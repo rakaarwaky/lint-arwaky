@@ -150,18 +150,19 @@ flowchart TD
 
 ## API Contract
 
-| Function                                                         | Input                                    | Output                        | Description                                                              |
-| ---------------------------------------------------------------- | ---------------------------------------- | ----------------------------- | ------------------------------------------------------------------------ |
-| The architecture line checker's line count check method          | file, definition, content, violations    | Mutates violations            | Check AES301 (max) and AES302 (min) line counts                          |
+
+| Function                                                         | Input                                    | Output                        | Description                                                               |
+| ------------------------------------------------------------------ | ------------------------------------------ | ------------------------------- | --------------------------------------------------------------------------- |
+| The architecture line checker's line count check method          | file, definition, content, violations    | Mutates violations            | Check AES301 (max) and AES302 (min) line counts                           |
 | The mandatory definition checker's class definition check method | file, definition, content, violations    | Mutates violations            | Check AES303 — file must declare at least one primary symbol             |
 | The mandatory definition checker's dead inheritance check method | file, content, violations                | Mutates violations            | Check AES303 — detect empty unit structs, empty classes                  |
 | The bypass checker's bypass comment detection method             | file, content, violations                | Mutates violations            | Check AES304 — detect forbidden tokens, attributes, and comment bypasses |
 | The bypass checker's Cargo.toml check method                     | content, violations                      | Mutates violations            | Check AES304 — detect Cargo.toml clippy allow bypass                     |
 | The code duplication analyzer's file similarity check method     | entries, min lines, threshold percentage | List of similarity violations | Check AES305 — file-level similarity analysis                            |
 | The code analysis orchestrator's main check runner               | config, files, root directory            | List of lint results          | Run all AES301–305 checks on workspace files                             |
-| The code analysis orchestrator's report formatter                | results, project root                    | Formatted string              | Format compliance report                                                 |
-| Check for critical violations                                    | results                                  | Boolean                       | Check if any CRITICAL severity violations exist                          |
-| Calculate compliance score                                       | results                                  | Score value                   | Calculate compliance score                                               |
+| The code analysis orchestrator's report formatter                | results, project root                    | Formatted string              | Format compliance report                                                  |
+| Check for critical violations                                    | results                                  | Boolean                       | Check if any CRITICAL severity violations exist                           |
+| Calculate compliance score                                       | results                                  | Score value                   | Calculate compliance score                                                |
 
 ## Integration Points
 
@@ -183,17 +184,17 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-| #  | Scenario | Expected | Rule |
-| -- | -------- | -------- | ---- |
-| 1  | File exceeds max line limit | AES301 violation | AES301 |
-| 2  | File below min line limit | AES302 violation | AES302 |
-| 3  | File has class/function definitions | No violation | pass |
-| 4  | File missing mandatory definitions | AES303 violation | AES303 |
-| 5  | File contains #[allow(...)] or #[expect(...)] | AES304 violation | AES304 |
-| 6  | File contains duplicate code blocks | AES305 violation | AES305 |
-| 7  | File within all thresholds | No violation | pass |
-| 8  | File in exceptions list | No violation — exception | excl |
 
+| # | Scenario                                      | Expected                  | Rule   |
+| --- | ----------------------------------------------- | --------------------------- | -------- |
+| 1 | File exceeds max line limit                   | AES301 violation          | AES301 |
+| 2 | File below min line limit                     | AES302 violation          | AES302 |
+| 3 | File has class/function definitions           | No violation              | pass   |
+| 4 | File missing mandatory definitions            | AES303 violation          | AES303 |
+| 5 | File contains #[allow(...)] or #[expect(...)] | AES304 violation          | AES304 |
+| 6 | File contains duplicate code blocks           | AES305 violation          | AES305 |
+| 7 | File within all thresholds                    | No violation              | pass   |
+| 8 | File in exceptions list                       | No violation — exception | excl   |
 
 ## Assumptions & Constraints
 

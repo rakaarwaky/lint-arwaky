@@ -34,8 +34,6 @@ flowchart TD
     C --> H3["unused_checker"]
     C --> H4["dummy_checker"]
     C --> H5["cycle_analyzer"]
-    C --> H6["purpose_checker"]
-
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
@@ -285,44 +283,7 @@ flowchart TD
 
 ---
 
-### FR-006: Import Purpose Validation (AES206)
 
-- **Description**: Validates that imports are used with the correct **purpose** as defined in the `allowed_imports` field of each `conditions` entry. Purpose is either `implement` (import used to implement a trait/protocol) or `call` (import used to invoke a function/method).
-- **Input**: `Vec<FileEntry>`, `Vec<ImportEntry>` (from filesystem crate), architecture configuration with `allowed_imports`.
-- **Output**: List of AES206 HIGH diagnostics with file path, line number, imported symbol, expected purpose, actual purpose.
-- **Business Rules**:
-
-  - **Purpose definitions**:
-
-    - `implement`: The imported symbol appears in a trait implementation or class inheritance position.
-      - Rust: `impl ImportedTrait for LocalType` — the imported symbol is in the `trait_` path of an `ItemImpl` node.
-      - Python: `class LocalType(ImportedProtocol)` — the imported symbol is in the class base list.
-      - TypeScript: `class LocalType implements ImportedInterface` — the imported symbol is in the `implements` clause.
-    - `call`: The imported symbol appears in a function/method call expression, NOT in an impl/inherits position.
-      - Rust: `imported_module::function()` or `ImportedType::method()` in `ExprCall` / `ExprMethodCall`.
-      - Python: `imported_module.function()` in call expression.
-      - TypeScript: `importedModule.function()` in call expression.
-  - **Validation logic**:
-
-    - For each file, match against `conditions` entries with `allowed_imports`.
-    - For each `allowed_imports` entry, find imports targeting the specified layer.
-    - Check that the imported symbol's usage matches the declared `purpose`.
-    - If purpose is `implement` but symbol is only used in call expressions → AES206 violation.
-    - If purpose is `call` but symbol is only used in impl/inherits position → AES206 violation.
-    - If symbol is used in BOTH positions → pass (most permissive interpretation).
-  - **AST detection**:
-
-    - Rust: Walk `ItemImpl` nodes for implement detection. Walk `ExprCall`/`ExprMethodCall` for call detection.
-    - Python: Walk class definitions for inherit detection. Walk call expressions for call detection.
-    - TypeScript: Walk class declarations with `implements` for implement detection. Walk call expressions for call detection.
-  - **Scope**: Only enforced for `conditions` entries that define `allowed_imports`. Entries without `allowed_imports` skip purpose validation.
-- **Edge Cases**:
-
-  - Import used in both impl and call → pass.
-  - Import declared in `allowed_imports` but never used → handled by AES203 (unused), not AES206.
-  - Re-exports (`pub use`, `export from`) are exempt from purpose validation.
-  - Barrel files are exempt.
-- **Error Handling**: Files that fail AST parsing produce `PARSE_WARN` and no AES206 violations.
 
 ---
 
@@ -331,13 +292,12 @@ flowchart TD
 
 | Operation                   | Input                                                                       | Output                                                                 | Description                                 |
 | ----------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------- |
-| Run full import audit       | Target path (file or directory)                                             | `Result<Vec<LintResult>, ScanError>`                                   | Run all 6 checks (AES201–AES206) on target |
+| Run full import audit       | Target path (file or directory)                                             | `Result<Vec<LintResult>, ScanError>`                                   | Run all 5 checks (AES201–AES205) on target |
 | Check forbidden imports     | Config, layer map,`Vec<FileEntry>`, `Vec<ImportEntry>`, root dir            | `Result<LintResultList, ImportError>`                                  | Check AES201 (config-driven matrix)         |
 | Check mandatory imports     | Config, layer map,`Vec<FileEntry>`, `Vec<ImportEntry>`, root dir            | `Result<LintResultList, ImportError>`                                  | Check AES202 (required imports per scope)   |
 | Check unused imports        | `Vec<FileEntry>`, `Vec<ImportEntry>`                                        | `Result<Vec<LintResult>, ImportError>`                                 | Check AES203 (unused symbols)               |
 | Check dummy imports         | `Vec<FileEntry>`, `Vec<ImportEntry>`, root dir, layer map                   | `Result<Vec<LintResult>, ImportError>`                                 | Check AES204 (dummy/stub code)              |
 | Check circular dependencies | Config, layer map,`Vec<FileEntry>`, `Vec<ImportEntry>`, `DiGraph`, root dir | `Result<Vec<LintResult>, ImportError>`                                 | Check AES205 (layer-level cycles)           |
-| Check import purpose        | `Vec<FileEntry>`, `Vec<ImportEntry>`, config, root dir                      | `Result<Vec<LintResult>, ImportError>`                                 | Check AES206 (implement vs call purpose)    |
 | Request filesystem parse    | Target path                                                                 | `Result<(Vec<FileEntry>, Vec<ImportEntry>, DiGraph), FilesystemError>` | Request parse from filesystem crate         |
 | Resolve barrel import       | Module path, symbol name, root dir                                          | `Option<ResolvedImport>`                                               | Resolve import through barrel file          |
 | Detect cycle edges          | Dependency edges                                                            | `Vec<SymbolName>`                                                      | Pure graph cycle detection (3-color DFS)    |
@@ -353,7 +313,7 @@ flowchart TD
   - The config system shared module — `ArchitectureConfig`, `ArchitectureRule`, `ArchitectureCondition`, `LayerDefinition`, `LayerMapVO` for rule configuration.
   - The import rules contract module — `IImportRunnerAggregate`, `IImportForbiddenProtocol`, `IImportMandatoryProtocol`, `IUnusedImportProtocol`, `IDummyImportCheckerProtocol`, `ICycleImportProtocol`, `IImportPurposeProtocol`.
   - The import rules taxonomy module — `AesImportViolation`, `DependencyEdge`, `ImportError`, `ResolvedImport`, `GraphColorVO`, `ImportPurposeVO`.
-  - The import rules utility module — `utility_import_resolver` (barrel resolution, scope matching), `utility_dummy_detector` (dummy detection), `utility_cycle_detector` (cycle detection), `utility_path_normalizer` (path normalization), `utility_purpose_detector` (implement vs call detection).
+  - The import rules utility module — `utility_import_resolver` (barrel resolution, scope matching), `utility_dummy_detector` (dummy detection), `utility_cycle_detector` (cycle detection), `utility_path_normalizer` (path normalization).
   - The common shared module — `FilePath`, `LineNumber`, `Severity`, `LintResult`, `LintMessage`, `Identity`, `SymbolName`, `LayerNameVO`, `LanguageVO`.
 - **External**:
 
@@ -377,7 +337,7 @@ flowchart TD
   - Check 1,000 files in < 2 seconds (validated via criterion benchmark).
   - Check 5,000 files in < 8 seconds.
   - AES205 cycle detection is O(V + E) — linear in the number of layer-level edges.
-  - File-level checks (AES203, AES204, AES206) are parallelized via `rayon` (`par_iter`).
+  - File-level checks (AES203, AES204) are parallelized via `rayon` (`par_iter`).
   - Mandatory and forbidden checks (AES201, AES202) run concurrently via `rayon::join`.
 - **Memory**:
 
@@ -461,17 +421,7 @@ flowchart TD
 | 3 | Self-import (file imports itself) | No violation (silently ignored) | pass   |
 | 4 | Indirect cycle (A → B → C → A) | AES205 violation                | AES205 |
 
-### AES206 — Import Purpose
 
-
-| # | Scenario                                                                        | Expected                                        | Rule   |
-| --- | --------------------------------------------------------------------------------- | ------------------------------------------------- | -------- |
-| 1 | capabilities imports contract(protocol) and implements it (`impl IFoo for Bar`) | No violation (purpose=implement, correct)       | pass   |
-| 2 | capabilities imports contract(protocol) but only calls functions on it          | AES206 violation (expected implement, got call) | AES206 |
-| 3 | agent imports utility and calls functions (`utility_helper::do_x()`)            | No violation (purpose=call, correct)            | pass   |
-| 4 | agent imports utility and implements it (`impl IUtility for Agent`)             | AES206 violation (expected call, got implement) | AES206 |
-| 5 | Import used in both impl and call                                               | No violation (most permissive)                  | pass   |
-| 6 | Condition has no`allowed_imports`                                               | No AES206 check (skipped)                       | pass   |
 
 ### Configuration
 
@@ -520,8 +470,7 @@ flowchart TD
 | **`PARSE_WARN`**     | Warning diagnostic (non-AES code) emitted when a file fails to parse                                                                                  |
 | **Re-export**        | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                                                            |
 | **Scope pattern**    | Config syntax like`taxonomy(vo)` or `surface(command|controller|page)` to target specific sub-layers                                                  |
-| **Conditions array** | YAML structure where each entry defines scope-specific`allowed`, `forbidden`, `mandatory`, and `allowed_imports` rules                                |
-| **Purpose**          | The intended usage of an import:`implement` (trait impl / class inheritance) or `call` (function invocation)                                          |
+| **Conditions array** | YAML structure where each entry defines scope-specific`allowed`, `forbidden`, and `mandatory` rules                                                    |
 | **3-color DFS**      | Graph traversal algorithm (White/Gray/Black) used for cycle detection                                                                                 |
 | **Dependency edge**  | A directed edge in the layer dependency graph (e.g.,`capabilities → contract`)                                                                       |
 | **ResolvedImport**   | VO carrying the result of barrel file resolution (original module, resolved file, resolved layer)                                                     |
@@ -546,7 +495,6 @@ architecture:
     AES203: { ... }
     AES204: { ... }
     AES205: { ... }
-    AES206: { ... }
 ```
 
 ### Rule Configuration Schema (AES201)
@@ -558,9 +506,7 @@ architecture:
   allowed: ["<layer>", ...]                    # Whitelist — pass
   forbidden: ["<layer>", ...]                  # Blacklist — AES201 CRITICAL
   mandatory: ["<layer>(<sub>)", ...] | null    # Required imports (AES202)
-  allowed_imports:                             # Optional — purpose enforcement (AES206)
-    - layer: "<layer>"
-      purpose: "implement" | "call"
+
 ```
 
 **Enforcement model**: Whitelist + Blacklist hybrid.
