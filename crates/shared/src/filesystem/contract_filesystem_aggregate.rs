@@ -1,9 +1,6 @@
 // PURPOSE: Contract layer — aggregate trait for filesystem operations
 // Single entry point for rule crates to access filesystem capabilities.
-//
-// Rule crates MUST only use filesystem through this aggregate trait.
-// Direct calls to filesystem::utility_filesystem_io are allowed during migration
-// but will be removed once all crates use the aggregate.
+// Implements FR-005 consumer access pattern with granular accessor methods.
 
 use super::taxonomy_filesystem_vo::*;
 use crate::common::taxonomy_path_vo::FilePath;
@@ -12,27 +9,69 @@ use std::path::{Path, PathBuf};
 /// Aggregate trait — combines all filesystem capabilities into one interface.
 /// Rule crates depend on this for file I/O, parsing, and dependency queries.
 ///
-/// Design: functions are grouped by concern (scan, read, discover, query, workspace).
-/// Each rule crate only needs a subset of these — the aggregate provides all.
+/// Pipeline runs once (lazy: triggered on first accessor call).
+/// All accessors return references — zero-cost, no clone.
+/// Result is immutable after construction (read-only queries only).
 pub trait IFilesystemAggregate: Send + Sync {
-    // ── Scan (full pipeline) ─────────────────────────────────
+    // ── Pipeline Trigger ──────────────────────────────────────
 
-    /// Run full scan: walk → cache → parse → extract → graph.
-    fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult;
+    /// Run full pipeline: walk -> cache -> parse -> extract -> graph.
+    /// Lazy: pipeline runs on first accessor call. Results cached internally.
+    fn run_pipeline(&self, root: &PathBuf, ignored: &[String]);
+
+    // ── File Access (FR-001) ─────────────────────────────────
+
+    /// All discovered source files (path, content, language, extension).
+    /// Consumers: naming-rules, code-analysis, import-rules.
+    fn file_list(&self) -> &[FileEntry];
+
+    // ── Parsed File Access (FR-002) ──────────────────────────
+
+    /// Files enriched with parse metadata and parse_ok flag.
+    /// Consumers: role-rules, orphan-detector.
+    fn parsed_file_list(&self) -> &[FileEntry];
+
+    // ── Parse Warnings (FR-002) ──────────────────────────────
+
+    /// Parse diagnostics for files that failed to parse.
+    /// Consumers: all.
+    fn parse_warnings(&self) -> &[ParseWarning];
+
+    // ── Import Access (FR-003) ───────────────────────────────
+
+    /// All extracted import entries across the workspace.
+    /// Consumers: import-rules, orphan-detector.
+    fn import_list(&self) -> &[ImportEntry];
+
+    // ── Graph Access (FR-004) ────────────────────────────────
+
+    /// Forward import graph (file -> files it imports).
+    /// Consumers: import-rules, orphan-detector.
+    fn dependency_graph(&self) -> &std::collections::HashMap<PathBuf, Vec<PathBuf>>;
+
+    /// Reverse import map (file -> list of files that import it).
+    /// Consumers: orphan-detector.
+    fn reverse_import_map(&self) -> &std::collections::HashMap<PathBuf, Vec<PathBuf>>;
+
+    /// Symbol definition map (trait/class/struct/interface name -> defining file).
+    /// Consumers: orphan-detector.
+    fn symbol_definitions(&self) -> &std::collections::HashMap<String, Vec<PathBuf>>;
+
+    /// Trait implementation map (trait/interface name -> list of implementor files).
+    /// Consumers: orphan-detector.
+    fn trait_implementations(&self) -> &std::collections::HashMap<String, Vec<PathBuf>>;
+
+    // ── Timing ───────────────────────────────────────────────
 
     /// Get timing breakdown of last scan.
     fn timing(&self) -> &ScanTiming;
 
-    // ── File Reading ──────────────────────────────────────────
+    // ── File Reading (backward compat) ───────────────────────
 
     /// Read file content. Checks cache first, falls back to disk.
-    /// Returns None if file is unreadable.
     fn read_file(&self, path: &Path) -> Option<String>;
 
     /// Read file for linting: checks cache, enforces 2MiB size limit.
-    /// Returns Ok(Some(content)) if readable and within limit.
-    /// Returns Ok(None) if file exceeds size limit (graceful skip).
-    /// Returns Err(message) if file is unreadable.
     fn read_lintable_file(&self, path: &str) -> Result<Option<String>, String>;
 
     /// Get cached file content (after scan).
@@ -41,22 +80,15 @@ pub trait IFilesystemAggregate: Send + Sync {
     /// Check if a file is in the cache.
     fn has_file(&self, path: &PathBuf) -> bool;
 
-    // ── File Discovery ────────────────────────────────────────
+    // ── File Discovery (backward compat) ─────────────────────
 
     /// Discover all source files in directory tree.
-    /// Uses ignore crate (gitignore-aware, parallel walk).
-    /// Returns Vec<FileEntry> with path, extension, language, size.
     fn discover_files(&self, root: &Path, ignored: &[String]) -> Vec<FileEntry>;
 
     /// Discover source files with workspace restriction.
-    /// Only walks into workspace member directories (crates/, packages/, modules/).
-    /// Returns Vec<FilePath> for backward compatibility with shared types.
     fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<FilePath>;
 
-    /// Get all discovered files (from last scan).
-    fn all_files(&self) -> &[FileEntry];
-
-    // ── Import/Dependency ─────────────────────────────────────
+    // ── Import/Dependency (backward compat) ──────────────────
 
     /// Get imports for a specific file.
     fn imports_for(&self, path: &PathBuf) -> Vec<ImportEntry>;
@@ -73,7 +105,7 @@ pub trait IFilesystemAggregate: Send + Sync {
     /// Find orphan files (nothing imports them).
     fn orphan_files(&self) -> Vec<PathBuf>;
 
-    // ── Path Queries ──────────────────────────────────────────
+    // ── Path Queries ─────────────────────────────────────────
 
     /// Check if path exists.
     fn path_exists(&self, path: &Path) -> bool;
@@ -82,12 +114,10 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn is_dir(&self, path: &Path) -> bool;
 
     /// Check if path should be ignored based on ignore patterns.
-    /// Combines is_path_ignored + is_ignored_dir logic.
     fn should_ignore(&self, path: &str, ignored: &[String]) -> bool;
 
-    // ── Workspace ─────────────────────────────────────────────
+    // ── Workspace ────────────────────────────────────────────
 
     /// Find workspace root by walking up from start path.
-    /// Looks for Cargo.toml, crates/, packages/, modules/ markers.
     fn workspace_root(&self, start: &str) -> Option<PathBuf>;
 }

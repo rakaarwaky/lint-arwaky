@@ -27,6 +27,29 @@ impl IConfigReaderProtocol for ConfigYamlReader {
 
             while !current.as_os_str().is_empty() && depth < 3 {
                 let candidate = current.join(filename);
+                // FR-001: Reject symlinks pointing outside project root
+                if let Ok(meta) = std::fs::symlink_metadata(&candidate) {
+                    if meta.file_type().is_symlink() {
+                        if let Ok(canonical) = std::fs::canonicalize(&candidate) {
+                            let root_canonical = std::fs::canonicalize(&project_root.value)
+                                .unwrap_or_else(|_| std::path::PathBuf::from(&project_root.value));
+                            if !canonical.starts_with(&root_canonical) {
+                                eprintln!(
+                                    "Warning: Symlink '{}' points outside project root, rejected.",
+                                    candidate.display()
+                                );
+                                // skip this candidate, continue searching
+                                if let Some(parent) = current.parent() {
+                                    current = parent.to_path_buf();
+                                } else {
+                                    break;
+                                }
+                                depth += 1;
+                                continue;
+                            }
+                        }
+                    }
+                }
                 match config_io::read_file_async(&candidate).await {
                     Ok(content) => {
                         return Ok(Some(ConfigSource::new(

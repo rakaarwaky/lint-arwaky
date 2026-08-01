@@ -7,6 +7,10 @@ use std::path::PathBuf;
 /// Maximum file size for linting (2 MiB).
 pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
 
+// ═══════════════════════════════════════════════════════════════
+// FR-001: File Discovery — Language & FileEntry
+// ═══════════════════════════════════════════════════════════════
+
 /// Supported programming languages for AST parsing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Language {
@@ -44,7 +48,7 @@ impl Language {
     }
 }
 
-/// A discovered source file with metadata.
+/// A discovered source file with metadata and optional parse results.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileEntry {
     /// Absolute path to the file.
@@ -55,7 +59,185 @@ pub struct FileEntry {
     pub language: Language,
     /// File size in bytes.
     pub size: u64,
+    /// File content (UTF-8). Empty for skipped/unreadable files.
+    pub content: String,
+    /// Whether AST parsing succeeded.
+    pub parse_ok: bool,
+    /// Language-specific parse metadata (None if parse_ok = false).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parse_metadata: Option<ParseMetadata>,
 }
+
+// ═══════════════════════════════════════════════════════════════
+// FR-002: AST Parsing — ParseMetadata & Language-Specific Types
+// ═══════════════════════════════════════════════════════════════
+
+/// Language-specific parse metadata extracted from AST.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ParseMetadata {
+    Rust(RustMetadata),
+    Python(PythonMetadata),
+    TypeScript(TypeScriptMetadata),
+    JavaScript(JavaScriptMetadata),
+}
+
+/// Rust-specific parse metadata.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RustMetadata {
+    /// `use` statements.
+    pub use_statements: Vec<RustUseItem>,
+    /// `mod` declarations with optional `#[path]` attribute.
+    pub mod_declarations: Vec<RustModItem>,
+    /// Struct definitions.
+    pub struct_definitions: Vec<String>,
+    /// Enum definitions.
+    pub enum_definitions: Vec<String>,
+    /// Trait definitions.
+    pub trait_definitions: Vec<String>,
+    /// Type alias definitions.
+    pub type_definitions: Vec<String>,
+    /// `impl` blocks (trait name, implementor type, has generic).
+    pub impl_blocks: Vec<RustImplItem>,
+    /// Function definitions (name, has_body).
+    pub function_definitions: Vec<RustFnItem>,
+}
+
+/// A Rust `use` statement.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RustUseItem {
+    /// Full use path (e.g., `std::collections::HashMap`).
+    pub path: String,
+    /// Whether the use has `pub` visibility.
+    pub is_pub: bool,
+    /// Whether this is a glob import (`use foo::*`).
+    pub is_glob: bool,
+    /// Imported names (for grouped imports like `use foo::{A, B}`).
+    pub names: Vec<String>,
+}
+
+/// A Rust `mod` declaration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RustModItem {
+    /// Module name.
+    pub name: String,
+    /// Optional `#[path = "..."]` attribute value.
+    pub path_attribute: Option<String>,
+}
+
+/// A Rust `impl` block.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RustImplItem {
+    /// Trait name (if implementing a trait, e.g., `Display`).
+    pub trait_name: Option<String>,
+    /// Qualified trait path (e.g., `std::fmt::Display`).
+    pub trait_path: Option<String>,
+    /// Implementor type name (e.g., `MyStruct`).
+    pub implementor_type: String,
+    /// Whether the impl has generic parameters (`impl<T>`).
+    pub has_generics: bool,
+}
+
+/// A Rust function definition.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RustFnItem {
+    /// Function name.
+    pub name: String,
+    /// Whether the function has a body (not just a signature).
+    pub has_body: bool,
+}
+
+/// Python-specific parse metadata.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct PythonMetadata {
+    /// `import X` statements.
+    pub import_statements: Vec<String>,
+    /// `from X import Y` statements (module path).
+    pub import_from_statements: Vec<String>,
+    /// Class declarations (name, base classes).
+    pub class_declarations: Vec<PythonClassItem>,
+    /// Function definitions (name, has_body).
+    pub function_definitions: Vec<PythonFnItem>,
+}
+
+/// A Python class declaration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PythonClassItem {
+    /// Class name.
+    pub name: String,
+    /// Base class names (from `class Foo(Bar, Baz)`).
+    pub bases: Vec<String>,
+}
+
+/// A Python function definition.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PythonFnItem {
+    /// Function name.
+    pub name: String,
+    /// Whether the function has a body.
+    pub has_body: bool,
+}
+
+/// TypeScript/JavaScript-specific parse metadata.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TypeScriptMetadata {
+    /// Import statements (source path).
+    pub import_statements: Vec<String>,
+    /// Export statements with `from` (source path).
+    pub export_from_statements: Vec<String>,
+    /// Class declarations (name, implements interfaces).
+    pub class_declarations: Vec<TSClassItem>,
+    /// Interface declarations.
+    pub interface_declarations: Vec<String>,
+    /// Type alias declarations.
+    pub type_alias_declarations: Vec<String>,
+    /// Function definitions (name, has_body).
+    pub function_definitions: Vec<TSFnItem>,
+}
+
+/// A TypeScript/JavaScript class declaration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TSClassItem {
+    /// Class name.
+    pub name: String,
+    /// Implemented interface names (from `implements IFoo, IBar`).
+    pub implements: Vec<String>,
+}
+
+/// A TypeScript/JavaScript function definition.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TSFnItem {
+    /// Function name.
+    pub name: String,
+    /// Whether the function has a body.
+    pub has_body: bool,
+}
+
+/// JavaScript metadata is identical to TypeScript for our purposes.
+pub type JavaScriptMetadata = TypeScriptMetadata;
+
+// ═══════════════════════════════════════════════════════════════
+// FR-002: Parse Warning Diagnostic
+// ═══════════════════════════════════════════════════════════════
+
+/// Diagnostic warning for files that failed to parse.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParseWarning {
+    /// File path that failed to parse.
+    pub file_path: PathBuf,
+    /// Error detail message.
+    pub error_detail: String,
+}
+
+impl ParseWarning {
+    /// Create a PARSE_WARN diagnostic message per FR-002.
+    pub fn message(&self) -> String {
+        format!("File skipped: parse failure \u2014 {}", self.error_detail)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FR-003: Import/Dependency Extraction — ImportEntry
+// ═══════════════════════════════════════════════════════════════
 
 /// Import type extracted from AST.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -64,9 +246,9 @@ pub enum ImportType {
     Use,
     /// Rust: `mod foo`
     Mod,
-    /// Python: `import foo` or `from foo import bar`
+    /// Python: `import foo`
     Import,
-    /// TypeScript/JS: `import foo from 'bar'`
+    /// TS/JS/Python: `from foo import bar` / `import foo from 'bar'`
     ImportFrom,
     /// TypeScript/JS: `require('bar')`
     Require,
@@ -91,37 +273,17 @@ pub struct ImportEntry {
     pub is_dynamic: bool,
     /// Was the import resolved to a file in the workspace?
     pub is_resolved: bool,
+    /// Imported symbols (for grouped imports: `use foo::{A, B}`).
+    pub symbols: Vec<String>,
+    /// Is this a re-export? (`pub use`, `export { X } from`)
+    pub is_reexport: bool,
+    /// Is this a wildcard import? (`use foo::*`, `export * from`)
+    pub is_wildcard: bool,
 }
 
-/// Result of a complete filesystem scan.
-#[derive(Debug)]
-pub struct FilesystemResult {
-    /// All discovered source files.
-    pub files: Vec<FileEntry>,
-    /// Extracted imports for each file.
-    pub imports: Vec<ImportEntry>,
-    /// Number of files parsed successfully.
-    pub parsed_count: usize,
-    /// Number of files that failed to parse.
-    pub parse_errors: usize,
-    /// Number of imports that couldn't be resolved.
-    pub unresolved_imports: usize,
-    /// Timing breakdown (milliseconds).
-    pub timing: ScanTiming,
-}
-
-/// Timing breakdown for scan stages.
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ScanTiming {
-    pub walk_ms: u64,
-    pub cache_ms: u64,
-    pub parse_ms: u64,
-    pub extract_ms: u64,
-    pub graph_ms: u64,
-    pub total_ms: u64,
-}
-
-// ─── Graph Node / Edge VOs ────────────────────────────────
+// ═══════════════════════════════════════════════════════════════
+// FR-004: Dependency Graph — Graph VOs
+// ═══════════════════════════════════════════════════════════════
 
 /// Graph node representing a source file in the dependency graph.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,9 +305,53 @@ pub struct ImportEdgeVO {
     pub raw_path: String,
     /// Whether the import was resolved to a workspace file.
     pub resolved: bool,
+    /// Is this a re-export edge?
+    pub is_reexport: bool,
+    /// Is this a wildcard import edge?
+    pub is_wildcard: bool,
 }
 
-// ─── Cache / Memory Budget VOs ─────────────────────────────
+/// A symbol definition entry (symbol name -> defining file).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DefinitionEntry {
+    /// Symbol name (trait/class/struct/interface/type alias).
+    pub name: String,
+    /// File path where the symbol is defined.
+    pub file_path: PathBuf,
+    /// Language of the defining file.
+    pub language: Language,
+}
+
+/// A trait/interface implementation entry.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ImplEntry {
+    /// Trait/interface name being implemented.
+    pub trait_name: String,
+    /// File containing the implementation.
+    pub file_path: PathBuf,
+    /// Language of the implementing file.
+    pub language: Language,
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FR-004: GraphData — Composite Graph Structure
+// ═══════════════════════════════════════════════════════════════
+
+/// Composite structure containing all graph data.
+/// Built by graph_builder, queried by consumer crates.
+#[derive(Debug, Default)]
+pub struct GraphData {
+    /// Reverse links: file -> list of files that import it.
+    pub reverse_links: std::collections::HashMap<PathBuf, Vec<PathBuf>>,
+    /// Symbol -> defining file map.
+    pub definitions: std::collections::HashMap<String, Vec<PathBuf>>,
+    /// Trait/interface -> implementor files map.
+    pub implementations: std::collections::HashMap<String, Vec<PathBuf>>,
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Cache / Memory Budget / Config VOs
+// ═══════════════════════════════════════════════════════════════
 
 /// Memory budget for file cache and AST cache.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -189,8 +395,6 @@ pub struct GraphStatsVO {
     pub cycle_count: usize,
 }
 
-// ─── Scan Config VO ────────────────────────────────────────
-
 /// Configuration for a filesystem scan.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanConfigVO {
@@ -210,4 +414,46 @@ impl Default for ScanConfigVO {
             budget: MemoryBudgetVO::default(),
         }
     }
+}
+
+/// Scan pipeline stage identifiers for error reporting.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum ScanStage {
+    Walk,
+    Cache,
+    Parse,
+    Extract,
+    Graph,
+}
+
+/// Result of a complete filesystem scan.
+#[derive(Debug)]
+pub struct FilesystemResult {
+    /// All discovered source files (enriched with content + parse metadata).
+    pub files: Vec<FileEntry>,
+    /// Extracted imports for each file.
+    pub imports: Vec<ImportEntry>,
+    /// Parse warnings for files that failed to parse.
+    pub warnings: Vec<ParseWarning>,
+    /// Graph data (reverse links, definitions, implementations).
+    pub graph: GraphData,
+    /// Number of files parsed successfully.
+    pub parsed_count: usize,
+    /// Number of files that failed to parse.
+    pub parse_errors: usize,
+    /// Number of imports that couldn't be resolved.
+    pub unresolved_imports: usize,
+    /// Timing breakdown (milliseconds).
+    pub timing: ScanTiming,
+}
+
+/// Timing breakdown for scan stages.
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct ScanTiming {
+    pub walk_ms: u64,
+    pub cache_ms: u64,
+    pub parse_ms: u64,
+    pub extract_ms: u64,
+    pub graph_ms: u64,
+    pub total_ms: u64,
 }
