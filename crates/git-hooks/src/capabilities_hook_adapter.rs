@@ -32,18 +32,18 @@ impl IHookManagerProtocol for GitHookAdapter {
         })?;
         let hook_path = hooks_dir.join("pre-commit");
         let exe_str = if executable_path.value.is_empty() {
-            "lint-arwaky"
+            "lint-arwaky-cli"
         } else {
             &executable_path.value
         };
         let hook_content = format!(
             "#!/bin/bash
 # Lint Arwaky Pre-Commit Hook
-echo \"Running Lint Arwaky scan...\"
-{} scan .
+echo \"Running Lint Arwaky check...\"
+{} check .
 if [ $? -ne 0 ]; then
- echo \"Linting failed. Please fix issues before committing.\"
- exit 1
+  echo \"Linting failed. Please fix issues before committing.\"
+  exit 1
 fi
 echo \"Linting passed.\"
 exit 0

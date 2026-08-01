@@ -207,37 +207,36 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
                 && let Some(vulns) = json.get("vulnerabilities")
+                && let Some(obj) = vulns.as_object()
             {
-                if let Some(obj) = vulns.as_object() {
-                    for (name, detail) in obj {
-                        let severity = detail
-                            .get("severity")
-                            .and_then(|s| s.as_str())
-                            .unwrap_or("unknown")
-                            .to_string();
-                        let via = detail.get("via").and_then(|v| v.as_array());
-                        let issue = match via {
-                            Some(arr) if !arr.is_empty() => {
-                                if let Some(v) = arr.first() {
-                                    if let Some(title) = v.get("title").and_then(|t| t.as_str()) {
-                                        title.to_string()
-                                    } else {
-                                        "Advisory vulnerability".to_string()
-                                    }
+                for (name, detail) in obj {
+                    let severity = detail
+                        .get("severity")
+                        .and_then(|s| s.as_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+                    let via = detail.get("via").and_then(|v| v.as_array());
+                    let issue = match via {
+                        Some(arr) if !arr.is_empty() => {
+                            if let Some(v) = arr.first() {
+                                if let Some(title) = v.get("title").and_then(|t| t.as_str()) {
+                                    title.to_string()
                                 } else {
                                     "Advisory vulnerability".to_string()
                                 }
+                            } else {
+                                "Advisory vulnerability".to_string()
                             }
-                            _ => "Transitive vulnerability".to_string(),
-                        };
-                        findings.push(SecurityFinding {
-                            severity,
-                            test_id: "npm-advisory".to_string(),
-                            file: name.clone(),
-                            line: 0,
-                            issue,
-                        });
-                    }
+                        }
+                        _ => "Transitive vulnerability".to_string(),
+                    };
+                    findings.push(SecurityFinding {
+                        severity,
+                        test_id: "npm-advisory".to_string(),
+                        file: name.clone(),
+                        line: 0,
+                        issue,
+                    });
                 }
             }
             SecurityScanReport {

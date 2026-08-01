@@ -73,27 +73,42 @@ impl LintArwakyMcpServer {
 
     #[tool(description = "Check system health: adapters and system state.")]
     pub async fn health_check(&self) -> String {
+        // FRD FR-004: all 9 adapters must be checked
         let mut adapters = Vec::new();
         for (name, lang) in &[
-            ("ruff", "python"),
-            ("mypy", "python"),
-            ("bandit", "python"),
-            ("clippy", "rust"),
-            ("eslint", "javascript"),
+            ("clippy", "Rust"),
+            ("rustfmt", "Rust"),
+            ("cargo-audit", "Rust"),
+            ("ruff", "Python"),
+            ("mypy", "Python"),
+            ("bandit", "Python"),
+            ("eslint", "JS/TS"),
+            ("prettier", "JS/TS"),
+            ("tsc", "JS/TS"),
         ] {
-            let found = if *name == "clippy" {
-                match std::process::Command::new("cargo")
+            // clippy requires `cargo clippy --version`, rustfmt uses `rustfmt --version`,
+            // cargo-audit uses `cargo audit --version`, others use `which`.
+            let found = match *name {
+                "clippy" => std::process::Command::new("cargo")
                     .args(["clippy", "--version"])
                     .output()
-                {
-                    Ok(o) => o.status.success(),
-                    Err(_) => false,
-                }
-            } else {
-                match std::process::Command::new("which").arg(name).output() {
-                    Ok(o) => o.status.success(),
-                    Err(_) => false,
-                }
+                    .map(|o| o.status.success())
+                    .unwrap_or(false),
+                "rustfmt" => std::process::Command::new("rustfmt")
+                    .args(["--version"])
+                    .output()
+                    .map(|o| o.status.success())
+                    .unwrap_or(false),
+                "cargo-audit" => std::process::Command::new("cargo")
+                    .args(["audit", "--version"])
+                    .output()
+                    .map(|o| o.status.success())
+                    .unwrap_or(false),
+                _ => std::process::Command::new("which")
+                    .arg(name)
+                    .output()
+                    .map(|o| o.status.success())
+                    .unwrap_or(false),
             };
             adapters.push(serde_json::json!({
                 "name": name,
