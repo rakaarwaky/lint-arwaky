@@ -3,6 +3,7 @@
 pub mod contract_filesystem_aggregate;
 pub mod contract_filesystem_protocol;
 pub mod taxonomy_filesystem_vo;
+pub mod utility_filesystem_io;
 
 // ─── Re-exports ────────────────────────────────────────────
 

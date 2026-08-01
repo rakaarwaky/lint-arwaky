@@ -59,7 +59,7 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         let root = std::path::PathBuf::from(&path.value);
         ["crates", "packages", "modules"]
             .iter()
-            .any(|dir| filesystem::utility_filesystem_io::path_exists(root.join(dir)))
+            .any(|dir| shared::filesystem::utility_filesystem_io::path_exists(root.join(dir)))
     }
 
     async fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {

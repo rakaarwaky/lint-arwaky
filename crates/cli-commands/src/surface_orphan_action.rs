@@ -98,7 +98,7 @@ pub fn handle_scan_orphan(
         let cwd = std::env::current_dir().unwrap_or_default();
         let ws_abs = cwd.join(&ws.path.value);
         let ws_top_root =
-            filesystem::utility_filesystem_io::find_workspace_root(&ws_abs.to_string_lossy());
+            shared::filesystem::utility_filesystem_io::find_workspace_root(&ws_abs.to_string_lossy());
         let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
             ws_abs
                 .strip_prefix(top_root)

@@ -22,7 +22,7 @@ use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use filesystem::utility_filesystem_io::is_path_ignored;
+use shared::filesystem::utility_filesystem_io::is_path_ignored;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::config_system::utility_config_parser::{
     parse_adapter_entries_from_yaml, parse_config_yaml_with_warnings,
@@ -49,7 +49,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         // Lightweight walk (extension check only, no file reading or parsing).
         let root_path = std::path::Path::new(&path.value);
         let (has_rs, has_py, has_js) =
-            filesystem::utility_filesystem_io::detect_languages(root_path);
+            shared::filesystem::utility_filesystem_io::detect_languages(root_path);
         let ignored_paths = load_ignored_paths_from_config(root_path, has_rs, has_py, has_js);
 
         // FR-002: Select adapters using the selector + config entries.

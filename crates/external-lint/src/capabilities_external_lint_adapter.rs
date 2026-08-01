@@ -6,7 +6,7 @@ use shared::common::{
     PatternList, ScanError, Timeout,
 };
 
-use filesystem::utility_filesystem_io as ext_io;
+use shared::filesystem::utility_filesystem_io as ext_io;
 use shared::common::ResponseData;
 use shared::common::{DirectoryPath, FilePath};
 use shared::external_lint::{

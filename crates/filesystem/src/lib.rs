@@ -10,9 +10,6 @@ pub mod capabilities_import_extractor;
 // ── Agent (orchestration) ──
 pub mod agent_filesystem_orchestrator;
 
-// ── Utility (stateless helpers) ──
-pub mod utility_filesystem_io;
-
 // ── Re-exports ──
 pub use agent_filesystem_orchestrator::FilesystemOrchestrator;
 pub use capabilities_ast_parser::ASTParser;

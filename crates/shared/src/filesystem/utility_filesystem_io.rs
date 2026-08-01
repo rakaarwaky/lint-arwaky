@@ -7,10 +7,9 @@
 //           is_directory, is_file, path_exists, is_source_file}
 //           shared::orphan_detector::utility_orphan_io::read_file_safe
 
+use crate::common::taxonomy_path_vo::FilePath;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-
-use shared::common::taxonomy_path_vo::FilePath;
 
 /// Default directories to skip during directory walks.
 pub const DEFAULT_SKIP_DIRS: [&str; 7] = [
@@ -312,18 +311,18 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
 /// Scan directory with ignored paths filter (matches shared signature).
 /// Returns FilePathList of source files.
 pub fn scan_directory_with_ignored(
-    path: &shared::common::taxonomy_path_vo::DirectoryPath,
+    path: &crate::common::taxonomy_path_vo::DirectoryPath,
     ignored_paths: &[String],
 ) -> Result<
-    shared::common::taxonomy_paths_vo::FilePathList,
-    shared::common::taxonomy_filesystem_error::FileSystemError,
+    crate::common::taxonomy_paths_vo::FilePathList,
+    crate::common::taxonomy_filesystem_error::FileSystemError,
 > {
     let dir = std::path::Path::new(&path.value);
     if !dir.exists() || !dir.is_dir() {
-        return Ok(shared::common::taxonomy_paths_vo::FilePathList { values: vec![] });
+        return Ok(crate::common::taxonomy_paths_vo::FilePathList { values: vec![] });
     }
     let files = collect_all_source_files(dir, ignored_paths);
-    Ok(shared::common::taxonomy_paths_vo::FilePathList { values: files })
+    Ok(crate::common::taxonomy_paths_vo::FilePathList { values: files })
 }
 
 /// Recursively scan directory for files, returning vector of file paths.
@@ -704,9 +703,9 @@ pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
 // Global file cache — read once, serve from memory.
 // FR-001/FR-002: Cache populated from FileEntry.content after walk.
 
+use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use dashmap::DashMap;
 use rayon::prelude::*;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::sync::LazyLock;
 
 static FILE_CACHE: LazyLock<DashMap<PathBuf, String>> = LazyLock::new(DashMap::new);
