@@ -3,7 +3,7 @@
 // Scope: Rust, Python, JavaScript, and TypeScript.
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::{FixOutcome, IFixProtocol};
+use shared::auto_fix::IFixProtocol;
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 

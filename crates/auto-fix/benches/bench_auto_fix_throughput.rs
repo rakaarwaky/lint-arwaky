@@ -44,6 +44,12 @@ impl ICodeAnalysisAggregate for BenchLinter {
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]
     }
+    fn run_analysis_with_entries(
+        &self,
+        _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<LintResult> {
+        vec![]
+    }
 }
 
 // ─── Benchmarks ───────────────────────────────────────────

@@ -33,6 +33,7 @@ impl PreviewView {
         };
 
         let (title, content) = match state.preview_mode {
+            PreviewMode::FileContent => (" Preview ".to_string(), state.preview_text.clone()),
             PreviewMode::LintResults => (" Lint Results ".to_string(), state.preview_text.clone()),
             PreviewMode::ActionOutput => {
                 (" Action Output ".to_string(), state.preview_text.clone())

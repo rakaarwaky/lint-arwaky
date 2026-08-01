@@ -73,8 +73,8 @@ impl TuiCommandSurface {
             state.terminal_height = h;
             state.terminal_width = w;
         }
-        state.show_path_dialog = false;
-        self.tui_aggregate.load_directory(&mut state, &cwd);
+        // FR-011: Path dialog shown on startup — user types project root or Tab for CWD.
+        // Directory loading happens AFTER dialog confirmation (PathConfirm / PathUseCurrent).
 
         let views = RenderViews::new();
         let result = self.event_loop(&mut terminal, &mut state, &views);
@@ -100,11 +100,6 @@ impl TuiCommandSurface {
                 && let Some(ref rx) = scan_rx
             {
                 self.tui_aggregate.poll_scan(state, rx);
-            }
-
-            // --- Poll watch updates (non-blocking) ---
-            if state.watching {
-                self.tui_aggregate.poll_watch(state);
             }
 
             terminal.draw(|frame| {

@@ -130,6 +130,7 @@ impl ActionHandler {
                     state.preview_scroll = state.preview_scroll.min(self.max_preview_scroll(state));
                 } else {
                     state.select_next();
+                    self.load_preview(state);
                 }
             }
             TuiEvent::MoveUp => {
@@ -137,6 +138,7 @@ impl ActionHandler {
                     state.preview_scroll = state.preview_scroll.saturating_sub(3);
                 } else {
                     state.select_prev();
+                    self.load_preview(state);
                 }
             }
             TuiEvent::MoveTop => {
@@ -144,6 +146,7 @@ impl ActionHandler {
                     state.preview_scroll = 0;
                 } else {
                     state.select_first();
+                    self.load_preview(state);
                 }
             }
             TuiEvent::MoveBottom => {
@@ -151,6 +154,7 @@ impl ActionHandler {
                     state.preview_scroll = self.max_preview_scroll(state);
                 } else {
                     state.select_last();
+                    self.load_preview(state);
                 }
             }
             // ---- Preview panel scrolling ----
@@ -197,7 +201,13 @@ impl ActionHandler {
                     state.compute_filtered_indices();
                 }
             }
-            TuiEvent::SearchConfirm | TuiEvent::SearchCancel => {
+            // FR-007: Enter confirms search and exits search mode (keeps filter).
+            // Esc cancels search and clears filter.
+            TuiEvent::SearchConfirm => {
+                state.search_mode = false;
+                // Keep search_query and filtered_indices — filter persists
+            }
+            TuiEvent::SearchCancel => {
                 state.search_mode = false;
                 state.search_query.clear();
                 state.compute_filtered_indices();
@@ -232,25 +242,11 @@ impl ActionHandler {
             }
             TuiEvent::ActionAdapters => self.run_action_no_path(state, |lp| lp.adapters()),
             TuiEvent::ActionVersion => self.run_action_no_path(state, |lp| lp.version()),
-            // ---- Watch: start/stop file watcher with real linting loop ----
+            // ---- Watch: FR-006 says watch is NOT supported in TUI ----
             TuiEvent::ActionWatch => {
-                if state.watching {
-                    // Stop watch mode
-                    state.watching = false;
-                    state.watch_receiver = None;
-                    state.watch_results.clear();
-                    state.preview_text = "Watch stopped.".to_string();
-                    state.preview_mode = PreviewMode::ActionOutput;
-                    state.set_status("Watch stopped.");
-                } else {
-                    // Start watch mode
-                    let (result, rx) = self.lint_port.watch(&state.selected_path());
-                    state.watching = true;
-                    state.watch_receiver = Some(rx);
-                    state.preview_text = result.output;
-                    state.preview_mode = PreviewMode::ActionOutput;
-                    state.set_status("Watching for file changes (press w to stop)...");
-                }
+                state.preview_text = "Watch mode is not supported in TUI.\nUse `lint-arwaky-cli watch` in a terminal.".to_string();
+                state.preview_mode = PreviewMode::ActionOutput;
+                state.set_status("Watch not supported in TUI");
             }
             // ---- Path input dialog: character-by-character editing ----
             TuiEvent::PathInput(ch) => state.path_input.push(ch),
@@ -330,7 +326,7 @@ impl ActionHandler {
         }
     }
 
-    /// Navigate into a directory or select a file (no preview loading).
+    /// Navigate into a directory or select a file and load preview.
     fn navigate_forward(&self, state: &mut AppState) {
         let path = state.selected_path();
         let is_dir = state.selected_entry().map(|e| e.is_dir).unwrap_or(false);
@@ -339,8 +335,8 @@ impl ActionHandler {
             state.current_dir = path;
             self.load_directory(state, &state.current_dir.clone());
         } else {
-            // File selected — no preview loading, Preview panel stays empty
-            // User must run an action (check, scan, fix, etc.) to see output
+            // FR-003: Entry is a file → preview loaded in Preview panel.
+            self.load_file_preview(state, &path);
             state.set_status(format!("Selected: {}", path));
         }
     }
@@ -367,17 +363,21 @@ impl ActionHandler {
     }
 
     /// Read up to 100 lines of a file for inline preview.
-    /// No-op — file content preview is intentionally disabled per FRD compliance.
-    pub fn load_file_preview(&self, _state: &mut AppState, _path: &str) {
-        // Preview panel only shows action output (check, scan, fix, ci, orphan, doctor, init, install, etc.)
-        // No file content preview is loaded.
+    pub fn load_file_preview(&self, state: &mut AppState, path: &str) {
+        let fp = FilePath::new(path.to_string()).unwrap_or_default();
+        let display = utility_file_system::read_file_preview(&fp, 100);
+        state.preview_text = display.to_string();
+        state.preview_scroll = 0;
+        state.preview_mode = PreviewMode::FileContent;
     }
 
     /// Load preview for the currently selected entry if it's a file.
-    /// No-op — file content preview is intentionally disabled per FRD compliance.
-    pub fn load_preview(&self, _state: &mut AppState) {
-        // Preview panel only shows action output (check, scan, fix, ci, orphan, doctor, init, install, etc.)
-        // No file content preview is loaded.
+    pub fn load_preview(&self, state: &mut AppState) {
+        if let Some(entry) = state.selected_entry() {
+            if !entry.is_dir {
+                self.load_file_preview(state, &entry.full_path);
+            }
+        }
     }
 
     /// Run a lint action that requires a selected path.
