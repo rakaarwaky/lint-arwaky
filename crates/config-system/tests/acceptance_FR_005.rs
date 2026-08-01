@@ -1,5 +1,5 @@
 // FR-005 — Config Security
-use shared::config_system::utility_config_io::{
+use shared::filesystem::utility_filesystem_io::{
     MAX_CONFIG_FILE_SIZE, read_text_within_canonical_root,
 };
 use std::fs;

@@ -218,7 +218,7 @@ impl CodeAnalysisOrchestrator {
     /// Run AES analysis on the current project (self-lint).
     pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
         let root = Path::new(project_root);
-        let src_dir = shared::code_analysis::utility_target_resolver::detect_source_dir(root);
+        let src_dir = shared::filesystem::utility_filesystem_io::detect_source_dir(root);
         self.run_lint_at(&src_dir)
     }
 
@@ -240,7 +240,7 @@ impl CodeAnalysisOrchestrator {
             .iter()
             .map(|fp| fp.value.clone())
             .collect();
-        let files = shared::code_analysis::utility_target_resolver::collect_source_files(
+        let files = shared::filesystem::utility_filesystem_io::collect_source_files(
             src_dir, &dir_path, &ignored,
         );
         if files.is_empty() {
@@ -377,7 +377,7 @@ impl CodeAnalysisOrchestrator {
         }
 
         // AES305: File-level similarity check
-        let src_dir = shared::code_analysis::utility_target_resolver::detect_source_dir(
+        let src_dir = shared::filesystem::utility_filesystem_io::detect_source_dir(
             std::path::Path::new(root_dir),
         );
         if let Ok(dp) = shared::common::taxonomy_path_vo::DirectoryPath::new(

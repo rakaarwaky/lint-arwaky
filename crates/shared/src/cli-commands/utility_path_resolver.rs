@@ -1,12 +1,7 @@
-// PURPOSE: Stateless path resolution utilities — re-export shim
-// Filesystem functions consolidated into filesystem::utility_filesystem_io
-// Business logic (detect_language_from_path, extract_member_from_path) stays here.
+// PURPOSE: Stateless path resolution utilities (business logic only)
+// Filesystem functions: see filesystem::utility_filesystem_io
 
 use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
-
-pub use crate::filesystem::utility_filesystem_io::{
-    find_workspace_root, is_leaf_member_path, is_member_path,
-};
 
 /// Detect ConfigLanguage from a file system path by checking for workspace type markers in the path.
 pub fn detect_language_from_path(path: &str) -> ConfigLanguage {

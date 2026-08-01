@@ -46,10 +46,9 @@ fn test_utility_imported_by_cross_crate_use_statement_should_not_flag_aes504() {
 
 #[test]
 fn test_utility_imported_by_nested_use_path_should_not_flag_aes504() {
-    // Test that `use shared::code_analysis::utility_target` is detected
+    // Test that `use shared::filesystem::utility_target_resolver` is detected
     let content = r#"
-use shared::code_analysis::utility_target_resolver::detect_source_dir;
-use shared::code_analysis::utility_target_resolver::collect_source_files;
+use shared::filesystem::utility_filesystem_io::{detect_source_dir, collect_source_files};
 
 pub fn some_function() {
     let dir = detect_source_dir(std::path::Path::new("."));
@@ -57,30 +56,30 @@ pub fn some_function() {
 }
 "#;
 
-    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_target");
+    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_filesystem_io");
 
     assert!(
         result,
-        "Nested use path like `use shared::code_analysis::utility_target` should be detected"
+        "Nested use path like `use shared::filesystem::utility_filesystem_io` should be detected"
     );
 }
 
 #[test]
 fn test_utility_imported_by_crate_path_should_not_flag_aes504() {
-    // Test that `use crate::code_analysis::utility_target` is detected
+    // Test that `use crate::filesystem::utility_target_resolver` is detected
     let content = r#"
-use crate::code_analysis::utility_target_resolver::detect_source_dir;
+use crate::filesystem::utility_filesystem_io::detect_source_dir;
 
 pub fn some_function() {
     let dir = detect_source_dir(std::path::Path::new("."));
 }
 "#;
 
-    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_target");
+    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_filesystem_io");
 
     assert!(
         result,
-        "Crate path like `use crate::code_analysis::utility_target` should be detected"
+        "Crate path like `use crate::filesystem::utility_filesystem_io` should be detected"
     );
 }
 

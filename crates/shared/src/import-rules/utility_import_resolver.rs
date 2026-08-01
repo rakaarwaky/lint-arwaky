@@ -559,7 +559,7 @@ pub fn resolve_barrel_import(
     let barrel_path = find_barrel_file(module_path, root_dir)?;
 
     // Step 2: Read barrel file content
-    let barrel_content = crate::code_analysis::utility_file_reader::get_cached(&barrel_path)
+    let barrel_content = crate::filesystem::utility_filesystem_io::cache_get_by_str(&barrel_path)
         .or_else(|| std::fs::read_to_string(&barrel_path).ok())?;
 
     // Step 3: Parse re-export mappings (symbol → file_stem)

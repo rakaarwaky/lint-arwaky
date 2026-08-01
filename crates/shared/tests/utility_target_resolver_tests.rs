@@ -1,6 +1,6 @@
 extern crate shared_lint_arwaky as shared;
 
-use shared::code_analysis::utility_target_resolver::collect_source_files;
+use shared::filesystem::utility_filesystem_io::collect_source_files;
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use std::path::Path;
 

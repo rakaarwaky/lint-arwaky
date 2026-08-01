@@ -1,7 +1,7 @@
 use crate::surface_common_action;
 use crate::surface_output_component::{ViolationItem, output_violations};
 use shared::cli_commands::Format;
-use shared::cli_commands::utility_path_resolver::is_member_path;
+use shared::filesystem::utility_filesystem_io::is_member_path;
 use shared::common::{ExitCode, FilePath};
 
 use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};

@@ -32,7 +32,7 @@ pub struct CliContainer {
 impl CliContainer {
     pub fn new_default() -> Self {
         // Ensure utility_path_resolver is reachable from entry point (AES504)
-        let _workspace_root = utility_path_resolver::find_workspace_root(".");
+        let _workspace_root = shared::filesystem::utility_filesystem_io::find_workspace_root(".");
 
         // Create config orchestrator — single source of truth for config
         let config_container = config_system::root_config_system_container::ConfigContainer::new();

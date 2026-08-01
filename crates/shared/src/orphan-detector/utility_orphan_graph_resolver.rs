@@ -10,7 +10,7 @@ pub fn build_crate_module_index(
     for (crate_name, src_dir) in crate_src_dirs {
         let mut module_map: HashMap<String, String> = HashMap::new();
         let canonical_src = std::fs::canonicalize(src_dir).unwrap_or_else(|_| src_dir.clone());
-        let all_files = super::utility_orphan_io::scan_directory_recursive(&canonical_src);
+        let all_files = crate::filesystem::utility_filesystem_io::scan_directory_recursive(&canonical_src);
         for path_str in all_files {
             if !path_str.ends_with(".rs")
                 && !path_str.ends_with(".py")
@@ -177,7 +177,7 @@ pub fn resolve_ts_relative(
     ];
 
     for cand in &candidates {
-        if super::utility_orphan_io::is_file(cand) {
+        if crate::filesystem::utility_filesystem_io::is_file(cand) {
             // Return RELATIVE path (matching graph convention)
             let rel = cand
                 .strip_prefix(workspace_root)

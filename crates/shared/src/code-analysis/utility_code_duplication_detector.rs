@@ -150,7 +150,7 @@ pub fn collect_file_entries(files: &[String]) -> Vec<(PathBuf, String)> {
         if !crate::common::utility_language_detector::is_lintable(&fp) {
             continue;
         }
-        let content = match crate::code_analysis::utility_file_reader::get_cached(&fp.value)
+        let content = match crate::filesystem::utility_filesystem_io::cache_get_by_str(&fp.value)
             .map_or_else(|| std::fs::read_to_string(&fp.value), Ok)
         {
             Ok(c) => c,
