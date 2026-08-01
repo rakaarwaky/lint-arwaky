@@ -4,8 +4,9 @@
 use filesystem_lint_arwaky::agent_filesystem_orchestrator::FilesystemOrchestrator;
 use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
 use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
-use filesystem_lint_arwaky::capabilities_file_walker::{FileWalker, walk_recursive};
-use filesystem_lint_arwaky::capabilities_import_extractor::extract_imports;
+use filesystem_lint_arwaky::capabilities_file_walker::FileWalker;
+use filesystem_lint_arwaky::capabilities_import_extractor::ImportExtractor;
+use shared::filesystem::contract_filesystem_protocol::IImportExtractorProtocol;
 use shared::filesystem::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::path::PathBuf;
@@ -52,7 +53,10 @@ fn fr001_walk_skips_large_files() {
 #[test]
 fn fr001_walk_recursive_returns_paths() {
     let root = test_root();
-    let paths = walk_recursive(&root);
+    let walker = FileWalker::new();
+    let extensions = shared::filesystem::taxonomy_filesystem_vo::Language::extensions();
+    let entries = walker.walk(&root, &[], extensions);
+    let paths: Vec<String> = entries.into_iter().map(|e| e.path.to_string_lossy().to_string()).collect();
     assert!(!paths.is_empty());
     assert!(paths.iter().all(|p| p.ends_with(".rs")));
 }
@@ -223,7 +227,8 @@ fn fr003_extract_rust_use() {
     let path = PathBuf::from("test.rs");
     let content = "use std::collections::HashMap;
 use crate::foo::Bar;";
-    let imports = extract_imports(&path, content, Language::Rust);
+    let extractor = ImportExtractor;
+    let imports = extractor.extract(&path, content, Language::Rust);
     assert_eq!(imports.len(), 2);
     assert_eq!(imports[0].raw_path, "std::collections::HashMap");
     assert_eq!(imports[0].import_type, ImportType::Use);
@@ -235,7 +240,8 @@ fn fr003_extract_rust_mod() {
     let path = PathBuf::from("lib.rs");
     let content = "mod foo;
 mod bar;";
-    let imports = extract_imports(&path, content, Language::Rust);
+    let extractor = ImportExtractor;
+    let imports = extractor.extract(&path, content, Language::Rust);
     assert_eq!(imports.len(), 2);
     assert_eq!(imports[0].import_type, ImportType::Mod);
     assert_eq!(imports[0].raw_path, "foo");
@@ -246,7 +252,8 @@ fn fr003_extract_python_import() {
     let path = PathBuf::from("main.py");
     let content = "import os
 from sys import argv";
-    let imports = extract_imports(&path, content, Language::Python);
+    let extractor = ImportExtractor;
+    let imports = extractor.extract(&path, content, Language::Python);
     assert_eq!(imports.len(), 2);
     assert_eq!(imports[0].import_type, ImportType::Import);
     assert_eq!(imports[1].import_type, ImportType::ImportFrom);
@@ -257,7 +264,8 @@ fn fr003_extract_js_import() {
     let path = PathBuf::from("app.js");
     let content = "import React from 'react';
 const fs = require('fs');";
-    let imports = extract_imports(&path, content, Language::JavaScript);
+    let extractor = ImportExtractor;
+    let imports = extractor.extract(&path, content, Language::JavaScript);
     assert!(imports.len() >= 2);
 }
 
@@ -265,7 +273,8 @@ const fs = require('fs');";
 fn fr003_extract_pub_use_as_reexport() {
     let path = PathBuf::from("lib.rs");
     let content = "pub use crate::foo::Bar;";
-    let imports = extract_imports(&path, content, Language::Rust);
+    let extractor = ImportExtractor;
+    let imports = extractor.extract(&path, content, Language::Rust);
     assert_eq!(imports.len(), 1);
     assert_eq!(imports[0].import_type, ImportType::ReExport);
     assert!(imports[0].is_reexport);
@@ -274,7 +283,8 @@ fn fr003_extract_pub_use_as_reexport() {
 #[test]
 fn fr003_extract_empty_file() {
     let path = PathBuf::from("empty.rs");
-    let imports = extract_imports(&path, "", Language::Rust);
+    let extractor = ImportExtractor;
+    let imports = extractor.extract(&path, "", Language::Rust);
     assert!(imports.is_empty());
 }
 
@@ -282,7 +292,8 @@ fn fr003_extract_empty_file() {
 fn fr003_extract_ts_export_from() {
     let path = PathBuf::from("index.ts");
     let content = "export { Foo } from './foo';";
-    let imports = extract_imports(&path, content, Language::TypeScript);
+    let extractor = ImportExtractor;
+    let imports = extractor.extract(&path, content, Language::TypeScript);
     assert_eq!(imports.len(), 1);
     assert_eq!(imports[0].import_type, ImportType::ReExport);
     assert!(imports[0].is_reexport);

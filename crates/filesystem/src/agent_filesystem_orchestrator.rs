@@ -4,13 +4,13 @@
 // Results cached internally, served to all consumers via reference.
 // Implements IFilesystemAggregate trait.
 
-use crate::capabilities_ast_parser::ASTParser;
-use crate::capabilities_dependency_graph::DependencyGraph;
-use crate::capabilities_file_walker::FileWalker;
-use crate::capabilities_import_extractor;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::taxonomy_filesystem_vo::*;
+use shared::filesystem::contract_filesystem_protocol::IImportExtractorProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::{
+    DefinitionEntry, FileEntry, FilesystemResult, GraphData, ImplEntry, ImportEntry, Language,
+    ParseMetadata, ParseWarning, ScanTiming,
+};
 use shared::filesystem::utility_filesystem_io;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -36,30 +36,30 @@ struct CachedResults {
 /// Delegates all I/O and computation to capabilities layer.
 /// FR-005: Pipeline runs once, results cached and served via references.
 pub struct FilesystemOrchestrator {
-    walker: FileWalker,
-    parser: ASTParser,
-    graph: RwLock<DependencyGraph>,
+    walker: crate::capabilities_file_walker::FileWalker,
+    parser: crate::capabilities_ast_parser::ASTParser,
+    graph: RwLock<crate::capabilities_dependency_graph::DependencyGraph>,
     cached: OnceLock<CachedResults>,
 }
 
 impl FilesystemOrchestrator {
     pub fn new() -> Self {
         Self {
-            walker: FileWalker::new(),
-            parser: ASTParser::new(),
-            graph: RwLock::new(DependencyGraph::new()),
+            walker: crate::capabilities_file_walker::FileWalker::new(),
+            parser: crate::capabilities_ast_parser::ASTParser::new(),
+            graph: RwLock::new(crate::capabilities_dependency_graph::DependencyGraph::new()),
             cached: OnceLock::new(),
         }
     }
 
     /// Get the dependency graph (for queries outside the aggregate trait).
-    pub fn graph(&self) -> &RwLock<DependencyGraph> {
+    pub fn graph(&self) -> &RwLock<crate::capabilities_dependency_graph::DependencyGraph> {
         &self.graph
     }
 
     /// Run the full pipeline: walk -> parse -> extract -> graph.
     /// FR-005: Pipeline runs once, results cached internally.
-    fn run_pipeline_internal(&self, root: &PathBuf, ignored: &[String]) {
+    fn run_pipeline_internal(&self, root: &Path, ignored: &[String]) {
         let extensions = Language::extensions();
         let mut timing = ScanTiming::default();
 
@@ -94,7 +94,8 @@ impl FilesystemOrchestrator {
             if !file.parse_ok || file.content.is_empty() {
                 continue;
             }
-            let imports = capabilities_import_extractor::extract_imports(
+            let extractor = crate::capabilities_import_extractor::ImportExtractor;
+            let imports = extractor.extract(
                 &file.path,
                 &file.content,
                 file.language,
@@ -111,24 +112,29 @@ impl FilesystemOrchestrator {
         // Stage 4: Build graph (FR-004)
         let t = Instant::now();
         {
-            let mut graph = self.graph.write().unwrap();
-            graph.build(&all_imports, &files, &definitions, &implementations);
+            match self.graph.write() {
+                Ok(mut graph) => {
+                    graph.build(&all_imports, &files, &definitions, &implementations);
+                }
+                Err(_) => return,
+            }
         }
         timing.graph_ms = t.elapsed().as_millis() as u64;
 
         timing.total_ms = timing.walk_ms + timing.parse_ms + timing.extract_ms + timing.graph_ms;
 
         // Cache all results
-        let graph = self.graph.read().unwrap();
-        let _ = self.cached.set(CachedResults {
-            files,
-            imports: all_imports,
-            warnings,
-            reverse_links: graph.reverse_links().clone(),
-            definitions: graph.definitions().clone(),
-            implementations: graph.implementations().clone(),
-            timing,
-        });
+        if let Ok(graph) = self.graph.read() {
+            let _ = self.cached.set(CachedResults {
+                files,
+                imports: all_imports,
+                warnings,
+                reverse_links: graph.reverse_links().clone(),
+                definitions: graph.definitions().clone(),
+                implementations: graph.implementations().clone(),
+                timing,
+            });
+        }
     }
 }
 
@@ -254,24 +260,35 @@ fn extract_definitions_and_impls(files: &[FileEntry]) -> (Vec<DefinitionEntry>, 
 impl IFilesystemAggregate for FilesystemOrchestrator {
     // ── Pipeline Trigger (FR-005) ─────────────────────────────
 
-    fn run_pipeline(&self, root: &PathBuf, ignored: &[String]) {
+    fn run_pipeline(&self, root: &Path, ignored: &[String]) {
         if self.cached.get().is_none() {
             self.run_pipeline_internal(root, ignored);
         }
     }
 
-    fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult {
+    fn scan(&self, root: &Path, ignored: &[String]) -> FilesystemResult {
         self.run_pipeline(root, ignored);
-        let cached = self.cached.get().unwrap();
-        FilesystemResult {
-            files: cached.files.clone(),
-            imports: cached.imports.clone(),
-            warnings: cached.warnings.clone(),
-            graph: GraphData::default(),
-            parsed_count: cached.files.iter().filter(|f| f.parse_ok).count(),
-            parse_errors: cached.files.iter().filter(|f| !f.parse_ok).count(),
-            unresolved_imports: cached.imports.iter().filter(|i| !i.is_resolved).count(),
-            timing: cached.timing.clone(),
+        match self.cached.get() {
+            Some(cached) => FilesystemResult {
+                files: cached.files.clone(),
+                imports: cached.imports.clone(),
+                warnings: cached.warnings.clone(),
+                graph: GraphData::default(),
+                parsed_count: cached.files.iter().filter(|f| f.parse_ok).count(),
+                parse_errors: cached.files.iter().filter(|f| !f.parse_ok).count(),
+                unresolved_imports: cached.imports.iter().filter(|i| !i.is_resolved).count(),
+                timing: cached.timing.clone(),
+            },
+            None => FilesystemResult {
+                files: Vec::new(),
+                imports: Vec::new(),
+                warnings: Vec::new(),
+                graph: GraphData::default(),
+                parsed_count: 0,
+                parse_errors: 0,
+                unresolved_imports: 0,
+                timing: ScanTiming::default(),
+            },
         }
     }
 
@@ -372,28 +389,28 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::read_lintable_file(path)
     }
 
-    fn get_file_content(&self, path: &PathBuf) -> Option<String> {
+    fn get_file_content(&self, path: &Path) -> Option<String> {
         if let Some(cached) = self.cached.get()
-            && let Some(entry) = cached.files.iter().find(|f| &f.path == path)
+            && let Some(entry) = cached.files.iter().find(|f| f.path == path)
         {
             return Some(entry.content.clone());
         }
-        utility_filesystem_io::cache_get(path)
+        utility_filesystem_io::cache_get(&path.to_path_buf())
             .or_else(|| utility_filesystem_io::read_file(path).ok())
     }
 
-    fn has_file(&self, path: &PathBuf) -> bool {
+    fn has_file(&self, path: &Path) -> bool {
         if let Some(cached) = self.cached.get() {
-            return cached.files.iter().any(|f| &f.path == path);
+            return cached.files.iter().any(|f| f.path == path);
         }
-        utility_filesystem_io::cache_contains(path)
+        utility_filesystem_io::cache_contains(&path.to_path_buf())
     }
 
     // ── File Discovery (backward compat) ─────────────────────
 
     fn discover_files(&self, root: &Path, ignored: &[String]) -> Vec<FileEntry> {
         let extensions = Language::extensions();
-        self.walker.walk(&root.to_path_buf(), ignored, extensions)
+        self.walker.walk(root, ignored, extensions)
     }
 
     fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<FilePath> {
@@ -404,7 +421,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     // ── Import/Dependency (backward compat) ──────────────────
 
-    fn imports_for(&self, path: &PathBuf) -> Vec<ImportEntry> {
+    fn imports_for(&self, path: &Path) -> Vec<ImportEntry> {
         if let Some(cached) = self.cached.get() {
             return cached
                 .imports
@@ -420,16 +437,25 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         self.import_list()
     }
 
-    fn depends_on(&self, from: &PathBuf, to: &PathBuf) -> bool {
-        self.graph.read().unwrap().reachable(from, to)
+    fn depends_on(&self, from: &Path, to: &Path) -> bool {
+        match self.graph.read() {
+            Ok(graph) => graph.reachable(from, to),
+            Err(_) => false,
+        }
     }
 
     fn cycles(&self) -> Vec<Vec<PathBuf>> {
-        self.graph.read().unwrap().cycles()
+        match self.graph.read() {
+            Ok(graph) => graph.cycles(),
+            Err(_) => Vec::new(),
+        }
     }
 
     fn orphan_files(&self) -> Vec<PathBuf> {
-        self.graph.read().unwrap().orphan_files()
+        match self.graph.read() {
+            Ok(graph) => graph.orphan_files(),
+            Err(_) => Vec::new(),
+        }
     }
 
     // ── Path Queries ─────────────────────────────────────────
@@ -463,10 +489,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn scan_directory_with_ignored(&self, dir: &Path, ignored: &[String]) -> Vec<PathBuf> {
-        let dir_path = DirectoryPath::new(
-            dir.to_string_lossy().to_string(),
-        )
-        .unwrap_or_default();
+        let dir_path = DirectoryPath::new(dir.to_string_lossy().to_string()).unwrap_or_default();
         match utility_filesystem_io::scan_directory_with_ignored(&dir_path, ignored) {
             Ok(entries) => entries
                 .values

@@ -7,6 +7,9 @@ pub mod capabilities_dependency_graph;
 pub mod capabilities_file_walker;
 pub mod capabilities_import_extractor;
 
+// ── Utility ──
+pub mod utility_import_extractor;
+
 // ── Agent (orchestration) ──
 pub mod agent_filesystem_orchestrator;
 
@@ -15,3 +18,4 @@ pub use agent_filesystem_orchestrator::FilesystemOrchestrator;
 pub use capabilities_ast_parser::ASTParser;
 pub use capabilities_dependency_graph::DependencyGraph;
 pub use capabilities_file_walker::FileWalker;
+pub use capabilities_import_extractor::ImportExtractor;

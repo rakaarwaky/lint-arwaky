@@ -3,10 +3,18 @@
 // Enriches each FileEntry with parse_metadata and parse_ok flag.
 
 use dashmap::DashMap;
-use rayon::prelude::*;
-use shared::filesystem::taxonomy_filesystem_vo::*;
+use rayon::iter::IntoParallelRefMutIterator;
+use rayon::iter::ParallelIterator;
+use shared::filesystem::contract_filesystem_protocol::IASTParserProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::{
+    FileEntry, Language, ParseMetadata, PythonClassItem, PythonFnItem, PythonMetadata, RustFnItem,
+    RustImplItem, RustMetadata, RustModItem, RustUseItem, TSClassItem, TSFnItem,
+    TypeScriptMetadata,
+};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ASTParser {
     asts: Arc<DashMap<PathBuf, String>>,
@@ -63,11 +71,23 @@ impl ASTParser {
     }
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl IASTParserProtocol for ASTParser {
+    fn parse_all(&self, files: &mut [FileEntry]) {
+        self.parse_all(files);
+    }
+}
+
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+
 impl Default for ASTParser {
     fn default() -> Self {
         Self::new()
     }
 }
+
 
 /// Extract language-specific metadata from a parsed AST.
 fn extract_metadata(tree: &tree_sitter::Tree, content: &str, language: Language) -> ParseMetadata {
@@ -213,19 +233,17 @@ fn extract_use_names(node: tree_sitter::Node, content: &str) -> Vec<String> {
     // For now, we extract names from the text if grouped
     let text = text_of(node, content);
     if let Some(brace_start) = text.find('{')
-        && let Some(brace_end) = text.find('}')
-    {
-        let inner = &text[brace_start + 1..brace_end];
-        for part in inner.split(',') {
-            let name = part.split_whitespace().next().unwrap_or("");
-            if !name.is_empty() {
-                names.push(name.to_string());
+        && let Some(brace_end) = text.find('}') {
+            let inner = &text[brace_start + 1..brace_end];
+            for part in inner.split(',') {
+                let name = part.split_whitespace().next().unwrap_or("");
+                if !name.is_empty() {
+                    names.push(name.to_string());
+                }
             }
         }
-    }
     names
 }
-
 /// Extract `#[path = "..."]` attribute from a mod_item.
 fn extract_path_attribute(node: tree_sitter::Node, content: &str) -> Option<String> {
     let text = text_of(node, content);

@@ -1,9 +1,13 @@
+use std::path::Path;
 // PURPOSE: Capabilities layer — file discovery (FR-001)
 // Walks directory tree using `ignore` crate (gitignore-aware, parallel walk).
 // Reads file contents into memory. Produces Vec<FileEntry>.
 
-use shared::filesystem::taxonomy_filesystem_vo::*;
+use shared::filesystem::contract_filesystem_protocol::IFileWalkerProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::path::PathBuf;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct FileWalker;
 
@@ -13,11 +17,24 @@ impl FileWalker {
     }
 }
 
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl IFileWalkerProtocol for FileWalker {
+    fn walk(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
+        self.walk(root, ignored, extensions)
+    }
+}
+
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+
 impl Default for FileWalker {
     fn default() -> Self {
         Self::new()
     }
 }
+
+
 
 impl FileWalker {
     /// Walk workspace directory tree, discover source files, read contents.
@@ -28,7 +45,7 @@ impl FileWalker {
     /// - Respects .gitignore, .ignore, and ignored_paths from config.
     /// - Skips hidden directories (.git, .venv, node_modules, target, dist, build, __pycache__).
     /// - Reads file content into FileEntry.content (UTF-8). Non-UTF-8 files are skipped.
-    pub fn walk(&self, root: &PathBuf, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
+    pub fn walk(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
         let workspace_subdirs = ["crates", "packages", "modules"];
         let found_subdirs: Vec<PathBuf> = workspace_subdirs
             .iter()
@@ -112,17 +129,6 @@ impl FileWalker {
 
         entries
     }
-}
-
-/// Simple recursive walk — returns file paths as strings.
-pub fn walk_recursive(dir: &std::path::Path) -> Vec<String> {
-    let walker = FileWalker::new();
-    let extensions = Language::extensions();
-    let entries = walker.walk(&dir.to_path_buf(), &[], extensions);
-    entries
-        .into_iter()
-        .map(|e| e.path.to_string_lossy().to_string())
-        .collect()
 }
 
 /// Check if a relative path should be ignored based on patterns.

@@ -3,7 +3,7 @@
 // Updated for FR-001 through FR-004 with enriched types.
 
 use super::taxonomy_filesystem_vo::*;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 /// Protocol for walking the filesystem and discovering source files (FR-001).
@@ -13,13 +13,17 @@ pub trait IFileWalkerProtocol: Send + Sync {
 
 /// Protocol for AST parsing (FR-002).
 pub trait IASTParserProtocol: Send + Sync {
-    fn parse(&self, path: &Path, content: &str, language: Language) -> Option<ParseMetadata>;
-    fn has_ast(&self, path: &Path) -> bool;
+    fn parse_all(&self, files: &mut [FileEntry]);
 }
 
 /// Protocol for extracting imports from source files (FR-003).
 pub trait IImportExtractorProtocol: Send + Sync {
-    fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry>;
+    fn extract(
+        &self,
+        path: &std::path::Path,
+        content: &str,
+        language: Language,
+    ) -> Vec<ImportEntry>;
 }
 
 /// Protocol for the dependency graph (FR-004).
@@ -37,13 +41,13 @@ pub trait IDependencyGraphProtocol: Send + Sync {
     fn reachable(&self, from: &Path, to: &Path) -> bool;
     fn orphan_files(&self) -> Vec<PathBuf>;
     fn all_files(&self) -> HashSet<PathBuf>;
-    fn reverse_links(&self) -> &std::collections::HashMap<PathBuf, Vec<PathBuf>>;
-    fn definitions(&self) -> &std::collections::HashMap<String, Vec<PathBuf>>;
-    fn implementations(&self) -> &std::collections::HashMap<String, Vec<PathBuf>>;
+    fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>>;
+    fn definitions(&self) -> &HashMap<String, Vec<PathBuf>>;
+    fn implementations(&self) -> &HashMap<String, Vec<PathBuf>>;
 }
 
 /// Protocol for the filesystem service facade.
 pub trait IFilesystemServiceProtocol: Send + Sync {
-    fn scan(&self, root: &Path, ignored: &[String]) -> FilesystemResult;
+    fn scan(&self, root: &std::path::Path, ignored: &[String]) -> FilesystemResult;
     fn graph(&self) -> &dyn IDependencyGraphProtocol;
 }

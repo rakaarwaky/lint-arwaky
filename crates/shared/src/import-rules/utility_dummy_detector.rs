@@ -79,6 +79,7 @@ pub fn symbol_used_real(
         || symbol == "IntoIterator"
         || symbol == "ParallelIterator"
         || symbol == "IntoParallelRefIterator"
+        || symbol == "IntoParallelRefMutIterator"
         || symbol == "IntoParallelIterator"
         || symbol == "Future"
         || symbol == "Stream"

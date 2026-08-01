@@ -1,10 +1,16 @@
+use std::path::Path;
 // PURPOSE: Capabilities layer — dependency graph construction (FR-004)
 // Build DiGraph (file -> file edges), ReverseLinkIndex, DefinitionMap, ImplMap.
 // Uses petgraph for the graph, DashMap for parallel construction.
 
-use shared::filesystem::taxonomy_filesystem_vo::*;
+use shared::filesystem::contract_filesystem_protocol::IDependencyGraphProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::{
+    DefinitionEntry, FileEntry, FileNodeVO, ImplEntry, ImportEdgeVO, ImportEntry,
+};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
+
+// ─── Block 1: Struct Definition ───────────────────────────
 
 /// Dependency graph — directed graph of file-to-file import relationships.
 /// Includes ReverseLinkIndex, DefinitionMap, and ImplMap per FR-004.
@@ -114,13 +120,14 @@ impl DependencyGraph {
         // Build ReverseLinkIndex: invert all edges
         self.reverse_links.clear();
         for edge in self.graph.edge_indices() {
-            let (source, target) = self.graph.edge_endpoints(edge).unwrap();
-            let target_path = self.graph[target].path.clone();
-            let source_path = self.graph[source].path.clone();
-            self.reverse_links
-                .entry(target_path)
-                .or_default()
-                .push(source_path);
+            if let Some((source, target)) = self.graph.edge_endpoints(edge) {
+                let target_path = self.graph[target].path.clone();
+                let source_path = self.graph[source].path.clone();
+                self.reverse_links
+                    .entry(target_path)
+                    .or_default()
+                    .push(source_path);
+            }
         }
 
         // Build DefinitionMap from parse metadata
@@ -144,12 +151,12 @@ impl DependencyGraph {
 
     /// Get files that import the given file (who depends on me).
     /// Uses ReverseLinkIndex for O(1) lookup.
-    pub fn dependents(&self, path: &PathBuf) -> Vec<PathBuf> {
+    pub fn dependents(&self, path: &Path) -> Vec<PathBuf> {
         self.reverse_links.get(path).cloned().unwrap_or_default()
     }
 
     /// Get files imported by the given file (what do I depend on).
-    pub fn dependencies(&self, path: &PathBuf) -> Vec<PathBuf> {
+    pub fn dependencies(&self, path: &Path) -> Vec<PathBuf> {
         let idx = match self.node_map.get(path) {
             Some(idx) => *idx,
             None => return Vec::new(),
@@ -174,7 +181,7 @@ impl DependencyGraph {
     }
 
     /// Check if there's a path from `from` to `to` (BFS).
-    pub fn reachable(&self, from: &PathBuf, to: &PathBuf) -> bool {
+    pub fn reachable(&self, from: &Path, to: &Path) -> bool {
         let from_idx = match self.node_map.get(from) {
             Some(idx) => *idx,
             None => return false,
@@ -225,6 +232,59 @@ impl DependencyGraph {
         (self.graph.node_count(), self.graph.edge_count())
     }
 }
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl IDependencyGraphProtocol for DependencyGraph {
+    fn build(
+        &mut self,
+        imports: &[ImportEntry],
+        files: &[FileEntry],
+        definitions: &[DefinitionEntry],
+        implementations: &[ImplEntry],
+    ) {
+        self.build(imports, files, definitions, implementations);
+    }
+
+    fn dependents(&self, path: &Path) -> Vec<PathBuf> {
+        self.dependents(path)
+    }
+
+    fn dependencies(&self, path: &Path) -> Vec<PathBuf> {
+        self.dependencies(path)
+    }
+
+    fn cycles(&self) -> Vec<Vec<PathBuf>> {
+        self.cycles()
+    }
+
+    fn reachable(&self, from: &Path, to: &Path) -> bool {
+        self.reachable(from, to)
+    }
+
+    fn orphan_files(&self) -> Vec<PathBuf> {
+        self.orphan_files()
+    }
+
+    fn all_files(&self) -> HashSet<PathBuf> {
+        self.all_files()
+    }
+
+    fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
+        self.reverse_links()
+    }
+
+    fn definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
+        self.definitions()
+    }
+
+    fn implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
+        self.implementations()
+    }
+}
+
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 
 impl Default for DependencyGraph {
     fn default() -> Self {
