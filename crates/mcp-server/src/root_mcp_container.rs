@@ -48,6 +48,7 @@ impl McpContainer {
             import_orchestrator: self.import_orchestrator.clone(),
             naming_orchestrator: self.naming_orchestrator.clone(),
             role_orchestrator: self.role_orchestrator.clone(),
+            filesystem: self.filesystem.clone(),
         };
         McpServerOrchestrator::new(deps)
     }
