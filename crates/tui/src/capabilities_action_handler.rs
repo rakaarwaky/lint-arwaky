@@ -372,11 +372,11 @@ impl ActionHandler {
 
     /// Load preview for the currently selected entry if it's a file.
     pub fn load_preview(&self, state: &mut AppState) {
-        if let Some(entry) = state.selected_entry() {
-            if !entry.is_dir {
-                let path = entry.full_path.clone();
-                self.load_file_preview(state, &path);
-            }
+        if let Some(entry) = state.selected_entry()
+            && !entry.is_dir
+        {
+            let path = entry.full_path.clone();
+            self.load_file_preview(state, &path);
         }
     }
 
