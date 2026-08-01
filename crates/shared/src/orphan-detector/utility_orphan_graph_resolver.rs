@@ -42,14 +42,15 @@ pub fn build_crate_module_index(
                 path_str.clone(),
             );
             if (stem == "mod" || stem == "__init__" || stem == "index")
-                && let Some(parent_dir) = path.parent().and_then(|p| p.file_name()) {
-                    let parent = parent_dir.to_string_lossy().to_string();
-                    module_map.insert(parent.clone(), path_str.clone());
-                    module_map.insert(
-                        super::utility_orphan_detector::normalize_module_component(&parent),
-                        path_str.clone(),
-                    );
-                }
+                && let Some(parent_dir) = path.parent().and_then(|p| p.file_name())
+            {
+                let parent = parent_dir.to_string_lossy().to_string();
+                module_map.insert(parent.clone(), path_str.clone());
+                module_map.insert(
+                    super::utility_orphan_detector::normalize_module_component(&parent),
+                    path_str.clone(),
+                );
+            }
         }
         let normalized_name =
             super::utility_orphan_detector::normalize_module_component(crate_name);
@@ -70,16 +71,18 @@ pub fn resolve_workspace_module(
     let seg_str = segments.join("/");
     let normalized = super::utility_orphan_detector::normalize_module_path(&seg_str);
     if let Some(path) = map.get(&normalized)
-        && path != current_file {
-            return Some(path.clone());
-        }
+        && path != current_file
+    {
+        return Some(path.clone());
+    }
     for i in (1..segments.len()).rev() {
         let candidate = segments[..i].join("/");
         let normalized = super::utility_orphan_detector::normalize_module_path(&candidate);
         if let Some(path) = map.get(&normalized)
-            && path != current_file {
-                return Some(path.clone());
-            }
+            && path != current_file
+        {
+            return Some(path.clone());
+        }
     }
     None
 }
@@ -108,9 +111,10 @@ pub fn find_workspace_root(start_dir: &str) -> String {
     let mut current = std::path::PathBuf::from(start_dir);
     // Make absolute so parent() doesn't return "" for relative single-segment paths
     if current.is_relative()
-        && let Ok(cwd) = std::env::current_dir() {
-            current = cwd.join(&current);
-        }
+        && let Ok(cwd) = std::env::current_dir()
+    {
+        current = cwd.join(&current);
+    }
     loop {
         let has_manifest = current.join("Cargo.toml").exists()
             || current.join("pyproject.toml").exists()

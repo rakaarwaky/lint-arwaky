@@ -235,33 +235,34 @@ impl OrphanGraphResolver {
             }
             // mod.rs / __init__.py → parent dir name
             if (stem == "mod" || stem == "__init__")
-                && let Some(parent_dir) = f.rsplit('/').nth(1) {
+                && let Some(parent_dir) = f.rsplit('/').nth(1)
+            {
+                module_to_file
+                    .entry(parent_dir.to_string())
+                    .or_default()
+                    .push(f.clone());
+                let normalized = parent_dir.replace('-', "_");
+                if normalized != parent_dir {
                     module_to_file
-                        .entry(parent_dir.to_string())
+                        .entry(normalized)
                         .or_default()
                         .push(f.clone());
-                    let normalized = parent_dir.replace('-', "_");
-                    if normalized != parent_dir {
+                }
+                if let Some(grandparent) = f.rsplit('/').nth(2) {
+                    let composite = format!("{}/{}", grandparent, parent_dir);
+                    module_to_file
+                        .entry(composite.clone())
+                        .or_default()
+                        .push(f.clone());
+                    let normalized_composite = composite.replace('-', "_");
+                    if normalized_composite != composite {
                         module_to_file
-                            .entry(normalized)
+                            .entry(normalized_composite)
                             .or_default()
                             .push(f.clone());
-                    }
-                    if let Some(grandparent) = f.rsplit('/').nth(2) {
-                        let composite = format!("{}/{}", grandparent, parent_dir);
-                        module_to_file
-                            .entry(composite.clone())
-                            .or_default()
-                            .push(f.clone());
-                        let normalized_composite = composite.replace('-', "_");
-                        if normalized_composite != composite {
-                            module_to_file
-                                .entry(normalized_composite)
-                                .or_default()
-                                .push(f.clone());
-                        }
                     }
                 }
+            }
         }
 
         // ─── AST-based file processing (replaces 7 regex passes) ───
@@ -317,18 +318,19 @@ impl OrphanGraphResolver {
                                     candidate.clone()
                                 };
                                 if utility_orphan_io::is_file(&abs_candidate)
-                                    && let Some(path_str) = candidate.to_str() {
-                                        let resolved = path_str.to_string();
-                                        if resolved != *f {
-                                            utility_orphan_graph_resolver::add_edge(
-                                                &mut import_graph,
-                                                &mut inbound_links,
-                                                f,
-                                                &resolved,
-                                            );
-                                            break;
-                                        }
+                                    && let Some(path_str) = candidate.to_str()
+                                {
+                                    let resolved = path_str.to_string();
+                                    if resolved != *f {
+                                        utility_orphan_graph_resolver::add_edge(
+                                            &mut import_graph,
+                                            &mut inbound_links,
+                                            f,
+                                            &resolved,
+                                        );
+                                        break;
                                     }
+                                }
                             }
                         }
                     }
@@ -441,26 +443,28 @@ impl OrphanGraphResolver {
                     let composite = segments[1..i].join("/");
                     if let Some(file_path) =
                         Self::resolve_module(ctx.module_to_file, &composite, current_file)
-                        && file_path != current_file {
-                            utility_orphan_graph_resolver::add_edge(
-                                import_graph,
-                                inbound_links,
-                                current_file,
-                                file_path,
-                            );
-                            return;
-                        }
-                }
-                if let Some(file_path) =
-                    Self::resolve_module(ctx.module_to_file, &segments[1], current_file)
-                    && file_path != current_file {
+                        && file_path != current_file
+                    {
                         utility_orphan_graph_resolver::add_edge(
                             import_graph,
                             inbound_links,
                             current_file,
                             file_path,
                         );
+                        return;
                     }
+                }
+                if let Some(file_path) =
+                    Self::resolve_module(ctx.module_to_file, &segments[1], current_file)
+                    && file_path != current_file
+                {
+                    utility_orphan_graph_resolver::add_edge(
+                        import_graph,
+                        inbound_links,
+                        current_file,
+                        file_path,
+                    );
+                }
             }
             return;
         }
@@ -472,15 +476,16 @@ impl OrphanGraphResolver {
                     let composite = segments[1..i].join("/");
                     if let Some(file_path) =
                         Self::resolve_module(ctx.module_to_file, &composite, current_file)
-                        && file_path != current_file {
-                            utility_orphan_graph_resolver::add_edge(
-                                import_graph,
-                                inbound_links,
-                                current_file,
-                                file_path,
-                            );
-                            return;
-                        }
+                        && file_path != current_file
+                    {
+                        utility_orphan_graph_resolver::add_edge(
+                            import_graph,
+                            inbound_links,
+                            current_file,
+                            file_path,
+                        );
+                        return;
+                    }
                 }
             }
             return;
@@ -491,14 +496,15 @@ impl OrphanGraphResolver {
             if segments.len() >= 2
                 && let Some(file_path) =
                     Self::resolve_module(ctx.module_to_file, &segments[1], current_file)
-                    && file_path != current_file {
-                        utility_orphan_graph_resolver::add_edge(
-                            import_graph,
-                            inbound_links,
-                            current_file,
-                            file_path,
-                        );
-                    }
+                && file_path != current_file
+            {
+                utility_orphan_graph_resolver::add_edge(
+                    import_graph,
+                    inbound_links,
+                    current_file,
+                    file_path,
+                );
+            }
             return;
         }
 
@@ -562,14 +568,15 @@ impl OrphanGraphResolver {
         let is_workspace_dir = matches!(dep.as_str(), "crates" | "packages" | "modules");
         if !is_workspace_dir
             && let Some(target) = Self::resolve_module(ctx.module_to_file, dep, current_file)
-                && target != current_file {
-                    utility_orphan_graph_resolver::add_edge(
-                        import_graph,
-                        inbound_links,
-                        current_file,
-                        target,
-                    );
-                }
+            && target != current_file
+        {
+            utility_orphan_graph_resolver::add_edge(
+                import_graph,
+                inbound_links,
+                current_file,
+                target,
+            );
+        }
     }
 
     /// Resolve a Python import using structured parse data.
@@ -640,14 +647,15 @@ impl OrphanGraphResolver {
             if let Some(last_seg) = imp.segments.last()
                 && let Some(target) =
                     Self::resolve_module(ctx.module_to_file, last_seg, current_file)
-                    && target != current_file {
-                        utility_orphan_graph_resolver::add_edge(
-                            import_graph,
-                            inbound_links,
-                            current_file,
-                            target,
-                        );
-                    }
+                && target != current_file
+            {
+                utility_orphan_graph_resolver::add_edge(
+                    import_graph,
+                    inbound_links,
+                    current_file,
+                    target,
+                );
+            }
             return;
         }
 
@@ -685,20 +693,8 @@ impl OrphanGraphResolver {
             } else if let Some(last_seg) = segments.last()
                 && let Some(target) =
                     Self::resolve_module(ctx.module_to_file, last_seg, current_file)
-                    && target != current_file {
-                        utility_orphan_graph_resolver::add_edge(
-                            import_graph,
-                            inbound_links,
-                            current_file,
-                            target,
-                        );
-                    }
-            return;
-        }
-
-        // Simple module name
-        if let Some(target) = Self::resolve_module(ctx.module_to_file, raw, current_file)
-            && target != current_file {
+                && target != current_file
+            {
                 utility_orphan_graph_resolver::add_edge(
                     import_graph,
                     inbound_links,
@@ -706,6 +702,20 @@ impl OrphanGraphResolver {
                     target,
                 );
             }
+            return;
+        }
+
+        // Simple module name
+        if let Some(target) = Self::resolve_module(ctx.module_to_file, raw, current_file)
+            && target != current_file
+        {
+            utility_orphan_graph_resolver::add_edge(
+                import_graph,
+                inbound_links,
+                current_file,
+                target,
+            );
+        }
     }
 
     /// Resolve a TypeScript/JavaScript import.
@@ -724,28 +734,30 @@ impl OrphanGraphResolver {
         if raw.starts_with('.') {
             if let Some(resolved) =
                 utility_orphan_graph_resolver::resolve_ts_relative(current_file, raw, root_path)
-                && resolved != current_file {
-                    utility_orphan_graph_resolver::add_edge(
-                        import_graph,
-                        inbound_links,
-                        current_file,
-                        &resolved,
-                    );
-                }
+                && resolved != current_file
+            {
+                utility_orphan_graph_resolver::add_edge(
+                    import_graph,
+                    inbound_links,
+                    current_file,
+                    &resolved,
+                );
+            }
             return;
         }
 
         // Package imports — try module_to_file lookup
         if let Some(last_seg) = imp.segments.last()
             && let Some(target) = Self::resolve_module(module_to_file, last_seg, current_file)
-                && target != current_file {
-                    utility_orphan_graph_resolver::add_edge(
-                        import_graph,
-                        inbound_links,
-                        current_file,
-                        target,
-                    );
-                }
+            && target != current_file
+        {
+            utility_orphan_graph_resolver::add_edge(
+                import_graph,
+                inbound_links,
+                current_file,
+                target,
+            );
+        }
     }
 
     /// Resolve a module key to the best-matching file path.

@@ -73,17 +73,17 @@ fn check_dir_containers(dir: &std::path::Path, identifiers: &[String]) -> bool {
                     || name.ends_with("_entry.py")
                     || name.ends_with("_entry.ts")
                     || name.ends_with("_entry.js"))
-                {
-                    let fp = FilePath {
-                        value: entry_path.value.clone(),
-                    };
-                    let content = utility_file_cache::read_cached(&fp).value;
-                    for id in identifiers {
-                        if content.contains(id) {
-                            return true;
-                        }
+            {
+                let fp = FilePath {
+                    value: entry_path.value.clone(),
+                };
+                let content = utility_file_cache::read_cached(&fp).value;
+                for id in identifiers {
+                    if content.contains(id) {
+                        return true;
                     }
                 }
+            }
         }
     }
     false
@@ -102,9 +102,10 @@ pub fn collect_source_files(dir: &std::path::Path, files: &mut Vec<String>) {
                 }
                 collect_source_files(path, files);
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str())
-                && matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
-                    files.push(entry_path.value().to_string());
-                }
+                && matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
+            {
+                files.push(entry_path.value().to_string());
+            }
         }
     }
 }

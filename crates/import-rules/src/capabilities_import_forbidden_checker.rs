@@ -190,14 +190,13 @@ impl ArchImportForbiddenChecker {
                     for sym in &symbol_names {
                         if let Some(resolved) = utility_import_resolver::resolve_barrel_import(
                             module_val, sym, root_dir,
-                        )
-                            && resolved.matches_layer(layer.value())
-                                && (suffixes.is_empty()
-                                    || suffixes.iter().any(|s| resolved.has_suffix(s.value())))
-                            {
-                                is_forbidden = true;
-                                break;
-                            }
+                        ) && resolved.matches_layer(layer.value())
+                            && (suffixes.is_empty()
+                                || suffixes.iter().any(|s| resolved.has_suffix(s.value())))
+                        {
+                            is_forbidden = true;
+                            break;
+                        }
                     }
                 }
 

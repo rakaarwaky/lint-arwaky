@@ -100,9 +100,10 @@ impl DiffChecker {
         if success {
             let ref_str = stdout.trim().to_string();
             if let Some(branch) = ref_str.rsplit('/').next()
-                && !branch.is_empty() {
-                    return branch.to_string();
-                }
+                && !branch.is_empty()
+            {
+                return branch.to_string();
+            }
         }
         "main".to_string()
     }

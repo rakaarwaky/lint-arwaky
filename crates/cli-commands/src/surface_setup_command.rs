@@ -259,14 +259,15 @@ fn resolve_mcp_binary() -> Result<std::path::PathBuf, String> {
 
     // 2. Sibling of current executable
     if let Ok(exe) = std::env::current_exe()
-        && let Some(dir) = exe.parent() {
-            let sibling = dir.join("lint-arwaky-mcp");
-            if sibling.is_file() {
-                return sibling
-                    .canonicalize()
-                    .map_err(|e| format!("cannot canonicalize sibling: {e}"));
-            }
+        && let Some(dir) = exe.parent()
+    {
+        let sibling = dir.join("lint-arwaky-mcp");
+        if sibling.is_file() {
+            return sibling
+                .canonicalize()
+                .map_err(|e| format!("cannot canonicalize sibling: {e}"));
         }
+    }
 
     // 3. Do NOT fall back to bare PATH — fail closed (P1.2)
     Err("lint-arwaky-mcp not found. Set LINT_ARWAKY_MCP_BIN to an absolute path.".into())

@@ -34,9 +34,10 @@ pub fn read_dir(dir_path: &FilePath) -> Vec<FilePath> {
     if let Ok(read_dir) = fs::read_dir(dir_path.value()) {
         for entry in read_dir.flatten() {
             if let Some(s) = entry.path().to_str()
-                && let Ok(fp) = FilePath::new(s) {
-                    entries.push(fp);
-                }
+                && let Ok(fp) = FilePath::new(s)
+            {
+                entries.push(fp);
+            }
         }
     }
     entries

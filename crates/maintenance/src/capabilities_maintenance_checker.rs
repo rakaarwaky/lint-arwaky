@@ -136,37 +136,37 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     .get("vulnerabilities")
                     .and_then(|v| v.get("list"))
                     .and_then(|l| l.as_array())
-                {
-                    for adv in list {
-                        let pkg = match adv
-                            .get("package")
-                            .and_then(|p| p.get("name"))
-                            .and_then(|n| n.as_str())
-                        {
-                            Some(s) => s.to_string(),
-                            None => "unknown".to_string(),
-                        };
-                        let severity = match adv.get("severity").and_then(|s| s.as_str()) {
-                            Some(s) => s.to_string(),
-                            None => "unknown".to_string(),
-                        };
-                        let cve = match adv
-                            .get("advisory")
-                            .and_then(|a| a.get("id"))
-                            .and_then(|i| i.as_str())
-                        {
-                            Some(s) => s.to_string(),
-                            None => "unknown".to_string(),
-                        };
-                        findings.push(SecurityFinding {
-                            severity,
-                            test_id: cve,
-                            file: pkg,
-                            line: 0,
-                            issue: "Advisory vulnerability".to_string(),
-                        });
-                    }
+            {
+                for adv in list {
+                    let pkg = match adv
+                        .get("package")
+                        .and_then(|p| p.get("name"))
+                        .and_then(|n| n.as_str())
+                    {
+                        Some(s) => s.to_string(),
+                        None => "unknown".to_string(),
+                    };
+                    let severity = match adv.get("severity").and_then(|s| s.as_str()) {
+                        Some(s) => s.to_string(),
+                        None => "unknown".to_string(),
+                    };
+                    let cve = match adv
+                        .get("advisory")
+                        .and_then(|a| a.get("id"))
+                        .and_then(|i| i.as_str())
+                    {
+                        Some(s) => s.to_string(),
+                        None => "unknown".to_string(),
+                    };
+                    findings.push(SecurityFinding {
+                        severity,
+                        test_id: cve,
+                        file: pkg,
+                        line: 0,
+                        issue: "Advisory vulnerability".to_string(),
+                    });
                 }
+            }
             SecurityScanReport {
                 language: "Rust".to_string(),
                 tool_name: "cargo-audit".to_string(),
@@ -178,37 +178,38 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 dep_io::run_external_command_in("bandit", &["-r", "--format", "json", root], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
-                && let Some(results) = json.get("results").and_then(|r| r.as_array()) {
-                    for r in results {
-                        let test_id = match r.get("test_id").and_then(|t| t.as_str()) {
-                            Some(s) => s.to_string(),
-                            None => String::new(),
-                        };
-                        let issue = match r.get("issue_text").and_then(|t| t.as_str()) {
-                            Some(s) => s.to_string(),
-                            None => String::new(),
-                        };
-                        let severity = match r.get("issue_severity").and_then(|s| s.as_str()) {
-                            Some(s) => s.to_string(),
-                            None => String::new(),
-                        };
-                        let fname = match r.get("filename").and_then(|f| f.as_str()) {
-                            Some(s) => s.to_string(),
-                            None => String::new(),
-                        };
-                        let line = r
-                            .get("line_number")
-                            .and_then(|l| l.as_u64())
-                            .unwrap_or_default();
-                        findings.push(SecurityFinding {
-                            severity,
-                            test_id,
-                            file: fname,
-                            line,
-                            issue,
-                        });
-                    }
+                && let Some(results) = json.get("results").and_then(|r| r.as_array())
+            {
+                for r in results {
+                    let test_id = match r.get("test_id").and_then(|t| t.as_str()) {
+                        Some(s) => s.to_string(),
+                        None => String::new(),
+                    };
+                    let issue = match r.get("issue_text").and_then(|t| t.as_str()) {
+                        Some(s) => s.to_string(),
+                        None => String::new(),
+                    };
+                    let severity = match r.get("issue_severity").and_then(|s| s.as_str()) {
+                        Some(s) => s.to_string(),
+                        None => String::new(),
+                    };
+                    let fname = match r.get("filename").and_then(|f| f.as_str()) {
+                        Some(s) => s.to_string(),
+                        None => String::new(),
+                    };
+                    let line = r
+                        .get("line_number")
+                        .and_then(|l| l.as_u64())
+                        .unwrap_or_default();
+                    findings.push(SecurityFinding {
+                        severity,
+                        test_id,
+                        file: fname,
+                        line,
+                        issue,
+                    });
                 }
+            }
             SecurityScanReport {
                 language: "Python".to_string(),
                 tool_name: "bandit".to_string(),
@@ -243,13 +244,12 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     if in_deps && line.trim().starts_with('[') {
                         in_deps = false;
                     }
-                    if in_deps
-                        && let Some(eq) = line.find('=') {
-                            let name = line[..eq].trim().to_string();
-                            if !name.is_empty() && !name.starts_with('#') {
-                                direct_deps.insert(name);
-                            }
+                    if in_deps && let Some(eq) = line.find('=') {
+                        let name = line[..eq].trim().to_string();
+                        if !name.is_empty() && !name.starts_with('#') {
+                            direct_deps.insert(name);
                         }
+                    }
                 }
             }
 
@@ -306,20 +306,23 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 let mut dependencies = Vec::new();
                 for line in content.lines() {
                     let t = line.trim();
-                    if t.contains('=') && !t.starts_with('[') && !t.starts_with('#')
-                        && let Some(eq) = t.find('=') {
-                            let name = t[..eq].trim().to_string();
-                            let version = t[eq + 1..]
-                                .trim()
-                                .trim_matches('"')
-                                .trim_matches('\'')
-                                .to_string();
-                            dependencies.push(DependencyInfo {
-                                name,
-                                version,
-                                dep_type: "python".to_string(),
-                            });
-                        }
+                    if t.contains('=')
+                        && !t.starts_with('[')
+                        && !t.starts_with('#')
+                        && let Some(eq) = t.find('=')
+                    {
+                        let name = t[..eq].trim().to_string();
+                        let version = t[eq + 1..]
+                            .trim()
+                            .trim_matches('"')
+                            .trim_matches('\'')
+                            .to_string();
+                        dependencies.push(DependencyInfo {
+                            name,
+                            version,
+                            dep_type: "python".to_string(),
+                        });
+                    }
                 }
                 Ok(DependencyReport {
                     language: "Python".to_string(),
@@ -438,9 +441,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             "pyproject.toml",
         ] {
             if std::path::Path::new(cfg).exists()
-                && let Ok(fp) = FilePath::new(cfg.to_string()) {
-                    config_found_paths.push(fp);
-                }
+                && let Ok(fp) = FilePath::new(cfg.to_string())
+            {
+                config_found_paths.push(fp);
+            }
         }
         let config_found = FilePathList::new(config_found_paths);
         if config_found.is_empty() {

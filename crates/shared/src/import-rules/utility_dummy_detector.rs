@@ -137,11 +137,13 @@ pub fn symbol_used_real(
             continue;
         }
 
-        if trimmed.starts_with("impl ") && trimmed.contains(" for ")
+        if trimmed.starts_with("impl ")
+            && trimmed.contains(" for ")
             && let Some(trait_name) = impl_trait_name(trimmed)
-                && dummy_impl_traits.contains(&trait_name) {
-                    continue;
-                }
+            && dummy_impl_traits.contains(&trait_name)
+        {
+            continue;
+        }
 
         return true;
     }
@@ -384,15 +386,15 @@ fn rust_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if body.contains('{') {
             if let Some(open) = body.find('{')
-                && let Some(close) = body.rfind('}') {
-                    let inside = &body[open + 1..close];
-                    for part in inside.split(',') {
-                        if let Some(symbol) = rust_imported_symbol_from_part(part.trim()) {
-                            symbols
-                                .push((SymbolName::new(symbol), LineNumber::new(idx as i64 + 1)));
-                        }
+                && let Some(close) = body.rfind('}')
+            {
+                let inside = &body[open + 1..close];
+                for part in inside.split(',') {
+                    if let Some(symbol) = rust_imported_symbol_from_part(part.trim()) {
+                        symbols.push((SymbolName::new(symbol), LineNumber::new(idx as i64 + 1)));
                     }
                 }
+            }
             continue;
         }
 
@@ -550,24 +552,25 @@ pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
 
         if trimmed.starts_with("import ") && trimmed.contains('{') && trimmed.contains("from") {
             if let Some(open) = trimmed.find('{')
-                && let Some(close) = trimmed.find('}') {
-                    let inside = &trimmed[open + 1..close];
-                    for part in inside.split(',') {
-                        let part = part.trim();
-                        if part.is_empty() {
-                            continue;
-                        }
+                && let Some(close) = trimmed.find('}')
+            {
+                let inside = &trimmed[open + 1..close];
+                for part in inside.split(',') {
+                    let part = part.trim();
+                    if part.is_empty() {
+                        continue;
+                    }
 
-                        let name = match part.split_once(" as ") {
-                            Some((_, alias)) => alias.trim(),
-                            None => part.split_whitespace().next().unwrap_or_default(),
-                        };
+                    let name = match part.split_once(" as ") {
+                        Some((_, alias)) => alias.trim(),
+                        None => part.split_whitespace().next().unwrap_or_default(),
+                    };
 
-                        if !name.is_empty() && name != "type" {
-                            symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
-                        }
+                    if !name.is_empty() && name != "type" {
+                        symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
                     }
                 }
+            }
             continue;
         }
 
@@ -591,26 +594,29 @@ pub fn js_imported_symbols(lines: &[&str]) -> Vec<(SymbolName, LineNumber)> {
             continue;
         }
 
-        if trimmed.starts_with("const ") && trimmed.contains("require(") && trimmed.contains('{')
+        if trimmed.starts_with("const ")
+            && trimmed.contains("require(")
+            && trimmed.contains('{')
             && let Some(open) = trimmed.find('{')
-                && let Some(close) = trimmed.find('}') {
-                    let inside = &trimmed[open + 1..close];
-                    for part in inside.split(',') {
-                        let part = part.trim();
-                        if part.is_empty() {
-                            continue;
-                        }
-
-                        let name = match part.split_once(':') {
-                            Some((_, alias)) => alias.trim(),
-                            None => part,
-                        };
-
-                        if !name.is_empty() {
-                            symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
-                        }
-                    }
+            && let Some(close) = trimmed.find('}')
+        {
+            let inside = &trimmed[open + 1..close];
+            for part in inside.split(',') {
+                let part = part.trim();
+                if part.is_empty() {
+                    continue;
                 }
+
+                let name = match part.split_once(':') {
+                    Some((_, alias)) => alias.trim(),
+                    None => part,
+                };
+
+                if !name.is_empty() {
+                    symbols.push((SymbolName::new(name), LineNumber::new(idx as i64 + 1)));
+                }
+            }
+        }
     }
 
     symbols

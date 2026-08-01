@@ -60,20 +60,24 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
                     .trim_start_matches(member)
                     .trim_start_matches('/');
                 if let Some(real_member) = deeper.split('/').next()
-                    && !real_member.is_empty() && !skip_dirs.contains(&real_member) {
-                        // If it has a file extension, it's a file — the root IS the member
-                        if real_member.contains('.')
-                            && let Some(root_member) = normalized_root.rsplit('/').next()
-                                && !root_member.is_empty() {
-                                    return root_member.to_string();
-                                }
-                        return real_member.to_string();
-                    }
-                // Nothing meaningful after skip dir — use root's last component
-                if let Some(root_member) = normalized_root.rsplit('/').next()
-                    && !root_member.is_empty() {
+                    && !real_member.is_empty()
+                    && !skip_dirs.contains(&real_member)
+                {
+                    // If it has a file extension, it's a file — the root IS the member
+                    if real_member.contains('.')
+                        && let Some(root_member) = normalized_root.rsplit('/').next()
+                        && !root_member.is_empty()
+                    {
                         return root_member.to_string();
                     }
+                    return real_member.to_string();
+                }
+                // Nothing meaningful after skip dir — use root's last component
+                if let Some(root_member) = normalized_root.rsplit('/').next()
+                    && !root_member.is_empty()
+                {
+                    return root_member.to_string();
+                }
             }
         }
     }
@@ -81,9 +85,11 @@ pub fn extract_member_from_path(file_path: &str, root: &str) -> String {
         if let Some(idx) = normalized_path.find(marker) {
             let after = &normalized_path[idx + marker.len()..].trim_start_matches('/');
             if let Some(member) = after.split('/').next()
-                && !member.is_empty() && !skip_dirs.contains(&member) {
-                    return member.to_string();
-                }
+                && !member.is_empty()
+                && !skip_dirs.contains(&member)
+            {
+                return member.to_string();
+            }
         }
     }
     ".".to_string()

@@ -36,9 +36,9 @@ fn has_source_files(dir: &Path) -> bool {
                     || name.ends_with(".py")
                     || name.ends_with(".ts")
                     || name.ends_with(".js"))
-                {
-                    return true;
-                }
+            {
+                return true;
+            }
         }
     }
     false
@@ -56,13 +56,15 @@ pub fn collect_source_files(
     } else if root_dir.is_file() {
         // Handle single file scan — include the file directly if it's a source file
         if let Some(ext) = root_dir.extension().and_then(|e| e.to_str())
-            && is_source_file(ext) {
-                let rel_path = root_dir.to_string_lossy();
-                if !is_path_ignored(&rel_path, ignored)
-                    && let Ok(fp) = FilePath::new(rel_path.to_string()) {
-                        files.push(fp);
-                    }
+            && is_source_file(ext)
+        {
+            let rel_path = root_dir.to_string_lossy();
+            if !is_path_ignored(&rel_path, ignored)
+                && let Ok(fp) = FilePath::new(rel_path.to_string())
+            {
+                files.push(fp);
             }
+        }
     }
     files
 }
