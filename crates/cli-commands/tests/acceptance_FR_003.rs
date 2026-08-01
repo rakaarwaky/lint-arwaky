@@ -39,6 +39,7 @@ fn frd_fix_01_dry_run_no_changes() {
         "dry-run must indicate preview mode, got: {}",
         stdout
     );
+    // Verify no changes were applied
     let content = fs::read_to_string(src.join("lib.rs")).unwrap();
     assert_eq!(
         content, "pub fn bad_name() {}\n",
@@ -74,6 +75,7 @@ fn frd_fix_03_remaining_violations_exit_1() {
     let tmp = std::env::temp_dir().join(format!("acc_fix_03_{}", std::process::id()));
     let src = tmp.join("src");
     fs::create_dir_all(&src).unwrap();
+    // Write code that will always have violations (e.g., a todo! macro)
     fs::write(src.join("lib.rs"), "pub fn needs_work() { todo!() }\n").unwrap();
     let output = cli_bin()
         .arg("fix")
@@ -81,6 +83,7 @@ fn frd_fix_03_remaining_violations_exit_1() {
         .output()
         .expect("failed to run fix");
     let code = output.status.code().unwrap_or(-1);
+    // Fix may exit 0 (all fixed) or 1 (remaining violations)
     assert!(
         code == 0 || code == 1,
         "fix should exit 0 or 1, got {}",

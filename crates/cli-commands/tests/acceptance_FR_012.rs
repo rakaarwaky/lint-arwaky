@@ -1,4 +1,4 @@
-// Acceptance tests for the `git-diff` command.
+// Acceptance tests for the `git-diff` command — analyze git-changed files.
 
 use std::process::Command;
 
@@ -20,38 +20,29 @@ fn cli_bin() -> Command {
     Command::new(p)
 }
 
-/// Run git-diff from the worktree (a git repo) against HEAD.
-fn run_git_diff() -> std::process::Output {
-    // Use the worktree root as the path — it's a git repo
-    let wt_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf();
-    cli_bin()
-        .arg("git-diff")
-        .arg("--base")
-        .arg("HEAD")
-        .arg(wt_root.to_str().unwrap())
-        .output()
-        .expect("failed to run git-diff")
-}
-
 #[test]
 fn frd_git_diff_01_shows_version_and_base() {
-    let output = run_git_diff();
+    let output = cli_bin()
+        .arg("git-diff")
+        .arg("--base")
+        .arg("main")
+        .output()
+        .expect("failed to run git-diff");
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
         stdout.contains("Git-Diff") || stdout.contains("Base:"),
-        "git-diff must show version header and base branch, got: {}",
-        stdout
+        "git-diff must show version header and base branch"
     );
 }
 
 #[test]
 fn frd_git_diff_02_exit_code_is_0_or_1() {
-    let output = run_git_diff();
+    let output = cli_bin()
+        .arg("git-diff")
+        .arg("--base")
+        .arg("main")
+        .output()
+        .expect("failed to run git-diff");
     let code = output.status.code().unwrap_or(-1);
     assert!(
         code == 0 || code == 1,
@@ -62,11 +53,15 @@ fn frd_git_diff_02_exit_code_is_0_or_1() {
 
 #[test]
 fn frd_git_diff_03_shows_files_changed() {
-    let output = run_git_diff();
+    let output = cli_bin()
+        .arg("git-diff")
+        .arg("--base")
+        .arg("main")
+        .output()
+        .expect("failed to run git-diff");
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
         stdout.contains("Files changed") || stdout.contains("changed files"),
-        "git-diff must show changed files count, got: {}",
-        stdout
+        "git-diff must show changed files count"
     );
 }

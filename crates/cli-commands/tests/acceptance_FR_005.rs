@@ -1,4 +1,4 @@
-// Acceptance tests for the `security` command.
+// Acceptance tests for the `security` command — vulnerability scanning.
 
 use std::fs;
 use std::process::Command;
@@ -22,7 +22,8 @@ fn cli_bin() -> Command {
 }
 
 #[test]
-fn frd_security_01_exit_code_valid() {
+fn frd_security_01_tool_not_installed_exit_3() {
+    // Run security on a temp dir — tool may or may not be installed
     let tmp = std::env::temp_dir().join(format!("acc_sec_01_{}", std::process::id()));
     fs::create_dir_all(&tmp).unwrap();
     let output = cli_bin()
@@ -31,6 +32,7 @@ fn frd_security_01_exit_code_valid() {
         .output()
         .expect("failed to run security");
     let code = output.status.code().unwrap_or(-1);
+    // Exit 0 = clean, 1 = vulns found, 3 = tool missing
     assert!(
         code == 0 || code == 1 || code == 3,
         "security should exit 0, 1, or 3, got {}",

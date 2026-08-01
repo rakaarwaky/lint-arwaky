@@ -1,4 +1,4 @@
-// Acceptance tests for the `mcp-config` command.
+// Acceptance tests for the `mcp-config` command — MCP client config generation.
 
 use std::process::Command;
 

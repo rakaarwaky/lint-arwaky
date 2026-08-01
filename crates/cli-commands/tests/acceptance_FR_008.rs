@@ -1,4 +1,4 @@
-// Acceptance tests for the `install` command.
+// Acceptance tests for the `install` command — adapter dependency installation.
 
 use std::process::Command;
 

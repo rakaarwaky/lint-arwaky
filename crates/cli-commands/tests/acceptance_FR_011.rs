@@ -41,6 +41,7 @@ fn frd_adapters_02_shows_none_or_list() {
         .output()
         .expect("failed to run adapters");
     let stdout = String::from_utf8_lossy(&output.stdout);
+    // Either shows "(none enabled)" or a bullet list
     assert!(
         stdout.contains("(none enabled)") || stdout.contains("  - "),
         "must show either none enabled or a bullet list"

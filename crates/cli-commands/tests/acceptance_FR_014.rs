@@ -1,4 +1,4 @@
-// Acceptance tests for individual linter commands.
+// Acceptance tests for individual linter commands (quality, import, naming, role, orphan, external).
 
 use std::fs;
 use std::process::Command;
@@ -21,59 +21,124 @@ fn cli_bin() -> Command {
     Command::new(p)
 }
 
-fn run_linter_on_clean_dir(linter: &str) -> i32 {
-    let tmp = std::env::temp_dir().join(format!("acc_linter_{}_{}", linter, std::process::id()));
+#[test]
+fn frd_linter_01_quality_clean_dir() {
+    let tmp = std::env::temp_dir().join(format!("acc_linter_01_{}", std::process::id()));
     let src = tmp.join("src");
     fs::create_dir_all(&src).unwrap();
     fs::write(src.join("lib.rs"), "pub fn clean() {}\n").unwrap();
     let output = cli_bin()
-        .arg(linter)
+        .arg("quality")
         .arg(tmp.to_str().unwrap())
         .output()
-        .unwrap_or_else(|_| panic!("failed to run {}", linter));
+        .expect("failed to run quality");
     let code = output.status.code().unwrap_or(-1);
-    fs::remove_dir_all(&tmp).ok();
-    code
-}
-
-#[test]
-fn frd_linter_01_quality() {
-    let code = run_linter_on_clean_dir("quality");
-    assert!(code == 0 || code == 1 || code == 2, "quality exit {}", code);
-}
-
-#[test]
-fn frd_linter_02_import() {
-    let code = run_linter_on_clean_dir("import");
-    assert!(code == 0 || code == 1 || code == 2, "import exit {}", code);
-}
-
-#[test]
-fn frd_linter_03_naming() {
-    let code = run_linter_on_clean_dir("naming");
-    assert!(code == 0 || code == 1 || code == 2, "naming exit {}", code);
-}
-
-#[test]
-fn frd_linter_04_role() {
-    let code = run_linter_on_clean_dir("role");
-    assert!(code == 0 || code == 1 || code == 2, "role exit {}", code);
-}
-
-#[test]
-fn frd_linter_05_orphan() {
-    let code = run_linter_on_clean_dir("orphan");
-    assert!(code == 0 || code == 1 || code == 2, "orphan exit {}", code);
-}
-
-#[test]
-fn frd_linter_06_external() {
-    let code = run_linter_on_clean_dir("external");
     assert!(
         code == 0 || code == 1 || code == 2,
-        "external exit {}",
+        "quality should exit 0, 1, or 2, got {}",
         code
     );
+    fs::remove_dir_all(&tmp).ok();
+}
+
+#[test]
+fn frd_linter_02_import_clean_dir() {
+    let tmp = std::env::temp_dir().join(format!("acc_linter_02_{}", std::process::id()));
+    let src = tmp.join("src");
+    fs::create_dir_all(&src).unwrap();
+    fs::write(src.join("lib.rs"), "pub fn clean() {}\n").unwrap();
+    let output = cli_bin()
+        .arg("import")
+        .arg(tmp.to_str().unwrap())
+        .output()
+        .expect("failed to run import");
+    let code = output.status.code().unwrap_or(-1);
+    assert!(
+        code == 0 || code == 1 || code == 2,
+        "import should exit 0, 1, or 2, got {}",
+        code
+    );
+    fs::remove_dir_all(&tmp).ok();
+}
+
+#[test]
+fn frd_linter_03_naming_clean_dir() {
+    let tmp = std::env::temp_dir().join(format!("acc_linter_03_{}", std::process::id()));
+    let src = tmp.join("src");
+    fs::create_dir_all(&src).unwrap();
+    fs::write(src.join("lib.rs"), "pub fn clean() {}\n").unwrap();
+    let output = cli_bin()
+        .arg("naming")
+        .arg(tmp.to_str().unwrap())
+        .output()
+        .expect("failed to run naming");
+    let code = output.status.code().unwrap_or(-1);
+    assert!(
+        code == 0 || code == 1 || code == 2,
+        "naming should exit 0, 1, or 2, got {}",
+        code
+    );
+    fs::remove_dir_all(&tmp).ok();
+}
+
+#[test]
+fn frd_linter_04_role_clean_dir() {
+    let tmp = std::env::temp_dir().join(format!("acc_linter_04_{}", std::process::id()));
+    let src = tmp.join("src");
+    fs::create_dir_all(&src).unwrap();
+    fs::write(src.join("lib.rs"), "pub fn clean() {}\n").unwrap();
+    let output = cli_bin()
+        .arg("role")
+        .arg(tmp.to_str().unwrap())
+        .output()
+        .expect("failed to run role");
+    let code = output.status.code().unwrap_or(-1);
+    assert!(
+        code == 0 || code == 1 || code == 2,
+        "role should exit 0, 1, or 2, got {}",
+        code
+    );
+    fs::remove_dir_all(&tmp).ok();
+}
+
+#[test]
+fn frd_linter_05_orphan_clean_dir() {
+    let tmp = std::env::temp_dir().join(format!("acc_linter_05_{}", std::process::id()));
+    let src = tmp.join("src");
+    fs::create_dir_all(&src).unwrap();
+    fs::write(src.join("lib.rs"), "pub fn clean() {}\n").unwrap();
+    let output = cli_bin()
+        .arg("orphan")
+        .arg(tmp.to_str().unwrap())
+        .output()
+        .expect("failed to run orphan");
+    let code = output.status.code().unwrap_or(-1);
+    assert!(
+        code == 0 || code == 1 || code == 2,
+        "orphan should exit 0, 1, or 2, got {}",
+        code
+    );
+    fs::remove_dir_all(&tmp).ok();
+}
+
+#[test]
+fn frd_linter_06_external_clean_dir() {
+    let tmp = std::env::temp_dir().join(format!("acc_linter_06_{}", std::process::id()));
+    let src = tmp.join("src");
+    fs::create_dir_all(&src).unwrap();
+    fs::write(src.join("lib.rs"), "pub fn clean() {}\n").unwrap();
+    let output = cli_bin()
+        .arg("external")
+        .arg(tmp.to_str().unwrap())
+        .output()
+        .expect("failed to run external");
+    let code = output.status.code().unwrap_or(-1);
+    assert!(
+        code == 0 || code == 1 || code == 2,
+        "external should exit 0, 1, or 2, got {}",
+        code
+    );
+    fs::remove_dir_all(&tmp).ok();
 }
 
 #[test]
@@ -92,7 +157,7 @@ fn frd_linter_07_quality_nonexistent_path_exit_2() {
 
 #[test]
 fn frd_linter_08_quality_format_json() {
-    let tmp = std::env::temp_dir().join(format!("acc_linter_json_{}", std::process::id()));
+    let tmp = std::env::temp_dir().join(format!("acc_linter_08_{}", std::process::id()));
     let src = tmp.join("src");
     fs::create_dir_all(&src).unwrap();
     fs::write(src.join("lib.rs"), "pub fn clean() {}\n").unwrap();
