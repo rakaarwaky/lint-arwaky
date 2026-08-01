@@ -80,7 +80,10 @@ pub fn group_by_member<'a>(
         let member = if let Some(m) = force_member {
             m.to_string()
         } else {
-            shared::cli_commands::utility_path_resolver::extract_member_from_path(&v.file.value, root)
+            shared::cli_commands::utility_path_resolver::extract_member_from_path(
+                &v.file.value,
+                root,
+            )
         };
         grouped.entry(member).or_default().push(v);
     }

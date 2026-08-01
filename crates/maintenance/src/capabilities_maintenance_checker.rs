@@ -66,6 +66,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             check_tool("ruff", &["--version"], false),
             check_tool("mypy", &["--version"], false),
             check_tool("bandit", &["--version"], false),
+            check_tool("radon", &["--version"], false),
         ];
 
         // FR-005: JS tools — all optional; local node_modules/.bin/ preferred
@@ -85,7 +86,8 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(eslint_status);
 
         let prettier_local = "node_modules/.bin/prettier";
-        let prettier_status = if shared::filesystem::utility_filesystem_io::is_file(prettier_local) {
+        let prettier_status = if shared::filesystem::utility_filesystem_io::is_file(prettier_local)
+        {
             ToolStatus {
                 name: "prettier (local)".to_string(),
                 status: "OK".to_string(),
@@ -384,8 +386,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             })
         } else if package_json.exists() {
             // FR-007: JS/TS — package.json (dependencies + devDependencies)
-            let content =
-                dep_io::read_dependency_file(&package_json).map_err(|e| e.to_string())?;
+            let content = dep_io::read_dependency_file(&package_json).map_err(|e| e.to_string())?;
             let json: serde_json::Value =
                 serde_json::from_str(&content).map_err(|e| e.to_string())?;
             let mut dependencies = Vec::new();
@@ -452,14 +453,12 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 let reqs = std::path::Path::new(root).join("requirements.txt");
                 if reqs.exists() {
                     // FR-007: Python — requirements.txt (fallback)
-                    let content =
-                        dep_io::read_dependency_file(&reqs).map_err(|e| e.to_string())?;
+                    let content = dep_io::read_dependency_file(&reqs).map_err(|e| e.to_string())?;
                     let mut dependencies = Vec::new();
                     for line in content.lines() {
                         let t = line.trim();
                         if !t.is_empty() && !t.starts_with('#') {
-                            let parts: Vec<&str> =
-                                t.splitn(2, ['=', '>', '<', '~']).collect();
+                            let parts: Vec<&str> = t.splitn(2, ['=', '>', '<', '~']).collect();
                             let name = parts[0].trim().to_string();
                             let version = if parts.len() > 1 {
                                 parts[1].trim_start_matches('=').trim().to_string()
@@ -493,7 +492,13 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let mut py_files = Vec::new();
         let mut rs_files = Vec::new();
         let mut js_files = Vec::new();
-        Self::walk_dir(root, &mut all_files, &mut py_files, &mut rs_files, &mut js_files);
+        Self::walk_dir(
+            root,
+            &mut all_files,
+            &mut py_files,
+            &mut rs_files,
+            &mut js_files,
+        );
 
         let total_count = all_files.len() as i64;
         let py_count = py_files.len() as i64;
@@ -506,7 +511,11 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             // Rust tests: *_test.rs, test_*.rs, files inside tests/
             for f in &rs_files {
                 let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                let parent = f.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()).unwrap_or("");
+                let parent = f
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
                 if name.starts_with("test_") || name.ends_with("_test.rs") || parent == "tests" {
                     count += 1;
                 }
@@ -514,7 +523,11 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             // Python tests: test_*.py, *_test.py, files inside tests/
             for f in &py_files {
                 let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                let parent = f.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()).unwrap_or("");
+                let parent = f
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
                 if name.starts_with("test_") || name.ends_with("_test.py") || parent == "tests" {
                     count += 1;
                 }
@@ -522,8 +535,16 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             // JS/TS tests: *.test.*, *.spec.*, files inside tests/ or __tests__/
             for f in &js_files {
                 let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                let parent = f.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()).unwrap_or("");
-                if name.contains(".test.") || name.contains(".spec.") || parent == "tests" || parent == "__tests__" {
+                let parent = f
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
+                if name.contains(".test.")
+                    || name.contains(".spec.")
+                    || parent == "tests"
+                    || parent == "__tests__"
+                {
                     count += 1;
                 }
             }
@@ -596,7 +617,12 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let py_ver = {
             let (stdout, _, success) = proc_io::run_command("python3", &["--version"]);
             if success {
-                stdout.lines().next().unwrap_or("unknown").trim().to_string()
+                stdout
+                    .lines()
+                    .next()
+                    .unwrap_or("unknown")
+                    .trim()
+                    .to_string()
             } else {
                 "not installed".to_string()
             }
@@ -604,7 +630,12 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let rust_ver = {
             let (stdout, _, success) = proc_io::run_command("rustc", &["--version"]);
             if success {
-                stdout.lines().next().unwrap_or("unknown").trim().to_string()
+                stdout
+                    .lines()
+                    .next()
+                    .unwrap_or("unknown")
+                    .trim()
+                    .to_string()
             } else {
                 "not installed".to_string()
             }
@@ -612,7 +643,12 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let node_ver = {
             let (stdout, _, success) = proc_io::run_command("node", &["--version"]);
             if success {
-                stdout.lines().next().unwrap_or("unknown").trim().to_string()
+                stdout
+                    .lines()
+                    .next()
+                    .unwrap_or("unknown")
+                    .trim()
+                    .to_string()
             } else {
                 "not installed".to_string()
             }
@@ -650,7 +686,14 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         // FR-001: 9 adapters
         for adapter in &[
-            "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit", "eslint", "prettier",
+            "clippy",
+            "rustfmt",
+            "cargo-audit",
+            "ruff",
+            "mypy",
+            "bandit",
+            "eslint",
+            "prettier",
             "tsc",
         ] {
             let found = match std::process::Command::new("which").arg(adapter).output() {

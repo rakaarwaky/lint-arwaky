@@ -21,6 +21,7 @@ pub struct DoctorResultVO {
 }
 
 impl DoctorResultVO {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         python_version: DescriptionVO,
         rust_version: DescriptionVO,

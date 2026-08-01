@@ -52,8 +52,8 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
     };
 
     let format = opts.format;
-    let is_specific_member =
-        opts.member.is_some() || shared::cli_commands::utility_path_resolver::is_leaf_member_path(&root);
+    let is_specific_member = opts.member.is_some()
+        || shared::cli_commands::utility_path_resolver::is_leaf_member_path(&root);
 
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {
