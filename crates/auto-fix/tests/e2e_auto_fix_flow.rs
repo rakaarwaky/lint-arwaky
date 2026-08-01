@@ -40,6 +40,12 @@ impl ICodeAnalysisAggregate for ConfigurableLinter {
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
         vec![]
     }
+    fn run_analysis_with_entries(
+        &self,
+        _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<shared::cli_commands::LintResult> {
+        vec![]
+    }
 }
 
 // ─── E2E: Unused import removal ───────────────────────────

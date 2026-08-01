@@ -2,7 +2,9 @@
 // Covers: execute, run_fix, manual_report.
 
 use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
-use shared::auto_fix::{FixApplied, FixOutcome, FixResult, IFixProtocol, LintFixOrchestratorAggregate};
+use shared::auto_fix::{
+    FixApplied, FixOutcome, FixResult, IFixProtocol, LintFixOrchestratorAggregate,
+};
 
 use shared::cli_commands::LintResult;
 use shared::common::{Count, LineNumber};

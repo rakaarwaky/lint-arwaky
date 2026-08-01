@@ -3,7 +3,7 @@
 //         report_non_fixable, is_fixable, fixable_codes.
 
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::{FixOutcome, IFixProtocol};
+use shared::auto_fix::IFixProtocol;
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::code_analysis::{CodeAnalysisRuleVO, ICodeAnalysisAggregate};
 
@@ -60,6 +60,12 @@ impl ICodeAnalysisAggregate for MockLinter {
     }
 
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        vec![]
+    }
+    fn run_analysis_with_entries(
+        &self,
+        _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+    ) -> Vec<shared::cli_commands::LintResult> {
         vec![]
     }
 }

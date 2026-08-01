@@ -311,7 +311,7 @@ impl LintFixProcessor {
         }
 
         // ─── Detect fixable bypass patterns ───
-        let allow_attr = format!("#{}", "allow(");
+        let allow_attr = format!("#[{}", "allow(");
         let unwrap_call = "unwrap()".to_string();
         let noqa_pattern = "noqa";
         let type_ignore = "type: ignore";
