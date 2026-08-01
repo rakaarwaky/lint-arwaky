@@ -6,7 +6,7 @@
 
 The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer AES architecture. It validates that files conform to structural naming patterns (AES101) and that file prefixes/suffixes are consistent with their architectural layer (AES102), preventing naming chaos and ensuring every file can be correctly assigned to an architectural layer.
 
-**File system operations (file walking, directory traversal, file filtering) are handled by the external `filesystem` crate.** The naming-rules crate receives a pre-filtered `Vec<FilePath>` from the filesystem crate`, then delegates analysis to its internal checkers.
+**File system operations (file walking, directory traversal, file filtering) are handled by the external `filesystem` crate.** The naming-rules crate receives pre-filtered file paths from the filesystem crate`, then delegates analysis to its internal checkers.
 
 ### Architecture & Data Flow
 
@@ -57,7 +57,7 @@ flowchart TD
 
   - Must be snake_case: lowercase ASCII letters (`a-z`), digits (`0-9`), and underscores only. No uppercase, no hyphens, no dots.
   - Must follow `prefix_concept_suffix` pattern with minimum N words (configurable via `config.naming.word_count.value`, default 3, fallback to 3 if non-positive).
-  - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a `HashMap<u32, Regex>`.
+  - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a concurrent map keyed by word count.
   - If the file has no recognized layer prefix (`taxonomy_`, `contract_`, `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`), AES000 is emitted with the unknown prefix and a list of allowed prefixes.
   - Exceptions: barrel files (`mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js`) and any file listed in the rule's `exceptions` list are skipped.
 - **Edge Cases**:
@@ -159,7 +159,7 @@ flowchart TD
 ## Non-functional Requirements
 
 - **Performance**: Walk and check 1,000 source files in < 1 second (regex compiled once per word count, O(n) per file).
-- **Memory**: O(1) per file for checker state. Regex cache uses `HashMap<u32, Regex>` — one entry per unique word count encountered (typically 1 entry for default config).
+- **Memory**: O(1) per file for checker state. Regex cache uses a concurrent map — one entry per unique word count encountered (typically 1 entry for default config).
 - **Accuracy**: Zero false positives for correctly named files. Zero false negatives for files that violate naming structure or suffix/prefix policies. All validation is deterministic (regex + list membership) — no heuristics, no AST ambiguity.
 
 ---

@@ -225,7 +225,7 @@ Loaded config is merged with embedded defaults (FR-005).
 
 - **Description**: Build the complete list of ignored paths from config + hardcoded universal defaults.
 - **Input**: Architecture config.
-- **Output**: `Vec<String>` of ignored path patterns.
+- **Output**: Ignored path patterns.
 - **Business Rules**:
 
   - Default ignored paths (hardcoded, universal):

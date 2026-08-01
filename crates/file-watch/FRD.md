@@ -4,20 +4,25 @@
 
 The file-watch crate provides a filesystem monitoring system that detects file changes in real time and automatically re-triggers the linting pipeline. It uses the `notify` crate (inotify on Linux) with `notify-debouncer-mini` to debounce rapid changes and avoid redundant processing.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    orchestrator                      │
-│  ┌──────────────┐       ┌──────────────────────┐   │
-│  │  notify provider │──────▶│  change analyzer      │   │
-│  │  provider     │ events│  (dedup + filter)     │   │
-│  └──────────────┘       └──────────────────────┘   │
-│                                    │                │
-│                                    ▼                │
-│                          ┌──────────────────┐       │
-│  │ lint pipeline    │       │
-│                          │ (code analysis)   │       │
-│                          └──────────────────┘       │
-└─────────────────────────────────────────────────────┘
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["watch orchestrator"]
+    B --> C["notify provider"]
+    C -->|file events| D["change analyzer"]
+    D -->|deduped events| E{"lintable?"}
+
+    E -->|"yes"| F["lint pipeline"]
+    E -->|"no"| G["skip"]
+
+    F --> H["Lint Results"]
+    H --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style E fill:#fff3e0,stroke:#e65100
+    style H fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ## Functional Requirements

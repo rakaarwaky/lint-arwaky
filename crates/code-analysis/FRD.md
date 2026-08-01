@@ -6,7 +6,7 @@
 
 The code-analysis crate enforces general code quality, formatting limits, and clean-coding policies. It protects the codebase from bloated files, empty structures, duplicate blocks, and bypass annotations while guaranteeing zero tolerance for warning/error suppressions.
 
-**File system operations  are handled by the external `filesystem` crate.** The code-analysis crate receives pre-read `Vec<File>` (path + content) from the filesystem crate , then delegates analysis to its internal checkers. The code-analysis crate does not perform AST parsing or file I/O directly.
+**File system operations  are handled by the external `filesystem` crate.** The code-analysis crate receives pre-read file data (path + content) from the filesystem crate , then delegates analysis to its internal checkers. The code-analysis crate does not perform AST parsing or file I/O directly.
 
 ### Architecture & Data Flow
 
@@ -71,7 +71,7 @@ flowchart TD
   - Files with long comments or docstrings → all lines counted uniformly.
   - Generated code → no special exclusion; the rule applies uniformly.
   - Empty files → 0 lines, passes.
-- **Error Handling**: Emit AES301 with actual line count and the configured maximum. Files that could not be read by the filesystem crate are excluded from `Vec<FileEntry>` and not checked.
+- **Error Handling**: Emit AES301 with actual line count and the configured maximum. Files that could not be read by the filesystem crate are excluded from the file list and not checked.
 
 ---
 
@@ -368,7 +368,7 @@ flowchart TD
 | **Pre-processing**   | Removal of import lines, blank lines, and comment-only lines before duplication window comparison                   |
 | **Safe variant**     | `unwrap_or()`, `unwrap_or_else()`, `unwrap_or_default()` — not flagged as bypass                                   |
 | **Severity levels**  | CRITICAL (bypasses), HIGH (line count), MEDIUM (dead inheritance, duplication)                                      |
-| **Filesystem crate** | External crate that handles file walking, reading, and filtering. Returns`Vec<FileEntry>` to code-analysis.         |
+| **Filesystem crate** | External crate that handles file walking, reading, and filtering. Returns file data to code-analysis.         |
 
 ---
 

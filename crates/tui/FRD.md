@@ -2,6 +2,37 @@
 
 ## System Overview
 
+
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Terminal"] -->|events| B["tui orchestrator"]
+    B --> C{"event type"}
+
+    C -->|"key / mouse"| D["action handler"]
+    C -->|"tick"| E["scan poll"]
+
+    D --> F{"action"}
+    F -->|"navigation"| G["state update"]
+    F -->|"lint action"| H["lint executor"]
+    F -->|"global action"| I["operation aggregates"]
+    F -->|"search / copy / help"| J["utility"]
+
+    H --> K["Preview Update"]
+    I --> K
+    G --> K
+    J --> K
+    E --> K
+
+    K --> B
+    B -->|render| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style C fill:#fff3e0,stroke:#e65100
+    style K fill:#f3e5f5,stroke:#7b1fa2
+```
+
 A state-driven 3-panel Ratatui terminal UI that provides real-time AES architecture linting with file browsing, preview, and all CLI commands mapped to keyboard shortcuts. Replaces the flat-menu dialoguer TUI with an interactive Ratatui-based interface supporting keyboard and mouse navigation.
 
 **Product priority (locked):** **P1 — supported surface.** Critical-path acceptance required for layout (FR-001), navigation (FR-002/003), path dialog (FR-011), lint action (FR-005), and background scan progress (FR-012). TUI must invoke the same aggregates as CLI (no divergent lint path).

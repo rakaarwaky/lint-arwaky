@@ -1,12 +1,52 @@
-# Lint Arwaky
 
-## The Last Code Quality Tool You Will Ever Need
+<h1 align="center">Lint Arwaky</h1>
+  <p align="center">
+    <strong>Architecture linter enforcement for Rust, Python, and TypeScript.</strong>
+  </p>
+</p>
 
-Your codebase is not a draft. It is the product your team ships, the system your users depend on, and the asset your company builds on. Yet every day, silent architecture decay erodes it — dead imports, broken layer boundaries, orphan files, naming inconsistencies, and role violations that no one notices until they cause an outage or block a release.
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.1.0-blue" alt="version" />
+  <img src="https://img.shields.io/badge/rust-1.70%2B-orange" alt="rust" />
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="license" />
+  <img src="https://img.shields.io/badge/platform-linux%20%7C%20macOS-lightgrey" alt="platform" />
+  <img src="https://img.shields.io/badge/languages-rust%20%7C%20python%20%7C%20typescript-blueviolet" alt="languages" />
+</p>
 
-Lint Arwaky stops that decay before it starts.
+---
 
-Built in Rust for speed, structured by the Agentic Engineering System specification, and designed to enforce architecture the way a compiler enforces syntax — Lint Arwaky does not ask you to care about code quality. It makes it impossible to ignore.
+Your codebase is not a draft. It is the product your team ships, the system
+your users depend on, and the asset your company builds on. Yet every day,
+silent architecture decay erodes it — dead imports, broken layer boundaries,
+orphan files, naming inconsistencies, and role violations that no one notices
+until they cause an outage or block a release.
+
+**Lint Arwaky stops that decay before it starts.**
+
+Built in Rust for speed, structured by the
+[Agentic Engineering System](ARCHITECTURE.md) specification, and designed to
+enforce architecture the way a compiler enforces syntax — Lint Arwaky does not
+ask you to care about code quality. It makes it impossible to ignore.
+
+---
+
+## Table of Contents
+
+- [Why This Exists](#why-this-exists)
+- [Features](#features)
+- [Supported Languages](#supported-languages)
+- [Quick Start](#quick-start)
+- [Commands](#commands)
+- [AES Rules (24)](#aes-rules-24)
+- [Exit Codes](#exit-codes)
+- [Configuration](#configuration)
+- [MCP Server](#mcp-server)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Performance](#performance)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -14,114 +54,87 @@ Built in Rust for speed, structured by the Agentic Engineering System specificat
 
 Most linters catch syntax errors or style mistakes. They do not catch:
 
-- **Architecture drift.** Files living where they do not belong, breaking layer boundaries, or importing from crates they should never touch.
-- **Orphan code.** Files that no agent, module, or import can reach — dead weight silently growing in your repository.
-- **Role confusion.** Agents writing business logic, surfaces depending on lower layers, capabilities implementing protocols instead of orchestrating them.
-- **Import chaos.** Circular dependencies, forbidden imports, unused modules — the kind of dependency mess that makes refactoring terrifying.
-- **Naming decay.** Structs named with underscores, functions without verb prefixes, enums that read like variables.
 
-Lint Arwaky catches all of these. And it does so fast enough to run on every commit, in CI, and during development — without making developers wait.
-
----
-
-## What You Get
-
-### Architecture Enforcement
-
-The AES specification defines seven strict layers. Lint Arwaky enforces them. If a surface module imports directly from the capabilities layer, it flags it. If an agent file contains business logic, it catches it. Your architecture is not a document no one reads — it is a live gate that blocks violations.
-
-### Multi-Language Coverage
-
-Rust crates, Python modules, TypeScript packages — Lint Arwaky scans all three. One tool. One configuration language. No more juggling linters per language or maintaining separate quality pipelines.
-
-### Orphan Detection
-
-It builds a dependency graph across your entire workspace and tells you exactly which files are unreachable. Not "maybe dead." Not "probably unused." It traces every import, every module reference, and returns the truth.
-
-### External Lint Integration
-
-Clippy, Ruff, ESLint, mypy, bandit — Lint Arwaky wraps them all into a single report with unified exit codes and threshold gates. You set the bar. The tool enforces it.
-
-### Auto-Fix
-
-For violations that have unambiguous solutions, Lint Arwaky does not just report — it fixes. With `--dry-run` you preview every change before it touches your files. Zero risk, maximum gain.
-
-### Git Hooks and CI Gates
-
-Install a pre-commit hook and never push architecture violations again. Configure `ci --threshold 0` and let your pipeline reject commits that break the contract. This is not a suggestion system. It is enforcement.
+| Problem                | What happens                                                 | What Lint Arwaky does                                            |
+| ------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **Architecture drift** | Files import from layers they should never touch             | Flags every forbidden cross-layer import (AES201)                |
+| **Orphan code**        | Dead files silently grow in your repository                  | Traces every import, flags unreachable files (AES501–506)       |
+| **Role confusion**     | Agents write business logic, surfaces depend on lower layers | Enforces per-layer responsibility rules (AES401–406)            |
+| **Import chaos**       | Circular dependencies, unused modules, dummy imports         | Detects cycles, unused imports, AI-generated stubs (AES203–205) |
+| **Naming decay**       | Inconsistent naming breaks layer detection                   | Enforces`prefix_concept_suffix` convention (AES101–102)         |
+| **Bypass culture**     | `unwrap()`, `#[allow(...)]`, `noqa`, `FIXME` accumulate      | Zero tolerance — every suppression is flagged (AES304)          |
 
 ---
 
-## How Fast Is It
+## Features
 
-Rust compilation means cold starts under two seconds. Incremental builds mean subsequent scans are nearly instant. The gate pipeline runs format checks, builds once, runs clippy, then executes self-lint, tests, and AES code verification in parallel. The entire quality gate suite completes in roughly two minutes — fast enough to run on every pull request without friction.
+- **24 AES rules** across 5 groups — naming, import, quality, role, orphan
+- **Multi-language** — Rust, Python, TypeScript/JavaScript in a single scan
+- **Full AST parsing** — tree-sitter for all languages, zero regex
+- **External linter bridge** — Clippy, Rustfmt, cargo-audit, Ruff, MyPy, Bandit, ESLint, Prettier, tsc unified into one report
+- **Auto-fix** — remove + replace + rename with `--dry-run` preview
+- **MCP server** — 5 tools for AI agent integration with full CLI parity
+- **CI gates** — stable exit codes, threshold enforcement, SARIF/JUnit/JSON reports
+- **Git hooks** — pre-commit architecture enforcement
+- **Watch mode** — continuous linting on file changes
+- **Self-auditing** — the project lints itself under its own rules
+
+---
+
+## Supported Languages
+
+
+| Language   | Extensions    | AST Parser             | External Linters             |
+| ------------ | --------------- | ------------------------ | ------------------------------ |
+| Rust       | `.rs`         | tree-sitter-rust       | Clippy, Rustfmt, cargo-audit |
+| Python     | `.py`         | tree-sitter-python     | Ruff, MyPy, Bandit           |
+| TypeScript | `.ts`, `.tsx` | tree-sitter-typescript | ESLint, Prettier, tsc        |
+| JavaScript | `.js`, `.jsx` | tree-sitter-javascript | ESLint, Prettier             |
 
 ---
 
 ## Quick Start
 
-Two install options are available:
-
-### Option 1: Remote Install (fast — no build, no clone)
+### Option 1: Remote Install (pre-built binary)
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/install.remote.sh | bash
 ```
 
-The script downloads a **pre-built binary** from GitHub Releases.
-
-### Option 2: Local Install (build from source)
+### Option 2: Build from Source
 
 ```bash
-# Clone
 git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
-
-# Build and install to ~/.cargo/bin
 bash scripts/install.local.sh
-
-# Verify
-lint-arwaky-cli version
-# Expected: Lint Arwaky v1.11.0
 ```
 
-Clones the repository, runs `cargo build --release`, and installs binaries to `~/.cargo/bin`. Requires Rust 1.70+ and Cargo.
+Requires Rust 1.70+ and Cargo.
+
+### Verify
+
+```bash
+lint-arwaky-cli version
+# Lint Arwaky v1.1.0
+```
+
+### First Scan
+
+```bash
+# Scan entire workspace
+lint-arwaky-cli scan .
+
+# Scan with CI exit codes
+lint-arwaky-cli ci . --threshold 0
+
+# Preview auto-fixes without applying
+lint-arwaky-cli fix . --dry-run
+```
+
 
 ---
 
-## Architecture
-
-Lint Arwaky follows its own AES (Agentic Engineering System) specification — a strict layered architecture with seven layers, organized into feature vertical slicing.
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification
-
-## Project Structure
-
-```
-lint-arwaky/
-├── crates/
-│   ├── auto-fix/           # Auto-fix processor
-│   ├── cli-commands/       # CLI surface
-│   ├── code-analysis/      # Code quality checks
-│   ├── config-system/      # Config loading
-│   ├── external-lint/      # External linter adapters
-│   ├── file-watch/         # File watching
-│   ├── git-hooks/          # Git hooks
-│   ├── import-rules/       # Import compliance
-│   ├── maintenance/        # Maintenance utilities
-│   ├── mcp-server/         # MCP server
-│   ├── naming-rules/       # Naming conventions
-│   ├── orphan-detector/    # Orphan code detection
-│   ├── project-setup/      # Setup utilities
-│   ├── role-rules/         # Role violations
-│   ├── shared/             # Taxonomy, contracts, utilities
-│   └── tui/                # TUI file browser
-├── PRD.md                  # Product requirements
-├── ARCHITECTURE.md         # AES specification
-└── README.md               # This file
-```
-
-## Available Commands
+## Commands
 
 ### Core Analysis
 
@@ -135,14 +148,14 @@ lint-arwaky/
 ### Individual Linter Surfaces
 
 
-| Command                           | Description                                   |
-| ----------------------------------- | ----------------------------------------------- |
-| `lint-arwaky-cli quality [path]`  | Code-quality analysis only (AES101-AES306)    |
-| `lint-arwaky-cli import [path]`   | Import-rule checks only (AES201-AES299)       |
-| `lint-arwaky-cli naming [path]`   | Naming-rule checks only (AES401-AES406)       |
-| `lint-arwaky-cli role [path]`     | Role-rule checks only (AES301-AES399)         |
-| `lint-arwaky-cli orphan <path>`   | Check if file is dead/unreachable code        |
-| `lint-arwaky-cli external [path]` | External linter checks (Clippy, Ruff, ESLint) |
+| Command                           | Rules       | Description                                         |
+| ----------------------------------- | ------------- | ----------------------------------------------------- |
+| `lint-arwaky-cli naming [path]`   | AES101–102 | Naming convention checks                            |
+| `lint-arwaky-cli import [path]`   | AES201–205 | Import boundary checks                              |
+| `lint-arwaky-cli quality [path]`  | AES301–305 | Code quality checks                                 |
+| `lint-arwaky-cli role [path]`     | AES401–406 | Layer role checks                                   |
+| `lint-arwaky-cli orphan <path>`   | AES501–506 | Orphan / unreachable code detection                 |
+| `lint-arwaky-cli external [path]` | tool-native | External linter checks (Clippy, Ruff, ESLint, etc.) |
 
 ### File Operations
 
@@ -157,7 +170,7 @@ lint-arwaky/
 | Command                               | Description                                |
 | --------------------------------------- | -------------------------------------------- |
 | `lint-arwaky-cli doctor`              | Environment diagnostics (toolchain health) |
-| `lint-arwaky-cli security [path]`     | Security vulnerability scan                |
+| `lint-arwaky-cli security [path]`     | Security vulnerability scan (cargo-audit)  |
 | `lint-arwaky-cli dependencies [path]` | Dependency report from manifests           |
 
 ### Git Hooks
@@ -173,7 +186,7 @@ lint-arwaky/
 
 | Command                       | Description                                    |
 | ------------------------------- | ------------------------------------------------ |
-| `lint-arwaky-cli init`        | Create default lint config files               |
+| `lint-arwaky-cli init`        | Create default config files                    |
 | `lint-arwaky-cli install`     | Install linter adapter dependencies (`--sudo`) |
 | `lint-arwaky-cli mcp-config`  | Print MCP server config (`--client <type>`)    |
 | `lint-arwaky-cli config-show` | Display active configuration                   |
@@ -186,17 +199,154 @@ lint-arwaky/
 | `lint-arwaky-cli version`  | Display version                  |
 | `lint-arwaky-cli adapters` | List active linters and adapters |
 
+---
+
+## AES Rules (24)
+
+
+| Group       | Rules                                                                                                                                                                        | Count |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| **Naming**  | AES101 naming convention · AES102 suffix/prefix validation                                                                                                                  | 2     |
+| **Import**  | AES201 layer dependency · AES202 mandatory imports · AES203 unused imports · AES204 dummy imports · AES205 circular dependencies                                         | 5     |
+| **Quality** | AES301 max lines · AES302 min lines · AES303 mandatory definitions · AES304 bypass detection · AES305 duplicate code                                                     | 5     |
+| **Role**    | AES401 taxonomy purity · AES402 contract primitives · AES403 capability implementation · AES404 utility purity · AES405 agent composition · AES406 surface passive role | 6     |
+| **Orphan**  | AES501 taxonomy · AES502 contract · AES503 capabilities · AES504 utility · AES505 agent · AES506 surface                                                                | 6     |
+
+External linter results use **tool-native codes** (e.g., `clippy::needless_return`,
+`ruff::E501`, `eslint::no-unused-vars`) and are reported alongside AES rules
+but are not part of the 24-rule count.
+
+---
+
+## Exit Codes
+
+
+| Code | Name                 | When                                                             |
+| ------ | ---------------------- | ------------------------------------------------------------------ |
+| `0`  | Ok                   | Clean scan · doctor finished · dry-run completed               |
+| `1`  | Policy fail          | Violations found · CI threshold failed · vulnerabilities found |
+| `2`  | Runtime error        | Path missing · pipeline crash · invalid args                   |
+| `3`  | Prerequisite missing | Required external tool not installed                             |
+
+---
+
 ## Configuration
 
-Configuration is loaded from YAML files.
+Configuration is loaded from YAML files with a 5-level priority chain:
+
+```
+1. Project root       lint_arwaky.config.<language>.yaml
+2. Parent dirs        up to 3 levels up
+3. XDG user           ~/.config/lint-arwaky/
+4. XDG system         /etc/xdg/lint-arwaky/
+5. Embedded defaults  compiled into binary
+```
+
+### Generate and Inspect
 
 ```bash
 # Create default config
 lint-arwaky-cli init
 
-# Show current config
+# Show active config
 lint-arwaky-cli config-show
 ```
+
+---
+
+## MCP Server
+
+Lint Arwaky exposes a [Model Context Protocol](https://modelcontextprotocol.io)
+server for AI agent integration with **full CLI parity**.
+
+### 5 Tools
+
+
+| Tool              | Description                          |
+| ------------------- | -------------------------------------- |
+| `execute_command` | Run any CLI command with full parity |
+| `list_commands`   | List all available commands          |
+| `read_skill`      | Read skill/documentation files       |
+| `health_check`    | Server and toolchain health          |
+| `get_config`      | Retrieve active configuration        |
+
+### Start Server
+
+```bash
+cargo run --bin lint-arwaky-mcp
+```
+
+### Client Configuration
+
+```bash
+# Print config for your MCP client
+lint-arwaky-cli mcp-config --client claude
+lint-arwaky-cli mcp-config --client cursor
+```
+
+See [DEPLOY.md](DEPLOY.md) for full client setup and tool reference.
+
+---
+
+## Architecture
+
+Lint Arwaky follows its own AES (Agentic Engineering System) specification —
+a strict 7-layer architecture enforced by its own rules:
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full specification.
+
+---
+
+## Project Structure
+
+```
+lint-arwaky/
+├── crates/
+│   ├── shared/             # Taxonomy VOs, contracts, utilities
+│   ├── config-system/      # Config loading, merging, validation
+│   ├── filesystem/         # File walking, AST parsing, graph construction
+│   ├── naming-rules/       # AES101–102 naming conventions
+│   ├── import-rules/       # AES201–205 import boundaries
+│   ├── code-analysis/      # AES301–305 code quality
+│   ├── role-rules/         # AES401–406 layer roles
+│   ├── orphan-detector/    # AES501–506 orphan detection
+│   ├── external-lint/      # External linter adapters (Clippy, Ruff, ESLint, etc.)
+│   ├── auto-fix/           # Mechanical fixes (remove + replace + rename)
+│   ├── report-formatter/   # text / JSON / SARIF / JUnit output
+│   ├── cli-commands/       # CLI surface
+│   ├── mcp-server/         # MCP server (5 tools, full CLI parity)
+│   ├── git-hooks/          # Pre-commit / git-diff hooks
+│   ├── file-watch/         # Continuous lint on file changes
+│   ├── project-setup/      # init / install / mcp-config
+│   ├── maintenance/        # doctor / security / deps
+│   └── tui/                # Interactive terminal UI
+├── scripts/
+│   ├── install.remote.sh   # Pre-built binary installer
+│   └── install.local.sh    # Build-from-source installer
+├── PRD.md                  # Product requirements
+├── ARCHITECTURE.md         # AES specification
+├── DEPLOY.md               # MCP deployment guide
+├── CONTRIBUTING.md         # Contribution guidelines
+└── README.md               # This file
+```
+
+---
+
+## Performance
+
+
+| Metric                              | Target       |
+| ------------------------------------- | -------------- |
+| 1,000 files (full pipeline)         | < 5 seconds  |
+| 10,000 files (full pipeline)        | < 15 seconds |
+| File discovery (1,660 files)        | < 500 ms     |
+| AST parsing (1,660 files, parallel) | < 2 s        |
+| Graph construction                  | < 200 ms     |
+
+All parsing uses tree-sitter (full AST, all languages). File-level checks
+are parallelized via rayon. No async runtime dependency.
+
+---
 
 ## Testing
 
@@ -204,21 +354,35 @@ lint-arwaky-cli config-show
 # Run all tests
 cargo test --workspace
 
-# Self-lint
+# Self-lint (the project lints itself)
 cargo run --bin lint-arwaky-cli -- check .
 
 # Run MCP server
 cargo run --bin lint-arwaky-mcp
+
+# Acceptance tests follow naming convention:
+# tests/acceptance_FR_00N.rs
 ```
 
-## MCP Server
-
-See [DEPLOY.md](DEPLOY.md) for client setup and MCP tool reference.
+---
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+Key conventions:
+
+- All code follows the AES 7-layer architecture (enforced by this tool)
+- Acceptance tests named `acceptance_FR_00N.rs` per functional requirement
+- No `unwrap()`, `#[allow(...)]`, `todo!()`, `FIXME`, or `HACK` in production code
+- Full AST parsing only — no regex-based code analysis
+
+---
+
 ## License
 
-MIT
+[MIT](LICENSE)
+
+```
+
+```

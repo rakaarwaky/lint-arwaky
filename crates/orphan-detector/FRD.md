@@ -105,7 +105,7 @@ flowchart TD
 ### FR-002: Entry Point Discovery
 
 - **Description**: Identify valid entry points that anchor the reachability graph.
-- **Input**: `Vec<FileEntry>` from `GraphAnalysisContext`, optional configured entry point patterns from architecture configuration.
+- **Input**: File list from the analysis context, optional configured entry point patterns from architecture configuration.
 - **Output**: Set of entry point file paths.
 - **Business Rules**:
 
@@ -120,7 +120,7 @@ flowchart TD
 
   - Workspace with zero entry points → all non-barrel files flagged as orphans.
   - Workspace with entry points in non-standard locations → requires config override.
-- **Error Handling**: Missing or inaccessible entry point files (not in `Vec<FileEntry>`) are excluded from the set.
+- **Error Handling**: Missing or inaccessible entry point files (not in the file list) are excluded from the set.
 
 ---
 
@@ -128,7 +128,7 @@ flowchart TD
 
 - **Description**: Perform BFS from all entry points through the forward import graph to determine which files are transitively reachable ("alive").
 - **Input**: Entry point set and the forward import graph from the analysis context.
-- **Output**: `Vec<String>` of all reachable file paths (alive set).
+- **Output**: Set of all reachable file paths (alive set).
 - **Business Rules**:
 
   - Uses breadth-first search with a visited tracker to avoid revisiting nodes.
@@ -367,7 +367,7 @@ flowchart TD
   - AST parsing eliminates false positives from: matches inside comments, matches inside string literals, multi-line statement fragmentation.
   - Known limitation: macro-generated code (see FR-011). Macro-generated impls are invisible → potential false orphan flags.
   - Parse failure → orphan (fail-strict). This eliminates false negatives at the cost of potential false positives for files with syntax errors.
-- **Concurrency**: Thread-safe via `Arc<dyn Trait>` shared ownership. File-level analysis is parallelized via `rayon` (`par_iter`). Graph analysis is read-only after construction.
+- **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon` (`par_iter`). Graph analysis is read-only after construction.
 - **Configurability**:
 
   - **Hardcoded conventions (permanent, by design)**:

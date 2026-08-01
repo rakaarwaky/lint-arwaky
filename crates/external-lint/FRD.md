@@ -203,7 +203,7 @@ flowchart TD
   - Working directory set to the resolved project root for each adapter.
   - Timeout exceeded → process killed (`child.kill()`), error returned.
   - Command not found → `OperationError::ToolNotFound` returned.
-  - Working directory is `Option<PathBuf>`:
+  - Working directory is optional:
     - `Some(path)` → set as working directory.
     - `None` → skip adapter with warning (no valid working directory found).
 - **Edge Cases**:

@@ -2,6 +2,39 @@
 
 ## System Overview
 
+
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["mcp server"]
+    B --> C{"tool"}
+
+    C -->|"execute_command"| D["action dispatcher"]
+    C -->|"list_commands"| E["command catalog"]
+    C -->|"read_skill"| F["skill reader"]
+    C -->|"health_check"| G["adapter checker"]
+    C -->|"get_config"| H["config loader"]
+
+    D --> I{"action type"}
+    I -->|"check / scan / orphan / role / naming / import / quality / external"| J["linter aggregates"]
+    I -->|"fix / ci / doctor / security / init / install / hooks"| K["operation aggregates"]
+
+    J --> L["JSON Response"]
+    K --> L
+    E --> L
+    F --> L
+    G --> L
+    H --> L
+
+    L --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style C fill:#fff3e0,stroke:#e65100
+    style L fill:#f3e5f5,stroke:#7b1fa2
+```
+
 The mcp-server crate implements a Model Context Protocol (MCP) server that exposes the lint-arwaky pipeline as JSON-RPC tools for AI agents and IDEs.
 
 **Product policy (locked):**

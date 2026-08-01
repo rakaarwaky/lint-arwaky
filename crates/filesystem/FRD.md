@@ -100,7 +100,7 @@ IFilesystemAggregate trait (granular accessors, return references):
 
 - **Description**: Walk project directory tree using `ignore` crate (gitignore-aware, parallel walk). Produce a flat list of source files filtered by extension. Read file contents into memory.
 - **Input**: Root path, ignored paths (from config), allowed extensions (from config).
-- **Output**: `Vec<FileEntry>` — path, content, extension, language.
+- **Output**: File data — path, content, extension, language.
 - **Business Rules**:
 
   - Uses `ignore::WalkBuilder` for parallel, gitignore-aware walking.
@@ -124,8 +124,8 @@ IFilesystemAggregate trait (granular accessors, return references):
 ### FR-002: AST Parsing
 
 - **Description**: Parse file contents into ASTs using tree-sitter. Parallel parsing via rayon. Enrich each `FileEntry` with parse metadata and `parse_ok` flag.
-- **Input**: `Vec<FileEntry>` from FR-001.
-- **Output**: `Vec<FileEntry>` enriched with parse metadata + `parse_ok` flag + list of `PARSE_WARN` diagnostics.
+- **Input**: File data from FR-001.
+- **Output**: File data enriched with parse metadata + parse_ok flag + list of parse warnings.
 - **Business Rules**:
 
   - Uses `tree-sitter` with language-specific grammars:
@@ -159,8 +159,8 @@ IFilesystemAggregate trait (granular accessors, return references):
 ### FR-003: Import/Dependency Extraction
 
 - **Description**: Extract import statements from ASTs. Normalize to absolute module paths. Produce a flat list of import entries.
-- **Input**: `Vec<FileEntry>` with parse metadata from FR-002.
-- **Output**: `Vec<ImportEntry>` — source file, target module path, imported symbols, import type, is_reexport, is_wildcard, resolved.
+- **Input**: File data with parse metadata from FR-002.
+- **Output**: Import data — source file, target module path, imported symbols, import type, reexport flag, wildcard flag, resolved flag.
 - **Business Rules**:
 
   - **Rust**: Extract `use` and `mod` statements from `ItemUse` / `ItemMod` parse metadata. Resolve `crate::`, `super::`, `self::` prefixes. Handle grouped imports (`use foo::{A, B}`), glob imports (`use foo::*`), and `pub use` re-exports. Handle `#[path = "..."]` attributes on `ItemMod`.
@@ -169,7 +169,7 @@ IFilesystemAggregate trait (granular accessors, return references):
   - Normalize relative paths (`./foo`, `../bar`) to workspace-root-relative module paths.
   - Handle barrel re-exports (`mod.rs`, `__init__.py`, `index.ts`) — resolve through barrel to original source file.
   - Skip external dependencies (crates.io packages, npm packages) — only internal workspace imports.
-  - **Conditional imports (`#[cfg(...)]`) are SKIPPED** — not extracted, not included in `Vec<ImportEntry>`.
+  - **Conditional imports (`#[cfg(...)]`) are SKIPPED** — not extracted, not included in import data.
   - Hyphen/underscore normalization: Rust crate names with hyphens (`lint-arwaky`) normalized to underscores (`lint_arwaky`) for module path resolution.
   - Build crate module index for cross-crate resolution.
 - **Edge Cases**:
@@ -186,13 +186,13 @@ IFilesystemAggregate trait (granular accessors, return references):
 ### FR-004: Dependency Graph and Map Construction
 
 - **Description**: Build a directed graph of file-to-file dependencies from extracted imports. Build reverse link index, definition map, and implementation map from parse metadata.
-- **Input**: `Vec<ImportEntry>` from FR-003, `Vec<FileEntry>` with parse metadata from FR-002.
+- **Input**: Import data from FR-003, file data with parse metadata from FR-002.
 - **Output**: `GraphData` containing:
 
   - `DiGraph` — petgraph `DiGraph<FileNode, ImportEdge>` (forward import graph).
-  - `ReverseLinkIndex` — `HashMap<PathBuf, Vec<PathBuf>>` (file → list of files that import it).
-  - `DefinitionMap` — `HashMap<SymbolName, PathBuf>` (trait/class/struct/interface name → defining file).
-  - `ImplMap` — `HashMap<SymbolName, Vec<PathBuf>>` (trait/interface name → list of implementor files).
+  - `ReverseLinkIndex` — reverse import map (file → list of files that import it).
+  - `DefinitionMap` — symbol definition map (trait/class/struct/interface name → defining file).
+  - `ImplMap` — trait implementation map (trait/interface name → list of implementor files).
 - **Business Rules**:
 
   - **DiGraph construction**:

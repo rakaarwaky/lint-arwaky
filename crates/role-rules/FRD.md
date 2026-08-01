@@ -6,7 +6,7 @@
 
 The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility) as defined by the 7-layer AES architecture. It receives pre-parsed file data from the external filesystem crate, classifies files by their filename prefix, and dispatches to 6 layer-specific role checkers (AES401–AES406). Root layer files are skipped (pure DI wiring only).
 
-File system operations handled by the external `filesystem` crate. The role-rules crate receives `Vec<File>` (path + content + language + parse metadata) from the filesystem crate , then classifies and delegates analysis to its internal checkers. The role-rules crate does not perform file I/O or AST parsing directly.
+File system operations handled by the external `filesystem` crate. The role-rules crate receives file data (path + content + language + parse metadata) from the filesystem crate , then classifies and delegates analysis to its internal checkers. The role-rules crate does not perform file I/O or AST parsing directly.
 
 Import checking is NOT performed by role-rules.All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES206). Role-rules only validates structural and responsibility constraints within each file.
 
@@ -61,7 +61,7 @@ flowchart TD
 ### FR-001: File Classification and Dispatch
 
 - **Description**: Classify each file received from the filesystem crate by its filename prefix to determine its AES layer, then dispatch to the appropriate layer-specific role checker.
-- **Input**: `Vec<File>` (path + content + language + parse metadata, from filesystem crate), architecture configuration.
+- **Input**: File data (path + content + language + parse metadata, from filesystem crate), architecture configuration.
 - **Output**: All violations found across all dispatched files.
 - **Business Rules**:
 
@@ -88,7 +88,7 @@ flowchart TD
   - Files matching multiple ignore patterns → excluded (any segment match suffices).
   - `capability_*` and `capabilities_*` both map to capabilities layer.
   - `surface_*` and `surfaces_*` both map to surface layer.
-- **Error Handling**: Files that could not be read or parsed by the filesystem crate are excluded from `Vec<File>` and never reach role-rules. No empty-content fallback.
+- **Error Handling**: Files that could not be read or parsed by the filesystem crate are excluded from the file list and never reach role-rules. No empty-content fallback.
 
 ---
 
@@ -300,7 +300,7 @@ flowchart TD
 ## Non-functional Requirements
 
 - **Performance**: Role checks operate on in-memory parse metadata. No I/O or parsing during check execution. File collection and parsing performed once by filesystem crate. Classification is O(1) per file (prefix match).
-- **Memory**: `Vec<FileEntry>` held in memory for duration of scan. Parse metadata is structured (typed structs), not raw strings. For 10,000 files, peak memory depends on filesystem crate's return strategy.
+- **Memory**: File data held in memory for duration of scan. Parse metadata is structured (typed structs), not raw strings. For 10,000 files, peak memory depends on filesystem crate's return strategy.
 - **Accuracy**: Zero false positives on correctly structured code. All detection uses AST parse metadata from the filesystem crate — no line-based or regex-based detection. Each AES rule has precisely defined skip rules and configurable thresholds.
 - **Language coverage**: Rust, Python, TypeScript, JavaScript all produce accurate violations via AST parse metadata provided by the filesystem crate.
 - **Configurability**: All thresholds, ignore paths, enable/disable toggles, surface classification suffixes, and layer-specific exceptions are config-driven via YAML. No hardcoded thresholds.
@@ -417,7 +417,7 @@ flowchart TD
 - Language detection is based on file extension, performed by the filesystem crate.
 - All detection uses AST parse metadata from the filesystem crate. No line-based or regex-based detection in the final implementation.
 - Import checking is NOT performed by role-rules. All import validation is handled by the import-rules crate (AES201–AES206).
-- The crate receives `Vec<FileEntry>` (path + content + language + parse metadata) from the external filesystem crate. No file I/O or AST parsing is performed internally.
+- The crate receives file data (path + content + language + parse metadata) from the external filesystem crate. No file I/O or AST parsing is performed internally.
 - Files that cannot be read or parsed by the filesystem crate are excluded from the returned list and never reach role-rules.
 - All thresholds are configurable via YAML. Default values apply when config values are absent.
 
@@ -436,7 +436,7 @@ flowchart TD
 | **Primitive type**   | Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures                                                    |
 | **VO**               | Value Object — a typed wrapper around a primitive that replaces raw types in signatures                                               |
 | **Parse metadata**   | Structured AST-derived data (type declarations, impl blocks, method signatures, function definitions) provided by the filesystem crate |
-| **Filesystem crate** | External crate that handles file walking, reading, AST parsing. Returns`Vec<FileEntry>` to role-rules.                                 |
+| **Filesystem crate** | External crate that handles file walking, reading, AST parsing. Returns file data to role-rules.                                 |
 | **Segment matching** | Path matching by splitting on`/` and comparing individual segments (not substring containment)                                         |
 
 ---

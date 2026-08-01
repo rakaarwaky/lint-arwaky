@@ -95,7 +95,7 @@ flowchart TD
                        imported BY capabilities, agent, surface
   ```
 
-  **Rationale**: Agent does not import capabilities because agent receives capabilities via DI (`Arc<dyn Trait>`). Surface does not import agent because surface receives orchestrator via DI from contract aggregate. Utility does not require contract and remains flexible.
+  **Rationale**: Agent does not import capabilities because agent receives capabilities via DI (trait objects). Surface does not import agent because surface receives orchestrator via DI from contract aggregate. Utility does not require contract and remains flexible.
 - **Per-Scope Rules**
 
 
@@ -137,7 +137,7 @@ flowchart TD
 
   - Target layer in `allowed` → **pass**.
   - Target layer in `forbidden` → **AES201 CRITICAL**.
-- **Import extraction**: Performed by the filesystem crate via full AST parsing. import-rules receives `Vec<ImportEntry>` with pre-extracted import data.
+- **Import extraction**: Performed by the filesystem crate via full AST parsing. import-rules receives pre-extracted import data.
 
   - Rust: `ItemUse` nodes via `syn` — handles `use`, `pub use`, `pub(crate) use`, grouped imports `use foo::{A, B}`, glob imports `use foo::*`, and multi-line imports.
   - Python: `from X import Y` and `import X` via full AST parser.
@@ -347,7 +347,7 @@ flowchart TD
   - AST parsing eliminates false positives from: matches inside comments, matches inside string literals, multi-line statement fragmentation, and dynamic regex failures.
   - AES203 accuracy: AST-based usage tracking eliminates hardcoded whitelists and heuristics.
   - Known limitation: macro-generated code (see FR-009). Macro body exemption is the only accepted source of potential false negatives.
-- **Concurrency**: Thread-safe via `Arc<dyn Trait>` shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. No async runtime dependency.
+- **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. No async runtime dependency.
 
 ---
 
@@ -471,7 +471,7 @@ flowchart TD
 | **Dependency edge**  | A directed edge in the layer dependency graph (e.g.,`capabilities → contract`)                                                                       |
 | **ResolvedImport**   | VO carrying the result of barrel file resolution (original module, resolved file, resolved layer)                                                     |
 | **Grey area**        | Import target that is neither in`allowed` nor `forbidden` list — produces WARNING, not CRITICAL                                                      |
-| **AES-DI**           | AES Dependency Injection model — layers import from contract, receive dependencies via`Arc<dyn Trait>`                                               |
+| **AES-DI**           | AES Dependency Injection model — layers import from contract, receive dependencies via trait objects                                               |
 
 ---
 

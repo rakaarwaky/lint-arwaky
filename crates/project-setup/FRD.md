@@ -2,6 +2,39 @@
 
 ## System Overview
 
+
+### Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A["Surface"] -->|input| B["setup orchestrator"]
+    B --> C{"action"}
+
+    C -->|"init"| D["config generator"]
+    C -->|"install"| E["adapter installer"]
+    C -->|"doctor"| F["tool checker"]
+    C -->|"mcp-config"| G["mcp config builder"]
+    C -->|"config-show"| H["config reader"]
+
+    D --> I["Config Files"]
+    E --> J["pip / npm"]
+    J --> K["Success / Error"]
+    F --> L["Tool Status"]
+    G --> M["MCP JSON"]
+    H --> N["Config Content"]
+
+    I --> B
+    K --> B
+    L --> B
+    M --> B
+    N --> B
+    B -->|output| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style C fill:#fff3e0,stroke:#e65100
+    style I fill:#f3e5f5,stroke:#7b1fa2
+```
+
 The project-setup crate provides scaffolding facilities, doctor checks, and adapter installation for new and existing projects. It detects project languages (Rust, Python, JavaScript), generates MCP configuration for different AI clients (Claude, Hermes, VS Code), creates `.env` files, installs linter adapters via pip/npm, loads language-specific config templates, and manages XDG config directories. The crate follows the AES 7-layer architecture: the setup management processor (capabilities) implements the setup management protocol, the setup management orchestrator (agent) delegates to the protocol, and the setup container (root) wires dependencies.
 
 ## Functional Requirements

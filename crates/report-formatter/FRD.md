@@ -2,27 +2,6 @@
 
 ## System Overview
 
-```
-┌───────────────────────────────────────────────────────┐
-│                    Surface Layer                       │
-│  cli-commands calls report formatter aggregate         │
-├───────────────────────────────────────────────────────┤
-│                    Agent Layer                         │
-│  report formatter orchestrator                         │
-│  (routes formatting by format type)                    │
-├───────────────────────────────────────────────────────┤
-│                  Capabilities Layer                    │
-│  text formatter (Text)                                │
-│  JSON formatter (JSON)                                │
-│  SARIF 2.1.0 formatter (SARIF)                        │
-│  JUnit XML formatter (JUnit)                          │
-├───────────────────────────────────────────────────────┤
-│                   Utility Layer                        │
-│  default text report fallback                          │
-└───────────────────────────────────────────────────────┘
-```
-
-
 ### Architecture & Data Flow
 
 ```mermaid
