@@ -2,18 +2,17 @@ use shared::common::{AdapterName, ErrorMessage};
 
 use shared::common::{ComplianceStatus, DescriptionVO, FilePath, FilePathList};
 use shared::common::{Count, Score};
-
 // PURPOSE: MaintenanceChecker — business logic capabilities for running audits and checking toolchains
 //
 // Implements IMaintenanceCheckerProtocol with health-check operations:
 //
-//   1. diagnose_toolchain: checks for installation of Rust, Python, JS, VCS tools.
-//   2. run_security_scan: runs cargo-audit or bandit depending on project type.
-//   3. run_dependency_report: parses lock files to list dependencies.
-//   4. stats: count Python files and test files, compute ratio.
-//   5. clean: remove cache directories.
-//   6. update: upgrade pip packages.
-//   7. doctor: check tool installations and config presence.
+//   1. doctor: check tool installations, config presence, language versions.
+//   2. diagnose_toolchain: checks for installation of Rust, Python, JS, VCS tools.
+//   3. run_security_scan: runs cargo-audit, bandit, or npm audit depending on project type.
+//   4. run_dependency_report: parses lock files to list dependencies.
+//   5. stats: count source files and test files across all languages, compute ratio.
+//   6. clean: remove cache directories.
+//   7. update: upgrade linter tools via pip/npm.
 
 use shared::common::utility_command_runner as proc_io;
 use shared::maintenance::IMaintenanceCheckerProtocol;
@@ -53,12 +52,15 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         };
 
-        let mut rust_tools = vec![check_tool("cargo", &["--version"], true)];
+        // FR-005: Rust tools — all required
+        let mut rust_tools = vec![check_tool("rustc", &["--version"], true)];
+        rust_tools.push(check_tool("cargo", &["--version"], true)];
         let mut clippy_status = check_tool("cargo", &["clippy", "--version"], true);
         clippy_status.name = "clippy".to_string();
         rust_tools.push(clippy_status);
         rust_tools.push(check_tool("rustfmt", &["--version"], true));
 
+        // FR-005: Python tools — all optional
         let python_tools = vec![
             check_tool("python3", &["--version"], false),
             check_tool("ruff", &["--version"], false),
@@ -66,6 +68,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             check_tool("bandit", &["--version"], false),
         ];
 
+        // FR-005: JS tools — all optional; local node_modules/.bin/ preferred
         let mut js_tools = vec![check_tool("node", &["--version"], false)];
         let eslint_local = "node_modules/.bin/eslint";
         let eslint_status = if shared::filesystem::utility_filesystem_io::is_file(eslint_local) {
@@ -82,8 +85,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(eslint_status);
 
         let prettier_local = "node_modules/.bin/prettier";
-        let prettier_status = if shared::filesystem::utility_filesystem_io::is_file(prettier_local)
-        {
+        let prettier_status = if shared::filesystem::utility_filesystem_io::is_file(prettier_local) {
             ToolStatus {
                 name: "prettier (local)".to_string(),
                 status: "OK".to_string(),
@@ -110,6 +112,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         };
         js_tools.push(tsc_status);
 
+        // FR-005: VCS tools — git required
         let vcs_tools = vec![check_tool("git", &["--version"], true)];
 
         let binary_path = match std::env::current_exe() {
@@ -129,7 +132,20 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
     async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
         let root = &project_path.value;
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
+        let package_json = std::path::Path::new(root).join("package.json");
+
+        // FR-006: Language detection — Cargo.lock → Rust, package.json → JS/TS, else Python
         if cargo_lock.exists() {
+            // FR-006: Rust — cargo audit
+            let tool_available = proc_io::run_command("cargo", &["audit", "--version"]).2;
+            if !tool_available {
+                return SecurityScanReport {
+                    language: "Rust".to_string(),
+                    tool_name: "cargo-audit".to_string(),
+                    findings: Vec::new(),
+                    tool_installed: false,
+                };
+            }
             let (s, _, _) = dep_io::run_external_command_in("cargo", &["audit", "--json"], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
@@ -174,7 +190,71 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 findings,
                 tool_installed: true,
             }
+        } else if package_json.exists() {
+            // FR-006: JS/TS — npm audit
+            let tool_available = proc_io::run_command("npm", &["--version"]).2;
+            if !tool_available {
+                return SecurityScanReport {
+                    language: "JavaScript".to_string(),
+                    tool_name: "npm-audit".to_string(),
+                    findings: Vec::new(),
+                    tool_installed: false,
+                };
+            }
+            let (s, _, _) = dep_io::run_external_command_in("npm", &["audit", "--json"], root);
+            let mut findings = Vec::new();
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
+                && let Some(vulns) = json.get("vulnerabilities")
+            {
+                if let Some(obj) = vulns.as_object() {
+                    for (name, detail) in obj {
+                        let severity = detail
+                            .get("severity")
+                            .and_then(|s| s.as_str())
+                            .unwrap_or("unknown")
+                            .to_string();
+                        let via = detail.get("via").and_then(|v| v.as_array());
+                        let issue = match via {
+                            Some(arr) if !arr.is_empty() => {
+                                if let Some(v) = arr.first() {
+                                    if let Some(title) = v.get("title").and_then(|t| t.as_str()) {
+                                        title.to_string()
+                                    } else {
+                                        "Advisory vulnerability".to_string()
+                                    }
+                                } else {
+                                    "Advisory vulnerability".to_string()
+                                }
+                            }
+                            _ => "Transitive vulnerability".to_string(),
+                        };
+                        findings.push(SecurityFinding {
+                            severity,
+                            test_id: "npm-advisory".to_string(),
+                            file: name.clone(),
+                            line: 0,
+                            issue,
+                        });
+                    }
+                }
+            }
+            SecurityScanReport {
+                language: "JavaScript".to_string(),
+                tool_name: "npm-audit".to_string(),
+                findings,
+                tool_installed: true,
+            }
         } else {
+            // FR-006: Python — bandit
+            let tool_available = proc_io::run_command("bandit", &["--version"]).2;
+            if !tool_available {
+                return SecurityScanReport {
+                    language: "Python".to_string(),
+                    tool_name: "bandit".to_string(),
+                    findings: Vec::new(),
+                    tool_installed: false,
+                };
+            }
             let (s, _, _) =
                 dep_io::run_external_command_in("bandit", &["-r", "--format", "json", root], root);
             let mut findings = Vec::new();
@@ -226,7 +306,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
     ) -> Result<DependencyReport, String> {
         let root = &project_path.value;
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
+        let package_json = std::path::Path::new(root).join("package.json");
+
         if cargo_lock.exists() {
+            // FR-007: Rust — Cargo.lock + Cargo.toml
             let content = dep_io::read_dependency_file(&cargo_lock).map_err(|e| e.to_string())?;
             let mut in_package = false;
             let mut pkg_name = String::new();
@@ -299,9 +382,45 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 language: "Rust".to_string(),
                 dependencies,
             })
+        } else if package_json.exists() {
+            // FR-007: JS/TS — package.json (dependencies + devDependencies)
+            let content =
+                dep_io::read_dependency_file(&package_json).map_err(|e| e.to_string())?;
+            let json: serde_json::Value =
+                serde_json::from_str(&content).map_err(|e| e.to_string())?;
+            let mut dependencies = Vec::new();
+
+            // Direct dependencies
+            if let Some(deps) = json.get("dependencies").and_then(|d| d.as_object()) {
+                for (name, ver) in deps {
+                    let version = ver.as_str().unwrap_or("").to_string();
+                    dependencies.push(DependencyInfo {
+                        name: name.clone(),
+                        version,
+                        dep_type: "direct".to_string(),
+                    });
+                }
+            }
+            // Dev dependencies
+            if let Some(dev_deps) = json.get("devDependencies").and_then(|d| d.as_object()) {
+                for (name, ver) in dev_deps {
+                    let version = ver.as_str().unwrap_or("").to_string();
+                    dependencies.push(DependencyInfo {
+                        name: name.clone(),
+                        version,
+                        dep_type: "direct".to_string(),
+                    });
+                }
+            }
+
+            Ok(DependencyReport {
+                language: "JavaScript".to_string(),
+                dependencies,
+            })
         } else {
             let pyproject = std::path::Path::new(root).join("pyproject.toml");
             if pyproject.exists() {
+                // FR-007: Python — pyproject.toml
                 let content =
                     dep_io::read_dependency_file(&pyproject).map_err(|e| e.to_string())?;
                 let mut dependencies = Vec::new();
@@ -332,12 +451,15 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             } else {
                 let reqs = std::path::Path::new(root).join("requirements.txt");
                 if reqs.exists() {
-                    let content = dep_io::read_dependency_file(&reqs).map_err(|e| e.to_string())?;
+                    // FR-007: Python — requirements.txt (fallback)
+                    let content =
+                        dep_io::read_dependency_file(&reqs).map_err(|e| e.to_string())?;
                     let mut dependencies = Vec::new();
                     for line in content.lines() {
                         let t = line.trim();
                         if !t.is_empty() && !t.starts_with('#') {
-                            let parts: Vec<&str> = t.splitn(2, ['=', '>', '<', '~']).collect();
+                            let parts: Vec<&str> =
+                                t.splitn(2, ['=', '>', '<', '~']).collect();
                             let name = parts[0].trim().to_string();
                             let version = if parts.len() > 1 {
                                 parts[1].trim_start_matches('=').trim().to_string()
@@ -357,7 +479,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     })
                 } else {
                     Err(
-                        "No dependency files found (Cargo.lock, pyproject.toml, requirements.txt)"
+                        "No dependency files found (Cargo.lock, package.json, pyproject.toml, requirements.txt)"
                             .to_string(),
                     )
                 }
@@ -367,41 +489,76 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
     async fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
         let root = std::path::Path::new(&project_path.value);
+        let mut all_files = Vec::new();
         let mut py_files = Vec::new();
-        Self::walk_dir(root, &mut py_files);
+        let mut rs_files = Vec::new();
+        let mut js_files = Vec::new();
+        Self::walk_dir(root, &mut all_files, &mut py_files, &mut rs_files, &mut js_files);
+
+        let total_count = all_files.len() as i64;
         let py_count = py_files.len() as i64;
-        let test_count = py_files
-            .iter()
-            .filter(|f| {
-                f.file_name()
-                    .map(|n| n.to_string_lossy().starts_with("test_"))
-                    .unwrap_or_default()
-            })
-            .count() as i64;
-        let ratio = if py_count > 0 {
-            test_count as f64 / py_count as f64
+        let rs_count = rs_files.len() as i64;
+        let js_count = js_files.len() as i64;
+
+        // FR-002: Test file detection per language
+        let test_count = {
+            let mut count = 0i64;
+            // Rust tests: *_test.rs, test_*.rs, files inside tests/
+            for f in &rs_files {
+                let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let parent = f.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()).unwrap_or("");
+                if name.starts_with("test_") || name.ends_with("_test.rs") || parent == "tests" {
+                    count += 1;
+                }
+            }
+            // Python tests: test_*.py, *_test.py, files inside tests/
+            for f in &py_files {
+                let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let parent = f.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()).unwrap_or("");
+                if name.starts_with("test_") || name.ends_with("_test.py") || parent == "tests" {
+                    count += 1;
+                }
+            }
+            // JS/TS tests: *.test.*, *.spec.*, files inside tests/ or __tests__/
+            for f in &js_files {
+                let name = f.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let parent = f.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()).unwrap_or("");
+                if name.contains(".test.") || name.contains(".spec.") || parent == "tests" || parent == "__tests__" {
+                    count += 1;
+                }
+            }
+            count
+        };
+
+        let ratio = if total_count > 0 {
+            test_count as f64 / total_count as f64
         } else {
             0.0
         };
 
         MaintenanceStatsVO {
             project_path: project_path.clone(),
-            total_files: Count::new(py_count),
+            total_files: Count::new(total_count),
             test_files: Count::new(test_count),
             test_ratio: Score::new(ratio),
             python_files: Count::new(py_count),
+            rust_files: Count::new(rs_count),
+            js_files: Count::new(js_count),
         }
     }
 
     async fn clean(&self) {
         let cwd = std::env::current_dir().ok();
         if let Some(cwd) = cwd {
+            // FR-003: Cache targets including .eslintcache, .tsc-cache
             let cache_dirs = [
                 ".pytest_cache",
                 ".mypy_cache",
                 ".ruff_cache",
                 "__pycache__",
                 ".lint_arwaky_cache",
+                ".eslintcache",
+                ".tsc-cache",
             ];
             let mut found_dirs = Vec::new();
             Self::find_cache_dirs(&cwd, &cache_dirs, &mut found_dirs);
@@ -412,12 +569,22 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
     }
 
     async fn update(&self) {
-        let adapters = ["ruff", "mypy", "bandit", "radon"];
-        for adapter in &adapters {
+        // FR-004: Python tools — pip upgrade
+        let python_tools = ["ruff", "mypy", "bandit"];
+        for tool in &python_tools {
             let _ = std::process::Command::new("pip")
-                .args(["install", "--upgrade", adapter])
+                .args(["install", "--upgrade", tool])
                 .output();
         }
+        // FR-004: JS/TS tools — npm global upgrade
+        let js_tools = ["eslint", "prettier", "typescript"];
+        for tool in &js_tools {
+            let _ = std::process::Command::new("npm")
+                .args(["install", "-g", tool])
+                .output();
+        }
+        // FR-004: Rust tools — print suggestion
+        eprintln!("Run `rustup update` to update Rust tools");
     }
 
     async fn doctor(&self) -> DoctorResultVO {
@@ -425,7 +592,31 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let mut adapter_statuses: std::collections::HashMap<AdapterName, String> =
             std::collections::HashMap::new();
 
-        let py_ver = DescriptionVO::new("3.12");
+        // FR-001: Language runtime versions
+        let py_ver = {
+            let (stdout, _, success) = proc_io::run_command("python3", &["--version"]);
+            if success {
+                stdout.lines().next().unwrap_or("unknown").trim().to_string()
+            } else {
+                "not installed".to_string()
+            }
+        };
+        let rust_ver = {
+            let (stdout, _, success) = proc_io::run_command("rustc", &["--version"]);
+            if success {
+                stdout.lines().next().unwrap_or("unknown").trim().to_string()
+            } else {
+                "not installed".to_string()
+            }
+        };
+        let node_ver = {
+            let (stdout, _, success) = proc_io::run_command("node", &["--version"]);
+            if success {
+                stdout.lines().next().unwrap_or("unknown").trim().to_string()
+            } else {
+                "not installed".to_string()
+            }
+        };
 
         let is_installed = match std::process::Command::new("pip")
             .args(["show", "lint-arwaky"])
@@ -435,11 +626,16 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             Err(_) => false,
         };
 
+        // FR-001: Config files — 7 per FRD
         let mut config_found_paths = Vec::new();
         for cfg in &[
-            ".lint_arwaky.json",
-            "lint_arwaky.config.yaml",
+            "lint_arwaky.config.rust.yaml",
+            "lint_arwaky.config.python.yaml",
+            "lint_arwaky.config.typescript.yaml",
+            "lint_arwaky.config.javascript.yaml",
             "pyproject.toml",
+            "Cargo.toml",
+            "package.json",
         ] {
             if std::path::Path::new(cfg).exists()
                 && let Ok(fp) = FilePath::new(cfg.to_string())
@@ -452,7 +648,11 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             issues.push(ErrorMessage::new("No configuration file found"));
         }
 
-        for adapter in &["ruff", "mypy", "bandit", "radon"] {
+        // FR-001: 9 adapters
+        for adapter in &[
+            "clippy", "rustfmt", "cargo-audit", "ruff", "mypy", "bandit", "eslint", "prettier",
+            "tsc",
+        ] {
             let found = match std::process::Command::new("which").arg(adapter).output() {
                 Ok(o) => o.status.success(),
                 Err(_) => false,
@@ -478,7 +678,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let healthy = ComplianceStatus::new(issues.is_empty());
 
         DoctorResultVO {
-            python_version: py_ver,
+            python_version: DescriptionVO::new(&py_ver),
+            rust_version: DescriptionVO::new(&rust_ver),
+            node_version: DescriptionVO::new(&node_ver),
             is_installed: ComplianceStatus::new(is_installed),
             config_found,
             adapter_statuses,
@@ -495,7 +697,15 @@ impl MaintenanceChecker {
         Self
     }
 
-    fn walk_dir(dir: &std::path::Path, py_files: &mut Vec<std::path::PathBuf>) {
+    /// Walk directory tree, collecting all source files and per-language files.
+    /// FR-002: Excludes target/, .git/, node_modules/, .venv/, __pycache__/, dist/, build/
+    fn walk_dir(
+        dir: &std::path::Path,
+        all_files: &mut Vec<std::path::PathBuf>,
+        py_files: &mut Vec<std::path::PathBuf>,
+        rs_files: &mut Vec<std::path::PathBuf>,
+        js_files: &mut Vec<std::path::PathBuf>,
+    ) {
         if let Ok(entries) = std::fs::read_dir(dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
@@ -508,12 +718,29 @@ impl MaintenanceChecker {
                         && name != ".git"
                         && name != "node_modules"
                         && name != ".venv"
+                        && name != "__pycache__"
+                        && name != "dist"
+                        && name != "build"
                     {
-                        Self::walk_dir(&path, py_files);
+                        Self::walk_dir(&path, all_files, py_files, rs_files, js_files);
                     }
-                } else if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("py")
-                {
-                    py_files.push(path);
+                } else if path.is_file() {
+                    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                    match ext {
+                        "py" => {
+                            all_files.push(path.clone());
+                            py_files.push(path);
+                        }
+                        "rs" => {
+                            all_files.push(path.clone());
+                            rs_files.push(path);
+                        }
+                        "js" | "jsx" | "ts" | "tsx" => {
+                            all_files.push(path.clone());
+                            js_files.push(path);
+                        }
+                        _ => {}
+                    }
                 }
             }
         }

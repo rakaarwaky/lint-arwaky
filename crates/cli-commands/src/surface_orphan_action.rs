@@ -1,6 +1,6 @@
 use crate::surface_common_action;
 use crate::surface_output_component::{ViolationItem, output_violations};
-use crate::utility_path_resolver::is_member_path;
+use shared::cli_commands::utility_path_resolver::is_member_path;
 use shared::cli_commands::Format;
 use shared::common::{ExitCode, FilePath};
 
@@ -168,7 +168,7 @@ fn scan_single_root(
     filter: &Option<String>,
 ) -> ExitCode {
     let scan_root = crate::surface_common_action::resolve_file_path(root);
-    let lang = crate::utility_path_resolver::detect_language_from_path(root);
+    let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
     let orphan_analyzer =
         orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
