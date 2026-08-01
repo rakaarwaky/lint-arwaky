@@ -17,18 +17,18 @@ metadata:
     - create-taxonomy-typescript
     - create-contract-typescript
 ---
-
 # create-surface-typescript
 
 Surface = entry points and UI adapters. No business logic. Delegate to aggregates. File: `surface_<domain>_<role>.ts`.
 
 ## Three Types (AES406)
 
-| Type | Suffixes | Imports | Forbidden |
-| --- | --- | --- | --- |
-| Smart | `_command`, `_controller`, `_page`, `_entry` | taxonomy + `contract_*_aggregate` | capabilities, concrete agents |
-| Utility | `_hook`, `_store`, `_action`, `_screen` | taxonomy + passive surfaces | smart surfaces, capabilities, agents |
-| Passive | `_component`, `_view`, `_layout` | taxonomy only | all other layers |
+
+| Type    | Suffixes                                     | Imports                          | Forbidden                            |
+| --------- | ---------------------------------------------- | ---------------------------------- | -------------------------------------- |
+| Smart   | `_command`, `_controller`, `_page`, `_entry` | taxonomy +`contract_*_aggregate` | capabilities, concrete agents        |
+| Utility | `_hook`, `_store`, `_action`, `_screen`      | taxonomy + passive surfaces      | smart surfaces, capabilities, agents |
+| Passive | `_component`, `_view`, `_layout`             | taxonomy only                    | all other layers                     |
 
 ## Rules
 
@@ -45,10 +45,19 @@ Extract to taxonomy utility only if ALL: no `this`, pure, domain-agnostic, reusa
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/surface_name_command.ts` | Smart surface |
-| `templates/surface_name_component.ts` | Passive surface |
+```typescript
+import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
+import { I<Name>Aggregate } from '../shared/<domain>/contract_<name>_aggregate';
+
+export class Surface<Name> {
+    constructor(private readonly aggregate: I<Name>Aggregate) {}
+
+    handle(event: TuiEvent): Result<UiState, SurfaceError> {
+        // orchestration only
+        return Ok(UiState.idle());
+    }
+}
+```
 
 ## Workflow
 
@@ -59,12 +68,12 @@ Extract to taxonomy utility only if ALL: no `this`, pure, domain-agnostic, reusa
 
 ## Checklist
 
-- [ ] Correct suffix for surface type.
-- [ ] Smart: only taxonomy + `contract_*_aggregate` imports.
-- [ ] Utility: only taxonomy + passive surface imports.
-- [ ] Passive: only taxonomy imports.
-- [ ] Smart delegates to aggregate via injected interface.
-- [ ] Zero business logic and computation.
-- [ ] No silent error discarding.
-- [ ] All state fields use shared VOs.
-- [ ] `npx tsc --noEmit` passes.
+- [ ]  Correct suffix for surface type.
+- [ ]  Smart: only taxonomy + `contract_*_aggregate` imports.
+- [ ]  Utility: only taxonomy + passive surface imports.
+- [ ]  Passive: only taxonomy imports.
+- [ ]  Smart delegates to aggregate via injected interface.
+- [ ]  Zero business logic and computation.
+- [ ]  No silent error discarding.
+- [ ]  All state fields use shared VOs.
+- [ ]  `npx tsc --noEmit` passes.

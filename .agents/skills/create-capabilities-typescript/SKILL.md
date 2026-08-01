@@ -54,12 +54,44 @@ Extract to utility only if ALL: no `this`, pure, no side effects, domain-agnosti
 
 ## Templates
 
+### 3-block implementation
 
-| File                                  | Purpose                |
-| --------------------------------------- | ------------------------ |
-| `templates/capabilities_name.ts`      | 3-block implementation |
-| `templates/contract_name_protocol.ts` | Protocol interface     |
+```typescript
+import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
+import { I<Name>Protocol } from '../shared/<domain>/contract_<name>_protocol';
 
+// ─── Block 1: Class Definition & Constructor ──────────────
+export class Capabilities<Name> implements I<Name>Protocol {
+    constructor(/* DI params */) {
+        // DI fields use protocol interfaces
+        // Value fields use shared VOs
+    }
+
+    // ─── Block 2: Public Contract (domain protocol ONLY) ──
+    methodName(param: <VO>): void {
+        // domain behavior
+    }
+
+    // ─── Block 3: Utility Methods, Factories & Helpers ────
+    toString(): string {
+        return 'Capabilities<Name>()';
+    }
+
+    static create(): Capabilities<Name> {
+        return new Capabilities<Name>();
+    }
+}
+```
+
+### Protocol interface
+
+```typescript
+import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
+
+export interface I<Name>Protocol {
+    methodName(param: <VO>): void;
+}
+```
 ## Workflow
 
 1. Confirm implements protocol behavior (not orchestration/data/mechanics).

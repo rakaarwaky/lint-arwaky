@@ -969,7 +969,11 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             .iter()
             .map(std::path::Path::new)
             .find(|p| p.exists())
-            .and_then(|p| filesystem::FilesystemOrchestrator::new().read_to_string(p).ok());
+            .and_then(|p| {
+                filesystem::FilesystemOrchestrator::new()
+                    .read_to_string(p)
+                    .ok()
+            });
         let content = match content {
             Some(c) => c,
             None => {

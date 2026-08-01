@@ -33,7 +33,7 @@ log/
 mimocode.jsonc
 .qwen
 .worktree/
-# Sensitive files (CRED007a)
 credentials.json
 serviceAccountKey
 .zed/settings.json
+.archive/

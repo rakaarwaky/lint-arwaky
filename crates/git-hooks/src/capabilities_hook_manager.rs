@@ -2,9 +2,9 @@ use shared::common::{DescriptionVO, FilePath, SuccessStatus};
 
 use shared::git_hooks::{IHookManagerProtocol, IHookProtocol};
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::GitHookError;
 use shared::git_hooks::{GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO};
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 // PURPOSE: HookManager — implements IHookProtocol for git hook management (capabilities layer)
@@ -38,7 +38,10 @@ impl IHookProtocol for HookManager {
 
     async fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
-        if self.filesystem.path_exists(&std::path::Path::new(&config_file)) {
+        if self
+            .filesystem
+            .path_exists(&std::path::Path::new(&config_file))
+        {
             return DescriptionVO::new(format!("ALREADY_EXISTS:{}", config_file));
         }
         DescriptionVO::new(format!("Initialized {}", config_file))
@@ -188,8 +191,16 @@ impl HookManager {
         if path1 == path2 {
             return Ok(0.0);
         }
-        let bytes1 = self.filesystem.read_to_string(std::path::Path::new(path1)).map(|s| s.into_bytes()).unwrap_or_default();
-        let bytes2 = self.filesystem.read_to_string(std::path::Path::new(path2)).map(|s| s.into_bytes()).unwrap_or_default();
+        let bytes1 = self
+            .filesystem
+            .read_to_string(std::path::Path::new(path1))
+            .map(|s| s.into_bytes())
+            .unwrap_or_default();
+        let bytes2 = self
+            .filesystem
+            .read_to_string(std::path::Path::new(path2))
+            .map(|s| s.into_bytes())
+            .unwrap_or_default();
         let max_size = bytes1.len().max(bytes2.len());
         if max_size == 0 {
             return Ok(0.0); // both empty

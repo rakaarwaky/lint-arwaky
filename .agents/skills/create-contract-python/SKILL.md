@@ -46,10 +46,29 @@ Naming: `I<Name>Protocol`, `I<Name>Aggregate`.
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/contract_name_protocol.py` | Protocol ABC |
-| `templates/contract_name_aggregate.py` | Aggregate ABC |
+### Protocol ABC
+
+```python
+from abc import ABC, abstractmethod
+from shared.<domain>.taxonomy_<name>_vo import <VO>
+
+
+class I<Name>Protocol(ABC):
+    @abstractmethod
+    def method_name(self, param: <VO>) -> None: ...
+```
+
+### Aggregate ABC
+
+```python
+from abc import ABC, abstractmethod
+from shared.<domain>.taxonomy_<name>_vo import <VO>
+
+
+class I<Name>Aggregate(ABC):
+    @abstractmethod
+    def execute(self, request: ScanRequest) -> list[LintResult]: ...
+```
 
 ## Workflow
 

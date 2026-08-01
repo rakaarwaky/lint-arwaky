@@ -54,19 +54,52 @@ Extract to utility only if ALL: no `self`, pure, no side effects, domain-agnosti
 
 ## Templates
 
+```rust
+use std::sync::Arc;
 
-| File                                  | Purpose                |
-| --------------------------------------- | ------------------------ |
-| `templates/capabilities_name.rs`      | 3-block implementation |
-| `templates/contract_name_protocol.rs` | Protocol trait         |
-| `templates/mod.rs`                    | Module registration    |
+use shared::<name-feature>::taxonomy_<name-policy>_vo::<NamePolicy>VO;
+use shared::<name-feature>::contract_<name-store>_protocol::I<NameStore>Protocol;
+use shared::<name-feature>::contract_<name-collaborator>_protocol::I<NameCollaborator>Protocol;
+use shared::<name-feature>::contract_<name-capability>_protocol::I<NameCapability>Protocol;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+pub struct Capabilities<NameCapability> {
+    collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+    store: Arc<dyn I<NameStore>Protocol>,
+    policy: <NamePolicy>VO,
+}
+
+// ─── Block 2: Public Contract (domain protocol ONLY) ──────
+impl I<NameCapability>Protocol for Capabilities<NameCapability> {
+    fn execute(&self, input: &<DomainVO>) -> Vec<<ResultVO>> {
+        let mut results = Vec::new();
+        // domain logic using injected dependencies
+        results
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Capabilities<NameCapability> {
+    pub fn new(
+        collaborator: Arc<dyn I<NameCollaborator>Protocol>,
+        store: Arc<dyn I<NameStore>Protocol>,
+        policy: <NamePolicy>VO,
+    ) -> Self {
+        Self {
+            collaborator,
+            store,
+            policy,
+        }
+    }
+}
+```
 
 ## Workflow
 
 1. Confirm implements protocol behavior (not orchestration/data/mechanics).
 2. File `use shared::..._protocol::I<Name>` — if missing → flag `CapabilityNoProtocol`.
 3. Create `contract_<name>_protocol.rs` if missing.
-4. Enforce 3-Block.
+4. Enforce 3-Block. with explicit `// Block 1:` `// Block 2: ``// Block 3:` comments
 5. AES403: ≥1 trait implementor, ≤3 types, `Arc<dyn Trait>` for DI, shared VOs.
 6. No forbidden imports, no inter-capability deps, no local domain models.
 7. `cargo check -p <crate-name>`.

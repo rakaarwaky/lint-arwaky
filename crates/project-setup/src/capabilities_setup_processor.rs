@@ -211,10 +211,10 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
 
     fn get_config_template(&self, language: &str) -> &'static str {
         match language {
-            "rust" => include_str!("../config/lint_arwaky.config.rust.yaml"),
-            "python" => include_str!("../config/lint_arwaky.config.python.yaml"),
-            "javascript" => include_str!("../config/lint_arwaky.config.javascript.yaml"),
-            _ => include_str!("../config/lint_arwaky.config.rust.yaml"),
+            "rust" => include_str!("../../shared/config/lint_arwaky.config.rust.yaml"),
+            "python" => include_str!("../../shared/config/lint_arwaky.config.python.yaml"),
+            "javascript" => include_str!("../../shared/config/lint_arwaky.config.javascript.yaml"),
+            _ => include_str!("../../shared/config/lint_arwaky.config.rust.yaml"),
         }
     }
 

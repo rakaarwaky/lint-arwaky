@@ -18,7 +18,6 @@ metadata:
     - create-agent-typescript
     - create-contract-typescript
 ---
-
 # create-taxonomy-typescript
 
 Taxonomy = stable domain language. Single source of truth for VOs, entities, errors, events, constants. Location: `packages/shared/src/<domain>/`.
@@ -28,14 +27,15 @@ Taxonomy = stable domain language. Single source of truth for VOs, entities, err
 
 ## File Types
 
-| Suffix | Content | Key constraint |
-| --- | --- | --- |
-| `_vo.ts` | Value Objects | `readonly` fields, validate in constructor, no I/O |
-| `_entity.ts` | Entities with identity | Identity VO field required |
-| `_error.ts` | Domain errors | `extends Error`, set `this.name` |
-| `_event.ts` | Domain events | Immutable, VO payload fields |
-| `_constant.ts` | Compile-time constants | `export const` only — no functions |
-| `_utility.ts` | Stateless helpers | No class, no `this`, domain-agnostic |
+
+| Suffix         | Content                | Key constraint                                     |
+| ---------------- | ------------------------ | ---------------------------------------------------- |
+| `_vo.ts`       | Value Objects          | `readonly` fields, validate in constructor, no I/O |
+| `_entity.ts`   | Entities with identity | Identity VO field required                         |
+| `_error.ts`    | Domain errors          | `extends Error`, set `this.name`                   |
+| `_event.ts`    | Domain events          | Immutable, VO payload fields                       |
+| `_constant.ts` | Compile-time constants | `export const` only — no functions                |
+| `_utility.ts`  | Stateless helpers      | No class, no`this`, domain-agnostic                |
 
 ## VO Rules (AES401/AES402)
 
@@ -44,13 +44,75 @@ Forbidden for domain fields: `string`, `number`, `string[]`, `Record<string,T>`.
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/taxonomy_name_vo.ts` | Value Object |
-| `templates/taxonomy_name_entity.ts` | Entity |
-| `templates/taxonomy_name_error.ts` | Error type |
-| `templates/taxonomy_name_constant.ts` | Constants |
-| `templates/taxonomy_name_utility.ts` | Utility functions |
+### Value Object
+
+```typescript
+export class <Name> {
+    private readonly _value: string;
+
+    constructor(value: string) {
+        if (!value.trim()) {
+            throw new Error('<Name> cannot be empty');
+        }
+        this._value = value;
+    }
+
+    get value(): string {
+        return this._value;
+    }
+
+    toString(): string {
+        return this._value;
+    }
+}
+```
+
+### Entity
+
+```typescript
+export class <Name> {
+    private readonly _value: string;
+
+    constructor(value: string) {
+        if (!value.trim()) {
+            throw new Error('<Name> cannot be empty');
+        }
+        this._value = value;
+    }
+
+    get value(): string {
+        return this._value;
+    }
+
+    toString(): string {
+        return this._value;
+    }
+}
+```
+
+### Error
+
+```typescript
+export class <Name>Error extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = '<Name>Error';
+    }
+}
+```
+
+### Constants
+
+```typescript
+/** Default value description. */
+export const <NAME>_DEFAULT: number = 24.0;
+
+/** Minimum value description. */
+export const <NAME>_MIN: number = 0.5;
+
+/** Filename constant. */
+export const <NAME>_FILENAME: string = 'file.json';
+```
 
 ## Workflow
 
@@ -64,11 +126,11 @@ Forbidden for domain fields: `string`, `number`, `string[]`, `Record<string,T>`.
 
 ## Checklist
 
-- [ ] Correct suffix.
-- [ ] VOs: `readonly` fields, validate on construction; composite VOs use other VOs.
-- [ ] Errors extend `Error`, set `this.name`.
-- [ ] Constants are `export const` pure literal values.
-- [ ] No import from capabilities, agents, surface, root, contracts.
-- [ ] No I/O, network, or database in taxonomy files.
-- [ ] Registered in shared `index.ts`.
-- [ ] `npx tsc --noEmit` passes.
+- [ ]  Correct suffix.
+- [ ]  VOs: `readonly` fields, validate on construction; composite VOs use other VOs.
+- [ ]  Errors extend `Error`, set `this.name`.
+- [ ]  Constants are `export const` pure literal values.
+- [ ]  No import from capabilities, agents, surface, root, contracts.
+- [ ]  No I/O, network, or database in taxonomy files.
+- [ ]  Registered in shared `index.ts`.
+- [ ]  `npx tsc --noEmit` passes.

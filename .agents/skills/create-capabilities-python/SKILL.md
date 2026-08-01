@@ -55,12 +55,45 @@ I/O: stateless + I/O + domain-agnostic = utility OK.
 
 ## Templates
 
+### 3-block implementation
 
-| File                                  | Purpose                |
-| --------------------------------------- | ------------------------ |
-| `templates/capabilities_name.py`      | 3-block implementation |
-| `templates/contract_name_protocol.py` | Protocol ABC           |
+```python
+from shared.<domain>.taxonomy_<name>_vo import <VO>
+from shared.<domain>.contract_<name>_protocol import I<Name>Protocol
 
+
+# ─── Block 1: Class Definition & Constructor ──────────────
+class Capabilities<Name>(I<Name>Protocol):
+    def __init__(self, /* DI params */) -> None:
+        # DI fields use protocol interfaces
+        # Value fields use shared VOs
+        ...
+
+    # ─── Block 2: Public Contract (domain protocol ONLY) ──
+    def method_name(self, param: <VO>) -> None:
+        # domain behavior
+        ...
+
+    # ─── Block 3: Dunder Methods, Factories & Helpers ─────
+    def __repr__(self) -> str:
+        return "Capabilities<Name>()"
+
+    @classmethod
+    def create_default(cls) -> "Capabilities<Name>":
+        return cls()
+```
+
+### Protocol ABC
+
+```python
+from abc import ABC, abstractmethod
+from shared.<domain>.taxonomy_<name>_vo import <VO>
+
+
+class I<Name>Protocol(ABC):
+    @abstractmethod
+    def method_name(self, param: <VO>) -> None: ...
+```
 ## Workflow
 
 1. Confirm implements protocol behavior (not orchestration/data/mechanics).

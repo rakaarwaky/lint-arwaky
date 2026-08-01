@@ -28,6 +28,43 @@ Utility = stateless standalone functions. No class, no `self`, no domain rules. 
 
 parser, splitter, trimmer, slugifier, sanitizer, normalizer, extractor, replacer, converter, counter, resolver, detector, builder, joiner, serializer, deserializer, encoder, decoder, hasher, generator, formatter, comparator, differ, matcher, checker, calculator, mapper, merger, grouper, sorter, deduplicator, printer
 
+## Templates
+
+```python
+"""<Domain> utility functions — stateless, pure, domain-agnostic.
+
+Module-level functions only — no classes, no state.
+"""
+
+# from shared.user.taxonomy_user_vo import UserVO  # uncomment if using VOs
+
+
+def <function_name>(<param_name>: str) -> str:
+    """<Description of what this function does>.
+
+    Args:
+        <param_name>: <description>
+
+    Returns:
+        <description of return value>
+    """
+    # pure function logic here
+    pass
+
+
+def <function_name>(<param_name>: str) -> str:
+    """<Description of what this function does>.
+
+    Args:
+        <param_name>: <description>
+
+    Returns:
+        <description of return value>
+    """
+    # pure function logic here
+    pass
+```
+
 ## Rules
 
 1. Only module-level functions — no `class`, no `self`.
@@ -38,10 +75,6 @@ parser, splitter, trimmer, slugifier, sanitizer, normalizer, extractor, replacer
 
 **Keep as private helper** if ANY: uses `self`, domain-specific, single consumer.
 **Extract here** only if ALL: no `self`, pure/I/O-safe, domain-agnostic, ≥2 consumers.
-
-## Templates
-
-`templates/utility_name.py`
 
 ## Workflow
 

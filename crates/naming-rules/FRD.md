@@ -129,11 +129,11 @@ flowchart TD
 ## API Contract
 
 
-| Operation                          | Input                                                      | Output                         | Purpose                                                                  |
-| ------------------------------------ | ------------------------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------ |
-| Full naming audit                  | File paths from filesystem crate                             | Lint results                    | Run both naming convention and suffix/prefix checks (AES101–AES102)      |
-| Naming convention check (AES101)   | File paths, configuration                                   | AES101/AES000 violations        | Validate snake_case structure and minimum word count                    |
-| Suffix/prefix check (AES102)       | File paths, configuration, layer map                        | AES102 violations               | Validate suffix matches layer policy and prefix-suffix consistency      |
+| Operation                        | Input                                | Output                   | Purpose                                                              |
+| ---------------------------------- | -------------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
+| Full naming audit                | File paths from filesystem crate     | Lint results             | Run both naming convention and suffix/prefix checks (AES101–AES102) |
+| Naming convention check (AES101) | File paths, configuration            | AES101/AES000 violations | Validate snake_case structure and minimum word count                 |
+| Suffix/prefix check (AES102)     | File paths, configuration, layer map | AES102 violations        | Validate suffix matches layer policy and prefix-suffix consistency   |
 
 ---
 
@@ -240,7 +240,7 @@ flowchart TD
 | **Flexible suffix policy** | Layer allows any suffix EXCEPT those in the forbidden list.                                                                    |
 | **Forbidden suffix**       | Suffix explicitly banned for a layer (belongs to another layer's domain)                                                       |
 | **Prefix-suffix mismatch** | File prefix indicates one layer but suffix belongs to a different layer's suffix set                                           |
-| **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Returns file paths to naming-rules.     |
+| **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Returns file paths to naming-rules.         |
 | **`PARSE_WARN`**           | Warning diagnostic (non-AES code) emitted when a file path is unreadable                                                       |
 
 ---

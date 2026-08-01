@@ -20,30 +20,7 @@ pub struct DoctorResultVO {
     pub healthy: ComplianceStatus,
 }
 
-impl DoctorResultVO {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        python_version: DescriptionVO,
-        rust_version: DescriptionVO,
-        node_version: DescriptionVO,
-        is_installed: ComplianceStatus,
-        config_found: FilePathList,
-        adapter_statuses: HashMap<AdapterName, String>,
-        issues: Vec<ErrorMessage>,
-        healthy: ComplianceStatus,
-    ) -> Self {
-        Self {
-            python_version,
-            rust_version,
-            node_version,
-            is_installed,
-            config_found,
-            adapter_statuses,
-            issues,
-            healthy,
-        }
-    }
-}
+// Constructor removed — struct has pub fields, direct initialization preferred.
 
 impl std::fmt::Display for DoctorResultVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

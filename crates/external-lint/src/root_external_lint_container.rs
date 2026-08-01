@@ -95,7 +95,10 @@ impl ExternalLintContainer {
         );
 
         Self {
-            aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps { adapters, filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()) })),
+            aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
+                adapters,
+                filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+            })),
         }
     }
 

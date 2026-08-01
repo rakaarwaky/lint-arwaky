@@ -36,9 +36,12 @@ impl OrphanContainer {
     pub fn new_with_config(config: ArchitectureConfig) -> Self {
         let parser_dispatcher: Arc<dyn IOrphanParserProtocol> =
             Arc::new(OrphanParserDispatcher::new());
-        let fs_agg: Arc<dyn IFilesystemAggregate> = Arc::new(filesystem::FilesystemOrchestrator::new());
-        let resolver: Arc<dyn IOrphanGraphResolverProtocol> =
-            Arc::new(OrphanGraphResolver::new(parser_dispatcher.clone(), fs_agg.clone()));
+        let fs_agg: Arc<dyn IFilesystemAggregate> =
+            Arc::new(filesystem::FilesystemOrchestrator::new());
+        let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new(
+            parser_dispatcher.clone(),
+            fs_agg.clone(),
+        ));
 
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             ArchOrphanDeps {

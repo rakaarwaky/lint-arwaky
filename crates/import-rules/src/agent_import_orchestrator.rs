@@ -170,7 +170,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let mut results = Vec::new();
 
         // Run async checks via tokio runtime
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let Ok(rt) = tokio::runtime::Runtime::new() else {
+            return Vec::new();
+        };
         rt.block_on(async {
             let mandatory_result = self
                 .deps

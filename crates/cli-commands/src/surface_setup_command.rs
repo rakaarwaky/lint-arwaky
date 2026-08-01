@@ -7,8 +7,8 @@
 //
 // Binary resolution for mcp-config: checks sibling of current exe first, fails closed (no PATH fallback).
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::ExitCode;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 

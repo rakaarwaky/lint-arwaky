@@ -1,6 +1,6 @@
 // PURPOSE: taxonomy_target_utility — pure utility functions for path resolution and source detection
 use crate::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use crate::common::utility_file_handler::{is_path_ignored, is_source_file, walk_source_files};
+use crate::filesystem::utility_filesystem_io::{is_path_ignored, is_source_ext as is_source_file, walk_source_files};
 use std::path::Path;
 
 /// Resolve target path: normalize "crates" → parent, keep "." as-is, etc.

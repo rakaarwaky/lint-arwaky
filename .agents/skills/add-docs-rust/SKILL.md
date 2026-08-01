@@ -15,15 +15,13 @@ metadata:
     - lint-arwaky-rust
     - cleanup-consolidate-rust
 ---
-
 # add-docs-rust
 
 ## Rules
 
-- Every crate directory MUST contain THREE crate-level docs: `PRD.md`, `FRD.md`, and `README.md`.
-- **PRD.md** = Product Requirements Document — describes **WHAT** and **WHY** for stakeholders, PM, Design, and Eng alignment.
-- **FRD.md** = Functional Requirements Document — describes **HOW** (functionally) for engineers, QA, and Tech Lead.
-- **README.md** = Developer onboarding — describes **HOW TO USE/RUN** for developers.
+- **PRD.md** = Product Requirements Document — **1 per project root** — describes **WHAT** and **WHY** for stakeholders.
+- **README.md** = Developer onboarding — **1 per project root** — describes **HOW TO USE/RUN** for developers.
+- **FRD.md** = Functional Requirements Document — **1 per feature crate** — describes **HOW** (functionally) for engineers.
 - Relationship: **PRD (what/why) → FRD (how) → README (how to use)**. Each serves a different audience.
 - All public structs and methods MUST have `///` doc comments (visible in `cargo doc`).
 - Doc comments MUST explain "what" and "why", not "how" (code shows how).
@@ -62,28 +60,32 @@ If no -> **Add README.md (how to use).**
 
 ## Document Audience Matrix
 
+
 | Document  | Audience                     | Focus                | Length    |
-| --------- | ---------------------------- | -------------------- | --------- |
+| ----------- | ------------------------------ | ---------------------- | ----------- |
 | PRD.md    | Stakeholder, PM, Design, Eng | _What_ & _Why_       | 1-2 pages |
 | FRD.md    | Engineer, QA, Tech Lead      | _How_ (functionally) | 2-5 pages |
 | README.md | Developer (new/existing)     | _How to use/run_     | 1-2 pages |
 
 ## Detection Patterns
 
-### Missing PRD.md / FRD.md / README.md (Create)
+### Missing docs (Create)
 
+Project root:
 ```
-crates/<name-folder>/
-├── src/
-│   ├── lib.rs
-│   └── ...
-├── tests/
-├── PRD.md        # stakeholder alignment (what/why)
-├── FRD.md        # engineering specs (how)
-└── README.md     # developer onboarding (how to use)
+project-root/
+├── PRD.md          # stakeholder alignment (what/why) — 1 per project
+├── README.md       # developer onboarding (how to use) — 1 per project
+├── crates/
+│   ├── feature-a/
+│   │   ├── src/
+│   │   └── FRD.md  # engineering specs (how) — per feature crate
+│   └── feature-b/
+│       ├── src/
+│       └── FRD.md  # engineering specs (how) — per feature crate
 ```
 
-### Missing Doc Comments (Add)
+### Missing Doc Comments 
 
 ```rust
 // PURPOSE explain file in one sentence
@@ -104,7 +106,7 @@ pub struct ImportOrchestrator {
 }
 ```
 
-## PRD.md Template (STAKEHOLDER ALIGNMENT — what/why)
+## PRD.md 
 
 ```markdown
 # PRD — <crate-name>
@@ -156,12 +158,12 @@ pub struct ImportOrchestrator {
 - <question or risk>
 ```
 
-## FRD.md Template (ENGINEERING SPECS — how)
+## FRD.md Template 
 
 ```markdown
-# FRD — <crate-name>
+# FRD — <feature-name>
 
-> Functional Requirements Document. Describes HOW this crate works functionally.
+> Functional Requirements Document. Describes HOW this feature works functionally.
 > Audience: Engineers, QA, Tech Lead.
 
 ## Reference
@@ -217,7 +219,7 @@ pub struct ImportOrchestrator {
 - **Term**: <definition>
 ```
 
-## README.md Template (DEVELOPER ONBOARDING — how to use)
+## README.md 
 
 ```markdown
 # <crate-name>
@@ -237,6 +239,7 @@ cd crates/<name>
 cargo build
 cargo run
 ```
+
 ````
 
 ## Architecture
@@ -289,7 +292,7 @@ cargo test
 
 ### Step 2: Create / Fix PRD.md (stakeholder alignment)
 
-Write crate-level PRD.md following the PRD template. It MUST contain:
+Write project-root PRD.md following the PRD template. It MUST contain:
 
 1. Problem Statement
 2. Goals & Success Metrics
@@ -302,7 +305,7 @@ Write for non-engineers. Avoid technical jargon. Use acceptance criteria.
 
 ### Step 3: Create / Fix FRD.md (engineering specs)
 
-Write crate-level FRD.md following the FRD template. It MUST contain:
+For each feature crate, write FRD.md following the FRD template. It MUST contain:
 
 1. Reference to PRD
 2. System Overview
@@ -315,7 +318,7 @@ Use precise, unambiguous language. Include edge cases and error handling.
 
 ### Step 4: Create / Update README.md (developer onboarding)
 
-Write README.md following the README template. It MUST contain:
+Write project-root README.md following the README template. It MUST contain:
 
 1. Quick Start (clone → build → run in < 10 minutes)
 2. Architecture (high-level)
@@ -384,14 +387,14 @@ pub fn validate(&self, data: &HashMap<String, Value>) -> Result<(bool, String), 
 
 ## Verification Checklist
 
-- [ ] PRD.md exists with Problem Statement, Goals, Personas, Scope, Features
-- [ ] FRD.md exists with Functional Requirements (FR-001 IDs), API Contract
-- [ ] README.md exists with Quick Start, Architecture, Commands, Testing
-- [ ] Documents serve correct audience (PRD=stakeholders, FRD=engineers, README=developers)
-- [ ] All public structs have `///` doc comments
-- [ ] All public methods have `///` doc comments with Args/Returns/Errors
-- [ ] All function signatures use type annotations
-- [ ] Example code in doc comments is valid Rust
+- [ ]  PRD.md at project root with Problem Statement, Goals, Personas, Scope, Features
+- [ ]  README.md at project root with Quick Start, Architecture, Commands, Testing
+- [ ]  FRD.md in each feature crate with Functional Requirements (FR-001 IDs), API Contract
+- [ ]  Documents serve correct audience (PRD=stakeholders, FRD=engineers, README=developers)
+- [ ]  All public structs have `///` doc comments
+- [ ]  All public methods have `///` doc comments with Args/Returns/Errors
+- [ ]  All function signatures use type annotations
+- [ ]  Example code in doc comments is valid Rust
 
 ## Quick Commands
 

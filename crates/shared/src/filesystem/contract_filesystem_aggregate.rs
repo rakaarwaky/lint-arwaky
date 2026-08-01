@@ -12,16 +12,15 @@ use std::path::{Path, PathBuf};
 /// Pipeline runs once (lazy: triggered on first accessor call).
 /// All accessors return references — zero-cost, no clone.
 /// Result is immutable after construction (read-only queries only).
-#[allow(clippy::ptr_arg)]
 pub trait IFilesystemAggregate: Send + Sync {
     // ── Pipeline Trigger ──────────────────────────────────────
 
     /// Run full pipeline: walk -> cache -> parse -> extract -> graph.
     /// Lazy: pipeline runs on first accessor call. Results cached internally.
-    fn run_pipeline(&self, root: &PathBuf, ignored: &[String]);
+    fn run_pipeline(&self, root: &Path, ignored: &[String]);
 
     /// Run full scan and return FilesystemResult (backward compat).
-    fn scan(&self, root: &PathBuf, ignored: &[String]) -> FilesystemResult;
+    fn scan(&self, root: &Path, ignored: &[String]) -> FilesystemResult;
 
     // ── File Access (FR-001) ─────────────────────────────────
 
@@ -79,10 +78,10 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn read_lintable_file(&self, path: &str) -> Result<Option<String>, String>;
 
     /// Get cached file content (after scan).
-    fn get_file_content(&self, path: &PathBuf) -> Option<String>;
+    fn get_file_content(&self, path: &Path) -> Option<String>;
 
     /// Check if a file is in the cache.
-    fn has_file(&self, path: &PathBuf) -> bool;
+    fn has_file(&self, path: &Path) -> bool;
 
     // ── File Discovery (backward compat) ─────────────────────
 
@@ -95,13 +94,13 @@ pub trait IFilesystemAggregate: Send + Sync {
     // ── Import/Dependency (backward compat) ──────────────────
 
     /// Get imports for a specific file.
-    fn imports_for(&self, path: &PathBuf) -> Vec<ImportEntry>;
+    fn imports_for(&self, path: &Path) -> Vec<ImportEntry>;
 
     /// Get all imports (from last scan).
     fn all_imports(&self) -> &[ImportEntry];
 
     /// Check if two files have a dependency relationship.
-    fn depends_on(&self, from: &PathBuf, to: &PathBuf) -> bool;
+    fn depends_on(&self, from: &Path, to: &Path) -> bool;
 
     /// Find circular dependencies.
     fn cycles(&self) -> Vec<Vec<PathBuf>>;

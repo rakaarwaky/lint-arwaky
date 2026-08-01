@@ -17,18 +17,18 @@ metadata:
     - create-taxonomy-rust
     - create-contract-rust
 ---
-
 # create-surface-rust
 
 Surface = entry points and UI adapters. No business logic. Delegate to aggregates. File: `surface_<domain>_<role>.rs`.
 
 ## Three Types (AES406)
 
-| Type | Suffixes | Imports | Forbidden |
-| --- | --- | --- | --- |
-| Smart | `_command`, `_controller`, `_page`, `_entry` | taxonomy + `contract_*_aggregate` | capabilities, concrete agents |
-| Utility | `_hook`, `_store`, `_action`, `_screen` | taxonomy + passive surfaces | smart surfaces, capabilities, agents |
-| Passive | `_component`, `_view`, `_layout` | taxonomy only | all other layers |
+
+| Type    | Suffixes                                     | Imports                          | Forbidden                            |
+| --------- | ---------------------------------------------- | ---------------------------------- | -------------------------------------- |
+| Smart   | `_command`, `_controller`, `_page`, `_entry` | taxonomy +`contract_*_aggregate` | capabilities, concrete agents        |
+| Utility | `_hook`, `_store`, `_action`, `_screen`      | taxonomy + passive surfaces      | smart surfaces, capabilities, agents |
+| Passive | `_component`, `_view`, `_layout`             | taxonomy only                    | all other layers                     |
 
 ## Rules
 
@@ -45,10 +45,27 @@ Extract to taxonomy utility only if ALL: no `self`, pure, domain-agnostic, reusa
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/surface_name_command.rs` | Smart surface |
-| `templates/surface_name_component.rs` | Passive surface |
+```rust
+use std::sync::Arc;
+
+use shared::<domain>::taxonomy_<name>_vo::<VO>;
+use shared::<domain>::contract_<name>_aggregate::I<Name>Aggregate;
+
+pub struct Surface<Name> {
+    aggregate: Arc<dyn I<Name>Aggregate>,
+}
+
+impl Surface<Name> {
+    pub fn new(aggregate: Arc<dyn I<Name>Aggregate>) -> Self {
+        Self { aggregate }
+    }
+
+    pub fn handle(&self, event: &TuiEvent) -> Result<UiState, SurfaceError> {
+        // orchestration only
+        Ok(UiState::idle())
+    }
+}
+```
 
 ## Workflow
 
@@ -59,12 +76,12 @@ Extract to taxonomy utility only if ALL: no `self`, pure, domain-agnostic, reusa
 
 ## Checklist
 
-- [ ] Correct suffix for surface type.
-- [ ] Smart: only taxonomy + `contract_*_aggregate` imports.
-- [ ] Utility: only taxonomy + passive surface imports.
-- [ ] Passive: only taxonomy imports.
-- [ ] Smart delegates via `Arc<dyn Trait>`.
-- [ ] Zero business logic and computation.
-- [ ] No silent error discarding.
-- [ ] All state fields use shared VOs.
-- [ ] `cargo check -p <crate-name>` passes.
+- [ ]  Correct suffix for surface type.
+- [ ]  Smart: only taxonomy + `contract_*_aggregate` imports.
+- [ ]  Utility: only taxonomy + passive surface imports.
+- [ ]  Passive: only taxonomy imports.
+- [ ]  Smart delegates via `Arc<dyn Trait>`.
+- [ ]  Zero business logic and computation.
+- [ ]  No silent error discarding.
+- [ ]  All state fields use shared VOs.
+- [ ]  `cargo check -p <crate-name>` passes.

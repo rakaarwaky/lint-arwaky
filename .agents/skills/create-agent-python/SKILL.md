@@ -65,18 +65,32 @@ I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + dom
 
 **VO rules:** `str`/`int`/`float` forbidden for domain fields/contracts. `bool` for semantic toggles only.
 
-See `templates/bad_*.py` / `templates/good_*.py` for examples.
-
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/agent_name_orchestrator.py` | Full agent (3-block) |
-| `templates/contract_name_aggregate.py` | Aggregate ABC |
-| `templates/block1_class_constructor.py` | Block 1 pattern |
-| `templates/block2_aggregate_method.py` | Block 2 pattern |
-| `templates/block3_dunder_helpers.py` | Block 3 pattern |
+```python
+from shared.<domain>.taxonomy_<name>_vo import <VO>
+from shared.<domain>.contract_<name>_aggregate import I<Name>Aggregate
 
+
+# ─── Block 1: Class Definition & Constructor ──────────────
+class Agent<Name>:
+    def __init__(self, aggregate: I<Name>Aggregate) -> None:
+        self._aggregate = aggregate
+
+    # ─── Block 2: Aggregate Method Implementation ─────────
+    def execute(self, request: <RequestVO>) -> list[<ResultVO>]:
+        # orchestration only — delegate to aggregate
+        results = self._aggregate.process(request)
+        return results
+
+    # ─── Block 3: Dunder Methods, Factories & Helpers ─────
+    def __repr__(self) -> str:
+        return "Agent<Name>()"
+
+    @classmethod
+    def create_default(cls) -> "Agent<Name>":
+        return cls()
+```
 ## Workflow
 
 1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.

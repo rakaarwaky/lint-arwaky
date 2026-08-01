@@ -9,8 +9,8 @@ use shared::common::Severity;
 use shared::config_system::ArchitectureConfig;
 use shared::orphan_detector::{IOrphanAggregate, IOrphanGraphResolverProtocol};
 
-use shared::orphan_detector::OrphanFileListVO;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::orphan_detector::OrphanFileListVO;
 use shared::orphan_detector::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
@@ -94,25 +94,30 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let root_path = std::path::Path::new(root_dir.value());
         let mut all_files = Vec::new();
         if root_path.is_dir() {
-            let all_entries = self.deps.filesystem.discover_source_files(root_path, ignored);
+            let all_entries = self
+                .deps
+                .filesystem
+                .discover_source_files(root_path, ignored);
             all_files = all_entries.into_iter().map(|fp| fp.value).collect();
         } else if root_path.is_file() {
             // Single file scan — include the file directly
             let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
             if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
-                && !self.deps.filesystem.should_ignore(
-                    &root_path.to_string_lossy(),
-                    ignored,
-                )
+                && !self
+                    .deps
+                    .filesystem
+                    .should_ignore(&root_path.to_string_lossy(), ignored)
             {
                 all_files.push(root_dir.value().to_string());
             }
         } // Normalize all file paths to be relative to workspace root so that
         // inbound_links (built by the graph resolver) and orphan analyzers
         // use a consistent path format.
-        let top_root =
-            self.deps.filesystem.workspace_root(root_dir.value())
-                .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root = self
+            .deps
+            .filesystem
+            .workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
         let all_files: Vec<String> = all_files
             .into_iter()
             .map(|f| {
@@ -182,9 +187,11 @@ impl ArchOrphanAnalyzer {
         root_dir: &FilePath,
     ) -> Vec<String> {
         let root_path = std::path::Path::new(root_dir.value());
-        let top_root =
-            self.deps.filesystem.workspace_root(root_dir.value())
-                .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root = self
+            .deps
+            .filesystem
+            .workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
         let mut seen: HashSet<String> = files.values.iter().cloned().collect();
         let mut result: Vec<String> = files.values.clone();
         for ws_dir in &["crates", "packages", "modules"] {
@@ -192,7 +199,11 @@ impl ArchOrphanAnalyzer {
             if self.deps.filesystem.is_dir(&ws_path) {
                 let entries = self.deps.filesystem.scan_directory(&ws_path);
                 for entry_path in entries {
-                    let name = entry_path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_string();
+                    let name = entry_path
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("")
+                        .to_string();
                     if !entry_path.is_dir() {
                         continue;
                     }
@@ -213,7 +224,10 @@ impl ArchOrphanAnalyzer {
                     let src_dir = top_root.join(ws_dir).join(&name).join("src");
                     if self.deps.filesystem.is_dir(&src_dir) {
                         let workspace_entries = self.deps.filesystem.discover_files(&src_dir, &[]);
-                        let workspace_files: Vec<String> = workspace_entries.iter().map(|e| e.path.to_string_lossy().to_string()).collect();
+                        let workspace_files: Vec<String> = workspace_entries
+                            .iter()
+                            .map(|e| e.path.to_string_lossy().to_string())
+                            .collect();
                         for f in workspace_files {
                             // Skip ignored paths (e.g. tests/, target/)
                             if self.deps.filesystem.should_ignore(
@@ -240,7 +254,10 @@ impl ArchOrphanAnalyzer {
                 }
                 // Also scan source files directly in the workspace dir (e.g. modules/root_cli_main_entry.py)
                 let root_entries = self.deps.filesystem.discover_files(&ws_path, &[]);
-                let root_files: Vec<String> = root_entries.iter().map(|e| e.path.to_string_lossy().to_string()).collect();
+                let root_files: Vec<String> = root_entries
+                    .iter()
+                    .map(|e| e.path.to_string_lossy().to_string())
+                    .collect();
                 for f in root_files {
                     // Skip ignored paths (e.g. tests/, target/)
                     if self.deps.filesystem.should_ignore(
@@ -297,9 +314,11 @@ impl ArchOrphanAnalyzer {
         // the format used by _process_file for file_fp — fixes path format mismatch
         // that caused false-positive AES506/AES503 orphan violations)
         let root_path = std::path::Path::new(root_dir.value());
-        let top_root =
-            self.deps.filesystem.workspace_root(root_dir.value())
-                .unwrap_or_else(|| root_path.to_path_buf());
+        let top_root = self
+            .deps
+            .filesystem
+            .workspace_root(root_dir.value())
+            .unwrap_or_else(|| root_path.to_path_buf());
         let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
         let alive_result = ReachabilityResult::new(
             alive_set
@@ -335,7 +354,11 @@ impl ArchOrphanAnalyzer {
         let content_map: HashMap<String, String> = all_files
             .iter()
             .filter_map(|f| {
-                let c = self.deps.filesystem.read_file(std::path::Path::new(f)).unwrap_or_default();
+                let c = self
+                    .deps
+                    .filesystem
+                    .read_file(std::path::Path::new(f))
+                    .unwrap_or_default();
                 if c.is_empty() {
                     None
                 } else {

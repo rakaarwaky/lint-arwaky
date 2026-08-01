@@ -141,8 +141,11 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
                 if let Ok(meta) = self.deps.filesystem.symlink_metadata(&candidate) {
                     if meta.file_type().is_symlink() {
                         if let Ok(canonical) = self.deps.filesystem.canonicalize(&candidate) {
-                            let root_canonical =
-                                self.deps.filesystem.canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+                            let root_canonical = self
+                                .deps
+                                .filesystem
+                                .canonicalize(root)
+                                .unwrap_or_else(|_| root.to_path_buf());
                             if !canonical.starts_with(&root_canonical) {
                                 eprintln!(
                                     "Warning: Symlink '{}' points outside project root, rejected.",

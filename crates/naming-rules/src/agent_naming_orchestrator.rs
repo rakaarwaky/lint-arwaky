@@ -58,7 +58,9 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let root = FilePath::new(".".to_string()).unwrap_or_default();
 
         // Block on async checkers
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let Ok(rt) = tokio::runtime::Runtime::new() else {
+            return Vec::new();
+        };
         rt.block_on(self.run_checks(&file_list, &root))
     }
 

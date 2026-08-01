@@ -70,12 +70,40 @@ e.g. `for file in files { self.checker.check(file) }` = OK. `files.iter().map(|f
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/agent_name.rs` | Full agent (3-block) |
-| `templates/contract_name_aggregate.rs` | Aggregate trait |
-| `templates/mod.rs` | Module registration |
+```rust
+use std::sync::Arc;
 
+use shared::<domain>::taxonomy_<name>_vo::<VO>;
+use shared::<domain>::contract_<name>_aggregate::I<Name>Aggregate;
+
+// ─── Block 1: Struct Definition ──────────────────────────
+pub struct Agent<Name> {
+    aggregate: Arc<dyn I<Name>Aggregate>,
+}
+
+// ─── Block 2: Aggregate Trait Implementation ─────────────
+impl I<Name>Aggregate for Agent<Name> {
+    fn execute(&self, request: &<RequestVO>) -> Vec<<ResultVO>> {
+        // orchestration only — delegate to aggregate
+        self.aggregate.process(request)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Agent<Name> {
+    pub fn new(aggregate: Arc<dyn I<Name>Aggregate>) -> Self {
+        Self { aggregate }
+    }
+}
+
+impl Default for Agent<Name> {
+    fn default() -> Self {
+        Self {
+            aggregate: Arc::new(PlaceholderAggregate),
+        }
+    }
+}
+```
 ## Workflow
 
 1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.

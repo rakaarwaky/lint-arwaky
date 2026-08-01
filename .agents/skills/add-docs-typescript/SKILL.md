@@ -1,6 +1,6 @@
 ---
 name: add-docs-typescript
-description: "Add proper JSDoc comments, type annotations, and crate-level PRD.md/FRD.md/README.md to TypeScript packages following project conventions."
+description: "Add proper JSDoc comments, type annotations, and project-level PRD.md/README.md + per-feature FRD.md to TypeScript packages following project conventions."
 metadata:
   tags: [typescript, docs, jsdoc, type-hints, prd, frd, readme]
   triggers:
@@ -15,42 +15,203 @@ metadata:
     - cleanup-consolidate-typescript
     - add-docs-rust
 ---
-
 # add-docs-typescript
 
 ## Purpose
 
 Add documentation at correct locations following project conventions.
 
+## Rules
+
+- **PRD.md** = Product Requirements Document — **1 per project root** — describes **WHAT** and **WHY** for stakeholders.
+- **README.md** = Developer onboarding — **1 per project root** — describes **HOW TO USE/RUN** for developers.
+- **FRD.md** = Functional Requirements Document — **1 per feature module** — describes **HOW** (functionally) for engineers.
+- Relationship: **PRD (what/why) → FRD (how) → README (how to use)**. Each serves a different audience.
+- All public classes and methods MUST have JSDoc docstrings.
+- Docstrings MUST explain "what" and "why", not "how" (code shows how).
+
 ## Document Location Matrix
 
+
 | Document  | Location            | Audience                     | Focus                |
-| --------- | ------------------- | ---------------------------- | -------------------- |
+| ----------- | --------------------- | ------------------------------ | ---------------------- |
 | PRD.md    | Root workspace      | Stakeholder, PM, Design, Eng | _What_ & _Why_       |
 | README.md | Root workspace      | Developer (new/existing)     | _How to use/run_     |
 | FRD.md    | Each feature module | Engineer, QA, Tech Lead      | _How_ (functionally) |
 
-## References
-
-Read these files for detailed rules:
-
-| File                                  | Content                              |
-| ------------------------------------- | ------------------------------------ |
-| `references/prd-rules.md`             | PRD rules, audience, anti-patterns   |
-| `references/frd-rules.md`             | FRD rules, IDs, test scenarios       |
-| `references/readme-rules.md`          | README rules, Quick Start, structure |
-| `references/jsdoc-rules.md`           | JSDoc comment rules and templates    |
-| `references/type-annotation-rules.md` | Type annotation rules and patterns   |
-
 ## Templates
 
-Use these templates when creating new files:
+### PRD.md
 
-| File                  | Purpose                      |
-| --------------------- | ---------------------------- |
-| `templates/PRD.md`    | New PRD at root workspace    |
-| `templates/FRD.md`    | New FRD in feature module    |
-| `templates/README.md` | New README at root workspace |
+```markdown
+# PRD — <project-name>
+
+## Problem Statement
+
+<One paragraph: what problem does this project solve?>
+
+## Goals & Success Metrics
+
+- Goal 1: <measurable outcome>
+- Goal 2: <measurable outcome>
+
+## User Personas
+
+- **Persona 1**: <who they are, what they need>
+- **Persona 2**: <...>
+
+## Scope
+
+- In scope: <...>
+- Out of scope: <...>
+
+## Feature Requirements (Prioritized)
+
+### P0 — Must Have
+
+- [ ] <feature with acceptance criteria>
+
+### P1 — Should Have
+
+- [ ] <feature with acceptance criteria>
+
+### P2 — Nice to Have
+
+- [ ] <feature with acceptance criteria>
+
+## Non-functional Requirements (High-level)
+
+- Performance: <...>
+- Security: <...>
+- Scalability: <...>
+
+## Open Questions / Risks
+
+- <question or risk>
+```
+
+### FRD.md
+
+```markdown
+# FRD — <feature-name>
+
+## System Overview
+
+<Architecture diagram or high-level description>
+
+## Functional Requirements
+
+### FR-001: <Feature Name>
+
+- **Description**: <what it does>
+- **Input**: <input data>
+- **Output**: <output data>
+- **Business Rules**: <validation logic>
+- **Edge Cases**: <edge case handling>
+- **Error Handling**: <error scenarios>
+
+### FR-002: <Feature Name>
+
+- ...
+
+## API Contract
+
+| Operation | Input | Output | Description |
+|-----------|-------|--------|-------------|
+| `<name>`  | ...   | ...    | ...         |
+
+## Integration Points
+
+- **3rd Party**: <service name, purpose>
+- **Internal**: <service name, purpose>
+
+## Non-functional Requirements (Detailed)
+
+- Performance: <response time, throughput>
+- Security: <auth, encryption, compliance>
+- SLA: <availability, uptime>
+
+## Test Scenarios / QA Checklist
+
+- [ ] <test scenario with expected result>
+
+## Assumptions & Constraints
+
+- <assumption or constraint>
+
+## Glossary
+
+- **Term**: <definition>
+
+## Reference
+
+- PRD: <link to root PRD.md>
+```
+
+### README.md
+
+```markdown
+# <project-name>
+
+> One-liner: what this project does and who it's for.
+
+## Prerequisites
+
+- Node 20+
+- <other dependencies>
+
+## Quick Start
+
+```bash
+git clone ...
+cd <project>
+npm install
+npm run dev
+```
+
+## Architecture
+
+<High-level diagram or link to full docs>
+
+## Project Structure
+
+```
+packages/
+├── feature-a/
+│   └── FRD.md        # feature specs
+├── feature-b/
+│   └── FRD.md        # feature specs
+└── ...
+```
+
+## Available Scripts
+
+
+| Command         | Description          |
+| ----------------- | ---------------------- |
+| `npm run dev`   | Start development    |
+| `npm run build` | Build for production |
+| `npm test`      | Run tests            |
+
+## Configuration
+
+<Environment variables, config files>
+
+## Testing
+
+```bash
+npm test
+```
+
+## Contributing
+
+<Branching strategy, PR conventions>
+
+## License
+
+<License type>
+
+```
 
 ## Definition of Done
 
@@ -74,15 +235,15 @@ Use these templates when creating new files:
 
 ### Step 2: Create / Fix PRD.md (root workspace)
 
-Write root-level PRD.md following `templates/PRD.md`. See `references/prd-rules.md` for rules.
+Write root-level PRD.md following the PRD.md template above. See `references/prd-rules.md` for rules.
 
 ### Step 3: Create / Fix FRD.md (each feature module)
 
-For each feature module, write FRD.md following `templates/FRD.md`. See `references/frd-rules.md` for rules.
+For each feature module, write FRD.md following the FRD.md template above. See `references/frd-rules.md` for rules.
 
 ### Step 4: Create / Update README.md (root workspace)
 
-Write root-level README.md following `templates/README.md`. See `references/readme-rules.md` for rules.
+Write root-level README.md following the README.md template above. See `references/readme-rules.md` for rules.
 
 ### Step 5: Add JSDoc Comments
 

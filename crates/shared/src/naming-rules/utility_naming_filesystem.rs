@@ -5,7 +5,7 @@
 
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::common::utility_file_handler::walk_source_files;
+use crate::filesystem::utility_filesystem_io::walk_source_files;
 use crate::taxonomy_common_vo::PatternList;
 use std::path::Path;
 

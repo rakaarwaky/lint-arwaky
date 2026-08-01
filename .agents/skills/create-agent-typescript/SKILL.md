@@ -69,11 +69,30 @@ Allowed: iteration to call deps, routing results, propagating errors.
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/agent_name.ts` | Full agent (3-block) |
-| `templates/contract_name_aggregate.ts` | Aggregate interface |
+```typescript
+import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
+import { I<Name>Aggregate } from '../shared/<domain>/contract_<name>_aggregate';
 
+// ─── Block 1: Class Definition & Constructor ──────────────
+export class Agent<Name> {
+    constructor(private readonly aggregate: I<Name>Aggregate) {}
+
+    // ─── Block 2: Aggregate Method Implementation ─────────
+    execute(request: <RequestVO>): <ResultVO>[] {
+        // orchestration only — delegate to aggregate
+        return this.aggregate.process(request);
+    }
+
+    // ─── Block 3: Utility Methods, Factories & Helpers ────
+    toString(): string {
+        return 'Agent<Name>()';
+    }
+
+    static create(): Agent<Name> {
+        return new Agent<Name>(/* inject deps */);
+    }
+}
+```
 ## Workflow
 
 1. Confirm orchestration only — computation → capabilities, domain data → taxonomy.

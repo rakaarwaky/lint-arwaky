@@ -91,7 +91,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         js_tools.push(eslint_status);
 
         let prettier_local = "node_modules/.bin/prettier";
-        let prettier_status = if self.filesystem.is_file(std::path::Path::new(prettier_local))
+        let prettier_status = if self
+            .filesystem
+            .is_file(std::path::Path::new(prettier_local))
         {
             ToolStatus {
                 name: "prettier (local)".to_string(),
@@ -588,7 +590,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             let mut found_dirs = Vec::new();
             self.find_cache_dirs(&cwd, &cache_dirs, &mut found_dirs);
             for entry in found_dirs {
-                let _ = self.filesystem.remove_dir_all(&std::path::Path::new(&entry));
+                let _ = self
+                    .filesystem
+                    .remove_dir_all(&std::path::Path::new(&entry));
             }
         }
     }
@@ -741,12 +745,15 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
 impl MaintenanceChecker {
     pub fn new() -> Self {
-        Self { filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()) }
+        Self {
+            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+        }
     }
 
     /// Walk directory tree, collecting all source files and per-language files.
     /// FR-002: Excludes target/, .git/, node_modules/, .venv/, __pycache__/, dist/, build/
-    fn walk_dir(&self,
+    fn walk_dir(
+        &self,
         dir: &std::path::Path,
         all_files: &mut Vec<std::path::PathBuf>,
         py_files: &mut Vec<std::path::PathBuf>,
@@ -791,7 +798,8 @@ impl MaintenanceChecker {
         }
     }
 
-    fn find_cache_dirs(&self,
+    fn find_cache_dirs(
+        &self,
         dir: &std::path::Path,
         cache_names: &[&str],
         found_dirs: &mut Vec<std::path::PathBuf>,

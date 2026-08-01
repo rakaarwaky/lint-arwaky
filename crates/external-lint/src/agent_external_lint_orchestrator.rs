@@ -122,7 +122,12 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             all.extend(values);
         }
         if !ignored_paths.is_empty() {
-            all.retain(|v| !self.deps.filesystem.should_ignore(&v.file.value, &ignored_paths));
+            all.retain(|v| {
+                !self
+                    .deps
+                    .filesystem
+                    .should_ignore(&v.file.value, &ignored_paths)
+            });
         }
         LintResultList::new(all)
     }
@@ -194,7 +199,8 @@ fn walk_up_find_config<T>(
         for cfg_name in &config_names {
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists()
-                && let Ok(content) = filesystem::FilesystemOrchestrator::new().read_to_string(&cfg_path)
+                && let Ok(content) =
+                    filesystem::FilesystemOrchestrator::new().read_to_string(&cfg_path)
                 && let Some(result) = extract(&content)
             {
                 return Some(result);

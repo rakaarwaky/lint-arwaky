@@ -1,6 +1,6 @@
 extern crate shared_lint_arwaky as shared;
 
-use shared::common::utility_file_handler::is_path_ignored;
+use shared::filesystem::utility_filesystem_io::is_path_ignored;
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 

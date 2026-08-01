@@ -3,7 +3,7 @@ use std::path::Path;
 
 /// Read file contents, returning empty string on error (backward compatible).
 pub fn read_file_safe(path: &str) -> String {
-    crate::common::utility_file_handler::read_file_safe(path)
+    crate::filesystem::utility_filesystem_io::read_file_safe(path)
 }
 
 /// Read file with diagnostic info — returns content or error details.
@@ -25,7 +25,7 @@ pub fn list_directory_entries(dir_path: &Path) -> Vec<(String, String, bool)> {
                     continue;
                 }
                 let path = dir_entry.path();
-                let is_dir = crate::common::utility_file_handler::is_dir(&path);
+                let is_dir = crate::filesystem::utility_filesystem_io::is_dir(&path);
                 entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
             }
         }
@@ -35,12 +35,12 @@ pub fn list_directory_entries(dir_path: &Path) -> Vec<(String, String, bool)> {
 
 /// Check if a path exists and is a file.
 pub fn is_file(path: &Path) -> bool {
-    crate::common::utility_file_handler::is_file_generic(path)
+    crate::filesystem::utility_filesystem_io::is_file(path)
 }
 
 /// Check if a path exists and is a directory.
 pub fn is_dir(path: &Path) -> bool {
-    crate::common::utility_file_handler::is_dir(path)
+    crate::filesystem::utility_filesystem_io::is_dir(path)
 }
 
 /// Scan directory entries, returning vector of (file_name, file_path, is_dir) tuples.
@@ -51,7 +51,7 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
         for dir_entry in read_dir.flatten() {
             if let Some(name) = dir_entry.file_name().to_str() {
                 let path = dir_entry.path();
-                let is_dir = crate::common::utility_file_handler::is_dir(&path);
+                let is_dir = crate::filesystem::utility_filesystem_io::is_dir(&path);
                 entries.push((name.to_string(), path.to_string_lossy().to_string(), is_dir));
             }
         }
@@ -73,7 +73,7 @@ pub fn scan_directory_recursive(dir_path: &Path) -> Vec<String> {
 
                 let path = dir_entry.path();
 
-                if crate::common::utility_file_handler::is_dir(&path) {
+                if crate::filesystem::utility_filesystem_io::is_dir(&path) {
                     if matches!(
                         name,
                         "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"

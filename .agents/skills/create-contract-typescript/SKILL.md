@@ -45,10 +45,25 @@ Naming: `I<Name>Protocol`, `I<Name>Aggregate`.
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/contract_name_protocol.ts` | Protocol interface |
-| `templates/contract_name_aggregate.ts` | Aggregate interface |
+### Protocol interface
+
+```typescript
+import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
+
+export interface I<Name>Protocol {
+    methodName(param: <VO>): void;
+}
+```
+
+### Aggregate interface
+
+```typescript
+import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
+
+export interface I<Name>Aggregate {
+    execute(request: ScanRequest): LintResult[];
+}
+```
 
 ## Workflow
 

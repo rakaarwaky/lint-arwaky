@@ -46,11 +46,39 @@ Naming: `I<Name>Protocol`, `I<Name>Aggregate`.
 
 ## Templates
 
-| File | Purpose |
-| --- | --- |
-| `templates/contract_name_protocol.rs` | Protocol trait |
-| `templates/contract_name_aggregate.rs` | Aggregate trait |
-| `templates/mod.rs` | Module registration |
+### Protocol trait
+
+```rust
+use shared::<domain>::taxonomy_<name>_vo::<VO>;
+
+pub trait I<Name>Protocol: Send + Sync {
+    fn method_name(
+        &self,
+        param: &VO,
+    );
+}
+```
+
+### Aggregate trait
+
+```rust
+use shared::<domain>::taxonomy_<name>_vo::<VO>;
+
+pub trait I<Name>Aggregate: Send + Sync {
+    fn execute(
+        &self,
+        request: &ScanRequest,
+    ) -> Vec<LintResult>;
+}
+```
+
+### mod.rs
+
+```rust
+// <domain> — contract traits for <domain> operations
+pub mod contract_<name>_protocol;
+pub mod contract_<name>_aggregate;
+```
 
 ## Workflow
 
