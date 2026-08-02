@@ -4,7 +4,7 @@ use shared::maintenance::{IMaintenanceCheckerProtocol, MaintenanceCommandsAggreg
 
 use shared::maintenance::MaintenanceStatsVO;
 use shared::maintenance::{
-    DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
+    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
 };
 use std::sync::Arc;
 
@@ -40,6 +40,10 @@ impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
 
     fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
         self.deps.checker.diagnose_toolchain()
+    }
+
+    fn health_check(&self) -> HealthCheckResult {
+        self.deps.checker.health_check()
     }
 
     fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {

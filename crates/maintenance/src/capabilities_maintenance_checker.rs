@@ -5,8 +5,8 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::maintenance::IMaintenanceCheckerProtocol;
 use shared::maintenance::MaintenanceStatsVO;
 use shared::maintenance::{
-    DependencyInfo, DependencyReport, DoctorResultVO, SecurityFinding, SecurityScanReport,
-    ToolStatus, ToolchainDiagnostics,
+    DependencyInfo, DependencyReport, DoctorResultVO, HealthCheckAdapterVO, HealthCheckResult,
+    SecurityFinding, SecurityScanReport, ToolStatus, ToolchainDiagnostics,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -64,6 +64,40 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             vcs_tools,
             binary_path,
         }
+    }
+
+    fn health_check(&self) -> HealthCheckResult {
+        // FRD FR-004: all 9 adapters must be checked
+        let mut adapters = Vec::new();
+        for (name, bin, args, lang) in &[
+            (
+                "clippy",
+                "cargo",
+                &["clippy", "--version"] as &[&str],
+                "Rust",
+            ),
+            ("rustfmt", "rustfmt", &["--version"] as &[&str], "Rust"),
+            (
+                "cargo-audit",
+                "cargo",
+                &["audit", "--version"] as &[&str],
+                "Rust",
+            ),
+            ("ruff", "ruff", &["--version"] as &[&str], "Python"),
+            ("mypy", "mypy", &["--version"] as &[&str], "Python"),
+            ("bandit", "bandit", &["--version"] as &[&str], "Python"),
+            ("eslint", "eslint", &["--version"] as &[&str], "JS/TS"),
+            ("prettier", "prettier", &["--version"] as &[&str], "JS/TS"),
+            ("tsc", "tsc", &["--version"] as &[&str], "JS/TS"),
+        ] {
+            let status = self.check_tool(bin, args, false);
+            adapters.push(HealthCheckAdapterVO {
+                name: name.to_string(),
+                language: lang.to_string(),
+                available: status.status == "OK",
+            });
+        }
+        HealthCheckResult { adapters }
     }
 
     fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {

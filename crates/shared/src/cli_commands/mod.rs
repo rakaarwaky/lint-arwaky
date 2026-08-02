@@ -6,7 +6,6 @@ pub mod taxonomy_protocol_vo;
 pub use crate::common::taxonomy_lint_result_vo as taxonomy_result_vo;
 pub mod taxonomy_scan_report_vo;
 pub mod taxonomy_scan_request_vo;
-pub mod utility_path_resolver;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

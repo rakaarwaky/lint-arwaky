@@ -1,5 +1,9 @@
 // PURPOSE: SurfaceCheckCommand — Runs all linter subprocesses, collects JSON results,
 // and delegates output formatting to surface_output_component.
+//
+// AES406 NOTE: This surface spawns the CLI binary as subprocesses (self-invocation pattern)
+// to run each linter with JSON output. This is a known gap — a LintRunnerAggregate should
+// be created to abstract the subprocess-based linter invocation behind a contract trait.
 // Adapted: std::process::Command replaces tokio::process::Command; sequential execution
 // replaces tokio::join!; filesystem aggregate injected via DI.
 use shared::common::ExitCode;

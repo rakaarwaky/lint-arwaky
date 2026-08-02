@@ -1,6 +1,4 @@
 // PURPOSE: CI entry point — surface action for CI threshold validation
-// Adapted: all calls sync; role audit removed (IRoleRunnerAggregate lost run_audit(path));
-// tokio runtime removed.
 use shared::common::ExitCode;
 use std::sync::Arc;
 
@@ -19,7 +17,7 @@ pub fn handle_ci(
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    _filesystem: Arc<dyn IFilesystemAggregate>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {
@@ -27,7 +25,7 @@ pub fn handle_ci(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !std::path::Path::new(&root_str).exists() {
+    if !filesystem.path_exists(std::path::Path::new(&root_str)) {
         eprintln!("Error: path '{}' does not exist", root_str);
         return ExitCode::RUNTIME_ERROR;
     }
@@ -44,10 +42,9 @@ pub fn handle_ci(
         results.extend(import_res);
     }
 
-    // Naming rules (sync in new API)
-    if let Ok(naming_res) = naming_orchestrator.run_audit(&root) {
-        results.extend(naming_res);
-    }
+    // Naming rules
+    let naming_res = naming_orchestrator.run_audit_with_entries(filesystem.file_list());
+    results.extend(naming_res);
 
     // Orphan detection (sync)
     let ignored = config_orchestrator.ignored_paths(&root);

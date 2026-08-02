@@ -141,3 +141,98 @@ fn unused_import_is_future_import(content: &str, alias: &str) -> bool {
                 || trimmed.contains(format!(" {},", alias).as_str()))
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detects_unused_rust_import() {
+        let checker = UnusedImportRuleChecker::new();
+        // std::collections::HashMap is imported but never used in the body
+        let content = r#"use std::collections::HashMap;
+
+fn main() {
+    println!("hello");
+}
+"#;
+        let result = checker
+            .check_unused_imports("/tmp/test/src/app.rs", content)
+            .unwrap();
+        assert!(!result.is_empty(), "Should detect unused HashMap import");
+        assert_eq!(result[0].code.code(), "AES203");
+        assert!(
+            result[0].message.value.contains("HashMap"),
+            "Violation message should mention HashMap, got: {}",
+            result[0].message
+        );
+    }
+
+    #[test]
+    fn no_violation_when_import_is_used() {
+        let checker = UnusedImportRuleChecker::new();
+        let content = r#"use std::collections::HashMap;
+
+fn main() {
+    let _map = HashMap::new();
+}
+"#;
+        let result = checker
+            .check_unused_imports("/tmp/test/src/main.rs", content)
+            .unwrap();
+        assert!(
+            result.is_empty(),
+            "Used import should produce no violations, got {}",
+            result.len()
+        );
+    }
+
+    #[test]
+    fn no_violation_for_barrel_files() {
+        let checker = UnusedImportRuleChecker::new();
+        // lib.rs / mod.rs are barrel files and should be skipped
+        let content = "use something::unused;\n";
+        let result_lib = checker
+            .check_unused_imports("/tmp/test/src/lib.rs", content)
+            .unwrap();
+        let result_mod = checker
+            .check_unused_imports("/tmp/test/src/mod.rs", content)
+            .unwrap();
+        assert!(result_lib.is_empty(), "lib.rs should be skipped");
+        assert!(result_mod.is_empty(), "mod.rs should be skipped");
+    }
+
+    #[test]
+    fn no_violation_for_empty_content() {
+        let checker = UnusedImportRuleChecker::new();
+        let result = checker
+            .check_unused_imports("/tmp/test/src/file.rs", "")
+            .unwrap();
+        assert!(
+            result.is_empty(),
+            "Empty content should produce no violations"
+        );
+    }
+
+    #[test]
+    fn detects_multiple_unused_imports() {
+        let checker = UnusedImportRuleChecker::new();
+        let content = r#"use std::collections::HashMap;
+use std::collections::BTreeMap;
+use std::io::Read;
+
+fn main() {
+    println!("no imports used");
+}
+"#;
+        let result = checker
+            .check_unused_imports("/tmp/test/src/multi.rs", content)
+            .unwrap();
+        // At least HashMap and BTreeMap should be flagged (Read is a trait — may be skipped)
+        assert!(
+            result.len() >= 2,
+            "Should detect at least 2 unused imports, got {}",
+            result.len()
+        );
+    }
+}

@@ -1,5 +1,4 @@
 // quality-rules — taxonomy and contract types
-pub mod contract_adapter_protocol;
 pub mod contract_bypass_checker_protocol;
 pub mod contract_class_protocol;
 pub mod contract_code_analysis_aggregate;
@@ -15,7 +14,6 @@ pub mod taxonomy_violation_code_analysis_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_adapter_protocol::ILinterAdapterProtocol;
 pub use contract_bypass_checker_protocol::IBypassCheckerProtocol;
 pub use contract_class_protocol::IMandatoryClassProtocol;
 pub use contract_code_analysis_aggregate::ICodeAnalysisAggregate;

@@ -4,7 +4,6 @@
 use std::sync::Arc;
 
 use shared::common::ScanError;
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_vo::{ErrorMessage, PatternList};
@@ -13,6 +12,7 @@ use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::IExternalLintExecutorProtocol;
+use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 

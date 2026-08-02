@@ -699,8 +699,10 @@ impl LintExecutor {
         let import = self.import_orchestrator.clone();
         let orphan_agg = self.orphan_aggregate.clone();
 
+        // Pre-fetch file list for naming/import audits (borrowed from filesystem, outlives scope)
+        let file_list = self.filesystem.file_list();
+
         // Clone path_string for each thread
-        let path_string_n = path_string.clone();
         let path_string_i = path_string.clone();
 
         std::thread::scope(|s| {
@@ -710,11 +712,7 @@ impl LintExecutor {
             // 2. Naming rules audit — AES101-102 (sync, no tokio needed)
             let h2 = s.spawn(move || {
                 naming
-                    .map(|n| {
-                        let p = shared::common::taxonomy_path_vo::FilePath::new(path_string_n)
-                            .unwrap_or_default();
-                        n.run_audit(&p).unwrap_or_default()
-                    })
+                    .map(|n| n.run_audit_with_entries(file_list))
                     .unwrap_or_default()
             });
 

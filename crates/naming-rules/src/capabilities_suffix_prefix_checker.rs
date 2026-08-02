@@ -218,3 +218,98 @@ impl SuffixPrefixChecker {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use shared::common::taxonomy_common_vo::{PatternList, SuffixPolicyVO};
+    use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+    use shared::common::taxonomy_layer_vo::LayerNameVO;
+    use std::collections::HashMap;
+
+    fn checker() -> SuffixPrefixChecker {
+        SuffixPrefixChecker::new()
+    }
+
+    fn layer_map_with_strict_capabilities() -> LayerMapVO {
+        let mut def = LayerDefinition::default();
+        def.naming.suffix_policy = SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string());
+        def.naming.allowed_suffix =
+            PatternList::new(vec!["checker".to_string(), "adapter".to_string()]);
+        def.naming.forbidden_suffix = PatternList::new(vec!["vo".to_string()]);
+        let mut layers = HashMap::new();
+        layers.insert(LayerNameVO::new("capabilities"), def);
+        LayerMapVO::new(layers)
+    }
+
+    fn layer_def(map: &LayerMapVO) -> &LayerDefinition {
+        map.values.get(&LayerNameVO::new("capabilities")).unwrap()
+    }
+
+    #[test]
+    fn construction_succeeds() {
+        let _ = checker();
+    }
+
+    #[test]
+    fn allowed_suffix_no_violation() {
+        let map = layer_map_with_strict_capabilities();
+        let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
+        let result = checker()._check_domain_suffixes(
+            "src/capabilities_user_checker.rs",
+            "capabilities_user_checker.rs",
+            Some(layer_def(&map)),
+            &Some(LayerNameVO::new("capabilities")),
+            &suffix_map,
+        );
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn forbidden_suffix_produces_violation() {
+        let map = layer_map_with_strict_capabilities();
+        let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
+        let result = checker()._check_domain_suffixes(
+            "src/capabilities_user_vo.rs",
+            "capabilities_user_vo.rs",
+            Some(layer_def(&map)),
+            &Some(LayerNameVO::new("capabilities")),
+            &suffix_map,
+        );
+        assert!(
+            result.is_some(),
+            "forbidden suffix 'vo' must produce a violation"
+        );
+    }
+
+    #[test]
+    fn strict_policy_wrong_suffix_produces_violation() {
+        let map = layer_map_with_strict_capabilities();
+        let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
+        let result = checker()._check_domain_suffixes(
+            "src/capabilities_user_handler.rs",
+            "capabilities_user_handler.rs",
+            Some(layer_def(&map)),
+            &Some(LayerNameVO::new("capabilities")),
+            &suffix_map,
+        );
+        assert!(
+            result.is_some(),
+            "suffix not in allowed list under strict policy must produce a violation"
+        );
+    }
+
+    #[test]
+    fn barrel_file_skipped() {
+        let map = layer_map_with_strict_capabilities();
+        let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
+        let result = checker()._check_domain_suffixes(
+            "src/capabilities/mod.rs",
+            "mod.rs",
+            Some(layer_def(&map)),
+            &Some(LayerNameVO::new("capabilities")),
+            &suffix_map,
+        );
+        assert!(result.is_none(), "barrel files must be skipped");
+    }
+}

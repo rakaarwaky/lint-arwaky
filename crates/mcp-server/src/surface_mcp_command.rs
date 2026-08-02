@@ -76,59 +76,7 @@ impl LintArwakyMcpServer {
 
     #[tool(description = "Check system health: adapters and system state.")]
     pub async fn health_check(&self) -> String {
-        // FRD FR-004: all 9 adapters must be checked
-        let mut adapters = Vec::new();
-        for (name, lang) in &[
-            ("clippy", "Rust"),
-            ("rustfmt", "Rust"),
-            ("cargo-audit", "Rust"),
-            ("ruff", "Python"),
-            ("mypy", "Python"),
-            ("bandit", "Python"),
-            ("eslint", "JS/TS"),
-            ("prettier", "JS/TS"),
-            ("tsc", "JS/TS"),
-        ] {
-            let found = match *name {
-                "clippy" => std::process::Command::new("cargo")
-                    .args(["clippy", "--version"])
-                    .output()
-                    .map(|o| o.status.success())
-                    .unwrap_or(false),
-                "rustfmt" => std::process::Command::new("rustfmt")
-                    .args(["--version"])
-                    .output()
-                    .map(|o| o.status.success())
-                    .unwrap_or(false),
-                "cargo-audit" => std::process::Command::new("cargo")
-                    .args(["audit", "--version"])
-                    .output()
-                    .map(|o| o.status.success())
-                    .unwrap_or(false),
-                _ => std::process::Command::new("which")
-                    .arg(name)
-                    .output()
-                    .map(|o| o.status.success())
-                    .unwrap_or(false),
-            };
-            adapters.push(serde_json::json!({
-                "name": name,
-                "language": lang,
-                "status": if found { "available" } else { "not_installed" }
-            }));
-        }
-        let available = adapters
-            .iter()
-            .filter(|a| a["status"] == "available")
-            .count();
-        let result = serde_json::json!({
-            "version": env!("CARGO_PKG_VERSION"),
-            "adapters_available": available,
-            "adapters_total": adapters.len(),
-            "adapters": adapters,
-            "exit_code": 0,
-        });
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        self.agent.health_check()
     }
 
     #[tool(

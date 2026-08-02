@@ -22,14 +22,14 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
+use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::quality_rules::LinterOperationError;
-use shared::quality_rules::contract_adapter_protocol::ILinterAdapterProtocol;
 use std::path::Path;
 use std::sync::Arc;
 use tracing::debug;
 
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

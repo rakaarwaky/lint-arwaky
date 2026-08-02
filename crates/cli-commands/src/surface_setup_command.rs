@@ -1,6 +1,6 @@
 // PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, install, mcp-config)
-// Adapted: handle_init uses sync methods; handle_install uses std::process::Command for
-// pip/npm directly; handle_mcp_config is sync. No tokio runtime needed.
+// AES406 compliant: handle_install delegates to SetupManagementAggregate.
+// No direct std::process::Command calls.
 use shared::common::ExitCode;
 use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
@@ -96,18 +96,12 @@ fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result
     Ok(count)
 }
 
-pub fn handle_install(sudo: bool) -> ExitCode {
+pub fn handle_install(setup: Arc<dyn SetupManagementAggregate>, sudo: bool) -> ExitCode {
     println!("Lint Arwaky — Install Adapter Dependencies");
     println!("{}", "=".repeat(50));
 
     println!("\n[1/2] Installing Python adapters (ruff, mypy, bandit)...");
-    let py_status = std::process::Command::new("pip3")
-        .args(["install", "--quiet", "ruff", "mypy", "bandit"])
-        .status();
-    let py_ok = match py_status {
-        Ok(s) => s.success(),
-        Err(_) => false,
-    };
+    let py_ok = setup.install_python_adapters().value;
     if py_ok {
         println!("  Python adapters installed");
     } else {
@@ -115,19 +109,7 @@ pub fn handle_install(sudo: bool) -> ExitCode {
     }
 
     println!("\n[2/2] Installing JavaScript adapters (eslint, prettier, typescript)...");
-    let js_status = if sudo {
-        std::process::Command::new("sudo")
-            .args(["npm", "install", "-g", "eslint", "prettier", "typescript"])
-            .status()
-    } else {
-        std::process::Command::new("npm")
-            .args(["install", "-g", "eslint", "prettier", "typescript"])
-            .status()
-    };
-    let js_ok = match js_status {
-        Ok(s) => s.success(),
-        Err(_) => false,
-    };
+    let js_ok = setup.install_javascript_adapters(sudo).value;
     if js_ok {
         println!("  JavaScript adapters installed");
     } else {

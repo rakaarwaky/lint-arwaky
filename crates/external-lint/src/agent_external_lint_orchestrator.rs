@@ -20,8 +20,8 @@ use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::quality_rules::contract_adapter_protocol::ILinterAdapterProtocol;
 
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 

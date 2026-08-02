@@ -52,6 +52,18 @@ pub struct ToolchainDiagnostics {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct HealthCheckAdapterVO {
+    pub name: String,
+    pub language: String,
+    pub available: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct HealthCheckResult {
+    pub adapters: Vec<HealthCheckAdapterVO>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SecurityFinding {
     pub severity: String,
     pub test_id: String,

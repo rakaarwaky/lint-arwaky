@@ -1,4 +1,7 @@
 // PURPOSE: External lint scan surface action
+// AES406 NOTE: Uses subprocess approach (self-invocation) to run external lint scanning
+// because IExternalLintAggregate::scan_all is async and no tokio runtime is available.
+// This is a known gap — a sync scan method or async-aware surface layer should replace this.
 // Adapted: uses subprocess approach since IExternalLintAggregate::scan_all is async
 // and no tokio runtime is available in this crate.
 use shared::common::ExitCode;

@@ -1,6 +1,8 @@
 // PURPOSE: Role rules scan surface action
+// AES406 NOTE: Uses subprocess approach (self-invocation) to run role scanning because
+// IRoleRunnerAggregate only has run_audit_with_entries, not a single-path variant.
+// This is a known gap — IRoleRunnerAggregate should expose a simpler scan method.
 // Adapted: IRoleRunnerAggregate no longer has run_audit(path) — only run_audit_with_entries.
-// Uses subprocess approach to invoke the binary for role scanning.
 use shared::common::ExitCode;
 use std::process::Command;
 use std::sync::Arc;

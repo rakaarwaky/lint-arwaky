@@ -2,7 +2,6 @@
 pub mod root_cli_container;
 pub mod surface_check_command;
 pub mod surface_ci_command;
-pub mod surface_common_action;
 pub mod surface_config_command;
 pub mod surface_external_action;
 pub mod surface_fix_action;

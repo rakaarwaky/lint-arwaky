@@ -1,5 +1,4 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
-use shared::common::taxonomy_adapter_error::ScanError;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
@@ -8,7 +7,6 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::{INamingConventionChecker, ISuffixPrefixChecker};
-use std::path::Path;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -27,29 +25,6 @@ pub struct NamingOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl INamingRunnerAggregate for NamingOrchestrator {
-    fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
-        let target_path = Path::new(&target.value);
-
-        if !target_path.exists() {
-            return Err(ScanError::new(
-                target.clone(),
-                shared::common::taxonomy_common_error::ErrorMessage::new(
-                    "target path does not exist",
-                ),
-            ));
-        }
-
-        // NOTE: run_audit is the simplified entry point. The caller should
-        // use run_audit_with_entries with pre-discovered file entries for
-        // full control over file discovery.
-        Err(ScanError::new(
-            target.clone(),
-            shared::common::taxonomy_common_error::ErrorMessage::new(
-                "use run_audit_with_entries with pre-discovered file entries",
-            ),
-        ))
-    }
-
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         // Convert FileEntry paths to FilePathList for the checkers
         let file_paths: Vec<FilePath> = files

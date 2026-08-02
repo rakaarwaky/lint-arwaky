@@ -106,17 +106,19 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 }
 
                 // 3. Naming rules
-                if let Ok(naming_results) = self.deps.naming_orchestrator.run_audit(&fp) {
-                    for r in &naming_results {
-                        all_results.push(serde_json::json!({
-                            "file": r.file.value.as_str(),
-                            "code": r.code.code(),
-                            "message": r.message.value.as_str(),
-                            "line": r.line.value(),
-                            "column": r.column.value(),
-                            "linter": "naming",
-                        }));
-                    }
+                let naming_results = self
+                    .deps
+                    .naming_orchestrator
+                    .run_audit_with_entries(self.deps.filesystem.file_list());
+                for r in &naming_results {
+                    all_results.push(serde_json::json!({
+                        "file": r.file.value.as_str(),
+                        "code": r.code.code(),
+                        "message": r.message.value.as_str(),
+                        "line": r.line.value(),
+                        "column": r.column.value(),
+                        "linter": "naming",
+                    }));
                 }
 
                 // 4. Role rules — IRoleRunnerAggregate only has run_audit_with_entries
@@ -807,14 +809,10 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     Some(p) => p,
                     None => ".".to_string(),
                 };
-                let fp = match shared::common::taxonomy_path_vo::FilePath::new(path.clone()) {
-                    Ok(f) => f,
-                    Err(_) => return serde_json::json!({"error": "Invalid path", "action": "naming", "exit_code": 2}).to_string(),
-                };
-                let results = match self.deps.naming_orchestrator.run_audit(&fp) {
-                    Ok(r) => r,
-                    Err(e) => return serde_json::json!({"error": format!("Naming audit failed: {}", e), "action": "naming", "exit_code": 2}).to_string(),
-                };
+                let results = self
+                    .deps
+                    .naming_orchestrator
+                    .run_audit_with_entries(self.deps.filesystem.file_list());
                 let exit_code = if results.is_empty() { 0 } else { 1 };
                 serde_json::json!({
                     "status": if exit_code == 0 { "success" } else { "violations" },
@@ -894,6 +892,33 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             }
         };
         serde_json::to_string(&result).unwrap_or_default()
+    }
+
+    fn health_check(&self) -> String {
+        let health = self.deps.maintenance_orchestrator.health_check();
+        let adapters: Vec<serde_json::Value> = health
+            .adapters
+            .iter()
+            .map(|a| {
+                serde_json::json!({
+                    "name": a.name,
+                    "language": a.language,
+                    "status": if a.available { "available" } else { "not_installed" },
+                })
+            })
+            .collect();
+        let available = adapters
+            .iter()
+            .filter(|a| a["status"] == "available")
+            .count();
+        let result = serde_json::json!({
+            "version": env!("CARGO_PKG_VERSION"),
+            "adapters_available": available,
+            "adapters_total": adapters.len(),
+            "adapters": adapters,
+            "exit_code": 0,
+        });
+        serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
     fn list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {

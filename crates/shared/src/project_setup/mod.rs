@@ -1,6 +1,5 @@
 pub mod contract_setup_aggregate;
 pub mod contract_setup_protocol;
-pub mod contract_tool_executor_protocol;
 pub mod taxonomy_setup_contract_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -10,12 +9,9 @@ pub mod taxonomy_setup_contract_vo;
 pub use contract_setup_aggregate::SetupManagementAggregate;
 pub use contract_setup_protocol::ISetupInstallerProtocol;
 pub use contract_setup_protocol::ISetupManagementProtocol;
-pub use contract_tool_executor_protocol::IToolExecutorProtocol;
-
 // ── Taxonomy types ──
 pub use contract_setup_aggregate::SetupMgmtProtocol;
 pub use contract_setup_protocol::InstallPackagesResult;
-pub use contract_tool_executor_protocol::ToolOutput;
 pub use taxonomy_setup_contract_vo::CreateConfigDirResult;
 pub use taxonomy_setup_contract_vo::McpBinaryNameVO;
 pub use taxonomy_setup_contract_vo::ProjectLanguageVO;

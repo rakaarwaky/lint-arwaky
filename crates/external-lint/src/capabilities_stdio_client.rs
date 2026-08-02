@@ -3,11 +3,11 @@ use std::collections::HashMap;
 use std::process::Command;
 use std::time::Duration;
 
-use shared::common::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
+use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

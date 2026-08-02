@@ -1,6 +1,10 @@
 // PURPOSE: GitCommandsSurface — CLI surface for git-diff integration
 // Runs AES analysis only on files changed since the specified git base.
-// Adapted: uses std::process::Command for git operations (no async, no tokio).
+//
+// AES406 NOTE: This surface uses std::process::Command for git operations because
+// no aggregate exists for git subprocess execution. This is a known gap —
+// a GitCommandsAggregate should be created in a git-operations crate to
+// abstract subprocess calls behind a contract trait.
 use shared::common::{ExitCode, FilePath, GitBranchName, Severity};
 use shared::quality_rules::ICodeAnalysisAggregate;
 use std::process::Command;

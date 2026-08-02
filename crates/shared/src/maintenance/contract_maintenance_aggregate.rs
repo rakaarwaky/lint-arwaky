@@ -2,7 +2,7 @@
 use crate::common::taxonomy_action_vo::JobId;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::maintenance::taxonomy_doctor_vo::{
-    DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
+    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
 };
 use crate::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 
@@ -13,6 +13,7 @@ pub trait MaintenanceCommandsAggregate: Send + Sync {
     fn doctor(&self) -> DoctorResultVO;
     fn cancel(&self, job_id: JobId);
     fn diagnose_toolchain(&self) -> ToolchainDiagnostics;
+    fn health_check(&self) -> HealthCheckResult;
     fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport;
     fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String>;
 }
