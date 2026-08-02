@@ -11,10 +11,9 @@ use crate::common::taxonomy_response_data_vo::ResponseData;
 ///
 /// Implementations wrap `ICommandExecutorProtocol` and add error mapping
 /// for scan and adapter operations.
-#[async_trait::async_trait]
 pub trait IExternalLintExecutorProtocol: Send + Sync {
     /// Execute a command, mapping failures to `LinterOperationError::Scan`.
-    async fn exec_cmd_scan(
+    fn exec_cmd_scan(
         &self,
         args: Vec<String>,
         working_dir: FilePath,
@@ -24,7 +23,7 @@ pub trait IExternalLintExecutorProtocol: Send + Sync {
     ) -> Result<ResponseData, LinterOperationError>;
 
     /// Execute a command, mapping failures to `LinterOperationError::Adapter`.
-    async fn exec_cmd_adapter(
+    fn exec_cmd_adapter(
         &self,
         args: Vec<String>,
         working_dir: FilePath,
@@ -33,7 +32,7 @@ pub trait IExternalLintExecutorProtocol: Send + Sync {
     ) -> Result<ResponseData, LinterOperationError>;
 
     /// Apply a JS tool's fix command.
-    async fn js_apply_fix(
+    fn js_apply_fix(
         &self,
         path: &FilePath,
         tool: &str,

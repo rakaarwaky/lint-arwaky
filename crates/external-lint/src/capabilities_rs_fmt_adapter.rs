@@ -10,7 +10,6 @@
 //   - apply_fix runs `cargo fmt` (without --check) to auto-format
 //   - Only reports added lines (+ prefix) as violations, not context lines
 
-use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::ErrorMessage;
 use shared::common::taxonomy_adapter_error::AdapterError;
@@ -43,13 +42,12 @@ pub struct RustFmtAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for RustFmtAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("rustfmt")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
 
         // Find the Cargo.toml parent to use as working directory
@@ -128,7 +126,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let working_dir = self.filesystem.resolve_cargo_working_dir(path);
         let cmd = vec!["cargo".to_string(), "fmt".to_string()];
         let _ = self.executor.execute_command(

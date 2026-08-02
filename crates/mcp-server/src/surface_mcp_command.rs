@@ -7,7 +7,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{
     Implementation, ProtocolVersion, ServerCapabilities, ServerInfo, ToolsCapability,
 };
-use rmcp::{tool, tool_handler, tool_router, ServerHandler};
+use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
 
 use shared::mcp_server::IMcpServerAggregate;

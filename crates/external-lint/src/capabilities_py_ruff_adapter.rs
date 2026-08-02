@@ -10,7 +10,6 @@
 //   - Maps Ruff severity levels (error/warning/info) to AES severity
 //   - Converts relative Ruff paths to absolute project paths
 
-use async_trait::async_trait;
 use serde_json::Value;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::ErrorMessage;
@@ -39,13 +38,12 @@ pub struct RuffAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for RuffAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("ruff")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
         if !self.filesystem.is_python_file_recursive(path) {
             return Ok(LintResultList::new(vec![]));
@@ -67,7 +65,6 @@ impl ILinterAdapterProtocol for RuffAdapter {
         let response = self
             .lint_executor
             .exec_cmd_adapter(cmd, working_dir, 60.0, self.name())
-            .await
             .map_err(crate::convert_executor_error)?;
 
         let stdout = &response.stdout;
@@ -138,7 +135,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let executable = self.resolve_executable();
         let cmd = vec![
             executable,
@@ -152,7 +149,6 @@ impl ILinterAdapterProtocol for RuffAdapter {
         let _ = self
             .lint_executor
             .exec_cmd_adapter(cmd, working_dir, 60.0, self.name())
-            .await
             .map_err(crate::convert_executor_error)?;
         Ok(ComplianceStatus::new(true))
     }
@@ -226,9 +222,8 @@ mod tests {
         use shared::external_lint::IExternalLintExecutorProtocol;
 
         struct EmptyLintExecutor;
-        #[async_trait::async_trait]
         impl IExternalLintExecutorProtocol for EmptyLintExecutor {
-            async fn exec_cmd_scan(
+            fn exec_cmd_scan(
                 &self,
                 _: Vec<String>,
                 _: shared::common::taxonomy_path_vo::FilePath,
@@ -241,7 +236,7 @@ mod tests {
             > {
                 Ok(shared::common::taxonomy_response_data_vo::ResponseData::default())
             }
-            async fn exec_cmd_adapter(
+            fn exec_cmd_adapter(
                 &self,
                 _: Vec<String>,
                 _: shared::common::taxonomy_path_vo::FilePath,
@@ -253,7 +248,7 @@ mod tests {
             > {
                 Ok(shared::common::taxonomy_response_data_vo::ResponseData::default())
             }
-            async fn js_apply_fix(
+            fn js_apply_fix(
                 &self,
                 _: &shared::common::taxonomy_path_vo::FilePath,
                 _: &str,

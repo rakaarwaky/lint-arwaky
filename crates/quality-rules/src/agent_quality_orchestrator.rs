@@ -261,19 +261,14 @@ impl CodeAnalysisOrchestrator {
             cargo_candidates.push(parent.join("Cargo.toml"));
         }
         for cargo_path in &cargo_candidates {
-            if cargo_path.exists() {
-                match self
-                    .deps
-                    .filesystem
-                    .read_lintable_file(&cargo_path.to_string_lossy())
-                {
-                    Some(cargo_content) => {
-                        self.deps
-                            .bypass_checker
-                            .check_cargo_toml(&cargo_content, &mut violations);
-                    }
-                    None => {}
-                }
+            if let Some(cargo_content) = self
+                .deps
+                .filesystem
+                .read_lintable_file(&cargo_path.to_string_lossy())
+            {
+                self.deps
+                    .bypass_checker
+                    .check_cargo_toml(&cargo_content, &mut violations);
             }
         }
 

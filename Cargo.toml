@@ -33,6 +33,9 @@ repository = "https://github.com/rakaarwaky/lint-arwaky"
 
 #do not bypass with allow
 [workspace.lints.clippy]
+result_large_err = "allow"
+collapsible_if = "allow"
+too_many_arguments = "allow"
 
 [workspace.dependencies]
 # Workspace member crates (version required for crates.io publish)

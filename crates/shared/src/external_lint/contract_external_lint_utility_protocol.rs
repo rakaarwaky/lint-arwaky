@@ -7,11 +7,9 @@ use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use crate::common::taxonomy_response_data_vo::ResponseData;
-use async_trait::async_trait;
 
 // ─── Path Operations ──────────────────────────────────────
 
-#[async_trait]
 pub trait IExternalLintPathProtocol: Send + Sync {
     fn canonicalize_path(&self, path_str: &str) -> FilePath;
     fn default_working_dir(&self, path: &FilePath) -> FilePath;
@@ -19,7 +17,6 @@ pub trait IExternalLintPathProtocol: Send + Sync {
 
 // ─── Language Detection ───────────────────────────────────
 
-#[async_trait]
 pub trait IExternalLintLanguageProtocol: Send + Sync {
     fn has_python_files(&self, path: &FilePath) -> bool;
     fn has_py_in_dir(&self, dir: &DirectoryPath) -> bool;
@@ -28,7 +25,6 @@ pub trait IExternalLintLanguageProtocol: Send + Sync {
 
 // ─── JS Adapter Operations ────────────────────────────────
 
-#[async_trait]
 pub trait IExternalLintJsProtocol: Send + Sync {
     fn resolve_js_cmd(
         &self,
@@ -37,7 +33,7 @@ pub trait IExternalLintJsProtocol: Send + Sync {
         working_dir: &FilePath,
     ) -> PatternList;
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath;
-    async fn js_apply_fix(
+    fn js_apply_fix(
         &self,
         executor: &dyn ICommandExecutorProtocol,
         path: &FilePath,
@@ -48,7 +44,6 @@ pub trait IExternalLintJsProtocol: Send + Sync {
 
 // ─── Cargo Adapter Operations ─────────────────────────────
 
-#[async_trait]
 pub trait IExternalLintCargoProtocol: Send + Sync {
     fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath;
     fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath;
@@ -56,9 +51,8 @@ pub trait IExternalLintCargoProtocol: Send + Sync {
 
 // ─── Command Execution ────────────────────────────────────
 
-#[async_trait]
 pub trait IExternalLintCommandProtocol: Send + Sync {
-    async fn exec_cmd_scan(
+    fn exec_cmd_scan(
         &self,
         executor: &dyn ICommandExecutorProtocol,
         args: PatternList,
@@ -67,7 +61,7 @@ pub trait IExternalLintCommandProtocol: Send + Sync {
         adapter_name: Option<AdapterName>,
         path: &FilePath,
     ) -> Result<ResponseData, LinterOperationError>;
-    async fn exec_cmd_adapter(
+    fn exec_cmd_adapter(
         &self,
         executor: &dyn ICommandExecutorProtocol,
         args: PatternList,
@@ -75,5 +69,5 @@ pub trait IExternalLintCommandProtocol: Send + Sync {
         timeout_secs: Timeout,
         adapter_name: AdapterName,
     ) -> Result<ResponseData, LinterOperationError>;
-    async fn noop_apply_fix(&self) -> Result<ComplianceStatus, LinterOperationError>;
+    fn noop_apply_fix(&self) -> Result<ComplianceStatus, LinterOperationError>;
 }

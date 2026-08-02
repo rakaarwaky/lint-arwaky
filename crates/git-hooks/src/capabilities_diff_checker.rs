@@ -134,11 +134,7 @@ impl DiffChecker {
         !changed_set.is_empty()
     }
 
-    fn try_fallback_head_sync(
-        &self,
-        changed_set: &mut HashSet<FilePath>,
-        project_path: &FilePath,
-    ) {
+    fn try_fallback_head_sync(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
         let (stdout, _, success) = self
             .filesystem
             .run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value);
@@ -151,11 +147,7 @@ impl DiffChecker {
         }
     }
 
-    fn try_ls_files_sync(
-        &self,
-        changed_set: &mut HashSet<FilePath>,
-        project_path: &FilePath,
-    ) {
+    fn try_ls_files_sync(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
         let (stdout, _, success) = self.filesystem.run_git_command(
             &["ls-files", "--modified", "--others", "--exclude-standard"],
             &project_path.value,

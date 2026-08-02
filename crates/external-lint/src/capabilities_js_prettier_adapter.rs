@@ -10,7 +10,6 @@
 //   - Detects warnings by checking for "[warn]" in combined stdout+stderr
 //   - Reports a single LintResult per file (not per-difference)
 
-use async_trait::async_trait;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_vo::{ColumnNumber, LineNumber};
@@ -37,13 +36,12 @@ pub struct PrettierAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for PrettierAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("prettier")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = path.value();
         if self.filesystem.is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
@@ -70,7 +68,6 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         let response = self
             .lint_executor
             .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
-            .await
             .map_err(crate::convert_executor_error)?;
         let mut results = Vec::new();
         let combined_output = format!("{}{}", response.stdout, response.stderr);
@@ -107,10 +104,9 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         self.lint_executor
             .js_apply_fix(path, "prettier", "--write")
-            .await
             .map_err(crate::convert_executor_error)
     }
 }

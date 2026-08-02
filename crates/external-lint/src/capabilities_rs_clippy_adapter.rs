@@ -15,7 +15,6 @@
 // NOTE: apply_fix runs `cargo clippy --fix` which modifies files in place.
 // This is the only adapter that supports auto-fix.
 
-use async_trait::async_trait;
 use serde_json::Value;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::ErrorMessage;
@@ -49,13 +48,12 @@ pub struct RustLinterAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for RustLinterAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("clippy")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
         let working_dir = self.filesystem.resolve_cargo_working_dir(path);
         let working_dir_str = working_dir.value();
@@ -177,7 +175,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let working_dir = self.filesystem.resolve_cargo_working_dir(path);
         let cmd = vec![
             "cargo".to_string(),

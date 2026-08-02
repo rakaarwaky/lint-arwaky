@@ -1072,9 +1072,7 @@ name = "external-lint-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "anyhow",
- "async-trait",
  "filesystem-lint-arwaky",
- "futures",
  "regex",
  "serde",
  "serde_json",
@@ -3033,7 +3031,6 @@ dependencies = [
  "dirs",
  "external-lint-lint-arwaky",
  "filesystem-lint-arwaky",
- "futures",
  "git-hooks-lint-arwaky",
  "import-rules-lint-arwaky",
  "maintenance-lint-arwaky",
@@ -3048,6 +3045,7 @@ dependencies = [
  "role-rules-lint-arwaky",
  "serde_json",
  "shared-lint-arwaky",
+ "tokio",
 ]
 
 [[package]]

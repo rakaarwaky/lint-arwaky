@@ -10,7 +10,6 @@
 //   - Severity is directly mapped: HIGH→HIGH, MEDIUM→MEDIUM, LOW→LOW
 //   - apply_fix always returns false (Bandit is a scanner, not a fixer)
 
-use async_trait::async_trait;
 use serde_json::Value;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
@@ -37,13 +36,12 @@ pub struct BanditAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for BanditAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("bandit")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
         if !self.filesystem.is_python_file_recursive(path) {
             return Ok(LintResultList::new(vec![]));
@@ -65,7 +63,6 @@ impl ILinterAdapterProtocol for BanditAdapter {
         let response = self
             .lint_executor
             .exec_cmd_adapter(cmd, working_dir, 120.0, self.name())
-            .await
             .map_err(crate::convert_executor_error)?;
 
         let stdout = &response.stdout;
@@ -131,7 +128,7 @@ impl ILinterAdapterProtocol for BanditAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }
@@ -185,9 +182,8 @@ mod tests {
         use shared::external_lint::IExternalLintExecutorProtocol;
 
         struct EmptyLintExecutor;
-        #[async_trait::async_trait]
         impl IExternalLintExecutorProtocol for EmptyLintExecutor {
-            async fn exec_cmd_scan(
+            fn exec_cmd_scan(
                 &self,
                 _: Vec<String>,
                 _: FilePath,
@@ -197,7 +193,7 @@ mod tests {
             ) -> Result<ResponseData, LinterOperationError> {
                 Ok(ResponseData::default())
             }
-            async fn exec_cmd_adapter(
+            fn exec_cmd_adapter(
                 &self,
                 _: Vec<String>,
                 _: FilePath,
@@ -206,7 +202,7 @@ mod tests {
             ) -> Result<ResponseData, LinterOperationError> {
                 Ok(ResponseData::default())
             }
-            async fn js_apply_fix(
+            fn js_apply_fix(
                 &self,
                 _: &FilePath,
                 _: &str,

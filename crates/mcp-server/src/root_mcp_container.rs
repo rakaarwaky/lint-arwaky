@@ -1,10 +1,18 @@
 // PURPOSE: McpContainer — DI wiring for MCP server aggregates
+//
+// Follows the project pattern: aggregate for cross-crate DI, protocol for intra-crate wiring.
+// Each container is constructed with explicit DI parameters — no Default impls for production use.
+
 use std::sync::Arc;
 
 use crate::agent_mcp_server_orchestrator::{McpServerDependencies, McpServerOrchestrator};
+use auto_fix::capabilities_file_adapter::FileAdapter;
+use auto_fix::root_auto_fix_container::AutoFixContainer;
+use git_hooks::root_git_hooks_container::GitContainer;
+use maintenance::root_maintenance_container::MaintenanceContainer;
+use project_setup::root_project_setup_container::SetupContainer;
 use shared::auto_fix::LintFixOrchestratorAggregate;
-use shared::quality_rules::ICodeAnalysisAggregate;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::LayerMapVO;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -14,6 +22,7 @@ use shared::maintenance::MaintenanceCommandsAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::project_setup::SetupManagementAggregate;
+use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
 pub struct McpContainer {
@@ -29,6 +38,7 @@ pub struct McpContainer {
     pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
     pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol>,
 }
 
 impl McpContainer {
@@ -47,80 +57,102 @@ impl McpContainer {
             naming_orchestrator: self.naming_orchestrator.clone(),
             role_orchestrator: self.role_orchestrator.clone(),
             filesystem: self.filesystem.clone(),
+            file_adapter: self.file_adapter.clone(),
         };
         McpServerOrchestrator::new(deps)
     }
 
-    pub fn new_default() -> Self {
-        // Filesystem orchestrator — shared across all containers
+    /// Create McpContainer with all dependencies explicitly injected.
+    ///
+    /// # Arguments
+    /// * `project_root` - Root directory of the project to lint
+    pub fn new(project_root: &str) -> Self {
+        // 1. Filesystem — shared across all containers
         let filesystem: Arc<dyn IFilesystemAggregate> =
             filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
 
-        // Create config orchestrator — single source of truth for config
+        // 2. Config — single source of truth for architecture config
         let config_container =
             config_system::root_config_system_container::ConfigContainer::new(filesystem.clone());
-        let orchestrator = config_container.orchestrator();
+        let config_orchestrator = config_container.orchestrator();
+        let config_parser = config_container.parser();
 
-        // Default project root for container initialization
-        let default_root = FilePath::new(".").unwrap_or_default();
-        let default_config = orchestrator.load_config_sync(&default_root);
+        // Load architecture config for containers that need it directly
+        use shared::common::FilePath;
+        let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
+        let arch_config = config_orchestrator.load_config_sync(&fp);
+        let layer_map = Arc::new(LayerMapVO::new(arch_config.layers.clone()));
 
-        // Quality rules (code analysis)
+        // 3. Quality rules (code analysis)
         let code_analysis_linter =
-            quality_rules::root_quality_rules_container::CodeAnalysisContainer::new(
+            quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
+                &config_orchestrator,
+                project_root,
                 filesystem.clone(),
             )
             .code_analysis_linter();
 
-        // Import rules
+        // 4. Import rules
         let import_container =
-            import_rules::root_import_rules_container::ImportContainer::new_with_config(
-                default_config.clone(),
+            import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
+                &config_orchestrator,
+                project_root,
                 filesystem.clone(),
             );
         let import_orchestrator = import_container.orchestrator();
 
-        // Naming rules
+        // 5. Naming rules
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-            Arc::new(default_config.clone()),
-            Arc::new(shared::common::taxonomy_definition_vo::LayerMapVO::new(
-                default_config.layers.clone(),
-            )),
+            Arc::new(arch_config.clone()),
+            layer_map,
         );
         let naming_orchestrator = naming_container.orchestrator();
 
-        // Orphan detector
+        // 6. Orphan rules
         let orphan_container =
-            orphan_rules::root_orphan_detector_container::OrphanContainer::new(filesystem.clone());
+            orphan_rules::root_orphan_detector_container::OrphanContainer::from_orchestrator(
+                &config_orchestrator,
+                project_root,
+                filesystem.clone(),
+            );
         let orphan_orchestrator = orphan_container.analyzer();
 
-        // External linters
-        let ext_container =
-            external_lint::root_external_lint_container::ExternalLintContainer::new_default();
+        // 7. External lint (needs filesystem + config_parser)
+        let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
+            filesystem.clone(),
+            config_parser,
+        );
         let external_lint = ext_container.aggregate();
 
-        // Role rules
+        // 8. Role rules
         let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
-            default_config.clone(),
+            arch_config.clone(),
         );
         let role_orchestrator = role_container.orchestrator();
 
-        // Auto-fix orchestrator (uses same code analysis linter)
-        let auto_fix_container =
-            auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
-        let fix_orchestrator = auto_fix_container.orchestrator(false);
+        // 9. File adapter for auto-fix
+        let file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol> =
+            Arc::new(FileAdapter::new(filesystem.clone()));
 
-        // Git hooks aggregate
-        let git_hooks_container = git_hooks::root_git_hooks_container::GitContainer::new_default();
-        let git_hooks_aggregate = git_hooks_container.aggregate();
+        // 10. Auto-fix orchestrator (uses same code analysis linter)
+        let auto_fix_container = AutoFixContainer::new(code_analysis_linter.clone());
+        let fix_orchestrator = auto_fix_container.orchestrator(false, file_adapter.clone());
 
-        // Maintenance orchestrator (doctor, security, dependencies)
-        let maintenance_container =
-            maintenance::root_maintenance_container::MaintenanceContainer::new();
+        // 11. Git hooks — requires hook_adapter and filesystem from git-hooks crate
+        let hook_adapter: Arc<dyn shared::git_hooks::IHookManagerProtocol> =
+            Arc::new(git_hooks::capabilities_hook_adapter::GitHookAdapter::new(
+                fp.clone(),
+                filesystem.clone(),
+            ));
+        let git_container = GitContainer::new(hook_adapter, filesystem.clone());
+        let git_hooks_aggregate = git_container.aggregate();
+
+        // 12. Maintenance (doctor, security, dependencies)
+        let maintenance_container = MaintenanceContainer::new(filesystem.clone());
         let maintenance_orchestrator = maintenance_container.orchestrator();
 
-        // Setup orchestrator (init, install, mcp-config)
-        let setup_container = project_setup::root_project_setup_container::SetupContainer::new();
+        // 13. Setup (init, install, mcp-config)
+        let setup_container = SetupContainer::new(filesystem.clone());
         let setup_orchestrator = setup_container.aggregate();
 
         Self {
@@ -130,12 +162,13 @@ impl McpContainer {
             orphan_orchestrator,
             external_lint,
             role_orchestrator,
-            config_orchestrator: orchestrator,
+            config_orchestrator,
             fix_orchestrator,
             git_hooks_aggregate,
             maintenance_orchestrator,
             setup_orchestrator,
             filesystem,
+            file_adapter,
         }
     }
 }

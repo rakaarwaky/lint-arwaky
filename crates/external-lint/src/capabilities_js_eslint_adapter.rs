@@ -10,7 +10,6 @@
 //   - Returns empty results for non-JS/TS files (no error)
 //   - Maps ESLint severity (1=warning, 2=error) to AES severity levels
 
-use async_trait::async_trait;
 use serde_json::Value;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
@@ -39,13 +38,12 @@ pub struct ESLintAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for ESLintAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("eslint")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = path.value();
         if self.filesystem.is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
@@ -72,7 +70,6 @@ impl ILinterAdapterProtocol for ESLintAdapter {
         let response = self
             .lint_executor
             .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
-            .await
             .map_err(crate::convert_executor_error)?;
 
         let stdout_str = response.stdout.to_string();
@@ -135,10 +132,9 @@ impl ILinterAdapterProtocol for ESLintAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         self.lint_executor
             .js_apply_fix(path, "eslint", "--fix")
-            .await
             .map_err(crate::convert_executor_error)
     }
 }

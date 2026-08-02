@@ -1,13 +1,11 @@
-use crate::utility_report_formatter::{
-    format_config_result, format_dependency_report, format_doctor_report, format_results,
-};
+use crate::utility_report_formatter::{format_config_result, format_results};
 use shared::auto_fix::FixResult;
 use shared::cli_commands::LintResultList;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::git_hooks::GitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::{DependencyReport, MaintenanceCommandsAggregate};
+use shared::maintenance::MaintenanceCommandsAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
 use shared::naming_rules::INamingRunnerAggregate;
@@ -652,8 +650,9 @@ impl LintExecutor {
             list.push(AdapterInfo {
                 name: b.into(),
                 label: l.into(),
-                installed: filesystem
-                    .is_binary_available(&ToolName::new(b.to_string()).unwrap_or_default()),
+                installed: filesystem.is_binary_available(&ToolName {
+                    value: b.to_string(),
+                }),
             });
         }
         list

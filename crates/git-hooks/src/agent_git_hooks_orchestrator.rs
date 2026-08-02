@@ -12,12 +12,12 @@
 // The orchestrator itself contains no git logic — it's pure composition.
 
 use shared::cli_commands::LintResultList;
+use shared::common::Identity;
 use shared::common::{FilePath, SuccessStatus};
 use shared::git_hooks::{
     GitHookError, GitHooksAggregate, HookManagementOrchestratorAggregate, IDiffProtocol,
     IHookManagerProtocol, IHookProtocol,
 };
-use shared::common::Identity;
 
 use std::sync::Arc;
 
@@ -44,10 +44,7 @@ impl GitHooksAggregate for GitHooksOrchestrator {
         self.diff_protocol().run_git_diff_check(path)
     }
 
-    fn install_hook(
-        &self,
-        executable_path: &FilePath,
-    ) -> Result<SuccessStatus, GitHookError> {
+    fn install_hook(&self, executable_path: &FilePath) -> Result<SuccessStatus, GitHookError> {
         self.hook_protocol().install_pre_commit(executable_path)
     }
 

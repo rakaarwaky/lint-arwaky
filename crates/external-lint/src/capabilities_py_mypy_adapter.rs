@@ -11,7 +11,6 @@
 //   - Falls back to column-less regex if column-full regex doesn't match
 //   - apply_fix always returns false (mypy is a type checker, not a formatter)
 
-use async_trait::async_trait;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
@@ -39,13 +38,12 @@ pub struct MyPyAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for MyPyAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("mypy")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
         if !self.filesystem.is_python_file_recursive(path) {
             return Ok(LintResultList::new(vec![]));
@@ -66,7 +64,6 @@ impl ILinterAdapterProtocol for MyPyAdapter {
         let response = self
             .lint_executor
             .exec_cmd_adapter(cmd, working_dir, 120.0, self.name())
-            .await
             .map_err(crate::convert_executor_error)?;
 
         let stdout = &response.stdout;
@@ -156,7 +153,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }

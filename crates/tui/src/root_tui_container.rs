@@ -24,8 +24,7 @@ impl TuiContainer {
 
         let action_handler: Arc<dyn IActionHandlerProtocol> =
             Arc::new(ActionHandler::new(lint_executor, filesystem));
-        let tui_aggregate: Arc<dyn ITuiAggregate> =
-            Arc::new(TuiOrchestrator::new(action_handler));
+        let tui_aggregate: Arc<dyn ITuiAggregate> = Arc::new(TuiOrchestrator::new(action_handler));
         let surface = TuiCommandSurface::new(tui_aggregate);
         surface.run()?;
         Ok(())

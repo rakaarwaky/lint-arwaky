@@ -1,5 +1,5 @@
-pub use shared::auto_fix::LintFixOrchestratorAggregate;
 pub use shared::auto_fix::IFixProtocol;
+pub use shared::auto_fix::LintFixOrchestratorAggregate;
 
 pub mod agent_fix_orchestrator;
 pub use agent_fix_orchestrator::FixOrchestrator;

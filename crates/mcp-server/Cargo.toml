@@ -2,23 +2,20 @@
 name = "mcp-server-lint-arwaky"
 version = "1.11.0"
 edition = "2024"
-description = "MCP server surface for lint-arwaky — AI-agent entry point."
+description = "MCP server surface for lint-arwaky."
 license = "MIT"
-repository = "https://github.com/rakaarwaky/lint-arwaky"
 
 [dependencies]
 shared = { workspace = true }
-rayon = { workspace = true }
-rmcp = { workspace = true }
-serde_json = { workspace = true }
-dirs = { workspace = true }
-futures = { workspace = true }
-once_cell = { workspace = true }
-regex = { workspace = true }
-
-# Feature crates for container wiring (root layer only)
 filesystem = { workspace = true }
 config-system = { workspace = true }
+serde_json = { workspace = true }
+rmcp = { workspace = true }
+dirs = { workspace = true }
+once_cell = { workspace = true }
+regex = { workspace = true }
+rayon = { workspace = true }
+tokio = { workspace = true }
 quality-rules = { workspace = true }
 import-rules = { workspace = true }
 naming-rules = { workspace = true }

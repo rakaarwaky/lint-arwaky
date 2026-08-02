@@ -25,9 +25,8 @@ pub struct ExternalLintExecutor {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait::async_trait]
 impl IExternalLintExecutorProtocol for ExternalLintExecutor {
-    async fn exec_cmd_scan(
+    fn exec_cmd_scan(
         &self,
         args: Vec<String>,
         working_dir: FilePath,
@@ -54,7 +53,7 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
             })
     }
 
-    async fn exec_cmd_adapter(
+    fn exec_cmd_adapter(
         &self,
         args: Vec<String>,
         working_dir: FilePath,
@@ -77,7 +76,7 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
             })
     }
 
-    async fn js_apply_fix(
+    fn js_apply_fix(
         &self,
         path: &FilePath,
         tool: &str,
@@ -98,9 +97,7 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
                 return Ok(ComplianceStatus::new(false));
             }
         };
-        let response = self
-            .exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool))
-            .await?;
+        let response = self.exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool))?;
         Ok(ComplianceStatus::new(response.returncode == 0))
     }
 }

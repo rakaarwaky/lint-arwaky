@@ -5,15 +5,13 @@
 // It performs a file-system scan to detect language usage before running
 // any adapters — avoids running rustfmt on Python-only projects.
 //
-// Adapters are run concurrently via future::join_all. If an adapter's binary
+// Adapters are run sequentially. If an adapter's binary
 // is not installed, a warning is printed (not an error) — the scan continues
 // with the remaining adapters.
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use async_trait::async_trait;
-use futures::future;
 use shared::cli_commands::taxonomy_result_vo::LintResultList;
 use shared::common::AdapterNameList;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
@@ -41,9 +39,8 @@ pub struct ExternalLintOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
-#[async_trait]
 impl IExternalLintAggregate for ExternalLintOrchestrator {
-    async fn scan_all(&self, path: &FilePath) -> LintResultList {
+    fn scan_all(&self, path: &FilePath) -> LintResultList {
         // FR-001: Detect project languages via filesystem aggregate's discover_files().
         // Lightweight walk (extension check only, no file reading or parsing).
         let root_path = std::path::Path::new(path.value());
@@ -85,52 +82,28 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                 .collect()
         };
 
-        // Build a map of per-adapter config for timeout lookup
-        let config_map: HashMap<&str, &AdapterEntry> = config_entries
-            .iter()
-            .filter(|e| adapter_names.iter().any(|n| *n == e.name.value()))
-            .map(|e| (e.name.value(), e))
-            .collect();
-
-        let mut futures = Vec::with_capacity(9);
+        let mut all = Vec::new();
         for name in &adapter_names {
             if let Some(adapter) = self.deps.adapters.get(*name) {
-                let adapter: Arc<dyn ILinterAdapterProtocol> = adapter.clone();
-                let path_clone = path.clone();
-                let name_owned = name.to_string();
-                let timeout_secs = config_map.get(name).map(|e| e.timeout).unwrap_or(60.0);
-                futures.push(async move {
-                    let _ = timeout_secs; // timeout applied per-adapter if needed in future
-                    match adapter.scan(&path_clone).await {
-                        Ok(results) => Ok::<Vec<_>, String>(results.values),
-                        Err(e) => {
-                            let err_msg = e.to_string();
-                            if err_msg.contains("No such file or directory")
-                                || err_msg.contains("os error 2")
-                            {
-                                eprintln!(
-                                    "[warn] {} is not installed or not in system PATH. Skipping.",
-                                    name_owned
-                                );
-                            } else {
-                                eprintln!("[warn] {} adapter failed: {}", name_owned, err_msg);
-                            }
-                            Ok(Vec::new())
+                match adapter.scan(path) {
+                    Ok(results) => {
+                        all.extend(results.values);
+                    }
+                    Err(e) => {
+                        let err_msg = e.to_string();
+                        if err_msg.contains("No such file or directory")
+                            || err_msg.contains("os error 2")
+                        {
+                            eprintln!(
+                                "[warn] {} is not installed or not in system PATH. Skipping.",
+                                name
+                            );
+                        } else {
+                            eprintln!("[warn] {} adapter failed: {}", name, err_msg);
                         }
                     }
-                });
+                }
             }
-        }
-
-        let results = future::join_all(futures).await;
-        let total_capacity: usize = results
-            .iter()
-            .filter_map(|r| r.as_ref().ok())
-            .map(|v| v.len())
-            .sum();
-        let mut all = Vec::with_capacity(total_capacity);
-        for values in results.into_iter().flatten() {
-            all.extend(values);
         }
         if !ignored_paths.is_empty() {
             all.retain(|v| self.deps.filesystem.should_ignore(&v.file, &ignored_paths));

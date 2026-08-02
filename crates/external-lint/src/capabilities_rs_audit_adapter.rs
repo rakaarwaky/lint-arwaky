@@ -11,7 +11,6 @@
 //   - apply_fix returns true (cargo-audit has no fix command; affected packages
 //     must be updated manually via cargo update)
 
-use async_trait::async_trait;
 use serde::Deserialize;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
@@ -58,13 +57,12 @@ struct Vulnerability {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for CargoAuditAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("cargo-audit")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
         let working_dir = self.filesystem.resolve_cargo_lock_working_dir(path);
         let working_dir_str = working_dir.value();
@@ -143,7 +141,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(true))
     }
 }

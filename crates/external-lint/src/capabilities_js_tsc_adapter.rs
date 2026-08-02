@@ -11,7 +11,6 @@
 //   - Skips files that don't end in .ts or .tsx
 //   - All tsc errors are reported as HIGH severity
 
-use async_trait::async_trait;
 use regex::Regex;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
@@ -40,13 +39,12 @@ pub struct TSCAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-#[async_trait]
 impl ILinterAdapterProtocol for TSCAdapter {
     fn name(&self) -> AdapterName {
         AdapterName::raw("tsc")
     }
 
-    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = path.value();
         if self.filesystem.is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
@@ -76,7 +74,6 @@ impl ILinterAdapterProtocol for TSCAdapter {
         let response = self
             .lint_executor
             .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
-            .await
             .map_err(crate::convert_executor_error)?;
 
         let output = format!("{}{}", response.stdout, response.stderr);
@@ -137,7 +134,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
         Ok(LintResultList::new(results))
     }
 
-    async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }
