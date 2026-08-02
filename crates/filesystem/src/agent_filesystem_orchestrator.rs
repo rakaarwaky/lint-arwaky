@@ -1,10 +1,6 @@
 // Agent layer — orchestrates FR-001 through FR-005
 // Only orchestration: delegates to capabilities & utility
 
-use std::path::Path;
-use std::sync::Arc;
-use std::sync::OnceLock;
-
 use crate::utility_filesystem_io;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -19,8 +15,10 @@ use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ImportEntry, ParseWarning, ScanTiming,
 };
 use std::collections::HashMap;
+use std::path::Path;
 use std::path::PathBuf;
-
+use std::sync::Arc;
+use std::sync::OnceLock;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct FilesystemOrchestratorDeps {
@@ -35,7 +33,6 @@ pub struct FilesystemOrchestrator {
     deps: FilesystemOrchestratorDeps,
 
     // Pipeline state (owned by agent, not by capabilities)
-    string_cache: dashmap::DashMap<String, String>,
     files: OnceLock<Vec<FileEntry>>,
     file_index: OnceLock<HashMap<PathBuf, usize>>,
     imports: OnceLock<Vec<ImportEntry>>,
@@ -386,7 +383,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn read_cached(&self, path: &FilePath) -> ContentString {
-        crate::utility_file_cache::read_cached(path, &self.string_cache)
+        let p: &Path = path;
+        self.get_file_content(p)
+            .map(|value| ContentString { value })
+            .unwrap_or_else(|| ContentString {
+                value: String::new(),
+            })
     }
 
     fn get_file_content(&self, path: &Path) -> Option<String> {
@@ -411,7 +413,9 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                 .string_cache
                 .get(file_str)
                 .map(|r| r.value().clone())
-                .unwrap_or_else(|| utility_filesystem_io::read_file_safe(file_str));
+                .unwrap_or_else(|| {
+                    utility_filesystem_io::read_file_safe(file_str).unwrap_or_default()
+                });
             out.push((PathBuf::from(file_str), content));
         }
         out
