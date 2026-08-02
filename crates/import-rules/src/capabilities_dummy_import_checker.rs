@@ -6,11 +6,11 @@ use shared::common::{
     ContentString, FilePath, Identity, LanguageVO, LineNumber, LintMessage, Severity, SymbolName,
 };
 
+use crate::utility_dummy_detector;
+use crate::utility_import_resolver;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use crate::utility_dummy_detector;
-use crate::utility_import_resolver;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.

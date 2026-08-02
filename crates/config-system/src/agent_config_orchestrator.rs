@@ -175,8 +175,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         let mut config = config.unwrap_or_else(|| default_config_for_language(language.as_str()));
 
         // Merge layers into config (same as make_layer_map in entry points)
-        let (merged_layers, _) =
-            crate::utility_config_merger::merge_config(&config);
+        let (merged_layers, _) = crate::utility_config_merger::merge_config(&config);
         config.layers = merged_layers;
 
         config

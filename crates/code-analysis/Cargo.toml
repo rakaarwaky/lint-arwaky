@@ -23,7 +23,6 @@ rayon.workspace = true
 tempfile = "3"
 
 [dev-dependencies]
-code_analysis.workspace = true
 criterion = { version = "0.8.2", features = ["html_reports"] }
 shared.workspace = true
 tempfile = "3"

@@ -22,7 +22,6 @@ once_cell.workspace = true
 proc-macro2 = { version = "1", features = ["span-locations"] }
 
 [dev-dependencies]
-orphan_detector.workspace = true
 tokio.workspace = true
 tempfile = "3"
 criterion = { version = "0.8.2", features = ["html_reports"] }

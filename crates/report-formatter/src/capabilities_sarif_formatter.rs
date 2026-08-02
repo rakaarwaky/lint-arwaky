@@ -1,13 +1,13 @@
 // PURPOSE: SarifFormatter — implements IReportFormatterProtocol for SARIF 2.1.0 output
 use std::collections::BTreeSet;
 
+use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::DisplayContent;
 use shared::report_formatter::{
     IReportFormatterProtocol, SarifArtifactLocation, SarifDriver, SarifLocation, SarifLog,
     SarifMessage, SarifPhysicalLocation, SarifRegion, SarifResult, SarifRule, SarifRun, SarifTool,
 };
-use crate::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.

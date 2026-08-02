@@ -8,11 +8,11 @@ use shared::common::{
     Severity, SymbolName,
 };
 
+use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use crate::utility_import_resolver;
 use std::collections::{HashMap, HashSet};
 
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules

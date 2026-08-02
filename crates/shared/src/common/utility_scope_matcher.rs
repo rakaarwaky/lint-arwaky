@@ -30,9 +30,19 @@ fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
         let layer = scope_str[..paren].trim();
         let inner = scope_str[paren + 1..].trim_end_matches(')').trim();
         let suffixes: Vec<Identity> = if inner.contains('|') {
-            inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).map(Identity::new).collect()
+            inner
+                .split('|')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .map(Identity::new)
+                .collect()
         } else {
-            inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).map(Identity::new).collect()
+            inner
+                .split(',')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .map(Identity::new)
+                .collect()
         };
         (LayerNameVO::new(layer), suffixes)
     } else {

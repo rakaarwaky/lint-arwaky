@@ -4,6 +4,7 @@
 // Results cached internally, served to all consumers via reference.
 // Implements IFilesystemAggregate trait.
 
+use crate::utility_filesystem_io;
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -12,7 +13,6 @@ use shared::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, FilesystemResult, GraphData, ImplEntry, ImportEntry, Language,
     ParseMetadata, ParseWarning, ScanTiming,
 };
-use crate::utility_filesystem_io;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, OnceLock, RwLock};

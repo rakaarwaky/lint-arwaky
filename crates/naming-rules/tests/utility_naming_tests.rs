@@ -1,4 +1,3 @@
-
 use naming_rules_lint_arwaky::utility_naming_checker::{get_stem, get_suffix};
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────

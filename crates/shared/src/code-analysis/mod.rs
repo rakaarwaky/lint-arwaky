@@ -23,7 +23,6 @@ pub use contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 pub use contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 pub use contract_line_protocol::ILineCheckerProtocol;
 
-pub mod utility_code_duplication_detector;
 // ── Taxonomy types ──
 pub use taxonomy_analysis_vo::GraphAnalysisContext;
 pub use taxonomy_analysis_vo::ImportGraph;

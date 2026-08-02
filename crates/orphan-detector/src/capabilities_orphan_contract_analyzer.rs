@@ -1,11 +1,11 @@
 // PURPOSE: ContractOrphanAnalyzer — IContractOrphanProtocol for orphan contract detection.
 // AST-based: uses parser dispatch for trait extraction and impl detection.
 
+use crate::utility_orphan_filename::{file_basename, file_suffix};
 use shared::code_analysis::{InheritanceMap, OrphanIndicatorResult};
 use shared::common::{FilePath, Severity};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use crate::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::{AesOrphanViolation, IContractOrphanProtocol, IOrphanParserProtocol};
 use std::collections::HashMap;
 use std::sync::Arc;

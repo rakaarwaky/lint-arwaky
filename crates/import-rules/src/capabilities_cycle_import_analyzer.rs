@@ -10,13 +10,13 @@ use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Severity};
 
+use crate::utility_cycle_detector;
+use crate::utility_import_module_parser;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use crate::utility_cycle_detector;
-use crate::utility_import_module_parser;
 
 use std::collections::HashMap;
 

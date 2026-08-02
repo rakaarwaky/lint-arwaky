@@ -1,10 +1,10 @@
 // PURPOSE: TaxonomyOrphanAnalyzer — ITaxonomyOrphanProtocol for orphan taxonomy detection.
 // AST-based: uses inbound_links from AST-built graph. No regex fallback.
 
+use crate::utility_orphan_filename::file_stem;
 use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
 use shared::common::LayerDefinition;
 use shared::common::{FilePath, Severity};
-use crate::utility_orphan_filename::file_stem;
 use shared::orphan_detector::{AesOrphanViolation, ITaxonomyOrphanProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────

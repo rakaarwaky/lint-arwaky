@@ -809,9 +809,9 @@ pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
 // Global file cache — read once, serve from memory.
 // FR-001/FR-002: Cache populated from FileEntry.content after walk.
 
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use dashmap::DashMap;
 use rayon::prelude::*;
+use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::sync::LazyLock;
 
 static FILE_CACHE: LazyLock<DashMap<PathBuf, String>> = LazyLock::new(DashMap::new);

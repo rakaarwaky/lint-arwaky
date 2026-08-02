@@ -19,7 +19,6 @@ tokio.workspace = true
 shared.workspace = true
 
 [dev-dependencies]
-naming_rules.workspace = true
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
 tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros"] }

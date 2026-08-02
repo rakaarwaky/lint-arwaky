@@ -155,7 +155,7 @@ impl UtilityOrphanAnalyzer {
     /// Checks both `use` imports AND identifier usage (for fully-qualified paths
     /// like `shared::common::utility_foo::bar()` that don't have a `use` statement).
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match FileParseResultVO::parse_path_content(file_path, content) {
+        match crate::capabilities_orphan_parser_dispatcher::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 // Check use-statement imports
                 let in_imports = result.imports.iter().any(|imp| {

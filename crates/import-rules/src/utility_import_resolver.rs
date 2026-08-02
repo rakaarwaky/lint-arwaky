@@ -1,8 +1,8 @@
+use crate::utility_path_normalizer;
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
-use crate::utility_path_normalizer;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use std::collections::HashMap;
 use std::path::Path;
@@ -24,7 +24,9 @@ pub fn parse_import_lines_helper(
     content: &str,
 ) -> Vec<(LineNumber, LineContentVO)> {
     let mut result = Vec::new();
-    match FileParseResultVO::parse_path_content(file_path, content) {
+    match orphan_detector::capabilities_orphan_parser_dispatcher::parse_file_content(
+        file_path, content,
+    ) {
         FileParseResultVO::Rust(parse_result) => {
             for imp in &parse_result.imports {
                 result.push((

@@ -7,8 +7,8 @@ use std::collections::hash_map::DefaultHasher;
 
 use std::path::PathBuf;
 
-use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-use crate::common::taxonomy_message_vo::LintMessage;
+use shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::common::taxonomy_message_vo::LintMessage;
 
 const MAX_LOCATIONS_PER_BLOCK: usize = 128;
 

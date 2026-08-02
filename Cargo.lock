@@ -559,7 +559,6 @@ name = "code-analysis-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "async-trait",
- "code-analysis-lint-arwaky",
  "criterion",
  "filesystem-lint-arwaky",
  "once_cell",
@@ -624,7 +623,6 @@ name = "config-system-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "async-trait",
- "config-system-lint-arwaky",
  "criterion",
  "dashmap",
  "dirs",
@@ -1220,7 +1218,6 @@ dependencies = [
  "anyhow",
  "camino",
  "dashmap",
- "filesystem-lint-arwaky",
  "ignore",
  "petgraph",
  "rayon",
@@ -2643,7 +2640,7 @@ dependencies = [
  "async-trait",
  "criterion",
  "filesystem-lint-arwaky",
- "import-rules-lint-arwaky",
+ "orphan-detector-lint-arwaky",
  "rayon",
  "serde",
  "serde_json",
@@ -3198,7 +3195,6 @@ dependencies = [
  "async-trait",
  "criterion",
  "filesystem-lint-arwaky",
- "naming-rules-lint-arwaky",
  "once_cell",
  "rayon",
  "regex",
@@ -3450,7 +3446,6 @@ dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
  "once_cell",
- "orphan-detector-lint-arwaky",
  "proc-macro2",
  "rayon",
  "regex",

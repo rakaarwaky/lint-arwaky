@@ -1,13 +1,13 @@
 // PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports.
 // AST-based: uses syn visitor for usage tracking. No dynamic regex. No DERIVE_MACROS whitelist.
 
+use crate::utility_import_resolver;
+use crate::utility_import_symbol_extractor;
 use shared::cli_commands::LintResult;
 use shared::common::{FilePath, LintMessage, Severity};
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use crate::utility_import_resolver;
-use crate::utility_import_symbol_extractor;
 
 pub struct UnusedImportRuleChecker;
 

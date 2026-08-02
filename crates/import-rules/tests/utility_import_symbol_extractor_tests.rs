@@ -1,8 +1,9 @@
-
 use std::collections::HashMap;
 
+use import_rules_lint_arwaky::utility_import_symbol_extractor::{
+    extract_used_symbols, is_name_used,
+};
 use shared::common::taxonomy_layer_vo::Identity;
-use import_rules_lint_arwaky::utility_import_symbol_extractor::{extract_used_symbols, is_name_used};
 
 #[test]
 fn derive_macro_serialize_always_used() {

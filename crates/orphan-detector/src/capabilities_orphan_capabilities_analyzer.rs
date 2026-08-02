@@ -1,11 +1,11 @@
 // PURPOSE: CapabilitiesOrphanAnalyzer — ICapabilitiesOrphanProtocol for orphan capability detection.
 // AST-based: uses parser dispatch for struct/trait name extraction.
 
+use crate::utility_orphan_filename::file_stem;
 use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
 use shared::common::{FilePath, Severity};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use crate::utility_orphan_filename::file_stem;
 use shared::orphan_detector::{
     AesOrphanViolation, ICapabilitiesOrphanProtocol, IOrphanParserProtocol,
 };

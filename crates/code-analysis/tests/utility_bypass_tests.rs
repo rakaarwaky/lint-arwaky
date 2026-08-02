@@ -1,5 +1,6 @@
-
-use code_analysis_lint_arwaky::utility_bypass_detector::{matches_keyword_token, matches_word_token};
+use code_analysis_lint_arwaky::utility_bypass_detector::{
+    matches_keyword_token, matches_word_token,
+};
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 

@@ -1,6 +1,6 @@
 // PURPOSE: taxonomy_parser_helper — pure utility functions for import parsing and syntax token extraction
-use shared::common::taxonomy_name_vo::SymbolName;
 use crate::utility_import_resolver;
+use shared::common::taxonomy_name_vo::SymbolName;
 
 pub fn extract_import_modules(content: &str) -> Vec<SymbolName> {
     let mut modules = Vec::new();

@@ -1,11 +1,11 @@
 // PURPOSE: OrphanParserDispatcher — route file parsing to the correct language parser.
 // Capabilities layer: implements IOrphanParserProtocol contract.
 
+use crate::utility_orphan_python_parser;
+use crate::utility_orphan_rust_parser;
+use crate::utility_orphan_ts_parser;
 use shared::orphan_detector::FileParseResultVO;
 use shared::orphan_detector::IOrphanParserProtocol;
-use shared::orphan_detector::utility_orphan_python_parser;
-use shared::orphan_detector::utility_orphan_rust_parser;
-use shared::orphan_detector::utility_orphan_ts_parser;
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -50,4 +50,10 @@ impl IOrphanParserProtocol for OrphanParserDispatcher {
             .unwrap_or("");
         matches!(ext, "rs" | "py" | "ts" | "tsx" | "js" | "jsx")
     }
+}
+
+/// Convenience: parse file content using default dispatcher.
+pub fn parse_file_content(path: &str, content: &str) -> shared::orphan_detector::FileParseResultVO {
+    let dispatcher = OrphanParserDispatcher::new();
+    dispatcher.parse_file(path, content)
 }

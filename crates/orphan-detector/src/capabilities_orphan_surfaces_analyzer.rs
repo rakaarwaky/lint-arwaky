@@ -1,9 +1,9 @@
 // PURPOSE: SurfacesOrphanAnalyzer — ISurfacesOrphanProtocol for orphan surface detection.
 // AST-based: uses inbound_links for FR-009 chain validation.
 
+use crate::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult, ReachabilityResult};
 use shared::common::{FilePath, LayerDefinition, Severity};
-use crate::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::orphan_detector::{AesOrphanViolation, ISurfacesOrphanProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────

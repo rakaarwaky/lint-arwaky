@@ -23,5 +23,5 @@ pub use capabilities_import_extractor::ImportExtractor;
 pub use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ── Re-exported constants from shared (avoid direct utility_filesystem_io imports) ──
-pub use shared::filesystem::MAX_LINT_FILE_BYTES;
 pub use crate::utility_filesystem_io::MAX_CONFIG_FILE_SIZE;
+pub use shared::filesystem::MAX_LINT_FILE_BYTES;

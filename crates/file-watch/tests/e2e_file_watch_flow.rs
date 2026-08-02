@@ -49,6 +49,24 @@ impl ICodeAnalysisAggregate for RecordingLinter {
     fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
         vec![]
     }
+
+    fn scan_duplicate_blocks(
+        &self,
+        _entries: Vec<(std::path::PathBuf, String)>,
+        _min_lines: usize,
+    ) -> Vec<Vec<(std::path::PathBuf, usize)>> {
+        vec![]
+    }
+
+    fn build_violations(
+        &self,
+        _blocks: &[Vec<(std::path::PathBuf, usize)>],
+        _total_loc: usize,
+        _min_dup_lines: usize,
+    ) -> Vec<shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation>
+    {
+        vec![]
+    }
 }
 
 // ─── E2E: watch a temp dir, create a file, receive event ────

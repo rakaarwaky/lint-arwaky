@@ -20,9 +20,6 @@ pub use contract_orphan_protocol::ISurfacesOrphanProtocol;
 pub use contract_orphan_protocol::ITaxonomyOrphanProtocol;
 pub use contract_orphan_protocol::IUtilityOrphanProtocol;
 
-pub mod utility_orphan_rust_parser;
-pub mod utility_orphan_python_parser;
-pub mod utility_orphan_ts_parser;
 // ── Taxonomy types ──
 pub use taxonomy_orphan_contract_vo::OrphanEntryPatternListVO;
 pub use taxonomy_orphan_contract_vo::OrphanFileListVO;

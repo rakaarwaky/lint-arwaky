@@ -1,8 +1,7 @@
-
-use shared::common::taxonomy_common_vo::LineNumber;
 use import_rules_lint_arwaky::utility_dummy_detector::{
     contains_ident, is_short_marker, js_imported_symbols, python_imported_symbols, symbol_used_real,
 };
+use shared::common::taxonomy_common_vo::LineNumber;
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 

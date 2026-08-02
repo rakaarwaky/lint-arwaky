@@ -41,5 +41,4 @@ shared.workspace = true
 tokio = { workspace = true, features = ["sync", "rt"] }
 
 [dev-dependencies]
-filesystem.workspace = true
 tempfile = "3"
