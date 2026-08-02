@@ -18,7 +18,8 @@ pub trait IFileWalkerProtocol: Send + Sync {
     fn walk(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry>;
 
     /// Lightweight mode: discover source file paths only.
-    fn discover_paths(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FilePath>;
+    fn discover_paths(&self, root: &Path, ignored: &[String], extensions: &[&str])
+    -> Vec<FilePath>;
 }
 
 // ═══════════════════════════════════════════════════════════

@@ -69,21 +69,15 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        self.cached_reverse_links
-            .get()
-            .unwrap_or(&EMPTY_HASH_MAP)
+        self.cached_reverse_links.get().unwrap_or(&EMPTY_HASH_MAP)
     }
 
     fn reverse_import_map(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        self.cached_reverse_links
-            .get()
-            .unwrap_or(&EMPTY_HASH_MAP)
+        self.cached_reverse_links.get().unwrap_or(&EMPTY_HASH_MAP)
     }
 
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        self.cached_definitions
-            .get()
-            .unwrap_or(&EMPTY_STRING_MAP)
+        self.cached_definitions.get().unwrap_or(&EMPTY_STRING_MAP)
     }
 
     fn trait_implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
@@ -104,7 +98,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         self.timing.get().unwrap_or(&DEFAULT)
     }
 
-    fn read_lintable_file(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> Result<Option<String>, String> {
+    fn read_lintable_file(
+        &self,
+        path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Result<Option<String>, String> {
         utility_filesystem_io::read_lintable_file(&path.value)
     }
 
@@ -121,10 +118,14 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn discover_files(&self, root: &Path, ignored: &[String]) -> Vec<FileEntry> {
         let exts = Language::extensions();
-        self.walker.discover_entries(root, ignored, &exts)
+        self.walker.walk(root, ignored, &exts)
     }
 
-    fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<shared::common::taxonomy_path_vo::FilePath> {
+    fn discover_source_files(
+        &self,
+        root: &Path,
+        ignored: &[String],
+    ) -> Vec<shared::common::taxonomy_path_vo::FilePath> {
         let exts = Language::extensions();
         self.walker.discover_paths(root, ignored, &exts)
     }
@@ -167,11 +168,18 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::is_file(path)
     }
 
-    fn should_ignore(&self, path: &shared::common::taxonomy_path_vo::FilePath, ignored: &[String]) -> bool {
+    fn should_ignore(
+        &self,
+        path: &shared::common::taxonomy_path_vo::FilePath,
+        ignored: &[String],
+    ) -> bool {
         utility_filesystem_io::is_path_ignored(&path.value, ignored)
     }
 
-    fn workspace_root(&self, start: &shared::common::taxonomy_path_vo::FilePath) -> Option<PathBuf> {
+    fn workspace_root(
+        &self,
+        start: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Option<PathBuf> {
         crate::utility_workspace_detection::find_workspace_root(&start.value)
     }
 
@@ -217,21 +225,34 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         crate::utility_tool_resolution::has_config_file(dir)
     }
 
-    fn has_cargo_toml(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> Option<shared::common::taxonomy_path_vo::FilePath> {
+    fn has_cargo_toml(
+        &self,
+        path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Option<shared::common::taxonomy_path_vo::FilePath> {
         crate::utility_tool_resolution::has_cargo_toml(&path.value)
             .map(|s| shared::common::taxonomy_path_vo::FilePath::new(s).unwrap_or_default())
     }
 
-    fn has_cargo_lock(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> Option<shared::common::taxonomy_path_vo::FilePath> {
+    fn has_cargo_lock(
+        &self,
+        path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> Option<shared::common::taxonomy_path_vo::FilePath> {
         crate::utility_tool_resolution::has_cargo_lock(&path.value)
             .map(|s| shared::common::taxonomy_path_vo::FilePath::new(s).unwrap_or_default())
     }
 
-    fn is_executable_in_path(&self, executable: &shared::filesystem::taxonomy_filesystem_vo::ToolName) -> bool {
+    fn is_executable_in_path(
+        &self,
+        executable: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+    ) -> bool {
         crate::utility_tool_resolution::is_executable_in_path(&executable.value)
     }
 
-    fn has_local_bin(&self, working_dir: &Path, executable: &shared::filesystem::taxonomy_filesystem_vo::ToolName) -> bool {
+    fn has_local_bin(
+        &self,
+        working_dir: &Path,
+        executable: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+    ) -> bool {
         crate::utility_tool_resolution::has_local_bin(working_dir, &executable.value)
     }
 
@@ -281,7 +302,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::is_source_file(path)
     }
 
-    fn is_source_ext(&self, ext: &shared::filesystem::taxonomy_filesystem_vo::FileExtension) -> bool {
+    fn is_source_ext(
+        &self,
+        ext: &shared::filesystem::taxonomy_filesystem_vo::FileExtension,
+    ) -> bool {
         utility_filesystem_io::is_source_ext(&ext.value)
     }
 
@@ -339,15 +363,16 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         &self,
         path: &shared::common::taxonomy_path_vo::FilePath,
     ) -> shared::common::taxonomy_path_vo::FilePath {
-        let resolved = crate::utility_tool_resolution::default_working_dir(
-            std::path::Path::new(&path.value),
-        );
+        let resolved =
+            crate::utility_tool_resolution::default_working_dir(std::path::Path::new(&path.value));
         shared::common::taxonomy_path_vo::FilePath::new(resolved.to_string_lossy().to_string())
             .unwrap_or_default()
     }
 
     fn is_python_file_recursive(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> bool {
-        crate::utility_tool_resolution::has_python_files_recursive(std::path::Path::new(&path.value))
+        crate::utility_tool_resolution::has_python_files_recursive(std::path::Path::new(
+            &path.value,
+        ))
     }
 
     fn set_permissions(&self, path: &Path, mode: u32) -> std::io::Result<()> {
@@ -358,7 +383,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::remove_file(path)
     }
 
-    fn read_cached(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> shared::common::taxonomy_source_vo::ContentString {
+    fn read_cached(
+        &self,
+        path: &shared::common::taxonomy_path_vo::FilePath,
+    ) -> shared::common::taxonomy_source_vo::ContentString {
         crate::utility_file_cache::read_cached(path)
     }
 
@@ -418,14 +446,16 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::run_external_command_in(name, args, current_dir)
     }
 
-    fn is_binary_available(&self, bin_name: &shared::filesystem::taxonomy_filesystem_vo::ToolName) -> bool {
+    fn is_binary_available(
+        &self,
+        bin_name: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+    ) -> bool {
         crate::utility_tool_resolution::is_binary_available(&bin_name.value)
     }
 
     fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
         utility_filesystem_io::read_dir_entries_as_pathbuf(dir)
     }
-
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
@@ -435,7 +465,9 @@ impl FilesystemOrchestrator {
         Self {
             walker: Box::new(crate::capabilities_file_walker::FileWalker::new()),
             parser: Box::new(crate::capabilities_ast_parser::ASTParser::new()),
-            graph: RwLock::new(Box::new(crate::capabilities_dependency_graph::DependencyGraph::new())),
+            graph: RwLock::new(Box::new(
+                crate::capabilities_dependency_graph::DependencyGraph::new(),
+            )),
             files: OnceLock::new(),
             imports: OnceLock::new(),
             warnings: OnceLock::new(),
@@ -503,7 +535,9 @@ impl FilesystemOrchestrator {
         // Cache graph query results (no more Box::leak)
         let _ = self.cached_reverse_links.set(graph.reverse_links().clone());
         let _ = self.cached_definitions.set(graph.definitions().clone());
-        let _ = self.cached_implementations.set(graph.implementations().clone());
+        let _ = self
+            .cached_implementations
+            .set(graph.implementations().clone());
 
         // Store results
         let _ = self.files.set(files);
@@ -584,7 +618,14 @@ fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         if matches!(
             name,
-            "target" | ".git" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv" | "tests"
+            "target"
+                | ".git"
+                | "node_modules"
+                | "dist"
+                | "build"
+                | "__pycache__"
+                | ".venv"
+                | "tests"
         ) {
             continue;
         }

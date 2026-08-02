@@ -109,7 +109,10 @@ pub fn is_leaf_member_path(path: &str) -> bool {
     let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
     let p = Path::new(path);
     for entry_path in crate::utility_filesystem_io::scan_directory(p) {
-        let name = entry_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        let name = entry_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
         if entry_path.is_dir() {
             if skip_dirs.contains(&name) {
                 continue;
@@ -163,14 +166,10 @@ fn has_source_files(dir: &Path) -> bool {
 pub fn detect_language_from_path(path: &str) -> ConfigLanguage {
     let path_buf = std::path::PathBuf::from(path);
 
-    if path_buf.join("Cargo.toml").exists()
-        || path_contains_component(&path_buf, "crates")
-    {
+    if path_buf.join("Cargo.toml").exists() || path_contains_component(&path_buf, "crates") {
         return ConfigLanguage::Rust;
     }
-    if path_buf.join("package.json").exists()
-        || path_contains_component(&path_buf, "packages")
-    {
+    if path_buf.join("package.json").exists() || path_contains_component(&path_buf, "packages") {
         return ConfigLanguage::TypeScript;
     }
     if path_buf.join("pyproject.toml").exists()

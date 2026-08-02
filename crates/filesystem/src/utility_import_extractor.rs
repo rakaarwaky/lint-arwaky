@@ -17,11 +17,7 @@ use crate::utility_tree_sitter_helpers::{
 // ═══════════════════════════════════════════════════════════════
 
 /// Extract all imports from a parsed file.
-pub fn extract_imports(
-    path: &Path,
-    content: &str,
-    language: Language,
-) -> Vec<ImportEntry> {
+pub fn extract_imports(path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
     if content.is_empty() {
         return Vec::new();
     }
@@ -337,11 +333,7 @@ fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<V
             }
         })
         .collect();
-    if names.is_empty() {
-        None
-    } else {
-        Some(names)
-    }
+    if names.is_empty() { None } else { Some(names) }
 }
 
 fn extract_require_source(node: tree_sitter::Node, content: &str) -> Option<String> {

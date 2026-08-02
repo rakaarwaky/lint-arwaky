@@ -324,11 +324,7 @@ pub fn run_git_command(args: &[&str], dir: &str) -> (String, String, bool) {
             String::from_utf8_lossy(&o.stderr).to_string(),
             o.status.success(),
         ),
-        Err(e) => (
-            String::new(),
-            format!("Failed to execute git: {e}"),
-            false,
-        ),
+        Err(e) => (String::new(), format!("Failed to execute git: {e}"), false),
     }
 }
 
@@ -349,4 +345,3 @@ pub fn parse_output_lines(output: &str) -> Vec<String> {
         .filter(|l| !l.is_empty())
         .collect()
 }
-

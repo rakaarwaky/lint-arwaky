@@ -11,11 +11,7 @@ pub fn normalize_module_path(module_path: &str) -> String {
 }
 
 /// Resolve a relative import path to an absolute file path.
-pub fn resolve_import_path(
-    source_file: &Path,
-    import_path: &str,
-    root: &Path,
-) -> Option<PathBuf> {
+pub fn resolve_import_path(source_file: &Path, import_path: &str, root: &Path) -> Option<PathBuf> {
     // Handle crate:: and super:: prefixes
     if import_path.starts_with("crate::") || import_path.starts_with("super::") {
         return resolve_crate_path(source_file, import_path, root);
@@ -31,9 +27,7 @@ pub fn resolve_import_path(
 }
 
 fn resolve_crate_path(source_file: &Path, import_path: &str, root: &Path) -> Option<PathBuf> {
-    let stripped = import_path
-        .strip_prefix("crate::")
-        .unwrap_or(import_path);
+    let stripped = import_path.strip_prefix("crate::").unwrap_or(import_path);
     let parts: Vec<&str> = stripped.split("::").collect();
 
     // Find the crate root from source file

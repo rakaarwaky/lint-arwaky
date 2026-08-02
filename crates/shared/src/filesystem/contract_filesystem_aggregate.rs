@@ -127,22 +127,13 @@ pub trait IFilesystemAggregate: Send + Sync {
     ) -> Option<Vec<String>>;
 
     /// Walk up to find JS project root.
-    fn resolve_js_working_dir(
-        &self,
-        path: &FilePath,
-    ) -> FilePath;
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath;
 
     /// Find parent dir with Cargo.toml.
-    fn resolve_cargo_working_dir(
-        &self,
-        path: &FilePath,
-    ) -> FilePath;
+    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath;
 
     /// Find parent dir with Cargo.lock.
-    fn resolve_cargo_lock_working_dir(
-        &self,
-        path: &FilePath,
-    ) -> FilePath;
+    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath;
 
     /// Check if directory contains a config file.
     fn has_config_file(&self, dir: &Path) -> bool;

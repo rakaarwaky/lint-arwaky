@@ -9,8 +9,8 @@ use dashmap::DashMap;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use shared::filesystem::contract_filesystem_protocol::IASTParserProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
-    FileEntry, Language, ParseMetadata, PythonClassItem, PythonFnItem, PythonMetadata,
-    RustFnItem, RustImplItem, RustMetadata, RustModItem, RustUseItem, TSClassItem, TSFnItem,
+    FileEntry, Language, ParseMetadata, PythonClassItem, PythonFnItem, PythonMetadata, RustFnItem,
+    RustImplItem, RustMetadata, RustModItem, RustUseItem, TSClassItem, TSFnItem,
     TypeScriptMetadata,
 };
 use std::path::PathBuf;
@@ -88,15 +88,11 @@ impl ASTParser {
     }
 }
 
-
-
 impl Default for ASTParser {
     fn default() -> Self {
         Self::new()
     }
 }
-
-
 
 /// Extract language-specific metadata from a parsed AST.
 fn extract_metadata(tree: &tree_sitter::Tree, content: &str, language: Language) -> ParseMetadata {
@@ -376,4 +372,3 @@ fn extract_ts_implements(node: tree_sitter::Node, content: &str) -> Vec<String> 
     }
     implements
 }
-

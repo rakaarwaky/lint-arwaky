@@ -27,7 +27,12 @@ impl IFileWalkerProtocol for FileWalker {
         self.discover_entries(root, ignored, extensions)
     }
 
-    fn discover_paths(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FilePath> {
+    fn discover_paths(
+        &self,
+        root: &Path,
+        ignored: &[String],
+        extensions: &[&str],
+    ) -> Vec<FilePath> {
         self.discover_paths(root, ignored, extensions)
     }
 }
@@ -100,7 +105,9 @@ impl FileWalker {
                 Some(l) => l,
                 None => continue,
             };
-            let size = crate::utility_filesystem_io::metadata(path).map(|m| m.len()).unwrap_or(0);
+            let size = crate::utility_filesystem_io::metadata(path)
+                .map(|m| m.len())
+                .unwrap_or(0);
             let content = crate::utility_filesystem_io::read_file_safe(path);
 
             entries.push(FileEntry {
