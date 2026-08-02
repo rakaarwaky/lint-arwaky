@@ -16,16 +16,14 @@ pub mod filesystem;
 // pub mod role_rules;
 // pub mod external_lint;
 
-// ── Layer 3: Fixing & hooks ─────────────────────────────────
+// ── Layer 3: Infrastructure ─────────────────────────────────
 // pub mod auto_fix;
 // pub mod git_hooks;
-
-// ── Layer 4: Infrastructure ─────────────────────────────────
 // pub mod file_watch;
 // pub mod project_setup;
 // pub mod maintenance;
 
-// ── Layer 5: Surface (CLI/MCP/TUI) ─────────────────────────
+// ── Layer 4: Surface (CLI/MCP/TUI) ─────────────────────────
 // pub mod report_formatter;
 // pub mod cli_commands;
 // pub mod mcp_server;
