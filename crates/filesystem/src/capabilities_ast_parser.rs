@@ -1,5 +1,5 @@
-// FR-002: AST Parsing
-// Produces: Vec<FileEntry> with parse_metadata + parse_ok flag
+// FR-002: AST Parsing + FR-003: Import Extraction
+// Produces: Vec<FileEntry> with parse_metadata + parse_ok flag, parse warnings, import data
 // Consumer: role-rules (via parameter), FR-003, FR-004
 //
 // Capabilities: struct ASTParser — stores ASTs in DashMap, parses in parallel
@@ -7,13 +7,14 @@
 
 use dashmap::DashMap;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
-use shared::filesystem::contract_filesystem_protocol::IASTParserProtocol;
+use shared::common::taxonomy_language_vo::Language;
+use shared::filesystem::contract_parser_protocol::IParserProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
-    FileEntry, Language, ParseMetadata, PythonClassItem, PythonFnItem, PythonMetadata, RustFnItem,
-    RustImplItem, RustMetadata, RustModItem, RustUseItem, TSClassItem, TSFnItem,
-    TypeScriptMetadata,
+    FileEntry, ImportEntry, ParseMetadata, ParseWarning, PythonClassItem, PythonFnItem,
+    PythonMetadata, RustFnItem, RustImplItem, RustMetadata, RustModItem, RustUseItem, TSClassItem,
+    TSFnItem, TypeScriptMetadata,
 };
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::utility_tree_sitter_helpers::{
@@ -24,21 +25,45 @@ use crate::utility_tree_sitter_helpers::{
 
 pub struct ASTParser {
     asts: Arc<DashMap<PathBuf, String>>,
+    warnings: Vec<ParseWarning>,
+    imports: Vec<ImportEntry>,
 }
 
 impl ASTParser {
     pub fn new() -> Self {
         Self {
             asts: Arc::new(DashMap::new()),
+            warnings: Vec::new(),
+            imports: Vec::new(),
         }
     }
 }
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 
-impl IASTParserProtocol for ASTParser {
+impl IParserProtocol for ASTParser {
+    fn parse_warnings(&self) -> &[ParseWarning] {
+        &self.warnings
+    }
+
+    fn import_list(&self) -> &[ImportEntry] {
+        &self.imports
+    }
+
     fn parse_all(&self, files: &mut [FileEntry]) {
-        self.parse_all(files);
+        self.parse_all_inner(files);
+    }
+
+    fn imports_for(&self, path: &Path) -> Vec<ImportEntry> {
+        self.imports
+            .iter()
+            .filter(|i| i.source_file == path)
+            .cloned()
+            .collect()
+    }
+
+    fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
+        self.extract_imports(path, content, language)
     }
 }
 
@@ -47,7 +72,7 @@ impl IASTParserProtocol for ASTParser {
 impl ASTParser {
     /// Parse all files in parallel using rayon.
     /// Each file is enriched with parse_ok flag and parse_metadata.
-    pub fn parse_all(&self, files: &mut [FileEntry]) {
+    fn parse_all_inner(&self, files: &mut [FileEntry]) {
         files.par_iter_mut().for_each(|entry| {
             if entry.content.is_empty() {
                 entry.parse_ok = true;
@@ -178,14 +203,14 @@ fn extract_rust_use(node: tree_sitter::Node, content: &str) -> RustUseItem {
 fn extract_use_names(node: tree_sitter::Node, content: &str) -> Vec<String> {
     let mut names = Vec::new();
     let text = text_of(node, content);
-    if let Some(brace_start) = text.find('{') {
-        if let Some(brace_end) = text.find('}') {
-            let inner = &text[brace_start + 1..brace_end];
-            for part in inner.split(',') {
-                let name = part.split_whitespace().next().unwrap_or("");
-                if !name.is_empty() {
-                    names.push(name.to_string());
-                }
+    if let Some(brace_start) = text.find('{')
+        && let Some(brace_end) = text.find('}')
+    {
+        let inner = &text[brace_start + 1..brace_end];
+        for part in inner.split(',') {
+            let name = part.split_whitespace().next().unwrap_or("");
+            if !name.is_empty() {
+                names.push(name.to_string());
             }
         }
     }
@@ -371,4 +396,11 @@ fn extract_ts_implements(node: tree_sitter::Node, content: &str) -> Vec<String> 
         }
     }
     implements
+}
+
+impl ASTParser {
+    /// Extract imports from file content using utility_import_extractor.
+    fn extract_imports(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
+        crate::utility_import_extractor::extract_imports(path, content, language)
+    }
 }

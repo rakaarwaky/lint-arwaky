@@ -142,21 +142,21 @@ fn extract_rust_imports(
                 is_wildcard: is_glob,
             });
         }
-    } else if kind == "mod_item" {
-        if let Some(name) = child_by_field(node, content, "name") {
-            imports.push(ImportEntry {
-                source_file: source_file.to_path_buf(),
-                raw_path: name,
-                resolved_path: None,
-                import_type: ImportType::Mod,
-                language: Language::Rust,
-                is_dynamic: false,
-                is_resolved: false,
-                symbols: Vec::new(),
-                is_reexport: false,
-                is_wildcard: false,
-            });
-        }
+    } else if kind == "mod_item"
+        && let Some(name) = child_by_field(node, content, "name")
+    {
+        imports.push(ImportEntry {
+            source_file: source_file.to_path_buf(),
+            raw_path: name,
+            resolved_path: None,
+            import_type: ImportType::Mod,
+            language: Language::Rust,
+            is_dynamic: false,
+            is_resolved: false,
+            symbols: Vec::new(),
+            is_reexport: false,
+            is_wildcard: false,
+        });
     }
 }
 
@@ -187,25 +187,25 @@ fn extract_python_imports(
                 is_wildcard: false,
             });
         }
-    } else if kind == "import_from_statement" {
-        if let Some(module) = child_by_field(node, content, "module_name") {
-            let text = text_of(node, content);
-            let is_wildcard = text.contains("*");
-            let is_relative = module.starts_with('.') || module.starts_with("..");
+    } else if kind == "import_from_statement"
+        && let Some(module) = child_by_field(node, content, "module_name")
+    {
+        let text = text_of(node, content);
+        let is_wildcard = text.contains("*");
+        let is_relative = module.starts_with('.') || module.starts_with("..");
 
-            imports.push(ImportEntry {
-                source_file: source_file.to_path_buf(),
-                raw_path: if is_relative { module.clone() } else { module },
-                resolved_path: None,
-                import_type: ImportType::ImportFrom,
-                language: Language::Python,
-                is_dynamic: false,
-                is_resolved: false,
-                symbols: extract_python_from_names(node, content),
-                is_reexport: false,
-                is_wildcard,
-            });
-        }
+        imports.push(ImportEntry {
+            source_file: source_file.to_path_buf(),
+            raw_path: if is_relative { module.clone() } else { module },
+            resolved_path: None,
+            import_type: ImportType::ImportFrom,
+            language: Language::Python,
+            is_dynamic: false,
+            is_resolved: false,
+            symbols: extract_python_from_names(node, content),
+            is_reexport: false,
+            is_wildcard,
+        });
     }
 }
 
@@ -291,21 +291,21 @@ fn extract_js_imports(
             if child.kind() == "variable_declarator" {
                 let mut c2 = child.walk();
                 for inner in child.named_children(&mut c2) {
-                    if inner.kind() == "call_expression" {
-                        if let Some(source) = extract_require_source(inner, content) {
-                            imports.push(ImportEntry {
-                                source_file: source_file.to_path_buf(),
-                                raw_path: source,
-                                resolved_path: None,
-                                import_type: ImportType::Require,
-                                language,
-                                is_dynamic: false,
-                                is_resolved: false,
-                                symbols: Vec::new(),
-                                is_reexport: false,
-                                is_wildcard: false,
-                            });
-                        }
+                    if inner.kind() == "call_expression"
+                        && let Some(source) = extract_require_source(inner, content)
+                    {
+                        imports.push(ImportEntry {
+                            source_file: source_file.to_path_buf(),
+                            raw_path: source,
+                            resolved_path: None,
+                            import_type: ImportType::Require,
+                            language,
+                            is_dynamic: false,
+                            is_resolved: false,
+                            symbols: Vec::new(),
+                            is_reexport: false,
+                            is_wildcard: false,
+                        });
                     }
                 }
             }
@@ -369,13 +369,6 @@ fn extract_require_source(node: tree_sitter::Node, content: &str) -> Option<Stri
 // ═══════════════════════════════════════════════════════════════
 // FR-003: Protocol Implementation
 // ═══════════════════════════════════════════════════════════════
-
-use shared::filesystem::contract_filesystem_protocol::IImportExtractorProtocol;
-
-pub struct ImportExtractor;
-
-impl IImportExtractorProtocol for ImportExtractor {
-    fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
-        extract_imports(path, content, language)
-    }
-}
+// Import extraction is now handled by ASTParser via IParserProtocol.
+// This file provides the stateless extract_imports() function only.
+// ═══════════════════════════════════════════════════════════════

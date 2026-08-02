@@ -17,7 +17,6 @@ metadata:
     - create-agent-rust
     - create-taxonomy-rust
 ---
-
 # create-contract-rust
 
 Contract = pure trait definitions. No default implementations. File: `contract_<concept>_<suffix>.rs`.
@@ -27,10 +26,11 @@ Contract = pure trait definitions. No default implementations. File: `contract_<
 
 ## Contract Roles
 
-| Suffix | Implemented By | Used By |
-| --- | --- | --- |
-| `_protocol` | Capabilities | Agent |
-| `_aggregate` | Agent | Surface |
+
+| Suffix       | Implemented By | Used By |
+| -------------- | ---------------- | --------- |
+| `_protocol`  | Capabilities   | Agent   |
+| `_aggregate` | Agent          | Surface |
 
 Naming: `I<Name>Protocol`, `I<Name>Aggregate`.
 
@@ -70,6 +70,26 @@ pub trait I<Name>Aggregate: Send + Sync {
         request: &ScanRequest,
     ) -> Vec<LintResult>;
 }
+
+pub trait I<Name>Aggregate:
+    I<Name>rotocol
+    + I<Name>Protocol
+    + I<Name>Protocol
+    + I<Name>Protocol
+    + I<Name>Protocol
+{
+    /// All discovered source files .
+    fn <Name>_<Name>(&self) -> &[FileEntry];
+
+    /// Read file content from bounded cache.
+    fn <Name>_<Name>(&self, path: &FilePath) -> ContentString;
+
+    /// Get cached file content (after scan).
+    fn <Name>_<Name>(&self, path: &Path) -> Option<String>;
+
+    /// Check if a file is in the cache.
+    fn <Name>_<Name>(&self, path: &Path) -> bool;
+}
 ```
 
 ### mod.rs
@@ -90,10 +110,10 @@ pub mod contract_<name>_aggregate;
 
 ## Checklist
 
-- [ ] Correct suffix `_protocol` or `_aggregate`.
-- [ ] `pub trait` only — no default method bodies.
-- [ ] All methods type-annotated.
-- [ ] No imports from capabilities, agents, surface.
-- [ ] Signatures use shared VOs.
-- [ ] Registered in shared `mod.rs`.
-- [ ] `cargo check -p <crate-name>` passes.
+- [ ]  Correct suffix `_protocol` or `_aggregate`.
+- [ ]  `pub trait` only — no default method bodies.
+- [ ]  All methods type-annotated.
+- [ ]  No imports from capabilities, agents, surface.
+- [ ]  Signatures use shared VOs.
+- [ ]  Registered in shared `mod.rs`.
+- [ ]  `cargo check -p <crate-name>` passes.

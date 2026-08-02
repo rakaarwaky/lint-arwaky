@@ -1,11 +1,11 @@
 // FR-004: Graph Data Construction
-// Produces: GraphData (DiGraph + ReverseLinkIndex + DefinitionMap + ImplMap)
+// Produces: DiGraph + ReverseLinkIndex + DefinitionMap + ImplMap
 // Consumer: orphan-detector, FR-003 (also uses FR-002 output)
 //
-// Capabilities: struct DependencyGraph — implements IDependencyGraphProtocol
+// Capabilities: struct DependencyGraph — implements IGraphProtocol
 // 3-block structure per AES skill
 
-use shared::filesystem::contract_filesystem_protocol::IDependencyGraphProtocol;
+use shared::filesystem::contract_graph_protocol::IGraphProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, FileNodeVO, ImplEntry, ImportEdgeVO, ImportEntry,
 };
@@ -36,7 +36,7 @@ impl DependencyGraph {
 
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 
-impl IDependencyGraphProtocol for DependencyGraph {
+impl IGraphProtocol for DependencyGraph {
     fn build(
         &mut self,
         imports: &[ImportEntry],
@@ -44,43 +44,50 @@ impl IDependencyGraphProtocol for DependencyGraph {
         definitions: &[DefinitionEntry],
         implementations: &[ImplEntry],
     ) {
-        self.build(imports, files, definitions, implementations);
+        self.build_graph(imports, files, definitions, implementations);
     }
 
-    fn dependents(&self, path: &Path) -> Vec<PathBuf> {
-        self.dependents(path)
+    fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
+        &self.reverse_links
     }
 
-    fn dependencies(&self, path: &Path) -> Vec<PathBuf> {
-        self.dependencies(path)
-    }
-
-    fn cycles(&self) -> Vec<Vec<PathBuf>> {
-        self.cycles()
-    }
-
-    fn reachable(&self, from: &Path, to: &Path) -> bool {
-        self.reachable(from, to)
-    }
-
-    fn orphan_files(&self) -> Vec<PathBuf> {
-        self.orphan_files()
-    }
-
-    fn all_files(&self) -> HashSet<PathBuf> {
-        self.all_files()
-    }
-
-    fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        self.reverse_links()
-    }
-
-    fn definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        self.definitions()
+    fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
+        &self.definitions
     }
 
     fn implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
-        self.implementations()
+        &self.implementations
+    }
+
+    fn dependents(&self, path: &Path) -> Vec<PathBuf> {
+        self.reverse_links.get(path).cloned().unwrap_or_default()
+    }
+
+    fn dependencies(&self, path: &Path) -> Vec<PathBuf> {
+        let idx = match self.node_map.get(path) {
+            Some(idx) => *idx,
+            None => return Vec::new(),
+        };
+        self.graph
+            .neighbors_directed(idx, petgraph::Direction::Outgoing)
+            .map(|n| self.graph[n].path.clone())
+            .collect()
+    }
+
+    fn reachable(&self, from: &Path, to: &Path) -> bool {
+        let from_idx = match self.node_map.get(from) {
+            Some(idx) => *idx,
+            None => return false,
+        };
+        let to_idx = match self.node_map.get(to) {
+            Some(idx) => *idx,
+            None => return false,
+        };
+        petgraph::algo::has_path_connecting(&self.graph, from_idx, to_idx, None)
+    }
+
+    fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
+        &self.reverse_links
     }
 }
 
@@ -94,7 +101,7 @@ impl Default for DependencyGraph {
 
 impl DependencyGraph {
     /// Build graph from imports, file list, definitions, and implementations.
-    pub fn build(
+    pub fn build_graph(
         &mut self,
         imports: &[ImportEntry],
         files: &[FileEntry],

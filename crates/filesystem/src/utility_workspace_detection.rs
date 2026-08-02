@@ -145,14 +145,13 @@ pub fn detect_source_dir(project_root: &Path) -> PathBuf {
 
 fn has_source_files(dir: &Path) -> bool {
     for entry_path in crate::utility_filesystem_io::scan_directory(dir) {
-        if let Some(name) = entry_path.file_name().and_then(|n| n.to_str()) {
-            if name.ends_with(".rs")
+        if let Some(name) = entry_path.file_name().and_then(|n| n.to_str())
+            && (name.ends_with(".rs")
                 || name.ends_with(".py")
                 || name.ends_with(".ts")
-                || name.ends_with(".js")
-            {
-                return true;
-            }
+                || name.ends_with(".js"))
+        {
+            return true;
         }
     }
     false

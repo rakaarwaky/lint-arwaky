@@ -101,10 +101,10 @@ pub fn resolve_js_working_dir(path: &std::path::Path) -> PathBuf {
         abs_path.clone()
     };
     for _ in 0..10 {
-        if is_file(&current.join("lint_arwaky.config.yaml"))
-            || is_file(&current.join("lint_arwaky.config.python.yaml"))
-            || is_file(&current.join("package.json"))
-            || Path::new(&current.join(".git")).is_dir()
+        if is_file(current.join("lint_arwaky.config.yaml"))
+            || is_file(current.join("lint_arwaky.config.python.yaml"))
+            || is_file(current.join("package.json"))
+            || current.join(".git").is_dir()
         {
             return current;
         }
@@ -126,17 +126,17 @@ pub fn resolve_cargo_working_dir(path_str: &str) -> PathBuf {
         return PathBuf::from(".");
     }
     let current = Path::new(path_str);
-    if current.is_dir() && path_exists(&current.join("Cargo.toml")) {
+    if current.is_dir() && path_exists(current.join("Cargo.toml")) {
         return current.to_path_buf();
     }
     if let Some(parent) = current.parent() {
-        if path_exists(&parent.join("Cargo.toml")) {
+        if path_exists(parent.join("Cargo.toml")) {
             return parent.to_path_buf();
         }
-        if let Some(grandparent) = parent.parent() {
-            if path_exists(&grandparent.join("Cargo.toml")) {
-                return grandparent.to_path_buf();
-            }
+        if let Some(grandparent) = parent.parent()
+            && path_exists(grandparent.join("Cargo.toml"))
+        {
+            return grandparent.to_path_buf();
         }
     }
     PathBuf::from(".")
@@ -148,17 +148,17 @@ pub fn resolve_cargo_lock_working_dir(path_str: &str) -> PathBuf {
         return PathBuf::from(".");
     }
     let current = Path::new(path_str);
-    if current.is_dir() && path_exists(&current.join("Cargo.lock")) {
+    if current.is_dir() && path_exists(current.join("Cargo.lock")) {
         return current.to_path_buf();
     }
     if let Some(parent) = current.parent() {
-        if path_exists(&parent.join("Cargo.lock")) {
+        if path_exists(parent.join("Cargo.lock")) {
             return parent.to_path_buf();
         }
-        if let Some(grandparent) = parent.parent() {
-            if path_exists(&grandparent.join("Cargo.lock")) {
-                return grandparent.to_path_buf();
-            }
+        if let Some(grandparent) = parent.parent()
+            && path_exists(grandparent.join("Cargo.lock"))
+        {
+            return grandparent.to_path_buf();
         }
     }
     PathBuf::from(".")
@@ -182,7 +182,7 @@ pub fn has_config_file(dir_path: &Path) -> bool {
         .iter()
         .any(|path| {
             let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            CONFIG_NAMES.iter().any(|c| name == *c)
+            CONFIG_NAMES.contains(&name)
                 || name.ends_with(".config.js")
                 || name.ends_with(".config.ts")
         })

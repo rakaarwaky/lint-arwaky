@@ -134,5 +134,4 @@ impl Capabilities<NameCapability> {
 - [ ]  `cargo check -p <crate-name>` passes.
 
 ```
-
 ```

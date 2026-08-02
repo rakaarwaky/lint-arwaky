@@ -141,11 +141,11 @@ pub fn resolve_barrel_reexport(
                 .map(|s| s.trim_end_matches(';').trim())
             {
                 let parts: Vec<&str> = path_part.split("::").collect();
-                if let Some(last) = parts.last() {
-                    if *last == imported_name {
-                        let module_path = parts[..parts.len() - 1].join("::");
-                        return resolve_absolute_path(&module_path, root);
-                    }
+                if let Some(last) = parts.last()
+                    && *last == imported_name
+                {
+                    let module_path = parts[..parts.len() - 1].join("::");
+                    return resolve_absolute_path(&module_path, root);
                 }
             }
         }

@@ -9,13 +9,14 @@
 // FR-004: Graph Construction   → capabilities_dependency_graph (struct + functions)
 // FR-005: Workspace Detection  → utility_workspace_detection (functions only)
 // FR-006: Tool Resolution      → utility_tool_resolution (functions only)
-// FR-007: File Cache           → utility_file_cache (static cache + functions)
+// FR-007: File Cache           → utility_file_cache (placeholder; cache state in orchestrator + capabilities)
 
 // ── Capabilities (stateful, produce structured data) ──
 pub mod capabilities_ast_parser; // FR-002
-pub mod capabilities_dependency_graph;
-pub mod capabilities_file_cache; // FR-007 (cache state)
-pub mod capabilities_file_walker; // FR-001 // FR-004
+pub mod capabilities_dependency_graph; // FR-004
+pub mod capabilities_filesystem_io; // IFileSystemIOProtocol
+pub mod capabilities_tool_resolution; // IToolResolutionProtocol
+pub mod capabilities_workspace; // IWorkspaceProtocol
 
 // ── Utility (stateless, technical mechanics) ──
 pub mod utility_file_cache; // FR-007
@@ -28,3 +29,6 @@ pub mod utility_workspace_detection; // FR-005 // import path resolution helper
 
 // ── Agent (orchestration) ──
 pub mod agent_filesystem_orchestrator;
+
+// ── Root (composition, wiring) ──
+pub mod root_filesystem_container;
