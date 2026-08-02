@@ -22,14 +22,16 @@ use shared::common::{FilePath, Severity};
 use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage, LocationList,
 };
-use shared::external_lint::utility_external_lint::resolve_cargo_lock_working_dir;
 
 use std::path::Path;
 use tracing::debug;
+use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct CargoAuditAdapter {}
+pub struct CargoAuditAdapter {
+        pub filesystem: Arc<dyn IFilesystemAggregate>,}
 
 /// Parsed output from `cargo-audit --json` (cargo-vulnerability-report format).
 #[derive(Debug, Deserialize)]
@@ -61,7 +63,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = resolve_cargo_lock_working_dir(path);
+        let working_dir = self.filesystem.resolve_cargo_lock_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_lock = Path::new(working_dir_str).join("Cargo.lock");
@@ -148,8 +150,9 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CargoAuditAdapter {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
+        Self { filesystem }
     }
 }
 

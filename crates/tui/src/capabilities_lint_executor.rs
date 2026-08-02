@@ -17,7 +17,6 @@ use shared::role_rules::IRoleRunnerAggregate;
 use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecutionResult};
 
 use shared::filesystem::IFilesystemAggregate;
-use shared::tui::utility_tui_io as tui_io;
 use std::sync::Arc;
 
 // PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
@@ -856,7 +855,7 @@ impl LintExecutor {
 
     /// Check if a binary is available in the system PATH.
     fn is_binary_available(b: &str) -> bool {
-        tui_io::is_binary_available(b)
+        shared::filesystem::utility_filesystem_io::is_binary_available(b)
     }
 
     /// Discover available linter adapters and check binary availability.

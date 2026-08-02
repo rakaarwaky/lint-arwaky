@@ -96,7 +96,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 
     fn collect_file_entries(&self, files: &[String]) -> Vec<(std::path::PathBuf, String)> {
-        shared::code_analysis::utility_code_duplication_detector::collect_file_entries(files)
+        shared::filesystem::utility_filesystem_io::collect_file_entries(files)
     }
 
     fn scan_duplicate_blocks(

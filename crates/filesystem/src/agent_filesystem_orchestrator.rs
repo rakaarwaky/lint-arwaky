@@ -11,6 +11,7 @@ use shared::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, FilesystemResult, GraphData, ImplEntry, ImportEntry, Language,
     ParseMetadata, ParseWarning, ScanTiming,
 };
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::utility_filesystem_io;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -639,6 +640,121 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn get_parent<'a>(&self, path: &'a str) -> &'a str {
         utility_filesystem_io::get_parent(path)
+    }
+
+
+    // ── Canonicalize (String variant) ─────────────────────────
+
+    fn canonicalize_path_str(&self, path_str: &str) -> String {
+        utility_filesystem_io::canonicalize_path_str(path_str)
+    }
+
+    // ── Path Resolution (external-lint) ───────────────────────
+
+    fn resolve_js_cmd(&self, executable: &str, args: Vec<String>, working_dir: &str) -> Option<Vec<String>> {
+        utility_filesystem_io::resolve_js_cmd(executable, args, working_dir)
+    }
+
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        utility_filesystem_io::resolve_js_working_dir(path)
+    }
+
+    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
+        utility_filesystem_io::resolve_cargo_working_dir(path)
+    }
+
+    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath {
+        utility_filesystem_io::resolve_cargo_lock_working_dir(path)
+    }
+
+    fn default_working_dir(&self, path: &FilePath) -> FilePath {
+        utility_filesystem_io::default_working_dir(path)
+    }
+
+    // ── Python Detection (recursive) ──────────────────────────
+
+    fn has_python_files_recursive(&self, path: &FilePath) -> bool {
+        utility_filesystem_io::has_python_files_recursive(path)
+    }
+
+    // ── File Mutations ────────────────────────────────────────
+
+    fn set_permissions(&self, path: &Path, mode: u32) -> std::io::Result<()> {
+        utility_filesystem_io::set_permissions(path, mode)
+    }
+
+    fn remove_file(&self, path: &Path) -> std::io::Result<()> {
+        utility_filesystem_io::remove_file(path)
+    }
+
+    // ── Cache ─────────────────────────────────────────────────
+
+    fn read_cached(&self, path: &FilePath) -> ContentString {
+        utility_filesystem_io::read_cached(path)
+    }
+
+    // ── Workspace Detection ───────────────────────────────────
+
+    fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &[String]) -> bool {
+        utility_filesystem_io::check_wired_in_container(workspace_root, identifiers)
+    }
+
+    fn find_workspace_root_from_path(&self, start: &Path) -> Result<PathBuf, std::io::Error> {
+        utility_filesystem_io::find_workspace_root_from_path(start)
+    }
+
+    // ── Orphan Detection ──────────────────────────────────────
+
+    fn resolve_orphan_module_path(&self, root: &Path, base_dir: &Path, module_path: &str) -> Option<PathBuf> {
+        utility_filesystem_io::resolve_orphan_module_path(root, base_dir, module_path)
+    }
+
+    // ── Language Detection ────────────────────────────────────
+
+    fn detect_language_from_path(&self, path: &str) -> shared::config_system::taxonomy_config_language_vo::ConfigLanguage {
+        utility_filesystem_io::detect_language_from_path(path)
+    }
+
+    // ── File Entry Collection ─────────────────────────────────
+
+    fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)> {
+        utility_filesystem_io::collect_file_entries(files)
+    }
+
+    // ── Process Execution (git) ───────────────────────────────
+
+    fn run_git_command(&self, args: &[&str], dir: &str) -> (String, String, bool) {
+        utility_filesystem_io::run_git_command(args, dir)
+    }
+
+    fn parse_output_lines(&self, output: &str) -> Vec<String> {
+        utility_filesystem_io::parse_output_lines(output)
+    }
+
+    // ── Process Execution (external) ──────────────────────────
+
+    fn run_external_command_in(&self, name: &str, args: &[&str], current_dir: &str) -> (String, String, bool) {
+        utility_filesystem_io::run_external_command_in(name, args, current_dir)
+    }
+
+    // ── TUI I/O ───────────────────────────────────────────────
+
+    fn write_text_to_file(&self, path: &Path, text: &str) -> Result<(), String> {
+        utility_filesystem_io::write_text_to_file(path, text)
+    }
+
+    fn is_binary_available(&self, bin_name: &str) -> bool {
+        utility_filesystem_io::is_binary_available(bin_name)
+    }
+
+    fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
+        utility_filesystem_io::read_dir_entries_as_pathbuf(dir)
+    }
+
+    // ── Noop (linter compatibility) ───────────────────────────
+
+    fn noop_apply_fix(&self) -> Result<shared::common::taxonomy_message_vo::ComplianceStatus, shared::code_analysis::taxonomy_operation_error::LinterOperationError> {
+        Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(false))
     }
 
 }

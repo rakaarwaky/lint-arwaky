@@ -12,6 +12,7 @@ use std::sync::Arc;
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
 use shared::code_analysis::ILinterAdapterProtocol;
 use shared::external_lint::{IExternalLintAggregate, IExternalLintExecutorProtocol};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::common::Timeout;
 
@@ -20,7 +21,7 @@ pub struct ExternalLintContainer {
 }
 
 impl ExternalLintContainer {
-    pub fn new() -> Self {
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let executor: Arc<
             dyn shared::common::contract_executor_protocol::ICommandExecutorProtocol,
         > = Arc::new(crate::capabilities_stdio_client::StdioClient::new(
@@ -28,7 +29,7 @@ impl ExternalLintContainer {
         ));
 
         let lint_executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(
-            crate::capabilities_external_lint_executor::ExternalLintExecutor::new(executor.clone()),
+            crate::capabilities_external_lint_executor::ExternalLintExecutor::new(executor.clone(), filesystem.clone()),
         );
 
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
@@ -37,6 +38,7 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_ruff_adapter::RuffAdapter::new(
                 lint_executor.clone(),
                 None,
+                filesystem.clone(),
             )),
         );
         adapters.insert(
@@ -44,6 +46,7 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_bandit_adapter::BanditAdapter::new(
                 lint_executor.clone(),
                 None,
+                filesystem.clone(),
             )),
         );
         adapters.insert(
@@ -51,6 +54,7 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_mypy_adapter::MyPyAdapter::new(
                 lint_executor.clone(),
                 None,
+                filesystem.clone(),
             )),
         );
         adapters.insert(
@@ -75,35 +79,37 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "clippy".to_string(),
-            Arc::new(
-                crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
-                    executor.clone(),
-                    None,
-                ),
-            ),
+            Arc::new(crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
+                executor.clone(),
+                None,
+                filesystem.clone(),
+            )),
         );
         adapters.insert(
             "rustfmt".to_string(),
             Arc::new(crate::capabilities_rs_fmt_adapter::RustFmtAdapter::new(
                 executor.clone(),
                 None,
+                filesystem.clone(),
             )),
         );
         adapters.insert(
             "cargo-audit".to_string(),
-            Arc::new(crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new()),
+            Arc::new(crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(filesystem.clone())),
         );
 
         Self {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
                 adapters,
-                filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
+                filesystem,
             })),
         }
     }
 
     pub fn new_default() -> Self {
-        Self::new()
+        let filesystem: Arc<dyn IFilesystemAggregate> =
+            Arc::new(filesystem::FilesystemOrchestrator::new());
+        Self::new(filesystem)
     }
 
     pub fn aggregate(&self) -> Arc<dyn IExternalLintAggregate> {
@@ -113,6 +119,6 @@ impl ExternalLintContainer {
 
 impl Default for ExternalLintContainer {
     fn default() -> Self {
-        Self::new()
+        Self::new_default()
     }
 }

@@ -113,7 +113,7 @@ impl CodeDuplicationAnalyzer {
         min_dup_lines: usize,
     ) -> Vec<AesCodeAnalysisViolation> {
         let entries =
-            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(files);
+            shared::filesystem::utility_filesystem_io::collect_file_entries(files);
         let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
         let blocks =
             shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
@@ -271,7 +271,7 @@ impl CodeDuplicationAnalyzer {
         threshold_pct: f64,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
         let entries =
-            shared::code_analysis::utility_code_duplication_detector::collect_file_entries(files);
+            shared::filesystem::utility_filesystem_io::collect_file_entries(files);
         self.check_file_similarity_entries(
             &entries
                 .iter()

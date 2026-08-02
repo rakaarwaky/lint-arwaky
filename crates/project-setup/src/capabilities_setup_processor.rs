@@ -2,7 +2,6 @@ use shared::common::DescriptionVO;
 use shared::common::DirectoryPath;
 use shared::common::{EnvContentVO, McpConfigVO};
 use shared::project_setup::ISetupManagementProtocol;
-use shared::project_setup::utility_setup_io as setup_io;
 use shared::project_setup::{McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError};
 
 use shared::common::SuccessStatus;
@@ -237,7 +236,7 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         let config_dir = dirs::config_dir()
             .map(|d| d.join("lint-arwaky"))
             .ok_or_else(|| SetupError::invalid_state("Could not determine XDG config directory"))?;
-        setup_io::create_dir(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
+        self.filesystem.create_dir_all(&config_dir).map_err(|e| SetupError::io(e.to_string()))?;
         Ok(config_dir)
     }
 
@@ -271,7 +270,7 @@ impl SetupManagementProcessor {
         if depth > max_depth {
             return;
         }
-        let entries = match setup_io::read_dir_entries(dir) {
+        let entries = match self.filesystem.read_dir_entries_as_pathbuf(dir) {
             Ok(e) => e,
             Err(_) => return,
         };

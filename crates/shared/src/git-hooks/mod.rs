@@ -5,7 +5,6 @@ pub mod contract_manager_protocol;
 pub mod contract_orchestrator_aggregate;
 pub mod taxonomy_git_diff_data_vo;
 pub mod taxonomy_hook_error;
-pub mod utility_git_io;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

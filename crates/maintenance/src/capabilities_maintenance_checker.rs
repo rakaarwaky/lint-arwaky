@@ -17,7 +17,6 @@ use shared::common::{Count, Score};
 use shared::common::utility_command_runner as proc_io;
 use shared::maintenance::IMaintenanceCheckerProtocol;
 use shared::maintenance::MaintenanceStatsVO;
-use shared::maintenance::utility_dependency_io as dep_io;
 use shared::maintenance::{
     DependencyInfo, DependencyReport, DoctorResultVO, SecurityFinding, SecurityScanReport,
     ToolStatus, ToolchainDiagnostics,
@@ -155,7 +154,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     tool_installed: false,
                 };
             }
-            let (s, _, _) = dep_io::run_external_command_in("cargo", &["audit", "--json"], root);
+            let (s, _, _) = self.filesystem.run_external_command_in("cargo", &["audit", "--json"], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
                 && let Some(list) = json
@@ -210,7 +209,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     tool_installed: false,
                 };
             }
-            let (s, _, _) = dep_io::run_external_command_in("npm", &["audit", "--json"], root);
+            let (s, _, _) = self.filesystem.run_external_command_in("npm", &["audit", "--json"], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
                 && let Some(vulns) = json.get("vulnerabilities")
@@ -264,7 +263,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 };
             }
             let (s, _, _) =
-                dep_io::run_external_command_in("bandit", &["-r", "--format", "json", root], root);
+                self.filesystem.run_external_command_in("bandit", &["-r", "--format", "json", root], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
                 && let Some(results) = json.get("results").and_then(|r| r.as_array())
@@ -318,7 +317,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         if cargo_lock.exists() {
             // FR-007: Rust — Cargo.lock + Cargo.toml
-            let content = dep_io::read_dependency_file(&cargo_lock).map_err(|e| e.to_string())?;
+            let content = self.filesystem.read_to_string(&cargo_lock).map_err(|e| e.to_string())?;
             let mut in_package = false;
             let mut pkg_name = String::new();
             let mut pkg_version = String::new();
@@ -326,7 +325,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
             let cargo_toml = std::path::Path::new(root).join("Cargo.toml");
             let mut direct_deps = std::collections::HashSet::new();
-            if let Ok(toml_content) = dep_io::read_dependency_file(&cargo_toml) {
+            if let Ok(toml_content) = self.filesystem.read_to_string(&cargo_toml) {
                 let mut in_deps = false;
                 for line in toml_content.lines() {
                     if line.trim().starts_with("[dependencies]") {
@@ -392,7 +391,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             })
         } else if package_json.exists() {
             // FR-007: JS/TS — package.json (dependencies + devDependencies)
-            let content = dep_io::read_dependency_file(&package_json).map_err(|e| e.to_string())?;
+            let content = self.filesystem.read_to_string(&package_json).map_err(|e| e.to_string())?;
             let json: serde_json::Value =
                 serde_json::from_str(&content).map_err(|e| e.to_string())?;
             let mut dependencies = Vec::new();
@@ -429,7 +428,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             if pyproject.exists() {
                 // FR-007: Python — pyproject.toml
                 let content =
-                    dep_io::read_dependency_file(&pyproject).map_err(|e| e.to_string())?;
+                    self.filesystem.read_to_string(&pyproject).map_err(|e| e.to_string())?;
                 let mut dependencies = Vec::new();
                 for line in content.lines() {
                     let t = line.trim();
@@ -459,7 +458,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 let reqs = std::path::Path::new(root).join("requirements.txt");
                 if reqs.exists() {
                     // FR-007: Python — requirements.txt (fallback)
-                    let content = dep_io::read_dependency_file(&reqs).map_err(|e| e.to_string())?;
+                    let content = self.filesystem.read_to_string(&reqs).map_err(|e| e.to_string())?;
                     let mut dependencies = Vec::new();
                     for line in content.lines() {
                         let t = line.trim();

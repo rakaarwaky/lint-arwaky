@@ -10,15 +10,16 @@ use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,
     LocationList, PatternList,
 };
-use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
 
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use tracing::debug;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
+        pub filesystem: Arc<dyn IFilesystemAggregate>,
     executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
@@ -33,7 +34,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = resolve_cargo_working_dir(path);
+        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_toml = Path::new(working_dir_str).join("Cargo.toml");
@@ -156,7 +157,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let working_dir = resolve_cargo_working_dir(path);
+        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
         let cmd = vec![
             "cargo".to_string(),
             "clippy".to_string(),
@@ -195,7 +196,9 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
 use std::path::Path;
 
 impl RustLinterAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>) -> Self {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
         Self {
             executor,
             _bin_path: bin_path,

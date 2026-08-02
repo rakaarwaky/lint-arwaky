@@ -5,13 +5,16 @@ use shared::common::{FilePath, FilePathList, GitBranchName, RenamedFileList};
 
 use shared::file_watch::GitDiffResultVO;
 use shared::git_hooks::IDiffProtocol;
-use shared::git_hooks::utility_git_io as git_io;
+use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // PURPOSE: DiffChecker — implements IDiffProtocol for git diff analysis (capabilities layer)
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DiffChecker;
+pub struct DiffChecker {
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -75,12 +78,16 @@ impl Default for DiffChecker {
 }
 
 impl DiffChecker {
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { filesystem }
+    }
+
     pub fn new() -> Self {
         Self
     }
 
     async fn get_default_branch_async(&self, project_path: &FilePath) -> String {
-        let (stdout, _, success) = git_io::run_git_command_async(
+        let (stdout, _, success) = self.filesystem.run_git_command(
             &["symbolic-ref", "refs/remotes/origin/HEAD"],
             &project_path.value,
         )
@@ -136,10 +143,10 @@ impl DiffChecker {
         project_path: &FilePath,
     ) -> bool {
         let (stdout, _, success) =
-            git_io::run_git_command_async(&["diff", "--name-only", variant], &project_path.value)
+            self.filesystem.run_git_command(&["diff", "--name-only", variant], &project_path.value)
                 .await;
         if success {
-            for line in git_io::parse_output_lines(&stdout) {
+            for line in self.filesystem.parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
                     changed_set.insert(fp);
                 }
@@ -154,10 +161,10 @@ impl DiffChecker {
         project_path: &FilePath,
     ) {
         let (stdout, _, success) =
-            git_io::run_git_command_async(&["diff", "--name-only", "HEAD"], &project_path.value)
+            self.filesystem.run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value)
                 .await;
         if success {
-            for line in git_io::parse_output_lines(&stdout) {
+            for line in self.filesystem.parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
                     changed_set.insert(fp);
                 }
@@ -170,13 +177,13 @@ impl DiffChecker {
         changed_set: &mut HashSet<FilePath>,
         project_path: &FilePath,
     ) {
-        let (stdout, _, success) = git_io::run_git_command_async(
+        let (stdout, _, success) = self.filesystem.run_git_command(
             &["ls-files", "--modified", "--others", "--exclude-standard"],
             &project_path.value,
         )
         .await;
         if success {
-            for line in git_io::parse_output_lines(&stdout) {
+            for line in self.filesystem.parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
                     changed_set.insert(fp);
                 }

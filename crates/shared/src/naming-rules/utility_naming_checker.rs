@@ -18,9 +18,9 @@ use crate::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 /// For dotfiles like `.gitignore`, the entire filename is returned.
 /// If there is no dot, the entire filename is returned.
 pub fn get_stem(filename: &str) -> Option<&str> {
-    Some(crate::filesystem::utility_filesystem_io::get_file_stem(
-        filename,
-    ))
+    std::path::Path::new(filename)
+        .file_stem()
+        .and_then(|n| n.to_str())
 }
 
 /// Extract the suffix (word after the last underscore) from a stem.

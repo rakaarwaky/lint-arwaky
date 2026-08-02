@@ -2,6 +2,7 @@
 // Wraps ICommandExecutorProtocol and adds error mapping for scan/adapter operations.
 
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::code_analysis::LinterOperationError;
 use shared::common::ICommandExecutorProtocol;
@@ -12,13 +13,11 @@ use shared::common::{
 
 use shared::external_lint::IExternalLintExecutorProtocol;
 
-use shared::external_lint::utility_external_lint::{
-    canonicalize_path, resolve_js_cmd, resolve_js_working_dir,
-};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintExecutor {
+        pub filesystem: Arc<dyn IFilesystemAggregate>,
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
@@ -80,9 +79,9 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
         tool: &str,
         fix_arg: &str,
     ) -> Result<ComplianceStatus, LinterOperationError> {
-        let wd = resolve_js_working_dir(path);
-        let abs_path = canonicalize_path(&path.value);
-        let cmd = match resolve_js_cmd(tool, vec![abs_path, fix_arg.to_string()], &wd.value) {
+        let wd = self.filesystem.resolve_js_working_dir(path);
+        let abs_path = self.filesystem.canonicalize_path_str(&path.value);
+        let cmd = match self.filesystem.resolve_js_cmd(tool, vec![abs_path.to_string_lossy().to_string(), fix_arg.to_string()], &wd.value) {
             Some(c) => c,
             None => {
                 return Ok(ComplianceStatus::new(false));
@@ -98,7 +97,9 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ExternalLintExecutor {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>) -> Self {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
         Self { executor }
     }
 }

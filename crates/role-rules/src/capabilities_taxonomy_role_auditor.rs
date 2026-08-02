@@ -157,6 +157,7 @@ impl TaxonomyRoleChecker {
             | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => {
                 Self::JS_PRIMITIVES
             }
+            _ => return,
         };
         let is_rs = matches!(
             file.language,

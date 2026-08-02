@@ -9,7 +9,6 @@ use std::path::PathBuf;
 
 use crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
 
 const MAX_LOCATIONS_PER_BLOCK: usize = 128;
 
@@ -137,26 +136,4 @@ pub fn build_violations(
             blocks.iter().map(|b| b.len()).sum::<usize>()
         ))),
     }]
-}
-
-/// Collect file entries: (PathBuf, content_string) for each lintable file.
-pub fn collect_file_entries(files: &[String]) -> Vec<(PathBuf, String)> {
-    let mut out = Vec::new();
-    for file_str in files {
-        let fp = match FilePath::new(file_str.clone()) {
-            Ok(f) => f,
-            Err(_) => continue,
-        };
-        if !crate::common::utility_language_detector::is_lintable(&fp) {
-            continue;
-        }
-        let content = match crate::filesystem::utility_filesystem_io::cache_get_by_str(&fp.value)
-            .map_or_else(|| crate::filesystem::utility_filesystem_io::read_file(&fp.value), Ok)
-        {
-            Ok(c) => c,
-            Err(_) => continue,
-        };
-        out.push((PathBuf::from(&fp.value), content));
-    }
-    out
 }

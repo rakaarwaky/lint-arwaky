@@ -21,10 +21,10 @@ use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,
     LocationList, PatternList,
 };
-use shared::external_lint::utility_external_lint::resolve_cargo_working_dir;
 
 use std::path::Path;
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use tracing::debug;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -34,6 +34,7 @@ use tracing::debug;
 /// Parses rustfmt's unified diff output to create per-difference LintResults.
 /// When no Cargo.toml is found, the scan is silently skipped.
 pub struct RustFmtAdapter {
+        pub filesystem: Arc<dyn IFilesystemAggregate>,
     executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
@@ -50,7 +51,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
         let mut results = Vec::new();
 
         // Find the Cargo.toml parent to use as working directory — resolves workspace roots
-        let working_dir = resolve_cargo_working_dir(path);
+        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
         let working_dir_str = &working_dir.value;
 
         let cargo_toml = Path::new(working_dir_str).join("Cargo.toml");
@@ -134,7 +135,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
     }
 
     async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let working_dir = resolve_cargo_working_dir(path);
+        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
         let cmd = vec!["cargo".to_string(), "fmt".to_string()];
         let _ = self
             .executor
@@ -151,7 +152,9 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl RustFmtAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>) -> Self {
+    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
         Self {
             executor,
             _bin_path: bin_path,

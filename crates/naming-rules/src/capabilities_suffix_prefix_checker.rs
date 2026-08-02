@@ -64,13 +64,22 @@ impl SuffixPrefixChecker {
         Self {}
     }
 
-    /// Build a mapping from suffix → layer name for cross-layer validation.
-    /// Each suffix from a strict layer's allowed list is mapped to that layer.
+    /// Build a mapping from suffix → base layer name for cross-layer validation.
+    /// Only maps to base layers (not specialized sub-layers like `taxonomy(vo)`) to avoid
+    /// false positives where a file in `taxonomy(vo)` is incorrectly flagged because
+    /// its suffix is mapped to a different sub-layer of the same base layer.
     fn build_suffix_to_layer_map(
         layer_map: &LayerMapVO,
     ) -> std::collections::HashMap<String, String> {
         let mut suffix_to_layer = std::collections::HashMap::new();
         for (layer_name, def) in &layer_map.values {
+            // Skip specialized sub-layers — only base layers participate in cross-layer
+            // validation. Sub-layers inherit the parent's suffix list, so mapping them
+            // causes false positives when resolve_specialized_layer resolves to a
+            // different sub-layer of the same base.
+            if layer_name.value().contains('(') {
+                continue;
+            }
             if def.naming.suffix_policy.value == SUFFIX_POLICY_STRICT {
                 for suffix in &def.naming.allowed_suffix.values {
                     suffix_to_layer
@@ -138,8 +147,11 @@ impl SuffixPrefixChecker {
         }
 
         // 2. Cross-layer suffix validation (FR-002: PrefixSuffixMismatch)
-        // If the suffix belongs to a DIFFERENT layer's strict suffix set, emit PrefixSuffixMismatch.
+        // If the suffix belongs to a DIFFERENT base layer's strict suffix set, emit PrefixSuffixMismatch.
         // This check runs before strict policy to provide a more specific error message.
+        // Note: suffix_to_layer only contains base layers, so we normalize current_layer
+        // to its base name too (e.g. "taxonomy(vo)" → "taxonomy") to avoid false positives
+        // where specialized sub-layers of the same base are compared against each other.
         if let Some(suf) = &suffix
             && let Some(suffix_belonging_layer) = suffix_to_layer.get(*suf)
         {
@@ -147,7 +159,8 @@ impl SuffixPrefixChecker {
                 .as_ref()
                 .map(|l| l.value().to_string())
                 .unwrap_or_default();
-            if suffix_belonging_layer != &current_layer {
+            let current_base = current_layer.split('(').next().unwrap_or(&current_layer);
+            if suffix_belonging_layer != current_base {
                 return Some(string_filename_result(
                     file,
                     RULE_CODE_SUFFIX_PREFIX,

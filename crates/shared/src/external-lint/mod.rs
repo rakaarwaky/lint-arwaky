@@ -3,7 +3,6 @@ pub mod contract_external_lint_aggregate;
 pub mod contract_external_lint_executor_protocol;
 pub mod contract_external_lint_selector_protocol;
 pub mod contract_external_lint_utility_protocol;
-pub mod utility_external_lint;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

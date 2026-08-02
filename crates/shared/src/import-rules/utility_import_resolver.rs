@@ -290,7 +290,7 @@ fn normalize_module_path(module_path: &str) -> String {
 fn try_barrel_candidates(dir: &Path, candidates: &[&str]) -> Option<String> {
     for candidate in candidates {
         let barrel_path = dir.join(candidate);
-        if crate::filesystem::utility_filesystem_io::path_exists(&barrel_path) {
+        if barrel_path.exists() {
             return Some(barrel_path.to_string_lossy().to_string());
         }
     }
@@ -559,8 +559,7 @@ pub fn resolve_barrel_import(
     let barrel_path = find_barrel_file(module_path, root_dir)?;
 
     // Step 2: Read barrel file content
-    let barrel_content = crate::filesystem::utility_filesystem_io::cache_get_by_str(&barrel_path)
-        .or_else(|| crate::filesystem::utility_filesystem_io::read_file(&barrel_path).ok())?;
+    let barrel_content = std::fs::read_to_string(&barrel_path).ok()?;
 
     // Step 3: Parse re-export mappings (symbol → file_stem)
     let reexports = parse_barrel_reexports(&barrel_content);

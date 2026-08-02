@@ -3,14 +3,42 @@ use std::collections::HashMap;
 
 /// Build a crate module index for hyphen-aware resolution.
 /// Maps normalized module paths to canonical file paths.
+
+/// Recursively scan directory for files (non-source-aware, raw paths).
+fn scan_dir_recursive(dir: &std::path::Path) -> Vec<String> {
+    let mut files = Vec::new();
+    _scan_dir_recursive(dir, &mut files);
+    files
+}
+
+fn _scan_dir_recursive(dir: &std::path::Path, files: &mut Vec<String>) {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with('.') {
+                continue;
+            }
+            let path = entry.path();
+            if path.is_dir() {
+                if matches!(name.as_str(), "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv") {
+                    continue;
+                }
+                _scan_dir_recursive(&path, files);
+            } else if let Some(path_str) = path.to_str() {
+                files.push(path_str.to_string());
+            }
+        }
+    }
+}
+
 pub fn build_crate_module_index(
     crate_src_dirs: &HashMap<String, std::path::PathBuf>,
 ) -> HashMap<String, HashMap<String, String>> {
     let mut index: HashMap<String, HashMap<String, String>> = HashMap::new();
     for (crate_name, src_dir) in crate_src_dirs {
         let mut module_map: HashMap<String, String> = HashMap::new();
-        let canonical_src = crate::filesystem::utility_filesystem_io::canonicalize_path(&src_dir.to_string_lossy());
-        let all_files = crate::filesystem::utility_filesystem_io::scan_directory_recursive(&canonical_src);
+        let canonical_src = std::fs::canonicalize(&src_dir).unwrap_or(src_dir.to_path_buf());
+        let all_files = scan_dir_recursive(&canonical_src);
         for path_str in all_files {
             if !path_str.ends_with(".rs")
                 && !path_str.ends_with(".py")
@@ -116,12 +144,12 @@ pub fn find_workspace_root(start_dir: &str) -> String {
         current = cwd.join(&current);
     }
     loop {
-        let has_manifest = crate::filesystem::utility_filesystem_io::path_exists(&current.join("Cargo.toml"))
-            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("pyproject.toml"))
-            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("package.json"));
-        let has_members = crate::filesystem::utility_filesystem_io::path_exists(&current.join("crates"))
-            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("packages"))
-            || crate::filesystem::utility_filesystem_io::path_exists(&current.join("modules"));
+        let has_manifest = current.join("Cargo.toml").exists()
+            || current.join("pyproject.toml").exists()
+            || current.join("package.json").exists();
+        let has_members = current.join("crates").is_dir()
+            || current.join("packages").is_dir()
+            || current.join("modules").is_dir();
         if has_manifest && has_members {
             return current.to_string_lossy().to_string();
         }
@@ -177,7 +205,7 @@ pub fn resolve_ts_relative(
     ];
 
     for cand in &candidates {
-        if crate::filesystem::utility_filesystem_io::is_file(cand) {
+        if cand.is_file() {
             // Return RELATIVE path (matching graph convention)
             let rel = cand
                 .strip_prefix(workspace_root)

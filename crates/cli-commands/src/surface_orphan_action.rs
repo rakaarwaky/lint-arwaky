@@ -5,7 +5,6 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::{ExitCode, FilePath};
 
 use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::IOrphanAggregate;
 use std::sync::Arc;
 
@@ -150,7 +149,7 @@ pub fn handle_scan_orphan(
         &all_violations,
         &target,
         format,
-        is_specific_member || is_member_path(&target),
+        is_specific_member || filesystem.is_member_path(&target),
     );
 
     if all_violations.is_empty() {
@@ -168,7 +167,7 @@ fn scan_single_root(
     filter: &Option<String>,
 ) -> ExitCode {
     let scan_root = crate::surface_common_action::resolve_file_path(root);
-    let lang = shared::cli_commands::utility_path_resolver::detect_language_from_path(root);
+    let lang = filesystem.detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
     let orphan_analyzer =
         orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
@@ -188,7 +187,7 @@ fn scan_single_root(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    output_violations(&violations, root, format, is_member_path(root));
+    output_violations(&violations, root, format, filesystem.is_member_path(root));
 
     if violations.is_empty() {
         ExitCode::OK

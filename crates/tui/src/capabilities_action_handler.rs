@@ -10,7 +10,6 @@ use std::sync::Arc;
 // This is the largest single file in the TUI crate; it owns all event→action mappings.
 
 use crate::utility_file_system;
-use shared::tui::utility_tui_io;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -437,7 +436,7 @@ impl ActionHandler {
     }
 
     /// Copy the current preview content to a file `lint-results.txt` in the current directory.
-    /// Delegates I/O to utility_tui_io::write_text_to_file().
+    /// Delegates I/O to shared::filesystem::utility_filesystem_io::write_text_to_file().
     fn copy_to_file(&self, state: &mut AppState) {
         let text = &state.preview_text;
         if text.is_empty() {
@@ -446,7 +445,7 @@ impl ActionHandler {
         }
 
         let path = std::path::Path::new("lint-results.txt");
-        match utility_tui_io::write_text_to_file(path, text) {
+        match shared::filesystem::utility_filesystem_io::write_text_to_file(path, text) {
             Ok(()) => state.set_status("Saved to lint-results.txt"),
             Err(e) => state.set_status(format!("Save failed: {e}")),
         }

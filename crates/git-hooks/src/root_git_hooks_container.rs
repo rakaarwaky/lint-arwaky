@@ -10,9 +10,9 @@ pub struct GitContainer {
 }
 
 impl GitContainer {
-    pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>) -> Self {
+    pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let diff_protocol: Arc<dyn IDiffProtocol> =
-            Arc::new(crate::capabilities_diff_checker::DiffChecker::new());
+            Arc::new(crate::capabilities_diff_checker::DiffChecker::new(filesystem.clone()));
         let hook_adapter_clone = Arc::clone(&hook_adapter);
         let hook_protocol: Arc<dyn IHookProtocol> = Arc::new(
             crate::capabilities_hook_manager::HookManager::new(hook_adapter_clone),
@@ -36,9 +36,9 @@ impl GitContainer {
             Arc::new(crate::capabilities_hook_adapter::GitHookAdapter::new(
                 shared::common::taxonomy_path_vo::FilePath::new(".".to_string())
                     .unwrap_or_default(),
-                filesystem,
+                filesystem.clone(),
             ));
-        Self::new(hook_adapter)
+        Self::new(hook_adapter, filesystem)
     }
 
     pub fn aggregate(&self) -> Arc<dyn GitHooksAggregate> {

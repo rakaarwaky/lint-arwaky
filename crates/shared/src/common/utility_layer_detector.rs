@@ -207,9 +207,10 @@ pub fn resolve_module_path_to_layer(module_path: &str, root_dir: &str) -> Option
     let scan_dir = format!("{}/{}", dir_path, rel_path);
 
     // Read directory entries and look for layer-prefixed files
-    for entry_path_str in crate::filesystem::utility_filesystem_io::read_dir_generic(&scan_dir) {
-        let entry_path = std::path::PathBuf::from(&entry_path_str);
-        if crate::filesystem::utility_filesystem_io::is_file(&entry_path) {
+    let Ok(read_dir) = std::fs::read_dir(&scan_dir) else { return None };
+    for entry in read_dir.flatten() {
+        let entry_path = entry.path();
+        if entry_path.is_file() {
             if let Some(filename) = entry_path.file_name().and_then(|n| n.to_str()) {
                 // Check if filename has a layer prefix
                 if let Some(layer) = detect_layer_from_prefix(filename) {

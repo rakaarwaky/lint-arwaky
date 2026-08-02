@@ -52,11 +52,13 @@ impl OrphanContainer {
                 contract_analyzer: Arc::new(
                     crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(
                         parser_dispatcher.clone(),
+                fs_agg.clone(),
                     ),
                 ),
                 capabilities_analyzer: Arc::new(
                     crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(
                         parser_dispatcher.clone(),
+                fs_agg.clone(),
                     ),
                 ),
                 utility_analyzer: Arc::new(

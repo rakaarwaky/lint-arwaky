@@ -23,13 +23,14 @@ use shared::common::{
     LocationList,
 };
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{default_working_dir, has_python_files};
 
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct RuffAdapter {
+        pub filesystem: Arc<dyn IFilesystemAggregate>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
@@ -44,7 +45,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
-        if !has_python_files(path) {
+        if !self.filesystem.has_python_files_recursive(path) {
             return Ok(LintResultList::new(vec![]));
         }
 
@@ -59,7 +60,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
             "--exit-zero".to_string(),
             "--no-cache".to_string(),
         ];
-        let working_dir = default_working_dir(path);
+        let working_dir = self.filesystem.default_working_dir(path);
 
         let response = self
             .lint_executor
@@ -143,7 +144,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
             "--fix".to_string(),
             "--exit-zero".to_string(),
         ];
-        let working_dir = default_working_dir(path);
+        let working_dir = self.filesystem.default_working_dir(path);
 
         let _ = self
             .lint_executor
@@ -159,6 +160,7 @@ impl RuffAdapter {
     pub fn new(
         lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
         bin_path: Option<FilePath>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         Self {
             lint_executor,
@@ -217,6 +219,7 @@ mod tests {
     use shared::common::{AdapterName, ComplianceStatus, FilePath, ResponseData, Severity};
     use shared::external_lint::IExternalLintExecutorProtocol;
     use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
     fn make_adapter() -> RuffAdapter {
         let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);

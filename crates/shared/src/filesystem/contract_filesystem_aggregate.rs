@@ -3,6 +3,7 @@
 // Implements FR-005 consumer access pattern with granular accessor methods.
 
 use crate::filesystem::taxonomy_filesystem_vo::{FileEntry, FilesystemResult, ImportEntry, ParseWarning, ScanTiming};
+use crate::common::taxonomy_source_vo::ContentString;
 use crate::common::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 
@@ -226,4 +227,97 @@ pub trait IFilesystemAggregate: Send + Sync {
 
     /// Get parent directory path.
     fn get_parent<'a>(&self, path: &'a str) -> &'a str;
+
+    // ── Canonicalize (String variant) ─────────────────────────
+
+    /// Canonicalize path to absolute string.
+    fn canonicalize_path_str(&self, path_str: &str) -> String;
+
+    // ── Path Resolution (external-lint) ───────────────────────
+
+    /// Resolve JS tool command from local node_modules/.bin.
+    fn resolve_js_cmd(&self, executable: &str, args: Vec<String>, working_dir: &str) -> Option<Vec<String>>;
+
+    /// Walk up to find JS project root.
+    fn resolve_js_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+
+    /// Find parent dir with Cargo.toml.
+    fn resolve_cargo_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+
+    /// Find parent dir with Cargo.lock.
+    fn resolve_cargo_lock_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+
+    /// Create default working directory.
+    fn default_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+
+    // ── Python Detection (recursive) ──────────────────────────
+
+    /// Check if path contains Python files (recursive, handles files too).
+    fn has_python_files_recursive(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> bool;
+
+    // ── File Mutations ────────────────────────────────────────
+
+    /// Set file permissions (Unix mode bits).
+    fn set_permissions(&self, path: &Path, mode: u32) -> std::io::Result<()>;
+
+    /// Remove a file.
+    fn remove_file(&self, path: &Path) -> std::io::Result<()>;
+
+    // ── Cache ─────────────────────────────────────────────────
+
+    /// Read file content from bounded cache (returns ContentString).
+    fn read_cached(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> ContentString;
+
+    // ── Workspace Detection ───────────────────────────────────
+
+    /// Check if any container/entry file under workspace root references identifiers.
+    fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &[String]) -> bool;
+
+    /// Find workspace root from Path (Result variant).
+    fn find_workspace_root_from_path(&self, start: &Path) -> Result<PathBuf, std::io::Error>;
+
+    // ── Orphan Detection ──────────────────────────────────────
+
+    /// Resolve a module path relative to base_dir, confined under root.
+    fn resolve_orphan_module_path(&self, root: &Path, base_dir: &Path, module_path: &str) -> Option<PathBuf>;
+
+    // ── Language Detection ────────────────────────────────────
+
+    /// Detect ConfigLanguage from a file system path.
+    fn detect_language_from_path(&self, path: &str) -> crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+
+    // ── File Entry Collection ─────────────────────────────────
+
+    /// Collect file entries (path, content) for each lintable file.
+    fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)>;
+
+    // ── Process Execution (git) ───────────────────────────────
+
+    /// Execute a git command and return stdout/stderr/success.
+    fn run_git_command(&self, args: &[&str], dir: &str) -> (String, String, bool);
+
+    /// Parse command output into trimmed non-empty lines.
+    fn parse_output_lines(&self, output: &str) -> Vec<String>;
+
+    // ── Process Execution (external) ──────────────────────────
+
+    /// Execute an external command with working directory.
+    fn run_external_command_in(&self, name: &str, args: &[&str], current_dir: &str) -> (String, String, bool);
+
+    // ── TUI I/O ───────────────────────────────────────────────
+
+    /// Write text content to a file.
+    fn write_text_to_file(&self, path: &Path, text: &str) -> Result<(), String>;
+
+    /// Check if a binary is available in system PATH.
+    fn is_binary_available(&self, bin_name: &str) -> bool;
+
+    /// Read directory entries as Vec<PathBuf>.
+    fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error>;
+
+    // ── Noop (linter compatibility) ───────────────────────────
+
+    /// No-op apply_fix for linters that cannot auto-fix.
+    fn noop_apply_fix(&self) -> Result<crate::common::taxonomy_message_vo::ComplianceStatus, crate::code_analysis::taxonomy_operation_error::LinterOperationError>;
+
 }

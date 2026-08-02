@@ -4,19 +4,17 @@
 use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
 use shared::common::{FilePath, Severity};
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_detector::utility_file_cache;
 use shared::orphan_detector::utility_orphan_filename::file_stem;
-use shared::orphan_detector::utility_workspace_scanner::{
-    check_wired_in_container, find_workspace_root,
-};
 use shared::orphan_detector::{
     AesOrphanViolation, ICapabilitiesOrphanProtocol, IOrphanParserProtocol,
 };
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CapabilitiesOrphanAnalyzer {
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
 }
 
@@ -49,7 +47,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         }
 
         let path = FilePath::new(fp).unwrap_or_default();
-        let content = utility_file_cache::read_cached(&path);
+        let content = self.filesystem.read_cached(&path);
         let content_ref = content.value();
 
         // AST-based identifier extraction
@@ -57,8 +55,8 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
         // Search for container files in workspace root
         let root = std::path::Path::new(root_dir.value());
-        if let Ok(workspace_root) = find_workspace_root(root) {
-            let wired = check_wired_in_container(&workspace_root, &identifiers);
+        if let Ok(workspace_root) = self.filesystem.find_workspace_root_from_path(root) {
+            let wired = self.filesystem.check_wired_in_container(&workspace_root, &identifiers);
             if wired {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
@@ -89,7 +87,9 @@ impl Default for CapabilitiesOrphanAnalyzer {
 }
 
 impl CapabilitiesOrphanAnalyzer {
-    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
+    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
         Self { parser_dispatcher }
     }
 

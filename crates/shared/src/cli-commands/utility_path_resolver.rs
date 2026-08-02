@@ -1,37 +1,4 @@
 // PURPOSE: Stateless path resolution utilities (business logic only)
-// Filesystem functions: see filesystem::utility_filesystem_io
-
-use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
-
-/// Detect ConfigLanguage from a file system path by checking for workspace type markers in the path.
-pub fn detect_language_from_path(path: &str) -> ConfigLanguage {
-    let path_buf = std::path::PathBuf::from(path);
-
-    if crate::filesystem::utility_filesystem_io::path_exists(path_buf.join("Cargo.toml"))
-        || path_contains_component(&path_buf, "crates")
-    {
-        return ConfigLanguage::Rust;
-    }
-    if crate::filesystem::utility_filesystem_io::path_exists(path_buf.join("package.json"))
-        || path_contains_component(&path_buf, "packages")
-    {
-        return ConfigLanguage::TypeScript;
-    }
-    if crate::filesystem::utility_filesystem_io::path_exists(path_buf.join("pyproject.toml"))
-        || crate::filesystem::utility_filesystem_io::path_exists(path_buf.join("setup.py"))
-        || crate::filesystem::utility_filesystem_io::path_exists(path_buf.join("requirements.txt"))
-        || path_contains_component(&path_buf, "modules")
-    {
-        return ConfigLanguage::Python;
-    }
-
-    ConfigLanguage::Rust
-}
-
-fn path_contains_component(path: &std::path::Path, component: &str) -> bool {
-    path.components()
-        .any(|c| matches!(c, std::path::Component::Normal(name) if name == component))
-}
 
 /// Extract workspace member name from a file path relative to the scan root.
 pub fn extract_member_from_path(file_path: &str, root: &str) -> String {

@@ -2,7 +2,7 @@ use shared::common::{FilePath, SuccessStatus};
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::IHookManagerProtocol;
-use shared::git_hooks::utility_git_io as git_io;
+use shared::filesystem::utility_filesystem_io;
 
 // PURPOSE: HookAdapter — IHookManagerProtocol implementation for installing/uninstalling git hook scripts
 
@@ -27,7 +27,7 @@ impl IHookManagerProtocol for GitHookAdapter {
             return Ok(SuccessStatus::new(false));
         }
         let hooks_dir = self.git_dir().join("hooks");
-        git_io::create_dir_all(&hooks_dir).map_err(|e| {
+        shared::filesystem::utility_filesystem_io::create_dir_all_generic(&hooks_dir).map_err(|e| {
             shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(format!(
                 "Failed to create hooks dir: {}",
                 e
@@ -62,7 +62,7 @@ exit 0
             })?;
         #[cfg(unix)]
         {
-            git_io::set_permissions(&hook_path, 0o755).map_err(|e| {
+            shared::filesystem::utility_filesystem_io::set_permissions(&hook_path, 0o755).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to set permissions: {}", e),
                 ))
@@ -79,7 +79,7 @@ exit 0
         }
         let hook_path = self.git_dir().join("hooks").join("pre-commit");
         if self.filesystem.path_exists(&hook_path) {
-            git_io::remove_file(&hook_path).map_err(|e| {
+            shared::filesystem::utility_filesystem_io::remove_file(&hook_path).map_err(|e| {
                 shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
                     format!("Failed to remove hook: {}", e),
                 ))

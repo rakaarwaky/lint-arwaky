@@ -20,20 +20,19 @@ use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 use shared::common::{FilePath, Severity};
 
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::utility_external_lint::{
-    default_working_dir, has_python_files, noop_apply_fix,
-};
 
 use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage, LocationList,
 };
 
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MyPyAdapter {
+        pub filesystem: Arc<dyn IFilesystemAggregate>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
@@ -48,7 +47,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
 
     async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
-        if !has_python_files(path) {
+        if !self.filesystem.has_python_files_recursive(path) {
             return Ok(LintResultList::new(vec![]));
         }
 
@@ -62,7 +61,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
             "--pretty".to_string(),
             "false".to_string(),
         ];
-        let working_dir = default_working_dir(path);
+        let working_dir = self.filesystem.default_working_dir(path);
 
         let response = self
             .lint_executor
@@ -183,7 +182,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        noop_apply_fix().await
+        self.filesystem.noop_apply_fix().await
     }
 }
 
@@ -205,6 +204,7 @@ impl MyPyAdapter {
     pub fn new(
         lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
         bin_path: Option<FilePath>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         Self {
             lint_executor,
