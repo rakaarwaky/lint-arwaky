@@ -201,10 +201,7 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
                     Some(n) => n,
                     None => continue,
                 };
-                if matches!(
-                    name,
-                    "node_modules" | "target" | ".git" | "Graph-It-Live" | "tests"
-                ) {
+                if matches!(name, "node_modules" | "target" | ".git" | "tests") {
                     continue;
                 }
                 walk_detect(&path, has_rs, has_py, has_js);

@@ -11,10 +11,11 @@ use shared::filesystem::taxonomy_filesystem_vo::{
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::RwLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct DependencyGraph {
+struct DependencyGraphInner {
     graph: petgraph::graph::DiGraph<FileNodeVO, ImportEdgeVO>,
     node_map: HashMap<PathBuf, petgraph::graph::NodeIndex>,
     reverse_links: HashMap<PathBuf, Vec<PathBuf>>,
@@ -22,14 +23,20 @@ pub struct DependencyGraph {
     implementations: HashMap<String, Vec<PathBuf>>,
 }
 
+pub struct DependencyGraph {
+    inner: RwLock<DependencyGraphInner>,
+}
+
 impl DependencyGraph {
     pub fn new() -> Self {
         Self {
-            graph: petgraph::graph::DiGraph::new(),
-            node_map: HashMap::new(),
-            reverse_links: HashMap::new(),
-            definitions: HashMap::new(),
-            implementations: HashMap::new(),
+            inner: RwLock::new(DependencyGraphInner {
+                graph: petgraph::graph::DiGraph::new(),
+                node_map: HashMap::new(),
+                reverse_links: HashMap::new(),
+                definitions: HashMap::new(),
+                implementations: HashMap::new(),
+            }),
         }
     }
 }
