@@ -173,7 +173,7 @@ fn e2e_full_pipeline_with_graph_query() {
     }
 
     // Build graph via the dependency graph capability
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     graph.build_graph(&imports, &files, &definitions, &implementations);
 
     // Query graph

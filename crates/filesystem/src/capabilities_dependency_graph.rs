@@ -11,32 +11,31 @@ use shared::filesystem::taxonomy_filesystem_vo::{
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::sync::RwLock;
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-struct DependencyGraphInner {
-    graph: petgraph::graph::DiGraph<FileNodeVO, ImportEdgeVO>,
-    node_map: HashMap<PathBuf, petgraph::graph::NodeIndex>,
-    reverse_links: HashMap<PathBuf, Vec<PathBuf>>,
-    definitions: HashMap<String, Vec<PathBuf>>,
-    implementations: HashMap<String, Vec<PathBuf>>,
-}
+static EMPTY_PATH_MAP: std::sync::LazyLock<HashMap<PathBuf, Vec<PathBuf>>> =
+    std::sync::LazyLock::new(HashMap::new);
+static EMPTY_STRING_MAP: std::sync::LazyLock<HashMap<String, Vec<PathBuf>>> =
+    std::sync::LazyLock::new(HashMap::new);
 
 pub struct DependencyGraph {
-    inner: RwLock<DependencyGraphInner>,
+    graph: OnceLock<petgraph::graph::DiGraph<FileNodeVO, ImportEdgeVO>>,
+    node_map: OnceLock<HashMap<PathBuf, petgraph::graph::NodeIndex>>,
+    reverse_links: OnceLock<HashMap<PathBuf, Vec<PathBuf>>>,
+    definitions: OnceLock<HashMap<String, Vec<PathBuf>>>,
+    implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
 }
 
 impl DependencyGraph {
     pub fn new() -> Self {
         Self {
-            inner: RwLock::new(DependencyGraphInner {
-                graph: petgraph::graph::DiGraph::new(),
-                node_map: HashMap::new(),
-                reverse_links: HashMap::new(),
-                definitions: HashMap::new(),
-                implementations: HashMap::new(),
-            }),
+            graph: OnceLock::new(),
+            node_map: OnceLock::new(),
+            reverse_links: OnceLock::new(),
+            definitions: OnceLock::new(),
+            implementations: OnceLock::new(),
         }
     }
 }
@@ -44,43 +43,74 @@ impl DependencyGraph {
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 
 impl IGraphProtocol for DependencyGraph {
+    fn build_graph(
+        &self,
+        imports: &[ImportEntry],
+        files: &[FileEntry],
+        definitions: &[DefinitionEntry],
+        implementations: &[ImplEntry],
+    ) {
+        // Delegate to the inherent method
+        DependencyGraph::build_graph(self, imports, files, definitions, implementations);
+    }
+
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        &self.definitions
+        self.definitions.get().unwrap_or(&EMPTY_STRING_MAP)
     }
 
     fn implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
-        &self.implementations
+        self.implementations.get().unwrap_or(&EMPTY_STRING_MAP)
     }
 
     fn dependents(&self, path: &Path) -> Vec<PathBuf> {
-        self.reverse_links.get(path).cloned().unwrap_or_default()
+        self.reverse_links
+            .get()
+            .and_then(|m| m.get(path))
+            .cloned()
+            .unwrap_or_default()
     }
 
     fn dependencies(&self, path: &Path) -> Vec<PathBuf> {
-        let idx = match self.node_map.get(path) {
+        let graph = match self.graph.get() {
+            Some(g) => g,
+            None => return Vec::new(),
+        };
+        let node_map = match self.node_map.get() {
+            Some(m) => m,
+            None => return Vec::new(),
+        };
+        let idx = match node_map.get(path) {
             Some(idx) => *idx,
             None => return Vec::new(),
         };
-        self.graph
+        graph
             .neighbors_directed(idx, petgraph::Direction::Outgoing)
-            .map(|n| self.graph[n].path.clone())
+            .map(|n| graph[n].path.clone())
             .collect()
     }
 
     fn reachable(&self, from: &Path, to: &Path) -> bool {
-        let from_idx = match self.node_map.get(from) {
+        let graph = match self.graph.get() {
+            Some(g) => g,
+            None => return false,
+        };
+        let node_map = match self.node_map.get() {
+            Some(m) => m,
+            None => return false,
+        };
+        let from_idx = match node_map.get(from) {
             Some(idx) => *idx,
             None => return false,
         };
-        let to_idx = match self.node_map.get(to) {
+        let to_idx = match node_map.get(to) {
             Some(idx) => *idx,
             None => return false,
         };
-        petgraph::algo::has_path_connecting(&self.graph, from_idx, to_idx, None)
+        petgraph::algo::has_path_connecting(graph, from_idx, to_idx, None)
     }
 
     fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        &self.reverse_links
+        self.reverse_links.get().unwrap_or(&EMPTY_PATH_MAP)
     }
 }
 
@@ -94,8 +124,9 @@ impl Default for DependencyGraph {
 
 impl DependencyGraph {
     /// Build graph from imports, file list, definitions, and implementations.
+    /// Uses OnceLock — safe to call once; subsequent calls are no-ops.
     pub fn build_graph(
-        &mut self,
+        &self,
         imports: &[ImportEntry],
         files: &[FileEntry],
         definitions: &[DefinitionEntry],
@@ -104,7 +135,6 @@ impl DependencyGraph {
         let mut graph = petgraph::graph::DiGraph::new();
         let mut node_map: HashMap<PathBuf, petgraph::graph::NodeIndex> = HashMap::new();
 
-        // Add all files as nodes
         for file in files {
             let idx = graph.add_node(FileNodeVO {
                 path: file.path.clone(),
@@ -114,7 +144,6 @@ impl DependencyGraph {
             node_map.insert(file.path.clone(), idx);
         }
 
-        // Add edges from imports
         for import in imports {
             let source_idx = match node_map.get(&import.source_file) {
                 Some(idx) => *idx,
@@ -163,16 +192,13 @@ impl DependencyGraph {
             }
         }
 
-        self.graph = graph;
-        self.node_map = node_map;
-
         // Build ReverseLinkIndex
-        self.reverse_links.clear();
-        for edge in self.graph.edge_indices() {
-            if let Some((source, target)) = self.graph.edge_endpoints(edge) {
-                let target_path = self.graph[target].path.clone();
-                let source_path = self.graph[source].path.clone();
-                self.reverse_links
+        let mut reverse_links: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+        for edge in graph.edge_indices() {
+            if let Some((source, target)) = graph.edge_endpoints(edge) {
+                let target_path = graph[target].path.clone();
+                let source_path = graph[source].path.clone();
+                reverse_links
                     .entry(target_path)
                     .or_default()
                     .push(source_path);
@@ -180,54 +206,70 @@ impl DependencyGraph {
         }
 
         // Build DefinitionMap
-        self.definitions.clear();
+        let mut def_map: HashMap<String, Vec<PathBuf>> = HashMap::new();
         for def in definitions {
-            self.definitions
+            def_map
                 .entry(def.name.clone())
                 .or_default()
                 .push(def.file_path.clone());
         }
 
         // Build ImplMap
-        self.implementations.clear();
+        let mut impl_map: HashMap<String, Vec<PathBuf>> = HashMap::new();
         for imp in implementations {
-            self.implementations
+            impl_map
                 .entry(imp.trait_name.clone())
                 .or_default()
                 .push(imp.file_path.clone());
         }
+
+        let _ = self.graph.set(graph);
+        let _ = self.node_map.set(node_map);
+        let _ = self.reverse_links.set(reverse_links);
+        let _ = self.definitions.set(def_map);
+        let _ = self.implementations.set(impl_map);
     }
 
     pub fn cycles(&self) -> Vec<Vec<PathBuf>> {
-        let sccs = petgraph::algo::kosaraju_scc(&self.graph);
+        let graph = match self.graph.get() {
+            Some(g) => g,
+            None => return Vec::new(),
+        };
+        let sccs = petgraph::algo::kosaraju_scc(graph);
         sccs.into_iter()
             .filter(|scc| scc.len() > 1)
-            .map(|scc| {
-                scc.into_iter()
-                    .map(|n| self.graph[n].path.clone())
-                    .collect()
-            })
+            .map(|scc| scc.into_iter().map(|n| graph[n].path.clone()).collect())
             .collect()
     }
 
     pub fn orphan_files(&self) -> Vec<PathBuf> {
-        self.graph
+        let graph = match self.graph.get() {
+            Some(g) => g,
+            None => return Vec::new(),
+        };
+        graph
             .node_indices()
             .filter(|idx| {
-                self.graph
+                graph
                     .edges_directed(*idx, petgraph::Direction::Incoming)
                     .count()
                     == 0
             })
-            .map(|idx| self.graph[idx].path.clone())
+            .map(|idx| graph[idx].path.clone())
             .collect()
     }
 
     pub fn all_files(&self) -> HashSet<PathBuf> {
-        self.node_map.keys().cloned().collect()
+        self.node_map
+            .get()
+            .map(|m| m.keys().cloned().collect())
+            .unwrap_or_default()
     }
 
     pub fn stats(&self) -> (usize, usize) {
-        (self.graph.node_count(), self.graph.edge_count())
+        match self.graph.get() {
+            Some(g) => (g.node_count(), g.edge_count()),
+            None => (0, 0),
+        }
     }
 }

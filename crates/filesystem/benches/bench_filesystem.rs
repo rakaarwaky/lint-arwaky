@@ -205,7 +205,7 @@ fn bench_graph_construction(c: &mut Criterion) {
                 .collect();
 
             b.iter(|| {
-                let mut graph = DependencyGraph::new();
+                let graph = DependencyGraph::new();
                 graph.build_graph(&imports, &files, &definitions, &[]);
                 std::hint::black_box(graph.stats());
             });
@@ -245,7 +245,7 @@ fn bench_graph_queries(c: &mut Criterion) {
             is_wildcard: false,
         })
         .collect();
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     graph.build_graph(&imports, &files, &[], &[]);
 
     group.bench_function("dependents", |b| {

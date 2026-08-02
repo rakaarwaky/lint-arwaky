@@ -47,7 +47,7 @@ fn make_import(source: &str, target: &str, import_type: ImportType) -> ImportEnt
 
 #[test]
 fn us1_a_imports_b_creates_edge() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![
         make_file_entry("/a.rs", Language::Rust),
         make_file_entry("/b.rs", Language::Rust),
@@ -61,7 +61,7 @@ fn us1_a_imports_b_creates_edge() {
 
 #[test]
 fn us2_circular_imports_both_edges() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![
         make_file_entry("/a.rs", Language::Rust),
         make_file_entry("/b.rs", Language::Rust),
@@ -78,7 +78,7 @@ fn us2_circular_imports_both_edges() {
 
 #[test]
 fn us3_symbol_definitions_map() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![make_file_entry("/a.rs", Language::Rust)];
     let definitions = vec![DefinitionEntry {
         name: "MyStruct".to_string(),
@@ -94,7 +94,7 @@ fn us3_symbol_definitions_map() {
 
 #[test]
 fn us4_implementations_map() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![make_file_entry("/a.rs", Language::Rust)];
     let implementations = vec![ImplEntry {
         trait_name: "Display".to_string(),
@@ -110,7 +110,7 @@ fn us4_implementations_map() {
 
 #[test]
 fn us5_dependents_and_reverse_links() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![
         make_file_entry("/a.rs", Language::Rust),
         make_file_entry("/b.rs", Language::Rust),
@@ -128,7 +128,7 @@ fn us5_dependents_and_reverse_links() {
 
 #[test]
 fn us5_reachability() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![
         make_file_entry("/a.rs", Language::Rust),
         make_file_entry("/b.rs", Language::Rust),
@@ -145,7 +145,7 @@ fn us5_reachability() {
 
 #[test]
 fn us5_nonexistent_file_has_no_deps() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![make_file_entry("/a.rs", Language::Rust)];
     graph.build_graph(&imports_empty(), &files, &[], &[]);
 
@@ -155,7 +155,7 @@ fn us5_nonexistent_file_has_no_deps() {
 
 #[test]
 fn fr002_orphan_files_detected() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![
         make_file_entry("/a.rs", Language::Rust),
         make_file_entry("/orphan.rs", Language::Rust),
@@ -169,7 +169,7 @@ fn fr002_orphan_files_detected() {
 
 #[test]
 fn fr002_cycle_detection() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![
         make_file_entry("/a.rs", Language::Rust),
         make_file_entry("/b.rs", Language::Rust),
@@ -188,7 +188,7 @@ fn fr002_cycle_detection() {
 
 #[test]
 fn fr002_graph_stats() {
-    let mut graph = DependencyGraph::new();
+    let graph = DependencyGraph::new();
     let files = vec![
         make_file_entry("/a.rs", Language::Rust),
         make_file_entry("/b.rs", Language::Rust),

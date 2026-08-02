@@ -12,7 +12,7 @@ use shared::filesystem::contract_parser_protocol::IParserProtocol;
 use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
 use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
-    FileEntry, ImportEntry, ParseWarning, ScanTiming,
+    DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning, ScanTiming,
 };
 use std::collections::HashMap;
 use std::path::Path;
@@ -81,17 +81,32 @@ static EMPTY_STRING_MAP: std::sync::LazyLock<HashMap<String, Vec<PathBuf>>> =
     std::sync::LazyLock::new(HashMap::new);
 
 impl IGraphProtocol for FilesystemOrchestrator {
+    fn build_graph(
+        &self,
+        imports: &[ImportEntry],
+        files: &[FileEntry],
+        definitions: &[DefinitionEntry],
+        implementations: &[ImplEntry],
+    ) {
+        self.deps
+            .graph
+            .build_graph(imports, files, definitions, implementations);
+    }
+
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
+        self.ensure_graph_built();
         self.cached_definitions.get().unwrap_or(&EMPTY_STRING_MAP)
     }
 
     fn implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
+        self.ensure_graph_built();
         self.cached_implementations
             .get()
             .unwrap_or(&EMPTY_STRING_MAP)
     }
 
     fn dependents(&self, path: &Path) -> Vec<PathBuf> {
+        self.ensure_graph_built();
         self.cached_reverse_links
             .get()
             .and_then(|m| m.get(path))
@@ -107,12 +122,12 @@ impl IGraphProtocol for FilesystemOrchestrator {
         if from == to {
             return true;
         }
-        self.cached_reverse_links.get().is_some_and(|m| {
-            m.contains_key(to) && m.get(to).is_some_and(|v| v.contains(&from.to_path_buf()))
-        })
+        self.ensure_graph_built();
+        self.deps.graph.reachable(from, to)
     }
 
     fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
+        self.ensure_graph_built();
         self.cached_reverse_links.get().unwrap_or(&EMPTY_HASH_MAP)
     }
 }
@@ -435,14 +450,100 @@ impl FilesystemOrchestrator {
         }
     }
 
-    pub fn build_file_index(&self) {
-        if let Some(file_list) = self.files.get() {
-            let index: HashMap<PathBuf, usize> = file_list
-                .iter()
-                .enumerate()
-                .map(|(i, entry)| (entry.path.clone(), i))
-                .collect();
-            let _ = self.file_index.set(index);
+    /// Walk filesystem from root, discover source files, read content, parse imports.
+    /// Populates files, file_index, imports, warnings caches.
+    pub fn build_file_index(&self, root: &Path) {
+        if self.files.get().is_some() {
+            return;
+        }
+
+        let ignored = vec![
+            "target".into(),
+            "node_modules".into(),
+            ".git".into(),
+            "dist".into(),
+            "build".into(),
+            "__pycache__".into(),
+            ".venv".into(),
+            "tests".into(),
+        ];
+
+        let scanned = self.deps.io.scan_directory_with_ignored(root, &ignored);
+
+        let mut entries = Vec::new();
+        let mut all_imports = Vec::new();
+        let all_warnings = Vec::new();
+
+        for path in &scanned {
+            if !self.deps.io.is_source_file(path) {
+                continue;
+            }
+            let language = self
+                .deps
+                .workspace
+                .detect_language_from_path(&path.to_string_lossy());
+            let content = match self.deps.io.read_to_string(path) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+            let lang_enum = match language {
+                shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+                    shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+                }
+                shared::common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+                    shared::filesystem::taxonomy_filesystem_vo::Language::Python
+                }
+                shared::common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+                    shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+                }
+            };
+            let imports = self.deps.parser.extract(path, &content, lang_enum);
+            all_imports.extend(imports);
+            let extension = path
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_string();
+            let size = content.len() as u64;
+            entries.push(shared::filesystem::taxonomy_filesystem_vo::FileEntry {
+                path: path.clone(),
+                extension,
+                language: lang_enum,
+                size,
+                content,
+                parse_ok: false,
+                parse_metadata: None,
+            });
+        }
+
+        let _ = self.files.set(entries.clone());
+        let _ = self.imports.set(all_imports);
+        let _ = self.warnings.set(all_warnings);
+
+        let index: HashMap<PathBuf, usize> = entries
+            .iter()
+            .enumerate()
+            .map(|(i, entry)| (entry.path.clone(), i))
+            .collect();
+        let _ = self.file_index.set(index);
+    }
+
+    fn ensure_graph_built(&self) {
+        if self.cached_reverse_links.get().is_some() {
+            return;
+        }
+        let files = self.files.get().cloned().unwrap_or_default();
+        let imports = self.imports.get().cloned().unwrap_or_default();
+        self.deps.graph.build_graph(&imports, &files, &[], &[]);
+
+        if let Some(rl) = self.deps.graph.reverse_links().clone().into() {
+            let _ = self.cached_reverse_links.set(rl);
+        }
+        if let Some(sd) = self.deps.graph.symbol_definitions().clone().into() {
+            let _ = self.cached_definitions.set(sd);
+        }
+        if let Some(imp) = self.deps.graph.implementations().clone().into() {
+            let _ = self.cached_implementations.set(imp);
         }
     }
 }
