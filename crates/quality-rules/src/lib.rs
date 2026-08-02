@@ -14,7 +14,6 @@ pub mod root_quality_rules_container;
 pub mod utility_bypass_detector;
 pub mod utility_code_duplication_detector;
 pub mod utility_column_index;
-pub mod utility_compliance_score;
 pub mod utility_language_mapper;
 pub mod utility_mandatory_checker;
 pub use root_quality_rules_container::CodeAnalysisContainer;
