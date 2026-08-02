@@ -227,16 +227,13 @@ pub fn has_python_files_recursive(path: &Path) -> bool {
 }
 
 fn has_py_in_dir_recursive(dir: &Path) -> bool {
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                if has_py_in_dir_recursive(&path) {
-                    return true;
-                }
-            } else if path.extension().map(|e| e == "py").unwrap_or(false) {
+    for path in crate::utility_filesystem_io::scan_directory(dir) {
+        if path.is_dir() {
+            if has_py_in_dir_recursive(&path) {
                 return true;
             }
+        } else if path.extension().map(|e| e == "py").unwrap_or(false) {
+            return true;
         }
     }
     false

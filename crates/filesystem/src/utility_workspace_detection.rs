@@ -82,7 +82,7 @@ pub fn is_member_path(path: &str) -> bool {
     // Rust: Cargo.toml without [workspace]
     let cargo_toml = p.join("Cargo.toml");
     if cargo_toml.exists() {
-        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+        if let Ok(content) = crate::utility_filesystem_io::read_to_string(&cargo_toml) {
             return !content.contains("[workspace]");
         }
         return true;
@@ -108,17 +108,14 @@ pub fn is_leaf_member_path(path: &str) -> bool {
     }
     let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
     let p = Path::new(path);
-    if let Ok(entries) = std::fs::read_dir(p) {
-        for entry in entries.flatten() {
-            if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                let dir_name = entry.file_name().to_string_lossy().to_string();
-                if skip_dirs.contains(&dir_name.as_str()) {
-                    continue;
-                }
-                let sub_path = entry.path();
-                if is_member_path(&sub_path.to_string_lossy()) {
-                    return false;
-                }
+    for entry_path in crate::utility_filesystem_io::scan_directory(p) {
+        let name = entry_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if entry_path.is_dir() {
+            if skip_dirs.contains(&name) {
+                continue;
+            }
+            if is_member_path(&entry_path.to_string_lossy()) {
+                return false;
             }
         }
     }
@@ -144,16 +141,14 @@ pub fn detect_source_dir(project_root: &Path) -> PathBuf {
 }
 
 fn has_source_files(dir: &Path) -> bool {
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            if let Some(name) = entry.file_name().to_str() {
-                if name.ends_with(".rs")
-                    || name.ends_with(".py")
-                    || name.ends_with(".ts")
-                    || name.ends_with(".js")
-                {
-                    return true;
-                }
+    for entry_path in crate::utility_filesystem_io::scan_directory(dir) {
+        if let Some(name) = entry_path.file_name().and_then(|n| n.to_str()) {
+            if name.ends_with(".rs")
+                || name.ends_with(".py")
+                || name.ends_with(".ts")
+                || name.ends_with(".js")
+            {
+                return true;
             }
         }
     }
@@ -202,12 +197,7 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
     let mut has_js = false;
 
     fn walk_detect(dir: &std::path::Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {
-        let entries = match std::fs::read_dir(dir) {
-            Ok(e) => e,
-            Err(_) => return,
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
+        for path in crate::utility_filesystem_io::scan_directory(dir) {
             if path.is_dir() {
                 let name = match path.file_name().and_then(|n| n.to_str()) {
                     Some(n) => n,

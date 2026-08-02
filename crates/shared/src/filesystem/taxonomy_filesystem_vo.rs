@@ -9,6 +9,42 @@ use std::path::PathBuf;
 pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
 
 // ═══════════════════════════════════════════════════════════════
+// Tool & Extension VOs
+// ═══════════════════════════════════════════════════════════════
+
+/// Tool or executable name (e.g. "eslint", "cargo").
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ToolName {
+    pub value: String,
+}
+
+impl ToolName {
+    pub fn new<S: Into<String>>(value: S) -> Result<Self, String> {
+        let value = value.into();
+        if value.trim().is_empty() {
+            return Err("Tool name cannot be empty".to_string());
+        }
+        Ok(Self { value })
+    }
+}
+
+/// File extension string (e.g. "rs", "py", "ts").
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct FileExtension {
+    pub value: String,
+}
+
+impl FileExtension {
+    pub fn new<S: Into<String>>(value: S) -> Result<Self, String> {
+        let value = value.into();
+        if value.trim().is_empty() {
+            return Err("File extension cannot be empty".to_string());
+        }
+        Ok(Self { value })
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // FR-001: File Discovery — Language & FileEntry
 // ═══════════════════════════════════════════════════════════════
 

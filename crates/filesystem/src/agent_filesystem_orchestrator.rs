@@ -26,6 +26,9 @@ pub struct FilesystemOrchestrator {
     imports: OnceLock<Vec<ImportEntry>>,
     warnings: OnceLock<Vec<ParseWarning>>,
     timing: OnceLock<ScanTiming>,
+    cached_reverse_links: OnceLock<HashMap<PathBuf, Vec<PathBuf>>>,
+    cached_definitions: OnceLock<HashMap<String, Vec<PathBuf>>>,
+    cached_implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
 }
 
 // ─── Block 2: Public Contract (aggregate trait ONLY) ──────
@@ -71,43 +74,27 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        match self.graph.read() {
-            Ok(g) => {
-                let cloned = g.reverse_links().clone();
-                Box::leak(Box::new(cloned))
-            }
-            Err(_) => &EMPTY_HASH_MAP,
-        }
+        self.cached_reverse_links
+            .get()
+            .unwrap_or(&EMPTY_HASH_MAP)
     }
 
     fn reverse_import_map(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        match self.graph.read() {
-            Ok(g) => {
-                let cloned = g.reverse_links().clone();
-                Box::leak(Box::new(cloned))
-            }
-            Err(_) => &EMPTY_HASH_MAP,
-        }
+        self.cached_reverse_links
+            .get()
+            .unwrap_or(&EMPTY_HASH_MAP)
     }
 
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        match self.graph.read() {
-            Ok(g) => {
-                let cloned = g.definitions().clone();
-                Box::leak(Box::new(cloned))
-            }
-            Err(_) => &EMPTY_STRING_MAP,
-        }
+        self.cached_definitions
+            .get()
+            .unwrap_or(&EMPTY_STRING_MAP)
     }
 
     fn trait_implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
-        match self.graph.read() {
-            Ok(g) => {
-                let cloned = g.implementations().clone();
-                Box::leak(Box::new(cloned))
-            }
-            Err(_) => &EMPTY_STRING_MAP,
-        }
+        self.cached_implementations
+            .get()
+            .unwrap_or(&EMPTY_STRING_MAP)
     }
 
     fn timing(&self) -> &ScanTiming {
@@ -126,8 +113,8 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::read_file(path).ok()
     }
 
-    fn read_lintable_file(&self, path: &str) -> Result<Option<String>, String> {
-        utility_filesystem_io::read_lintable_file(path)
+    fn read_lintable_file(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> Result<Option<String>, String> {
+        utility_filesystem_io::read_lintable_file(&path.value)
     }
 
     fn get_file_content(&self, path: &Path) -> Option<String> {
@@ -193,12 +180,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::is_file(path)
     }
 
-    fn should_ignore(&self, path: &str, ignored: &[String]) -> bool {
-        utility_filesystem_io::is_path_ignored(path, ignored)
+    fn should_ignore(&self, path: &shared::common::taxonomy_path_vo::FilePath, ignored: &[String]) -> bool {
+        utility_filesystem_io::is_path_ignored(&path.value, ignored)
     }
 
-    fn workspace_root(&self, start: &str) -> Option<PathBuf> {
-        crate::utility_workspace_detection::find_workspace_root(start)
+    fn workspace_root(&self, start: &shared::common::taxonomy_path_vo::FilePath) -> Option<PathBuf> {
+        crate::utility_workspace_detection::find_workspace_root(&start.value)
     }
 
     fn scan_directory(&self, dir: &Path) -> Vec<PathBuf> {
@@ -234,7 +221,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::get_file_stem(path)
     }
 
-    fn has_python_files(&self, dir: &Path) -> bool {
+    fn is_python_file(&self, dir: &Path) -> bool {
         utility_filesystem_io::is_source_file(dir)
             && dir
                 .extension()
@@ -247,20 +234,22 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         crate::utility_tool_resolution::has_config_file(dir)
     }
 
-    fn has_cargo_toml(&self, path_str: &str) -> Option<String> {
-        crate::utility_tool_resolution::has_cargo_toml(path_str)
+    fn has_cargo_toml(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> Option<shared::common::taxonomy_path_vo::FilePath> {
+        crate::utility_tool_resolution::has_cargo_toml(&path.value)
+            .map(|s| shared::common::taxonomy_path_vo::FilePath::new(s).unwrap_or_default())
     }
 
-    fn has_cargo_lock(&self, path_str: &str) -> Option<String> {
-        crate::utility_tool_resolution::has_cargo_lock(path_str)
+    fn has_cargo_lock(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> Option<shared::common::taxonomy_path_vo::FilePath> {
+        crate::utility_tool_resolution::has_cargo_lock(&path.value)
+            .map(|s| shared::common::taxonomy_path_vo::FilePath::new(s).unwrap_or_default())
     }
 
-    fn is_executable_in_path(&self, executable: &str) -> bool {
-        crate::utility_tool_resolution::is_executable_in_path(executable)
+    fn is_executable_in_path(&self, executable: &shared::filesystem::taxonomy_filesystem_vo::ToolName) -> bool {
+        crate::utility_tool_resolution::is_executable_in_path(&executable.value)
     }
 
-    fn has_local_bin(&self, working_dir: &Path, executable: &str) -> bool {
-        crate::utility_tool_resolution::has_local_bin(working_dir, executable)
+    fn has_local_bin(&self, working_dir: &Path, executable: &shared::filesystem::taxonomy_filesystem_vo::ToolName) -> bool {
+        crate::utility_tool_resolution::has_local_bin(working_dir, &executable.value)
     }
 
     fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
@@ -283,12 +272,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::remove_dir_all(path)
     }
 
-    fn is_member_path(&self, path: &str) -> bool {
-        crate::utility_workspace_detection::is_member_path(path)
+    fn is_member_path(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> bool {
+        crate::utility_workspace_detection::is_member_path(&path.value)
     }
 
-    fn is_leaf_member_path(&self, path: &str) -> bool {
-        crate::utility_workspace_detection::is_leaf_member_path(path)
+    fn is_leaf_member_path(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> bool {
+        crate::utility_workspace_detection::is_leaf_member_path(&path.value)
     }
 
     fn detect_source_dir(&self, project_root: &Path) -> PathBuf {
@@ -314,8 +303,8 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::is_source_file(path)
     }
 
-    fn is_source_ext(&self, ext: &str) -> bool {
-        utility_filesystem_io::is_source_ext(ext)
+    fn is_source_ext(&self, ext: &shared::filesystem::taxonomy_filesystem_vo::FileExtension) -> bool {
+        utility_filesystem_io::is_source_ext(&ext.value)
     }
 
     fn get_basename<'a>(&self, path: &'a str) -> &'a str {
@@ -326,17 +315,17 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::get_parent(path)
     }
 
-    fn canonicalize_path_str(&self, path_str: &str) -> String {
-        utility_filesystem_io::canonicalize_path_str(path_str)
+    fn canonicalize_path_str(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> String {
+        utility_filesystem_io::canonicalize_path_str(&path.value)
     }
 
     fn resolve_js_cmd(
         &self,
-        executable: &str,
+        executable: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
         args: Vec<String>,
-        working_dir: &str,
+        working_dir: &shared::common::taxonomy_path_vo::FilePath,
     ) -> Option<Vec<String>> {
-        crate::utility_tool_resolution::resolve_js_cmd(executable, args, working_dir)
+        crate::utility_tool_resolution::resolve_js_cmd(&executable.value, args, &working_dir.value)
     }
 
     fn resolve_js_working_dir(
@@ -379,7 +368,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             .unwrap_or_default()
     }
 
-    fn has_python_files_recursive(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> bool {
+    fn is_python_file_recursive(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> bool {
         crate::utility_tool_resolution::has_python_files_recursive(std::path::Path::new(&path.value))
     }
 
@@ -455,8 +444,8 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::write_text_to_file(path, text)
     }
 
-    fn is_binary_available(&self, bin_name: &str) -> bool {
-        crate::utility_tool_resolution::is_binary_available(bin_name)
+    fn is_binary_available(&self, bin_name: &shared::filesystem::taxonomy_filesystem_vo::ToolName) -> bool {
+        crate::utility_tool_resolution::is_binary_available(&bin_name.value)
     }
 
     fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
@@ -485,6 +474,9 @@ impl FilesystemOrchestrator {
             imports: OnceLock::new(),
             warnings: OnceLock::new(),
             timing: OnceLock::new(),
+            cached_reverse_links: OnceLock::new(),
+            cached_definitions: OnceLock::new(),
+            cached_implementations: OnceLock::new(),
         }
     }
 
@@ -539,6 +531,11 @@ impl FilesystemOrchestrator {
 
         let total_ms = start.elapsed().as_millis() as u64;
 
+        // Cache graph query results (no more Box::leak)
+        let _ = self.cached_reverse_links.set(graph.reverse_links().clone());
+        let _ = self.cached_definitions.set(graph.definitions().clone());
+        let _ = self.cached_implementations.set(graph.implementations().clone());
+
         // Store results
         let _ = self.files.set(files);
         let _ = self.imports.set(imports);
@@ -563,42 +560,39 @@ impl Default for FilesystemOrchestrator {
 // ─── Private Helpers ──────────────────────────────────────
 
 fn scan_recursive(dir: &Path, files: &mut Vec<String>) {
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            if name.starts_with('.') {
-                continue;
+    for path in utility_filesystem_io::scan_directory(dir) {
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if name.starts_with('.') {
+            continue;
+        }
+        if path.is_dir() {
+            if !matches!(
+                name,
+                "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+            ) {
+                scan_recursive(&path, files);
             }
-            if path.is_dir() {
-                if !matches!(
-                    name,
-                    "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
-                ) {
-                    scan_recursive(&path, files);
-                }
-            } else if let Some(path_str) = path.to_str() {
-                files.push(path_str.to_string());
-            }
+        } else if let Some(path_str) = path.to_str() {
+            files.push(path_str.to_string());
         }
     }
 }
 
 fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
-    let canonical_root = std::fs::canonicalize(root).ok()?;
+    let canonical_root = utility_filesystem_io::canonicalize(root).ok()?;
     let absolute = if candidate.is_absolute() {
         candidate.to_path_buf()
     } else {
         canonical_root.join(candidate)
     };
-    if let Ok(canonical_candidate) = std::fs::canonicalize(&absolute) {
+    if let Ok(canonical_candidate) = utility_filesystem_io::canonicalize(&absolute) {
         return canonical_candidate
             .starts_with(&canonical_root)
             .then_some(canonical_candidate);
     }
     let parent = absolute.parent()?;
     let file_name = absolute.file_name()?;
-    let canonical_parent = std::fs::canonicalize(parent).ok()?;
+    let canonical_parent = utility_filesystem_io::canonicalize(parent).ok()?;
     let canonical_candidate = canonical_parent.join(file_name);
     canonical_candidate
         .starts_with(&canonical_root)
@@ -616,34 +610,29 @@ fn check_wired_in_container(workspace_root: &Path, identifiers: &[String]) -> bo
 }
 
 fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
-    if let Ok(entries) = std::fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            if matches!(
-                name,
-                "target" | ".git" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv" | "tests"
-            ) {
-                continue;
+    for path in utility_filesystem_io::scan_directory(dir) {
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if matches!(
+            name,
+            "target" | ".git" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv" | "tests"
+        ) {
+            continue;
+        }
+        if path.is_dir() {
+            if check_dir_containers(&path, identifiers) {
+                return true;
             }
-            if path.is_dir() {
-                if check_dir_containers(&path, identifiers) {
-                    return true;
-                }
-            } else if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.ends_with("_container.rs")
-                    || name.ends_with("_container.py")
-                    || name.ends_with("_container.ts")
-                    || name.ends_with("_entry.rs")
-                    || name.ends_with("_entry.py")
-                    || name.ends_with("_entry.ts")
-                {
-                    if let Ok(content) = std::fs::read_to_string(&path) {
-                        for id in identifiers {
-                            if content.contains(id) {
-                                return true;
-                            }
-                        }
+        } else if name.ends_with("_container.rs")
+            || name.ends_with("_container.py")
+            || name.ends_with("_container.ts")
+            || name.ends_with("_entry.rs")
+            || name.ends_with("_entry.py")
+            || name.ends_with("_entry.ts")
+        {
+            if let Ok(content) = utility_filesystem_io::read_to_string(&path) {
+                for id in identifiers {
+                    if content.contains(id) {
+                        return true;
                     }
                 }
             }

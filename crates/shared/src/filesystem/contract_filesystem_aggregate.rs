@@ -4,7 +4,7 @@
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 use crate::filesystem::taxonomy_filesystem_vo::{
-    FileEntry, FilesystemResult, ImportEntry, ParseWarning, ScanTiming,
+    FileEntry, FileExtension, FilesystemResult, ImportEntry, ParseWarning, ScanTiming, ToolName,
 };
 use std::path::{Path, PathBuf};
 
@@ -30,10 +30,6 @@ pub trait IFilesystemAggregate: Send + Sync {
     // FR-002: AST Parsing
     // ═══════════════════════════════════════════════════════════
 
-    /// Files enriched with parse metadata and parse_ok flag.
-    /// Consumer: role-rules
-    fn parsed_file_list(&self) -> &[FileEntry];
-
     /// Parse diagnostics for files that failed to parse.
     fn parse_warnings(&self) -> &[ParseWarning];
 
@@ -47,9 +43,6 @@ pub trait IFilesystemAggregate: Send + Sync {
 
     /// Get imports for a specific file.
     fn imports_for(&self, path: &Path) -> Vec<ImportEntry>;
-
-    /// Get all imports (from last scan).
-    fn all_imports(&self) -> &[ImportEntry];
 
     // ═══════════════════════════════════════════════════════════
     // FR-004: Graph Data Construction
@@ -81,16 +74,16 @@ pub trait IFilesystemAggregate: Send + Sync {
     // ═══════════════════════════════════════════════════════════
 
     /// Find workspace root by walking up from start path.
-    fn workspace_root(&self, start: &str) -> Option<PathBuf>;
+    fn workspace_root(&self, start: &FilePath) -> Option<PathBuf>;
 
     /// Find workspace root from Path (Result variant).
     fn find_workspace_root_from_path(&self, start: &Path) -> Result<PathBuf, std::io::Error>;
 
     /// Detect if a path is a single workspace member.
-    fn is_member_path(&self, path: &str) -> bool;
+    fn is_member_path(&self, path: &FilePath) -> bool;
 
     /// Detect if a path is a leaf member.
-    fn is_leaf_member_path(&self, path: &str) -> bool;
+    fn is_leaf_member_path(&self, path: &FilePath) -> bool;
 
     /// Detect source directory from project root.
     fn detect_source_dir(&self, project_root: &Path) -> PathBuf;
@@ -117,65 +110,57 @@ pub trait IFilesystemAggregate: Send + Sync {
     // ═══════════════════════════════════════════════════════════
 
     /// Check if an executable exists in PATH.
-    fn is_executable_in_path(&self, executable: &str) -> bool;
+    fn is_executable_in_path(&self, executable: &ToolName) -> bool;
 
     /// Check if a binary is available in system PATH.
-    fn is_binary_available(&self, bin_name: &str) -> bool;
+    fn is_binary_available(&self, bin_name: &ToolName) -> bool;
 
     /// Check if an executable exists in local node_modules/.bin.
-    fn has_local_bin(&self, working_dir: &Path, executable: &str) -> bool;
+    fn has_local_bin(&self, working_dir: &Path, executable: &ToolName) -> bool;
 
     /// Resolve JS tool command from local node_modules/.bin.
     fn resolve_js_cmd(
         &self,
-        executable: &str,
+        executable: &ToolName,
         args: Vec<String>,
-        working_dir: &str,
+        working_dir: &FilePath,
     ) -> Option<Vec<String>>;
 
     /// Walk up to find JS project root.
     fn resolve_js_working_dir(
         &self,
-        path: &crate::common::taxonomy_path_vo::FilePath,
-    ) -> crate::common::taxonomy_path_vo::FilePath;
+        path: &FilePath,
+    ) -> FilePath;
 
     /// Find parent dir with Cargo.toml.
     fn resolve_cargo_working_dir(
         &self,
-        path: &crate::common::taxonomy_path_vo::FilePath,
-    ) -> crate::common::taxonomy_path_vo::FilePath;
+        path: &FilePath,
+    ) -> FilePath;
 
     /// Find parent dir with Cargo.lock.
     fn resolve_cargo_lock_working_dir(
         &self,
-        path: &crate::common::taxonomy_path_vo::FilePath,
-    ) -> crate::common::taxonomy_path_vo::FilePath;
+        path: &FilePath,
+    ) -> FilePath;
 
     /// Check if directory contains a config file.
     fn has_config_file(&self, dir: &Path) -> bool;
 
     /// Find Cargo.toml in the given path.
-    fn has_cargo_toml(&self, path_str: &str) -> Option<String>;
+    fn has_cargo_toml(&self, path: &FilePath) -> Option<FilePath>;
 
     /// Find Cargo.lock in the given path.
-    fn has_cargo_lock(&self, path_str: &str) -> Option<String>;
+    fn has_cargo_lock(&self, path: &FilePath) -> Option<FilePath>;
 
-    /// Check if path contains Python files (recursive).
-    fn has_python_files_recursive(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> bool;
+    /// Check if a path is a Python source file or contains Python files (recursive).
+    fn is_python_file_recursive(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> bool;
 
     /// Create default working directory.
     fn default_working_dir(
         &self,
         path: &crate::common::taxonomy_path_vo::FilePath,
     ) -> crate::common::taxonomy_path_vo::FilePath;
-
-    /// No-op apply_fix for linters that cannot auto-fix.
-    fn noop_apply_fix(
-        &self,
-    ) -> Result<
-        crate::common::taxonomy_message_vo::ComplianceStatus,
-        crate::common::taxonomy_operation_error::LinterOperationError,
-    >;
 
     // ═══════════════════════════════════════════════════════════
     // FR-007: File Cache
@@ -188,29 +173,20 @@ pub trait IFilesystemAggregate: Send + Sync {
     // File I/O
     // ═══════════════════════════════════════════════════════════
 
-    /// Run full pipeline: walk -> parse -> extract -> graph.
-    fn run_pipeline(&self, root: &Path, ignored: &[String]);
-
     /// Run full scan and return FilesystemResult.
     fn scan(&self, root: &Path, ignored: &[String]) -> FilesystemResult;
 
     /// Get timing breakdown of last scan.
     fn timing(&self) -> &ScanTiming;
 
-    /// Read file content.
-    fn read_file(&self, path: &Path) -> Option<String>;
-
     /// Read file for linting: checks cache, enforces 2MiB size limit.
-    fn read_lintable_file(&self, path: &str) -> Result<Option<String>, String>;
+    fn read_lintable_file(&self, path: &FilePath) -> Result<Option<String>, String>;
 
     /// Get cached file content (after scan).
     fn get_file_content(&self, path: &Path) -> Option<String>;
 
     /// Check if a file is in the cache.
     fn has_file(&self, path: &Path) -> bool;
-
-    /// Collect source files from a directory tree.
-    fn collect_source_files(&self, root_dir: &Path, ignored: &[String]) -> Vec<FilePath>;
 
     /// Recursively scan directory for files.
     fn scan_directory_recursive(&self, dir: &Path) -> Vec<String>;
@@ -235,13 +211,13 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn is_file(&self, path: &Path) -> bool;
 
     /// Check if path should be ignored.
-    fn should_ignore(&self, path: &str, ignored: &[String]) -> bool;
+    fn should_ignore(&self, path: &FilePath, ignored: &[String]) -> bool;
 
     /// Canonicalize path (resolve symlinks).
     fn canonicalize(&self, path: &Path) -> Result<PathBuf, std::io::Error>;
 
     /// Canonicalize path to absolute string.
-    fn canonicalize_path_str(&self, path_str: &str) -> String;
+    fn canonicalize_path_str(&self, path: &FilePath) -> String;
 
     /// Check if path is a symlink.
     fn is_symlink(&self, path: &Path) -> bool;
@@ -259,7 +235,7 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn is_source_file(&self, path: &Path) -> bool;
 
     /// Check if extension string is recognized.
-    fn is_source_ext(&self, ext: &str) -> bool;
+    fn is_source_ext(&self, ext: &FileExtension) -> bool;
 
     /// Get file basename.
     fn get_basename<'a>(&self, path: &'a str) -> &'a str;
@@ -267,15 +243,12 @@ pub trait IFilesystemAggregate: Send + Sync {
     /// Get parent directory path.
     fn get_parent<'a>(&self, path: &'a str) -> &'a str;
 
-    /// Check if directory contains Python source files.
-    fn has_python_files(&self, dir: &Path) -> bool;
+    /// Check if a path is a Python source file.
+    fn is_python_file(&self, dir: &Path) -> bool;
 
     // ═══════════════════════════════════════════════════════════
     // Directory Operations
     // ═══════════════════════════════════════════════════════════
-
-    /// List directory entries (non-recursive).
-    fn scan_directory(&self, dir: &Path) -> Vec<PathBuf>;
 
     /// List directory entries with ignore filter.
     fn scan_directory_with_ignored(&self, dir: &Path, ignored: &[String]) -> Vec<PathBuf>;
@@ -310,9 +283,6 @@ pub trait IFilesystemAggregate: Send + Sync {
 
     /// Remove a file.
     fn remove_file(&self, path: &Path) -> std::io::Result<()>;
-
-    /// Write text content to a file.
-    fn write_text_to_file(&self, path: &Path, text: &str) -> Result<(), String>;
 
     // ═══════════════════════════════════════════════════════════
     // Process Execution (utility)

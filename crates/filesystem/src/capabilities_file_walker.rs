@@ -96,8 +96,8 @@ impl FileWalker {
                 Some(l) => l,
                 None => continue,
             };
-            let size = entry.metadata().map(|m| m.len()).unwrap_or(0);
-            let content = std::fs::read_to_string(path).unwrap_or_default();
+            let size = crate::utility_filesystem_io::metadata(path).map(|m| m.len()).unwrap_or(0);
+            let content = crate::utility_filesystem_io::read_file_safe(path);
 
             entries.push(FileEntry {
                 path: path.to_path_buf(),

@@ -135,7 +135,7 @@ pub fn resolve_barrel_reexport(
     imported_name: &str,
     root: &Path,
 ) -> Option<PathBuf> {
-    let content = std::fs::read_to_string(barrel_file).ok()?;
+    let content = crate::utility_filesystem_io::read_to_string(barrel_file).ok()?;
 
     // Look for pub use statements
     for line in content.lines() {
