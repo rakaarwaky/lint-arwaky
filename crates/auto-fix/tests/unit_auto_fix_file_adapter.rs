@@ -1,3 +1,4 @@
+use std::sync::Arc;
 // PURPOSE: Unit tests for FileAdapter — file I/O capability.
 // Covers: read_file, write_file, path_exists (happy path, edge, error).
 

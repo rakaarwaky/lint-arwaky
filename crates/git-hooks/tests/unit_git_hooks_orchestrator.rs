@@ -19,6 +19,7 @@ fn sut() -> GitHooksOrchestrator {
     let diff: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new())));
     let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(
         FilePath::new("/tmp/nonexistent").unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
     let hook_protocol: Arc<dyn IHookProtocol> =
         Arc::new(HookManager::new(Arc::clone(&hook_adapter)));

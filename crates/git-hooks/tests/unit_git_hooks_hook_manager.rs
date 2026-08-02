@@ -14,6 +14,7 @@ use std::sync::Arc;
 fn sut() -> HookManager {
     let adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(
         FilePath::new("/tmp/nonexistent_repo").unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
     HookManager::new(adapter)
 }

@@ -19,3 +19,7 @@ pub use capabilities_ast_parser::ASTParser;
 pub use capabilities_dependency_graph::DependencyGraph;
 pub use capabilities_file_walker::FileWalker;
 pub use capabilities_import_extractor::ImportExtractor;
+
+// ── Re-exported constants from shared (avoid direct utility_filesystem_io imports) ──
+pub use shared::filesystem::MAX_LINT_FILE_BYTES;
+pub use shared::filesystem::utility_filesystem_io::MAX_CONFIG_FILE_SIZE;

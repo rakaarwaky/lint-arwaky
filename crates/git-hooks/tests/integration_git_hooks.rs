@@ -83,10 +83,11 @@ fn container_install_uninstall_roundtrip_in_temp_repo() {
         Arc::new(
             git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter::new(
                 FilePath::new(tmp_dir.to_str().unwrap().to_string()).unwrap_or_default(),
+                Arc::new(filesystem::FilesystemOrchestrator::new()),
             ),
         );
 
-    let container = GitContainer::new(hook_adapter);
+    let container = GitContainer::new(hook_adapter, Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
 
     // Install

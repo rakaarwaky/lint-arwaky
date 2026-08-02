@@ -19,7 +19,7 @@ fn create_temp_repo() -> (tempfile::TempDir, String) {
 fn frd_003_hook_exits_nonzero_on_lint_failure() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default());
+    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe = FilePath::new("lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
@@ -42,7 +42,7 @@ fn frd_003_hook_exits_nonzero_on_lint_failure() {
 fn frd_003_hook_exits_zero_on_lint_success() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default());
+    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe = FilePath::new("lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
@@ -60,7 +60,7 @@ fn frd_003_hook_exits_zero_on_lint_success() {
 fn frd_003_hook_invokes_lint_check_command() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default());
+    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe = FilePath::new("lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
@@ -78,7 +78,7 @@ fn frd_003_hook_invokes_lint_check_command() {
 fn frd_003_hook_shows_failure_message() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default());
+    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe = FilePath::new("lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 

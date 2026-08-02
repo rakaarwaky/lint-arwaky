@@ -1,12 +1,14 @@
 //! Unit tests for surface_check_action — find_workspace_root, handle_default_check.
 
-use shared::filesystem::utility_filesystem_io::find_workspace_root;
+use filesystem::FilesystemOrchestrator;
+use filesystem::IFilesystemAggregate;
 
 // ─── find_workspace_root ─────────────────────────────────────────────────────
 
 #[test]
 fn find_workspace_root_returns_none_for_nonexistent_path() {
-    let result = find_workspace_root("/nonexistent/path/xyz");
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.workspace_root("/nonexistent/path/xyz");
     assert!(result.is_none());
 }
 
@@ -17,7 +19,8 @@ fn find_workspace_root_detects_crates_directory() {
     let crates_dir = tmp.join("crates");
     std::fs::create_dir_all(&crates_dir).unwrap();
 
-    let result = find_workspace_root(tmp.to_str().unwrap());
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.workspace_root(tmp.to_str().unwrap());
     assert!(result.is_some());
     assert_eq!(result.unwrap(), tmp);
 
@@ -31,7 +34,8 @@ fn find_workspace_root_detects_packages_directory() {
     let packages_dir = tmp.join("packages");
     std::fs::create_dir_all(&packages_dir).unwrap();
 
-    let result = find_workspace_root(tmp.to_str().unwrap());
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.workspace_root(tmp.to_str().unwrap());
     assert!(result.is_some());
     assert_eq!(result.unwrap(), tmp);
 
@@ -44,7 +48,8 @@ fn find_workspace_root_detects_modules_directory() {
     let modules_dir = tmp.join("modules");
     std::fs::create_dir_all(&modules_dir).unwrap();
 
-    let result = find_workspace_root(tmp.to_str().unwrap());
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.workspace_root(tmp.to_str().unwrap());
     assert!(result.is_some());
     assert_eq!(result.unwrap(), tmp);
 
@@ -57,7 +62,8 @@ fn find_workspace_root_walks_up_from_child() {
     let child = tmp.join("crates").join("my-crate").join("src");
     std::fs::create_dir_all(&child).unwrap();
 
-    let result = find_workspace_root(child.to_str().unwrap());
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.workspace_root(child.to_str().unwrap());
     assert!(result.is_some());
     assert_eq!(result.unwrap(), tmp);
 

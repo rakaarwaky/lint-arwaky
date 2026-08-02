@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
 use shared::code_analysis::ILinterAdapterProtocol;
+use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::external_lint::{IExternalLintAggregate, IExternalLintExecutorProtocol};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
@@ -21,7 +22,10 @@ pub struct ExternalLintContainer {
 }
 
 impl ExternalLintContainer {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new(
+        filesystem: Arc<dyn IFilesystemAggregate>,
+        config_parser: Arc<dyn IConfigParserProtocol>,
+    ) -> Self {
         let executor: Arc<
             dyn shared::common::contract_executor_protocol::ICommandExecutorProtocol,
         > = Arc::new(crate::capabilities_stdio_client::StdioClient::new(
@@ -102,6 +106,7 @@ impl ExternalLintContainer {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
                 adapters,
                 filesystem,
+                config_parser,
             })),
         }
     }
@@ -109,7 +114,9 @@ impl ExternalLintContainer {
     pub fn new_default() -> Self {
         let filesystem: Arc<dyn IFilesystemAggregate> =
             Arc::new(filesystem::FilesystemOrchestrator::new());
-        Self::new(filesystem)
+        let config_parser: Arc<dyn IConfigParserProtocol> =
+            Arc::new(config_system::ConfigParserProvider::new());
+        Self::new(filesystem, config_parser)
     }
 
     pub fn aggregate(&self) -> Arc<dyn IExternalLintAggregate> {

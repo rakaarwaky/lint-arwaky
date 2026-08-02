@@ -19,7 +19,7 @@ fn create_temp_repo() -> (tempfile::TempDir, String) {
 fn frd_001_hook_installed_in_correct_location() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default());
+    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let result = adapter.install_pre_commit(&exe);
 
@@ -41,7 +41,7 @@ fn frd_001_hook_has_executable_permission() {
 
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default());
+    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
@@ -57,7 +57,7 @@ fn frd_001_hook_has_executable_permission() {
 fn frd_001_hook_has_valid_shebang() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default());
+    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
@@ -75,6 +75,7 @@ fn frd_001_non_git_dir_returns_false() {
     let tmp_dir = tempfile::tempdir().unwrap();
     let adapter = GitHookAdapter::new(
         FilePath::new(tmp_dir.path().to_str().unwrap().to_string()).unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     );
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let result = adapter.install_pre_commit(&exe);

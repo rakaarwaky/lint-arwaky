@@ -1,8 +1,9 @@
 // PURPOSE: Acceptance test for FR-006: File Read Error Diagnostics (DIAG_IO)
 // Emit diagnostic when file cannot be read or exceeds size limit.
 
-use shared::filesystem::utility_filesystem_io::read_lintable_file;
-pub const MAX_LINT_FILE_BYTES: u64 = 2 * 1024 * 1024;
+use filesystem::FilesystemOrchestrator;
+use filesystem::IFilesystemAggregate;
+use filesystem::MAX_LINT_FILE_BYTES;
 
 /// FR-006: Max file size is 2 MiB
 #[test]
@@ -18,7 +19,8 @@ fn fr_006_readable_file_returns_content() {
     let file_path = dir.path().join("test.rs");
     std::fs::write(&file_path, "fn main() {}").unwrap();
 
-    let result = read_lintable_file(file_path.to_str().unwrap());
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.read_lintable_file(file_path.to_str().unwrap());
     assert!(result.is_ok());
     let content = result.unwrap();
     assert!(content.is_some());
@@ -44,7 +46,8 @@ fn fr_006_oversized_file_returns_none() {
     let large_content = "x".repeat((2 * 1024 * 1024 + 1) as usize);
     std::fs::write(&file_path, &large_content).unwrap();
 
-    let result = read_lintable_file(file_path.to_str().unwrap());
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.read_lintable_file(file_path.to_str().unwrap());
     assert!(result.is_ok());
     assert!(result.unwrap().is_none()); // Graceful skip, not an error
 }
@@ -58,7 +61,8 @@ fn fr_006_file_at_exact_limit_readable() {
     let content = "x".repeat(MAX_LINT_FILE_BYTES as usize);
     std::fs::write(&file_path, &content).unwrap();
 
-    let result = read_lintable_file(file_path.to_str().unwrap());
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.read_lintable_file(file_path.to_str().unwrap());
     assert!(result.is_ok());
     assert!(result.unwrap().is_some());
 }

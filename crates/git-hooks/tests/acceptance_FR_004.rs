@@ -15,6 +15,7 @@ fn frd_004_all_public_types_constructible() {
     let _diff = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let _adapter = GitHookAdapter::new(
         shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     );
     let _container = GitContainer::new_default();
 }

@@ -22,10 +22,8 @@ use shared::code_analysis::ILinterAdapterProtocol;
 use shared::common::{AdapterName, AdapterNameList, FilePath};
 
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
+use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
-use shared::config_system::utility_config_parser::{
-    parse_adapter_entries_from_yaml, parse_config_yaml_with_warnings,
-};
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -35,6 +33,7 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub config_parser: Arc<dyn IConfigParserProtocol>,
 }
 
 pub struct ExternalLintOrchestrator {
@@ -51,7 +50,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         let root_path = std::path::Path::new(&path.value);
         let (has_rs, has_py, has_js) =
             Self::detect_languages_from_fs(&*self.deps.filesystem, root_path);
-        let ignored_paths = load_ignored_paths_from_config(root_path, has_rs, has_py, has_js);
+        let ignored_paths = load_ignored_paths_from_config(root_path, has_rs, has_py, has_js, &*self.deps.config_parser);
 
         // FR-002: Select adapters using the selector + config entries.
         let selector = CapabilitiesExternalLintSelector::with_defaults();
@@ -63,7 +62,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 
         // Parse config entries (with weight/timeout) and filter by enabled status
         let config_entries: Vec<AdapterEntry> =
-            load_adapter_entries_from_config(root_path, has_rs, has_py, has_js);
+            load_adapter_entries_from_config(root_path, has_rs, has_py, has_js, &*self.deps.config_parser);
         let adapter_names: Vec<&str> = if config_entries.is_empty() {
             selected.iter().map(|s| s.as_str()).collect()
         } else {
@@ -216,9 +215,10 @@ fn load_ignored_paths_from_config(
     has_rs: bool,
     has_py: bool,
     has_js: bool,
+    config_parser: &dyn IConfigParserProtocol,
 ) -> Vec<String> {
     walk_up_find_config(root_path, has_rs, has_py, has_js, |content| {
-        let (config, _) = parse_config_yaml_with_warnings(content);
+        let (config, _) = config_parser.parse_config_yaml_with_warnings(content);
         let paths: Vec<String> = config
             .ignored_paths
             .values
@@ -235,9 +235,10 @@ fn load_adapter_entries_from_config(
     has_rs: bool,
     has_py: bool,
     has_js: bool,
+    config_parser: &dyn IConfigParserProtocol,
 ) -> Vec<AdapterEntry> {
     walk_up_find_config(root_path, has_rs, has_py, has_js, |content| {
-        let entries = parse_adapter_entries_from_yaml(content);
+        let entries = config_parser.parse_adapter_entries_from_yaml(content);
         if entries.is_empty() {
             None
         } else {

@@ -1,3 +1,4 @@
+use std::sync::Arc;
 // PURPOSE: Benchmark tests for CapabilitiesExternalLintSelector — measures
 // adapter selection throughput under various language combinations.
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement

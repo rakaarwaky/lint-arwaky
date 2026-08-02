@@ -49,6 +49,10 @@ impl ICodeAnalysisAggregate for MockLinter {
         vec![]
     }
     }
+
+    fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
+        vec![]
+    }
 }
 
 /// FRD-UNUSED-IMPORT-01: Rust `use` statement removed when flagged as AES203.

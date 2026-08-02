@@ -39,7 +39,7 @@ flowchart TD
     H3 --> I
     H4 --> I
     H5 --> I
-    H6 --> I
+
     I --> J["LintResult"]
     J --> C
     C --> B

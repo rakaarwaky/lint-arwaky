@@ -23,9 +23,10 @@ async fn full_pre_commit_hook_lifecycle() {
     let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(
         git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter::new(
             FilePath::new(path_str.clone()).unwrap_or_default(),
+            Arc::new(filesystem::FilesystemOrchestrator::new()),
         ),
     );
-    let container = GitContainer::new(hook_adapter);
+    let container = GitContainer::new(hook_adapter, Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
 
     // Step 2: Install pre-commit hook
@@ -77,9 +78,10 @@ async fn pre_commit_hook_blocks_on_violation_simulation() {
     let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(
         git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter::new(
             FilePath::new(path_str).unwrap_or_default(),
+            Arc::new(filesystem::FilesystemOrchestrator::new()),
         ),
     );
-    let container = GitContainer::new(hook_adapter);
+    let container = GitContainer::new(hook_adapter, Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
 
     let exe_path = FilePath::new("lint-arwaky").unwrap_or_default();
