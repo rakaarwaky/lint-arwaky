@@ -1,5 +1,6 @@
 // FR-002 — Multi-Language Support
-use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+mod common;
+
 use shared::common::FilePath;
 use std::fs;
 use tempfile::TempDir;
@@ -15,10 +16,9 @@ fn us2_rust_workspace_loads_rust_config() {
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert_eq!(
-        ConfigContainer::new()
+        common::make_container()
             .orchestrator()
             .load_project_config(&fp)
-            
             .source
             .language,
         "rust"
@@ -36,10 +36,9 @@ fn us2_python_workspace_loads_python_config() {
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert_eq!(
-        ConfigContainer::new()
+        common::make_container()
             .orchestrator()
             .load_project_config(&fp)
-            
             .source
             .language,
         "python"
@@ -57,10 +56,9 @@ fn us2_typescript_workspace_loads_typescript_config() {
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert_eq!(
-        ConfigContainer::new()
+        common::make_container()
             .orchestrator()
             .load_project_config(&fp)
-            
             .source
             .language,
         "typescript"

@@ -4,7 +4,6 @@ use shared::config_system::{
     IConfigValidatorProtocol,
 };
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 
 use std::sync::Arc;
 
@@ -15,29 +14,17 @@ pub struct ConfigContainer {
     validator: Arc<dyn IConfigValidatorProtocol>,
 }
 
-impl Default for ConfigContainer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl ConfigContainer {
-    pub fn new() -> Self {
-        let fs: Arc<dyn IFilesystemAggregate> =
-            filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-
-        let wp: Arc<dyn IWorkspaceProtocol> =
-            Arc::new(filesystem::capabilities_workspace::CapabilitiesWorkspace::new());
-
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let workspace_detector = Arc::new(
-            crate::capabilities_workspace_detector::WorkspaceDetector::with_workspace_protocol(wp),
+            crate::capabilities_workspace_detector::WorkspaceDetector::new(filesystem.clone()),
         );
         let yaml_reader = Arc::new(crate::capabilities_yaml_reader::ConfigYamlReader::new(
-            fs.clone(),
+            filesystem.clone(),
         ));
         let validator = Arc::new(crate::capabilities_rules_validator::ConfigRulesValidator::new());
         let parser = Arc::new(
-            crate::capabilities_parser_provider::ConfigParserProvider::with_filesystem(fs.clone()),
+            crate::capabilities_parser_provider::ConfigParserProvider::new(filesystem.clone()),
         );
 
         Self {
@@ -46,7 +33,7 @@ impl ConfigContainer {
                 config_reader: yaml_reader.clone(),
                 parser: parser.clone(),
                 validator: validator.clone(),
-                filesystem: fs.clone(),
+                filesystem,
             })),
             reader: yaml_reader,
             parser,

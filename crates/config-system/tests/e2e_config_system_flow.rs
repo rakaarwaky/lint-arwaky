@@ -1,5 +1,6 @@
 // E2E tests — full config lifecycle from filesystem to validated output.
-use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+mod common;
+
 use shared::common::FilePath;
 use shared::config_system::ConfigLanguage;
 use std::fs;
@@ -44,7 +45,7 @@ fn full_config_lifecycle_rust_workspace() {
     - .git
 "#;
     fs::write(root.join("lint_arwaky.config.rust.yaml"), config_yaml).unwrap();
-    let container = ConfigContainer::new();
+    let container = common::make_container();
     let orch = container.orchestrator();
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
     let result = orch.load_project_config(&fp);
@@ -72,10 +73,9 @@ fn full_config_lifecycle_typescript_fallback() {
     )
     .unwrap();
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
-    let result = ConfigContainer::new()
+    let result = common::make_container()
         .orchestrator()
-        .load_config_for_language(&fp, ConfigLanguage::TypeScript)
-        ;
+        .load_config_for_language(&fp, ConfigLanguage::TypeScript);
     assert_eq!(result.source.language, "typescript");
     assert!(result.source.path.value.contains("javascript"));
 }
@@ -86,10 +86,9 @@ fn e2e_reader_lists_multi_language_configs() {
     fs::write(tmp.path().join("lint_arwaky.config.rust.yaml"), "a: 1").unwrap();
     fs::write(tmp.path().join("lint_arwaky.config.python.yaml"), "b: 2").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let files = ConfigContainer::new()
+    let files = common::make_container()
         .reader()
         .list_config_files(&fp)
-        
         .unwrap();
     assert_eq!(files.len(), 2);
     let langs: Vec<ConfigLanguage> = files.iter().map(|(l, _)| *l).collect();

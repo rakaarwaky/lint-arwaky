@@ -106,21 +106,8 @@ impl IConfigParserProtocol for ConfigParserProvider {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl Default for ConfigParserProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl ConfigParserProvider {
-    pub fn new() -> Self {
-        Self {
-            filesystem: filesystem::root_filesystem_container::FilesystemContainer::new()
-                .orchestrator(),
-        }
-    }
-
-    pub fn with_filesystem(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         Self { filesystem }
     }
 }

@@ -1,11 +1,13 @@
 // FR-005 — Config Security (symlink rejection, XDG fallback)
+mod common;
+
 use shared::common::FilePath;
 use shared::config_system::{ConfigLanguage, IConfigReaderProtocol};
 use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader {
-    config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader::default()
+    config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader::new(common::make_fs())
 }
 
 #[test]

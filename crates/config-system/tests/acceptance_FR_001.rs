@@ -1,5 +1,6 @@
 // FR-001 — Project Config Discovery
-use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+mod common;
+
 use shared::common::FilePath;
 use std::fs;
 use tempfile::TempDir;
@@ -14,10 +15,9 @@ fn us1_config_in_project_root_is_found() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = ConfigContainer::new()
+    let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp)
-        ;
+        .load_project_config(&fp);
     assert!(
         result
             .source
@@ -44,10 +44,9 @@ fn us1_config_in_parent_directory_is_found() {
     let nested = tmp.path().join("src").join("deep");
     fs::create_dir_all(&nested).unwrap();
     let fp = FilePath::new(nested.to_string_lossy().to_string()).unwrap();
-    let result = ConfigContainer::new()
+    let result = common::make_container()
         .orchestrator()
-        .load_config_for_language(&fp, ConfigLanguage::Rust)
-        ;
+        .load_config_for_language(&fp, ConfigLanguage::Rust);
     assert!(
         result
             .source

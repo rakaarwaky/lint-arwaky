@@ -1,4 +1,6 @@
 // Unit tests for ConfigOrchestrator — config loading, caching, workspace discovery.
+mod common;
+
 use config_system_lint_arwaky::agent_config_orchestrator::{
     ConfigOrchestrator, ConfigOrchestratorDeps,
 };
@@ -14,13 +16,11 @@ use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_orchestrator() -> ConfigOrchestrator {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    let wp: Arc<dyn shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol> =
-        Arc::new(filesystem::capabilities_workspace::CapabilitiesWorkspace::new());
+    let fs = common::make_fs();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::with_workspace_protocol(wp)),
+        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
-        parser: Arc::new(ConfigParserProvider::with_filesystem(fs.clone())),
+        parser: Arc::new(ConfigParserProvider::new(fs.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
         filesystem: fs,
     })

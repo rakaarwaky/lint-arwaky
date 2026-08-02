@@ -1,5 +1,6 @@
 // FR-003 — Config Fallback Safety
-use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+mod common;
+
 use shared::common::FilePath;
 use tempfile::TempDir;
 
@@ -7,10 +8,9 @@ use tempfile::TempDir;
 fn us3_no_config_file_uses_defaults() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = ConfigContainer::new()
+    let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp)
-        ;
+        .load_project_config(&fp);
     assert!(result.config.enabled.value);
     assert!(
         result
@@ -24,7 +24,7 @@ fn us3_no_config_file_uses_defaults() {
 #[test]
 fn us3_defaults_are_valid_and_usable() {
     let tmp = TempDir::new().unwrap();
-    let orch = ConfigContainer::new().orchestrator();
+    let orch = common::make_container().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let config = orch.load_config_sync(&fp);
     assert!(config.enabled.value);

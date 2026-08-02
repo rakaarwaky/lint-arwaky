@@ -1,5 +1,6 @@
 // Integration tests — full DI wiring via ConfigContainer.
-use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+mod common;
+
 use shared::common::FilePath;
 use shared::config_system::{ConfigLanguage, ProjectConfig};
 
@@ -8,35 +9,28 @@ use tempfile::TempDir;
 
 #[test]
 fn container_provides_orchestrator() {
-    let _ = ConfigContainer::new().orchestrator();
+    let _ = common::make_container().orchestrator();
 }
 #[test]
 fn container_provides_reader() {
-    let _ = ConfigContainer::new().reader();
+    let _ = common::make_container().reader();
 }
 #[test]
 fn container_provides_parser() {
-    let _ = ConfigContainer::new().parser();
+    let _ = common::make_container().parser();
 }
 #[test]
 fn container_provides_validator() {
-    let _ = ConfigContainer::new().validator();
-}
-
-#[test]
-fn container_default_is_equivalent_to_new() {
-    let _oa = ConfigContainer::new().orchestrator();
-    let _ob = ConfigContainer::default().orchestrator();
+    let _ = common::make_container().validator();
 }
 
 #[test]
 fn container_orchestrator_loads_defaults_for_empty_project() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = ConfigContainer::new()
+    let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp)
-        ;
+        .load_project_config(&fp);
     assert!(!result.warnings.is_empty());
 }
 
@@ -50,10 +44,9 @@ fn container_orchestrator_loads_real_config() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = ConfigContainer::new()
+    let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp)
-        ;
+        .load_project_config(&fp);
     assert_eq!(result.source.language, "rust");
 }
 
@@ -62,10 +55,9 @@ fn container_reader_lists_config_files() {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("lint_arwaky.config.rust.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let files = ConfigContainer::new()
+    let files = common::make_container()
         .reader()
         .list_config_files(&fp)
-        
         .unwrap();
     assert_eq!(files.len(), 1);
     assert_eq!(files[0].0, ConfigLanguage::Rust);
@@ -77,7 +69,7 @@ fn container_parser_parses_yaml() {
     let path = tmp.path().join("config.yaml");
     fs::write(&path, "project_name: integration-test\n").unwrap();
     let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap();
-    let config = ConfigContainer::new()
+    let config = common::make_container()
         .parser()
         .parse_yaml_config(&fp)
         .unwrap();
@@ -86,7 +78,7 @@ fn container_parser_parses_yaml() {
 
 #[test]
 fn container_validator_validates_default_config() {
-    let result = ConfigContainer::new()
+    let result = common::make_container()
         .validator()
         .validate_thresholds(&ProjectConfig::default());
     assert!(result.is_valid);
@@ -107,11 +99,11 @@ thresholds:
     let path = tmp.path().join("config.yaml");
     fs::write(&path, yaml).unwrap();
     let fp = FilePath::new(path.to_string_lossy().to_string()).unwrap();
-    let config = ConfigContainer::new()
+    let config = common::make_container()
         .parser()
         .parse_yaml_config(&fp)
         .unwrap();
-    let validation = ConfigContainer::new()
+    let validation = common::make_container()
         .validator()
         .validate_thresholds(&config);
     assert!(validation.is_valid);

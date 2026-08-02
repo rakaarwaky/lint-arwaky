@@ -1,4 +1,6 @@
 // Unit tests for WorkspaceDetector — language detection and workspace discovery.
+mod common;
+
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use shared::common::FilePath;
 use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
@@ -6,7 +8,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_detector() -> WorkspaceDetector {
-    WorkspaceDetector::new()
+    WorkspaceDetector::new(common::make_fs())
 }
 fn create_file(dir: &std::path::Path, name: &str) {
     fs::write(dir.join(name), "").unwrap();
@@ -166,12 +168,7 @@ fn discover_members_under_modules_dir() {
 fn discover_members_returns_empty_when_no_workspace_dirs() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(
-        make_detector()
-            .discover_workspace_members(&fp)
-            
-            .is_empty()
-    );
+    assert!(make_detector().discover_workspace_members(&fp).is_empty());
 }
 
 #[test]
@@ -267,9 +264,9 @@ fn detect_unknown_for_file_not_in_workspace() {
 }
 
 #[test]
-fn default_and_new_are_equivalent() {
-    let a = WorkspaceDetector::new();
-    let b = WorkspaceDetector::new();
+fn new_creates_equivalent_instances() {
+    let a = WorkspaceDetector::new(common::make_fs());
+    let b = WorkspaceDetector::new(common::make_fs());
     let tmp = TempDir::new().unwrap();
     create_file(tmp.path(), "Cargo.toml");
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();

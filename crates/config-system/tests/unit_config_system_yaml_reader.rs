@@ -1,4 +1,6 @@
 // Unit tests for ConfigYamlReader — config file discovery and XDG fallback.
+mod common;
+
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared::common::FilePath;
 use shared::config_system::{ConfigLanguage, IConfigReaderProtocol};
@@ -7,7 +9,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> ConfigYamlReader {
-    ConfigYamlReader::default()
+    ConfigYamlReader::new(common::make_fs())
 }
 
 #[test]
@@ -40,7 +42,6 @@ fn read_config_finds_python_yaml_in_project_root() {
     assert!(
         make_reader()
             .read_config(&fp, ConfigLanguage::Python)
-            
             .unwrap()
             .is_some()
     );
@@ -57,7 +58,6 @@ fn read_config_typescript_falls_back_to_javascript_yaml() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = make_reader()
         .read_config(&fp, ConfigLanguage::TypeScript)
-        
         .unwrap();
     assert!(result.is_some());
     assert!(result.unwrap().path.value.contains("javascript"));
@@ -77,7 +77,6 @@ fn read_config_searches_parent_directories_up_to_depth_3() {
     assert!(
         make_reader()
             .read_config(&fp, ConfigLanguage::Rust)
-            
             .unwrap()
             .is_some()
     );
@@ -90,7 +89,6 @@ fn read_config_returns_none_when_no_file_found() {
     assert!(
         make_reader()
             .read_config(&fp, ConfigLanguage::Rust)
-            
             .unwrap()
             .is_none()
     );
@@ -114,13 +112,7 @@ fn list_config_files_finds_all_languages() {
 fn list_config_files_returns_empty_when_none_exist() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(
-        make_reader()
-            .list_config_files(&fp)
-            
-            .unwrap()
-            .is_empty()
-    );
+    assert!(make_reader().list_config_files(&fp).unwrap().is_empty());
 }
 
 #[test]
@@ -146,7 +138,6 @@ fn list_config_files_deduplicates_typescript_javascript() {
 }
 
 #[test]
-fn default_and_new_are_equivalent() {
-    let _a = ConfigYamlReader::default();
-    let _b = ConfigYamlReader::default();
+fn new_creates_instance() {
+    let _a = ConfigYamlReader::new(common::make_fs());
 }

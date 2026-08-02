@@ -132,12 +132,6 @@ impl IConfigReaderProtocol for ConfigYamlReader {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl Default for ConfigYamlReader {
-    fn default() -> Self {
-        Self::new(filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator())
-    }
-}
-
 impl ConfigYamlReader {
     pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         Self { filesystem }
