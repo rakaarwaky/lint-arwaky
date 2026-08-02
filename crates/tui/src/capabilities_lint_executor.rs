@@ -96,9 +96,38 @@ impl ILintExecutorProtocol for LintExecutor {
 
     fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
-        let results = self.code_analysis.run_code_analysis(&fp);
-        let score = self.code_analysis.calc_score(&results.values);
-        let has_critical = self.code_analysis.check_critical(&results.values);
+        let mut all_results: Vec<shared::common::taxonomy_lint_result_vo::LintResult> = Vec::new();
+
+        // 1. Quality analysis
+        let quality = self.code_analysis.run_code_analysis(&fp);
+        all_results.extend(quality.values);
+
+        // 2. Import rules
+        if let Some(ref import_agg) = self.import_orchestrator {
+            if let Ok(import_res) = import_agg.run_audit(&fp) {
+                all_results.extend(import_res);
+            }
+        }
+
+        // 3. Naming rules
+        if let Some(ref naming_agg) = self.naming_orchestrator {
+            let naming_res = naming_agg.run_audit_with_entries(self.filesystem.file_list());
+            all_results.extend(naming_res);
+        }
+
+        // 4. Orphan detection
+        if let Some(ref orphan_agg) = self.orphan_aggregate {
+            let ignored = self
+                .config_orchestrator
+                .as_ref()
+                .map(|o| o.ignored_paths(&fp))
+                .unwrap_or_default();
+            let (_, orphan_res) = orphan_agg.scan_orphans(&fp, &ignored.values);
+            all_results.extend(orphan_res);
+        }
+
+        let score = self.code_analysis.calc_score(&all_results);
+        let has_critical = self.code_analysis.check_critical(&all_results);
         let pass = score.value() >= flags.threshold as f64 && !has_critical.value();
         let status = if pass { "PASS" } else { "FAIL" };
         let output = format!(
@@ -106,16 +135,16 @@ impl ILintExecutorProtocol for LintExecutor {
             path,
             score,
             flags.threshold,
-            results.len(),
+            all_results.len(),
             has_critical.value(),
             status
         );
         if pass {
-            LintExecutionResult::success(output, results.len())
+            LintExecutionResult::success(output, all_results.len())
         } else {
             LintExecutionResult {
                 output,
-                violation_count: results.len(),
+                violation_count: all_results.len(),
                 success: false,
             }
         }

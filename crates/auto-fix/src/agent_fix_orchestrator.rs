@@ -14,7 +14,9 @@
 //   - AES304 (bypass comment):   YES — safe to remove the bypass comment
 //   - All others:               NO  — require manual review
 
-use shared::auto_fix::{FixResult, IFixProtocol, LintFixOrchestratorAggregate};
+use shared::auto_fix::{
+    FixResult, IFileAdapterProtocol, IFixProtocol, LintFixOrchestratorAggregate,
+};
 use shared::cli_commands::LintResult;
 use shared::common::FilePath;
 use std::sync::Arc;
@@ -26,6 +28,7 @@ use std::sync::Arc;
 /// No business logic — just wires the aggregate contract to the fix processor.
 pub struct FixOrchestrator {
     fix_protocol: Arc<dyn IFixProtocol>,
+    file_adapter: Arc<dyn IFileAdapterProtocol>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -34,13 +37,23 @@ impl LintFixOrchestratorAggregate for FixOrchestrator {
     fn execute(&self, path: &FilePath) -> FixResult {
         self.fix_protocol.execute(path)
     }
+
+    fn file_adapter(&self) -> Arc<dyn IFileAdapterProtocol> {
+        self.file_adapter.clone()
+    }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl FixOrchestrator {
-    pub fn new(fix_protocol: Arc<dyn IFixProtocol>) -> Self {
-        Self { fix_protocol }
+    pub fn new(
+        fix_protocol: Arc<dyn IFixProtocol>,
+        file_adapter: Arc<dyn IFileAdapterProtocol>,
+    ) -> Self {
+        Self {
+            fix_protocol,
+            file_adapter,
+        }
     }
 
     /// Execute the fix pipeline: lint → filter fixable → apply fixes.

@@ -38,7 +38,6 @@ pub struct McpContainer {
     pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
     pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol>,
 }
 
 impl McpContainer {
@@ -57,7 +56,6 @@ impl McpContainer {
             naming_orchestrator: self.naming_orchestrator.clone(),
             role_orchestrator: self.role_orchestrator.clone(),
             filesystem: self.filesystem.clone(),
-            file_adapter: self.file_adapter.clone(),
         };
         McpServerOrchestrator::new(deps)
     }
@@ -138,13 +136,8 @@ impl McpContainer {
         let auto_fix_container = AutoFixContainer::new(code_analysis_linter.clone());
         let fix_orchestrator = auto_fix_container.orchestrator(false, file_adapter.clone());
 
-        // 11. Git hooks — requires hook_adapter and filesystem from git-hooks crate
-        let hook_adapter: Arc<dyn shared::git_hooks::IHookManagerProtocol> =
-            Arc::new(git_hooks::capabilities_hook_adapter::GitHookAdapter::new(
-                fp.clone(),
-                filesystem.clone(),
-            ));
-        let git_container = GitContainer::new(hook_adapter, filesystem.clone());
+        // 11. Git hooks — container owns adapter construction internally
+        let git_container = GitContainer::new(fp.clone(), filesystem.clone());
         let git_hooks_aggregate = git_container.aggregate();
 
         // 12. Maintenance (doctor, security, dependencies)
@@ -168,7 +161,6 @@ impl McpContainer {
             maintenance_orchestrator,
             setup_orchestrator,
             filesystem,
-            file_adapter,
         }
     }
 }

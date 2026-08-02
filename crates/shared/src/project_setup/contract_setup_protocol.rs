@@ -13,7 +13,6 @@ use crate::project_setup::taxonomy_setup_contract_vo::{
     WriteConfigResult,
 };
 
-#[async_trait::async_trait]
 pub trait ISetupManagementProtocol: Send + Sync {
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO;
     fn generate_mcp_config(&self) -> McpConfigVO;
@@ -42,7 +41,6 @@ pub trait ISetupManagementProtocol: Send + Sync {
 /// InvalidState vs Other) instead of inspecting free-form error strings.
 pub type InstallPackagesResult = Result<(), SetupError>;
 
-#[async_trait::async_trait]
 pub trait ISetupInstallerProtocol: Send + Sync {
     fn install_python_packages(&self, packages: &[String]) -> InstallPackagesResult;
     fn install_npm_packages(&self, packages: &[String], sudo: bool) -> InstallPackagesResult;

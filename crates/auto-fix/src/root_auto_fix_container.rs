@@ -24,10 +24,11 @@ impl AutoFixContainer {
         let fix_protocol = crate::capabilities_fix_processor::LintFixProcessor::with_dry_run(
             dry_run,
             self.code_analysis_linter.clone(),
-            file_adapter,
+            file_adapter.clone(),
         );
         Arc::new(crate::agent_fix_orchestrator::FixOrchestrator::new(
             Arc::new(fix_protocol),
+            file_adapter,
         ))
     }
 }

@@ -17,6 +17,8 @@ members = [
     "crates/file-watch",
     "crates/project-setup",
     "crates/maintenance",
+    # Layer 3.5: Dispatcher
+    "crates/dispatcher",
     # Layer 4: Surface
     "crates/report-formatter",
     "crates/cli-commands",
@@ -53,6 +55,7 @@ git-hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", vers
 file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "1.11.0" }
 project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "1.11.0" }
 maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.11.0" }
+dispatcher = { package = "dispatcher-lint-arwaky", path = "crates/dispatcher", version = "1.11.0" }
 report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "1.11.0" }
 cli-commands = { path = "crates/cli-commands", version = "0.1.0" }
 mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "1.11.0" }

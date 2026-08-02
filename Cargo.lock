@@ -493,6 +493,7 @@ version = "0.1.0"
 dependencies = [
  "ctrlc",
  "dirs",
+ "dispatcher-lint-arwaky",
  "rayon",
  "regex",
  "serde_json",
@@ -981,6 +982,23 @@ dependencies = [
  "block2",
  "libc",
  "objc2",
+]
+
+[[package]]
+name = "dispatcher-lint-arwaky"
+version = "1.11.0"
+dependencies = [
+ "config-system-lint-arwaky",
+ "external-lint-lint-arwaky",
+ "filesystem-lint-arwaky",
+ "import-rules-lint-arwaky",
+ "naming-rules-lint-arwaky",
+ "orphan-rules-lint-arwaky",
+ "quality-rules-lint-arwaky",
+ "role-rules-lint-arwaky",
+ "serde",
+ "serde_json",
+ "shared-lint-arwaky",
 ]
 
 [[package]]
@@ -3378,13 +3396,11 @@ dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
  "once_cell",
- "proc-macro2",
  "rayon",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
- "syn 2.0.119",
  "tempfile",
 ]
 

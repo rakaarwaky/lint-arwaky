@@ -4,6 +4,10 @@ pub mod contract_orphan_parser_protocol;
 pub mod contract_orphan_protocol;
 pub mod taxonomy_orphan_contract_vo;
 pub mod taxonomy_orphan_parse_result_vo;
+pub mod taxonomy_parser_dispatcher;
+pub mod taxonomy_python_parser;
+pub mod taxonomy_rust_parser;
+pub mod taxonomy_ts_parser;
 pub mod taxonomy_violation_orphan_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -16,6 +20,7 @@ pub use contract_orphan_protocol::IContractOrphanProtocol;
 pub use contract_orphan_protocol::ISurfacesOrphanProtocol;
 pub use contract_orphan_protocol::ITaxonomyOrphanProtocol;
 pub use contract_orphan_protocol::IUtilityOrphanProtocol;
+pub use taxonomy_parser_dispatcher::parse_file_content;
 
 pub use taxonomy_orphan_contract_vo::OrphanEntryPatternListVO;
 pub use taxonomy_orphan_contract_vo::OrphanFileListVO;

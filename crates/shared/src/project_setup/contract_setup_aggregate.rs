@@ -12,7 +12,6 @@ use crate::project_setup::taxonomy_setup_contract_vo::{
 
 pub type SetupMgmtProtocol = Box<dyn ISetupManagementProtocol>;
 
-#[async_trait::async_trait]
 pub trait SetupManagementAggregate: Send + Sync {
     fn check_http(&self, url: &TransportUrlVO) -> SuccessStatus;
     fn generate_env(&self, transport: &TransportProtocol, home: &DirectoryPath) -> EnvContentVO;

@@ -5,6 +5,7 @@
 // and returns JSON responses.
 use rmcp::handler::server::wrapper::Parameters;
 use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::git_hooks::GitHooksAggregate;
 use shared::maintenance::MaintenanceCommandsAggregate;
@@ -36,7 +37,6 @@ pub struct McpServerDependencies {
         Arc<dyn shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate>,
     pub filesystem:
         Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
-    pub file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol>,
 }
 
 pub struct McpServerOrchestrator {
@@ -80,29 +80,11 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
                 // 1. Code analysis (quality)
                 let quality = self.deps.code_analysis_linter.run_code_analysis_path(&fp);
-                for r in &quality {
-                    all_results.push(serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                        "linter": "quality",
-                    }));
-                }
+                all_results.extend(Self::results_to_json(&quality, Some("quality")));
 
                 // 2. Import rules
                 if let Ok(import_results) = self.deps.import_orchestrator.run_audit(&fp) {
-                    for r in &import_results {
-                        all_results.push(serde_json::json!({
-                            "file": r.file.value.as_str(),
-                            "code": r.code.code(),
-                            "message": r.message.value.as_str(),
-                            "line": r.line.value(),
-                            "column": r.column.value(),
-                            "linter": "import",
-                        }));
-                    }
+                    all_results.extend(Self::results_to_json(&import_results, Some("import")));
                 }
 
                 // 3. Naming rules
@@ -110,32 +92,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     .deps
                     .naming_orchestrator
                     .run_audit_with_entries(self.deps.filesystem.file_list());
-                for r in &naming_results {
-                    all_results.push(serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                        "linter": "naming",
-                    }));
-                }
+                all_results.extend(Self::results_to_json(&naming_results, Some("naming")));
 
                 // 4. Role rules — IRoleRunnerAggregate only has run_audit_with_entries
                 let role_results = self
                     .deps
                     .role_orchestrator
                     .run_audit_with_entries(self.deps.filesystem.file_list());
-                for r in &role_results {
-                    all_results.push(serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                        "linter": "role",
-                    }));
-                }
+                all_results.extend(Self::results_to_json(&role_results, Some("role")));
 
                 // 5. Orphan detector
                 let ignored = self.deps.config_orchestrator.ignored_paths(&fp);
@@ -143,29 +107,14 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     &self.deps.config_orchestrator, &fp.value, self.deps.filesystem.clone(),
                 ).analyzer();
                 let (_, orphan_results) = orphan_analyzer.scan_orphans(&fp, ignored.values());
-                for r in &orphan_results {
-                    all_results.push(serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                        "linter": "orphan",
-                    }));
-                }
+                all_results.extend(Self::results_to_json(&orphan_results, Some("orphan")));
 
                 // 6. External linters
                 let scan_results = self.deps.external_lint.scan_all(&fp);
-                for r in scan_results.iter() {
-                    all_results.push(serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                        "linter": "external",
-                    }));
-                }
+                all_results.extend(Self::results_to_json(
+                    &scan_results.values,
+                    Some("external"),
+                ));
 
                 let total = all_results.len();
                 let exit_code = if total == 0 { 0 } else { 1 };
@@ -220,8 +169,8 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 let fix_container = auto_fix::root_auto_fix_container::AutoFixContainer::new(
                     self.deps.code_analysis_linter.clone(),
                 );
-                let fix_orchestrator =
-                    fix_container.orchestrator(dry_run, self.deps.file_adapter.clone());
+                let file_adapter = self.deps.fix_orchestrator.file_adapter();
+                let fix_orchestrator = fix_container.orchestrator(dry_run, file_adapter);
                 let fix_result = fix_orchestrator.execute(&fp);
 
                 serde_json::json!({
@@ -296,13 +245,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "path": path,
                     "exit_code": if results.is_empty() { 0 } else { 1 },
                     "orphan_count": results.len(),
-                    "results": results.iter().map(|r| serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                    })).collect::<Vec<serde_json::Value>>(),
+                    "results": Self::results_to_json(&results, None),
                 })
             }
             "security" => {
@@ -764,13 +707,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "path": path,
                     "exit_code": exit_code,
                     "violation_count": results.len(),
-                    "results": results.iter().map(|r| serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                    })).collect::<Vec<serde_json::Value>>(),
+                    "results": Self::results_to_json(&results, None),
                 })
             }
             "import" => {
@@ -794,13 +731,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "path": path,
                     "exit_code": exit_code,
                     "violation_count": results.len(),
-                    "results": results.iter().map(|r| serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                    })).collect::<Vec<serde_json::Value>>(),
+                    "results": Self::results_to_json(&results, None),
                 })
             }
             "naming" => {
@@ -820,13 +751,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "path": path,
                     "exit_code": exit_code,
                     "violation_count": results.len(),
-                    "results": results.iter().map(|r| serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                    })).collect::<Vec<serde_json::Value>>(),
+                    "results": Self::results_to_json(&results, None),
                 })
             }
             "role" => {
@@ -851,13 +776,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "path": path,
                     "exit_code": exit_code,
                     "violation_count": results.len(),
-                    "results": results.iter().map(|r| serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                    })).collect::<Vec<serde_json::Value>>(),
+                    "results": Self::results_to_json(&results, None),
                 })
             }
             "external" => {
@@ -878,13 +797,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                     "path": path,
                     "exit_code": exit_code,
                     "violation_count": scan_results.values.len(),
-                    "results": scan_results.values.iter().map(|r| serde_json::json!({
-                        "file": r.file.value.as_str(),
-                        "code": r.code.code(),
-                        "message": r.message.value.as_str(),
-                        "line": r.line.value(),
-                        "column": r.column.value(),
-                    })).collect::<Vec<serde_json::Value>>(),
+                    "results": Self::results_to_json(&scan_results.values, None),
                 })
             }
             _ => {
@@ -1093,5 +1006,26 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 impl McpServerOrchestrator {
     pub fn new(deps: McpServerDependencies) -> Self {
         Self { deps }
+    }
+
+    /// Serialize a list of LintResults to JSON value array.
+    /// If `linter` is provided, adds a "linter" field to each entry.
+    fn results_to_json(results: &[LintResult], linter: Option<&str>) -> Vec<serde_json::Value> {
+        results
+            .iter()
+            .map(|r| {
+                let mut obj = serde_json::json!({
+                    "file": r.file.value.as_str(),
+                    "code": r.code.code(),
+                    "message": r.message.value.as_str(),
+                    "line": r.line.value(),
+                    "column": r.column.value(),
+                });
+                if let Some(name) = linter {
+                    obj["linter"] = serde_json::json!(name);
+                }
+                obj
+            })
+            .collect()
     }
 }

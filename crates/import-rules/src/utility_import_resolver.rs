@@ -4,6 +4,7 @@ use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -24,9 +25,7 @@ pub fn parse_import_lines_helper(
     content: &str,
 ) -> Vec<(LineNumber, LineContentVO)> {
     let mut result = Vec::new();
-    match orphan_rules::capabilities_orphan_parser_dispatcher::parse_file_content(
-        file_path, content,
-    ) {
+    match parse_file_content(file_path, content) {
         FileParseResultVO::Rust(parse_result) => {
             for imp in &parse_result.imports {
                 result.push((

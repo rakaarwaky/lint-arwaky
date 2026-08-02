@@ -1,7 +1,7 @@
-// PURPOSE: utility_orphan_python_parser -- comment-aware structured parsing for Python.
+// PURPOSE: taxonomy_python_parser — comment-aware structured parsing for Python.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
-use shared::orphan_rules::taxonomy_orphan_parse_result_vo::{
+use crate::orphan_rules::taxonomy_orphan_parse_result_vo::{
     AstFnDefVO, AstImportVO, PythonParseResultVO,
 };
 

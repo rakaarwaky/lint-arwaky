@@ -1,3 +1,4 @@
+use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::{GitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
 
@@ -8,10 +9,11 @@ pub struct GitContainer {
 }
 
 impl GitContainer {
-    pub fn new(
-        hook_adapter: Arc<dyn IHookManagerProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
-    ) -> Self {
+    pub fn new(root_dir: FilePath, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(
+            crate::capabilities_hook_adapter::GitHookAdapter::new(root_dir, filesystem.clone()),
+        );
+
         let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(
             crate::capabilities_diff_checker::DiffChecker::new(filesystem.clone()),
         );
