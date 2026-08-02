@@ -15,6 +15,7 @@ pub mod agent_filesystem_orchestrator;
 
 // ── Re-exports ──
 pub use agent_filesystem_orchestrator::FilesystemOrchestrator;
+pub use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 pub use capabilities_ast_parser::ASTParser;
 pub use capabilities_dependency_graph::DependencyGraph;
 pub use capabilities_file_walker::FileWalker;

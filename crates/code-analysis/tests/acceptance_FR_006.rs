@@ -30,7 +30,8 @@ fn fr_006_readable_file_returns_content() {
 /// FR-006: Non-existent file returns Err
 #[test]
 fn fr_006_nonexistent_file_returns_err() {
-    let result = read_lintable_file("/nonexistent/path/file.rs");
+    let orch = FilesystemOrchestrator::new();
+    let result = orch.read_lintable_file("/nonexistent/path/file.rs");
     assert!(result.is_err());
     let err_msg = result.unwrap_err();
     assert!(err_msg.contains("/nonexistent/path/file.rs"));
