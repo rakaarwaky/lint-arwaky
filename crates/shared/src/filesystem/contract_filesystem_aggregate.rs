@@ -179,12 +179,6 @@ pub trait IFilesystemAggregate: Send + Sync {
     /// Check if a file is in the cache.
     fn has_file(&self, path: &Path) -> bool;
 
-    /// Recursively scan directory for files.
-    fn scan_directory_recursive(&self, dir: &Path) -> Vec<String>;
-
-    /// Walk directory and collect paths of all source files.
-    fn collect_source_files_from_path(&self, dir: &Path, files: &mut Vec<String>);
-
     /// Collect file entries (path, content) for each lintable file.
     fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)>;
 

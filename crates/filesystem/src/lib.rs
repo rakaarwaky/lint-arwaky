@@ -14,6 +14,7 @@
 // ── Capabilities (stateful, produce structured data) ──
 pub mod capabilities_ast_parser; // FR-002
 pub mod capabilities_dependency_graph;
+pub mod capabilities_file_cache; // FR-007 (cache state)
 pub mod capabilities_file_walker; // FR-001 // FR-004
 
 // ── Utility (stateless, technical mechanics) ──

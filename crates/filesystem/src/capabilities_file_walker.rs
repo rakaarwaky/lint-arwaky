@@ -174,21 +174,7 @@ fn matches_extension(path: &Path, extensions: &[&str]) -> bool {
 }
 
 /// Check if a relative path should be ignored based on patterns.
+/// Delegates to canonical implementation in utility_filesystem_io.
 pub fn is_ignored(rel_path: &str, ignored: &[String]) -> bool {
-    if rel_path.is_empty() {
-        return false;
-    }
-    for pat in ignored {
-        if pat.is_empty() {
-            continue;
-        }
-        if let Some(stripped) = pat.strip_prefix('/') {
-            if !stripped.is_empty() && rel_path.contains(stripped) {
-                return true;
-            }
-        } else if rel_path.contains(pat.as_str()) {
-            return true;
-        }
-    }
-    false
+    crate::utility_filesystem_io::is_path_ignored(rel_path, ignored)
 }

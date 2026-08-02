@@ -5,14 +5,12 @@
 
 use std::path::{Path, PathBuf};
 
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
+
 // ═══════════════════════════════════════════════════════════════
 // File Reading
 // ═══════════════════════════════════════════════════════════════
-
-/// Read file content synchronously.
-pub fn read_file<P: AsRef<Path>>(path: P) -> Result<String, std::io::Error> {
-    std::fs::read_to_string(path)
-}
 
 /// Read file content, returning empty string on error.
 pub fn read_file_safe<P: AsRef<Path>>(path: P) -> String {
@@ -39,11 +37,6 @@ pub fn read_lintable_file(path: &str) -> Result<Option<String>, String> {
 // File Writing
 // ═══════════════════════════════════════════════════════════════
 
-/// Write content to a file.
-pub fn write_file<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> std::io::Result<()> {
-    std::fs::write(path, contents)
-}
-
 /// Write string to file.
 pub fn write_string(path: &Path, content: &str) -> Result<(), std::io::Error> {
     std::fs::write(path, content)
@@ -64,7 +57,6 @@ pub fn set_permissions(path: &Path, mode: u32) -> std::io::Result<()> {
     let mut perms = std::fs::metadata(path)?.permissions();
     #[cfg(unix)]
     {
-        use std::os::unix::fs::PermissionsExt;
         perms.set_mode(mode);
     }
     std::fs::set_permissions(path, perms)

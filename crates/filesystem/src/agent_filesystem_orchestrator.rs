@@ -8,8 +8,7 @@ use std::sync::{OnceLock, RwLock};
 use crate::utility_filesystem_io;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::{
-    IFileWalkerProtocol,
-    IASTParserProtocol, IDependencyGraphProtocol,
+    IASTParserProtocol, IDependencyGraphProtocol, IFileWalkerProtocol,
 };
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, FilesystemResult, ImportEntry, Language, ParseWarning, ScanTiming,
@@ -286,16 +285,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         crate::utility_workspace_detection::detect_source_dir(project_root)
     }
 
-    fn scan_directory_recursive(&self, dir: &Path) -> Vec<String> {
-        let mut files = Vec::new();
-        scan_recursive(dir, &mut files);
-        files
-    }
-
-    fn collect_source_files_from_path(&self, dir: &Path, files: &mut Vec<String>) {
-        scan_recursive(dir, files);
-    }
-
     fn is_source_file(&self, path: &Path) -> bool {
         utility_filesystem_io::is_source_file(path)
     }
@@ -385,7 +374,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         &self,
         path: &shared::common::taxonomy_path_vo::FilePath,
     ) -> shared::common::taxonomy_source_vo::ContentString {
-        crate::utility_file_cache::read_cached(path)
+        crate::capabilities_file_cache::read_cached(path)
     }
 
     fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &[String]) -> bool {
@@ -560,25 +549,6 @@ impl Default for FilesystemOrchestrator {
 }
 
 // ─── Private Helpers ──────────────────────────────────────
-
-fn scan_recursive(dir: &Path, files: &mut Vec<String>) {
-    for path in utility_filesystem_io::scan_directory(dir) {
-        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if name.starts_with('.') {
-            continue;
-        }
-        if path.is_dir() {
-            if !matches!(
-                name,
-                "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
-            ) {
-                scan_recursive(&path, files);
-            }
-        } else if let Some(path_str) = path.to_str() {
-            files.push(path_str.to_string());
-        }
-    }
-}
 
 fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
     let canonical_root = utility_filesystem_io::canonicalize(root).ok()?;
