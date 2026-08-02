@@ -2,8 +2,8 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use crate::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use crate::common::taxonomy_layer_vo::LayerNameVO;
 
 /// Detect architectural layer from filename prefix.
 ///

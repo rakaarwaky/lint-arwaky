@@ -72,21 +72,18 @@ impl ScanError {
     }
 }
 
-impl From<ImportError> for ScanError {
-    fn from(e: ImportError) -> Self {
-        let path = match &e {
-            ImportError::CircularDependency { file: Some(p), .. } => p.clone(),
-            _ => FilePath::new(".").unwrap_or_default(),
-        };
-        ScanError {
-            path,
-            message: ErrorMessage::new(e.to_string()),
-            error_code: Some(ErrorCode::raw("IMPORT_ERR")),
-            adapter_name: Some(AdapterName::raw("import-rules")),
-            cause: None,
-        }
-    }
-}
+//impl From<ImportError> for ScanError {
+//    fn from(e: ImportError) -> Self {
+//        let path = match &e {
+//            ImportError::CircularDependency { file: Some(p), .. } => p.clone(),
+//            _ => FilePath::new(".").unwrap_or_default(),
+//        };
+//        ScanError {
+//            path,
+//            message: ErrorMessage::new(e.to_string()),
+//            error_code: Some(ErrorCode::raw("IMPORT_ERR")),
+//            adapter_name: Some(AdapterName::raw("import-rules")),
+//            cause: None,
 
 impl std::fmt::Display for ScanError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

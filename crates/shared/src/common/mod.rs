@@ -1,13 +1,12 @@
 // common — truly shared types used by multiple features
-pub mod taxonomy_config_language_vo;
-pub mod taxonomy_operation_error;
-pub mod contract_executor_protocol;
+// pub mod contract_executor_protocol;
 pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_list_vo;
 pub mod taxonomy_adapter_name_vo;
 pub mod taxonomy_common_error;
 pub mod taxonomy_common_vo;
+pub mod taxonomy_config_language_vo;
 pub mod taxonomy_definition_vo;
 pub mod taxonomy_display_content_vo;
 pub mod taxonomy_duration_vo;
@@ -24,6 +23,7 @@ pub mod taxonomy_lint_result_vo;
 pub mod taxonomy_lint_vo;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
+pub mod taxonomy_operation_error;
 pub mod taxonomy_path_vo;
 pub mod taxonomy_paths_vo;
 pub mod taxonomy_response_data_vo;
@@ -41,13 +41,6 @@ pub mod utility_signature_parser;
 pub mod utility_value_object_generator;
 
 // ─── Re-exports ────────────────────────────────────────────
-// Barrel re-export pattern: allows consumers to import directly
-// NOTE: lib.rs re-exports all of common via `pub use common::*`
-
-// ── Contract traits ──
-pub use contract_executor_protocol::ICommandExecutorProtocol;
-
-// ── Taxonomy types ──
 pub use taxonomy_action_vo::ActionName;
 pub use taxonomy_action_vo::JobId;
 pub use taxonomy_adapter_error::AdapterError;
