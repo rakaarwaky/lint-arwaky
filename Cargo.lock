@@ -756,6 +756,7 @@ dependencies = [
  "camino",
  "dashmap",
  "ignore",
+ "once_cell",
  "petgraph",
  "rayon",
  "shared-lint-arwaky",

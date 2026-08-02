@@ -3,7 +3,6 @@
 //
 // Utility: stateless standalone functions
 
-use shared::common::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 
 // ═══════════════════════════════════════════════════════════════

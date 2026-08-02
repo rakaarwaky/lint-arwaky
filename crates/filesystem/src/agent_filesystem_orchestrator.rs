@@ -3,12 +3,11 @@
 // Only orchestration: calls capabilities, returns results
 
 use std::path::Path;
-use std::sync::{Arc, OnceLock, RwLock};
+use std::sync::{OnceLock, RwLock};
 
 use crate::capabilities_ast_parser::ASTParser;
 use crate::capabilities_dependency_graph::DependencyGraph;
 use crate::capabilities_file_walker::FileWalker;
-use crate::utility_file_cache;
 use crate::utility_filesystem_io;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::{
@@ -30,6 +29,11 @@ pub struct FilesystemOrchestrator {
 }
 
 // ─── Block 2: Public Contract (aggregate trait ONLY) ──────
+
+static EMPTY_HASH_MAP: once_cell::sync::Lazy<HashMap<PathBuf, Vec<PathBuf>>> =
+    once_cell::sync::Lazy::new(HashMap::new);
+static EMPTY_STRING_MAP: once_cell::sync::Lazy<HashMap<String, Vec<PathBuf>>> =
+    once_cell::sync::Lazy::new(HashMap::new);
 
 impl IFilesystemAggregate for FilesystemOrchestrator {
     fn run_pipeline(&self, root: &Path, ignored: &[String]) {
@@ -67,43 +71,48 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        use std::sync::OnceLock;
-        static EMPTY: OnceLock<HashMap<PathBuf, Vec<PathBuf>>> = OnceLock::new();
-        self.graph
-            .read()
-            .map(|g| g.reverse_links())
-            .unwrap_or(EMPTY.get_or_init(HashMap::new))
+        match self.graph.read() {
+            Ok(g) => {
+                let cloned = g.reverse_links().clone();
+                Box::leak(Box::new(cloned))
+            }
+            Err(_) => &EMPTY_HASH_MAP,
+        }
     }
 
     fn reverse_import_map(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        use std::sync::OnceLock;
-        static EMPTY: OnceLock<HashMap<PathBuf, Vec<PathBuf>>> = OnceLock::new();
-        self.graph
-            .read()
-            .map(|g| g.reverse_links())
-            .unwrap_or(EMPTY.get_or_init(HashMap::new))
+        match self.graph.read() {
+            Ok(g) => {
+                let cloned = g.reverse_links().clone();
+                Box::leak(Box::new(cloned))
+            }
+            Err(_) => &EMPTY_HASH_MAP,
+        }
     }
 
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        use std::sync::OnceLock;
-        static EMPTY: OnceLock<HashMap<String, Vec<PathBuf>>> = OnceLock::new();
-        self.graph
-            .read()
-            .map(|g| g.definitions())
-            .unwrap_or(EMPTY.get_or_init(HashMap::new))
+        match self.graph.read() {
+            Ok(g) => {
+                let cloned = g.definitions().clone();
+                Box::leak(Box::new(cloned))
+            }
+            Err(_) => &EMPTY_STRING_MAP,
+        }
     }
 
     fn trait_implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
-        use std::sync::OnceLock;
-        static EMPTY: OnceLock<HashMap<String, Vec<PathBuf>>> = OnceLock::new();
-        self.graph
-            .read()
-            .map(|g| g.implementations())
-            .unwrap_or(EMPTY.get_or_init(HashMap::new))
+        match self.graph.read() {
+            Ok(g) => {
+                let cloned = g.implementations().clone();
+                Box::leak(Box::new(cloned))
+            }
+            Err(_) => &EMPTY_STRING_MAP,
+        }
     }
 
     fn timing(&self) -> &ScanTiming {
         static DEFAULT: ScanTiming = ScanTiming {
+            cache_ms: 0,
             walk_ms: 0,
             parse_ms: 0,
             extract_ms: 0,

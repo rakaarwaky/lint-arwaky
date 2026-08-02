@@ -5,7 +5,7 @@
 // Utility: static cache + stateless functions
 
 use dashmap::DashMap;
-use rayon::iter::ParallelIterator;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 use std::sync::LazyLock;

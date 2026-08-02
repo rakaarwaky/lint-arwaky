@@ -3,7 +3,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::utility_filesystem_io::{is_file, path_exists};
+use crate::utility_filesystem_io::is_file;
 
 /// Normalize a module path for filesystem lookup.
 pub fn normalize_module_path(module_path: &str) -> String {
@@ -144,7 +144,7 @@ pub fn resolve_barrel_reexport(
             // Extract the path from pub use path::name;
             if let Some(path_part) = line
                 .strip_prefix("pub use ")
-                .and_then(|s| s.trim_end_matches(';').trim())
+                .map(|s| s.trim_end_matches(';').trim())
             {
                 let parts: Vec<&str> = path_part.split("::").collect();
                 if let Some(last) = parts.last() {
