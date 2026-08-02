@@ -22,6 +22,7 @@ pub struct FilesystemOrchestrator {
     walker: Box<dyn IFileWalkerProtocol>,
     parser: Box<dyn IASTParserProtocol>,
     graph: RwLock<Box<dyn IDependencyGraphProtocol>>,
+    string_cache: dashmap::DashMap<String, String>,
     files: OnceLock<Vec<FileEntry>>,
     imports: OnceLock<Vec<ImportEntry>>,
     warnings: OnceLock<Vec<ParseWarning>>,
@@ -374,7 +375,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         &self,
         path: &shared::common::taxonomy_path_vo::FilePath,
     ) -> shared::common::taxonomy_source_vo::ContentString {
-        crate::capabilities_file_cache::read_cached(path)
+        crate::capabilities_file_cache::read_cached(path, &self.string_cache)
     }
 
     fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &[String]) -> bool {
@@ -409,7 +410,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)> {
         let mut out = Vec::new();
         for file_str in files {
-            let content = crate::utility_file_cache::cache_get_by_str(file_str)
+            let content = self
+                .string_cache
+                .get(file_str)
+                .map(|r| r.value().clone())
                 .unwrap_or_else(|| utility_filesystem_io::read_file_safe(file_str));
             out.push((PathBuf::from(file_str), content));
         }
@@ -455,6 +459,7 @@ impl FilesystemOrchestrator {
             graph: RwLock::new(Box::new(
                 crate::capabilities_dependency_graph::DependencyGraph::new(),
             )),
+            string_cache: dashmap::DashMap::new(),
             files: OnceLock::new(),
             imports: OnceLock::new(),
             warnings: OnceLock::new(),
