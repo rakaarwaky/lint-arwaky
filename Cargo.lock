@@ -988,17 +988,9 @@ dependencies = [
 name = "dispatcher-lint-arwaky"
 version = "1.11.0"
 dependencies = [
- "config-system-lint-arwaky",
  "ctrlc",
  "dirs",
- "external-lint-lint-arwaky",
- "filesystem-lint-arwaky",
- "import-rules-lint-arwaky",
- "naming-rules-lint-arwaky",
- "orphan-rules-lint-arwaky",
- "quality-rules-lint-arwaky",
  "regex",
- "role-rules-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
@@ -3047,11 +3039,9 @@ dependencies = [
 name = "mcp-server-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "config-system-lint-arwaky",
  "dirs",
  "dispatcher-lint-arwaky",
- "once_cell",
- "rayon",
- "regex",
  "rmcp",
  "serde_json",
  "shared-lint-arwaky",

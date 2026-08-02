@@ -16,6 +16,7 @@ impl AutoFixContainer {
         }
     }
 
+    /// Construct orchestrator with caller-provided file adapter.
     pub fn orchestrator(
         &self,
         dry_run: bool,
@@ -30,5 +31,16 @@ impl AutoFixContainer {
             Arc::new(fix_protocol),
             file_adapter,
         ))
+    }
+
+    /// Construct orchestrator with filesystem aggregate — handles FileAdapter internally.
+    pub fn orchestrator_with_filesystem(
+        &self,
+        dry_run: bool,
+        filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+    ) -> Arc<dyn LintFixOrchestratorAggregate> {
+        let file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol> =
+            Arc::new(crate::capabilities_file_adapter::FileAdapter::new(filesystem));
+        self.orchestrator(dry_run, file_adapter)
     }
 }

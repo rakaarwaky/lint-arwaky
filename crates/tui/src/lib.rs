@@ -1,10 +1,10 @@
 pub mod agent_tui_orchestrator;
 pub mod capabilities_action_handler;
 pub mod capabilities_lint_executor;
-pub mod root_logging_entry;
 pub mod root_tui_container;
 pub mod surface_file_list_view;
 pub mod surface_help_screen;
+pub mod surface_logging_controller;
 pub mod surface_path_screen;
 pub mod surface_preview_view;
 pub mod surface_shortcut_component;

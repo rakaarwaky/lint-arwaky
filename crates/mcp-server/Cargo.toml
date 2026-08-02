@@ -8,12 +8,10 @@ license = "MIT"
 [dependencies]
 shared = { workspace = true }
 dispatcher = { workspace = true }
+config-system = { workspace = true }
 serde_json = { workspace = true }
 rmcp = { workspace = true }
 dirs = { workspace = true }
-once_cell = { workspace = true }
-regex = { workspace = true }
-rayon = { workspace = true }
 tokio = { workspace = true }
 
 [lints]

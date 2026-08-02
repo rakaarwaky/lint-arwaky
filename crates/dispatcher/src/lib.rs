@@ -18,3 +18,4 @@ pub mod surface_quality_action;
 pub mod surface_role_action;
 pub mod surface_setup_action;
 pub mod surface_watch_action;
+pub mod surface_mcp_action;

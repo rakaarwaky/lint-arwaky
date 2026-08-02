@@ -19,7 +19,7 @@ impl TuiContainer {
         lint_executor: Arc<dyn ILintExecutorProtocol>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> anyhow::Result<()> {
-        crate::root_logging_entry::init()?;
+        crate::surface_logging_controller::init()?;
         tracing::info!(target = "tui", "TUI container starting");
 
         let action_handler: Arc<dyn IActionHandlerProtocol> =
