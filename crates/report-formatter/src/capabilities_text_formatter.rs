@@ -21,6 +21,7 @@ impl IReportFormatterProtocol for TextFormatter {
         if format == Format::Text {
             self.format_text(report)
         } else {
+            DisplayContent::new(format_report_default(report))
         }
     }
 

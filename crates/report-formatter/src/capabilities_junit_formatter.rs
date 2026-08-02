@@ -15,6 +15,7 @@ impl IReportFormatterProtocol for JunitFormatter {
         if format == Format::Junit {
             self.format_junit_report(report)
         } else {
+            DisplayContent::new(format_report_default(report))
         }
     }
 
