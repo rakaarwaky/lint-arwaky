@@ -3039,7 +3039,6 @@ dependencies = [
 name = "mcp-server-lint-arwaky"
 version = "1.11.0"
 dependencies = [
- "config-system-lint-arwaky",
  "dirs",
  "dispatcher-lint-arwaky",
  "rmcp",
