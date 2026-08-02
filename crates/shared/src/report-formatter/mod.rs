@@ -6,7 +6,6 @@ pub mod taxonomy_sarif_driver_vo;
 pub mod taxonomy_sarif_location_vo;
 pub mod taxonomy_sarif_log_vo;
 pub mod taxonomy_sarif_result_vo;
-pub mod utility_report_format;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -21,4 +20,3 @@ pub use taxonomy_sarif_location_vo::{
 };
 pub use taxonomy_sarif_log_vo::{SarifLog, SarifRun, SarifTool};
 pub use taxonomy_sarif_result_vo::{SarifMessage, SarifResult};
-pub use utility_report_format::format_report_default;

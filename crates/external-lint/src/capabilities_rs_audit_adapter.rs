@@ -23,10 +23,10 @@ use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage, LocationList,
 };
 
-use std::path::Path;
-use tracing::debug;
-use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::path::Path;
+use std::sync::Arc;
+use tracing::debug;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -151,8 +151,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CargoAuditAdapter {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>,
-    ) -> Self {
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         Self { filesystem }
     }
 }

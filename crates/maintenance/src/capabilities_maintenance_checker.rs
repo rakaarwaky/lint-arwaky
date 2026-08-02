@@ -144,7 +144,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         // FR-006: Language detection — Cargo.lock → Rust, package.json → JS/TS, else Python
         if cargo_lock.exists() {
             // FR-006: Rust — cargo audit
-            let tool_available = self.filesystem.run_external_command_in("cargo", &["audit", "--version"], ".").2;
+            let tool_available = self
+                .filesystem
+                .run_external_command_in("cargo", &["audit", "--version"], ".")
+                .2;
             if !tool_available {
                 return SecurityScanReport {
                     language: "Rust".to_string(),
@@ -153,7 +156,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     tool_installed: false,
                 };
             }
-            let (s, _, _) = self.filesystem.run_external_command_in("cargo", &["audit", "--json"], root);
+            let (s, _, _) =
+                self.filesystem
+                    .run_external_command_in("cargo", &["audit", "--json"], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
                 && let Some(list) = json
@@ -199,7 +204,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         } else if package_json.exists() {
             // FR-006: JS/TS — npm audit
-            let tool_available = self.filesystem.run_external_command_in("npm", &["--version"], ".").2;
+            let tool_available = self
+                .filesystem
+                .run_external_command_in("npm", &["--version"], ".")
+                .2;
             if !tool_available {
                 return SecurityScanReport {
                     language: "JavaScript".to_string(),
@@ -208,7 +216,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     tool_installed: false,
                 };
             }
-            let (s, _, _) = self.filesystem.run_external_command_in("npm", &["audit", "--json"], root);
+            let (s, _, _) =
+                self.filesystem
+                    .run_external_command_in("npm", &["audit", "--json"], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
                 && let Some(vulns) = json.get("vulnerabilities")
@@ -252,7 +262,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         } else {
             // FR-006: Python — bandit
-            let tool_available = self.filesystem.run_external_command_in("bandit", &["--version"], ".").2;
+            let tool_available = self
+                .filesystem
+                .run_external_command_in("bandit", &["--version"], ".")
+                .2;
             if !tool_available {
                 return SecurityScanReport {
                     language: "Python".to_string(),
@@ -261,8 +274,11 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                     tool_installed: false,
                 };
             }
-            let (s, _, _) =
-                self.filesystem.run_external_command_in("bandit", &["-r", "--format", "json", root], root);
+            let (s, _, _) = self.filesystem.run_external_command_in(
+                "bandit",
+                &["-r", "--format", "json", root],
+                root,
+            );
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s)
                 && let Some(results) = json.get("results").and_then(|r| r.as_array())
@@ -316,7 +332,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         if cargo_lock.exists() {
             // FR-007: Rust — Cargo.lock + Cargo.toml
-            let content = self.filesystem.read_to_string(&cargo_lock).map_err(|e| e.to_string())?;
+            let content = self
+                .filesystem
+                .read_to_string(&cargo_lock)
+                .map_err(|e| e.to_string())?;
             let mut in_package = false;
             let mut pkg_name = String::new();
             let mut pkg_version = String::new();
@@ -390,7 +409,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             })
         } else if package_json.exists() {
             // FR-007: JS/TS — package.json (dependencies + devDependencies)
-            let content = self.filesystem.read_to_string(&package_json).map_err(|e| e.to_string())?;
+            let content = self
+                .filesystem
+                .read_to_string(&package_json)
+                .map_err(|e| e.to_string())?;
             let json: serde_json::Value =
                 serde_json::from_str(&content).map_err(|e| e.to_string())?;
             let mut dependencies = Vec::new();
@@ -426,8 +448,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             let pyproject = std::path::Path::new(root).join("pyproject.toml");
             if pyproject.exists() {
                 // FR-007: Python — pyproject.toml
-                let content =
-                    self.filesystem.read_to_string(&pyproject).map_err(|e| e.to_string())?;
+                let content = self
+                    .filesystem
+                    .read_to_string(&pyproject)
+                    .map_err(|e| e.to_string())?;
                 let mut dependencies = Vec::new();
                 for line in content.lines() {
                     let t = line.trim();
@@ -457,7 +481,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
                 let reqs = std::path::Path::new(root).join("requirements.txt");
                 if reqs.exists() {
                     // FR-007: Python — requirements.txt (fallback)
-                    let content = self.filesystem.read_to_string(&reqs).map_err(|e| e.to_string())?;
+                    let content = self
+                        .filesystem
+                        .read_to_string(&reqs)
+                        .map_err(|e| e.to_string())?;
                     let mut dependencies = Vec::new();
                     for line in content.lines() {
                         let t = line.trim();
@@ -621,7 +648,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         // FR-001: Language runtime versions
         let py_ver = {
-            let (stdout, _, success) = self.filesystem.run_external_command_in("python3", &["--version"], ".");
+            let (stdout, _, success) =
+                self.filesystem
+                    .run_external_command_in("python3", &["--version"], ".");
             if success {
                 stdout
                     .lines()
@@ -634,7 +663,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         };
         let rust_ver = {
-            let (stdout, _, success) = self.filesystem.run_external_command_in("rustc", &["--version"], ".");
+            let (stdout, _, success) =
+                self.filesystem
+                    .run_external_command_in("rustc", &["--version"], ".");
             if success {
                 stdout
                     .lines()
@@ -647,7 +678,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         };
         let node_ver = {
-            let (stdout, _, success) = self.filesystem.run_external_command_in("node", &["--version"], ".");
+            let (stdout, _, success) =
+                self.filesystem
+                    .run_external_command_in("node", &["--version"], ".");
             if success {
                 stdout
                     .lines()

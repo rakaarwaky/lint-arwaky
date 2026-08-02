@@ -8,8 +8,8 @@ use shared::config_system::{
     IWorkspaceDetectorProtocol, WorkspaceInfo,
 };
 
-use shared::config_system::utility_config_defaults::default_config_for_language;
-use shared::config_system::utility_config_parser::parse_config_yaml;
+use crate::utility_config_defaults::default_config_for_language;
+use crate::utility_config_parser::parse_config_yaml;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -176,7 +176,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
         // Merge layers into config (same as make_layer_map in entry points)
         let (merged_layers, _) =
-            shared::config_system::utility_config_merger::merge_config(&config);
+            crate::utility_config_merger::merge_config(&config);
         config.layers = merged_layers;
 
         config

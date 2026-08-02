@@ -2,10 +2,10 @@
 // REQ: Hooks correctly installed on all supported system types (Linux, macOS, Windows).
 // Maps to: FRD Success Indicator #1
 
-use std::sync::Arc;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::FilePath;
 use shared::git_hooks::IHookManagerProtocol;
+use std::sync::Arc;
 
 fn create_temp_repo() -> (tempfile::TempDir, String) {
     let tmp_dir = tempfile::tempdir().unwrap();
@@ -19,7 +19,10 @@ fn create_temp_repo() -> (tempfile::TempDir, String) {
 fn frd_001_hook_installed_in_correct_location() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let adapter = GitHookAdapter::new(
+        FilePath::new(path_str).unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let result = adapter.install_pre_commit(&exe);
 
@@ -41,7 +44,10 @@ fn frd_001_hook_has_executable_permission() {
 
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let adapter = GitHookAdapter::new(
+        FilePath::new(path_str).unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 
@@ -57,7 +63,10 @@ fn frd_001_hook_has_executable_permission() {
 fn frd_001_hook_has_valid_shebang() {
     let (tmp_dir, path_str) = create_temp_repo();
 
-    let adapter = GitHookAdapter::new(FilePath::new(path_str).unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let adapter = GitHookAdapter::new(
+        FilePath::new(path_str).unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let exe = FilePath::new("/usr/bin/lint-arwaky").unwrap_or_default();
     let _ = adapter.install_pre_commit(&exe);
 

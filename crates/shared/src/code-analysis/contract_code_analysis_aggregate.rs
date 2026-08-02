@@ -29,7 +29,9 @@ pub trait ICodeAnalysisAggregate: Send + Sync {
         entries: Vec<(std::path::PathBuf, String)>,
         min_lines: usize,
     ) -> Vec<Vec<(std::path::PathBuf, usize)>> {
-        crate::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(entries, min_lines)
+        crate::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
+            entries, min_lines,
+        )
     }
 
     /// Build violation results from detected duplicate blocks.
@@ -38,7 +40,12 @@ pub trait ICodeAnalysisAggregate: Send + Sync {
         blocks: &[Vec<(std::path::PathBuf, usize)>],
         total_loc: usize,
         min_dup_lines: usize,
-    ) -> Vec<crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation> {
-        crate::code_analysis::utility_code_duplication_detector::build_violations(blocks, total_loc, min_dup_lines)
+    ) -> Vec<crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation>
+    {
+        crate::code_analysis::utility_code_duplication_detector::build_violations(
+            blocks,
+            total_loc,
+            min_dup_lines,
+        )
     }
 }

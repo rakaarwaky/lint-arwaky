@@ -3,9 +3,9 @@
 
 use shared::orphan_detector::FileParseResultVO;
 use shared::orphan_detector::IOrphanParserProtocol;
-use shared::orphan_detector::utility_orphan_python_parser;
-use shared::orphan_detector::utility_orphan_rust_parser;
-use shared::orphan_detector::utility_orphan_ts_parser;
+use crate::utility_orphan_python_parser;
+use crate::utility_orphan_rust_parser;
+use crate::utility_orphan_ts_parser;
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────

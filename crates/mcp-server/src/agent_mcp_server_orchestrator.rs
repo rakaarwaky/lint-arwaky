@@ -1036,7 +1036,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
             layers.push(lang.as_str());
             if let Ok(Some(source)) = self.deps.config_orchestrator.read_config(&fp, *lang).await {
                 // Parse architecture config (rules, ignored_paths)
-                let arch_config = shared::config_system::utility_config_parser::parse_config_yaml(
+                let arch_config = config_system::utility_config_parser::parse_config_yaml(
                     &source.raw_content,
                 );
                 rules_enabled.push(lang.as_str());
@@ -1050,7 +1050,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
 
                 // Parse adapter names for adapter_toggles
                 let adapter_names =
-                    shared::config_system::utility_config_parser::parse_adapter_names_from_yaml(
+                    config_system::utility_config_parser::parse_adapter_names_from_yaml(
                         &source.raw_content,
                     );
                 for name in adapter_names {
@@ -1060,7 +1060,7 @@ impl IMcpServerAggregate for McpServerOrchestrator {
                 // Extract score threshold via shared utility (project.thresholds.score or thresholds.score)
                 if score_threshold.is_none()
                     && let Some(t) =
-                        shared::config_system::utility_config_parser::parse_score_threshold(
+                        config_system::utility_config_parser::parse_score_threshold(
                             &source.raw_content,
                         )
                 {

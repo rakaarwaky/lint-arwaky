@@ -11,7 +11,6 @@ pub mod contract_action_handler_protocol;
 pub mod contract_lint_executor_protocol;
 pub mod contract_tui_aggregate;
 
-
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
 

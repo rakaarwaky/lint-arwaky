@@ -89,15 +89,18 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_config_yaml_with_warnings(
         &self,
         yaml_str: &str,
-    ) -> (shared::config_system::taxonomy_config_vo::ArchitectureConfig, Vec<String>) {
-        shared::config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
+    ) -> (
+        shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        Vec<String>,
+    ) {
+        crate::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
     }
 
     fn parse_adapter_entries_from_yaml(
         &self,
         yaml_str: &str,
     ) -> Vec<shared::config_system::taxonomy_setting_vo::AdapterEntry> {
-        shared::config_system::utility_config_parser::parse_adapter_entries_from_yaml(yaml_str)
+        crate::utility_config_parser::parse_adapter_entries_from_yaml(yaml_str)
     }
 }
 

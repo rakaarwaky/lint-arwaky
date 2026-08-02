@@ -12,15 +12,16 @@ pub mod utility_import_extractor;
 
 // ── Agent (orchestration) ──
 pub mod agent_filesystem_orchestrator;
+pub mod utility_filesystem_io;
 
 // ── Re-exports ──
 pub use agent_filesystem_orchestrator::FilesystemOrchestrator;
-pub use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 pub use capabilities_ast_parser::ASTParser;
 pub use capabilities_dependency_graph::DependencyGraph;
 pub use capabilities_file_walker::FileWalker;
 pub use capabilities_import_extractor::ImportExtractor;
+pub use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ── Re-exported constants from shared (avoid direct utility_filesystem_io imports) ──
 pub use shared::filesystem::MAX_LINT_FILE_BYTES;
-pub use shared::filesystem::utility_filesystem_io::MAX_CONFIG_FILE_SIZE;
+pub use crate::utility_filesystem_io::MAX_CONFIG_FILE_SIZE;

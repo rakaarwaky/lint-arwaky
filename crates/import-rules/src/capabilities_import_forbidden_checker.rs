@@ -19,7 +19,7 @@ use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::utility_import_resolver;
+use crate::utility_import_resolver;
 use std::collections::{HashMap, HashSet};
 
 // ─── Block 1: Struct Definition ───────────────────────────

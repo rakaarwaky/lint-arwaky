@@ -11,15 +11,15 @@ use shared::common::{
     LocationList, PatternList,
 };
 
-use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
 use tracing::debug;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
-        pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
     executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
@@ -196,7 +196,9 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
 use std::path::Path;
 
 impl RustLinterAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>,
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         Self {

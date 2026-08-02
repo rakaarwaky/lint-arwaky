@@ -9,8 +9,8 @@ use shared::common::{
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::utility_dummy_detector;
-use shared::import_rules::utility_import_resolver;
+use crate::utility_dummy_detector;
+use crate::utility_import_resolver;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 // Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.

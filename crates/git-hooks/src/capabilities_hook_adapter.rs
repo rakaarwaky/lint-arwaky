@@ -61,11 +61,13 @@ exit 0
             })?;
         #[cfg(unix)]
         {
-            self.filesystem.set_permissions(&hook_path, 0o755).map_err(|e| {
-                shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
-                    format!("Failed to set permissions: {}", e),
-                ))
-            })?;
+            self.filesystem
+                .set_permissions(&hook_path, 0o755)
+                .map_err(|e| {
+                    shared::git_hooks::taxonomy_hook_error::GitHookError::new(LintMessage::new(
+                        format!("Failed to set permissions: {}", e),
+                    ))
+                })?;
         }
         Ok(SuccessStatus::new(true))
     }

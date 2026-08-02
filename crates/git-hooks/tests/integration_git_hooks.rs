@@ -87,7 +87,10 @@ fn container_install_uninstall_roundtrip_in_temp_repo() {
             ),
         );
 
-    let container = GitContainer::new(hook_adapter, Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = GitContainer::new(
+        hook_adapter,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
     let aggregate = container.aggregate();
 
     // Install

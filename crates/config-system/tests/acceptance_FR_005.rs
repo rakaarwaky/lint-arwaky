@@ -20,7 +20,9 @@ async fn us5_symlink_outside_root_is_rejected() {
     }
     let canonical_root = fs::canonicalize(&root).unwrap();
     let orch = FilesystemOrchestrator::new();
-    let result = orch.read_text_within_canonical_root(&link, &canonical_root).await;
+    let result = orch
+        .read_text_within_canonical_root(&link, &canonical_root)
+        .await;
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err().kind(),
@@ -36,7 +38,9 @@ async fn us5_oversized_config_is_rejected() {
     fs::write(&large_file, &large_content).unwrap();
     let canonical_root = fs::canonicalize(tmp.path()).unwrap();
     let orch = FilesystemOrchestrator::new();
-    let result = orch.read_text_within_canonical_root(&large_file, &canonical_root).await;
+    let result = orch
+        .read_text_within_canonical_root(&large_file, &canonical_root)
+        .await;
     assert!(result.is_err());
     assert_eq!(result.unwrap_err().kind(), std::io::ErrorKind::InvalidData);
 }
@@ -48,7 +52,9 @@ async fn us5_valid_file_within_root_is_read() {
     fs::write(&config_file, "architecture:\n  enabled: true\n").unwrap();
     let canonical_root = fs::canonicalize(tmp.path()).unwrap();
     let orch = FilesystemOrchestrator::new();
-    let result = orch.read_text_within_canonical_root(&config_file, &canonical_root).await;
+    let result = orch
+        .read_text_within_canonical_root(&config_file, &canonical_root)
+        .await;
     assert!(result.is_ok());
     assert!(result.unwrap().contains("architecture"));
 }

@@ -15,8 +15,8 @@ use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
-use shared::import_rules::utility_cycle_detector;
-use shared::import_rules::utility_import_module_parser;
+use crate::utility_cycle_detector;
+use crate::utility_import_module_parser;
 
 use std::collections::HashMap;
 

@@ -21,15 +21,15 @@ use shared::common::{
     LocationList, Severity,
 };
 
-use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
 
 use shared::external_lint::IExternalLintExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct BanditAdapter {
-        pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
@@ -178,7 +178,11 @@ mod tests {
 
     fn make_adapter() -> BanditAdapter {
         let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
-        BanditAdapter::new(executor, None, Arc::new(filesystem::FilesystemOrchestrator::new()))
+        BanditAdapter::new(
+            executor,
+            None,
+            Arc::new(filesystem::FilesystemOrchestrator::new()),
+        )
     }
 
     struct EmptyLintExecutor;

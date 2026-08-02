@@ -1,7 +1,9 @@
 // PURPOSE: utility_orphan_ts_parser — comment-aware structured parsing for TypeScript/JavaScript.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
-use crate::orphan_detector::taxonomy_orphan_parse_result_vo::{AstFnDefVO, AstImportVO, TsParseResultVO};
+use crate::orphan_detector::taxonomy_orphan_parse_result_vo::{
+    AstFnDefVO, AstImportVO, TsParseResultVO,
+};
 
 // ─── Block 1: Main Parse Function ─────────────────────────
 

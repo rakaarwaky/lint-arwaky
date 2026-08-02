@@ -10,9 +10,13 @@ pub struct GitContainer {
 }
 
 impl GitContainer {
-    pub fn new(hook_adapter: Arc<dyn IHookManagerProtocol>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        let diff_protocol: Arc<dyn IDiffProtocol> =
-            Arc::new(crate::capabilities_diff_checker::DiffChecker::new(filesystem.clone()));
+    pub fn new(
+        hook_adapter: Arc<dyn IHookManagerProtocol>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
+        let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(
+            crate::capabilities_diff_checker::DiffChecker::new(filesystem.clone()),
+        );
         let hook_adapter_clone = Arc::clone(&hook_adapter);
         let hook_protocol: Arc<dyn IHookProtocol> = Arc::new(
             crate::capabilities_hook_manager::HookManager::new(hook_adapter_clone),

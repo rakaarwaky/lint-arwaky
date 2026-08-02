@@ -25,14 +25,14 @@ use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage, LocationList,
 };
 
-use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
 use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MyPyAdapter {
-        pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }

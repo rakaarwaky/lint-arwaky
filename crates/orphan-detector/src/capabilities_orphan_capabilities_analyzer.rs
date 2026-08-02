@@ -3,13 +3,13 @@
 
 use shared::code_analysis::{OrphanIndicatorResult, ReachabilityResult};
 use shared::common::{FilePath, Severity};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_detector::utility_orphan_filename::file_stem;
+use crate::utility_orphan_filename::file_stem;
 use shared::orphan_detector::{
     AesOrphanViolation, ICapabilitiesOrphanProtocol, IOrphanParserProtocol,
 };
 use std::sync::Arc;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -56,7 +56,9 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         // Search for container files in workspace root
         let root = std::path::Path::new(root_dir.value());
         if let Ok(workspace_root) = self.filesystem.find_workspace_root_from_path(root) {
-            let wired = self.filesystem.check_wired_in_container(&workspace_root, &identifiers);
+            let wired = self
+                .filesystem
+                .check_wired_in_container(&workspace_root, &identifiers);
             if wired {
                 return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
             }
@@ -80,7 +82,8 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
 impl Default for CapabilitiesOrphanAnalyzer {
     fn default() -> Self {
-        let filesystem: Arc<dyn IFilesystemAggregate> = Arc::new(filesystem::FilesystemOrchestrator::new());
+        let filesystem: Arc<dyn IFilesystemAggregate> =
+            Arc::new(filesystem::FilesystemOrchestrator::new());
         Self::new(
             Arc::new(crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new()),
             filesystem,
@@ -89,10 +92,14 @@ impl Default for CapabilitiesOrphanAnalyzer {
 }
 
 impl CapabilitiesOrphanAnalyzer {
-    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+    pub fn new(
+        parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
-        Self { parser_dispatcher, filesystem }
+        Self {
+            parser_dispatcher,
+            filesystem,
+        }
     }
 
     /// Extract identifiers (struct names, trait names, stem, PascalCase stem) using AST.

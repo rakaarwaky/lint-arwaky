@@ -1,8 +1,8 @@
 // PURPOSE: ExternalLintExecutor — implements IExternalLintExecutorProtocol
 // Wraps ICommandExecutorProtocol and adds error mapping for scan/adapter operations.
 
-use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
 
 use shared::code_analysis::LinterOperationError;
 use shared::common::ICommandExecutorProtocol;
@@ -13,11 +13,10 @@ use shared::common::{
 
 use shared::external_lint::IExternalLintExecutorProtocol;
 
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintExecutor {
-        pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
@@ -81,7 +80,11 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
     ) -> Result<ComplianceStatus, LinterOperationError> {
         let wd = self.filesystem.resolve_js_working_dir(path);
         let abs_path = self.filesystem.canonicalize_path_str(&path.value);
-        let cmd = match self.filesystem.resolve_js_cmd(tool, vec![abs_path.clone(), fix_arg.to_string()], &wd.value) {
+        let cmd = match self.filesystem.resolve_js_cmd(
+            tool,
+            vec![abs_path.clone(), fix_arg.to_string()],
+            &wd.value,
+        ) {
             Some(c) => c,
             None => {
                 return Ok(ComplianceStatus::new(false));
@@ -97,9 +100,13 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ExternalLintExecutor {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>,
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
-        Self { executor, filesystem }
+        Self {
+            executor,
+            filesystem,
+        }
     }
 }

@@ -48,7 +48,7 @@ fn test_utility_imported_by_cross_crate_use_statement_should_not_flag_aes504() {
 fn test_utility_imported_by_nested_use_path_should_not_flag_aes504() {
     // Test that `use shared::filesystem::utility_target_resolver` is detected
     let content = r#"
-use shared::filesystem::utility_filesystem_io::{detect_source_dir, collect_source_files};
+use filesystem_lint_arwaky::utility_filesystem_io::{detect_source_dir, collect_source_files};
 
 pub fn some_function() {
     let dir = detect_source_dir(std::path::Path::new("."));
@@ -56,11 +56,12 @@ pub fn some_function() {
 }
 "#;
 
-    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_filesystem_io");
+    let result =
+        UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_filesystem_io");
 
     assert!(
         result,
-        "Nested use path like `use shared::filesystem::utility_filesystem_io` should be detected"
+        "Nested use path like `use filesystem_lint_arwaky::utility_filesystem_io` should be detected"
     );
 }
 
@@ -75,7 +76,8 @@ pub fn some_function() {
 }
 "#;
 
-    let result = UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_filesystem_io");
+    let result =
+        UtilityOrphanAnalyzer::is_module_imported("test.rs", content, "utility_filesystem_io");
 
     assert!(
         result,

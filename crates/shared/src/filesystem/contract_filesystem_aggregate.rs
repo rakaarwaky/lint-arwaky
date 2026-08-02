@@ -2,9 +2,11 @@
 // Single entry point for rule crates to access filesystem capabilities.
 // Implements FR-005 consumer access pattern with granular accessor methods.
 
-use crate::filesystem::taxonomy_filesystem_vo::{FileEntry, FilesystemResult, ImportEntry, ParseWarning, ScanTiming};
-use crate::common::taxonomy_source_vo::ContentString;
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_source_vo::ContentString;
+use crate::filesystem::taxonomy_filesystem_vo::{
+    FileEntry, FilesystemResult, ImportEntry, ParseWarning, ScanTiming,
+};
 use std::path::{Path, PathBuf};
 
 /// Aggregate trait — combines all filesystem capabilities into one interface.
@@ -239,19 +241,36 @@ pub trait IFilesystemAggregate: Send + Sync {
     // ── Path Resolution (external-lint) ───────────────────────
 
     /// Resolve JS tool command from local node_modules/.bin.
-    fn resolve_js_cmd(&self, executable: &str, args: Vec<String>, working_dir: &str) -> Option<Vec<String>>;
+    fn resolve_js_cmd(
+        &self,
+        executable: &str,
+        args: Vec<String>,
+        working_dir: &str,
+    ) -> Option<Vec<String>>;
 
     /// Walk up to find JS project root.
-    fn resolve_js_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+    fn resolve_js_working_dir(
+        &self,
+        path: &crate::common::taxonomy_path_vo::FilePath,
+    ) -> crate::common::taxonomy_path_vo::FilePath;
 
     /// Find parent dir with Cargo.toml.
-    fn resolve_cargo_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+    fn resolve_cargo_working_dir(
+        &self,
+        path: &crate::common::taxonomy_path_vo::FilePath,
+    ) -> crate::common::taxonomy_path_vo::FilePath;
 
     /// Find parent dir with Cargo.lock.
-    fn resolve_cargo_lock_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+    fn resolve_cargo_lock_working_dir(
+        &self,
+        path: &crate::common::taxonomy_path_vo::FilePath,
+    ) -> crate::common::taxonomy_path_vo::FilePath;
 
     /// Create default working directory.
-    fn default_working_dir(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> crate::common::taxonomy_path_vo::FilePath;
+    fn default_working_dir(
+        &self,
+        path: &crate::common::taxonomy_path_vo::FilePath,
+    ) -> crate::common::taxonomy_path_vo::FilePath;
 
     // ── Python Detection (recursive) ──────────────────────────
 
@@ -282,12 +301,20 @@ pub trait IFilesystemAggregate: Send + Sync {
     // ── Orphan Detection ──────────────────────────────────────
 
     /// Resolve a module path relative to base_dir, confined under root.
-    fn resolve_orphan_module_path(&self, root: &Path, base_dir: &Path, module_path: &str) -> Option<PathBuf>;
+    fn resolve_orphan_module_path(
+        &self,
+        root: &Path,
+        base_dir: &Path,
+        module_path: &str,
+    ) -> Option<PathBuf>;
 
     // ── Language Detection ────────────────────────────────────
 
     /// Detect ConfigLanguage from a file system path.
-    fn detect_language_from_path(&self, path: &str) -> crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+    fn detect_language_from_path(
+        &self,
+        path: &str,
+    ) -> crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
 
     // ── File Entry Collection ─────────────────────────────────
 
@@ -305,7 +332,12 @@ pub trait IFilesystemAggregate: Send + Sync {
     // ── Process Execution (external) ──────────────────────────
 
     /// Execute an external command with working directory.
-    fn run_external_command_in(&self, name: &str, args: &[&str], current_dir: &str) -> (String, String, bool);
+    fn run_external_command_in(
+        &self,
+        name: &str,
+        args: &[&str],
+        current_dir: &str,
+    ) -> (String, String, bool);
 
     // ── TUI I/O ───────────────────────────────────────────────
 
@@ -321,6 +353,10 @@ pub trait IFilesystemAggregate: Send + Sync {
     // ── Noop (linter compatibility) ───────────────────────────
 
     /// No-op apply_fix for linters that cannot auto-fix.
-    fn noop_apply_fix(&self) -> Result<crate::common::taxonomy_message_vo::ComplianceStatus, crate::code_analysis::taxonomy_operation_error::LinterOperationError>;
-
+    fn noop_apply_fix(
+        &self,
+    ) -> Result<
+        crate::common::taxonomy_message_vo::ComplianceStatus,
+        crate::code_analysis::taxonomy_operation_error::LinterOperationError,
+    >;
 }

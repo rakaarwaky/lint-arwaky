@@ -24,13 +24,13 @@ use shared::common::{
 };
 use shared::external_lint::IExternalLintExecutorProtocol;
 
-use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct RuffAdapter {
-        pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
@@ -223,7 +223,11 @@ mod tests {
 
     fn make_adapter() -> RuffAdapter {
         let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
-        RuffAdapter::new(executor, None, Arc::new(filesystem::FilesystemOrchestrator::new()))
+        RuffAdapter::new(
+            executor,
+            None,
+            Arc::new(filesystem::FilesystemOrchestrator::new()),
+        )
     }
 
     struct EmptyLintExecutor;

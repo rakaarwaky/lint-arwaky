@@ -2,10 +2,10 @@ use shared::common::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::Format;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::FilePath;
 use shared::common::LayerMapVO;
 use shared::config_system::IConfigOrchestratorAggregate;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use crate::surface_output_component::{ViolationItem, output_violations};
 

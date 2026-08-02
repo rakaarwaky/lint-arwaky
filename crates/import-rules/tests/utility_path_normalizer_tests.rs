@@ -1,6 +1,6 @@
 extern crate shared_lint_arwaky as shared;
 
-use shared::import_rules::utility_path_normalizer::{extract_layer_from_prefix, get_relative_path};
+use import_rules_lint_arwaky::utility_path_normalizer::{extract_layer_from_prefix, get_relative_path};
 
 // ─── Regression Tests for Phase 3 Fixes ──────────────────────────────────────────
 

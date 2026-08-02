@@ -9,8 +9,8 @@ use shared::common::{LayerMapVO, LayerNameVO, LintMessage};
 use shared::config_system::ArchitectureConfig;
 use shared::naming_rules::ISuffixPrefixChecker;
 use shared::naming_rules::NamingViolation;
-use shared::naming_rules::utility_naming_checker::string_filename_result;
-use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
+use crate::utility_naming_checker::string_filename_result;
+use crate::utility_naming_checker::{get_stem, get_suffix};
 use shared::naming_rules::{RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 
 // ─── Block 1: Struct Definition ───────────────────────────

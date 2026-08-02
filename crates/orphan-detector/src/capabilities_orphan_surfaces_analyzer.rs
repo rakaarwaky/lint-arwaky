@@ -3,7 +3,7 @@
 
 use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult, ReachabilityResult};
 use shared::common::{FilePath, LayerDefinition, Severity};
-use shared::orphan_detector::utility_orphan_filename::{file_basename, file_stem, file_suffix};
+use crate::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::orphan_detector::{AesOrphanViolation, ISurfacesOrphanProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────

@@ -1,8 +1,8 @@
 use crate::surface_common_action;
 use crate::surface_output_component::{ViolationItem, output_violations};
 use shared::cli_commands::Format;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::{ExitCode, FilePath};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
 use shared::orphan_detector::IOrphanAggregate;

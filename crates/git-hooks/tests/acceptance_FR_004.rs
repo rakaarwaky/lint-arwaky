@@ -2,12 +2,12 @@
 // REQ: The crate's own source complies with AES rules when complete.
 // Maps to: FRD Success Indicator #4
 
-use std::sync::Arc;
 use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
+use std::sync::Arc;
 
 /// FRD-004: All public types are constructible (no dead code)
 #[test]

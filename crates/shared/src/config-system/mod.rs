@@ -12,9 +12,6 @@ pub mod taxonomy_multi_project_workspace_info_vo;
 pub mod taxonomy_setting_vo;
 pub mod taxonomy_source_vo;
 pub mod taxonomy_validation_vo;
-pub mod utility_config_defaults;
-pub mod utility_config_merger;
-pub mod utility_config_parser;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

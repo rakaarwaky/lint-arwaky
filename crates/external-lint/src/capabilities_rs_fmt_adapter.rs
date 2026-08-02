@@ -22,9 +22,9 @@ use shared::common::{
     LocationList, PatternList,
 };
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::path::Path;
 use std::sync::Arc;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use tracing::debug;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -34,7 +34,7 @@ use tracing::debug;
 /// Parses rustfmt's unified diff output to create per-difference LintResults.
 /// When no Cargo.toml is found, the scan is silently skipped.
 pub struct RustFmtAdapter {
-        pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
     executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
@@ -152,7 +152,9 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl RustFmtAdapter {
-    pub fn new(executor: Arc<dyn ICommandExecutorProtocol>, bin_path: Option<FilePath>,
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        bin_path: Option<FilePath>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         Self {

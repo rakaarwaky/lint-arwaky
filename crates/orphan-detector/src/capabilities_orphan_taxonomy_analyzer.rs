@@ -4,7 +4,7 @@
 use shared::code_analysis::{InboundLinkMap, OrphanIndicatorResult};
 use shared::common::LayerDefinition;
 use shared::common::{FilePath, Severity};
-use shared::orphan_detector::utility_orphan_filename::file_stem;
+use crate::utility_orphan_filename::file_stem;
 use shared::orphan_detector::{AesOrphanViolation, ITaxonomyOrphanProtocol};
 
 // ─── Block 1: Struct Definition ───────────────────────────

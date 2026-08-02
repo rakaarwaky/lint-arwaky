@@ -5,7 +5,6 @@ use std::sync::Arc;
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use config_system::ConfigParserProvider;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 fn bench_select_adapters(c: &mut Criterion) {
@@ -48,7 +47,10 @@ fn bench_container_creation(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    std::hint::black_box(external_lint_lint_arwaky::ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new())));
+                    std::hint::black_box(external_lint_lint_arwaky::ExternalLintContainer::new(
+                        Arc::new(filesystem::FilesystemOrchestrator::new()),
+                        Arc::new(config_system::ConfigParserProvider::new()),
+                    ));
                 }
             });
         });
@@ -64,7 +66,10 @@ fn bench_adapter_names(c: &mut Criterion) {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_with_input(BenchmarkId::new("calls", n), &n, |b, val| {
             let count = *val;
-            let container = external_lint_lint_arwaky::ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+            let container = external_lint_lint_arwaky::ExternalLintContainer::new(
+                Arc::new(filesystem::FilesystemOrchestrator::new()),
+                Arc::new(config_system::ConfigParserProvider::new()),
+            );
             let aggregate = container.aggregate();
             b.iter(|| {
                 for _ in 0..count {

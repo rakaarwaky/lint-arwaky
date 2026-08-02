@@ -27,7 +27,10 @@ edition = "2021"
     .unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     // Should not panic regardless of whether clippy/rustfmt are installed
@@ -42,7 +45,10 @@ async fn scan_python_project_does_not_crash() {
     fs::write(dir.path().join("app.py"), "x: int = 'not an int'\n").unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     let results = aggregate.scan_all(&path).await;
@@ -60,7 +66,10 @@ async fn scan_js_project_does_not_crash() {
     fs::write(dir.path().join("index.ts"), "const x: number = 'oops';\n").unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     let results = aggregate.scan_all(&path).await;
@@ -75,7 +84,10 @@ async fn scan_mixed_project_detects_all_languages() {
     fs::write(dir.path().join("index.ts"), "export {}").unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     // All 9 adapters should be attempted
@@ -94,7 +106,10 @@ async fn scan_single_file_path_works() {
     fs::write(&file, "import os\n").unwrap();
 
     let path = FilePath::new(file.to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     let results = aggregate.scan_all(&path).await;
@@ -104,7 +119,10 @@ async fn scan_single_file_path_works() {
 #[tokio::test]
 async fn scan_nonexistent_path_does_not_crash() {
     let path = FilePath::new("/nonexistent/path/xyz_12345".to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     // Should not panic — language detection finds nothing, no adapters run

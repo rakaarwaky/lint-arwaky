@@ -4,12 +4,12 @@
 // Speed: s–min (release gate / nightly)
 // Best practices: significance_level(0.05), sample_size(30+), reuse runtime across iterations
 
-use std::sync::Arc;
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use shared::common::taxonomy_git_vo::GitBranchName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use std::sync::Arc;
 
 fn bench_get_default_branch(c: &mut Criterion) {
     let checker = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));

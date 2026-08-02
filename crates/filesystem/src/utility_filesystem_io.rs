@@ -941,11 +941,7 @@ fn walk_py_files_inner(dir: &Path, files: &mut Vec<FilePath>) {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or_default();
-                if name != "target"
-                    && name != ".git"
-                    && name != "node_modules"
-                    && name != ".venv"
-                {
+                if name != "target" && name != ".git" && name != "node_modules" && name != ".venv" {
                     walk_py_files_inner(&path, files);
                 }
             } else if path.is_file()
@@ -1177,7 +1173,6 @@ pub fn cache_clear_str() {
     STRING_CACHE.clear();
 }
 
-
 // ─── File Metadata ────────────────────────────────────────
 
 /// Get file/directory metadata.
@@ -1228,7 +1223,6 @@ pub fn read_file_safe_str(path: &str) -> String {
     std::fs::read_to_string(path).unwrap_or_default()
 }
 
-
 // ─── Generic Read Dir ──────────────────────────────────────
 
 /// Read directory entries (generic, returns Vec<String> of path strings).
@@ -1270,9 +1264,7 @@ pub fn collect_file_entries(files: &[String]) -> Vec<(PathBuf, String)> {
         if !is_lintable_file(&fp) {
             continue;
         }
-        let content = match cache_get_by_str(&fp.value)
-            .map_or_else(|| read_file(&fp.value), Ok)
-        {
+        let content = match cache_get_by_str(&fp.value).map_or_else(|| read_file(&fp.value), Ok) {
             Ok(c) => c,
             Err(_) => continue,
         };
@@ -1285,13 +1277,10 @@ pub fn collect_file_entries(files: &[String]) -> Vec<(PathBuf, String)> {
 pub fn detect_language_from_path(path: &str) -> ConfigLanguage {
     let path_buf = std::path::PathBuf::from(path);
 
-    if path_exists(path_buf.join("Cargo.toml"))
-        || path_contains_component(&path_buf, "crates")
-    {
+    if path_exists(path_buf.join("Cargo.toml")) || path_contains_component(&path_buf, "crates") {
         return ConfigLanguage::Rust;
     }
-    if path_exists(path_buf.join("package.json"))
-        || path_contains_component(&path_buf, "packages")
+    if path_exists(path_buf.join("package.json")) || path_contains_component(&path_buf, "packages")
     {
         return ConfigLanguage::TypeScript;
     }
@@ -1332,8 +1321,7 @@ pub fn read_cached(path: &FilePath) -> ContentString {
         return ContentString::new(content.clone());
     }
 
-    let content = cache_get_by_str(path.value())
-        .unwrap_or_else(|| read_file_safe(path.value()));
+    let content = cache_get_by_str(path.value()).unwrap_or_else(|| read_file_safe(path.value()));
 
     if cache.len() < MAX_CACHE_ENTRIES {
         cache.insert(path.value().to_string(), content.clone());
@@ -1359,14 +1347,11 @@ pub fn clear_file_cache() {
     cache.clear();
 }
 
-
 // ─── Migrated from utility_external_lint ─────────────────────
 
 /// Canonicalize a path string to absolute, returning as String.
 pub fn canonicalize_path_str(path_str: &str) -> String {
-    canonicalize_path(path_str)
-        .to_string_lossy()
-        .to_string()
+    canonicalize_path(path_str).to_string_lossy().to_string()
 }
 
 /// Create a default `"."` working directory, falling back to the given path if it fails.
@@ -1375,8 +1360,13 @@ pub fn default_working_dir(path: &FilePath) -> FilePath {
 }
 
 /// No-op apply_fix for linters that cannot auto-fix (scanners, type-checkers).
-pub async fn noop_apply_fix() -> Result<crate::common::taxonomy_message_vo::ComplianceStatus, crate::code_analysis::taxonomy_operation_error::LinterOperationError> {
-    Ok(crate::common::taxonomy_message_vo::ComplianceStatus::new(false))
+pub async fn noop_apply_fix() -> Result<
+    crate::common::taxonomy_message_vo::ComplianceStatus,
+    crate::code_analysis::taxonomy_operation_error::LinterOperationError,
+> {
+    Ok(crate::common::taxonomy_message_vo::ComplianceStatus::new(
+        false,
+    ))
 }
 
 /// Return true if the given path contains any Python (`.py`) files (recursive).
@@ -1510,7 +1500,9 @@ pub fn resolve_cargo_lock_working_dir(path: &FilePath) -> FilePath {
 /// Walk parent directories from `start` to locate the workspace root:
 /// a directory that holds a member dir (crates/packages/modules) AND a
 /// manifest (Cargo.toml / package.json / pyproject.toml).
-pub fn find_workspace_root_from_path(start: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> {
+pub fn find_workspace_root_from_path(
+    start: &std::path::Path,
+) -> Result<std::path::PathBuf, std::io::Error> {
     let member_dirs = ["crates", "packages", "modules"];
     let mut current = start.to_path_buf();
     loop {
@@ -1615,12 +1607,14 @@ pub fn collect_source_files_from_path(dir: &std::path::Path, files: &mut Vec<Str
     }
 }
 
-
 // ─── Migrated from utility_git_io ────────────────────────────
 
 /// Execute a git command and return stdout/stderr/success status.
 pub fn run_git_command(args: &[&str], dir: &str) -> (String, String, bool) {
-    let output = std::process::Command::new("git").args(args).current_dir(dir).output();
+    let output = std::process::Command::new("git")
+        .args(args)
+        .current_dir(dir)
+        .output();
 
     match output {
         Ok(o) => (
@@ -1768,7 +1762,11 @@ pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
 }
 
 /// Resolve a module path relative to a base directory, confined under root.
-pub fn resolve_orphan_module_path(root: &Path, base_dir: &Path, module_path: &str) -> Option<PathBuf> {
+pub fn resolve_orphan_module_path(
+    root: &Path,
+    base_dir: &Path,
+    module_path: &str,
+) -> Option<PathBuf> {
     let candidate = if Path::new(module_path).is_absolute() {
         PathBuf::from(module_path)
     } else {

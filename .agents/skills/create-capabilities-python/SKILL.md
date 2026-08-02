@@ -31,7 +31,7 @@ Capabilities = concrete protocol ABC implementation. File: `capabilities_<domain
 
 **External:** repository, gateway, client, provider, fetcher, reader, writer, scanner, executor, publisher, subscriber, adapter, connector, uploader, downloader, sender, receiver, dispatcher, watcher, monitor
 
-## AES403 Rules
+## Structure Rules
 
 - Rule 1: Internal helper classes without ABC → ALLOWED.
 - Rule 2: ≥1 class inherits a protocol ABC.
@@ -94,6 +94,7 @@ class I<Name>Protocol(ABC):
     @abstractmethod
     def method_name(self, param: <VO>) -> None: ...
 ```
+
 ## Workflow
 
 1. Confirm implements protocol behavior (not orchestration/data/mechanics).

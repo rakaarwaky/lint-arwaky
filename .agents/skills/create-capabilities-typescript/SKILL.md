@@ -31,7 +31,7 @@ Capabilities = concrete protocol interface implementation. File: `capabilities_<
 
 **External:** repository, gateway, client, provider, fetcher, reader, writer, scanner, executor, publisher, subscriber, adapter, connector, uploader, downloader, sender, receiver, dispatcher, watcher, monitor
 
-## AES403 Rules
+## Structure Rules
 
 - Rule 1: Internal helper classes without `implements` → ALLOWED.
 - Rule 2: ≥1 class implements a protocol interface.
@@ -92,6 +92,7 @@ export interface I<Name>Protocol {
     methodName(param: <VO>): void;
 }
 ```
+
 ## Workflow
 
 1. Confirm implements protocol behavior (not orchestration/data/mechanics).

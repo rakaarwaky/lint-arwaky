@@ -56,8 +56,11 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         let wd = self.filesystem.resolve_js_working_dir(path);
         let abs_path = self.filesystem.canonicalize_path_str(path_str);
 
-        let cmd = match self.filesystem.resolve_js_cmd("prettier", vec!["--check".to_string(), abs_path], &wd.value)
-        {
+        let cmd = match self.filesystem.resolve_js_cmd(
+            "prettier",
+            vec!["--check".to_string(), abs_path],
+            &wd.value,
+        ) {
             Some(c) => c,
             None => return Ok(LintResultList::default()),
         };

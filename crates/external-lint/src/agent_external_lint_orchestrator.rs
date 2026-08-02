@@ -50,7 +50,13 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         let root_path = std::path::Path::new(&path.value);
         let (has_rs, has_py, has_js) =
             Self::detect_languages_from_fs(&*self.deps.filesystem, root_path);
-        let ignored_paths = load_ignored_paths_from_config(root_path, has_rs, has_py, has_js, &*self.deps.config_parser);
+        let ignored_paths = load_ignored_paths_from_config(
+            root_path,
+            has_rs,
+            has_py,
+            has_js,
+            &*self.deps.config_parser,
+        );
 
         // FR-002: Select adapters using the selector + config entries.
         let selector = CapabilitiesExternalLintSelector::with_defaults();
@@ -61,8 +67,13 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             .collect();
 
         // Parse config entries (with weight/timeout) and filter by enabled status
-        let config_entries: Vec<AdapterEntry> =
-            load_adapter_entries_from_config(root_path, has_rs, has_py, has_js, &*self.deps.config_parser);
+        let config_entries: Vec<AdapterEntry> = load_adapter_entries_from_config(
+            root_path,
+            has_rs,
+            has_py,
+            has_js,
+            &*self.deps.config_parser,
+        );
         let adapter_names: Vec<&str> = if config_entries.is_empty() {
             selected.iter().map(|s| s.as_str()).collect()
         } else {

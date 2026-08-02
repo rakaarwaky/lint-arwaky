@@ -3,8 +3,8 @@ use shared::code_analysis::{
     AesCodeAnalysisViolation, IDeadInheritanceProtocol, IMandatoryClassProtocol,
 };
 
-use shared::code_analysis::utility_bypass_detector::skip_cfg_test_block;
-use shared::code_analysis::utility_mandatory_checker::rust_declares_type;
+use crate::utility_bypass_detector::skip_cfg_test_block;
+use crate::utility_mandatory_checker::rust_declares_type;
 use shared::common::{LayerDefinition, LintMessage, Severity};
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.

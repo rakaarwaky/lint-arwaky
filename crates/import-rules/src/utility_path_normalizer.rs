@@ -27,10 +27,12 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
 }
 
 pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-    let normalized_file = std::fs::canonicalize(file_path).unwrap_or_else(|_| std::path::PathBuf::from(file_path))
+    let normalized_file = std::fs::canonicalize(file_path)
+        .unwrap_or_else(|_| std::path::PathBuf::from(file_path))
         .to_string_lossy()
         .replace('\\', "/");
-    let normalized_root = std::fs::canonicalize(root_dir).unwrap_or_else(|_| std::path::PathBuf::from(root_dir))
+    let normalized_root = std::fs::canonicalize(root_dir)
+        .unwrap_or_else(|_| std::path::PathBuf::from(root_dir))
         .to_string_lossy()
         .replace('\\', "/")
         .trim_end_matches('/')

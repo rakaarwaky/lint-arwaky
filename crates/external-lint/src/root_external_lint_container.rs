@@ -33,7 +33,10 @@ impl ExternalLintContainer {
         ));
 
         let lint_executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(
-            crate::capabilities_external_lint_executor::ExternalLintExecutor::new(executor.clone(), filesystem.clone()),
+            crate::capabilities_external_lint_executor::ExternalLintExecutor::new(
+                executor.clone(),
+                filesystem.clone(),
+            ),
         );
 
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
@@ -83,11 +86,13 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "clippy".to_string(),
-            Arc::new(crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
-                executor.clone(),
-                None,
-                filesystem.clone(),
-            )),
+            Arc::new(
+                crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
+                    executor.clone(),
+                    None,
+                    filesystem.clone(),
+                ),
+            ),
         );
         adapters.insert(
             "rustfmt".to_string(),
@@ -99,7 +104,9 @@ impl ExternalLintContainer {
         );
         adapters.insert(
             "cargo-audit".to_string(),
-            Arc::new(crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(filesystem.clone())),
+            Arc::new(
+                crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(filesystem.clone()),
+            ),
         );
 
         Self {

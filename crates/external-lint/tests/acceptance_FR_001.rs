@@ -16,7 +16,10 @@ async fn frd_001_missing_tools_do_not_crash_scan() {
     fs::write(dir.path().join("index.ts"), "export {}").unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     // Even if none of the 9 tools are installed, scan_all must not panic
@@ -35,7 +38,10 @@ async fn frd_002_partial_tool_availability_still_returns_results() {
     fs::write(dir.path().join("app.py"), "import os\nprint('hello')\n").unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     // Should not crash even if ruff/mypy/bandit are not installed
@@ -51,7 +57,10 @@ async fn frd_003_empty_project_returns_empty_results() {
     let dir = tempfile::tempdir().unwrap();
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
+    let container = ExternalLintContainer::new(
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+        Arc::new(config_system::ConfigParserProvider::new()),
+    );
     let aggregate = container.aggregate();
 
     let results = aggregate.scan_all(&path).await;

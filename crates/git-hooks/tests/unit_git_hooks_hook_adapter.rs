@@ -3,13 +3,16 @@
 // Layer: Capabilities (GitHookAdapter)
 // Speed: ms
 
-use std::sync::Arc;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::FilePath;
 use shared::git_hooks::IHookManagerProtocol;
+use std::sync::Arc;
 
 fn sut_in_non_repo() -> GitHookAdapter {
-    GitHookAdapter::new(FilePath::new("/tmp/nonexistent_repo_test_xyz").unwrap_or_default(), Arc::new(filesystem::FilesystemOrchestrator::new()))
+    GitHookAdapter::new(
+        FilePath::new("/tmp/nonexistent_repo_test_xyz").unwrap_or_default(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    )
 }
 
 // ─── Construction ─────────────────────────────────────────

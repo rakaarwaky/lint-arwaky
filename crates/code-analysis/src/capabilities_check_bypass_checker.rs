@@ -10,7 +10,7 @@ use std::borrow::Cow;
 use shared::cli_commands::LintResult;
 use shared::code_analysis::{CodeAnalysisRuleVO, IBypassCheckerProtocol};
 
-use shared::code_analysis::utility_bypass_detector::{
+use crate::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
     starts_with_allow_attr, strip_trailing_comment,
 };
@@ -18,8 +18,8 @@ use shared::code_analysis::{
     AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
 };
 
-use shared::code_analysis::utility_column_index;
-use shared::code_analysis::utility_language_mapper::code_analysis_language_from_file;
+use crate::utility_column_index;
+use crate::utility_language_mapper::code_analysis_language_from_file;
 use shared::common::{LintMessage, PatternList, Severity};
 
 use shared::common::utility_value_object_generator;

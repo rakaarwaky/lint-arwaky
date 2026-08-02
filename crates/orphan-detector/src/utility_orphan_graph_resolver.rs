@@ -20,7 +20,10 @@ fn _scan_dir_recursive(dir: &std::path::Path, files: &mut Vec<String>) {
             }
             let path = entry.path();
             if path.is_dir() {
-                if matches!(name.as_str(), "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv") {
+                if matches!(
+                    name.as_str(),
+                    "target" | "node_modules" | "dist" | "build" | "__pycache__" | ".venv"
+                ) {
                     continue;
                 }
                 _scan_dir_recursive(&path, files);

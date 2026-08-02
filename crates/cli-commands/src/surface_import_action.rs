@@ -2,8 +2,8 @@ use shared::common::ExitCode;
 use std::sync::Arc;
 
 use shared::cli_commands::Format;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::common::FilePath;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::import_rules::IImportRunnerAggregate;
 
 use crate::surface_common_action;

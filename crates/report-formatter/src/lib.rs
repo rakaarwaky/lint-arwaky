@@ -8,6 +8,7 @@ pub mod capabilities_json_formatter;
 pub mod capabilities_junit_formatter;
 pub mod capabilities_sarif_formatter;
 pub mod capabilities_text_formatter;
+pub mod utility_report_format;
 
 pub use agent_report_formatter_orchestrator::{ReportFormatterDeps, ReportFormatterOrchestrator};
 pub use capabilities_json_formatter::JsonFormatter;

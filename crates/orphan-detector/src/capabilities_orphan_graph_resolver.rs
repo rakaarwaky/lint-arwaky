@@ -7,8 +7,8 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::IOrphanGraphResolverProtocol;
 use shared::orphan_detector::IOrphanParserProtocol;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
-use shared::orphan_detector::utility_orphan_filename::file_stem;
-use shared::orphan_detector::utility_orphan_graph_resolver;
+use crate::utility_orphan_filename::file_stem;
+use crate::utility_orphan_graph_resolver;
 use shared::orphan_detector::{OrphanEntryPatternListVO, OrphanFileListVO};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
@@ -112,7 +112,7 @@ impl IOrphanGraphResolverProtocol for OrphanGraphResolver {
                 .filter(|f| {
                     let basename = f.rsplit('/').next().unwrap_or(f);
                     let stem =
-                        shared::orphan_detector::utility_orphan_filename::file_stem(basename);
+                        crate::utility_orphan_filename::file_stem(basename);
                     configured_strs.iter().any(|pattern| {
                         basename == pattern
                             || stem == *pattern
@@ -327,10 +327,9 @@ impl OrphanGraphResolver {
                                 Some(p) => p.to_path_buf(),
                                 None => continue,
                             };
-                            if let Some(resolved_path) =
-                                self.filesystem.resolve_orphan_module_path(
-                                    root_path, &base_dir, path_attr,
-                                )
+                            if let Some(resolved_path) = self
+                                .filesystem
+                                .resolve_orphan_module_path(root_path, &base_dir, path_attr)
                             {
                                 let resolved = resolved_path.to_string_lossy().to_string();
                                 if std::path::PathBuf::from(&resolved).is_file() && resolved != *f {
@@ -588,7 +587,7 @@ impl OrphanGraphResolver {
                         .and_then(|s| s.to_str())
                         .unwrap_or_default();
                     let normalized_stem =
-                        shared::orphan_detector::utility_orphan_detector::normalize_module_component(stem);
+                        crate::utility_orphan_detector::normalize_module_component(stem);
                     if (stem == module_name || normalized_stem == module_name)
                         && path_str != current_file
                     {

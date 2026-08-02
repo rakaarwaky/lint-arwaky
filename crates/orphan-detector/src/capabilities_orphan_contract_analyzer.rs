@@ -3,12 +3,12 @@
 
 use shared::code_analysis::{InheritanceMap, OrphanIndicatorResult};
 use shared::common::{FilePath, Severity};
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_detector::utility_orphan_filename::{file_basename, file_suffix};
+use crate::utility_orphan_filename::{file_basename, file_suffix};
 use shared::orphan_detector::{AesOrphanViolation, IContractOrphanProtocol, IOrphanParserProtocol};
 use std::collections::HashMap;
 use std::sync::Arc;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Mutex;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -168,7 +168,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
 
 impl Default for ContractOrphanAnalyzer {
     fn default() -> Self {
-        let filesystem: Arc<dyn IFilesystemAggregate> = Arc::new(filesystem::FilesystemOrchestrator::new());
+        let filesystem: Arc<dyn IFilesystemAggregate> =
+            Arc::new(filesystem::FilesystemOrchestrator::new());
         Self::new(
             Arc::new(crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new()),
             filesystem,
@@ -177,7 +178,8 @@ impl Default for ContractOrphanAnalyzer {
 }
 
 impl ContractOrphanAnalyzer {
-    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
+    pub fn new(
+        parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         Self {
@@ -314,9 +316,10 @@ impl ContractOrphanAnalyzer {
 
     fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {
         let root = std::path::Path::new(root_dir.value()).to_path_buf();
-        let top_root =
-            self.filesystem.find_workspace_root_from_path(&root)
-                .unwrap_or_else(|_| root.clone());
+        let top_root = self
+            .filesystem
+            .find_workspace_root_from_path(&root)
+            .unwrap_or_else(|_| root.clone());
         if let Ok(mut guard) = self.search_cache.lock() {
             if let Some(cache) = guard.as_ref()
                 && cache.root == top_root
@@ -328,7 +331,8 @@ impl ContractOrphanAnalyzer {
             for ws_dir in &["crates", "packages", "modules"] {
                 let ws_path = top_root.join(ws_dir);
                 if ws_path.exists() {
-                    self.filesystem.collect_source_files_from_path(&ws_path, &mut search_files);
+                    self.filesystem
+                        .collect_source_files_from_path(&ws_path, &mut search_files);
                 }
             }
             let files = Arc::new(search_files);

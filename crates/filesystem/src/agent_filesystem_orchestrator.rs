@@ -5,14 +5,14 @@
 // Implements IFilesystemAggregate trait.
 
 use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IImportExtractorProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, FilesystemResult, GraphData, ImplEntry, ImportEntry, Language,
     ParseMetadata, ParseWarning, ScanTiming,
 };
-use shared::common::taxonomy_source_vo::ContentString;
-use shared::filesystem::utility_filesystem_io;
+use crate::utility_filesystem_io;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, OnceLock, RwLock};
@@ -646,7 +646,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::get_parent(path)
     }
 
-
     // ── Canonicalize (String variant) ─────────────────────────
 
     fn canonicalize_path_str(&self, path_str: &str) -> String {
@@ -655,7 +654,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     // ── Path Resolution (external-lint) ───────────────────────
 
-    fn resolve_js_cmd(&self, executable: &str, args: Vec<String>, working_dir: &str) -> Option<Vec<String>> {
+    fn resolve_js_cmd(
+        &self,
+        executable: &str,
+        args: Vec<String>,
+        working_dir: &str,
+    ) -> Option<Vec<String>> {
         utility_filesystem_io::resolve_js_cmd(executable, args, working_dir)
     }
 
@@ -709,13 +713,21 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     // ── Orphan Detection ──────────────────────────────────────
 
-    fn resolve_orphan_module_path(&self, root: &Path, base_dir: &Path, module_path: &str) -> Option<PathBuf> {
+    fn resolve_orphan_module_path(
+        &self,
+        root: &Path,
+        base_dir: &Path,
+        module_path: &str,
+    ) -> Option<PathBuf> {
         utility_filesystem_io::resolve_orphan_module_path(root, base_dir, module_path)
     }
 
     // ── Language Detection ────────────────────────────────────
 
-    fn detect_language_from_path(&self, path: &str) -> shared::config_system::taxonomy_config_language_vo::ConfigLanguage {
+    fn detect_language_from_path(
+        &self,
+        path: &str,
+    ) -> shared::config_system::taxonomy_config_language_vo::ConfigLanguage {
         utility_filesystem_io::detect_language_from_path(path)
     }
 
@@ -737,7 +749,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     // ── Process Execution (external) ──────────────────────────
 
-    fn run_external_command_in(&self, name: &str, args: &[&str], current_dir: &str) -> (String, String, bool) {
+    fn run_external_command_in(
+        &self,
+        name: &str,
+        args: &[&str],
+        current_dir: &str,
+    ) -> (String, String, bool) {
         utility_filesystem_io::run_external_command_in(name, args, current_dir)
     }
 
@@ -757,8 +774,14 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     // ── Noop (linter compatibility) ───────────────────────────
 
-    fn noop_apply_fix(&self) -> Result<shared::common::taxonomy_message_vo::ComplianceStatus, shared::code_analysis::taxonomy_operation_error::LinterOperationError> {
-        Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(false))
+    fn noop_apply_fix(
+        &self,
+    ) -> Result<
+        shared::common::taxonomy_message_vo::ComplianceStatus,
+        shared::code_analysis::taxonomy_operation_error::LinterOperationError,
+    > {
+        Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
+            false,
+        ))
     }
-
 }
