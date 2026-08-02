@@ -13,6 +13,7 @@ Before starting, read:
 
 1. **`ARCHITECTURE.md`** — 7-layer spec (to avoid breaking architecture during implementation)
 2. **`.agents/rules/RULES_AES.md`** — All AES rules (to avoid introducing violations during implementation)
+3. **`.agents/skills/`** Use skill driven development
 
 ## Workflow
 
