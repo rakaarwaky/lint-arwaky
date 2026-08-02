@@ -2,7 +2,7 @@
 
 Read before making any changes to the codebase.
 Make sure to read [TEST.md](TEST.md) for pass/fail criteria before committing any changes.
-See also [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
+
 
 ## Build & dev
 
@@ -64,7 +64,7 @@ cargo clippy --all-targets -- -D warnings
 cargo clippy -p import_rules -- -D warnings # per crate
 ```
 
-## Architecture (7-layer AES + Vertical Slicing + Multi-Crate Workspace)
+## Architecture 
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full layer specifications, naming conventions, and concrete examples.
 
@@ -72,7 +72,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full layer specifications, naming
 
 See [README.md](README.md) for the feature crate overview.
 
-## Branch management (CRITICAL — must follow)
+## Branch management 
 
 Allowed branch naming:
 

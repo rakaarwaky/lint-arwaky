@@ -9,7 +9,7 @@ The filesystem crate produces filesystem data for all feature crates.
 ### Architecture
 
 ```
-Consumer crate
+Consumer 
   └→ import IFilesystemAggregate
        └→ Container (root) — creates capabilities, injects via Arc<dyn Trait>
             └→ Orchestrator (agent) — zero I/O, delegates to 5 protocol traits
@@ -236,14 +236,14 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 ### IGraphProtocol (6 operations)
 
 
-| Operation          | Input                                                            | Output                            |
-| -------------------- | ------------------------------------------------------------------ | ----------------------------------- |
-| reverse_links      | —                                                               | `&HashMap<PathBuf, Vec<PathBuf>>` |
-| symbol_definitions | —                                                               | `&HashMap<String, Vec<PathBuf>>`  |
-| implementations    | —                                                               | `&HashMap<String, Vec<PathBuf>>`  |
-| dependents         | `&Path`                                                          | `Vec<PathBuf>`                    |
-| dependencies       | `&Path`                                                          | `Vec<PathBuf>`                    |
-| reachable          | `&Path, &Path`                                                   | `bool`                            |
+| Operation          | Input          | Output                            |
+| -------------------- | ---------------- | ----------------------------------- |
+| reverse_links      | —             | `&HashMap<PathBuf, Vec<PathBuf>>` |
+| symbol_definitions | —             | `&HashMap<String, Vec<PathBuf>>`  |
+| implementations    | —             | `&HashMap<String, Vec<PathBuf>>`  |
+| dependents         | `&Path`        | `Vec<PathBuf>`                    |
+| dependencies       | `&Path`        | `Vec<PathBuf>`                    |
+| reachable          | `&Path, &Path` | `bool`                            |
 
 ### IFileSystemIOProtocol (29 operations)
 
