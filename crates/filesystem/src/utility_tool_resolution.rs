@@ -178,16 +178,13 @@ pub fn has_config_file(dir_path: &Path) -> bool {
         "setup.cfg",
         ".flake8",
     ];
-    dir_path
-        .read_dir()
-        .into_iter()
-        .flatten()
-        .flatten()
-        .any(|e| {
-            let name = e.file_name();
+    crate::utility_filesystem_io::scan_directory(dir_path)
+        .iter()
+        .any(|path| {
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
             CONFIG_NAMES.iter().any(|c| name == *c)
-                || name.to_string_lossy().ends_with(".config.js")
-                || name.to_string_lossy().ends_with(".config.ts")
+                || name.ends_with(".config.js")
+                || name.ends_with(".config.ts")
         })
 }
 

@@ -49,11 +49,6 @@ pub fn write_string(path: &Path, content: &str) -> Result<(), std::io::Error> {
     std::fs::write(path, content)
 }
 
-/// Write text content to a file.
-pub fn write_text_to_file(path: &Path, text: &str) -> Result<(), String> {
-    write_file(path, text.as_bytes()).map_err(|e| format!("Failed to write file: {e}"))
-}
-
 /// Copy file from src to dst.
 pub fn copy_file(src: &Path, dst: &Path) -> Result<u64, std::io::Error> {
     std::fs::copy(src, dst)
