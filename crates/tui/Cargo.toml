@@ -7,7 +7,7 @@ license = "MIT"
 
 [dependencies]
 shared = { workspace = true }
-filesystem = { workspace = true }
+dispatcher = { workspace = true }
 config-system = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
@@ -19,19 +19,6 @@ ratatui = { workspace = true }
 crossterm = { workspace = true }
 arboard = { workspace = true }
 rayon = { workspace = true }
-naming-rules = { workspace = true }
-import-rules = { workspace = true }
-quality-rules = { workspace = true }
-orphan-rules = { workspace = true }
-role-rules = { workspace = true }
-external-lint = { workspace = true }
-auto-fix = { workspace = true }
-git-hooks = { workspace = true }
-file-watch = { workspace = true }
-project-setup = { workspace = true }
-maintenance = { workspace = true }
-report-formatter = { workspace = true }
-cli-commands = { workspace = true }
 
 [lints]
 workspace = true

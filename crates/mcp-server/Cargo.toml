@@ -7,8 +7,7 @@ license = "MIT"
 
 [dependencies]
 shared = { workspace = true }
-filesystem = { workspace = true }
-config-system = { workspace = true }
+dispatcher = { workspace = true }
 serde_json = { workspace = true }
 rmcp = { workspace = true }
 dirs = { workspace = true }
@@ -16,16 +15,7 @@ once_cell = { workspace = true }
 regex = { workspace = true }
 rayon = { workspace = true }
 tokio = { workspace = true }
-quality-rules = { workspace = true }
-import-rules = { workspace = true }
-naming-rules = { workspace = true }
-orphan-rules = { workspace = true }
-role-rules = { workspace = true }
-external-lint = { workspace = true }
-auto-fix = { workspace = true }
-git-hooks = { workspace = true }
-project-setup = { workspace = true }
-maintenance = { workspace = true }
+
 
 [lints]
 workspace = true
