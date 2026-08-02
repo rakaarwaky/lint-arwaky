@@ -4,6 +4,7 @@ use shared::tui::{IActionHandlerProtocol, ILintExecutorProtocol, LintExecutionRe
 use shared::tui::TuiEvent;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // PURPOSE: Capabilities-layer action handler — the central state machine for TUI events.
 // Translates every TuiEvent into a state mutation or I/O operation (filesystem/lint).
@@ -18,6 +19,7 @@ use crate::utility_file_system;
 /// Filesystem operations use direct utility calls instead of protocol ports.
 pub struct ActionHandler {
     lint_port: Arc<dyn ILintExecutorProtocol>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -114,8 +116,8 @@ impl IActionHandlerProtocol for ActionHandler {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ActionHandler {
-    pub fn new(lint_port: Arc<dyn ILintExecutorProtocol>) -> Self {
-        Self { lint_port }
+    pub fn new(lint_port: Arc<dyn ILintExecutorProtocol>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { lint_port, filesystem }
     }
 
     /// Main event dispatch — maps every TuiEvent variant to a concrete action.
@@ -436,7 +438,7 @@ impl ActionHandler {
     }
 
     /// Copy the current preview content to a file `lint-results.txt` in the current directory.
-    /// Delegates I/O to shared::filesystem::utility_filesystem_io::write_text_to_file().
+    /// Delegates I/O to self.filesystem.write_text_to_file().
     fn copy_to_file(&self, state: &mut AppState) {
         let text = &state.preview_text;
         if text.is_empty() {
@@ -445,7 +447,7 @@ impl ActionHandler {
         }
 
         let path = std::path::Path::new("lint-results.txt");
-        match shared::filesystem::utility_filesystem_io::write_text_to_file(path, text) {
+        match self.filesystem.write_text_to_file(path, text) {
             Ok(()) => state.set_status("Saved to lint-results.txt"),
             Err(e) => state.set_status(format!("Save failed: {e}")),
         }

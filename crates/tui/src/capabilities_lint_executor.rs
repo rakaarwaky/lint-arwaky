@@ -18,6 +18,7 @@ use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecution
 
 use shared::filesystem::IFilesystemAggregate;
 use std::sync::Arc;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
 // Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)
@@ -693,10 +694,12 @@ impl LintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         watch_aggregate: Option<Arc<dyn IWatchAggregate>>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         Self {
             code_analysis,
             watch_aggregate,
+            filesystem,
             fix_orchestrator: None,
             setup_aggregate: None,
             maintenance: None,
@@ -854,8 +857,8 @@ impl LintExecutor {
     }
 
     /// Check if a binary is available in the system PATH.
-    fn is_binary_available(b: &str) -> bool {
-        shared::filesystem::utility_filesystem_io::is_binary_available(b)
+    fn is_binary_available(b: &str, filesystem: &dyn IFilesystemAggregate) -> bool {
+        filesystem.is_binary_available(b)
     }
 
     /// Discover available linter adapters and check binary availability.
@@ -885,7 +888,7 @@ impl LintExecutor {
             list.push(AdapterInfo {
                 name: b.into(),
                 label: l.into(),
-                installed: Self::is_binary_available(b),
+                installed: Self::is_binary_available(b, &self.filesystem),
             });
         }
         list

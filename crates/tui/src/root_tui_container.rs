@@ -92,7 +92,7 @@ impl TuiContainer {
                 .with_multi_project_orchestrator(config_container.orchestrator()),
         );
         let action_handler: Arc<dyn IActionHandlerProtocol> =
-            Arc::new(ActionHandler::new(lint_executor));
+            Arc::new(ActionHandler::new(lint_executor, filesystem.clone()));
         let tui_aggregate: Arc<dyn ITuiAggregate> = Arc::new(TuiOrchestrator::new(action_handler));
         let surface = TuiCommandSurface::new(tui_aggregate);
         surface.run()?;
