@@ -328,7 +328,7 @@ impl OrphanGraphResolver {
                                 None => continue,
                             };
                             if let Some(resolved_path) =
-                                shared::filesystem::utility_filesystem_io::resolve_orphan_module_path(
+                                self.filesystem.resolve_orphan_module_path(
                                     root_path, &base_dir, path_attr,
                                 )
                             {

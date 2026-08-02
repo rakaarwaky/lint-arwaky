@@ -15,6 +15,7 @@ pub fn handle_scan_import(
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filter: Option<String>,
+    fs_agg: Arc<dyn IFilesystemAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -49,7 +50,7 @@ pub fn handle_scan_import(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    output_violations(&violations, &root, format, shared::filesystem::utility_filesystem_io::is_member_path(&root));
+    output_violations(&violations, &root, format, fs_agg.is_member_path(&root));
     if violations.is_empty() {
         ExitCode::OK
     } else {

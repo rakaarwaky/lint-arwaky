@@ -16,7 +16,7 @@ pub fn handle_scan_orphan(
     config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filter: Option<String>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    fs_agg: Arc<dyn IFilesystemAggregate>,
 ) -> ExitCode {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -49,6 +49,7 @@ pub fn handle_scan_orphan(
             &config_orchestrator,
             format,
             &filter,
+            &fs_agg,
         );
     }
 
@@ -98,7 +99,7 @@ pub fn handle_scan_orphan(
         // Use absolute paths for correct strip_prefix comparison.
         let cwd = std::env::current_dir().unwrap_or_default();
         let ws_abs = cwd.join(&ws.path.value);
-        let ws_top_root = filesystem.workspace_root(&ws_abs.to_string_lossy());
+        let ws_top_root = fs_agg.workspace_root(&ws_abs.to_string_lossy());
         let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
             ws_abs
                 .strip_prefix(top_root)
@@ -149,7 +150,7 @@ pub fn handle_scan_orphan(
         &all_violations,
         &target,
         format,
-        is_specific_member || shared::filesystem::utility_filesystem_io::is_member_path(&target),
+        is_specific_member || fs_agg.is_member_path(&target),
     );
 
     if all_violations.is_empty() {
@@ -165,9 +166,10 @@ fn scan_single_root(
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     format: Format,
     filter: &Option<String>,
+    fs_agg: &Arc<dyn IFilesystemAggregate>,
 ) -> ExitCode {
     let scan_root = crate::surface_common_action::resolve_file_path(root);
-    let lang = shared::filesystem::utility_filesystem_io::detect_language_from_path(root);
+    let lang = fs_agg.detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
     let orphan_analyzer =
         orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
@@ -187,7 +189,7 @@ fn scan_single_root(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    output_violations(&violations, root, format, shared::filesystem::utility_filesystem_io::is_member_path(root));
+    output_violations(&violations, root, format, fs_agg.is_member_path(root));
 
     if violations.is_empty() {
         ExitCode::OK

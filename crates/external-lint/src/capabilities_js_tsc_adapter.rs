@@ -19,10 +19,6 @@ use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 use shared::common::{FilePath, Severity};
 
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::filesystem::utility_filesystem_io::{
-    canonicalize_path_str as canonicalize_path, noop_apply_fix, resolve_js_cmd,
-    resolve_js_working_dir as resolve_working_dir,
-};
 
 use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, LineNumber, LintMessage,
@@ -57,8 +53,8 @@ impl ILinterAdapterProtocol for TSCAdapter {
             return Ok(LintResultList::default());
         }
 
-        let wd = resolve_working_dir(path);
-        let abs_path = canonicalize_path(path_str);
+        let wd = self.filesystem.resolve_js_working_dir(path);
+        let abs_path = self.filesystem.canonicalize_path_str(path_str);
 
         let mut args = vec![
             "--noEmit".to_string(),
@@ -69,7 +65,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
             args.push(abs_path);
         }
 
-        let cmd = match resolve_js_cmd("tsc", args, &wd.value) {
+        let cmd = match self.filesystem.resolve_js_cmd("tsc", args, &wd.value) {
             Some(c) => c,
             None => return Ok(LintResultList::default()),
         };
@@ -139,7 +135,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        noop_apply_fix().await
+        self.filesystem.noop_apply_fix()
     }
 }
 

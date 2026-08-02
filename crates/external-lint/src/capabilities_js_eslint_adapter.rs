@@ -19,9 +19,6 @@ use shared::code_analysis::{ILinterAdapterProtocol, LinterOperationError};
 use shared::common::{FilePath, ScanError, Severity};
 
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::filesystem::utility_filesystem_io::{
-    canonicalize_path_str as canonicalize_path, resolve_js_cmd, resolve_js_working_dir as resolve_working_dir,
-};
 
 use shared::common::{
     AdapterName, ColumnNumber, ComplianceStatus, ErrorCode, ErrorMessage, LineNumber, LintMessage,
@@ -57,10 +54,10 @@ impl ILinterAdapterProtocol for ESLintAdapter {
             return Ok(LintResultList::default());
         }
 
-        let wd = resolve_working_dir(path);
-        let abs_path = canonicalize_path(path_str);
+        let wd = self.filesystem.resolve_js_working_dir(path);
+        let abs_path = self.filesystem.canonicalize_path_str(path_str);
 
-        let cmd = match resolve_js_cmd(
+        let cmd = match self.filesystem.resolve_js_cmd(
             "eslint",
             vec![abs_path, "--format".to_string(), "json".to_string()],
             &wd.value,
