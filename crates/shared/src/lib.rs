@@ -1,21 +1,23 @@
-// PURPOSE: shared — all taxonomy types, contract traits, and shared definitions
-// No dependencies on other feature crates — this is the foundation layer.
+// PURPOSE: shared — taxonomy types, contract traits, and shared definitions
+// Minimal: only what filesystem crate needs.
 
-pub mod common;
+// ── Common modules (directly included, avoiding full common/mod.rs) ──
+pub mod common {
+    pub mod taxonomy_config_language_vo;
+    pub mod taxonomy_message_vo;
+    pub mod taxonomy_operation_error;
+    pub mod taxonomy_path_vo;
+    pub mod taxonomy_source_vo;
+    pub mod utility_command_runner;
+}
+
+// ── Re-exports ──
+pub use common::taxonomy_config_language_vo::ConfigLanguage;
+pub use common::taxonomy_message_vo::ComplianceStatus;
+pub use common::taxonomy_operation_error::LinterOperationError;
+pub use common::taxonomy_path_vo::{DirectoryPath, FilePath};
+pub use common::taxonomy_source_vo::ContentString;
+pub use common::utility_command_runner;
+
+// Feature-specific modules
 pub mod filesystem;
-// pub mod config_system;
-// pub mod auto_fix;
-// pub mod cli_commands;
-// pub mod code_analysis;
-// pub mod external_lint;
-// pub mod file_watch;
-// pub mod git_hooks;
-// pub mod import_rules;
-// pub mod mcp_server;
-// pub mod naming_rules;
-// pub mod orphan_detector;
-// pub mod project_setup;
-// pub mod maintenance;
-// pub mod role_rules;
-// pub mod report_formatter;
-// pub mod tui;
