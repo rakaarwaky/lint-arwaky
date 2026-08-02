@@ -8,7 +8,6 @@ license = "MIT"
 [dependencies]
 shared = { workspace = true }
 dispatcher = { workspace = true }
-config-system = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }

@@ -16,7 +16,7 @@ use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::report_formatter::IReportFormatterAggregate;
 
-use dispatcher::surface_output_component::{ViolationItem, output_violations};
+use crate::surface_output_component::{ViolationItem, output_violations};
 
 pub struct ScanOptions {
     pub path: Option<FilePath>,

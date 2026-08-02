@@ -5282,7 +5282,6 @@ version = "1.11.0"
 dependencies = [
  "anyhow",
  "arboard",
- "config-system-lint-arwaky",
  "crossterm",
  "dispatcher-lint-arwaky",
  "ratatui",
