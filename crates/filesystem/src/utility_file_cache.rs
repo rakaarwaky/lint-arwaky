@@ -39,36 +39,13 @@ pub fn read_cached(path: &shared::common::taxonomy_path_vo::FilePath) -> shared:
     shared::common::taxonomy_source_vo::ContentString::new(content)
 }
 
-/// Clear bounded file cache.
-pub fn clear_file_cache() {
-    let mut cache = file_cache_map().lock().unwrap_or_else(|e| e.into_inner());
-    cache.clear();
-}
-
 // ═══════════════════════════════════════════════════════════════
 // String-keyed Cache (code-analysis compatibility)
 // ═══════════════════════════════════════════════════════════════
 
 static STRING_CACHE: LazyLock<DashMap<String, String>> = LazyLock::new(DashMap::new);
 
-/// Populate the string-keyed file cache.
-pub fn cache_populate_from_pairs(files: &[(String, String)]) {
-    for (path, content) in files {
-        STRING_CACHE.insert(path.clone(), content.clone());
-    }
-}
-
 /// Get cached file content by string path.
 pub fn cache_get_by_str(path: &str) -> Option<String> {
     STRING_CACHE.get(path).map(|r| r.value().clone())
-}
-
-/// Check if a string path is in the string-keyed cache.
-pub fn cache_contains_str(path: &str) -> bool {
-    STRING_CACHE.contains_key(path)
-}
-
-/// Clear the string-keyed file cache.
-pub fn cache_clear_str() {
-    STRING_CACHE.clear();
 }

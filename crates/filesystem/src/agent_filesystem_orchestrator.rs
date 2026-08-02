@@ -433,9 +433,9 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 impl FilesystemOrchestrator {
     pub fn new() -> Self {
         Self {
-            walker: FileWalker::new(),
-            parser: ASTParser::new(),
-            graph: RwLock::new(DependencyGraph::new()),
+            walker: Box::new(crate::capabilities_file_walker::FileWalker::new()),
+            parser: Box::new(crate::capabilities_ast_parser::ASTParser::new()),
+            graph: RwLock::new(Box::new(crate::capabilities_dependency_graph::DependencyGraph::new())),
             files: OnceLock::new(),
             imports: OnceLock::new(),
             warnings: OnceLock::new(),
@@ -459,7 +459,7 @@ impl FilesystemOrchestrator {
         // Stage 1: File Discovery
         let walk_start = std::time::Instant::now();
         let exts = Language::extensions();
-        let mut files = self.walker.discover_entries(root, ignored, &exts);
+        let mut files = self.walker.walk(root, ignored, &exts);
         let walk_ms = walk_start.elapsed().as_millis() as u64;
 
         // Stage 2: AST Parsing
