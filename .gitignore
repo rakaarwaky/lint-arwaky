@@ -37,3 +37,5 @@ credentials.json
 serviceAccountKey
 .zed/settings.json
 .archive/
+.agents/finding
+.agents/plans
