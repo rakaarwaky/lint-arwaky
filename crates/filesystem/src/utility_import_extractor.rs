@@ -1,9 +1,10 @@
-// FR-003: Import Data Extraction
+// FR-001: Import Data Extraction
 // Produces: Vec<ImportEntry>
 // Consumer: import-rules, FR-004
 //
 // Utility: standalone functions, no struct needed (stateless)
 // Language-specific extraction: Rust, Python, TypeScript, JavaScript
+// Accepts optional pre-parsed Tree to avoid double parsing (P2.2)
 
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use std::path::Path;
@@ -13,31 +14,42 @@ use crate::utility_tree_sitter_helpers::{
 };
 
 // ═══════════════════════════════════════════════════════════════
-// Public API — FR-003
+// Public API — FR-001
 // ═══════════════════════════════════════════════════════════════
 
-/// Extract all imports from a parsed file.
-pub fn extract_imports(path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
+/// Extract all imports from a file.
+/// If `pre_parsed` is provided, reuses it instead of re-parsing.
+pub fn extract_imports(
+    path: &Path,
+    content: &str,
+    language: Language,
+    pre_parsed: Option<&tree_sitter::Tree>,
+) -> Vec<ImportEntry> {
     if content.is_empty() {
         return Vec::new();
     }
 
-    let grammar = match language {
-        Language::Rust => tree_sitter_rust::LANGUAGE,
-        Language::Python => tree_sitter_python::LANGUAGE,
-        Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
-        Language::JavaScript => tree_sitter_javascript::LANGUAGE,
-        Language::Unknown => return Vec::new(),
-    };
+    let tree = match pre_parsed {
+        Some(t) => t.clone(),
+        None => {
+            let grammar = match language {
+                Language::Rust => tree_sitter_rust::LANGUAGE,
+                Language::Python => tree_sitter_python::LANGUAGE,
+                Language::TypeScript => tree_sitter_typescript::LANGUAGE_TYPESCRIPT,
+                Language::JavaScript => tree_sitter_javascript::LANGUAGE,
+                Language::Unknown => return Vec::new(),
+            };
 
-    let mut parser = tree_sitter::Parser::new();
-    if parser.set_language(&grammar.into()).is_err() {
-        return Vec::new();
-    }
+            let mut parser = tree_sitter::Parser::new();
+            if parser.set_language(&grammar.into()).is_err() {
+                return Vec::new();
+            }
 
-    let tree = match parser.parse(content, None) {
-        Some(t) => t,
-        None => return Vec::new(),
+            match parser.parse(content, None) {
+                Some(t) => t,
+                None => return Vec::new(),
+            }
+        }
     };
 
     let mut imports = Vec::new();

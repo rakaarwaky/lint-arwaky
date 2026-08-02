@@ -23,8 +23,8 @@ metadata:
 
 Agent = orchestration only. No I/O, no business logic, no domain computation, no local domain data.
 
-**Allowed imports:** `shared/*` — taxonomy VOs, constants, aggregate ABCs, protocol ABCs.
-**Forbidden imports:** `capabilities_*`, `agent_*`, `surface_*`, concrete `utility_*`.
+**Allowed imports:** `shared/*` — taxonomy VOs, constants, aggregate ABCs, protocol ABCs, utility functions.
+**Forbidden imports:** `capabilities_*`, `agent_*`, `surface_*`.
 
 **Allowed ops:** `for`/`while`/`async for`, `if/else`/`match`, `try/except`/`raise`, `asyncio.wait_for`, collecting results into shared VOs.
 **Forbidden ops:** `open()`, `Path()`, `os.*`, `requests.*`, `httpx.*`, `sqlite3.*`, `asyncpg.*`, stdout/stderr write, env mutation, global state mutation.

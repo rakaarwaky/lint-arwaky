@@ -428,27 +428,6 @@ pub enum ScanStage {
     Graph,
 }
 
-/// Result of a complete filesystem scan.
-#[derive(Debug)]
-pub struct FilesystemResult {
-    /// All discovered source files (enriched with content + parse metadata).
-    pub files: Vec<FileEntry>,
-    /// Extracted imports for each file.
-    pub imports: Vec<ImportEntry>,
-    /// Parse warnings for files that failed to parse.
-    pub warnings: Vec<ParseWarning>,
-    /// Graph data (reverse links, definitions, implementations).
-    pub graph: GraphData,
-    /// Number of files parsed successfully.
-    pub parsed_count: usize,
-    /// Number of files that failed to parse.
-    pub parse_errors: usize,
-    /// Number of imports that couldn't be resolved.
-    pub unresolved_imports: usize,
-    /// Timing breakdown (milliseconds).
-    pub timing: ScanTiming,
-}
-
 /// Timing breakdown for scan stages.
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ScanTiming {

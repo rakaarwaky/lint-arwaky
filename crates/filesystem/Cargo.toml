@@ -11,7 +11,6 @@ publish = true
 workspace = true
 
 [dependencies]
-once_cell = "1"
 ignore = "0.4"
 
 # AST parsing
@@ -38,7 +37,6 @@ anyhow = "1.0.104"
 
 # Shared types
 shared.workspace = true
-tokio = { workspace = true, features = ["sync", "rt"] }
 
 [dev-dependencies]
 tempfile = "3"

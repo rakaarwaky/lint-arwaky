@@ -12,9 +12,16 @@ use std::os::unix::fs::PermissionsExt;
 // File Reading
 // ═══════════════════════════════════════════════════════════════
 
-/// Read file content, returning empty string on error.
-pub fn read_file_safe<P: AsRef<Path>>(path: P) -> String {
-    std::fs::read_to_string(path).unwrap_or_default()
+/// Read file content, returning Result. Logs warning on failure.
+pub fn read_file_safe<P: AsRef<Path>>(path: P) -> Result<String, std::io::Error> {
+    let path = path.as_ref();
+    match std::fs::read_to_string(path) {
+        Ok(content) => Ok(content),
+        Err(e) => {
+            eprintln!("warning: failed to read {}: {}", path.display(), e);
+            Err(e)
+        }
+    }
 }
 
 /// Read file content to string.

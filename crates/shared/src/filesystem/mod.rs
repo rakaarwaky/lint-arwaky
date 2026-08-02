@@ -15,7 +15,6 @@ pub mod taxonomy_filesystem_vo;
 pub use taxonomy_filesystem_vo::DefinitionEntry;
 pub use taxonomy_filesystem_vo::FileEntry;
 pub use taxonomy_filesystem_vo::FileNodeVO;
-pub use taxonomy_filesystem_vo::FilesystemResult;
 pub use taxonomy_filesystem_vo::GraphData;
 pub use taxonomy_filesystem_vo::ImplEntry;
 pub use taxonomy_filesystem_vo::ImportEdgeVO;

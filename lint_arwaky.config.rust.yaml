@@ -224,7 +224,7 @@ architecture:
         - scope: "utility"
           allowed: ["taxonomy"]
           mandatory: null
-          forbidden: ["agent", "surface", "contract", "capabilities", "root", "utility"]
+          forbidden: ["agent", "surface", "contract", "capabilities", "root"]
 
         - scope: "contract(protocol)"
           allowed: ["taxonomy", "contract"]

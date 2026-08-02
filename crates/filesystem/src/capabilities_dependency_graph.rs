@@ -37,20 +37,6 @@ impl DependencyGraph {
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 
 impl IGraphProtocol for DependencyGraph {
-    fn build(
-        &mut self,
-        imports: &[ImportEntry],
-        files: &[FileEntry],
-        definitions: &[DefinitionEntry],
-        implementations: &[ImplEntry],
-    ) {
-        self.build_graph(imports, files, definitions, implementations);
-    }
-
-    fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        &self.reverse_links
-    }
-
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
         &self.definitions
     }
@@ -205,21 +191,6 @@ impl DependencyGraph {
         }
     }
 
-    pub fn dependents(&self, path: &Path) -> Vec<PathBuf> {
-        self.reverse_links.get(path).cloned().unwrap_or_default()
-    }
-
-    pub fn dependencies(&self, path: &Path) -> Vec<PathBuf> {
-        let idx = match self.node_map.get(path) {
-            Some(idx) => *idx,
-            None => return Vec::new(),
-        };
-        self.graph
-            .neighbors_directed(idx, petgraph::Direction::Outgoing)
-            .map(|n| self.graph[n].path.clone())
-            .collect()
-    }
-
     pub fn cycles(&self) -> Vec<Vec<PathBuf>> {
         let sccs = petgraph::algo::kosaraju_scc(&self.graph);
         sccs.into_iter()
@@ -230,18 +201,6 @@ impl DependencyGraph {
                     .collect()
             })
             .collect()
-    }
-
-    pub fn reachable(&self, from: &Path, to: &Path) -> bool {
-        let from_idx = match self.node_map.get(from) {
-            Some(idx) => *idx,
-            None => return false,
-        };
-        let to_idx = match self.node_map.get(to) {
-            Some(idx) => *idx,
-            None => return false,
-        };
-        petgraph::algo::has_path_connecting(&self.graph, from_idx, to_idx, None)
     }
 
     pub fn orphan_files(&self) -> Vec<PathBuf> {
@@ -259,18 +218,6 @@ impl DependencyGraph {
 
     pub fn all_files(&self) -> HashSet<PathBuf> {
         self.node_map.keys().cloned().collect()
-    }
-
-    pub fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        &self.reverse_links
-    }
-
-    pub fn definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        &self.definitions
-    }
-
-    pub fn implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
-        &self.implementations
     }
 
     pub fn stats(&self) -> (usize, usize) {

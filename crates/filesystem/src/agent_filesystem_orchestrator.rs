@@ -1,7 +1,5 @@
-// Agent layer — orchestrates FR-001 through FR-007
-// Zero I/O, zero business logic, zero domain computation
-// Only orchestration: delegates to capabilities via contract protocols, returns results
-// Capabilities are injected via Arc<dyn ProtocolTrait> — agent never imports concrete types
+// Agent layer — orchestrates FR-001 through FR-005
+// Only orchestration: delegates to capabilities & utility
 
 use std::path::Path;
 use std::sync::Arc;
@@ -18,7 +16,7 @@ use shared::filesystem::contract_parser_protocol::IParserProtocol;
 use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
 use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
-    DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning, ScanTiming,
+    FileEntry, ImportEntry, ParseWarning, ScanTiming,
 };
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -39,6 +37,7 @@ pub struct FilesystemOrchestrator {
     // Pipeline state (owned by agent, not by capabilities)
     string_cache: dashmap::DashMap<String, String>,
     files: OnceLock<Vec<FileEntry>>,
+    file_index: OnceLock<HashMap<PathBuf, usize>>,
     imports: OnceLock<Vec<ImportEntry>>,
     warnings: OnceLock<Vec<ParseWarning>>,
     cached_reverse_links: OnceLock<HashMap<PathBuf, Vec<PathBuf>>>,
@@ -79,26 +78,12 @@ impl IParserProtocol for FilesystemOrchestrator {
 
 // ═══ IGraphProtocol (8 methods) ════════════════════════════
 
-static EMPTY_HASH_MAP: once_cell::sync::Lazy<HashMap<PathBuf, Vec<PathBuf>>> =
-    once_cell::sync::Lazy::new(HashMap::new);
-static EMPTY_STRING_MAP: once_cell::sync::Lazy<HashMap<String, Vec<PathBuf>>> =
-    once_cell::sync::Lazy::new(HashMap::new);
+static EMPTY_HASH_MAP: std::sync::LazyLock<HashMap<PathBuf, Vec<PathBuf>>> =
+    std::sync::LazyLock::new(HashMap::new);
+static EMPTY_STRING_MAP: std::sync::LazyLock<HashMap<String, Vec<PathBuf>>> =
+    std::sync::LazyLock::new(HashMap::new);
 
 impl IGraphProtocol for FilesystemOrchestrator {
-    fn build(
-        &mut self,
-        _imports: &[ImportEntry],
-        _files: &[FileEntry],
-        _definitions: &[DefinitionEntry],
-        _implementations: &[ImplEntry],
-    ) {
-        // Graph is built internally during pipeline; this is a no-op for the orchestrator.
-    }
-
-    fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        self.cached_reverse_links.get().unwrap_or(&EMPTY_HASH_MAP)
-    }
-
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
         self.cached_definitions.get().unwrap_or(&EMPTY_STRING_MAP)
     }
@@ -117,8 +102,8 @@ impl IGraphProtocol for FilesystemOrchestrator {
             .unwrap_or_default()
     }
 
-    fn dependencies(&self, _path: &Path) -> Vec<PathBuf> {
-        Vec::new()
+    fn dependencies(&self, path: &Path) -> Vec<PathBuf> {
+        self.deps.graph.dependencies(path)
     }
 
     fn reachable(&self, from: &Path, to: &Path) -> bool {
@@ -405,14 +390,18 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn get_file_content(&self, path: &Path) -> Option<String> {
-        self.file_list()
-            .iter()
-            .find(|f| f.path == path)
-            .map(|f| f.content.clone())
+        self.file_index
+            .get()
+            .and_then(|idx| idx.get(path))
+            .and_then(|&i| self.files.get()?.get(i))
+            .map(|entry| entry.content.clone())
     }
 
     fn has_file(&self, path: &Path) -> bool {
-        self.file_list().iter().any(|f| f.path == path)
+        self.file_index
+            .get()
+            .map(|idx| idx.contains_key(path))
+            .unwrap_or(false)
     }
 
     fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)> {
@@ -437,11 +426,23 @@ impl FilesystemOrchestrator {
             deps,
             string_cache: dashmap::DashMap::new(),
             files: OnceLock::new(),
+            file_index: OnceLock::new(),
             imports: OnceLock::new(),
             warnings: OnceLock::new(),
             cached_reverse_links: OnceLock::new(),
             cached_definitions: OnceLock::new(),
             cached_implementations: OnceLock::new(),
+        }
+    }
+
+    pub fn build_file_index(&self) {
+        if let Some(file_list) = self.files.get() {
+            let index: HashMap<PathBuf, usize> = file_list
+                .iter()
+                .enumerate()
+                .map(|(i, entry)| (entry.path.clone(), i))
+                .collect();
+            let _ = self.file_index.set(index);
         }
     }
 }
