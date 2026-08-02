@@ -91,6 +91,6 @@ fn acceptance_report_formatter_routing_correct() {
 #[test]
 fn acceptance_report_formatter_default_format() {
     let report = ScanReport::new(vec![], vec![]);
-    let result = shared::report_formatter::format_report_default(&report);
+    let result = report_formatter_lint_arwaky::format_report_default(&report);
     assert!(!result.is_empty());
 }

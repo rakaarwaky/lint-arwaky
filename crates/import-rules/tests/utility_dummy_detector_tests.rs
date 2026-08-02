@@ -1,4 +1,3 @@
-extern crate shared_lint_arwaky as shared;
 
 use shared::common::taxonomy_common_vo::LineNumber;
 use import_rules_lint_arwaky::utility_dummy_detector::{

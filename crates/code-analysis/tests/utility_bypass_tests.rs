@@ -1,4 +1,3 @@
-extern crate shared_lint_arwaky as shared;
 
 use code_analysis_lint_arwaky::utility_bypass_detector::{matches_keyword_token, matches_word_token};
 

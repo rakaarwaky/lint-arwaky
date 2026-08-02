@@ -1,4 +1,3 @@
-extern crate shared_lint_arwaky as shared;
 
 use orphan_detector_lint_arwaky::utility_orphan_detector::has_trait_implementation;
 

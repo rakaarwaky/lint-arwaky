@@ -171,7 +171,7 @@ fn build_graph_context_subfolder_expands_to_workspace_files() {
 
     // Get a few files from the subfolder
     let files: Vec<String> =
-        filesystem_lint_arwaky::utility_filesystem_io::scan_directory_recursive(&subfolder)
+        filesystem::utility_filesystem_io::scan_directory_recursive(&subfolder)
             .into_iter()
             .filter(|f| f.ends_with(".rs"))
             .take(5)

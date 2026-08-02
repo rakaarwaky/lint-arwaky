@@ -1,4 +1,3 @@
-extern crate shared_lint_arwaky as shared;
 
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use filesystem_lint_arwaky::utility_filesystem_io::collect_source_files;

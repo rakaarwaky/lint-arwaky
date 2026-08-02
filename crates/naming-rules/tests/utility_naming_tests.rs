@@ -1,4 +1,3 @@
-extern crate shared_lint_arwaky as shared;
 
 use naming_rules_lint_arwaky::utility_naming_checker::{get_stem, get_suffix};
 

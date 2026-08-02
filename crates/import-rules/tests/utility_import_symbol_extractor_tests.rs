@@ -1,4 +1,3 @@
-extern crate shared_lint_arwaky as shared;
 
 use std::collections::HashMap;
 
