@@ -1,0 +1,250 @@
+// FR-005: Workspace Detection
+// Produces: workspace root, member status, source dir, language
+// Consumers: cli-commands, external-lint, orphan-detector, config-system
+//
+// Utility: stateless standalone functions
+
+use shared::common::taxonomy_config_language_vo::ConfigLanguage;
+use std::path::{Path, PathBuf};
+
+// ═══════════════════════════════════════════════════════════════
+// Workspace Root Detection
+// ═══════════════════════════════════════════════════════════════
+
+/// Find workspace root by walking up from start path.
+pub fn find_workspace_root(start: &str) -> Option<PathBuf> {
+    let mut dir = Path::new(start).to_path_buf();
+    if !dir.is_absolute() {
+        dir = std::env::current_dir().ok()?.join(&dir);
+    }
+    loop {
+        if dir.join("crates").is_dir()
+            || dir.join("packages").is_dir()
+            || dir.join("modules").is_dir()
+        {
+            return Some(dir);
+        }
+        if dir.join("Cargo.toml").exists() {
+            if let Some(parent) = dir.parent() {
+                let parent_name = parent
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or_default();
+                if parent.join("crates").is_dir()
+                    || parent.join("packages").is_dir()
+                    || parent.join("modules").is_dir()
+                    || matches!(parent_name, "crates" | "packages" | "modules")
+                {
+                    // Don't return yet — parent is the real workspace root
+                } else {
+                    return Some(dir);
+                }
+            } else {
+                return Some(dir);
+            }
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+
+/// Find workspace root (Result variant).
+pub fn find_workspace_root_from_path(start: &Path) -> Result<PathBuf, std::io::Error> {
+    let member_dirs = ["crates", "packages", "modules"];
+    let mut current = start.to_path_buf();
+    loop {
+        let has_cargo = current.join("Cargo.toml").exists();
+        let has_package_json = current.join("package.json").exists();
+        let has_pyproject = current.join("pyproject.toml").exists();
+        let has_member_dir = member_dirs.iter().any(|d| current.join(d).is_dir());
+
+        if has_member_dir && (has_cargo || has_package_json || has_pyproject) {
+            return Ok(current);
+        }
+        if !current.pop() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "workspace root not found",
+            ));
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Member Detection
+// ═══════════════════════════════════════════════════════════════
+
+/// Detect if a path is a single workspace member.
+pub fn is_member_path(path: &str) -> bool {
+    let p = Path::new(path);
+
+    // Rust: Cargo.toml without [workspace]
+    let cargo_toml = p.join("Cargo.toml");
+    if cargo_toml.exists() {
+        if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+            return !content.contains("[workspace]");
+        }
+        return true;
+    }
+
+    // Python: __init__.py or pyproject.toml
+    if p.join("__init__.py").exists() || p.join("pyproject.toml").exists() {
+        return true;
+    }
+
+    // TypeScript: package.json
+    if p.join("package.json").exists() {
+        return true;
+    }
+
+    false
+}
+
+/// Detect if a path is a leaf member (not a group of members).
+pub fn is_leaf_member_path(path: &str) -> bool {
+    if !is_member_path(path) {
+        return false;
+    }
+    let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
+    let p = Path::new(path);
+    if let Ok(entries) = std::fs::read_dir(p) {
+        for entry in entries.flatten() {
+            if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
+                let dir_name = entry.file_name().to_string_lossy().to_string();
+                if skip_dirs.contains(&dir_name.as_str()) {
+                    continue;
+                }
+                let sub_path = entry.path();
+                if is_member_path(&sub_path.to_string_lossy()) {
+                    return false;
+                }
+            }
+        }
+    }
+    true
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Source Directory Detection
+// ═══════════════════════════════════════════════════════════════
+
+/// Detect source directory from project root.
+pub fn detect_source_dir(project_root: &Path) -> PathBuf {
+    if has_source_files(project_root) {
+        return project_root.to_path_buf();
+    }
+    for name in &["packages", "crates", "modules"] {
+        let candidate = project_root.join(name);
+        if candidate.is_dir() {
+            return candidate;
+        }
+    }
+    project_root.to_path_buf()
+}
+
+fn has_source_files(dir: &Path) -> bool {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if let Some(name) = entry.file_name().to_str() {
+                if name.ends_with(".rs")
+                    || name.ends_with(".py")
+                    || name.ends_with(".ts")
+                    || name.ends_with(".js")
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Language Detection
+// ═══════════════════════════════════════════════════════════════
+
+/// Detect ConfigLanguage from a file system path.
+pub fn detect_language_from_path(path: &str) -> ConfigLanguage {
+    let path_buf = std::path::PathBuf::from(path);
+
+    if path_buf.join("Cargo.toml").exists()
+        || path_contains_component(&path_buf, "crates")
+    {
+        return ConfigLanguage::Rust;
+    }
+    if path_buf.join("package.json").exists()
+        || path_contains_component(&path_buf, "packages")
+    {
+        return ConfigLanguage::TypeScript;
+    }
+    if path_buf.join("pyproject.toml").exists()
+        || path_buf.join("setup.py").exists()
+        || path_buf.join("requirements.txt").exists()
+        || path_contains_component(&path_buf, "modules")
+    {
+        return ConfigLanguage::Python;
+    }
+
+    ConfigLanguage::Rust
+}
+
+fn path_contains_component(path: &std::path::Path, component: &str) -> bool {
+    path.components()
+        .any(|c| matches!(c, std::path::Component::Normal(name) if name == component))
+}
+
+/// Detect languages by walking directory tree.
+/// Returns (has_rust, has_python, has_js).
+pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
+    let mut has_rs = false;
+    let mut has_py = false;
+    let mut has_js = false;
+
+    fn walk_detect(dir: &std::path::Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {
+        let entries = match std::fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let name = match path.file_name().and_then(|n| n.to_str()) {
+                    Some(n) => n,
+                    None => continue,
+                };
+                if matches!(
+                    name,
+                    "node_modules" | "target" | ".git" | "Graph-It-Live" | "tests"
+                ) {
+                    continue;
+                }
+                walk_detect(&path, has_rs, has_py, has_js);
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                match ext {
+                    "rs" => *has_rs = true,
+                    "py" => *has_py = true,
+                    "js" | "ts" | "jsx" | "tsx" => *has_js = true,
+                    _ => {}
+                }
+            }
+            if *has_rs && *has_py && *has_js {
+                return;
+            }
+        }
+    }
+
+    if root.is_file() {
+        if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
+            match ext {
+                "rs" => has_rs = true,
+                "py" => has_py = true,
+                "js" | "ts" | "jsx" | "tsx" => has_js = true,
+                _ => {}
+            }
+        }
+    } else {
+        walk_detect(root, &mut has_rs, &mut has_py, &mut has_js);
+    }
+    (has_rs, has_py, has_js)
+}

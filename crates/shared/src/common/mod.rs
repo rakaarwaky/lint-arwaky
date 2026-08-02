@@ -1,4 +1,6 @@
 // common — truly shared types used by multiple features
+pub mod taxonomy_config_language_vo;
+pub mod taxonomy_operation_error;
 pub mod contract_executor_protocol;
 pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_error;

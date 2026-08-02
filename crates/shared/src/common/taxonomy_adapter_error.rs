@@ -8,7 +8,7 @@ use crate::common::taxonomy_common_error::FieldName;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::import_rules::taxonomy_import_error::ImportError;
+// use crate::import_rules::taxonomy_import_error::ImportError;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]

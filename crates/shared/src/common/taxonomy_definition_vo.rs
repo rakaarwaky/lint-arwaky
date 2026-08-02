@@ -41,13 +41,13 @@ pub struct LayerDefinition {
     pub recursive: BooleanVO,
 
     #[serde(flatten)]
-    pub naming: crate::config_system::taxonomy_config_vo::NamingRuleVO,
+    // pub naming: crate::config_system::taxonomy_config_vo::NamingRuleVO,
     #[serde(flatten)]
-    pub code_analysis: crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
+    // pub code_analysis: crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
     #[serde(flatten)]
-    pub role: crate::config_system::taxonomy_config_vo::RoleRuleVO,
+    // pub role: crate::config_system::taxonomy_config_vo::RoleRuleVO,
     #[serde(flatten)]
-    pub orphan: crate::config_system::taxonomy_config_vo::OrphanRuleVO,
+    // pub orphan: crate::config_system::taxonomy_config_vo::OrphanRuleVO,
 }
 
 single_field_vo!(LayerMapVO, values: std::collections::HashMap<LayerNameVO, LayerDefinition>);
