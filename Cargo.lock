@@ -1126,6 +1126,7 @@ dependencies = [
  "config-system-lint-arwaky",
  "criterion",
  "dirs",
+ "filesystem-lint-arwaky",
  "futures",
  "regex",
  "serde",
