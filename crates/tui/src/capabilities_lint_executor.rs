@@ -16,8 +16,8 @@ use shared::project_setup::SetupManagementAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecutionResult};
 
-use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use std::sync::Arc;
 
 // PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
 // Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)

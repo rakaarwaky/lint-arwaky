@@ -2,7 +2,6 @@
 // are safely ignored or warned about without crashing the run."
 
 use external_lint_lint_arwaky::ExternalLintContainer;
-use config_system::ConfigParserProvider;
 use shared::common::FilePath;
 use std::fs;
 use std::sync::Arc;

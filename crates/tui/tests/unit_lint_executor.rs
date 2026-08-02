@@ -3,6 +3,7 @@
 
 use shared::tui::{ActionFlags, ILintExecutorProtocol};
 
+use std::sync::Arc;
 use tui_lint_arwaky::capabilities_lint_executor::LintExecutor;
 
 fn executor() -> LintExecutor {
@@ -10,6 +11,7 @@ fn executor() -> LintExecutor {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     )
 }
 
@@ -95,5 +97,9 @@ fn lint_executor_default_creates_valid_instance() {
     let code_analysis =
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter();
-    let _ = LintExecutor::new(code_analysis, None);
+    let _ = LintExecutor::new(
+        code_analysis,
+        None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 }

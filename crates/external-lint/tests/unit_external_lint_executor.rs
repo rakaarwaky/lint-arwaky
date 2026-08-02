@@ -49,7 +49,7 @@ impl ICommandExecutorProtocol for FailingExecutor {
 }
 
 fn make_executor(response: ResponseData) -> ExternalLintExecutor {
-    ExternalLintExecutor::new(Arc::new(MockExecutor { response }), Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(filesystem::FilesystemOrchestrator::new()))
+    ExternalLintExecutor::new(Arc::new(MockExecutor { response }), Arc::new(filesystem::FilesystemOrchestrator::new()))
 }
 
 // ─── exec_cmd_scan ────────────────────────────────────────
@@ -79,7 +79,7 @@ async fn exec_cmd_scan_returns_response_on_success() {
 
 #[tokio::test]
 async fn exec_cmd_scan_maps_error_to_scan_error() {
-    let executor = ExternalLintExecutor::new(Arc::new(FailingExecutor), Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let executor = ExternalLintExecutor::new(Arc::new(FailingExecutor), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new("/tmp/test.rs".to_string()).unwrap();
 
     let result = executor
@@ -122,7 +122,7 @@ async fn exec_cmd_adapter_returns_response_on_success() {
 
 #[tokio::test]
 async fn exec_cmd_adapter_maps_error_to_adapter_error() {
-    let executor = ExternalLintExecutor::new(Arc::new(FailingExecutor), Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let executor = ExternalLintExecutor::new(Arc::new(FailingExecutor), Arc::new(filesystem::FilesystemOrchestrator::new()));
 
     let result = executor
         .exec_cmd_adapter(
@@ -146,6 +146,6 @@ fn constructor_accepts_arc_executor() {
     let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockExecutor {
         response: ResponseData::new(),
     });
-    let lint_executor = ExternalLintExecutor::new(executor), Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(filesystem::FilesystemOrchestrator::new());
+    let lint_executor = ExternalLintExecutor::new(executor, Arc::new(filesystem::FilesystemOrchestrator::new()));
     let _ = lint_executor;
 }

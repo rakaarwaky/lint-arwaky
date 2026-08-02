@@ -2,7 +2,6 @@
 // violations combined in a single unified report or MCP response."
 
 use external_lint_lint_arwaky::ExternalLintContainer;
-use config_system::ConfigParserProvider;
 use shared::cli_commands::LintResultList;
 use shared::common::{AdapterName, FilePath};
 

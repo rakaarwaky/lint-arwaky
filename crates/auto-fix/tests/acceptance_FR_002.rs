@@ -48,8 +48,6 @@ impl ICodeAnalysisAggregate for MockLinter {
         vec![]
     }
 
-    }
-
     fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
         vec![]
     }

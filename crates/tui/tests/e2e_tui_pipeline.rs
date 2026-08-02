@@ -13,8 +13,12 @@ fn build_full_pipeline() -> TuiOrchestrator {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
-    let handler = Arc::new(ActionHandler::new(executor));
+    let handler = Arc::new(ActionHandler::new(
+        executor,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    ));
     TuiOrchestrator::new(handler)
 }
 

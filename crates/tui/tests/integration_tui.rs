@@ -15,8 +15,12 @@ fn build_full_wiring() -> (TuiOrchestrator, Arc<ActionHandler>, Arc<LintExecutor
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
-    let handler = Arc::new(ActionHandler::new(executor.clone()));
+    let handler = Arc::new(ActionHandler::new(
+        executor.clone(),
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    ));
     let orchestrator = TuiOrchestrator::new(handler.clone());
 
     (orchestrator, handler, executor)
@@ -59,8 +63,12 @@ fn handler_and_orchestrator_share_arc() {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
-    let handler = Arc::new(ActionHandler::new(executor));
+    let handler = Arc::new(ActionHandler::new(
+        executor,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    ));
     let _orchestrator = TuiOrchestrator::new(handler);
 
     // Trait object verification passed above
@@ -74,6 +82,13 @@ fn tui_components_default_creates_valid_instances() {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter();
 
-    let executor = Arc::new(LintExecutor::new(code_analysis, None));
-    let _handler = ActionHandler::new(executor);
+    let executor = Arc::new(LintExecutor::new(
+        code_analysis,
+        None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    ));
+    let _handler = ActionHandler::new(
+        executor,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 }

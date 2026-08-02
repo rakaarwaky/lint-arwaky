@@ -31,7 +31,7 @@ Capabilities = concrete protocol trait implementation. File: `capabilities_<doma
 
 **External:** repository, gateway, client, provider, fetcher, reader, writer, scanner, executor, publisher, subscriber, adapter, connector, uploader, downloader, sender, receiver, dispatcher, watcher, monitor
 
-## AES403 Rules
+## StructureRules
 
 - Rule 1: Internal helper structs without trait impl → ALLOWED.
 - Rule 2: ≥1 struct implements a protocol trait.

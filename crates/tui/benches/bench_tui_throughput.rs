@@ -15,11 +15,13 @@ fn build_tui_stack() -> (Arc<LintExecutor>, Arc<ActionHandler>) {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
-    let handler = Arc::new(ActionHandler::new(executor.clone()
-        as Arc<
-            dyn shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol,
-        >));
+    let handler = Arc::new(ActionHandler::new(
+        executor.clone()
+            as Arc<dyn shared::tui::contract_lint_executor_protocol::ILintExecutorProtocol>,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    ));
     (executor, handler)
 }
 

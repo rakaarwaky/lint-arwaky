@@ -12,8 +12,12 @@ fn build_handler() -> ActionHandler {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
-    ActionHandler::new(lint_executor)
+    ActionHandler::new(
+        lint_executor,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    )
 }
 
 // ─── handle: Event dispatch verification ──
@@ -57,6 +61,10 @@ fn action_handler_default_creates_valid_instance() {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
-    let _ = ActionHandler::new(lint_executor);
+    let _ = ActionHandler::new(
+        lint_executor,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    );
 }

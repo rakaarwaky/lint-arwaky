@@ -1,10 +1,10 @@
 use shared::common::FilePath;
 use shared::tui::{IActionHandlerProtocol, ILintExecutorProtocol, LintExecutionResult, ScanUpdate};
 
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::tui::TuiEvent;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 // PURPOSE: Capabilities-layer action handler — the central state machine for TUI events.
 // Translates every TuiEvent into a state mutation or I/O operation (filesystem/lint).
@@ -116,8 +116,14 @@ impl IActionHandlerProtocol for ActionHandler {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ActionHandler {
-    pub fn new(lint_port: Arc<dyn ILintExecutorProtocol>, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { lint_port, filesystem }
+    pub fn new(
+        lint_port: Arc<dyn ILintExecutorProtocol>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
+        Self {
+            lint_port,
+            filesystem,
+        }
     }
 
     /// Main event dispatch — maps every TuiEvent variant to a concrete action.

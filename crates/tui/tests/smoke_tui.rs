@@ -15,8 +15,12 @@ fn smoke_tui_crate_boots_and_responds() {
         code_analysis::root_code_analysis_container::CodeAnalysisContainer::default()
             .code_analysis_linter(),
         None,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
     ));
-    let handler = Arc::new(ActionHandler::new(executor));
+    let handler = Arc::new(ActionHandler::new(
+        executor,
+        Arc::new(filesystem::FilesystemOrchestrator::new()),
+    ));
 
     // 2. Orchestrator instantiates
     let orchestrator = TuiOrchestrator::new(handler);

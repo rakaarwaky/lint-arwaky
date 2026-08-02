@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use config_system::ConfigParserProvider;
 // PURPOSE: Smoke test — verify the external-lint subsystem boots and responds
 // within 5 seconds. If this fails, nothing else matters.
 

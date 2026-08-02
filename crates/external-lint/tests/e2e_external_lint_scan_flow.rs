@@ -3,7 +3,6 @@
 // External tools may not be installed; the system must handle that gracefully.
 
 use external_lint_lint_arwaky::ExternalLintContainer;
-use config_system::ConfigParserProvider;
 use shared::common::FilePath;
 use std::fs;
 use std::sync::Arc;
