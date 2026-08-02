@@ -2,7 +2,9 @@
 // Adapted: sync — iterates known languages using read_config (sync) instead of
 // list_config_files (async). No tokio runtime needed.
 use shared::common::{ExitCode, FilePath};
-use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::{
+    taxonomy_config_vo::ArchitectureConfig, ConfigLanguage, IConfigOrchestratorAggregate,
+};
 use std::sync::Arc;
 
 /// Redact sensitive values from config content.
@@ -67,4 +69,17 @@ pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -
         println!("No config file found. Run `lint-arwaky init` to create one.");
     }
     ExitCode::OK
+}
+
+// Config parsing wrappers — used by MCP agent instead of importing config_system directly.
+pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
+    config_system::utility_config_parser::parse_config_yaml(yaml_str)
+}
+
+pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
+    config_system::utility_config_parser::parse_adapter_names_from_yaml(yaml_str)
+}
+
+pub fn parse_score_threshold(yaml_str: &str) -> Option<f64> {
+    config_system::utility_config_parser::parse_score_threshold(yaml_str)
 }
