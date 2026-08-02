@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Export a selected skill into a single consolidated Markdown file.
+"""Export ALL skills for a selected language into a single consolidated Markdown file.
 
-The output includes all files within the skill directory under `.agents/skills/<name>/`.
+The output includes all files from every skill directory matching the language suffix
+under `.agents/skills/<name>/`.
 
 Usage:
-    # Interactive mode (prompts for selection):
+    # Interactive mode (prompts for language):
     python3 scripts/export_skill.py
 
     # CLI mode (non-interactive):
-    python3 scripts/export_skill.py --skill add-docs-rust
-    python3 scripts/export_skill.py --skill create-agent-python --output /tmp/out.md
+    python3 scripts/export_skill.py --lang rust
+    python3 scripts/export_skill.py --lang python --output /tmp/rust_skills.md
 """
 
 import argparse
@@ -19,6 +20,9 @@ from pathlib import Path
 
 # Sanitize version strings to a safe filename fragment (CWE-22 mitigation).
 SAFE_VERSION_CHARS = re.compile(r"[^0-9A-Za-z.\-]")
+
+LANGUAGES = ["rust", "python", "typescript"]
+LANG_SUFFIXES = {lang: f"-{lang}" for lang in LANGUAGES}
 
 
 def resolve_project_root() -> tuple[Path, Path]:
@@ -41,18 +45,22 @@ def list_skill_dirs(skills_dir: Path) -> list[str]:
     return sorted(skill_dirs)
 
 
-def prompt_skill(skill_dirs: list[str]) -> str:
-    """Show numbered list, prompt for selection, return the chosen skill name."""
-    print("Available skills:")
-    for i, name in enumerate(skill_dirs, 1):
-        print(f"{i:2d}) {name}")
+def filter_by_language(skills: list[str], lang: str) -> list[str]:
+    """Return skills whose name ends with -<lang>."""
+    suffix = LANG_SUFFIXES[lang]
+    return [s for s in skills if s.endswith(suffix)]
+
+
+def prompt_language() -> str:
+    """Show numbered language list, prompt for selection, return chosen language."""
+    print("Select language:")
+    for i, lang in enumerate(LANGUAGES, 1):
+        print(f"  {i}) {lang.capitalize()}")
     print()
 
     while True:
         try:
-            choice = input(
-                f"Select a skill (1-{len(skill_dirs)}) or 'q' to quit: "
-            ).strip()
+            choice = input(f"Select (1-{len(LANGUAGES)}) or 'q' to quit: ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nExiting.")
             sys.exit(0)
@@ -62,14 +70,14 @@ def prompt_skill(skill_dirs: list[str]) -> str:
             sys.exit(0)
 
         try:
-            idx = int(choice) - 1
+            idx = int(choice)
         except ValueError:
             print("Error: Invalid input. Please enter a valid number or 'q'.")
             continue
 
-        if 0 <= idx < len(skill_dirs):
-            return skill_dirs[idx]
-        print(f"Error: Please choose a number between 1 and {len(skill_dirs)}.")
+        if 1 <= idx <= len(LANGUAGES):
+            return LANGUAGES[idx - 1]
+        print(f"Error: Please choose a number between 1 and {len(LANGUAGES)}.")
 
 
 def collect_skill_files(skill_path: Path) -> set[Path]:
@@ -112,139 +120,125 @@ def _language_for(path: Path) -> str:
 
 def write_markdown(
     output_path: Path,
-    sorted_files: list[Path],
+    skill_data: dict[str, list[Path]],
     project_root: Path,
-    selected_skill: str,
+    lang: str,
 ) -> None:
+    """Write all skills for a language into one consolidated markdown file."""
+    total_files = sum(len(files) for files in skill_data.values())
+
     with open(output_path, "w", encoding="utf-8") as out:
-        out.write(f"# Skill: {selected_skill}\n\n")
+        out.write(f"# Skills: {lang.capitalize()} ({len(skill_data)} skills, {total_files} files)\n\n")
         out.write(
-            f"This document contains all files for skill `{selected_skill}` "
-            f"from `.agents/skills/{selected_skill}/`.\n\n"
+            f"This document contains all {lang} skills "
+            f"from `.agents/skills/`.\n\n"
         )
 
-        out.write("## File List\n\n")
-        for f in sorted_files:
-            rel = f.relative_to(project_root)
-            out.write(f"- [{rel}]({f.as_uri()})\n")
+        # Table of contents
+        out.write("## Table of Contents\n\n")
+        for skill_name in sorted(skill_data.keys()):
+            out.write(f"- [{skill_name}](#{skill_name})\n")
         out.write("\n---\n\n")
 
-        for f in sorted_files:
-            rel = f.relative_to(project_root)
-            out.write(f"## File: {rel}\n\n")
-            lang = _language_for(f)
-            if lang:
-                out.write(f"```{lang}\n")
-            else:
-                out.write("```\n")
-            try:
-                content = f.read_text(encoding="utf-8", errors="replace")
-                escaped = content.replace("```", "``` `")
-                out.write(escaped)
-                if not content.endswith("\n"):
-                    out.write("\n")
-            except OSError as e:
-                out.write(f"/* Error reading file: {e} */\n")
-            out.write("```\n\n---\n\n")
+        # Each skill
+        for skill_name in sorted(skill_data.keys()):
+            files = skill_data[skill_name]
+            out.write(f"# {skill_name}\n\n")
+            out.write(f"**Files:** {len(files)}\n\n")
+
+            # File list
+            out.write("## File List\n\n")
+            for f in sorted(files):
+                rel = f.relative_to(project_root)
+                out.write(f"- [{rel}]({f.as_uri()})\n")
+            out.write("\n---\n\n")
+
+            # File contents
+            for f in sorted(files):
+                rel = f.relative_to(project_root)
+                out.write(f"## File: {rel}\n\n")
+                lang_id = _language_for(f)
+                if lang_id:
+                    out.write(f"```{lang_id}\n")
+                else:
+                    out.write("```\n")
+                try:
+                    content = f.read_text(encoding="utf-8", errors="replace")
+                    escaped = content.replace("```", "``` `")
+                    out.write(escaped)
+                    if not content.endswith("\n"):
+                        out.write("\n")
+                except OSError as e:
+                    out.write(f"/* Error reading file: {e} */\n")
+                out.write("```\n\n---\n\n")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Export a skill directory into a single consolidated Markdown file."
+        description="Export all skills for a language into a single consolidated Markdown file."
     )
     parser.add_argument(
-        "--skill", "-s",
-        help="Skill name to export (non-interactive mode). Omit for interactive selection.",
+        "--lang", "-l",
+        choices=LANGUAGES,
+        help="Language to export (rust/python/typescript). Omit for interactive selection.",
     )
     parser.add_argument(
         "--output", "-o",
-        help="Output file path (default: .agents/skills/exports/<skill>.md).",
+        help="Output file path (default: .agents/skills/exports/<lang>.md).",
     )
     return parser.parse_args()
+
+
+def export_all_skills(
+    project_root: Path,
+    skills_dir: Path,
+    lang: str,
+    output_path: Path | None = None,
+) -> Path:
+    """Export all skills for a language. Returns the output path written."""
+    skill_dirs = list_skill_dirs(skills_dir)
+    matched = filter_by_language(skill_dirs, lang)
+
+    if not matched:
+        print(f"Error: No skills found for language '{lang}'.", file=sys.stderr)
+        sys.exit(1)
+    # Default output: .agents/finding/<lang>.md
+    if output_path is None:
+        output_path = project_root / ".agents" / "finding" / f"{lang}.md"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Collect files for each skill
+    skill_data: dict[str, list[Path]] = {}
+    for skill_name in matched:
+        skill_path = skills_dir / skill_name
+        files = collect_skill_files(skill_path)
+        skill_data[skill_name] = sorted(files)
+        print(f"  {skill_name}: {len(files)} file(s)")
+
+    print(f"\n  Writing {len(matched)} skills to {output_path}...")
+    write_markdown(output_path, skill_data, project_root, lang)
+    return output_path
 
 
 def main() -> None:
     args = parse_args()
 
-    if args.skill:
-        # Non-interactive CLI mode
-        project_root, skills_dir = resolve_project_root()
+    project_root, skills_dir = resolve_project_root()
 
-        skill_dirs = list_skill_dirs(skills_dir)
-        if args.skill not in skill_dirs:
-            print(f"Error: Skill '{args.skill}' not found. Available: {', '.join(skill_dirs)}", file=sys.stderr)
-            sys.exit(1)
-
-        selected_skill = args.skill
-        print(f"Processing skill: {selected_skill}...")
-
-        skill_path = skills_dir / selected_skill
-        files_to_export = collect_skill_files(skill_path)
-
-        if args.output:
-            output_path = Path(args.output)
-        else:
-            output_filename = f"{selected_skill}.md"
-            output_path = skills_dir / "exports" / output_filename
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        print(f"Collecting {len(files_to_export)} file(s)...")
-        sorted_files = sorted(files_to_export)
-
-        print(f"Writing export to {output_path}...")
-        write_markdown(
-            output_path,
-            sorted_files,
-            project_root,
-            selected_skill,
-        )
-
-        print(f"\nSuccess! Consolidated markdown file created: {output_path}")
+    # Non-interactive CLI mode
+    if args.lang:
+        lang = args.lang
+        print(f"Exporting all {lang} skills...")
+        result = export_all_skills(project_root, skills_dir, lang, args.output)
+        print(f"\nSuccess! Exported to: {result}")
         return
 
     # Interactive mode
-    while True:
-        print("\n=== Lint Arwaky Skill Exporter ===")
-
-        project_root, skills_dir = resolve_project_root()
-
-        skill_dirs = list_skill_dirs(skills_dir)
-        if not skill_dirs:
-            print("Error: No skills found in '.agents/skills' directory.", file=sys.stderr)
-            sys.exit(1)
-
-        selected_skill = prompt_skill(skill_dirs)
-        print(f"\nProcessing skill: {selected_skill}...")
-
-        skill_path = skills_dir / selected_skill
-        files_to_export = collect_skill_files(skill_path)
-
-        output_filename = f"{selected_skill}.md"
-        output_path = skills_dir / "exports" / output_filename
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        print(f"Collecting {len(files_to_export)} file(s)...")
-        sorted_files = sorted(files_to_export)
-
-        print(f"Writing export to {output_path}...")
-        write_markdown(
-            output_path,
-            sorted_files,
-            project_root,
-            selected_skill,
-        )
-
-        print(f"\nSuccess! Consolidated markdown file created: {output_path}")
-
-        try:
-            again = input("\nExport another skill? (y/n): ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            print("\nExiting.")
-            break
-        if again != "y":
-            break
-
-    print("Done.")
+    print("\n=== Lint Arwaky Skill Exporter ===")
+    lang = prompt_language()
+    print(f"\nExporting all {lang} skills...")
+    result = export_all_skills(project_root, skills_dir, lang)
+    print(f"\nSuccess! Exported to: {result}")
 
 
 if __name__ == "__main__":

@@ -1,95 +1,33 @@
-# FRD — filesystem (v1.1.0)
+# FRD — filesystem (v3.0.0)
 
 ---
 
 ## System Overview
 
-The filesystem crate centralizes all file I/O, AST parsing, import extraction, and dependency graph construction for lint-arwaky. It is the **single source of file data** for all rule crates (naming-rules, code-analysis, role-rules, import-rules, orphan-detector). Rule crates do not perform file I/O or AST parsing directly — they access pre-parsed data through granular accessor methods on the `IFilesystemAggregate` trait.
+The filesystem crate produces data for all feature crates. Each Functional Requirement is defined by **what data it produces** and **for whom**.
 
-### Architecture & Data Flow
+### Data Production Map
 
-```mermaid
-flowchart TD
-    subgraph FS ["filesystem crate"]
-        A["filesystem_aggregate\n(IFilesystemAggregate)"] --> B["file_walker"]
-        A --> C["ast_parser"]
-        A --> D["import_extractor"]
-        A --> E["graph_builder"]
+| FR | Output Data | Consumers |
+| --- | --- | --- |
+| FR-001 | `Vec<FilePath>` or `Vec<FileEntry>` | naming-rules, code-analysis |
+| FR-002 | `Vec<FileEntry>` with parse metadata | role-rules |
+| FR-003 | `Vec<ImportEntry>` | import-rules |
+| FR-004 | `GraphData` (graph + maps) | orphan-detector |
+| FR-005 | Workspace info (root, member, language) | cli-commands, external-lint, orphan-detector |
+| FR-006 | Tool info (paths, availability) | external-lint, maintenance |
+| FR-007 | Cached file content | orphan-detector |
 
-        B -->|"ignore crate\ngitignore-aware\nparallel walk"| F["Vec‹FileEntry›"]
-        F --> C
-        C -->|"tree-sitter\nparallel rayon"| G["ParseMetadata\n+ parse_ok flag"]
-        G --> D
-        D -->|"AST-based\nextraction"| H["Vec‹ImportEntry›"]
-        H --> E
-        E -->|"petgraph + dashmap"| I["DiGraph\n+ ReverseLinkIndex\n+ DefinitionMap\n+ ImplMap"]
-    end
-
-    F -->|"files()"| N1["naming-rules"]
-    F -->|"files()"| N2["code-analysis"]
-    G -->|"parsed_files()"| N3["role-rules"]
-    F -->|"files()"| N4["import-rules"]
-    H -->|"imports()"| N4
-    I -->|"graph()"| N4
-    G -->|"parsed_files()"| N5["orphan-detector"]
-    H -->|"imports()"| N5
-    I -->|"graph()\nreverse_links()\ndefinitions()\nimplementations()"| N5
-
-    style FS fill:#fff3e0,stroke:#e65100
-    style A fill:#e8f5e9,stroke:#388e3c
-    style I fill:#e3f2fd,stroke:#1565c0
-```
-
-### Pipeline Sequence
+### Pipeline Dependency
 
 ```
-filesystem_aggregate (lazy: pipeline runs on first accessor call)
-  │
-  ├── Stage 1: file_walker
-  │     Walk crates/, packages/, modules/
-  │     Filter by extension (.rs, .py, .ts, .js, .jsx, .tsx)
-  │     Respect .gitignore, .ignore, config ignored_paths
-  │     Skip hidden directories, symlink safety
-  │     Read file contents (UTF-8)
-  │     → Vec<FileEntry> (path, content, language, extension)
-  │
-  ├── Stage 2: ast_parser (parallel via rayon)
-  │     Parse each FileEntry via tree-sitter
-  │     Set parse_ok flag (true/false)
-  │     Extract parse metadata (type declarations, impl blocks,
-  │       method signatures, function definitions, class bases)
-  │     Emit PARSE_WARN for parse_ok = false
-  │     → Vec<FileEntry> (enriched with parse metadata)
-  │
-  ├── Stage 3: import_extractor
-  │     Extract import/use/from/require statements from AST
-  │     Normalize relative paths to workspace-root-relative
-  │     Resolve barrel re-exports (mod.rs, __init__.py, index.ts)
-  │     Skip external dependencies (crates.io, npm)
-  │     Skip conditional imports (#[cfg(...)])
-  │     → Vec<ImportEntry>
-  │
-  └── Stage 4: graph_builder
-        Build DiGraph (file → file edges)
-        Build ReverseLinkIndex (file → importers)
-        Build DefinitionMap (trait/class/struct → file)
-        Build ImplMap (trait → implementors)
-        → GraphData
-```
+FR-001 (discovery)
+  └→ FR-002 (parsing)
+       ├→ FR-003 (imports)
+       │    └→ FR-004 (graph)
+       └→ FR-004 (graph, also uses FR-002 output)
 
-### Consumer Access Pattern
-
-```
-IFilesystemAggregate trait (granular accessors, return references):
-
-  file_list()              → all source files              naming-rules, code-analysis, import-rules
-  parsed_file_list()       → files with parse metadata     role-rules, orphan-detector
-  parse_warnings()         → parse diagnostics             all consumers
-  import_list()            → all import entries            import-rules, orphan-detector
-  dependency_graph()       → forward import graph          import-rules, orphan-detector
-  reverse_import_map()     → reverse import map            orphan-detector
-  symbol_definitions()     → symbol → file map             orphan-detector
-  trait_implementations()  → trait → implementors map      orphan-detector
+FR-005, FR-006, FR-007 — independent
 ```
 
 ---
@@ -98,393 +36,442 @@ IFilesystemAggregate trait (granular accessors, return references):
 
 ### FR-001: File Discovery
 
-- **Description**: Walk project directory tree using `ignore` crate (gitignore-aware, parallel walk). Produce a flat list of source files filtered by extension. Read file contents into memory.
-- **Input**: Root path, ignored paths (from config), allowed extensions (from config).
-- **Output**: File data — path, content, extension, language.
-- **Business Rules**:
+**What it produces**: Source file paths, optionally with content.
 
-  - Uses `ignore::WalkBuilder` for parallel, gitignore-aware walking.
-  - Scans `crates/`, `packages/`, `modules/` subdirectories at root level.
-  - Filters by extension: `.rs`, `.py`, `.ts`, `.js`, `.jsx`, `.tsx`.
-  - Respects `.gitignore`, `.ignore`, and `ignored_paths` from config.
-  - Skips hidden directories (`.git`, `.venv`, `node_modules`, `target`, `dist`, `build`, `__pycache__`).
-  - Reads file content into `FileEntry.content` (UTF-8). Non-UTF-8 files are skipped with warning.
-  - No file size limit — all files regardless of size are read and processed.
-- **Edge Cases**:
+| Mode | Output Type | Consumer |
+| --- | --- | --- |
+| Lightweight | `Vec<FilePath>` — paths only | naming-rules |
+| Full | `Vec<FileEntry>` — paths + content + language + extension | code-analysis |
 
-  - Symlinks: follow if target is within workspace root, skip otherwise (symlink safety).
-  - Empty directories: return empty list, no error.
-  - Permission denied: log warning, skip file, continue walk.
-  - Non-UTF-8 content: skip file, log warning.
-  - Empty files: included in result with empty content string.
-- **Error Handling**: Non-fatal — skip inaccessible files, return partial results. Walk errors do not abort the scan.
+**Input**: Root path, ignored paths (from config).
+
+**Business Rules**:
+
+- Walk project directory tree using `ignore` crate (gitignore-aware, parallel walk).
+- Scans `crates/`, `packages/`, `modules/` subdirectories at root level.
+- Filters by extension: `.rs`, `.py`, `.ts`, `.js`, `.jsx`, `.tsx`.
+- Respects `.gitignore`, `.ignore`, and `ignored_paths` from config.
+- Skips hidden directories (`.git`, `.venv`, `node_modules`, `target`, `dist`, `build`, `__pycache__`).
+- **Lightweight mode**: Returns only file paths. No file reading.
+- **Full mode**: Reads file content into `FileEntry.content` (UTF-8). Non-UTF-8 files are skipped with warning.
+- No file size limit — all files regardless of size are processed.
+
+**Edge Cases**:
+
+- Symlinks: follow if target is within workspace root, skip otherwise.
+- Empty directories: return empty list, no error.
+- Permission denied: log warning, skip file, continue walk.
+- Non-UTF-8 content (full mode): skip file, log warning.
+- Empty files: included with empty content string.
+
+**Error Handling**: Non-fatal — skip inaccessible files, return partial results.
 
 ---
 
 ### FR-002: AST Parsing
 
-- **Description**: Parse file contents into ASTs using tree-sitter. Parallel parsing via rayon. Enrich each `FileEntry` with parse metadata and `parse_ok` flag.
-- **Input**: File data from FR-001.
-- **Output**: File data enriched with parse metadata + parse_ok flag + list of parse warnings.
-- **Business Rules**:
+**What it produces**: File entries enriched with parse metadata and `parse_ok` flag.
 
-  - Uses `tree-sitter` with language-specific grammars:
-    - `tree-sitter-rust` for `.rs`
-    - `tree-sitter-python` for `.py`
-    - `tree-sitter-typescript` for `.ts`, `.tsx`
-    - `tree-sitter-javascript` for `.js`, `.jsx`
-  - Parsing is parallel via `rayon::par_iter`.
-  - Each `FileEntry` is enriched with:
-    - `parse_ok: bool` — whether parsing succeeded.
-    - `parse_metadata` — language-specific structured data:
-      - **Rust**: `ItemUse` (imports), `ItemMod` (module declarations with `#[path]` attributes), `ItemImpl` (trait implementations with trait path and implementor type), `ItemStruct` / `ItemEnum` / `ItemTrait` / `ItemType` (definitions), `ItemFn` (function definitions with body span and parameter types).
-      - **Python**: import statements, class declarations (with base classes), function definitions (with body span and parameter types).
-      - **TypeScript/JavaScript**: import/export statements, class declarations (with implements clause), interface declarations, type alias declarations, function definitions (with body span).
-  - Files with `parse_ok = false` produce a `PARSE_WARN` diagnostic:
-    - Code: `PARSE_WARN` (not an AES code).
-    - Severity: `WARNING`.
-    - Message: `"File skipped: parse failure — {error_detail}"`.
-  - Files with `parse_ok = false` are retained in the result with empty parse metadata. Consumer crates decide how to handle them.
-  - No regex fallback. If tree-sitter grammar is not available for a language, the file is marked `parse_ok = false`.
-- **Edge Cases**:
+| Output | Type | Consumer |
+| --- | --- | --- |
+| Parsed entries | `Vec<FileEntry>` with parse metadata | role-rules, FR-003, FR-004 |
 
-  - Syntax error in source: tree-sitter produces partial tree. `parse_ok = false`, partial metadata extracted where possible.
-  - Empty file: `parse_ok = true`, empty metadata.
-  - JSX/TSX content: tree-sitter-typescript handles JSX natively.
-  - Multi-line imports/definitions: handled natively by tree-sitter AST.
-- **Error Handling**: Non-fatal — parse errors produce `parse_ok = false` + `PARSE_WARN`, do not block scan. No panics, no unwraps.
+**Input**: `Vec<FileEntry>` from FR-001 (full mode).
 
----
+**Business Rules**:
 
-### FR-003: Import/Dependency Extraction
+- Uses `tree-sitter` with language-specific grammars:
+  - `tree-sitter-rust` for `.rs`
+  - `tree-sitter-python` for `.py`
+  - `tree-sitter-typescript` for `.ts`, `.tsx`
+  - `tree-sitter-javascript` for `.js`, `.jsx`
+- Parsing is parallel via `rayon::par_iter`.
+- Each `FileEntry` is enriched with:
+  - `parse_ok: bool` — whether parsing succeeded.
+  - `parse_metadata` — language-specific structured data:
+    - **Rust**: `ItemUse`, `ItemMod`, `ItemImpl`, `ItemStruct`/`ItemEnum`/`ItemTrait`/`ItemType`, `ItemFn`.
+    - **Python**: import statements, class declarations, function definitions.
+    - **TypeScript/JavaScript**: import/export statements, class declarations, interface declarations, type alias declarations, function definitions.
+- Files with `parse_ok = false` produce a `PARSE_WARN` diagnostic.
+- No regex fallback.
 
-- **Description**: Extract import statements from ASTs. Normalize to absolute module paths. Produce a flat list of import entries.
-- **Input**: File data with parse metadata from FR-002.
-- **Output**: Import data — source file, target module path, imported symbols, import type, reexport flag, wildcard flag, resolved flag.
-- **Business Rules**:
+**Edge Cases**:
 
-  - **Rust**: Extract `use` and `mod` statements from `ItemUse` / `ItemMod` parse metadata. Resolve `crate::`, `super::`, `self::` prefixes. Handle grouped imports (`use foo::{A, B}`), glob imports (`use foo::*`), and `pub use` re-exports. Handle `#[path = "..."]` attributes on `ItemMod`.
-  - **Python**: Extract `import X` and `from X import Y` from parse metadata. Resolve relative imports (`from . import X`, `from ..module import Y`) by walking parent directories.
-  - **TypeScript/JavaScript**: Extract `import { X } from`, `import X from`, `import * as X from`, side-effect imports, `export { X } from`, `export * from`, and `require()` from parse metadata. Resolve extensionless imports by trying `.ts`, `.js`, `.tsx`, `.jsx`, and `/index.*` candidates.
-  - Normalize relative paths (`./foo`, `../bar`) to workspace-root-relative module paths.
-  - Handle barrel re-exports (`mod.rs`, `__init__.py`, `index.ts`) — resolve through barrel to original source file.
-  - Skip external dependencies (crates.io packages, npm packages) — only internal workspace imports.
-  - **Conditional imports (`#[cfg(...)]`) are SKIPPED** — not extracted, not included in import data.
-  - Hyphen/underscore normalization: Rust crate names with hyphens (`lint-arwaky`) normalized to underscores (`lint_arwaky`) for module path resolution.
-  - Build crate module index for cross-crate resolution.
-- **Edge Cases**:
+- Syntax error: tree-sitter produces partial tree, `parse_ok = false`.
+- Empty file: `parse_ok = true`, empty metadata.
+- Macro-generated code: invisible to parser.
 
-  - Dynamic imports (`import()` in TS): extract string literal if static, mark as `is_dynamic = true`. Variable-based dynamic imports (`import(moduleName)`) are skipped.
-  - Star imports (`use foo::*`, `export * from`): mark as `is_wildcard = true`, edge created to module root.
-  - Unresolvable imports (target file not found): `ImportEntry` created with `resolved = false`.
-  - Files with `parse_ok = false`: no imports extracted (empty contribution).
-  - Multi-line import statements: handled natively by tree-sitter AST.
-- **Error Handling**: Non-fatal — unresolvable imports logged, marked `resolved = false`, excluded from graph edges.
+**Error Handling**: Non-fatal — parse errors produce `parse_ok = false` + `PARSE_WARN`.
 
 ---
 
-### FR-004: Dependency Graph and Map Construction
+### FR-003: Import Data Extraction
 
-- **Description**: Build a directed graph of file-to-file dependencies from extracted imports. Build reverse link index, definition map, and implementation map from parse metadata.
-- **Input**: Import data from FR-003, file data with parse metadata from FR-002.
-- **Output**: `GraphData` containing:
+**What it produces**: Flat list of import entries.
 
-  - `DiGraph` — petgraph `DiGraph<FileNode, ImportEdge>` (forward import graph).
-  - `ReverseLinkIndex` — reverse import map (file → list of files that import it).
-  - `DefinitionMap` — symbol definition map (trait/class/struct/interface name → defining file).
-  - `ImplMap` — trait implementation map (trait/interface name → list of implementor files).
-- **Business Rules**:
+| Output | Type | Consumer |
+| --- | --- | --- |
+| Import entries | `Vec<ImportEntry>` | import-rules, FR-004 |
 
-  - **DiGraph construction**:
+**Input**: `Vec<FileEntry>` with parse metadata from FR-002.
 
-    - Nodes: each source file (keyed by workspace-root-relative path).
-    - Edges: import relationship (source file → imported file).
-    - Edge weight: import type (use/from/require/mod), is_reexport, is_wildcard.
-    - Parallel construction via `DashMap` → merge into `petgraph::DiGraph`.
-    - Duplicate imports: single edge, deduplicated.
-    - Broken imports (`resolved = false`): edge created with `resolved = false` flag.
-  - **ReverseLinkIndex construction**:
+**Business Rules**:
 
-    - Invert all DiGraph edges: for each edge A → B, add A to B's importer list.
-    - Barrel file re-exports are resolved: if A imports from barrel B which re-exports from C, the reverse link points to C (original source), not B (barrel).
-  - **DefinitionMap construction** (from parse metadata):
+- **Rust**: Extract `use`/`mod` statements. Resolve `crate::`/`super::`/`self::`. Handle grouped imports, glob imports, `pub use` re-exports.
+- **Python**: Extract `import X`/`from X import Y`. Resolve relative imports.
+- **TypeScript/JavaScript**: Extract `import`/`export`/`require()`. Resolve extensionless imports.
+- Normalize relative paths to workspace-root-relative module paths.
+- Handle barrel re-exports (`mod.rs`, `__init__.py`, `index.ts`).
+- Skip external dependencies (crates.io, npm).
+- Skip conditional imports (`#[cfg(...)]`).
 
-    - Rust: `ItemStruct` name → file, `ItemEnum` name → file, `ItemTrait` name → file, `ItemType` name → file.
-    - Python: class name → file.
-    - TypeScript: class name → file, interface name → file, type alias name → file.
-  - **ImplMap construction** (from parse metadata):
+**Edge Cases**:
 
-    - Rust: `ItemImpl` with `trait_` field → trait name mapped to implementor file. Handles generic impls (`impl<T> Trait for Type`) and qualified paths (`impl foo::Trait for Bar`).
-    - Python: class base list → parent class mapped to child file.
-    - TypeScript: `implements` clause → interface mapped to implementor file.
-  - **Graph queries supported**:
+- Dynamic imports: extract if static, skip if variable-based.
+- Unresolvable imports: `resolved = false`.
+- Files with `parse_ok = false`: no imports extracted.
 
-    - `dependents(file)` → who imports this file? (ReverseLinkIndex lookup)
-    - `dependencies(file)` → what does this file import? (DiGraph outgoing edges)
-    - `reachable(from)` → all files transitively reachable from `from` (BFS)
-- **Edge Cases**:
-
-  - External dependencies (not in workspace): not added as nodes. Import entries with `resolved = false` are logged but do not create edges.
-  - Circular imports: cycles exist in graph but do not cause construction errors.
-  - Files with `parse_ok = false`: present as nodes (from file list) but contribute no edges, definitions, or implementations.
-- **Error Handling**: Non-fatal — broken imports create unresolved entries. Graph construction errors produce partial graph with diagnostics.
+**Error Handling**: Non-fatal — unresolvable imports logged, marked `resolved = false`.
 
 ---
 
-### FR-005: Filesystem Orchestrator
+### FR-004: Graph Data Construction
 
-- **Description**: Single entry point that orchestrates FR-001 through FR-004. Exposes data via **granular accessor methods** on the `IFilesystemAggregate` trait. Pipeline runs once (lazy initialization on first accessor call), results cached internally, served to all consumers via reference.
-- **Input**: Scan root path, architecture configuration (ignored paths, extensions).
-- **Output**: Per-accessor return (see trait definition below).
-- **Business Rules**:
+**What it produces**: Structured graph data with 4 components.
 
-  - **Pipeline**: walk → parse → extract → graph (sequential stages, parallel within each stage).
-  - Pipeline runs once per scan (lazy: triggered on first accessor call). Results cached internally.
-  - All accessors return **references** (`&[T]`, `&Map`) — zero-cost, no clone.
-  - Result is immutable after construction (read-only queries only).
-  - Implements `IFilesystemAggregate` trait (defined by this crate, not by consumer crates).
-  - Each stage logs timing for performance profiling.
-  - **Consumer access pattern**:
+| Output Component | Type | Description |
+| --- | --- | --- |
+| DiGraph | `petgraph::DiGraph` | Forward import graph (file → files it imports) |
+| ReverseLinkIndex | `HashMap<PathBuf, Vec<PathBuf>>` | Reverse import map (file → files that import it) |
+| DefinitionMap | `HashMap<String, Vec<PathBuf>>` | Symbol → defining file |
+| ImplMap | `HashMap<String, Vec<PathBuf>>` | Trait/interface → implementor files |
 
+**Consumer**: orphan-detector
 
-    | Consumer        | Accessors Used                                                                               |
-    | ----------------- | ---------------------------------------------------------------------------------------------- |
-    | naming-rules    | file_list()                                                                                   |
-    | code-analysis   | file_list()                                                                                   |
-    | role-rules      | parsed_file_list()                                                                            |
-    | import-rules    | file_list(), import_list(), dependency_graph()                                               |
-    | orphan-detector | parsed_file_list(), import_list(), dependency_graph(), reverse_import_map(), symbol_definitions(), trait_implementations() |
-    | all consumers   | parse_warnings()                                                                              |
-- **Edge Cases**:
+**Input**: `Vec<ImportEntry>` from FR-003 + `Vec<FileEntry>` with parse metadata from FR-002.
 
-  - Empty project: all accessors return empty slices/maps, no error.
-  - Single file: still run full pipeline (consistency).
-  - Multiple consumers calling different accessors: pipeline runs once, results shared.
-  - Accessor called before pipeline completes: blocks until pipeline finishes (lazy init).
-- **Error Handling**: Pipeline failure at any stage produces `ScanError` with stage identification. Partial results available via accessors for completed stages. `parse_warnings()` always returns diagnostics for any parse failures.
+**Business Rules**:
+
+- **DiGraph**: Nodes = source files, Edges = import relationships. Parallel construction via `DashMap`.
+- **ReverseLinkIndex**: Invert all DiGraph edges. Barrel re-exports resolved to original source.
+- **DefinitionMap**: From parse metadata — struct/enum/trait/type/class/interface name → file.
+- **ImplMap**: From parse metadata — trait/interface → implementor files.
+- **Graph queries**: `dependents(file)`, `dependencies(file)`, `reachable(from)`.
+
+**Edge Cases**:
+
+- Circular imports: cycles exist but don't cause errors.
+- Broken imports: edge with `resolved = false`.
+- Files with `parse_ok = false`: nodes but no edges.
+
+**Error Handling**: Non-fatal — broken imports create unresolved entries.
+
+---
+
+### FR-005: Workspace Detection
+
+**What it produces**: Workspace metadata.
+
+| Output | Type | Consumers |
+| --- | --- | --- |
+| Workspace root | `Option<PathBuf>` | cli-commands, orphan-detector |
+| Member status | `bool` | cli-commands |
+| Leaf member status | `bool` | cli-commands |
+| Source directory | `PathBuf` | code-analysis |
+| Language from path | `ConfigLanguage` | config-system |
+| Language by walking | `(bool, bool, bool)` | external-lint |
+
+**Input**: Start path (string or Path).
+
+**Business Rules**:
+
+- **Workspace root** (`workspace_root`, `find_workspace_root_from_path`): Walk up looking for `crates/`/`packages/`/`modules/` + manifest.
+- **Member detection** (`is_member_path`): Cargo.toml without `[workspace]`, or `__init__.py`/`pyproject.toml`, or `package.json`.
+- **Leaf member** (`is_leaf_member_path`): Member without sub-members.
+- **Source dir** (`detect_source_dir`): Check `packages/`/`crates/`/`modules/` in order.
+- **Language from path** (`detect_language_from_path`): Check manifest markers.
+- **Language by walking** (`detect_languages`): Walk + check extensions. Early-terminate.
+
+**Error Handling**: Non-fatal — returns `None`/`Err` for unresolvable cases.
+
+---
+
+### FR-006: Tool Resolution
+
+**What it produces**: Tool availability and resolved paths.
+
+| Output | Type | Consumers |
+| --- | --- | --- |
+| Executable in PATH | `bool` | external-lint, maintenance |
+| Local bin available | `bool` | external-lint, maintenance |
+| JS tool command | `Option<Vec<String>>` | external-lint |
+| Working directory | `FilePath` | external-lint |
+| Config file present | `bool` | external-lint, maintenance |
+| Cargo manifest present | `Option<String>` | external-lint |
+
+**Input**: Tool name, working directory, arguments.
+
+**Business Rules**:
+
+- **PATH detection** (`is_executable_in_path`, `is_binary_available`): Check system PATH.
+- **Local bin** (`has_local_bin`): Check `node_modules/.bin/`.
+- **JS tool** (`resolve_js_cmd`): Local binary only, no npx/bunx fallback.
+- **Working dirs** (`resolve_js_working_dir`, `resolve_cargo_working_dir`, `resolve_cargo_lock_working_dir`): Walk up to find project root.
+- **Config detection** (`has_config_file`): Check for `.eslintrc`, `tsconfig.json`, etc.
+- **Manifest detection** (`has_cargo_toml`, `has_cargo_lock`): Check for Cargo files.
+
+**Error Handling**: Non-fatal — return false/None for unavailable tools.
+
+---
+
+### FR-007: File Cache
+
+**What it produces**: Cached file content for fast repeated reads.
+
+| Output | Type | Consumer |
+| --- | --- | --- |
+| Cached content | `ContentString` | orphan-detector |
+
+**Input**: File paths.
+
+**Business Rules**:
+
+- **DashMap cache** (pipeline): Parallel population via rayon. Thread-safe lookup.
+- **Bounded HashMap cache** (ad-hoc): `MAX_CACHE_ENTRIES = 20,000`. Simple threshold, no LRU.
+- **String-keyed cache** (code-analysis compatibility): Separate cache for string-keyed lookups.
+- **Cache cascade**: `read_cached()` checks DashMap → bounded → disk.
+
+**Edge Cases**:
+
+- Concurrent access: DashMap handles thread safety.
+- Cache full: silently skip insertion, serve from disk.
+- Empty content: not stored.
+
+**Error Handling**: Non-fatal — cache misses fall through to disk reads.
 
 ---
 
 ## API Contract
 
+### FR-001: File Discovery
 
-| Operation                         | Input                      | Output                    | Purpose                                                                         |
-| ---------------------------------- | ---------------------------- | --------------------------- | --------------------------------------------------------------------------------- |
-| Full scan (walk → parse → graph) | Root path, configuration     | Internal pipeline trigger   | Run full pipeline, lazy on first accessor call                                  |
-| File list                        | —                           | All source files            | All discovered files (path, content, language)                                  |
-| Parsed file list                 | —                           | Parsed files                | Files enriched with parse metadata and parse_ok flag                            |
-| Parse warnings                   | —                           | Parse diagnostics           | Warnings emitted for files that failed to parse                                 |
-| Import list                      | —                           | Import entries              | All extracted import entries across the workspace                               |
-| Dependency graph                 | —                           | Forward import graph        | File-to-file import edges                                                       |
-| Reverse import map               | —                           | Reverse import map          | File → list of files that import it                                             |
-| Definition map                   | —                           | Symbol → file map           | Trait/class/struct/interface names mapped to their defining file                |
-| Implementation map               | —                           | Trait → implementor map     | Trait/interface names mapped to their implementor files                         |
-| DI container                     | —                           | Filesystem container        | Default dependency injection container                                          |
-| DI container with config         | Architecture configuration  | Filesystem container        | DI container with custom configuration                                         |
+| Method | Output | Used By |
+| --- | --- | --- |
+| `discover_source_files(root, ignored)` | `Vec<FilePath>` | naming-rules |
+| `discover_files(root, ignored)` | `Vec<FileEntry>` | code-analysis, import-rules, orphan-detector |
+| `collect_source_files(root_dir, ignored)` | `Vec<FilePath>` | code-analysis |
+| `collect_file_entries(files)` | `Vec<(PathBuf, String)>` | code-analysis |
+| `read_lintable_file(path)` | `Result<Option<String>, String>` | code-analysis |
+
+### FR-002: AST Parsing
+
+| Method | Output | Used By |
+| --- | --- | --- |
+| `run_pipeline(root, ignored)` | — (triggers FR-001→FR-004) | mcp-server |
+| `file_list()` | `&[FileEntry]` | — (available) |
+| `parsed_file_list()` | `&[FileEntry]` | role-rules (via parameter) |
+| `parse_warnings()` | `&[ParseWarning]` | mcp-server, cli-commands |
+
+### FR-003: Import Data Extraction
+
+| Method | Output | Used By |
+| --- | --- | --- |
+| `import_list()` | `&[ImportEntry]` | import-rules (via parameter) |
+| `all_imports()` | `&[ImportEntry]` | — (available) |
+| `imports_for(path)` | `Vec<ImportEntry>` | — (available) |
+
+### FR-004: Graph Data Construction
+
+| Method | Output | Used By |
+| --- | --- | --- |
+| `dependency_graph()` | `&HashMap<PathBuf, Vec<PathBuf>>` | import-rules (via parameter) |
+| `reverse_import_map()` | `&HashMap<PathBuf, Vec<PathBuf>>` | orphan-detector (via parameter) |
+| `symbol_definitions()` | `&HashMap<String, Vec<PathBuf>>` | orphan-detector (via parameter) |
+| `trait_implementations()` | `&HashMap<String, Vec<PathBuf>>` | orphan-detector (via parameter) |
+| `depends_on(from, to)` | `bool` | — (available) |
+| `cycles()` | `Vec<Vec<PathBuf>>` | — (available) |
+| `orphan_files()` | `Vec<PathBuf>` | — (available) |
+
+### FR-005: Workspace Detection
+
+| Method | Output | Used By |
+| --- | --- | --- |
+| `workspace_root(start)` | `Option<PathBuf>` | cli-commands |
+| `find_workspace_root_from_path(start)` | `Result<PathBuf, io::Error>` | orphan-detector |
+| `is_member_path(path)` | `bool` | cli-commands |
+| `is_leaf_member_path(path)` | `bool` | cli-commands |
+| `detect_source_dir(project_root)` | `PathBuf` | code-analysis |
+| `detect_language_from_path(path)` | `ConfigLanguage` | config-system |
+| `detect_languages(root)` | `(bool, bool, bool)` | external-lint |
+
+### FR-006: Tool Resolution
+
+| Method | Output | Used By |
+| --- | --- | --- |
+| `resolve_js_cmd(exec, args, wd)` | `Option<Vec<String>>` | external-lint |
+| `resolve_js_working_dir(path)` | `FilePath` | external-lint |
+| `resolve_cargo_working_dir(path)` | `FilePath` | external-lint |
+| `resolve_cargo_lock_working_dir(path)` | `FilePath` | external-lint |
+| `is_executable_in_path(exec)` | `bool` | external-lint, maintenance |
+| `is_binary_available(bin_name)` | `bool` | tui |
+| `has_local_bin(wd, exec)` | `bool` | external-lint, maintenance |
+| `has_config_file(dir)` | `bool` | external-lint, maintenance |
+| `has_cargo_toml(path)` | `Option<String>` | external-lint |
+| `has_cargo_lock(path)` | `Option<String>` | external-lint |
+| `has_python_files_recursive(path)` | `bool` | external-lint |
+| `default_working_dir(path)` | `FilePath` | external-lint |
+| `noop_apply_fix()` | `Result<ComplianceStatus, LinterOperationError>` | external-lint |
+
+### FR-007: File Cache
+
+| Method | Output | Used By |
+| --- | --- | --- |
+| `read_cached(path)` | `ContentString` | orphan-detector |
+| `cache_populate(files)` | — | — (internal) |
+| `cache_get(path)` | `Option<String>` | — (internal) |
+| `cache_contains(path)` | `bool` | — (internal) |
+| `cache_memory_bytes()` | `usize` | — (internal) |
+| `cache_clear()` | — | — (internal) |
+
+### File I/O (utility, not FR)
+
+| Method | Output | Used By |
+| --- | --- | --- |
+| `read_file(path)` | `Option<String>` | config-system |
+| `read_to_string(path)` | `Result<String, io::Error>` | config-system, auto-fix, git-hooks, maintenance |
+| `write_string(path, content)` | `Result<(), io::Error>` | auto-fix, git-hooks |
+| `write_text_to_file(path, text)` | `Result<(), String>` | tui |
+| `copy_file(src, dst)` | `Result<u64, io::Error>` | cli-commands |
+| `remove_file(path)` | `Result<(), io::Error>` | git-hooks |
+| `create_dir_all(path)` | `Result<(), io::Error>` | git-hooks |
+| `scan_directory(dir)` | `Vec<PathBuf>` | config-system, orphan-detector, maintenance |
+| `scan_directory_with_ignored(dir, ignored)` | `Vec<PathBuf>` | tui |
+| `read_dir_entries_as_pathbuf(dir)` | `Result<Vec<PathBuf>, io::Error>` | project-setup |
+| `run_git_command(args, dir)` | `(String, String, bool)` | git-hooks |
+| `run_external_command_in(name, args, dir)` | `(String, String, bool)` | maintenance |
+| `parse_output_lines(output)` | `Vec<String>` | git-hooks |
+| `path_exists(path)` | `bool` | config-system, git-hooks |
+| `is_file(path)` | `bool` | external-lint, maintenance, git-hooks, project-setup |
+| `is_dir(path)` | `bool` | orphan-detector, project-setup, git-hooks |
+| `canonicalize(path)` | `Result<PathBuf, io::Error>` | config-system |
+| `canonicalize_path_str(path)` | `String` | external-lint |
+| `symlink_metadata(path)` | `Result<Metadata, io::Error>` | config-system |
+| `should_ignore(path, ignored)` | `bool` | orphan-detector |
+| `is_ignored_dir(dir, ignored)` | `bool` | orphan-detector |
+| `timing()` | `&ScanTiming` | — (available) |
 
 ---
 
-## Integration Points
+## Consumer Access Pattern
 
-- **Internal** (filesystem crate):
-
-  - `file_walker` — `ignore` crate-based parallel directory walker with gitignore awareness.
-  - `ast_parser` — tree-sitter-based parallel AST parser with language dispatch.
-  - `import_extractor` — AST-based import/mod/from/require extraction with path normalization and barrel resolution.
-  - `graph_builder` — petgraph DiGraph construction, ReverseLinkIndex, DefinitionMap, ImplMap.
-  - `filesystem_aggregate` — orchestrator implementing `IFilesystemAggregate` trait.
-  - Taxonomy VOs — `FileEntry`, `ImportEntry`, `ParseMetadata`, `GraphData`, `GraphAnalysisContext`.
-- **External**:
-
-  - `ignore` crate — parallel, gitignore-aware directory walking.
-  - `tree-sitter` + `tree-sitter-rust` + `tree-sitter-python` + `tree-sitter-typescript` + `tree-sitter-javascript` — full AST parsing for all supported languages.
-  - `petgraph` — directed graph data structure and algorithms.
-  - `dashmap` — concurrent HashMap for parallel graph construction.
-  - `rayon` — data parallelism for file reading and parsing.
-  - No network calls. No filesystem writes. Read-only static analysis.
-- **Consumers** (dependency direction: consumer → filesystem, never reverse):
-
-  - `naming-rules` crate — accesses `files()`.
-  - `code-analysis` crate — accesses `files()`.
-  - `role-rules` crate — accesses `parsed_files()`.
-  - `import-rules` crate — accesses `files()`, `imports()`, `graph()`.
-  - `orphan-detector` crate — accesses `parsed_files()`, `imports()`, `graph()`, `reverse_links()`, `definitions()`, `implementations()`.
+| Consumer | FRs Used | Methods |
+| --- | --- | --- |
+| **naming-rules** | FR-001 | `discover_source_files()` |
+| **code-analysis** | FR-001, FR-005 | `collect_file_entries()`, `collect_source_files()`, `detect_source_dir()`, `read_lintable_file()` |
+| **role-rules** | FR-002 | `parsed_file_list()` (via parameter) |
+| **import-rules** | FR-001, FR-003, FR-004 | `discover_files()`, `import_list()`, `dependency_graph()` (via parameter) |
+| **orphan-detector** | FR-002, FR-003, FR-004, FR-005, FR-007 | `parsed_file_list()`, `import_list()`, `dependency_graph()`, `reverse_import_map()`, `symbol_definitions()`, `trait_implementations()`, `read_cached()`, `find_workspace_root_from_path()`, `discover_files()`, `scan_directory()`, `is_dir()`, `is_ignored_dir()`, `should_ignore()` |
+| **cli-commands** | FR-005 | `workspace_root()`, `is_member_path()`, `is_leaf_member_path()`, `canonicalize()`, `copy_file()` |
+| **config-system** | utility | `read_file()`, `read_to_string()`, `symlink_metadata()`, `canonicalize()`, `path_exists()`, `scan_directory()` |
+| **external-lint** | FR-005, FR-006 | `detect_languages()`, `resolve_js_cmd()`, `resolve_js_working_dir()`, `is_executable_in_path()`, `has_local_bin()`, `has_config_file()`, `has_cargo_toml()`, `has_cargo_lock()`, `resolve_cargo_working_dir()`, `resolve_cargo_lock_working_dir()`, `canonicalize_path_str()`, `is_file()`, `default_working_dir()`, `has_python_files_recursive()`, `noop_apply_fix()` |
+| **tui** | utility | `write_text_to_file()`, `scan_directory_with_ignored()`, `is_binary_available()` |
+| **mcp-server** | FR-002 | `run_pipeline()`, `parse_warnings()` |
+| **auto-fix** | utility | `read_to_string()`, `write_string()`, `copy_file()` |
+| **project-setup** | utility | `is_dir()`, `is_file()`, `read_dir_entries_as_pathbuf()` |
+| **maintenance** | FR-006, utility | `run_external_command_in()`, `is_file()`, `read_to_string()`, `scan_directory()`, `is_executable_in_path()`, `has_local_bin()`, `has_config_file()` |
+| **git-hooks** | utility | `path_exists()`, `is_file()`, `is_dir()`, `read_to_string()`, `write_string()`, `create_dir_all()`, `remove_file()`, `run_git_command()`, `parse_output_lines()` |
+| **report-formatter** | — | (no filesystem usage) |
+| **file-watch** | — | (uses notify crate directly) |
 
 ---
 
 ## Non-functional Requirements
 
-- **Performance**:
-
-  - Full scan of 1,660 files: **< 5 seconds** total.
-  - File discovery (walk): **< 500ms** for 1,660 files.
-  - File reading: **< 2s** for 1,660 files (parallel via rayon).
-  - AST parsing: **< 2s** for 1,660 files (parallel via rayon).
-  - Import extraction: **< 500ms** (query parsed ASTs).
-  - Graph construction: **< 200ms** (DashMap + petgraph).
-  - 10,000 files: **< 15 seconds** total.
-  - Accessor calls after pipeline: **O(1)** — return cached reference.
-- **Memory**:
-
-  - File content cache: O(total file size). For 1,660 files × ~500 avg lines: ~50 MiB.
-  - AST parse metadata: ~2x file content overhead (tree-sitter trees are compact). ~100 MiB.
-  - Import entries: ~200 bytes per entry. For ~10,000 imports: ~2 MiB.
-  - Graph: ~100 bytes per edge, ~1 KB per node. For 10,000 edges: ~1 MiB.
-  - DefinitionMap + ImplMap: ~100 bytes per entry. ~1 MiB.
-  - Total estimated for 1,660 files: **~150 MiB**.
-  - No file size limit — memory bounded by total workspace size.
-- **Accuracy**:
-
-  - **All languages WAJIB full AST** via tree-sitter. No regex-based or line-based parsing.
-  - AST parsing eliminates false data from: matches inside comments, matches inside string literals, multi-line statement fragmentation.
-  - Known limitation: macro-generated code (Rust `macro_rules!`, proc macros) is not expanded. Macro-generated imports, definitions, and implementations are invisible.
-  - Conditional imports (`#[cfg(...)]`) are skipped — consistent with import-rules behavior.
-- **Concurrency**:
-
-  - File reading and AST parsing parallelized via `rayon`.
-  - Graph construction parallelized via `DashMap`.
-  - `IFilesystemAggregate` trait is `Send + Sync` — safe for concurrent access from multiple consumer crates.
-  - Pipeline result is immutable after construction — no synchronization needed for accessor calls.
-- **Configurability**:
-
-  - **Hardcoded conventions (permanent, by design)**:
-    - Workspace directory structure (`crates/`, `packages/`, `modules/`).
-    - Barrel file names (`mod.rs`, `lib.rs`, `__init__.py`, `index.ts`).
-    - Supported file extensions (`.rs`, `.py`, `.ts`, `.js`, `.jsx`, `.tsx`).
-  - **Configurable (via YAML)**:
-    - Additional ignored paths.
-    - Additional workspace directories (beyond default three).
-    - Symlink following behavior.
+- **Performance**: Pipeline processes 1,000 files in < 2s. 10,000 files in < 10s. Accessor calls O(1).
+- **Memory**: Bounded by total workspace size. Cache capped at 20,000 entries.
+- **Accuracy**: Full AST via tree-sitter for all languages. No regex fallback.
+- **Concurrency**: Pipeline parallel via rayon + DashMap. Trait is `Send + Sync`.
+- **Configurability**: Hardcoded conventions (workspace structure, extensions). Configurable via YAML (ignored paths, workspace dirs).
 
 ---
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
-### FR-001 — File Discovery
+### FR-001: File Discovery
 
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Workspace with 100 .rs files | All 100 discovered | FR-001 |
+| 2 | File in .gitignore | Not discovered | FR-001 |
+| 3 | Symlink pointing outside workspace | Skipped | FR-001 |
+| 4 | Empty directory | Empty list | FR-001 |
+| 5 | Non-UTF-8 file (full mode) | Skipped with warning | FR-001 |
 
-| #  | Scenario                                    | Expected                               | Rule   |
-| ---- | --------------------------------------------- | ---------------------------------------- | -------- |
-| 1  | Workspace with 100 .rs files across crates/ | All 100 discovered                     | FR-001 |
-| 2  | Workspace with .rs, .py, .ts, .js files     | All extensions discovered              | FR-001 |
-| 3  | File in .gitignore                          | Not discovered                         | FR-001 |
-| 4  | File in config ignored_paths                | Not discovered                         | FR-001 |
-| 5  | Hidden directory (.git, .venv)              | Not discovered                         | FR-001 |
-| 6  | Symlink pointing outside workspace          | Skipped (symlink safety)               | FR-001 |
-| 7  | Symlink pointing inside workspace           | Followed                               | FR-001 |
-| 8  | Permission denied file                      | Skipped with warning, walk continues   | FR-001 |
-| 9  | Empty directory                             | Empty list, no error                   | FR-001 |
-| 10 | Non-UTF-8 file                              | Skipped with warning                   | FR-001 |
-| 11 | Empty file (0 bytes)                        | Included with empty content            | FR-001 |
-| 12 | File with .md extension                     | Not discovered (unsupported extension) | FR-001 |
+### FR-002: AST Parsing
 
-### FR-002 — AST Parsing
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Valid Rust file | parse_ok = true, full metadata | FR-002 |
+| 2 | Rust file with syntax error | parse_ok = false, PARSE_WARN | FR-002 |
+| 3 | Empty file | parse_ok = true, empty metadata | FR-002 |
+| 4 | 1,000 files parsed in parallel | Completes in < 1s | FR-002 |
 
+### FR-003: Import Data Extraction
 
-| # | Scenario                                | Expected                             | Rule   |
-| --- | ----------------------------------------- | -------------------------------------- | -------- |
-| 1 | Valid Rust file                         | parse_ok = true, full metadata       | FR-002 |
-| 2 | Valid Python file                       | parse_ok = true, full metadata       | FR-002 |
-| 3 | Valid TypeScript file with JSX          | parse_ok = true, full metadata       | FR-002 |
-| 4 | Rust file with syntax error             | parse_ok = false, PARSE_WARN emitted | FR-002 |
-| 5 | Python file with unterminated string    | parse_ok = false, PARSE_WARN emitted | FR-002 |
-| 6 | Empty file                              | parse_ok = true, empty metadata      | FR-002 |
-| 7 | Multi-line struct definition            | Fully extracted in metadata          | FR-002 |
-| 8 | Generic impl (`impl<T> Trait for Type`) | Trait + implementor extracted        | FR-002 |
-| 9 | 1,000 files parsed in parallel          | Completes in < 2s                    | FR-002 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | `use crate::foo::Bar` | ImportEntry with resolved path | FR-003 |
+| 2 | `use foo::*` | is_wildcard = true | FR-003 |
+| 3 | `#[cfg(test)] use foo::Bar` | Not extracted | FR-003 |
+| 4 | External dependency | Not extracted | FR-003 |
 
-### FR-003 — Import Extraction
+### FR-004: Graph Data Construction
 
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | A imports B | Edge A → B | FR-004 |
+| 2 | Circular imports | Both edges exist | FR-004 |
+| 3 | `struct Foo` in A | DefinitionMap: "Foo" → A | FR-004 |
+| 4 | `impl IBar for Foo` | ImplMap: "IBar" → [A] | FR-004 |
 
-| #  | Scenario                                       | Expected                                            | Rule   |
-| ---- | ------------------------------------------------ | ----------------------------------------------------- | -------- |
-| 1  | Rust`use crate::foo::Bar`                      | ImportEntry with resolved path                      | FR-003 |
-| 2  | Rust`use foo::{A, B, C}`                       | 3 ImportEntries                                     | FR-003 |
-| 3  | Rust`use foo::*`                               | 1 ImportEntry, is_wildcard = true                   | FR-003 |
-| 4  | Rust`pub use foo::Bar`                         | ImportEntry, is_reexport = true                     | FR-003 |
-| 5  | Rust`#[cfg(test)] use foo::Bar`                | Not extracted (conditional skip)                    | FR-003 |
-| 6  | Python`from . import X`                        | Resolved to sibling file                            | FR-003 |
-| 7  | Python`from ..module import Y`                 | Resolved to parent directory                        | FR-003 |
-| 8  | TS`import { X } from './path'`                 | ImportEntry with resolved path                      | FR-003 |
-| 9  | TS extensionless import`from './utils/helper'` | Resolves helper.ts / helper/index.ts                | FR-003 |
-| 10 | TS`export * from './path'`                     | ImportEntry, is_reexport = true, is_wildcard = true | FR-003 |
-| 11 | External dependency (`use serde::Serialize`)   | Not extracted (external)                            | FR-003 |
-| 12 | Import inside comment                          | Not extracted (AST ignores comments)                | FR-003 |
-| 13 | Import inside string literal                   | Not extracted (AST ignores strings)                 | FR-003 |
-| 14 | File with parse_ok = false                     | No imports extracted                                | FR-003 |
+### FR-005: Workspace Detection
 
-### FR-004 — Graph Construction
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Start from crates/some-crate/src | Finds workspace root | FR-005 |
+| 2 | Path with Cargo.toml (no [workspace]) | is_member_path = true | FR-005 |
+| 3 | Path with Cargo.toml nearby | detect_language = Rust | FR-005 |
 
+### FR-006: Tool Resolution
 
-| #  | Scenario                                                  | Expected                                | Rule   |
-| ---- | ----------------------------------------------------------- | ----------------------------------------- | -------- |
-| 1  | File A imports File B                                     | Edge A → B in DiGraph                  | FR-004 |
-| 2  | File A imports File B                                     | B's reverse_links contains A            | FR-004 |
-| 3  | Circular imports (A → B → A)                            | Both edges exist, no construction error | FR-004 |
-| 4  | Duplicate imports (A imports B twice)                     | Single edge, deduplicated               | FR-004 |
-| 5  | Broken import (target not found)                          | Edge with resolved = false              | FR-004 |
-| 6  | Rust`struct Foo` in file A                                | DefinitionMap: "Foo" → A               | FR-004 |
-| 7  | Rust`impl IBar for Foo` in file A                         | ImplMap: "IBar" → [A]                  | FR-004 |
-| 8  | Python`class Foo(Bar)` in file A                          | ImplMap: "Bar" → [A]                   | FR-004 |
-| 9  | TS`class Foo implements IBar` in file A                   | ImplMap: "IBar" → [A]                  | FR-004 |
-| 10 | Barrel re-export: A imports barrel B, B re-exports from C | Reverse link: A → C (not B)            | FR-004 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | node_modules/.bin/eslint exists | resolve_js_cmd returns command | FR-006 |
+| 2 | Binary in system PATH | is_executable_in_path = true | FR-006 |
+| 3 | has_config_file with .eslintrc | Returns true | FR-006 |
 
-### FR-005 — Orchestrator
+### FR-007: File Cache
 
-
-| # | Scenario                                            | Expected                                        | Rule   |
-| --- | ----------------------------------------------------- | ------------------------------------------------- | -------- |
-| 1 | First accessor call triggers pipeline               | Pipeline runs once                              | FR-005 |
-| 2 | Second accessor call                                | Returns cached result, no re-run                | FR-005 |
-| 3 | Multiple consumers call different accessors         | Pipeline runs once, all served                  | FR-005 |
-| 4 | Empty project                                       | All accessors return empty, no error            | FR-005 |
-| 5 | Pipeline failure at Stage 2                         | ScanError with stage ID, Stage 1 data available | FR-005 |
-| 6 | `parse_warnings()` after scan with 3 parse failures | 3 PARSE_WARN diagnostics                        | FR-005 |
-
-### Performance
-
-
-| # | Scenario                        | Expected     | Rule |
-| --- | --------------------------------- | -------------- | ------ |
-| 1 | 1,660 file workspace full scan  | < 5 seconds  | perf |
-| 2 | 10,000 file workspace full scan | < 15 seconds | perf |
-| 3 | Accessor call after pipeline    | O(1), < 1ms  | perf |
-
----
-
-## Assumptions & Constraints
-
-- Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
-- All source files are UTF-8 encoded. Non-UTF-8 files are skipped.
-- No file size limit — all files are read and processed regardless of size.
-- Tree-sitter grammars are available for all supported languages (Rust, Python, TypeScript, JavaScript). No regex fallback.
-- Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded. Macro-generated imports, definitions, and implementations are invisible to the parser.
-- Conditional imports (`#[cfg(...)]`) are skipped — consistent with import-rules behavior.
-- Pipeline runs once per scan. Results are immutable and cached. No incremental re-parsing.
-- The filesystem crate defines `IFilesystemAggregate` trait. Consumer crates depend on this trait. The filesystem crate does NOT implement traits from consumer crates.
-- No network calls. No filesystem writes. Read-only static analysis.
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | cache_populate + cache_get | Returns content | FR-007 |
+| 2 | read_cached with DashMap hit | No disk I/O | FR-007 |
+| 3 | Bounded cache at 20K entries | New inserts skipped | FR-007 |
 
 ---
 
 ## Glossary
 
-
-| Term                     | Definition                                                                                                    |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **AES**                  | Agentic Engineering System — the 7-layer coding convention                                                   |
-| **FileEntry**            | Value object containing file path, content, language, extension, parse metadata, and parse_ok flag            |
-| **ImportEntry**          | Value object containing source file, target module path, imported symbols, import type, and resolution status |
-| **DiGraph**              | petgraph directed graph with file nodes and import edges                                                      |
-| **ReverseLinkIndex**     | Map of file path → list of files that import it (inverted graph edges)                                       |
-| **DefinitionMap**        | Map of symbol name (trait/class/struct/interface) → defining file path                                       |
-| **ImplMap**              | Map of trait/interface name → list of implementor file paths                                                 |
-| **GraphData**            | Composite structure containing DiGraph, ReverseLinkIndex, DefinitionMap, and ImplMap                          |
-| **parse_ok**             | Boolean flag on FileEntry indicating whether AST parsing succeeded                                            |
-| **PARSE_WARN**           | Warning diagnostic (non-AES code) emitted when a file fails to parse                                          |
-| **Barrel file**          | A package marker or re-export file (`__init__.py`, `mod.rs`, `lib.rs`, `index.ts`)                            |
-| **IFilesystemAggregate** | Trait defined by filesystem crate exposing granular accessor methods. Consumer crates depend on this trait.   |
-| **Granular accessor**    | Trait method returning reference to specific data slice (`&[FileEntry]`, `&DiGraph`, etc.)                    |
-| **Pipeline**             | Sequential stages (walk → parse → extract → graph) with parallelism within each stage                      |
+| Term | Definition |
+| --- | --- |
+| **FilePath** | Value object containing only the file path string |
+| **FileEntry** | Value object: path + content + language + extension + parse metadata + parse_ok |
+| **ImportEntry** | Value object: source file + target module + symbols + type + flags |
+| **GraphData** | Composite: DiGraph + ReverseLinkIndex + DefinitionMap + ImplMap |
+| **ParseMetadata** | Structured AST-derived data per language |
+| **PARSE_WARN** | Warning for files that failed to parse |
+| **Barrel file** | Re-export file (`mod.rs`, `__init__.py`, `index.ts`) |
+| **IFilesystemAggregate** | Trait exposing all filesystem capabilities |
 
 ## Reference
 

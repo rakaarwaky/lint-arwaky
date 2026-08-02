@@ -11,7 +11,6 @@ publish = true
 workspace = true
 
 [dependencies]
-# File walking (gitignore-aware, parallel)
 ignore = "0.4"
 
 # AST parsing
