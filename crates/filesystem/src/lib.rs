@@ -20,6 +20,7 @@ pub mod capabilities_file_walker; // FR-001 // FR-004
 pub mod utility_file_cache; // FR-007
 pub mod utility_filesystem_io; // file I/O primitives
 pub mod utility_import_extractor; // FR-003
+pub mod utility_tree_sitter_helpers; // shared tree-sitter node helpers
 pub mod utility_import_resolver;
 pub mod utility_tool_resolution; // FR-006
 pub mod utility_workspace_detection; // FR-005 // import path resolution helper

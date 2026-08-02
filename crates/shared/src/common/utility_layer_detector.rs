@@ -212,12 +212,12 @@ pub fn resolve_module_path_to_layer(module_path: &str, root_dir: &str) -> Option
     };
     for entry in read_dir.flatten() {
         let entry_path = entry.path();
-        if entry_path.is_file() {
-            if let Some(filename) = entry_path.file_name().and_then(|n| n.to_str()) {
-                // Check if filename has a layer prefix
-                if let Some(layer) = detect_layer_from_prefix(filename) {
-                    return Some(layer);
-                }
+        if entry_path.is_file()
+            && let Some(filename) = entry_path.file_name().and_then(|n| n.to_str())
+        {
+            // Check if filename has a layer prefix
+            if let Some(layer) = detect_layer_from_prefix(filename) {
+                return Some(layer);
             }
         }
     }

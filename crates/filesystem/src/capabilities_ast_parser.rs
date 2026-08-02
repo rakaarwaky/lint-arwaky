@@ -16,6 +16,10 @@ use shared::filesystem::taxonomy_filesystem_vo::{
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use crate::utility_tree_sitter_helpers::{
+    child_by_field, extract_js_string_child, extract_use_path, text_of,
+};
+
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ASTParser {
@@ -173,51 +177,6 @@ fn extract_rust_use(node: tree_sitter::Node, content: &str) -> RustUseItem {
         is_glob,
         names,
     }
-}
-
-fn extract_use_path(node: tree_sitter::Node, content: &str) -> Option<String> {
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "scoped_identifier" | "use_as_clause" => {
-                return extract_scoped_path(child, content);
-            }
-            "identifier" | "crate" | "super" | "self" => {
-                return Some(text_of(child, content));
-            }
-            _ => {}
-        }
-    }
-    None
-}
-
-fn extract_scoped_path(node: tree_sitter::Node, content: &str) -> Option<String> {
-    let kind = node.kind();
-    if kind == "use_as_clause" {
-        let mut cursor = node.walk();
-        for child in node.named_children(&mut cursor) {
-            if child.kind() == "scoped_identifier" || child.kind() == "identifier" {
-                return extract_scoped_path(child, content);
-            }
-        }
-        return None;
-    }
-    let mut parts = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "identifier" | "crate" | "super" | "self" => {
-                parts.push(text_of(child, content));
-            }
-            "scoped_identifier" => {
-                if let Some(inner) = extract_scoped_path(child, content) {
-                    parts.push(inner);
-                }
-            }
-            _ => {}
-        }
-    }
-    Some(parts.join("::"))
 }
 
 fn extract_use_names(node: tree_sitter::Node, content: &str) -> Vec<String> {
@@ -418,32 +377,3 @@ fn extract_ts_implements(node: tree_sitter::Node, content: &str) -> Vec<String> 
     implements
 }
 
-fn extract_js_string_child(node: tree_sitter::Node, content: &str) -> Option<String> {
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "string" | "template_string" => {
-                let text = text_of(child, content);
-                let stripped = text
-                    .trim_start_matches('\'')
-                    .trim_start_matches('"')
-                    .trim_end_matches('\'')
-                    .trim_end_matches('"');
-                if !stripped.is_empty() {
-                    return Some(stripped.to_string());
-                }
-            }
-            _ => {}
-        }
-    }
-    None
-}
-
-fn text_of(node: tree_sitter::Node, content: &str) -> String {
-    content[node.byte_range()].to_string()
-}
-
-fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option<String> {
-    let child = node.child_by_field_name(field)?;
-    Some(text_of(child, content))
-}

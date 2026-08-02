@@ -1,6 +1,7 @@
 // Contract layer — protocol traits for filesystem operations
 // Organized by FR per FRD v3.0.0
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImplEntry, ImportEntry, Language,
 };
@@ -13,7 +14,11 @@ use std::path::{Path, PathBuf};
 
 /// Protocol for walking the filesystem and discovering source files.
 pub trait IFileWalkerProtocol: Send + Sync {
+    /// Full mode: discover source files with content.
     fn walk(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry>;
+
+    /// Lightweight mode: discover source file paths only.
+    fn discover_paths(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FilePath>;
 }
 
 // ═══════════════════════════════════════════════════════════

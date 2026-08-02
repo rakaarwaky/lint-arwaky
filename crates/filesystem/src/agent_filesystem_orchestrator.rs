@@ -1,6 +1,6 @@
 // Agent layer — orchestrates FR-001 through FR-004
 // Zero I/O, zero business logic, zero domain computation
-// Only orchestration: calls capabilities, returns results
+// Only orchestration: calls capabilities via contract protocols, returns results
 
 use std::path::Path;
 use std::sync::{OnceLock, RwLock};
@@ -10,6 +10,9 @@ use crate::capabilities_dependency_graph::DependencyGraph;
 use crate::capabilities_file_walker::FileWalker;
 use crate::utility_filesystem_io;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::{
+    IASTParserProtocol, IDependencyGraphProtocol,
+};
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, FilesystemResult, ImportEntry, Language, ParseWarning, ScanTiming,
 };
@@ -19,9 +22,9 @@ use std::path::PathBuf;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct FilesystemOrchestrator {
-    walker: FileWalker,
-    parser: ASTParser,
-    graph: RwLock<DependencyGraph>,
+    walker: Box<dyn IFileWalkerProtocol>,
+    parser: Box<dyn IASTParserProtocol>,
+    graph: RwLock<Box<dyn IDependencyGraphProtocol>>,
     files: OnceLock<Vec<FileEntry>>,
     imports: OnceLock<Vec<ImportEntry>>,
     warnings: OnceLock<Vec<ParseWarning>>,
@@ -443,9 +446,12 @@ impl FilesystemOrchestrator {
         }
     }
 
-    fn run_pipeline(&self, root: &Path, ignored: &[String]) {
+    /// Run the scan pipeline. Returns `true` if the pipeline executed,
+    /// `false` if data was already populated (stale — caller should use
+    /// existing results or reconstruct a new orchestrator).
+    fn run_pipeline(&self, root: &Path, ignored: &[String]) -> bool {
         if self.files.get().is_some() {
-            return; // Already ran
+            return false; // Already ran — stale data
         }
 
         let start = std::time::Instant::now();
@@ -511,6 +517,7 @@ impl FilesystemOrchestrator {
             graph_ms,
             total_ms,
         });
+        true
     }
 }
 

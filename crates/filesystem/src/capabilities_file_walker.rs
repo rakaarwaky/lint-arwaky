@@ -26,6 +26,10 @@ impl IFileWalkerProtocol for FileWalker {
     fn walk(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FileEntry> {
         self.discover_entries(root, ignored, extensions)
     }
+
+    fn discover_paths(&self, root: &Path, ignored: &[String], extensions: &[&str]) -> Vec<FilePath> {
+        self.discover_paths(root, ignored, extensions)
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
