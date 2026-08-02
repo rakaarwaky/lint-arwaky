@@ -9,11 +9,11 @@ pub mod config_system;
 pub mod filesystem;
 
 // ── Layer 2: Lint rules ─────────────────────────────────────
-// pub mod naming_rules;
+pub mod naming_rules;
 // pub mod import_rules;
-// pub mod quality_rules;
-// pub mod orphan_rules;
-// pub mod role_rules;
+pub mod orphan_rules;
+pub mod quality_rules;
+pub mod role_rules;
 // pub mod external_lint;
 
 // ── Layer 3: Infrastructure ─────────────────────────────────

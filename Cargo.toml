@@ -1,6 +1,28 @@
 [workspace]
 resolver = "2"
-members = ["crates/shared", "crates/filesystem", "crates/config-system"]
+members = [
+    "crates/shared",
+    "crates/filesystem",
+    "crates/config-system",
+    # Layer 2: Lint rules
+    "crates/naming-rules",
+    "crates/import-rules",
+    "crates/quality-rules",
+    "crates/orphan-rules",
+    "crates/role-rules",
+    "crates/external-lint",
+    # Layer 3: Infrastructure
+    "crates/auto-fix",
+    "crates/git-hooks",
+    "crates/file-watch",
+    "crates/project-setup",
+    "crates/maintenance",
+    # Layer 4: Surface
+    "crates/report-formatter",
+    "crates/cli-commands",
+    "crates/mcp-server",
+    "crates/tui",
+]
 
 #do not bypass with allow
 [workspace.lints.clippy]
@@ -10,6 +32,21 @@ members = ["crates/shared", "crates/filesystem", "crates/config-system"]
 shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "1.11.0" }
 filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "1.11.0" }
 config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "1.11.0" }
+naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "1.11.0" }
+import-rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules", version = "1.11.0" }
+quality-rules = { package = "quality-rules-lint-arwaky", path = "crates/quality-rules", version = "1.11.0" }
+orphan-rules = { package = "orphan-rules-lint-arwaky", path = "crates/orphan-rules", version = "1.11.0" }
+role-rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "1.11.0" }
+external-lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "1.11.0" }
+auto-fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "1.11.0" }
+git-hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", version = "1.11.0" }
+file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "1.11.0" }
+project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "1.11.0" }
+maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.11.0" }
+report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "1.11.0" }
+cli-commands = { package = "cli-commands-lint-arwaky", path = "crates/cli-commands", version = "1.11.0" }
+mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "1.11.0" }
+tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "1.11.0" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0.229", features = ["derive"] }
