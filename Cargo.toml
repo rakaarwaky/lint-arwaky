@@ -108,23 +108,40 @@ readme = "README.md"
 name = "lint_arwaky"
 path = "crates/lib.rs"
 
-#[[bin]]
-#name = "lint-arwaky-cli"
-#path = "crates/root_cli_main_entry.rs"
-#
-#[[bin]]
-#name = "lint-arwaky-mcp"
-#path = "crates/root_mcp_main_entry.rs"
-#
-#[[bin]]
-#name = "lint-arwaky-tui"
-#path = "crates/root_tui_main_entry.rs"
-#
+[[bin]]
+name = "lint-arwaky-cli"
+path = "crates/root_cli_main_entry.rs"
+
+[[bin]]
+name = "lint-arwaky-mcp"
+path = "crates/root_mcp_main_entry.rs"
+
+[[bin]]
+name = "lint-arwaky-tui"
+path = "crates/root_tui_main_entry.rs"
 
 [dependencies]
+# Workspace member crates
 shared.workspace = true
 filesystem.workspace = true
 config-system.workspace = true
+naming-rules.workspace = true
+import-rules.workspace = true
+quality-rules.workspace = true
+orphan-rules.workspace = true
+role-rules.workspace = true
+external-lint.workspace = true
+auto-fix.workspace = true
+git-hooks.workspace = true
+file-watch.workspace = true
+project-setup.workspace = true
+maintenance.workspace = true
+dispatcher.workspace = true
+report-formatter.workspace = true
+cli-commands.workspace = true
+mcp-server.workspace = true
+tui.workspace = true
+# External dependencies
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true
