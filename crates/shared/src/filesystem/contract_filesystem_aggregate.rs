@@ -185,7 +185,7 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn read_cached(&self, path: &crate::common::taxonomy_path_vo::FilePath) -> ContentString;
 
     // ═══════════════════════════════════════════════════════════
-    // File I/O (utility)
+    // File I/O
     // ═══════════════════════════════════════════════════════════
 
     /// Run full pipeline: walk -> parse -> extract -> graph.
@@ -222,7 +222,7 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)>;
 
     // ═══════════════════════════════════════════════════════════
-    // Path Operations (utility)
+    // Path Operations
     // ═══════════════════════════════════════════════════════════
 
     /// Check if path exists.
@@ -271,7 +271,7 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn has_python_files(&self, dir: &Path) -> bool;
 
     // ═══════════════════════════════════════════════════════════
-    // Directory Operations (utility)
+    // Directory Operations
     // ═══════════════════════════════════════════════════════════
 
     /// List directory entries (non-recursive).
@@ -287,7 +287,7 @@ pub trait IFilesystemAggregate: Send + Sync {
     fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error>;
 
     // ═══════════════════════════════════════════════════════════
-    // File Write Operations (utility)
+    // File Write Operations
     // ═══════════════════════════════════════════════════════════
 
     /// Read file content to string.
