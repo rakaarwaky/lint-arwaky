@@ -15,7 +15,7 @@ The filesystem crate produces data for all feature crates. Each Functional Requi
 | FR-002 | `Vec<FileEntry>` with parse metadata    | role-rules                                   |
 | FR-003 | `Vec<ImportEntry>`                      | import-rules                                 |
 | FR-004 | `GraphData` (graph + maps)              | orphan-rules                                 |
-| FR-005 | Workspace info (root, member, language) | cli-commands, external-lint, orphan-detector |
+| FR-005 | Workspace info (root, member, language) | cli-commands, external-lint, orphan-rules |
 | FR-006 | Tool info (paths, availability)         | external-lint, maintenance                   |
 | FR-007 | Cached file content                     | orphan-rules                                 |
 
@@ -43,7 +43,7 @@ FR-005, FR-006, FR-007 — independent
 | Mode        | Output Type                                                | Consumer      |
 | ------------- | ------------------------------------------------------------ | --------------- |
 | Lightweight | `Vec<FilePath>` — paths only                              | naming-rules  |
-| Full        | `Vec<FileEntry>` — paths + content + language + extension | code-analysis |
+| Full        | `Vec<FileEntry>` — paths + content + language + extension | quality-rules |
 
 **Input**: Root path, ignored paths (from config).
 
@@ -151,7 +151,7 @@ FR-005, FR-006, FR-007 — independent
 | DefinitionMap    | `HashMap<String, Vec<PathBuf>>`  | Symbol → defining file                           |
 | ImplMap          | `HashMap<String, Vec<PathBuf>>`  | Trait/interface → implementor files              |
 
-**Consumer**: orphan-detector
+**Consumer**: orphan-rules
 
 **Input**: `Vec<ImportEntry>` from FR-003 + `Vec<FileEntry>` with parse metadata from FR-002.
 
@@ -180,10 +180,10 @@ FR-005, FR-006, FR-007 — independent
 
 | Output              | Type                 | Consumers                     |
 | --------------------- | ---------------------- | ------------------------------- |
-| Workspace root      | `Option<PathBuf>`    | cli-commands, orphan-detector |
+| Workspace root      | `Option<PathBuf>`    | cli-commands, orphan-rules |
 | Member status       | `bool`               | cli-commands                  |
 | Leaf member status  | `bool`               | cli-commands                  |
-| Source directory    | `PathBuf`            | code-analysis                 |
+| Source directory    | `PathBuf`            | quality-rules                 |
 | Language from path  | `ConfigLanguage`     | config-system                 |
 | Language by walking | `(bool, bool, bool)` | external-lint                 |
 
@@ -238,7 +238,7 @@ FR-005, FR-006, FR-007 — independent
 
 | Output         | Type            | Consumer        |
 | ---------------- | ----------------- | ----------------- |
-| Cached content | `ContentString` | orphan-detector |
+| Cached content | `ContentString` | orphan-rules |
 
 **Input**: File paths.
 
@@ -246,7 +246,7 @@ FR-005, FR-006, FR-007 — independent
 
 - **DashMap cache** (pipeline): Parallel population via rayon. Thread-safe lookup.
 - **Bounded HashMap cache** (ad-hoc): `MAX_CACHE_ENTRIES = 20,000`. Simple threshold, no LRU.
-- **String-keyed cache** (code-analysis compatibility): Separate cache for string-keyed lookups.
+- **String-keyed cache** (quality-rules compatibility): Separate cache for string-keyed lookups.
 - **Cache cascade**: `read_cached()` checks DashMap → bounded → disk.
 
 **Edge Cases**:
@@ -267,10 +267,10 @@ FR-005, FR-006, FR-007 — independent
 | Method                                    | Output                           | Used By                                      |
 | ------------------------------------------- | ---------------------------------- | ---------------------------------------------- |
 | `discover_source_files(root, ignored)`    | `Vec<FilePath>`                  | naming-rules                                 |
-| `discover_files(root, ignored)`           | `Vec<FileEntry>`                 | code-analysis, import-rules, orphan-detector |
-| `collect_source_files(root_dir, ignored)` | `Vec<FilePath>`                  | code-analysis                                |
-| `collect_file_entries(files)`             | `Vec<(PathBuf, String)>`         | code-analysis                                |
-| `read_lintable_file(path)`                | `Result<Option<String>, String>` | code-analysis                                |
+| `discover_files(root, ignored)`           | `Vec<FileEntry>`                 | quality-rules, import-rules, orphan-rules |
+| `collect_source_files(root_dir, ignored)` | `Vec<FilePath>`                  | quality-rules                                |
+| `collect_file_entries(files)`             | `Vec<(PathBuf, String)>`         | quality-rules                                |
+| `read_lintable_file(path)`                | `Result<Option<String>, String>` | quality-rules                                |
 
 ### FR-002: AST Parsing
 
@@ -297,9 +297,9 @@ FR-005, FR-006, FR-007 — independent
 | Method                    | Output                            | Used By                         |
 | --------------------------- | ----------------------------------- | --------------------------------- |
 | `dependency_graph()`      | `&HashMap<PathBuf, Vec<PathBuf>>` | import-rules (via parameter)    |
-| `reverse_import_map()`    | `&HashMap<PathBuf, Vec<PathBuf>>` | orphan-detector (via parameter) |
-| `symbol_definitions()`    | `&HashMap<String, Vec<PathBuf>>`  | orphan-detector (via parameter) |
-| `trait_implementations()` | `&HashMap<String, Vec<PathBuf>>`  | orphan-detector (via parameter) |
+| `reverse_import_map()`    | `&HashMap<PathBuf, Vec<PathBuf>>` | orphan-rules (via parameter) |
+| `symbol_definitions()`    | `&HashMap<String, Vec<PathBuf>>`  | orphan-rules (via parameter) |
+| `trait_implementations()` | `&HashMap<String, Vec<PathBuf>>`  | orphan-rules (via parameter) |
 | `depends_on(from, to)`    | `bool`                            | — (available)                  |
 | `cycles()`                | `Vec<Vec<PathBuf>>`               | — (available)                  |
 | `orphan_files()`          | `Vec<PathBuf>`                    | — (available)                  |
@@ -310,10 +310,10 @@ FR-005, FR-006, FR-007 — independent
 | Method                                 | Output                       | Used By         |
 | ---------------------------------------- | ------------------------------ | ----------------- |
 | `workspace_root(start)`                | `Option<PathBuf>`            | cli-commands    |
-| `find_workspace_root_from_path(start)` | `Result<PathBuf, io::Error>` | orphan-detector |
+| `find_workspace_root_from_path(start)` | `Result<PathBuf, io::Error>` | orphan-rules |
 | `is_member_path(path)`                 | `bool`                       | cli-commands    |
 | `is_leaf_member_path(path)`            | `bool`                       | cli-commands    |
-| `detect_source_dir(project_root)`      | `PathBuf`                    | code-analysis   |
+| `detect_source_dir(project_root)`      | `PathBuf`                    | quality-rules   |
 | `detect_language_from_path(path)`      | `ConfigLanguage`             | config-system   |
 | `detect_languages(root)`               | `(bool, bool, bool)`         | external-lint   |
 
@@ -341,7 +341,7 @@ FR-005, FR-006, FR-007 — independent
 
 | Method                  | Output           | Used By         |
 | ------------------------- | ------------------ | ----------------- |
-| `read_cached(path)`     | `ContentString`  | orphan-detector |
+| `read_cached(path)`     | `ContentString`  | orphan-rules |
 | `cache_populate(files)` | —               | — (internal)   |
 | `cache_get(path)`       | `Option<String>` | — (internal)   |
 | `cache_contains(path)`  | `bool`           | — (internal)   |
@@ -360,7 +360,7 @@ FR-005, FR-006, FR-007 — independent
 | `copy_file(src, dst)`                       | `Result<u64, io::Error>`          | cli-commands                                         |
 | `remove_file(path)`                         | `Result<(), io::Error>`           | git-hooks                                            |
 | `create_dir_all(path)`                      | `Result<(), io::Error>`           | git-hooks                                            |
-| `scan_directory(dir)`                       | `Vec<PathBuf>`                    | config-system, orphan-detector, maintenance          |
+| `scan_directory(dir)`                       | `Vec<PathBuf>`                    | config-system, orphan-rules, maintenance          |
 | `scan_directory_with_ignored(dir, ignored)` | `Vec<PathBuf>`                    | tui                                                  |
 | `read_dir_entries_as_pathbuf(dir)`          | `Result<Vec<PathBuf>, io::Error>` | project-setup                                        |
 | `run_git_command(args, dir)`                | `(String, String, bool)`          | git-hooks                                            |
@@ -368,12 +368,12 @@ FR-005, FR-006, FR-007 — independent
 | `parse_output_lines(output)`                | `Vec<String>`                     | git-hooks                                            |
 | `path_exists(path)`                         | `bool`                            | config-system, git-hooks                             |
 | `is_file(path)`                             | `bool`                            | external-lint, maintenance, git-hooks, project-setup |
-| `is_dir(path)`                              | `bool`                            | orphan-detector, project-setup, git-hooks            |
+| `is_dir(path)`                              | `bool`                            | orphan-rules, project-setup, git-hooks            |
 | `canonicalize(path)`                        | `Result<PathBuf, io::Error>`      | config-system                                        |
 | `canonicalize_path_str(path)`               | `String`                          | external-lint                                        |
 | `symlink_metadata(path)`                    | `Result<Metadata, io::Error>`     | config-system                                        |
-| `should_ignore(path, ignored)`              | `bool`                            | orphan-detector                                      |
-| `is_ignored_dir(dir, ignored)`              | `bool`                            | orphan-detector                                      |
+| `should_ignore(path, ignored)`              | `bool`                            | orphan-rules                                      |
+| `is_ignored_dir(dir, ignored)`              | `bool`                            | orphan-rules                                      |
 | `timing()`                                  | `&ScanTiming`                     | — (available)                                       |
 
 ---
@@ -384,10 +384,10 @@ FR-005, FR-006, FR-007 — independent
 | Consumer             | FRs Used                               | Methods                                                                                                                                                                                                                                                                                                                                                                 |
 | ---------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **naming-rules**     | FR-001                                 | `discover_source_files()`                                                                                                                                                                                                                                                                                                                                               |
-| **code-analysis**    | FR-001, FR-005                         | `collect_file_entries()`, `collect_source_files()`, `detect_source_dir()`, `read_lintable_file()`                                                                                                                                                                                                                                                                       |
+| **quality-rules**    | FR-001, FR-005                         | `collect_file_entries()`, `collect_source_files()`, `detect_source_dir()`, `read_lintable_file()`                                                                                                                                                                                                                                                                       |
 | **role-rules**       | FR-002                                 | `parsed_file_list()` (via parameter)                                                                                                                                                                                                                                                                                                                                    |
 | **import-rules**     | FR-001, FR-003, FR-004                 | `discover_files()`, `import_list()`, `dependency_graph()` (via parameter)                                                                                                                                                                                                                                                                                               |
-| **orphan-detector**  | FR-002, FR-003, FR-004, FR-005, FR-007 | `parsed_file_list()`, `import_list()`, `dependency_graph()`, `reverse_import_map()`, `symbol_definitions()`, `trait_implementations()`, `read_cached()`, `find_workspace_root_from_path()`, `discover_files()`, `scan_directory()`, `is_dir()`, `is_ignored_dir()`, `should_ignore()`                                                                                   |
+| **orphan-rules**  | FR-002, FR-003, FR-004, FR-005, FR-007 | `parsed_file_list()`, `import_list()`, `dependency_graph()`, `reverse_import_map()`, `symbol_definitions()`, `trait_implementations()`, `read_cached()`, `find_workspace_root_from_path()`, `discover_files()`, `scan_directory()`, `is_dir()`, `is_ignored_dir()`, `should_ignore()`                                                                                   |
 | **cli-commands**     | FR-005                                 | `workspace_root()`, `is_member_path()`, `is_leaf_member_path()`, `canonicalize()`, `copy_file()`                                                                                                                                                                                                                                                                        |
 | **config-system**    | utility                                | `read_file()`, `read_to_string()`, `symlink_metadata()`, `canonicalize()`, `path_exists()`, `scan_directory()`                                                                                                                                                                                                                                                          |
 | **external-lint**    | FR-005, FR-006                         | `detect_languages()`, `resolve_js_cmd()`, `resolve_js_working_dir()`, `is_executable_in_path()`, `has_local_bin()`, `has_config_file()`, `has_cargo_toml()`, `has_cargo_lock()`, `resolve_cargo_working_dir()`, `resolve_cargo_lock_working_dir()`, `canonicalize_path_str()`, `is_file()`, `default_working_dir()`, `has_python_files_recursive()`, `noop_apply_fix()` |
