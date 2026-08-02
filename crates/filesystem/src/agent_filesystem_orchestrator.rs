@@ -134,10 +134,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             .collect()
     }
 
-    fn all_imports(&self) -> &[ImportEntry] {
-        self.import_list()
-    }
-
     fn depends_on(&self, from: &Path, to: &Path) -> bool {
         self.graph
             .read()
@@ -174,10 +170,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn workspace_root(&self, start: &shared::common::taxonomy_path_vo::FilePath) -> Option<PathBuf> {
         crate::utility_workspace_detection::find_workspace_root(&start.value)
-    }
-
-    fn scan_directory(&self, dir: &Path) -> Vec<PathBuf> {
-        utility_filesystem_io::scan_directory(dir)
     }
 
     fn scan_directory_with_ignored(&self, dir: &Path, ignored: &[String]) -> Vec<PathBuf> {
@@ -270,11 +262,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn detect_source_dir(&self, project_root: &Path) -> PathBuf {
         crate::utility_workspace_detection::detect_source_dir(project_root)
-    }
-
-    fn collect_source_files(&self, root_dir: &Path, ignored: &[String]) -> Vec<shared::common::taxonomy_path_vo::FilePath> {
-        let exts = Language::extensions();
-        self.walker.discover_paths(root_dir, ignored, &exts)
     }
 
     fn scan_directory_recursive(&self, dir: &Path) -> Vec<String> {
@@ -428,10 +415,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::run_external_command_in(name, args, current_dir)
     }
 
-    fn write_text_to_file(&self, path: &Path, text: &str) -> Result<(), String> {
-        utility_filesystem_io::write_text_to_file(path, text)
-    }
-
     fn is_binary_available(&self, bin_name: &shared::filesystem::taxonomy_filesystem_vo::ToolName) -> bool {
         crate::utility_tool_resolution::is_binary_available(&bin_name.value)
     }
@@ -440,14 +423,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::read_dir_entries_as_pathbuf(dir)
     }
 
-    fn noop_apply_fix(
-        &self,
-    ) -> Result<
-        shared::common::taxonomy_message_vo::ComplianceStatus,
-        shared::common::taxonomy_operation_error::LinterOperationError,
-    > {
-        utility_filesystem_io::noop_apply_fix_sync()
-    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
