@@ -39,10 +39,6 @@ static EMPTY_STRING_MAP: once_cell::sync::Lazy<HashMap<String, Vec<PathBuf>>> =
     once_cell::sync::Lazy::new(HashMap::new);
 
 impl IFilesystemAggregate for FilesystemOrchestrator {
-    fn run_pipeline(&self, root: &Path, ignored: &[String]) {
-        self.run_pipeline(root, ignored);
-    }
-
     fn scan(&self, root: &Path, ignored: &[String]) -> FilesystemResult {
         self.run_pipeline(root, ignored);
         FilesystemResult {
@@ -59,10 +55,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn file_list(&self) -> &[FileEntry] {
         self.files.get().map(|v| v.as_slice()).unwrap_or(&[])
-    }
-
-    fn parsed_file_list(&self) -> &[FileEntry] {
-        self.file_list()
     }
 
     fn parse_warnings(&self) -> &[ParseWarning] {
@@ -107,10 +99,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             total_ms: 0,
         };
         self.timing.get().unwrap_or(&DEFAULT)
-    }
-
-    fn read_file(&self, path: &Path) -> Option<String> {
-        utility_filesystem_io::read_file(path).ok()
     }
 
     fn read_lintable_file(&self, path: &shared::common::taxonomy_path_vo::FilePath) -> Result<Option<String>, String> {
