@@ -1,0 +1,20 @@
+// PURPOSE: IDiffProtocol — protocol for git diff analysis operations (business logic)
+use crate::cli_commands::taxonomy_result_vo::LintResultList;
+use crate::common::taxonomy_git_vo::GitBranchName;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
+use crate::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
+
+pub trait IDiffProtocol: Send + Sync {
+    /// Run lint check on git diff changes
+    fn run_git_diff_check(&self, path: &FilePath) -> LintResultList;
+
+    /// Get detailed diff result for a path
+    fn get_diff(&self, path: &FilePath) -> GitDiffResultVO;
+
+    /// Get list of changed files from git diff
+    fn get_changed_files(&self, path: &FilePath, base: &GitBranchName) -> FilePathList;
+
+    /// Get default branch name for a repository
+    fn get_default_branch(&self, path: &FilePath) -> GitBranchName;
+}

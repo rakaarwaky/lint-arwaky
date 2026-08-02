@@ -61,9 +61,7 @@ fn us2_syntax_error_produces_warning() {
     parser.parse_all(&mut files);
     assert!(!files[0].parse_ok);
     assert!(!parser.parse_warnings().is_empty());
-    assert!(parser.parse_warnings()[0]
-        .error_detail
-        .contains("errors"));
+    assert!(parser.parse_warnings()[0].error_detail.contains("errors"));
 }
 
 #[test]
@@ -85,7 +83,9 @@ fn us4_use_statements_extracted() {
     parser.parse_all(&mut files);
     let imports = parser.import_list();
     assert!(
-        imports.iter().any(|i| i.raw_path.contains("std::collections")),
+        imports
+            .iter()
+            .any(|i| i.raw_path.contains("std::collections")),
         "Should extract std::collections import"
     );
 }
@@ -101,7 +101,10 @@ fn us5_wildcard_import_detected() {
     assert!(
         imports.iter().any(|i| i.is_wildcard),
         "Should detect wildcard import, got: {:?}",
-        imports.iter().map(|i| (&i.raw_path, i.is_wildcard)).collect::<Vec<_>>()
+        imports
+            .iter()
+            .map(|i| (&i.raw_path, i.is_wildcard))
+            .collect::<Vec<_>>()
     );
 }
 

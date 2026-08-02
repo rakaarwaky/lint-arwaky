@@ -1,0 +1,18 @@
+// PURPOSE: ILinterAdapterProtocol — protocol trait for linter adapter implementations (Ruff, Mypy, Clippy, etc.)
+
+use async_trait::async_trait;
+
+use crate::common::taxonomy_adapter_name_vo::AdapterName;
+use crate::common::taxonomy_message_vo::ComplianceStatus;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::quality_rules::taxonomy_analysis_vo::LintResultList;
+use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
+
+/// Abstract interface for linter adapters.
+/// Implemented by Infrastructure (e.g., RuffAdapter, MypyAdapter).
+#[async_trait]
+pub trait ILinterAdapterProtocol: Send + Sync {
+    fn name(&self) -> AdapterName;
+    async fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError>;
+    async fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError>;
+}

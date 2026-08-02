@@ -296,3 +296,46 @@ pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
     }
     false
 }
+
+/// Discover source files under root, filtering by ignored patterns.
+pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
+    let walker = ignore::WalkBuilder::new(root)
+        .hidden(false)
+        .git_ignore(true)
+        .build();
+    let exts: Vec<&str> = vec!["rs", "py", "js", "ts", "jsx", "tsx"];
+    walker
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().map(|ft| ft.is_file()).unwrap_or(false))
+        .filter(|e| {
+            e.path()
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .map(|ext| exts.contains(&ext))
+                .unwrap_or(false)
+        })
+        .filter(|e| {
+            let path_str = e.path().to_string_lossy();
+            !ignored.iter().any(|pat| path_str.contains(pat.as_str()))
+        })
+        .map(|e| e.path().to_string_lossy().to_string())
+        .collect()
+}
+
+/// Scan directory recursively for all files.
+pub fn scan_directory(root: &Path) -> Vec<String> {
+    let walker = ignore::WalkBuilder::new(root)
+        .hidden(false)
+        .git_ignore(true)
+        .build();
+    walker
+        .filter_map(|e| e.ok())
+        .filter(|e| e.file_type().map(|ft| ft.is_file()).unwrap_or(false))
+        .map(|e| e.path().to_string_lossy().to_string())
+        .collect()
+}
+
+/// Discover all files (source + non-source) under root.
+pub fn discover_files(root: &Path) -> Vec<String> {
+    scan_directory(root)
+}

@@ -1,0 +1,24 @@
+[package]
+name = "role-rules-lint-arwaky"
+version = "1.11.0"
+edition = "2024"
+description = "Architectural role-layer violation checks covering AES401–AES406."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+[lints]
+workspace = true
+
+[dependencies]
+shared.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+once_cell.workspace = true
+regex.workspace = true
+rayon.workspace = true
+
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+tempfile = "3"
+filesystem.workspace = true

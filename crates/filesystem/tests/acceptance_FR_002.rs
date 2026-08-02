@@ -9,7 +9,7 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use shared::common::taxonomy_language_vo::Language;
 use shared::filesystem::contract_graph_protocol::IGraphProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
-    DefinitionEntry, FileEntry, ImportEntry, ImportType, ImplEntry,
+    DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ImportType,
 };
 use std::path::{Path, PathBuf};
 
@@ -72,8 +72,16 @@ fn us2_circular_imports_both_edges() {
     ];
     graph.build_graph(&imports, &files, &[], &[]);
 
-    assert!(graph.dependencies(Path::new("/a.rs")).contains(&PathBuf::from("/b.rs")));
-    assert!(graph.dependencies(Path::new("/b.rs")).contains(&PathBuf::from("/a.rs")));
+    assert!(
+        graph
+            .dependencies(Path::new("/a.rs"))
+            .contains(&PathBuf::from("/b.rs"))
+    );
+    assert!(
+        graph
+            .dependencies(Path::new("/b.rs"))
+            .contains(&PathBuf::from("/a.rs"))
+    );
 }
 
 #[test]

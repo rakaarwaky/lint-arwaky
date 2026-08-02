@@ -61,7 +61,10 @@ fn us2_not_member_without_manifest() {
 #[test]
 fn us3_detect_rust_language() {
     let ws = make_workspace();
-    assert_eq!(ws.detect_language_from_path("src/main.rs"), ConfigLanguage::Rust);
+    assert_eq!(
+        ws.detect_language_from_path("src/main.rs"),
+        ConfigLanguage::Rust
+    );
     assert_eq!(ws.detect_language_from_path("lib.rs"), ConfigLanguage::Rust);
 }
 
@@ -87,7 +90,10 @@ fn us3_detect_typescript_language() {
 fn us3_detect_unknown_defaults_to_rust() {
     let ws = make_workspace();
     // Unknown extensions default to Rust per utility_workspace_detection
-    assert_eq!(ws.detect_language_from_path("data.json"), ConfigLanguage::Rust);
+    assert_eq!(
+        ws.detect_language_from_path("data.json"),
+        ConfigLanguage::Rust
+    );
 }
 
 #[test]

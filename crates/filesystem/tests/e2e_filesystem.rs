@@ -53,7 +53,11 @@ fn e2e_scan_parse_and_query_imports() {
         .iter()
         .map(|p| {
             let content = orch.read_to_string(p).unwrap_or_default();
-            let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_string();
+            let ext = p
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_string();
             let language = Language::from_extension(&ext).unwrap_or(Language::Unknown);
             FileEntry {
                 path: p.clone(),
@@ -70,7 +74,11 @@ fn e2e_scan_parse_and_query_imports() {
 
     // Step 3: Verify all files parsed
     for entry in &files {
-        assert!(entry.parse_ok, "File {} should parse OK", entry.path.display());
+        assert!(
+            entry.parse_ok,
+            "File {} should parse OK",
+            entry.path.display()
+        );
     }
 
     // Step 4: Verify imports were extracted via the parser capability directly
@@ -98,16 +106,8 @@ fn e2e_full_pipeline_with_graph_query() {
     let tmp = TempDir::new().unwrap();
     let src = tmp.path().join("src");
     std::fs::create_dir_all(&src).unwrap();
-    std::fs::write(
-        src.join("a.rs"),
-        "use crate::b::B;\npub struct A(pub B);\n",
-    )
-    .unwrap();
-    std::fs::write(
-        src.join("b.rs"),
-        "pub struct B;\n",
-    )
-    .unwrap();
+    std::fs::write(src.join("a.rs"), "use crate::b::B;\npub struct A(pub B);\n").unwrap();
+    std::fs::write(src.join("b.rs"), "pub struct B;\n").unwrap();
 
     let orch = make_orchestrator();
 
@@ -119,7 +119,11 @@ fn e2e_full_pipeline_with_graph_query() {
         .iter()
         .map(|p| {
             let content = orch.read_to_string(p).unwrap_or_default();
-            let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("").to_string();
+            let ext = p
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_string();
             let language = Language::from_extension(&ext).unwrap_or(Language::Unknown);
             FileEntry {
                 path: p.clone(),
@@ -200,7 +204,11 @@ fn e2e_orchestrator_collect_file_entries() {
             let content = orch.read_to_string(p).unwrap_or_default();
             FileEntry {
                 path: p.clone(),
-                extension: p.extension().and_then(|e| e.to_str()).unwrap_or("").to_string(),
+                extension: p
+                    .extension()
+                    .and_then(|e| e.to_str())
+                    .unwrap_or("")
+                    .to_string(),
                 language: Language::Rust,
                 size: content.len() as u64,
                 content,
@@ -212,7 +220,10 @@ fn e2e_orchestrator_collect_file_entries() {
 
     // collect_file_entries falls through to disk reads when cache is empty
     let entries = orch.collect_file_entries(
-        &files.iter().map(|f| f.path.to_string_lossy().to_string()).collect::<Vec<_>>(),
+        &files
+            .iter()
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect::<Vec<_>>(),
     );
     assert_eq!(entries.len(), files.len());
 }
@@ -234,7 +245,10 @@ fn e2e_workspace_detection_in_pipeline() {
 
     // Language detection
     let lang = orch.detect_language_from_path("src/main.rs");
-    assert_eq!(lang, shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust);
+    assert_eq!(
+        lang,
+        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
+    );
 
     // Source dir detection — look for crates/packages/modules, not src/
     let source_dir = orch.detect_source_dir(tmp.path());

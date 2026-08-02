@@ -1,5 +1,5 @@
 // common — truly shared types used by multiple features
-// pub mod contract_executor_protocol;
+pub mod contract_executor_protocol;
 pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_list_vo;
@@ -22,6 +22,9 @@ pub mod taxonomy_language_vo;
 pub mod taxonomy_layer_vo;
 pub mod taxonomy_lint_result_vo;
 pub mod taxonomy_lint_vo;
+
+pub use taxonomy_lint_result_vo::LintResult;
+pub use taxonomy_lint_result_vo::LintResultList;
 pub mod taxonomy_message_vo;
 pub mod taxonomy_name_vo;
 pub mod taxonomy_operation_error;
@@ -33,7 +36,7 @@ pub mod taxonomy_source_vo;
 pub mod taxonomy_suggestion_vo;
 pub mod taxonomy_threshold_vo;
 pub mod utility_command_runner;
-// pub mod utility_compliance_score;
+pub mod utility_compliance_score;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_path_normalization;
@@ -75,7 +78,9 @@ pub use taxonomy_common_vo::SuffixVO;
 pub use taxonomy_common_vo::Timestamp;
 pub use taxonomy_definition_vo::LayerDefinition;
 pub use taxonomy_definition_vo::LayerMapVO;
+pub use taxonomy_definition_vo::LayerNamingConfig;
 pub use taxonomy_definition_vo::NamingConfig;
+pub use taxonomy_definition_vo::OrphanRuleVO;
 pub use taxonomy_display_content_vo::DisplayContent;
 pub use taxonomy_duration_vo::Timeout;
 pub use taxonomy_error_vo::ErrorCode;

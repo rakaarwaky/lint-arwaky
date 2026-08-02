@@ -1,0 +1,19 @@
+[package]
+name = "file-watch-lint-arwaky"
+version = "1.11.0"
+edition = "2024"
+description = "File-watch feature crate — real-time file change detection and incremental lint pipeline."
+license = "MIT"
+
+[lints]
+workspace = true
+
+[features]
+watch = []
+
+[dependencies]
+shared.workspace = true
+notify.workspace = true
+notify-debouncer-mini.workspace = true
+tokio.workspace = true
+async-trait.workspace = true

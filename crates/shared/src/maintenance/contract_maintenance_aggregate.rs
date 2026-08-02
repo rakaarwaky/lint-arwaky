@@ -5,19 +5,14 @@ use crate::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, SecurityScanReport, ToolchainDiagnostics,
 };
 use crate::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
-use async_trait::async_trait;
 
-#[async_trait]
 pub trait MaintenanceCommandsAggregate: Send + Sync {
-    async fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO;
-    async fn clean(&self);
-    async fn update(&self);
-    async fn doctor(&self) -> DoctorResultVO;
-    async fn cancel(&self, job_id: JobId);
-    async fn diagnose_toolchain(&self) -> ToolchainDiagnostics;
-    async fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport;
-    async fn run_dependency_report(
-        &self,
-        project_path: &FilePath,
-    ) -> Result<DependencyReport, String>;
+    fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO;
+    fn clean(&self);
+    fn update(&self);
+    fn doctor(&self) -> DoctorResultVO;
+    fn cancel(&self, job_id: JobId);
+    fn diagnose_toolchain(&self) -> ToolchainDiagnostics;
+    fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport;
+    fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String>;
 }

@@ -38,4 +38,22 @@ pub trait IFilesystemAggregate:
 
     /// Collect file entries (path, content) for each lintable file.
     fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)>;
+
+    /// Discover source files under root, filtering by ignored patterns.
+    fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<String>;
+
+    /// Read file content by path (alias for get_file_content).
+    fn read_file(&self, path: &Path) -> Option<String>;
+
+    /// Scan directory recursively for all files.
+    fn scan_directory(&self, root: &Path) -> Vec<String>;
+
+    /// Discover all files (source + non-source) under root.
+    fn discover_files(&self, root: &Path) -> Vec<String>;
+
+    /// Collect source files from a directory with ignored patterns.
+    fn collect_source_files(&self, dir: &Path, ignored: &[String]) -> Vec<FilePath>;
+
+    /// Read a lintable file by path string.
+    fn read_lintable_file(&self, path: &str) -> Option<String>;
 }

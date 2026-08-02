@@ -256,7 +256,9 @@ fn bench_graph_queries(c: &mut Criterion) {
 
     group.bench_function("dependencies", |b| {
         b.iter(|| {
-            std::hint::black_box(graph.dependencies(&PathBuf::from(format!("/q/file_{}.rs", n / 2))));
+            std::hint::black_box(
+                graph.dependencies(&PathBuf::from(format!("/q/file_{}.rs", n / 2))),
+            );
         });
     });
 
@@ -277,7 +279,11 @@ fn bench_workspace_detection(c: &mut Criterion) {
     group.sample_size(30);
 
     let tmp = TempDir::new().unwrap();
-    std::fs::write(tmp.path().join("Cargo.toml"), "[workspace]\nmembers=[\"crates/*\"]\n").unwrap();
+    std::fs::write(
+        tmp.path().join("Cargo.toml"),
+        "[workspace]\nmembers=[\"crates/*\"]\n",
+    )
+    .unwrap();
     let ws = CapabilitiesWorkspace::new();
 
     group.bench_function("workspace_root", |b| {

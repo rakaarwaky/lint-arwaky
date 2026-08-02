@@ -5,6 +5,7 @@ use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
+use crate::common::taxonomy_definition_vo::OrphanRuleVO;
 use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_paths_vo::FilePathList;
@@ -56,14 +57,6 @@ pub struct RoleRuleVO {
     pub no_primitives: BooleanVO,
     #[serde(default)]
     pub forbidden_inheritance: PatternList,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct OrphanRuleVO {
-    #[serde(default)]
-    pub check_orphan: BooleanVO,
-    #[serde(default, alias = "entry_points")]
-    pub orphan_entry_points: PatternList,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

@@ -2,6 +2,7 @@
 // Only orchestration: delegates to capabilities & utility
 
 use crate::utility_filesystem_io;
+use crate::utility_workspace_detection;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
@@ -431,6 +432,35 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             out.push((path, content));
         }
         out
+    }
+
+    fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<String> {
+        crate::utility_workspace_detection::discover_source_files(root, ignored)
+    }
+
+    fn read_file(&self, path: &Path) -> Option<String> {
+        self.get_file_content(path)
+    }
+
+    fn scan_directory(&self, root: &Path) -> Vec<String> {
+        crate::utility_workspace_detection::scan_directory(root)
+    }
+
+    fn discover_files(&self, root: &Path) -> Vec<String> {
+        crate::utility_workspace_detection::discover_files(root)
+    }
+
+    fn collect_source_files(&self, dir: &Path, ignored: &[String]) -> Vec<FilePath> {
+        crate::utility_workspace_detection::discover_source_files(dir, ignored)
+            .into_iter()
+            .filter_map(|s| FilePath::new(s).ok())
+            .collect()
+    }
+
+    fn read_lintable_file(&self, path: &str) -> Option<String> {
+        crate::utility_filesystem_io::read_lintable_file(path)
+            .ok()
+            .flatten()
     }
 }
 

@@ -28,7 +28,10 @@ fn us1_walk_discovers_all_source_files() {
         .iter()
         .filter(|p| p.to_string_lossy().contains(".rs") || p.to_string_lossy().contains(".py"))
         .collect();
-    assert!(source_files.len() >= 3, "Should find at least 3 source files");
+    assert!(
+        source_files.len() >= 3,
+        "Should find at least 3 source files"
+    );
 }
 
 #[test]
@@ -41,7 +44,9 @@ fn us2_gitignore_excludes_files() {
     std::fs::write(tmp.path().join("visible.rs"), "").unwrap();
     let io = make_io();
     let files = io.scan_directory_with_ignored(tmp.path(), &["ignored_dir".to_string()]);
-    let has_ignored = files.iter().any(|p| p.to_string_lossy().contains("ignored_dir"));
+    let has_ignored = files
+        .iter()
+        .any(|p| p.to_string_lossy().contains("ignored_dir"));
     assert!(!has_ignored, "ignored_dir should be excluded");
 }
 
@@ -87,7 +92,9 @@ fn us6_scan_with_ignored_patterns() {
         "src.rs should be found"
     );
     assert!(
-        !files.iter().any(|p| p.to_string_lossy().contains("build.rs")),
+        !files
+            .iter()
+            .any(|p| p.to_string_lossy().contains("build.rs")),
         "build.rs in target/ should be excluded"
     );
 }

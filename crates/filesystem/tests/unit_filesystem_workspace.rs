@@ -84,7 +84,11 @@ fn detect_source_dir_falls_back_to_root() {
 #[test]
 fn find_workspace_root_from_path_finds_cargo() {
     let tmp = TempDir::new().unwrap();
-    std::fs::write(tmp.path().join("Cargo.toml"), "[workspace]\nmembers=[\"crates/*\"]\n").unwrap();
+    std::fs::write(
+        tmp.path().join("Cargo.toml"),
+        "[workspace]\nmembers=[\"crates/*\"]\n",
+    )
+    .unwrap();
     let nested = tmp.path().join("crates").join("my-crate").join("src");
     std::fs::create_dir_all(&nested).unwrap();
     let ws = make_workspace();

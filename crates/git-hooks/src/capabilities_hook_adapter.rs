@@ -1,0 +1,103 @@
+use shared::common::{FilePath, LintMessage, SuccessStatus};
+
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::git_hooks::GitHookError;
+use shared::git_hooks::IHookManagerProtocol;
+use std::sync::Arc;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
+pub struct GitHookAdapter {
+    root_dir: FilePath,
+    filesystem: Arc<dyn IFilesystemAggregate>,
+}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl IHookManagerProtocol for GitHookAdapter {
+    fn install_pre_commit(
+        &self,
+        executable_path: &FilePath,
+    ) -> Result<SuccessStatus, GitHookError> {
+        if !self.is_git_repo() {
+            return Ok(SuccessStatus::new(false));
+        }
+        let hooks_dir = self.git_dir().join("hooks");
+        self.filesystem.create_dir_all(&hooks_dir).map_err(|e| {
+            GitHookError::new(LintMessage::new(format!(
+                "Failed to create hooks dir: {}",
+                e
+            )))
+        })?;
+        let hook_path = hooks_dir.join("pre-commit");
+        let exe_str = if executable_path.value.is_empty() {
+            "lint-arwaky-cli"
+        } else {
+            &executable_path.value
+        };
+        let hook_content = format!(
+            "#!/bin/bash
+# Lint Arwaky Pre-Commit Hook
+echo \"Running Lint Arwaky check...\"
+{} check .
+if [ $? -ne 0 ]; then
+  echo \"Linting failed. Please fix issues before committing.\"
+  exit 1
+fi
+echo \"Linting passed.\"
+exit 0
+",
+            exe_str
+        );
+        self.filesystem
+            .write_string(&hook_path, &hook_content)
+            .map_err(|e| {
+                GitHookError::new(LintMessage::new(format!("Failed to write hook: {}", e)))
+            })?;
+        #[cfg(unix)]
+        {
+            self.filesystem
+                .set_permissions(&hook_path, 0o755)
+                .map_err(|e| {
+                    GitHookError::new(LintMessage::new(format!(
+                        "Failed to set permissions: {}",
+                        e
+                    )))
+                })?;
+        }
+        Ok(SuccessStatus::new(true))
+    }
+
+    fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
+        if !self.is_git_repo() {
+            return Ok(SuccessStatus::new(false));
+        }
+        let hook_path = self.git_dir().join("hooks").join("pre-commit");
+        if self.filesystem.path_exists(&hook_path) {
+            self.filesystem.remove_file(&hook_path).map_err(|e| {
+                GitHookError::new(LintMessage::new(format!("Failed to remove hook: {}", e)))
+            })?;
+        }
+        Ok(SuccessStatus::new(true))
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl GitHookAdapter {
+    pub fn new(root_dir: FilePath, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self {
+            root_dir,
+            filesystem,
+        }
+    }
+
+    fn git_dir(&self) -> std::path::PathBuf {
+        std::path::PathBuf::from(&self.root_dir.value).join(".git")
+    }
+
+    fn is_git_repo(&self) -> bool {
+        let git = self.git_dir();
+        self.filesystem.is_dir(&git)
+    }
+}

@@ -1,0 +1,13 @@
+[package]
+name = "git-hooks-lint-arwaky"
+version = "1.11.0"
+edition = "2024"
+description = "Git hooks feature crate — pre-commit enforcement and diff analysis."
+license = "MIT"
+
+[lints]
+workspace = true
+
+[dependencies]
+shared.workspace = true
+serde_yaml_ng.workspace = true

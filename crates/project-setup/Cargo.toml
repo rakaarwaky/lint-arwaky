@@ -1,0 +1,15 @@
+[package]
+name = "project-setup-lint-arwaky"
+version = "1.11.0"
+edition = "2024"
+description = "Project scaffolding and doctor checks."
+license = "MIT"
+
+[lints]
+workspace = true
+
+[dependencies]
+shared = { workspace = true }
+filesystem = { workspace = true }
+dirs = { workspace = true }
+serde_json = { workspace = true }

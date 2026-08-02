@@ -38,7 +38,10 @@ fn orchestrator_workspace_detects_language() {
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
     let lang = orch.detect_language_from_path("src/main.rs");
-    assert_eq!(lang, shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust);
+    assert_eq!(
+        lang,
+        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
+    );
 }
 
 #[test]

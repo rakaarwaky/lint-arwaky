@@ -75,8 +75,11 @@ fn has_local_bin_true_when_binary_exists() {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(bin_dir.join("eslint"), std::fs::Permissions::from_mode(0o755))
-            .unwrap();
+        std::fs::set_permissions(
+            bin_dir.join("eslint"),
+            std::fs::Permissions::from_mode(0o755),
+        )
+        .unwrap();
     }
     let tool = make_tool();
     let name = ToolName::new("eslint").unwrap();
@@ -105,7 +108,14 @@ fn is_python_file_recursive_false_for_no_python() {
 fn default_working_dir_returns_path() {
     let tmp = TempDir::new().unwrap();
     let tool = make_tool();
-    let fp = FilePath::new(tmp.path().join("src").join("main.rs").to_string_lossy().to_string()).unwrap();
+    let fp = FilePath::new(
+        tmp.path()
+            .join("src")
+            .join("main.rs")
+            .to_string_lossy()
+            .to_string(),
+    )
+    .unwrap();
     let result = tool.default_working_dir(&fp);
     assert!(!result.value.is_empty());
 }

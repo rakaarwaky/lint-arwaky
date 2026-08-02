@@ -1,0 +1,15 @@
+[package]
+name = "auto-fix-lint-arwaky"
+version = "1.11.0"
+edition = "2024"
+description = "Auto-fix processor that applies mechanical corrections for AES rule violations."
+license = "MIT"
+
+[lints]
+workspace = true
+
+[dependencies]
+shared = { workspace = true }
+filesystem = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

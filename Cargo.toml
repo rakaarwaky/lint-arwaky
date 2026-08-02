@@ -24,6 +24,13 @@ members = [
     "crates/tui",
 ]
 
+[workspace.package]
+edition = "2024"
+publish = true
+rust-version = "1.85.0"
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+
 #do not bypass with allow
 [workspace.lints.clippy]
 
@@ -44,7 +51,7 @@ file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", v
 project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "1.11.0" }
 maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "1.11.0" }
 report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "1.11.0" }
-cli-commands = { package = "cli-commands-lint-arwaky", path = "crates/cli-commands", version = "1.11.0" }
+cli-commands = { path = "crates/cli-commands", version = "0.1.0" }
 mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "1.11.0" }
 tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "1.11.0" }
 
@@ -111,6 +118,7 @@ path = "crates/lib.rs"
 [dependencies]
 shared.workspace = true
 filesystem.workspace = true
+config-system.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 regex.workspace = true

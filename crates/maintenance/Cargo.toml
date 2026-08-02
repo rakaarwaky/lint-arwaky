@@ -1,0 +1,14 @@
+[package]
+name = "maintenance-lint-arwaky"
+version = "1.11.0"
+edition = "2024"
+description = "Maintenance features: doctor, stats, clean, update, security scan, dependency report."
+license = "MIT"
+
+[lints]
+workspace = true
+
+[dependencies]
+shared = { workspace = true }
+filesystem = { workspace = true }
+serde_json = { workspace = true }

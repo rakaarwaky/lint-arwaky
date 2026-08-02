@@ -1,0 +1,425 @@
+use shared::cli_commands::LintResult;
+use shared::common::taxonomy_definition_vo::LayerMapVO;
+use shared::common::taxonomy_layer_vo::LayerNameVO;
+use shared::common::utility_layer_detector;
+use shared::common::{
+    ContentString, FilePath, Identity, LanguageVO, LineNumber, LintMessage, Severity, SymbolName,
+};
+
+use crate::utility_dummy_detector;
+use crate::utility_import_resolver;
+use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
+
+// PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
+pub struct DummyImportChecker;
+
+impl DummyImportChecker {}
+
+struct DummyFileContext {
+    lines: Vec<String>,
+    lang: LanguageVO,
+    layer_name: String,
+    dummy_ranges: Vec<(LineNumber, LineNumber)>,
+    dummy_impl_traits: Vec<String>,
+}
+
+impl DummyFileContext {
+    fn compute(file: &str, content: &str, layer_map: &LayerMapVO) -> Option<Self> {
+        let basename = std::path::Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        if utility_import_resolver::is_barrel_file(basename) {
+            return None;
+        }
+        let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
+        let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
+        let lang = LanguageVO::from_path(file);
+        let layer_name = Self::detect_layer(file, layer_map);
+        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&str_refs, lang);
+        let dummy_impl_traits: Vec<String> =
+            utility_dummy_detector::dummy_impl_traits_with_lines(&str_refs)
+                .into_iter()
+                .map(|(t, _)| t.value().to_string())
+                .collect();
+        Some(Self {
+            lines,
+            lang,
+            layer_name,
+            dummy_ranges,
+            dummy_impl_traits,
+        })
+    }
+
+    fn detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
+        let filename: &str = utility_layer_detector::extract_filename(file);
+        match utility_layer_detector::detect_layer_from_prefix(filename) {
+            Some(base) => {
+                let layer_keys: Vec<String> =
+                    layer_map.values.keys().map(|k| k.to_string()).collect();
+                utility_layer_detector::resolve_specialized_layer(&base, file, &layer_keys)
+            }
+            None => "any".to_string(),
+        }
+    }
+
+    fn str_refs(&self) -> Vec<&str> {
+        self.lines.iter().map(|s| s.as_str()).collect()
+    }
+}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+
+impl IDummyImportCheckerProtocol for DummyImportChecker {
+    fn rule_name(&self) -> Identity {
+        Identity::new("AES204")
+    }
+
+    fn check_dummy_imports(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_imports(file.value(), &ctx, &mut violations, layer_map);
+        Ok(violations)
+    }
+
+    fn check_dummy_functions(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_functions(file.value(), &ctx, &mut violations);
+        Ok(violations)
+    }
+
+    fn check_dummy_impls(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_impls(file.value(), &ctx, &mut violations);
+        Ok(violations)
+    }
+
+    fn check_taxonomy_intent(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations);
+        Ok(violations)
+    }
+
+    fn check_layer_contract_intent(
+        &self,
+        _file: &FilePath,
+        _content: &ContentString,
+        _root_dir: &FilePath,
+        _layer_map: &LayerMapVO,
+    ) -> Result<Vec<LintResult>, ImportError> {
+        Ok(Vec::new())
+    }
+
+    fn check_surface_logic(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        _root_dir: &FilePath,
+        _layer_map: &LayerMapVO,
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let mut violations = Vec::new();
+        Self::_check_surface_logic(file.value(), content.value(), &mut violations);
+        Ok(violations)
+    }
+
+    fn check_all_dummy(
+        &self,
+        file: &FilePath,
+        content: &ContentString,
+        _root_dir: &FilePath,
+        layer_map: &LayerMapVO,
+    ) -> Result<Vec<LintResult>, ImportError> {
+        let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
+            return Ok(Vec::new());
+        };
+        let mut violations = Vec::new();
+        Self::_check_dummy_imports(file.value(), &ctx, &mut violations, layer_map);
+        Self::_check_dummy_functions(file.value(), &ctx, &mut violations);
+        Self::_check_dummy_impls(file.value(), &ctx, &mut violations);
+        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations);
+        Self::_check_surface_logic(file.value(), content.value(), &mut violations);
+        Ok(violations)
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits & Helpers ─────────
+impl Default for DummyImportChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl DummyImportChecker {
+    pub fn new() -> Self {
+        Self
+    }
+
+    fn _check_dummy_imports(
+        file: &str,
+        ctx: &DummyFileContext,
+        violations: &mut Vec<LintResult>,
+        _layer_map: &LayerMapVO,
+    ) {
+        let lines = ctx.str_refs();
+        let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
+
+        for (symbol, line_no) in imported {
+            let symbol_str = symbol.value().to_string();
+            if is_future_import(&lines, &symbol_str) {
+                continue;
+            }
+            if utility_dummy_detector::symbol_used_real(
+                &lines,
+                &symbol_str,
+                &ctx.dummy_ranges,
+                &ctx.dummy_impl_traits,
+            ) {
+                continue;
+            }
+            violations.push(LintResult::new_arch(file, line_no.value() as usize, "AES204", Severity::HIGH,
+                AesImportViolation::ImportIntentViolation {
+                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
+                    import_type: SymbolName::new(symbol_str),
+                    intent: SymbolName::new("Use imported symbols in real logic, not only in dummy functions or stubs"),
+                    reason: Some(LintMessage::new(
+                        "Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings."
+                    )),
+                }.to_string(),
+            ));
+        }
+    }
+
+    fn _check_dummy_functions(
+        file: &str,
+        ctx: &DummyFileContext,
+        violations: &mut Vec<LintResult>,
+    ) {
+        for (start, end) in &ctx.dummy_ranges {
+            violations.push(LintResult::new_arch(
+                file,
+                start.value() as usize,
+                "AES204",
+                Severity::HIGH,
+                AesImportViolation::ImportIntentViolation {
+                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
+                    import_type: SymbolName::new("_use_mandatory_imports"),
+                    intent: SymbolName::new(
+                        "Remove dummy functions that exist only to silence unused import checks",
+                    ),
+                    reason: Some(LintMessage::new(format!(
+                        "Dummy function range ends at line {}",
+                        end
+                    ))),
+                }
+                .to_string(),
+            ));
+        }
+    }
+
+    fn _check_dummy_impls(file: &str, ctx: &DummyFileContext, violations: &mut Vec<LintResult>) {
+        let lines = ctx.str_refs();
+        for (trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
+            violations.push(LintResult::new_arch(
+                file,
+                start.value() as usize,
+                "AES204",
+                Severity::HIGH,
+                AesImportViolation::ImportIntentViolation {
+                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
+                    import_type: SymbolName::new(trait_name.value().to_string()),
+                    intent: SymbolName::new(
+                        "Implement contract methods with real behavior instead of empty/todo stubs",
+                    ),
+                    reason: Some(LintMessage::new(
+                        "Trait implementations with empty bodies violate the contract abstraction.",
+                    )),
+                }
+                .to_string(),
+            ));
+        }
+    }
+
+    fn _check_taxonomy_intent(
+        file: &str,
+        ctx: &DummyFileContext,
+        violations: &mut Vec<LintResult>,
+    ) {
+        let lines = ctx.str_refs();
+        let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
+
+        let mut has_dummy_function = false;
+        let mut dummy_function_line = 0;
+        for (i, line) in lines.iter().enumerate() {
+            let trimmed = line.trim();
+            let is_dummy = match ctx.lang {
+                LanguageVO::Rust => trimmed.starts_with("fn _use_") && trimmed.contains("()"),
+                LanguageVO::Python => trimmed.starts_with("def _use_") && trimmed.contains("()"),
+                LanguageVO::JavaScript => {
+                    trimmed.starts_with("function _use") && trimmed.contains("()")
+                }
+                LanguageVO::Unknown => false,
+            };
+            if is_dummy {
+                has_dummy_function = true;
+                dummy_function_line = i + 1;
+                break;
+            }
+        }
+        if !has_dummy_function {
+            return;
+        }
+
+        let has_real_usage = imported.iter().any(|(symbol, line_no)| {
+            let is_taxonomy = lines
+                .get(line_no.value().saturating_sub(1) as usize)
+                .is_some_and(|line| {
+                    let t = line.trim();
+                    match ctx.lang {
+                        LanguageVO::Rust => {
+                            t.contains("use shared::taxonomy_")
+                                || t.contains("use shared::common::taxonomy_")
+                                || t.contains("use crate::common::taxonomy_")
+                                || t.contains("use crate::taxonomy_")
+                        }
+                        LanguageVO::Python => {
+                            t.contains("from taxonomy_") || t.contains("from shared.taxonomy_")
+                        }
+                        LanguageVO::JavaScript => {
+                            t.contains("from 'taxonomy_") || t.contains("from \"taxonomy_")
+                        }
+                        LanguageVO::Unknown => false,
+                    }
+                });
+            if !is_taxonomy {
+                return false;
+            }
+            utility_dummy_detector::symbol_used_real(
+                &lines,
+                symbol.value(),
+                &ctx.dummy_ranges,
+                &ctx.dummy_impl_traits,
+            )
+        });
+
+        if !has_real_usage {
+            let has_taxonomy_import = lines.iter().any(|l| {
+                let t = l.trim();
+                match ctx.lang {
+                    LanguageVO::Rust => {
+                        t.contains("use shared::taxonomy_")
+                            || t.contains("use shared::common::taxonomy_")
+                            || t.contains("use crate::common::taxonomy_")
+                            || t.contains("use crate::taxonomy_")
+                    }
+                    LanguageVO::Python => {
+                        t.contains("import taxonomy_") || t.contains("from taxonomy_")
+                    }
+                    LanguageVO::JavaScript => {
+                        t.contains("from 'taxonomy_") || t.contains("from \"taxonomy_")
+                    }
+                    LanguageVO::Unknown => false,
+                }
+            });
+            if has_taxonomy_import {
+                violations.push(LintResult::new_arch(file, dummy_function_line, "AES204", Severity::HIGH,
+                    AesImportViolation::ImportIntentViolation {
+                        source_layer: LayerNameVO::new(ctx.layer_name.clone()),
+                        import_type: SymbolName::new("taxonomy"),
+                        intent: SymbolName::new("Use taxonomy Value Objects in function signatures instead of primitives"),
+                        reason: Some(LintMessage::new(
+                            "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose."
+                        )),
+                    }.to_string(),
+                ));
+            }
+        }
+    }
+
+    fn _check_surface_logic(file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let lines: Vec<&str> = content.lines().collect();
+        let lang = LanguageVO::from_path(file);
+        let logic_patterns = [
+            "lint_path(",
+            "compute_score(",
+            "has_critical(",
+            "walk_rs_files(",
+        ];
+
+        for (i, line) in lines.iter().enumerate() {
+            let trimmed = line.trim();
+            let is_skip = match lang {
+                LanguageVO::Rust => trimmed.starts_with("//") || trimmed.starts_with("fn _use_"),
+                LanguageVO::Python => trimmed.starts_with("#") || trimmed.starts_with("def _use_"),
+                LanguageVO::JavaScript => {
+                    trimmed.starts_with("//") || trimmed.starts_with("function _use")
+                }
+                LanguageVO::Unknown => false,
+            };
+            if is_skip {
+                continue;
+            }
+            for pattern in &logic_patterns {
+                let is_string_lit = trimmed.contains(&format!("\"{}", pattern))
+                    || trimmed.contains(&format!("'{}", pattern));
+                if trimmed.contains(pattern) && !is_string_lit {
+                    violations.push(LintResult::new_arch(file, i + 1, "AES204", Severity::MEDIUM,
+                        AesImportViolation::ImportIntentViolation {
+                            source_layer: LayerNameVO::new("surfaces"),
+                            import_type: SymbolName::new(pattern.to_string()),
+                            intent: SymbolName::new(format!("Delegate to aggregate instead of calling '{}' directly", pattern)),
+                            reason: Some(LintMessage::new(
+                                "Surface-layer code must delegate business logic to the aggregate layer."
+                            )),
+                        }.to_string(),
+                    ));
+                }
+            }
+        }
+    }
+}
+
+/// Check if any line matches `from __future__ import ...symbol...`.
+fn is_future_import(lines: &[&str], symbol: &str) -> bool {
+    let content = lines.join("\n");
+    utility_import_resolver::is_future_import(&content, symbol)
+}

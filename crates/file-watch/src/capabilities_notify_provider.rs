@@ -1,0 +1,134 @@
+// PURPOSE: NotifyWatchProvider — IWatchProviderProtocol implementation using notify crate (inotify on Linux)
+
+use std::sync::Mutex;
+use std::time::Duration;
+
+use notify::{RecommendedWatcher, RecursiveMode};
+use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
+use shared::common::BooleanVO;
+use shared::common::LintMessage;
+use shared::file_watch::IWatchProviderProtocol;
+use shared::file_watch::WatchConfig;
+use shared::file_watch::WatchEvent;
+use shared::file_watch::WatchEventKind;
+use shared::file_watch::WatchServiceError;
+use tokio::sync::broadcast;
+
+// ─── Block 1: Struct Definition ───────────────────────────
+
+pub struct NotifyWatchProvider {
+    watcher: Mutex<Option<notify_debouncer_mini::Debouncer<RecommendedWatcher>>>,
+    tx: broadcast::Sender<WatchEvent>,
+    ignore_patterns: Mutex<Vec<String>>,
+}
+
+// ─── Block 2: Protocol Trait Implementation ───────────────
+// NOTE: #[async_trait] required — shared contract still uses it.
+// Remove when IWatchProviderProtocol switches to native async fn in traits.
+
+#[async_trait::async_trait]
+impl IWatchProviderProtocol for NotifyWatchProvider {
+    async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError> {
+        let path_str = config.path.value();
+        let path = std::path::Path::new(path_str);
+        if !path.exists() {
+            return Err(WatchServiceError::new(LintMessage::new(format!(
+                "Path does not exist: {}",
+                path_str
+            ))));
+        }
+
+        {
+            let mut patterns = match self.ignore_patterns.lock() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
+            *patterns = config.ignore_patterns.clone();
+        }
+
+        let tx = self.tx.clone();
+        let ignore = config.ignore_patterns.clone();
+
+        let mut debouncer = new_debouncer(
+            Duration::from_millis(config.debounce_ms),
+            move |res: Result<Vec<notify_debouncer_mini::DebouncedEvent>, _>| {
+                if let Ok(events) = res {
+                    for event in events {
+                        if event.kind == DebouncedEventKind::Any {
+                            let path_str = event.path.to_string_lossy().to_string();
+                            let skip = ignore.iter().any(|p| path_str.contains(p.as_str()));
+                            if !skip {
+                                let watch_event =
+                                    WatchEvent::new(path_str, WatchEventKind::Modified);
+                                let _ = tx.send(watch_event);
+                            }
+                        }
+                    }
+                }
+            },
+        )
+        .map_err(|e| {
+            WatchServiceError::new(LintMessage::new(format!(
+                "Failed to create debouncer: {}",
+                e
+            )))
+        })?;
+
+        let recursive = if config.recursive {
+            RecursiveMode::Recursive
+        } else {
+            RecursiveMode::NonRecursive
+        };
+
+        debouncer.watcher().watch(path, recursive).map_err(|e| {
+            WatchServiceError::new(LintMessage::new(format!("Failed to watch path: {}", e)))
+        })?;
+
+        {
+            let mut watcher_guard = match self.watcher.lock() {
+                Ok(guard) => guard,
+                Err(poisoned) => poisoned.into_inner(),
+            };
+            *watcher_guard = Some(debouncer);
+        }
+        Ok(())
+    }
+
+    async fn stop(&self) -> Result<(), WatchServiceError> {
+        let mut guard = match self.watcher.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        if let Some(debouncer) = guard.take() {
+            drop(debouncer);
+        }
+        Ok(())
+    }
+
+    async fn is_available(&self) -> BooleanVO {
+        BooleanVO::new(cfg!(feature = "watch"))
+    }
+
+    fn subscribe(&self) -> broadcast::Receiver<WatchEvent> {
+        self.tx.subscribe()
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl Default for NotifyWatchProvider {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NotifyWatchProvider {
+    pub fn new() -> Self {
+        let (tx, _) = broadcast::channel(256);
+        Self {
+            watcher: Mutex::new(None),
+            tx,
+            ignore_patterns: Mutex::new(Vec::new()),
+        }
+    }
+}

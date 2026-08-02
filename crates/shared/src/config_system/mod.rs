@@ -25,12 +25,12 @@ pub use contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 pub use contract_workspace_detector_protocol::WorkspaceType;
 
 // ── Taxonomy types ──
+pub use crate::common::taxonomy_definition_vo::OrphanRuleVO;
 pub use taxonomy_config_error::ConfigError;
 pub use taxonomy_config_language_vo::ConfigLanguage;
 pub use taxonomy_config_vo::ArchitectureConfig;
 pub use taxonomy_config_vo::ArchitectureRule;
 pub use taxonomy_config_vo::NamingRuleVO;
-pub use taxonomy_config_vo::OrphanRuleVO;
 pub use taxonomy_config_vo::RoleRuleVO;
 pub use taxonomy_identifier_vo::ConfigKey;
 pub use taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;

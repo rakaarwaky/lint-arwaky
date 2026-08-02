@@ -109,11 +109,7 @@ fn parse_all_collects_imports() {
 fn imports_for_returns_only_matching_file() {
     let parser = ASTParser::new();
     let mut files = vec![
-        make_entry(
-            "/a.rs",
-            "use std::collections::HashMap;\n",
-            Language::Rust,
-        ),
+        make_entry("/a.rs", "use std::collections::HashMap;\n", Language::Rust),
         make_entry("/b.rs", "use std::io::Read;\n", Language::Rust),
     ];
     parser.parse_all(&mut files);
@@ -141,11 +137,7 @@ fn extract_returns_imports_for_snippet() {
 #[test]
 fn parse_warnings_empty_when_all_files_parse_ok() {
     let parser = ASTParser::new();
-    let mut files = vec![make_entry(
-        "/test.rs",
-        "fn main() {}",
-        Language::Rust,
-    )];
+    let mut files = vec![make_entry("/test.rs", "fn main() {}", Language::Rust)];
     parser.parse_all(&mut files);
     assert!(parser.parse_warnings().is_empty());
 }
@@ -164,6 +156,10 @@ fn parse_parallel_multiple_files() {
         .collect();
     parser.parse_all(&mut files);
     for entry in &files {
-        assert!(entry.parse_ok, "File {} should parse OK", entry.path.display());
+        assert!(
+            entry.parse_ok,
+            "File {} should parse OK",
+            entry.path.display()
+        );
     }
 }

@@ -50,7 +50,14 @@ fn orchestrator_implements_aggregate() {
 
 #[test]
 fn orchestrator_implements_all_protocol_traits() {
-    fn assert_trait<T: IParserProtocol + IGraphProtocol + IWorkspaceProtocol + IToolResolutionProtocol + IFileSystemIOProtocol>() {}
+    fn assert_trait<
+        T: IParserProtocol
+            + IGraphProtocol
+            + IWorkspaceProtocol
+            + IToolResolutionProtocol
+            + IFileSystemIOProtocol,
+    >() {
+    }
     assert_trait::<FilesystemOrchestrator>();
 }
 

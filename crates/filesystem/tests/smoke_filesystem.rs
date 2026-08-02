@@ -12,7 +12,11 @@ fn filesystem_boots_and_container_creates() {
     let orch = container.orchestrator();
     let _ = orch.file_list();
     let elapsed = start.elapsed();
-    assert!(elapsed.as_secs() < 5, "Smoke test exceeded 5s: {:?}", elapsed);
+    assert!(
+        elapsed.as_secs() < 5,
+        "Smoke test exceeded 5s: {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -27,7 +31,11 @@ fn filesystem_io_operations_respond() {
     assert_eq!(content, "smoke test");
     orch.remove_file(&file).unwrap();
     let elapsed = start.elapsed();
-    assert!(elapsed.as_secs() < 5, "Smoke test exceeded 5s: {:?}", elapsed);
+    assert!(
+        elapsed.as_secs() < 5,
+        "Smoke test exceeded 5s: {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -47,7 +55,11 @@ fn filesystem_parse_operations_respond() {
     orch.parse_all(&mut files);
     assert!(files[0].parse_ok);
     let elapsed = start.elapsed();
-    assert!(elapsed.as_secs() < 5, "Smoke test exceeded 5s: {:?}", elapsed);
+    assert!(
+        elapsed.as_secs() < 5,
+        "Smoke test exceeded 5s: {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -56,9 +68,16 @@ fn filesystem_workspace_detection_responds() {
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
     let lang = orch.detect_language_from_path("src/main.rs");
-    assert_eq!(lang, shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust);
+    assert_eq!(
+        lang,
+        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
+    );
     let elapsed = start.elapsed();
-    assert!(elapsed.as_secs() < 5, "Smoke test exceeded 5s: {:?}", elapsed);
+    assert!(
+        elapsed.as_secs() < 5,
+        "Smoke test exceeded 5s: {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -69,7 +88,11 @@ fn filesystem_tool_resolution_responds() {
     let name = shared::filesystem::taxonomy_filesystem_vo::ToolName::new("sh").unwrap();
     assert!(orch.is_binary_available(&name));
     let elapsed = start.elapsed();
-    assert!(elapsed.as_secs() < 5, "Smoke test exceeded 5s: {:?}", elapsed);
+    assert!(
+        elapsed.as_secs() < 5,
+        "Smoke test exceeded 5s: {:?}",
+        elapsed
+    );
 }
 
 #[test]
@@ -83,5 +106,9 @@ fn filesystem_scan_directory_responds() {
     let files = orch.scan_directory_with_ignored(tmp.path(), &[]);
     assert!(!files.is_empty());
     let elapsed = start.elapsed();
-    assert!(elapsed.as_secs() < 5, "Smoke test exceeded 5s: {:?}", elapsed);
+    assert!(
+        elapsed.as_secs() < 5,
+        "Smoke test exceeded 5s: {:?}",
+        elapsed
+    );
 }
