@@ -1,7 +1,7 @@
 // PURPOSE: ICodeAnalysisAggregate — aggregate trait for code-analysis checks (AES301–AES305) and formatting reports
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
-use crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use crate::quality_rules::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
 use crate::common::taxonomy_common_vo::{BooleanVO, Score};
 use crate::common::taxonomy_display_content_vo::DisplayContent;
 use crate::common::taxonomy_path_vo::FilePath;
@@ -36,5 +36,5 @@ pub trait ICodeAnalysisAggregate: Send + Sync {
         blocks: &[Vec<(std::path::PathBuf, usize)>],
         total_loc: usize,
         min_dup_lines: usize,
-    ) -> Vec<crate::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation>;
+    ) -> Vec<crate::quality_rules::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation>;
 }

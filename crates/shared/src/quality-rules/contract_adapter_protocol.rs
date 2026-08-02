@@ -2,8 +2,8 @@
 
 use async_trait::async_trait;
 
-use crate::code_analysis::taxonomy_analysis_vo::LintResultList;
-use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
+use crate::quality_rules::taxonomy_analysis_vo::LintResultList;
+use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::FilePath;

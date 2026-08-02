@@ -84,7 +84,7 @@ pub struct ArchitectureRule {
     #[serde(flatten)]
     pub naming: NamingRuleVO,
     #[serde(flatten)]
-    pub code_analysis: crate::code_analysis::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
+    pub code_analysis: crate::quality_rules::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
     #[serde(flatten)]
     pub role: RoleRuleVO,
     #[serde(flatten)]

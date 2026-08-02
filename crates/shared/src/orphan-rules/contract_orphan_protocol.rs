@@ -1,8 +1,8 @@
 // PURPOSE: ITaxonomyOrphanProtocol + layer-specific orphan indicator protocols (agent, contract, capabilities, utility, surfaces)
-use crate::code_analysis::taxonomy_analysis_vo::InboundLinkMap;
-use crate::code_analysis::taxonomy_analysis_vo::InheritanceMap;
-use crate::code_analysis::taxonomy_analysis_vo::OrphanIndicatorResult;
-use crate::code_analysis::taxonomy_analysis_vo::ReachabilityResult;
+use crate::quality_rules::taxonomy_analysis_vo::InboundLinkMap;
+use crate::quality_rules::taxonomy_analysis_vo::InheritanceMap;
+use crate::quality_rules::taxonomy_analysis_vo::OrphanIndicatorResult;
+use crate::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_path_vo::FilePath;
 use std::collections::HashMap;

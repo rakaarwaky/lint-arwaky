@@ -5,8 +5,8 @@
 //   * `Vec<String>` returns → `OrphanFileListVO`
 //   * `&[String] configured` → `&[OrphanEntryPatternListVO]`
 //   * `&str root_dir` → kept as `&str` (idiomatic borrow, AES402 allows)
-use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
-use crate::orphan_detector::taxonomy_orphan_contract_vo::{
+use crate::quality_rules::taxonomy_analysis_vo::GraphAnalysisContext;
+use crate::orphan_rules::taxonomy_orphan_contract_vo::{
     OrphanEntryPatternListVO, OrphanFileListVO,
 };
 

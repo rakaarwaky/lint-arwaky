@@ -1,4 +1,4 @@
-// code-analysis — taxonomy and contract types
+// quality-rules — taxonomy and contract types
 pub mod contract_adapter_protocol;
 pub mod contract_bypass_checker_protocol;
 pub mod contract_class_protocol;

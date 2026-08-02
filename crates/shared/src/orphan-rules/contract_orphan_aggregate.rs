@@ -1,9 +1,9 @@
 // PURPOSE: IOrphanAggregate — aggregate trait for orphan detection (AES308)
 use crate::cli_commands::taxonomy_result_vo::LintResult;
-use crate::code_analysis::taxonomy_analysis_vo::GraphAnalysisContext;
+use crate::quality_rules::taxonomy_analysis_vo::GraphAnalysisContext;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
-use crate::orphan_detector::taxonomy_orphan_contract_vo::OrphanFileListVO;
+use crate::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO;
 
 pub trait IOrphanAggregate: Send + Sync {
     fn build_orphan_graph_context(

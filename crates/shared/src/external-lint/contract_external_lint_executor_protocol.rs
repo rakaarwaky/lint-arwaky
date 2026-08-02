@@ -1,7 +1,7 @@
 // PURPOSE: IExternalLintExecutorProtocol — protocol for external lint command execution
 // Defines the interface for executing linter commands with error mapping.
 
-use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
+use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::FilePath;

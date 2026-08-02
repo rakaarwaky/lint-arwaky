@@ -1,5 +1,5 @@
 // PURPOSE: IExternalLintPathProtocol — protocol for path operations in external lint
-use crate::code_analysis::taxonomy_operation_error::LinterOperationError;
+use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
 use crate::common::contract_executor_protocol::ICommandExecutorProtocol;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::PatternList;

@@ -11,6 +11,7 @@ use crate::capabilities_file_walker::FileWalker;
 use crate::utility_filesystem_io;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::{
+    IFileWalkerProtocol,
     IASTParserProtocol, IDependencyGraphProtocol,
 };
 use shared::filesystem::taxonomy_filesystem_vo::{
