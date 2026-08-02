@@ -104,7 +104,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
         entries: Vec<(std::path::PathBuf, String)>,
         min_lines: usize,
     ) -> Vec<Vec<(std::path::PathBuf, usize)>> {
-        crate::utility_code_duplication_detector::scan_duplicate_blocks(
+        shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
             entries, min_lines,
         )
     }
@@ -116,7 +116,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
         min_dup_lines: usize,
     ) -> Vec<shared::code_analysis::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation>
     {
-        crate::utility_code_duplication_detector::build_violations(
+        shared::code_analysis::utility_code_duplication_detector::build_violations(
             blocks,
             total_loc,
             min_dup_lines,

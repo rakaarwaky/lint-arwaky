@@ -6,7 +6,8 @@
 // external lint results section, diagnostics section, and compliance score.
 use shared::cli_commands::{Format, ScanReport};
 use shared::common::DisplayContent;
-use shared::report_formatter::{IReportFormatterProtocol, format_report_default};
+use shared::report_formatter::IReportFormatterProtocol;
+use crate::utility_report_format::format_report_default;
 use std::collections::BTreeMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -20,7 +21,6 @@ impl IReportFormatterProtocol for TextFormatter {
         if format == Format::Text {
             self.format_text(report)
         } else {
-            DisplayContent::new(format_report_default(report))
         }
     }
 
@@ -150,6 +150,7 @@ impl TextFormatter {
                         "INFO"
                     }
                 };
+use crate::utility_report_format::format_report_default;
                 out.push_str(&format!("  [{}] [{}] {}\n", sev_label, d.source, d.message));
             }
             out.push('\n');

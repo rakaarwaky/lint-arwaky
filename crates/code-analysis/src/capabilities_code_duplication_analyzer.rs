@@ -112,11 +112,11 @@ impl CodeDuplicationAnalyzer {
         let entries = self.filesystem.collect_file_entries(files);
         let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
         let blocks =
-            crate::utility_code_duplication_detector::scan_duplicate_blocks(
+            shared::code_analysis::utility_code_duplication_detector::scan_duplicate_blocks(
                 entries,
                 min_dup_lines,
             );
-        crate::utility_code_duplication_detector::build_violations(
+        shared::code_analysis::utility_code_duplication_detector::build_violations(
             &blocks,
             total_loc,
             min_dup_lines,
@@ -164,7 +164,7 @@ impl CodeDuplicationAnalyzer {
             for w in lines.windows(min_dup_lines) {
                 // P2.1: normalize once — cache hash for second pass
                 let key =
-                    crate::utility_code_duplication_detector::normalize_window(w);
+                    shared::code_analysis::utility_code_duplication_detector::normalize_window(w);
                 let id = hash_key(&key);
                 global.entry(id).or_default().insert(fi);
                 file_hashes.insert(id);

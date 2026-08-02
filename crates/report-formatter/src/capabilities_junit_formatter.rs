@@ -1,7 +1,8 @@
 // PURPOSE: JunitFormatter — implements IReportFormatterProtocol for JUnit XML output per FR-004
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::DisplayContent;
-use shared::report_formatter::{IReportFormatterProtocol, format_report_default};
+use shared::report_formatter::IReportFormatterProtocol;
+use crate::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.
@@ -14,7 +15,6 @@ impl IReportFormatterProtocol for JunitFormatter {
         if format == Format::Junit {
             self.format_junit_report(report)
         } else {
-            DisplayContent::new(format_report_default(report))
         }
     }
 
@@ -83,6 +83,7 @@ impl JunitFormatter {
             diagnostics: vec![],
             score: None,
         };
+use crate::utility_report_format::format_report_default;
         self.format_junit_report(&dummy_report)
     }
 }

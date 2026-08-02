@@ -7,9 +7,9 @@
 //           is_directory, is_file, path_exists, is_source_file}
 //           shared::orphan_detector::utility_orphan_io::read_file_safe
 
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
+use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
@@ -399,18 +399,18 @@ pub fn scan_directory(dir_path: &Path) -> Vec<(String, String, bool)> {
 /// Scan directory with ignored paths filter (matches shared signature).
 /// Returns FilePathList of source files.
 pub fn scan_directory_with_ignored(
-    path: &crate::common::taxonomy_path_vo::DirectoryPath,
+    path: &shared::common::taxonomy_path_vo::DirectoryPath,
     ignored_paths: &[String],
 ) -> Result<
-    crate::common::taxonomy_paths_vo::FilePathList,
-    crate::common::taxonomy_filesystem_error::FileSystemError,
+    shared::common::taxonomy_paths_vo::FilePathList,
+    shared::common::taxonomy_filesystem_error::FileSystemError,
 > {
     let dir = std::path::Path::new(&path.value);
     if !dir.exists() || !dir.is_dir() {
-        return Ok(crate::common::taxonomy_paths_vo::FilePathList { values: vec![] });
+        return Ok(shared::common::taxonomy_paths_vo::FilePathList { values: vec![] });
     }
     let files = collect_all_source_files(dir, ignored_paths);
-    Ok(crate::common::taxonomy_paths_vo::FilePathList { values: files })
+    Ok(shared::common::taxonomy_paths_vo::FilePathList { values: files })
 }
 
 /// Recursively scan directory for files, returning vector of file paths.
@@ -518,9 +518,9 @@ pub fn is_source_ext(ext: &str) -> bool {
 
 /// Filter FilePathList to only include source files.
 pub fn filter_source_files(
-    files: &crate::common::taxonomy_paths_vo::FilePathList,
-) -> crate::common::taxonomy_paths_vo::FilePathList {
-    let filtered: Vec<crate::common::taxonomy_path_vo::FilePath> = files
+    files: &shared::common::taxonomy_paths_vo::FilePathList,
+) -> shared::common::taxonomy_paths_vo::FilePathList {
+    let filtered: Vec<shared::common::taxonomy_path_vo::FilePath> = files
         .values
         .iter()
         .filter(|f| {
@@ -532,7 +532,7 @@ pub fn filter_source_files(
         })
         .cloned()
         .collect();
-    crate::common::taxonomy_paths_vo::FilePathList::new(filtered)
+    shared::common::taxonomy_paths_vo::FilePathList::new(filtered)
 }
 
 // ─── Workspace-aware Walking ────────────────────────────────
@@ -809,7 +809,7 @@ pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
 // Global file cache — read once, serve from memory.
 // FR-001/FR-002: Cache populated from FileEntry.content after walk.
 
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use dashmap::DashMap;
 use rayon::prelude::*;
 use std::sync::LazyLock;
@@ -1066,7 +1066,7 @@ fn has_source_files(dir: &Path) -> bool {
 /// Collect source files (.rs, .py, .ts, .js, .tsx, .jsx) from a directory tree or single file.
 pub fn collect_source_files(
     root_dir: &Path,
-    _dir_path: &crate::common::taxonomy_path_vo::DirectoryPath,
+    _dir_path: &shared::common::taxonomy_path_vo::DirectoryPath,
     ignored: &[String],
 ) -> Vec<FilePath> {
     let mut files = Vec::new();
@@ -1361,10 +1361,10 @@ pub fn default_working_dir(path: &FilePath) -> FilePath {
 
 /// No-op apply_fix for linters that cannot auto-fix (scanners, type-checkers).
 pub async fn noop_apply_fix() -> Result<
-    crate::common::taxonomy_message_vo::ComplianceStatus,
-    crate::code_analysis::taxonomy_operation_error::LinterOperationError,
+    shared::common::taxonomy_message_vo::ComplianceStatus,
+    shared::code_analysis::taxonomy_operation_error::LinterOperationError,
 > {
-    Ok(crate::common::taxonomy_message_vo::ComplianceStatus::new(
+    Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
         false,
     ))
 }
@@ -1665,7 +1665,7 @@ pub fn parse_output_lines(output: &str) -> Vec<String> {
 
 /// Execute an external command and return stdout/stderr/success status.
 pub fn run_external_command(name: &str, args: &[&str]) -> (String, String, bool) {
-    crate::common::utility_command_runner::run_command(name, args)
+    shared::common::utility_command_runner::run_command(name, args)
 }
 
 /// Execute an external command with a working directory and return stdout/stderr/success.
@@ -1674,7 +1674,7 @@ pub fn run_external_command_in(
     args: &[&str],
     current_dir: &str,
 ) -> (String, String, bool) {
-    crate::common::utility_command_runner::run_command_in_dir(name, args, Some(current_dir))
+    shared::common::utility_command_runner::run_command_in_dir(name, args, Some(current_dir))
 }
 
 // ─── Migrated from utility_tui_io ────────────────────────────

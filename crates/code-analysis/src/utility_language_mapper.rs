@@ -1,8 +1,8 @@
 // PURPOSE: Stateless utility functions for mapping language detection results
-use crate::code_analysis::taxonomy_violation_code_analysis_vo::Language as CodeAnalysisLanguage;
-use crate::common::taxonomy_language_vo::Language as CommonLanguage;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::utility_language_detector;
+use shared::code_analysis::taxonomy_violation_code_analysis_vo::Language as CodeAnalysisLanguage;
+use shared::common::taxonomy_language_vo::Language as CommonLanguage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::utility_language_detector;
 
 /// Map a file path to the code-analysis Language enum.
 pub fn code_analysis_language_from_file(file: &str) -> CodeAnalysisLanguage {

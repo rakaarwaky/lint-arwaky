@@ -10,8 +10,5 @@ pub mod capabilities_orphan_taxonomy_analyzer;
 pub mod capabilities_orphan_utility_analyzer;
 pub mod root_orphan_detector_container;
 pub mod utility_orphan_graph_resolver;
-pub mod utility_orphan_ts_parser;
-pub mod utility_orphan_rust_parser;
-pub mod utility_orphan_python_parser;
 pub mod utility_orphan_detector;
 pub mod utility_orphan_filename;

@@ -6,8 +6,8 @@ use shared::common::DisplayContent;
 use shared::report_formatter::{
     IReportFormatterProtocol, SarifArtifactLocation, SarifDriver, SarifLocation, SarifLog,
     SarifMessage, SarifPhysicalLocation, SarifRegion, SarifResult, SarifRule, SarifRun, SarifTool,
-    format_report_default,
 };
+use crate::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.

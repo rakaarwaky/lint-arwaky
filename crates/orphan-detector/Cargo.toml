@@ -17,6 +17,8 @@ serde_json.workspace = true
 rayon.workspace = true
 shared.workspace = true
 syn = { version = "2", features = ["full", "visit", "parsing"] }
+regex.workspace = true
+once_cell.workspace = true
 proc-macro2 = { version = "1", features = ["span-locations"] }
 
 [dev-dependencies]

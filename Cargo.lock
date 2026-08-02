@@ -3449,9 +3449,11 @@ version = "1.12.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
+ "once_cell",
  "orphan-detector-lint-arwaky",
  "proc-macro2",
  "rayon",
+ "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",

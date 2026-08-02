@@ -1,15 +1,15 @@
 // PURPOSE: Shared helpers for naming checkers — layer detection, exception matching, result construction.
-use crate::cli_commands::taxonomy_result_vo::LintResult;
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_lint_vo::LocationList;
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_severity_vo::Severity;
-use crate::common::utility_layer_detector;
-use crate::naming_rules::taxonomy_naming_constant::ADAPTER_NAME;
-use crate::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::cli_commands::taxonomy_result_vo::LintResult;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_common_vo::{ColumnNumber, LineNumber};
+use shared::common::taxonomy_error_vo::ErrorCode;
+use shared::common::taxonomy_lint_vo::LocationList;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::utility_layer_detector;
+use shared::naming_rules::taxonomy_naming_constant::ADAPTER_NAME;
+use shared::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 
 /// Extract the file stem using the last dot (rfind), consistent across all checkers.
 ///

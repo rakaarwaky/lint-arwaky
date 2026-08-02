@@ -248,10 +248,10 @@ impl FileParseResultVO {
             .unwrap_or("");
 
         match ext {
-            "rs" => Self::Rust(super::utility_orphan_rust_parser::parse_rust(content)),
-            "py" => Self::Python(super::utility_orphan_python_parser::parse_python(content)),
+            "rs" => Self::Rust(crate::orphan_detector::utility_orphan_rust_parser::parse_rust(content)),
+            "py" => Self::Python(crate::orphan_detector::utility_orphan_python_parser::parse_python(content)),
             "ts" | "tsx" | "js" | "jsx" => {
-                Self::TypeScript(super::utility_orphan_ts_parser::parse_ts(content))
+                Self::TypeScript(crate::orphan_detector::utility_orphan_ts_parser::parse_ts(content))
             }
             _ => Self::Unsupported,
         }

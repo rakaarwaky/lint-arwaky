@@ -1,7 +1,7 @@
 // PURPOSE: utility_dummy_helper — pure utility functions for dummy function, block, and trait detection
-use crate::common::taxonomy_common_vo::LanguageVO;
-use crate::common::taxonomy_common_vo::LineNumber;
-use crate::common::taxonomy_name_vo::SymbolName;
+use shared::common::taxonomy_common_vo::LanguageVO;
+use shared::common::taxonomy_common_vo::LineNumber;
+use shared::common::taxonomy_name_vo::SymbolName;
 
 pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(LineNumber, LineNumber)> {
     match lang {

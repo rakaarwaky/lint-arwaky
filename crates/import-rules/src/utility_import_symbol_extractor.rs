@@ -1,10 +1,10 @@
 // PURPOSE: utility_import_symbol_extractor — AST-based unused import detection.
 // Replaces dynamic regex + hardcoded DERIVE_MACROS whitelist with syn AST.
 
-use crate::common::taxonomy_common_vo::LineNumber;
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_name_vo::SymbolName;
-use crate::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use shared::common::taxonomy_common_vo::LineNumber;
+use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::taxonomy_name_vo::SymbolName;
+use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use std::collections::{HashMap, HashSet};
 
 // ─── Block 1: Import Alias Extraction (AST-based) ─────────

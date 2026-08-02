@@ -1,6 +1,6 @@
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_paths_vo::FilePathList;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 /// Parse the score threshold from raw YAML config content.
 /// Checks `project.thresholds.score` then `thresholds.score`.
@@ -261,9 +261,9 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
 /// ```
 pub fn parse_adapter_entries_from_yaml(
     yaml_str: &str,
-) -> Vec<crate::config_system::taxonomy_setting_vo::AdapterEntry> {
-    use crate::common::taxonomy_adapter_name_vo::AdapterName;
-    use crate::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus};
+) -> Vec<shared::config_system::taxonomy_setting_vo::AdapterEntry> {
+    use shared::common::taxonomy_adapter_name_vo::AdapterName;
+    use shared::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus};
     let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
         Ok(v) => v,
         Err(_) => return Vec::new(),

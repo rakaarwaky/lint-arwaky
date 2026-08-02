@@ -1,7 +1,7 @@
 // PURPOSE: Utility functions for cycle detection — pure functions only, no contract dependencies
-use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
-use crate::import_rules::taxonomy_graph_color_vo::GraphColorVO;
-use crate::taxonomy_name_vo::SymbolName;
+use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
+use shared::import_rules::taxonomy_graph_color_vo::GraphColorVO;
+use shared::taxonomy_name_vo::SymbolName;
 use std::collections::{HashMap, HashSet};
 
 pub fn normalize_to_layer(name: &str) -> String {

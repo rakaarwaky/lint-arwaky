@@ -15,4 +15,4 @@ pub use capabilities_json_formatter::JsonFormatter;
 pub use capabilities_junit_formatter::{JunitFormatter, xml_escape};
 pub use capabilities_sarif_formatter::SarifFormatter;
 pub use capabilities_text_formatter::TextFormatter;
-pub use shared::report_formatter::format_report_default;
+pub use utility_report_format::format_report_default;

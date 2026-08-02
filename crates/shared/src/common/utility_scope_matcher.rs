@@ -2,8 +2,7 @@
 // Extracted from forbidden/mandatory checkers to eliminate duplicated
 // stem/suffix extraction and scope-membership logic.
 
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::import_rules::utility_import_resolver;
+use crate::common::taxonomy_layer_vo::{Identity, LayerNameVO};
 
 /// Check if a file belongs to a given scope rule based on its filename.
 ///
@@ -25,6 +24,22 @@ use crate::import_rules::utility_import_resolver;
 /// let result = file_belongs_to_scope("surfaces_auth.rs", &Identity::new("surfaces"));
 /// assert!(result.is_some());
 /// ```
+fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
+    let scope_str = scope.value();
+    if let Some(paren) = scope_str.find('(') {
+        let layer = scope_str[..paren].trim();
+        let inner = scope_str[paren + 1..].trim_end_matches(')').trim();
+        let suffixes: Vec<Identity> = if inner.contains('|') {
+            inner.split('|').map(|s| s.trim()).filter(|s| !s.is_empty()).map(Identity::new).collect()
+        } else {
+            inner.split(',').map(|s| s.trim()).filter(|s| !s.is_empty()).map(Identity::new).collect()
+        };
+        (LayerNameVO::new(layer), suffixes)
+    } else {
+        (LayerNameVO::new(scope_str.trim()), vec![])
+    }
+}
+
 pub fn file_belongs_to_scope(
     basename: &str,
     scope_identity: &Identity,
@@ -32,7 +47,7 @@ pub fn file_belongs_to_scope(
     let stem = extract_file_stem(basename);
 
     // Resolve scope to get expected layer and suffixes
-    let (expected_layer, suffixes) = utility_import_resolver::resolve_scope(scope_identity);
+    let (expected_layer, suffixes) = resolve_scope(scope_identity);
     let expected_prefix = expected_layer.value();
 
     // Check if stem starts with `{layer}_` prefix

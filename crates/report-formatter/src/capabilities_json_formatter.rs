@@ -3,8 +3,8 @@ use shared::cli_commands::{Format, ScanReport};
 use shared::common::DisplayContent;
 use shared::report_formatter::{
     IReportFormatterProtocol, JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,
-    format_report_default,
 };
+use crate::utility_report_format::format_report_default;
 
 /// JsonFormatter — produces structured pretty-printed JSON output from ScanReport.
 pub struct JsonFormatter;

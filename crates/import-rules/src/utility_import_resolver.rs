@@ -1,9 +1,9 @@
-use crate::common::taxonomy_common_vo::LineNumber;
-use crate::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
-use crate::import_rules::utility_path_normalizer;
-use crate::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use shared::common::taxonomy_common_vo::LineNumber;
+use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
+use crate::utility_path_normalizer;
+use shared::orphan_detector::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -595,7 +595,7 @@ pub fn resolve_barrel_symbol(module_path: &str, symbol: &str, root_dir: &str) ->
 ///
 /// # Examples
 /// - `from X import A, B as C`       → ["A", "C"]
-/// - `use crate::mod::{A, B};`       → ["A", "B"]
+/// - `use shared::mod::{A, B};`       → ["A", "B"]
 /// - `import { A, B } from './mod'`  → ["A", "B"]
 /// - `import X from './mod'`         → ["X"]
 pub fn extract_symbol_names(line: &str) -> Vec<String> {
@@ -619,7 +619,7 @@ pub fn extract_symbol_names(line: &str) -> Vec<String> {
         return names;
     }
 
-    // ── Rust: use crate::module::{A, B}; / use module::Type; ──
+    // ── Rust: use shared::module::{A, B}; / use module::Type; ──
     if trimmed.starts_with("use ")
         || trimmed.starts_with("pub use ")
         || trimmed.starts_with("pub(crate) use ")

@@ -1,6 +1,6 @@
 // PURPOSE: taxonomy_parser_helper — pure utility functions for import parsing and syntax token extraction
-use crate::common::taxonomy_name_vo::SymbolName;
-use crate::import_rules::utility_import_resolver;
+use shared::common::taxonomy_name_vo::SymbolName;
+use crate::utility_import_resolver;
 
 pub fn extract_import_modules(content: &str) -> Vec<SymbolName> {
     let mut modules = Vec::new();
@@ -43,7 +43,7 @@ pub fn extract_import_modules(content: &str) -> Vec<SymbolName> {
 ///
 /// Handles ALL three language patterns:
 ///   - Python:  from mypackage import PaymentService
-///   - Rust:    use crate::features::AuthOrchestrator;
+///   - Rust:    use shared::features::AuthOrchestrator;
 ///   - TS/JS:   import { UserService } from './services';
 ///
 /// # Returns
@@ -83,7 +83,7 @@ pub fn extract_import_modules_resolved(
             continue;
         }
 
-        // ── Rust: use crate::module::Type; / use module::{A, B}; ──
+        // ── Rust: use shared::module::Type; / use module::{A, B}; ──
         if trimmed.starts_with("use ")
             || trimmed.starts_with("pub use ")
             || trimmed.starts_with("pub(crate) use ")
