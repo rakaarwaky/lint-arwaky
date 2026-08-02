@@ -5,9 +5,6 @@
 use std::path::Path;
 use std::sync::{OnceLock, RwLock};
 
-use crate::capabilities_ast_parser::ASTParser;
-use crate::capabilities_dependency_graph::DependencyGraph;
-use crate::capabilities_file_walker::FileWalker;
 use crate::utility_filesystem_io;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::{
