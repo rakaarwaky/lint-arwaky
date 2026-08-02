@@ -360,3 +360,13 @@ pub async fn noop_apply_fix() -> Result<
         false,
     ))
 }
+
+/// No-op apply_fix sync version for non-async contexts.
+pub fn noop_apply_fix_sync() -> Result<
+    shared::common::taxonomy_message_vo::ComplianceStatus,
+    shared::common::taxonomy_operation_error::LinterOperationError,
+> {
+    Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
+        false,
+    ))
+}

@@ -41,6 +41,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         FilesystemResult {
             files: self.file_list().to_vec(),
             imports: self.import_list().to_vec(),
+            warnings: self.parse_warnings().to_vec(),
+            graph: shared::filesystem::taxonomy_filesystem_vo::GraphData::default(),
+            parsed_count: self.file_list().iter().filter(|f| f.parse_ok).count(),
+            parse_errors: self.file_list().iter().filter(|f| !f.parse_ok).count(),
+            unresolved_imports: 0,
+            timing: self.timing().clone(),
         }
     }
 
@@ -61,35 +67,39 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn dependency_graph(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        static EMPTY: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+        use std::sync::OnceLock;
+        static EMPTY: OnceLock<HashMap<PathBuf, Vec<PathBuf>>> = OnceLock::new();
         self.graph
             .read()
             .map(|g| g.reverse_links())
-            .unwrap_or(&EMPTY)
+            .unwrap_or(EMPTY.get_or_init(HashMap::new))
     }
 
     fn reverse_import_map(&self) -> &HashMap<PathBuf, Vec<PathBuf>> {
-        static EMPTY: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+        use std::sync::OnceLock;
+        static EMPTY: OnceLock<HashMap<PathBuf, Vec<PathBuf>>> = OnceLock::new();
         self.graph
             .read()
             .map(|g| g.reverse_links())
-            .unwrap_or(&EMPTY)
+            .unwrap_or(EMPTY.get_or_init(HashMap::new))
     }
 
     fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>> {
-        static EMPTY: HashMap<String, Vec<PathBuf>> = HashMap::new();
+        use std::sync::OnceLock;
+        static EMPTY: OnceLock<HashMap<String, Vec<PathBuf>>> = OnceLock::new();
         self.graph
             .read()
             .map(|g| g.definitions())
-            .unwrap_or(&EMPTY)
+            .unwrap_or(EMPTY.get_or_init(HashMap::new))
     }
 
     fn trait_implementations(&self) -> &HashMap<String, Vec<PathBuf>> {
-        static EMPTY: HashMap<String, Vec<PathBuf>> = HashMap::new();
+        use std::sync::OnceLock;
+        static EMPTY: OnceLock<HashMap<String, Vec<PathBuf>>> = OnceLock::new();
         self.graph
             .read()
             .map(|g| g.implementations())
-            .unwrap_or(&EMPTY)
+            .unwrap_or(EMPTY.get_or_init(HashMap::new))
     }
 
     fn timing(&self) -> &ScanTiming {
@@ -450,7 +460,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         shared::common::taxonomy_message_vo::ComplianceStatus,
         shared::common::taxonomy_operation_error::LinterOperationError,
     > {
-        utility_filesystem_io::noop_apply_fix().await
+        utility_filesystem_io::noop_apply_fix_sync()
     }
 }
 
@@ -493,7 +503,7 @@ impl FilesystemOrchestrator {
             .filter(|f| !f.parse_ok)
             .map(|f| ParseWarning {
                 file_path: f.path.clone(),
-                message: format!("File skipped: parse failure"),
+                error_detail: "File skipped: parse failure".to_string(),
             })
             .collect();
 
@@ -526,6 +536,7 @@ impl FilesystemOrchestrator {
         let _ = self.warnings.set(warnings);
         let _ = self.timing.set(ScanTiming {
             walk_ms,
+            cache_ms: 0,
             parse_ms,
             extract_ms,
             graph_ms,
