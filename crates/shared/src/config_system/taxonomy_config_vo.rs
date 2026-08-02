@@ -1,4 +1,5 @@
 // PURPOSE: ArchitectureConfig, LayerDefinition, ConfigRule — configuration value objects for AES rules definition
+use crate::common::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
@@ -84,7 +85,7 @@ pub struct ArchitectureRule {
     #[serde(flatten)]
     pub naming: NamingRuleVO,
     #[serde(flatten)]
-    pub code_analysis: crate::quality_rules::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
+    pub code_analysis: CodeAnalysisRuleVO,
     #[serde(flatten)]
     pub role: RoleRuleVO,
     #[serde(flatten)]

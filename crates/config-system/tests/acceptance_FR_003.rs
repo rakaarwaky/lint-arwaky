@@ -1,0 +1,32 @@
+// FR-003 — Config Fallback Safety
+use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+use shared::common::FilePath;
+use tempfile::TempDir;
+
+#[test]
+fn us3_no_config_file_uses_defaults() {
+    let tmp = TempDir::new().unwrap();
+    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let result = ConfigContainer::new()
+        .orchestrator()
+        .load_project_config(&fp)
+        ;
+    assert!(result.config.enabled.value);
+    assert!(
+        result
+            .warnings
+            .iter()
+            .any(|w| w.contains("No config file found"))
+    );
+    assert_eq!(result.source.path.value, "embedded");
+}
+
+#[test]
+fn us3_defaults_are_valid_and_usable() {
+    let tmp = TempDir::new().unwrap();
+    let orch = ConfigContainer::new().orchestrator();
+    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let config = orch.load_config_sync(&fp);
+    assert!(config.enabled.value);
+    assert!(!orch.ignored_paths(&fp).is_empty());
+}

@@ -22,6 +22,9 @@ pub fn extract_use_path(node: tree_sitter::Node, content: &str) -> Option<String
             "scoped_identifier" | "use_as_clause" => {
                 return extract_scoped_path(child, content);
             }
+            "use_wildcard" => {
+                return extract_scoped_path(child, content);
+            }
             "identifier" | "crate" | "super" | "self" => {
                 return Some(text_of(child, content));
             }

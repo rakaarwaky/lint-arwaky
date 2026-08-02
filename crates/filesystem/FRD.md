@@ -20,12 +20,6 @@ Consumer
                  └→ IWorkspaceProtocol
 ```
 
-- **Agent layer**: Orchestration only. Zero I/O, zero business logic. Receives capabilities via DI.
-- **Capabilities layer**: Concrete implementations of protocol traits. Owns business logic and I/O.
-- **Contract layer**: Pure trait definitions. No implementation, no imports from other layers.
-- **Root layer**: Composition root. Creates capabilities, injects as `Arc<dyn Trait>` into agent.
-- **Utility layer**: Stateless pure functions. No structs, no trait impls.
-
 ### Data Production Map
 
 

@@ -5,8 +5,8 @@
 pub mod common;
 
 // ── Layer 1: Core ───────────────────────────────────────────
+pub mod config_system;
 pub mod filesystem;
-// pub mod config_system;
 
 // ── Layer 2: Lint rules ─────────────────────────────────────
 // pub mod naming_rules;

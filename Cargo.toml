@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/shared", "crates/filesystem"]
+members = ["crates/shared", "crates/filesystem", "crates/config-system"]
 
 #do not bypass with allow
 [workspace.lints.clippy]
@@ -9,6 +9,7 @@ members = ["crates/shared", "crates/filesystem"]
 # Workspace member crates (version required for crates.io publish)
 shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "1.11.0" }
 filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "1.11.0" }
+config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "1.11.0" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0.229", features = ["derive"] }
@@ -129,8 +130,6 @@ opt-level = 0
 debug = 0
 strip = false
 codegen-units = 1
-
-
 
 
 # Centralised lint policy — applied to every workspace crate via `lints.workspace = true`.

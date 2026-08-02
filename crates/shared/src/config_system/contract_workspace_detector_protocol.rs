@@ -1,7 +1,6 @@
 // PURPOSE: IWorkspaceDetectorProtocol — protocol trait for detecting workspace type from directory structure
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use async_trait::async_trait;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WorkspaceType {
@@ -39,7 +38,6 @@ impl From<WorkspaceType> for ConfigLanguage {
     }
 }
 
-#[async_trait]
 pub trait IWorkspaceDetectorProtocol: Send + Sync {
     /// Detect workspace type by checking folder structure and config files.
     fn detect(&self, path: &FilePath) -> WorkspaceType;
@@ -48,5 +46,5 @@ pub trait IWorkspaceDetectorProtocol: Send + Sync {
     fn is_workspace(&self, path: &FilePath) -> bool;
 
     /// Discover workspace member directories under the given root.
-    async fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath>;
+    fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath>;
 }

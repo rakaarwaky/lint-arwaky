@@ -39,4 +39,10 @@ anyhow = "1.0.104"
 shared.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
+
+[[bench]]
+name = "bench_filesystem"
+path = "benches/bench_filesystem.rs"
+harness = false

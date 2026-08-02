@@ -1,0 +1,60 @@
+// FR-001 — Project Config Discovery
+use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
+use shared::common::FilePath;
+use std::fs;
+use tempfile::TempDir;
+
+#[test]
+fn us1_config_in_project_root_is_found() {
+    let tmp = TempDir::new().unwrap();
+    fs::write(
+        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        "architecture:\n  enabled: true\n  rules: []\n",
+    )
+    .unwrap();
+    fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
+    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let result = ConfigContainer::new()
+        .orchestrator()
+        .load_project_config(&fp)
+        ;
+    assert!(
+        result
+            .source
+            .path
+            .value
+            .contains("lint_arwaky.config.rust.yaml")
+    );
+    assert!(
+        !result
+            .warnings
+            .iter()
+            .any(|w| w.contains("No config file found"))
+    );
+}
+
+#[test]
+fn us1_config_in_parent_directory_is_found() {
+    let tmp = TempDir::new().unwrap();
+    fs::write(
+        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        "architecture:\n  enabled: true\n  rules: []\n",
+    )
+    .unwrap();
+    let nested = tmp.path().join("src").join("deep");
+    fs::create_dir_all(&nested).unwrap();
+    let fp = FilePath::new(nested.to_string_lossy().to_string()).unwrap();
+    let result = ConfigContainer::new()
+        .orchestrator()
+        .load_config_for_language(&fp, ConfigLanguage::Rust)
+        ;
+    assert!(
+        result
+            .source
+            .path
+            .value
+            .contains("lint_arwaky.config.rust.yaml")
+    );
+}
+
+use shared::config_system::ConfigLanguage;
