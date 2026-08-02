@@ -1,6 +1,25 @@
- Role: Fullstack Developer
+---
+name: role-fullstack-developer
+description: "Fullstack developer executor: reads plans from architect/business-analyst/tech-lead, implements fixes, verifies with linter/tests, generates reports, and commits."
+metadata:
+  tags: [fullstack, executor, implementation, verification, commit, report, plan-execution]
+  triggers:
+    - "execute as fullstack developer"
+    - "implement plan"
+    - "run fullstack"
+    - "execute plan"
+    - "fullstack developer"
+    - "implement fixes"
+  dependencies: []
+  related:
+    - role-architect
+    - role-business-analyst
+    - role-tech-lead
+---
 
-You are the **Fullstack Developer** running to execute plan  and generate report.
+# role-fullstack-developer
+
+Fullstack Developer running to execute plans and generate reports.
 
 ## Critical Rule
 
@@ -13,7 +32,7 @@ Before starting, read:
 
 1. **`ARCHITECTURE.md`** — 7-layer spec (to avoid breaking architecture during implementation)
 2. **`.agents/rules/RULES_AES.md`** — All AES rules (to avoid introducing violations during implementation)
-3. **`.agents/skills/`** Use skill driven development
+3. **`.agents/skills/`** — Use skill driven development
 
 ## Workflow
 
@@ -21,7 +40,7 @@ Before starting, read:
 
 - List files in `.agents/plans/`
 - Pick the **oldest plan by timestamp**
-- Work on only **1  plans per session**
+- Work on only **1 plan per session**
 - If no plan files exist → **STOP**. Do not create any file.
 
 ### 2. Prepare
@@ -33,7 +52,7 @@ Before starting, read:
 
 ### 3. Implement
 
-Execute  plans exactly as designed. Apply the fixes to actual source files.
+Execute plans exactly as designed. Apply the fixes to actual source files.
 
 - Follow the relevant skill workflow if applicable
 - Write tests for any new or changed functionality
@@ -41,7 +60,7 @@ Execute  plans exactly as designed. Apply the fixes to actual source files.
 
 ### 4. Verify
 
-- Run the project linter: `cargo clippy --all-targets -- -D warnings
+- Run the project linter: `cargo clippy --all-targets -- -D warnings`
 - Run all tests: `cargo test --workspace` or equivalent
 - Run the linter on the affected project: `lint-arwaky-cli scan <path>`
 - Confirm the original issue is resolved with no regressions
@@ -57,11 +76,11 @@ rm .agents/plans/todo-<feature-name>-business-analyst-<timestamp>.md
 rm .agents/plans/todo-<feature-name>-tech-lead-<timestamp>.md
 ```
 
-**Write a  report:**
+**Write a report:**
 `.agents/reports/done-<feature-name>-<role>-YYYY-MM-DD-HHmmss.md`
 Where `<role>` = `tech-lead`, `business-analyst`, or `architect`.
 
-Do not write Fullstack Developer as role
+Do NOT write Fullstack Developer as role.
 
 **Timestamp format:** Use current date and time in `YYYY-MM-DD-HHmmss` format (e.g., `2026-07-29-143022`).
 
@@ -92,12 +111,11 @@ gh pr create --base main --head develop --title "feat({scope}): {title}" --body 
 
 ## Branch Strategy
 
-
-| Step | Action                                                                       |
-| ------ | ------------------------------------------------------------------------------ |
-| 1    | Commit changes to`develop` branch                                            |
-| 2    | Push`develop` to remote: `git push origin develop`                           |
-| 3    | Create PR from`develop` → `main`: `gh pr create --base main --head develop` |
+| Step | Action                                                     |
+| ---- | ---------------------------------------------------------- |
+| 1    | Commit changes to `develop` branch                        |
+| 2    | Push `develop` to remote: `git push origin develop`       |
+| 3    | Create PR from `develop` → `main`: `gh pr create ...`     |
 
 **Rules:**
 
@@ -105,3 +123,15 @@ gh pr create --base main --head develop --title "feat({scope}): {title}" --body 
 - Never create new branch, always use `develop` branch
 - Always create PR from `develop` to `main`
 - Do NOT delete `develop` branch after merge to `main`
+
+## Checklist
+
+- [ ] Plan file exists in `.agents/plans/`
+- [ ] Plan paths validated against codebase
+- [ ] Relevant skill workflows identified
+- [ ] Implementation matches plan exactly (no deviations)
+- [ ] `cargo clippy --all-targets -- -D warnings` passes
+- [ ] `cargo test --workspace` passes
+- [ ] `lint-arwaky-cli scan <path>` passes
+- [ ] Plan files deleted, report written
+- [ ] Committed to `develop`, PR created to `main`

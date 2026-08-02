@@ -1,28 +1,52 @@
 # Lint Arwaky Skills
 
- Each skill is a self-contained directory with a `SKILL.md` file defining rules, patterns, and workflows.
+Each skill is a self-contained directory with a `SKILL.md` file defining rules, patterns, and workflows.
 
 ## Structure
 
 .agents/skills/
-├── add-docs-<language></language>              # USE when you work on documentation
-├── cleanup-files-<language></language>         # USE when you work on formatting
-├── consolidate-files-<language></language>     # USE when you work on consolidation
-├── create-agent-<language></language>          # USE when you work on Agent layer
-├── create-capabilities-<language></language>   # USE when you work on Capabilities layer
-├── create-contract-<language></language>       # USE when you work on Contract layer
-├── create-surface-<language></language>        # USE when you work on Surface layer
-├── create-taxonomy-<language></language>       # USE when you work on Taxonomy layer
-├── create-test-<language></language>           # USE when you work on Test
-├── fix-bypass-<language></language>            # USE when you remove bypass
-└── lint-arwaky-<language></language>           # USE when you run scan vioaltion
+├── add-docs-<language>              # USE when you work on documentation
+├── cleanup-consolidate-<language>   # USE when you work on cleanup & consolidation
+├── create-agent-<language>          # USE when you work on Agent layer
+├── create-capabilities-<language>   # USE when you work on Capabilities layer
+├── create-contract-<language>       # USE when you work on Contract layer
+├── create-root-<language>           # USE when you work on Root layer
+├── create-surface-<language>        # USE when you work on Surface layer
+├── create-skill-all                # USE when you create a new skill
+├── create-taxonomy-<language>       # USE when you work on Taxonomy layer
+├── create-test-<language>           # USE when you work on Test
+├── create-utility-<language>        # USE when you work on Utility layer
+├── fix-bypass-<language>            # USE when you remove bypass
+├── lint-arwaky-<language>           # USE when you run scan violation
+├── role-architect                   # USE for architecture review & layer validation
+├── role-business-analyst            # USE for requirements & business flow review
+├── role-fullstack-developer         # USE to execute plans & implement fixes
+└── role-tech-lead                   # USE for code quality, security & performance review
 
 ## Naming Convention
 
-All skills follow the pattern `<action>-<language>`:
+### Language Skills
+
+Follow the pattern `<action>-<language>`:
 
 - **Action**: What the skill does (create, fix, cleanup, add, lint, etc.)
-- **Language**: Target language (`python` or `rust` or `typescript`)
+- **Language**: Target language (`python`, `rust`, or `typescript`)
+
+### Role Skills
+
+Follow the pattern `role-<role-name>`:
+
+- **Role**: The review or execution role (architect, business-analyst, tech-lead, fullstack-developer)
+- Role skills produce plan files (architect, business-analyst, tech-lead) or execute them (fullstack-developer)
+
+## Role Workflow
+
+Roles follow a pipeline: **Architect** → **Business Analyst** → **Tech Lead** → **Fullstack Developer**
+
+1. **Architect** reviews layer boundaries, naming, orphans, scalability, and data flow
+2. **Business Analyst** reviews requirements clarity, business flow, logic implementation, and traceability
+3. **Tech Lead** reviews security, performance, error handling, SOLID principles, and code quality
+4. **Fullstack Developer** executes all plans and generates execution reports
 
 ## Usage
 

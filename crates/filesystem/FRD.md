@@ -218,6 +218,115 @@ fn lint(fs: &dyn IFilesystemAggregate) { ... }
 
 ---
 
+## API Contract
+
+All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protocol trait.
+
+### IParserProtocol (5 operations)
+
+
+| Operation      | Input                   | Output                |
+| ---------------- | ------------------------- | ----------------------- |
+| parse_all      | `&mut [FileEntry]`      | — (mutates in-place) |
+| parse_warnings | —                      | `&[ParseWarning]`     |
+| import_list    | —                      | `&[ImportEntry]`      |
+| imports_for    | `&Path`                 | `Vec<ImportEntry>`    |
+| extract        | `&Path, &str, Language` | `Vec<ImportEntry>`    |
+
+### IGraphProtocol (8 operations)
+
+
+| Operation          | Input                                                            | Output                            |
+| -------------------- | ------------------------------------------------------------------ | ----------------------------------- |
+| build              | `&[ImportEntry], &[FileEntry], &[DefinitionEntry], &[ImplEntry]` | — (mutates self)                 |
+| dependency_graph   | —                                                               | `&HashMap<PathBuf, Vec<PathBuf>>` |
+| reverse_links      | —                                                               | `&HashMap<PathBuf, Vec<PathBuf>>` |
+| symbol_definitions | —                                                               | `&HashMap<String, Vec<PathBuf>>`  |
+| implementations    | —                                                               | `&HashMap<String, Vec<PathBuf>>`  |
+| dependents         | `&Path`                                                          | `Vec<PathBuf>`                    |
+| dependencies       | `&Path`                                                          | `Vec<PathBuf>`                    |
+| reachable          | `&Path, &Path`                                                   | `bool`                            |
+
+### IFileSystemIOProtocol (32 operations)
+
+
+| Operation                   | Input                  | Output                   |
+| ----------------------------- | ------------------------ | -------------------------- |
+| path_exists                 | `&Path`                | `bool`                   |
+| is_dir                      | `&Path`                | `bool`                   |
+| is_file                     | `&Path`                | `bool`                   |
+| is_symlink                  | `&Path`                | `bool`                   |
+| should_ignore               | `&FilePath, &[String]` | `bool`                   |
+| is_ignored_dir              | `&Path, &[String]`     | `bool`                   |
+| is_source_file              | `&Path`                | `bool`                   |
+| is_source_ext               | `&FileExtension`       | `bool`                   |
+| is_python_file              | `&Path`                | `bool`                   |
+| canonicalize                | `&Path`                | `Result<PathBuf>`        |
+| canonicalize_path_str       | `&FilePath`            | `String`                 |
+| metadata                    | `&Path`                | `Result<Metadata>`       |
+| symlink_metadata            | `&Path`                | `Result<Metadata>`       |
+| get_file_stem               | `&str`                 | `&str`                   |
+| get_basename                | `&str`                 | `&str`                   |
+| get_parent                  | `&str`                 | `&str`                   |
+| read_to_string              | `&Path`                | `Result<String>`         |
+| write_string                | `&Path, &str`          | `Result<()>`             |
+| copy_file                   | `&Path, &Path`         | `Result<u64>`            |
+| create_dir_all              | `&Path`                | `Result<()>`             |
+| remove_dir_all              | `&Path`                | `Result<()>`             |
+| remove_file                 | `&Path`                | `Result<()>`             |
+| set_permissions             | `&Path, u32`           | `Result<()>`             |
+| scan_directory_with_ignored | `&Path, &[String]`     | `Vec<PathBuf>`           |
+| read_dir_entries_as_pathbuf | `&Path`                | `Result<Vec<PathBuf>>`   |
+| run_git_command             | `&[&str], &str`        | `(String, String, bool)` |
+| run_external_command_in     | `&str, &[&str], &str`  | `(String, String, bool)` |
+| parse_output_lines          | `&str`                 | `Vec<String>`            |
+| timing                      | —                     | `&ScanTiming`            |
+
+### IToolResolutionProtocol (12 operations)
+
+
+| Operation                      | Input                               | Output                |
+| -------------------------------- | ------------------------------------- | ----------------------- |
+| is_executable_in_path          | `&ToolName`                         | `bool`                |
+| is_binary_available            | `&ToolName`                         | `bool`                |
+| has_local_bin                  | `&Path, &ToolName`                  | `bool`                |
+| has_config_file                | `&Path`                             | `bool`                |
+| has_cargo_toml                 | `&FilePath`                         | `Option<FilePath>`    |
+| has_cargo_lock                 | `&FilePath`                         | `Option<FilePath>`    |
+| is_python_file_recursive       | `&FilePath`                         | `bool`                |
+| resolve_js_cmd                 | `&ToolName, Vec<String>, &FilePath` | `Option<Vec<String>>` |
+| resolve_js_working_dir         | `&FilePath`                         | `FilePath`            |
+| resolve_cargo_working_dir      | `&FilePath`                         | `FilePath`            |
+| resolve_cargo_lock_working_dir | `&FilePath`                         | `FilePath`            |
+| default_working_dir            | `&FilePath`                         | `FilePath`            |
+
+### IWorkspaceProtocol (8 operations)
+
+
+| Operation                     | Input                | Output            |
+| ------------------------------- | ---------------------- | ------------------- |
+| workspace_root                | `&FilePath`          | `Option<PathBuf>` |
+| find_workspace_root_from_path | `&Path`              | `Result<PathBuf>` |
+| is_member_path                | `&FilePath`          | `bool`            |
+| is_leaf_member_path           | `&FilePath`          | `bool`            |
+| detect_source_dir             | `&Path`              | `PathBuf`         |
+| detect_language_from_path     | `&str`               | `ConfigLanguage`  |
+| check_wired_in_container      | `&Path, &[String]`   | `bool`            |
+| resolve_orphan_module_path    | `&Path, &Path, &str` | `Option<PathBuf>` |
+
+### IFilesystemAggregate — Cache Accessors (5 operations)
+
+
+| Operation            | Input       | Output                   |
+| ---------------------- | ------------- | -------------------------- |
+| file_list            | —          | `&[FileEntry]`           |
+| read_cached          | `&FilePath` | `ContentString`          |
+| get_file_content     | `&Path`     | `Option<String>`         |
+| has_file             | `&Path`     | `bool`                   |
+| collect_file_entries | `&[String]` | `Vec<(PathBuf, String)>` |
+
+---
+
 ## Non-functional Requirements
 
 - **Performance**: Pipeline processes 1,000 files in < 2s. 10,000 files in < 10s. Accessor calls O(1).
