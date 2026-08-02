@@ -236,3 +236,66 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
     }
     (has_rs, has_py, has_js)
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Path Utilities
+// ═══════════════════════════════════════════════════════════════
+
+/// Confine a candidate path under a root directory. Returns canonicalized path if valid.
+pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
+    let canonical_root = crate::utility_filesystem_io::canonicalize(root).ok()?;
+    let absolute = if candidate.is_absolute() {
+        candidate.to_path_buf()
+    } else {
+        canonical_root.join(candidate)
+    };
+    if let Ok(canonical_candidate) = crate::utility_filesystem_io::canonicalize(&absolute) {
+        return canonical_candidate
+            .starts_with(&canonical_root)
+            .then_some(canonical_candidate);
+    }
+    let parent = absolute.parent()?;
+    let file_name = absolute.file_name()?;
+    let canonical_parent = crate::utility_filesystem_io::canonicalize(parent).ok()?;
+    let canonical_candidate = canonical_parent.join(file_name);
+    canonical_candidate
+        .starts_with(&canonical_root)
+        .then_some(canonical_candidate)
+}
+
+/// Check if a directory contains files matching identifiers (recursive).
+pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
+    for path in crate::utility_filesystem_io::scan_directory(dir) {
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        if matches!(
+            name,
+            "target"
+                | ".git"
+                | "node_modules"
+                | "dist"
+                | "build"
+                | "__pycache__"
+                | ".venv"
+                | "tests"
+        ) {
+            continue;
+        }
+        if path.is_dir() && check_dir_containers(&path, identifiers) {
+            return true;
+        } else if (name.ends_with("_container.rs")
+            || name.ends_with("_container.py")
+            || name.ends_with("_container.ts")
+            || name.ends_with("_entry.rs")
+            || name.ends_with("_entry.py")
+            || name.ends_with("_entry.ts"))
+            && let Ok(content) = crate::utility_filesystem_io::read_to_string(&path)
+        {
+            for id in identifiers {
+                if content.contains(id) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}

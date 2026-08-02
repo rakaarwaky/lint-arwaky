@@ -83,12 +83,7 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
     }
 
     fn is_python_file(&self, path: &Path) -> bool {
-        utility_filesystem_io::is_source_file(path)
-            && path
-                .extension()
-                .and_then(|e| e.to_str())
-                .map(|e| e == "py")
-                .unwrap_or(false)
+        utility_filesystem_io::is_python_file(path)
     }
 
     // ── Directory Operations (3) ─────────────────────────────

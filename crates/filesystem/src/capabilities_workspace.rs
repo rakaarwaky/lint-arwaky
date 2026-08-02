@@ -2,7 +2,6 @@
 // Implements IWorkspaceProtocol by delegating to utility_workspace_detection stateless functions.
 // 3-block structure per AES skill.
 
-use crate::utility_filesystem_io;
 use crate::utility_workspace_detection;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -49,7 +48,8 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
     fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &[String]) -> bool {
         for dir_name in &["crates", "packages", "modules"] {
             let dir = workspace_root.join(dir_name);
-            if dir.is_dir() && check_dir_containers(&dir, identifiers) {
+            if dir.is_dir() && utility_workspace_detection::check_dir_containers(&dir, identifiers)
+            {
                 return true;
             }
         }
@@ -67,7 +67,7 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
         } else {
             base_dir.join(module_path)
         };
-        confine_under_root(root, &candidate)
+        utility_workspace_detection::confine_under_root(root, &candidate)
     }
 }
 
@@ -77,63 +77,4 @@ impl Default for CapabilitiesWorkspace {
     fn default() -> Self {
         Self::new()
     }
-}
-
-// ─── Private Helpers ──────────────────────────────────────
-
-fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
-    let canonical_root = utility_filesystem_io::canonicalize(root).ok()?;
-    let absolute = if candidate.is_absolute() {
-        candidate.to_path_buf()
-    } else {
-        canonical_root.join(candidate)
-    };
-    if let Ok(canonical_candidate) = utility_filesystem_io::canonicalize(&absolute) {
-        return canonical_candidate
-            .starts_with(&canonical_root)
-            .then_some(canonical_candidate);
-    }
-    let parent = absolute.parent()?;
-    let file_name = absolute.file_name()?;
-    let canonical_parent = utility_filesystem_io::canonicalize(parent).ok()?;
-    let canonical_candidate = canonical_parent.join(file_name);
-    canonical_candidate
-        .starts_with(&canonical_root)
-        .then_some(canonical_candidate)
-}
-
-fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
-    for path in utility_filesystem_io::scan_directory(dir) {
-        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if matches!(
-            name,
-            "target"
-                | ".git"
-                | "node_modules"
-                | "dist"
-                | "build"
-                | "__pycache__"
-                | ".venv"
-                | "tests"
-        ) {
-            continue;
-        }
-        if path.is_dir() && check_dir_containers(&path, identifiers) {
-            return true;
-        } else if (name.ends_with("_container.rs")
-            || name.ends_with("_container.py")
-            || name.ends_with("_container.ts")
-            || name.ends_with("_entry.rs")
-            || name.ends_with("_entry.py")
-            || name.ends_with("_entry.ts"))
-            && let Ok(content) = utility_filesystem_io::read_to_string(&path)
-        {
-            for id in identifiers {
-                if content.contains(id) {
-                    return true;
-                }
-            }
-        }
-    }
-    false
 }

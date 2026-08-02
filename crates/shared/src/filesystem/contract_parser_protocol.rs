@@ -1,5 +1,5 @@
 // Contract layer — parser protocol trait
-// FR-002: AST Parse Results + FR-003: Import Extraction Queries
+// FR-001: AST Parsing & Import Extraction
 // Responsibilities: parse diagnostics, import data queries
 
 use crate::common::taxonomy_language_vo::Language;

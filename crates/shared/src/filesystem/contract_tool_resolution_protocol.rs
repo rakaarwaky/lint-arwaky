@@ -1,5 +1,5 @@
 // Contract layer — tool resolution protocol trait
-// FR-006: External Tool Availability and Resolution
+// FR-004: Tool Resolution
 // Responsibilities: PATH checks, JS tool resolution, Cargo tool resolution
 
 use crate::common::taxonomy_path_vo::FilePath;

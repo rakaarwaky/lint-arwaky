@@ -164,6 +164,16 @@ pub fn is_source_ext(ext: &str) -> bool {
     matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx")
 }
 
+/// Check if path is a Python source file.
+pub fn is_python_file(path: &Path) -> bool {
+    is_source_file(path)
+        && path
+            .extension()
+            .and_then(|e| e.to_str())
+            .map(|e| e == "py")
+            .unwrap_or(false)
+}
+
 /// Return true if rel_path should be skipped based on ignored patterns.
 pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
     if rel_path.is_empty() {

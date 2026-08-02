@@ -3,7 +3,9 @@
 //
 // Utility: pure functions, no struct, no trait impl
 
-use shared::filesystem::taxonomy_filesystem_vo::{RustFnItem, RustImplItem, RustMetadata, RustModItem, RustUseItem};
+use shared::filesystem::taxonomy_filesystem_vo::{
+    RustFnItem, RustImplItem, RustMetadata, RustModItem, RustUseItem,
+};
 
 use crate::utility_tree_sitter_helpers::{child_by_field, extract_use_path, text_of};
 

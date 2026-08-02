@@ -203,7 +203,7 @@ Consumer crate
 
 ## Consumer Access Pattern
 
-All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **70+ methods**.
+All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **65 methods**.
 
 ### Setup
 
@@ -233,13 +233,11 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 | imports_for    | `&Path`                 | `Vec<ImportEntry>`    |
 | extract        | `&Path, &str, Language` | `Vec<ImportEntry>`    |
 
-### IGraphProtocol (8 operations)
+### IGraphProtocol (6 operations)
 
 
 | Operation          | Input                                                            | Output                            |
 | -------------------- | ------------------------------------------------------------------ | ----------------------------------- |
-| build              | `&[ImportEntry], &[FileEntry], &[DefinitionEntry], &[ImplEntry]` | — (mutates self)                 |
-| dependency_graph   | —                                                               | `&HashMap<PathBuf, Vec<PathBuf>>` |
 | reverse_links      | —                                                               | `&HashMap<PathBuf, Vec<PathBuf>>` |
 | symbol_definitions | —                                                               | `&HashMap<String, Vec<PathBuf>>`  |
 | implementations    | —                                                               | `&HashMap<String, Vec<PathBuf>>`  |
@@ -247,7 +245,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 | dependencies       | `&Path`                                                          | `Vec<PathBuf>`                    |
 | reachable          | `&Path, &Path`                                                   | `bool`                            |
 
-### IFileSystemIOProtocol (32 operations)
+### IFileSystemIOProtocol (29 operations)
 
 
 | Operation                   | Input                  | Output                   |
@@ -406,7 +404,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 
 | Term                        | Definition                                                                 |
 | ----------------------------- | ---------------------------------------------------------------------------- |
-| **IFilesystemAggregate**    | Composed trait: all 5 protocols + cache accessors = 70+ methods            |
+| **IFilesystemAggregate**    | Composed trait: all 5 protocols + cache accessors = 65 methods             |
 | **IParserProtocol**         | AST parse results and import extraction queries                            |
 | **IGraphProtocol**          | Dependency graph, definitions, implementations, reachability               |
 | **IFileSystemIOProtocol**   | Low-level file I/O, path ops, directory ops, process execution             |

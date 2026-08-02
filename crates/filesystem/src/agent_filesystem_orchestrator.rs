@@ -383,7 +383,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn read_cached(&self, path: &FilePath) -> ContentString {
-        let p: &Path = path;
+        let p = Path::new(path.value());
         self.get_file_content(p)
             .map(|value| ContentString { value })
             .unwrap_or_else(|| ContentString {
@@ -409,14 +409,11 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)> {
         let mut out = Vec::new();
         for file_str in files {
-            let content = self
-                .string_cache
-                .get(file_str)
-                .map(|r| r.value().clone())
-                .unwrap_or_else(|| {
-                    utility_filesystem_io::read_file_safe(file_str).unwrap_or_default()
-                });
-            out.push((PathBuf::from(file_str), content));
+            let path = PathBuf::from(file_str);
+            let content = self.get_file_content(&path).unwrap_or_else(|| {
+                utility_filesystem_io::read_file_safe(file_str).unwrap_or_default()
+            });
+            out.push((path, content));
         }
         out
     }
@@ -428,7 +425,6 @@ impl FilesystemOrchestrator {
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
         Self {
             deps,
-            string_cache: dashmap::DashMap::new(),
             files: OnceLock::new(),
             file_index: OnceLock::new(),
             imports: OnceLock::new(),
