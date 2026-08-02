@@ -2,7 +2,8 @@
 // Measures: DiffChecker throughput, GitCommandAdapter latency.
 // Layer: Capabilities performance
 // Speed: s–min (release gate / nightly)
-// Best practices: significance_level(0.05), sample_size(30+), reuse runtime across iterations
+// Best practices: significance_level(0.05), sample_size(30+), reuse std::sync::Arc;
+use runtime across iterations
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
@@ -11,7 +12,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 
 fn bench_get_default_branch(c: &mut Criterion) {
-    let checker = DiffChecker::new();
+    let checker = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new(".").unwrap_or_default();
     let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("get_default_branch");
@@ -23,7 +24,7 @@ fn bench_get_default_branch(c: &mut Criterion) {
 }
 
 fn bench_get_changed_files(c: &mut Criterion) {
-    let checker = DiffChecker::new();
+    let checker = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new(".").unwrap_or_default();
     let branch = GitBranchName::new("main");
     let rt = tokio::runtime::Runtime::new().unwrap();
@@ -36,7 +37,7 @@ fn bench_get_changed_files(c: &mut Criterion) {
 }
 
 fn bench_get_diff(c: &mut Criterion) {
-    let checker = DiffChecker::new();
+    let checker = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new(".").unwrap_or_default();
     let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("get_diff");
@@ -48,7 +49,7 @@ fn bench_get_diff(c: &mut Criterion) {
 }
 
 fn bench_run_git_diff_check(c: &mut Criterion) {
-    let checker = DiffChecker::new();
+    let checker = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new(".").unwrap_or_default();
     let rt = tokio::runtime::Runtime::new().unwrap();
     let mut group = c.benchmark_group("run_git_diff_check");

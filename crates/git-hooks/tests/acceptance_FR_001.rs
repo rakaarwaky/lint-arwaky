@@ -2,6 +2,7 @@
 // REQ: Hooks correctly installed on all supported system types (Linux, macOS, Windows).
 // Maps to: FRD Success Indicator #1
 
+use std::sync::Arc;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::FilePath;
 use shared::git_hooks::IHookManagerProtocol;

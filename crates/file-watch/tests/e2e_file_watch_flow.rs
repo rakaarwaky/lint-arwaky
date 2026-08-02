@@ -45,6 +45,10 @@ impl ICodeAnalysisAggregate for RecordingLinter {
     fn run_analysis_with_entries(&self, _: &[shared::filesystem::FileEntry]) -> Vec<LintResult> {
         vec![]
     }
+
+    fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
+        vec![]
+    }
 }
 
 // ─── E2E: watch a temp dir, create a file, receive event ────

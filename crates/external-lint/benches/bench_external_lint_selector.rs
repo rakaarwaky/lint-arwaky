@@ -46,7 +46,7 @@ fn bench_container_creation(c: &mut Criterion) {
             let count = *val;
             b.iter(|| {
                 for _ in 0..count {
-                    std::hint::black_box(external_lint_lint_arwaky::ExternalLintContainer::new());
+                    std::hint::black_box(external_lint_lint_arwaky::ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new())));
                 }
             });
         });
@@ -62,7 +62,7 @@ fn bench_adapter_names(c: &mut Criterion) {
         group.throughput(Throughput::Elements(n as u64));
         group.bench_with_input(BenchmarkId::new("calls", n), &n, |b, val| {
             let count = *val;
-            let container = external_lint_lint_arwaky::ExternalLintContainer::new();
+            let container = external_lint_lint_arwaky::ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
             let aggregate = container.aggregate();
             b.iter(|| {
                 for _ in 0..count {

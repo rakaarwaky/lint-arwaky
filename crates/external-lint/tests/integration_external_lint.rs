@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 #[test]
 fn container_creates_aggregate() {
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
     // Aggregate should be a valid Arc
     assert!(Arc::strong_count(&aggregate) >= 1);
@@ -35,7 +35,7 @@ fn container_new_default_creates_aggregate() {
 
 #[test]
 fn orchestrator_has_all_nine_adapters_registered() {
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
     assert_eq!(names.len(), 9);
@@ -43,7 +43,7 @@ fn orchestrator_has_all_nine_adapters_registered() {
 
 #[test]
 fn orchestrator_contains_rust_adapters() {
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
     assert!(names.contains(&AdapterName::raw("clippy")));
@@ -53,7 +53,7 @@ fn orchestrator_contains_rust_adapters() {
 
 #[test]
 fn orchestrator_contains_python_adapters() {
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
     assert!(names.contains(&AdapterName::raw("ruff")));
@@ -63,7 +63,7 @@ fn orchestrator_contains_python_adapters() {
 
 #[test]
 fn orchestrator_contains_js_adapters() {
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
     assert!(names.contains(&AdapterName::raw("eslint")));
@@ -102,7 +102,7 @@ async fn orchestrator_with_no_adapters_returns_empty_results() {
 
 #[test]
 fn aggregate_is_object_safe() {
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate: Arc<dyn IExternalLintAggregate> = container.aggregate();
     // Verify we can call methods through the trait object
     let _ = aggregate.adapter_names();
@@ -112,8 +112,8 @@ fn aggregate_is_object_safe() {
 
 #[test]
 fn multiple_containers_are_independent() {
-    let c1 = ExternalLintContainer::new();
-    let c2 = ExternalLintContainer::new();
+    let c1 = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let c2 = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let a1 = c1.aggregate();
     let a2 = c2.aggregate();
     // Different Arc pointers

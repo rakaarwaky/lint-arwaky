@@ -1,6 +1,6 @@
 //! Unit tests for surface_check_action — find_workspace_root, handle_default_check.
 
-use shared::cli_commands::utility_path_resolver::find_workspace_root;
+use shared::filesystem::utility_filesystem_io::find_workspace_root;
 
 // ─── find_workspace_root ─────────────────────────────────────────────────────
 

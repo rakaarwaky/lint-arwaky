@@ -2,6 +2,7 @@
 // REQ: The crate's own source complies with AES rules when complete.
 // Maps to: FRD Success Indicator #4
 
+use std::sync::Arc;
 use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
@@ -11,7 +12,7 @@ use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 /// FRD-004: All public types are constructible (no dead code)
 #[test]
 fn frd_004_all_public_types_constructible() {
-    let _diff = DiffChecker::new();
+    let _diff = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let _adapter = GitHookAdapter::new(
         shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
     );

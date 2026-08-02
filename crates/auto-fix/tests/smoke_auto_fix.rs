@@ -44,13 +44,17 @@ impl ICodeAnalysisAggregate for NoopLinter {
         _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
     ) -> Vec<shared::cli_commands::LintResult> {
         vec![]
+
+    fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
+        vec![]
+    }
     }
 }
 
 #[test]
 fn crate_boots_and_all_components_wire() {
     // 1. FileAdapter instantiates
-    let adapter = FileAdapter::new();
+    let adapter = FileAdapter::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let test_path = FilePath::new("/tmp/smoke_test.rs".to_string()).unwrap();
     let _ = adapter.path_exists(&test_path);
 
@@ -66,7 +70,7 @@ fn crate_boots_and_all_components_wire() {
 
 #[test]
 fn all_public_types_are_constructible() {
-    let _adapter = FileAdapter::new();
+    let _adapter = FileAdapter::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let _adapter_default = FileAdapter;
 
     let linter: Arc<dyn ICodeAnalysisAggregate> = Arc::new(NoopLinter);

@@ -14,7 +14,6 @@ use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtoc
 use shared::role_rules::IRoleRunnerAggregate;
 
 // Ensure utility_path_resolver is reachable from entry point for AES504 orphan detection
-use shared::cli_commands::utility_path_resolver;
 
 pub struct CliContainer {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,

@@ -113,37 +113,37 @@ fn tsc_adapter_name() {
 
 #[test]
 fn bandit_adapter_name() {
-    let adapter = BanditAdapter::new(mock_lint_executor(), None);
+    let adapter = BanditAdapter::new(mock_lint_executor(), None, Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "bandit");
 }
 
 #[test]
 fn mypy_adapter_name() {
-    let adapter = MyPyAdapter::new(mock_lint_executor(), None);
+    let adapter = MyPyAdapter::new(mock_lint_executor(), None, Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "mypy");
 }
 
 #[test]
 fn ruff_adapter_name() {
-    let adapter = RuffAdapter::new(mock_lint_executor(), None);
+    let adapter = RuffAdapter::new(mock_lint_executor(), None, Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "ruff");
 }
 
 #[test]
 fn cargo_audit_adapter_name() {
-    let adapter = CargoAuditAdapter::new();
+    let adapter = CargoAuditAdapter::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "cargo-audit");
 }
 
 #[test]
 fn rustfmt_adapter_name() {
-    let adapter = RustFmtAdapter::new(mock_cmd_executor(), None);
+    let adapter = RustFmtAdapter::new(mock_cmd_executor(), None, Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "rustfmt");
 }
 
 #[test]
 fn clippy_adapter_name() {
-    let adapter = RustLinterAdapter::new(mock_cmd_executor(), None);
+    let adapter = RustLinterAdapter::new(mock_cmd_executor(), None, Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "clippy");
 }
 
@@ -178,21 +178,21 @@ async fn tsc_skips_non_ts_file() {
 #[test]
 fn ruff_adapter_with_custom_bin_path() {
     let bin = FilePath::new("/usr/local/bin/ruff".to_string()).unwrap();
-    let adapter = RuffAdapter::new(mock_lint_executor(), Some(bin));
+    let adapter = RuffAdapter::new(mock_lint_executor(), Some(bin), Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "ruff");
 }
 
 #[test]
 fn bandit_adapter_with_custom_bin_path() {
     let bin = FilePath::new("/usr/local/bin/bandit".to_string()).unwrap();
-    let adapter = BanditAdapter::new(mock_lint_executor(), Some(bin));
+    let adapter = BanditAdapter::new(mock_lint_executor(), Some(bin), Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "bandit");
 }
 
 #[test]
 fn mypy_adapter_with_custom_bin_path() {
     let bin = FilePath::new("/usr/local/bin/mypy".to_string()).unwrap();
-    let adapter = MyPyAdapter::new(mock_lint_executor(), Some(bin));
+    let adapter = MyPyAdapter::new(mock_lint_executor(), Some(bin), Arc::new(filesystem::FilesystemOrchestrator::new()));
     assert_eq!(adapter.name().value(), "mypy");
 }
 
@@ -216,7 +216,7 @@ async fn tsc_apply_fix_returns_false() {
 
 #[tokio::test]
 async fn bandit_apply_fix_returns_false() {
-    let adapter = BanditAdapter::new(mock_lint_executor(), None);
+    let adapter = BanditAdapter::new(mock_lint_executor(), None, Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new("/tmp/test.py".to_string()).unwrap();
     let result = adapter.apply_fix(&path).await.unwrap();
     assert!(!result.value());
@@ -224,7 +224,7 @@ async fn bandit_apply_fix_returns_false() {
 
 #[tokio::test]
 async fn mypy_apply_fix_returns_false() {
-    let adapter = MyPyAdapter::new(mock_lint_executor(), None);
+    let adapter = MyPyAdapter::new(mock_lint_executor(), None, Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new("/tmp/test.py".to_string()).unwrap();
     let result = adapter.apply_fix(&path).await.unwrap();
     assert!(!result.value());

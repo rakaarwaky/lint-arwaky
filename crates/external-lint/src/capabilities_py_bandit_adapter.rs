@@ -175,11 +175,10 @@ mod tests {
     use shared::common::{AdapterName, ComplianceStatus, FilePath, ResponseData, Severity};
     use shared::external_lint::IExternalLintExecutorProtocol;
     use std::sync::Arc;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
     fn make_adapter() -> BanditAdapter {
         let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
-        BanditAdapter::new(executor, None)
+        BanditAdapter::new(executor, None, Arc::new(filesystem::FilesystemOrchestrator::new()))
     }
 
     struct EmptyLintExecutor;

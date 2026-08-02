@@ -2,6 +2,7 @@
 // REQ: Commits that violate AES rules are successfully blocked.
 // Maps to: FRD Success Indicator #3
 
+use std::sync::Arc;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::FilePath;
 use shared::git_hooks::IHookManagerProtocol;

@@ -3,6 +3,7 @@
 // Layer: Capabilities (GitHookAdapter)
 // Speed: ms
 
+use std::sync::Arc;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::FilePath;
 use shared::git_hooks::IHookManagerProtocol;
@@ -16,7 +17,7 @@ fn sut_in_non_repo() -> GitHookAdapter {
 #[test]
 fn new_creates_instance_with_root_dir() {
     let path = FilePath::new("/tmp/test_repo").unwrap_or_default();
-    let _adapter = GitHookAdapter::new(path);
+    let _adapter = GitHookAdapter::new(path), Arc::new(filesystem::FilesystemOrchestrator::new()));
 }
 
 // ─── install_pre_commit (non-repo) ────────────────────────
@@ -49,7 +50,7 @@ fn install_pre_commit_in_git_repo_creates_hook() {
     let _ = std::fs::create_dir_all(tmp_dir.join(".git"));
 
     let root = FilePath::new(tmp_dir.to_str().unwrap().to_string()).unwrap_or_default();
-    let adapter = GitHookAdapter::new(root);
+    let adapter = GitHookAdapter::new(root), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe_path = FilePath::new("/usr/local/bin/lint-arwaky").unwrap_or_default();
 
     let result = adapter.install_pre_commit(&exe_path);
@@ -76,7 +77,7 @@ fn install_pre_commit_with_empty_executable_uses_default_name() {
     let _ = std::fs::create_dir_all(tmp_dir.join(".git"));
 
     let root = FilePath::new(tmp_dir.to_str().unwrap().to_string()).unwrap_or_default();
-    let adapter = GitHookAdapter::new(root);
+    let adapter = GitHookAdapter::new(root), Arc::new(filesystem::FilesystemOrchestrator::new()));
     let exe_path = FilePath::new("").unwrap_or_default();
 
     let result = adapter.install_pre_commit(&exe_path);
@@ -103,7 +104,7 @@ fn uninstall_pre_commit_removes_hook_file() {
     std::fs::write(&hook_path, "#!/bin/bash\necho test").unwrap();
 
     let root = FilePath::new(tmp_dir.to_str().unwrap().to_string()).unwrap_or_default();
-    let adapter = GitHookAdapter::new(root);
+    let adapter = GitHookAdapter::new(root), Arc::new(filesystem::FilesystemOrchestrator::new()));
 
     let result = adapter.uninstall_pre_commit();
     assert!(result.is_ok());
@@ -121,7 +122,7 @@ fn uninstall_pre_commit_no_hook_file_still_succeeds() {
     let _ = std::fs::create_dir_all(tmp_dir.join(".git").join("hooks"));
 
     let root = FilePath::new(tmp_dir.to_str().unwrap().to_string()).unwrap_or_default();
-    let adapter = GitHookAdapter::new(root);
+    let adapter = GitHookAdapter::new(root), Arc::new(filesystem::FilesystemOrchestrator::new()));
 
     let result = adapter.uninstall_pre_commit();
     assert!(result.is_ok());

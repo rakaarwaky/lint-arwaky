@@ -63,7 +63,7 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .and_then(|r| r.code_analysis.duplication_threshold)
             .unwrap_or(50.0);
 
-        let dir_path = match shared::common::taxonomy_path_vo::DirectoryPath::new(
+        let _dir_path = match shared::common::taxonomy_path_vo::DirectoryPath::new(
             src.to_string_lossy().to_string(),
         ) {
             Ok(dp) => dp,

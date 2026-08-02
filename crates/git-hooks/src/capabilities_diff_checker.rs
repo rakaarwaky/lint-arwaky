@@ -118,10 +118,10 @@ impl DiffChecker {
             }
         }
         if changed_set.is_empty() {
-            self.try_fallback_head_async(&mut changed_set, project_path);
+            self.try_fallback_head_async(&mut changed_set, project_path).await;
         }
         if changed_set.is_empty() {
-            self.try_ls_files_async(&mut changed_set, project_path);
+            self.try_ls_files_async(&mut changed_set, project_path).await;
         }
         let mut vec = Vec::with_capacity(changed_set.len());
         vec.extend(changed_set);

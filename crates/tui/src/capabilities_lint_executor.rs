@@ -16,7 +16,6 @@ use shared::project_setup::SetupManagementAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecutionResult};
 
-use shared::filesystem::IFilesystemAggregate;
 use std::sync::Arc;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
@@ -567,7 +566,7 @@ impl ILintExecutorProtocol for LintExecutor {
     }
 
     fn adapters(&self) -> LintExecutionResult {
-        let adapters = Self::discover_adapters();
+        let adapters = Self::discover_adapters(&*self.filesystem);
         let mut output = String::from("Active Linter Adapters:\n");
         for (i, adapter) in adapters.iter().enumerate() {
             let status = if adapter.installed { "[+]" } else { "[-]" };
@@ -710,7 +709,6 @@ impl LintExecutor {
             import_orchestrator: None,
             naming_orchestrator: None,
             role_orchestrator: None,
-            filesystem: Arc::new(filesystem::FilesystemOrchestrator::new()),
         }
     }
 
@@ -862,7 +860,7 @@ impl LintExecutor {
     }
 
     /// Discover available linter adapters and check binary availability.
-    fn discover_adapters() -> Vec<AdapterInfo> {
+    fn discover_adapters(filesystem: &dyn IFilesystemAggregate) -> Vec<AdapterInfo> {
         let mut list = vec![
             ("ast_rust_scanner", "Rust AST (built-in)", true),
             ("ast_py_scanner", "Python AST (built-in)", true),
@@ -888,7 +886,7 @@ impl LintExecutor {
             list.push(AdapterInfo {
                 name: b.into(),
                 label: l.into(),
-                installed: Self::is_binary_available(b, &self.filesystem),
+                installed: Self::is_binary_available(b, filesystem),
             });
         }
         list

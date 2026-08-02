@@ -49,6 +49,10 @@ impl ICodeAnalysisAggregate for BenchLinter {
         _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
     ) -> Vec<LintResult> {
         vec![]
+
+    fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
+        vec![]
+    }
     }
 }
 
@@ -134,7 +138,7 @@ fn bench_file_adapter_read(c: &mut Criterion) {
         tmp.flush().unwrap();
 
         let path = FilePath::new(tmp.path().to_str().unwrap().to_string()).unwrap();
-        let adapter = FileAdapter::new();
+        let adapter = FileAdapter::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
 
         group.bench_with_input(
             BenchmarkId::new("read_file", format!("{}kb", size_kb)),

@@ -78,7 +78,7 @@ impl TuiContainer {
         let file_watch_container = FileWatchContainer::new();
         let watch_agg = file_watch_container.aggregate(code_analysis_aggregate.clone());
         let lint_executor = Arc::new(
-            LintExecutor::new(code_analysis_aggregate, Some(watch_agg))
+            LintExecutor::new(code_analysis_aggregate, Some(watch_agg), filesystem.clone())
                 .with_fix(fix_orchestrator)
                 .with_setup(setup_aggregate)
                 .with_hook_port(hook_aggregate)

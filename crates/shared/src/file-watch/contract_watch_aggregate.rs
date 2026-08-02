@@ -1,6 +1,5 @@
 // PURPOSE: IWatchAggregate — contract trait for watch operations used by surfaces
 use crate::common::taxonomy_common_error::ExitCode;
-use crate::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
 use crate::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 use crate::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use std::sync::Arc;

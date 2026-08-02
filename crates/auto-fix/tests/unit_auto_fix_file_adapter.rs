@@ -9,7 +9,7 @@ use std::io::Write;
 use tempfile::NamedTempFile;
 
 fn sut() -> FileAdapter {
-    FileAdapter::new()
+    FileAdapter::new(Arc::new(filesystem::FilesystemOrchestrator::new()))
 }
 
 // ─── path_exists ──────────────────────────────────────────
@@ -118,7 +118,7 @@ fn write_file_returns_false_for_invalid_path() {
 
 #[test]
 fn default_constructor_produces_working_adapter() {
-    let adapter = FileAdapter;
+    let adapter = FileAdapter::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let path = FilePath::new("/nonexistent.rs".to_string()).unwrap();
     assert!(!adapter.path_exists(&path));
 }

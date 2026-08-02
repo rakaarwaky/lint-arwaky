@@ -6,6 +6,7 @@ use shared::cli_commands::LintResultList;
 use shared::common::{AdapterName, FilePath};
 
 use std::fs;
+use std::sync::Arc;
 
 /// FRD-EXT-004: scan_all returns a unified LintResultList combining all adapter outputs.
 #[tokio::test]
@@ -15,7 +16,7 @@ async fn frd_004_scan_all_returns_unified_result_list() {
     fs::write(dir.path().join("app.py"), "x = 1").unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
 
     let results: LintResultList = aggregate.scan_all(&path).await;
@@ -41,7 +42,7 @@ async fn frd_005_results_carry_adapter_source() {
     fs::write(dir.path().join("script.py"), "import os\n").unwrap();
 
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
 
     let results = aggregate.scan_all(&path).await;
@@ -72,7 +73,7 @@ async fn frd_005_results_carry_adapter_source() {
 /// FRD-EXT-006: adapter_names() exposes the full registered adapter list.
 #[tokio::test]
 async fn frd_006_adapter_names_exposes_all_registered() {
-    let container = ExternalLintContainer::new();
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
 

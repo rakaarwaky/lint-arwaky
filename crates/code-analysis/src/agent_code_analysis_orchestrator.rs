@@ -230,7 +230,7 @@ impl CodeAnalysisOrchestrator {
     /// Core method: collect files and run all checks.
     fn run_lint_at(&self, src_dir: &Path) -> Vec<LintResult> {
         let config = &self.config;
-        let dir_path = match DirectoryPath::new(src_dir.to_string_lossy().to_string()) {
+        let _dir_path = match DirectoryPath::new(src_dir.to_string_lossy().to_string()) {
             Ok(dp) => dp,
             Err(_) => return Vec::new(),
         };

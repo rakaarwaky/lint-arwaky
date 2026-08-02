@@ -3,13 +3,14 @@
 // Layer: Capabilities (DiffChecker)
 // Speed: ms
 
+use std::sync::Arc;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use shared::common::{FilePath, GitBranchName};
 
 use shared::git_hooks::IDiffProtocol;
 
 fn sut() -> DiffChecker {
-    DiffChecker::new()
+    DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()))
 }
 
 fn test_path() -> FilePath {
@@ -20,12 +21,12 @@ fn test_path() -> FilePath {
 
 #[test]
 fn new_creates_instance() {
-    let _checker = DiffChecker::new();
+    let _checker = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
 }
 
 #[test]
 fn default_creates_instance() {
-    let _checker = DiffChecker;
+    let _checker = DiffChecker::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
 }
 
 // ─── get_default_branch ───────────────────────────────────

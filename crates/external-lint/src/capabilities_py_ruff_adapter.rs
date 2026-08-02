@@ -220,11 +220,10 @@ mod tests {
     use shared::common::{AdapterName, ComplianceStatus, FilePath, ResponseData, Severity};
     use shared::external_lint::IExternalLintExecutorProtocol;
     use std::sync::Arc;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
     fn make_adapter() -> RuffAdapter {
         let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
-        RuffAdapter::new(executor, None)
+        RuffAdapter::new(executor, None, Arc::new(filesystem::FilesystemOrchestrator::new()))
     }
 
     struct EmptyLintExecutor;
