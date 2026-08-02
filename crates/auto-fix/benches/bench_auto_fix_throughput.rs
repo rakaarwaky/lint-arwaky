@@ -49,10 +49,8 @@ impl ICodeAnalysisAggregate for BenchLinter {
         _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
     ) -> Vec<LintResult> {
         vec![]
-
-    fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
-        vec![]
     }
+
     }
 
     fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {

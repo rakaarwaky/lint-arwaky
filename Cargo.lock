@@ -1123,9 +1123,9 @@ version = "1.11.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "config-system-lint-arwaky",
  "criterion",
  "dirs",
- "filesystem-lint-arwaky",
  "futures",
  "regex",
  "serde",

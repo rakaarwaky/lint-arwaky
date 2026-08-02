@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use config_system::ConfigParserProvider;
 // PURPOSE: Smoke test — verify the external-lint subsystem boots and responds
 // within 5 seconds. If this fails, nothing else matters.
 
@@ -9,7 +10,7 @@ use shared::common::FilePath;
 async fn external_lint_boots_and_returns_adapter_names() {
     let start = std::time::Instant::now();
 
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
     let aggregate = container.aggregate();
     let names = aggregate.adapter_names();
 
@@ -36,7 +37,7 @@ async fn scan_all_on_empty_dir_completes_without_panic() {
     let dir = tempfile::tempdir().unwrap();
     let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
 
-    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()));
+    let container = ExternalLintContainer::new(Arc::new(filesystem::FilesystemOrchestrator::new()), Arc::new(config_system::ConfigParserProvider::new()));
     let aggregate = container.aggregate();
 
     let start = std::time::Instant::now();

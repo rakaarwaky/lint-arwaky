@@ -14,7 +14,6 @@ use shared::common::{Count, Score};
 //   6. clean: remove cache directories.
 //   7. update: upgrade linter tools via pip/npm.
 
-use shared::common::utility_command_runner as proc_io;
 use shared::maintenance::IMaintenanceCheckerProtocol;
 use shared::maintenance::MaintenanceStatsVO;
 use shared::maintenance::{
@@ -37,7 +36,7 @@ pub struct MaintenanceChecker {
 impl IMaintenanceCheckerProtocol for MaintenanceChecker {
     async fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
         let check_tool = &|name: &str, args: &[&str], required: bool| {
-            let (stdout, _, success) = proc_io::run_command(name, args);
+            let (stdout, _, success) = self.filesystem.run_external_command_in(name, args, ".");
             let (status, version) = if success {
                 let ver = match stdout.lines().next() {
                     Some(v) => v.trim().to_string(),
@@ -145,7 +144,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         // FR-006: Language detection — Cargo.lock → Rust, package.json → JS/TS, else Python
         if cargo_lock.exists() {
             // FR-006: Rust — cargo audit
-            let tool_available = proc_io::run_command("cargo", &["audit", "--version"]).2;
+            let tool_available = self.filesystem.run_external_command_in("cargo", &["audit", "--version"], ".").2;
             if !tool_available {
                 return SecurityScanReport {
                     language: "Rust".to_string(),
@@ -200,7 +199,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         } else if package_json.exists() {
             // FR-006: JS/TS — npm audit
-            let tool_available = proc_io::run_command("npm", &["--version"]).2;
+            let tool_available = self.filesystem.run_external_command_in("npm", &["--version"], ".").2;
             if !tool_available {
                 return SecurityScanReport {
                     language: "JavaScript".to_string(),
@@ -253,7 +252,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         } else {
             // FR-006: Python — bandit
-            let tool_available = proc_io::run_command("bandit", &["--version"]).2;
+            let tool_available = self.filesystem.run_external_command_in("bandit", &["--version"], ".").2;
             if !tool_available {
                 return SecurityScanReport {
                     language: "Python".to_string(),
@@ -622,7 +621,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
 
         // FR-001: Language runtime versions
         let py_ver = {
-            let (stdout, _, success) = proc_io::run_command("python3", &["--version"]);
+            let (stdout, _, success) = self.filesystem.run_external_command_in("python3", &["--version"], ".");
             if success {
                 stdout
                     .lines()
@@ -635,7 +634,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         };
         let rust_ver = {
-            let (stdout, _, success) = proc_io::run_command("rustc", &["--version"]);
+            let (stdout, _, success) = self.filesystem.run_external_command_in("rustc", &["--version"], ".");
             if success {
                 stdout
                     .lines()
@@ -648,7 +647,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         };
         let node_ver = {
-            let (stdout, _, success) = proc_io::run_command("node", &["--version"]);
+            let (stdout, _, success) = self.filesystem.run_external_command_in("node", &["--version"], ".");
             if success {
                 stdout
                     .lines()

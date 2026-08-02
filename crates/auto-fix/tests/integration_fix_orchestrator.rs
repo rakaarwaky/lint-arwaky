@@ -58,10 +58,8 @@ impl ICodeAnalysisAggregate for MockCodeAnalysisAggregate {
         _files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
     ) -> Vec<shared::cli_commands::LintResult> {
         vec![]
-
-    fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
-        vec![]
     }
+
     }
 
     fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
