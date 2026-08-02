@@ -624,6 +624,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         utility_filesystem_io::scan_directory_recursive(dir)
     }
 
+    fn collect_source_files_from_path(&self, dir: &Path, files: &mut Vec<String>) {
+        utility_filesystem_io::collect_source_files_from_path(dir, files)
+    }
+
     // ── Path Metadata Helpers ─────────────────────────────
 
     fn is_source_file(&self, path: &Path) -> bool {

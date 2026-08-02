@@ -81,7 +81,7 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
     ) -> Result<ComplianceStatus, LinterOperationError> {
         let wd = self.filesystem.resolve_js_working_dir(path);
         let abs_path = self.filesystem.canonicalize_path_str(&path.value);
-        let cmd = match self.filesystem.resolve_js_cmd(tool, vec![abs_path.to_string_lossy().to_string(), fix_arg.to_string()], &wd.value) {
+        let cmd = match self.filesystem.resolve_js_cmd(tool, vec![abs_path.clone(), fix_arg.to_string()], &wd.value) {
             Some(c) => c,
             None => {
                 return Ok(ComplianceStatus::new(false));
@@ -100,6 +100,6 @@ impl ExternalLintExecutor {
     pub fn new(executor: Arc<dyn ICommandExecutorProtocol>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
-        Self { executor }
+        Self { executor, filesystem }
     }
 }

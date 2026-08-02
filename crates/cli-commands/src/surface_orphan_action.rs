@@ -149,7 +149,7 @@ pub fn handle_scan_orphan(
         &all_violations,
         &target,
         format,
-        is_specific_member || filesystem.is_member_path(&target),
+        is_specific_member || shared::filesystem::utility_filesystem_io::is_member_path(&target),
     );
 
     if all_violations.is_empty() {
@@ -167,7 +167,7 @@ fn scan_single_root(
     filter: &Option<String>,
 ) -> ExitCode {
     let scan_root = crate::surface_common_action::resolve_file_path(root);
-    let lang = filesystem.detect_language_from_path(root);
+    let lang = shared::filesystem::utility_filesystem_io::detect_language_from_path(root);
     let ignored = config_orchestrator.ignored_paths_for_language(&scan_root, lang);
     let orphan_analyzer =
         orphan_detector::root_orphan_detector_container::OrphanContainer::from_orchestrator(
@@ -187,7 +187,7 @@ fn scan_single_root(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    output_violations(&violations, root, format, filesystem.is_member_path(root));
+    output_violations(&violations, root, format, shared::filesystem::utility_filesystem_io::is_member_path(root));
 
     if violations.is_empty() {
         ExitCode::OK

@@ -31,7 +31,8 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CargoAuditAdapter {
-        pub filesystem: Arc<dyn IFilesystemAggregate>,}
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+}
 
 /// Parsed output from `cargo-audit --json` (cargo-vulnerability-report format).
 #[derive(Debug, Deserialize)]
@@ -158,6 +159,6 @@ impl CargoAuditAdapter {
 
 impl Default for CargoAuditAdapter {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(filesystem::FilesystemOrchestrator::new()))
     }
 }

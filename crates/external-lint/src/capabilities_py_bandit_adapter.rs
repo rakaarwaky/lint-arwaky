@@ -130,7 +130,7 @@ impl ILinterAdapterProtocol for BanditAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.filesystem.noop_apply_fix().await
+        self.filesystem.noop_apply_fix()
     }
 }
 

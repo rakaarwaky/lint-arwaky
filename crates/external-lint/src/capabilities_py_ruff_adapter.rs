@@ -165,6 +165,7 @@ impl RuffAdapter {
         Self {
             lint_executor,
             bin_path,
+            filesystem,
         }
     }
 

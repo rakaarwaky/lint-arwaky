@@ -80,9 +80,11 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
 impl Default for CapabilitiesOrphanAnalyzer {
     fn default() -> Self {
-        Self::new(Arc::new(
-            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
-        ))
+        let filesystem: Arc<dyn IFilesystemAggregate> = Arc::new(filesystem::FilesystemOrchestrator::new());
+        Self::new(
+            Arc::new(crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new()),
+            filesystem,
+        )
     }
 }
 
@@ -90,7 +92,7 @@ impl CapabilitiesOrphanAnalyzer {
     pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
-        Self { parser_dispatcher }
+        Self { parser_dispatcher, filesystem }
     }
 
     /// Extract identifiers (struct names, trait names, stem, PascalCase stem) using AST.

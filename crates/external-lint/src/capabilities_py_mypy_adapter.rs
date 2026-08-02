@@ -182,7 +182,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
     }
 
     async fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.filesystem.noop_apply_fix().await
+        self.filesystem.noop_apply_fix()
     }
 }
 
@@ -209,6 +209,7 @@ impl MyPyAdapter {
         Self {
             lint_executor,
             bin_path,
+            filesystem,
         }
     }
 

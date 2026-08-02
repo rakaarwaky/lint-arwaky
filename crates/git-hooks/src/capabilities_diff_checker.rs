@@ -23,16 +23,14 @@ impl IDiffProtocol for DiffChecker {
     async fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
         let default_branch = self.get_default_branch_async(path).await;
         let _changed_files = self
-            .collect_changed_files_async(path, &default_branch)
-            .await;
+            .collect_changed_files_async(path, &default_branch).await;
         LintResultList::new(Vec::new())
     }
 
     async fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
         let default_branch = self.get_default_branch_async(path).await;
         let changed_files = self
-            .collect_changed_files_async(path, &default_branch)
-            .await;
+            .collect_changed_files_async(path, &default_branch).await;
         let lintable_vec: Vec<FilePath> = changed_files
             .values
             .iter()
@@ -73,7 +71,7 @@ impl IDiffProtocol for DiffChecker {
 
 impl Default for DiffChecker {
     fn default() -> Self {
-        Self::new()
+        Self::new(Arc::new(filesystem::FilesystemOrchestrator::new()))
     }
 }
 
@@ -82,16 +80,12 @@ impl DiffChecker {
         Self { filesystem }
     }
 
-    pub fn new() -> Self {
-        Self
-    }
 
     async fn get_default_branch_async(&self, project_path: &FilePath) -> String {
         let (stdout, _, success) = self.filesystem.run_git_command(
             &["symbolic-ref", "refs/remotes/origin/HEAD"],
             &project_path.value,
-        )
-        .await;
+        );
         if success {
             let ref_str = stdout.trim().to_string();
             if let Some(branch) = ref_str.rsplit('/').next()
@@ -124,12 +118,10 @@ impl DiffChecker {
             }
         }
         if changed_set.is_empty() {
-            self.try_fallback_head_async(&mut changed_set, project_path)
-                .await;
+            self.try_fallback_head_async(&mut changed_set, project_path);
         }
         if changed_set.is_empty() {
-            self.try_ls_files_async(&mut changed_set, project_path)
-                .await;
+            self.try_ls_files_async(&mut changed_set, project_path);
         }
         let mut vec = Vec::with_capacity(changed_set.len());
         vec.extend(changed_set);
@@ -143,8 +135,7 @@ impl DiffChecker {
         project_path: &FilePath,
     ) -> bool {
         let (stdout, _, success) =
-            self.filesystem.run_git_command(&["diff", "--name-only", variant], &project_path.value)
-                .await;
+            self.filesystem.run_git_command(&["diff", "--name-only", variant], &project_path.value);
         if success {
             for line in self.filesystem.parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
@@ -161,8 +152,7 @@ impl DiffChecker {
         project_path: &FilePath,
     ) {
         let (stdout, _, success) =
-            self.filesystem.run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value)
-                .await;
+            self.filesystem.run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value);
         if success {
             for line in self.filesystem.parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {
@@ -180,8 +170,7 @@ impl DiffChecker {
         let (stdout, _, success) = self.filesystem.run_git_command(
             &["ls-files", "--modified", "--others", "--exclude-standard"],
             &project_path.value,
-        )
-        .await;
+        );
         if success {
             for line in self.filesystem.parse_output_lines(&stdout) {
                 if let Ok(fp) = FilePath::new(&line) {

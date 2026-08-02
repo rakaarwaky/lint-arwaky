@@ -50,7 +50,7 @@ pub fn handle_scan_quality(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    output_violations(&violations, &root, format, filesystem.is_member_path(&root));
+    output_violations(&violations, &root, format, shared::filesystem::utility_filesystem_io::is_member_path(&root));
     if violations.is_empty() {
         ExitCode::OK
     } else {

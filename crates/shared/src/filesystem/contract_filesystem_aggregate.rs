@@ -214,6 +214,9 @@ pub trait IFilesystemAggregate: Send + Sync {
     /// Recursively scan directory for files (non-source-aware, raw paths).
     fn scan_directory_recursive(&self, dir: &Path) -> Vec<String>;
 
+    /// Walk directory and collect paths of all source files.
+    fn collect_source_files_from_path(&self, dir: &Path, files: &mut Vec<String>);
+
     // ── Path Metadata Helpers ─────────────────────────────
 
     /// Check if a path has a source file extension (.rs, .py, .ts, .js, .tsx, .jsx).

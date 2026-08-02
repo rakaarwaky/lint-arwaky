@@ -202,6 +202,7 @@ impl RustLinterAdapter {
         Self {
             executor,
             _bin_path: bin_path,
+            filesystem,
         }
     }
 }

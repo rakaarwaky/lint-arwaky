@@ -168,9 +168,11 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
 
 impl Default for ContractOrphanAnalyzer {
     fn default() -> Self {
-        Self::new(Arc::new(
-            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
-        ))
+        let filesystem: Arc<dyn IFilesystemAggregate> = Arc::new(filesystem::FilesystemOrchestrator::new());
+        Self::new(
+            Arc::new(crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new()),
+            filesystem,
+        )
     }
 }
 
@@ -181,6 +183,7 @@ impl ContractOrphanAnalyzer {
         Self {
             search_cache: Mutex::new(None),
             parser_dispatcher,
+            filesystem,
         }
     }
 
