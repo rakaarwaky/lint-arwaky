@@ -2,7 +2,7 @@
 use crate::common::taxonomy_language_info_vo::LanguageInfo;
 use crate::common::taxonomy_language_vo::Language;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::taxonomy_source_vo::SourceContentVO;
+use crate::common::taxonomy_source_vo::SourceContentVO;
 
 /// Detect the programming language of a file from its extension.
 pub fn detect_language(path: &FilePath) -> Language {

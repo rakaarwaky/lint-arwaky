@@ -354,7 +354,7 @@ pub fn parse_output_lines(output: &str) -> Vec<String> {
 /// No-op apply_fix for linters that cannot auto-fix.
 pub async fn noop_apply_fix() -> Result<
     shared::common::taxonomy_message_vo::ComplianceStatus,
-    shared::code_analysis::taxonomy_operation_error::LinterOperationError,
+    shared::common::taxonomy_operation_error::LinterOperationError,
 > {
     Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
         false,
