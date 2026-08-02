@@ -116,7 +116,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn discover_files(&self, root: &Path, ignored: &[String]) -> Vec<FileEntry> {
         let exts = Language::extensions();
-        self.walker.walk(root, ignored, &exts)
+        self.walker.walk(root, ignored, exts)
     }
 
     fn discover_source_files(
@@ -125,7 +125,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         ignored: &[String],
     ) -> Vec<shared::common::taxonomy_path_vo::FilePath> {
         let exts = Language::extensions();
-        self.walker.discover_paths(root, ignored, &exts)
+        self.walker.discover_paths(root, ignored, exts)
     }
 
     fn imports_for(&self, path: &Path) -> Vec<ImportEntry> {
@@ -489,7 +489,7 @@ impl FilesystemOrchestrator {
         // Stage 1: File Discovery
         let walk_start = std::time::Instant::now();
         let exts = Language::extensions();
-        let mut files = self.walker.walk(root, ignored, &exts);
+        let mut files = self.walker.walk(root, ignored, exts);
         let walk_ms = walk_start.elapsed().as_millis() as u64;
 
         // Stage 2: AST Parsing
