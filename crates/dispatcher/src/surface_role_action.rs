@@ -1,40 +1,32 @@
-// PURPOSE: Role rules scan surface action
+// PURPOSE: Role rules scan business logic, no formatting.
 // AES406 NOTE: Uses subprocess approach (self-invocation) to run role scanning because
 // IRoleRunnerAggregate only has run_audit_with_entries, not a single-path variant.
 // This is a known gap — IRoleRunnerAggregate should expose a simpler scan method.
 // Adapted: IRoleRunnerAggregate no longer has run_audit(path) — only run_audit_with_entries.
-use shared::common::ExitCode;
 use std::process::Command;
 use std::sync::Arc;
 
-use shared::cli_commands::Format;
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
-use crate::surface_output_component::{ViolationItem, output_violations};
+use crate::surface_output_component::ViolationItem;
 
-pub fn handle_scan_role(
+pub fn collect_role(
     path: Option<FilePath>,
-    format: Format,
     _role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filter: Option<String>,
-    fs_agg: Arc<dyn IFilesystemAggregate>,
-) -> ExitCode {
+    _fs_agg: Arc<dyn IFilesystemAggregate>,
+) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
     if !std::path::Path::new(&root).exists() {
-        eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::RUNTIME_ERROR;
+        return Err(format!("Error: path '{}' does not exist", root));
     }
 
-    let root_fp = match FilePath::new(root.clone()) {
-        Ok(fp) => fp,
-        Err(_) => return ExitCode::RUNTIME_ERROR,
-    };
+    let _root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
 
     // Use subprocess approach since IRoleRunnerAggregate only has run_audit_with_entries
     let exe_path = match std::env::current_exe() {
@@ -67,10 +59,7 @@ pub fn handle_scan_role(
                 Vec::new()
             }
         }
-        Err(e) => {
-            eprintln!("[error] failed to run role linter: {e}");
-            return ExitCode::RUNTIME_ERROR;
-        }
+        Err(e) => return Err(format!("[error] failed to run role linter: {e}")),
     };
 
     if let Some(ref filter_str) = filter {
@@ -78,10 +67,5 @@ pub fn handle_scan_role(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    output_violations(&violations, &root, format, fs_agg.is_member_path(&root_fp));
-    if violations.is_empty() {
-        ExitCode::OK
-    } else {
-        ExitCode::POLICY_FAIL
-    }
+    Ok(violations)
 }

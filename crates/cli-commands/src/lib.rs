@@ -1,7 +1,8 @@
 // PURPOSE: Module declarations for cli-commands (Smart Surface)
-pub mod root_cli_container;
+pub mod surface_ci_command;
 pub mod surface_config_command;
 pub mod surface_fix_command;
+pub mod surface_formatting;
 pub mod surface_git_command;
 pub mod surface_maintenance_command;
 pub mod surface_plugin_command;

@@ -1,12 +1,8 @@
-// mcp-server — taxonomy and contract types
-pub mod contract_mcp_server_aggregate;
+// mcp-server — taxonomy types
 pub mod taxonomy_mcp_tool_args_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
-
-// ── Contract traits ──
-pub use contract_mcp_server_aggregate::IMcpServerAggregate;
 
 // ── Taxonomy types ──
 pub use taxonomy_mcp_tool_args_vo::ExecuteCommandArgs;

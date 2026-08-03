@@ -1,7 +1,12 @@
-// PURPOSE: MCP binary entry point — wiring all dependencies
+// PURPOSE: MCP binary entry point — wiring all dependencies + rmcp stdio serve.
+use mcp_server::surface_mcp_action_command::{McpActionSurface, McpServerDependencies};
+use mcp_server::surface_mcp_tool_command::LintArwakyMcpServer;
+use rmcp::ServiceExt;
+use rmcp::transport::stdio;
 use std::sync::Arc;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
 
@@ -63,14 +68,18 @@ fn main() {
 
     let auto_fix_container =
         auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
-    let fix_orchestrator =
-        auto_fix_container.orchestrator_with_filesystem(false, filesystem.clone());
+    let fix_orchestrator_factory: Arc<
+        dyn Fn(bool) -> Arc<dyn shared::auto_fix::LintFixOrchestratorAggregate> + Send + Sync,
+    > = {
+        let container = auto_fix_container;
+        let fs_for_factory = filesystem.clone();
+        Arc::new(move |dry| container.orchestrator_with_filesystem(dry, fs_for_factory.clone()))
+    };
 
-    let git_container =
-        git_hooks::root_git_hooks_container::GitContainer::new(
-            shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-            filesystem.clone(),
-        );
+    let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
+        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+        filesystem.clone(),
+    );
     let git_hooks_aggregate = git_container.aggregate();
 
     let maintenance_container =
@@ -81,6 +90,30 @@ fn main() {
         project_setup::root_project_setup_container::SetupContainer::new(filesystem.clone());
     let setup_orchestrator = setup_container.aggregate();
 
-    // TODO: wire MCP server and start
-    println!("MCP binary — wiring complete");
+    // DI: inject config_system parsing functions
+    let deps = McpServerDependencies {
+        code_analysis_linter,
+        fix_orchestrator_factory,
+        orphan_orchestrator,
+        maintenance_orchestrator,
+        git_hooks_aggregate,
+        setup_orchestrator,
+        config_orchestrator: config_orchestrator.clone(),
+        external_lint,
+        import_orchestrator,
+        naming_orchestrator,
+        role_orchestrator,
+        filesystem,
+        parse_config_yaml: config_system::utility_config_parser::parse_config_yaml,
+        parse_adapter_names: config_system::utility_config_parser::parse_adapter_names_from_yaml,
+        parse_score_threshold: config_system::utility_config_parser::parse_score_threshold,
+    };
+
+    let action_surface = Arc::new(McpActionSurface::new(deps));
+    let server = LintArwakyMcpServer::new(action_surface);
+
+    let (stdin, stdout) = stdio();
+    let running = server.serve((stdin, stdout)).await?;
+    running.waiting().await?;
+    Ok(())
 }

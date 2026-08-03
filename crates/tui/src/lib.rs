@@ -1,9 +1,10 @@
-pub mod agent_tui_orchestrator;
-pub mod capabilities_action_handler;
-pub mod capabilities_lint_executor;
+// PURPOSE: Module declarations for tui (Surface-only crate)
+// No contract/aggregate/capabilities layers — surfaces call domain aggregates directly.
 pub mod root_tui_container;
+pub mod surface_action_handler;
 pub mod surface_file_list_view;
 pub mod surface_help_screen;
+pub mod surface_lint_executor;
 pub mod surface_logging_controller;
 pub mod surface_path_screen;
 pub mod surface_preview_view;

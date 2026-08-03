@@ -1,7 +1,8 @@
-// PURPOSE: TUI binary entry point — wiring all dependencies
+// PURPOSE: TUI binary entry point — composition root wiring domain aggregates
+// directly into TUI surfaces (surface-only: no contract/aggregate/capabilities).
 use std::sync::Arc;
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
 
@@ -81,6 +82,24 @@ fn main() {
         project_setup::root_project_setup_container::SetupContainer::new(filesystem.clone());
     let setup_orchestrator = setup_container.aggregate();
 
-    // TODO: wire TUI and start
-    println!("TUI binary — wiring complete");
+    // Build TUI surfaces directly from domain aggregates (no abstraction layers).
+    let lint_executor = std::sync::Arc::new(
+        tui::surface_lint_executor::SurfaceLintExecutor::new(
+            code_analysis_linter,
+            None,
+            filesystem.clone(),
+        )
+        .with_fix(fix_orchestrator)
+        .with_setup(setup_orchestrator)
+        .with_maintenance(maintenance_orchestrator)
+        .with_hook_port(git_hooks_aggregate)
+        .with_config(config_orchestrator.clone())
+        .with_external_lint(external_lint)
+        .with_orphan(orphan_orchestrator)
+        .with_import_orchestrator(import_orchestrator)
+        .with_naming_orchestrator(naming_orchestrator)
+        .with_role_orchestrator(role_orchestrator),
+    );
+
+    tui::root_tui_container::TuiContainer::run(lint_executor, filesystem)
 }

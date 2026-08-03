@@ -1,4 +1,4 @@
-// PURPOSE: Module declarations for mcp-server
-pub mod agent_mcp_server_orchestrator;
-pub mod root_mcp_container;
-pub mod surface_mcp_command;
+// PURPOSE: Module declarations for mcp-server (Surface-only crate)
+// No contract/aggregate/capabilities layers — surface calls dispatcher directly.
+pub mod surface_mcp_action_command;
+pub mod surface_mcp_tool_command;

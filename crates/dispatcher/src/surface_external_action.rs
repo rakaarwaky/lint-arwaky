@@ -1,35 +1,30 @@
-// PURPOSE: External lint scan surface action
+// PURPOSE: External lint scan business logic, no formatting.
 // AES406 NOTE: Uses subprocess approach (self-invocation) to run external lint scanning
 // because IExternalLintAggregate::scan_all is async and no tokio runtime is available.
 // This is a known gap — a sync scan method or async-aware surface layer should replace this.
 // Adapted: uses subprocess approach since IExternalLintAggregate::scan_all is async
 // and no tokio runtime is available in this crate.
-use shared::common::ExitCode;
 use std::process::Command;
 use std::sync::Arc;
 
-use shared::cli_commands::Format;
 use shared::common::FilePath;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
-use crate::surface_output_component::{ViolationItem, output_violations};
+use crate::surface_output_component::ViolationItem;
 
-pub fn handle_scan_external(
+pub fn collect_external(
     path: Option<FilePath>,
-    format: Format,
     _external_lint: Arc<dyn IExternalLintAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filter: Option<String>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-) -> ExitCode {
+    _filesystem: Arc<dyn IFilesystemAggregate>,
+) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
     if !std::path::Path::new(&root).exists() {
-        eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::RUNTIME_ERROR;
+        return Err(format!("Error: path '{}' does not exist", root));
     }
 
     // Use subprocess approach — spawn external linter and parse JSON output
@@ -63,10 +58,7 @@ pub fn handle_scan_external(
                 Vec::new()
             }
         }
-        Err(e) => {
-            eprintln!("[error] failed to run external linter: {e}");
-            return ExitCode::RUNTIME_ERROR;
-        }
+        Err(e) => return Err(format!("[error] failed to run external linter: {e}")),
     };
 
     if let Some(ref filter_str) = filter {
@@ -74,17 +66,5 @@ pub fn handle_scan_external(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    let has_violations = !violations.is_empty();
-    let root_fp = FilePath::new(root.clone()).unwrap_or_default();
-    output_violations(
-        &violations,
-        &root,
-        format,
-        filesystem.is_member_path(&root_fp),
-    );
-    if has_violations {
-        ExitCode::POLICY_FAIL
-    } else {
-        ExitCode::OK
-    }
+    Ok(violations)
 }

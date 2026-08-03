@@ -12,15 +12,15 @@ use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::project_setup::SetupManagementAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
-use shared::tui::{ActionFlags, AdapterInfo, ILintExecutorProtocol, LintExecutionResult};
+use shared::tui::{ActionFlags, AdapterInfo, LintExecutionResult};
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use std::sync::Arc;
 
-// PURPOSE: Capabilities-layer lint executor — wraps ICodeAnalysisAggregate for the TUI.
-// Implements ILintExecutorProtocol, providing all lint action methods (check, scan, fix, ci, etc.)
-// with user-facing output formatting.
+// PURPOSE: Surface-layer lint executor — direct facade over domain aggregates for the TUI.
+// Provides all lint action methods (check, scan, fix, ci, etc.) with user-facing output
+// formatting, calling domain aggregates directly (no protocol abstraction).
 // All methods are synchronous — async aggregates fall back to CLI suggestions.
 
 use shared::auto_fix::LintFixOrchestratorAggregate;
@@ -28,7 +28,7 @@ use shared::file_watch::IWatchAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct LintExecutor {
+pub struct SurfaceLintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
     watch_aggregate: Option<Arc<dyn IWatchAggregate>>,
     fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
@@ -44,10 +44,10 @@ pub struct LintExecutor {
     filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Lint Action Methods ─────────────────────────
 
-impl ILintExecutorProtocol for LintExecutor {
-    fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
+impl SurfaceLintExecutor {
+    pub fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
         let results = self.code_analysis.run_code_analysis(&fp);
         let count = results.len();
@@ -59,11 +59,11 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn scan(&self, path: &str) -> LintExecutionResult {
+    pub fn scan(&self, path: &str) -> LintExecutionResult {
         self.run_comprehensive_scan(path)
     }
 
-    fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
+    pub fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
         let mode = if flags.dry_run { "DRY-RUN" } else { "LIVE" };
         match &self.fix_orchestrator {
             Some(orchestrator) => {
@@ -94,7 +94,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
+    pub fn ci(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
         let fp = shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
         let mut all_results: Vec<shared::common::taxonomy_lint_result_vo::LintResult> = Vec::new();
 
@@ -150,7 +150,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn orphan(&self, path: &str) -> LintExecutionResult {
+    pub fn orphan(&self, path: &str) -> LintExecutionResult {
         match &self.orphan_aggregate {
             Some(orphan_agg) => {
                 let scan_root = self
@@ -229,7 +229,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn security(&self, path: &str) -> LintExecutionResult {
+    pub fn security(&self, path: &str) -> LintExecutionResult {
         match &self.external_lint {
             Some(ext_lint) => {
                 // External lint scan_all is async — suggest CLI for full security scan
@@ -255,7 +255,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn duplicates(&self, path: &str) -> LintExecutionResult {
+    pub fn duplicates(&self, path: &str) -> LintExecutionResult {
         let scan_root = self
             .filesystem
             .workspace_root(
@@ -307,7 +307,7 @@ impl ILintExecutorProtocol for LintExecutor {
         LintExecutionResult::success(output, count)
     }
 
-    fn dependencies(&self, path: &str) -> LintExecutionResult {
+    pub fn dependencies(&self, path: &str) -> LintExecutionResult {
         match &self.maintenance {
             Some(_maintenance) => {
                 // MaintenanceCommandsAggregate methods are async — suggest CLI
@@ -327,7 +327,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn doctor(&self) -> LintExecutionResult {
+    pub fn doctor(&self) -> LintExecutionResult {
         match &self.maintenance {
             Some(_maintenance) => {
                 // MaintenanceCommandsAggregate::diagnose_toolchain is async — suggest CLI
@@ -341,11 +341,11 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn init(&self, _flags: &ActionFlags) -> LintExecutionResult {
+    pub fn init(&self, _flags: &ActionFlags) -> LintExecutionResult {
         self.run_init()
     }
 
-    fn install(&self, _flags: &ActionFlags) -> LintExecutionResult {
+    pub fn install(&self, _flags: &ActionFlags) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(protocol) => {
                 let language = protocol.detect_language();
@@ -363,7 +363,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn mcp_config(&self, flags: &ActionFlags) -> LintExecutionResult {
+    pub fn mcp_config(&self, flags: &ActionFlags) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(setup) => {
                 let transport =
@@ -399,7 +399,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn config_show(&self) -> LintExecutionResult {
+    pub fn config_show(&self) -> LintExecutionResult {
         match &self.config_orchestrator {
             Some(orchestrator) => {
                 let cwd = std::env::current_dir()
@@ -417,7 +417,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn install_hook(&self) -> LintExecutionResult {
+    pub fn install_hook(&self) -> LintExecutionResult {
         match &self.hook_port {
             Some(_hook) => {
                 // GitHooksAggregate methods are async — suggest CLI
@@ -435,7 +435,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn uninstall_hook(&self) -> LintExecutionResult {
+    pub fn uninstall_hook(&self) -> LintExecutionResult {
         match &self.hook_port {
             Some(_hook) => {
                 // GitHooksAggregate methods are async — suggest CLI
@@ -453,7 +453,7 @@ impl ILintExecutorProtocol for LintExecutor {
         }
     }
 
-    fn adapters(&self) -> LintExecutionResult {
+    pub fn adapters(&self) -> LintExecutionResult {
         let adapters = Self::discover_adapters(self.filesystem.as_ref());
         let mut output = String::from("Active Linter Adapters:\n");
         for (i, adapter) in adapters.iter().enumerate() {
@@ -472,7 +472,7 @@ impl ILintExecutorProtocol for LintExecutor {
         LintExecutionResult::success(output, 0)
     }
 
-    fn version(&self) -> LintExecutionResult {
+    pub fn version(&self) -> LintExecutionResult {
         let output = format!(
             "Lint Arwaky v{} (AES Semantic Builder)",
             env!("CARGO_PKG_VERSION")
@@ -480,7 +480,7 @@ impl ILintExecutorProtocol for LintExecutor {
         LintExecutionResult::success(output, 0)
     }
 
-    fn watch(
+    pub fn watch(
         &self,
         path: &str,
     ) -> (
@@ -503,7 +503,7 @@ impl ILintExecutorProtocol for LintExecutor {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl LintExecutor {
+impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         watch_aggregate: Option<Arc<dyn IWatchAggregate>>,
@@ -688,7 +688,7 @@ impl LintExecutor {
     }
 }
 
-impl LintExecutor {
+impl SurfaceLintExecutor {
     fn run_comprehensive_scan(&self, path: &str) -> LintExecutionResult {
         self.run_legacy_scan(path)
     }

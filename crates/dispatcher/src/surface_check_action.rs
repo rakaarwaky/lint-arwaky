@@ -1,72 +1,45 @@
-// PURPOSE: SurfaceCheckCommand — Runs all linter subprocesses, collects JSON results,
-// and delegates output formatting to surface_output_component.
+// PURPOSE: SurfaceCheckAction — check/scan business logic, no formatting.
 //
-// AES406 NOTE: This surface spawns the CLI binary as subprocesses (self-invocation pattern)
-// to run each linter with JSON output. This is a known gap — a LintRunnerAggregate should
-// be created to abstract the subprocess-based linter invocation behind a contract trait.
-// Adapted: std::process::Command replaces tokio::process::Command; sequential execution
-// replaces tokio::join!; filesystem aggregate injected via DI.
-use shared::common::ExitCode;
+// Runs all linter subprocesses (self-invocation pattern) with `--format json`,
+// collects JSON results, and returns violations as data. CLI/MCP surfaces
+// format the returned Vec<ViolationItem> themselves.
+// Adapted: std::process::Command replaces tokio::process::Command; sequential
+// execution replaces tokio::join!; filesystem aggregate injected via DI.
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::process::Command;
 use std::sync::Arc;
 
-use shared::cli_commands::Format;
 use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
-use shared::report_formatter::IReportFormatterAggregate;
 
-use crate::surface_output_component::{ViolationItem, output_violations};
+use crate::surface_output_component::ViolationItem;
 
 pub struct ScanOptions {
     pub path: Option<FilePath>,
-    pub report_formatter: Arc<dyn IReportFormatterAggregate>,
     pub multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub filter: Option<String>,
     pub member: Option<String>,
-    pub format: Format,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-}
-
-pub struct CheckCommandsSurface;
-
-impl CheckCommandsSurface {
-    pub fn new(
-        _report_formatter: Arc<dyn IReportFormatterAggregate>,
-        _multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
-    ) -> Self {
-        Self
-    }
-
-    pub fn check_orphan_single_file(&self, _file_path: &str) {}
 }
 
 pub type CheckOptions = ScanOptions;
 
-/// Run all 6 linters via subprocesses, collect JSON, output unified report.
-pub fn handle_scan(opts: ScanOptions) -> ExitCode {
+/// Run all 6 linters via subprocesses, collect JSON, return unified violation list.
+/// Err(String) carries a user-facing error message (path not found, bad member, ...).
+pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
     let root = match &opts.path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
     if !std::path::Path::new(&root).exists() {
-        eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::RUNTIME_ERROR;
+        return Err(format!("Error: path '{}' does not exist", root));
     }
-
-    let format = opts.format;
-    let is_specific_member = opts.member.is_some()
-        || opts
-            .filesystem
-            .is_leaf_member_path(&FilePath::new(root.clone()).unwrap_or_default());
 
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {
         if let Some(ref orchestrator) = opts.multi_project_orchestrator {
-            let root_fp = match FilePath::new(root.clone()) {
-                Ok(fp) => fp,
-                Err(_) => return ExitCode::RUNTIME_ERROR,
-            };
+            let root_fp =
+                FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
             let workspaces = orchestrator.discover_workspaces(&root_fp);
             if !workspaces.is_empty() {
                 let matched = workspaces.iter().any(|ws| {
@@ -77,8 +50,7 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
                     ws_file.as_ref() == m.as_str() || ws.path.value == *m
                 });
                 if !matched {
-                    eprintln!("[error] no workspace member matching '{m}'");
-                    return ExitCode::RUNTIME_ERROR;
+                    return Err(format!("[error] no workspace member matching '{m}'"));
                 }
             }
         }
@@ -97,31 +69,42 @@ pub fn handle_scan(opts: ScanOptions) -> ExitCode {
             all_violations.retain(|v| v.code.code().contains(&filter_upper));
         }
 
-        output_violations(&all_violations, &target_path, format, is_specific_member);
-        if all_violations.is_empty() {
-            ExitCode::OK
-        } else {
-            ExitCode::POLICY_FAIL
-        }
+        Ok(all_violations)
     } else {
-        let target_path = root.clone();
-        let mut all_violations = run_all_linters_json(&target_path, opts.filesystem.as_ref());
+        let mut all_violations = run_all_linters_json(&root, opts.filesystem.as_ref());
 
         if let Some(ref filter_str) = opts.filter {
             let filter_upper = filter_str.to_uppercase();
             all_violations.retain(|v| v.code.code().contains(&filter_upper));
         }
 
-        output_violations(&all_violations, &target_path, format, is_specific_member);
-        if all_violations.is_empty() {
-            ExitCode::OK
-        } else {
-            ExitCode::POLICY_FAIL
-        }
+        Ok(all_violations)
     }
 }
 
-pub use handle_scan as handle_check;
+pub use collect_scan as collect_check;
+
+/// Run all 6 linters via subprocesses for a given path; return violations.
+pub fn collect_scan_json(
+    path: &str,
+    fs_agg: &dyn IFilesystemAggregate,
+) -> Result<Vec<ViolationItem>, String> {
+    if !std::path::Path::new(path).exists() {
+        return Err(format!("Error: path '{}' does not exist", path));
+    }
+    Ok(run_all_linters_json(path, fs_agg))
+}
+
+/// Default check: subprocess JSON scan of all linters.
+pub fn collect_default_check(
+    project_root: &str,
+    _code_analysis_linter: Arc<
+        dyn shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate,
+    >,
+    fs_agg: &dyn IFilesystemAggregate,
+) -> Result<Vec<ViolationItem>, String> {
+    collect_scan_json(project_root, fs_agg)
+}
 
 /// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
 fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<ViolationItem> {
@@ -215,30 +198,4 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
     }
 
     all
-}
-
-/// Synchronous entry point (used by MCP server / default check).
-pub fn handle_scan_parallel_subprocesses(
-    path: &str,
-    format: Format,
-    fs_agg: &dyn IFilesystemAggregate,
-) -> ExitCode {
-    let all_violations = run_all_linters_json(path, fs_agg);
-    output_violations(&all_violations, path, format, false);
-
-    if all_violations.is_empty() {
-        ExitCode::OK
-    } else {
-        ExitCode::POLICY_FAIL
-    }
-}
-
-pub fn handle_default_check(
-    project_root: &str,
-    _code_analysis_linter: Arc<
-        dyn shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate,
-    >,
-    fs_agg: &dyn IFilesystemAggregate,
-) -> ExitCode {
-    handle_scan_parallel_subprocesses(project_root, Format::Text, fs_agg)
 }

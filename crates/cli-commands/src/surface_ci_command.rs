@@ -1,5 +1,5 @@
-// PURPOSE: CI entry point — CLI thin wrapper
-// Calls dispatcher::surface_ci_action for business logic, only adds CLI output
+// PURPOSE: CI command — CLI thin wrapper
+// Calls dispatcher for CI business logic, only adds CLI output.
 use shared::common::ExitCode;
 use std::sync::Arc;
 
@@ -22,20 +22,40 @@ pub fn handle_ci(
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> ExitCode {
-    // Resolve path
-    let root = match &path {
-        Some(p) => p.clone(),
-        None => FilePath::new(".").unwrap_or_default(),
-    };
-
-    // Delegate to dispatcher for business logic
-    dispatcher::surface_ci_action::handle_ci(
-        &root,
-        code_analysis_linter.as_ref(),
-        import_orchestrator.as_ref(),
-        naming_orchestrator.as_ref(),
-        orphan_orchestrator.as_ref(),
-        filesystem.as_ref(),
-        threshold.value() as f64,
-    )
+    match dispatcher::surface_ci_action::collect_ci(
+        code_analysis_linter,
+        import_orchestrator,
+        naming_orchestrator,
+        config_orchestrator,
+        orphan_orchestrator,
+        filesystem,
+        path,
+        threshold,
+    ) {
+        Ok(report) => {
+            println!("Lint Arwaky v{} — CI Architecture Compliance", report.version);
+            println!("Score: {:.1} / 100", report.score);
+            println!("Threshold: {}", report.threshold);
+            println!();
+            println!(
+                "CRITICAL: {} | HIGH: {} | MEDIUM: {} | LOW: {}",
+                report.critical, report.high, report.medium, report.low
+            );
+            println!();
+            if report.pass {
+                println!("Result: PASS (exit code 0)");
+                ExitCode::OK
+            } else {
+                for r in &report.reasons {
+                    eprintln!("  {r}");
+                }
+                eprintln!("Result: FAIL (exit code 1)");
+                ExitCode::POLICY_FAIL
+            }
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            ExitCode::RUNTIME_ERROR
+        }
+    }
 }

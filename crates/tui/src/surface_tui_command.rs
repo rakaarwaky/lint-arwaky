@@ -1,3 +1,4 @@
+use crate::surface_action_handler::SurfaceActionHandler;
 use crate::surface_file_list_view::FileListView;
 use crate::surface_path_screen::PathScreen;
 use crate::surface_preview_view::PreviewView;
@@ -16,7 +17,7 @@ use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use shared::tui::{AppState, ITuiAggregate, ScanUpdate, TuiEvent};
+use shared::tui::{AppState, ScanUpdate, TuiEvent};
 
 use std::io::stdout;
 use std::sync::Arc;
@@ -45,12 +46,12 @@ impl RenderViews {
 }
 
 pub struct TuiCommandSurface {
-    tui_aggregate: Arc<dyn ITuiAggregate>,
+    action_handler: Arc<SurfaceActionHandler>,
 }
 
 impl TuiCommandSurface {
-    pub fn new(tui_aggregate: Arc<dyn ITuiAggregate>) -> Self {
-        Self { tui_aggregate }
+    pub fn new(action_handler: Arc<SurfaceActionHandler>) -> Self {
+        Self { action_handler }
     }
 
     pub fn run(&self) -> anyhow::Result<()> {
@@ -99,7 +100,7 @@ impl TuiCommandSurface {
             if state.scanning
                 && let Some(ref rx) = scan_rx
             {
-                self.tui_aggregate.poll_scan(state, rx);
+                self.action_handler.poll_scan(state, rx);
             }
 
             terminal.draw(|frame| {
@@ -146,7 +147,7 @@ impl TuiCommandSurface {
                 // --- Intercept ActionScan: spawn background thread ---
                 if matches!(tui_event, TuiEvent::ActionScan) {
                     if !state.scanning
-                        && let Some(rx) = self.tui_aggregate.start_scan(state)
+                        && let Some(rx) = self.action_handler.start_scan(state)
                     {
                         scan_rx = Some(rx);
                     }
@@ -165,7 +166,7 @@ impl TuiCommandSurface {
                 {
                     // Block long-running actions while a scan is in progress
                 } else {
-                    self.tui_aggregate.handle_event(state, tui_event);
+                    self.action_handler.handle(state, tui_event);
                 }
             }
 

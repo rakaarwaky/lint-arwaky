@@ -1,12 +1,34 @@
-// PURPOSE: SetupCommandsSurface — CLI surface for project setup (init, install, mcp-config)
-// AES406 compliant: handle_install delegates to SetupManagementAggregate.
+// PURPOSE: SetupCommandsSurface — project setup business logic, no formatting.
+// handle_install delegates to SetupManagementAggregate.
 // No direct std::process::Command calls.
-use shared::common::ExitCode;
 use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 
-pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> ExitCode {
-    let mut all_ok = true;
+/// One setup step outcome — message + success flag for CLI rendering.
+#[derive(Debug, Clone)]
+pub struct SetupInitItem {
+    pub message: String,
+    pub ok: bool,
+}
+
+/// Adapter installation outcome.
+#[derive(Debug, Clone, Copy)]
+pub struct InstallReport {
+    pub py_ok: bool,
+    pub js_ok: bool,
+}
+
+/// MCP client config snippet.
+#[derive(Debug, Clone)]
+pub struct McpConfigReport {
+    pub client: String,
+    pub binary: String,
+    pub config_json: String,
+}
+
+pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Vec<SetupInitItem> {
+    let mut items: Vec<SetupInitItem> = Vec::new();
+
     let languages = setup_orchestrator.detect_languages();
     for lang in languages.iter() {
         let lang_str = lang.value();
@@ -14,15 +36,19 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
         let content = setup_orchestrator.get_config_template(lang_str);
         match setup_orchestrator.write_config_file(&target, content) {
             Ok(desc) => {
-                println!(
-                    "Config written/overwritten: {} (language: {})",
-                    target, lang_str
-                );
-                println!("  {}", desc.value);
+                items.push(SetupInitItem {
+                    message: format!(
+                        "Config written/overwritten: {} (language: {}) — {}",
+                        target, lang_str, desc.value
+                    ),
+                    ok: true,
+                });
             }
             Err(e) => {
-                println!("Error creating config for {}: {e}", lang_str);
-                all_ok = false;
+                items.push(SetupInitItem {
+                    message: format!("Error creating config for {}: {e}", lang_str),
+                    ok: false,
+                });
             }
         }
     }
@@ -40,15 +66,27 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
         for doc in &doc_files {
             let xdg_src = xdg_base.join(doc);
             if !xdg_src.exists() {
-                println!("  {doc} — not in XDG config, skipping");
+                items.push(SetupInitItem {
+                    message: format!("  {doc} — not in XDG config, skipping"),
+                    ok: true,
+                });
                 continue;
             }
             match std::fs::read_to_string(&xdg_src) {
                 Ok(content) => match setup_orchestrator.write_config_file(doc, &content) {
-                    Ok(_) => println!("  {doc} — copied/overwritten from XDG config"),
-                    Err(e) => println!("  {doc} — error: {e}"),
+                    Ok(_) => items.push(SetupInitItem {
+                        message: format!("  {doc} — copied/overwritten from XDG config"),
+                        ok: true,
+                    }),
+                    Err(e) => items.push(SetupInitItem {
+                        message: format!("  {doc} — error: {e}"),
+                        ok: false,
+                    }),
                 },
-                Err(e) => println!("  {doc} — read error: {e}"),
+                Err(e) => items.push(SetupInitItem {
+                    message: format!("  {doc} — read error: {e}"),
+                    ok: false,
+                }),
             }
         }
 
@@ -58,25 +96,34 @@ pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Exi
             let target_agents = std::path::Path::new(".agents");
             match copy_dir_all(&xdg_agents, target_agents) {
                 Ok(count) => {
-                    println!("  .agents/ — copied/overwritten {count} file(s) from XDG config");
+                    items.push(SetupInitItem {
+                        message: format!(
+                            "  .agents/ — copied/overwritten {count} file(s) from XDG config"
+                        ),
+                        ok: true,
+                    });
                 }
                 Err(e) => {
-                    println!("  .agents/ — copy error: {e}");
-                    all_ok = false;
+                    items.push(SetupInitItem {
+                        message: format!("  .agents/ — copy error: {e}"),
+                        ok: false,
+                    });
                 }
             }
         } else {
-            println!("  .agents/ — not in XDG config, skipping");
+            items.push(SetupInitItem {
+                message: "  .agents/ — not in XDG config, skipping".to_string(),
+                ok: true,
+            });
         }
     } else {
-        println!("Warning: could not determine XDG config dir");
+        items.push(SetupInitItem {
+            message: "Warning: could not determine XDG config dir".to_string(),
+            ok: false,
+        });
     }
 
-    if all_ok {
-        ExitCode::OK
-    } else {
-        ExitCode::POLICY_FAIL
-    }
+    items
 }
 
 fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<usize> {
@@ -96,37 +143,13 @@ fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result
     Ok(count)
 }
 
-pub fn handle_install(setup: Arc<dyn SetupManagementAggregate>, sudo: bool) -> ExitCode {
-    println!("Lint Arwaky — Install Adapter Dependencies");
-    println!("{}", "=".repeat(50));
-
-    println!("\n[1/2] Installing Python adapters (ruff, mypy, bandit)...");
+pub fn collect_install(setup: Arc<dyn SetupManagementAggregate>, sudo: bool) -> InstallReport {
     let py_ok = setup.install_python_adapters().value;
-    if py_ok {
-        println!("  Python adapters installed");
-    } else {
-        println!("  Failed to install Python adapters");
-    }
-
-    println!("\n[2/2] Installing JavaScript adapters (eslint, prettier, typescript)...");
     let js_ok = setup.install_javascript_adapters(sudo).value;
-    if js_ok {
-        println!("  JavaScript adapters installed");
-    } else {
-        println!("  Failed to install JavaScript adapters");
-    }
-
-    println!("\n{}", "=".repeat(50));
-    if py_ok && js_ok {
-        println!("Done! Run `lint-arwaky doctor` to verify.");
-        ExitCode::OK
-    } else {
-        println!("Installation failed. Run with `--sudo` if npm globally requires permissions.");
-        ExitCode::POLICY_FAIL
-    }
+    InstallReport { py_ok, js_ok }
 }
 
-pub fn handle_mcp_config(client: &str) -> ExitCode {
+pub fn collect_mcp_config(client: &str) -> McpConfigReport {
     let binary = which_mcp_binary();
     let config = match client {
         "claude-code" | "claude" => serde_json::json!({
@@ -182,11 +205,11 @@ pub fn handle_mcp_config(client: &str) -> ExitCode {
         }),
     };
     let json_str = serde_json::to_string_pretty(&config).unwrap_or_default();
-    println!("MCP Client Configuration for: {}", client);
-    println!("Binary: {}", binary);
-    println!();
-    println!("{}", json_str);
-    ExitCode::OK
+    McpConfigReport {
+        client: client.to_string(),
+        binary,
+        config_json: json_str,
+    }
 }
 
 fn which_mcp_binary() -> String {

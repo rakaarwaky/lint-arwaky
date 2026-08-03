@@ -1,44 +1,33 @@
+use crate::surface_lint_executor::SurfaceLintExecutor;
 use shared::common::FilePath;
-use shared::tui::{IActionHandlerProtocol, ILintExecutorProtocol, LintExecutionResult, ScanUpdate};
+use shared::tui::{LintExecutionResult, ScanUpdate};
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::tui::TuiEvent;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
 
-// PURPOSE: Capabilities-layer action handler — the central state machine for TUI events.
+// PURPOSE: Surface-layer action handler — the central state machine for TUI events.
 // Translates every TuiEvent into a state mutation or I/O operation (filesystem/lint).
+// Calls the surface lint executor and filesystem aggregate directly (no abstraction).
 // This is the largest single file in the TUI crate; it owns all event→action mappings.
 
 use crate::utility_file_system;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-/// ActionHandler — pure state machine for TUI interaction.
-/// Owns the lint executor, bridging UI events to backend operations.
+/// SurfaceActionHandler — pure state machine for TUI interaction.
+/// Owns the surface lint executor, bridging UI events to backend operations.
 /// Filesystem operations use direct utility calls instead of protocol ports.
-pub struct ActionHandler {
-    lint_port: Arc<dyn ILintExecutorProtocol>,
+pub struct SurfaceActionHandler {
+    lint_port: Arc<SurfaceLintExecutor>,
     filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Background Task Methods ─────────────────────
 
-impl IActionHandlerProtocol for ActionHandler {
-    fn handle(&self, state: &mut AppState, event: TuiEvent) {
-        ActionHandler::handle(self, state, event);
-    }
-
-    fn load_directory(&self, state: &mut AppState, path: &str) {
-        ActionHandler::load_directory(self, state, path);
-    }
-
-    fn load_preview(&self, _state: &mut AppState) {
-        // No-op — TUI Preview panel only shows action output (check, scan, fix, etc.)
-        // File content preview is intentionally disabled per FRD compliance.
-    }
-
-    fn poll_watch(&self, state: &mut AppState) {
+impl SurfaceActionHandler {
+    pub fn poll_watch(&self, state: &mut AppState) {
         // Check for new watch results from background thread
         if let Some(rx) = &state.watch_receiver {
             while let Ok(message) = rx.try_recv() {
@@ -53,7 +42,7 @@ impl IActionHandlerProtocol for ActionHandler {
         }
     }
 
-    fn start_scan(&self, state: &mut AppState) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
+    pub fn start_scan(&self, state: &mut AppState) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
         // Guard: don't start a second scan while one is running.
         if state.scanning {
             return None;
@@ -84,7 +73,7 @@ impl IActionHandlerProtocol for ActionHandler {
         Some(rx)
     }
 
-    fn poll_scan(&self, state: &mut AppState, rx: &std::sync::mpsc::Receiver<ScanUpdate>) {
+    pub fn poll_scan(&self, state: &mut AppState, rx: &std::sync::mpsc::Receiver<ScanUpdate>) {
         while let Ok(update) = rx.try_recv() {
             match update {
                 ScanUpdate::Progress { phase, done, total } => {
@@ -115,9 +104,9 @@ impl IActionHandlerProtocol for ActionHandler {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl ActionHandler {
+impl SurfaceActionHandler {
     pub fn new(
-        lint_port: Arc<dyn ILintExecutorProtocol>,
+        lint_port: Arc<SurfaceLintExecutor>,
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         Self {
@@ -392,7 +381,7 @@ impl ActionHandler {
     fn run_action<F>(&self, state: &mut AppState, action: F)
     where
         F: FnOnce(
-            &dyn ILintExecutorProtocol,
+            &SurfaceLintExecutor,
             &str,
             &shared::tui::taxonomy_action_flags_vo::ActionFlags,
         ) -> LintExecutionResult,
@@ -414,7 +403,7 @@ impl ActionHandler {
     /// Run a global lint action that has no path parameter (e.g. doctor, version).
     fn run_action_no_path<F>(&self, state: &mut AppState, action: F)
     where
-        F: FnOnce(&dyn ILintExecutorProtocol) -> LintExecutionResult,
+        F: FnOnce(&SurfaceLintExecutor) -> LintExecutionResult,
     {
         let result = action(self.lint_port.as_ref());
         state.preview_text = result.output;

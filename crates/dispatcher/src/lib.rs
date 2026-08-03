@@ -2,8 +2,8 @@
 // Source of truth for shared scan/CI business logic
 // CLI/MCP/TUI call these functions then format output themselves
 
-pub mod surface_ci_action;
 pub mod surface_check_action;
+pub mod surface_ci_action;
 pub mod surface_config_action;
 pub mod surface_external_action;
 pub mod surface_fix_action;
@@ -18,4 +18,3 @@ pub mod surface_quality_action;
 pub mod surface_role_action;
 pub mod surface_setup_action;
 pub mod surface_watch_action;
-pub mod surface_mcp_action;

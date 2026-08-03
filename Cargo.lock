@@ -988,7 +988,6 @@ dependencies = [
 name = "dispatcher-lint-arwaky"
 version = "1.11.0"
 dependencies = [
- "config-system-lint-arwaky",
  "ctrlc",
  "dirs",
  "regex",

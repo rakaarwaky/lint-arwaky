@@ -1,36 +1,25 @@
-// PURPOSE: Naming rules scan surface action
+// PURPOSE: Naming rules scan business logic, no formatting.
 //
 // Data Flow:
-//   CLI → handle_scan_naming → filesystem.file_list() → naming_orchestrator.run_audit_with_entries → violations → output
-//
-// The surface layer is responsible for:
-//   1. Path validation (delegated to filesystem aggregate)
-//   2. Fetching pre-populated file entries from filesystem aggregate
-//   3. Delegating audit to naming orchestrator (zero I/O in agent layer)
-//   4. Formatting and printing violations
-//   5. Returning ExitCode (OK or POLICY_FAIL)
+//   CLI → collect_naming → filesystem.file_list() → naming_orchestrator.run_audit_with_entries → violations
 //
 // The naming-rules crate performs zero I/O — it receives &[FileEntry] and
 // returns LintResult violations. All filesystem access is handled by the
-// filesystem aggregate via the surface layer.
-use shared::common::ExitCode;
+// filesystem aggregate.
 use std::sync::Arc;
 
-use shared::cli_commands::Format;
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 
-use crate::surface_output_component::{ViolationItem, output_violations};
+use crate::surface_output_component::ViolationItem;
 
-pub fn handle_scan_naming(
+pub fn collect_naming(
     path: Option<FilePath>,
-    format: Format,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
-) -> ExitCode {
+) -> Result<Vec<ViolationItem>, String> {
     // 1. Resolve target path (default: current directory)
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -39,13 +28,9 @@ pub fn handle_scan_naming(
 
     // 2. Validate path exists (delegated to filesystem aggregate)
     if !fs_agg.path_exists(std::path::Path::new(&root)) {
-        eprintln!("Error: path '{}' does not exist", root);
-        return ExitCode::RUNTIME_ERROR;
+        return Err(format!("Error: path '{}' does not exist", root));
     }
-    let root_fp = match FilePath::new(root.clone()) {
-        Ok(fp) => fp,
-        Err(_) => return ExitCode::RUNTIME_ERROR,
-    };
+    let _root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
 
     // 3. Run naming audit — surface fetches cached file entries from filesystem,
     //    passes them to orchestrator. Orchestrator does zero I/O, only delegates
@@ -64,11 +49,6 @@ pub fn handle_scan_naming(
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    // 6. Output violations and return exit code
-    output_violations(&violations, &root, format, fs_agg.is_member_path(&root_fp));
-    if violations.is_empty() {
-        ExitCode::OK
-    } else {
-        ExitCode::POLICY_FAIL
-    }
+    // 6. Return violations — CLI formats output and maps exit code
+    Ok(violations)
 }

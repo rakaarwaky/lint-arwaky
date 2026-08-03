@@ -7,17 +7,8 @@ pub mod taxonomy_state_vo;
 pub mod taxonomy_tui_event;
 pub mod taxonomy_watch_message_vo;
 
-pub mod contract_action_handler_protocol;
-pub mod contract_lint_executor_protocol;
-pub mod contract_tui_aggregate;
-
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
-
-// ── Contract traits ──
-pub use contract_action_handler_protocol::IActionHandlerProtocol;
-pub use contract_lint_executor_protocol::ILintExecutorProtocol;
-pub use contract_tui_aggregate::ITuiAggregate;
 
 // ── Taxonomy types ──
 pub use taxonomy_action_flags_vo::ActionFlags;
