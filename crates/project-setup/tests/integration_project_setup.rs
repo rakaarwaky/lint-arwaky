@@ -30,7 +30,6 @@ fn aggregate_and_protocol_are_accessible() {
     let container = make_container();
     let agg = container.aggregate();
     let proto = container.protocol();
-    // Both should be accessible; they wrap different implementations
     let _ = agg.detect_language();
     let _ = proto.generate_mcp_config();
 }
@@ -40,7 +39,8 @@ fn aggregate_detect_language_via_container() {
     let container = make_container();
     let agg = container.aggregate();
     let lang = agg.detect_language();
-    assert!(!lang.value().is_empty());
+    assert!(lang.is_some());
+    assert!(!lang.unwrap().value().is_empty());
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn protocol_generate_mcp_config_via_container() {
 fn aggregate_get_config_template() {
     let container = make_container();
     let agg = container.aggregate();
-    let template = agg.get_config_template("rust");
+    let template = agg.get_config_template("rust").unwrap();
     assert!(!template.is_empty());
 }
 

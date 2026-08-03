@@ -39,7 +39,7 @@ fn fr004_write_config_file_error_on_invalid_path() {
     let result = proto.write_config_file("/nonexistent/deeply/nested/file.yaml", "content");
     assert!(result.is_err(), "FR-004: invalid path should return error");
     match result.unwrap_err() {
-        SetupError::Io(_) => {} // expected
+        SetupError::Io(_) => {}
         other => panic!("FR-004: expected Io error, got: {:?}", other),
     }
 }
@@ -56,7 +56,7 @@ fn fr004_create_global_config_dir() {
                 "FR-004: config dir should contain 'lint-arwaky'"
             );
         }
-        Err(SetupError::InvalidState(_)) => {} // acceptable in restricted envs
+        Err(SetupError::InvalidState(_)) => {}
         Err(e) => panic!("FR-004: unexpected error: {:?}", e),
     }
 }

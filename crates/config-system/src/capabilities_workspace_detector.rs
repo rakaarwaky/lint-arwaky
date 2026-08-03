@@ -110,92 +110,91 @@ fn dir_has_any_file(dir: &std::path::Path, targets: &[&str]) -> bool {
 }
 
 /// BF-4: Limit parent-dir matching to direct parent/grandparent, not arbitrary ancestors.
-/// FR-003: Walks up to 2 parent directories if no marker found at target path.
+/// FR-003: Walks up parent directories looking for marker files and workspace dir names.
+/// Limits ancestor name matching to 2 levels (BF-4), but walks further for marker files.
 fn has_rust_markers(path: &std::path::Path) -> bool {
-    // Check the target path itself
-    if dir_has_any_file(path, &["Cargo.toml"]) {
-        return true;
-    }
-    // FR-003: Walk up to 2 parent directories
-    if let Some(parent) = path.parent() {
-        if dir_has_any_file(parent, &["Cargo.toml"]) {
+    let marker_files = ["Cargo.toml"];
+    let workspace_name = "crates";
+    let mut current = Some(path);
+    let mut levels = 0;
+
+    while let Some(p) = current {
+        if levels == 0 && dir_has_any_file(p, &marker_files) {
             return true;
         }
-        // Direct parent name match: crates/ → Rust
-        if parent.file_name().map_or(false, |n| n == "crates") {
-            return true;
-        }
-        if let Some(grandparent) = parent.parent() {
-            if dir_has_any_file(grandparent, &["Cargo.toml"]) {
+        if levels > 0 && levels <= 2 {
+            // BF-4: Only check workspace dir name at parent/grandparent level
+            if p.file_name().map_or(false, |n| n == workspace_name) {
                 return true;
             }
         }
+        if levels > 0 && dir_has_any_file(p, &marker_files) {
+            return true;
+        }
+        levels += 1;
+        if levels > 5 {
+            break;
+        }
+        current = p.parent();
     }
     false
 }
 
 fn has_python_markers(path: &std::path::Path) -> bool {
-    if dir_has_any_file(
-        path,
-        &[
-            "pyproject.toml",
-            "setup.py",
-            "requirements.txt",
-            "__init__.py",
-        ],
-    ) {
-        return true;
-    }
-    if let Some(parent) = path.parent() {
-        if dir_has_any_file(
-            parent,
-            &[
-                "pyproject.toml",
-                "setup.py",
-                "requirements.txt",
-                "__init__.py",
-            ],
-        ) {
+    let marker_files = [
+        "pyproject.toml",
+        "setup.py",
+        "requirements.txt",
+        "__init__.py",
+    ];
+    let workspace_name = "modules";
+    let mut current = Some(path);
+    let mut levels = 0;
+
+    while let Some(p) = current {
+        if levels == 0 && dir_has_any_file(p, &marker_files) {
             return true;
         }
-        // Direct parent name match: modules/ → Python
-        if parent.file_name().map_or(false, |n| n == "modules") {
-            return true;
-        }
-        if let Some(grandparent) = parent.parent() {
-            if dir_has_any_file(
-                grandparent,
-                &[
-                    "pyproject.toml",
-                    "setup.py",
-                    "requirements.txt",
-                    "__init__.py",
-                ],
-            ) {
+        if levels > 0 && levels <= 2 {
+            if p.file_name().map_or(false, |n| n == workspace_name) {
                 return true;
             }
         }
+        if levels > 0 && dir_has_any_file(p, &marker_files) {
+            return true;
+        }
+        levels += 1;
+        if levels > 5 {
+            break;
+        }
+        current = p.parent();
     }
     false
 }
 
 fn has_typescript_markers(path: &std::path::Path) -> bool {
-    if dir_has_any_file(path, &["package.json", "tsconfig.json"]) {
-        return true;
-    }
-    if let Some(parent) = path.parent() {
-        if dir_has_any_file(parent, &["package.json", "tsconfig.json"]) {
+    let marker_files = ["package.json", "tsconfig.json"];
+    let workspace_name = "packages";
+    let mut current = Some(path);
+    let mut levels = 0;
+
+    while let Some(p) = current {
+        if levels == 0 && dir_has_any_file(p, &marker_files) {
             return true;
         }
-        // Direct parent name match: packages/ → TypeScript
-        if parent.file_name().map_or(false, |n| n == "packages") {
-            return true;
-        }
-        if let Some(grandparent) = parent.parent() {
-            if dir_has_any_file(grandparent, &["package.json", "tsconfig.json"]) {
+        if levels > 0 && levels <= 2 {
+            if p.file_name().map_or(false, |n| n == workspace_name) {
                 return true;
             }
         }
+        if levels > 0 && dir_has_any_file(p, &marker_files) {
+            return true;
+        }
+        levels += 1;
+        if levels > 5 {
+            break;
+        }
+        current = p.parent();
     }
     false
 }

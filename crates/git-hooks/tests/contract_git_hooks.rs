@@ -59,3 +59,31 @@ fn hook_manager_can_be_arc_trait_object() {
     fn assert_object_safe<T: IHookProtocol>() {}
     assert_object_safe::<HookManager>();
 }
+
+// ─── New aggregate methods contract tests ─────────────────
+
+#[test]
+fn aggregate_has_initialize_config_method() {
+    fn assert_method<T: GitHooksAggregate>() {
+        // Verify the method exists and has the right signature by calling it
+        let _ = |t: &T, path: &str| t.initialize_config(path);
+    }
+    assert_method::<GitHooksOrchestrator>();
+}
+
+#[test]
+fn aggregate_has_update_ignore_rule_method() {
+    fn assert_method<T: GitHooksAggregate>() {
+        use shared::git_hooks::HookIgnoreUpdateVO;
+        let _ = |t: &T, req: HookIgnoreUpdateVO| t.update_ignore_rule(req);
+    }
+    assert_method::<GitHooksOrchestrator>();
+}
+
+#[test]
+fn aggregate_has_get_diff_data_method() {
+    fn assert_method<T: GitHooksAggregate>() {
+        let _ = |t: &T, p1: &str, p2: &str| t.get_diff_data(p1, p2);
+    }
+    assert_method::<GitHooksOrchestrator>();
+}

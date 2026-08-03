@@ -63,15 +63,15 @@ fn us7_concurrent_requests_for_same_key_are_safe() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
 
-    let sut = make_orchestrator();
+    let sut = Arc::new(make_orchestrator());
     let path_str = tmp.path().to_string_lossy().to_string();
 
     // Spawn multiple threads requesting the same config concurrently
     let handles: Vec<_> = (0..8)
         .map(|_| {
             let fp = FilePath::new(path_str.clone()).unwrap();
-            let sut_ref = &sut;
-            thread::spawn(move || sut_ref.load_config_for_language(&fp, ConfigLanguage::Rust))
+            let sut_clone = sut.clone();
+            thread::spawn(move || sut_clone.load_config_for_language(&fp, ConfigLanguage::Rust))
         })
         .collect();
 

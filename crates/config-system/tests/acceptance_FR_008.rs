@@ -3,7 +3,7 @@
 mod common;
 
 use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::IConfigOrchestratorAggregate;
 use std::fs;
 use tempfile::TempDir;
 

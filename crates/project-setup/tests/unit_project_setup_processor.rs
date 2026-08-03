@@ -1,6 +1,6 @@
 // Unit tests — SetupManagementProcessor protocol methods.
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::{ISetupManagementProtocol, ISetupInstallerProtocol, SetupError};
+use shared::project_setup::{ISetupInstallerProtocol, ISetupManagementProtocol, SetupError};
 use std::sync::Arc;
 
 struct StubInstaller;
@@ -33,7 +33,10 @@ fn generate_env_contains_header() {
     let proc = make_processor();
     let home = DirectoryPath::new("/tmp").unwrap();
     let env = proc.generate_env(&home);
-    assert!(env.value().contains("Lint Arwaky Environment Configuration"));
+    assert!(
+        env.value()
+            .contains("Lint Arwaky Environment Configuration")
+    );
 }
 
 #[test]
@@ -81,9 +84,47 @@ fn mcp_config_vscode_wraps_in_mcp_servers() {
 }
 
 #[test]
+fn mcp_config_cursor_returns_valid() {
+    let proc = make_processor();
+    let config = proc.mcp_config_cursor();
+    assert!(
+        !config.value().is_empty(),
+        "Cursor config should have entries"
+    );
+}
+
+#[test]
+fn mcp_config_windsurf_returns_valid() {
+    let proc = make_processor();
+    let config = proc.mcp_config_windsurf();
+    assert!(
+        !config.value().is_empty(),
+        "Windsurf config should have entries"
+    );
+}
+
+#[test]
+fn mcp_config_copilot_returns_valid() {
+    let proc = make_processor();
+    let config = proc.mcp_config_copilot();
+    assert!(
+        !config.value().is_empty(),
+        "Copilot config should have entries"
+    );
+}
+
+#[test]
+fn mcp_config_all_returns_valid() {
+    let proc = make_processor();
+    let config = proc.mcp_config_all();
+    assert!(!config.value().is_empty(), "All config should have entries");
+}
+
+#[test]
 fn get_config_template_rust_returns_yaml() {
     let proc = make_processor();
-    let template = proc.get_config_template("rust");
+    let result = proc.get_config_template("rust");
+    let template = result.unwrap();
     assert!(!template.is_empty());
     assert!(template.contains("architecture") || template.contains("rules"));
 }
@@ -91,30 +132,46 @@ fn get_config_template_rust_returns_yaml() {
 #[test]
 fn get_config_template_python_returns_yaml() {
     let proc = make_processor();
-    let template = proc.get_config_template("python");
+    let template = proc.get_config_template("python").unwrap();
     assert!(!template.is_empty());
 }
 
 #[test]
 fn get_config_template_javascript_returns_yaml() {
     let proc = make_processor();
-    let template = proc.get_config_template("javascript");
+    let template = proc.get_config_template("javascript").unwrap();
     assert!(!template.is_empty());
 }
 
 #[test]
-fn get_config_template_unknown_defaults_to_rust() {
+fn get_config_template_unknown_returns_error() {
     let proc = make_processor();
-    let unknown = proc.get_config_template("kotlin");
-    let rust = proc.get_config_template("rust");
-    assert_eq!(unknown, rust, "Unknown language should default to rust template");
+    let result = proc.get_config_template("kotlin");
+    assert!(result.is_err(), "Unknown language should return Err");
+    match result.unwrap_err() {
+        SetupError::UnknownLanguage(_) => {}
+        e => panic!("Expected UnknownLanguage error, got: {:?}", e),
+    }
+}
+
+#[test]
+fn get_config_template_typescript_returns_yaml() {
+    let proc = make_processor();
+    let result = proc.get_config_template("typescript");
+    assert!(
+        result.is_ok(),
+        "FR-005: 'typescript' should have a template"
+    );
+    let template = result.unwrap();
+    assert!(!template.is_empty());
 }
 
 #[test]
 fn detect_language_returns_non_empty() {
     let proc = make_processor();
     let lang = proc.detect_language();
-    assert!(!lang.value().is_empty());
+    assert!(lang.is_some(), "Should detect a language");
+    assert!(!lang.unwrap().value().is_empty());
 }
 
 #[test]
@@ -151,7 +208,11 @@ fn write_config_file_succeeds() {
     let tmp = tempfile::TempDir::new().unwrap();
     let path = tmp.path().join("test_config.yaml");
     let result = proc.write_config_file(&path.to_string_lossy(), "key: value\n");
-    assert!(result.is_ok(), "write_config_file should succeed: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "write_config_file should succeed: {:?}",
+        result
+    );
     let desc = result.unwrap();
     assert!(desc.value().contains("test_config.yaml"));
 }
@@ -170,10 +231,19 @@ fn file_exists_returns_correctly() {
 fn create_global_config_dir_succeeds() {
     let proc = make_processor();
     let result = proc.create_global_config_dir();
-    // This may fail in CI if XDG_CONFIG_HOME is not set, but should not panic
     match result {
         Ok(path) => assert!(path.exists() || path.to_string_lossy().contains("lint-arwaky")),
-        Err(SetupError::InvalidState(_)) => {} // acceptable in some envs
+        Err(SetupError::InvalidState(_)) => {}
         Err(e) => panic!("Unexpected error: {:?}", e),
     }
+}
+
+#[test]
+fn pre_flight_check_returns_results() {
+    let proc = make_processor();
+    let results = proc.pre_flight_check();
+    assert!(
+        !results.is_empty(),
+        "Pre-flight check should return at least one entry"
+    );
 }

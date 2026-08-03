@@ -34,8 +34,14 @@ fn fr005_which_mcp_binary_contains_lint_arwaky_mcp() {
 fn fr005_file_exists_check() {
     let container = make_container();
     let proto = container.protocol();
-    // Existing file
     assert!(proto.file_exists("Cargo.toml"), "FR-005: Cargo.toml should exist");
-    // Non-existing file
     assert!(!proto.file_exists("definitely_does_not_exist_12345.txt"));
+}
+
+#[test]
+fn fr005_pre_flight_check() {
+    let container = make_container();
+    let proto = container.protocol();
+    let results = proto.pre_flight_check();
+    assert!(!results.is_empty(), "FR-005: pre_flight_check should return results");
 }

@@ -75,9 +75,42 @@ TUI (Smart Surface)
 
 - **Path dialog mode**: all key input → path editing (Char, Backspace, Enter, Tab, Esc).
 - **Search mode**: character input → search query (Char, Backspace, Enter, Esc).
-- **Normal mode**: vim-style navigation (j/k/h/l), action keys (c/s/f/t/o/d/i/m/…), Ctrl combos.
+- **Normal mode**: vim-style navigation (j/k/h/l), action keys (c/s/f/t/o/D/d/i/I/m/C/H/U/a/v/y/?/), Ctrl combos.
 - **Mouse**: left click → selection, drag → scrollbar, scroll up/down → scroll.
 - **Ctrl+ combos**: q=quit, s=security, p=dependencies, y=copy-to-file.
+- **Key mapping reference**:
+
+  | Key | TuiEvent | Category |
+  |-----|----------|----------|
+  | `j`/↓ | MoveDown | Navigation |
+  | `k`/↑ | MoveUp | Navigation |
+  | `h`/← | NavigateBack | Navigation |
+  | `l`/→/Enter | NavigateForward | Navigation |
+  | Home/End | MoveTop/MoveBottom | Navigation |
+  | PgUp/PgDn | PreviewScrollUp/PreviewScrollDown | Preview |
+  | Tab/BackTab | FocusNext/FocusPrev | Focus |
+  | `c` | ActionCheck | Lint (path) |
+  | `s` | ActionScan | Lint (path) |
+  | `f` | ActionFix | Lint (path) |
+  | `t` | ActionCi | Lint (path) |
+  | `o` | ActionOrphan | Lint (path) |
+  | `D` | ActionDuplicates | Lint (path) |
+  | `d` | ActionDoctor | Global |
+  | `i` | ActionInit | Global |
+  | `I` | ActionInstall | Global |
+  | `m` | ActionMcpConfig | Global |
+  | `C` | ActionConfigShow | Global |
+  | `H` | ActionInstallHook | Global |
+  | `U` | ActionUninstallHook | Global |
+  | `a` | ActionAdapters | Global |
+  | `v` | ActionVersion | Global |
+  | `y` | CopyToClipboard | Export |
+  | `?` | ToggleHelp | UI |
+  | `/` | ToggleSearch | UI |
+  | Esc/q | Quit | Exit |
+  | Ctrl+s | ActionSecurity | Lint (path) |
+  | Ctrl+p | ActionDependencies | Lint (path) |
+  | Ctrl+y | CopyToFile | Export |
 
 **Edge Cases**:
 
@@ -132,15 +165,16 @@ TUI (Smart Surface)
 | Scan progress    | Async progress updates via channel             |
 | Action blocking  | Long actions blocked during active scan        |
 
-**Input**: `TuiEvent` variants (ActionCheck/Scan/Fix/Ci/Orphan/Security/…).
+**Input**: `TuiEvent` variants (ActionCheck/Scan/Fix/Ci/Orphan/Security/Duplicates/Dependencies/…).
 
 **Business Rules**:
 
-- **Path-requiring actions** (check, scan, fix, ci, orphan, security, dependencies): use `run_action` with selected path.
+- **Path-requiring actions** (check, scan, fix, ci, orphan, security, duplicates, dependencies): use `run_action` with selected path.
 - **Global actions** (doctor, init, install, mcp-config, config-show, install-hook, uninstall-hook, adapters, version): use `run_action_no_path`.
 - **Scan**: runs in background thread, sends `ScanUpdate::Progress`/`Complete` via `mpsc::sync_channel(16)`.
 - **Other actions**: run synchronously, block event loop briefly.
-- Watch mode: explicitly unsupported in TUI — shows message to use CLI.
+- **Duplicates** (`D` key): delegates to `SurfaceLintExecutor::duplicates()`, which uses `ICodeAnalysisAggregate::scan_duplicate_blocks()` to detect code duplication.
+- Watch mode: explicitly unsupported in TUI — pressing `w` shows "Watch mode is not supported in TUI" message.
 
 **Edge Cases**:
 
@@ -288,7 +322,9 @@ TUI (Smart Surface)
 
 ### FR-009: UI Rendering
 
-**Files**: `surface_file_list_view.rs`, `surface_preview_view.rs`, `surface_tree_view.rs`, `surface_shortcut_component.rs`, `surface_status_component.rs`, `surface_path_screen.rs`, `surface_help_screen.rs`
+**Files**: `surface_file_list_view.rs`, `surface_preview_view.rs`, `surface_tree_view.rs`, `surface_shortcut_component.rs`, `surface_status_component.rs`, `surface_path_screen.rs`
+
+**Note**: Help overlay rendering is handled by `PreviewView` in `HelpOverlay` mode. The `surface_help_screen.rs` module exists but is unused dead code (AES506).
 
 **What it produces**: Ratatui widgets for each panel.
 
@@ -366,7 +402,8 @@ TUI (Smart Surface)
 
 - `init()`: sets up tracing subscriber with file appender.
 - `record()`: logs event variant name at `tracing::debug!(target = "tui")`.
-- Events logged: MoveDown, MoveUp, MoveTop, MoveBottom, FocusNext/Prev, NavigateBack/Forward, all Action* events, Quit, Resize.
+- **Integration point**: `record(&tui_event)` is called in the event loop (`surface_tui_command.rs`) immediately after `from_crossterm_event()` translates a crossterm event, and before the event is dispatched to the action handler or intercepted for scan management.
+- Events logged: MoveDown, MoveUp, MoveTop, MoveBottom, FocusNext/Prev, NavigateBack/Forward, all Action* events, Quit, Resize, mouse events, search/path input events.
 
 **Edge Cases**:
 
@@ -390,6 +427,10 @@ TUI (Smart Surface)
 | Valid directory    | `is_valid_directory` → bool                   |
 | Clipboard          | `copy_text_to_clipboard` → bool               |
 | Result formatting  | `format_results`, `format_config_result`      |
+| Human file size    | `file_size_human` → `DisplayContent` (unused in production) |
+| Path decomposition | `path_components` → `Vec<FilePath>` (unused in production) |
+| Doctor report      | `format_doctor_report` → `LintExecutionResult` (unused in production) |
+| Dependency report  | `format_dependency_report` → `LintExecutionResult` (unused in production) |
 
 **Input**: File paths, lint results.
 
@@ -399,6 +440,7 @@ TUI (Smart Surface)
 - `list_directory`: reads dir entries, returns `DirectoryEntry` with name, path, is_dir.
 - `read_file_preview`: reads up to N lines, returns string.
 - `format_results`: converts `LintResultList` to display string.
+- **Unused functions note**: `file_size_human`, `path_components`, `format_doctor_report`, and `format_dependency_report` are defined but never called from production source code — only exercised by tests. Consider removing or consolidating per AES504.
 
 **Error Handling**: Returns empty/default on failure.
 
