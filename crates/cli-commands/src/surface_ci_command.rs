@@ -23,12 +23,14 @@ pub fn handle_ci(
     threshold: Threshold,
 ) -> ExitCode {
     match dispatcher::surface_ci_action::collect_ci(
-        code_analysis_linter,
-        import_orchestrator,
-        naming_orchestrator,
-        config_orchestrator,
-        orphan_orchestrator,
-        filesystem,
+        dispatcher::surface_ci_action::CiScanDeps {
+            code_analysis_linter,
+            import_orchestrator,
+            naming_orchestrator,
+            config_orchestrator,
+            orphan_orchestrator,
+            filesystem,
+        },
         path,
         threshold,
     ) {

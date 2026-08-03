@@ -31,7 +31,7 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !std::path::Path::new(&root).exists() {
+    if !opts.filesystem.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 
@@ -88,7 +88,7 @@ pub fn collect_scan_json(
     path: &str,
     fs_agg: &dyn IFilesystemAggregate,
 ) -> Result<Vec<ViolationItem>, String> {
-    if !std::path::Path::new(path).exists() {
+    if !fs_agg.path_exists(std::path::Path::new(path)) {
         return Err(format!("Error: path '{}' does not exist", path));
     }
     Ok(run_all_linters_json(path, fs_agg))
@@ -97,9 +97,6 @@ pub fn collect_scan_json(
 /// Default check: subprocess JSON scan of all linters.
 pub fn collect_default_check(
     project_root: &str,
-    _code_analysis_linter: Arc<
-        dyn shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate,
-    >,
     fs_agg: &dyn IFilesystemAggregate,
 ) -> Result<Vec<ViolationItem>, String> {
     collect_scan_json(project_root, fs_agg)

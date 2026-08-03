@@ -18,13 +18,14 @@ use crate::surface_output_component::ViolationItem;
 pub fn collect_external_direct(
     path: Option<FilePath>,
     external_lint: Arc<dyn IExternalLintAggregate>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !std::path::Path::new(&root).exists() {
+    if !filesystem.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
     let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
@@ -54,7 +55,7 @@ pub fn collect_external(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !std::path::Path::new(&root).exists() {
+    if !_filesystem.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 

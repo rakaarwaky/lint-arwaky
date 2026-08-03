@@ -218,10 +218,12 @@ pub fn handle_orphan(
     match dispatcher::surface_orphan_action::collect_orphan(
         path.clone(),
         member,
-        orphan_orchestrator,
-        config_orchestrator,
+        dispatcher::surface_orphan_action::OrphanScanDeps {
+            orphan_orchestrator,
+            config_orchestrator,
+            fs_agg: filesystem.clone(),
+        },
         filter,
-        filesystem.clone(),
     ) {
         Ok(violations) => {
             output_violations(
@@ -253,6 +255,7 @@ pub fn handle_external(
     match dispatcher::surface_external_action::collect_external_direct(
         path.clone(),
         external_lint,
+        _filesystem,
         filter,
     ) {
         Ok(violations) => {

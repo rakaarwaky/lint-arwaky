@@ -10,36 +10,40 @@ use shared::orphan_rules::IOrphanAggregate;
 
 use crate::surface_output_component::ViolationItem;
 
-#[allow(clippy::too_many_arguments)]
+/// DI container for all aggregates needed by orphan scanning.
+pub struct OrphanScanDeps {
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub fs_agg: Arc<dyn IFilesystemAggregate>,
+}
+
 pub fn collect_orphan(
     path: Option<FilePath>,
     member: Option<String>,
-    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    deps: OrphanScanDeps,
     filter: Option<String>,
-    fs_agg: Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !std::path::Path::new(&root).exists() {
+    if !deps.fs_agg.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
 
     // discover_workspaces is sync in new API
-    let workspaces = config_orchestrator.discover_workspaces(&root_fp);
+    let workspaces = deps.config_orchestrator.discover_workspaces(&root_fp);
 
     if workspaces.is_empty() {
         return scan_single_root(
             &root,
             &root_fp,
-            &orphan_orchestrator,
-            &config_orchestrator,
+            &deps.orphan_orchestrator,
+            &deps.config_orchestrator,
             &filter,
-            &fs_agg,
+            &deps.fs_agg,
         );
     }
 
@@ -72,14 +76,16 @@ pub fn collect_orphan(
             .workspace_type
             .parse::<ConfigLanguage>()
             .unwrap_or(ConfigLanguage::Rust);
-        let _ignored = config_orchestrator.ignored_paths_for_language(&ws.path, lang);
+        let _ignored = deps
+            .config_orchestrator
+            .ignored_paths_for_language(&ws.path, lang);
 
         // Build file index for this workspace
         let ws_path = std::path::Path::new(ws.path.value.as_str());
-        fs_agg.build_file_index(ws_path);
+        deps.fs_agg.build_file_index(ws_path);
 
         // Build OrphanFileListVO from pre-fetched FileEntry data
-        let file_list = fs_agg.file_list();
+        let file_list = deps.fs_agg.file_list();
         let file_paths: Vec<String> = file_list
             .iter()
             .map(|f| f.path.to_string_lossy().to_string())
@@ -88,16 +94,20 @@ pub fn collect_orphan(
             shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
 
         // Build graph context from filesystem's pre-built data
-        let context = orphan_orchestrator.build_orphan_graph_context(&orphan_files, &ws.path);
+        let context = deps
+            .orphan_orchestrator
+            .build_orphan_graph_context(&orphan_files, &ws.path);
 
         // Run orphan checks on pre-fetched data
-        let results = orphan_orchestrator.check_orphans_with_entries(file_list, &context);
+        let results = deps
+            .orphan_orchestrator
+            .check_orphans_with_entries(file_list, &context);
 
         // Filter results belonging to this workspace
         let ws_abs = std::env::current_dir()
             .unwrap_or_default()
             .join(&ws.path.value);
-        let ws_top_root = fs_agg.workspace_root(
+        let ws_top_root = deps.fs_agg.workspace_root(
             &FilePath::new(ws_abs.to_string_lossy().to_string()).unwrap_or_default(),
         );
         let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {

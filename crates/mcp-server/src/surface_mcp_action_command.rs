@@ -95,12 +95,14 @@ impl McpActionSurface {
             Err(e) => return e,
         };
         match dispatcher::surface_ci_action::collect_ci(
-            self.deps.code_analysis_linter.clone(),
-            self.deps.import_orchestrator.clone(),
-            self.deps.naming_orchestrator.clone(),
-            self.deps.config_orchestrator.clone(),
-            self.deps.orphan_orchestrator.clone(),
-            self.deps.filesystem.clone(),
+            dispatcher::surface_ci_action::CiScanDeps {
+                code_analysis_linter: self.deps.code_analysis_linter.clone(),
+                import_orchestrator: self.deps.import_orchestrator.clone(),
+                naming_orchestrator: self.deps.naming_orchestrator.clone(),
+                config_orchestrator: self.deps.config_orchestrator.clone(),
+                orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
+                filesystem: self.deps.filesystem.clone(),
+            },
             Some(fp),
             Threshold::new(threshold as u32),
         ) {
@@ -222,10 +224,12 @@ impl McpActionSurface {
         match dispatcher::surface_orphan_action::collect_orphan(
             Some(fp),
             None,
-            self.deps.orphan_orchestrator.clone(),
-            self.deps.config_orchestrator.clone(),
+            dispatcher::surface_orphan_action::OrphanScanDeps {
+                orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
+                config_orchestrator: self.deps.config_orchestrator.clone(),
+                fs_agg: self.deps.filesystem.clone(),
+            },
             None,
-            self.deps.filesystem.clone(),
         ) {
             Ok(violations) => {
                 let exit_code = if violations.is_empty() { 0 } else { 1 };
@@ -250,6 +254,7 @@ impl McpActionSurface {
         match dispatcher::surface_external_action::collect_external_direct(
             Some(fp),
             self.deps.external_lint.clone(),
+            self.deps.filesystem.clone(),
             None,
         ) {
             Ok(violations) => violations_response("external", path, &violations),

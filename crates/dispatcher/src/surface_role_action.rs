@@ -47,7 +47,7 @@ pub fn collect_role(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !std::path::Path::new(&root).exists() {
+    if !_fs_agg.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 

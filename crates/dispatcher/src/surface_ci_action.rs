@@ -24,14 +24,18 @@ pub struct CiReport {
     pub total_violations: usize,
 }
 
-#[allow(clippy::too_many_arguments)]
+/// DI container for all aggregates needed by CI validation.
+pub struct CiScanDeps {
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+}
+
 pub fn collect_ci(
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    deps: CiScanDeps,
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> Result<CiReport, String> {
@@ -39,34 +43,38 @@ pub fn collect_ci(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !filesystem.path_exists(std::path::Path::new(&root_str)) {
+    if !deps.filesystem.path_exists(std::path::Path::new(&root_str)) {
         return Err(format!("Error: path '{}' does not exist", root_str));
     }
     let root = FilePath::new(root_str).map_err(|_| "invalid path".to_string())?;
 
     // Build file index once — all rule checkers consume fresh data
     let root_path = std::path::Path::new(root.value());
-    filesystem.build_file_index(root_path);
+    deps.filesystem.build_file_index(root_path);
 
     // Quality analysis (sync)
-    let mut results = code_analysis_linter.run_code_analysis_path(&root);
+    let mut results = deps.code_analysis_linter.run_code_analysis_path(&root);
 
     // Import rules — pass pre-fetched FileEntry data
-    let file_list = filesystem.file_list();
-    let import_res = import_orchestrator.run_audit_with_entries(file_list);
+    let file_list = deps.filesystem.file_list();
+    let import_res = deps.import_orchestrator.run_audit_with_entries(file_list);
     results.extend(import_res);
 
     // Naming rules — pass pre-fetched FileEntry data
-    let naming_res = naming_orchestrator.run_audit_with_entries(filesystem.file_list());
+    let naming_res = deps
+        .naming_orchestrator
+        .run_audit_with_entries(deps.filesystem.file_list());
     results.extend(naming_res);
 
     // Orphan detection (sync)
-    let ignored = config_orchestrator.ignored_paths(&root);
-    let (_, orphan_res) = orphan_orchestrator.scan_orphans(&root, &ignored.values);
+    let ignored = deps.config_orchestrator.ignored_paths(&root);
+    let (_, orphan_res) = deps
+        .orphan_orchestrator
+        .scan_orphans(&root, &ignored.values);
     results.extend(orphan_res);
 
-    let score = code_analysis_linter.calc_score(&results);
-    let has_crit = code_analysis_linter.check_critical(&results);
+    let score = deps.code_analysis_linter.calc_score(&results);
+    let has_crit = deps.code_analysis_linter.check_critical(&results);
     let below_threshold = score.value() < threshold.value() as f64;
 
     let mut reasons: Vec<String> = Vec::new();

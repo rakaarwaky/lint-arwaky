@@ -19,7 +19,7 @@ pub fn collect_quality(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !std::path::Path::new(&root).exists() {
+    if !fs_agg.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
     let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
