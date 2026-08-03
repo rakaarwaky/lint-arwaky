@@ -116,7 +116,7 @@ impl NamingConventionChecker {
         &self,
         file: &str,
         filename: &str,
-        layer_name: &Option<LayerNameVO>,
+        _layer_name: &Option<LayerNameVO>,
         definition: Option<&shared::common::taxonomy_definition_vo::LayerDefinition>,
         min_words: usize,
     ) -> Option<LintResult> {
@@ -126,25 +126,6 @@ impl NamingConventionChecker {
         }
 
         let stem = get_stem(filename).unwrap_or_default();
-
-        if layer_name.is_none() {
-            return Some(string_filename_result(
-                file,
-                RULE_CODE_NAMING_CONVENTION,
-                NamingViolation::NamingConvention {
-                    min_words,
-                    separator: SNAKE_CASE_SEPARATOR.to_string(),
-                    reason: Some(LintMessage::new(format!(
-                        "No architectural layer could be determined for '{}', and the stem '{}' does not follow \
-                         the 'prefix_concept_suffix' naming pattern. Files must contain at least {} underscore-separated \
-                         lowercase words (e.g., 'capabilities_user_checker'). A valid layer prefix is the first word.",
-                        file, stem, min_words
-                    ))),
-                }
-                .to_string(),
-                Severity::HIGH,
-            ));
-        }
 
         if let Some(def) = definition
             && def.exceptions.values.contains(&filename.to_string())
