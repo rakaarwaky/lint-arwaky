@@ -78,8 +78,8 @@ pub fn handle_security(
             println!();
 
             if !report.tool_installed {
-                println!("No Cargo.lock found — skipping Rust security scan.");
-                return ExitCode::OK;
+                println!("Security scanning tool not installed — cannot run scan.");
+                return ExitCode::PREREQUISITE_MISSING;
             }
 
             println!("Language: {}", report.language);
@@ -89,7 +89,11 @@ pub fn handle_security(
                 println!("  {} {} {}", f.severity.to_uppercase(), f.test_id, f.file);
             }
 
-            ExitCode::OK
+            if report.findings.is_empty() {
+                ExitCode::OK
+            } else {
+                ExitCode::POLICY_FAIL
+            }
         }
         Err(e) => {
             eprintln!("{e}");
@@ -114,8 +118,11 @@ pub fn handle_dependencies(
             println!("Language: {}", report.language);
             println!("Dependencies: {} total", report.dependencies.len());
             println!();
-            for dep in report.dependencies.iter().take(100) {
+            for dep in report.dependencies.iter().take(30) {
                 println!("  {} {}", dep.name, dep.version);
+            }
+            if report.dependencies.len() > 30 {
+                println!("  ... and {} more", report.dependencies.len() - 30);
             }
             ExitCode::OK
         }
