@@ -98,6 +98,11 @@ pub fn collect_orphan(
 
         // Build OrphanFileListVO from pre-fetched FileEntry data
         let file_list = ws_filesystem.file_list();
+        eprintln!(
+            "[debug] workspace loop: ws={}, files={}",
+            ws.path.value,
+            file_list.len()
+        );
         let file_paths: Vec<String> = file_list
             .iter()
             .map(|f| f.path.to_string_lossy().to_string())
@@ -110,6 +115,12 @@ pub fn collect_orphan(
 
         // Run orphan checks on pre-fetched data with correct root_dir
         let results = ws_orchestrator.check_orphans_with_context(&orphan_files, &ws.path, &context);
+        eprintln!(
+            "[debug] orphan results: ws={}, violations={}, all_ws_files={}",
+            ws.path.value,
+            results.len(),
+            context.all_workspace_files.len(),
+        );
 
         // Filter results belonging to this workspace
         let ws_abs = std::env::current_dir()
@@ -166,6 +177,11 @@ fn scan_single_root(
     // Build file index for this workspace
     let root_path = std::path::Path::new(root);
     ws_filesystem.build_file_index(root_path);
+    eprintln!(
+        "[debug] scan_single_root: root={}, files={}",
+        root,
+        ws_filesystem.file_list().len()
+    );
 
     // Create a new orchestrator with config from the target path
     let ws_config = config_orchestrator.load_config_sync(root_fp);
