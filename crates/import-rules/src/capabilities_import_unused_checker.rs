@@ -36,7 +36,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         let mut unused: Vec<String> = Vec::new();
         for alias in imported_aliases.keys() {
             let alias_str = alias.value();
-            if unused_import_is_future_import(content, alias_str) {
+            if crate::utility_import_resolver::is_future_import(content, alias_str) {
                 continue;
             }
             if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
@@ -73,7 +73,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         let mut violations = Vec::new();
         for alias in imported_aliases.keys() {
             let alias_str = alias.value();
-            if unused_import_is_future_import(content, alias_str) {
+            if crate::utility_import_resolver::is_future_import(content, alias_str) {
                 continue;
             }
             if used_symbols.contains(alias) || exported_symbols.contains(alias) {
@@ -121,14 +121,4 @@ impl UnusedImportRuleChecker {
     pub fn new() -> Self {
         Self
     }
-}
-
-fn unused_import_is_future_import(content: &str, alias: &str) -> bool {
-    content.lines().any(|line| {
-        let trimmed = line.trim();
-        trimmed.starts_with("from __future__ import ")
-            && (trimmed == format!("from __future__ import {}", alias)
-                || trimmed.contains(format!(", {}", alias).as_str())
-                || trimmed.contains(format!(" {},", alias).as_str()))
-    })
 }

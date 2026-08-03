@@ -319,7 +319,7 @@ impl ArchImportForbiddenChecker {
                     let (forbidden_layer, forbidden_suffixes) =
                         utility_import_resolver::resolve_scope(&forbidden_identity);
 
-                    let is_forbidden = if forbidden_suffixes.is_empty() {
+                    let mut is_forbidden = if forbidden_suffixes.is_empty() {
                         module_val
                             .split([':', '.', '/', '\\'])
                             .filter(|s| !s.is_empty())
@@ -337,6 +337,30 @@ impl ArchImportForbiddenChecker {
                             &forbidden_suffixes,
                         )
                     };
+
+                    // Barrel file resolution — use resolved_path from filesystem
+                    if !is_forbidden {
+                        if let Some(ref resolved_path) = entry.resolved_path {
+                            let resolved_file = resolved_path
+                                .file_name()
+                                .map(|n| n.to_string_lossy().to_string())
+                                .unwrap_or_default();
+                            let resolved_layer =
+                                utility_path_normalizer::extract_layer_from_prefix(&resolved_file);
+                            let layer_matches =
+                                resolved_layer.as_deref() == Some(forbidden_layer.value());
+                            let suffix_matches = forbidden_suffixes.is_empty()
+                                || forbidden_suffixes.iter().any(|s| {
+                                    let suffix_lower = s.value().to_lowercase();
+                                    resolved_file
+                                        .to_lowercase()
+                                        .contains(&format!("_{}", suffix_lower))
+                                });
+                            if layer_matches && suffix_matches {
+                                is_forbidden = true;
+                            }
+                        }
+                    }
 
                     if is_forbidden {
                         let allowed: Vec<LayerNameVO> = rule
