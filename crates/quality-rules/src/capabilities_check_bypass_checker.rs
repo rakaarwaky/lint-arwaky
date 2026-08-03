@@ -18,11 +18,8 @@ use shared::quality_rules::{
     AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
 };
 
-use crate::utility_column_index;
 use crate::utility_language_mapper::code_analysis_language_from_file;
 use shared::common::{LintMessage, PatternList, Severity};
-
-use shared::common::utility_value_object_generator;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct BypassChecker {
@@ -32,8 +29,6 @@ pub struct BypassChecker {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl IBypassCheckerProtocol for BypassChecker {
     fn check_cargo_toml(&self, content: &str, violations: &mut Vec<LintResult>) {
-        let _ = utility_value_object_generator::is_generator_enabled();
-        let _ = utility_column_index::compute_column(content, "");
         let mut in_clippy_section = false;
 
         for (i, line) in content.lines().enumerate() {

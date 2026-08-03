@@ -50,7 +50,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
         if def.code_analysis.min_lines.value > 0 && count < def.code_analysis.min_lines.value {
             violations.push(LintResult::new_arch(
                 file,
-                0,
+                count as usize,
                 "AES302",
                 Severity::HIGH,
                 format!(
@@ -69,7 +69,7 @@ impl ILineCheckerProtocol for ArchLineChecker {
         if def.code_analysis.max_lines.value > 0 && count > def.code_analysis.max_lines.value {
             violations.push(LintResult::new_arch(
                 file,
-                0,
+                count as usize,
                 "AES301",
                 Severity::HIGH,
                 format!(

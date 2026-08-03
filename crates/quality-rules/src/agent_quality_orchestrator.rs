@@ -148,6 +148,12 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                     .dead_inheritance_checker
                     .check_dead_inheritance(&file, c, &mut v);
 
+                // AES304: Cargo.toml bypass detection
+                if filename == "Cargo.toml" || filename == "cargo.toml" {
+                    self.deps.bypass_checker.check_cargo_toml(c, &mut v);
+                    return v;
+                }
+
                 if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
                     return v;
                 }
