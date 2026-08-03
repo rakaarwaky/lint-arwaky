@@ -27,3 +27,4 @@ pub use taxonomy_orphan_parse_result_vo::{
     PythonParseResultVO, RustParseResultVO, TsParseResultVO,
 };
 pub use taxonomy_violation_orphan_vo::AesOrphanViolation;
+pub use taxonomy_violation_orphan_vo::format_orphan_violation;

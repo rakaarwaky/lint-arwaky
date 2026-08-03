@@ -33,3 +33,4 @@ pub use taxonomy_layer_names_constant::LAYER_TAXONOMY;
 pub use taxonomy_layer_names_constant::LAYER_UTILITY;
 pub use taxonomy_layer_names_vo::layer_surfaces;
 pub use taxonomy_violation_role_vo::AesRoleViolation;
+pub use taxonomy_violation_role_vo::format_role_violation;
