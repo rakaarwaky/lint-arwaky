@@ -1,3 +1,2 @@
-// AES303: empty class
-export class EmptyClassEntity {
-}
+// AES303: dead inheritance - empty class without implementation
+export class EmptyClassEntity {}

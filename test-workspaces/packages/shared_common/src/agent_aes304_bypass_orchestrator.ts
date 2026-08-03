@@ -1,9 +1,6 @@
-// AES304: bypass annotation - any type and type assertions
-import { DomainModelBase } from './domain_model_base';
-
+// AES304: bypass annotation - throw new Error() pattern
 export class BypassEntity {
-    unsafe_method(): any {
-        const result: any = null;  // any type bypass
-        return result;
+    unsafe_method(): void {
+        throw new Error("bypass"); // AES304: forbidden throw pattern
     }
 }
