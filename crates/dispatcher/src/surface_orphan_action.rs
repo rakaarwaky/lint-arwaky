@@ -98,10 +98,10 @@ pub fn collect_orphan(
             .orphan_orchestrator
             .build_orphan_graph_context(&orphan_files, &ws.path);
 
-        // Run orphan checks on pre-fetched data
-        let results = deps
-            .orphan_orchestrator
-            .check_orphans_with_entries(file_list, &context);
+        // Run orphan checks on pre-fetched data with correct root_dir
+        let results =
+            deps.orphan_orchestrator
+                .check_orphans_with_context(&orphan_files, &ws.path, &context);
 
         // Filter results belonging to this workspace
         let ws_abs = std::env::current_dir()
@@ -167,8 +167,8 @@ fn scan_single_root(
     // Build graph context from filesystem's pre-built data
     let context = orphan_orchestrator.build_orphan_graph_context(&orphan_files, root_fp);
 
-    // Run orphan checks on pre-fetched data
-    let results = orphan_orchestrator.check_orphans_with_entries(file_list, &context);
+    // Run orphan checks on pre-fetched data with correct root_dir
+    let results = orphan_orchestrator.check_orphans_with_context(&orphan_files, root_fp, &context);
 
     let mut violations: Vec<ViolationItem> = results
         .iter()
