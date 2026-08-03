@@ -75,9 +75,10 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = 
-                format!("AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", forbidden.join(", "))
-;
+                let msg = format!(
+                    "AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.",
+                    forbidden.join(", ")
+                );
                 violations.push(LintResult::new_arch(
                     &path_str,
                     line_no,
@@ -95,9 +96,10 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = 
-                format!("AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", forbidden.join(", "))
-;
+                let msg = format!(
+                    "AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.",
+                    forbidden.join(", ")
+                );
                 violations.push(LintResult::new_arch(
                     &path_str,
                     line_no,
@@ -114,9 +116,10 @@ impl ContractRoleChecker {
             if forbidden.is_empty() {
                 continue;
             }
-            let msg = 
-            format!("AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", forbidden.join(", "))
-;
+            let msg = format!(
+                "AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.",
+                forbidden.join(", ")
+            );
             violations.push(LintResult::new_arch(
                 &path_str,
                 line_no,
@@ -126,5 +129,4 @@ impl ContractRoleChecker {
             ));
         }
     }
-
 }

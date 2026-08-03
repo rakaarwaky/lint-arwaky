@@ -5,7 +5,12 @@ pub use crate::common::taxonomy_language_vo::Language;
 use crate::common::taxonomy_message_vo::LintMessage;
 
 pub const WORD_PATTERN_TOKENS: &[&str] = &[
-    "unwrap", "expect", "panic", "todo", "unimplemented", "unreachable",
+    "unwrap",
+    "expect",
+    "panic",
+    "todo",
+    "unimplemented",
+    "unreachable",
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

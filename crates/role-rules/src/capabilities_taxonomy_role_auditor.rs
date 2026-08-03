@@ -211,11 +211,12 @@ impl TaxonomyRoleChecker {
                             inner_trimmed == prim_clean || inner_trimmed.starts_with(prim_clean)
                         }) {
                             let primitive_clean = p.trim_end_matches('<');
-                            let msg = 
-                            format!("AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY? Primitive type '{}' used on line {} of {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.", primitive_clean,
-                                    i + 1,
-                                    path_str)
-;
+                            let msg = format!(
+                                "AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY? Primitive type '{}' used on line {} of {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.",
+                                primitive_clean,
+                                i + 1,
+                                path_str
+                            );
 
                             violations.push(LintResult::new_arch(
                                 &path_str,
@@ -235,11 +236,12 @@ impl TaxonomyRoleChecker {
                             .starts_with(|c: char| c.is_alphanumeric() || c == '_'))
                 {
                     let primitive_clean = p.trim_end_matches('<');
-                    let msg = 
-                    format!("AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY? Primitive type '{}' used on line {} of {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.", primitive_clean,
-                            i + 1,
-                            path_str)
-;
+                    let msg = format!(
+                        "AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY? Primitive type '{}' used on line {} of {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.",
+                        primitive_clean,
+                        i + 1,
+                        path_str
+                    );
 
                     violations.push(LintResult::new_arch(
                         &path_str,
@@ -448,5 +450,4 @@ impl TaxonomyRoleChecker {
             false
         }
     }
-
 }

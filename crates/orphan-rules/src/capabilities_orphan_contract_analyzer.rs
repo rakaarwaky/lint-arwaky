@@ -2,8 +2,8 @@ use crate::utility_orphan_filename::{file_basename, file_suffix};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_rules::IContractOrphanProtocol;
+use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, OrphanIndicatorResult};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -231,7 +231,12 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 true,
                 format!(
                     "AES502 CONTRACT_ORPHAN: Contract {} '{}' is orphaned.\nWHY? Contract {} '{}' is not implemented by any {} file.\nFIX: Implement '{}' in a capabilities_* file.",
-                    suffix, unimplemented.join(", "), suffix, unimplemented.join(", "), "expected", unimplemented.join(", ")
+                    suffix,
+                    unimplemented.join(", "),
+                    suffix,
+                    unimplemented.join(", "),
+                    "expected",
+                    unimplemented.join(", ")
                 ),
                 Severity::MEDIUM,
             );
@@ -255,7 +260,12 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 true,
                 format!(
                     "AES502 CONTRACT_ORPHAN: Contract {} '{}' is orphaned.\nWHY? Contract {} '{}' is not implemented by any {} file.\nFIX: Implement '{}' in a capabilities_* file.",
-                    suffix, trait_names.join(", "), suffix, trait_names.join(", "), "orchestrator/container", trait_names.join(", ")
+                    suffix,
+                    trait_names.join(", "),
+                    suffix,
+                    trait_names.join(", "),
+                    "orchestrator/container",
+                    trait_names.join(", ")
                 ),
                 Severity::MEDIUM,
             );
@@ -279,7 +289,12 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 true,
                 format!(
                     "AES502 CONTRACT_ORPHAN: Contract {} '{}' is orphaned.\nWHY? Contract {} '{}' is not implemented by any {} file.\nFIX: Implement '{}' in a capabilities_* file.",
-                    suffix, trait_names.join(", "), suffix, trait_names.join(", "), "surface", trait_names.join(", ")
+                    suffix,
+                    trait_names.join(", "),
+                    suffix,
+                    trait_names.join(", "),
+                    "surface",
+                    trait_names.join(", ")
                 ),
                 Severity::MEDIUM,
             );

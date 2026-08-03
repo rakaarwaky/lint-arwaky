@@ -103,10 +103,7 @@ fn fr002_creates_hooks_directory_when_missing() {
         "install on non-git should not error: {:?}",
         result.err()
     );
-    assert!(
-        !result.unwrap().0,
-        "should return false for non-git repo"
-    );
+    assert!(!result.unwrap().0, "should return false for non-git repo");
 }
 
 #[test]
@@ -158,7 +155,11 @@ fn fr003_removes_existing_hook() {
 
     let adapter = make_adapter(&tmp);
     let result = adapter.uninstall_pre_commit();
-    assert!(result.is_ok(), "uninstall should succeed: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "uninstall should succeed: {:?}",
+        result.err()
+    );
     assert!(result.unwrap().0, "should return true when hook existed");
     assert!(
         !hooks_dir.join("pre-commit").exists(),
@@ -377,13 +378,13 @@ fn fr006_add_rule_to_config() {
     );
     let mgr = make_hook_manager(&tmp);
 
-    let request = HookIgnoreUpdateVO::new(
-        "dist",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request = HookIgnoreUpdateVO::new("dist", false, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
-    assert!(result.value.contains("Added"), "should report Added: {}", result.value);
+    assert!(
+        result.value.contains("Added"),
+        "should report Added: {}",
+        result.value
+    );
 
     let content = std::fs::read_to_string(&config_path).unwrap();
     assert!(content.contains("dist"), "config should contain 'dist'");
@@ -399,16 +400,20 @@ fn fr006_remove_rule_from_config() {
     );
     let mgr = make_hook_manager(&tmp);
 
-    let request = HookIgnoreUpdateVO::new(
-        "vendor",
-        true,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request =
+        HookIgnoreUpdateVO::new("vendor", true, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
-    assert!(result.value.contains("Removed"), "should report Removed: {}", result.value);
+    assert!(
+        result.value.contains("Removed"),
+        "should report Removed: {}",
+        result.value
+    );
 
     let content = std::fs::read_to_string(&config_path).unwrap();
-    assert!(!content.contains("- vendor"), "config should not contain '- vendor'");
+    assert!(
+        !content.contains("- vendor"),
+        "config should not contain '- vendor'"
+    );
     assert!(
         content.contains("- node_modules"),
         "other rules should remain"
@@ -421,11 +426,7 @@ fn fr006_config_not_found_suggests_init() {
     let config_path = tmp.path().join("nonexistent.yaml");
     let mgr = make_hook_manager(&tmp);
 
-    let request = HookIgnoreUpdateVO::new(
-        "test",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request = HookIgnoreUpdateVO::new("test", false, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
     assert!(
         result.value.contains("not found") || result.value.contains("Run lint-arwaky-cli"),
@@ -444,11 +445,8 @@ fn fr006_add_existing_rule_is_noop() {
     );
     let mgr = make_hook_manager(&tmp);
 
-    let request = HookIgnoreUpdateVO::new(
-        "vendor",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request =
+        HookIgnoreUpdateVO::new("vendor", false, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
     assert!(
         result.value.contains("already present"),
@@ -463,7 +461,11 @@ fn fr006_initialize_config_creates_default() {
     let mgr = make_hook_manager(&tmp);
 
     let result = mgr.initialize_config(tmp.path().to_str().unwrap());
-    assert!(result.value.contains("Initialized"), "should report Initialized: {}", result.value);
+    assert!(
+        result.value.contains("Initialized"),
+        "should report Initialized: {}",
+        result.value
+    );
 
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     assert!(config_path.exists(), "config file should be created");

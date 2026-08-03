@@ -244,5 +244,4 @@ impl SurfaceRoleChecker {
             ));
         }
     }
-
 }

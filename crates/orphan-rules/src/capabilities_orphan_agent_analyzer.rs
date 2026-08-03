@@ -1,7 +1,7 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_rules::IAgentOrphanProtocol;
+use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::OrphanIndicatorResult;
 use std::collections::HashMap;
 
@@ -94,7 +94,9 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                 true,
                 format!(
                     "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? Agent aggregate '{}' is not called by any surface or container.\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs.",
-                    aggregate_traits.join(", "), aggregate_traits.join(", "), aggregate_traits.join(", ")
+                    aggregate_traits.join(", "),
+                    aggregate_traits.join(", "),
+                    aggregate_traits.join(", ")
                 ),
                 Severity::HIGH,
             );

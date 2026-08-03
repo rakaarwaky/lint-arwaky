@@ -218,7 +218,10 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                 }
                 let msg = match &aes_violation {
                     shared::quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => {
-                        format!("AES305 CODE_DUPLICATION: Duplicate code block detected.\nWHY? {}\nFIX: Extract the duplicated logic into a shared function.", reason.as_ref().map(|r| r.to_string()).unwrap_or_default())
+                        format!(
+                            "AES305 CODE_DUPLICATION: Duplicate code block detected.\nWHY? {}\nFIX: Extract the duplicated logic into a shared function.",
+                            reason.as_ref().map(|r| r.to_string()).unwrap_or_default()
+                        )
                     }
                     other => format!("{:?}", other),
                 };

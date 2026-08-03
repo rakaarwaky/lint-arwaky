@@ -329,5 +329,4 @@ impl CapabilitiesRoleChecker {
             }
         }
     }
-
 }

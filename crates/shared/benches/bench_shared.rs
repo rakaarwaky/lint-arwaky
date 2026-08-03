@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 fn bench_shared_common(c: &mut Criterion) {
     c.bench_function("shared_path_normalize", |b| {

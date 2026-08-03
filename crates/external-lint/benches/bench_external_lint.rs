@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 fn bench_external_lint(c: &mut Criterion) {
     c.bench_function("external_lint_container_creation", |b| {

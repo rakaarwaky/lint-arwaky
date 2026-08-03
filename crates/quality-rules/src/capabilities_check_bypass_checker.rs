@@ -204,10 +204,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                         && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
-                        let reason = format!(
-                            "Found forbidden bypass token: '{}'",
-                            token
-                        );
+                        let reason = format!("Found forbidden bypass token: '{}'", token);
                         let msg = match Self::classify_token(token) {
                             ViolationKind::UnwrapExpect => format!(
                                 "AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.\nWHY? {}\nFIX: Replace the unwrap/expect call with structured error handling.",

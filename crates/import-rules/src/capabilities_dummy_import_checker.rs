@@ -1,8 +1,6 @@
 use shared::cli_commands::LintResult;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::{
-    ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity,
-};
+use shared::common::{ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use crate::utility_dummy_detector;

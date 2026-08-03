@@ -102,9 +102,7 @@ fn aes503_capabilities_violation_display_message() {
     };
     let msg = format!(
         "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs.",
-        "capabilities_handler",
-        "Not wired in container.",
-        "capabilities_handler"
+        "capabilities_handler", "Not wired in container.", "capabilities_handler"
     );
     assert!(msg.contains("AES503"));
     assert!(msg.contains("capabilities_handler"));

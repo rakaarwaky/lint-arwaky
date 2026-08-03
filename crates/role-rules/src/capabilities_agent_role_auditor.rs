@@ -357,5 +357,4 @@ impl AgentRoleChecker {
             }
         }
     }
-
 }

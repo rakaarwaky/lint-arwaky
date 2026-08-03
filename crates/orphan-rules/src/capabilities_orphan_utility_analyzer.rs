@@ -1,8 +1,8 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
-use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_rules::IUtilityOrphanProtocol;
+use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
 use std::collections::HashMap;
 

@@ -6,7 +6,8 @@ fn scan_command_module_exists() {
 
 #[test]
 fn config_command_module_exists() {
-    let _ = std::any::type_name::<cli_commands_lint_arwaky::surface_config_command::ConfigCommand>();
+    let _ =
+        std::any::type_name::<cli_commands_lint_arwaky::surface_config_command::ConfigCommand>();
 }
 
 #[test]

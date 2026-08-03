@@ -40,10 +40,7 @@ fn e2e_hook_install_then_uninstall_round_trip() {
         install_result.err()
     );
     let status = install_result.unwrap();
-    assert!(
-        status.0,
-        "install_hook should return true for a git repo"
-    );
+    assert!(status.0, "install_hook should return true for a git repo");
 
     // Verify the hook script was written
     let hook_file = hooks_dir.join("pre-commit");
@@ -104,10 +101,7 @@ fn e2e_install_creates_hooks_directory_when_missing() {
         result.err()
     );
     // Non-git repo → SuccessStatus(false)
-    assert!(
-        !result.unwrap().0,
-        "should return false for non-git repo"
-    );
+    assert!(!result.unwrap().0, "should return false for non-git repo");
 }
 
 // ─── E2E: Config initialization → ignore rule management ──
@@ -128,11 +122,8 @@ fn e2e_config_init_then_add_ignore_rule() {
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     assert!(config_path.exists(), "config file should exist after init");
 
-    let request = HookIgnoreUpdateVO::new(
-        "target",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request =
+        HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
     let add_result = aggregate.update_ignore_rule(request);
     assert!(
         add_result.value.contains("Added"),
@@ -148,11 +139,8 @@ fn e2e_config_init_then_add_ignore_rule() {
     );
 
     // Step 4: Try adding the same rule again (idempotent)
-    let request_dup = HookIgnoreUpdateVO::new(
-        "target",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request_dup =
+        HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
     let dup_result = aggregate.update_ignore_rule(request_dup);
     assert!(
         dup_result.value.contains("already present"),
@@ -168,19 +156,13 @@ fn e2e_config_init_then_remove_ignore_rule() {
     // Initialize and add a rule first
     aggregate.initialize_config(tmp.path().to_str().unwrap());
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
-    let request = HookIgnoreUpdateVO::new(
-        "target",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request =
+        HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
     aggregate.update_ignore_rule(request);
 
     // Now remove it
-    let remove_request = HookIgnoreUpdateVO::new(
-        "target",
-        true,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let remove_request =
+        HookIgnoreUpdateVO::new("target", true, config_path.to_str().unwrap().to_string());
     let remove_result = aggregate.update_ignore_rule(remove_request);
     assert!(
         remove_result.value.contains("Removed"),
@@ -268,8 +250,7 @@ fn e2e_orchestrator_exposes_hook_manager_via_aggregate() {
     let (_, aggregate) = make_container();
 
     // HookManagementOrchestratorAggregate is object-safe and accessible
-    let manager: &dyn shared::git_hooks::IHookManagerProtocol =
-        aggregate.get_hook_manager();
+    let manager: &dyn shared::git_hooks::IHookManagerProtocol = aggregate.get_hook_manager();
     let identity = aggregate.get_hook_manager_identity();
     assert_eq!(identity.value(), "git_hook_manager");
 
