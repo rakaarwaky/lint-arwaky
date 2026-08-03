@@ -9,13 +9,12 @@
 //   4. Smart surfaces: exempt from Passive + Utility checks but subject to global function limit.
 
 use shared::common::LintResult;
-use shared::common::Language;
 use shared::common::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ParseMetadata, PythonMetadata, RustMetadata, TypeScriptMetadata,
 };
-use shared::role_rules::{format_role_violation, AesRoleViolation, ISurfaceRoleChecker};
+use shared::role_rules::{AesRoleViolation, ISurfaceRoleChecker};
 
 const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_CONTROL_FLOW: usize = 3;
@@ -90,15 +89,12 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                format_role_violation(
-                    &AesRoleViolation::SurfaceRoleViolation {
-                        reason: Some(LintMessage::new(format!(
-                            "File {} has too many function declarations (exceeds 15): found {}",
-                            path_str, fn_count
-                        ))),
-                    },
-                    Language::Rust,
-                ),
+                Self::fmt(&AesRoleViolation::SurfaceRoleViolation {
+                    reason: Some(LintMessage::new(format!(
+                        "File {} has too many function declarations (exceeds 15): found {}",
+                        path_str, fn_count
+                    ))),
+                }),
             ));
         }
     }

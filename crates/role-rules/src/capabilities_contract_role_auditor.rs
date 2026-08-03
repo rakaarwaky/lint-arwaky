@@ -14,7 +14,7 @@ use shared::common::utility_signature_parser::{
 };
 use shared::common::{Language, LintMessage, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::{format_role_violation, AesRoleViolation, IContractRoleChecker};
+use shared::role_rules::{AesRoleViolation, IContractRoleChecker};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractRoleChecker {}
@@ -75,7 +75,7 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = format_role_violation(
+                let msg = Self::fmt(
                     &AesRoleViolation::ContractPrimitive {
                         reason: Some(LintMessage::new(format!(
                             "Forbidden primitive types in signature: {}",
@@ -101,7 +101,7 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = format_role_violation(
+                let msg = Self::fmt(
                     &AesRoleViolation::ContractPrimitive {
                         reason: Some(LintMessage::new(format!(
                             "Forbidden primitive types in signature: {}",
@@ -126,7 +126,7 @@ impl ContractRoleChecker {
             if forbidden.is_empty() {
                 continue;
             }
-            let msg = format_role_violation(
+            let msg = Self::fmt(
                 &AesRoleViolation::ContractPrimitive {
                     reason: Some(LintMessage::new(format!(
                         "Forbidden primitive types in signature: {}",

@@ -18,7 +18,7 @@ use shared::common::LintResult;
 use shared::common::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::{format_role_violation, AesRoleViolation, ICapabilitiesRoleChecker};
+use shared::role_rules::{AesRoleViolation, ICapabilitiesRoleChecker};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct CapabilitiesRoleChecker {}
@@ -80,13 +80,13 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        format_role_violation(&AesRoleViolation::CapabilityTooManyTypes {
+                        Self::fmt(&AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types (struct + enum), max 3 allowed",
                                 type_count
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                     return;
                 }
@@ -99,12 +99,12 @@ impl CapabilitiesRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::CapabilityNoImplementor {
+                        Self::fmt(&AesRoleViolation::CapabilityNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.",
                                 path_str
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -121,25 +121,25 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        format_role_violation(&AesRoleViolation::CapabilityTooManyTypes {
+                        Self::fmt(&AesRoleViolation::CapabilityTooManyTypes {
                             count: class_count,
                             reason: Some(LintMessage::new(format!(
                                 "Found {} classes, max 3 allowed",
                                 class_count
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::CapabilityNoImplementor {
+                        Self::fmt(&AesRoleViolation::CapabilityNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No class with parent/inheritance found in {}. At least one class must inherit from a parent class.",
                                 path_str
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -158,25 +158,25 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        format_role_violation(&AesRoleViolation::CapabilityTooManyTypes {
+                        Self::fmt(&AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types (class/interface/enum), max 3 allowed",
                                 type_count
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::CapabilityNoImplementor {
+                        Self::fmt(&AesRoleViolation::CapabilityNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No class with 'implements' keyword found in {}. At least one class must implement an interface/protocol.",
                                 path_str
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -237,13 +237,13 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        format_role_violation(&AesRoleViolation::CapabilityTooManyTypes {
+                        Self::fmt(&AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types (struct + enum), max 3 allowed",
                                 type_count
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                     return;
                 }
@@ -259,11 +259,11 @@ impl CapabilitiesRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::CapabilityNoImplementor {
+                        Self::fmt(&AesRoleViolation::CapabilityNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.", path_str
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -289,22 +289,22 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        format_role_violation(&AesRoleViolation::CapabilityTooManyTypes {
+                        Self::fmt(&AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
                             reason: Some(LintMessage::new(format!(
                                 "Found {} classes, max 3 allowed",
                                 type_count
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::CapabilityNoImplementor {
+                        Self::fmt(&AesRoleViolation::CapabilityNoImplementor {
                             reason: Some(LintMessage::new(format!("No class with parent/inheritance found in {}. At least one class must inherit from a parent class.", path_str))),
-                        }, Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -341,13 +341,13 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        format_role_violation(&AesRoleViolation::CapabilityTooManyTypes {
+                        Self::fmt(&AesRoleViolation::CapabilityTooManyTypes {
                             count: type_count,
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types, max 3 allowed",
                                 type_count
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                     return;
                 }
@@ -357,12 +357,12 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::CapabilityNoImplementor {
+                        Self::fmt(&AesRoleViolation::CapabilityNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No class with 'implements' found in {}.",
                                 path_str
                             ))),
-                        }, Language::Rust),
+                        }),
                     ));
                 }
             }
