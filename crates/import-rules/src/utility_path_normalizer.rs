@@ -25,20 +25,3 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
 
     None
 }
-
-/// Normalize a path string without filesystem I/O.
-/// Collapses `.`, `..`, and redundant separators.
-fn normalize_path(path: &str) -> String {
-    let normalized = path.replace('\\', "/");
-    let mut components: Vec<&str> = Vec::new();
-    for part in normalized.split('/') {
-        match part {
-            "" | "." => continue,
-            ".." => {
-                components.pop();
-            }
-            other => components.push(other),
-        }
-    }
-    format!("/{}", components.join("/"))
-}

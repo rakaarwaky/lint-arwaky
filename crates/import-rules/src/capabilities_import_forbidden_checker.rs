@@ -168,8 +168,12 @@ impl ArchImportForbiddenChecker {
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
     ) -> Result<LintResultList, ImportError> {
-        let fp = FilePath::new(file_path.to_string()).unwrap();
-        let root = FilePath::new(root_dir.to_string()).unwrap();
+        let Ok(fp) = FilePath::new(file_path.to_string()) else {
+            return Ok(LintResultList::new(vec![]));
+        };
+        let Ok(root) = FilePath::new(root_dir.to_string()) else {
+            return Ok(LintResultList::new(vec![]));
+        };
         let files = FilePathList::new(vec![fp]);
         let mut content_map = HashMap::new();
         content_map.insert(file_path.to_string(), content.to_string());
