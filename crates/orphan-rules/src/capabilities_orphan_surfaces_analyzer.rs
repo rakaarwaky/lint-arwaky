@@ -22,7 +22,7 @@ impl SurfacesOrphanAnalyzer {
 
     fn surface_category(suffix: &str) -> &'static str {
         match suffix {
-            "command" | "controller" | "page" | "router" | "entry" => "smart",
+            "command" | "controller" | "page" | "router" => "smart",
             "hook" | "store" | "action" | "screen" => "utility",
             "component" | "view" | "layout" => "passive",
             _ => "unknown",
