@@ -12,6 +12,7 @@ serde_json = { workspace = true }
 rmcp = { workspace = true }
 dirs = { workspace = true }
 tokio = { workspace = true }
+tracing = { workspace = true }
 
 [lints]
 workspace = true

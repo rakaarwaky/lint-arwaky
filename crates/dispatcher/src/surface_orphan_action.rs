@@ -2,6 +2,7 @@
 // Adapted: sync — all orphan calls are sync. Removed orphan_detector crate dependency;
 // uses injected IOrphanAggregate via DI. Simplified workspace handling.
 use std::sync::Arc;
+use tracing::debug;
 
 use shared::common::FilePath;
 use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
@@ -136,11 +137,11 @@ pub fn collect_orphan(
 
         // Run orphan checks on pre-fetched data with correct root_dir
         let results = ws_orchestrator.check_orphans_with_context(&orphan_files, &ws.path, &context);
-        eprintln!(
-            "[debug] orphan results: ws={}, violations={}, all_ws_files={}",
-            ws.path.value,
-            results.len(),
-            context.all_workspace_files.len(),
+        debug!(
+            ws = %ws.path.value,
+            violations = results.len(),
+            all_ws_files = context.all_workspace_files.len(),
+            "orphan results",
         );
 
         // Filter results belonging to this workspace

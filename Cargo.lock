@@ -196,6 +196,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -503,6 +504,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -1004,6 +1006,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -1164,6 +1167,7 @@ dependencies = [
  "shared-lint-arwaky",
  "tempfile",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -1190,6 +1194,7 @@ dependencies = [
  "rayon",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
  "tree-sitter",
  "tree-sitter-javascript",
  "tree-sitter-python",
@@ -1448,6 +1453,7 @@ dependencies = [
  "serde_yaml_ng",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -3049,6 +3055,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -3083,6 +3090,7 @@ dependencies = [
  "shared-lint-arwaky",
  "tempfile",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -3718,6 +3726,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -4063,6 +4072,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -4537,6 +4547,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.19",
  "tokio",
+ "tracing",
 ]
 
 [[package]]

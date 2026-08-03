@@ -15,6 +15,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
+use tracing::{error, warn};
+
 use shared::common::{ExitCode, FilePath};
 use shared::file_watch::IChangeAnalyzerProtocol;
 use shared::file_watch::{IWatchAggregate, IWatchProviderProtocol, WatchConfig};
@@ -53,12 +55,12 @@ impl IWatchAggregate for WatchOrchestrator {
         {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("Failed to create tokio runtime: {}", e);
+                error!(error = %e, "failed to create tokio runtime");
                 return ExitCode::RUNTIME_ERROR;
             }
         };
         if let Err(e) = rt.block_on(self.provider.start(&config)) {
-            eprintln!("Failed to start watcher: {}", e);
+            error!(error = %e, "failed to start watcher");
             return ExitCode::RUNTIME_ERROR;
         }
 
@@ -103,7 +105,7 @@ impl IWatchAggregate for WatchOrchestrator {
 
         // Stop watcher — log error on failure
         if let Err(e) = rt.block_on(self.provider.stop()) {
-            eprintln!("Warning: failed to stop watcher cleanly: {}", e);
+            warn!(error = %e, "failed to stop watcher cleanly");
         }
         println!("Watcher stopped.");
         ExitCode::OK

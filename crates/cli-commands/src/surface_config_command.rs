@@ -3,6 +3,7 @@
 use shared::common::ExitCode;
 use shared::config_system::IConfigOrchestratorAggregate;
 use std::sync::Arc;
+use tracing::warn;
 
 pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -> ExitCode {
     let report = dispatcher::surface_config_action::collect_config_show(orchestrator);
@@ -12,7 +13,7 @@ pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -
         println!("{}", entry.content);
     }
     for w in &report.warnings {
-        eprintln!("{w}");
+        warn!(warning = %w);
     }
     if report.entries.is_empty() {
         println!("No config file found. Run `lint-arwaky init` to create one.");

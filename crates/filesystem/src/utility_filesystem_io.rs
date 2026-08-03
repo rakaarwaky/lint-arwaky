@@ -4,6 +4,7 @@
 // Utility: stateless standalone functions
 
 use std::path::{Path, PathBuf};
+use tracing::warn;
 
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -18,7 +19,7 @@ pub fn read_file_safe<P: AsRef<Path>>(path: P) -> Result<String, std::io::Error>
     match std::fs::read_to_string(path) {
         Ok(content) => Ok(content),
         Err(e) => {
-            eprintln!("warning: failed to read {}: {}", path.display(), e);
+            warn!(path = %path.display(), error = %e, "failed to read file");
             Err(e)
         }
     }

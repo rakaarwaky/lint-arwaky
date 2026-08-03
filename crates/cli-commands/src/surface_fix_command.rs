@@ -4,6 +4,7 @@ use shared::auto_fix::LintFixOrchestratorAggregate;
 use shared::common::{ExitCode, FilePath};
 use shared::quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
+use tracing::{error, info};
 
 pub fn handle_fix(
     path: Option<FilePath>,
@@ -59,13 +60,13 @@ pub fn handle_fix(
                     println!("Fix complete — all violations resolved.");
                     ExitCode::OK
                 } else {
-                    eprintln!("Fix complete — {} violations remain.", report.after_count);
+                    info!("fix complete — {} violations remain.", report.after_count);
                     ExitCode::POLICY_FAIL
                 }
             }
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }

@@ -5,8 +5,18 @@ use rmcp::ServiceExt;
 use rmcp::transport::stdio;
 use std::sync::Arc;
 
+fn init_tracing() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "warn".into()),
+        )
+        .init();
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    init_tracing();
     let filesystem: Arc<
         dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
     > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();

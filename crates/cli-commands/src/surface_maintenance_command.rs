@@ -4,6 +4,7 @@ use shared::common::ExitCode;
 use shared::common::FilePath;
 use shared::maintenance::MaintenanceCommandsAggregate;
 use std::sync::Arc;
+use tracing::error;
 
 use crate::surface_formatting::status_icon;
 
@@ -96,7 +97,7 @@ pub fn handle_security(
             }
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
@@ -127,7 +128,7 @@ pub fn handle_dependencies(
             ExitCode::OK
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }

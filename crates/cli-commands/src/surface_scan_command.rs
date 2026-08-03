@@ -2,6 +2,7 @@
 // Calls dispatcher for business logic, only adds CLI output.
 use shared::common::ExitCode;
 use std::sync::Arc;
+use tracing::error;
 
 use shared::cli_commands::Format;
 use shared::common::FilePath;
@@ -58,7 +59,7 @@ pub fn handle_scan(
             exit_for(violations.len())
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
@@ -103,7 +104,7 @@ pub fn handle_quality(
             exit_for(violations.len())
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
@@ -138,7 +139,7 @@ pub fn handle_import(
             exit_for(violations.len())
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
@@ -173,7 +174,7 @@ pub fn handle_naming(
             exit_for(violations.len())
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
@@ -208,7 +209,7 @@ pub fn handle_role(
             exit_for(violations.len())
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
@@ -247,7 +248,7 @@ pub fn handle_orphan(
             exit_for(violations.len())
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
@@ -275,7 +276,7 @@ pub fn handle_external(
             exit_for(violations.len())
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }

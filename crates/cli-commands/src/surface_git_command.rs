@@ -3,6 +3,7 @@
 use shared::common::{ExitCode, GitBranchName, Severity};
 use shared::quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
+use tracing::error;
 
 pub fn handle_git_diff(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -68,7 +69,7 @@ pub fn handle_git_diff(
             }
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }

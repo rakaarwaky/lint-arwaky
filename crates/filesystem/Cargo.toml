@@ -37,6 +37,7 @@ anyhow = "1.0.104"
 
 # Shared types
 shared.workspace = true
+tracing.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

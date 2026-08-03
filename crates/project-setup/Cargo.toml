@@ -12,6 +12,7 @@ workspace = true
 shared = { workspace = true }
 dirs = { workspace = true }
 serde_json = { workspace = true }
+tracing.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

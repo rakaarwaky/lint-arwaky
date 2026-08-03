@@ -22,6 +22,7 @@ use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -94,12 +95,16 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                         if err_msg.contains("No such file or directory")
                             || err_msg.contains("os error 2")
                         {
-                            eprintln!(
-                                "[warn] {} is not installed or not in system PATH. Skipping.",
-                                name
+                            warn!(
+                                adapter = name,
+                                "is not installed or not in system PATH. Skipping."
                             );
                         } else {
-                            eprintln!("[warn] {} adapter failed: {}", name, err_msg);
+                            warn!(
+                                adapter = name,
+                                error = %err_msg,
+                                "adapter failed"
+                            );
                         }
                     }
                 }

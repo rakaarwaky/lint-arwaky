@@ -11,6 +11,7 @@ workspace = true
 [dependencies]
 shared.workspace = true
 serde_yaml_ng.workspace = true
+tracing.workspace = true
 
 [dev-dependencies]
 filesystem = { workspace = true }

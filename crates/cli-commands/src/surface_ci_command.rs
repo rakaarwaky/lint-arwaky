@@ -2,6 +2,7 @@
 // Calls dispatcher for CI business logic, only adds CLI output.
 use shared::common::ExitCode;
 use std::sync::Arc;
+use tracing::{error, info};
 
 use shared::common::{FilePath, Threshold};
 use shared::config_system::IConfigOrchestratorAggregate;
@@ -52,14 +53,14 @@ pub fn handle_ci(
                 ExitCode::OK
             } else {
                 for r in &report.reasons {
-                    eprintln!("  {r}");
+                    info!(result = %r, "scan result");
                 }
-                eprintln!("Result: FAIL (exit code 1)");
+                info!("scan result: FAIL");
                 ExitCode::POLICY_FAIL
             }
         }
         Err(e) => {
-            eprintln!("{e}");
+            error!(error = %e, "operation failed");
             ExitCode::RUNTIME_ERROR
         }
     }
