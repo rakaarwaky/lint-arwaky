@@ -95,7 +95,7 @@ impl NamingConventionChecker {
         REGEX_TABLE[idx]
             .get_or_init(|| {
                 let pattern = format!(
-                    r"^[a-z0-9.]+(_[a-z0-9.]+){{{},}}$",
+                    r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$",
                     min_words.saturating_sub(1)
                 );
                 Regex::new(&pattern).ok()
