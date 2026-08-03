@@ -673,15 +673,12 @@ impl FilesystemOrchestrator {
             });
         }
 
+        // Populate parse_metadata (including used_identifiers) via AST parser BEFORE caching.
+        self.parse_all(&mut entries);
+
         let _ = self.files.set(entries.clone());
         let _ = self.imports.set(all_imports);
         let _ = self.warnings.set(all_warnings);
-
-        // Populate parse_metadata (including used_identifiers) via AST parser.
-        if let Some(mut files) = self.files.get().cloned() {
-            self.parse_all(&mut files);
-            let _ = self.files.set(files);
-        }
 
         let index: HashMap<PathBuf, usize> = entries
             .iter()

@@ -34,6 +34,7 @@ pub fn init() -> anyhow::Result<()> {
         .with(filter)
         .with(file_layer)
         .with(console_layer)
+        .with(tracing_error::SpanTrace::capture())
         .try_init()
         .ok();
 
