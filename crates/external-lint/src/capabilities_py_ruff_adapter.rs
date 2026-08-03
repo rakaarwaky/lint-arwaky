@@ -215,6 +215,7 @@ impl RuffAdapter {
 #[cfg(test)]
 mod tests {
     use crate::capabilities_py_ruff_adapter::RuffAdapter;
+    use shared::common::taxonomy_path_vo::FilePath;
     use shared::common::taxonomy_severity_vo::Severity;
     use std::sync::Arc;
 
@@ -224,7 +225,7 @@ mod tests {
             &[]
         }
         fn read_cached(&self, _: &FilePath) -> shared::common::taxonomy_source_vo::ContentString {
-            shared::common::taxonomy_source_vo::ContentString::raw("")
+            shared::common::taxonomy_source_vo::ContentString::new("")
         }
         fn get_file_content(&self, _: &std::path::Path) -> Option<String> {
             None
