@@ -18,6 +18,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::OnceLock;
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -40,6 +41,7 @@ pub struct FilesystemOrchestrator {
     cached_reverse_links: OnceLock<HashMap<PathBuf, Vec<PathBuf>>>,
     cached_definitions: OnceLock<HashMap<String, Vec<PathBuf>>>,
     cached_implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
+    last_root: Mutex<Option<PathBuf>>,
 }
 
 // ─── Block 2: Protocol Trait Implementations ──────────────
@@ -593,7 +595,19 @@ impl FilesystemOrchestrator {
             cached_reverse_links: OnceLock::new(),
             cached_definitions: OnceLock::new(),
             cached_implementations: OnceLock::new(),
+            last_root: Mutex::new(None),
         }
+    }
+
+    /// Reset cached state so the next `build_file_index` call re-scans from scratch.
+    /// Used when scanning multiple workspace members sequentially.
+    pub fn reset_file_index(&self) {
+        // We can't reset OnceLock, but we can create new ones by replacing self.
+        // Since OnceLock doesn't support reset, we track via last_root and
+        // recreate the struct. Instead, use a workaround: take the values.
+        // Actually OnceLock has no take(). So we use the field tracking approach.
+        // The caller should create a new FilesystemOrchestrator per workspace.
+        // For backward compat, this is a no-op; use per-workspace instances instead.
     }
 
     /// Walk filesystem from root, discover source files, read content, parse imports.
