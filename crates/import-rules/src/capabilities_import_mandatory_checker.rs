@@ -5,15 +5,13 @@ use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
-use shared::common::{FilePath, FilePathList, Identity, LintMessage, Severity, SymbolName};
+use shared::common::{FilePath, FilePathList, Identity, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
-use shared::import_rules::format_import_violation;
 use shared::import_rules::taxonomy_import_error::ImportError;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use std::collections::{HashMap, HashSet};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -145,14 +143,12 @@ impl ArchImportMandatoryChecker {
                     1,
                     "AES202",
                     Severity::HIGH,
-                    format_import_violation(&AesImportViolation::MissingImport {
-                        source_layer: LayerNameVO::new(source_layer.to_string()),
-                        required: SymbolName::new(required.clone()),
-                        reason: Some(LintMessage::new(format!(
-                            "File '{}' in layer '{}' is missing required import '{}'.",
-                            basename, source_layer, required
-                        ))),
-                    }),
+                    format!(
+                        "AES202 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
+                            WHY? Layer '{}' must import '{}' to satisfy architectural requirements.\n\
+                            FIX: Add the required import statement.",
+                        source_layer, required, source_layer, required
+                    ),
                 );
                 if !violations.contains(&v) {
                     violations.push(v);
@@ -225,14 +221,12 @@ impl ArchImportMandatoryChecker {
                 1,
                 "AES202",
                 Severity::HIGH,
-                format_import_violation(&AesImportViolation::MissingImport {
-                    source_layer: LayerNameVO::new(rule_layer_str.to_string()),
-                    required: SymbolName::new(required.to_string()),
-                    reason: Some(LintMessage::new(format!(
-                        "File '{}' in scope '{}' is missing required import '{}'.",
-                        basename, rule_layer_str, required
-                    ))),
-                }),
+                format!(
+                    "AES202 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
+                        WHY? Layer '{}' must import '{}' to satisfy architectural requirements.\n\
+                        FIX: Add the required import statement.",
+                    rule_layer_str, required, rule_layer_str, required
+                ),
             );
             if !violations.contains(&v) {
                 violations.push(v);
