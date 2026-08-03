@@ -2,8 +2,12 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020"],
-    "types": ["node"],
+    "lib": [
+      "ES2020"
+    ],
+    "types": [
+      "node"
+    ],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,8 +17,19 @@
     "outDir": "./dist",
     "rootDir": ".",
     "paths": {
-      "calculator-shared/*": ["./shared/*"]
+      "calculator-shared/*": [
+        "./shared/*"
+      ]
     }
   },
-  "include": ["src/**/*.ts", "shared/src/**/*.ts", "addition/src/**/*.ts", "subtraction/src/**/*.ts", "multiplication/src/**/*.ts", "division/src/**/*.ts", "cli/src/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "shared/src/**/*.ts",
+    "addition/src/**/*.ts",
+    "subtraction/src/**/*.ts",
+    "multiplication/src/**/*.ts",
+    "division/src/**/*.ts",
+    "cli/src/**/*.ts",
+    "root_calculator_entry.ts"
+  ]
 }
