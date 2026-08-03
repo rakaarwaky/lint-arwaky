@@ -26,6 +26,9 @@ pub struct NamingOrchestrator {
 
 impl INamingRunnerAggregate for NamingOrchestrator {
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
+        // DEBUG: print layer_map info
+        eprintln!("[DEBUG] layer_map layers: {:?}", self.deps.layer_map.values.keys().map(|k| k.value()).collect::<Vec<_>>());
+        eprintln!("[DEBUG] files count: {}", files.len());
         // Naming checks are path-only — do NOT skip parse failures.
         // Per FRD glossary, skip only UNREADABLE files (empty content).
         let file_paths: Vec<FilePath> = files

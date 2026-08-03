@@ -51,6 +51,9 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
                 layer.as_ref()?;
 
                 let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
+                // DEBUG
+                eprintln!("[DEBUG-SUFFIX] file={} layer={:?} def_exists={}", filename, layer, def.is_some());
+
                 self.check_domain_suffixes_internal(
                     &f_str,
                     filename,
@@ -129,6 +132,11 @@ impl SuffixPrefixChecker {
             .as_ref()
             .map(|l| l.value().to_string())
             .unwrap_or_else(|| "unknown".to_string());
+
+        // DEBUG
+        eprintln!("[DEBUG-INTERNAL] file={} stem={} suffix={:?} layer={} policy='{}' allowed={:?} forbidden={:?}",
+            filename, stem, suffix, layer_display,
+            def.naming.suffix_policy.value, def.naming.allowed_suffix.values, def.naming.forbidden_suffix.values);
 
         // 1. Forbidden suffix check (always enforced regardless of policy)
         if let Some(suf) = &suffix
