@@ -1,6 +1,6 @@
 // Fixture: AES205 — circular dependency B side (contract importing capabilities).
-use capabilities::processor::CapabilitiesProcessor;
+use capabilities::handler::CapabilitiesHandler;
 
 pub fn process() {
-    let _proc = CapabilitiesProcessor::new();
+    let _handler = CapabilitiesHandler::new();
 }
