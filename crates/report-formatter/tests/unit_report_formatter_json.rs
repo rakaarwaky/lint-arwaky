@@ -76,7 +76,8 @@ fn summary_counts_severities() {
     let out = JsonFormatter::new().format_json(&report_with_mixed_results());
     let v: serde_json::Value = serde_json::from_str(out.value()).unwrap();
     let summary = &v["summary"];
-    assert_eq!(summary["total_violations"], 3);
+    // total_violations excludes INFO-severity results (consistent with ScanReport::violation_count)
+    assert_eq!(summary["total_violations"], 2);
     assert_eq!(summary["critical"], 1);
     assert_eq!(summary["medium"], 1);
     assert_eq!(summary["low"], 0);

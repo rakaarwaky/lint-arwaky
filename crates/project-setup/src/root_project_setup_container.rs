@@ -41,12 +41,8 @@ impl SetupContainer {
     }
 }
 
-// ─── Block 3: Default Trait Implementation ────────────────
-
-impl Default for SetupContainer {
-    fn default() -> Self {
-        panic!(
-            "SetupContainer::default() requires a filesystem instance — use SetupContainer::new(filesystem) instead"
-        )
-    }
-}
+// ─── Note: No Default impl ────────────────────────────────
+// SetupContainer requires a filesystem instance — construction is only
+// possible via SetupContainer::new(filesystem). Providing a Default impl
+// would be a bypass violation (AES304) since there is no valid zero-arg
+// construction path.

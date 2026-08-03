@@ -213,14 +213,14 @@ fn auto_fix_contracts_are_send_sync() {
 
 #[test]
 fn file_watch_contracts_are_traits() {
-    // IChangeAnalyzerProtocol is not dyn compatible (has non-object-safe methods)
+    assert_trait::<dyn IChangeAnalyzerProtocol>();
     assert_trait::<dyn IWatchProviderProtocol>();
     assert_trait::<dyn IWatchAggregate>();
 }
 
 #[test]
 fn file_watch_contracts_are_send_sync() {
-    // IChangeAnalyzerProtocol is not dyn compatible
+    assert_send_sync::<dyn IChangeAnalyzerProtocol>();
     assert_send_sync::<dyn IWatchProviderProtocol>();
     assert_send_sync::<dyn IWatchAggregate>();
 }

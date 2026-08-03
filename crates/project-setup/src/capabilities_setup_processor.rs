@@ -3,16 +3,18 @@
 // Implements ISetupManagementProtocol — the capabilities layer for project initialization.
 // Handles:
 //   - Environment file generation (.env with PHANTOM_ROOT for JS tools)
-//   - MCP configuration generation in 3 formats (Claude, Hermes, VS Code)
-//   - Binary discovery for lint-arwaky-mcp (current exe dir, CARGO_HOME, PATH)
+//   - MCP configuration generation in 7 formats (Claude, Cursor, Windsurf, Copilot, Hermes, VS Code, All)
+//   - Binary discovery for lint-arwaky-mcp (env var, current exe dir, CARGO_HOME, PATH)
 //   - Language detection (rust crates/, python pyproject.toml, js package.json)
 //   - Config file template loading from embedded YAML files
 //   - XDG config directory creation
+//   - Pre-flight checks for pip/npm availability
 
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::project_setup::ISetupManagementProtocol;
+use shared::project_setup::contract_setup_protocol::{PackageManagerStatus, PreFlightResult};
 use shared::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,
@@ -48,12 +50,14 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     /// Generate the base mcp.json entry for lint-arwaky.
+    /// Uses the resolved binary path and FRD-aligned alwaysAllow list.
     fn generate_mcp_config(&self) -> McpConfigVO {
+        let bin = self.which_mcp_binary();
         let mut config = HashMap::new();
         let server_entry = serde_json::json!({
-            "command": "lint-arwaky",
+            "command": bin.value(),
             "args": [],
-            "alwaysAllow": ["lint", "execute_command", "health_check", "list_commands", "read_skill_context"]
+            "alwaysAllow": ["execute_command", "list_commands", "read_skill", "health_check", "get_config"]
         });
         config.insert("lint-arwaky".to_string(), server_entry);
         McpConfigVO::new(config)
@@ -67,7 +71,31 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         McpConfigVO::new(config)
     }
 
-    /// Generate Hermes/Antigravity MCP config format.
+    /// Generate Cursor MCP config format.
+    fn mcp_config_cursor(&self) -> McpConfigVO {
+        let base = self.generate_mcp_config();
+        let mut config = HashMap::new();
+        config.insert("mcpServers".to_string(), serde_json::json!(base.value()));
+        McpConfigVO::new(config)
+    }
+
+    /// Generate Windsurf MCP config format.
+    fn mcp_config_windsurf(&self) -> McpConfigVO {
+        let base = self.generate_mcp_config();
+        let mut config = HashMap::new();
+        config.insert("mcpServers".to_string(), serde_json::json!(base.value()));
+        McpConfigVO::new(config)
+    }
+
+    /// Generate Copilot MCP config format.
+    fn mcp_config_copilot(&self) -> McpConfigVO {
+        let base = self.generate_mcp_config();
+        let mut config = HashMap::new();
+        config.insert("mcpServers".to_string(), serde_json::json!(base.value()));
+        McpConfigVO::new(config)
+    }
+
+    /// Generate Hermes/Antigravity MCP config format (base config directly).
     fn mcp_config_hermes(&self) -> McpConfigVO {
         self.generate_mcp_config()
     }
@@ -83,8 +111,47 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         McpConfigVO::new(config)
     }
 
-    /// Resolve the path to the lint-arwaky-mcp binary.
+    /// Generate MCP configs for all supported clients in one object (FR-001).
+    fn mcp_config_all(&self) -> McpConfigVO {
+        let mut config = HashMap::new();
+        config.insert(
+            "claude-code".to_string(),
+            serde_json::json!(self.mcp_config_claude().value()),
+        );
+        config.insert(
+            "cursor".to_string(),
+            serde_json::json!(self.mcp_config_cursor().value()),
+        );
+        config.insert(
+            "windsurf".to_string(),
+            serde_json::json!(self.mcp_config_windsurf().value()),
+        );
+        config.insert(
+            "copilot".to_string(),
+            serde_json::json!(self.mcp_config_copilot().value()),
+        );
+        config.insert(
+            "hermes".to_string(),
+            serde_json::json!(self.mcp_config_hermes().value()),
+        );
+        config.insert(
+            "vscode".to_string(),
+            serde_json::json!(self.mcp_config_vscode().value()),
+        );
+        McpConfigVO::new(config)
+    }
+
+    /// Resolve the path to the lint-arwaky-mcp binary (FR-001 priority order).
     fn which_mcp_binary(&self) -> McpBinaryNameVO {
+        // Priority 1: LINT_ARWAKY_MCP_BIN env var (must point to existing file)
+        if let Ok(env_bin) = std::env::var("LINT_ARWAKY_MCP_BIN") {
+            if !env_bin.is_empty() && std::path::Path::new(&env_bin).is_file() {
+                return McpBinaryNameVO::new(env_bin);
+            }
+            // Non-file path or empty → fall through to priority 2
+        }
+
+        // Priority 2: Sibling of current executable
         let exe_candidate = std::env::current_exe()
             .ok()
             .and_then(|p| {
@@ -92,30 +159,23 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
                     .map(|d| d.join("lint-arwaky-mcp").to_string_lossy().to_string())
             })
             .unwrap_or_default();
-        let cargo_home = match std::env::var("CARGO_HOME") {
-            Ok(home) => home,
-            Err(_) => "~/.cargo".to_string(),
-        };
-        let candidates = [
-            exe_candidate,
-            format!("{}/bin/lint-arwaky-mcp", cargo_home),
-            "lint-arwaky-mcp".to_string(),
-        ];
+
+        // Priority 3: CARGO_HOME/bin/lint-arwaky-mcp
+        let cargo_home = std::env::var("CARGO_HOME").unwrap_or_else(|_| "~/.cargo".to_string());
+        let cargo_home_candidate = format!("{}/bin/lint-arwaky-mcp", cargo_home);
+
+        // Priority 4: Bare name (relies on OS PATH resolution at runtime)
+        let bare_name = "lint-arwaky-mcp".to_string();
+
+        let candidates = [exe_candidate, cargo_home_candidate, bare_name];
         for c in &candidates {
             if !c.is_empty() && std::path::Path::new(c).exists() {
                 return McpBinaryNameVO::new(c.clone());
             }
         }
-        let which_output = if let Ok(path) = std::env::var("PATH") {
-            path.split(':')
-                .map(|p| std::path::Path::new(p).join("lint-arwaky-mcp"))
-                .find(|p| p.is_file())
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_else(|| "lint-arwaky-mcp".to_string())
-        } else {
-            "lint-arwaky-mcp".to_string()
-        };
-        McpBinaryNameVO::new(which_output)
+
+        // Fall back to bare name for runtime PATH resolution
+        McpBinaryNameVO::new("lint-arwaky-mcp".to_string())
     }
 
     fn install_python_adapters(&self) -> SuccessStatus {
@@ -139,15 +199,15 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         SuccessStatus::new(res.is_ok())
     }
 
-    fn detect_language(&self) -> ProjectLanguageVO {
+    /// Detect the primary language. Returns None when no languages are detected
+    /// (no default — per FR-003 "No default language" rule).
+    fn detect_language(&self) -> Option<ProjectLanguageVO> {
         let langs = self.detect_languages();
-        langs
-            .values
-            .into_iter()
-            .next()
-            .unwrap_or_else(|| ProjectLanguageVO::new("rust"))
+        langs.values.into_iter().next()
     }
 
+    /// Detect ALL languages present in the project (FR-003).
+    /// Returns empty list when no languages found — no default language.
     fn detect_languages(&self) -> ProjectLanguagesVO {
         let mut found_rust = false;
         let mut found_python = false;
@@ -193,19 +253,78 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         if found_javascript {
             langs.push(ProjectLanguageVO::new("javascript"));
         }
-        if langs.is_empty() {
-            langs.push(ProjectLanguageVO::new("rust"));
-        }
+        // FR-003: No default language — return empty list when nothing detected
         ProjectLanguagesVO::new(langs)
     }
 
-    fn get_config_template(&self, language: &str) -> &'static str {
+    /// Get an embedded config template for the given language (FR-005).
+    /// Returns `Err(SetupError::UnknownLanguage)` for unsupported languages.
+    fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError> {
         match language {
-            "rust" => include_str!("../../shared/config/lint_arwaky.config.rust.yaml"),
-            "python" => include_str!("../../shared/config/lint_arwaky.config.python.yaml"),
-            "javascript" => include_str!("../../shared/config/lint_arwaky.config.javascript.yaml"),
-            _ => include_str!("../../shared/config/lint_arwaky.config.rust.yaml"),
+            "rust" => Ok(include_str!(
+                "../../shared/config/lint_arwaky.config.rust.yaml"
+            )),
+            "python" => Ok(include_str!(
+                "../../shared/config/lint_arwaky.config.python.yaml"
+            )),
+            "javascript" => Ok(include_str!(
+                "../../shared/config/lint_arwaky.config.javascript.yaml"
+            )),
+            "typescript" => Ok(include_str!(
+                "../../shared/config/lint_arwaky.config.typescript.yaml"
+            )),
+            _ => Err(SetupError::unknown_language(
+                "rust, python, javascript, typescript",
+            )),
         }
+    }
+
+    /// Pre-flight check: verify package managers are available (FR-007).
+    fn pre_flight_check(&self) -> PreFlightResult {
+        let mut results = Vec::new();
+
+        // Check pip
+        let pip_ok = std::process::Command::new("pip")
+            .arg("--version")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false)
+            || std::process::Command::new("python3")
+                .args(["-m", "pip", "--version"])
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .status()
+                .map(|s| s.success())
+                .unwrap_or(false);
+        results.push(PackageManagerStatus {
+            tool: "pip".to_string(),
+            status: if pip_ok {
+                "ok".to_string()
+            } else {
+                "not_found".to_string()
+            },
+        });
+
+        // Check npm
+        let npm_ok = std::process::Command::new("npm")
+            .arg("--version")
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .map(|s| s.success())
+            .unwrap_or(false);
+        results.push(PackageManagerStatus {
+            tool: "npm".to_string(),
+            status: if npm_ok {
+                "ok".to_string()
+            } else {
+                "not_found".to_string()
+            },
+        });
+
+        results
     }
 
     fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult {

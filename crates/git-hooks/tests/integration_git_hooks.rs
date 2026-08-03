@@ -7,8 +7,8 @@ use tempfile::TempDir;
 
 fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
     let tmp = TempDir::new().unwrap();
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let container = GitContainer::new(fp, filesystem);
     (tmp, container.aggregate())
@@ -17,8 +17,8 @@ fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
 #[test]
 fn container_creates_with_filesystem() {
     let tmp = TempDir::new().unwrap();
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let _container = GitContainer::new(fp, filesystem);
 }

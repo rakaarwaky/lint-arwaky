@@ -48,7 +48,13 @@ flowchart TD
 | --------------------------- | -------------------------- | ------------------- | ------------------------------------------------------------ |
 | **AES violations**        | Internal rule crates     | AES101–AES506    | `AES201 CRITICAL surface → capabilities import forbidden` |
 | **External lint results** | External linter adapters | Tool-native codes | `clippy::needless_return`, `ruff::E501`                    |
-| **Diagnostics**           | Report input (diagnostics list) | `PARSE_WARN`      | `File skipped: parse failure — syntax error`              |
+| **PARSE_WARN**            | Report input (`report.results` with PARSE_ prefix) or `report.diagnostics` | `PARSE_WARN` | `File skipped: parse failure — syntax error` |
+
+> **PARSE_WARN dual representation**: PARSE_WARN entries may arrive via
+> `report.results` (as `LintResult` with code starting with `PARSE_`) or
+> via `report.diagnostics` (as `PipelineDiagnostic`). All formatters
+> handle both paths and render them consistently. PARSE_WARN is always
+> visually distinct from AES violations.
 
 All formatters handle all three categories.
 
@@ -68,7 +74,7 @@ All formatters handle all three categories.
   - Output includes:
     - Per-violation detail: severity badge, rule code, file:line, message.
     - Violation counts grouped by rule code, sorted by count (descending).
-    - Severity breakdown: CRITICAL / HIGH / MEDIUM / LOW counts.
+    - Severity breakdown: CRITICAL / HIGH / MEDIUM / LOW / INFO counts.
     - External lint results section (tool-native codes, grouped by tool).
     - Diagnostics section (PARSE_WARN warnings, if any).
     - Total violation count and compliance score (if available).
@@ -416,7 +422,7 @@ All formatters handle all three categories.
 | **ScanReport**                 | Aggregated results + diagnostics from a full pipeline run                                  |
 | **Report Formatter Protocol**  | Interface for individual format implementations (text, json, sarif, junit)                 |
 | **Report Formatter Aggregate** | Interface for the orchestrator that routes to the correct formatter                        |
-| **PARSE_WARN**                 | Non-AES warning diagnostic for files that failed to parse. Included in all report formats. |
+| **PARSE_WARN**                 | Non-AES warning for files that failed to parse. May appear as `LintResult` (code `PARSE_*`) in `report.results` or as `PipelineDiagnostic` in `report.diagnostics`. All formatters handle both paths. |
 | **Tool-native code**           | External linter rule identifier (e.g.,`clippy::needless_return`, `ruff::E501`)             |
 
 ---

@@ -170,17 +170,14 @@ flowchart TD
 
 ### FR-005: Duplicate Code Detection (AES305)
 
-- **Description**: Compares code blocks across all workspace files and flags files with excessive content overlap. Import lines, blank lines, and comment-only lines are excluded before comparison to avoid false positives from boilerplate.
+- **Description**: Compares code blocks across all workspace files and flags files with excessive content overlap.
 - **Input**: File data from filesystem crate (path + content), architecture configuration.
 - **Output**: AES305 diagnostic for files exceeding duplication threshold.
 - **Business Rules**:
 
   - **Pre-processing** (before window comparison):
 
-    1. Remove import/use lines (Rust `use ...`, Python `import ...` / `from ... import ...`, TS/JS `import ...` / `export ... from ...`).
-    2. Remove blank lines (whitespace-only).
-    3. Remove comment-only lines (Rust `//`, Python `#`, TS/JS `//`, block comment lines `/* */`).
-    4. Normalize remaining lines: trim whitespace, strip non-alphanumeric characters.
+    1. Normalize each line: trim whitespace, keep only alphanumeric and whitespace characters (strip punctuation, operators, etc.).
   - **Algorithm**: Sliding window hash-based comparison on normalized lines.
 
     - Window size (`min_lines`): read from AES305 rule config, default 10 lines.
@@ -191,11 +188,10 @@ flowchart TD
   - Pre-read entries avoid double I/O (file content provided by filesystem crate).
 - **Edge Cases**:
 
-  - Files shorter than `min_lines` (after pre-processing) → skipped (no windows to compare).
+  - Files shorter than `min_lines` → skipped (no windows to compare).
   - All files identical → each file gets one violation.
-  - Generated code or boilerplate → no special exclusion (but imports/comments/blank lines are already excluded).
+  - Generated code or boilerplate → no special exclusion.
   - Single file in workspace → no violations (no other files to compare).
-  - Files that become empty after pre-processing (only imports + comments) → skipped.
 - **Error Handling**: Emit AES305 with the shared percentage, total windows, and list of similar files (up to 5).
 
 ---
@@ -221,9 +217,11 @@ flowchart TD
 
   - The configuration system in the shared crate — reads architecture configuration YAML for per-rule thresholds, forbidden bypass patterns, ignored paths.
   - The taxonomy definitions in the shared crate — layer definition for min/max lines, mandatory class toggle, exception lists.
-  - The bypass detection utility in the shared crate — substring matching, string/char position checks, `cfg(test)` skip logic.
-  - The language mapping utility in the shared crate — detects source language from file extension.
-  - The code duplication detection utility in the shared crate — line pre-processing, window normalization, hash-based dedup.
+  - The bypass detection utility in this crate (`utility_bypass_detector`) — substring matching, string/char position checks, `cfg(test)` skip logic.
+  - The language mapping utility in this crate (`utility_language_mapper`) — detects source language from file extension.
+  - The code duplication detection utility in this crate (`utility_code_duplication_detector`) — line normalization, window hashing, hash-based dedup.
+  - The column index utility in this crate (`utility_column_index`) — column position computation.
+  - The mandatory checker utility in this crate (`utility_mandatory_checker`) — symbol detection helpers.
   - The compliance score utility in the shared crate — compliance score calculation.
 - **External**:
 
@@ -323,12 +321,10 @@ flowchart TD
 | --- | ------------------------------------------------------------------ | ------------------------------------ | -------- |
 | 1 | Two files with 80% identical code blocks                         | AES305 violation (both files)      | AES305 |
 | 2 | Two files with 30% overlap, threshold = 50%                      | No violation                       | pass   |
-| 3 | File shorter than`min_lines` after pre-processing                | No violation — skipped            | pass   |
+| 3 | File shorter than`min_lines`                                    | No violation — skipped            | pass   |
 | 4 | Single file in workspace                                         | No violation (nothing to compare)  | pass   |
-| 5 | Two files identical except imports                               | No violation (imports excluded)    | pass   |
-| 6 | Two files identical except comments                              | No violation (comments excluded)   | pass   |
-| 7 | Three files all identical                                        | AES305 violation (all three files) | AES305 |
-| 8 | File with only imports and comments (empty after pre-processing) | No violation — skipped            | pass   |
+| 5 | Three files all identical                                        | AES305 violation (all three files) | AES305 |
+| 6 | File with only whitespace lines (very short after normalization) | No violation — skipped            | pass   |
 
 ### Configuration
 
@@ -348,7 +344,7 @@ flowchart TD
 - Rules are configurable via YAML (the architecture configuration); default thresholds apply when config values are absent.
 - The crate receives pre-read file data (path + content) from the external filesystem crate. No file I/O or AST parsing is performed internally.
 - Files that cannot be read by the filesystem crate are excluded from the returned list and not checked.
-- Duplicate detection uses hash-based window comparison on normalized lines (not AST-level). Import lines, blank lines, and comment-only lines are excluded before comparison.
+- Duplicate detection uses hash-based window comparison on normalized lines (not AST-level). Lines are normalized by trimming whitespace and keeping only alphanumeric and whitespace characters.
 - Bypass detection is language-aware (Rust, Python, JavaScript, TypeScript each have language-specific patterns). All patterns are flagged in both code and comments. Patterns inside string literals are not flagged.
 - `#[cfg(test)]` blocks are universally skipped for bypass detection and dead inheritance scanning (unwrap/panic/stubs are normal in tests).
 - Line count includes all lines (blank, comments, docstrings). No exclusion for AES301/AES302.
@@ -414,7 +410,9 @@ AES3XX:
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - **Filesystem crate** (external): filesystem aggregate and file walker
-- Shared bypass detection utility
-- Shared duplication detection utility
-- Shared language mapping utility
+- `utility_bypass_detector` (this crate): bypass pattern matching helpers
+- `utility_code_duplication_detector` (this crate): duplication analysis functions
+- `utility_language_mapper` (this crate): language detection from file extension
+- `utility_column_index` (this crate): column position computation
+- `utility_mandatory_checker` (this crate): symbol detection helpers
 - Shared compliance score utility

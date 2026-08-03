@@ -9,19 +9,14 @@ fn make_dry_run_orch() -> std::sync::Arc<dyn LintFixOrchestratorAggregate> {
         .orchestrator();
     let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    container.orchestrator_with_filesystem(true, filesystem)
+    container.orchestrator_with_filesystem(filesystem)
 }
 
 #[test]
 fn aes201_forbidden_import_is_fixable() {
-    // AES201 violations are import-related and should be fixable.
-    // The auto-fix processor considers AES201, AES304, AES203 as fixable codes.
     let orch = make_dry_run_orch();
     let tmp = TempDir::new().unwrap();
 
-    // Write a file with a known-forbidden import pattern.
-    // The forbidden import list depends on the config, but a basic Rust
-    // file with an unused import will be picked up.
     std::fs::write(
         tmp.path().join("aes201_target.rs"),
         "use std::io::Read;\nfn main() {}\n",
@@ -35,14 +30,13 @@ fn aes201_forbidden_import_is_fixable() {
     )
     .unwrap();
 
-    let result = orch.execute(&fp);
+    let result = orch.execute(&fp, true); // per-request dry_run
     assert!(
         result.is_success(),
         "AES201 fix dry-run should succeed: {}",
         result
     );
 
-    // The output should indicate the fix pipeline ran
     let output = result.output.value();
     assert!(
         output.contains("Dry-run")
@@ -71,8 +65,7 @@ fn aes201_output_mentions_fixable_codes() {
     )
     .unwrap();
 
-    let result = orch.execute(&fp);
-    // The dry-run output should mention AES violations
+    let result = orch.execute(&fp, true); // per-request dry_run
     let output = result.output.value();
     assert!(
         output.contains("Dry-run")

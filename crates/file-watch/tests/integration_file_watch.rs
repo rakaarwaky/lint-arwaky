@@ -23,14 +23,14 @@ fn container_provider_accessible() {
 fn container_aggregate_needs_linter() {
     let container = FileWatchContainer::new();
     // Need a linter to create the aggregate
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let _agg = container.aggregate(qa.code_analysis_linter());
 }
 
 #[test]
 fn container_aggregate_is_trait_object() {
     let container = FileWatchContainer::new();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let agg = container.aggregate(qa.code_analysis_linter());
     let _: Arc<dyn IWatchAggregate> = agg;
 }

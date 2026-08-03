@@ -8,7 +8,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_detector() -> WorkspaceDetector {
-    WorkspaceDetector::new(common::make_fs())
+    WorkspaceDetector::new()
 }
 fn create_file(dir: &std::path::Path, name: &str) {
     fs::write(dir.join(name), "").unwrap();
@@ -265,10 +265,47 @@ fn detect_unknown_for_file_not_in_workspace() {
 
 #[test]
 fn new_creates_equivalent_instances() {
-    let a = WorkspaceDetector::new(common::make_fs());
-    let b = WorkspaceDetector::new(common::make_fs());
+    let a = WorkspaceDetector::new();
+    let b = WorkspaceDetector::new();
     let tmp = TempDir::new().unwrap();
     create_file(tmp.path(), "Cargo.toml");
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     assert_eq!(a.detect(&fp), b.detect(&fp));
+}
+
+// TA-7: FR-004 scenario 4 — root's parent is a workspace directory
+#[test]
+fn discover_members_root_parent_is_workspace_dir() {
+    let tmp = TempDir::new().unwrap();
+    // Create crates/my-crate structure
+    let crate_dir = tmp.path().join("crates").join("my-crate");
+    fs::create_dir_all(&crate_dir).unwrap();
+    // Pass crates/my-crate as root — its parent (crates) is a workspace dir
+    let fp = FilePath::new(crate_dir.to_string_lossy().to_string()).unwrap();
+    let members = make_detector().discover_workspace_members(&fp);
+    // Should return root as a single-member workspace
+    assert_eq!(members.len(), 1);
+    assert_eq!(members[0], fp);
+}
+
+#[test]
+fn discover_members_root_parent_is_packages_dir() {
+    let tmp = TempDir::new().unwrap();
+    let pkg_dir = tmp.path().join("packages").join("my-pkg");
+    fs::create_dir_all(&pkg_dir).unwrap();
+    let fp = FilePath::new(pkg_dir.to_string_lossy().to_string()).unwrap();
+    let members = make_detector().discover_workspace_members(&fp);
+    assert_eq!(members.len(), 1);
+    assert_eq!(members[0], fp);
+}
+
+#[test]
+fn discover_members_root_parent_is_modules_dir() {
+    let tmp = TempDir::new().unwrap();
+    let mod_dir = tmp.path().join("modules").join("my-mod");
+    fs::create_dir_all(&mod_dir).unwrap();
+    let fp = FilePath::new(mod_dir.to_string_lossy().to_string()).unwrap();
+    let members = make_detector().discover_workspace_members(&fp);
+    assert_eq!(members.len(), 1);
+    assert_eq!(members[0], fp);
 }

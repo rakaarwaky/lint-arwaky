@@ -22,7 +22,7 @@ fn auto_fix_orchestrator_creates() {
         .orchestrator();
     let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    let _orch = container.orchestrator_with_filesystem(true, filesystem);
+    let _orch = container.orchestrator_with_filesystem(filesystem);
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -38,7 +38,7 @@ fn auto_fix_orchestrator_is_trait_object() {
         .orchestrator();
     let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    let orch = container.orchestrator_with_filesystem(true, filesystem);
+    let orch = container.orchestrator_with_filesystem(filesystem);
     let _: std::sync::Arc<dyn LintFixOrchestratorAggregate> = orch;
     let elapsed = start.elapsed();
     assert!(

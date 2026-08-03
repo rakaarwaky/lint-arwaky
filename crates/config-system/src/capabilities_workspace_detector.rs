@@ -1,16 +1,13 @@
 use shared::common::FilePath;
 use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
-// PURPOSE: WorkspaceDetector — thin wrapper around filesystem's IFilesystemAggregate
+// PURPOSE: WorkspaceDetector — detects workspace type from marker files
 // Maps ConfigLanguage ↔ WorkspaceType and adds discover_workspace_members
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-pub struct WorkspaceDetector {
-    filesystem: Arc<dyn IFilesystemAggregate>,
-}
+pub struct WorkspaceDetector;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
@@ -92,8 +89,8 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl WorkspaceDetector {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { filesystem }
+    pub fn new() -> Self {
+        Self
     }
 }
 
