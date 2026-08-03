@@ -7,8 +7,10 @@
 // abstract subprocess calls behind a contract trait.
 use shared::cli_commands::LintResult;
 use shared::common::{FilePath, GitBranchName};
+use shared::git_hooks::GitHooksAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use std::process::Command;
+use std::sync::Arc;
 
 /// Git-diff scan outcome — formatted by CLI surfaces.
 #[derive(Debug, Clone)]
@@ -51,6 +53,57 @@ pub fn collect_git_diff(
         total_violations: results.len(),
         results,
     })
+}
+
+/// Hook install/uninstall outcome — formatted by CLI/MCP/TUI surfaces.
+#[derive(Debug, Clone)]
+pub struct HookReport {
+    pub action: String,
+    pub success: bool,
+    pub message: String,
+}
+
+/// Install pre-commit hook via GitHooksAggregate.
+pub fn collect_install_hook(
+    git_hooks: Arc<dyn GitHooksAggregate>,
+    executable_path: &FilePath,
+) -> Result<HookReport, String> {
+    match git_hooks.install_hook(executable_path) {
+        Ok(status) => Ok(HookReport {
+            action: "install".to_string(),
+            success: status.value(),
+            message: if status.value() {
+                "Pre-commit hook installed successfully".to_string()
+            } else {
+                "Pre-commit hook installation reported failure".to_string()
+            },
+        }),
+        Err(e) => Ok(HookReport {
+            action: "install".to_string(),
+            success: false,
+            message: format!("Failed to install hook: {e}"),
+        }),
+    }
+}
+
+/// Uninstall pre-commit hook via GitHooksAggregate.
+pub fn collect_uninstall_hook(git_hooks: Arc<dyn GitHooksAggregate>) -> Result<HookReport, String> {
+    match git_hooks.uninstall_hook() {
+        Ok(status) => Ok(HookReport {
+            action: "uninstall".to_string(),
+            success: status.value(),
+            message: if status.value() {
+                "Pre-commit hook removed successfully".to_string()
+            } else {
+                "Pre-commit hook removal reported failure".to_string()
+            },
+        }),
+        Err(e) => Ok(HookReport {
+            action: "uninstall".to_string(),
+            success: false,
+            message: format!("Failed to uninstall hook: {e}"),
+        }),
+    }
 }
 
 /// Get list of changed files from git diff using std::process::Command.

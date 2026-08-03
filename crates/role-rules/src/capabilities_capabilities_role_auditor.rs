@@ -368,53 +368,43 @@ impl CapabilitiesRoleChecker {
         }
     }
 
+    fn fmt_msg(v: &AesRoleViolation) -> String {
+        Self::fmt(v)
+    }
+
     fn fmt(v: &AesRoleViolation) -> String {
         match v {
             AesRoleViolation::CapabilityTooManyTypes { count, reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Max 3 types (struct/enum) allowed in capabilities. Refactor excess types to taxonomy layer.".to_string(),
+                let why = reason.as_ref().map_or(
+                    "Capabilities must have at most 3 type declarations.".to_string(),
                     |r| r.to_string(),
                 );
                 format!(
-                    "AES403 CAPABILITY_ROLE: Too many types ({count} struct/enum) in capabilities file.\n\
-                     WHY? {why}\n\
-                     FIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer."
+                    "AES403 CAPABILITIES_ROLE: Too many types ({count}).\n\
+                        WHY? {why}\n\
+                        FIX: Split into multiple capability files."
                 )
             }
             AesRoleViolation::CapabilityNoImplementor { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "At least one struct must implement a _protocol trait (impl Trait for Struct). Internal helper structs are allowed.".to_string(),
+                let why = reason.as_ref().map_or(
+                    "No struct implements a protocol trait in this capability file."
+                        .to_string(),
                     |r| r.to_string(),
                 );
                 format!(
-                    "AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\n\
-                     WHY? {why}\n\
-                     FIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers."
+                    "AES403 CAPABILITIES_ROLE: No protocol implementor found.\n\
+                        WHY? {why}\n\
+                        FIX: Add at least one struct implementing a _protocol trait."
                 )
             }
-            AesRoleViolation::CapabilityNoProtocol { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "file has 'capabilities_' prefix but no _protocol import — this file is broken/useless.".to_string(),
-                    |r| r.to_string(),
-                );
+            other => {
+                let why = format!("Unhandled capability violation variant: {other:?}");
                 format!(
-                    "AES403 CAPABILITY_ROLE: Capabilities file has no _protocol implementation.\n\
-                     WHY? {why}\n\
-                     FIX: Rename the file if it is not a capability, delete if obsolete, or create the required contract protocol first then implement it here."
+                    "AES403 CAPABILITIES_ROLE: Capability role violation.\n\
+                        WHY? {why}\n\
+                        FIX: Ensure capability follows composition conventions."
                 )
             }
-            AesRoleViolation::SingleBottleneck { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Routing all commands to a single capability violates high-level decomposition and creates a single bottleneck.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES403 CAPABILITY_ROLE: All orchestrator dispatch routes route to a single capability.\n\
-                     WHY? {why}\n\
-                     FIX: Distribute logic or route commands to multiple distinct capabilities."
-                )
-            }
-            _ => unreachable!("CapabilitiesRoleChecker::fmt called with non-capability violation"),
         }
     }
 }

@@ -147,6 +147,47 @@ impl TaxonomyRoleChecker {
         "symbol",
     ];
 
+    fn fmt_msg(v: &AesRoleViolation) -> String {
+        Self::fmt(v)
+    }
+
+    fn fmt(v: &AesRoleViolation) -> String {
+        match v {
+            AesRoleViolation::PrimitiveUsage { primitive, reason } => {
+                let why = reason.as_ref().map_or(
+                    "Primitive type used in taxonomy layer — domain types must use VOs."
+                        .to_string(),
+                    |r| r.to_string(),
+                );
+                format!(
+                    "AES401 TAXONOMY_ROLE: Primitive type '{}' used in taxonomy file.\n\
+                        WHY? {why}\n\
+                        FIX: Wrap primitive in a dedicated Value Object.",
+                    primitive.value()
+                )
+            }
+            AesRoleViolation::ConstantPurity { reason } => {
+                let why = reason.as_ref().map_or(
+                    "Non-constant declaration found in constant file.".to_string(),
+                    |r| r.to_string(),
+                );
+                format!(
+                    "AES401 TAXONOMY_ROLE: Constant purity violation.\n\
+                        WHY? {why}\n\
+                        FIX: Only const/static declarations allowed in taxonomy constant files."
+                )
+            }
+            other => {
+                let why = format!("Unhandled taxonomy violation variant: {other:?}");
+                format!(
+                    "AES401 TAXONOMY_ROLE: Taxonomy role violation.\n\
+                        WHY? {why}\n\
+                        FIX: Ensure file follows taxonomy conventions."
+                )
+            }
+        }
+    }
+
     fn scan_primitives(file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
         let content = &file.content;
@@ -211,13 +252,6 @@ impl TaxonomyRoleChecker {
                             inner_trimmed == prim_clean || inner_trimmed.starts_with(prim_clean)
                         }) {
                             let primitive_clean = p.trim_end_matches('<');
-                            let lang = if is_rs {
-                                shared::common::Language::Rust
-                            } else if is_py {
-                                shared::common::Language::Python
-                            } else {
-                                shared::common::Language::JavaScript
-                            };
                             let msg = Self::fmt(&AesRoleViolation::PrimitiveUsage {
                                 primitive: SymbolName::new(primitive_clean),
                                 reason: Some(LintMessage::new(format!(
@@ -246,13 +280,6 @@ impl TaxonomyRoleChecker {
                             .starts_with(|c: char| c.is_alphanumeric() || c == '_'))
                 {
                     let primitive_clean = p.trim_end_matches('<');
-                    let lang = if is_rs {
-                        shared::common::Language::Rust
-                    } else if is_py {
-                        shared::common::Language::Python
-                    } else {
-                        shared::common::Language::JavaScript
-                    };
                     let msg = Self::fmt(&AesRoleViolation::PrimitiveUsage {
                         primitive: SymbolName::new(primitive_clean),
                         reason: Some(LintMessage::new(format!(
@@ -261,7 +288,7 @@ impl TaxonomyRoleChecker {
                             i + 1,
                             path_str
                         ))),
-                    });
+                    }, shared::common::Language::Rust);
 
                     violations.push(LintResult::new_arch(
                         &path_str,
@@ -493,7 +520,7 @@ impl TaxonomyRoleChecker {
                             i + 1,
                             path_str
                         ))),
-                    }),
+                    }, ),
                 ));
             }
         }
@@ -504,35 +531,6 @@ impl TaxonomyRoleChecker {
             stem.ends_with(suffix)
         } else {
             false
-        }
-    }
-
-    /// Format violation message inline — checker-owned, not in shared VO.
-    fn fmt(v: &AesRoleViolation) -> String {
-        match v {
-            AesRoleViolation::ConstantPurity { reason } => {
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or_else(|| {
-                    "Constant taxonomy modules must only contain pure constant or static values \
-                     to maintain value-level immutability.".to_string()
-                });
-                format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\n\
-                        WHY? {why}\n\
-                        FIX: Move the non-constant code to the appropriate layer, or convert it \
-                        to a constant/static declaration.")
-            }
-            AesRoleViolation::PrimitiveUsage { primitive, reason } => {
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or_else(|| {
-                    format!("Direct primitive types (like '{primitive}') are forbidden in taxonomy \
-                     entities, errors, and events to maintain strict value object boundaries \
-                     and avoid primitive obsession.")
-                });
-                format!("AES401 TAXONOMY_ROLE: Direct primitive '{primitive}' in taxonomy entity, \
-                        error, or event.\n\
-                        WHY? {why}\n\
-                        FIX: Replace the primitive type with a domain Value Object (VO) or \
-                        constant from the taxonomy layer.")
-            }
-            _ => unreachable!("TaxonomyRoleChecker only handles ConstantPurity and PrimitiveUsage"),
         }
     }
 }

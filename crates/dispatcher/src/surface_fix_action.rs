@@ -69,3 +69,49 @@ pub fn collect_fix(
         fixable,
     })
 }
+
+/// Direct fix — takes the orchestrator directly instead of a factory closure.
+/// For surfaces that hold a single pre-built orchestrator (e.g. TUI).
+pub fn collect_fix_direct(
+    path: Option<FilePath>,
+    dry_run: bool,
+    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>,
+) -> Result<FixReport, String> {
+    let project_path = match path {
+        Some(p) => p,
+        None => FilePath::new(".").unwrap_or_default(),
+    };
+
+    let results = code_analysis_linter.run_code_analysis(&project_path);
+
+    let fixable: Vec<LintResult> = results
+        .iter()
+        .filter(|r| {
+            let code_str = r.code.code();
+            code_str == "AES101" || code_str == "AES203" || code_str == "AES304"
+        })
+        .cloned()
+        .collect();
+
+    let fix_result = fix_orchestrator.execute(&project_path, dry_run);
+
+    let (after_count, fixed_count, success) = if dry_run {
+        (results.len(), 0usize, true)
+    } else {
+        let after_results = code_analysis_linter.run_code_analysis(&project_path);
+        let fixed_count = results.len().saturating_sub(after_results.len());
+        (after_results.len(), fixed_count, after_results.is_empty())
+    };
+
+    Ok(FixReport {
+        project_path: project_path.value,
+        dry_run,
+        before_count: results.len(),
+        after_count,
+        fixed_count,
+        output: fix_result.output.value,
+        success,
+        fixable,
+    })
+}

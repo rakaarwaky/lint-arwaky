@@ -6,11 +6,15 @@
 use dispatcher::surface_check_action::{ScanOptions, collect_scan};
 use dispatcher::surface_ci_action::{CiScanDeps, collect_ci};
 use dispatcher::surface_config_action::collect_config_show;
+use dispatcher::surface_fix_action::collect_fix_direct;
+use dispatcher::surface_git_action::{collect_install_hook, collect_uninstall_hook};
 use dispatcher::surface_maintenance_action::{
     collect_dependencies, collect_doctor, collect_security,
 };
 use dispatcher::surface_orphan_action::{OrphanScanDeps, collect_orphan};
+use dispatcher::surface_plugin_action::collect_adapters_detailed;
 use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
+use dispatcher::surface_version_action::collect_version;
 
 use shared::auto_fix::LintFixOrchestratorAggregate;
 use shared::common::FilePath;
@@ -25,7 +29,7 @@ use shared::orphan_rules::IOrphanAggregate;
 use shared::project_setup::SetupManagementAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
-use shared::tui::{ActionFlags, AdapterInfo, LintExecutionResult};
+use shared::tui::{ActionFlags, LintExecutionResult};
 
 use std::sync::Arc;
 
@@ -101,25 +105,30 @@ impl SurfaceLintExecutor {
     }
 
     pub fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
-        let mode = if flags.dry_run { "DRY-RUN" } else { "LIVE" };
-        match &self.fix_orchestrator {
-            Some(orchestrator) => {
-                let file_path = FilePath::new(path.to_string()).unwrap_or_default();
-                let fix_result = orchestrator.execute(&file_path, flags.dry_run);
-                let output = format!("[{}] {}", mode, fix_result.output);
-                if fix_result.is_success() {
-                    LintExecutionResult::success(output, 0)
+        let fix_orch = match &self.fix_orchestrator {
+            Some(o) => o.clone(),
+            None => {
+                let output = format!(
+                    "[{}] Fix scan on {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.",
+                    if flags.dry_run { "DRY-RUN" } else { "LIVE" },
+                    path,
+                    path
+                );
+                return LintExecutionResult::failure(output);
+            }
+        };
+        let fp = Some(FilePath::new(path.to_string()).unwrap_or_default());
+        match collect_fix_direct(fp, flags.dry_run, self.code_analysis.clone(), fix_orch) {
+            Ok(report) => {
+                let mode = if report.dry_run { "DRY-RUN" } else { "LIVE" };
+                let output = format!("[{}] {}", mode, report.output);
+                if report.success {
+                    LintExecutionResult::success(output, report.fixed_count)
                 } else {
                     LintExecutionResult::failure(output)
                 }
             }
-            None => {
-                let output = format!(
-                    "[{}] Fix scan on {}\nFix application requires FixOrchestrator aggregate.\nUse CLI `lint-arwaky-cli fix {}` for full fix pipeline.",
-                    mode, path, path
-                );
-                LintExecutionResult::failure(output)
-            }
+            Err(e) => LintExecutionResult::failure(format!("Error: {e}")),
         }
     }
 
@@ -375,39 +384,57 @@ impl SurfaceLintExecutor {
     }
 
     pub fn install_hook(&self) -> LintExecutionResult {
-        match &self.hook_port {
-            Some(_hook) => {
-                LintExecutionResult::success(
+        let hooks = match &self.hook_port {
+            Some(h) => h.clone(),
+            None => {
+                return LintExecutionResult::success(
                     "Git pre-commit hook installation.\nUse CLI `lint-arwaky-cli install-hook` to install."
                         .to_string(),
                     0,
-                )
+                );
             }
-            None => LintExecutionResult::success(
-                "Git pre-commit hook installation.\nUse CLI `lint-arwaky-cli install-hook` to install."
-                    .to_string(),
-                0,
-            ),
+        };
+        let exe_path = std::env::current_exe()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or_else(|_| "lint-arwaky-cli".to_string());
+        let fp = FilePath::new(exe_path).unwrap_or_default();
+        match collect_install_hook(hooks, &fp) {
+            Ok(report) => {
+                if report.success {
+                    LintExecutionResult::success(report.message, 0)
+                } else {
+                    LintExecutionResult::failure(report.message)
+                }
+            }
+            Err(e) => LintExecutionResult::failure(format!("Error: {e}")),
         }
     }
 
     pub fn uninstall_hook(&self) -> LintExecutionResult {
-        match &self.hook_port {
-            Some(_hook) => LintExecutionResult::success(
-                "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
-                    .to_string(),
-                0,
-            ),
-            None => LintExecutionResult::success(
-                "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
-                    .to_string(),
-                0,
-            ),
+        let hooks = match &self.hook_port {
+            Some(h) => h.clone(),
+            None => {
+                return LintExecutionResult::success(
+                    "Git pre-commit hook removal.\nUse CLI `lint-arwaky-cli uninstall-hook` to remove."
+                        .to_string(),
+                    0,
+                );
+            }
+        };
+        match collect_uninstall_hook(hooks) {
+            Ok(report) => {
+                if report.success {
+                    LintExecutionResult::success(report.message, 0)
+                } else {
+                    LintExecutionResult::failure(report.message)
+                }
+            }
+            Err(e) => LintExecutionResult::failure(format!("Error: {e}")),
         }
     }
 
     pub fn adapters(&self) -> LintExecutionResult {
-        let adapters = Self::discover_adapters(self.filesystem.as_ref());
+        let adapters = collect_adapters_detailed(self.filesystem.as_ref());
         let mut output = String::from("Active Linter Adapters:\n");
         for (i, adapter) in adapters.iter().enumerate() {
             let status = if adapter.installed { "[+]" } else { "[-]" };
@@ -426,10 +453,8 @@ impl SurfaceLintExecutor {
     }
 
     pub fn version(&self) -> LintExecutionResult {
-        let output = format!(
-            "Lint Arwaky v{} (AES Semantic Builder)",
-            env!("CARGO_PKG_VERSION")
-        );
+        let report = collect_version();
+        let output = format!("Lint Arwaky v{} (AES Semantic Builder)", report.version);
         LintExecutionResult::success(output, 0)
     }
 }
@@ -536,42 +561,6 @@ impl SurfaceLintExecutor {
             config_orchestrator: self.config_orchestrator.clone()?,
             fs_agg: self.filesystem.clone(),
         })
-    }
-
-    fn discover_adapters(filesystem: &dyn IFilesystemAggregate) -> Vec<AdapterInfo> {
-        use shared::filesystem::taxonomy_filesystem_vo::ToolName;
-
-        let mut list = vec![
-            ("ast_rust_scanner", "Rust AST (built-in)", true),
-            ("ast_py_scanner", "Python AST (built-in)", true),
-            ("ast_js_scanner", "JS/TS AST (built-in)", true),
-        ]
-        .into_iter()
-        .map(|(n, l, i)| AdapterInfo {
-            name: n.into(),
-            label: l.into(),
-            installed: i,
-        })
-        .collect::<Vec<_>>();
-        for (b, l) in [
-            ("clippy", "Clippy (Rust)"),
-            ("ruff", "Ruff (Python)"),
-            ("mypy", "MyPy (Python)"),
-            ("bandit", "Bandit (Python)"),
-            ("radon", "Radon (Python metrics)"),
-            ("eslint", "ESLint (JavaScript)"),
-            ("prettier", "Prettier (JavaScript)"),
-            ("tsc", "TypeScript Compiler"),
-        ] {
-            list.push(AdapterInfo {
-                name: b.into(),
-                label: l.into(),
-                installed: filesystem.is_binary_available(&ToolName {
-                    value: b.to_string(),
-                }),
-            });
-        }
-        list
     }
 }
 
