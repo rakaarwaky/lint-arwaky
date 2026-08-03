@@ -115,12 +115,23 @@ run_gate "Self-Lint (check .)" bash -c '
 ' &
 SELF_LINT_PID=$!
 
-run_gate "AES Codes (test-workspaces >= 24)" bash -c '
-    codes=$($CLI scan test-workspaces 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
-    echo "  unique codes: ${codes:-0}"
-    [ "${codes:-0}" -ge 24 ]
+run_gate "AES Codes (workspaces-bad >= 24)" bash -c '
+    codes_rust=$($CLI scan workspaces-bad/crates 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
+    codes_python=$($CLI scan workspaces-bad/modules 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
+    codes_ts=$($CLI scan workspaces-bad/packages 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
+    echo "  Rust: ${codes_rust:-0} codes, Python: ${codes_python:-0} codes, TS: ${codes_ts:-0} codes"
+    [ "${codes_rust:-0}" -ge 24 ] && [ "${codes_python:-0}" -ge 24 ] && [ "${codes_ts:-0}" -ge 24 ]
 ' &
 AES_CODES_PID=$!
+
+run_gate "False Positives (workspaces-good == 0)" bash -c '
+    fp_rust=$($CLI scan workspaces-good/crates --format json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get(\"results\",[])))" 2>/dev/null || echo "0")
+    fp_python=$($CLI scan workspaces-good/modules --format json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get(\"results\",[])))" 2>/dev/null || echo "0")
+    fp_ts=$($CLI scan workspaces-good/packages --format json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get(\"results\",[])))" 2>/dev/null || echo "0")
+    echo "  Rust FP: ${fp_rust}, Python FP: ${fp_python}, TS FP: ${fp_ts}"
+    [ "${fp_rust:-0}" -eq 0 ] && [ "${fp_python:-0}" -eq 0 ] && [ "${fp_ts:-0}" -eq 0 ]
+' &
+FP_PID=$!
 
 # Single cargo nextest invocation — 3× faster than cargo test
 run_gate "Tests (workspace)" bash -c '
@@ -129,7 +140,7 @@ run_gate "Tests (workspace)" bash -c '
 ' &
 TEST_PID=$!
 
-wait_and_report $SELF_LINT_PID $AES_CODES_PID $TEST_PID
+wait_and_report $SELF_LINT_PID $AES_CODES_PID $FP_PID $TEST_PID
 echo "Phase 3 duration: $((SECONDS - ph3_start))s"
 
 TOTAL_TIME=$((SECONDS - START_TIME))

@@ -56,16 +56,16 @@ Scans target Python workspace, discovers modules, and runs all linters.
 
 ```bash
 # Basic scan (defaults to text format)
-lint-arwaky-cli scan test-workspaces/modules
+lint-arwaky-cli scan workspaces-bad/modules
 
 # Scan with specific output format (text | json | sarif | junit)
-lint-arwaky-cli scan test-workspaces/modules --format json
+lint-arwaky-cli scan workspaces-bad/modules --format json
 
 # Filter scan results by rule code (e.g. AES201, AES401)
-lint-arwaky-cli scan test-workspaces/modules --filter AES201
+lint-arwaky-cli scan workspaces-bad/modules --filter AES201
 
 # Save reports to custom directory
-lint-arwaky-cli scan test-workspaces/modules --format json --output-dir ~/.local/share/lint-arwaky/reports
+lint-arwaky-cli scan workspaces-bad/modules --format json --output-dir ~/.local/share/lint-arwaky/reports
 ```
 
 **Arguments & Flags**:
@@ -256,7 +256,7 @@ lint-arwaky-cli version
 
 ```json
 // execute_command: run Python scan
-{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_command","arguments":{"action":"scan","args":{"path":"test-workspaces/modules"}}}}
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_command","arguments":{"action":"scan","args":{"path":"workspaces-bad/modules"}}}}
 
 // health_check: check Python adapters (ruff, mypy, bandit)
 {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"health_check","arguments":{}}}

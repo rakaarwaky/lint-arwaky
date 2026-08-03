@@ -3990,7 +3990,7 @@ const WORKSPACE_DIRS: [&str; 3] = ["crates", "packages", "modules"];
 /// Returns Some(set) of allowed workspace directory names if root contains
 /// any of crates/packages/modules. When set, only those subdirectories are
 /// scanned — everything else at root level is skipped (avoids walking
-/// test-workspaces, scripts, docs, etc.).
+/// workspaces-bad, scripts, docs, etc.).
 fn workspace_restrict(root: &Path) -> Option<HashSet<&str>> {
     let allowed: HashSet<&str> = WORKSPACE_DIRS
         .iter()

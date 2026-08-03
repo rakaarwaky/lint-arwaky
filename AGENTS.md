@@ -51,9 +51,9 @@ CARGO_INCREMENTAL=0 cargo clippy -p import_rules -- -D warnings  # per crate
 
 ```bash
 cd /home/raka/mcp-arwaky/lint-arwaky
-cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates for rust
-cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules for python
-cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages for typescript
+cargo run --bin lint-arwaky-cli -- scan workspaces-bad/crates for rust
+cargo run --bin lint-arwaky-cli -- scan workspaces-bad/modules for python
+cargo run --bin lint-arwaky-cli -- scan workspaces-bad/packages for typescript
 ```
 
 ## Format & lint

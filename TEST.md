@@ -16,45 +16,36 @@ There are 3 test workspaces with 2 variants each:
 
 ```
 workspaces-bad/                      # Files with violations (should trigger AES rules)
-├── crates/                          # Rust: 64 files with violations
+├── crates/                          # Rust: 721 files → 2311 violations, 24 AES codes
 │   ├── shared_common/src/           # Orphan files, bad naming, etc.
 │   ├── naming_violations/src/       # AES101 naming violations
 │   ├── code_analysis/src/           # AES503 capabilities orphans
 │   └── ...
-├── modules/                         # Python: 526 files with violations
-├── packages/                        # JS/TS: 333 files with violations
+├── modules/                         # Python: 704 files → 2083 violations, 24 AES codes
+├── packages/                        # JS/TS: 494 files → 1905 violations, 24 AES codes
 ├── Cargo.toml, pyproject.toml, package.json, ...
 
-workspaces-good/                     # Clean files (no violations expected)
-├── crates/                          # Rust: 686 clean files
-│   ├── shared_common/src/           # Properly imported taxonomy files
-│   ├── di_containers/src/           # Agent files wired to surfaces
-│   ├── cli_commands/src/            # Surface files with proper imports
+workspaces-good/                     # Clean files (0 violations expected)
+├── crates/                          # Rust: 29 clean files
 │   └── ...
-├── modules/                         # Python: 238 clean files
-├── packages/                        # JS/TS: 211 clean files
+├── modules/                         # Python: 69 clean files
+├── packages/                        # JS/TS: 50 clean files
 ├── Cargo.toml, pyproject.toml, package.json, ...
 ```
 
 ### Expected Violation Counts
 
-
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
-| ----------- | ---------- | ------- | ------------ | ----------------- | -------------------- |
-| bad       | Rust     | 64    | 181        | —              | 20/24 (4 missing*) |
-| bad       | Python   | 526   | TBD        | —              | 24 unique codes    |
-| bad       | JS/TS    | 333   | TBD        | —              | 24 unique codes    |
-| good      | Rust     | 686   | 0          | 1 (AES504)      | —                 |
-| good      | Python   | 238   | 0          | 0               | —                 |
-| good      | JS/TS    | 211   | 0          | 0               | —                 |
+| --------- | -------- | ----- | ---------- | --------------- | ------------------ |
+| bad       | Rust     | 721   | 2311       | —               | 24 unique codes    |
+| bad       | Python   | 704   | 2083       | —               | 24 unique codes    |
+| bad       | JS/TS    | 494   | 1905       | —               | 24 unique codes    |
+| good      | Rust     | 29    | 0          | 0               | —                  |
+| good      | Python   | 69    | 0          | 0               | —                  |
+| good      | JS/TS    | 50    | 0          | 0               | —                  |
 
-> **Note**: The 1 AES504 false positive in workspaces-good is expected —
-> `utility_has_consumer.rs` becomes orphaned because its consumer
-> (`capabilities_consumer.rs`) was moved to workspaces-bad (AES303 violation).
-
-> **Missing codes* (Rust)**: AES205 (circular), AES301 (file too large),
-> AES305 (duplicate), AES401 (taxonomy purity) — trigger files not yet
-> added to test-workspaces. See Section 3.2 for detection matrix.
+> **Note**: workspaces-good should produce 0 violations. If any violation
+> appears, it's a false positive that must be fixed.
 
 See [README.md](README.md) for CLI reference and
 [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
@@ -175,7 +166,7 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | #  | Scenario                                     | Expected Exit Code               |
 | ---- | ---------------------------------------------- | ---------------------------------- |
 | 1  | `scan` on clean project                      | 0                                |
-| 2  | `scan` on test-workspaces (violations found) | 1                                |
+| 2  | `scan` on workspaces-bad (violations found) | 1                                |
 | 3  | `scan` on nonexistent path                   | 2                                |
 | 4  | `scan` with invalid arguments                | 2                                |
 | 5  | `security` without cargo-audit installed     | 3                                |

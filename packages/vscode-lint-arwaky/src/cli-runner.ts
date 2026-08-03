@@ -67,9 +67,10 @@ export async function scan(
     return result;
   } catch (err: unknown) {
     if (err instanceof Error && "code" in err) {
-      const nodeErr = err as { code: number; stderr?: string; message: string };
+      const nodeErr = err as { code: number; stderr?: string; stdout?: string; message: string };
+      const detail = nodeErr.stderr?.trim() || nodeErr.stdout?.trim() || nodeErr.message;
       throw new CliError(
-        `lint-arwaky-cli exited with code ${nodeErr.code}`,
+        `lint-arwaky-cli failed (code ${nodeErr.code}):\n${detail}`,
         nodeErr.code,
         nodeErr.stderr ?? "",
       );

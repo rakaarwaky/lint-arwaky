@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { scan, CliError } from "./cli-runner";
 
 let diagnostics: vscode.DiagnosticCollection;
+let outputChannel: vscode.OutputChannel;
 
 const severityMap: Record<string, vscode.DiagnosticSeverity> = {
   critical: vscode.DiagnosticSeverity.Error,
@@ -13,11 +14,13 @@ const severityMap: Record<string, vscode.DiagnosticSeverity> = {
 
 export function activate(context: vscode.ExtensionContext) {
   diagnostics = vscode.languages.createDiagnosticCollection("lint-arwaky");
+  outputChannel = vscode.window.createOutputChannel("Lint Arwaky");
 
   context.subscriptions.push(
     vscode.commands.registerCommand("lint-arwaky.scan", handleScan),
     vscode.commands.registerCommand("lint-arwaky.scanFile", handleScanFile),
     diagnostics,
+    outputChannel,
   );
 }
 
@@ -77,13 +80,10 @@ async function runScan(targetPath: string) {
       vscode.window.showWarningMessage(`Lint Arwaky: ${total} violation(s).`);
     }
   } catch (err) {
-    if (err instanceof CliError) {
-      vscode.window.showErrorMessage(err.message);
-    } else {
-      vscode.window.showErrorMessage(
-        `Lint Arwaky: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+    const msg = err instanceof Error ? err.message : String(err);
+    outputChannel.appendLine(`ERROR: ${msg}`);
+    outputChannel.show(true);
+    vscode.window.showErrorMessage(msg, "OK");
   }
 }
 

@@ -54,19 +54,19 @@ Scans target Rust workspace, discovers workspace members, and runs all linters.
 
 ```bash
 # Basic scan (defaults to text format)
-lint-arwaky-cli scan test-workspaces/crates
+lint-arwaky-cli scan workspaces-bad/crates
 
 # Scan with specific output format (text | json | sarif | junit)
-lint-arwaky-cli scan test-workspaces/crates --format json
+lint-arwaky-cli scan workspaces-bad/crates --format json
 
 # Scan single workspace member by name
-lint-arwaky-cli scan test-workspaces/crates --member shared
+lint-arwaky-cli scan workspaces-bad/crates --member shared
 
 # Filter results by specific AES rule ID
-lint-arwaky-cli scan test-workspaces/crates --filter AES401
+lint-arwaky-cli scan workspaces-bad/crates --filter AES401
 
 # Save reports to custom directory
-lint-arwaky-cli scan test-workspaces/crates --format json --output-dir ~/.local/share/lint-arwaky/reports
+lint-arwaky-cli scan workspaces-bad/crates --format json --output-dir ~/.local/share/lint-arwaky/reports
 ```
 
 **Arguments & Flags**:
@@ -244,7 +244,7 @@ lint-arwaky-cli version
 
 ```json
 // execute_command: run Rust scan
-{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_command","arguments":{"action":"scan","args":{"path":"test-workspaces/crates"}}}}
+{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_command","arguments":{"action":"scan","args":{"path":"workspaces-bad/crates"}}}}
 
 // health_check: check Rust adapters (clippy)
 {"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"health_check","arguments":{}}}
