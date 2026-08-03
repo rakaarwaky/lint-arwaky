@@ -4,6 +4,7 @@ use mcp_server::surface_mcp_tool_command::LintArwakyMcpServer;
 use rmcp::ServiceExt;
 use rmcp::transport::stdio;
 use std::sync::Arc;
+use tracing_subscriber::prelude::*;
 
 fn init_tracing() {
     tracing_subscriber::fmt()
@@ -11,7 +12,8 @@ fn init_tracing() {
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "warn".into()),
         )
-        .with(tracing_error::SpanTrace::capture())
+        .finish()
+        .with(tracing_error::ErrorLayer::default())
         .init();
 }
 

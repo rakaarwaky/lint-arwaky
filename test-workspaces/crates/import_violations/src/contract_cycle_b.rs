@@ -1,5 +1,5 @@
-// AES205 side B — contract importing capabilities (creates cycle with cycle_start).
-// contract(aggregate) importing capabilities is forbidden → triggers AES201 + AES205.
+// AES205 side B — contract importing capabilities (creates cycle).
+// This triggers AES201 (forbidden) + AES205 (cycle).
 use capabilities::handler::CapabilitiesHandler;
 use taxonomy::entity::ProductEntity;
 

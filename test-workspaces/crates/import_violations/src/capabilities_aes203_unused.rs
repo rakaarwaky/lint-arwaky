@@ -1,7 +1,7 @@
-// AES203 only — capabilities with unused import.
-// Has mandatory taxonomy import, no forbidden imports, no dummy functions.
-use taxonomy::vo::CategoryVO;
+// AES203 ONLY — capabilities with unused import.
+// Has BOTH mandatory imports (taxonomy + contract(protocol)), no forbidden, no dummy.
 use taxonomy::vo::UserVO;
+use taxonomy::vo::CategoryVO;
 use contract::protocol::ContractProtocol;
 
 pub fn process() -> UserVO {
