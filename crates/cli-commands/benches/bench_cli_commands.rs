@@ -13,7 +13,7 @@ fn bench_format_lint_results(c: &mut Criterion) {
             code: shared::common::ErrorCode::raw(format!("AES{}", 100 + (i % 10))),
             message: shared::common::LintMessage::new(format!("violation at file_{}.rs:{}", i, i)),
             source: None,
-            severity: shared::common::Severity::Warning,
+            severity: shared::common::Severity::MEDIUM,
             enclosing_scope: None,
             related_locations: Default::default(),
         })
@@ -35,14 +35,13 @@ fn bench_scan_request_construction(c: &mut Criterion) {
     group.significance_level(0.05).confidence_level(0.95);
     group.sample_size(30);
 
-    let root = shared::common::FilePath::new("/tmp/project".to_string()).unwrap();
     group.bench_function("create_scan_request", |b| {
         b.iter(|| {
-            let req = shared::cli_commands::ScanRequest {
-                project_root: root.clone(),
-                languages: vec![shared::common::ConfigLanguage::Rust],
-                use_default_config: true,
-            };
+            let target = shared::cli_commands::ScanTarget::new("/tmp/project".to_string());
+            let req = shared::cli_commands::ScanRequest::new(
+                target,
+                shared::cli_commands::ScanMode::Check,
+            );
             std::hint::black_box(req);
         });
     });

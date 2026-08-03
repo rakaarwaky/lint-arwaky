@@ -14,9 +14,9 @@ fn bench_output_json(c: &mut Criterion) {
             message: shared::common::LintMessage::new(format!("violation at module_{}.rs:{}", i, i)),
             source: None,
             severity: if i % 3 == 0 {
-                shared::common::Severity::Error
+                shared::common::Severity::HIGH
             } else {
-                shared::common::Severity::Warning
+                shared::common::Severity::MEDIUM
             },
             enclosing_scope: None,
             related_locations: Default::default(),
@@ -51,10 +51,12 @@ fn bench_ci_report_construction(c: &mut Criterion) {
                 score: 0.85,
                 threshold: 70,
                 pass: true,
-                results_count: 5,
-                errors_count: 2,
-                warnings_count: 3,
-                output: "CI output".to_string(),
+                reasons: vec!["AES101".to_string(), "AES304".to_string()],
+                critical: 1,
+                high: 2,
+                medium: 3,
+                low: 4,
+                total_violations: 10,
             };
             std::hint::black_box(report);
         });

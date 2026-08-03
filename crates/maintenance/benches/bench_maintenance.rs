@@ -1,5 +1,5 @@
 // Benchmark tests for maintenance — checker and tool executor throughput.
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 fn bench_stats_collection(c: &mut Criterion) {
     use shared::common::FilePath;

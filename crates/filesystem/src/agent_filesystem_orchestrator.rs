@@ -615,16 +615,17 @@ impl FilesystemOrchestrator {
         ];
         ignored.extend_from_slice(extra_ignored);
 
-        let scanned = self.deps.io.scan_directory_with_ignored(root, &ignored);
+        let scanned: Vec<PathBuf> =
+            crate::utility_workspace_detection::discover_source_files(root, &ignored)
+                .into_iter()
+                .map(PathBuf::from)
+                .collect();
 
         let mut entries = Vec::new();
         let mut all_imports = Vec::new();
         let all_warnings = Vec::new();
 
         for path in &scanned {
-            if !self.deps.io.is_source_file(path) {
-                continue;
-            }
             let language = self
                 .deps
                 .workspace
