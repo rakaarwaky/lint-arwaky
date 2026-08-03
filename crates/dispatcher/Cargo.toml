@@ -12,3 +12,6 @@ serde_json = { workspace = true }
 regex = { workspace = true }
 dirs = { workspace = true }
 ctrlc = { workspace = true }
+
+[lints]
+workspace = true
