@@ -494,6 +494,7 @@ checksum = "c8d4a3bb8b1e0c1050499d1815f5ab16d04f0959b233085fb31653fbfc9d98f9"
 name = "cli-commands"
 version = "0.1.0"
 dependencies = [
+ "criterion",
  "ctrlc",
  "dirs",
  "dispatcher-lint-arwaky",
@@ -501,6 +502,7 @@ dependencies = [
  "regex",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]
@@ -991,12 +993,14 @@ dependencies = [
 name = "dispatcher-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "criterion",
  "ctrlc",
  "dirs",
  "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]
@@ -1149,11 +1153,13 @@ name = "file-watch-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "async-trait",
+ "criterion",
  "filesystem-lint-arwaky",
  "notify",
  "notify-debouncer-mini",
  "quality-rules-lint-arwaky",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -3066,11 +3072,13 @@ dependencies = [
 name = "mcp-server-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "criterion",
  "dirs",
  "dispatcher-lint-arwaky",
  "rmcp",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
 ]
 
@@ -5301,6 +5309,7 @@ version = "1.11.0"
 dependencies = [
  "anyhow",
  "arboard",
+ "criterion",
  "crossterm",
  "dispatcher-lint-arwaky",
  "ratatui",

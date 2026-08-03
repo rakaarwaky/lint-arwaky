@@ -19,7 +19,7 @@ fn bench_stats_collection(c: &mut Criterion) {
     }
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
 
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
     let checker = maintenance_lint_arwaky::MaintenanceChecker::new(filesystem);
 
@@ -39,7 +39,7 @@ fn bench_doctor_output(c: &mut Criterion) {
     group.significance_level(0.05).confidence_level(0.95);
     group.sample_size(10);
 
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
     let checker = maintenance_lint_arwaky::MaintenanceChecker::new(filesystem);
 
