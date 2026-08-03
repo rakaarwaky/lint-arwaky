@@ -22,6 +22,7 @@ use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol
 use shared::import_rules::taxonomy_import_constant::DEFAULT_SKIP_DIRS;
 
 use shared::common::taxonomy_definition_vo::LayerMapVO;
+use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -356,10 +357,10 @@ impl ImportOrchestrator {
         } else if path.is_file() {
             match FilePath::new(path.to_string_lossy().to_string()) {
                 Ok(fp) => files.push(fp),
-                Err(e) => eprintln!(
-                    "[warn] invalid file path '{}': {}",
-                    path.to_string_lossy(),
-                    e
+                Err(e) => warn!(
+                    path = %path.to_string_lossy(),
+                    error = %e,
+                    "invalid file path"
                 ),
             }
         }

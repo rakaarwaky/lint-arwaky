@@ -32,6 +32,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use tracing::{debug, instrument};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -100,12 +101,12 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         root_dir: &FilePath,
         context: &GraphAnalysisContext,
     ) -> Vec<LintResult> {
-        eprintln!(
-            "[debug orphan] config.enabled={}, root={}, all_ws_files={}, file_count={}",
-            self.config.enabled.value,
-            root_dir.value,
-            context.all_workspace_files.len(),
-            files.values.len(),
+        debug!(
+            config_enabled = self.config.enabled.value,
+            root = root_dir.value,
+            all_ws_files = context.all_workspace_files.len(),
+            file_count = files.values.len(),
+            "orphan check"
         );
         if !self.config.enabled.value {
             return Vec::new();
@@ -140,6 +141,7 @@ impl ArchOrphanAnalyzer {
         Self { deps, config }
     }
 
+    #[instrument(skip(self))]
     fn _check_orphans_inner(
         &self,
         files: &OrphanFileListVO,
@@ -237,14 +239,15 @@ impl ArchOrphanAnalyzer {
                 )
             })
             .collect();
-        eprintln!(
-            "[debug orphan inner] entry_points={}, violations={}",
-            entry_points.values.len(),
-            violations.len(),
+        debug!(
+            entry_points = entry_points.values.len(),
+            violations = violations.len(),
+            "orphan inner scan complete"
         );
         violations
     }
 
+    #[instrument(skip(self))]
     fn _process_file(
         &self,
         f: &str,
@@ -264,10 +267,7 @@ impl ArchOrphanAnalyzer {
             Ok(fp) => fp,
             Err(_) => {
                 if dc < 5 {
-                    eprintln!(
-                        "[debug _process_file] SKIP bad path: f='{}', abs='{}'",
-                        f, abs_f_str
-                    );
+                    debug!(file = f, abs_path = abs_f_str, "SKIP bad path");
                 }
                 return None;
             }
@@ -276,10 +276,7 @@ impl ArchOrphanAnalyzer {
         let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename);
         if base_layer.is_none() {
             if dc < 5 {
-                eprintln!(
-                    "[debug _process_file] SKIP no layer prefix: f='{}', filename='{}'",
-                    f, filename
-                );
+                debug!(file = f, filename = filename, "SKIP no layer prefix");
             }
             return None;
         }
@@ -303,16 +300,13 @@ impl ArchOrphanAnalyzer {
         let basename = file_fp.basename();
         if definition.exceptions.values.contains(&basename) {
             if dc < 5 {
-                eprintln!(
-                    "[debug _process_file] SKIP exception: f='{}', basename='{}'",
-                    f, basename
-                );
+                debug!(file = f, basename = basename, "SKIP exception");
             }
             return None;
         }
         if !definition.orphan.check_orphan.value {
             if dc < 5 {
-                eprintln!("[debug _process_file] SKIP no orphan check: f='{}'", f);
+                debug!(file = f, "SKIP no orphan check");
             }
             return None;
         }
