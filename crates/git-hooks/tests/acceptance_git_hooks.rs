@@ -61,7 +61,7 @@ fn fr002_hook_script_contains_correct_executable() {
     let exec_path = FilePath::new("/usr/local/bin/lint-arwaky-cli".to_string()).unwrap();
     let result = adapter.install_pre_commit(&exec_path);
     assert!(result.is_ok(), "install should succeed: {:?}", result.err());
-    assert!(result.unwrap().0, "should return true");
+    assert!(result.unwrap().value, "should return true");
 
     let hook_content = std::fs::read_to_string(hooks_dir.join("pre-commit")).unwrap();
     assert!(
@@ -103,7 +103,7 @@ fn fr002_creates_hooks_directory_when_missing() {
         "install on non-git should not error: {:?}",
         result.err()
     );
-    assert!(!result.unwrap().0, "should return false for non-git repo");
+    assert!(!result.unwrap().value, "should return false for non-git repo");
 }
 
 #[test]
@@ -138,7 +138,7 @@ fn fr002_not_git_repo_returns_false() {
     let adapter = make_adapter(&tmp);
     let exec_path = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
     let result = adapter.install_pre_commit(&exec_path).unwrap();
-    assert!(!result.0, "non-git repo should return false");
+    assert!(!result.value, "non-git repo should return false");
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -160,7 +160,7 @@ fn fr003_removes_existing_hook() {
         "uninstall should succeed: {:?}",
         result.err()
     );
-    assert!(result.unwrap().0, "should return true when hook existed");
+    assert!(result.unwrap().value, "should return true when hook existed");
     assert!(
         !hooks_dir.join("pre-commit").exists(),
         "pre-commit should be removed"
@@ -178,7 +178,7 @@ fn fr003_idempotent_when_hook_missing() {
     let result = adapter.uninstall_pre_commit();
     assert!(result.is_ok(), "uninstall should succeed");
     assert!(
-        result.unwrap().0,
+        result.unwrap().value,
         "should return true even when no hook exists"
     );
 }
@@ -189,7 +189,7 @@ fn fr003_not_git_repo_returns_false() {
     // No .git directory
     let adapter = make_adapter(&tmp);
     let result = adapter.uninstall_pre_commit().unwrap();
-    assert!(!result.0, "non-git repo should return false");
+    assert!(!result.value, "non-git repo should return false");
 }
 
 #[test]

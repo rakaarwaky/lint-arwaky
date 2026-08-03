@@ -317,7 +317,15 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .map(|ext| exts.contains(&ext))
                 .unwrap_or(false)
         })
-        .map(|e| e.path().to_string_lossy().to_string())
+        .map(|e| {
+            let p = e.path();
+            // Return path relative to root so downstream consumers (orphan, import, etc.)
+            // can correctly join with workspace root.
+            p.strip_prefix(root)
+                .unwrap_or(p)
+                .to_string_lossy()
+                .to_string()
+        })
         .collect()
 }
 

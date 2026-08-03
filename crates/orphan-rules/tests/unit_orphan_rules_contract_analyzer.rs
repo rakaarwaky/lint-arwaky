@@ -376,6 +376,7 @@ impl IFilesystemAggregate for MockFilesystem {
         vec![]
     }
     fn build_file_index(&self, _: &std::path::Path) {}
+    fn build_file_index_with_ignored(&self, _: &std::path::Path, _: &[String]) {}
     fn build_orphan_graph_context(
         &self,
         _root_dir: &std::path::Path,
