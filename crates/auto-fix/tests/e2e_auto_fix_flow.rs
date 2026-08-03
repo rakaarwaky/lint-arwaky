@@ -1,5 +1,6 @@
 // E2E tests — full pipeline: create container → dry-run fix → verify result.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
+use shared::auto_fix::IFileAdapterProtocol;
 use shared::auto_fix::LintFixOrchestratorAggregate;
 use shared::common::{ContentString, FilePath};
 use std::sync::Arc;

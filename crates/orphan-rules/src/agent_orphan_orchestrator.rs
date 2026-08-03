@@ -222,7 +222,7 @@ impl ArchOrphanAnalyzer {
             })
             .collect();
 
-        files
+        let violations: Vec<LintResult> = files
             .values
             .par_iter()
             .filter_map(|f| {
@@ -236,7 +236,13 @@ impl ArchOrphanAnalyzer {
                     &content_map,
                 )
             })
-            .collect()
+            .collect();
+        eprintln!(
+            "[debug orphan inner] entry_points={}, violations={}",
+            entry_points.values.len(),
+            violations.len(),
+        );
+        violations
     }
 
     fn _process_file(
@@ -249,13 +255,25 @@ impl ArchOrphanAnalyzer {
         top_root_str: &str,
         content_map: &HashMap<String, String>,
     ) -> Option<LintResult> {
+        static DEBUG_COUNT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let dc = DEBUG_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        if dc < 3 {
+            eprintln!(
+                "[debug _process_file] f='{}', top_root='{}'",
+                f, top_root_str
+            );
+        }
         // Resolve relative path to absolute so sub-analyzers can read file contents
         let abs_f = std::path::Path::new(top_root_str).join(f);
         let abs_f_str = abs_f.to_string_lossy().to_string();
         let file_fp = FilePath::new(&abs_f_str).ok()?;
         let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
-        let base_layer =
-            shared::common::utility_layer_detector::detect_layer_from_prefix(filename)?;
+        let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename);
+        if base_layer.is_none() {
+            // Skip files without recognized layer prefix silently
+            return None;
+        }
+        let base_layer = base_layer.unwrap();
         let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
             &base_layer,
             file_fp.value(),

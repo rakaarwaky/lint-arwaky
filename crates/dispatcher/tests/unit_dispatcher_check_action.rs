@@ -1,6 +1,7 @@
 // Unit tests — collect_scan with nonexistent path returns error.
 use dispatcher_lint_arwaky::surface_check_action::{ScanOptions, collect_scan};
 use shared::common::FilePath;
+use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use std::sync::Arc;
 
 /// Minimal mock filesystem that does canonicalize by returning the path as-is.
@@ -114,16 +115,16 @@ impl shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol for Min
 impl shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol
     for MinimalFilesystem
 {
-    fn is_executable_in_path(&self, _: &str) -> bool {
+    fn is_executable_in_path(&self, _: &ToolName) -> bool {
         false
     }
-    fn is_binary_available(&self, _: &str) -> bool {
+    fn is_binary_available(&self, _: &ToolName) -> bool {
         false
     }
-    fn has_local_bin(&self, _: &std::path::Path, _: &str) -> bool {
+    fn has_local_bin(&self, _: &std::path::Path, _: &ToolName) -> bool {
         false
     }
-    fn resolve_js_cmd(&self, _: &str, _: Vec<String>, _: &FilePath) -> Option<Vec<String>> {
+    fn resolve_js_cmd(&self, _: &ToolName, _: Vec<String>, _: &FilePath) -> Option<Vec<String>> {
         None
     }
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
@@ -298,6 +299,7 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
         vec![]
     }
     fn build_file_index(&self, _: &std::path::Path) {}
+    fn build_file_index_with_ignored(&self, _: &std::path::Path, _: &[String]) {}
     fn build_orphan_graph_context(
         &self,
         _: &std::path::Path,

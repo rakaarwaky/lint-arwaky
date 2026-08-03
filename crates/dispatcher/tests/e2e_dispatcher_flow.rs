@@ -4,7 +4,13 @@ use shared::common::taxonomy_path_vo::FilePath;
 #[test]
 fn e2e_check_action_full_flow() {
     let path = FilePath::new(".").unwrap();
-    let result = dispatcher_lint_arwaky::surface_check_action::CheckAction::execute(&path);
-    // Should return a lint result list (may be empty for clean project)
-    assert!(!result.values.is_empty() || result.values.is_empty());
+    let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
+        path: Some(path),
+        multi_project_orchestrator: None,
+        filter: None,
+        member: None,
+        filesystem: std::sync::Arc::new(shared::filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()),
+    };
+    let result = dispatcher_lint_arwaky::surface_check_action::collect_scan(opts);
+    assert!(result.is_ok());
 }
