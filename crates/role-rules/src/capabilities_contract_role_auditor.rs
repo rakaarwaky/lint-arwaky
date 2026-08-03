@@ -146,19 +146,19 @@ impl ContractRoleChecker {
     }
 
     fn fmt(v: &AesRoleViolation, lang: Language) -> String {
+        let lang_name = match lang {
+            Language::Rust => "Rust",
+            Language::Python => "Python",
+            Language::TypeScript => "TypeScript",
+            Language::JavaScript => "JavaScript",
+            _ => "Unknown",
+        };
         match v {
             AesRoleViolation::ContractPrimitive { reason } => {
-                let default = format!(
-                    "Contracts must enforce value object boundaries to prevent primitive obsession. Use {} instead of primitives.",
-                    lang.type_kw()
-                );
-                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or(default);
-                format!(
-                    "AES402 CONTRACT_PRIMITIVE: Contract {} or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? {why}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.",
-                    lang.interface_kw()
-                )
+                let why = reason.as_ref().map_or("Contract signatures must not use primitive types.".to_string(), |r| r.to_string());
+                format!("AES402 CONTRACT_ROLE: Forbidden primitive type in {lang_name} contract signature.\nWHY? {why}\nFIX: Replace primitive with domain VO or abstract type.")
             }
-            _ => unreachable!(),
+            other => format!("AES402 CONTRACT_ROLE: Contract role violation.\nWHY? {other:?}\nFIX: Ensure contract follows conventions."),
         }
     }
 }

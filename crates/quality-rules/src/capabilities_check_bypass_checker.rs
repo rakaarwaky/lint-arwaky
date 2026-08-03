@@ -283,9 +283,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                format!(
-                                    "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\nWHY? Found forbidden Python pattern: 'raise NotImplementedError'\nFIX: Either implement the missing logic or return a Result::Err.",
-                                ),
+                                "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\nWHY? Found forbidden Python pattern: 'raise NotImplementedError'\nFIX: Either implement the missing logic or return a Result::Err.".to_string(),
                             ));
                         } else if code_lower.contains("assert false") {
                             violations.push(LintResult::new_arch(
@@ -293,9 +291,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                format!(
-                                    "AES304 PANIC: Forbidden panic call detected.\nWHY? Found forbidden Python pattern: 'assert False'\nFIX: Return a Result or handle the failure case gracefully without panicking.",
-                                ),
+                                "AES304 PANIC: Forbidden panic call detected.\nWHY? Found forbidden Python pattern: 'assert False'\nFIX: Return a Result or handle the failure case gracefully without panicking.".to_string(),
                             ));
                         }
                     }

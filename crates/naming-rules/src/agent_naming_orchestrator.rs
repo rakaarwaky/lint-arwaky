@@ -56,7 +56,7 @@ impl NamingOrchestrator {
             .rules
             .iter()
             .find(|r| r.rule_type.code() == rule_code)
-            .map_or(true, |r| r.enabled.value)
+            .is_none_or(|r| r.enabled.value)
     }
 
     fn run_checks(&self, files: &FilePathList, root_dir: &FilePath) -> Vec<LintResult> {

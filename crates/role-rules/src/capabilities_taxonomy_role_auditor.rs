@@ -147,47 +147,6 @@ impl TaxonomyRoleChecker {
         "symbol",
     ];
 
-    fn fmt_msg(v: &AesRoleViolation) -> String {
-        Self::fmt(v)
-    }
-
-    fn fmt(v: &AesRoleViolation) -> String {
-        match v {
-            AesRoleViolation::PrimitiveUsage { primitive, reason } => {
-                let why = reason.as_ref().map_or(
-                    "Primitive type used in taxonomy layer — domain types must use VOs."
-                        .to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES401 TAXONOMY_ROLE: Primitive type '{}' used in taxonomy file.\n\
-                        WHY? {why}\n\
-                        FIX: Wrap primitive in a dedicated Value Object.",
-                    primitive.value()
-                )
-            }
-            AesRoleViolation::ConstantPurity { reason } => {
-                let why = reason.as_ref().map_or(
-                    "Non-constant declaration found in constant file.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES401 TAXONOMY_ROLE: Constant purity violation.\n\
-                        WHY? {why}\n\
-                        FIX: Only const/static declarations allowed in taxonomy constant files."
-                )
-            }
-            other => {
-                let why = format!("Unhandled taxonomy violation variant: {other:?}");
-                format!(
-                    "AES401 TAXONOMY_ROLE: Taxonomy role violation.\n\
-                        WHY? {why}\n\
-                        FIX: Ensure file follows taxonomy conventions."
-                )
-            }
-        }
-    }
-
     fn scan_primitives(file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
         let content = &file.content;
@@ -200,11 +159,11 @@ impl TaxonomyRoleChecker {
             }
             _ => return,
         };
-        let is_rs = matches!(
+        let _is_rs = matches!(
             file.language,
             shared::filesystem::taxonomy_filesystem_vo::Language::Rust
         );
-        let is_py = matches!(
+        let _is_py = matches!(
             file.language,
             shared::filesystem::taxonomy_filesystem_vo::Language::Python
         );
@@ -288,7 +247,7 @@ impl TaxonomyRoleChecker {
                             i + 1,
                             path_str
                         ))),
-                    }, shared::common::Language::Rust);
+                    });
 
                     violations.push(LintResult::new_arch(
                         &path_str,
@@ -520,7 +479,7 @@ impl TaxonomyRoleChecker {
                             i + 1,
                             path_str
                         ))),
-                    }, ),
+                    }),
                 ));
             }
         }
@@ -531,6 +490,20 @@ impl TaxonomyRoleChecker {
             stem.ends_with(suffix)
         } else {
             false
+        }
+    }
+
+    fn fmt(v: &AesRoleViolation) -> String {
+        match v {
+            AesRoleViolation::PrimitiveUsage { primitive, reason } => {
+                let why = reason.as_ref().map_or("Primitive type used in taxonomy layer — domain types must use VOs.".to_string(), |r| r.to_string());
+                format!("AES401 TAXONOMY_ROLE: Primitive type '{}' used in taxonomy file.\nWHY? {why}\nFIX: Wrap primitive in a dedicated Value Object.", primitive.value())
+            }
+            AesRoleViolation::ConstantPurity { reason } => {
+                let why = reason.as_ref().map_or("Non-constant declaration found in constant file.".to_string(), |r| r.to_string());
+                format!("AES401 TAXONOMY_ROLE: Constant purity violation.\nWHY? {why}\nFIX: Only const/static declarations allowed in taxonomy constant files.")
+            }
+            other => format!("AES401 TAXONOMY_ROLE: Taxonomy role violation.\nWHY? {other:?}\nFIX: Ensure file follows taxonomy conventions."),
         }
     }
 }

@@ -368,43 +368,17 @@ impl CapabilitiesRoleChecker {
         }
     }
 
-    fn fmt_msg(v: &AesRoleViolation) -> String {
-        Self::fmt(v)
-    }
-
     fn fmt(v: &AesRoleViolation) -> String {
         match v {
             AesRoleViolation::CapabilityTooManyTypes { count, reason } => {
-                let why = reason.as_ref().map_or(
-                    "Capabilities must have at most 3 type declarations.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES403 CAPABILITIES_ROLE: Too many types ({count}).\n\
-                        WHY? {why}\n\
-                        FIX: Split into multiple capability files."
-                )
+                let why = reason.as_ref().map_or("Capabilities must have at most 3 type declarations.".to_string(), |r| r.to_string());
+                format!("AES403 CAPABILITIES_ROLE: Too many types ({count}).\nWHY? {why}\nFIX: Split into multiple capability files.")
             }
             AesRoleViolation::CapabilityNoImplementor { reason } => {
-                let why = reason.as_ref().map_or(
-                    "No struct implements a protocol trait in this capability file."
-                        .to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES403 CAPABILITIES_ROLE: No protocol implementor found.\n\
-                        WHY? {why}\n\
-                        FIX: Add at least one struct implementing a _protocol trait."
-                )
+                let why = reason.as_ref().map_or("No struct implements a protocol trait.".to_string(), |r| r.to_string());
+                format!("AES403 CAPABILITIES_ROLE: No protocol implementor found.\nWHY? {why}\nFIX: Add at least one struct implementing a _protocol trait.")
             }
-            other => {
-                let why = format!("Unhandled capability violation variant: {other:?}");
-                format!(
-                    "AES403 CAPABILITIES_ROLE: Capability role violation.\n\
-                        WHY? {why}\n\
-                        FIX: Ensure capability follows composition conventions."
-                )
-            }
+            other => format!("AES403 CAPABILITIES_ROLE: Capability role violation.\nWHY? {other:?}\nFIX: Ensure capability follows composition conventions."),
         }
     }
 }

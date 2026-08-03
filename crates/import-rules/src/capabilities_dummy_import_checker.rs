@@ -1,6 +1,5 @@
 use shared::cli_commands::LintResult;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
 use shared::common::{
     ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity,
@@ -23,7 +22,6 @@ impl DummyImportChecker {}
 struct DummyFileContext {
     lines: Vec<String>,
     lang: LanguageVO,
-    layer_name: String,
     dummy_ranges: Vec<(LineNumber, LineNumber)>,
     dummy_impl_traits: Vec<String>,
 }
@@ -40,7 +38,6 @@ impl DummyFileContext {
         let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
         let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
         let lang = LanguageVO::from_path(file);
-        let layer_name = Self::detect_layer(file, layer_map);
         let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&str_refs, lang);
         let dummy_impl_traits: Vec<String> =
             utility_dummy_detector::dummy_impl_traits_with_lines(&str_refs)
@@ -50,7 +47,6 @@ impl DummyFileContext {
         Some(Self {
             lines,
             lang,
-            layer_name,
             dummy_ranges,
             dummy_impl_traits,
         })
@@ -241,14 +237,9 @@ impl DummyImportChecker {
                 continue;
             }
             violations.push(LintResult::new_arch(file, line_no.value() as usize, "AES204", Severity::HIGH,
-                format_import_violation(&AesImportViolation::ImportIntentViolation {
-                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
-                    import_type: SymbolName::new(symbol_str),
-                    intent: SymbolName::new("Use imported symbols in real logic, not only in dummy functions or stubs"),
-                    reason: Some(LintMessage::new(
-                        "Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings."
-                    )),
-                }),
+                "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                     WHY? Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings.\n\
+                     FIX: Ensure imports match the file's layer intent.".to_string(),
             ));
         }
     }
@@ -264,39 +255,27 @@ impl DummyImportChecker {
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
-                format_import_violation(&AesImportViolation::ImportIntentViolation {
-                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
-                    import_type: SymbolName::new("_use_mandatory_imports"),
-                    intent: SymbolName::new(
-                        "Remove dummy functions that exist only to silence unused import checks",
-                    ),
-                    reason: Some(LintMessage::new(format!(
-                        "Dummy function range ends at line {}",
-                        end
-                    ))),
-                }),
+                format!(
+                    "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                     WHY? Dummy function range ends at line {}\n\
+                     FIX: Ensure imports match the file's layer intent.",
+                    end
+                ),
             ));
         }
     }
 
     fn _check_dummy_impls(file: &str, ctx: &DummyFileContext, violations: &mut Vec<LintResult>) {
         let lines = ctx.str_refs();
-        for (trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
+        for (_trait_name, start) in utility_dummy_detector::dummy_impl_traits_with_lines(&lines) {
             violations.push(LintResult::new_arch(
                 file,
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
-                format_import_violation(&AesImportViolation::ImportIntentViolation {
-                    source_layer: LayerNameVO::new(ctx.layer_name.clone()),
-                    import_type: SymbolName::new(trait_name.value().to_string()),
-                    intent: SymbolName::new(
-                        "Implement contract methods with real behavior instead of empty/todo stubs",
-                    ),
-                    reason: Some(LintMessage::new(
-                        "Trait implementations with empty bodies violate the contract abstraction.",
-                    )),
-                }),
+                "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                     WHY? Trait implementations with empty bodies violate the contract abstraction.\n\
+                     FIX: Ensure imports match the file's layer intent.".to_string(),
             ));
         }
     }
@@ -386,14 +365,9 @@ impl DummyImportChecker {
             });
             if has_taxonomy_import {
                 violations.push(LintResult::new_arch(file, dummy_function_line, "AES204", Severity::HIGH,
-                    format_import_violation(&AesImportViolation::ImportIntentViolation {
-                        source_layer: LayerNameVO::new(ctx.layer_name.clone()),
-                        import_type: SymbolName::new("taxonomy"),
-                        intent: SymbolName::new("Use taxonomy Value Objects in function signatures instead of primitives"),
-                        reason: Some(LintMessage::new(
-                            "Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose."
-                        )),
-                    }),
+                    "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                         WHY? Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose.\n\
+                         FIX: Ensure imports match the file's layer intent.".to_string(),
                 ));
             }
         }
@@ -427,14 +401,9 @@ impl DummyImportChecker {
                     || trimmed.contains(&format!("'{}", pattern));
                 if trimmed.contains(pattern) && !is_string_lit {
                     violations.push(LintResult::new_arch(file, i + 1, "AES204", Severity::MEDIUM,
-                        format_import_violation(&AesImportViolation::ImportIntentViolation {
-                            source_layer: LayerNameVO::new("surfaces"),
-                            import_type: SymbolName::new(pattern.to_string()),
-                            intent: SymbolName::new(format!("Delegate to aggregate instead of calling '{}' directly", pattern)),
-                            reason: Some(LintMessage::new(
-                                "Surface-layer code must delegate business logic to the aggregate layer."
-                            )),
-                        }),
+                        "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                             WHY? Surface-layer code must delegate business logic to the aggregate layer.\n\
+                             FIX: Ensure imports match the file's layer intent.".to_string(),
                     ));
                 }
             }

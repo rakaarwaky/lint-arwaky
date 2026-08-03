@@ -112,7 +112,7 @@ impl ArchImportMandatoryChecker {
     fn _check_mandatory_imports(
         &self,
         file: &str,
-        basename: &str,
+        _basename:         basename: &str,str,
         definition: &LayerDefinition,
         entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
@@ -160,7 +160,7 @@ impl ArchImportMandatoryChecker {
     fn _check_scope_mandatory_imports(
         &self,
         file: &str,
-        basename: &str,
+        _basename:         basename: &str,str,
         config: &ArchitectureConfig,
         entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
@@ -200,7 +200,7 @@ impl ArchImportMandatoryChecker {
     fn _check_single_scope_requirement(
         &self,
         file: &str,
-        basename: &str,
+        _basename:         basename: &str,str,
         rule_layer_str: &str,
         required: &str,
         entries: &[ImportEntry],

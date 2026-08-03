@@ -44,7 +44,13 @@ fn two_identical_files_produces_violation() {
         !violations.is_empty(),
         "Expected duplication violation for identical files"
     );
-    assert!(violations[0].0.contains("AES305") || violations[0].1.to_string().contains("AES305"));
+    let has_aes305 = match &violations[0].1 {
+        shared::quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => {
+            reason.as_ref().map_or(false, |r| r.to_string().contains("AES305"))
+        }
+        _ => false,
+    };
+    assert!(violations[0].0.contains("AES305") || has_aes305);
 }
 
 #[test]
@@ -121,7 +127,12 @@ fn violation_message_contains_percentage() {
 
     let violations = ana.handle_duplicates_entries(&entries);
     assert!(!violations.is_empty());
-    let msg = violations[0].1.to_string();
+    let msg = match &violations[0].1 {
+        shared::quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => {
+            reason.as_ref().map_or("".to_string(), |r| r.to_string())
+        }
+        other => format!("{other:?}"),
+    };
     assert!(
         msg.contains("AES305"),
         "Violation message should contain AES305"

@@ -61,7 +61,7 @@ impl UtilityRoleChecker {
                         0,
                         "AES404",
                         Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::UtilityRole {
+                        Self::fmt(&AesRoleViolation::UtilityRole {
                             reason: Some(
                                 format!(
                                     "Utility files must not define structs or enums. Found: [{}]",
@@ -69,7 +69,7 @@ impl UtilityRoleChecker {
                                 )
                                 .into(),
                             ),
-                        }, shared::common::Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -86,7 +86,7 @@ impl UtilityRoleChecker {
                         0,
                         "AES404",
                         Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::UtilityRole {
+                        Self::fmt(&AesRoleViolation::UtilityRole {
                             reason: Some(
                                 format!(
                                     "Utility files must not define classes. Found: [{}]",
@@ -94,7 +94,7 @@ impl UtilityRoleChecker {
                                 )
                                 .into(),
                             ),
-                        }, shared::common::Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -113,12 +113,12 @@ impl UtilityRoleChecker {
                 if !forbidden.is_empty() {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES404", Severity::MEDIUM,
-                        format_role_violation(&AesRoleViolation::UtilityRole {
+                        Self::fmt(&AesRoleViolation::UtilityRole {
                             reason: Some(format!(
                                 "Utility files must not define classes, interfaces, enums, or types. Found: [{}]",
                                 forbidden.join(", ")
                             ).into()),
-                        }, shared::common::Language::Rust),
+                        }),
                     ));
                 }
             }
@@ -139,9 +139,9 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    format_role_violation(&AesRoleViolation::UtilityRole {
+                    Self::fmt(&AesRoleViolation::UtilityRole {
                         reason: Some("Utility files must not define structs or enums.".into()),
-                    }, shared::common::Language::Rust),
+                    }),
                 ));
             }
         } else if ext == "typescript" || ext == "ts" || ext == "tsx" {
@@ -156,12 +156,12 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    format_role_violation(&AesRoleViolation::UtilityRole {
+                    Self::fmt(&AesRoleViolation::UtilityRole {
                         reason: Some(
                             "Utility files must not define classes, interfaces, enums, or types."
                                 .into(),
                         ),
-                    }, shared::common::Language::Rust),
+                    }),
                 ));
             }
         } else if ext == "python" || ext == "py" {
@@ -176,9 +176,9 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    format_role_violation(&AesRoleViolation::UtilityRole {
+                    Self::fmt(&AesRoleViolation::UtilityRole {
                         reason: Some("Utility files must not define classes or functions.".into()),
-                    }, shared::common::Language::Rust),
+                    }),
                 ));
             }
         }
@@ -359,32 +359,13 @@ impl UtilityRoleChecker {
         result
     }
 
-    fn fmt_msg(v: &AesRoleViolation) -> String {
-        Self::fmt(v)
-    }
-
     fn fmt(v: &AesRoleViolation) -> String {
         match v {
             AesRoleViolation::UtilityRole { reason } => {
-                let why = reason.as_ref().map_or(
-                    "Utility files must be stateless free functions only — no structs, enums, classes, or interfaces."
-                        .to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\n\
-                        WHY? {why}\n\
-                        FIX: Remove type definitions; use stateless functions only."
-                )
+                let why = reason.as_ref().map_or("Utility files must be stateless free functions only — no structs, enums, classes, or interfaces.".to_string(), |r| r.to_string());
+                format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? {why}\nFIX: Remove type definitions; use stateless functions only.")
             }
-            other => {
-                let why = format!("Unhandled utility violation variant: {other:?}");
-                format!(
-                    "AES404 UTILITY_ROLE: Utility role violation.\n\
-                        WHY? {why}\n\
-                        FIX: Ensure utility file follows conventions."
-                )
-            }
+            other => format!("AES404 UTILITY_ROLE: Utility role violation.\nWHY? {other:?}\nFIX: Ensure utility file follows conventions."),
         }
     }
 }

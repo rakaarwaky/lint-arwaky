@@ -4,7 +4,6 @@ use rayon::iter::ParallelIterator;
 use shared::cli_commands::LintResult;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Severity};
@@ -14,10 +13,8 @@ use crate::utility_cycle_detector;
 use crate::utility_import_module_parser;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::format_import_violation;
 use shared::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use shared::import_rules::taxonomy_import_error::ImportError;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 
 use std::collections::HashMap;
 
@@ -224,12 +221,12 @@ impl DependencyCycleAnalyzer {
             let target = parts[1];
             let file = file_by_layer.get(source).cloned().unwrap_or_else(|| source.to_string());
             LintResult::new_arch(&file, 1, "AES205", Severity::CRITICAL,
-                format_import_violation(&AesImportViolation::CircularImport {
-                    reason: Some(LintMessage::new(format!(
-                        "Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.",
-                        source, target
-                    ))),
-                }),
+                format!(
+                    "AES205 IMPORT_VIOLATION: Circular dependency.\n\
+                     WHY? Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
+                     FIX: Break the dependency cycle.",
+                    source, target
+                ),
             )
         }).collect()
     }

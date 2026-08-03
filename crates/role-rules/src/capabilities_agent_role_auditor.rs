@@ -391,7 +391,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::AgentNoImplementor {
+                    Self::fmt(&AesRoleViolation::AgentNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No class with 'implements' found in {}.",
                                 path_str
@@ -403,118 +403,46 @@ impl AgentRoleChecker {
         }
     }
 
-    /// Format an `AesRoleViolation` into a human-readable lint message.
     fn fmt(v: &AesRoleViolation) -> String {
         match v {
-            AesRoleViolation::AgentTooManyTypes {
-                count,
-                names,
-                reason,
-            } => {
+            AesRoleViolation::AgentTooManyTypes { count, names, reason } => {
                 let names_str: Vec<String> = names.iter().map(|n| n.to_string()).collect();
                 let names_list = names_str.join(", ");
-                let why = reason.as_ref().map_or_else(
-                    || "Max 3 types (struct/enum) allowed in agent files. Refactor excess types to taxonomy layer.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: Too many types ({count} struct/enum) in agent file: [{names_list}].\n\
-                     WHY? {why}\n\
-                     FIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer."
-                )
+                let why = reason.as_ref().map_or("Max 3 types allowed in agent files.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: Too many types ({count}) in agent file: [{names_list}].\nWHY? {why}\nFIX: Keep at most 3 types. Move excess to taxonomy layer.")
             }
             AesRoleViolation::AgentNoImplementor { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "At least one struct must implement an _aggregate trait (impl Trait for Struct). Internal helper structs are allowed.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: No struct implements an _aggregate trait.\n\
-                     WHY? {why}\n\
-                     FIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers."
-                )
+                let why = reason.as_ref().map_or("At least one struct must implement an _aggregate trait.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? {why}\nFIX: At least one struct must implement the agent _aggregate.")
             }
             AesRoleViolation::StatelessExecution { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Agent execution components must be stateless to guarantee reentrancy and prevent side effects.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: Non-stateless behavior detected.\n\
-                     WHY? {why}\n\
-                     FIX: Remove mutable class state assignments or move initialization logic to the constructor."
-                )
+                let why = reason.as_ref().map_or("Agent execution components must be stateless.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: Non-stateless behavior detected.\nWHY? {why}\nFIX: Remove mutable state or move init to constructor.")
             }
             AesRoleViolation::HighLevelPolicy { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Agents must focus on high-level orchestration policies and not import concrete implementations directly.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: Low-level implementation details imported.\n\
-                     WHY? {why}\n\
-                     FIX: Reference components using their contract interfaces instead of concrete types."
-                )
+                let why = reason.as_ref().map_or("Agents must focus on high-level orchestration.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: Low-level implementation imported.\nWHY? {why}\nFIX: Reference components via contract interfaces.")
             }
             AesRoleViolation::CoordinatesMultiple { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Orchestrator agents exist to coordinate multiple subsystems; simple single-component logic belongs elsewhere.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: Orchestrator coordinates too few subsystems.\n\
-                     WHY? {why}\n\
-                     FIX: Merge this simple flow into its caller or delegate at least two subsystems to this orchestrator."
-                )
+                let why = reason.as_ref().map_or("Orchestrator agents coordinate multiple subsystems.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: Orchestrator coordinates too few subsystems.\nWHY? {why}\nFIX: Merge into caller or delegate at least two subsystems.")
             }
             AesRoleViolation::NoDomainLogic { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Complex domain logic detected in a passive agent role or surface wrapper.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\n\
-                     WHY? {why}\n\
-                     FIX: Move the complex domain/control logic into capabilities or orchestrator components."
-                )
+                let why = reason.as_ref().map_or("Complex domain logic in a passive role.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: Complex domain logic in passive role.\nWHY? {why}\nFIX: Move to capabilities or orchestrator.")
             }
             AesRoleViolation::LazyEagerInit { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Agent containers must only declare and wire dependencies, avoiding complex logic in constructors.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: Complex initialization logic found in container module.\n\
-                     WHY? {why}\n\
-                     FIX: Move the initialization/conditional logic out of the constructor or container setup."
-                )
+                let why = reason.as_ref().map_or("Agent containers must only wire dependencies.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: Complex init logic in container.\nWHY? {why}\nFIX: Move init logic out of constructor.")
             }
             AesRoleViolation::MustImplementContract { reason } => {
-                let why = reason.as_ref().map_or_else(
-                    || "Agent containers must implement the 'ServiceContainerAggregate' interface to satisfy dependency injection protocols.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!(
-                    "AES405 AGENT_ROLE: Class is missing required contract implementation.\n\
-                     WHY? {why}\n\
-                     FIX: Add the 'ServiceContainerAggregate' implementation for the container class."
-                )
+                let why = reason.as_ref().map_or("Agent containers must implement ServiceContainerAggregate.".to_string(), |r| r.to_string());
+                format!("AES405 AGENT_ROLE: Missing required contract implementation.\nWHY? {why}\nFIX: Add ServiceContainerAggregate implementation.")
             }
             AesRoleViolation::AgentFileSizeLimit { max_lines } => {
-                format!(
-                    "AES405 AGENT_ROLE: Agent file exceeds {max_lines} lines.\n\
-                     WHY? Agent files must remain compact to preserve role clarity.\n\
-                     FIX: Split the orchestrator/container into smaller focused modules."
-                )
+                format!("AES405 AGENT_ROLE: Agent file exceeds {max_lines} lines.\nWHY? Agent files must remain compact.\nFIX: Split into smaller focused modules.")
             }
-            other => {
-                let why = format!("Unhandled agent violation variant: {other:?}");
-                format!(
-                    "AES405 AGENT_ROLE: Unknown agent violation.\n\
-                     WHY? {why}\n\
-                     FIX: Check the AesRoleViolation enum and add a handler for this variant."
-                )
-            }
+            other => format!("AES405 AGENT_ROLE: Unknown agent violation.\nWHY? {other:?}\nFIX: Check AesRoleViolation enum."),
         }
     }
 }

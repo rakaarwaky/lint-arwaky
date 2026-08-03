@@ -263,57 +263,30 @@ impl SurfaceRoleChecker {
         }
     }
 
-    // ── Inline formatter (replaces format_role_violation) ──
-
     fn fmt(v: &AesRoleViolation) -> String {
         match v {
             AesRoleViolation::SurfaceRoleViolation { reason } => {
                 let why = reason.as_ref().map_or(
-                    "Surface role violation - surfaces must adhere to their designated role \
-                     (command, controller, component, hook, etc.)."
-                        .to_string(),
+                    "Surface must adhere to its designated role.".to_string(),
                     |r| r.to_string(),
                 );
-                format!(
-                    "AES406 SURFACE_ROLE: Surface role boundary violation.\n\
-                        WHY? {why}\n\
-                        FIX: Ensure surface only performs its designated responsibilities."
-                )
+                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? {why}\nFIX: Ensure surface only performs its designated responsibilities.")
             }
             AesRoleViolation::PassiveViolation { reason } => {
                 let why = reason.as_ref().map_or(
-                    "Passive surfaces must not contain logic that should be in capabilities or \
-                     agents."
-                        .to_string(),
+                    "Passive surfaces must not contain logic that should be in capabilities or agents.".to_string(),
                     |r| r.to_string(),
                 );
-                format!(
-                    "AES406 SURFACE_ROLE: Passive surface contains business logic.\n\
-                        WHY? {why}\n\
-                        FIX: Move logic to appropriate capability or agent."
-                )
+                format!("AES406 SURFACE_ROLE: Passive surface contains business logic.\nWHY? {why}\nFIX: Move logic to appropriate capability or agent.")
             }
             AesRoleViolation::NoDomainLogic { reason } => {
                 let why = reason.as_ref().map_or(
-                    "Complex domain logic detected in a passive agent role or surface wrapper."
-                        .to_string(),
+                    "Complex domain logic detected in a passive role.".to_string(),
                     |r| r.to_string(),
                 );
-                format!(
-                    "AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\n\
-                        WHY? {why}\n\
-                        FIX: Move the complex domain/control logic into capabilities or \
-                        orchestrator components."
-                )
+                format!("AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\nWHY? {why}\nFIX: Move logic to capabilities or orchestrator.")
             }
-            other => {
-                let why = format!("Unhandled surface violation variant: {other:?}");
-                format!(
-                    "AES406 SURFACE_ROLE: Unknown surface violation.\n\
-                        WHY? {why}\n\
-                        FIX: Check the AesRoleViolation enum and add a handler for this variant."
-                )
-            }
+            other => format!("AES406 SURFACE_ROLE: Unknown surface violation.\nWHY? {other:?}\nFIX: Check AesRoleViolation enum."),
         }
     }
 }
