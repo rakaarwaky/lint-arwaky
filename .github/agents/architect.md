@@ -1,3 +1,4 @@
+
 ---
 name: role-architect
 description: "Expert architecture reviewer: validates AES layer boundaries, naming conventions, dependency direction, orphan detection, and scalability across 7-layer spec."

@@ -4,8 +4,6 @@ import argparse
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from shared.src.taxonomy_expression_vo import ExpressionVO
-from shared.src.taxonomy_result_vo import ResultVO
 from shared.src.taxonomy_operation_vo import OperationVO
 from addition.src.capability_addition_analyzer import AdditionAnalyzer
 from subtraction.src.capability_subtraction_analyzer import SubtractionAnalyzer

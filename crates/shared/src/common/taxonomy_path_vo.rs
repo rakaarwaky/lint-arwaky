@@ -111,9 +111,7 @@ impl FilePath {
         matches!(
             f.as_ref(),
             "__init__.py"
-                | "main.py"
                 | "py.typed"
-                | "app.py"
                 | "lib.rs"
                 | "main.rs"
                 | "build.rs"
@@ -121,10 +119,6 @@ impl FilePath {
                 | "index.js"
                 | "index.tsx"
                 | "index.jsx"
-                | "main.ts"
-                | "main.js"
-                | "app.ts"
-                | "app.js"
         )
     }
 }

@@ -16,7 +16,7 @@ members = [
 
 [[bin]]
 name = "calculator"
-path = "src/main.rs"
+path = "src/root_calculator_entry.rs"
 
 [dependencies]
 calculator-shared = { path = "crates/shared" }

@@ -90,7 +90,7 @@ fn filepath_is_barrel_file() {
 fn filepath_is_entry_point() {
     assert!(FilePath::new("main.rs").unwrap().is_entry_point());
     assert!(FilePath::new("lib.rs").unwrap().is_entry_point());
-    assert!(FilePath::new("app.py").unwrap().is_entry_point());
+    assert!(!FilePath::new("app.py").unwrap().is_entry_point());
     assert!(!FilePath::new("helper.rs").unwrap().is_entry_point());
 }
 
