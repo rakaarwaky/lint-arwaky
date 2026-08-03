@@ -1,0 +1,9 @@
+{
+  "name": "calculator-addition",
+  "version": "1.0.0",
+  "main": "src/capability_addition_analyzer.ts",
+  "private": true,
+  "dependencies": {
+    "calculator-shared": "*"
+  }
+}

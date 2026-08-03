@@ -3,74 +3,52 @@
 version = 4
 
 [[package]]
-name = "aes-test-fulfillment"
-version = "0.1.0"
-
-[[package]]
-name = "cli-commands"
+name = "calculator-addition"
 version = "0.1.0"
 dependencies = [
- "di-containers",
- "language-adapters",
- "layer-rules",
- "taxonomy",
+ "calculator-shared",
 ]
 
 [[package]]
-name = "code-analysis"
+name = "calculator-cli"
 version = "0.1.0"
 dependencies = [
- "layer-rules",
- "taxonomy",
+ "calculator-shared",
 ]
 
 [[package]]
-name = "di-containers"
+name = "calculator-division"
 version = "0.1.0"
 dependencies = [
- "code-analysis",
+ "calculator-shared",
 ]
 
 [[package]]
-name = "language-adapters"
-version = "0.1.0"
-
-[[package]]
-name = "layer-rules"
+name = "calculator-multiplication"
 version = "0.1.0"
 dependencies = [
- "taxonomy",
+ "calculator-shared",
 ]
 
 [[package]]
-name = "shared-common"
+name = "calculator-root"
 version = "0.1.0"
 dependencies = [
- "di-containers",
- "taxonomy",
+ "calculator-addition",
+ "calculator-cli",
+ "calculator-division",
+ "calculator-multiplication",
+ "calculator-shared",
+ "calculator-subtraction",
 ]
 
 [[package]]
-name = "surface-orphan-test"
+name = "calculator-shared"
 version = "0.1.0"
 
 [[package]]
-name = "taxonomy"
-version = "0.1.0"
-
-[[package]]
-name = "test-project-rust"
+name = "calculator-subtraction"
 version = "0.1.0"
 dependencies = [
- "cli-commands",
- "code-analysis",
- "di-containers",
- "language-adapters",
- "layer-rules",
- "shared-common",
- "taxonomy",
+ "calculator-shared",
 ]
-
-[[package]]
-name = "utility_orphan_test"
-version = "0.1.0"

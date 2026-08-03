@@ -1,0 +1,9 @@
+{
+  "name": "calculator-multiplication",
+  "version": "1.0.0",
+  "main": "src/capability_multiplication_analyzer.ts",
+  "private": true,
+  "dependencies": {
+    "calculator-shared": "*"
+  }
+}

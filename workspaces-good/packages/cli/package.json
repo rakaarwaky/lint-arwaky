@@ -1,0 +1,9 @@
+{
+  "name": "calculator-cli",
+  "version": "1.0.0",
+  "main": "src/surface_calculator_command.ts",
+  "private": true,
+  "dependencies": {
+    "calculator-shared": "*"
+  }
+}

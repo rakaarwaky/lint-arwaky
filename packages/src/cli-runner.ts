@@ -53,28 +53,41 @@ export async function scan(
     args.push("--language", language);
   }
 
+  let stdout = "";
+  let stderr = "";
+
   try {
-    const { stdout, stderr } = await execFileAsync(cliPath, args, {
+    const result = await execFileAsync(cliPath, args, {
       maxBuffer: 10 * 1024 * 1024,
       timeout: 120_000,
     });
-
-    if (stderr) {
-      console.warn(`[lint-arwaky] stderr: ${stderr}`);
-    }
-
-    const result = JSON.parse(stdout) as ScanResult;
-    return result;
+    stdout = result.stdout;
+    stderr = result.stderr;
   } catch (err: unknown) {
-    if (err instanceof Error && "code" in err) {
-      const nodeErr = err as { code: number; stderr?: string; stdout?: string; message: string };
-      const detail = nodeErr.stderr?.trim() || nodeErr.stdout?.trim() || nodeErr.message;
-      throw new CliError(
-        `lint-arwaky-cli failed (code ${nodeErr.code}):\n${detail}`,
-        nodeErr.code,
-        nodeErr.stderr ?? "",
-      );
+    if (err instanceof Error && "stdout" in err) {
+      const nodeErr = err as unknown as { stdout?: string; stderr?: string; code: number };
+      stdout = nodeErr.stdout ?? "";
+      stderr = nodeErr.stderr ?? "";
+
+      if (nodeErr.code > 1) {
+        throw new CliError(
+          `lint-arwaky-cli failed (code ${nodeErr.code}):\n${stderr || "unknown error"}`,
+          nodeErr.code,
+          stderr,
+        );
+      }
+    } else {
+      throw err;
     }
-    throw err;
   }
+
+  if (stderr) {
+    console.warn(`[lint-arwaky] stderr: ${stderr}`);
+  }
+
+  if (!stdout.trim()) {
+    throw new CliError("lint-arwaky-cli returned empty output", null, stderr);
+  }
+
+  return JSON.parse(stdout) as ScanResult;
 }

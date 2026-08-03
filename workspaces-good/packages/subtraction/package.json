@@ -1,0 +1,9 @@
+{
+  "name": "calculator-subtraction",
+  "version": "1.0.0",
+  "main": "src/capability_subtraction_analyzer.ts",
+  "private": true,
+  "dependencies": {
+    "calculator-shared": "*"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "calculator-division",
+  "version": "1.0.0",
+  "main": "src/capability_division_analyzer.ts",
+  "private": true,
+  "dependencies": {
+    "calculator-shared": "*"
+  }
+}

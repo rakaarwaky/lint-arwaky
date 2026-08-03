@@ -1,0 +1,7 @@
+{
+  "name": "calculator-shared",
+  "version": "1.0.0",
+  "main": "src/taxonomy_operation_vo.ts",
+  "private": true,
+  "dependencies": {}
+}
