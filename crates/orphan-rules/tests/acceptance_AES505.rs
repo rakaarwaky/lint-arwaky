@@ -3,10 +3,16 @@ use orphan_rules_lint_arwaky::capabilities_orphan_agent_analyzer::AgentOrphanAna
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::IAgentOrphanProtocol;
+use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
 use std::collections::HashMap;
 
 fn agent_analyzer() -> AgentOrphanAnalyzer {
     AgentOrphanAnalyzer::new()
+}
+
+fn empty_reachability() -> ReachabilityResult {
+    use std::collections::HashSet;
+    ReachabilityResult::new(HashSet::new())
 }
 
 #[test]
@@ -31,7 +37,7 @@ fn aes505_agent_with_aggregate_trait_not_used_by_surface_is_orphan() {
         "crates/shared/src/unrelated.rs".to_string(),
     ];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map);
+    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         result.is_orphan,
         "Agent file with unreferenced aggregate should be orphan"
@@ -61,7 +67,7 @@ fn aes505_agent_with_aggregate_used_by_surface_is_not_orphan() {
         "crates/tui/src/surface_main_screen.rs".to_string(),
     ];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map);
+    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         !result.is_orphan,
         "Agent aggregate used by surface should NOT be orphan"
@@ -89,7 +95,7 @@ fn aes505_agent_with_aggregate_used_by_container_is_not_orphan() {
         "crates/cli/src/root_cli_container.rs".to_string(),
     ];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map);
+    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         !result.is_orphan,
         "Agent aggregate used by container should NOT be orphan"
@@ -114,7 +120,7 @@ fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
     );
     let all_files = vec![fp.value().to_string(), "crates/cli/src/main.rs".to_string()];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map);
+    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         !result.is_orphan,
         "Agent aggregate used by main.rs should NOT be orphan"
@@ -129,12 +135,12 @@ fn aes505_empty_content_is_not_orphan() {
     let root = FilePath::new(".".to_string()).unwrap();
     let content_map: HashMap<String, String> = HashMap::new();
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &[], &content_map);
+    let result = analyzer.is_agent_orphan(&fp, &root, &[], &content_map, &empty_reachability());
     assert!(!result.is_orphan, "Empty content should not be flagged");
 }
 
 #[test]
-fn aes505_no_aggregate_traits_is_not_orphan() {
+fn aes505_no_aggregate_traits_not_in_alive_set_is_orphan() {
     let analyzer = agent_analyzer();
     let fp =
         FilePath::new("crates/orphan-rules/src/agent_foo_orchestrator.rs".to_string()).unwrap();
@@ -147,10 +153,40 @@ fn aes505_no_aggregate_traits_is_not_orphan() {
     );
     let all_files = vec![fp.value().to_string()];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map);
+    // Empty reachability — file is not reachable from entry points
+    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+    assert!(
+        result.is_orphan,
+        "File without aggregate traits and not in alive set should be orphan"
+    );
+}
+
+#[test]
+fn aes505_no_aggregate_traits_in_alive_set_is_not_orphan() {
+    use shared::common::taxonomy_path_vo::FilePath as FP;
+    use std::collections::HashSet;
+
+    let analyzer = agent_analyzer();
+    let fp =
+        FilePath::new("crates/orphan-rules/src/agent_foo_orchestrator.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let mut content_map = HashMap::new();
+    // Regular functions, no aggregate trait impls
+    content_map.insert(
+        fp.value().to_string(),
+        "fn helper() -> i32 { 42 }\nfn run() { helper(); }".to_string(),
+    );
+    let all_files = vec![fp.value().to_string()];
+
+    // File IS in the alive set
+    let mut alive_set = HashSet::new();
+    alive_set.insert(FP::new(fp.value().to_string()).unwrap());
+    let alive = ReachabilityResult::new(alive_set);
+
+    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &alive);
     assert!(
         !result.is_orphan,
-        "File without aggregate traits should not be orphan"
+        "File without aggregate traits but in alive set should NOT be orphan"
     );
 }
 
