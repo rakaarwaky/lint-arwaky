@@ -32,14 +32,12 @@ fn construction_succeeds() {
 fn allowed_suffix_no_violation() {
     let map = layer_map_with_strict_capabilities();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_checker.rs",
         "capabilities_user_checker.rs",
         Some(layer_def(&map)),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(result.is_none());
 }
@@ -48,14 +46,12 @@ fn allowed_suffix_no_violation() {
 fn forbidden_suffix_produces_violation() {
     let map = layer_map_with_strict_capabilities();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_vo.rs",
         "capabilities_user_vo.rs",
         Some(layer_def(&map)),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_some(),
@@ -67,14 +63,12 @@ fn forbidden_suffix_produces_violation() {
 fn strict_policy_wrong_suffix_produces_violation() {
     let map = layer_map_with_strict_capabilities();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_handler.rs",
         "capabilities_user_handler.rs",
         Some(layer_def(&map)),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_some(),
@@ -86,14 +80,12 @@ fn strict_policy_wrong_suffix_produces_violation() {
 fn barrel_file_skipped() {
     let map = layer_map_with_strict_capabilities();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities/mod.rs",
         "mod.rs",
         Some(layer_def(&map)),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(result.is_none(), "barrel files must be skipped");
 }
@@ -102,14 +94,12 @@ fn barrel_file_skipped() {
 fn unknown_suffix_strict_produces_violation() {
     let map = layer_map_with_strict_capabilities();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_foo.rs",
         "capabilities_user_foo.rs",
         Some(layer_def(&map)),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_some(),
@@ -126,36 +116,16 @@ fn unknown_suffix_flexible_no_violation() {
     layers.insert(LayerNameVO::new("capabilities"), def);
     let map = LayerMapVO::new(layers);
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_foo.rs",
         "capabilities_user_foo.rs",
         Some(layer_def(&map)),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_none(),
         "unknown suffix under flexible policy must not produce violation"
-    );
-}
-
-#[test]
-fn unknown_prefix_produces_violation() {
-    let result = checker().check_unknown_prefix("src/foo_bar_baz.rs", "foo_bar_baz.rs");
-    assert!(
-        result.is_some(),
-        "unknown prefix must produce AES000 violation"
-    );
-}
-
-#[test]
-fn unknown_prefix_barrel_skipped() {
-    let result = checker().check_unknown_prefix("src/foo/mod.rs", "mod.rs");
-    assert!(
-        result.is_none(),
-        "barrel files must be skipped for unknown prefix"
     );
 }
 
@@ -168,7 +138,6 @@ fn cross_layer_taxonomy_with_protocol_suffix() {
     let mut layers = HashMap::new();
     layers.insert(LayerNameVO::new("taxonomy"), def);
 
-    // protocol is in contract's suffix set
     let mut contract_def = LayerDefinition::default();
     contract_def.naming.suffix_policy = SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string());
     contract_def.naming.allowed_suffix =
@@ -178,7 +147,6 @@ fn cross_layer_taxonomy_with_protocol_suffix() {
 
     let map = LayerMapVO::new(layers);
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let tax_def = map.values.get(&LayerNameVO::new("taxonomy")).unwrap();
     let result = checker().check_domain_suffixes_internal(
         "src/taxonomy_user_protocol.rs",
@@ -186,7 +154,6 @@ fn cross_layer_taxonomy_with_protocol_suffix() {
         Some(tax_def),
         &Some(LayerNameVO::new("taxonomy")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_some(),
@@ -198,25 +165,12 @@ fn cross_layer_taxonomy_with_protocol_suffix() {
 fn single_word_no_suffix_fails_strict_policy() {
     let map = layer_map_with_strict_capabilities();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user.rs",
         "capabilities_user.rs",
         Some(layer_def(&map)),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(result.is_some(), "no suffix must fail strict policy");
-}
-
-#[test]
-fn unknown_prefix_uses_aes000_code() {
-    let result = checker().check_unknown_prefix("src/foo_bar_baz.rs", "foo_bar_baz.rs");
-    let result = result.unwrap();
-    assert_eq!(
-        result.code.code(),
-        "AES000",
-        "unknown prefix must use AES000 code"
-    );
 }

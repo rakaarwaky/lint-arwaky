@@ -116,6 +116,7 @@ impl FilePath {
                 | "app.py"
                 | "lib.rs"
                 | "main.rs"
+                | "build.rs"
                 | "index.ts"
                 | "index.js"
                 | "index.tsx"

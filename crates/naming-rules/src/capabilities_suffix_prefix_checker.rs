@@ -11,9 +11,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::ISuffixPrefixChecker;
-use shared::naming_rules::{
-    LAYER_PREFIXES, RULE_CODE_SUFFIX_PREFIX, RULE_CODE_UNKNOWN_PREFIX, SUFFIX_POLICY_STRICT,
-};
+use shared::naming_rules::{RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -33,7 +31,6 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let suffix_to_layer = Self::build_suffix_to_layer_map(layer_map);
-        let all_suffixes = Self::build_all_suffixes(layer_map);
 
         let violations: Vec<LintResult> = files
             .values
@@ -44,9 +41,10 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
                 let layer = self._detect_layer(&f_str, &layer_keys);
                 let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
 
-                // AES102 UnknownPrefix: no layer detected from filename prefix
+                // No recognised layer prefix → no suffix policy applies → skip.
+                // (AES000 removed: unknown-prefix signalling is out of scope.)
                 if layer.is_none() {
-                    return self.check_unknown_prefix(&f_str, filename);
+                    return None;
                 }
 
                 let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
@@ -56,7 +54,6 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
                     def,
                     &layer_name,
                     &suffix_to_layer,
-                    &all_suffixes,
                 )
             })
             .collect();
@@ -98,54 +95,10 @@ impl SuffixPrefixChecker {
         suffix_to_layer
     }
 
-    /// Collect all allowed suffixes from all layers (base layers only) for UnknownSuffix check.
-    pub fn build_all_suffixes(layer_map: &LayerMapVO) -> Vec<String> {
-        let mut all = Vec::new();
-        for (layer_name, def) in &layer_map.values {
-            if layer_name.value().contains('(') {
-                continue;
-            }
-            for suffix in &def.naming.allowed_suffix.values {
-                if !all.contains(suffix) {
-                    all.push(suffix.clone());
-                }
-            }
-        }
-        all
-    }
-
     fn _detect_layer(&self, file: &str, layer_keys: &[String]) -> Option<String> {
         let filename = utility_layer_detector::extract_filename(file);
         utility_layer_detector::detect_layer_from_prefix(filename)
             .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
-    }
-
-    /// AES102 UnknownPrefix — file prefix does not match any recognised layer prefix.
-    pub fn check_unknown_prefix(&self, file: &str, filename: &str) -> Option<LintResult> {
-        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
-        if fp.is_barrel_file() || fp.is_entry_point() {
-            return None;
-        }
-
-        let stem = get_stem(filename)?;
-        let actual_prefix = stem.split('_').next().unwrap_or_default();
-
-        if actual_prefix.is_empty() || LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
-            return None;
-        }
-
-        Some(string_filename_result(
-            file,
-            RULE_CODE_UNKNOWN_PREFIX,
-            format!(
-                "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
-                 Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
-                 Likely causes: typo in the prefix name, or the file is in the wrong directory.",
-                actual_prefix,
-                LAYER_PREFIXES.len()
-            ),
-            Severity::HIGH,
-        ))
     }
 
     /// Check domain suffix rules per layer (AES102: suffix/prefix rules + cross-layer validation).
@@ -156,7 +109,6 @@ impl SuffixPrefixChecker {
         definition: Option<&shared::common::taxonomy_definition_vo::LayerDefinition>,
         layer_name: &Option<LayerNameVO>,
         suffix_to_layer: &std::collections::HashMap<String, String>,
-        all_suffixes: &[String],
     ) -> Option<LintResult> {
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();
         if fp.is_barrel_file() || fp.is_entry_point() {
@@ -215,25 +167,7 @@ impl SuffixPrefixChecker {
             }
         }
 
-        // 3. Unknown suffix check (strict policy only — suffix not in any layer's set)
-        if def.naming.suffix_policy.value == SUFFIX_POLICY_STRICT
-            && let Some(suf) = &suffix
-            && !all_suffixes.iter().any(|v| v == *suf)
-        {
-            return Some(string_filename_result(
-                file,
-                RULE_CODE_SUFFIX_PREFIX,
-                format!(
-                    "Suffix '{}' does not belong to any recognised layer's suffix set. \
-                     Only suffixes defined in the architecture configuration are valid. \
-                     This means the suffix is either a typo or the file belongs in a different layer.",
-                    suf
-                ),
-                Severity::HIGH,
-            ));
-        }
-
-        // 4. Strict policy check (suffix not in this layer's allowed list)
+        // 3. Strict policy check (suffix not in this layer's allowed list)
         if def.naming.suffix_policy.value == SUFFIX_POLICY_STRICT {
             let valid = match &suffix {
                 Some(s) => def.naming.allowed_suffix.values.iter().any(|v| v == *s),

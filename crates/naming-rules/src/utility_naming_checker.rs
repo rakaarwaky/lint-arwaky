@@ -8,6 +8,7 @@ use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::taxonomy_naming_constant::ADAPTER_NAME;
 
 /// Extract the file stem using the last dot (rfind), consistent across all checkers.
@@ -46,4 +47,18 @@ pub fn string_filename_result(
         enclosing_scope: None,
         related_locations: LocationList::new(),
     }
+}
+
+/// Collect the rule-level exceptions list for a given rule code.
+///
+/// FRD FR-001/FR-002: "Files in the rule's exceptions list are skipped."
+/// This lookup is evaluated before layer detection so unknown-prefix files
+/// can also be excepted.
+pub fn rule_exception_set(config: &ArchitectureConfig, rule_code: &str) -> std::collections::HashSet<String> {
+    config
+        .rules
+        .iter()
+        .find(|r| r.rule_type.code() == rule_code)
+        .map(|r| r.exceptions.values.iter().cloned().collect())
+        .unwrap_or_default()
 }

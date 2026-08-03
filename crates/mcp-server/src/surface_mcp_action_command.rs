@@ -213,15 +213,14 @@ impl McpActionSurface {
     }
 
     /// Run role scan via dispatcher (direct aggregate — no subprocess).
-    pub fn execute_role(&self, _path: &str) -> serde_json::Value {
-        // NOTE: collect_role_direct does not accept a path parameter.
-        // The user-provided path is currently ignored.
+    pub fn execute_role(&self, path: &str) -> serde_json::Value {
         match dispatcher::surface_role_action::collect_role_direct(
             self.deps.role_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
+            path,
         ) {
-            Ok(violations) => violations_response("role", _path, &violations),
+            Ok(violations) => violations_response("role", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }

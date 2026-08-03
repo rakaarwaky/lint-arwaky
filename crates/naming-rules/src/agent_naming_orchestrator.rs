@@ -26,10 +26,11 @@ pub struct NamingOrchestrator {
 
 impl INamingRunnerAggregate for NamingOrchestrator {
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
-        // Convert FileEntry paths to FilePathList for the checkers
+        // Naming checks are path-only — do NOT skip parse failures.
+        // Per FRD glossary, skip only UNREADABLE files (empty content).
         let file_paths: Vec<FilePath> = files
             .iter()
-            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .filter(|f| !f.content.is_empty())
             .filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok())
             .collect();
         let file_list = FilePathList::new(file_paths);

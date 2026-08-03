@@ -30,10 +30,13 @@ pub fn collect_naming(
     if !fs_agg.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
-    let _root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
+    let _root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
 
-    // 3. Run naming audit — surface fetches cached file entries from filesystem,
-    //    passes them to orchestrator. Orchestrator does zero I/O, only delegates
+    // 3. Build file index for target path
+    let root_path = std::path::Path::new(&root);
+    fs_agg.build_file_index(root_path);
+
+    // 4. Run naming audit — orchestrator does zero I/O, only delegates
     //    to naming_convention_checker (AES101) and suffix_prefix_checker (AES102).
     let results = naming_orchestrator.run_audit_with_entries(fs_agg.file_list());
 

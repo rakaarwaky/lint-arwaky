@@ -8,7 +8,6 @@ use shared::common::taxonomy_lint_result_vo::LintResultList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::naming_rules::RULE_CODE_SUFFIX_PREFIX;
-use shared::naming_rules::RULE_CODE_UNKNOWN_PREFIX;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
 
@@ -47,53 +46,12 @@ fn multi_layer_map() -> LayerMapVO {
     LayerMapVO::new(layers)
 }
 
-// ── FR-AES102-01: Missing layer prefix produces violation ─
-
-#[test]
-fn unknown_prefix_produces_violation() {
-    let result = checker().check_unknown_prefix("src/foo_bar_baz.rs", "foo_bar_baz.rs");
-    assert!(
-        result.is_some(),
-        "unknown prefix must produce AES000 violation"
-    );
-    assert_eq!(result.unwrap().code.code(), RULE_CODE_UNKNOWN_PREFIX);
-}
-
-#[test]
-fn recognised_prefix_no_violation() {
-    let result = checker().check_unknown_prefix(
-        "src/capabilities_user_checker.rs",
-        "capabilities_user_checker.rs",
-    );
-    assert!(
-        result.is_none(),
-        "recognised prefix must not produce violation"
-    );
-}
-
-#[test]
-fn unknown_prefix_barrel_file_skipped() {
-    let result = checker().check_unknown_prefix("src/foo/mod.rs", "mod.rs");
-    assert!(result.is_none(), "barrel files must be skipped");
-}
-
-#[test]
-fn all_layer_prefixes_recognised() {
-    use shared::naming_rules::LAYER_PREFIXES;
-    for prefix in LAYER_PREFIXES {
-        let filename = format!("{}foo_bar.rs", prefix);
-        let result = checker().check_unknown_prefix(&format!("src/{}", filename), &filename);
-        assert!(result.is_none(), "prefix '{}' should be recognised", prefix);
-    }
-}
-
 // ── FR-AES102-02: Wrong suffix for layer produces violation ─
 
 #[test]
 fn wrong_suffix_for_layer_produces_violation() {
     let map = strict_capabilities_layer_map();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
     let result = checker().check_domain_suffixes_internal(
@@ -102,7 +60,6 @@ fn wrong_suffix_for_layer_produces_violation() {
         Some(def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_some(),
@@ -115,7 +72,6 @@ fn wrong_suffix_for_layer_produces_violation() {
 fn correct_suffix_for_layer_passes() {
     let map = strict_capabilities_layer_map();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
     let result = checker().check_domain_suffixes_internal(
@@ -124,7 +80,6 @@ fn correct_suffix_for_layer_passes() {
         Some(def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_none(),
@@ -138,7 +93,6 @@ fn correct_suffix_for_layer_passes() {
 fn forbidden_suffix_produces_violation() {
     let map = strict_capabilities_layer_map();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
     let result = checker().check_domain_suffixes_internal(
@@ -147,7 +101,6 @@ fn forbidden_suffix_produces_violation() {
         Some(def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_some(),
@@ -161,17 +114,14 @@ fn forbidden_suffix_produces_violation() {
 fn cross_layer_suffix_violation_detected() {
     let map = multi_layer_map();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let cap_def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
-    // 'orchestrator' belongs to agent layer, not capabilities
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_orchestrator.rs",
         "capabilities_user_orchestrator.rs",
         Some(cap_def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_some(),
@@ -183,17 +133,14 @@ fn cross_layer_suffix_violation_detected() {
 fn same_layer_suffix_no_cross_violation() {
     let map = multi_layer_map();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let agent_def = map.values.get(&LayerNameVO::new("agent")).unwrap();
 
-    // 'orchestrator' belongs to agent layer — file is also agent
     let result = checker().check_domain_suffixes_internal(
         "src/agent_naming_orchestrator.rs",
         "agent_naming_orchestrator.rs",
         Some(agent_def),
         &Some(LayerNameVO::new("agent")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_none(),
@@ -207,7 +154,6 @@ fn same_layer_suffix_no_cross_violation() {
 fn valid_file_with_correct_suffix_passes() {
     let map = strict_capabilities_layer_map();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
     let result = checker().check_domain_suffixes_internal(
@@ -216,7 +162,6 @@ fn valid_file_with_correct_suffix_passes() {
         Some(def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(result.is_none(), "correct suffix 'adapter' should pass");
 }
@@ -233,7 +178,6 @@ fn flexible_policy_allows_unknown_suffix() {
     layers.insert(LayerNameVO::new("capabilities"), def);
     let map = LayerMapVO::new(layers);
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
     let result = checker().check_domain_suffixes_internal(
@@ -242,7 +186,6 @@ fn flexible_policy_allows_unknown_suffix() {
         Some(def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(
         result.is_none(),
@@ -256,7 +199,6 @@ fn flexible_policy_allows_unknown_suffix() {
 fn aes102_barrel_file_skipped() {
     let map = strict_capabilities_layer_map();
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
     let result = checker().check_domain_suffixes_internal(
@@ -265,7 +207,6 @@ fn aes102_barrel_file_skipped() {
         Some(def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(result.is_none(), "barrel file must be skipped");
 }
@@ -284,7 +225,6 @@ fn excepted_file_bypasses_suffix_check() {
     layers.insert(LayerNameVO::new("capabilities"), def);
     let map = LayerMapVO::new(layers);
     let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
-    let all = SuffixPrefixChecker::build_all_suffixes(&map);
     let def = map.values.get(&LayerNameVO::new("capabilities")).unwrap();
 
     let result = checker().check_domain_suffixes_internal(
@@ -293,7 +233,6 @@ fn excepted_file_bypasses_suffix_check() {
         Some(def),
         &Some(LayerNameVO::new("capabilities")),
         &suffix_map,
-        &all,
     );
     assert!(result.is_none(), "excepted file must bypass suffix check");
 }

@@ -188,6 +188,7 @@ pub fn handle_role(
         role_orchestrator,
         filter,
         filesystem.clone(),
+        &root,
     ) {
         Ok(violations) => {
             output_violations(

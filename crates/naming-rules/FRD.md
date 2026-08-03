@@ -1,4 +1,8 @@
-# FRD — naming-rules (v1.1.0)
+# FRD — naming-rules (v1.11.0)
+
+> **Scope:** this crate enforces AES101 and AES102 only. Unknown-layer-prefix
+> files are skipped by AES102 (no layer → no suffix policy) and validated
+> structurally by AES101.
 
 ---
 
@@ -68,7 +72,6 @@ flowchart TD
 - **Error Handling**:
 
   - Emit AES101 with the invalid stem, expected pattern, and minimum word count.
-  - Emit AES000 with the unrecognized prefix and list of valid prefixes.
   - Unreadable file paths (returned by filesystem crate with error flag) are skipped.
 
 ---
@@ -177,7 +180,7 @@ flowchart TD
 | 6  | Barrel file (`mod.rs`, `__init__.py`, `index.ts`)                             | No violation — exception      | excl   |
 | 7  | File in exception list (`main.rs`, `lib.rs`)                                  | No violation — exception      | excl   |
 | 8  | Valid file but`min_words` config set to 5, file has 3 words                   | AES101 — below configured min | AES101 |
-| 9  | File with unrecognized prefix (`foobar_user_vo`)                              | AES000 — unknown prefix       | AES101 |
+| 9  | File with unrecognized prefix (`foobar_user_vo`)                              | No violation — unknown prefix out of scope (AES101 pass, AES102 skip) | pass   |
 | 10 | File with digits in segment (`taxonomy_v2_vo`)                                | No violation (digits allowed)  | pass   |
 
 ### AES102 — Suffix/Prefix Validation
@@ -206,7 +209,7 @@ flowchart TD
 
 | # | Scenario                       | Expected                    | Rule   |
 | --- | -------------------------------- | ----------------------------- | -------- |
-| 1 | Rule AES101 disabled in config | No AES101/AES000 violations | config |
+| 1 | Rule AES101 disabled in config | No AES101 violations | config |
 | 2 | Rule AES102 disabled in config | No AES102 violations        | config |
 | 3 | File in exceptions list        | No violation for that file  | config |
 

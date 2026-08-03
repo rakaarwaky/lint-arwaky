@@ -25,7 +25,7 @@ pub fn detect_layer_from_prefix(filename: &str) -> Option<String> {
         ("capabilities_", "capabilities"),
         ("utility_", "utility"),
         ("agent_", "agent"),
-        ("surface_", "surfaces"),
+        ("surface_", "surface"),
         ("root_", "root"),
     ];
 

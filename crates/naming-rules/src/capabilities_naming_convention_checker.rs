@@ -6,7 +6,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 
 use crate::utility_naming_checker::get_stem;
-use crate::utility_naming_checker::string_filename_result;
+use crate::utility_naming_checker::{rule_exception_set, string_filename_result};
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -78,6 +78,8 @@ impl NamingConventionChecker {
     }
 
     /// Build naming regex dynamically based on min_words.
+    /// Slots map 1:1 to word counts 1..=10 (FRD: "one slot per word count 1–10").
+    /// Counts > 10 are clamped to the 10-word slot.
     fn naming_regex(min_words: usize) -> Option<&'static Regex> {
         static REGEX_TABLE: [OnceLock<Option<Regex>>; 10] = [
             OnceLock::new(),
@@ -91,12 +93,12 @@ impl NamingConventionChecker {
             OnceLock::new(),
             OnceLock::new(),
         ];
-        let idx = min_words.min(9);
-        REGEX_TABLE[idx]
+        let clamped = min_words.clamp(1, 10);
+        REGEX_TABLE[clamped - 1]
             .get_or_init(|| {
                 let pattern = format!(
                     r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$",
-                    min_words.saturating_sub(1)
+                    clamped.saturating_sub(1)
                 );
                 Regex::new(&pattern).ok()
             })
