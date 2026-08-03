@@ -40,7 +40,9 @@ impl ContractOrphanAnalyzer {
     }
 
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
-        match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(file_path, content) {
+        match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(
+            file_path, content,
+        ) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
             FileParseResultVO::TypeScript(result) => result.trait_names(),
@@ -59,7 +61,8 @@ impl ContractOrphanAnalyzer {
             if content.is_empty() {
                 continue;
             }
-            match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(cf, &content) {
+            match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(cf, &content)
+            {
                 FileParseResultVO::Rust(result) => {
                     if result.has_trait_impl(trait_name) {
                         return true;

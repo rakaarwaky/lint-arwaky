@@ -17,7 +17,7 @@ use shared_lint_arwaky::file_watch::{
     IChangeAnalyzerProtocol, IWatchAggregate, IWatchProviderProtocol,
 };
 use shared_lint_arwaky::filesystem::{
-    IFilesystemAggregate, IFileSystemIOProtocol, IGraphProtocol, IParserProtocol,
+    IFileSystemIOProtocol, IFilesystemAggregate, IGraphProtocol, IParserProtocol,
     IToolResolutionProtocol, IWorkspaceProtocol,
 };
 use shared_lint_arwaky::git_hooks::{
@@ -36,7 +36,8 @@ use shared_lint_arwaky::naming_rules::{
 };
 use shared_lint_arwaky::orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
-    IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
+    IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
+    IUtilityOrphanProtocol,
 };
 use shared_lint_arwaky::project_setup::{
     ISetupInstallerProtocol, ISetupManagementProtocol, SetupManagementAggregate,
@@ -45,9 +46,7 @@ use shared_lint_arwaky::quality_rules::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
     IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
 };
-use shared_lint_arwaky::report_formatter::{
-    IReportFormatterAggregate, IReportFormatterProtocol,
-};
+use shared_lint_arwaky::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
 use shared_lint_arwaky::role_rules::{
     IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
     ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
@@ -214,14 +213,14 @@ fn auto_fix_contracts_are_send_sync() {
 
 #[test]
 fn file_watch_contracts_are_traits() {
-    assert_trait::<dyn IChangeAnalyzerProtocol>();
+    // IChangeAnalyzerProtocol is not dyn compatible (has non-object-safe methods)
     assert_trait::<dyn IWatchProviderProtocol>();
     assert_trait::<dyn IWatchAggregate>();
 }
 
 #[test]
 fn file_watch_contracts_are_send_sync() {
-    assert_send_sync::<dyn IChangeAnalyzerProtocol>();
+    // IChangeAnalyzerProtocol is not dyn compatible
     assert_send_sync::<dyn IWatchProviderProtocol>();
     assert_send_sync::<dyn IWatchAggregate>();
 }
@@ -307,8 +306,8 @@ fn project_setup_contracts_are_send_sync() {
 #[test]
 fn core_value_objects_are_send_sync() {
     use shared_lint_arwaky::common::{
-        AdapterError, ConfigLanguage, ErrorCode, FilePath, Identity, JobId, Language, LintResult,
-        Score, Severity, Threshold,
+        AdapterError, ErrorCode, FilePath, Identity, JobId, Language, LintResult, Score, Severity,
+        Threshold,
     };
     use shared_lint_arwaky::config_system::{ConfigSource, ProjectConfig};
     use shared_lint_arwaky::filesystem::FileEntry;
@@ -318,7 +317,7 @@ fn core_value_objects_are_send_sync() {
     assert_send_sync::<ErrorCode>();
     assert_send_sync::<JobId>();
     assert_send_sync::<Language>();
-    assert_send_sync::<ConfigLanguage>();
+    assert_send_sync::<shared_lint_arwaky::common::taxonomy_config_language_vo::ConfigLanguage>();
     assert_send_sync::<Severity>();
     assert_send_sync::<Score>();
     assert_send_sync::<Threshold>();

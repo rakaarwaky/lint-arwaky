@@ -26,9 +26,18 @@ fn config_language_as_str() {
 
 #[test]
 fn config_language_from_str_cases() {
-    assert_eq!(ConfigLanguage::from_str("RUST").expect("parses"), ConfigLanguage::Rust);
-    assert_eq!(ConfigLanguage::from_str(" ts ").expect("parses"), ConfigLanguage::TypeScript);
-    assert_eq!(ConfigLanguage::from_str("js").expect("parses"), ConfigLanguage::TypeScript);
+    assert_eq!(
+        ConfigLanguage::from_str("RUST").expect("parses"),
+        ConfigLanguage::Rust
+    );
+    assert_eq!(
+        ConfigLanguage::from_str(" ts ").expect("parses"),
+        ConfigLanguage::TypeScript
+    );
+    assert_eq!(
+        ConfigLanguage::from_str("js").expect("parses"),
+        ConfigLanguage::TypeScript
+    );
     assert!(ConfigLanguage::from_str("go").is_err());
 }
 
@@ -42,9 +51,11 @@ fn config_language_file_names_per_language() {
         ConfigLanguage::Python.config_file_names(),
         &["lint_arwaky.config.python.yaml"]
     );
-    assert!(ConfigLanguage::TypeScript
-        .config_file_names()
-        .contains(&"lint_arwaky.config.javascript.yaml"));
+    assert!(
+        ConfigLanguage::TypeScript
+            .config_file_names()
+            .contains(&"lint_arwaky.config.javascript.yaml")
+    );
 }
 
 // ── Thresholds / AdapterEntry / ProjectConfig ───────────────
@@ -141,7 +152,11 @@ fn config_source_new_normalizes_path() {
 #[test]
 fn config_result_new() {
     let source = ConfigSource::new("rust", "x", "y");
-    let result = ConfigResult::new(ArchitectureConfig::default(), source, vec!["w1".to_string()]);
+    let result = ConfigResult::new(
+        ArchitectureConfig::default(),
+        source,
+        vec!["w1".to_string()],
+    );
     assert_eq!(result.warnings.len(), 1);
     assert!(result.config.enabled.value());
 }

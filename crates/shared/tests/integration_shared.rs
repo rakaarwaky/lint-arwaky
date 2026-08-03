@@ -2,34 +2,32 @@
 
 use std::collections::HashMap;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::{BooleanVO, ColumnNumber, Count, LineNumber, Score};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO, NamingConfig};
-use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::common::utility_compliance_score::compute_score;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
+use shared_lint_arwaky::common::taxonomy_common_vo::{
+    BooleanVO, ColumnNumber, Count, LineNumber, Score,
+};
+use shared_lint_arwaky::common::taxonomy_definition_vo::{
+    LayerDefinition, LayerMapVO, NamingConfig,
+};
+use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
+use shared_lint_arwaky::common::taxonomy_layer_vo::LayerNameVO;
+use shared_lint_arwaky::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_lint_arwaky::common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
+use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
+use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
+use shared_lint_arwaky::common::taxonomy_paths_vo::FilePathList;
+use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
+use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_lint_arwaky::common::utility_compliance_score::compute_score;
+use shared_lint_arwaky::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 /// Build a full lint result chain: Config → LayerMap → LintResult.
 #[test]
 fn config_to_layermap_to_lintresult_chain() {
     // 1. Create architecture config with layers
     let mut layers = HashMap::new();
-    layers.insert(
-        LayerNameVO::new("taxonomy"),
-        LayerDefinition::default(),
-    );
-    layers.insert(
-        LayerNameVO::new("contract"),
-        LayerDefinition::default(),
-    );
+    layers.insert(LayerNameVO::new("taxonomy"), LayerDefinition::default());
+    layers.insert(LayerNameVO::new("contract"), LayerDefinition::default());
     let config = ArchitectureConfig::new(
         BooleanVO::new(true),
         layers,
@@ -63,7 +61,7 @@ fn vo_interop_filepath_to_lintresultlist_to_score() {
     let fp = FilePath::new("src/surface/scan.rs").unwrap();
     let scope = ScopeRef::new("scan_action");
 
-    let mut result = LintResult {
+    let result = LintResult {
         file: fp,
         line: LineNumber::new(42),
         column: ColumnNumber::new(5),
@@ -81,10 +79,13 @@ fn vo_interop_filepath_to_lintresultlist_to_score() {
     list.push(result.clone());
 
     assert_eq!(list.len(), 2);
-    assert_eq!(list.iter().map(|r| r.code.code()).collect::<Vec<_>>(), vec!["AES401", "AES401"]);
+    assert_eq!(
+        list.iter().map(|r| r.code.code()).collect::<Vec<_>>(),
+        vec!["AES401", "AES401"]
+    );
 
     // Compute compliance score
-    let score = compute_score(&list);
+    let score = compute_score(&list.values);
     // 2 × HIGH = 2 × 3 = 6 penalty → 94.0
     assert_eq!(score, 94.0);
 }
@@ -138,8 +139,8 @@ fn lintresult_with_related_locations() {
 /// Verify LintResult identity is deterministic.
 #[test]
 fn lintresult_identity_deterministic() {
-    let a = LintResult::new_arch("x.rs", 1, "AES101", Severity::Error, "msg");
-    let b = LintResult::new_arch("x.rs", 1, "AES101", Severity::Error, "msg");
+    let a = LintResult::new_arch("x.rs", 1, "AES101", Severity::CRITICAL, "msg");
+    let b = LintResult::new_arch("x.rs", 1, "AES101", Severity::CRITICAL, "msg");
     assert_eq!(a.identity().value, b.identity().value);
 }
 
@@ -187,7 +188,7 @@ fn filepath_normalization_in_lintresult() {
     let fp = FilePath::new("src\\main.rs").unwrap();
     assert_eq!(fp.value(), "src/main.rs");
 
-    let result = LintResult::new_arch(&fp.value, 1, "AES101", Severity::Error, "test");
+    let result = LintResult::new_arch(&fp.value, 1, "AES101", Severity::CRITICAL, "test");
     assert_eq!(result.file.value(), "src/main.rs");
 }
 
@@ -209,15 +210,19 @@ fn lintresultlist_mutation_and_iteration() {
 
     assert_eq!(list.len(), 5);
     let codes: Vec<&str> = list.iter().map(|r| r.code.code()).collect();
-    assert_eq!(codes, vec!["AES101", "AES101", "AES101", "AES101", "AES101"]);
+    assert_eq!(
+        codes,
+        vec!["AES101", "AES101", "AES101", "AES101", "AES101"]
+    );
 }
 
 /// Verify LayerDefinition default and custom fields.
 #[test]
 fn layer_definition_customization() {
     let mut ld = LayerDefinition::default();
-    ld.allowed = shared::common::taxonomy_common_vo::PatternList::new(vec!["*_vo.rs"]);
-    ld.forbidden = shared::common::taxonomy_common_vo::PatternList::new(vec!["*_test.rs"]);
+    ld.allowed = shared_lint_arwaky::common::taxonomy_common_vo::PatternList::new(vec!["*_vo.rs"]);
+    ld.forbidden =
+        shared_lint_arwaky::common::taxonomy_common_vo::PatternList::new(vec!["*_test.rs"]);
     ld.word_count = Count::new(2);
 
     assert_eq!(ld.allowed.len(), 1);

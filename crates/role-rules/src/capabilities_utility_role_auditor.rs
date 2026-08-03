@@ -44,14 +44,16 @@ impl UtilityRoleChecker {
         let path_str = file.path.to_string_lossy();
         match meta {
             ParseMetadata::Rust(rust_meta) => {
-                // Utility must not define structs or enums
+                // Utility must not define structs, enums, traits, or type aliases
                 if !rust_meta.struct_definitions.is_empty()
                     || !rust_meta.enum_definitions.is_empty()
+                    || !rust_meta.trait_definitions.is_empty()
                 {
                     let items: Vec<&str> = rust_meta
                         .struct_definitions
                         .iter()
                         .chain(rust_meta.enum_definitions.iter())
+                        .chain(rust_meta.trait_definitions.iter())
                         .map(|s| s.as_str())
                         .collect();
                     violations.push(LintResult::new_arch(

@@ -12,3 +12,14 @@ workspace = true
 shared = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+
+[dev-dependencies]
+quality-rules = { workspace = true }
+filesystem = { workspace = true }
+criterion = { version = "0.8.2", features = ["html_reports"] }
+tempfile = "3"
+
+[[bench]]
+name = "bench_auto_fix"
+path = "benches/bench_auto_fix.rs"
+harness = false

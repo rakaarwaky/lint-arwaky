@@ -8,8 +8,8 @@ use orphan_rules_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrp
 use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
 use orphan_rules_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
 use shared::orphan_rules::{
-    IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
-    IOrphanAggregate, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
+    IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
+    ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
 
 // ── Trait-bound helpers ────────────────────────────────────

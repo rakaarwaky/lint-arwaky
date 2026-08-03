@@ -6,7 +6,7 @@ use mock_filesystem::mock_filesystem;
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::{IOrphanAggregate, OrphanFileListVO};
+use shared::orphan_rules::OrphanFileListVO;
 
 #[test]
 fn container_creates_with_default_config() {
@@ -59,14 +59,14 @@ fn analyzer_scan_orphans_on_empty_dir() {
 fn analyzer_returns_empty_for_disabled_config() {
     use shared::common::taxonomy_common_vo::BooleanVO;
     let fs = mock_filesystem();
-    let mut config = ArchitectureConfig::default();
-    config.enabled = BooleanVO::new(false);
+    let config = ArchitectureConfig {
+        enabled: BooleanVO::new(false),
+        ..Default::default()
+    };
     let container = OrphanContainer::new_with_config(config, fs);
     let analyzer = container.analyzer();
 
-    let files = OrphanFileListVO::new(vec![
-        "src/taxonomy_color.rs".to_string(),
-    ]);
+    let files = OrphanFileListVO::new(vec!["src/taxonomy_color.rs".to_string()]);
     let root = FilePath::new(".".to_string()).unwrap();
     let results = analyzer.check_orphans(&files, &root);
     // Config disabled → no results

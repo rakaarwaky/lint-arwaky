@@ -4,8 +4,8 @@ mod common;
 use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
 use shared_lint_arwaky::common::taxonomy_common_error::ExitCode;
 use shared_lint_arwaky::common::taxonomy_common_vo::{
-    BooleanVO, ColumnNumber, Count, ErrorMessage, LineNumber, PatternList, Score, Timestamp,
-    LanguageVO,
+    BooleanVO, ColumnNumber, Count, ErrorMessage, LanguageVO, LineNumber, PatternList, Score,
+    Timestamp,
 };
 use shared_lint_arwaky::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
@@ -27,7 +27,8 @@ use shared_lint_arwaky::common::utility_language_detector::{
 };
 use shared_lint_arwaky::common::utility_path_normalization::{
     normalize_path, resolve_capabilities_path,
-};use shared_lint_arwaky::common::utility_signature_parser::{
+};
+use shared_lint_arwaky::common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
@@ -230,7 +231,10 @@ fn compute_score_clamps_at_zero() {
 // ── Languages ───────────────────────────────────────────────
 #[test]
 fn config_language_parse_and_format() {
-    assert_eq!(ConfigLanguage::from_str("rust").expect("parses"), ConfigLanguage::Rust);
+    assert_eq!(
+        ConfigLanguage::from_str("rust").expect("parses"),
+        ConfigLanguage::Rust
+    );
     assert_eq!(
         ConfigLanguage::from_str("python").expect("parses"),
         ConfigLanguage::Python
@@ -250,11 +254,11 @@ fn config_language_parse_and_format() {
 
 #[test]
 fn config_language_file_names() {
-    assert_eq!(ConfigLanguage::Rust.config_file_names(), &["lint_arwaky.config.rust.yaml"]);
     assert_eq!(
-        ConfigLanguage::TypeScript.config_file_names().len(),
-        2
+        ConfigLanguage::Rust.config_file_names(),
+        &["lint_arwaky.config.rust.yaml"]
     );
+    assert_eq!(ConfigLanguage::TypeScript.config_file_names().len(), 2);
 }
 
 #[test]
@@ -271,7 +275,10 @@ fn language_detection_from_adapter_name() {
     assert_eq!(Language::from_adapter_name("clippy"), Language::Rust);
     assert_eq!(Language::from_adapter_name("ruff"), Language::Python);
     assert_eq!(Language::from_adapter_name("eslint"), Language::JavaScript);
-    assert_eq!(Language::from_adapter_name("typescript"), Language::TypeScript);
+    assert_eq!(
+        Language::from_adapter_name("typescript"),
+        Language::TypeScript
+    );
     assert_eq!(Language::from_adapter_name("nonsense"), Language::Unknown);
 }
 
@@ -280,7 +287,10 @@ fn language_metadata_keywords() {
     assert_eq!(Language::Rust.interface_kw(), "trait");
     assert_eq!(Language::Python.interface_kw(), "Protocol");
     assert_eq!(Language::TypeScript.struct_keyword(), "class/interface");
-    assert_eq!(Language::extensions(), &["rs", "py", "ts", "tsx", "js", "jsx"]);
+    assert_eq!(
+        Language::extensions(),
+        &["rs", "py", "ts", "tsx", "js", "jsx"]
+    );
     assert_eq!(Language::Rust.as_str(), "rust");
 }
 
@@ -416,7 +426,10 @@ fn lint_result_new_arch_sets_defaults() {
     assert_eq!(result.line.value(), 5);
     assert_eq!(result.severity, Severity::HIGH);
     assert!(result.enclosing_scope.is_some());
-    assert_eq!(result.source.expect("arch sets source").value(), "architecture");
+    assert_eq!(
+        result.source.expect("arch sets source").value(),
+        "architecture"
+    );
 }
 
 #[test]
@@ -461,7 +474,7 @@ fn location_list_push_and_deref() {
 fn success_status_and_adapter_metadata() {
     assert!(SuccessStatus::new(true).value());
     assert!(!SuccessStatus::default().value());
-    let meta = AdapterMetadata::new(AdapterName::raw("ruff"), "ruff.Linter");
+    let meta = AdapterMetadata::new(AdapterName::raw("ruff"), "ruff.Linter".to_string());
     assert_eq!(meta.class_path, "ruff.Linter");
 }
 
@@ -536,7 +549,7 @@ fn extract_python_method_signatures_with_primitives() {
 }
 
 #[test]
-fn extract_typescript_method_signatures() {
+fn extract_typescript_method_signatures_test() {
     let content = "interface IFoo {\n  getName(): string;\n  safeName(): unknown;\n}\n";
     let sigs = extract_typescript_method_signatures(content);
     assert_eq!(sigs.len(), 1);
@@ -547,7 +560,8 @@ fn forbidden_primitive_detection_python() {
     let found = python_signature_uses_forbidden_primitive("def run(self, x: str) -> int:");
     assert!(found.contains(&"str"));
     assert!(found.contains(&"int"));
-    let clean = python_signature_uses_forbidden_primitive("def run(self, x: ValueObject) -> ValueObject:");
+    let clean =
+        python_signature_uses_forbidden_primitive("def run(self, x: ValueObject) -> ValueObject:");
     assert!(clean.is_empty());
 }
 
@@ -563,6 +577,8 @@ fn forbidden_primitive_detection_rust() {
     let found = signature_uses_forbidden_primitive("fn read(&self, x: i32) -> String;");
     assert!(found.contains(&"i32"));
     assert!(found.contains(&"String"));
-    let clean = signature_uses_forbidden_primitive("fn read(&self, x: &FilePath) -> Result<String, Error>;");
+    let clean = signature_uses_forbidden_primitive(
+        "fn read(&self, x: &FilePath) -> Result<String, Error>;",
+    );
     assert!(clean.is_empty() || !clean.contains(&"i32"));
 }

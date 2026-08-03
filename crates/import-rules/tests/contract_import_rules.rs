@@ -22,7 +22,9 @@ fn _assert_dummy_import_checker_protocol<T: IDummyImportCheckerProtocol>() {}
 
 #[test]
 fn orchestrator_implements_import_runner_aggregate() {
-    _assert_import_runner_aggregate::<import_rules_lint_arwaky::agent_import_orchestrator::ImportOrchestrator>();
+    _assert_import_runner_aggregate::<
+        import_rules_lint_arwaky::agent_import_orchestrator::ImportOrchestrator,
+    >();
 }
 
 #[test]

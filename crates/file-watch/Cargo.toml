@@ -17,3 +17,7 @@ notify.workspace = true
 notify-debouncer-mini.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
+
+[dev-dependencies]
+quality-rules = { workspace = true }
+filesystem = { workspace = true }

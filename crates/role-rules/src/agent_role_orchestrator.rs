@@ -153,8 +153,12 @@ impl RoleOrchestrator {
     }
 
     fn is_ignored(&self, path: &str) -> bool {
-        self.ignored_paths
-            .iter()
-            .any(|ignored| path.contains(ignored.as_str()))
+        let segments: Vec<&str> = path.split('/').collect();
+        self.ignored_paths.iter().any(|ignored| {
+            let ignored_segments: Vec<&str> = ignored.split('/').collect();
+            ignored_segments
+                .iter()
+                .all(|igs| segments.iter().any(|s| s == igs))
+        })
     }
 }

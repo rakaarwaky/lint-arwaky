@@ -1,5 +1,6 @@
 // Unit tests — shared/cli_commands taxonomy types.
 use clap::Parser;
+use shared_lint_arwaky::cli_commands::Format;
 use shared_lint_arwaky::cli_commands::taxonomy_cli_vo::{Cli, Commands};
 use shared_lint_arwaky::cli_commands::taxonomy_command_catalog_vo::{
     COMMAND_CATALOG, CommandCatalogVO,
@@ -10,10 +11,11 @@ use shared_lint_arwaky::cli_commands::taxonomy_protocol_vo::{
 use shared_lint_arwaky::cli_commands::taxonomy_scan_report_vo::{
     DiagnosticSeverity, PipelineDiagnostic, PipelineError, ScanReport,
 };
-use shared_lint_arwaky::cli_commands::taxonomy_scan_request_vo::{ScanMode, ScanRequest, ScanTarget};
-use shared_lint_arwaky::cli_commands::Format;
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
+use shared_lint_arwaky::cli_commands::taxonomy_scan_request_vo::{
+    ScanMode, ScanRequest, ScanTarget,
+};
 use shared_lint_arwaky::common::Score;
+use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
 
 // ── Cli / Commands (clap) ───────────────────────────────────
 #[test]
@@ -22,7 +24,11 @@ fn cli_parses_scan_command() {
         .expect("valid clap args");
     assert!(!cli.verbose);
     match cli.command {
-        Commands::Scan { path, format, member } => {
+        Commands::Scan {
+            path,
+            format,
+            member,
+        } => {
             assert_eq!(path.as_deref(), Some("src/"));
             assert_eq!(format, Format::Json);
             assert!(member.is_none());
@@ -68,7 +74,9 @@ fn cli_parses_flagless_commands() {
         (vec!["uninstall-hook"], "UninstallHook"),
         (vec!["config-show"], "ConfigShow"),
     ] {
-        let cli = Cli::try_parse_from([["lint-arwaky"], args.as_slice()].concat())
+        let mut full_args = vec!["lint-arwaky"];
+        full_args.extend_from_slice(&args);
+        let cli = Cli::try_parse_from(full_args)
             .expect("valid clap args");
         assert_eq!(format!("{:?}", cli.command), expected);
     }
@@ -98,7 +106,9 @@ fn command_catalog_contains_core_commands() {
 #[test]
 fn command_metadata_display() {
     let catalog = CommandCatalogVO::command_catalog();
-    let check = catalog.get(&shared_lint_arwaky::common::ActionName::from("check")).expect("check exists");
+    let check = catalog
+        .get(&shared_lint_arwaky::common::ActionName::from("check"))
+        .expect("check exists");
     let rendered = check.to_string();
     assert!(rendered.contains('('));
 }
@@ -160,7 +170,7 @@ fn scan_target_default_is_dot() {
 
 #[test]
 fn scan_mode_default_is_check() {
-    assert_eq!(ScanMode::default(), ScanMode::Check);
+    assert!(matches!(ScanMode::default(), ScanMode::Check));
 }
 
 // ── ScanReport / diagnostics ────────────────────────────────
@@ -191,10 +201,14 @@ fn pipeline_diagnostic_new() {
 
 #[test]
 fn pipeline_error_display() {
-    assert!(PipelineError::PathNotFound("/x".to_string())
-        .to_string()
-        .contains("path not found"));
-    assert!(PipelineError::Io("e".to_string())
-        .to_string()
-        .contains("io error"));
+    assert!(
+        PipelineError::PathNotFound("/x".to_string())
+            .to_string()
+            .contains("path not found")
+    );
+    assert!(
+        PipelineError::Io("e".to_string())
+            .to_string()
+            .contains("io error")
+    );
 }

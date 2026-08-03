@@ -1,21 +1,19 @@
 // E2E tests — full pipeline: temp dir → config → container → audit → violations.
-use naming_rules_lint_arwaky::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
+use naming_rules_lint_arwaky::agent_naming_orchestrator::{
+    NamingOrchestrator, NamingOrchestratorDeps,
+};
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::LintResultList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::PatternList;
 use shared::common::SuffixPolicyVO;
+use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -36,14 +34,15 @@ fn make_file_entries(dir: &std::path::Path, names: &[&str]) -> Vec<FileEntry> {
         .iter()
         .map(|name| {
             let path = dir.join(name);
-            std::fs::write(&path, "fn dummy() {}").unwrap();
+            let content = format!("fn dummy_{}() {{}}", name.replace('.', "_"));
+            std::fs::write(&path, &content).unwrap();
             FileEntry {
                 path,
                 extension: "rs".to_string(),
                 language: Language::Rust,
-                size: 13,
-                content: "fn dummy() {}".to_string(),
-                parse_ok: false,
+                size: content.len() as u64,
+                content,
+                parse_ok: true,
                 parse_metadata: None,
             }
         })
@@ -56,7 +55,7 @@ fn e2e_convention_violations_found() {
     let entries = make_file_entries(
         tmp.path(),
         &[
-            "capabilities_BadFile.rs",   // uppercase → AES101
+            "capabilities_BadFile.rs",      // uppercase → AES101
             "capabilities_user_checker.rs", // clean → passes
         ],
     );
@@ -76,7 +75,7 @@ fn e2e_convention_violations_found() {
         !results.is_empty(),
         "e2e should find at least one AES101 violation"
     );
-    let has_aes101 = results.iter().any(|r| r.code.value().contains("AES101"));
+    let has_aes101 = results.iter().any(|r| r.code.code().contains("AES101"));
     assert!(has_aes101, "should contain AES101 code");
 }
 
@@ -86,7 +85,7 @@ fn e2e_suffix_violations_found() {
     let entries = make_file_entries(
         tmp.path(),
         &[
-            "capabilities_user_vo.rs",   // forbidden suffix 'vo' → AES102
+            "capabilities_user_vo.rs",      // forbidden suffix 'vo' → AES102
             "capabilities_user_handler.rs", // not in allowed list → AES102
         ],
     );
@@ -106,7 +105,7 @@ fn e2e_suffix_violations_found() {
         !results.is_empty(),
         "e2e should find at least one AES102 violation"
     );
-    let has_aes102 = results.iter().any(|r| r.code.value().contains("AES102"));
+    let has_aes102 = results.iter().any(|r| r.code.code().contains("AES102"));
     assert!(has_aes102, "should contain AES102 code");
 }
 
@@ -115,10 +114,7 @@ fn e2e_clean_files_no_violations() {
     let tmp = TempDir::new().unwrap();
     let entries = make_file_entries(
         tmp.path(),
-        &[
-            "capabilities_user_checker.rs",
-            "capabilities_db_adapter.rs",
-        ],
+        &["capabilities_user_checker.rs", "capabilities_db_adapter.rs"],
     );
 
     let config = Arc::new(ArchitectureConfig::default());

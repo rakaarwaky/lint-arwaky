@@ -1,7 +1,9 @@
 // PURPOSE: Test path normalization utility functions from shared::common::utility_path_normalization
 
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::utility_path_normalization::{normalize_path, resolve_capabilities_path};
+use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
+use shared_lint_arwaky::common::utility_path_normalization::{
+    normalize_path, resolve_capabilities_path,
+};
 
 // ── normalize_path ──────────────────────────────────────────
 

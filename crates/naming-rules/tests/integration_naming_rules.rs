@@ -1,15 +1,14 @@
 // Integration tests — NamingContainer DI wiring + orchestrator round-trip.
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
+use shared::common::PatternList;
+use shared::common::SuffixPolicyVO;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_lint_result_vo::LintResultList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::PatternList;
-use shared::common::SuffixPolicyVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -50,7 +49,7 @@ fn orchestrator_produces_results_for_invalid_names() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config, layer_map);
-    let orch = container.orchestrator();
+    let _orch = container.orchestrator();
 
     let files = FilePathList::new(vec![
         FilePath::new("src/capabilities_Bad_Caps.rs".to_string()).unwrap(),
@@ -59,15 +58,13 @@ fn orchestrator_produces_results_for_invalid_names() {
     let mut results = LintResultList::new(Vec::new());
 
     // Run convention checker
-    container
-        .naming_convention_checker()
-        .check_file_naming(
-            &ArchitectureConfig::default(),
-            &make_layer_map(),
-            &files,
-            &root,
-            &mut results,
-        );
+    container.naming_convention_checker().check_file_naming(
+        &ArchitectureConfig::default(),
+        &make_layer_map(),
+        &files,
+        &root,
+        &mut results,
+    );
 
     assert!(
         !results.is_empty(),
@@ -87,15 +84,13 @@ fn orchestrator_clean_file_no_violations() {
     let root = FilePath::new(".".to_string()).unwrap();
     let mut results = LintResultList::new(Vec::new());
 
-    container
-        .naming_convention_checker()
-        .check_file_naming(
-            &ArchitectureConfig::default(),
-            &make_layer_map(),
-            &files,
-            &root,
-            &mut results,
-        );
+    container.naming_convention_checker().check_file_naming(
+        &ArchitectureConfig::default(),
+        &make_layer_map(),
+        &files,
+        &root,
+        &mut results,
+    );
 
     assert!(
         results.is_empty(),

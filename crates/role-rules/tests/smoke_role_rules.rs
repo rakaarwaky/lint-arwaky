@@ -2,6 +2,7 @@
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared::role_rules::IRoleRunnerAggregate;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
@@ -92,7 +93,11 @@ fn smoke_multiple_files() {
 
     let files = vec![
         make_file("src/agent_one.rs", Language::Rust, "pub struct A {}\n"),
-        make_file("src/capabilities_two.rs", Language::Rust, "pub struct B {}\n"),
+        make_file(
+            "src/capabilities_two.rs",
+            Language::Rust,
+            "pub struct B {}\n",
+        ),
         make_file("src/utility_three.rs", Language::Rust, "pub struct C {}\n"),
     ];
     let results = orch.run_audit_with_entries(&files);

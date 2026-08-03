@@ -1,14 +1,14 @@
 // Contract tests — verify all capabilities implement their declared protocol traits.
 // Each checker struct must be usable as a trait object for its corresponding protocol.
 
+use role_rules_lint_arwaky::agent_role_orchestrator::RoleCheckerDeps;
+use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
-use role_rules_lint_arwaky::agent_role_orchestrator::RoleCheckerDeps;
-use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
 use shared::common::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::{

@@ -29,7 +29,7 @@ fn uppercase_single_word_produces_violation() {
         3,
     );
     assert!(result.is_some(), "single uppercase word must fail AES101");
-    assert_eq!(result.unwrap().code.value(), RULE_CODE_NAMING_CONVENTION);
+    assert_eq!(result.unwrap().code.code(), RULE_CODE_NAMING_CONVENTION);
 }
 
 #[test]
@@ -188,8 +188,10 @@ fn main_rs_is_skipped() {
 
 #[test]
 fn excepted_filename_passes() {
-    let mut def = LayerDefinition::default();
-    def.exceptions = shared::common::PatternList::new(vec!["special_file.rs".to_string()]);
+    let def = LayerDefinition {
+        exceptions: shared::common::PatternList::new(vec!["special_file.rs".to_string()]),
+        ..Default::default()
+    };
     let result = checker()._check_file_naming(
         "src/special_file.rs",
         "special_file.rs",
@@ -197,7 +199,10 @@ fn excepted_filename_passes() {
         Some(&def),
         3,
     );
-    assert!(result.is_none(), "excepted file must pass regardless of name");
+    assert!(
+        result.is_none(),
+        "excepted file must pass regardless of name"
+    );
 }
 
 // ── FR-AES101-07: Convention check via public trait API ───
@@ -217,6 +222,10 @@ fn check_file_naming_via_trait_api() {
 
     checker().check_file_naming(&config, &layer_map, &files, &root, &mut results);
 
-    assert_eq!(results.len(), 1, "only the bad file should produce a violation");
-    assert_eq!(results.values[0].code.value(), RULE_CODE_NAMING_CONVENTION);
+    assert_eq!(
+        results.len(),
+        1,
+        "only the bad file should produce a violation"
+    );
+    assert_eq!(results.values[0].code.code(), RULE_CODE_NAMING_CONVENTION);
 }

@@ -1,12 +1,12 @@
 // PURPOSE: Integration tests — ImportContainer wiring with real filesystem aggregate.
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
+use shared::common::NamingConfig;
 use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::ArchitectureConfig;
-use shared::config_system::taxonomy_config_vo::NamingConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -41,7 +41,7 @@ fn test_config() -> ArchitectureConfig {
 }
 
 fn make_filesystem() -> Arc<dyn IFilesystemAggregate> {
-    let container = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new();
+    let container = filesystem::root_filesystem_container::FilesystemContainer::new();
     container.orchestrator()
 }
 
@@ -57,10 +57,7 @@ fn container_creates_orchestrator() {
 #[test]
 fn orchestrator_returns_empty_for_disabled_config() {
     let mut layers = HashMap::new();
-    layers.insert(
-        LayerNameVO::new("capabilities"),
-        LayerDefinition::default(),
-    );
+    layers.insert(LayerNameVO::new("capabilities"), LayerDefinition::default());
     let config = ArchitectureConfig::new(
         BooleanVO::new(false), // disabled
         layers,
@@ -143,6 +140,8 @@ fn orchestrator_detects_forbidden_import_in_temp_dir() {
 
     let config = test_config();
     let fs = make_filesystem();
+    // Build file index so import_list() is populated
+    fs.build_file_index(tmp.path());
     let container = ImportContainer::new_with_config(config, fs);
     let orchestrator = container.orchestrator();
 

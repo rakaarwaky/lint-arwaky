@@ -1,21 +1,21 @@
 // PURPOSE: Test compliance score utility from shared::common::utility_compliance_score
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::LineNumber;
-use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_lint_vo::LocationList;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_compliance_score::compute_score;
+use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
+use shared_lint_arwaky::common::taxonomy_common_vo::LineNumber;
+use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
+use shared_lint_arwaky::common::taxonomy_lint_result_vo::LintResult;
+use shared_lint_arwaky::common::taxonomy_lint_vo::LocationList;
+use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
+use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
+use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
+use shared_lint_arwaky::common::utility_compliance_score::compute_score;
 
 /// Helper: build a minimal LintResult with the given severity.
 fn make_result(severity: Severity) -> LintResult {
     LintResult {
         file: FilePath::new("test.rs").unwrap(),
         line: LineNumber::new(1),
-        column: shared::common::taxonomy_common_vo::ColumnNumber::new(0),
+        column: shared_lint_arwaky::common::taxonomy_common_vo::ColumnNumber::new(0),
         code: ErrorCode::raw("AES101"),
         message: LintMessage::new("test"),
         source: Some(AdapterName::raw("architecture")),
@@ -70,9 +70,9 @@ fn compute_score_critical_deducts_5() {
 #[test]
 fn compute_score_multiple_violations_sum() {
     let results = vec![
-        make_result(Severity::HIGH),  // 3
+        make_result(Severity::HIGH),   // 3
         make_result(Severity::MEDIUM), // 2
-        make_result(Severity::LOW),   // 1
+        make_result(Severity::LOW),    // 1
     ];
     // penalty = 3 + 2 + 1 = 6
     assert_eq!(compute_score(&results), 94.0);

@@ -3,17 +3,19 @@
 
 use std::collections::HashMap;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::{BooleanVO, ColumnNumber, Count, LineNumber, PatternList, Score};
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_lint_vo::{LocationList, ScopeRef};
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
+use shared_lint_arwaky::common::taxonomy_common_vo::{
+    BooleanVO, ColumnNumber, Count, LineNumber, PatternList, Score,
+};
+use shared_lint_arwaky::common::taxonomy_definition_vo::LayerMapVO;
+use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
+use shared_lint_arwaky::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_lint_arwaky::common::taxonomy_lint_vo::{LocationList, ScopeRef};
+use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
+use shared_lint_arwaky::common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
+use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_lint_arwaky::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 // ── FilePath ────────────────────────────────────────────────
 
@@ -21,7 +23,7 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 fn filepath_new_and_value() {
     let fp = FilePath::new("src/main.rs").unwrap();
     assert_eq!(fp.value(), "src/main.rs");
-    assert_eq!(*fp, "src/main.rs");
+    assert_eq!(fp.value(), "src/main.rs");
 }
 
 #[test]
@@ -189,7 +191,7 @@ fn error_code_classification() {
 fn error_code_display_and_deref() {
     let ec = ErrorCode::raw("AES305");
     assert_eq!(format!("{}", ec), "AES305");
-    assert_eq!(*ec, "AES305");
+    assert_eq!(ec.code(), "AES305");
 }
 
 // ── LintMessage ─────────────────────────────────────────────
@@ -211,7 +213,7 @@ fn lint_result_direct_construction() {
         code: ErrorCode::raw("AES101"),
         message: LintMessage::new("test violation"),
         source: None,
-        severity: Severity::Error,
+        severity: Severity::CRITICAL,
         enclosing_scope: None,
         related_locations: LocationList::new(),
     };
@@ -238,7 +240,7 @@ fn lint_result_new_orphan_convenience() {
 
 #[test]
 fn lint_result_identity() {
-    let result = LintResult::new_arch("test.rs", 1, "AES101", Severity::Error, "test");
+    let result = LintResult::new_arch("test.rs", 1, "AES101", Severity::CRITICAL, "test");
     let id = result.identity();
     assert!(!id.value.is_empty());
 }
@@ -255,7 +257,7 @@ fn lint_result_list_empty() {
 #[test]
 fn lint_result_list_with_items() {
     let mut list = LintResultList::new(Vec::new());
-    let result = LintResult::new_arch("a.rs", 1, "AES101", Severity::Error, "err");
+    let result = LintResult::new_arch("a.rs", 1, "AES101", Severity::CRITICAL, "err");
     list.push(result);
     assert_eq!(list.len(), 1);
     assert!(!list.is_empty());
@@ -296,15 +298,15 @@ fn architecture_config_default() {
 fn architecture_config_custom() {
     let mut layers = HashMap::new();
     layers.insert(
-        shared::common::taxonomy_layer_vo::LayerNameVO::new("surface"),
-        shared::common::taxonomy_definition_vo::LayerDefinition::default(),
+        shared_lint_arwaky::common::taxonomy_layer_vo::LayerNameVO::new("surface"),
+        shared_lint_arwaky::common::taxonomy_definition_vo::LayerDefinition::default(),
     );
     let config = ArchitectureConfig::new(
         BooleanVO::new(true),
         layers,
         Vec::new(),
-        shared::common::taxonomy_definition_vo::NamingConfig::new(Count::new(3)),
-        shared::common::taxonomy_paths_vo::FilePathList { values: vec![] },
+        shared_lint_arwaky::common::taxonomy_definition_vo::NamingConfig::new(Count::new(3)),
+        shared_lint_arwaky::common::taxonomy_paths_vo::FilePathList { values: vec![] },
         BooleanVO::new(false),
     );
     assert_eq!(config.layers.len(), 1);
@@ -449,10 +451,20 @@ fn architecture_config_is_send_sync() {
 // Verify that key aggregate/protocol traits are object-safe by checking
 // they can be used as dyn Trait in a where clause.
 
-fn _assert_object_safe_filesystem_aggregate<T: shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>() {}
-fn _assert_object_safe_parser<T: shared::filesystem::contract_parser_protocol::IParserProtocol>() {}
-fn _assert_object_safe_workspace<T: shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol>() {}
-fn _assert_object_safe_config_orch<T: shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate>() {}
+fn _assert_object_safe_filesystem_aggregate<
+    T: shared_lint_arwaky::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+>() {
+}
+fn _assert_object_safe_parser<
+    T: shared_lint_arwaky::filesystem::contract_parser_protocol::IParserProtocol,
+>() {
+}
+fn _assert_object_safe_workspace<
+    T: shared_lint_arwaky::filesystem::contract_workspace_protocol::IWorkspaceProtocol,
+>() {
+}
+fn _assert_object_safe_config_orch<T: shared_lint_arwaky::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate>(){
+}
 
 #[test]
 fn contract_traits_compile() {

@@ -189,9 +189,13 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 name = "auto-fix-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "criterion",
+ "filesystem-lint-arwaky",
+ "quality-rules-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]
@@ -1144,8 +1148,10 @@ name = "file-watch-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "async-trait",
+ "filesystem-lint-arwaky",
  "notify",
  "notify-debouncer-mini",
+ "quality-rules-lint-arwaky",
  "shared-lint-arwaky",
  "tokio",
 ]
@@ -1427,8 +1433,10 @@ dependencies = [
 name = "git-hooks-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "filesystem-lint-arwaky",
  "serde_yaml_ng",
  "shared-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]
@@ -3025,8 +3033,11 @@ dependencies = [
 name = "maintenance-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "criterion",
+ "filesystem-lint-arwaky",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]
@@ -3389,6 +3400,7 @@ name = "orphan-rules-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "criterion",
+ "filesystem-lint-arwaky",
  "once_cell",
  "rayon",
  "regex",
@@ -3687,9 +3699,12 @@ dependencies = [
 name = "project-setup-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "criterion",
  "dirs",
+ "filesystem-lint-arwaky",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]
@@ -4031,9 +4046,11 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 name = "report-formatter-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "criterion",
  "rayon",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
 ]
 
 [[package]]
@@ -5289,6 +5306,7 @@ dependencies = [
  "rayon",
  "serde_json",
  "shared-lint-arwaky",
+ "tempfile",
  "tokio",
  "tracing",
  "tracing-appender",

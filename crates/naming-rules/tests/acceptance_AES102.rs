@@ -1,12 +1,12 @@
 // Acceptance tests — AES102 suffix/prefix rules (map to FRD user stories).
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use shared::common::PatternList;
+use shared::common::SuffixPolicyVO;
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_lint_result_vo::LintResultList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::PatternList;
-use shared::common::SuffixPolicyVO;
 use shared::naming_rules::RULE_CODE_SUFFIX_PREFIX;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
@@ -32,13 +32,13 @@ fn multi_layer_map() -> LayerMapVO {
     cap_def.naming.suffix_policy = SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string());
     cap_def.naming.allowed_suffix =
         PatternList::new(vec!["checker".to_string(), "adapter".to_string()]);
-    cap_def.naming.forbidden_suffix = PatternList::new(vec![]);
+    cap_def.naming.forbidden_suffix = PatternList::new(Vec::<String>::new());
 
     let mut agent_def = LayerDefinition::default();
     agent_def.naming.suffix_policy = SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string());
     agent_def.naming.allowed_suffix =
         PatternList::new(vec!["orchestrator".to_string(), "runner".to_string()]);
-    agent_def.naming.forbidden_suffix = PatternList::new(vec![]);
+    agent_def.naming.forbidden_suffix = PatternList::new(Vec::<String>::new());
 
     let mut layers = HashMap::new();
     layers.insert(LayerNameVO::new("capabilities"), cap_def);
@@ -51,8 +51,11 @@ fn multi_layer_map() -> LayerMapVO {
 #[test]
 fn unknown_prefix_produces_violation() {
     let result = checker()._check_unknown_prefix("src/foo_bar_baz.rs", "foo_bar_baz.rs");
-    assert!(result.is_some(), "unknown prefix must produce AES102 violation");
-    assert_eq!(result.unwrap().code.value(), RULE_CODE_SUFFIX_PREFIX);
+    assert!(
+        result.is_some(),
+        "unknown prefix must produce AES102 violation"
+    );
+    assert_eq!(result.unwrap().code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
 
 #[test]
@@ -61,7 +64,10 @@ fn recognised_prefix_no_violation() {
         "src/capabilities_user_checker.rs",
         "capabilities_user_checker.rs",
     );
-    assert!(result.is_none(), "recognised prefix must not produce violation");
+    assert!(
+        result.is_none(),
+        "recognised prefix must not produce violation"
+    );
 }
 
 #[test]
@@ -76,11 +82,7 @@ fn all_layer_prefixes_recognised() {
     for prefix in LAYER_PREFIXES {
         let filename = format!("{}foo_bar.rs", prefix);
         let result = checker()._check_unknown_prefix(&format!("src/{}", filename), &filename);
-        assert!(
-            result.is_none(),
-            "prefix '{}' should be recognised",
-            prefix
-        );
+        assert!(result.is_none(), "prefix '{}' should be recognised", prefix);
     }
 }
 
@@ -101,8 +103,11 @@ fn wrong_suffix_for_layer_produces_violation() {
         &suffix_map,
         &all,
     );
-    assert!(result.is_some(), "suffix 'handler' not in allowed list must fail");
-    assert_eq!(result.unwrap().code.value(), RULE_CODE_SUFFIX_PREFIX);
+    assert!(
+        result.is_some(),
+        "suffix 'handler' not in allowed list must fail"
+    );
+    assert_eq!(result.unwrap().code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
 
 #[test]
@@ -120,7 +125,10 @@ fn correct_suffix_for_layer_passes() {
         &suffix_map,
         &all,
     );
-    assert!(result.is_none(), "suffix 'checker' is allowed for capabilities");
+    assert!(
+        result.is_none(),
+        "suffix 'checker' is allowed for capabilities"
+    );
 }
 
 // ── FR-AES102-03: Forbidden suffix detected ───────────────
@@ -140,7 +148,10 @@ fn forbidden_suffix_produces_violation() {
         &suffix_map,
         &all,
     );
-    assert!(result.is_some(), "forbidden suffix 'vo' must produce violation");
+    assert!(
+        result.is_some(),
+        "forbidden suffix 'vo' must produce violation"
+    );
 }
 
 // ── FR-AES102-04: Cross-layer suffix violation ────────────
@@ -215,7 +226,7 @@ fn valid_file_with_correct_suffix_passes() {
 fn flexible_policy_allows_unknown_suffix() {
     let mut def = LayerDefinition::default();
     def.naming.suffix_policy = SuffixPolicyVO::new("flexible".to_string());
-    def.naming.forbidden_suffix = PatternList::new(vec![]);
+    def.naming.forbidden_suffix = PatternList::new(Vec::<String>::new());
 
     let mut layers = HashMap::new();
     layers.insert(LayerNameVO::new("capabilities"), def);
@@ -232,7 +243,10 @@ fn flexible_policy_allows_unknown_suffix() {
         &suffix_map,
         &all,
     );
-    assert!(result.is_none(), "flexible policy should allow unknown suffixes");
+    assert!(
+        result.is_none(),
+        "flexible policy should allow unknown suffixes"
+    );
 }
 
 // ── FR-AES102-07: Barrel/entry files skipped ──────────────
@@ -261,9 +275,8 @@ fn aes102_barrel_file_skipped() {
 fn excepted_file_bypasses_suffix_check() {
     let mut def = LayerDefinition::default();
     def.naming.suffix_policy = SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string());
-    def.naming.allowed_suffix =
-        PatternList::new(vec!["checker".to_string()]);
-    def.naming.forbidden_suffix = PatternList::new(vec![]);
+    def.naming.allowed_suffix = PatternList::new(vec!["checker".to_string()]);
+    def.naming.forbidden_suffix = PatternList::new(Vec::<String>::new());
     def.exceptions = PatternList::new(vec!["special_adapter.rs".to_string()]);
 
     let mut layers = HashMap::new();
@@ -306,5 +319,5 @@ fn check_domain_suffixes_via_trait_api() {
         1,
         "only the forbidden-suffix file should produce a violation"
     );
-    assert_eq!(results.values[0].code.value(), RULE_CODE_SUFFIX_PREFIX);
+    assert_eq!(results.values[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
 }

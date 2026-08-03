@@ -11,3 +11,13 @@ workspace = true
 [dependencies]
 shared = { workspace = true }
 serde_json = { workspace = true }
+
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+tempfile = "3"
+filesystem.workspace = true
+
+[[bench]]
+name = "bench_maintenance"
+path = "benches/bench_maintenance.rs"
+harness = false

@@ -11,3 +11,7 @@ workspace = true
 [dependencies]
 shared.workspace = true
 serde_yaml_ng.workspace = true
+
+[dev-dependencies]
+filesystem = { workspace = true }
+tempfile = "3"

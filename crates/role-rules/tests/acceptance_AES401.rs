@@ -34,13 +34,17 @@ fn run_audit(files: Vec<FileEntry>) -> Vec<shared::common::LintResult> {
 
 #[test]
 fn aes401_constant_file_with_struct_detected() {
+    // Basename must end with "_constant.rs" to trigger check_constant
     let file = make_file(
-        "src/taxonomy_app_config.rs",
+        "src/taxonomy_app_constant.rs",
         Language::Rust,
         "pub struct AppConfig {\n    pub name: String,\n}\n",
     );
     let results = run_audit(vec![file]);
-    let aes401: Vec<_> = results.iter().filter(|r| r.code.code() == "AES401").collect();
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
     assert!(
         !aes401.is_empty(),
         "taxonomy constant file with struct should trigger AES401"
@@ -49,13 +53,17 @@ fn aes401_constant_file_with_struct_detected() {
 
 #[test]
 fn aes401_clean_constant_file_no_violation() {
+    // Basename must end with "_constant.rs" to trigger check_constant
     let file = make_file(
-        "src/taxonomy_app_constants.rs",
+        "src/taxonomy_app_constant.rs",
         Language::Rust,
         "pub const MAX_RETRIES: u32 = 3;\npub const DEFAULT_TIMEOUT_MS: u64 = 5000;\n",
     );
     let results = run_audit(vec![file]);
-    let aes401: Vec<_> = results.iter().filter(|r| r.code.code() == "AES401").collect();
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
     assert!(
         aes401.is_empty(),
         "clean constant file should not trigger AES401"
@@ -73,7 +81,10 @@ fn aes401_entity_with_primitive_detected() {
         "pub struct User {\n    name: String,\n    age: i32,\n}\n",
     );
     let results = run_audit(vec![file]);
-    let aes401: Vec<_> = results.iter().filter(|r| r.code.code() == "AES401").collect();
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
     assert!(
         !aes401.is_empty(),
         "entity file with primitive types should trigger AES401"
@@ -90,7 +101,10 @@ fn aes401_error_with_primitive_detected() {
         "pub struct AppError {\n    message: String,\n}\n",
     );
     let results = run_audit(vec![file]);
-    let aes401: Vec<_> = results.iter().filter(|r| r.code.code() == "AES401").collect();
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
     assert!(
         !aes401.is_empty(),
         "error file with primitive types should trigger AES401"
@@ -107,7 +121,10 @@ fn aes401_event_with_primitive_detected() {
         "pub struct UserEvent {\n    payload: String,\n}\n",
     );
     let results = run_audit(vec![file]);
-    let aes401: Vec<_> = results.iter().filter(|r| r.code.code() == "AES401").collect();
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
     assert!(
         !aes401.is_empty(),
         "event file with primitive types should trigger AES401"
@@ -124,7 +141,10 @@ fn aes401_non_taxonomy_file_ignored() {
         "pub struct Foo {\n    val: String,\n}\n",
     );
     let results = run_audit(vec![file]);
-    let aes401: Vec<_> = results.iter().filter(|r| r.code.code() == "AES401").collect();
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
     assert!(
         aes401.is_empty(),
         "non-taxonomy file should not trigger AES401"

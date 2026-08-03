@@ -3,17 +3,16 @@ use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::fs;
-use std::path::PathBuf;
 
 /// Create a FileEntry from a file on disk (simulates filesystem → orchestrator pipeline).
-fn file_entry_from_path(path: &PathBuf, content: &str, lang: Language) -> FileEntry {
+fn file_entry_from_path(path: &std::path::Path, content: &str, lang: Language) -> FileEntry {
     let ext = path
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or("")
         .to_string();
     FileEntry {
-        path: path.clone(),
+        path: path.to_path_buf(),
         extension: ext,
         language: lang,
         size: content.len() as u64,
@@ -29,7 +28,8 @@ fn e2e_taxonomy_violation_detected() {
     let dir = tmp.path();
 
     // Create a taxonomy constant file with a struct (AES401 violation)
-    let path = dir.join("taxonomy_app_constants.rs");
+    // Basename must end with "_constant.rs" to trigger check_constant
+    let path = dir.join("taxonomy_app_constant.rs");
     let content = "pub struct AppConfig {\n    pub name: String,\n}\n";
     fs::write(&path, content).unwrap();
 
@@ -40,7 +40,10 @@ fn e2e_taxonomy_violation_detected() {
     let orch = container.orchestrator();
 
     let results = orch.run_audit_with_entries(&[file]);
-    let aes401: Vec<_> = results.iter().filter(|r| r.code.code() == "AES401").collect();
+    let aes401: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES401")
+        .collect();
     assert!(
         !aes401.is_empty(),
         "taxonomy constant with struct should produce AES401"
@@ -64,7 +67,10 @@ fn e2e_capability_violation_detected() {
     let orch = container.orchestrator();
 
     let results = orch.run_audit_with_entries(&[file]);
-    let aes403: Vec<_> = results.iter().filter(|r| r.code.code() == "AES403").collect();
+    let aes403: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES403")
+        .collect();
     assert!(
         !aes403.is_empty(),
         "capabilities with 4 types should produce AES403"
@@ -88,7 +94,10 @@ fn e2e_utility_violation_detected() {
     let orch = container.orchestrator();
 
     let results = orch.run_audit_with_entries(&[file]);
-    let aes404: Vec<_> = results.iter().filter(|r| r.code.code() == "AES404").collect();
+    let aes404: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES404")
+        .collect();
     assert!(
         !aes404.is_empty(),
         "utility with struct should produce AES404"
@@ -112,7 +121,10 @@ fn e2e_agent_violation_detected() {
     let orch = container.orchestrator();
 
     let results = orch.run_audit_with_entries(&[file]);
-    let aes405: Vec<_> = results.iter().filter(|r| r.code.code() == "AES405").collect();
+    let aes405: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES405")
+        .collect();
     assert!(
         !aes405.is_empty(),
         "agent without implementor should produce AES405"
@@ -140,7 +152,10 @@ fn e2e_surface_violation_detected() {
     let orch = container.orchestrator();
 
     let results = orch.run_audit_with_entries(&[file]);
-    let aes406: Vec<_> = results.iter().filter(|r| r.code.code() == "AES406").collect();
+    let aes406: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES406")
+        .collect();
     assert!(
         !aes406.is_empty(),
         "passive surface with excess control flow should produce AES406"
@@ -153,7 +168,8 @@ fn e2e_mixed_files_produce_correct_violations() {
     let dir = tmp.path();
 
     // Create multiple files with different violations
-    let taxonomy_path = dir.join("taxonomy_settings.rs");
+    // Basename must end with "_constant.rs" to trigger check_constant
+    let taxonomy_path = dir.join("taxonomy_settings_constant.rs");
     let taxonomy_content = "pub struct Settings {}\n";
     fs::write(&taxonomy_path, taxonomy_content).unwrap();
 
@@ -188,12 +204,6 @@ fn e2e_mixed_files_produce_correct_violations() {
         codes.contains(&"AES401"),
         "should detect taxonomy violation"
     );
-    assert!(
-        codes.contains(&"AES404"),
-        "should detect utility violation"
-    );
-    assert!(
-        codes.contains(&"AES405"),
-        "should detect agent violation"
-    );
+    assert!(codes.contains(&"AES404"), "should detect utility violation");
+    assert!(codes.contains(&"AES405"), "should detect agent violation");
 }
