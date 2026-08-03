@@ -2,32 +2,27 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, IOrphanParserProtocol, IUtilityOrphanProtocol};
+use shared::orphan_rules::{AesOrphanViolation, IUtilityOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
 use std::collections::HashMap;
-use std::sync::Arc;
 
 const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "surfaces", "root"];
 
-pub struct UtilityOrphanAnalyzer {
-    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
-}
+pub struct UtilityOrphanAnalyzer;
 
 impl Default for UtilityOrphanAnalyzer {
     fn default() -> Self {
-        Self::new(Arc::new(
-            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
-        ))
+        Self::new()
     }
 }
 
 impl UtilityOrphanAnalyzer {
-    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
-        Self { parser_dispatcher }
+    pub fn new() -> Self {
+        Self
     }
 
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match crate::capabilities_orphan_parser_dispatcher::parse_file_content(file_path, content) {
+        match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 let in_imports = result.imports.iter().any(|imp| {
                     imp.segments.iter().any(|seg| {

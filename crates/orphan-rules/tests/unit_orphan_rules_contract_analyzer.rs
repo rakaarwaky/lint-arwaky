@@ -402,14 +402,14 @@ impl IFilesystemAggregate for MockFilesystem {
 fn test_constructor() {
     let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
-    let _analyzer = ContractOrphanAnalyzer::new(parser, fs);
+    let _analyzer = ContractOrphanAnalyzer::new(fs);
 }
 
 #[test]
 fn test_empty_content_is_not_orphan() {
     let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
-    let analyzer = ContractOrphanAnalyzer::new(parser, fs);
+    let analyzer = ContractOrphanAnalyzer::new(fs);
 
     let fp = FilePath::new("crates/shared/src/contract_foo_protocol.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
@@ -429,7 +429,7 @@ fn test_empty_content_is_not_orphan() {
 fn test_no_traits_is_not_orphan() {
     let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
-    let analyzer = ContractOrphanAnalyzer::new(parser, fs);
+    let analyzer = ContractOrphanAnalyzer::new(fs);
 
     let fp = FilePath::new("crates/shared/src/contract_foo_protocol.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
@@ -453,7 +453,7 @@ fn test_no_traits_is_not_orphan() {
 fn test_trait_not_implemented_is_orphan() {
     let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
-    let analyzer = ContractOrphanAnalyzer::new(parser, fs);
+    let analyzer = ContractOrphanAnalyzer::new(fs);
 
     let fp = FilePath::new("crates/shared/src/contract_foo_protocol.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
@@ -488,7 +488,7 @@ fn test_trait_not_implemented_is_orphan() {
 fn test_trait_implemented_is_not_orphan() {
     let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
-    let analyzer = ContractOrphanAnalyzer::new(parser, fs);
+    let analyzer = ContractOrphanAnalyzer::new(fs);
 
     let fp = FilePath::new("crates/shared/src/contract_foo_protocol.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();

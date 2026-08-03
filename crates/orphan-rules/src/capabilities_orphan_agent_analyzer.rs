@@ -1,26 +1,21 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, IAgentOrphanProtocol, IOrphanParserProtocol};
+use shared::orphan_rules::{AesOrphanViolation, IAgentOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::OrphanIndicatorResult;
 use std::collections::HashMap;
-use std::sync::Arc;
 
-pub struct AgentOrphanAnalyzer {
-    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
-}
+pub struct AgentOrphanAnalyzer;
 
 impl Default for AgentOrphanAnalyzer {
     fn default() -> Self {
-        Self::new(Arc::new(
-            crate::capabilities_orphan_parser_dispatcher::OrphanParserDispatcher::new(),
-        ))
+        Self::new()
     }
 }
 
 impl AgentOrphanAnalyzer {
-    pub fn new(parser_dispatcher: Arc<dyn IOrphanParserProtocol>) -> Self {
-        Self { parser_dispatcher }
+    pub fn new() -> Self {
+        Self
     }
 
     fn content_contains_word(text: &str, word: &str) -> bool {
@@ -29,7 +24,7 @@ impl AgentOrphanAnalyzer {
     }
 
     fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
-        let mut traits = match self.parser_dispatcher.parse_file(file_path, content) {
+        let mut traits = match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
             FileParseResultVO::Python(result) => result.aggregate_names(),
             FileParseResultVO::TypeScript(result) => result.aggregate_names(),

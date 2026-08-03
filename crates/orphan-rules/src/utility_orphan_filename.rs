@@ -1,6 +1,78 @@
 // PURPOSE: Pure filename utility functions for orphan detection (AES layer naming)
 // These are stateless, domain-agnostic, reusable across multiple capabilities.
 
+use shared::orphan_rules::taxonomy_orphan_contract_vo::{
+    OrphanEntryPatternListVO, OrphanFileListVO,
+};
+
+/// Identify entry points from file list using configured patterns.
+/// Pure function — no state, no I/O.
+pub fn identify_entry_points(
+    files: &[OrphanFileListVO],
+    configured: &[OrphanEntryPatternListVO],
+) -> OrphanFileListVO {
+    let file_strs: Vec<String> = files
+        .iter()
+        .flat_map(|v| v.values.iter().cloned())
+        .collect();
+    let configured_strs: Vec<String> = configured
+        .iter()
+        .flat_map(|p| p.values.iter().cloned())
+        .collect();
+
+    let matched: Vec<String> = if configured_strs.is_empty() {
+        file_strs
+            .iter()
+            .filter(|f| {
+                let basename = f.rsplit('/').next().unwrap_or(f);
+                basename.ends_with("_container.rs")
+                    || basename.ends_with("_container.py")
+                    || basename.ends_with("_container.ts")
+                    || basename.ends_with("_container.js")
+                    || basename.ends_with("_entry.rs")
+                    || basename.ends_with("_entry.py")
+                    || basename.ends_with("_entry.ts")
+                    || basename.ends_with("_entry.js")
+                    || basename.starts_with("root_")
+                    || basename == "main.rs"
+                    || basename == "lib.rs"
+                    || basename == "main.py"
+                    || basename == "__main__.py"
+                    || basename == "main.ts"
+                    || basename == "main.js"
+                    || basename == "index.ts"
+                    || basename == "index.js"
+            })
+            .cloned()
+            .collect()
+    } else {
+        file_strs
+            .iter()
+            .filter(|f| {
+                let basename = f.rsplit('/').next().unwrap_or(f);
+                let stem = file_stem(basename);
+                configured_strs.iter().any(|pattern| {
+                    basename == pattern
+                        || stem == *pattern
+                        || (pattern.starts_with('_') && stem.ends_with(pattern.as_str()))
+                        || (pattern.starts_with('.') && basename.ends_with(pattern.as_str()))
+                        || (pattern == "root_" && basename.starts_with("root_"))
+                        || (pattern.ends_with(".rs")
+                            || pattern.ends_with(".py")
+                            || pattern.ends_with(".ts")
+                            || pattern.ends_with(".js"))
+                            && basename.ends_with(pattern.as_str())
+                })
+            })
+            .cloned()
+            .collect()
+    };
+    let mut matched = matched;
+    matched.sort();
+    matched.dedup();
+    OrphanFileListVO::new(matched)
+}
+
 /// Extract basename from path: "crates/shared/src/lib.rs" -> "lib.rs"
 pub fn file_basename(path: &str) -> String {
     match path.rsplit('/').next() {

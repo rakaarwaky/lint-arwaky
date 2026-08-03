@@ -7,7 +7,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::{IOrphanAggregate, IOrphanGraphResolverProtocol};
+use shared::orphan_rules::IOrphanAggregate;
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::OrphanFileListVO;
@@ -37,7 +37,6 @@ use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
 /// Dependencies for ArchOrphanAnalyzer to avoid too_many_arguments.
 pub struct ArchOrphanDeps {
-    pub resolver: Arc<dyn IOrphanGraphResolverProtocol>,
     pub taxonomy_analyzer: Arc<dyn ITaxonomyOrphanProtocol>,
     pub contract_analyzer: Arc<dyn IContractOrphanProtocol>,
     pub capabilities_analyzer: Arc<dyn ICapabilitiesOrphanProtocol>,
@@ -65,9 +64,7 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
-        self.deps
-            .resolver
-            .identify_entry_points(std::slice::from_ref(files), &[])
+        crate::utility_orphan_filename::identify_entry_points(std::slice::from_ref(files), &[])
     }
 
     fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult> {
@@ -151,10 +148,10 @@ impl ArchOrphanAnalyzer {
         let all_files = &context.all_workspace_files;
 
         let entry_points_vo = OrphanFileListVO::new(all_files.clone());
-        let entry_points = self
-            .deps
-            .resolver
-            .identify_entry_points(std::slice::from_ref(&entry_points_vo), &[configured_vo]);
+        let entry_points = crate::utility_orphan_filename::identify_entry_points(
+            std::slice::from_ref(&entry_points_vo),
+            &[configured_vo],
+        );
 
         // Compute top_root early so alive_result can use absolute paths (matching
         // the format used by _process_file for file_fp — fixes path format mismatch

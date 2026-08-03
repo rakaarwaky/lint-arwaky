@@ -3,31 +3,22 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{
-    AesOrphanViolation, ICapabilitiesOrphanProtocol, IOrphanParserProtocol,
-};
+use shared::orphan_rules::{AesOrphanViolation, ICapabilitiesOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::sync::Arc;
 
 pub struct CapabilitiesOrphanAnalyzer {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
 }
 
 impl CapabilitiesOrphanAnalyzer {
-    pub fn new(
-        parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
-    ) -> Self {
-        Self {
-            parser_dispatcher,
-            filesystem,
-        }
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+        Self { filesystem }
     }
 
     fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
         let mut identifiers: Vec<String> = Vec::new();
-        match self.parser_dispatcher.parse_file(file_path, content) {
+        match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 identifiers.extend(result.struct_names());
                 identifiers.extend(result.trait_names());

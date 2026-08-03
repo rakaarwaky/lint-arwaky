@@ -3,7 +3,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, IContractOrphanProtocol, IOrphanParserProtocol};
+use shared::orphan_rules::{AesOrphanViolation, IContractOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, OrphanIndicatorResult};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -29,23 +29,18 @@ impl Default for SearchFilesCache {
 pub struct ContractOrphanAnalyzer {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     search_cache: Mutex<Option<SearchFilesCache>>,
-    pub parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
 }
 
 impl ContractOrphanAnalyzer {
-    pub fn new(
-        parser_dispatcher: Arc<dyn IOrphanParserProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
-    ) -> Self {
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         Self {
             search_cache: Mutex::new(None),
-            parser_dispatcher,
             filesystem,
         }
     }
 
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
-        match self.parser_dispatcher.parse_file(file_path, content) {
+        match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
             FileParseResultVO::TypeScript(result) => result.trait_names(),
@@ -64,7 +59,7 @@ impl ContractOrphanAnalyzer {
             if content.is_empty() {
                 continue;
             }
-            match self.parser_dispatcher.parse_file(cf, &content) {
+            match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(cf, &content) {
                 FileParseResultVO::Rust(result) => {
                     if result.has_trait_impl(trait_name) {
                         return true;

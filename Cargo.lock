@@ -3706,7 +3706,6 @@ dependencies = [
  "filesystem-lint-arwaky",
  "once_cell",
  "rayon",
- "regex",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
