@@ -2,7 +2,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::IAgentOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::quality_rules::taxonomy_analysis_vo::OrphanIndicatorResult;
+use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 
 pub struct AgentOrphanAnalyzer;
@@ -45,6 +45,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         _root_dir: &FilePath,
         all_files: &[String],
         content_map: &HashMap<String, String>,
+        alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
         let content = match content_map.get(fp).cloned().unwrap_or_default() {
@@ -55,48 +56,64 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         };
 
         let aggregate_traits = self.extract_aggregate_traits(fp, &content);
-        if aggregate_traits.is_empty() {
+
+        // Case 1: Agent implements aggregate traits — check if any surface references them
+        if !aggregate_traits.is_empty() {
+            let candidates: Vec<&String> = all_files
+                .iter()
+                .filter(|cf| {
+                    let cb = match cf.split('/').next_back() {
+                        Some(b) => b,
+                        None => return false,
+                    };
+                    cb.starts_with("surface_")
+                        || cb.ends_with("_container.rs")
+                        || cb.ends_with("_container.py")
+                        || cb.ends_with("_container.ts")
+                        || cb.ends_with("_container.js")
+                        || cb.ends_with("_entry.rs")
+                        || cb.ends_with("_entry.py")
+                        || cb.ends_with("_entry.ts")
+                        || cb.ends_with("_entry.js")
+                        || cb == "main.rs"
+                        || cb == "main.py"
+                        || cb == "main.ts"
+                        || cb == "main.js"
+                })
+                .collect();
+
+            let is_referenced = candidates.iter().any(|cf| {
+                let candidate_content = content_map.get(&**cf).cloned().unwrap_or_default();
+                aggregate_traits
+                    .iter()
+                    .any(|t| Self::content_contains_word(&candidate_content, t))
+            });
+
+            if !is_referenced {
+                return OrphanIndicatorResult::new(
+                    true,
+                    format!(
+                        "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? Agent aggregate '{}' is not called by any surface or container.\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs.",
+                        aggregate_traits.join(", "),
+                        aggregate_traits.join(", "),
+                        aggregate_traits.join(", ")
+                    ),
+                    Severity::HIGH,
+                );
+            }
+
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        let candidates: Vec<&String> = all_files
-            .iter()
-            .filter(|cf| {
-                let cb = match cf.split('/').next_back() {
-                    Some(b) => b,
-                    None => return false,
-                };
-                cb.starts_with("surface_")
-                    || cb.ends_with("_container.rs")
-                    || cb.ends_with("_container.py")
-                    || cb.ends_with("_container.ts")
-                    || cb.ends_with("_container.js")
-                    || cb.ends_with("_entry.rs")
-                    || cb.ends_with("_entry.py")
-                    || cb.ends_with("_entry.ts")
-                    || cb.ends_with("_entry.js")
-                    || cb == "main.rs"
-                    || cb == "main.py"
-                    || cb == "main.ts"
-                    || cb == "main.js"
-            })
-            .collect();
-
-        let is_referenced = candidates.iter().any(|cf| {
-            let candidate_content = content_map.get(&**cf).cloned().unwrap_or_default();
-            aggregate_traits
-                .iter()
-                .any(|t| Self::content_contains_word(&candidate_content, t))
-        });
-
-        if !is_referenced {
+        // Case 2: No aggregate traits — check reachability from entry points
+        if !alive_files.paths.iter().any(|af| af.value() == fp) {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? Agent aggregate '{}' is not called by any surface or container.\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs.",
-                    aggregate_traits.join(", "),
-                    aggregate_traits.join(", "),
-                    aggregate_traits.join(", ")
+                    "AES505 AGENT_ORPHAN: '{}' is unreachable from any entry point.\nWHY? Agent file '{}' is not reachable from any entry point (main, lib, container, surface).\nFIX: Import '{}' in a surface_* file or root_*_container.rs, or add it to lib.rs.",
+                    shared::common::utility_layer_detector::extract_filename(fp),
+                    shared::common::utility_layer_detector::extract_filename(fp),
+                    shared::common::utility_layer_detector::extract_filename(fp)
                 ),
                 Severity::HIGH,
             );

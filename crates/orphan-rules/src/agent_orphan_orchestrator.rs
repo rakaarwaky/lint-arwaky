@@ -483,7 +483,7 @@ impl ArchOrphanAnalyzer {
             return self
                 .deps
                 .agent_analyzer
-                .is_agent_orphan(&fp, &root, all_files, content_map);
+                .is_agent_orphan(&fp, &root, all_files, content_map, alive_result);
         }
 
         if layer_str.contains(LAYER_SURFACES) {

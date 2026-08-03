@@ -55,6 +55,7 @@ pub trait IAgentOrphanProtocol: Send + Sync {
         root_dir: &FilePath,
         all_files: &[String],
         content_map: &HashMap<String, String>,
+        alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult;
 }
 
