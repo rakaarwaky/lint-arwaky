@@ -4,6 +4,7 @@
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use crate::import_rules::taxonomy_import_error::ImportError;
 
 pub trait IUnusedImportProtocol: Send + Sync {
@@ -12,6 +13,7 @@ pub trait IUnusedImportProtocol: Send + Sync {
         &self,
         path: &FilePath,
         content: &str,
+        import_entries: &[ImportEntry],
     ) -> Result<Vec<LintMessage>, ImportError>;
 
     /// Check unused imports given file path and content.
@@ -20,5 +22,6 @@ pub trait IUnusedImportProtocol: Send + Sync {
         &self,
         file: &str,
         content: &str,
+        import_entries: &[ImportEntry],
     ) -> Result<Vec<LintResult>, ImportError>;
 }

@@ -6,6 +6,7 @@ use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use crate::import_rules::taxonomy_import_error::ImportError;
 use std::collections::HashMap;
 
@@ -14,6 +15,7 @@ use std::collections::HashMap;
 ///
 /// `content_map` maps file path → file content. The orchestrator pre-reads files
 /// and passes the map so capabilities don't do I/O directly.
+/// `imports_map` maps file path → parsed ImportEntry list from filesystem crate's AST parser.
 pub trait IImportMandatoryProtocol: Send + Sync {
     fn rule_name(&self) -> Identity;
     fn run_mandatory_imports(
@@ -23,5 +25,6 @@ pub trait IImportMandatoryProtocol: Send + Sync {
         files: &FilePathList,
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Result<LintResultList, ImportError>;
 }

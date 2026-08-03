@@ -10,6 +10,7 @@ use std::sync::Arc;
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
@@ -79,12 +80,24 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             })
             .collect();
 
+        // Build import map from filesystem's AST parser (avoids re-parsing in checkers)
+        let import_list = self.deps.filesystem.import_list();
+        let imports_map: HashMap<String, Vec<ImportEntry>> = {
+            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+            for entry in import_list {
+                let key = entry.source_file.to_string_lossy().to_string();
+                map.entry(key).or_default().push(entry.clone());
+            }
+            map
+        };
+
         let mandatory_result = self.deps.mandatory.run_mandatory_imports(
             &self.config,
             &self.layer_map,
             &files,
             &root_dir,
             &content_map,
+            &imports_map,
         );
         let forbidden_result = self.deps.forbidden.check_forbidden_imports(
             &self.config,
@@ -92,6 +105,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             &files,
             &root_dir,
             &content_map,
+            &imports_map,
         );
         let mandatory_results = mandatory_result.unwrap_or_default();
         let forbidden_results = forbidden_result.unwrap_or_default();
@@ -109,15 +123,25 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                         return local_results;
                     }
                 };
-                if let Ok(unused) = deps.unused.check_unused_imports(file.value(), &content) {
+                let file_imports = imports_map
+                    .get(file.value())
+                    .map(|v| v.as_slice())
+                    .unwrap_or(&[]);
+                if let Ok(unused) =
+                    deps.unused
+                        .check_unused_imports(file.value(), &content, file_imports)
+                {
                     local_results.extend(unused);
                 }
 
                 let content_str = ContentString::new(content);
-                if let Ok(dummy) =
-                    deps.dummy
-                        .check_all_dummy(file, &content_str, &root_dir_clone, layer_map)
-                {
+                if let Ok(dummy) = deps.dummy.check_all_dummy(
+                    file,
+                    &content_str,
+                    &root_dir_clone,
+                    layer_map,
+                    &imports_map,
+                ) {
                     local_results.extend(dummy);
                 }
                 local_results
@@ -135,6 +159,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             &files,
             &root_dir,
             &content_map,
+            &imports_map,
         ) {
             results.values.extend(cycle_violations);
         }
@@ -166,6 +191,17 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .map(|f| (f.path.to_string_lossy().to_string(), f.content.clone()))
             .collect();
 
+        // Build import map from filesystem's AST parser
+        let import_list = self.deps.filesystem.import_list();
+        let imports_map: HashMap<String, Vec<ImportEntry>> = {
+            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+            for entry in import_list {
+                let key = entry.source_file.to_string_lossy().to_string();
+                map.entry(key).or_default().push(entry.clone());
+            }
+            map
+        };
+
         let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
         let mut results = Vec::new();
 
@@ -176,6 +212,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             &file_list,
             &root_dir,
             &content_map,
+            &imports_map,
         );
         let forbidden_result = self.deps.forbidden.check_forbidden_imports(
             &self.config,
@@ -183,6 +220,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             &file_list,
             &root_dir,
             &content_map,
+            &imports_map,
         );
         if let Ok(v) = mandatory_result {
             results.extend(v.values);
@@ -197,6 +235,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             &file_list,
             &root_dir,
             &content_map,
+            &imports_map,
         );
         if let Ok(v) = cycle_result {
             results.extend(v);
@@ -213,19 +252,25 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     Some(c) => c.as_str(),
                     None => return local,
                 };
-                if let Ok(v) = self
-                    .deps
-                    .unused
-                    .check_unused_imports(file.value(), content_str)
+                let file_imports = imports_map
+                    .get(file.value())
+                    .map(|v| v.as_slice())
+                    .unwrap_or(&[]);
+                if let Ok(v) =
+                    self.deps
+                        .unused
+                        .check_unused_imports(file.value(), content_str, file_imports)
                 {
                     local.extend(v);
                 }
                 let cs = ContentString::new(content_str.to_string());
-                if let Ok(v) =
-                    self.deps
-                        .dummy
-                        .check_all_dummy(file, &cs, &root_dir, &self.layer_map)
-                {
+                if let Ok(v) = self.deps.dummy.check_all_dummy(
+                    file,
+                    &cs,
+                    &root_dir,
+                    &self.layer_map,
+                    &imports_map,
+                ) {
                     local.extend(v);
                 }
                 local

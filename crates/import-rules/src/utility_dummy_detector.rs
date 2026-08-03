@@ -2,6 +2,7 @@
 use shared::common::taxonomy_common_vo::LanguageVO;
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_name_vo::SymbolName;
+use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 pub fn dummy_function_ranges(lines: &[&str], lang: LanguageVO) -> Vec<(LineNumber, LineNumber)> {
     match lang {
@@ -732,4 +733,42 @@ pub fn is_short_marker(inner: &str) -> bool {
         || inner.starts_with("unimplemented!(")
         || inner.starts_with("panic!(")
         || inner.starts_with("unreachable!(")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ImportEntry-based functions (consume filesystem crate's parsed data)
+// ═══════════════════════════════════════════════════════════════
+
+/// Extract imported symbols from ImportEntry list (replaces imported_symbols).
+/// Returns (symbol_name, line_number) pairs — same shape as the legacy function.
+pub fn imported_symbols_from_entries(entries: &[ImportEntry]) -> Vec<(SymbolName, LineNumber)> {
+    let mut symbols = Vec::new();
+    for entry in entries {
+        // Skip wildcard imports
+        if entry.is_wildcard {
+            continue;
+        }
+        // For grouped imports, emit each symbol separately
+        if !entry.symbols.is_empty() {
+            for sym in &entry.symbols {
+                if sym.is_empty() || sym == "*" || sym == "self" || sym == "_" {
+                    continue;
+                }
+                symbols.push((SymbolName::new(sym.clone()), LineNumber::new(1)));
+            }
+        } else {
+            // Single import — use last segment of raw_path
+            let last = entry
+                .raw_path
+                .rsplit("::")
+                .next()
+                .unwrap_or(&entry.raw_path);
+            if last.is_empty() || last == "*" || last == "self" || last == "_" || last == "default"
+            {
+                continue;
+            }
+            symbols.push((SymbolName::new(last.to_string()), LineNumber::new(1)));
+        }
+    }
+    symbols
 }

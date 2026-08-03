@@ -13,6 +13,7 @@ use shared::common::utility_layer_detector;
 use shared::common::{
     FilePath, FilePathList, Identity, LineContentVO, LineNumber, LintMessage, Severity,
 };
+use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
@@ -39,6 +40,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         files: &FilePathList,
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Result<LintResultList, ImportError> {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let root_dir_str = root_dir.to_string();
@@ -60,12 +62,16 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                     return Vec::new();
                 }
 
-                let content = match content_map.get(&f_str) {
-                    Some(c) => c.clone(),
-                    None => return Vec::new(),
+                // Use ImportEntry from filesystem if available, fallback to line-based
+                let import_lines = if let Some(entries) = imports_map.get(&f_str) {
+                    utility_import_resolver::import_entries_to_lines(entries)
+                } else {
+                    let content = match content_map.get(&f_str) {
+                        Some(c) => c.clone(),
+                        None => return Vec::new(),
+                    };
+                    utility_import_resolver::parse_import_lines_helper(&f_str, &content)
                 };
-                let import_lines =
-                    utility_import_resolver::parse_import_lines_helper(&f_str, &content);
                 if import_lines.is_empty() {
                     return Vec::new();
                 }
@@ -134,7 +140,8 @@ impl ArchImportForbiddenChecker {
         let files = FilePathList::new(vec![fp]);
         let mut content_map = HashMap::new();
         content_map.insert(file_path.to_string(), content.to_string());
-        self.check_forbidden_imports(config, layer_map, &files, &root, &content_map)
+        let imports_map = HashMap::new();
+        self.check_forbidden_imports(config, layer_map, &files, &root, &content_map, &imports_map)
     }
 
     fn _check_forbidden_imports_with_lines(

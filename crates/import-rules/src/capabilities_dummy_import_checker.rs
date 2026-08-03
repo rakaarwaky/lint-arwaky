@@ -5,6 +5,7 @@ use shared::common::utility_layer_detector;
 use shared::common::{
     ContentString, FilePath, Identity, LanguageVO, LineNumber, LintMessage, Severity, SymbolName,
 };
+use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use crate::utility_dummy_detector;
 use crate::utility_import_resolver;
@@ -86,12 +87,19 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         content: &ContentString,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
+        import_entries: &[ImportEntry],
     ) -> Result<Vec<LintResult>, ImportError> {
         let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
             return Ok(Vec::new());
         };
         let mut violations = Vec::new();
-        Self::_check_dummy_imports(file.value(), &ctx, &mut violations, layer_map);
+        Self::_check_dummy_imports(
+            file.value(),
+            &ctx,
+            &mut violations,
+            layer_map,
+            import_entries,
+        );
         Ok(violations)
     }
 
@@ -131,12 +139,13 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         content: &ContentString,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
+        import_entries: &[ImportEntry],
     ) -> Result<Vec<LintResult>, ImportError> {
         let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
             return Ok(Vec::new());
         };
         let mut violations = Vec::new();
-        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations);
+        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations, import_entries);
         Ok(violations)
     }
 
@@ -168,15 +177,26 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         content: &ContentString,
         _root_dir: &FilePath,
         layer_map: &LayerMapVO,
+        imports_map: &std::collections::HashMap<String, Vec<ImportEntry>>,
     ) -> Result<Vec<LintResult>, ImportError> {
         let Some(ctx) = DummyFileContext::compute(file.value(), content.value(), layer_map) else {
             return Ok(Vec::new());
         };
+        let import_entries = imports_map
+            .get(file.value())
+            .map(|v| v.as_slice())
+            .unwrap_or(&[]);
         let mut violations = Vec::new();
-        Self::_check_dummy_imports(file.value(), &ctx, &mut violations, layer_map);
+        Self::_check_dummy_imports(
+            file.value(),
+            &ctx,
+            &mut violations,
+            layer_map,
+            import_entries,
+        );
         Self::_check_dummy_functions(file.value(), &ctx, &mut violations);
         Self::_check_dummy_impls(file.value(), &ctx, &mut violations);
-        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations);
+        Self::_check_taxonomy_intent(file.value(), &ctx, &mut violations, import_entries);
         Self::_check_surface_logic(file.value(), content.value(), &mut violations);
         Ok(violations)
     }
@@ -199,9 +219,15 @@ impl DummyImportChecker {
         ctx: &DummyFileContext,
         violations: &mut Vec<LintResult>,
         _layer_map: &LayerMapVO,
+        import_entries: &[ImportEntry],
     ) {
         let lines = ctx.str_refs();
-        let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
+        // Use ImportEntry from filesystem if available, fallback to line-based
+        let imported = if !import_entries.is_empty() {
+            utility_dummy_detector::imported_symbols_from_entries(import_entries)
+        } else {
+            utility_dummy_detector::imported_symbols(&lines, ctx.lang)
+        };
 
         for (symbol, line_no) in imported {
             let symbol_str = symbol.value().to_string();
@@ -283,9 +309,15 @@ impl DummyImportChecker {
         file: &str,
         ctx: &DummyFileContext,
         violations: &mut Vec<LintResult>,
+        import_entries: &[ImportEntry],
     ) {
         let lines = ctx.str_refs();
-        let imported = utility_dummy_detector::imported_symbols(&lines, ctx.lang);
+        // Use ImportEntry from filesystem if available, fallback to line-based
+        let imported = if !import_entries.is_empty() {
+            utility_dummy_detector::imported_symbols_from_entries(import_entries)
+        } else {
+            utility_dummy_detector::imported_symbols(&lines, ctx.lang)
+        };
 
         let mut has_dummy_function = false;
         let mut dummy_function_line = 0;

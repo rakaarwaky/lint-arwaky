@@ -8,6 +8,7 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Severity};
+use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use crate::utility_cycle_detector;
 use crate::utility_import_module_parser;
@@ -36,10 +37,18 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         files: &[FilePath],
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Vec<LintResult> {
         let file_strs: Vec<String> = files.iter().map(|f| f.to_string()).collect();
         let root_str = root_dir.to_string();
-        self._scan(config, layer_map, &file_strs, &root_str, content_map)
+        self._scan(
+            config,
+            layer_map,
+            &file_strs,
+            &root_str,
+            content_map,
+            imports_map,
+        )
     }
 
     fn check_cycles(
@@ -49,6 +58,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
         files: &FilePathList,
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Result<Vec<LintResult>, ImportError> {
         let file_strs: Vec<String> = files.values.iter().map(|f| f.to_string()).collect();
         let cycle_violations = self._scan(
@@ -57,6 +67,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
             &file_strs,
             &root_dir.to_string(),
             content_map,
+            imports_map,
         );
         Ok(cycle_violations)
     }
@@ -84,6 +95,7 @@ impl DependencyCycleAnalyzer {
         files: &[String],
         root_dir: &str,
         content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Vec<LintResult> {
         if !config.enabled.value {
             return vec![];
@@ -120,10 +132,16 @@ impl DependencyCycleAnalyzer {
                     None => return None,
                 };
 
-                let resolved_modules =
+                // Use ImportEntry from filesystem if available, fallback to line-based
+                let resolved_modules = if let Some(entries) = imports_map.get(file) {
+                    utility_import_module_parser::extract_import_modules_from_entries_resolved(
+                        entries, root_dir,
+                    )
+                } else {
                     utility_import_module_parser::extract_import_modules_resolved(
                         &content, root_dir,
-                    );
+                    )
+                };
 
                 let modules: Vec<SymbolName> = resolved_modules
                     .into_iter()

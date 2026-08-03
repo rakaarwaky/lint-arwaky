@@ -2,6 +2,7 @@ use crate::utility_path_normalizer;
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
@@ -54,6 +55,142 @@ pub fn parse_import_lines_helper(
     }
     result
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ImportEntry-based functions (consume filesystem crate's parsed data)
+// ═══════════════════════════════════════════════════════════════
+
+/// Convert ImportEntry list to the legacy (LineNumber, LineContentVO) format.
+/// Bridge function for checkers that haven't migrated to ImportEntry yet.
+pub fn import_entries_to_lines(entries: &[ImportEntry]) -> Vec<(LineNumber, LineContentVO)> {
+    entries
+        .iter()
+        .map(|e| {
+            (
+                LineNumber::new(1), // ImportEntry doesn't carry line number
+                LineContentVO::new(format_raw_path_for_line(e)),
+            )
+        })
+        .collect()
+}
+
+/// Format an ImportEntry's raw_path into the line content format expected by checkers.
+fn format_raw_path_for_line(entry: &ImportEntry) -> String {
+    match entry.import_type {
+        shared::filesystem::taxonomy_filesystem_vo::ImportType::Use => {
+            let prefix = if entry.is_reexport {
+                "pub use "
+            } else {
+                "use "
+            };
+            if entry.symbols.is_empty() {
+                format!("{}{};", prefix, entry.raw_path)
+            } else {
+                format!(
+                    "{}{}::{{{}}};",
+                    prefix,
+                    entry.raw_path,
+                    entry.symbols.join(", ")
+                )
+            }
+        }
+        shared::filesystem::taxonomy_filesystem_vo::ImportType::Import => {
+            format!("import {}", entry.raw_path)
+        }
+        shared::filesystem::taxonomy_filesystem_vo::ImportType::ImportFrom => {
+            if entry.symbols.is_empty() {
+                format!("import {} from '{}'", entry.raw_path, entry.raw_path)
+            } else {
+                format!(
+                    "from {} import {}",
+                    entry.raw_path,
+                    entry.symbols.join(", ")
+                )
+            }
+        }
+        shared::filesystem::taxonomy_filesystem_vo::ImportType::ReExport => {
+            format!("pub use {};", entry.raw_path)
+        }
+        _ => entry.raw_path.clone(),
+    }
+}
+
+/// Extract module path from an ImportEntry (replaces extract_module_from_line).
+pub fn extract_module_from_import_entry(entry: &ImportEntry) -> Identity {
+    // For Rust use statements, raw_path is already the module path
+    // For Python/TS, raw_path is the module path from 'from X import Y' or 'import X'
+    Identity::new(entry.raw_path.clone())
+}
+
+/// Extract symbol names from an ImportEntry (replaces extract_symbol_names).
+pub fn extract_symbols_from_import_entry(entry: &ImportEntry) -> Vec<String> {
+    entry.symbols.clone()
+}
+
+/// Check if an ImportEntry matches a scope requirement (replaces import_matches_scope).
+pub fn import_entry_matches_scope(
+    entry: &ImportEntry,
+    layer: &LayerNameVO,
+    suffixes: &[Identity],
+) -> bool {
+    let raw = &entry.raw_path;
+    let segments: Vec<&str> = raw
+        .split(|c: char| {
+            c == ':'
+                || c == '.'
+                || c == '/'
+                || c == '\\'
+                || c.is_whitespace()
+                || c == '"'
+                || c == '\''
+                || c == '{'
+                || c == '}'
+                || c == ','
+                || c == ';'
+        })
+        .filter(|s| !s.is_empty())
+        .collect();
+    let layer_lower = layer.value().to_lowercase();
+    let layer_prefix = format!("{}_", layer_lower);
+    let layer_match = segments.iter().any(|s| {
+        let trimmed = s.trim().to_lowercase();
+        trimmed == layer_lower || trimmed.starts_with(&layer_prefix)
+    });
+    if !layer_match || suffixes.is_empty() {
+        return layer_match;
+    }
+    // Check symbols too
+    for sym in &entry.symbols {
+        let sym_lower = sym.to_lowercase();
+        if suffixes.iter().any(|s| {
+            let s_val = s.value();
+            sym_lower.ends_with(&format!("_{}", s_val))
+        }) {
+            return true;
+        }
+    }
+    // Check raw_path segments for suffix match
+    suffixes.iter().any(|s| {
+        let s_val = s.value();
+        segments.iter().any(|seg| {
+            let cleaned = seg
+                .trim_end_matches(';')
+                .trim()
+                .trim_start_matches('{')
+                .trim_end_matches('}')
+                .trim();
+            cleaned.split(',').any(|t| {
+                let name = t.trim();
+                let name_lower = name.to_lowercase();
+                name_lower.ends_with(&format!("_{}", s_val))
+            })
+        })
+    })
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Legacy line-based functions (kept for backward compat, will be removed)
+// ═══════════════════════════════════════════════════════════════
 
 /// Parse a scope value (e.g. "contract(protocol)") into layer + suffix matches.
 pub fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {

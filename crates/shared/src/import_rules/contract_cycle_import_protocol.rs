@@ -5,6 +5,7 @@ use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use crate::import_rules::taxonomy_import_error::ImportError;
 use std::collections::HashMap;
@@ -17,6 +18,7 @@ pub trait ICycleImportProtocol: Send + Sync {
         files: &[FilePath],
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Vec<LintResult>;
 
     fn check_cycles(
@@ -26,6 +28,7 @@ pub trait ICycleImportProtocol: Send + Sync {
         files: &crate::common::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Result<Vec<LintResult>, ImportError>;
 
     fn detect_cycle_edges(&self, edges: &[DependencyEdge]) -> Vec<SymbolName>;

@@ -5,6 +5,7 @@ use crate::utility_import_resolver;
 use crate::utility_import_symbol_extractor;
 use shared::cli_commands::LintResult;
 use shared::common::{FilePath, LintMessage, Severity};
+use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
@@ -16,14 +17,22 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         &self,
         path: &FilePath,
         content: &str,
+        import_entries: &[ImportEntry],
     ) -> Result<Vec<LintMessage>, ImportError> {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        let imported_aliases =
-            utility_import_symbol_extractor::extract_imported_aliases(path.value(), content);
-        let exported_symbols =
-            utility_import_symbol_extractor::extract_exported_symbols(path.value(), content);
+        // Use ImportEntry from filesystem if available, fallback to line-based
+        let imported_aliases = if !import_entries.is_empty() {
+            utility_import_symbol_extractor::extract_imported_aliases_from_entries(import_entries)
+        } else {
+            utility_import_symbol_extractor::extract_imported_aliases(path.value(), content)
+        };
+        let exported_symbols = if !import_entries.is_empty() {
+            utility_import_symbol_extractor::extract_exported_symbols_from_entries(import_entries)
+        } else {
+            utility_import_symbol_extractor::extract_exported_symbols(path.value(), content)
+        };
         let used_symbols = utility_import_symbol_extractor::extract_used_symbols(
             path.value(),
             content,
@@ -46,6 +55,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         &self,
         file: &str,
         content: &str,
+        import_entries: &[ImportEntry],
     ) -> Result<Vec<LintResult>, ImportError> {
         let basename = std::path::Path::new(file)
             .file_name()
@@ -54,10 +64,17 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(basename) {
             return Ok(Vec::new());
         }
-        let imported_aliases =
-            utility_import_symbol_extractor::extract_imported_aliases(file, content);
-        let exported_symbols =
-            utility_import_symbol_extractor::extract_exported_symbols(file, content);
+        // Use ImportEntry from filesystem if available, fallback to line-based
+        let imported_aliases = if !import_entries.is_empty() {
+            utility_import_symbol_extractor::extract_imported_aliases_from_entries(import_entries)
+        } else {
+            utility_import_symbol_extractor::extract_imported_aliases(file, content)
+        };
+        let exported_symbols = if !import_entries.is_empty() {
+            utility_import_symbol_extractor::extract_exported_symbols_from_entries(import_entries)
+        } else {
+            utility_import_symbol_extractor::extract_exported_symbols(file, content)
+        };
         let used_symbols =
             utility_import_symbol_extractor::extract_used_symbols(file, content, &imported_aliases);
         let mut violations = Vec::new();
@@ -157,7 +174,7 @@ fn main() {
 }
 "#;
         let result = checker
-            .check_unused_imports("/tmp/test/src/app.rs", content)
+            .check_unused_imports("/tmp/test/src/app.rs", content, &[])
             .unwrap();
         assert!(!result.is_empty(), "Should detect unused HashMap import");
         assert_eq!(result[0].code.code(), "AES203");
@@ -178,7 +195,7 @@ fn main() {
 }
 "#;
         let result = checker
-            .check_unused_imports("/tmp/test/src/main.rs", content)
+            .check_unused_imports("/tmp/test/src/main.rs", content, &[])
             .unwrap();
         assert!(
             result.is_empty(),
@@ -193,10 +210,10 @@ fn main() {
         // lib.rs / mod.rs are barrel files and should be skipped
         let content = "use something::unused;\n";
         let result_lib = checker
-            .check_unused_imports("/tmp/test/src/lib.rs", content)
+            .check_unused_imports("/tmp/test/src/lib.rs", content, &[])
             .unwrap();
         let result_mod = checker
-            .check_unused_imports("/tmp/test/src/mod.rs", content)
+            .check_unused_imports("/tmp/test/src/mod.rs", content, &[])
             .unwrap();
         assert!(result_lib.is_empty(), "lib.rs should be skipped");
         assert!(result_mod.is_empty(), "mod.rs should be skipped");
@@ -206,7 +223,7 @@ fn main() {
     fn no_violation_for_empty_content() {
         let checker = UnusedImportRuleChecker::new();
         let result = checker
-            .check_unused_imports("/tmp/test/src/file.rs", "")
+            .check_unused_imports("/tmp/test/src/file.rs", "", &[])
             .unwrap();
         assert!(
             result.is_empty(),
@@ -226,7 +243,7 @@ fn main() {
 }
 "#;
         let result = checker
-            .check_unused_imports("/tmp/test/src/multi.rs", content)
+            .check_unused_imports("/tmp/test/src/multi.rs", content, &[])
             .unwrap();
         // At least HashMap and BTreeMap should be flagged (Read is a trait — may be skipped)
         assert!(
