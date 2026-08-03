@@ -43,15 +43,22 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
     fn used_identifiers_for(&self, _: &std::path::Path) -> Vec<String> {
         vec![]
     }
+    fn build_file_index(&self, _: &std::path::Path) {}
     fn build_orphan_graph_context(
         &self,
         _root_dir: &std::path::Path,
         _ignored: &[String],
     ) -> shared::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext {
         shared::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext::new(
-            shared::filesystem::taxonomy_filesystem_vo::ImportGraph::new(std::collections::HashMap::new()),
-            shared::filesystem::taxonomy_filesystem_vo::InboundLinkMap::new(std::collections::HashMap::new()),
-            shared::filesystem::taxonomy_filesystem_vo::InheritanceMap::new(std::collections::HashMap::new()),
+            shared::filesystem::taxonomy_filesystem_vo::ImportGraph::new(
+                std::collections::HashMap::new(),
+            ),
+            shared::filesystem::taxonomy_filesystem_vo::InboundLinkMap::new(
+                std::collections::HashMap::new(),
+            ),
+            shared::filesystem::taxonomy_filesystem_vo::InheritanceMap::new(
+                std::collections::HashMap::new(),
+            ),
             vec![],
         )
     }

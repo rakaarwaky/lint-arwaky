@@ -72,10 +72,26 @@ pub fn collect_orphan(
             .workspace_type
             .parse::<ConfigLanguage>()
             .unwrap_or(ConfigLanguage::Rust);
-        let ignored = config_orchestrator.ignored_paths_for_language(&ws.path, lang);
+        let _ignored = config_orchestrator.ignored_paths_for_language(&ws.path, lang);
 
-        // scan_orphans is sync — call directly on the injected aggregate
-        let (_, results) = orphan_orchestrator.scan_orphans(&ws.path, &ignored.values);
+        // Build file index for this workspace
+        let ws_path = std::path::Path::new(ws.path.value.as_str());
+        fs_agg.build_file_index(ws_path);
+
+        // Build OrphanFileListVO from pre-fetched FileEntry data
+        let file_list = fs_agg.file_list();
+        let file_paths: Vec<String> = file_list
+            .iter()
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect();
+        let orphan_files =
+            shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
+
+        // Build graph context from filesystem's pre-built data
+        let context = orphan_orchestrator.build_orphan_graph_context(&orphan_files, &ws.path);
+
+        // Run orphan checks on pre-fetched data
+        let results = orphan_orchestrator.check_orphans_with_entries(file_list, &context);
 
         // Filter results belonging to this workspace
         let ws_abs = std::env::current_dir()
@@ -121,20 +137,28 @@ fn scan_single_root(
     root: &str,
     root_fp: &FilePath,
     orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
-    config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+    _config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     filter: &Option<String>,
     fs_agg: &Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
-    // detect_language_from_path returns shared::common::ConfigLanguage;
-    // ignored_paths_for_language expects shared::config_system::ConfigLanguage.
-    // Convert via FromStr.
-    let common_lang = fs_agg.detect_language_from_path(root);
-    let lang = common_lang
-        .to_string()
-        .parse::<ConfigLanguage>()
-        .unwrap_or(ConfigLanguage::Rust);
-    let ignored = config_orchestrator.ignored_paths_for_language(root_fp, lang);
-    let (_, results) = orphan_orchestrator.scan_orphans(root_fp, &ignored.values);
+    // Build file index first — filesystem discovers files, reads content, parses AST
+    let root_path = std::path::Path::new(root);
+    fs_agg.build_file_index(root_path);
+
+    // Build OrphanFileListVO from pre-fetched FileEntry data
+    let file_list = fs_agg.file_list();
+    let file_paths: Vec<String> = file_list
+        .iter()
+        .map(|f| f.path.to_string_lossy().to_string())
+        .collect();
+    let orphan_files =
+        shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
+
+    // Build graph context from filesystem's pre-built data
+    let context = orphan_orchestrator.build_orphan_graph_context(&orphan_files, root_fp);
+
+    // Run orphan checks on pre-fetched data
+    let results = orphan_orchestrator.check_orphans_with_entries(file_list, &context);
 
     let mut violations: Vec<ViolationItem> = results
         .iter()

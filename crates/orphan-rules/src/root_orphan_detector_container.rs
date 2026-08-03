@@ -40,10 +40,8 @@ impl OrphanContainer {
     ) -> Self {
         let parser_dispatcher: Arc<dyn IOrphanParserProtocol> =
             Arc::new(OrphanParserDispatcher::new());
-        let resolver: Arc<dyn IOrphanGraphResolverProtocol> = Arc::new(OrphanGraphResolver::new(
-            parser_dispatcher.clone(),
-            filesystem.clone(),
-        ));
+        let resolver: Arc<dyn IOrphanGraphResolverProtocol> =
+            Arc::new(OrphanGraphResolver::new());
 
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             ArchOrphanDeps {

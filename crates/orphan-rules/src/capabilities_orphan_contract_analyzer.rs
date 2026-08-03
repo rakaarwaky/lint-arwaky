@@ -161,21 +161,24 @@ impl ContractOrphanAnalyzer {
                 return cache.files.clone();
             }
             let mut search_files: Vec<String> = all_files.to_vec();
-            // Collect additional source files from workspace dirs
+            // Collect additional source files from workspace dirs via filesystem
+            let ignored: Vec<String> = vec![
+                "target".into(),
+                "node_modules".into(),
+                ".git".into(),
+                "dist".into(),
+                "build".into(),
+                "__pycache__".into(),
+                ".venv".into(),
+                "tests".into(),
+            ];
             for ws_dir in &["crates", "packages", "modules"] {
                 let ws_path = top_root.join(ws_dir);
-                if ws_path.exists() {
-                    // Walk workspace dirs to collect source files
-                    if let Ok(entries) = std::fs::read_dir(&ws_path) {
-                        for entry in entries.flatten() {
-                            let member_path = entry.path();
-                            if !member_path.is_dir() {
-                                continue;
-                            }
-                            let src_dir = member_path.join("src");
-                            if src_dir.is_dir() {
-                                Self::collect_source_files_recursive(&src_dir, &mut search_files);
-                            }
+                if self.filesystem.is_dir(&ws_path) {
+                    let discovered = self.filesystem.discover_source_files(&ws_path, &ignored);
+                    for f in discovered {
+                        if search_files.iter().all(|existing| existing != &f) {
+                            search_files.push(f);
                         }
                     }
                 }
@@ -189,25 +192,6 @@ impl ContractOrphanAnalyzer {
             files
         } else {
             Arc::new(all_files.to_vec())
-        }
-    }
-
-    fn collect_source_files_recursive(dir: &std::path::Path, files: &mut Vec<String>) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.is_dir() {
-                    Self::collect_source_files_recursive(&path, files);
-                } else if let Some(s) = path.to_str() {
-                    if s.ends_with(".rs")
-                        || s.ends_with(".py")
-                        || s.ends_with(".ts")
-                        || s.ends_with(".js")
-                    {
-                        files.push(s.to_string());
-                    }
-                }
-            }
         }
     }
 }
