@@ -1,4 +1,4 @@
-// Fixture: AES203 — unused import in capabilities.
+// Fixture: AES203 — unused import in capabilities (no dummy function).
 use taxonomy::vo::UserVO;
 
 pub fn process() {

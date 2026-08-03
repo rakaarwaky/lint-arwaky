@@ -100,6 +100,13 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         root_dir: &FilePath,
         context: &GraphAnalysisContext,
     ) -> Vec<LintResult> {
+        eprintln!(
+            "[debug orphan] config.enabled={}, root={}, all_ws_files={}, file_count={}",
+            self.config.enabled.value,
+            root_dir.value,
+            context.all_workspace_files.len(),
+            files.values.len(),
+        );
         if !self.config.enabled.value {
             return Vec::new();
         }
