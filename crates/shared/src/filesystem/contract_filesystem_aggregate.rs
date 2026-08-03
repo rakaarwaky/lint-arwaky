@@ -56,4 +56,8 @@ pub trait IFilesystemAggregate:
 
     /// Read a lintable file by path string.
     fn read_lintable_file(&self, path: &str) -> Option<String>;
+
+    /// Get tree-sitter-extracted used identifiers for a file (from ParseMetadata).
+    /// Returns empty vec if file not in cache or parse_metadata is None.
+    fn used_identifiers_for(&self, path: &Path) -> Vec<String>;
 }

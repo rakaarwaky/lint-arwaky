@@ -302,4 +302,3 @@ impl MandatoryDefinitionChecker {
         false
     }
 }
-

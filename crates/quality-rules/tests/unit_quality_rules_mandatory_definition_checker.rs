@@ -31,12 +31,7 @@ fn file_with_struct_no_violation() {
     let mut violations = Vec::new();
     let def = def_with_mandatory(true);
     let content = "pub struct Foo {\n    pub bar: i32,\n}\n";
-    checker().check_mandatory_class_definition(
-        "src/lib.rs",
-        Some(&def),
-        content,
-        &mut violations,
-    );
+    checker().check_mandatory_class_definition("src/lib.rs", Some(&def), content, &mut violations);
     assert!(violations.is_empty());
 }
 
@@ -45,12 +40,7 @@ fn file_without_definition_produces_violation() {
     let mut violations = Vec::new();
     let def = def_with_mandatory(true);
     let content = "let x = 1;\nprintln!(\"hello\");\n";
-    checker().check_mandatory_class_definition(
-        "src/util.rs",
-        Some(&def),
-        content,
-        &mut violations,
-    );
+    checker().check_mandatory_class_definition("src/util.rs", Some(&def), content, &mut violations);
     assert_eq!(violations.len(), 1);
     assert!(violations[0].code.code().contains("AES303"));
 }
@@ -60,12 +50,7 @@ fn barrel_file_skipped() {
     let mut violations = Vec::new();
     let def = def_with_mandatory(true);
     let content = "";
-    checker().check_mandatory_class_definition(
-        "src/mod.rs",
-        Some(&def),
-        content,
-        &mut violations,
-    );
+    checker().check_mandatory_class_definition("src/mod.rs", Some(&def), content, &mut violations);
     assert!(violations.is_empty());
 }
 

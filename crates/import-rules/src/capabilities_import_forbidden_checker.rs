@@ -1,5 +1,5 @@
 // PURPOSE: ArchImportForbiddenChecker — AES201: enforce forbidden import rules
-// Uses utility functions directly — no IImportParserProtocol, no IAnalyzer.
+// Uses ImportEntry fields directly — no text-based parsing, no bridge functions.
 //
 // Barrel resolution: when direct module-path matching fails (e.g. import
 // through __init__.py / mod.rs / index.ts hides the original file name),
@@ -10,14 +10,13 @@ use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
-use shared::common::{
-    FilePath, FilePathList, Identity, LineContentVO, LineNumber, LintMessage, Severity,
-};
+use shared::common::{FilePath, FilePathList, Identity, LintMessage, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
 use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
 
 use crate::utility_import_resolver;
+use crate::utility_path_normalizer;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
@@ -40,12 +39,11 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &FilePathList,
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         _content_map: &HashMap<String, String>,
         imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Result<LintResultList, ImportError> {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
-        let root_dir_str = root_dir.to_string();
 
         let aes201_exceptions: HashSet<String> = config
             .rules
@@ -64,14 +62,10 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                     return Vec::new();
                 }
 
-                // Use ImportEntry from filesystem's AST parser
-                let import_lines = match imports_map.get(&f_str) {
-                    Some(entries) => utility_import_resolver::import_entries_to_lines(entries),
-                    None => return Vec::new(),
+                let entries = match imports_map.get(&f_str) {
+                    Some(e) if !e.is_empty() => e,
+                    _ => return Vec::new(),
                 };
-                if import_lines.is_empty() {
-                    return Vec::new();
-                }
 
                 let mut local_violations = Vec::new();
                 let filename = utility_layer_detector::extract_filename(&f_str);
@@ -84,21 +78,20 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
                     );
                     let layer_name = LayerNameVO::new(specialized.as_str());
                     if let Some(def) = layer_map.values.get(&layer_name) {
-                        self._check_forbidden_imports_with_lines(
+                        self._check_forbidden_imports(
                             &f_str,
                             &specialized,
                             def,
-                            &import_lines,
-                            &root_dir_str,
+                            entries,
                             &mut local_violations,
                         );
                     }
                 }
-                self._check_scope_forbidden_imports_with_lines(
+                self._check_scope_forbidden_imports(
                     &f_str,
                     &basename,
                     config,
-                    &import_lines,
+                    entries,
                     &mut local_violations,
                 );
                 local_violations
@@ -183,13 +176,12 @@ impl ArchImportForbiddenChecker {
         self.check_forbidden_imports(config, layer_map, &files, &root, &content_map, &imports_map)
     }
 
-    fn _check_forbidden_imports_with_lines(
+    fn _check_forbidden_imports(
         &self,
         file: &str,
         layer_name: &str,
         definition: &LayerDefinition,
-        import_lines: &[(LineNumber, LineContentVO)],
-        root_dir: &str,
+        entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
     ) {
         let file_path = match FilePath::new(file.to_string()) {
@@ -213,20 +205,15 @@ impl ArchImportForbiddenChecker {
 
         let layer_name_vo = LayerNameVO::new(layer_name);
 
-        for (line_num, line) in import_lines {
-            let module = match utility_import_resolver::extract_module_from_line(line) {
-                Some(m) => m,
-                None => continue,
-            };
-            let module_val = module.value();
-
-            let symbol_names = utility_import_resolver::extract_symbol_names(line.value());
+        for (idx, entry) in entries.iter().enumerate() {
+            let module_val = utility_import_resolver::entry_module_path(entry);
 
             for forbidden in &forbidden_list {
                 let forbidden_identity = Identity::new(forbidden);
                 let (layer, suffixes) = utility_import_resolver::resolve_scope(&forbidden_identity);
 
                 let mut is_forbidden = if suffixes.is_empty() {
+                    // Direct layer match from raw_path segments
                     module_val
                         .split([':', '.', '/', '\\'])
                         .filter(|s| !s.is_empty())
@@ -238,19 +225,28 @@ impl ArchImportForbiddenChecker {
                             }
                         })
                 } else {
-                    utility_import_resolver::import_matches_scope(line, &layer, &suffixes)
+                    utility_import_resolver::entry_matches_scope(entry, &layer, &suffixes)
                 };
 
+                // Barrel file resolution — use resolved_path from filesystem
                 if !is_forbidden {
-                    for sym in &symbol_names {
-                        if let Some(resolved) = utility_import_resolver::resolve_barrel_import(
-                            module_val, sym, root_dir, None,
-                        ) && resolved.matches_layer(layer.value())
-                            && (suffixes.is_empty()
-                                || suffixes.iter().any(|s| resolved.has_suffix(s.value())))
-                        {
+                    if let Some(ref resolved_path) = entry.resolved_path {
+                        let resolved_file = resolved_path
+                            .file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_default();
+                        let resolved_layer =
+                            utility_path_normalizer::extract_layer_from_prefix(&resolved_file);
+                        let layer_matches = resolved_layer.as_deref() == Some(layer.value());
+                        let suffix_matches = suffixes.is_empty()
+                            || suffixes.iter().any(|s| {
+                                let suffix_lower = s.value().to_lowercase();
+                                resolved_file
+                                    .to_lowercase()
+                                    .contains(&format!("_{}", suffix_lower))
+                            });
+                        if layer_matches && suffix_matches {
                             is_forbidden = true;
-                            break;
                         }
                     }
                 }
@@ -271,7 +267,7 @@ impl ArchImportForbiddenChecker {
                         .collect();
                     violations.push(LintResult::new_arch(
                         file,
-                        line_num.value() as usize,
+                        idx + 1,
                         "AES201",
                         Severity::CRITICAL,
                         AesImportViolation::ForbiddenImport {
@@ -290,12 +286,12 @@ impl ArchImportForbiddenChecker {
         }
     }
 
-    fn _check_scope_forbidden_imports_with_lines(
+    fn _check_scope_forbidden_imports(
         &self,
         file: &str,
         basename: &str,
         config: &ArchitectureConfig,
-        import_lines: &[(LineNumber, LineContentVO)],
+        entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
     ) {
         if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
@@ -315,64 +311,63 @@ impl ArchImportForbiddenChecker {
                 continue;
             };
 
-            for (line_num, line) in import_lines {
-                if let Some(module) = utility_import_resolver::extract_module_from_line(line) {
-                    let module_val = module.value();
-                    for forbidden in &rule.forbidden.values {
-                        let forbidden_identity = Identity::new(forbidden);
-                        let (forbidden_layer, forbidden_suffixes) =
-                            utility_import_resolver::resolve_scope(&forbidden_identity);
-                        let is_forbidden = if forbidden_suffixes.is_empty() {
-                            module_val
-                                .split([':', '.', '/', '\\'])
-                                .filter(|s| !s.is_empty())
-                                .any(|seg| {
-                                    let cleaned = Identity::new(seg.trim_end_matches(';').trim());
-                                    match utility_import_resolver::extract_layer_from_import(
-                                        &cleaned,
-                                    ) {
-                                        Some(l) => l == forbidden_layer,
-                                        None => false,
-                                    }
-                                })
-                        } else {
-                            utility_import_resolver::import_matches_scope(
-                                line,
-                                &forbidden_layer,
-                                &forbidden_suffixes,
-                            )
-                        };
-                        if is_forbidden {
-                            let allowed: Vec<LayerNameVO> = rule
-                                .allowed
-                                .values
-                                .iter()
-                                .map(|s| {
-                                    LayerNameVO::new(
-                                        utility_import_resolver::resolve_scope(&Identity::new(s))
-                                            .0
-                                            .value()
-                                            .to_string(),
-                                    )
-                                })
-                                .collect();
-                            violations.push(LintResult::new_arch(
-                                file,
-                                line_num.value() as usize,
-                                "AES201",
-                                Severity::CRITICAL,
-                                AesImportViolation::ForbiddenImport {
-                                    source_layer: LayerNameVO::new(rule_layer_str.clone()),
-                                    forbidden_layer: LayerNameVO::new(forbidden.clone()),
-                                    allowed,
-                                    reason: Some(LintMessage::new(format!(
-                                        "Scope rule violation: file imports from '{}' which resolves to forbidden layer '{}'.",
-                                        module_val, forbidden
-                                    ))),
+            for (idx, entry) in entries.iter().enumerate() {
+                let module_val = utility_import_resolver::entry_module_path(entry);
+
+                for forbidden in &rule.forbidden.values {
+                    let forbidden_identity = Identity::new(forbidden);
+                    let (forbidden_layer, forbidden_suffixes) =
+                        utility_import_resolver::resolve_scope(&forbidden_identity);
+
+                    let is_forbidden = if forbidden_suffixes.is_empty() {
+                        module_val
+                            .split([':', '.', '/', '\\'])
+                            .filter(|s| !s.is_empty())
+                            .any(|seg| {
+                                let cleaned = Identity::new(seg.trim_end_matches(';').trim());
+                                match utility_import_resolver::extract_layer_from_import(&cleaned) {
+                                    Some(l) => l == forbidden_layer,
+                                    None => false,
                                 }
-                                .to_string(),
-                            ));
-                        }
+                            })
+                    } else {
+                        utility_import_resolver::entry_matches_scope(
+                            entry,
+                            &forbidden_layer,
+                            &forbidden_suffixes,
+                        )
+                    };
+
+                    if is_forbidden {
+                        let allowed: Vec<LayerNameVO> = rule
+                            .allowed
+                            .values
+                            .iter()
+                            .map(|s| {
+                                LayerNameVO::new(
+                                    utility_import_resolver::resolve_scope(&Identity::new(s))
+                                        .0
+                                        .value()
+                                        .to_string(),
+                                )
+                            })
+                            .collect();
+                        violations.push(LintResult::new_arch(
+                            file,
+                            idx + 1,
+                            "AES201",
+                            Severity::CRITICAL,
+                            AesImportViolation::ForbiddenImport {
+                                source_layer: LayerNameVO::new(rule_layer_str.clone()),
+                                forbidden_layer: LayerNameVO::new(forbidden.clone()),
+                                allowed,
+                                reason: Some(LintMessage::new(format!(
+                                    "Scope rule violation: file imports from '{}' which resolves to forbidden layer '{}'.",
+                                    module_val, forbidden
+                                ))),
+                            }
+                            .to_string(),
+                        ));
                     }
                 }
             }

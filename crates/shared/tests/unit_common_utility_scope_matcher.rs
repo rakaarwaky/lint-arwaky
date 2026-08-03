@@ -1,8 +1,8 @@
 // Unit tests for utility_scope_matcher — scope-based file matching helpers.
+use shared_lint_arwaky::common::Identity;
 use shared_lint_arwaky::common::utility_scope_matcher::{
     extract_file_stem, extract_layer_prefix, extract_suffix, file_belongs_to_scope,
 };
-use shared_lint_arwaky::common::Identity;
 
 #[test]
 fn test_file_belongs_to_scope_matches() {

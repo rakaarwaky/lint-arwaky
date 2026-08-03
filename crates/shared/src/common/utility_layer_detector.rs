@@ -224,4 +224,3 @@ pub fn resolve_module_path_to_layer(module_path: &str, root_dir: &str) -> Option
 
     None
 }
-

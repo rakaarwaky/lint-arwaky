@@ -10,7 +10,7 @@ use std::sync::Arc;
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ParseMetadata};
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
@@ -91,6 +91,23 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             map
         };
 
+        // Build used_identifiers map from filesystem's tree-sitter AST cache
+        let used_identifiers_map: HashMap<String, Vec<String>> = files
+            .values
+            .iter()
+            .filter_map(|f| {
+                let ids = self
+                    .deps
+                    .filesystem
+                    .used_identifiers_for(std::path::Path::new(f.value()));
+                if ids.is_empty() {
+                    None
+                } else {
+                    Some((f.value().to_string(), ids))
+                }
+            })
+            .collect();
+
         let mandatory_result = self.deps.mandatory.run_mandatory_imports(
             &self.config,
             &self.layer_map,
@@ -127,9 +144,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     .get(file.value())
                     .map(|v| v.as_slice())
                     .unwrap_or(&[]);
+                let file_ids = used_identifiers_map.get(file.value()).map(|v| v.as_slice());
                 if let Ok(unused) =
                     deps.unused
-                        .check_unused_imports(file.value(), &content, file_imports)
+                        .check_unused_imports(file.value(), &content, file_imports, file_ids)
                 {
                     local_results.extend(unused);
                 }
@@ -202,6 +220,20 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             map
         };
 
+        // Build used_identifiers map from FileEntry.parse_metadata (tree-sitter AST)
+        let used_identifiers_map: HashMap<String, Vec<String>> = files
+            .iter()
+            .filter_map(|f| {
+                let ids = match f.parse_metadata.as_ref()? {
+                    ParseMetadata::Python(m) => Some(m.used_identifiers.clone()),
+                    ParseMetadata::TypeScript(m) => Some(m.used_identifiers.clone()),
+                    ParseMetadata::JavaScript(m) => Some(m.used_identifiers.clone()),
+                    _ => None,
+                };
+                ids.map(|i| (f.path.to_string_lossy().to_string(), i))
+            })
+            .collect();
+
         let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
         let mut results = Vec::new();
 
@@ -256,11 +288,13 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     .get(file.value())
                     .map(|v| v.as_slice())
                     .unwrap_or(&[]);
-                if let Ok(v) =
-                    self.deps
-                        .unused
-                        .check_unused_imports(file.value(), content_str, file_imports)
-                {
+                let file_ids = used_identifiers_map.get(file.value()).map(|v| v.as_slice());
+                if let Ok(v) = self.deps.unused.check_unused_imports(
+                    file.value(),
+                    content_str,
+                    file_imports,
+                    file_ids,
+                ) {
                     local.extend(v);
                 }
                 let cs = ContentString::new(content_str.to_string());

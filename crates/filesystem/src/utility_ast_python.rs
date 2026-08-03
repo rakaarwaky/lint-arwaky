@@ -64,3 +64,57 @@ fn extract_python_class_bases(node: tree_sitter::Node, content: &str) -> Vec<Str
     }
     bases
 }
+
+/// Extract all identifiers from a Python AST using tree-sitter.
+/// Skips import statements, string literals, and comments.
+pub fn extract_python_identifiers(tree: &tree_sitter::Tree, content: &str) -> Vec<String> {
+    let mut ids = std::collections::HashSet::new();
+    extract_identifiers_recursive(tree.root_node(), content, &mut ids);
+    let mut result: Vec<String> = ids.into_iter().collect();
+    result.sort();
+    result
+}
+
+fn extract_identifiers_recursive(
+    node: tree_sitter::Node,
+    content: &str,
+    ids: &mut std::collections::HashSet<String>,
+) {
+    let kind = node.kind();
+
+    // Skip import statements entirely
+    if kind == "import_statement" || kind == "import_from_statement" {
+        return;
+    }
+
+    // Skip comment nodes
+    if kind == "comment" {
+        return;
+    }
+
+    // Skip string literals — don't extract identifiers from string content
+    if kind == "string" || kind == "concatenated_string" || kind == "f_string" {
+        return;
+    }
+
+    // If this is an identifier node, extract it
+    if kind == "identifier" || kind == "attribute" {
+        let text = text_of(node, content);
+        // Only add valid Python identifiers (start with letter or _, rest alphanumeric)
+        if !text.is_empty()
+            && text
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_alphabetic() || c == '_')
+            && text.chars().all(|c| c.is_alphanumeric() || c == '_')
+        {
+            ids.insert(text);
+        }
+    }
+
+    // Recurse into children
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        extract_identifiers_recursive(child, content, ids);
+    }
+}

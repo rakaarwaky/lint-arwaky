@@ -9,19 +9,24 @@ use crate::import_rules::taxonomy_import_error::ImportError;
 
 pub trait IUnusedImportProtocol: Send + Sync {
     /// Find unused imports in a file. `content` is pre-read file content.
+    /// `used_identifiers` — pre-extracted identifiers from filesystem's tree-sitter AST
+    /// (from ParseMetadata). Empty slice when no AST data is available.
     fn find_unused_imports(
         &self,
         path: &FilePath,
         content: &str,
         import_entries: &[ImportEntry],
+        used_identifiers: &[String],
     ) -> Result<Vec<LintMessage>, ImportError>;
 
     /// Check unused imports given file path and content.
     /// file_path is needed for AST parser dispatch (language detection by extension).
+    /// `used_identifiers` — pre-extracted identifiers from filesystem's tree-sitter AST.
     fn check_unused_imports(
         &self,
         file: &str,
         content: &str,
         import_entries: &[ImportEntry],
+        used_identifiers: &[String],
     ) -> Result<Vec<LintResult>, ImportError>;
 }

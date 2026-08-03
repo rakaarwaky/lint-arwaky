@@ -1,8 +1,6 @@
 // Unit tests for SuffixPrefixChecker — AES102 suffix/prefix rules.
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
-use shared::common::{
-    LayerDefinition, LayerMapVO, LayerNameVO, PatternList, SuffixPolicyVO,
-};
+use shared::common::{LayerDefinition, LayerMapVO, LayerNameVO, PatternList, SuffixPolicyVO};
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
 
@@ -13,7 +11,8 @@ fn checker() -> SuffixPrefixChecker {
 fn layer_map_with_strict_capabilities() -> LayerMapVO {
     let mut def = LayerDefinition::default();
     def.naming.suffix_policy = SuffixPolicyVO::new(SUFFIX_POLICY_STRICT.to_string());
-    def.naming.allowed_suffix = PatternList::new(vec!["checker".to_string(), "adapter".to_string()]);
+    def.naming.allowed_suffix =
+        PatternList::new(vec!["checker".to_string(), "adapter".to_string()]);
     def.naming.forbidden_suffix = PatternList::new(vec!["vo".to_string()]);
     let mut layers = HashMap::new();
     layers.insert(LayerNameVO::new("capabilities"), def);

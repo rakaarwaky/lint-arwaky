@@ -335,4 +335,3 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
     }
 }
-

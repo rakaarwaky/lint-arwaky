@@ -1,41 +1,22 @@
 // PURPOSE: utility_import_symbol_extractor — AST-based unused import detection.
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
-use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
 use std::collections::{HashMap, HashSet};
 
 // ─── Block 2: Usage Detection (AST-based) ─────────────────
 
 pub fn extract_used_symbols(
     file_path: &str,
-    content: &str,
+    _content: &str,
     imported_aliases: &HashMap<Identity, Identity>,
+    used_identifiers: &[String],
 ) -> HashSet<Identity> {
     let mut used = HashSet::new();
-    match parse_file_content(file_path, content) {
-        FileParseResultVO::Rust(result) => {
-            for alias in imported_aliases.keys() {
-                if result.is_identifier_used(alias.value()) {
-                    used.insert(Identity::new(alias.value()));
-                }
-            }
+    let id_set: HashSet<&str> = used_identifiers.iter().map(|s| s.as_str()).collect();
+    for alias in imported_aliases.keys() {
+        if id_set.contains(alias.value()) {
+            used.insert(Identity::new(alias.value()));
         }
-        FileParseResultVO::Python(result) => {
-            for alias in imported_aliases.keys() {
-                if result.is_identifier_used(alias.value()) {
-                    used.insert(Identity::new(alias.value()));
-                }
-            }
-        }
-        FileParseResultVO::TypeScript(result) => {
-            for alias in imported_aliases.keys() {
-                if result.is_identifier_used(alias.value()) {
-                    used.insert(Identity::new(alias.value()));
-                }
-            }
-        }
-        FileParseResultVO::Unsupported => {}
     }
     used
 }
@@ -128,4 +109,3 @@ pub fn extract_exported_symbols_from_entries(entries: &[ImportEntry]) -> HashSet
     }
     exported
 }
-

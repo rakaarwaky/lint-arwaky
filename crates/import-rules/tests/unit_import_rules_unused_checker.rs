@@ -35,7 +35,7 @@ fn main() {
 "#;
     let imports = vec![rust_use("std::collections::HashMap")];
     let result = checker
-        .check_unused_imports("/tmp/test/src/app.rs", content, &imports)
+        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &[])
         .unwrap();
     assert!(!result.is_empty(), "Should detect unused HashMap import");
     assert_eq!(result[0].code.code(), "AES203");
@@ -57,7 +57,7 @@ fn main() {
 "#;
     let imports = vec![rust_use("std::collections::HashMap")];
     let result = checker
-        .check_unused_imports("/tmp/test/src/main.rs", content, &imports)
+        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[])
         .unwrap();
     assert!(
         result.is_empty(),
@@ -72,10 +72,10 @@ fn no_violation_for_barrel_files() {
     let content = "use something::unused;\n";
     let imports = vec![rust_use("something::unused")];
     let result_lib = checker
-        .check_unused_imports("/tmp/test/src/lib.rs", content, &imports)
+        .check_unused_imports("/tmp/test/src/lib.rs", content, &imports, &[])
         .unwrap();
     let result_mod = checker
-        .check_unused_imports("/tmp/test/src/mod.rs", content, &imports)
+        .check_unused_imports("/tmp/test/src/mod.rs", content, &imports, &[])
         .unwrap();
     assert!(result_lib.is_empty(), "lib.rs should be skipped");
     assert!(result_mod.is_empty(), "mod.rs should be skipped");
@@ -85,7 +85,7 @@ fn no_violation_for_barrel_files() {
 fn no_violation_for_empty_content() {
     let checker = checker();
     let result = checker
-        .check_unused_imports("/tmp/test/src/file.rs", "", &[])
+        .check_unused_imports("/tmp/test/src/file.rs", "", &[], &[])
         .unwrap();
     assert!(
         result.is_empty(),
@@ -110,7 +110,7 @@ fn main() {
         rust_use("std::io::Read"),
     ];
     let result = checker
-        .check_unused_imports("/tmp/test/src/multi.rs", content, &imports)
+        .check_unused_imports("/tmp/test/src/multi.rs", content, &imports, &[])
         .unwrap();
     // At least HashMap and BTreeMap should be flagged (Read is a trait — may be skipped)
     assert!(

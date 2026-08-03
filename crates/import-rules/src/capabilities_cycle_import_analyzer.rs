@@ -132,11 +132,11 @@ impl DependencyCycleAnalyzer {
                     None => return None,
                 };
 
-                // Use ImportEntry from filesystem's AST parser
+                // Use ImportEntry from filesystem's AST parser (resolved_path already set)
                 let resolved_modules = match imports_map.get(file) {
                     Some(entries) => {
                         utility_import_module_parser::extract_import_modules_from_entries_resolved(
-                            entries, root_dir,
+                            entries,
                         )
                     }
                     None => return None,

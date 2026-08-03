@@ -708,4 +708,3 @@ impl BypassChecker {
         normalized.contains("level=\"allow\"") || normalized.contains("level='allow'")
     }
 }
-

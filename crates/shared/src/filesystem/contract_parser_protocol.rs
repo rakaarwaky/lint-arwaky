@@ -14,4 +14,9 @@ pub trait IParserProtocol: Send + Sync {
     fn parse_all(&self, files: &mut [FileEntry]);
     fn imports_for(&self, path: &Path) -> Vec<ImportEntry>;
     fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry>;
+
+    /// Resolve all stored imports through barrel files (__init__.py, mod.rs, etc.).
+    /// Populates `resolved_path` and `is_resolved` fields.
+    /// Call after `parse_all` with the project root directory.
+    fn resolve_barrel_imports(&self, root_dir: &Path);
 }

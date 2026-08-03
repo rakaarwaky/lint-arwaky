@@ -71,6 +71,10 @@ impl IParserProtocol for FilesystemOrchestrator {
     ) -> Vec<ImportEntry> {
         self.deps.parser.extract(path, content, language)
     }
+
+    fn resolve_barrel_imports(&self, root_dir: &Path) {
+        self.deps.parser.resolve_barrel_imports(root_dir);
+    }
 }
 
 // ═══ IGraphProtocol (8 methods) ════════════════════════════
@@ -460,6 +464,27 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         crate::utility_filesystem_io::read_lintable_file(path)
             .ok()
             .flatten()
+    }
+
+    fn used_identifiers_for(&self, path: &Path) -> Vec<String> {
+        self.file_index
+            .get()
+            .and_then(|idx| idx.get(path))
+            .and_then(|&i| self.files.get()?.get(i))
+            .and_then(|entry| entry.parse_metadata.as_ref())
+            .map(|meta| match meta {
+                shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Python(m) => {
+                    m.used_identifiers.clone()
+                }
+                shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(m) => {
+                    m.used_identifiers.clone()
+                }
+                shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::JavaScript(m) => {
+                    m.used_identifiers.clone()
+                }
+                _ => Vec::new(),
+            })
+            .unwrap_or_default()
     }
 }
 

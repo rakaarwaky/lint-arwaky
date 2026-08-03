@@ -1,34 +1,33 @@
-# FRD — import-rules (v1.12.1)
+# FRD — import-rules (v1.13.0)
 
 ## System Overview
 
-The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level.File discovery and raw content reads are handled by the external `filesystem` crate via the filesystem aggregate trait (`IFilesystemAggregate`). The import-rules crate receives the file list and raw file contents, then parses imports internally (via the shared parser dispatcher and its own utility modules) and delegates analysis to its internal checkers.All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
+The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level. File discovery, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the filesystem aggregate (`IFilesystemAggregate`). The Surface fetches file entries, import data, and `used_identifiers` from filesystem first, then passes pre-fetched data to the import orchestrator. The import-rules crate receives `&[FileEntry]`, `content_map`, `imports_map`, and `used_identifiers` — all pre-fetched by the caller. The import orchestrator does **zero I/O** — it only performs business logic analysis. All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
 
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["import_aggregate\n(IImportRunnerAggregate)"]
-    B --> C["import_orchestrator"]
-
-    C -->|"request file discovery"| D["filesystem_aggregate\n(external crate)"]
+    A["Surface"] -->|"fetch file data"| D["filesystem_aggregate\n(external crate)"]
 
     subgraph FS ["filesystem crate (external)"]
         D --> E1["file_walker"]
-        E1 --> G1["File Data\n(paths + raw contents)"]
+        D --> E2["AST parser\n(imports_map)"]
+        E1 --> G1["FileEntry[]\n+ content_map"]
+        E2 --> G2["ImportEntry[]\n(resolved_path populated)"]
     end
 
     G1 -->|"return"| D
-    D -->|"file list\nraw contents"| C
+    G2 -->|"return"| D
+    D -->|"file entries\ncontent_map\nimports_map"| A
 
-    subgraph IR ["import-rules (internal parsing)"]
-        C --> P1["import_parser\n(shared parser dispatcher)"]
-        C --> P2["import_resolver\n(scope / barrel)"]
-        C --> P3["symbol_extractor\n(usage tracking)"]
-        C --> P4["module_parser + cycle_detector\n(dependency edges)"]
-        P1 --> P2
-        P1 --> P3
-        P1 --> P4
+    A -->|"pass pre-fetched data"| B["import_aggregate\n(IImportRunnerAggregate)"]
+    B --> C["import_orchestrator\n(zero I/O)"]
+
+    subgraph IR ["import-rules (business logic only)"]
+        C --> P1["import_resolver\n(scope / barrel via resolved_path)"]
+        C --> P2["symbol_extractor\n(usage tracking)"]
+        C --> P3["module_parser + cycle_detector\n(dependency edges)"]
     end
 
     C --> H1["forbidden_check"]
@@ -123,11 +122,11 @@ flowchart TD
 
   - Target layer in `allowed` → **pass**.
   - Target layer in `forbidden` → **AES201 CRITICAL**.
-- **Import extraction**: Performed internally by import-rules via the shared parser dispatcher (`shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content`) plus `utility_import_resolver::parse_import_lines_helper`. No pre-parsed import data is received from the filesystem crate.
+- **Import extraction**: Pre-fetched by Surface via filesystem crate's AST parser (`IParserProtocol` → `ImportEntry`). The `imports_map` (HashMap of file path to `Vec<ImportEntry>`) is passed to the import orchestrator. Each `ImportEntry` contains `raw_path`, `resolved_path` (populated by barrel resolution), `symbols`, `is_wildcard`, `is_reexport`, and `import_type`. Import-rules consumes `ImportEntry` fields directly — no text-based parsing.
 
-  - Rust: `ItemUse` nodes via `syn` (shared crate parser) — handles `use`, `pub use`, `pub(crate) use`, grouped imports `use foo::{A, B}`, glob imports `use foo::*`, and multi-line imports.
-  - Python: `from X import Y` and `import X` via comment-aware line-based parsing (`taxonomy_python_parser`).
-  - TypeScript: `import { X } from`, `import X from`, `import * as X from`, side-effect imports, and `export { X } from` re-exports via comment-aware structured parsing (`taxonomy_ts_parser`).
+  - Rust: `use_declaration` and `mod_item` nodes via tree-sitter.
+  - Python: `import_statement` and `import_from_statement` nodes via tree-sitter.
+  - TypeScript/JavaScript: `import_statement`, `export_statement`, and `require()` calls via tree-sitter.
 - **Layer detection**: Detected from filename prefix of the importing file (`taxonomy_*` → taxonomy, `contract_*` → contract, etc.) and from the import target path segments. Whole-word segment matching (split on `:`, `.`, `/`, `\` — never substring `contains()`).
 - **Barrel resolution**: When direct module-path matching fails (import through `__init__.py`, `mod.rs`, `index.ts` hides the original file name), resolve each imported symbol through the barrel file to detect the original source file and its layer prefix (see FR-007).
 - **Scope matching**: Files are matched to `conditions` entries via filename prefix and suffix. Files matching multiple conditions are checked against **all** matched conditions.
@@ -164,18 +163,15 @@ flowchart TD
 ### FR-003: Unused Import Detection (AES203)
 
 - **Description**: Detects and flags imported symbols that are never referenced within the file body. Uses AST-based usage tracking for all languages.
-- **Input**: File data, raw file contents (from filesystem crate).
+- **Input**: File data, raw file contents (from filesystem crate), `used_identifiers` (optional, from `ParseMetadata` via tree-sitter AST).
 - **Output**: List of AES203 MEDIUM diagnostics with file path, line number, and unused symbol name.
 - **Business Rules**:
 
-  - **Import extraction**: Performed internally by import-rules via `utility_import_symbol_extractor::extract_imported_aliases` (backed by the shared parser dispatcher).
+  - **Import extraction**: Pre-fetched by Surface via filesystem crate. Import-rules consumes `ImportEntry` fields directly via `utility_import_symbol_extractor::extract_imported_aliases_from_entries`.
 
-    - Rust: All `ItemUse` nodes via `syn` (shared crate parser). Each imported alias is recorded with its full path.
-    - Python: `from X import Y` and `import X` aliases via comment-aware line-based parsing (`taxonomy_python_parser`).
-    - TypeScript: Named imports, default imports, namespace imports, and re-exports via comment-aware structured parsing (`taxonomy_ts_parser`).
-  - **Usage detection**:
-
-    - Walk identifier usage from parse results (`FileParseResultVO::is_identifier_used` — `syn` visitor for Rust, identifier matching for Python/TS).
+    - Import data comes from `imports_map` (tree-sitter parsed `ImportEntry` with `resolved_path`, `symbols`, `is_wildcard`, `is_reexport`).
+    - **Usage detection (tree-sitter AST)**: When `used_identifiers` from `ParseMetadata` are available (Python, TypeScript, JavaScript), import-rules uses them directly — a pre-computed `HashSet<&str>` lookup per alias. This is the primary path for `run_audit_with_entries` (MCP/TUI surfaces).
+    - **Usage detection (fallback)**: When `used_identifiers` is `None` (legacy `run_audit` path), falls back to `FileParseResultVO::is_identifier_used` (shared crate) — `syn` visitor for Rust, comment-aware line-based word splitting for Python/TS.
     - An imported symbol is "used" if its name appears as an identifier reference anywhere in the file body (excluding the import statement itself).
     - Usage inside `#[derive(...)]` attributes is detected via attribute parsing — no hardcoded whitelist.
     - Usage inside macro invocations (non-derive) is **NOT tracked** in v1.12. Imported symbols that appear ONLY inside macro bodies are **exempt from AES203** (skip, not flag). Full macro expansion is planned for v2.0 (see FR-009).
@@ -250,12 +246,10 @@ flowchart TD
 - **Output**: List of AES205 CRITICAL diagnostics with cycle path description.
 - **Business Rules**:
 
-  - **Module extraction**: Performed internally by import-rules via `utility_import_module_parser::extract_import_modules_resolved` (line-based, all languages). Dependency edges are built inside import-rules (`DependencyEdge`) — no pre-built graph is received from the filesystem crate.
+  - **Module extraction**: Pre-fetched by Surface via filesystem crate. Import-rules uses `ImportEntry.resolved_path` (populated by barrel resolution) and `ImportEntry.raw_path` to build dependency edges. Uses `utility_import_module_parser::extract_import_modules_from_entries_resolved`.
 
-    - Rust: `use`, `pub use`, `pub(crate) use` lines (incl. grouped `use module::{A, B}`) parsed by string splitting.
-    - Python: `from X import Y` and `import X` via line-based parsing.
-    - TypeScript: `import { X } from '...'` and JavaScript `require(...)` destructuring via line-based parsing.
-  - **Barrel-aware resolution**: For imports through barrel files, resolve to the original source file so the dependency graph reflects actual file-to-file dependencies.
+    - Import data comes from `imports_map` (tree-sitter parsed `ImportEntry` with `resolved_path`, `symbols`).
+    - Barrel resolution is handled by filesystem — `resolved_path` points to the actual source file, not the barrel re-export.
   - **Layer-level graph**: Import edges are normalized to layer-level edges (e.g., `capabilities → contract`). Cycle detection operates on the layer graph, not the file graph.
   - **Cycle detection algorithm**: 3-color DFS (White → Gray → Black). A Gray → Gray edge indicates a back edge (cycle). Cycle nodes are extracted via parent-chain traversal.
   - **Deduplication**: Cycles are deduplicated by sorted node set to avoid reporting the same cycle multiple times.
@@ -277,13 +271,12 @@ flowchart TD
 
 | Operation                          | Input                                                   | Output               | Purpose                                          |
 | ------------------------------------ | --------------------------------------------------------- | ---------------------- | -------------------------------------------------- |
-| Full import audit                  | Target path (file or directory)                         | Lint results         | Run all import checks (AES201–AES205)           |
-| Forbidden import check (AES201)    | File data, import data, configuration                   | CRITICAL violations  | Validate imports against layer dependency matrix |
-| Mandatory import check (AES202)    | File data, import data, configuration                   | HIGH violations      | Verify required imports per scope                |
-| Unused import check (AES203)       | File data, import data                                  | MEDIUM violations    | Detect symbols never referenced in code          |
-| Dummy import check (AES204)        | File data, import data, layer map                       | HIGH violations      | Detect stub code circumventing AES203            |
-| Circular dependency check (AES205) | File data, import data, dependency graph, configuration | CRITICAL violations  | Detect layer-level import cycles                 |
-| Barrel resolution                  | Module path, symbol name, root dir                      | Resolved import info | Resolve import through barrel re-export files    |
+| Full import audit                  | File entries, content_map, imports_map, configuration    | Lint results         | Run all import checks (AES201–AES205)           |
+| Forbidden import check (AES201)    | File entries, imports_map, configuration, layer_map     | CRITICAL violations  | Validate imports against layer dependency matrix |
+| Mandatory import check (AES202)    | File entries, imports_map, configuration, layer_map     | HIGH violations      | Verify required imports per scope                |
+| Unused import check (AES203)       | File entry, content, import_entries, used_identifiers (optional) | MEDIUM violations    | Detect symbols never referenced in code          |
+| Dummy import check (AES204)        | File entry, content, import_entries, layer_map          | HIGH violations      | Detect stub code circumventing AES203            |
+| Circular dependency check (AES205) | File entries, imports_map, configuration, layer_map     | CRITICAL violations  | Detect layer-level import cycles                 |
 
 ---
 
@@ -294,17 +287,23 @@ flowchart TD
   - The config system shared module — `ArchitectureConfig`, `ArchitectureRule`, `ArchitectureCondition`, `LayerDefinition`, `LayerMapVO` for rule configuration.
   - The import rules contract module — aggregate and protocol traits for runner, forbidden, mandatory, unused, dummy, cycle, and purpose checks.
   - The import rules taxonomy module — value objects for violations, errors, resolved imports, graph coloring, and import purpose.
-  - The import rules utility module — barrel resolution, scope matching, dummy detection, cycle detection, and path normalization.
+  - The import rules utility module — scope matching, dummy detection, cycle detection, and path normalization. Barrel resolution is now handled by the filesystem crate (`resolved_path` in `ImportEntry`).
   - The common shared module — path, line number, severity, lint result, lint message, identity, symbol name, layer name, and language value objects.
-- **External**:
+- **External** (data provided by Surface via filesystem crate):
 
-  - **`filesystem` crate** — provides `filesystem_aggregate` which handles:
-    - File walking and discovery (`file_walker` / `discover_source_files`).
-    - Raw file content reads (`read_file`).
-    - Returns file list and raw contents to the caller. No import parsing is delegated to this crate.
-  - **`shared` crate** — provides the parser infrastructure used by import-rules: `orphan_rules::taxonomy_parser_dispatcher::parse_file_content` (dispatches to `taxonomy_rust_parser` via `syn`, `taxonomy_python_parser` via comment-aware line-based parsing, `taxonomy_ts_parser` via comment-aware structured parsing) and `taxonomy_orphan_parse_result_vo::FileParseResultVO` (imports, trait impls, struct defs, trait defs, mod declarations, `is_identifier_used`).
+  - **Surface layer** — fetches all data from filesystem aggregate and passes to import orchestrator:
+    - `file_list: Vec<FileEntry>` — pre-discovered source files with content.
+    - `content_map: HashMap<String, String>` — file path to content mapping.
+    - `imports_map: HashMap<String, Vec<ImportEntry>>` — file path to parsed imports (with `resolved_path` populated by filesystem's barrel resolution).
+    - The import orchestrator does **zero I/O** — it only receives pre-fetched data and performs business logic analysis.
+  - **`filesystem` crate** — provides `IFilesystemAggregate` which handles:
+    - File walking and discovery (`discover_source_files`).
+    - AST parsing and import extraction (`IParserProtocol` → `ImportEntry` with `resolved_path`).
+    - Barrel resolution (`resolve_barrel_imports` populates `ImportEntry.resolved_path`).
+    - Tree-sitter identifier extraction for Python/TS/JS (`ParseMetadata.used_identifiers`) — consumed by import-rules for AES203 usage detection.
+    - All I/O is centralized in the filesystem crate — import-rules performs no filesystem reads.
+  - **`shared` crate** — provides fallback parser infrastructure used by import-rules when `used_identifiers` is unavailable: `orphan_rules::taxonomy_parser_dispatcher::parse_file_content` (dispatches to `taxonomy_rust_parser` via `syn`, `taxonomy_python_parser` via comment-aware line-based parsing, `taxonomy_ts_parser` via comment-aware structured parsing) and `taxonomy_orphan_parse_result_vo::FileParseResultVO` (imports, trait impls, struct defs, trait defs, mod declarations, `is_identifier_used`).
   - `syn` crate (v2, features: `full`, `visit`, `parsing`) — Rust AST parsing (via shared crate).
-  - The filesystem crate depends on the `tree-sitter` family for its own `IParserProtocol` pipeline, but import-rules does NOT consume tree-sitter parse results — its Python/TS parsing is line-based in the shared crate.
   - No network calls. No filesystem writes. Pure static analysis.
 
 ---
@@ -325,10 +324,10 @@ flowchart TD
   - All file contents are pre-loaded into an in-memory `content_map` at the start of the audit (`run_audit`), including barrel files.
 - **Accuracy**:
 
-  - **Rust** uses full AST parsing via `syn` (shared crate). **Python/TypeScript** use comment-aware line-based parsing — no full AST, no tree-sitter.
+  - **Rust** uses full AST parsing via `syn` (shared crate). **Python/TypeScript/JavaScript** use tree-sitter AST for identifier extraction (via `ParseMetadata.used_identifiers` from filesystem crate), with comment-aware line-based parsing as fallback.
   - **Zero false positives** for valid imports across all supported languages (Rust, Python, TypeScript/JavaScript).
-  - Comment-aware line parsing (Python/TS) and `syn` AST (Rust) eliminate false positives from matches inside comments; string-literal and multi-line handling remains heuristic for Python/TS.
-  - AES203 accuracy: usage tracking based on parse results; retains a small heuristic set for trait detection (`prelude`, `async_trait`, `::io::Write`, `Ext`/`Iterator`/`Stream` suffixes).
+  - Tree-sitter AST (Python/TS) and `syn` AST (Rust) eliminate false positives from matches inside comments, string literals, and multi-line constructs.
+  - AES203 accuracy: usage tracking based on tree-sitter identifiers (primary) or parse results (fallback); retains a small heuristic set for trait detection (`prelude`, `async_trait`, `::io::Write`, `Ext`/`Iterator`/`Stream` suffixes).
   - Known limitation: macro-generated code (see FR-009). Macro body exemption is the only accepted source of potential false negatives.
 - **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. No async runtime dependency.
 
@@ -416,13 +415,13 @@ flowchart TD
 - Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
 - Layer hierarchy is defined in config YAML and detected from filename prefixes (hardcoded AES convention).
 - Naming convention validation is handled by the naming rules crate; import-rules assumes filenames are correctly named.
-- Rust uses full AST parsing via `syn`; Python/TS use comment-aware line-based parsing. Both parser families live in the shared crate (`orphan_rules`) and are invoked from inside import-rules — the filesystem crate is not involved in parsing.
+- Rust uses full AST parsing via `syn`; Python/TS/JS use tree-sitter AST for identifier extraction (via `ParseMetadata.used_identifiers`). When `used_identifiers` is unavailable, falls back to comment-aware line-based parsing from the shared crate (`orphan_rules`).
 - No network calls are required; all analysis is local filesystem.
 - Configuration is loaded once and reused across all checks in a scan.
 - Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — imports and usage inside macros are invisible to the detector. Macro body exemption applies to AES203 (see FR-009).
 - Barrel file resolution is one level deep — nested barrel chains are not fully resolved.
 - AES203 and AES204 are independent and may both flag the same import (no deduplication).
-- File walking and raw content reads are handled by the external filesystem crate. Import parsing, extraction, and dependency graph construction happen inside import-rules via shared parser utilities.
+- File walking, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the external filesystem crate. Import-rules consumes pre-parsed `ImportEntry` and `ParseMetadata.used_identifiers` — no internal parsing for import/usage detection.
 
 ---
 
@@ -440,8 +439,8 @@ flowchart TD
 | **Barrel file**      | A package marker or re-export file (`__init__.py`, `mod.rs`, `index.ts`)                                                                                      |
 | **AST**              | Abstract Syntax Tree — structured representation of source code produced by a parser                                                                         |
 | **`syn`**            | Rust crate for parsing Rust source code into an AST                                                                                                           |
-| **tree-sitter**      | Incremental parsing library used by the filesystem crate's own`IParserProtocol` pipeline; not consumed by import-rules (Python/TS parsing here is line-based) |
-| **Filesystem crate** | External crate that handles file walking/discovery and raw content reads for import-rules. Does not parse imports.                                            |
+| **tree-sitter**      | Incremental parsing library used by the filesystem crate's `IParserProtocol` pipeline for import extraction and identifier extraction (Python/TS/JS). Import-rules consumes `ParseMetadata.used_identifiers` from tree-sitter AST for AES203 usage detection. |
+| **Filesystem crate** | External crate that handles file walking/discovery, AST parsing (import extraction + identifier extraction), and barrel resolution for import-rules. All I/O is centralized here. |
 | **Parse result**     | Typed struct containing extracted imports, trait impls, struct defs, trait defs, and mod declarations                                                         |
 | **`parse_ok`**       | Boolean flag on parse results indicating whether parsing succeeded                                                                                            |
 | **Parse skip**      | Files that fail to parse or unreadable files are skipped; no separate warning diagnostic is emitted |

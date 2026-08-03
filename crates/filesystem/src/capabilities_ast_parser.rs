@@ -64,6 +64,20 @@ impl IParserProtocol for ASTParser {
     fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
         self.extract_imports(path, content, language)
     }
+
+    fn resolve_barrel_imports(&self, root_dir: &Path) {
+        if let Some(imports) = self.imports.get() {
+            let resolved: Vec<ImportEntry> = imports
+                .iter()
+                .cloned()
+                .map(|entry| {
+                    crate::utility_barrel_resolution::resolve_single_import(entry, root_dir)
+                })
+                .collect();
+            let _ = imports;
+            let _ = self.imports.set(resolved);
+        }
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
@@ -184,6 +198,7 @@ impl Default for ASTParser {
 
 /// Extract language-specific metadata from a parsed AST.
 /// Delegates to utility_ast_rust/python/typescript for language-specific logic.
+/// Also populates `used_identifiers` for Python and TypeScript via tree-sitter AST walk.
 fn extract_metadata_from_tree(
     tree: &tree_sitter::Tree,
     content: &str,
@@ -193,16 +208,24 @@ fn extract_metadata_from_tree(
         Language::Rust => ParseMetadata::Rust(crate::utility_ast_rust::extract_rust_metadata(
             tree, content,
         )),
-        Language::Python => ParseMetadata::Python(
-            crate::utility_ast_python::extract_python_metadata(tree, content),
-        ),
-        Language::TypeScript => ParseMetadata::TypeScript(
-            crate::utility_ast_typescript::extract_ts_metadata(tree, content),
-        ),
-        // JS shares the TS grammar structure for extraction purposes
-        Language::JavaScript => ParseMetadata::JavaScript(
-            crate::utility_ast_typescript::extract_ts_metadata(tree, content),
-        ),
+        Language::Python => {
+            let mut meta = crate::utility_ast_python::extract_python_metadata(tree, content);
+            meta.used_identifiers =
+                crate::utility_ast_python::extract_python_identifiers(tree, content);
+            ParseMetadata::Python(meta)
+        }
+        Language::TypeScript => {
+            let mut meta = crate::utility_ast_typescript::extract_ts_metadata(tree, content);
+            meta.used_identifiers =
+                crate::utility_ast_typescript::extract_ts_identifiers(tree, content);
+            ParseMetadata::TypeScript(meta)
+        }
+        Language::JavaScript => {
+            let mut meta = crate::utility_ast_typescript::extract_ts_metadata(tree, content);
+            meta.used_identifiers =
+                crate::utility_ast_typescript::extract_ts_identifiers(tree, content);
+            ParseMetadata::JavaScript(meta)
+        }
         Language::Unknown => ParseMetadata::Unknown,
     }
 }

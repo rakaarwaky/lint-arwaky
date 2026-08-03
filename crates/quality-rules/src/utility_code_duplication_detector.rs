@@ -137,4 +137,3 @@ pub fn build_violations(
         ))),
     }]
 }
-

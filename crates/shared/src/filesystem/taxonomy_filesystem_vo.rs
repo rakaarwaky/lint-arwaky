@@ -159,6 +159,8 @@ pub struct PythonMetadata {
     pub class_declarations: Vec<PythonClassItem>,
     /// Function definitions (name, has_body).
     pub function_definitions: Vec<PythonFnItem>,
+    /// All identifiers used in the file body (tree-sitter extracted).
+    pub used_identifiers: Vec<String>,
 }
 
 /// A Python class declaration.
@@ -194,6 +196,8 @@ pub struct TypeScriptMetadata {
     pub type_alias_declarations: Vec<String>,
     /// Function definitions (name, has_body).
     pub function_definitions: Vec<TSFnItem>,
+    /// All identifiers used in the file body (tree-sitter extracted).
+    pub used_identifiers: Vec<String>,
 }
 
 /// A TypeScript/JavaScript class declaration.

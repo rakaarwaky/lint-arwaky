@@ -18,11 +18,11 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         path: &FilePath,
         content: &str,
         import_entries: &[ImportEntry],
+        used_identifiers: &[String],
     ) -> Result<Vec<LintMessage>, ImportError> {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
         }
-        // Use ImportEntry from filesystem's AST parser
         let imported_aliases =
             utility_import_symbol_extractor::extract_imported_aliases_from_entries(import_entries);
         let exported_symbols =
@@ -31,6 +31,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             path.value(),
             content,
             &imported_aliases,
+            used_identifiers,
         );
         let mut unused: Vec<String> = Vec::new();
         for alias in imported_aliases.keys() {
@@ -50,6 +51,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         file: &str,
         content: &str,
         import_entries: &[ImportEntry],
+        used_identifiers: &[String],
     ) -> Result<Vec<LintResult>, ImportError> {
         let basename = std::path::Path::new(file)
             .file_name()
@@ -58,13 +60,16 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         if utility_import_resolver::is_barrel_file(basename) {
             return Ok(Vec::new());
         }
-        // Use ImportEntry from filesystem's AST parser
         let imported_aliases =
             utility_import_symbol_extractor::extract_imported_aliases_from_entries(import_entries);
         let exported_symbols =
             utility_import_symbol_extractor::extract_exported_symbols_from_entries(import_entries);
-        let used_symbols =
-            utility_import_symbol_extractor::extract_used_symbols(file, content, &imported_aliases);
+        let used_symbols = utility_import_symbol_extractor::extract_used_symbols(
+            file,
+            content,
+            &imported_aliases,
+            used_identifiers,
+        );
         let mut violations = Vec::new();
         for alias in imported_aliases.keys() {
             let alias_str = alias.value();
@@ -72,25 +77,6 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 continue;
             }
             if used_symbols.contains(alias) || exported_symbols.contains(alias) {
-                continue;
-            }
-            let alias_in_body = content.lines().any(|l| {
-                let t = l.trim();
-                if t.is_empty()
-                    || t.starts_with("//")
-                    || t.starts_with("#")
-                    || t.starts_with("use ")
-                    || t.starts_with("pub use ")
-                    || t.starts_with("pub(crate) use ")
-                    || t.starts_with("import ")
-                    || t.starts_with("from ")
-                    || t.starts_with("export ")
-                {
-                    return false;
-                }
-                t.contains(alias_str)
-            });
-            if alias_in_body {
                 continue;
             }
             if let Some(raw_path) = imported_aliases.get(alias) {
@@ -146,4 +132,3 @@ fn unused_import_is_future_import(content: &str, alias: &str) -> bool {
                 || trimmed.contains(format!(" {},", alias).as_str()))
     })
 }
-

@@ -47,7 +47,11 @@ fn cargo_toml_non_clippy_section_no_violation() {
 fn rust_unwrap_detected() {
     let mut violations = Vec::new();
     let content = "let x = foo.unwrap();\n";
-    checker_with_patterns(&["unwrap"]).check_bypass_comments("src/lib.rs", content, &mut violations);
+    checker_with_patterns(&["unwrap"]).check_bypass_comments(
+        "src/lib.rs",
+        content,
+        &mut violations,
+    );
     assert_eq!(violations.len(), 1);
 }
 
@@ -55,7 +59,11 @@ fn rust_unwrap_detected() {
 fn rust_unwrap_or_safe_no_violation() {
     let mut violations = Vec::new();
     let content = "let x = foo.unwrap_or(0);\n";
-    checker_with_patterns(&["unwrap"]).check_bypass_comments("src/lib.rs", content, &mut violations);
+    checker_with_patterns(&["unwrap"]).check_bypass_comments(
+        "src/lib.rs",
+        content,
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
@@ -79,7 +87,11 @@ fn rust_panic_detected() {
 fn cfg_test_block_skipped() {
     let mut violations = Vec::new();
     let content = "#[cfg(test)]\nmod tests {\n    use super::*;\n    #[test]\n    fn foo() { let x = bar.unwrap(); }\n}\n";
-    checker_with_patterns(&["unwrap"]).check_bypass_comments("src/lib.rs", content, &mut violations);
+    checker_with_patterns(&["unwrap"]).check_bypass_comments(
+        "src/lib.rs",
+        content,
+        &mut violations,
+    );
     assert!(violations.is_empty());
 }
 
