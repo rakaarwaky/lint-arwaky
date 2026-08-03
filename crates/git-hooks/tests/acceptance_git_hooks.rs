@@ -510,7 +510,7 @@ fn hook_manager_identity_is_git_hook_manager() {
 #[test]
 fn orchestrator_hook_manager_identity_delegates_correctly() {
     let (_, aggregate) = make_container();
-    let identity = aggregate.get_hook_manager_identity();
+    let identity = aggregate.hook_protocol().get_hook_manager_identity();
     assert_eq!(
         identity.value(),
         "git_hook_manager",

@@ -1,6 +1,6 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
 use cli_commands::surface_formatting::{group_by_member, status_icon};
-use dispatcher_lint_arwaky::surface_output_component::ViolationItem;
+use dispatcher::surface_output_component::ViolationItem;
 use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 
 fn violation(file: &str, code: &str, line: i64) -> ViolationItem {

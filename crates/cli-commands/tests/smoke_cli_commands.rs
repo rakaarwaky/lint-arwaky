@@ -19,10 +19,10 @@ fn smoke_surface_formatting_module_imports() {
 #[test]
 fn smoke_all_surface_modules_importable() {
     let start = std::time::Instant::now();
-    let _ = std::any::type_name::<cli_commands::surface_scan_command::handle_scan>();
-    let _ = std::any::type_name::<cli_commands::surface_ci_command::handle_ci>();
-    let _ = std::any::type_name::<cli_commands::surface_fix_command::handle_fix>();
-    let _ = std::any::type_name::<cli_commands::surface_formatting::group_by_member>();
+    let _ = cli_commands::surface_scan_command::handle_scan;
+    let _ = cli_commands::surface_ci_command::handle_ci;
+    let _ = cli_commands::surface_fix_command::handle_fix;
+    let _ = cli_commands::surface_formatting::group_by_member;
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

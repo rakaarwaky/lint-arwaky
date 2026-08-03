@@ -1,10 +1,13 @@
 // E2E tests — full pipeline: container wiring → orchestrator → capabilities → results.
 
-use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
+use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
+use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
+use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
+use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
+use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -13,8 +16,33 @@ fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
     let filesystem =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem);
-    (tmp, container.aggregate())
+    let hook_adapter: Arc<dyn IHookManagerProtocol> =
+        Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
+    let diff_protocol: Arc<dyn IDiffProtocol> =
+        Arc::new(DiffChecker::new(filesystem.clone()));
+    let hook_protocol: Arc<dyn IHookProtocol> =
+        Arc::new(HookManager::new(hook_adapter.clone(), filesystem.clone()));
+    let orch: Arc<dyn GitHooksAggregate> = Arc::new(GitHooksOrchestrator::new(
+        diff_protocol, hook_protocol, hook_adapter,
+    ));
+    (tmp, orch)
+}
+
+fn make_orchestrator() -> (TempDir, Arc<GitHooksOrchestrator>) {
+    let tmp = TempDir::new().unwrap();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let hook_adapter: Arc<dyn IHookManagerProtocol> =
+        Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
+    let diff_protocol: Arc<dyn IDiffProtocol> =
+        Arc::new(DiffChecker::new(filesystem.clone()));
+    let hook_protocol: Arc<dyn IHookProtocol> =
+        Arc::new(HookManager::new(hook_adapter.clone(), filesystem.clone()));
+    let orch = Arc::new(GitHooksOrchestrator::new(
+        diff_protocol, hook_protocol, hook_adapter,
+    ));
+    (tmp, orch)
 }
 
 fn write_file(path: &std::path::Path, content: &str) {
@@ -40,7 +68,7 @@ fn e2e_hook_install_then_uninstall_round_trip() {
         install_result.err()
     );
     let status = install_result.unwrap();
-    assert!(status.0, "install_hook should return true for a git repo");
+    assert!(status.value, "install_hook should return true for a git repo");
 
     // Verify the hook script was written
     let hook_file = hooks_dir.join("pre-commit");
@@ -60,7 +88,7 @@ fn e2e_hook_install_then_uninstall_round_trip() {
     );
     let status = uninstall_result.unwrap();
     assert!(
-        status.0,
+        status.value,
         "uninstall_hook should return true when hook existed"
     );
 
@@ -82,7 +110,7 @@ fn e2e_uninstall_is_idempotent() {
     // Uninstall when no hook exists — should still succeed
     let result = aggregate.uninstall_hook();
     assert!(result.is_ok(), "idempotent uninstall should succeed");
-    assert!(result.unwrap().0, "should return true even if no hook");
+    assert!(result.unwrap().value, "should return true even if no hook");
 }
 
 #[test]
@@ -101,7 +129,7 @@ fn e2e_install_creates_hooks_directory_when_missing() {
         result.err()
     );
     // Non-git repo → SuccessStatus(false)
-    assert!(!result.unwrap().0, "should return false for non-git repo");
+    assert!(!result.unwrap().value, "should return false for non-git repo");
 }
 
 // ─── E2E: Config initialization → ignore rule management ──
@@ -247,11 +275,11 @@ fn e2e_orchestrator_delegates_to_hook_protocol() {
 
 #[test]
 fn e2e_orchestrator_exposes_hook_manager_via_aggregate() {
-    let (_, aggregate) = make_container();
+    let (_, orch) = make_orchestrator();
 
     // HookManagementOrchestratorAggregate is object-safe and accessible
-    let manager: &dyn shared::git_hooks::IHookManagerProtocol = aggregate.get_hook_manager();
-    let identity = aggregate.get_hook_manager_identity();
+    let manager: &dyn IHookManagerProtocol = orch.get_hook_manager();
+    let identity = orch.get_hook_manager_identity();
     assert_eq!(identity.value(), "git_hook_manager");
 
     // Manager should be usable

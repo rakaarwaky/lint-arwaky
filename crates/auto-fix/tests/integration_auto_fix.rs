@@ -9,16 +9,16 @@ use tempfile::TempDir;
 
 #[test]
 fn container_creates_with_quality_rules() {
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let _ = container;
 }
 
 #[test]
 fn container_orchestrator_with_filesystem() {
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
     let _: Arc<dyn LintFixOrchestratorAggregate> = orch;
@@ -26,9 +26,9 @@ fn container_orchestrator_with_filesystem() {
 
 #[test]
 fn container_orchestrator_with_custom_file_adapter() {
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
 
     let file_adapter: Arc<dyn IFileAdapterProtocol> =
@@ -39,9 +39,9 @@ fn container_orchestrator_with_custom_file_adapter() {
 
 #[test]
 fn orchestrator_file_adapter_returns_adapter() {
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
     let _adapter = orch.file_adapter();
@@ -49,7 +49,7 @@ fn orchestrator_file_adapter_returns_adapter() {
 
 #[test]
 fn file_adapter_read_write_path_exists() {
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
     let adapter = auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter::new(filesystem);
     let tmp = TempDir::new().unwrap();
@@ -67,9 +67,9 @@ fn file_adapter_read_write_path_exists() {
 
 #[test]
 fn orchestrator_execute_on_empty_project_dry_run() {
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
 
@@ -83,9 +83,9 @@ fn orchestrator_execute_on_empty_project_dry_run() {
 
 #[test]
 fn orchestrator_execute_per_request_dry_run_false() {
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
 
@@ -103,9 +103,9 @@ fn orchestrator_execute_per_request_dry_run_false() {
 
 #[test]
 fn orchestrator_manual_report_empty() {
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
 

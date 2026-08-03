@@ -16,6 +16,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 filesystem = { workspace = true }
+config-system = { workspace = true }
 criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [lints]

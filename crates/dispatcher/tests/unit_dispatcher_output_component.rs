@@ -1,7 +1,7 @@
 // Unit tests — ViolationItem construction and fields from various sources.
 use dispatcher_lint_arwaky::surface_output_component::ViolationItem;
 use shared::cli_commands::LintResult;
-use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, LocationList, Severity};
 
 fn make_lint_result(
     file: &str,
@@ -19,7 +19,7 @@ fn make_lint_result(
         source: None,
         severity,
         enclosing_scope: None,
-        related_locations: vec![],
+        related_locations: LocationList::new(),
     }
 }
 

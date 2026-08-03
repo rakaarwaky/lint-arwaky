@@ -8,10 +8,8 @@
 
 use shared::common::LintResult;
 use shared::common::Severity;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_name_vo::SymbolName;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::{AesRoleViolation, IAgentRoleChecker};
+use shared::role_rules::IAgentRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentRoleChecker {}

@@ -10,7 +10,6 @@ fn tui_container_type_exists() {
 #[test]
 fn tui_utility_modules_importable() {
     use tui_lint_arwaky::utility_file_system;
-    use tui_lint_arwaky::utility_report_formatter;
 
     // Verify key functions are accessible
     let _ = utility_file_system::list_directory

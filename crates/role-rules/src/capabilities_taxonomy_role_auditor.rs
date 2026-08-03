@@ -9,9 +9,8 @@
 
 use shared::common::LintResult;
 use shared::common::Severity;
-use shared::common::{LintMessage, SymbolName};
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::{AesRoleViolation, ITaxonomyRoleChecker};
+use shared::role_rules::ITaxonomyRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TaxonomyRoleChecker {}

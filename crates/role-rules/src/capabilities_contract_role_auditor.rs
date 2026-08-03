@@ -12,9 +12,9 @@ use shared::common::utility_signature_parser::{
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
-use shared::common::{Language, LintMessage, Severity};
+use shared::common::{Language, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::{AesRoleViolation, IContractRoleChecker};
+use shared::role_rules::IContractRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractRoleChecker {}
@@ -61,7 +61,7 @@ impl ContractRoleChecker {
             return;
         }
 
-        let lang = if is_rs {
+        let _lang = if is_rs {
             Language::Rust
         } else if is_py {
             Language::Python

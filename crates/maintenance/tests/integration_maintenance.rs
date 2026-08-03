@@ -1,8 +1,6 @@
 // Integration tests — full DI wiring via MaintenanceContainer.
 use shared::common::FilePath;
-use shared::maintenance::{
-    IMaintenanceCheckerProtocol, IToolExecutorProtocol, MaintenanceCommandsAggregate,
-};
+use shared::maintenance::MaintenanceCommandsAggregate;
 use std::sync::Arc;
 
 fn make_container() -> maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer {

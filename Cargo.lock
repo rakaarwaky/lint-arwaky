@@ -1099,6 +1099,7 @@ name = "external-lint-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "anyhow",
+ "config-system-lint-arwaky",
  "criterion",
  "filesystem-lint-arwaky",
  "regex",

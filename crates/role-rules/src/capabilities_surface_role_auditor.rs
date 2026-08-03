@@ -10,11 +10,10 @@
 
 use shared::common::LintResult;
 use shared::common::Severity;
-use shared::common::taxonomy_message_vo::LintMessage;
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ParseMetadata, PythonMetadata, RustMetadata, TypeScriptMetadata,
 };
-use shared::role_rules::{AesRoleViolation, ISurfaceRoleChecker};
+use shared::role_rules::ISurfaceRoleChecker;
 
 const MAX_PUBLIC_METHODS: usize = 10;
 const MAX_CONTROL_FLOW: usize = 3;

@@ -204,6 +204,10 @@ impl DummyImportChecker {
         _layer_map: &LayerMapVO,
         import_entries: &[ImportEntry],
     ) {
+        // No dummy functions or trait impls in this file — nothing to flag as AES204.
+        if ctx.dummy_ranges.is_empty() && ctx.dummy_impl_traits.is_empty() {
+            return;
+        }
         let lines = ctx.str_refs();
         // Use ImportEntry from filesystem's AST parser
         let imported = utility_dummy_detector::imported_symbols_from_entries(import_entries);

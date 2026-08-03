@@ -5,7 +5,7 @@ use shared::auto_fix::LintFixOrchestratorAggregate;
 #[test]
 fn auto_fix_container_creates() {
     let start = std::time::Instant::now();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let _container = AutoFixContainer::new(qa.code_analysis_linter());
     let elapsed = start.elapsed();
     assert!(
@@ -18,9 +18,9 @@ fn auto_fix_container_creates() {
 #[test]
 fn auto_fix_orchestrator_creates() {
     let start = std::time::Instant::now();
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let _orch = container.orchestrator_with_filesystem(filesystem);
     let elapsed = start.elapsed();
@@ -34,9 +34,9 @@ fn auto_fix_orchestrator_creates() {
 #[test]
 fn auto_fix_orchestrator_is_trait_object() {
     let start = std::time::Instant::now();
-    let filesystem = filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer::new()
+    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
         .orchestrator();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
+    let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
     let _: std::sync::Arc<dyn LintFixOrchestratorAggregate> = orch;

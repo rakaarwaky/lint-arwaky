@@ -5,7 +5,6 @@ use shared::auto_fix::{FixOutcome, IFileAdapterProtocol, IFixProtocol};
 use shared::common::{ContentString, FilePath};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use tempfile::TempDir;
 
 /// Mock adapter backed by a HashMap — no filesystem aggregate cache issues.
 struct MockAdapter {

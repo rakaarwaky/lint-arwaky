@@ -1,7 +1,6 @@
 // Smoke tests — module imports work, key types accessible, complete within 5s.
 use dispatcher_lint_arwaky::surface_check_action::ScanOptions;
 use dispatcher_lint_arwaky::surface_output_component::ViolationItem;
-use shared::common::{ErrorCode, FilePath, LintMessage, Severity};
 
 #[test]
 fn smoke_module_imports_work() {
@@ -46,7 +45,7 @@ fn smoke_violation_item_is_send_sync() {
 #[test]
 fn smoke_scan_options_is_send() {
     // ScanOptions contains Arc, should be Send
-    fn assert_send<T: Send>() {}
+    fn _assert_send<T: Send>() {}
     // We can't easily create ScanOptions without a filesystem, but we can verify the type exists
     let _ = std::any::type_name::<ScanOptions>();
 }

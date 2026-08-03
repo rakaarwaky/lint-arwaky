@@ -7,7 +7,7 @@
 use shared::common::LintResult;
 use shared::common::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::{AesRoleViolation, IUtilityRoleChecker};
+use shared::role_rules::IUtilityRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct UtilityRoleChecker {}
