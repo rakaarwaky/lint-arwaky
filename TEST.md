@@ -207,14 +207,22 @@ The base codebase must be clean of internal architecture rule violations.
   ```bash
   bash scripts/install.local.sh
   ```
-- [ ]  Run scan on all 3 test workspaces:
+- [ ]  Run scan on bad workspaces (should find violations):
 
   ```bash
-  lint-arwaky-cli scan test-workspaces/crates
-  lint-arwaky-cli scan test-workspaces/modules
-  lint-arwaky-cli scan test-workspaces/packages
+  lint-arwaky-cli scan workspaces-bad/crates
+  lint-arwaky-cli scan workspaces-bad/modules
+  lint-arwaky-cli scan workspaces-bad/packages
   ```
-- [ ]  **Criteria**: Each scan meets aggregate thresholds (Section 3.1).
+- [ ]  Run scan on good workspaces (should find 0 violations):
+
+  ```bash
+  lint-arwaky-cli scan workspaces-good/crates
+  lint-arwaky-cli scan workspaces-good/modules
+  lint-arwaky-cli scan workspaces-good/packages
+  ```
+- [ ]  **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
+- [ ]  **Criteria**: Good workspaces produce 0 violations (false positive test).
 - [ ]  **Criteria**: All 24 AES codes detected per language (Section 3.2).
 - [ ]  **Criteria**: All negative tests pass (Section 3.3).
 - [ ]  **Criteria**: All exit code tests pass (Section 3.4).
@@ -246,17 +254,17 @@ The base codebase must be clean of internal architecture rule violations.
 - [ ]  JSON output:
 
   ```bash
-  lint-arwaky-cli scan test-workspaces/crates --format json
+  lint-arwaky-cli scan workspaces-bad/crates --format json
   ```
 - [ ]  SARIF output:
 
   ```bash
-  lint-arwaky-cli scan test-workspaces/crates --format sarif
+  lint-arwaky-cli scan workspaces-bad/crates --format sarif
   ```
 - [ ]  JUnit XML output:
 
   ```bash
-  lint-arwaky-cli scan test-workspaces/crates --format junit
+  lint-arwaky-cli scan workspaces-bad/crates --format junit
   ```
 
   **Criteria**: All 3 formats produce valid, parseable output with correct
