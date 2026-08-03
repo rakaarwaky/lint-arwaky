@@ -233,6 +233,13 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                 ArchitectureConfig::default()
             }
         };
+        // Default orphan.check_orphan to true for all layers when not explicitly set.
+        // BooleanVO defaults to false, but orphan detection should be enabled by default.
+        for def in config.layers.values_mut() {
+            if !def.orphan.check_orphan.value && def.orphan.exceptions.values.is_empty() {
+                def.orphan.check_orphan = BooleanVO::new(true);
+            }
+        }
         if config.ignored_paths.values.is_empty()
             && let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence())
         {

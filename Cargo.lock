@@ -2635,6 +2635,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -3178,6 +3179,7 @@ dependencies = [
  "regex",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -3429,6 +3431,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -3747,6 +3750,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
@@ -4178,6 +4182,7 @@ dependencies = [
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
+ "tracing",
 ]
 
 [[package]]
