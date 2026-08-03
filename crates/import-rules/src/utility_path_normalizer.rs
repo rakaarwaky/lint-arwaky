@@ -26,35 +26,6 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
     None
 }
 
-pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-    // String-based normalization — avoids std::fs::canonicalize() I/O
-    let normalized_file = normalize_path(file_path);
-    let normalized_root = normalize_path(root_dir).trim_end_matches('/').to_string();
-
-    let file_path = Path::new(&normalized_file);
-    let root_path = Path::new(&normalized_root);
-
-    match file_path.strip_prefix(root_path) {
-        Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
-        Err(_) => {
-            // Fallback: try string-based prefix removal
-            let root_prefix = if normalized_root.ends_with('/') {
-                normalized_root.clone()
-            } else {
-                format!("{}/", normalized_root)
-            };
-
-            if normalized_file.starts_with(&root_prefix) {
-                normalized_file[root_prefix.len()..].to_string()
-            } else if normalized_file == normalized_root {
-                String::new()
-            } else {
-                normalized_file
-            }
-        }
-    }
-}
-
 /// Normalize a path string without filesystem I/O.
 /// Collapses `.`, `..`, and redundant separators.
 fn normalize_path(path: &str) -> String {

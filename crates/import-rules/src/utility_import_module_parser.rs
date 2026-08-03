@@ -7,14 +7,6 @@ use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 // ImportEntry-based functions (consume filesystem crate's parsed data)
 // ═══════════════════════════════════════════════════════════════
 
-/// Extract import module names from ImportEntry list (replaces extract_import_modules).
-pub fn extract_import_modules_from_entries(entries: &[ImportEntry]) -> Vec<SymbolName> {
-    entries
-        .iter()
-        .map(|e| SymbolName::new(e.raw_path.clone()))
-        .collect()
-}
-
 /// Extract import modules with barrel file resolution from ImportEntry list.
 /// Replaces extract_import_modules_resolved.
 pub fn extract_import_modules_from_entries_resolved(

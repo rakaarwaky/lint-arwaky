@@ -7,60 +7,6 @@ use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
 use std::collections::{HashMap, HashSet};
 
-// ─── Block 1: Import Alias Extraction (AST-based) ─────────
-
-pub fn extract_imported_aliases(file_path: &str, content: &str) -> HashMap<Identity, Identity> {
-    let mut aliases = HashMap::new();
-    match parse_file_content(file_path, content) {
-        FileParseResultVO::Rust(result) => {
-            for imp in &result.imports {
-                if imp.is_glob {
-                    continue;
-                }
-                if imp.raw_path.starts_with("crate::")
-                    || imp.raw_path.starts_with("super::")
-                    || imp.raw_path.starts_with("self::")
-                {
-                    continue;
-                }
-                if let Some(last) = imp.last_segment()
-                    && !last.is_empty()
-                    && last != "*"
-                    && last != "self"
-                {
-                    aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
-                }
-            }
-        }
-        FileParseResultVO::Python(result) => {
-            for imp in &result.imports {
-                if imp.raw_path.starts_with("__future__") {
-                    continue;
-                }
-                if let Some(last) = imp.last_segment()
-                    && !last.is_empty()
-                    && last != "*"
-                {
-                    aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
-                }
-            }
-        }
-        FileParseResultVO::TypeScript(result) => {
-            for imp in &result.imports {
-                if let Some(last) = imp.last_segment()
-                    && !last.is_empty()
-                    && last != "*"
-                    && last != "default"
-                {
-                    aliases.insert(Identity::new(last), Identity::new(imp.raw_path.clone()));
-                }
-            }
-        }
-        FileParseResultVO::Unsupported => {}
-    }
-    aliases
-}
-
 // ─── Block 2: Usage Detection (AST-based) ─────────────────
 
 pub fn extract_used_symbols(
