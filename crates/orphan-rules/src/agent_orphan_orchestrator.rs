@@ -257,20 +257,30 @@ impl ArchOrphanAnalyzer {
     ) -> Option<LintResult> {
         static DEBUG_COUNT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
         let dc = DEBUG_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        if dc < 3 {
-            eprintln!(
-                "[debug _process_file] f='{}', top_root='{}'",
-                f, top_root_str
-            );
-        }
         // Resolve relative path to absolute so sub-analyzers can read file contents
         let abs_f = std::path::Path::new(top_root_str).join(f);
         let abs_f_str = abs_f.to_string_lossy().to_string();
-        let file_fp = FilePath::new(&abs_f_str).ok()?;
+        let file_fp = match FilePath::new(&abs_f_str) {
+            Ok(fp) => fp,
+            Err(_) => {
+                if dc < 5 {
+                    eprintln!(
+                        "[debug _process_file] SKIP bad path: f='{}', abs='{}'",
+                        f, abs_f_str
+                    );
+                }
+                return None;
+            }
+        };
         let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
         let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename);
         if base_layer.is_none() {
-            // Skip files without recognized layer prefix silently
+            if dc < 5 {
+                eprintln!(
+                    "[debug _process_file] SKIP no layer prefix: f='{}', filename='{}'",
+                    f, filename
+                );
+            }
             return None;
         }
         let base_layer = base_layer.unwrap();
@@ -292,9 +302,18 @@ impl ArchOrphanAnalyzer {
 
         let basename = file_fp.basename();
         if definition.exceptions.values.contains(&basename) {
+            if dc < 5 {
+                eprintln!(
+                    "[debug _process_file] SKIP exception: f='{}', basename='{}'",
+                    f, basename
+                );
+            }
             return None;
         }
         if !definition.orphan.check_orphan.value {
+            if dc < 5 {
+                eprintln!("[debug _process_file] SKIP no orphan check: f='{}'", f);
+            }
             return None;
         }
 

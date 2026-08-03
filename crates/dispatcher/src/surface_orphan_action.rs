@@ -96,16 +96,37 @@ pub fn collect_orphan(
         let ws_path = std::path::Path::new(ws.path.value.as_str());
         ws_filesystem.build_file_index_with_ignored(ws_path, &_ignored.values);
 
-        // Build OrphanFileListVO from pre-fetched FileEntry data
+        // Build OrphanFileListVO — paths must be relative to top_root (workspace root),
+        // not CWD or ws.path, because orphan orchestrator joins them with top_root.
+        // top_root is determined by workspace_root() in the orchestrator.
         let file_list = ws_filesystem.file_list();
-        eprintln!(
-            "[debug] workspace loop: ws={}, files={}",
-            ws.path.value,
-            file_list.len()
+        // Find the workspace root (top_root) that the orchestrator will use
+        let ws_abs = std::env::current_dir()
+            .unwrap_or_default()
+            .join(&ws.path.value);
+        let ws_top_root = ws_filesystem.workspace_root(
+            &FilePath::new(ws_abs.to_string_lossy().to_string()).unwrap_or_default(),
         );
+        let top_root = ws_top_root.unwrap_or_else(|| ws_abs.clone());
+        let top_root_str = top_root.to_string_lossy().to_string();
         let file_paths: Vec<String> = file_list
             .iter()
-            .map(|f| f.path.to_string_lossy().to_string())
+            .map(|f| {
+                let path_str = f.path.to_string_lossy().to_string();
+                // Make path relative to top_root
+                if let Ok(canon) = std::fs::canonicalize(&f.path) {
+                    let canon_str = canon.to_string_lossy().to_string();
+                    if let Some(rel) = canon_str.strip_prefix(&top_root_str) {
+                        rel.strip_prefix('/').unwrap_or(rel).to_string()
+                    } else {
+                        path_str
+                    }
+                } else if let Some(rel) = path_str.strip_prefix(&top_root_str) {
+                    rel.strip_prefix('/').unwrap_or(rel).to_string()
+                } else {
+                    path_str
+                }
+            })
             .collect();
         let orphan_files =
             shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
@@ -179,7 +200,12 @@ fn scan_single_root(
 
     // Build file index for this workspace (respects config ignored_paths)
     let root_path = std::path::Path::new(root);
-    let ignored_strs: Vec<String> = ws_config.ignored_paths.values.iter().map(|fp| fp.value().to_string()).collect();
+    let ignored_strs: Vec<String> = ws_config
+        .ignored_paths
+        .values
+        .iter()
+        .map(|fp| fp.value().to_string())
+        .collect();
     ws_filesystem.build_file_index_with_ignored(root_path, &ignored_strs);
     let ws_orchestrator: Arc<dyn IOrphanAggregate> =
         orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
@@ -188,11 +214,29 @@ fn scan_single_root(
         )
         .analyzer();
 
-    // Build OrphanFileListVO from pre-fetched FileEntry data
+    // Build OrphanFileListVO — paths relative to workspace root (top_root)
     let file_list = ws_filesystem.file_list();
+    let root_abs = std::env::current_dir().unwrap_or_default().join(root);
+    let ws_top_root = ws_filesystem.workspace_root(root_fp);
+    let top_root = ws_top_root.unwrap_or_else(|| root_abs.clone());
+    let top_root_str = top_root.to_string_lossy().to_string();
     let file_paths: Vec<String> = file_list
         .iter()
-        .map(|f| f.path.to_string_lossy().to_string())
+        .map(|f| {
+            let path_str = f.path.to_string_lossy().to_string();
+            if let Ok(canon) = std::fs::canonicalize(&f.path) {
+                let canon_str = canon.to_string_lossy().to_string();
+                if let Some(rel) = canon_str.strip_prefix(&top_root_str) {
+                    rel.strip_prefix('/').unwrap_or(rel).to_string()
+                } else {
+                    path_str
+                }
+            } else if let Some(rel) = path_str.strip_prefix(&top_root_str) {
+                rel.strip_prefix('/').unwrap_or(rel).to_string()
+            } else {
+                path_str
+            }
+        })
         .collect();
     let orphan_files =
         shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
