@@ -1,7 +1,0 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.backends._legacy:_Backend"
-
-[project]
-name = "code_analysis"
-version = "0.1.0"
