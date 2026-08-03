@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[package]
+name = "test-project-rust"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "test-project-rust-bin"
+path = "crates/main.rs"
+
+[[bin]]
+name = "root_violation"
+path = "crates/root_violation.rs"
+
+[dependencies]
+shared-common = { path = "crates/shared_common" }
+layer-rules = { path = "crates/layer_rules" }
+code-analysis = { path = "crates/code_analysis" }
+language-adapters = { path = "crates/language_adapters" }
+di-containers = { path = "crates/di_containers" }
+cli-commands = { path = "crates/cli_commands" }
+taxonomy = { path = "crates/taxonomy" }

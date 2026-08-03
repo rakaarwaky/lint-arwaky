@@ -1,64 +1,53 @@
  1. Test Projects
 
-There are 3 test workspaces, each containing files **intentionally designed**
-to trigger AES violations:
+There are 3 test workspaces with 2 variants each:
+- **`workspaces-bad/`** — files with intentional violations (linter SHOULD detect them)
+- **`workspaces-good/`** — clean files (linter should NOT flag them = false positive test)
 
+| Category         | Bad Path                        | Good Path                       | Purpose                                     |
+| ------------------ | ------------------------------- | ------------------------------- | --------------------------------------------- |
+| Rust (crates)    | `workspaces-bad/crates/`       | `workspaces-good/crates/`       | AES Rust rules + Clippy/Rustfmt/cargo-audit |
+| Python (modules) | `workspaces-bad/modules/`      | `workspaces-good/modules/`      | AES Python rules + Ruff/MyPy/Bandit         |
+| JS/TS (packages) | `workspaces-bad/packages/`     | `workspaces-good/packages/`     | AES JS/TS rules + ESLint/Prettier/tsc       |
 
-| Category         | Path                        | Purpose                                     |
-| ------------------ | ----------------------------- | --------------------------------------------- |
-| Rust (crates)    | `test-workspaces/crates/`   | AES Rust rules + Clippy/Rustfmt/cargo-audit |
-| Python (modules) | `test-workspaces/modules/`  | AES Python rules + Ruff/MyPy/Bandit         |
-| JS/TS (packages) | `test-workspaces/packages/` | AES JS/TS rules + ESLint/Prettier/tsc       |
-
-### Test Project Structure
+### Workspace Structure
 
 ```
-test-workspaces/
-├── crates/                          # Rust test workspace
-│   ├── taxonomy_bad_naming.rs       # AES101: uppercase, hyphens, too few words
-│   ├── taxonomy_user_vo.rs          # AES401: raw String/i32 fields (should use VOs)
-│   ├── taxonomy_constant.rs         # AES401: contains fn/struct (should be const only)
-│   ├── contract_bad_protocol.rs     # AES402: primitives in method signatures
-│   ├── capabilities_no_impl.rs      # AES403: no protocol implementor
-│   ├── capabilities_too_many.rs     # AES403: >3 type declarations
-│   ├── utility_with_struct.rs       # AES404: struct in utility file
-│   ├── agent_no_aggregate.rs        # AES405: no aggregate implementor
-│   ├── surface_passive_logic.rs     # AES406: domain logic in passive surface
-│   ├── surface_too_many_fns.rs      # AES406: >15 functions
-│   ├── forbidden_import.rs          # AES201: taxonomy imports capabilities
-│   ├── unused_imports.rs            # AES203: declared but never used
-│   ├── dummy_functions.rs           # AES204: _use_* / dummy_* functions
-│   ├── circular_a.rs                # AES205: circular dependency (a → b)
-│   ├── circular_b.rs                # AES205: circular dependency (b → a)
-│   ├── orphan_file.rs               # AES501-506: not imported by anything
-│   ├── bypass_unwrap.rs             # AES304: unwrap(), expect(), panic!
-│   ├── bypass_allow.rs              # AES304: #[allow(...)]
-│   ├── bypass_comments.rs           # AES304: FIXME, HACK, XXX
-│   ├── bloated_file.rs              # AES301: >1000 lines
-│   ├── empty_file.rs                # AES302: <10 lines
-│   ├── no_definitions.rs            # AES303: no struct/enum/trait
-│   ├── duplicate_a.rs               # AES305: >50% overlap with duplicate_b
-│   ├── duplicate_b.rs               # AES305: >50% overlap with duplicate_a
-│   └── mod.rs                       # Barrel file — must be SKIPPED
-│
-├── modules/                         # Python test workspace
-│   ├── taxonomy_bad_naming.py       # AES101: invalid naming
-│   ├── utility_with_class.py        # AES404: class in utility file
-│   ├── bypass_noqa.py               # AES304: # noqa, # type: ignore
-│   ├── bypass_not_implemented.py    # AES304: raise NotImplementedError
-│   ├── orphan_module.py             # AES501-506: unreachable
-│   ├── __init__.py                  # Barrel file — must be SKIPPED
+workspaces-bad/                      # Files with violations (should trigger AES rules)
+├── crates/                          # Rust: 64 files with violations
+│   ├── shared_common/src/           # Orphan files, bad naming, etc.
+│   ├── naming_violations/src/       # AES101 naming violations
+│   ├── code_analysis/src/           # AES503 capabilities orphans
 │   └── ...
-│
-└── packages/                        # JS/TS test workspace
-    ├── taxonomy_bad_naming.ts       # AES101: invalid naming
-    ├── surface_component_logic.tsx  # AES406: domain logic in passive component
-    ├── bypass_ts_ignore.ts          # AES304: @ts-ignore, @ts-expect-error
-    ├── bypass_eslint_disable.js     # AES304: eslint-disable
-    ├── orphan_component.tsx         # AES501-506: unreachable
-    ├── index.ts                     # Barrel file — must be SKIPPED
-    └── ...
+├── modules/                         # Python: 526 files with violations
+├── packages/                        # JS/TS: 333 files with violations
+├── Cargo.toml, pyproject.toml, package.json, ...
+
+workspaces-good/                     # Clean files (no violations expected)
+├── crates/                          # Rust: 686 clean files
+│   ├── shared_common/src/           # Properly imported taxonomy files
+│   ├── di_containers/src/           # Agent files wired to surfaces
+│   ├── cli_commands/src/            # Surface files with proper imports
+│   └── ...
+├── modules/                         # Python: 238 clean files
+├── packages/                        # JS/TS: 211 clean files
+├── Cargo.toml, pyproject.toml, package.json, ...
 ```
+
+### Expected Violation Counts
+
+| Workspace | Language | Files | Violations | False Positives |
+| --------- | -------- | ----- | ---------- | --------------- |
+| bad       | Rust     | 64    | 64         | —               |
+| bad       | Python   | 526   | 526        | —               |
+| bad       | JS/TS    | 333   | 333        | —               |
+| good      | Rust     | 686   | 0          | 1 (AES504)      |
+| good      | Python   | 238   | 0          | 0               |
+| good      | JS/TS    | 211   | 0          | 0               |
+
+> **Note**: The 1 AES504 false positive in workspaces-good is expected —
+> `utility_has_consumer.rs` becomes orphaned because its consumer
+> (`capabilities_consumer.rs`) was moved to workspaces-bad (AES503 violation).
 
 See [README.md](README.md) for CLI reference and
 [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
@@ -79,14 +68,15 @@ cargo run --bin lint-arwaky-cli -- check .
 ### 2.2 Scan Test Projects
 
 ```bash
-# Rust test workspace
-cargo run --bin lint-arwaky-cli -- scan test-workspaces/crates
+# Scan bad workspace (should find violations)
+cargo run --bin lint-arwaky-cli -- scan workspaces-bad/crates
+cargo run --bin lint-arwaky-cli -- scan workspaces-bad/modules
+cargo run --bin lint-arwaky-cli -- scan workspaces-bad/packages
 
-# Python test workspace
-cargo run --bin lint-arwaky-cli -- scan test-workspaces/modules
-
-# JS/TS test workspace
-cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages
+# Scan good workspace (should find 0 violations = false positive test)
+cargo run --bin lint-arwaky-cli -- scan workspaces-good/crates
+cargo run --bin lint-arwaky-cli -- scan workspaces-good/modules
+cargo run --bin lint-arwaky-cli -- scan workspaces-good/packages
 ```
 
 > Language is auto-detected from file extensions. No language flag needed.
@@ -97,13 +87,13 @@ cargo run --bin lint-arwaky-cli -- scan test-workspaces/packages
 
 ```bash
 # Run only naming rules on Rust test workspace
-cargo run --bin lint-arwaky-cli -- naming test-workspaces/crates
+cargo run --bin lint-arwaky-cli -- naming workspaces-bad/crates
 
 # Run only import rules
-cargo run --bin lint-arwaky-cli -- import test-workspaces/crates
+cargo run --bin lint-arwaky-cli -- import workspaces-bad/crates
 
 # Run only orphan detection
-cargo run --bin lint-arwaky-cli -- orphan test-workspaces/crates
+cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 ```
 
 ---
