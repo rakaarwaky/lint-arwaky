@@ -80,20 +80,24 @@ pub fn collect_orphan(
             .config_orchestrator
             .ignored_paths_for_language(&ws.path, lang);
 
-        // Create a new orchestrator with the workspace's config (not the root config)
+        // Create a fresh filesystem instance for this workspace (shared singleton caches first scan)
+        let ws_filesystem: Arc<dyn IFilesystemAggregate> =
+            filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+
+        // Create a new orchestrator with the workspace's config and fresh filesystem
         let ws_orchestrator: Arc<dyn IOrphanAggregate> =
             orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
                 ws.config.clone(),
-                deps.fs_agg.clone(),
+                ws_filesystem.clone(),
             )
             .analyzer();
 
         // Build file index for this workspace
         let ws_path = std::path::Path::new(ws.path.value.as_str());
-        deps.fs_agg.build_file_index(ws_path);
+        ws_filesystem.build_file_index(ws_path);
 
         // Build OrphanFileListVO from pre-fetched FileEntry data
-        let file_list = deps.fs_agg.file_list();
+        let file_list = ws_filesystem.file_list();
         let file_paths: Vec<String> = file_list
             .iter()
             .map(|f| f.path.to_string_lossy().to_string())
@@ -111,7 +115,7 @@ pub fn collect_orphan(
         let ws_abs = std::env::current_dir()
             .unwrap_or_default()
             .join(&ws.path.value);
-        let ws_top_root = deps.fs_agg.workspace_root(
+        let ws_top_root = ws_filesystem.workspace_root(
             &FilePath::new(ws_abs.to_string_lossy().to_string()).unwrap_or_default(),
         );
         let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
@@ -153,23 +157,27 @@ fn scan_single_root(
     orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     filter: &Option<String>,
-    fs_agg: &Arc<dyn IFilesystemAggregate>,
+    _fs_agg: &Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
-    // Build file index first — filesystem discovers files, reads content, parses AST
+    // Create a fresh filesystem instance (shared singleton caches first scan)
+    let ws_filesystem: Arc<dyn IFilesystemAggregate> =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+
+    // Build file index for this workspace
     let root_path = std::path::Path::new(root);
-    fs_agg.build_file_index(root_path);
+    ws_filesystem.build_file_index(root_path);
 
     // Create a new orchestrator with config from the target path
     let ws_config = config_orchestrator.load_config_sync(root_fp);
     let ws_orchestrator: Arc<dyn IOrphanAggregate> =
         orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
             ws_config,
-            fs_agg.clone(),
+            ws_filesystem.clone(),
         )
         .analyzer();
 
     // Build OrphanFileListVO from pre-fetched FileEntry data
-    let file_list = fs_agg.file_list();
+    let file_list = ws_filesystem.file_list();
     let file_paths: Vec<String> = file_list
         .iter()
         .map(|f| f.path.to_string_lossy().to_string())

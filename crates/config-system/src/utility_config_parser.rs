@@ -147,15 +147,18 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
                 if let Some(layer) = obj.get_mut(&name)
                     && let Some(layer_obj) = layer.as_object_mut()
                 {
+                    // Build the naming sub-object for LayerDefinition.naming: LayerNamingConfig
+                    let mut naming_obj = serde_json::Map::new();
                     if let Some(ref p) = policy {
-                        layer_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
+                        naming_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
                     }
-                    layer_obj.insert("allowed_suffix".to_string(), allowed);
+                    naming_obj.insert("allowed_suffix".to_string(), allowed);
                     if let Some(arr) = forbidden.as_array()
                         && !arr.is_empty()
                     {
-                        layer_obj.insert("forbidden_suffix".to_string(), forbidden);
+                        naming_obj.insert("forbidden_suffix".to_string(), forbidden);
                     }
+                    layer_obj.insert("naming".to_string(), serde_json::Value::Object(naming_obj));
                     layer_obj.remove("suffix");
                 }
             }
