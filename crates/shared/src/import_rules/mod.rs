@@ -28,4 +28,3 @@ pub use taxonomy_dependency_edge_vo::DependencyEdge;
 pub use taxonomy_import_constant::DEFAULT_SKIP_DIRS;
 pub use taxonomy_import_error::ImportError;
 pub use taxonomy_violation_import_vo::AesImportViolation;
-pub use taxonomy_violation_import_vo::format_import_violation;

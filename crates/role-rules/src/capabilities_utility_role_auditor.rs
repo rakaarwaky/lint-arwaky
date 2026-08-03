@@ -4,6 +4,7 @@
 //   Uses ParseMetadata when available to detect forbidden type definitions.
 //   Falls back to comment-stripped line scanning.
 
+use shared::common::Language;
 use shared::common::LintResult;
 use shared::common::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};

@@ -72,7 +72,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        AesCodeAnalysisViolation::DeadInheritance {
+                        format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
                             reason: Some(LintMessage::new(format!(
                                 "Unit struct declared on line {} in {} without impl or derive",
                                 i + 1,
@@ -101,7 +101,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        AesCodeAnalysisViolation::DeadInheritance {
+                        format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
                             reason: Some(LintMessage::new(format!(
                                 "Empty Python class on line {} in {} (': pass')",
                                 i + 1,

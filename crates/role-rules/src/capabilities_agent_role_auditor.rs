@@ -6,12 +6,13 @@
 //   3. Rule 2 (FRD) — Max 3 type declarations per file.
 //   Internal helper types without implementor pattern are ALLOWED.
 
+use shared::common::Language;
 use shared::common::LintResult;
 use shared::common::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::{AesRoleViolation, IAgentRoleChecker};
+use shared::role_rules::{AesRoleViolation, IAgentRoleChecker, format_role_violation};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentRoleChecker {}
@@ -74,14 +75,14 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        AesRoleViolation::AgentTooManyTypes {
+                        format_role_violation(&AesRoleViolation::AgentTooManyTypes {
                             count: type_count,
                             names: all_names.iter().map(SymbolName::new).collect(),
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types (struct/enum) in {}, max 3 allowed: [{}]",
                                 type_count, path_str, names_str
                             ))),
-                        },
+                        }, Language::Rust),
                     ));
                     return;
                 }
@@ -94,12 +95,12 @@ impl AgentRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        AesRoleViolation::AgentNoImplementor {
+                        format_role_violation(&AesRoleViolation::AgentNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.",
                                 path_str
                             ))),
-                        },
+                        }, Language::Rust),
                     ));
                 }
             }
@@ -122,26 +123,26 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        AesRoleViolation::AgentTooManyTypes {
+                        format_role_violation(&AesRoleViolation::AgentTooManyTypes {
                             count: type_count,
                             names: names.iter().map(SymbolName::new).collect(),
                             reason: Some(LintMessage::new(format!(
                                 "Found {} classes in {}, max 3 allowed: [{}]",
                                 type_count, path_str, names_str
                             ))),
-                        },
+                        }, Language::Rust),
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        AesRoleViolation::AgentNoImplementor {
+                        format_role_violation(&AesRoleViolation::AgentNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No class with parent/inheritance found in {}. At least one class must inherit from a parent class.",
                                 path_str
                             ))),
-                        },
+                        }, Language::Rust),
                     ));
                 }
             }
@@ -168,26 +169,26 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        AesRoleViolation::AgentTooManyTypes {
+                        format_role_violation(&AesRoleViolation::AgentTooManyTypes {
                             count: type_count,
                             names: all_names.iter().map(SymbolName::new).collect(),
                             reason: Some(LintMessage::new(format!(
                                 "Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]",
                                 type_count, path_str, names_str
                             ))),
-                        },
+                        }, Language::Rust),
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        AesRoleViolation::AgentNoImplementor {
+                        format_role_violation(&AesRoleViolation::AgentNoImplementor {
                             reason: Some(LintMessage::new(format!(
                                 "No class with 'implements' keyword found in {}. At least one class must implement an aggregate interface.",
                                 path_str
                             ))),
-                        },
+                        }, Language::Rust),
                     ));
                 }
             }
@@ -248,7 +249,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        AesRoleViolation::AgentTooManyTypes {
+                        format_role_violation(&AesRoleViolation::AgentTooManyTypes {
                             count: type_names.len(),
                             names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
                             reason: Some(LintMessage::new(format!(
@@ -257,7 +258,7 @@ impl AgentRoleChecker {
                                 path_str,
                                 names_str
                             ))),
-                        },
+                        }, Language::Rust),
                     ));
                     return;
                 }
@@ -270,9 +271,9 @@ impl AgentRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        AesRoleViolation::AgentNoImplementor {
+                        format_role_violation(&AesRoleViolation::AgentNoImplementor {
                             reason: Some(LintMessage::new(format!("No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.", path_str))),
-                        },
+                        }, Language::Rust),
                     ));
                 }
             }
