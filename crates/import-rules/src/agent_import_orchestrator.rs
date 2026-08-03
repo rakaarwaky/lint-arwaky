@@ -144,7 +144,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     .get(file.value())
                     .map(|v| v.as_slice())
                     .unwrap_or(&[]);
-                let file_ids = used_identifiers_map.get(file.value()).map(|v| v.as_slice());
+                let file_ids = used_identifiers_map
+                    .get(file.value())
+                    .map(|v| v.as_slice())
+                    .unwrap_or(&[]);
                 if let Ok(unused) =
                     deps.unused
                         .check_unused_imports(file.value(), &content, file_imports, file_ids)
@@ -288,7 +291,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     .get(file.value())
                     .map(|v| v.as_slice())
                     .unwrap_or(&[]);
-                let file_ids = used_identifiers_map.get(file.value()).map(|v| v.as_slice());
+                let file_ids = used_identifiers_map
+                    .get(file.value())
+                    .map(|v| v.as_slice())
+                    .unwrap_or(&[]);
                 if let Ok(v) = self.deps.unused.check_unused_imports(
                     file.value(),
                     content_str,

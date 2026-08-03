@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 // ─── Block 2: Usage Detection (AST-based) ─────────────────
 
 pub fn extract_used_symbols(
-    file_path: &str,
+    _file_path: &str,
     _content: &str,
     imported_aliases: &HashMap<Identity, Identity>,
     used_identifiers: &[String],

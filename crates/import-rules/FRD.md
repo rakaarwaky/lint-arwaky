@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level. File discovery, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the filesystem aggregate (`IFilesystemAggregate`). The Surface fetches file entries, import data, and `used_identifiers` from filesystem first, then passes pre-fetched data to the import orchestrator. The import-rules crate receives `&[FileEntry]`, `content_map`, `imports_map`, and `used_identifiers` — all pre-fetched by the caller. The import orchestrator does **zero I/O** — it only performs business logic analysis. All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
+The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level. File discovery, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the filesystem aggregate (`IFilesystemAggregate`). The Surface fetches file entries, import data, and `used_identifiers` (via `used_identifiers_for(path)`) from filesystem first, then passes pre-fetched data to the import orchestrator. The import-rules crate receives `&[FileEntry]`, `content_map`, `imports_map`, and `used_identifiers_map` — all pre-fetched by the caller. The import orchestrator does **zero I/O** — it only performs business logic analysis. All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
 
 ### Architecture & Data Flow
 
@@ -163,15 +163,14 @@ flowchart TD
 ### FR-003: Unused Import Detection (AES203)
 
 - **Description**: Detects and flags imported symbols that are never referenced within the file body. Uses AST-based usage tracking for all languages.
-- **Input**: File data, raw file contents (from filesystem crate), `used_identifiers` (optional, from `ParseMetadata` via tree-sitter AST).
+- **Input**: File data, raw file contents (from filesystem crate), `used_identifiers_map` (required, from filesystem's `used_identifiers_for(path)` via tree-sitter AST).
 - **Output**: List of AES203 MEDIUM diagnostics with file path, line number, and unused symbol name.
 - **Business Rules**:
 
   - **Import extraction**: Pre-fetched by Surface via filesystem crate. Import-rules consumes `ImportEntry` fields directly via `utility_import_symbol_extractor::extract_imported_aliases_from_entries`.
 
     - Import data comes from `imports_map` (tree-sitter parsed `ImportEntry` with `resolved_path`, `symbols`, `is_wildcard`, `is_reexport`).
-    - **Usage detection (tree-sitter AST)**: When `used_identifiers` from `ParseMetadata` are available (Python, TypeScript, JavaScript), import-rules uses them directly — a pre-computed `HashSet<&str>` lookup per alias. This is the primary path for `run_audit_with_entries` (MCP/TUI surfaces).
-    - **Usage detection (fallback)**: When `used_identifiers` is `None` (legacy `run_audit` path), falls back to `FileParseResultVO::is_identifier_used` (shared crate) — `syn` visitor for Rust, comment-aware line-based word splitting for Python/TS.
+    - **Usage detection (tree-sitter AST)**: `used_identifiers` from `ParseMetadata` are required — a pre-computed `HashSet<&str>` lookup per alias. All surfaces (`run_audit` and `run_audit_with_entries`) build `used_identifiers_map` from the filesystem aggregate's `used_identifiers_for(path)` method, which reads from the tree-sitter AST cache. No fallback to line-based parsing.
     - An imported symbol is "used" if its name appears as an identifier reference anywhere in the file body (excluding the import statement itself).
     - Usage inside `#[derive(...)]` attributes is detected via attribute parsing — no hardcoded whitelist.
     - Usage inside macro invocations (non-derive) is **NOT tracked** in v1.12. Imported symbols that appear ONLY inside macro bodies are **exempt from AES203** (skip, not flag). Full macro expansion is planned for v2.0 (see FR-009).
@@ -274,7 +273,7 @@ flowchart TD
 | Full import audit                  | File entries, content_map, imports_map, configuration    | Lint results         | Run all import checks (AES201–AES205)           |
 | Forbidden import check (AES201)    | File entries, imports_map, configuration, layer_map     | CRITICAL violations  | Validate imports against layer dependency matrix |
 | Mandatory import check (AES202)    | File entries, imports_map, configuration, layer_map     | HIGH violations      | Verify required imports per scope                |
-| Unused import check (AES203)       | File entry, content, import_entries, used_identifiers (optional) | MEDIUM violations    | Detect symbols never referenced in code          |
+| Unused import check (AES203)       | File entry, content, import_entries, used_identifiers_map | MEDIUM violations    | Detect symbols never referenced in code          |
 | Dummy import check (AES204)        | File entry, content, import_entries, layer_map          | HIGH violations      | Detect stub code circumventing AES203            |
 | Circular dependency check (AES205) | File entries, imports_map, configuration, layer_map     | CRITICAL violations  | Detect layer-level import cycles                 |
 
@@ -300,9 +299,8 @@ flowchart TD
     - File walking and discovery (`discover_source_files`).
     - AST parsing and import extraction (`IParserProtocol` → `ImportEntry` with `resolved_path`).
     - Barrel resolution (`resolve_barrel_imports` populates `ImportEntry.resolved_path`).
-    - Tree-sitter identifier extraction for Python/TS/JS (`ParseMetadata.used_identifiers`) — consumed by import-rules for AES203 usage detection.
+    - Tree-sitter identifier extraction for Python/TS/JS (`ParseMetadata.used_identifiers`) — consumed by import-rules via `used_identifiers_for(path)` for AES203 usage detection.
     - All I/O is centralized in the filesystem crate — import-rules performs no filesystem reads.
-  - **`shared` crate** — provides fallback parser infrastructure used by import-rules when `used_identifiers` is unavailable: `orphan_rules::taxonomy_parser_dispatcher::parse_file_content` (dispatches to `taxonomy_rust_parser` via `syn`, `taxonomy_python_parser` via comment-aware line-based parsing, `taxonomy_ts_parser` via comment-aware structured parsing) and `taxonomy_orphan_parse_result_vo::FileParseResultVO` (imports, trait impls, struct defs, trait defs, mod declarations, `is_identifier_used`).
   - `syn` crate (v2, features: `full`, `visit`, `parsing`) — Rust AST parsing (via shared crate).
   - No network calls. No filesystem writes. Pure static analysis.
 
@@ -324,10 +322,10 @@ flowchart TD
   - All file contents are pre-loaded into an in-memory `content_map` at the start of the audit (`run_audit`), including barrel files.
 - **Accuracy**:
 
-  - **Rust** uses full AST parsing via `syn` (shared crate). **Python/TypeScript/JavaScript** use tree-sitter AST for identifier extraction (via `ParseMetadata.used_identifiers` from filesystem crate), with comment-aware line-based parsing as fallback.
+  - **Rust** uses full AST parsing via `syn` (shared crate). **Python/TypeScript/JavaScript** use tree-sitter AST for identifier extraction (via `ParseMetadata.used_identifiers` from filesystem crate).
   - **Zero false positives** for valid imports across all supported languages (Rust, Python, TypeScript/JavaScript).
   - Tree-sitter AST (Python/TS) and `syn` AST (Rust) eliminate false positives from matches inside comments, string literals, and multi-line constructs.
-  - AES203 accuracy: usage tracking based on tree-sitter identifiers (primary) or parse results (fallback); retains a small heuristic set for trait detection (`prelude`, `async_trait`, `::io::Write`, `Ext`/`Iterator`/`Stream` suffixes).
+  - AES203 accuracy: usage tracking based on tree-sitter identifiers; retains a small heuristic set for trait detection (`prelude`, `async_trait`, `::io::Write`, `Ext`/`Iterator`/`Stream` suffixes).
   - Known limitation: macro-generated code (see FR-009). Macro body exemption is the only accepted source of potential false negatives.
 - **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. No async runtime dependency.
 
@@ -415,13 +413,13 @@ flowchart TD
 - Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
 - Layer hierarchy is defined in config YAML and detected from filename prefixes (hardcoded AES convention).
 - Naming convention validation is handled by the naming rules crate; import-rules assumes filenames are correctly named.
-- Rust uses full AST parsing via `syn`; Python/TS/JS use tree-sitter AST for identifier extraction (via `ParseMetadata.used_identifiers`). When `used_identifiers` is unavailable, falls back to comment-aware line-based parsing from the shared crate (`orphan_rules`).
+- Rust uses full AST parsing via `syn`; Python/TS/JS use tree-sitter AST for identifier extraction (via `ParseMetadata.used_identifiers` from filesystem crate's `used_identifiers_for(path)` method). No line-based fallback.
 - No network calls are required; all analysis is local filesystem.
 - Configuration is loaded once and reused across all checks in a scan.
 - Macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — imports and usage inside macros are invisible to the detector. Macro body exemption applies to AES203 (see FR-009).
 - Barrel file resolution is one level deep — nested barrel chains are not fully resolved.
 - AES203 and AES204 are independent and may both flag the same import (no deduplication).
-- File walking, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the external filesystem crate. Import-rules consumes pre-parsed `ImportEntry` and `ParseMetadata.used_identifiers` — no internal parsing for import/usage detection.
+- File walking, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the external filesystem crate. Import-rules consumes pre-parsed `ImportEntry` and `used_identifiers_for(path)` — no internal parsing for import/usage detection.
 
 ---
 
