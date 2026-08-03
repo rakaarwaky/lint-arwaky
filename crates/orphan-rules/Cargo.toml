@@ -21,3 +21,4 @@ once_cell.workspace = true
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
+filesystem-lint-arwaky.workspace = true

@@ -32,4 +32,10 @@ proc-macro2 = { version = "1", features = ["span-locations"] }
 
 [dev-dependencies]
 tempfile = "3.27.0"
+criterion = { version = "0.8.2", features = ["html_reports"] }
+
+[[bench]]
+name = "bench_shared"
+path = "benches/bench_shared.rs"
+harness = false
 

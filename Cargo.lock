@@ -4493,6 +4493,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
+ "criterion",
  "dashmap",
  "once_cell",
  "proc-macro2",
