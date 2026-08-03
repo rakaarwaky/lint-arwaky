@@ -996,6 +996,7 @@ dependencies = [
  "criterion",
  "ctrlc",
  "dirs",
+ "orphan-rules-lint-arwaky",
  "regex",
  "serde",
  "serde_json",

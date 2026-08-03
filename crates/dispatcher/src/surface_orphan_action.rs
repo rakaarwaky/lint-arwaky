@@ -80,6 +80,14 @@ pub fn collect_orphan(
             .config_orchestrator
             .ignored_paths_for_language(&ws.path, lang);
 
+        // Create a new orchestrator with the workspace's config (not the root config)
+        let ws_orchestrator: Arc<dyn IOrphanAggregate> =
+            orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                ws.config.clone(),
+                deps.fs_agg.clone(),
+            )
+            .analyzer();
+
         // Build file index for this workspace
         let ws_path = std::path::Path::new(ws.path.value.as_str());
         deps.fs_agg.build_file_index(ws_path);
@@ -94,14 +102,10 @@ pub fn collect_orphan(
             shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
 
         // Build graph context from filesystem's pre-built data
-        let context = deps
-            .orphan_orchestrator
-            .build_orphan_graph_context(&orphan_files, &ws.path);
+        let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, &ws.path);
 
         // Run orphan checks on pre-fetched data with correct root_dir
-        let results =
-            deps.orphan_orchestrator
-                .check_orphans_with_context(&orphan_files, &ws.path, &context);
+        let results = ws_orchestrator.check_orphans_with_context(&orphan_files, &ws.path, &context);
 
         // Filter results belonging to this workspace
         let ws_abs = std::env::current_dir()
@@ -147,13 +151,22 @@ fn scan_single_root(
     root: &str,
     root_fp: &FilePath,
     orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
-    _config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
+    config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     filter: &Option<String>,
     fs_agg: &Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
     // Build file index first — filesystem discovers files, reads content, parses AST
     let root_path = std::path::Path::new(root);
     fs_agg.build_file_index(root_path);
+
+    // Create a new orchestrator with config from the target path
+    let ws_config = config_orchestrator.load_config_sync(root_fp);
+    let ws_orchestrator: Arc<dyn IOrphanAggregate> =
+        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+            ws_config,
+            fs_agg.clone(),
+        )
+        .analyzer();
 
     // Build OrphanFileListVO from pre-fetched FileEntry data
     let file_list = fs_agg.file_list();
@@ -165,10 +178,10 @@ fn scan_single_root(
         shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
 
     // Build graph context from filesystem's pre-built data
-    let context = orphan_orchestrator.build_orphan_graph_context(&orphan_files, root_fp);
+    let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, root_fp);
 
     // Run orphan checks on pre-fetched data with correct root_dir
-    let results = orphan_orchestrator.check_orphans_with_context(&orphan_files, root_fp, &context);
+    let results = ws_orchestrator.check_orphans_with_context(&orphan_files, root_fp, &context);
 
     let mut violations: Vec<ViolationItem> = results
         .iter()
