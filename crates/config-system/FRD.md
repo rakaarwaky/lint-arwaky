@@ -146,8 +146,7 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Business Rules**:
 
   - Scans for subdirectories under `crates/`, `packages/`, `modules/`.
-  - Uses **std::thread / rayon** for concurrent filesystem operations (no async runtime).
-  - Concurrency bounded to 8 concurrent workspace loads.
+  - Uses sequential filesystem operations (no async runtime, no thread pool).
   - If root is itself a workspace directory (e.g., `crates/`), returns its direct subdirectories.
   - If root's parent is a workspace directory, returns root as a single-member workspace.
 - **Edge Cases**:
@@ -321,7 +320,6 @@ Loaded config is merged with embedded defaults (FR-005).
   - YAML 1.2 deserialization library (`serde_yaml`).
   - TOML parsing library (`toml`) for `[tool.lint-arwaky]` sections.
   - `dashmap` — concurrent HashMap for config cache.
-  - `rayon` — data parallelism for workspace discovery.
 - **Consumers** (dependency direction: consumer → config-system):
 
   - `naming-rules` crate — reads AES101/AES102 config.
@@ -336,9 +334,9 @@ Loaded config is merged with embedded defaults (FR-005).
 
 ## Non-functional Requirements
 
-- **Performance**: Config read from project root < 50ms. Config read from XDG paths < 100ms. Workspace discovery for 10 members < 500ms (concurrency bound of 8 via rayon).
+- **Performance**: Config read from project root < 50ms. Config read from XDG paths < 100ms. Workspace discovery for 10 members < 500ms (sequential).
 - **Memory**: Memory overhead per parsed config < 10 KB (cached). DashMap pre-allocated with capacity 32.
-- **Concurrency**: Workspace discovery bounded to 8 concurrent loads via rayon. Config cache thread-safe via DashMap (no Mutex, no lock poisoning).
+- **Concurrency**: Workspace discovery runs sequentially. Config cache thread-safe via DashMap (no Mutex, no lock poisoning).
 - **Security**: Symlink attack detection via O(1) canonical path check. `ConfigLanguage` enum prevents path injection. XDG_CONFIG_DIRS limited to 8 entries, absolute paths only.
 - **Reliability**: DashMap operations are infallible (no lock poisoning). YAML parse failures produce warnings, not silent defaults.
 
@@ -452,7 +450,7 @@ Loaded config is merged with embedded defaults (FR-005).
 - Workspace structure must follow `crates/`, `packages/`, `modules/` convention.
 - Maximum 8 XDG_CONFIG_DIRS entries; only absolute paths accepted.
 - No config file size limit.
-- Workspace discovery concurrency: 8 concurrent loads maximum via rayon.
+- Workspace discovery runs sequentially.
 - YAML parsing uses a YAML 1.2 parser (`serde_yaml`).
 - TOML parsing reads only the `[tool]` section, not full TOML config.
 - Config cache uses DashMap (no Mutex, no lock poisoning).

@@ -30,7 +30,7 @@ flowchart TD
     D --> G["git diff\n(multiple strategies)"]
     G --> H["changed files\n(lintable filter)"]
     H --> I["lint pipeline\n(via linter aggregates)"]
-    I --> J["Lint Results\n+ PARSE_WARN"]
+    I --> J["Lint Results"]
 
     E --> K[".git/hooks/pre-commit"]
     K --> L["Success / Error"]
@@ -154,22 +154,21 @@ flowchart TD
 
 - **Description**: Run the git diff check and lint pipeline on changed files.
 - **Input**: `FilePath` (project root).
-- **Output**: `LintResultList` containing lint results for changed files,
-  including `PARSE_WARN` diagnostics.
+- **Output**: `LintResultList` containing lint results for changed files.
 - **Business Rules**:
 
   - Collects changed files via FR-001 (git diff detection).
   - Filters to lintable source files only.
   - Delegates to linter aggregates for AES analysis on changed files.
-  - `PARSE_WARN` diagnostics from the filesystem crate are included in
-    output as warnings.
+  - Files that fail to parse are skipped by the linter aggregates; no separate
+    parse-warning diagnostic is included in output.
   - Only lintable file types (per FR-001 filter) are included.
 - **Edge Cases**:
 
   - No changed files → returns empty `LintResultList`.
   - All changed files are non-lintable → returns empty list.
-  - Changed file with parse failure → PARSE_WARN included, file skipped
-    for AES checks.
+  - Changed file with parse failure → skipped by the linter aggregates for
+    AES checks.
 - **Error Handling**: Git command failure → treated as no changes.
 
 ---
@@ -237,7 +236,7 @@ flowchart TD
 
 | Operation                 | Input                     | Output                           | Purpose                                    |
 | --------------------------- | --------------------------- | ---------------------------------- | -------------------------------------------- |
-| Git hooks check           | project root              | Lint results + PARSE_WARN        | Run diff and lint changed files            |
+| Git hooks check           | project root              | Lint results                     | Run diff and lint changed files            |
 | Get diff                  | project root              | Diff result with lintable filter | Get full diff result                       |
 | Get changed files         | project root, base branch | File path list                   | Get files changed vs base branch           |
 | Get default branch        | project root              | Branch name                      | Detect default branch name                 |
@@ -332,7 +331,7 @@ flowchart TD
 | --- | --------------------------------- | ----------------------- | -------- |
 | 1 | Changed files with violations   | Lint results returned | FR-004 |
 | 2 | No changed files                | Empty result list     | FR-004 |
-| 3 | Changed file with parse failure | PARSE_WARN included   | FR-004 |
+| 3 | Changed file with parse failure | Skipped by linters, no warning | FR-004 |
 | 4 | All changed files non-lintable  | Empty result list     | FR-004 |
 
 ### FR-005 — Diff Data Comparison
@@ -389,7 +388,7 @@ flowchart TD
 | **Diff variant**    | A git diff command string tried against the repository to find changed files                |
 | **Hook manager**    | Low-level component that handles`.git/hooks/` file operations                               |
 | **Diff checker**    | Component that runs git commands to identify changed files                                  |
-| **PARSE_WARN**      | Non-AES warning diagnostic for files that failed to parse. Included in check output.        |
+| **Parse skip**       | Files that fail to parse are skipped by the linter aggregates; no separate warning diagnostic is included in output. |
 
 ---
 

@@ -6,7 +6,7 @@
 
 The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, and tsc on Rust, Python, and JS/TS files. It normalizes their JSON/text reports into the unified lint-arwaky violation format using **tool-native rule codes** (e.g., `clippy::needless_return`, `ruff::E501`) and integrates them into the compliance report.
 
-The crate detects which languages are present via the filesystem crate's lightweight `detect_languages()` method and only runs relevant adapters. All adapters execute concurrently via **std::thread** (no async runtime). Each adapter runs its external tool as a subprocess, captures output, and normalizes results.
+The crate detects which languages are present via the filesystem crate's lightweight extension walk and only runs relevant adapters. All adapters execute **sequentially** (no threads, no async runtime). Each adapter runs its external tool as a subprocess, captures output, and normalizes results.
 
 ### Architecture & Data Flow
 
@@ -15,11 +15,11 @@ flowchart TD
     A["Surface"] -->|input| B["external_lint_aggregate"]
     B --> C["orchestrator"]
 
-    C -->|"detect_languages()"| D["filesystem_aggregate\n(external crate)"]
+    C -->|"discover_files()"| D["filesystem_aggregate\n(external crate)"]
     D -->|"(has_rust, has_python, has_js)"| C
 
     C --> E["adapter_selection"]
-    E -->|"adapter list"| F["thread_pool\n(std::thread per adapter)"]
+    E -->|"adapter list"| F["adapter loop\n(sequential)"]
 
     F --> G1["clippy"]
     F --> G2["rustfmt"]
@@ -57,18 +57,17 @@ flowchart TD
 
 ### FR-001: Detect Project Languages
 
-- **Description**: Determine which languages (Rust, Python, JS/TS) are present in the project using the filesystem crate's lightweight `detect_languages()` method.
+- **Description**: Determine which languages (Rust, Python, JS/TS) are present in the project using a lightweight extension walk via the filesystem aggregate's `discover_files()`.
 - **Input**: Filesystem aggregate reference.
 - **Output**: Three booleans: `has_rust`, `has_python`, `has_js`.
 - **Business Rules**:
 
-  - Calls `filesystem_aggregate.detect_languages()` which performs a lightweight walk (extension check only, no file reading or parsing).
+  - Calls `discover_files()` then inspects file extensions locally (extension check only, no file reading or parsing).
   - Language detection based on file extension:
     - Rust: `.rs`
     - Python: `.py`
     - JS/TS: `.js`, `.jsx`, `.ts`, `.tsx`
   - Symlink behavior follows filesystem crate convention: follow if target is within workspace root, skip otherwise.
-  - Early termination: filesystem crate stops scanning once all three languages are found.
 - **Edge Cases**:
 
   - Empty project → all booleans false, no adapters selected.
@@ -101,26 +100,25 @@ flowchart TD
 
 ---
 
-### FR-003: Execute Adapters Concurrently
+### FR-003: Execute Adapters Sequentially
 
-- **Description**: Run all selected adapters in parallel using **std::thread** (one thread per adapter), collecting results via channel.
+- **Description**: Run all selected adapters one after another in adapter-list order, aggregating results.
 - **Input**: Adapter list, target path.
 - **Output**: Aggregated lint results from all adapters.
 - **Business Rules**:
 
-  - One `std::thread::spawn` per adapter (up to 9 threads).
+  - Iterates the adapter list in order (Rust → Python → JS groups).
   - Each adapter receives the same target path.
-  - Results collected via `std::sync::mpsc::channel` or `thread::join` + `Vec` merge.
-  - Total capacity pre-computed for list allocation.
-  - No async runtime — pure thread-based parallelism.
-  - Each thread runs its adapter's scan method, which invokes subprocess (FR-005) and normalizes output (FR-004).
+  - Results are appended into a single `Vec` as they arrive.
+  - No threads — execution is strictly sequential.
+  - Each adapter's scan method invokes subprocess (FR-005) and normalizes output (FR-004).
 - **Edge Cases**:
 
   - All adapters return empty results → returns empty result list.
-  - One adapter thread panics → other results still collected (`join()` returns `Err`, logged as warning).
+  - One adapter fails (panic or error) → remaining adapters still run, failure logged as warning.
   - Adapter binary not installed → warning printed, results for that adapter are empty.
-  - Adapter timeout exceeded → thread returns error result, other threads continue.
-- **Error Handling**: Per-adapter errors are caught at thread boundary. "No such file or directory" or "os error 2" → warning about missing tool. Other errors → generic adapter failure warning. Thread panic → logged, results from other adapters preserved.
+  - Adapter timeout exceeded → error logged, other adapters continue.
+- **Error Handling**: Per-adapter errors are caught at the loop boundary. "No such file or directory" or "os error 2" → warning about missing tool. Other errors → generic adapter failure warning. A failing adapter does not stop subsequent adapters.
 
 ### FR-004: Normalize External Tool Output
 
@@ -263,7 +261,7 @@ flowchart TD
 
 | Operation                       | Input                                    | Output                    | Purpose                                                                    |
 | --------------------------------- | ------------------------------------------ | --------------------------- | ---------------------------------------------------------------------------- |
-| Full external lint scan         | Filesystem aggregate, target path        | Lint results              | Detect languages, select adapters, run all concurrently, aggregate results |
+| Full external lint scan         | Filesystem aggregate, target path        | Lint results              | Detect languages, select adapters, run all sequentially, aggregate results |
 | Detect project languages        | Filesystem aggregate                     | Language booleans         | Determine which languages (Rust, Python, JS/TS) are present                |
 | Select adapters                 | Language booleans, configuration         | Adapter list              | Select adapters based on detected languages and config                     |
 | Execute subprocess              | Command args, working directory, timeout | Subprocess result         | Run external tool as subprocess with timeout and error mapping             |
@@ -283,7 +281,7 @@ flowchart TD
   - File handler utility — file system utilities.
 - **External**:
 
-  - **`filesystem` crate** — provides `detect_languages()` for lightweight language detection (extension-only walk, no file reading or parsing).
+  - **`filesystem` crate** — provides `discover_files()` for lightweight language detection (extension-only walk, no file reading or parsing).
   - `cargo clippy` — Rust idiom, performance, and style linting.
   - `rustfmt --check` — Rust formatting verification.
   - `cargo audit --json` — Rust dependency vulnerability auditing.
@@ -298,10 +296,10 @@ flowchart TD
 
 ## Non-functional Requirements
 
-- **Performance**: All adapters run concurrently via std::thread; total scan time is bounded by the slowest adapter (typically < 30s for medium projects). Language detection via filesystem crate is O(n) in file count with early termination.
-- **Memory**: Each adapter's results are collected in Vec with pre-computed capacity. JSON parsing loads full tool output into memory. Thread stack: ~8 MiB per thread × 9 threads = ~72 MiB overhead.
+- **Performance**: All adapters run sequentially; total scan time is the sum of adapter times (typically < 60s per adapter timeout bound for medium projects). Language detection is O(n) in file count.
+- **Memory**: Each adapter's results are collected in Vec. JSON parsing loads full tool output into memory. No thread overhead.
 - **Accuracy**: Severity mapping is tool-specific (see FR-004 table). Unknown tool severities default to MEDIUM. Tool-native rule codes preserve full diagnostic information from the original tool.
-- **Concurrency**: Thread-based parallelism via `std::thread`. No async runtime dependency. Thread-safe result collection via `mpsc::channel` or `Mutex<Vec>`. Each adapter runs in its own thread with independent subprocess.
+- **Concurrency**: Sequential execution. No threads, no async runtime dependency.
 - **Configurability**: All adapters configurable via YAML — enabled/disabled, weight, timeout. See Appendix A.
 
 ---
@@ -330,9 +328,9 @@ flowchart TD
 | 2 | Adapter produces JSON output                  | Correctly parsed into LintResult                  | FR-004 |
 | 3 | Adapter produces empty output (no violations) | Empty result list                                 | FR-004 |
 | 4 | All adapters fail                             | Returns empty result list with warnings           | FR-003 |
-| 5 | One adapter thread panics                     | Other results still collected                     | FR-003 |
+| 5 | One adapter fails (panic or error)             | Other adapters still run and results collected | FR-003 |
 | 6 | Timeout exceeded                              | Adapter returns error, other adapters continue    | FR-005 |
-| 7 | Concurrent execution                          | All adapters run in parallel (verify with timing) | FR-003 |
+| 7 | Sequential execution                         | Adapters run one after another (verify with timing) | FR-003 |
 
 ### Normalization
 
@@ -368,8 +366,8 @@ flowchart TD
 - Subprocess timeout defaults to 60 seconds per adapter; configurable per adapter via YAML.
 - The crate assumes the project root contains appropriate config files for each language's tools (e.g., `.eslintrc`, `Cargo.toml`, `pyproject.toml`).
 - JSON parsing of tool output is lenient; malformed output results in empty results rather than crashes.
-- Language detection uses the filesystem crate's `detect_languages()` method. The filesystem crate must be initialized before external-lint runs.
-- Concurrency is thread-based (std::thread). No async runtime dependency.
+- Language detection uses the filesystem crate's `discover_files()` method. The filesystem crate must be initialized before external-lint runs.
+- Execution is sequential (no threads). No async runtime dependency.
 - Rule codes use tool-native identifiers. No new naming scheme is imposed.
 - Symlink behavior follows filesystem crate convention: follow if within workspace, skip otherwise.
 

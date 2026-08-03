@@ -6,14 +6,15 @@
 
 The mcp-server crate implements a Model Context Protocol (MCP) server that
 exposes the lint-arwaky pipeline as JSON-RPC tools for AI agents and IDEs.
-It communicates via **stdio** (stdin/stdout) using blocking I/O with
-**std::thread** for concurrent request handling. No async runtime dependency.
+It communicates via **stdio** (stdin/stdout) using the rmcp MCP framework on
+a Tokio async runtime. Tool handlers are `async fn`; concurrent requests are
+handled by the async runtime.
 
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
-    A["AI Agent / IDE"] -->|"JSON-RPC\nstdin"| B["mcp server\n(blocking stdio)"]
+    A["AI Agent / IDE"] -->|"JSON-RPC\nstdin"| B["mcp server\n(async, Tokio)"]
     B --> C{"tool"}
 
     C -->|"execute_command"| D["action dispatcher"]
@@ -49,8 +50,8 @@ flowchart TD
   stubs or placeholder success responses.
 - JSON responses include `exit_code` aligned with the workspace Exit Code
   Contract (`0` / `1` / `2` / `3`) from the root PRD.
-- `PARSE_WARN` diagnostics are included in responses as warnings, not counted
-  as AES violations.
+- Files that fail to parse are skipped by the underlying analyzers; the MCP
+  server does not emit a separate parse-warning diagnostic.
 
 ---
 
@@ -216,9 +217,9 @@ flowchart TD
 
   - Tools: `execute_command`, `list_commands`, `read_skill`, `health_check`,
     `get_config`.
-  - Transport: stdio (blocking I/O on stdin/stdout).
-  - Concurrent requests handled via std::thread (one thread per request).
-  - No async runtime dependency.
+- Transport: stdio via `rmcp::transport::stdio()`.
+- Concurrent requests handled by the Tokio async runtime; tool handlers are
+  `async fn`.
 - **Edge Cases**: None (declarative).
 - **Error Handling**: Registration failures prevent server start (fail fast).
 
@@ -252,7 +253,7 @@ flowchart TD
 
   - MCP protocol library (JSON-RPC, tool registration).
   - Host process environment (`which`, cargo, language toolchains).
-  - No async runtime dependency.
+  - Tokio async runtime (via `rmcp`).
 
 ---
 
@@ -263,8 +264,9 @@ flowchart TD
   pipeline performance.
 - **Parity**: For every non-watch action, MCP and CLI produce equivalent
   exit semantics and side effects.
-- **Concurrency**: MCP server uses blocking stdio I/O. Concurrent requests
-  handled via std::thread (one thread per request). File mutations (`fix`)
+- **Concurrency**: MCP server runs on the Tokio async runtime (rmcp). Tool
+  handlers are `async fn`; concurrent requests are handled by the runtime.
+  File mutations (`fix`)
   are serialized per path to prevent race conditions. No async runtime
   dependency.
 - **Security**: Unknown actions never invoke arbitrary shell; only
@@ -341,10 +343,9 @@ flowchart TD
 - Long-lived `watch` is deferred with explicit unsupported response until
   async watch design exists.
 - Skill file location search is best-effort across project and XDG paths.
-- MCP server uses blocking stdio I/O with std::thread for concurrency.
-  No async runtime dependency.
-- `PARSE_WARN` diagnostics are included in JSON responses as warnings,
-  not counted as AES violations.
+- MCP server uses stdio transport on the Tokio async runtime (rmcp).
+- Files that fail to parse are skipped by the underlying analyzers; no
+  separate parse-warning diagnostic is emitted.
 - All 9 external lint adapters are checked in health_check.
 
 ---
@@ -359,7 +360,7 @@ flowchart TD
 | **Parity**             | Same business outcome for an action via CLI or MCP                                            |
 | **Exit Code Contract** | 0 ok, 1 policy fail, 2 runtime error, 3 prerequisite missing                                  |
 | **get_config**         | Fifth MCP tool for effective configuration inspection                                         |
-| **PARSE_WARN**         | Non-AES warning diagnostic for files that failed to parse. Included in responses as warnings. |
+| **Parse skip**         | Files that fail to parse are skipped by the underlying analyzers; no separate warning diagnostic is emitted. |
 | **stdio**              | Standard input/output transport for MCP JSON-RPC communication                                |
 
 ---

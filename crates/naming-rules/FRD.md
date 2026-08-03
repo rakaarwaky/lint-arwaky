@@ -46,7 +46,7 @@ flowchart TD
 
 ### FR-001: Naming Convention (AES101)
 
-- **Description**: Every file stem must be snake_case with at least N underscore-separated words in `prefix_concept_suffix` pattern. If the file has no recognized layer prefix, AES000 (unknown prefix) is emitted as a pre-condition failure.
+- **Description**: Every file stem must be snake_case with at least N underscore-separated words in `prefix_concept_suffix` pattern.
 - **Input**: Pre-populated `&[FileEntry]` from filesystem aggregate (via surface), architecture configuration, layer map.
 - **Output**:
 
@@ -54,9 +54,8 @@ flowchart TD
 - **Business Rules**:
 
   - Must be snake_case: lowercase ASCII letters (`a-z`), digits (`0-9`), and underscores only. No uppercase, no hyphens, no dots.
-  - Must follow `prefix_concept_suffix` pattern with minimum N words (configurable via `config.naming.word_count.value`, default 3, fallback to 3 if non-positive).
-  - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a concurrent map keyed by word count.
-  - If the file has no recognized layer prefix (`taxonomy_`, `contract_`, `utility_`, `capabilities_`, `agent_`, `surface_`, `root_`), AES000 is emitted with the unknown prefix and a list of allowed prefixes.
+  - Must follow `prefix_concept_suffix` pattern with minimum N words (configurable via `config.naming.word_count.value`, default 3.
+  - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a static `OnceLock` table (one slot per word count 1–10).
   - Exceptions: barrel files (`mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js`) and any file listed in the rule's `exceptions` list are skipped.
 - **Edge Cases**:
 
@@ -66,12 +65,11 @@ flowchart TD
   - Abbreviations like `db` or `http` → allowed as long as lowercase and underscore-separated.
   - Digits in segments (`taxonomy_v2_vo`) → allowed.
   - Files with fewer than N words → AES101 (too few words).
-  - Files in unknown directories (no detectable layer) → AES000 (unknown prefix).
 - **Error Handling**:
 
   - Emit AES101 with the invalid stem, expected pattern, and minimum word count.
   - Emit AES000 with the unrecognized prefix and list of valid prefixes.
-  - Unreadable file paths (returned by filesystem crate with error flag) are skipped with `PARSE_WARN` warning.
+  - Unreadable file paths (returned by filesystem crate with error flag) are skipped.
 
 ---
 
@@ -127,11 +125,11 @@ flowchart TD
 ## API Contract
 
 
-| Operation                        | Input                                | Output                   | Purpose                                                              |
-| ---------------------------------- | -------------------------------------- | -------------------------- | ---------------------------------------------------------------------- |
-| Full naming audit                | `&[FileEntry]` from filesystem aggregate | Lint results             | Run both naming convention and suffix/prefix checks (AES101–AES102) |
-| Naming convention check (AES101) | `&[FileEntry]`, configuration        | AES101/AES000 violations | Validate snake_case structure and minimum word count                 |
-| Suffix/prefix check (AES102)     | `&[FileEntry]`, configuration, layer map | AES102 violations        | Validate suffix matches layer policy and prefix-suffix consistency   |
+| Operation                        | Input                                    | Output             | Purpose                                                              |
+| ---------------------------------- | ------------------------------------------ | -------------------- | ---------------------------------------------------------------------- |
+| Full naming audit                | `&[FileEntry]` from filesystem aggregate | Lint results       | Run both naming convention and suffix/prefix checks (AES101–AES102) |
+| Naming convention check (AES101) | `&[FileEntry]`, configuration            | AES101 violations | Validate snake_case structure and minimum word count                 |
+| Suffix/prefix check (AES102)     | `&[FileEntry]`, configuration, layer map | AES102 violations  | Validate suffix matches layer policy and prefix-suffix consistency   |
 
 ---
 
@@ -159,7 +157,7 @@ flowchart TD
 ## Non-functional Requirements
 
 - **Performance**: Walk and check 1,000 source files in < 1 second (regex compiled once per word count, O(n) per file).
-- **Memory**: O(1) per file for checker state. Regex cache uses a concurrent map — one entry per unique word count encountered (typically 1 entry for default config).
+- **Memory**: O(1) per file for checker state. Regex cache is a static `OnceLock` table — one slot per word count 1–10 (typically 1 entry for default config).
 - **Accuracy**: Zero false positives for correctly named files. Zero false negatives for files that violate naming structure or suffix/prefix policies. All validation is deterministic (regex + list membership) — no heuristics, no AST ambiguity.
 
 ---
@@ -229,19 +227,19 @@ flowchart TD
 ## Glossary
 
 
-| Term                       | Definition                                                                                                                     |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **AES**                    | Agentic Engineering System — the 7-layer architecture framework                                                               |
-| **Layer**                  | Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)                                       |
-| **Suffix**                 | Last underscore-separated token in the filename indicating role (`vo`, `protocol`, `orchestrator`, `checker`, etc.)            |
-| **Prefix**                 | First underscore-separated token in the filename identifying the architectural layer (`taxonomy`, `contract`, `utility`, etc.) |
-| **Stem**                   | Filename without extension (e.g.,`capabilities_user_checker`)                                                                  |
-| **Strict suffix policy**   | Layer requires suffix to be in an explicit allow-list. Any other suffix is rejected.                                           |
-| **Flexible suffix policy** | Layer allows any suffix EXCEPT those in the forbidden list.                                                                    |
-| **Forbidden suffix**       | Suffix explicitly banned for a layer (belongs to another layer's domain)                                                       |
-| **Prefix-suffix mismatch** | File prefix indicates one layer but suffix belongs to a different layer's suffix set                                           |
-| **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Caches `FileEntry[]` in `OnceLock`. Surface layer fetches via `file_list()` and passes to naming-rules. |
-| **`PARSE_WARN`**           | Warning diagnostic (non-AES code) emitted when a file path is unreadable                                                       |
+| Term                       | Definition                                                                                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AES**                    | Agentic Engineering System — the 7-layer architecture framework                                                                                                                          |
+| **Layer**                  | Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)                                                                                                  |
+| **Suffix**                 | Last underscore-separated token in the filename indicating role (`vo`, `protocol`, `orchestrator`, `checker`, etc.)                                                                       |
+| **Prefix**                 | First underscore-separated token in the filename identifying the architectural layer (`taxonomy`, `contract`, `utility`, etc.)                                                            |
+| **Stem**                   | Filename without extension (e.g.,`capabilities_user_checker`)                                                                                                                             |
+| **Strict suffix policy**   | Layer requires suffix to be in an explicit allow-list. Any other suffix is rejected.                                                                                                      |
+| **Flexible suffix policy** | Layer allows any suffix EXCEPT those in the forbidden list.                                                                                                                               |
+| **Forbidden suffix**       | Suffix explicitly banned for a layer (belongs to another layer's domain)                                                                                                                  |
+| **Prefix-suffix mismatch** | File prefix indicates one layer but suffix belongs to a different layer's suffix set                                                                                                      |
+| **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Caches`FileEntry[]` in `OnceLock`. Surface layer fetches via `file_list()` and passes to naming-rules. |
+| **Unreadable skip**     | File paths returned by the filesystem crate with an error flag are skipped silently; no separate warning diagnostic is emitted. |
 
 ---
 

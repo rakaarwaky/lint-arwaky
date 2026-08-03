@@ -118,7 +118,7 @@ Consumer
 
 **Business Rules**:
 
-- Directory walk uses ignore crate (gitignore-aware, parallel).
+- Directory walk uses ignore crate (gitignore-aware, sequential).
 - Filters by source file extensions.
 - Respects .gitignore, .ignore, and configurable ignored paths.
 - Process execution returns stdout, stderr, and success flag.

@@ -32,7 +32,7 @@ flowchart TD
     G --> L
     I --> L
 
-    L --> M["Lint Results\n+ PARSE_WARN diagnostics"]
+    L --> M["Lint Results"]
     M --> B
     B -->|output| A
 
@@ -70,11 +70,10 @@ fails.
 
   - `check` and `scan` are 1:1 equivalent aliases that invoke the exact same
     analysis pipeline.
-  - Runs the complete 6-group analysis pipeline concurrently via
-    **std::thread / rayon**: code analysis (AES301–305), naming rules
-    (AES101–102), import rules (AES201–205), external adapters
-    (Clippy, Ruff, ESLint, etc.), role rules (AES401–406), orphan detection
-    (AES501–506).
+  - Runs the complete 6-group analysis pipeline sequentially, spawning one
+    subprocess per linter group in order: quality (AES301–305), role
+    (AES401–406), import (AES201–205), naming (AES101–102), orphan
+    (AES501–506), external (Clippy, Ruff, ESLint, etc.).
   - Results filtered to the target path using canonical path comparison.
   - Supports `--git-diff` for staged-only scanning via the git hooks aggregate.
   - Path validated before scanning — returns exit code 2 if path doesn't exist.
@@ -85,8 +84,8 @@ fails.
     code breakdowns.
   - Falls back to single-scan mode if no workspaces discovered.
   - Pre-computes canonical paths once per workspace for efficient filtering.
-  - `PARSE_WARN` diagnostics from the filesystem crate are included in output
-    (displayed as warnings, not counted as AES violations).
+  - Files that fail to parse are skipped by the per-group analyzers; the CLI
+    does not emit a separate parse-warning diagnostic.
 - **Edge Cases**:
 
   - Path doesn't exist → error message + exit code 2.
@@ -96,7 +95,8 @@ fails.
   - No workspace members discovered → falls back to single-scan.
   - Pipeline fails for a specific workspace → warning logged, continues with others.
   - Empty results across all workspaces → exit code 0.
-  - Files with `parse_ok = false` → PARSE_WARN displayed, file skipped for AES checks.
+  - Files with `parse_ok = false` are skipped by the per-group analyzers; no
+    separate warning diagnostic is displayed.
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
   Pipeline errors per workspace logged as warnings; global errors return exit
   code 2.
@@ -398,7 +398,8 @@ fails.
   - When scanning a specific member path, output shows detailed per-file
     violations.
   - When scanning a workspace root, output shows compact per-AES-code counts.
-  - `PARSE_WARN` diagnostics are included in output as warnings.
+  - Files that fail to parse are skipped by the analyzers; no separate
+    parse-warning diagnostic is displayed.
 - **Edge Cases**:
 
   - Path doesn't exist → error message + exit code 2.
@@ -465,7 +466,8 @@ fails.
   - `file-watch` — watch aggregate for file monitoring.
 - **External**:
 
-  - `rayon` — data parallelism for concurrent linter group execution.
+  - Subprocess spawning (std::process::Command) — one `lint-arwaky-cli`
+    invocation per linter group, executed sequentially.
   - Signal handling (`ctrlc` crate) for graceful watch shutdown.
   - Regex library for secret redaction pattern matching.
   - No async runtime dependency.
@@ -478,9 +480,10 @@ fails.
   all platforms including Windows.
 - **Performance**: Ignore-aware scanning excludes common build/dependency
   directories. Symlink targets outside workspace root are pruned. Linter
-  groups run concurrently via std::thread / rayon.
-- **Concurrency**: Linter groups run concurrently via std::thread / rayon.
-  Deferred container construction for lightweight commands (version, adapters).
+  groups run sequentially as subprocesses (no thread pool).
+- **Concurrency**: Linter groups run sequentially; per-file parallelism is
+  handled inside each linter crate. Deferred container construction for
+  lightweight commands (version, adapters).
   No async runtime dependency.
 - **Multi-workspace**: Scan auto-discovers workspace members and runs
   per-project analysis with isolated DI containers.
@@ -504,7 +507,7 @@ fails.
 | 4 | Workspace member discovery +`--member`       | Correct member targeted                            | FR-001 |
 | 5 | No workspace members                         | Falls back to single-scan                          | FR-001 |
 | 6 | Pipeline fails for one workspace             | Warning logged, others continue                    | FR-001 |
-| 7 | Files with parse_ok = false                  | PARSE_WARN displayed, not counted as AES violation | FR-001 |
+| 7 | Files with parse_ok = false                  | Skipped by analyzers, no separate warning displayed      | FR-001 |
 
 ### FR-002 — CI
 
@@ -594,9 +597,9 @@ fails.
 - Config-show always redacts secrets before display.
 - MCP execute surface must preserve full parity with these commands
   (see mcp-server FRD).
-- Concurrency via std::thread / rayon. No async runtime dependency.
-- `PARSE_WARN` diagnostics are displayed as warnings, not counted as AES
-  violations, and do not affect exit code.
+- Linter groups run sequentially as subprocesses. No async runtime dependency.
+- Files that fail to parse are skipped by the per-group analyzers; no separate
+  parse-warning diagnostic is emitted.
 
 ---
 
@@ -612,7 +615,7 @@ fails.
 | **DI Container** | Composition root that wires capabilities to contract protocols                                         |
 | **LintResult**   | Individual violation finding with file, line, code, severity, message                                  |
 | **ScanReport**   | Aggregated results + diagnostics from a full pipeline run                                              |
-| **PARSE_WARN**   | Non-AES warning diagnostic for files that failed to parse. Displayed but not counted as AES violation. |
+| **Parse skip**   | Files that fail to parse are skipped by the per-group analyzers; no separate warning diagnostic is emitted. |
 
 ---
 

@@ -48,7 +48,7 @@ flowchart TD
 | --------------------------- | -------------------------- | ------------------- | ------------------------------------------------------------ |
 | **AES violations**        | Internal rule crates     | AES101–AES506    | `AES201 CRITICAL surface → capabilities import forbidden` |
 | **External lint results** | External linter adapters | Tool-native codes | `clippy::needless_return`, `ruff::E501`                    |
-| **Diagnostics**           | Filesystem crate         | `PARSE_WARN`      | `File skipped: parse failure — syntax error`              |
+| **Diagnostics**           | Report input (diagnostics list) | `PARSE_WARN`      | `File skipped: parse failure — syntax error`              |
 
 All formatters handle all three categories.
 
