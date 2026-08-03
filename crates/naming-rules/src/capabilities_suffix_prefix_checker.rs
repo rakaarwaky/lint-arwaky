@@ -14,7 +14,9 @@ use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::ISuffixPrefixChecker;
 use shared::naming_rules::NamingViolation;
-use shared::naming_rules::{RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
+use shared::naming_rules::{LAYER_PREFIXES, RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
+
+use std::sync::OnceLock;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -45,6 +47,12 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
                 let filename = f.rsplit('/').next().unwrap_or(&f_str);
                 let layer = self._detect_layer(&f_str, &layer_keys);
                 let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
+
+                // AES102 UnknownPrefix: no layer detected from filename prefix
+                if layer.is_none() {
+                    return self._check_unknown_prefix(&f_str, filename);
+                }
+
                 let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
                 self._check_domain_suffixes(&f_str, filename, def, &layer_name, &suffix_to_layer)
             })
@@ -98,6 +106,48 @@ impl SuffixPrefixChecker {
         let filename = utility_layer_detector::extract_filename(file);
         utility_layer_detector::detect_layer_from_prefix(filename)
             .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
+    }
+
+    /// AES102 UnknownPrefix — file prefix does not match any recognised layer prefix.
+    fn _check_unknown_prefix(&self, file: &str, filename: &str) -> Option<LintResult> {
+        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
+        if fp.is_barrel_file() || fp.is_entry_point() {
+            return None;
+        }
+
+        let stem = get_stem(filename)?;
+        let actual_prefix = stem.split('_').next().unwrap_or_default();
+
+        if actual_prefix.is_empty() || LAYER_PREFIXES.iter().any(|p| stem.starts_with(p)) {
+            return None;
+        }
+
+        static ALLOWED_LAZY: OnceLock<Vec<String>> = OnceLock::new();
+        let allowed = ALLOWED_LAZY
+            .get_or_init(|| {
+                LAYER_PREFIXES
+                    .iter()
+                    .map(|p| p.trim_end_matches('_').to_string())
+                    .collect()
+            })
+            .clone();
+
+        Some(string_filename_result(
+            file,
+            RULE_CODE_SUFFIX_PREFIX,
+            NamingViolation::UnknownPrefix {
+                prefix: actual_prefix.to_string(),
+                allowed,
+                reason: Some(LintMessage::new(format!(
+                    "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
+                     Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
+                     Likely causes: typo in the prefix name, or the file is in the wrong directory.",
+                    actual_prefix, LAYER_PREFIXES.len()
+                ))),
+            }
+            .to_string(),
+            Severity::HIGH,
+        ))
     }
 
     /// Check domain suffix rules per layer (AES102: suffix/prefix rules + cross-layer validation).
@@ -311,5 +361,23 @@ mod tests {
             &suffix_map,
         );
         assert!(result.is_none(), "barrel files must be skipped");
+    }
+
+    #[test]
+    fn unknown_prefix_produces_violation() {
+        let result = checker()._check_unknown_prefix("src/foo_bar_baz.rs", "foo_bar_baz.rs");
+        assert!(
+            result.is_some(),
+            "unknown prefix must produce AES102 violation"
+        );
+    }
+
+    #[test]
+    fn unknown_prefix_barrel_skipped() {
+        let result = checker()._check_unknown_prefix("src/foo/mod.rs", "mod.rs");
+        assert!(
+            result.is_none(),
+            "barrel files must be skipped for unknown prefix"
+        );
     }
 }

@@ -15,9 +15,7 @@ use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::INamingConventionChecker;
 use shared::naming_rules::NamingViolation;
-use shared::naming_rules::{
-    LAYER_PREFIXES, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SNAKE_CASE_SEPARATOR,
-};
+use shared::naming_rules::{RULE_CODE_NAMING_CONVENTION, SNAKE_CASE_SEPARATOR};
 
 use std::sync::OnceLock;
 
@@ -122,8 +120,6 @@ impl NamingConventionChecker {
         definition: Option<&shared::common::taxonomy_definition_vo::LayerDefinition>,
         min_words: usize,
     ) -> Option<LintResult> {
-        let layer_prefixes = LAYER_PREFIXES;
-
         let fp = FilePath::new(filename.to_string()).unwrap_or_default();
         if fp.is_barrel_file() || fp.is_entry_point() {
             return None;
@@ -132,36 +128,6 @@ impl NamingConventionChecker {
         let stem = get_stem(filename).unwrap_or_default();
 
         if layer_name.is_none() {
-            let actual_prefix = stem.split('_').next().unwrap_or_default();
-
-            if !actual_prefix.is_empty() && !layer_prefixes.iter().any(|p| stem.starts_with(p)) {
-                static ALLOWED_LAZY: OnceLock<Vec<String>> = OnceLock::new();
-                let allowed = ALLOWED_LAZY
-                    .get_or_init(|| {
-                        LAYER_PREFIXES
-                            .iter()
-                            .map(|p| p.trim_end_matches('_').to_string())
-                            .collect()
-                    })
-                    .clone();
-                return Some(string_filename_result(
-                    file,
-                    RULE_CODE_SUFFIX_PREFIX,
-                    NamingViolation::UnknownPrefix {
-                        prefix: actual_prefix.to_string(),
-                        allowed,
-                        reason: Some(LintMessage::new(format!(
-                            "The prefix '{}' is not one of the {} recognised AES layer prefixes. \
-                             Every source file must start with a valid layer prefix so it can be assigned to the correct architectural layer. \
-                             Likely causes: typo in the prefix name, or the file is in the wrong directory.",
-                            actual_prefix, layer_prefixes.len()
-                        ))),
-                    }
-                    .to_string(),
-                    Severity::HIGH,
-                ));
-            }
-
             return Some(string_filename_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
@@ -258,12 +224,5 @@ mod tests {
             3,
         );
         assert!(result.is_none());
-    }
-
-    #[test]
-    fn unknown_prefix_produces_violation() {
-        let result =
-            checker()._check_file_naming("src/foo_bar_baz.rs", "foo_bar_baz.rs", &None, None, 3);
-        assert!(result.is_some());
     }
 }
