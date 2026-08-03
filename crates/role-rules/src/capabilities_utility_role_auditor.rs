@@ -86,7 +86,7 @@ impl UtilityRoleChecker {
                         0,
                         "AES404",
                         Severity::MEDIUM,
-                        AesRoleViolation::UtilityRole {
+                        format_role_violation(&AesRoleViolation::UtilityRole {
                             reason: Some(
                                 format!(
                                     "Utility files must not define classes. Found: [{}]",
@@ -94,8 +94,7 @@ impl UtilityRoleChecker {
                                 )
                                 .into(),
                             ),
-                        }
-                        .to_string(),
+                        }, Language::Rust),
                     ));
                 }
             }
@@ -114,12 +113,12 @@ impl UtilityRoleChecker {
                 if !forbidden.is_empty() {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES404", Severity::MEDIUM,
-                        AesRoleViolation::UtilityRole {
+                        format_role_violation(&AesRoleViolation::UtilityRole {
                             reason: Some(format!(
                                 "Utility files must not define classes, interfaces, enums, or types. Found: [{}]",
                                 forbidden.join(", ")
                             ).into()),
-                        }.to_string(),
+                        }, Language::Rust),
                     ));
                 }
             }
@@ -140,10 +139,9 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    AesRoleViolation::UtilityRole {
+                    format_role_violation(&AesRoleViolation::UtilityRole {
                         reason: Some("Utility files must not define structs or enums.".into()),
-                    }
-                    .to_string(),
+                    }, Language::Rust),
                 ));
             }
         } else if ext == "typescript" || ext == "ts" || ext == "tsx" {
@@ -158,13 +156,12 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    AesRoleViolation::UtilityRole {
+                    format_role_violation(&AesRoleViolation::UtilityRole {
                         reason: Some(
                             "Utility files must not define classes, interfaces, enums, or types."
                                 .into(),
                         ),
-                    }
-                    .to_string(),
+                    }, Language::Rust),
                 ));
             }
         } else if ext == "python" || ext == "py" {
@@ -179,10 +176,9 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    AesRoleViolation::UtilityRole {
+                    format_role_violation(&AesRoleViolation::UtilityRole {
                         reason: Some("Utility files must not define classes or functions.".into()),
-                    }
-                    .to_string(),
+                    }, Language::Rust),
                 ));
             }
         }

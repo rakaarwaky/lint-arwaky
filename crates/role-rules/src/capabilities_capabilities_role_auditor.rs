@@ -17,7 +17,7 @@ use shared::common::LintResult;
 use shared::common::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::{AesRoleViolation, ICapabilitiesRoleChecker};
+use shared::role_rules::{format_role_violation, AesRoleViolation, ICapabilitiesRoleChecker};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct CapabilitiesRoleChecker {}

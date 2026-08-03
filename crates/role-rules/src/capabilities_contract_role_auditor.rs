@@ -75,14 +75,15 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = AesRoleViolation::ContractPrimitive {
-                    reason: Some(LintMessage::new(format!(
-                        "Forbidden primitive types in signature: {}",
-                        forbidden.join(", ")
-                    ))),
-                }
-                .with_language(lang)
-                .to_string();
+                let msg = format_role_violation(
+                    &AesRoleViolation::ContractPrimitive {
+                        reason: Some(LintMessage::new(format!(
+                            "Forbidden primitive types in signature: {}",
+                            forbidden.join(", ")
+                        ))),
+                    },
+                    lang,
+                );
                 violations.push(LintResult::new_arch(
                     &path_str,
                     line_no,
@@ -100,14 +101,15 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = AesRoleViolation::ContractPrimitive {
-                    reason: Some(LintMessage::new(format!(
-                        "Forbidden primitive types in signature: {}",
-                        forbidden.join(", ")
-                    ))),
-                }
-                .with_language(lang)
-                .to_string();
+                let msg = format_role_violation(
+                    &AesRoleViolation::ContractPrimitive {
+                        reason: Some(LintMessage::new(format!(
+                            "Forbidden primitive types in signature: {}",
+                            forbidden.join(", ")
+                        ))),
+                    },
+                    lang,
+                );
                 violations.push(LintResult::new_arch(
                     &path_str,
                     line_no,
@@ -124,14 +126,15 @@ impl ContractRoleChecker {
             if forbidden.is_empty() {
                 continue;
             }
-            let msg = AesRoleViolation::ContractPrimitive {
-                reason: Some(LintMessage::new(format!(
-                    "Forbidden primitive types in signature: {}",
-                    forbidden.join(", ")
-                ))),
-            }
-            .with_language(lang)
-            .to_string();
+            let msg = format_role_violation(
+                &AesRoleViolation::ContractPrimitive {
+                    reason: Some(LintMessage::new(format!(
+                        "Forbidden primitive types in signature: {}",
+                        forbidden.join(", ")
+                    ))),
+                },
+                lang,
+            );
             violations.push(LintResult::new_arch(
                 &path_str,
                 line_no,
