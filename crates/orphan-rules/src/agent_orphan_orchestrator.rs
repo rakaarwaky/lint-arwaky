@@ -29,7 +29,6 @@ use shared::role_rules::taxonomy_layer_names_constant::{
 
 use std::collections::VecDeque;
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -57,14 +56,12 @@ pub struct ArchOrphanAnalyzer {
 impl IOrphanAggregate for ArchOrphanAnalyzer {
     fn build_orphan_graph_context(
         &self,
-        files: &OrphanFileListVO,
+        _files: &OrphanFileListVO,
         root_dir: &FilePath,
     ) -> GraphAnalysisContext {
-        let all_workspace_files = self._expand_workspace_files(files, root_dir);
-        let full_files_vo = OrphanFileListVO::new(all_workspace_files);
-        self.deps
-            .resolver
-            .build_graph_context(std::slice::from_ref(&full_files_vo), root_dir.value())
+        let root_path = std::path::Path::new(root_dir.value());
+        let ignored = self.ignored_paths();
+        self.deps.filesystem.build_orphan_graph_context(root_path, &ignored)
     }
 
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
@@ -77,13 +74,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         if !self.config.enabled.value {
             return Vec::new();
         }
-        // Expand once — reused by both graph construction and inner checking.
-        let all_workspace_files = self._expand_workspace_files(files, root_dir);
-        let full_files_vo = OrphanFileListVO::new(all_workspace_files);
-        let context = self
-            .deps
-            .resolver
-            .build_graph_context(std::slice::from_ref(&full_files_vo), root_dir.value());
+        let context = self.build_orphan_graph_context(files, root_dir);
+        let all_files = context.all_workspace_files.clone();
+        let full_files_vo = OrphanFileListVO::new(all_files);
         self._check_orphans_inner(files, root_dir, &context, &full_files_vo)
     }
 
@@ -93,48 +86,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         ignored: &[String],
     ) -> (GraphAnalysisContext, Vec<LintResult>) {
         let root_path = std::path::Path::new(root_dir.value());
-        let mut all_files = Vec::new();
-        if root_path.is_dir() {
-            all_files = discover_source_files(root_path, ignored);
-        } else if root_path.is_file() {
-            // Single file scan — include the file directly
-            let ext = root_path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "rs" | "py" | "ts" | "js" | "tsx" | "jsx") {
-                let fp_check =
-                    FilePath::new(root_path.to_string_lossy().to_string()).unwrap_or_default();
-                if !self.deps.filesystem.should_ignore(&fp_check, ignored) {
-                    all_files.push(root_dir.value().to_string());
-                }
-            }
-        } // Normalize all file paths to be relative to workspace root so that
-        // inbound_links (built by the graph resolver) and orphan analyzers
-        // use a consistent path format.
-        let top_root = self
-            .deps
-            .filesystem
-            .workspace_root(root_dir)
-            .unwrap_or_else(|| root_path.to_path_buf());
-        let all_files: Vec<String> = all_files
-            .into_iter()
-            .map(|f| {
-                std::path::Path::new(&f)
-                    .strip_prefix(&top_root)
-                    .map(|p| p.to_string_lossy().to_string())
-                    .unwrap_or(f)
-            })
-            .collect();
-
-        let files_vo = OrphanFileListVO::new(all_files);
-
-        // Expand workspace files BEFORE building the graph context so that the
-        // import graph has all workspace files to resolve cross-file imports.
-        // Without this, single-file scans build a graph from only 1 file,
-        // causing orphan detection to miss connections to container/surface files.
-        let expanded_files = self._expand_workspace_files(&files_vo, root_dir);
-        let expanded_vo = OrphanFileListVO::new(expanded_files);
-
-        let context = self.build_orphan_graph_context(&expanded_vo, root_dir);
-        let results = self.check_orphans_with_context(&expanded_vo, root_dir, &context);
+        let context = self.deps.filesystem.build_orphan_graph_context(root_path, ignored);
+        let files_vo = OrphanFileListVO::new(context.all_workspace_files.clone());
+        let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
         (context, results)
     }
 
@@ -175,91 +129,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
 impl ArchOrphanAnalyzer {
     pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
         Self { deps, config }
-    }
-
-    fn _expand_workspace_files(
-        &self,
-        files: &OrphanFileListVO,
-        root_dir: &FilePath,
-    ) -> Vec<String> {
-        let root_path = std::path::Path::new(root_dir.value());
-        let top_root = self
-            .deps
-            .filesystem
-            .workspace_root(root_dir)
-            .unwrap_or_else(|| root_path.to_path_buf());
-        let mut seen: HashSet<String> = files.values.iter().cloned().collect();
-        let mut result: Vec<String> = files.values.clone();
-        let ignored_config: Vec<String> = self
-            .config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|v| v.value.clone())
-            .collect();
-        for ws_dir in &["crates", "packages", "modules"] {
-            let ws_path = top_root.join(ws_dir);
-            if self.deps.filesystem.is_dir(&ws_path) {
-                let entries = self
-                    .deps
-                    .filesystem
-                    .scan_directory_with_ignored(&ws_path, &[]);
-                for entry_path in entries {
-                    let name = entry_path
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("")
-                        .to_string();
-                    if !entry_path.is_dir() {
-                        continue;
-                    }
-                    // Skip ignored workspace members (e.g. tests/, target/)
-                    let member_dir = top_root.join(ws_dir).join(&name);
-                    if self
-                        .deps
-                        .filesystem
-                        .is_ignored_dir(&member_dir, &ignored_config)
-                    {
-                        continue;
-                    }
-                    let src_dir = top_root.join(ws_dir).join(&name).join("src");
-                    if self.deps.filesystem.is_dir(&src_dir) {
-                        let workspace_files = discover_source_files(&src_dir, &[]);
-                        for f in workspace_files {
-                            // Skip ignored paths (e.g. tests/, target/)
-                            let f_path = FilePath::new(f.clone()).unwrap_or_default();
-                            if self.deps.filesystem.should_ignore(&f_path, &ignored_config) {
-                                continue;
-                            }
-                            let rel = std::path::Path::new(&f)
-                                .strip_prefix(&top_root)
-                                .map(|p| p.to_string_lossy().to_string())
-                                .unwrap_or(f);
-                            if seen.insert(rel.clone()) {
-                                result.push(rel);
-                            }
-                        }
-                    }
-                }
-                // Also scan source files directly in the workspace dir (e.g. modules/root_cli_main_entry.py)
-                let root_files = discover_source_files(&ws_path, &[]);
-                for f in root_files {
-                    // Skip ignored paths (e.g. tests/, target/)
-                    let f_path = FilePath::new(f.clone()).unwrap_or_default();
-                    if self.deps.filesystem.should_ignore(&f_path, &ignored_config) {
-                        continue;
-                    }
-                    let rel = std::path::Path::new(&f)
-                        .strip_prefix(&top_root)
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or(f);
-                    if seen.insert(rel.clone()) {
-                        result.push(rel);
-                    }
-                }
-            }
-        }
-        result
     }
 
     fn _check_orphans_inner(
@@ -604,37 +473,13 @@ impl ArchOrphanAnalyzer {
             .map(|r| !r.enabled.value)
             .unwrap_or(false)
     }
-}
 
-// ─── Free Functions ───────────────────────────────────────
-
-/// Walk `root` recursively, skip directories whose name matches `ignored`,
-/// and return absolute path strings for source files (.rs, .py, .ts, .js, .tsx, .jsx).
-fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
-    const SOURCE_EXTS: &[&str] = &["rs", "py", "ts", "js", "tsx", "jsx"];
-    let mut result = Vec::new();
-    let mut stack = vec![root.to_path_buf()];
-    while let Some(dir) = stack.pop() {
-        let entries = match std::fs::read_dir(&dir) {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if ignored.iter().any(|ig| dir_name == ig.as_str()) {
-                    continue;
-                }
-                stack.push(path);
-            } else if path.is_file() {
-                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                    if SOURCE_EXTS.contains(&ext) {
-                        result.push(path.to_string_lossy().to_string());
-                    }
-                }
-            }
-        }
+    fn ignored_paths(&self) -> Vec<String> {
+        self.config
+            .ignored_paths
+            .values
+            .iter()
+            .map(|v| v.value.clone())
+            .collect()
     }
-    result
 }

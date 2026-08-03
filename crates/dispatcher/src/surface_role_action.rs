@@ -19,6 +19,10 @@ pub fn collect_role_direct(
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
+    // Build file index first — filesystem discovers files, reads content, parses AST
+    fs_agg.build_file_index(std::path::Path::new("."));
+
+    // Pass pre-fetched FileEntry data to role orchestrator
     let results = role_orchestrator.run_audit_with_entries(fs_agg.file_list());
     let mut violations: Vec<ViolationItem> = results
         .iter()

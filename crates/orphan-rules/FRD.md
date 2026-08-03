@@ -6,33 +6,29 @@
 
 The orphan-rules crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It builds its own import reachability graph and inheritance map, then performs layer-specific orphan analysis starting from valid entry points (containers, binary entries, main files).
 
-Graph construction happens **inside the crate**: `OrphanGraphResolver` (capabilities_orphan_graph_resolver.rs) discovers workspace files (including direct `std::fs` walks), parses each file via the shared parser dispatcher (`IOrphanParserProtocol` — Rust via `syn`, Python/TS via comment-aware line-based parsing), resolves imports to file edges, and produces a `GraphAnalysisContext`. The external `filesystem` crate is used only for helper operations: workspace-root detection, ignore filtering, content reads, directory checks, and orphan module-path resolution.
+Graph construction is delegated to the external `filesystem` aggregate via `build_orphan_graph_context(root, ignored)`, which discovers workspace files, parses each file via tree-sitter AST, resolves imports to file edges, and returns a `GraphAnalysisContext`. The Surface calls `filesystem.build_file_index(root)` to populate caches, then calls `filesystem.build_orphan_graph_context(root, ignored)` to get the analysis context. The orphan-rules crate receives pre-built graph data and performs zero I/O — it only performs business logic analysis on pre-fetched data.
 
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["orphan_aggregate"]
-    B --> C["orphan_orchestrator"]
-
-    C -->|"workspace root / ignore / content"| D["filesystem_aggregate\n(external crate)"]
+    A["Surface"] -->|"build_file_index(root)"| D["filesystem_aggregate\n(external crate)"]
+    A -->|"build_orphan_graph_context(root, ignored)"| D
 
     subgraph FS ["filesystem crate (external)"]
-        D --> E1["workspace_root / is_dir / should_ignore"]
-        D --> E2["read_to_string"]
-        D --> E3["resolve_orphan_module_path"]
+        D --> E1["file_walker"]
+        D --> E2["AST parser\n(imports + identifiers)"]
+        D --> E3["graph builder\n(reverse links, definitions)"]
+        E1 --> G1["GraphAnalysisContext\n(import graph, inbound links,\ninheritance map, file list)"]
+        E2 --> G1
+        E3 --> G1
     end
 
-    D -->|"helpers"| C
+    G1 -->|"return"| D
+    D -->|"GraphAnalysisContext\n(pre-built)"| A
 
-    subgraph OR ["orphan-rules (internal)"]
-        C --> R1["OrphanGraphResolver\n(graph construction)"]
-        R1 --> R2["parser_dispatcher\n(shared parsers: syn / line-based)"]
-        R1 --> R3["std::fs walks + reads\n(workspace discovery)"]
-        R1 --> G1["GraphAnalysisContext\n(import graph, inbound links,\ninheritance map, file list)"]
-    end
-
-    G1 -->|"built in-crate"| C
+    A -->|"scan_orphans(context)"| B["orphan_aggregate"]
+    B --> C["orphan_orchestrator\n(zero I/O)"]
 
     C --> H1["taxonomy_analysis"]
     C --> H2["contract_analysis"]
@@ -54,7 +50,6 @@ flowchart TD
 
     style A fill:#e1f5fe,stroke:#0288d1
     style FS fill:#fff3e0,stroke:#e65100
-    style OR fill:#e8f5e9,stroke:#2e7d32
     style D fill:#fff3e0,stroke:#e65100
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2

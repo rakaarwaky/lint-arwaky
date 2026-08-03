@@ -6,28 +6,29 @@
 
 The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility) as defined by the 7-layer AES architecture. It receives pre-parsed file data from the external filesystem crate, classifies files by their filename prefix, and dispatches to 6 layer-specific role checkers (AES401–AES406). Root layer files are skipped (pure DI wiring only).
 
-File system operations handled by the external `filesystem` crate. The role-rules crate receives file data (path + content + language + parse metadata) from the filesystem crate , then classifies and delegates analysis to its internal checkers. The role-rules crate does not perform file I/O or AST parsing directly.
+File discovery, raw content reads, and AST parsing are handled by the external `filesystem` aggregate (`IFilesystemAggregate`). The Surface calls `filesystem.build_file_index(root)` to populate caches, then passes pre-fetched `&[FileEntry]` (with parse_metadata) to the role-rules orchestrator via `run_audit_with_entries`. The role-rules crate does zero I/O — it only performs business logic analysis on pre-fetched data.
 
-Import checking is NOT performed by role-rules.All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES206). Role-rules only validates structural and responsibility constraints within each file.
+Import checking is NOT performed by role-rules. All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES206). Role-rules only validates structural and responsibility constraints within each file.
 
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["role_aggregate"]
-    B --> C["role_orchestrator"]
-
-    C -->|"request files"| D["filesystem_aggregate\n(external crate)"]
+    A["Surface"] -->|"build_file_index(root)"| D["filesystem_aggregate\n(external crate)"]
+    A -->|"file_list()"| D
 
     subgraph FS ["filesystem crate (external)"]
         D --> E1["file_walker"]
-        D --> E2["ast_parser"]
-        E1 --> G1["Vec‹FileEntry›"]
+        D --> E2["AST parser\n(parse_metadata)"]
+        E1 --> G1["FileEntry[]\n+ content_map"]
         E2 --> G1
     end
 
     G1 -->|"return"| D
-    D -->|"file data\n(path + content +\nlanguage + parse metadata)"| C
+    D -->|"FileEntry[]\n(pre-fetched)"| A
+
+    A -->|"run_audit_with_entries(&[FileEntry])"| B["role_aggregate"]
+    B --> C["role_orchestrator\n(zero I/O)"]
 
     C -->|"classify by prefix"| H1["taxonomy_check"]
     C -->|"classify by prefix"| H2["contract_check"]
@@ -53,8 +54,6 @@ flowchart TD
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2
 ```
-
-```---
 
 ## Functional Requirements
 

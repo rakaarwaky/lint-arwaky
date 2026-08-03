@@ -13,7 +13,7 @@ pub fn collect_quality(
     path: Option<FilePath>,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     filter: Option<String>,
-    _fs_agg: Arc<dyn IFilesystemAggregate>,
+    fs_agg: Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -24,8 +24,13 @@ pub fn collect_quality(
     }
     let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
 
-    // Use the injected linter directly — per-config loading handled at binary level
-    let results = code_analysis_linter.run_code_analysis_path(&root_fp);
+    // Build file index first — filesystem discovers files, reads content, parses AST
+    let root_path = std::path::Path::new(root_fp.value());
+    fs_agg.build_file_index(root_path);
+
+    // Pass pre-fetched FileEntry data to quality orchestrator
+    let file_list = fs_agg.file_list();
+    let results = code_analysis_linter.run_analysis_with_entries(file_list);
     let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)

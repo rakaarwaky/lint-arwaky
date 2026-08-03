@@ -6,36 +6,37 @@
 
 The quality-rules crate enforces general code quality, formatting limits, and clean-coding policies. It protects the codebase from bloated files, empty structures, duplicate blocks, and bypass annotations while guaranteeing zero tolerance for warning/error suppressions.
 
-**File system operations  are handled by the external `filesystem` crate.** The quality-rules crate receives pre-read file data (path + content) from the filesystem crate , then delegates analysis to its internal checkers. The quality-rules crate does not perform AST parsing or file I/O directly.
+File discovery, raw content reads, and AST parsing are handled by the external `filesystem` aggregate (`IFilesystemAggregate`). The Surface calls `filesystem.build_file_index(root)` to populate caches, then passes pre-fetched `&[FileEntry]` to the quality-rules orchestrator via `run_audit_with_entries`. The quality-rules crate does zero I/O — it only performs business logic analysis on pre-fetched data.
 
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["code_analysis_aggregate"]
-    B --> C["code_analysis_orchestrator"]
-
-    C -->|"request files"| D["filesystem_aggregate\n(external crate)"]
+    A["Surface"] -->|"build_file_index(root)"| D["filesystem_aggregate\n(external crate)"]
+    A -->|"file_list()"| D
 
     subgraph FS ["filesystem crate (external)"]
         D --> E1["file_walker"]
-        E1 --> G1["Vec‹FileEntry›"]
+        D --> E2["AST parser\n(parse_metadata)"]
+        E1 --> G1["FileEntry[]\n+ content_map"]
+        E2 --> G1
     end
 
     G1 -->|"return"| D
-    D -->|"file data\n(path + content)"| C
+    D -->|"FileEntry[]\n(pre-fetched)"| A
+
+    A -->|"run_audit_with_entries(&[FileEntry])"| B["code_analysis_aggregate"]
+    B --> C["code_analysis_orchestrator\n(zero I/O)"]
 
     C --> H1["line_count_check"]
-    C --> H2["line_count_check"]
-    C --> H3["definition_check"]
-    C --> H4["bypass_detection"]
-    C --> H5["duplication_analysis"]
+    C --> H2["definition_check"]
+    C --> H3["bypass_detection"]
+    C --> H4["duplication_analysis"]
 
     H1 --> I["Violations"]
     H2 --> I
     H3 --> I
     H4 --> I
-    H5 --> I
     I --> J["LintResult"]
     J --> C
     C --> B
