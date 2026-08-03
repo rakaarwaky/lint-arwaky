@@ -12,7 +12,7 @@ pub fn collect_import(
     path: Option<FilePath>,
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     filter: Option<String>,
-    _fs_agg: Arc<dyn IFilesystemAggregate>,
+    fs_agg: Arc<dyn IFilesystemAggregate>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -23,10 +23,17 @@ pub fn collect_import(
     }
     let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
 
-    // run_audit is sync in new API — call directly
+    // Build file index first — filesystem discovers files, reads content, parses imports
+    let root_path = std::path::Path::new(root_fp.value());
+    fs_agg.build_file_index(root_path);
+
+    // Pass pre-fetched FileEntry data to import orchestrator
+    let file_list = fs_agg.file_list();
     let results = import_orchestrator
-        .run_audit(&root_fp)
-        .map_err(|e| format!("[error] import rules failed: {e}"))?;
+        .run_audit_with_entries(file_list)
+        .into_iter()
+        .collect::<Vec<_>>();
+
     let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)

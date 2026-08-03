@@ -44,15 +44,19 @@ pub fn collect_ci(
     }
     let root = FilePath::new(root_str).map_err(|_| "invalid path".to_string())?;
 
+    // Build file index once — all rule checkers consume fresh data
+    let root_path = std::path::Path::new(root.value());
+    filesystem.build_file_index(root_path);
+
     // Quality analysis (sync)
     let mut results = code_analysis_linter.run_code_analysis_path(&root);
 
-    // Import rules (sync in new API)
-    if let Ok(import_res) = import_orchestrator.run_audit(&root) {
-        results.extend(import_res);
-    }
+    // Import rules — pass pre-fetched FileEntry data
+    let file_list = filesystem.file_list();
+    let import_res = import_orchestrator.run_audit_with_entries(file_list);
+    results.extend(import_res);
 
-    // Naming rules
+    // Naming rules — pass pre-fetched FileEntry data
     let naming_res = naming_orchestrator.run_audit_with_entries(filesystem.file_list());
     results.extend(naming_res);
 

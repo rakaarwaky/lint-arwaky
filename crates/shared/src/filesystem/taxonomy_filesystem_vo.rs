@@ -3,6 +3,7 @@
 
 pub use crate::common::taxonomy_language_vo::Language;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Maximum file size for linting (2 MiB).
@@ -441,4 +442,146 @@ pub struct ScanTiming {
     pub extract_ms: u64,
     pub graph_ms: u64,
     pub total_ms: u64,
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Graph Analysis VOs — used by orphan-rules and other consumers
+// ═══════════════════════════════════════════════════════════════
+
+/// Analysis context produced by filesystem graph construction.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct GraphAnalysisContext {
+    pub import_graph: ImportGraph,
+    pub inbound_links: InboundLinkMap,
+    pub inheritance_map: InheritanceMap,
+    /// All workspace files used to build the graph.
+    pub all_workspace_files: Vec<String>,
+}
+
+impl GraphAnalysisContext {
+    pub fn new(
+        import_graph: ImportGraph,
+        inbound_links: InboundLinkMap,
+        inheritance_map: InheritanceMap,
+        all_workspace_files: Vec<String>,
+    ) -> Self {
+        Self {
+            import_graph,
+            inbound_links,
+            inheritance_map,
+            all_workspace_files,
+        }
+    }
+}
+
+/// Forward dependency graph: file → files it imports.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ImportGraph {
+    pub mapping: HashMap<String, Vec<String>>,
+}
+
+impl ImportGraph {
+    pub fn new(value: HashMap<String, Vec<String>>) -> Self {
+        Self { mapping: value }
+    }
+}
+
+/// Reverse dependency map: file → files that import it.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct InboundLinkMap {
+    pub mapping: HashMap<String, Vec<String>>,
+}
+
+impl InboundLinkMap {
+    pub fn new(value: HashMap<String, Vec<String>>) -> Self {
+        Self { mapping: value }
+    }
+
+    /// Retrieve importers for a file path, falling back to canonical or suffix matching.
+    pub fn get_importers(&self, path: &str) -> Option<&Vec<String>> {
+        let mut result: Option<&Vec<String>> = None;
+
+        if let Some(v) = self.mapping.get(path) {
+            result = Some(v);
+        }
+
+        let with_prefix = format!("./{}", path);
+        if let Some(v) = self.mapping.get(&with_prefix) {
+            if let Some(existing) = result {
+                if v.len() > existing.len() {
+                    result = Some(v);
+                }
+            } else {
+                result = Some(v);
+            }
+        }
+
+        if result.is_none() {
+            for marker in &["/crates/", "/packages/", "/modules/"] {
+                if let Some(pos) = path.find(marker) {
+                    let rel = &path[pos + 1..];
+                    if let Some(v) = self.mapping.get(rel) {
+                        result = Some(v);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if let Some(pos) = path.find("/crates/") {
+            let with_middle_dot = format!("{}/.{}", &path[..pos], &path[pos..]);
+            if let Some(v) = self.mapping.get(&with_middle_dot) {
+                if let Some(existing) = result {
+                    if v.len() > existing.len() {
+                        result = Some(v);
+                    }
+                } else {
+                    result = Some(v);
+                }
+            }
+        }
+
+        if result.is_none() {
+            let clean = path.strip_prefix("./").unwrap_or(path);
+            if let Some(v) = self.mapping.get(clean) {
+                result = Some(v);
+            }
+        }
+
+        if result.is_none() {
+            let clean = path.strip_prefix("./").unwrap_or(path);
+            for (k, v) in &self.mapping {
+                let k_clean = k.strip_prefix("./").unwrap_or(k);
+                if k_clean == clean {
+                    result = Some(v);
+                    break;
+                }
+            }
+        }
+
+        if result.is_none() {
+            let clean = path.strip_prefix("./").unwrap_or(path);
+            for (k, v) in &self.mapping {
+                let k_clean = k.strip_prefix("./").unwrap_or(k);
+                if k_clean.ends_with(clean) || clean.ends_with(k_clean) {
+                    result = Some(v);
+                    break;
+                }
+            }
+        }
+
+        result
+    }
+}
+
+/// Inheritance relationships: file → inherited trait/interface names.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct InheritanceMap {
+    pub mapping: HashMap<String, Vec<String>>,
+}
+
+impl InheritanceMap {
+    pub fn new(value: HashMap<String, Vec<String>>) -> Self {
+        Self { mapping: value }
+    }
 }

@@ -11,6 +11,7 @@ use crate::filesystem::contract_parser_protocol::IParserProtocol;
 use crate::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
 use crate::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
 use std::path::{Path, PathBuf};
 
 /// Aggregate trait — composes all 5 focused filesystem protocol traits.
@@ -60,4 +61,18 @@ pub trait IFilesystemAggregate:
     /// Get tree-sitter-extracted used identifiers for a file (from ParseMetadata).
     /// Returns empty vec if file not in cache or parse_metadata is None.
     fn used_identifiers_for(&self, path: &Path) -> Vec<String>;
+
+    /// Build file index from root — discovers source files, reads content, parses imports.
+    /// Populates file_list(), import_list(), and parse_metadata caches.
+    /// No-op if already built. Must be called before file_list() returns useful data.
+    fn build_file_index(&self, root: &Path);
+
+    /// Build orphan-detection graph context from workspace root.
+    /// Discovers source files, reads content, extracts imports, builds import graph,
+    /// and returns the analysis context with forward/reverse links and inheritance.
+    fn build_orphan_graph_context(
+        &self,
+        root_dir: &Path,
+        ignored: &[String],
+    ) -> GraphAnalysisContext;
 }

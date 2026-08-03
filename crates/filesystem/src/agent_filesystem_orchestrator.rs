@@ -12,7 +12,8 @@ use shared::filesystem::contract_parser_protocol::IParserProtocol;
 use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
 use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
-    DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning, ScanTiming,
+    DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
+    InboundLinkMap, InheritanceMap, ParseWarning, ScanTiming,
 };
 use std::collections::HashMap;
 use std::path::Path;
@@ -486,6 +487,81 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             })
             .unwrap_or_default()
     }
+
+    fn build_file_index(&self, root: &Path) {
+        self.build_file_index(root);
+    }
+
+    fn build_orphan_graph_context(
+        &self,
+        root_dir: &Path,
+        _ignored: &[String],
+    ) -> GraphAnalysisContext {
+        self.build_file_index(root_dir);
+        self.ensure_graph_built();
+
+        let top_root = self
+            .deps
+            .workspace
+            .workspace_root(
+                &FilePath::new(root_dir.to_string_lossy().to_string()).unwrap_or_default(),
+            )
+            .unwrap_or_else(|| root_dir.to_path_buf());
+
+        // Build forward graph from import entries (source → targets)
+        let imports = self.imports.get().cloned().unwrap_or_default();
+        let mut forward: HashMap<String, Vec<String>> = HashMap::new();
+        for imp in &imports {
+            let src_rel = path_to_relative(&imp.source_file, &top_root);
+            let target = imp.resolved_path.as_ref().unwrap_or(&imp.source_file);
+            let tgt_rel = path_to_relative(target, &top_root);
+            if src_rel != tgt_rel {
+                forward.entry(src_rel).or_default().push(tgt_rel);
+            }
+        }
+
+        let reverse: HashMap<String, Vec<String>> = self
+            .deps
+            .graph
+            .reverse_links()
+            .iter()
+            .map(|(k, v)| {
+                let rel = path_to_relative(k, &top_root);
+                let rel_v: Vec<String> = v.iter().map(|p| path_to_relative(p, &top_root)).collect();
+                (rel, rel_v)
+            })
+            .collect();
+
+        // implementations() keys are symbol/trait names (String), values are file paths
+        let inheritance: HashMap<String, Vec<String>> = self
+            .deps
+            .graph
+            .implementations()
+            .iter()
+            .map(|(k, v)| {
+                let rel_v: Vec<String> = v.iter().map(|p| path_to_relative(p, &top_root)).collect();
+                (k.clone(), rel_v)
+            })
+            .collect();
+
+        let all_files: Vec<String> = self
+            .files
+            .get()
+            .map(|entries| {
+                entries
+                    .iter()
+                    .map(|e| path_to_relative(&e.path, &top_root))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        GraphAnalysisContext::new(
+            ImportGraph::new(forward),
+            InboundLinkMap::new(reverse),
+            InheritanceMap::new(inheritance),
+            all_files,
+        )
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
@@ -600,4 +676,13 @@ impl FilesystemOrchestrator {
             let _ = self.cached_implementations.set(imp);
         }
     }
+}
+
+// ─── Free Functions ───────────────────────────────────────
+
+/// Convert absolute path to relative path string (relative to workspace root).
+fn path_to_relative(path: &Path, root: &Path) -> String {
+    path.strip_prefix(root)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| path.to_string_lossy().to_string())
 }
