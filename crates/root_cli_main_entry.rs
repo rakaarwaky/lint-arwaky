@@ -9,7 +9,11 @@ use shared::cli_commands::Format;
 use shared::common::{FilePath, GitBranchName, Threshold};
 
 #[derive(Parser)]
-#[command(name = "lint-arwaky", version, about = "Autonomous code quality and architecture enforcement")]
+#[command(
+    name = "lint-arwaky",
+    version,
+    about = "Autonomous code quality and architecture enforcement"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -163,8 +167,9 @@ fn parse_format(s: &str) -> Format {
 fn main() {
     let cli = Cli::parse();
 
-    let filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let filesystem: Arc<
+        dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
 
     let config_container =
         config_system::root_config_system_container::ConfigContainer::new(filesystem.clone());
@@ -187,9 +192,10 @@ fn main() {
     let import_orchestrator = import_container.orchestrator();
 
     let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-        Arc::new(config_orchestrator.load_config_sync(
-            &FilePath::new(".".to_string()).unwrap_or_default(),
-        )),
+        Arc::new(
+            config_orchestrator
+                .load_config_sync(&FilePath::new(".".to_string()).unwrap_or_default()),
+        ),
         Arc::new(shared::common::LayerMapVO::new(
             config_orchestrator
                 .load_config_sync(&FilePath::new(".".to_string()).unwrap_or_default())
@@ -236,9 +242,8 @@ fn main() {
         project_setup::root_project_setup_container::SetupContainer::new(filesystem.clone());
     let setup_orchestrator = setup_container.aggregate();
 
-    let watch_aggregate =
-        file_watch::root_file_watch_container::FileWatchContainer::new()
-            .aggregate(code_analysis_linter.clone());
+    let watch_aggregate = file_watch::root_file_watch_container::FileWatchContainer::new()
+        .aggregate(code_analysis_linter.clone());
 
     let report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate> = Arc::new(
         report_formatter::ReportFormatterOrchestrator::new(report_formatter::ReportFormatterDeps {
@@ -250,7 +255,12 @@ fn main() {
     );
 
     let exit_code = match cli.command {
-        Command::Scan { path, format, filter, member } => cli_commands::surface_scan_command::handle_scan(
+        Command::Scan {
+            path,
+            format,
+            filter,
+            member,
+        } => cli_commands::surface_scan_command::handle_scan(
             Some(FilePath::new(path).unwrap_or_default()),
             parse_format(&format),
             filesystem.clone(),
@@ -258,77 +268,92 @@ fn main() {
             filter,
             member,
         ),
-        Command::Check { path, format, filter } => {
-            cli_commands::surface_scan_command::handle_check(
-                Some(FilePath::new(path).unwrap_or_default()),
-                parse_format(&format),
-                code_analysis_linter.clone(),
-                filesystem.clone(),
-                Some(config_orchestrator.clone()),
-                filter,
-            )
-        }
-        Command::Quality { path, format, filter } => {
-            cli_commands::surface_scan_command::handle_quality(
-                Some(FilePath::new(path).unwrap_or_default()),
-                parse_format(&format),
-                code_analysis_linter.clone(),
-                filesystem.clone(),
-                filter,
-            )
-        }
-        Command::Role { path, format, filter } => {
-            cli_commands::surface_scan_command::handle_role(
-                Some(FilePath::new(path).unwrap_or_default()),
-                parse_format(&format),
-                role_orchestrator.clone(),
-                report_formatter.clone(),
-                filesystem.clone(),
-                filter,
-            )
-        }
-        Command::Import { path, format, filter } => {
-            cli_commands::surface_scan_command::handle_import(
-                Some(FilePath::new(path).unwrap_or_default()),
-                parse_format(&format),
-                import_orchestrator.clone(),
-                report_formatter.clone(),
-                filesystem.clone(),
-                filter,
-            )
-        }
-        Command::Naming { path, format, filter } => {
-            cli_commands::surface_scan_command::handle_naming(
-                Some(FilePath::new(path).unwrap_or_default()),
-                parse_format(&format),
-                naming_orchestrator.clone(),
-                report_formatter.clone(),
-                filesystem.clone(),
-                filter,
-            )
-        }
-        Command::Orphan { path, format, filter, member } => {
-            cli_commands::surface_scan_command::handle_orphan(
-                Some(FilePath::new(path).unwrap_or_default()),
-                member,
-                parse_format(&format),
-                orphan_orchestrator.clone(),
-                config_orchestrator.clone(),
-                report_formatter.clone(),
-                filesystem.clone(),
-                filter,
-            )
-        }
-        Command::External { path, format, filter } => {
-            cli_commands::surface_scan_command::handle_external(
-                Some(FilePath::new(path).unwrap_or_default()),
-                parse_format(&format),
-                external_lint.clone(),
-                report_formatter.clone(),
-                filesystem.clone(),
-                filter,
-            )
-        }
+        Command::Check {
+            path,
+            format,
+            filter,
+        } => cli_commands::surface_scan_command::handle_check(
+            Some(FilePath::new(path).unwrap_or_default()),
+            parse_format(&format),
+            code_analysis_linter.clone(),
+            filesystem.clone(),
+            Some(config_orchestrator.clone()),
+            filter,
+        ),
+        Command::Quality {
+            path,
+            format,
+            filter,
+        } => cli_commands::surface_scan_command::handle_quality(
+            Some(FilePath::new(path).unwrap_or_default()),
+            parse_format(&format),
+            code_analysis_linter.clone(),
+            filesystem.clone(),
+            filter,
+        ),
+        Command::Role {
+            path,
+            format,
+            filter,
+        } => cli_commands::surface_scan_command::handle_role(
+            Some(FilePath::new(path).unwrap_or_default()),
+            parse_format(&format),
+            role_orchestrator.clone(),
+            report_formatter.clone(),
+            filesystem.clone(),
+            filter,
+        ),
+        Command::Import {
+            path,
+            format,
+            filter,
+        } => cli_commands::surface_scan_command::handle_import(
+            Some(FilePath::new(path).unwrap_or_default()),
+            parse_format(&format),
+            import_orchestrator.clone(),
+            report_formatter.clone(),
+            filesystem.clone(),
+            filter,
+        ),
+        Command::Naming {
+            path,
+            format,
+            filter,
+        } => cli_commands::surface_scan_command::handle_naming(
+            Some(FilePath::new(path).unwrap_or_default()),
+            parse_format(&format),
+            naming_orchestrator.clone(),
+            report_formatter.clone(),
+            filesystem.clone(),
+            filter,
+        ),
+        Command::Orphan {
+            path,
+            format,
+            filter,
+            member,
+        } => cli_commands::surface_scan_command::handle_orphan(
+            Some(FilePath::new(path).unwrap_or_default()),
+            member,
+            parse_format(&format),
+            orphan_orchestrator.clone(),
+            config_orchestrator.clone(),
+            report_formatter.clone(),
+            filesystem.clone(),
+            filter,
+        ),
+        Command::External {
+            path,
+            format,
+            filter,
+        } => cli_commands::surface_scan_command::handle_external(
+            Some(FilePath::new(path).unwrap_or_default()),
+            parse_format(&format),
+            external_lint.clone(),
+            report_formatter.clone(),
+            filesystem.clone(),
+            filter,
+        ),
         Command::Ci { path, threshold } => cli_commands::surface_ci_command::handle_ci(
             code_analysis_linter.clone(),
             import_orchestrator.clone(),
@@ -348,23 +373,19 @@ fn main() {
             code_analysis_linter.clone(),
             fix_orchestrator_factory.clone(),
         ),
-        Command::Git { base, path, filter } => {
-            cli_commands::surface_git_command::handle_git_diff(
-                code_analysis_linter.clone(),
-                GitBranchName::new(base),
-                Some(&path),
-                filter.as_deref(),
-            )
-        }
+        Command::Git { base, path, filter } => cli_commands::surface_git_command::handle_git_diff(
+            code_analysis_linter.clone(),
+            GitBranchName::new(base),
+            Some(&path),
+            filter.as_deref(),
+        ),
         Command::Doctor => cli_commands::surface_maintenance_command::handle_doctor(
             maintenance_orchestrator.clone(),
         ),
-        Command::Security { path } => {
-            cli_commands::surface_maintenance_command::handle_security(
-                maintenance_orchestrator.clone(),
-                Some(FilePath::new(path).unwrap_or_default()),
-            )
-        }
+        Command::Security { path } => cli_commands::surface_maintenance_command::handle_security(
+            maintenance_orchestrator.clone(),
+            Some(FilePath::new(path).unwrap_or_default()),
+        ),
         Command::Dependencies { path } => {
             cli_commands::surface_maintenance_command::handle_dependencies(
                 maintenance_orchestrator.clone(),

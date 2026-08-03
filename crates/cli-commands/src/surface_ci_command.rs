@@ -33,7 +33,10 @@ pub fn handle_ci(
         threshold,
     ) {
         Ok(report) => {
-            println!("Lint Arwaky v{} — CI Architecture Compliance", report.version);
+            println!(
+                "Lint Arwaky v{} — CI Architecture Compliance",
+                report.version
+            );
             println!("Score: {:.1} / 100", report.score);
             println!("Threshold: {}", report.threshold);
             println!();

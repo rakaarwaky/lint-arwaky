@@ -8,8 +8,8 @@ use std::sync::Arc;
 use shared::auto_fix::LintFixOrchestratorAggregate;
 use shared::common::Threshold;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::IConfigOrchestratorAggregate;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::GitHooksAggregate;
@@ -26,9 +26,8 @@ use dispatcher::surface_output_component::ViolationItem;
 #[derive(Clone)]
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    pub fix_orchestrator_factory: Arc<
-        dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync,
-    >,
+    pub fix_orchestrator_factory:
+        Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
     pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
@@ -124,9 +123,8 @@ impl McpActionSurface {
 
     /// Run fix — auto-fix with dry_run support via dispatcher.
     pub fn execute_fix(&self, path: &str, dry_run: bool) -> serde_json::Value {
-        let fp = FilePath::new(path.to_string()).unwrap_or_else(|_| {
-            FilePath::new(".".to_string()).unwrap_or_default()
-        });
+        let fp = FilePath::new(path.to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
         match dispatcher::surface_fix_action::collect_fix(
             Some(fp),
             dry_run,
@@ -263,8 +261,9 @@ impl McpActionSurface {
 
     /// Run doctor diagnostics via dispatcher.
     pub fn execute_doctor(&self) -> serde_json::Value {
-        let diag =
-            dispatcher::surface_maintenance_action::collect_doctor(self.deps.maintenance_orchestrator.clone());
+        let diag = dispatcher::surface_maintenance_action::collect_doctor(
+            self.deps.maintenance_orchestrator.clone(),
+        );
         let mut checks = Vec::new();
         for status in &diag.rust_tools {
             checks.push(serde_json::json!({"tool": status.name, "status": if status.status == "OK" { "ok" } else { "not_found" }, "version": status.version}));
@@ -283,9 +282,8 @@ impl McpActionSurface {
 
     /// Run security scan via dispatcher.
     pub fn execute_security(&self, path: &str) -> serde_json::Value {
-        let fp = FilePath::new(path.to_string()).unwrap_or_else(|_| {
-            FilePath::new(".".to_string()).unwrap_or_default()
-        });
+        let fp = FilePath::new(path.to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
         match dispatcher::surface_maintenance_action::collect_security(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
@@ -321,9 +319,8 @@ impl McpActionSurface {
 
     /// Run dependency report via dispatcher.
     pub fn execute_dependencies(&self, path: &str) -> serde_json::Value {
-        let fp = FilePath::new(path.to_string()).unwrap_or_else(|_| {
-            FilePath::new(".".to_string()).unwrap_or_default()
-        });
+        let fp = FilePath::new(path.to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
         match dispatcher::surface_maintenance_action::collect_dependencies(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
@@ -375,7 +372,9 @@ impl McpActionSurface {
             "dependencies" => self.execute_dependencies(path),
             "version" => self.execute_version(),
             "watch" => self.execute_watch(),
-            _ => serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2}),
+            _ => {
+                serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2})
+            }
         }
     }
 
@@ -424,7 +423,11 @@ impl McpActionSurface {
 
     /// Read skill documentation by section.
     pub fn handle_read_skill(&self, section: Option<String>) -> String {
-        let skills = ["lint-arwaky-rust", "lint-arwaky-python", "lint-arwaky-typescript"];
+        let skills = [
+            "lint-arwaky-rust",
+            "lint-arwaky-python",
+            "lint-arwaky-typescript",
+        ];
         let base = env!("CARGO_MANIFEST_DIR");
         let mut candidates: Vec<String> = skills
             .iter()
@@ -476,9 +479,8 @@ impl McpActionSurface {
 
     /// Effective architecture configuration for a target path/language.
     pub fn handle_get_config(&self, path: &str, language: Option<String>) -> String {
-        let fp = FilePath::new(path.to_string()).unwrap_or_else(|_| {
-            FilePath::new(".".to_string()).unwrap_or_default()
-        });
+        let fp = FilePath::new(path.to_string())
+            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
 
         let config_files = match self.deps.config_orchestrator.list_config_files(&fp) {
             Ok(files) => files,
@@ -521,7 +523,8 @@ impl McpActionSurface {
         }
 
         if config_files.is_empty() {
-            warnings.push("No config files found. Run `lint-arwaky init` to create one.".to_string());
+            warnings
+                .push("No config files found. Run `lint-arwaky init` to create one.".to_string());
         }
 
         let result = serde_json::json!({
@@ -558,7 +561,11 @@ fn violations_to_json(violations: &[ViolationItem]) -> Vec<serde_json::Value> {
 }
 
 /// Standard scan response envelope.
-fn violations_response(action: &str, path: &str, violations: &[ViolationItem]) -> serde_json::Value {
+fn violations_response(
+    action: &str,
+    path: &str,
+    violations: &[ViolationItem],
+) -> serde_json::Value {
     let exit_code = if violations.is_empty() { 0 } else { 1 };
     serde_json::json!({
         "status": if exit_code == 0 { "success" } else { "violations" },

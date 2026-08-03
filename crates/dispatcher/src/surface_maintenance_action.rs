@@ -7,9 +7,7 @@ use shared::maintenance::{
 };
 use std::sync::Arc;
 
-pub fn collect_doctor(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
-) -> ToolchainDiagnostics {
+pub fn collect_doctor(maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> ToolchainDiagnostics {
     maintenance.diagnose_toolchain()
 }
 

@@ -39,7 +39,10 @@ impl LintArwakyMcpServer {
         &self.tool_router
     }
 
-    pub fn handle_execute_command(&self, Parameters(args): Parameters<ExecuteCommandArgs>) -> String {
+    pub fn handle_execute_command(
+        &self,
+        Parameters(args): Parameters<ExecuteCommandArgs>,
+    ) -> String {
         let action = args.action.clone();
         let path = args
             .args
@@ -61,7 +64,9 @@ impl LintArwakyMcpServer {
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
 
-        let result = self.action.execute_command(&action, &path, threshold, dry_run);
+        let result = self
+            .action
+            .execute_command(&action, &path, threshold, dry_run);
         serde_json::to_string(&result).unwrap_or_default()
     }
 

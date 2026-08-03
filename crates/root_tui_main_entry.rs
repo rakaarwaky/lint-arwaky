@@ -3,8 +3,9 @@
 use std::sync::Arc;
 
 fn main() -> anyhow::Result<()> {
-    let filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let filesystem: Arc<
+        dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
 
     let config_container =
         config_system::root_config_system_container::ConfigContainer::new(filesystem.clone());
@@ -67,11 +68,10 @@ fn main() -> anyhow::Result<()> {
     let fix_orchestrator =
         auto_fix_container.orchestrator_with_filesystem(false, filesystem.clone());
 
-    let git_container =
-        git_hooks::root_git_hooks_container::GitContainer::new(
-            shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-            filesystem.clone(),
-        );
+    let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
+        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+        filesystem.clone(),
+    );
     let git_hooks_aggregate = git_container.aggregate();
 
     let maintenance_container =

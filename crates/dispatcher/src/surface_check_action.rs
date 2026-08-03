@@ -38,8 +38,7 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
     // Validate member against discovered workspaces
     if let Some(ref m) = opts.member {
         if let Some(ref orchestrator) = opts.multi_project_orchestrator {
-            let root_fp =
-                FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
+            let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
             let workspaces = orchestrator.discover_workspaces(&root_fp);
             if !workspaces.is_empty() {
                 let matched = workspaces.iter().any(|ws| {

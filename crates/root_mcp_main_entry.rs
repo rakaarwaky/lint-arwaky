@@ -7,8 +7,9 @@ use std::sync::Arc;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let filesystem: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let filesystem: Arc<
+        dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
 
     let config_container =
         config_system::root_config_system_container::ConfigContainer::new(filesystem.clone());

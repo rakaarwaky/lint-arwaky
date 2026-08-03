@@ -46,7 +46,9 @@ fn redact_secrets(content: &str) -> String {
     result
 }
 
-pub fn collect_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -> ConfigShowReport {
+pub fn collect_config_show(
+    orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+) -> ConfigShowReport {
     let project_root = FilePath::new(".".to_string()).unwrap_or_default();
 
     // Iterate known languages using sync read_config instead of async list_config_files

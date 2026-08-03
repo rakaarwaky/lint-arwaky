@@ -22,8 +22,10 @@ pub fn handle_git_diff(
             println!("Files changed: {}", report.files.len());
             println!();
 
-            let mut per_file: std::collections::BTreeMap<String, Vec<&shared::cli_commands::LintResult>> =
-                std::collections::BTreeMap::new();
+            let mut per_file: std::collections::BTreeMap<
+                String,
+                Vec<&shared::cli_commands::LintResult>,
+            > = std::collections::BTreeMap::new();
             for r in &report.results {
                 per_file.entry(r.file.value.clone()).or_default().push(r);
             }

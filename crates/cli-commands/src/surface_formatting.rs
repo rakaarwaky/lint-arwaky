@@ -425,11 +425,7 @@ fn lang_tag(path: &str) -> &str {
 /// Status icon helper for doctor output (NO_COLOR aware).
 pub fn status_icon(is_ok: bool) -> &'static str {
     if std::env::var_os("NO_COLOR").is_some() {
-        if is_ok {
-            "[OK]  "
-        } else {
-            "[FAIL]"
-        }
+        if is_ok { "[OK]  " } else { "[FAIL]" }
     } else if is_ok {
         "✓"
     } else {

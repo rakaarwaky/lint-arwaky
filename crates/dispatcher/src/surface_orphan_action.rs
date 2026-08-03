@@ -33,7 +33,14 @@ pub fn collect_orphan(
     let workspaces = config_orchestrator.discover_workspaces(&root_fp);
 
     if workspaces.is_empty() {
-        return scan_single_root(&root, &root_fp, &orphan_orchestrator, &config_orchestrator, &filter, &fs_agg);
+        return scan_single_root(
+            &root,
+            &root_fp,
+            &orphan_orchestrator,
+            &config_orchestrator,
+            &filter,
+            &fs_agg,
+        );
     }
 
     let workspaces = if let Some(ref member_name) = member {
@@ -49,7 +56,9 @@ pub fn collect_orphan(
             })
             .collect();
         if filtered.is_empty() {
-            return Err(format!("[error] no workspace member matching '{member_name}'"));
+            return Err(format!(
+                "[error] no workspace member matching '{member_name}'"
+            ));
         }
         filtered
     } else {

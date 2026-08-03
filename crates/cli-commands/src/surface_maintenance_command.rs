@@ -86,12 +86,7 @@ pub fn handle_security(
             println!("Tool: {}", report.tool_name);
             println!("Findings: {}", report.findings.len());
             for f in &report.findings {
-                println!(
-                    "  {} {} {}",
-                    f.severity.to_uppercase(),
-                    f.test_id,
-                    f.file
-                );
+                println!("  {} {} {}", f.severity.to_uppercase(), f.test_id, f.file);
             }
 
             ExitCode::OK

@@ -42,7 +42,10 @@ impl SurfaceActionHandler {
         }
     }
 
-    pub fn start_scan(&self, state: &mut AppState) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
+    pub fn start_scan(
+        &self,
+        state: &mut AppState,
+    ) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
         // Guard: don't start a second scan while one is running.
         if state.scanning {
             return None;

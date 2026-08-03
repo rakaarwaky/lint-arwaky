@@ -54,7 +54,10 @@ pub fn collect_git_diff(
 }
 
 /// Get list of changed files from git diff using std::process::Command.
-fn get_changed_files_sync(project_path: &FilePath, base: &GitBranchName) -> Result<Vec<FilePath>, String> {
+fn get_changed_files_sync(
+    project_path: &FilePath,
+    base: &GitBranchName,
+) -> Result<Vec<FilePath>, String> {
     let output = Command::new("git")
         .args(["diff", "--name-only", &format!("{}...HEAD", base.value())])
         .current_dir(&project_path.value)

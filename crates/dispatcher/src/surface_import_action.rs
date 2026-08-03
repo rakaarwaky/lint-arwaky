@@ -24,10 +24,9 @@ pub fn collect_import(
     let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
 
     // run_audit is sync in new API — call directly
-    let results =
-        import_orchestrator
-            .run_audit(&root_fp)
-            .map_err(|e| format!("[error] import rules failed: {e}"))?;
+    let results = import_orchestrator
+        .run_audit(&root_fp)
+        .map_err(|e| format!("[error] import rules failed: {e}"))?;
     let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)

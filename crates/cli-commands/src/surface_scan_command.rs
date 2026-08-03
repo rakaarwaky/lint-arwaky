@@ -89,7 +89,12 @@ pub fn handle_quality(
         filesystem.clone(),
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, is_member(&path, filesystem.as_ref()));
+            output_violations(
+                &violations,
+                &root,
+                format,
+                is_member(&path, filesystem.as_ref()),
+            );
             exit_for(violations.len())
         }
         Err(e) => {
@@ -117,7 +122,12 @@ pub fn handle_import(
         filesystem.clone(),
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, is_member(&path, filesystem.as_ref()));
+            output_violations(
+                &violations,
+                &root,
+                format,
+                is_member(&path, filesystem.as_ref()),
+            );
             exit_for(violations.len())
         }
         Err(e) => {
@@ -145,7 +155,12 @@ pub fn handle_naming(
         filesystem.clone(),
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, is_member(&path, filesystem.as_ref()));
+            output_violations(
+                &violations,
+                &root,
+                format,
+                is_member(&path, filesystem.as_ref()),
+            );
             exit_for(violations.len())
         }
         Err(e) => {
@@ -173,7 +188,12 @@ pub fn handle_role(
         filesystem.clone(),
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, is_member(&path, filesystem.as_ref()));
+            output_violations(
+                &violations,
+                &root,
+                format,
+                is_member(&path, filesystem.as_ref()),
+            );
             exit_for(violations.len())
         }
         Err(e) => {
@@ -205,7 +225,12 @@ pub fn handle_orphan(
         filesystem.clone(),
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, is_member(&path, filesystem.as_ref()));
+            output_violations(
+                &violations,
+                &root,
+                format,
+                is_member(&path, filesystem.as_ref()),
+            );
             exit_for(violations.len())
         }
         Err(e) => {
@@ -233,7 +258,12 @@ pub fn handle_external(
         filesystem.clone(),
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, is_member(&path, filesystem.as_ref()));
+            output_violations(
+                &violations,
+                &root,
+                format,
+                is_member(&path, filesystem.as_ref()),
+            );
             exit_for(violations.len())
         }
         Err(e) => {
