@@ -6,25 +6,21 @@ use std::collections::hash_map::DefaultHasher;
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
-//   1. Resolve target directory (default: ".")
-//   2. Walk all lintable files via utility_target::collect_source_files (handles ignored patterns)
-//   3. For each file, read content and tokenize into lines
-//   4. Slide a window of `min_lines` over lines; normalize each window (trim, alphanumeric-only)
-//   5. Use normalized window as hash key in global map; store (file_idx, line)
-//   6. Identify which normalized keys appear in 2+ files (shared keys)
-//   7. For each file, calculate what % of its windows are shared
-//   8. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
+//   1. Accept pre-fetched (path, content) entries from caller
+//   2. For each file, tokenize content into lines
+//   3. Slide a window of `min_lines` over lines; normalize each window (trim, alphanumeric-only)
+//   4. Use normalized window as hash key in global map; store file indices
+//   5. Identify which normalized keys appear in 2+ files (shared keys)
+//   6. For each file, calculate what % of its windows are shared
+//   7. If a file's shared % exceeds `threshold_pct`, emit a single violation per file
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CodeDuplicationAnalyzer {
     /// P1.6 fix: carry injected config instead of calling default_aes_config()
     config: Arc<ArchitectureConfig>,
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -32,23 +28,17 @@ pub struct CodeDuplicationAnalyzer {
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
     fn handle_duplicates(
         &self,
-        path: Option<shared::common::taxonomy_path_vo::DirectoryPath>,
+        _path: Option<shared::common::taxonomy_path_vo::DirectoryPath>,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        let root = match &path {
-            Some(p) => p.value.clone(),
-            None => ".".to_string(),
-        };
-        let src = self
-            .filesystem
-            .detect_source_dir(std::path::Path::new(&root));
-        // P1.6 fix: use injected config (self.config) instead of default_aes_config()
+        // Legacy path: caller must pre-fetch entries and pass them via handle_duplicates_entries.
+        Vec::new()
+    }
+
+    fn handle_duplicates_entries(
+        &self,
+        entries: &[(std::path::PathBuf, String)],
+    ) -> Vec<(String, AesCodeAnalysisViolation)> {
         let config = self.config.as_ref();
-        let ignored_vec: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.replace('/', std::path::MAIN_SEPARATOR_STR))
-            .collect();
         let min_lines = config
             .rules
             .iter()
@@ -63,55 +53,23 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .and_then(|r| r.code_analysis.duplication_threshold)
             .unwrap_or(50.0);
 
-        let _dir_path = match shared::common::taxonomy_path_vo::DirectoryPath::new(
-            src.to_string_lossy().to_string(),
-        ) {
-            Ok(dp) => dp,
-            Err(_) => return Vec::new(),
-        };
-        let source_files = self.filesystem.collect_source_files(&src, &ignored_vec);
-        let file_strs: Vec<String> = source_files.iter().map(|f| f.value.clone()).collect();
-        self.check_file_similarity(&file_strs, min_lines, threshold_pct)
+        let str_entries: Vec<(String, String)> = entries
+            .iter()
+            .map(|(p, c)| (p.display().to_string(), c.clone()))
+            .collect();
+        self.check_file_similarity_entries(&str_entries, min_lines, threshold_pct)
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CodeDuplicationAnalyzer {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self {
-            config: Arc::new(ArchitectureConfig::default()),
-            filesystem,
-        }
-    }
-
-    pub fn from_config(
-        config: Arc<ArchitectureConfig>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
-    ) -> Self {
-        Self { config, filesystem }
+    pub fn from_config(config: Arc<ArchitectureConfig>) -> Self {
+        Self { config }
     }
 }
 
 impl CodeDuplicationAnalyzer {
-    /// Legacy per-block duplication detection.
-    /// Kept for backward compatibility; prefer `check_file_similarity`.
-    pub fn check_duplicates(
-        &self,
-        files: &[String],
-        min_dup_lines: usize,
-    ) -> Vec<AesCodeAnalysisViolation> {
-        let entries = self.filesystem.collect_file_entries(files);
-        let total_loc = entries.iter().map(|(_, c)| c.lines().count()).sum();
-        let blocks =
-            crate::utility_code_duplication_detector::scan_duplicate_blocks(entries, min_dup_lines);
-        crate::utility_code_duplication_detector::build_violations(
-            &blocks,
-            total_loc,
-            min_dup_lines,
-        )
-    }
-
     /// File-level similarity analysis using pre-read entries.
     /// Instead of one violation per sliding-window match, calculates what % of a file's
     /// normalized windows also appear in other files. Only files exceeding `threshold_pct`
@@ -135,7 +93,7 @@ impl CodeDuplicationAnalyzer {
         fn hash_key(key: &str) -> u64 {
             let mut hasher = DefaultHasher::new();
             std::hash::Hash::hash(key, &mut hasher);
-            std::hash::Hasher::finish(&hasher)
+            std::hash::Hasher::finish(&mut hasher)
         }
 
         // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)
@@ -245,23 +203,6 @@ impl CodeDuplicationAnalyzer {
 
         violations
     }
-
-    /// File-level similarity analysis (legacy API — reads files internally).
-    /// Prefer `check_file_similarity_entries` to avoid double I/O.
-    pub fn check_file_similarity(
-        &self,
-        files: &[String],
-        min_dup_lines: usize,
-        threshold_pct: f64,
-    ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        let entries = self.filesystem.collect_file_entries(files);
-        self.check_file_similarity_entries(
-            &entries
-                .iter()
-                .map(|(p, c)| (p.display().to_string(), c.clone()))
-                .collect::<Vec<_>>(),
-            min_dup_lines,
-            threshold_pct,
-        )
-    }
 }
+
+use std::sync::Arc;
