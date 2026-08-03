@@ -1,8 +1,6 @@
-// AES401: constant file contains non-constant declaration (struct)
-pub struct NonConstantEntity;
-
-impl NonConstantEntity {
-    pub fn method(&self) -> i32 {
-        42
-    }
+// AES401: using primitives in taxonomy entity
+pub struct UserEntity {
+    pub name: String,
+    pub age: i32,
+    pub email: String,
 }
