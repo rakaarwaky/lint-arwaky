@@ -237,7 +237,7 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
         // Default orphan.check_orphan to true for all layers when not explicitly set.
         // BooleanVO defaults to false, but orphan detection should be enabled by default.
         for def in config.layers.values_mut() {
-            if !def.orphan.check_orphan.value && def.orphan.exceptions.values.is_empty() {
+            if !def.orphan.check_orphan.value {
                 def.orphan.check_orphan = BooleanVO::new(true);
             }
         }

@@ -19,6 +19,7 @@ shared.workspace = true
 dirs.workspace = true
 dashmap = "6"
 rayon = { workspace = true }
+tracing.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

@@ -2,6 +2,8 @@ use shared::common::FilePath;
 use shared::config_system::{ConfigError, ConfigLanguage, ConfigSource, IConfigReaderProtocol};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
+use tracing::warn;
+
 // PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
 // XDG Base Directory Specification compliant config lookup
 use std::sync::Arc;
@@ -37,10 +39,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                         .canonicalize(std::path::Path::new(&project_root.value))
                         .unwrap_or_else(|_| std::path::PathBuf::from(&project_root.value));
                     if !canonical.starts_with(&root_canonical) {
-                        eprintln!(
-                            "Warning: Symlink '{}' points outside project root, rejected.",
-                            candidate.display()
-                        );
+                        warn!(path = %candidate.display(), "symlink points outside project root, rejected");
                         if let Some(parent) = current.parent() {
                             current = parent.to_path_buf();
                         } else {
@@ -62,11 +61,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                         // keep searching upward
                     }
                     Err(e) => {
-                        eprintln!(
-                            "Warning: Failed to read config '{}': {}",
-                            candidate.display(),
-                            e
-                        );
+                        warn!(path = %candidate.display(), error = %e, "failed to read config");
                     }
                 }
 
@@ -117,11 +112,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                     }
                     Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
                     Err(e) => {
-                        eprintln!(
-                            "Warning: Failed to read config '{}': {}",
-                            candidate.display(),
-                            e
-                        );
+                        warn!(path = %candidate.display(), error = %e, "failed to read config");
                     }
                 }
             }
@@ -183,7 +174,7 @@ impl ConfigYamlReader {
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
                 Err(e) => {
-                    eprintln!("Warning: Failed to read config '{}': {}", path.display(), e);
+                    warn!(path = %path.display(), error = %e, "failed to read config");
                 }
             }
         }

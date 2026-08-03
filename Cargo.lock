@@ -596,6 +596,7 @@ dependencies = [
  "shared-lint-arwaky",
  "tempfile",
  "toml",
+ "tracing",
 ]
 
 [[package]]

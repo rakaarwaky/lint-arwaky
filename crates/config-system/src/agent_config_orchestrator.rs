@@ -11,6 +11,8 @@ use crate::utility_config_defaults::default_config_for_language;
 use crate::utility_config_parser::parse_config_yaml;
 use std::sync::Arc;
 
+use tracing::warn;
+
 // ─── Block 1: Struct Definition ───────────────────────────
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -150,11 +152,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             .discover_workspace_members(root);
 
         if workspaces.is_empty() {
-            eprintln!(
-                "Warning: No AES-compliant workspace members (crates/, packages/, or modules/) found in '{}'. \
-                This system mandates a multi-module structure. Please refactor your project.",
-                root.value
-            );
+            warn!(root = %root.value, "no AES-compliant workspace members found, please refactor to multi-module structure");
             return Vec::new();
         }
 
@@ -201,10 +199,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
                         .canonicalize(root)
                         .unwrap_or_else(|_| root.to_path_buf());
                     if !canonical.starts_with(&root_canonical) {
-                        eprintln!(
-                            "Warning: Symlink '{}' points outside project root, rejected.",
-                            candidate.display()
-                        );
+                        warn!(path = %candidate.display(), "symlink points outside project root, rejected");
                         continue;
                     }
                 }

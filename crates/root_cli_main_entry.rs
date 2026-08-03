@@ -168,7 +168,7 @@ enum Command {
 
 fn parse_format(s: &str) -> Format {
     Format::from_str(s).unwrap_or_else(|e| {
-        eprintln!("{e}");
+        tracing::error!(error = %e, "invalid format");
         std::process::exit(2);
     })
 }
