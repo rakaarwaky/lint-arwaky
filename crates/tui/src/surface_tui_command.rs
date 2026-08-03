@@ -143,6 +143,7 @@ impl TuiCommandSurface {
             if event::poll(Duration::from_millis(50))? {
                 let crossterm_event = event::read()?;
                 let tui_event = from_crossterm_event(crossterm_event, state);
+                crate::surface_logging_controller::record(&tui_event);
 
                 // --- Intercept ActionScan: spawn background thread ---
                 if matches!(tui_event, TuiEvent::ActionScan) {
@@ -242,6 +243,7 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::Char('t') => TuiEvent::ActionCi,
         KeyCode::Char('w') => TuiEvent::ActionWatch,
         KeyCode::Char('o') => TuiEvent::ActionOrphan,
+        KeyCode::Char('D') => TuiEvent::ActionDuplicates,
         KeyCode::Char('d') => TuiEvent::ActionDoctor,
         KeyCode::Char('i') => TuiEvent::ActionInit,
         KeyCode::Char('I') => TuiEvent::ActionInstall,
