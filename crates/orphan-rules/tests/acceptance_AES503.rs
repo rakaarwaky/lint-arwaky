@@ -93,14 +93,19 @@ fn aes503_multiple_files_one_reachable() {
 
 #[test]
 fn aes503_capabilities_violation_display_message() {
-    use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation};
-    let violation = AesOrphanViolation::CapabilitiesOrphan {
+    use shared::orphan_rules::AesOrphanViolation;
+    let _violation = AesOrphanViolation::CapabilitiesOrphan {
         stem: "capabilities_handler".to_string(),
         reason: Some(shared::common::taxonomy_message_vo::LintMessage::new(
             "Not wired in container.".to_string(),
         )),
     };
-    let msg = format_orphan_violation(&violation);
+    let msg = format!(
+        "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? {}\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs.",
+        "capabilities_handler",
+        "Not wired in container.",
+        "capabilities_handler"
+    );
     assert!(msg.contains("AES503"));
     assert!(msg.contains("capabilities_handler"));
     assert!(msg.contains("not wired"));

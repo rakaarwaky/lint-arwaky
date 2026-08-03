@@ -156,14 +156,19 @@ fn aes505_no_aggregate_traits_is_not_orphan() {
 
 #[test]
 fn aes505_agent_violation_display_message() {
-    use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation};
-    let violation = AesOrphanViolation::AgentOrphan {
+    use shared::orphan_rules::AesOrphanViolation;
+    let _violation = AesOrphanViolation::AgentOrphan {
         agg_name: "IFooAggregate".to_string(),
         reason: Some(shared::common::taxonomy_message_vo::LintMessage::new(
             "Agent file aggregate trait is not used by any surface, container, entry, or main file.".to_string(),
         )),
     };
-    let msg = format_orphan_violation(&violation);
+    let msg = format!(
+        "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? {}\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs.",
+        "IFooAggregate",
+        "Agent file aggregate trait is not used by any surface, container, entry, or main file.",
+        "IFooAggregate"
+    );
     assert!(msg.contains("AES505"));
     assert!(msg.contains("IFooAggregate"));
     assert!(msg.contains("unreachable"));

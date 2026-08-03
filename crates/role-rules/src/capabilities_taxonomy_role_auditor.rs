@@ -7,7 +7,6 @@
 //   For constant purity, uses ParseMetadata struct/enum/trait/fn definitions to
 //   detect non-constant declarations.
 
-use shared::common::Language;
 use shared::common::LintResult;
 use shared::common::Severity;
 use shared::common::{LintMessage, SymbolName};

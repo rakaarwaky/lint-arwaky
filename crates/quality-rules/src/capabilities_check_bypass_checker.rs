@@ -14,13 +14,10 @@ use crate::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
     starts_with_allow_attr, strip_trailing_comment,
 };
-use shared::quality_rules::{
-    AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
-    format_code_analysis_violation,
-};
+use shared::quality_rules::{Language, ViolationKind, WORD_PATTERN_TOKENS};
 
 use crate::utility_language_mapper::code_analysis_language_from_file;
-use shared::common::{LintMessage, PatternList, Severity};
+use shared::common::{PatternList, Severity};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct BypassChecker {
@@ -175,12 +172,10 @@ impl IBypassCheckerProtocol for BypassChecker {
                     line_number,
                     "AES304",
                     Severity::CRITICAL,
-                    format_code_analysis_violation(&AesCodeAnalysisViolation::BypassComment {
-                        reason: Some(LintMessage::new(format!(
-                            "Found forbidden bypass attribute: '{}'",
-                            code_trim.lines().next().unwrap_or(code_trim)
-                        ))),
-                    }),
+                    format!(
+                        "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\nWHY? Found forbidden bypass attribute: '{}'\nFIX: Remove the bypass comment and resolve the issue properly.",
+                        code_trim.lines().next().unwrap_or(code_trim)
+                    ),
                 ));
                 i += 1;
                 continue;
@@ -209,30 +204,31 @@ impl IBypassCheckerProtocol for BypassChecker {
                         && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
-                        let reason = Some(LintMessage::new(format!(
+                        let reason = format!(
                             "Found forbidden bypass token: '{}'",
                             token
-                        )));
-                        let vo = match Self::classify_token(token) {
-                            ViolationKind::UnwrapExpect => AesCodeAnalysisViolation::UnwrapExpect {
-                                reason: reason.clone(),
-                            },
-                            ViolationKind::Panic => AesCodeAnalysisViolation::Panic {
-                                reason: reason.clone(),
-                            },
-                            ViolationKind::Todo => AesCodeAnalysisViolation::Todo {
-                                reason: reason.clone(),
-                            },
-                            ViolationKind::Unimplemented => {
-                                AesCodeAnalysisViolation::Unimplemented {
-                                    reason: reason.clone(),
-                                }
-                            }
-                            ViolationKind::BypassComment => {
-                                AesCodeAnalysisViolation::BypassComment {
-                                    reason: reason.clone(),
-                                }
-                            }
+                        );
+                        let msg = match Self::classify_token(token) {
+                            ViolationKind::UnwrapExpect => format!(
+                                "AES304 UNWRAP_EXPECT: Forbidden unwrap or expect call detected.\nWHY? {}\nFIX: Replace the unwrap/expect call with structured error handling.",
+                                reason
+                            ),
+                            ViolationKind::Panic => format!(
+                                "AES304 PANIC: Forbidden panic call detected.\nWHY? {}\nFIX: Return a Result or handle the failure case gracefully without panicking.",
+                                reason
+                            ),
+                            ViolationKind::Todo => format!(
+                                "AES304 TODO: Forbidden todo!() call detected.\nWHY? {}\nFIX: Implement the function body with real logic.",
+                                reason
+                            ),
+                            ViolationKind::Unimplemented => format!(
+                                "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\nWHY? {}\nFIX: Either implement the missing logic or return a Result::Err.",
+                                reason
+                            ),
+                            ViolationKind::BypassComment => format!(
+                                "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\nWHY? {}\nFIX: Remove the bypass comment and resolve the issue properly.",
+                                reason
+                            ),
                         };
 
                         violations.push(LintResult::new_arch(
@@ -240,7 +236,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            format_code_analysis_violation(&vo),
+                            msg,
                         ));
 
                         matched = true;
@@ -261,12 +257,10 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            format_code_analysis_violation(&AesCodeAnalysisViolation::BypassComment {
-                                reason: Some(LintMessage::new(format!(
-                                    "Found forbidden bypass pattern: '{}'",
-                                    token
-                                ))),
-                            }),
+                            format!(
+                                "AES304 BYPASS_COMMENT: Forbidden bypass comment or annotation detected.\nWHY? Found forbidden bypass pattern: '{}'\nFIX: Remove the bypass comment and resolve the issue properly.",
+                                token
+                            ),
                         ));
 
                         matched = true;
@@ -289,11 +283,9 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                format_code_analysis_violation(&AesCodeAnalysisViolation::Unimplemented {
-                                    reason: Some(LintMessage::new(
-                                        "Found forbidden Python pattern: 'raise NotImplementedError'",
-                                    )),
-                                }),
+                                format!(
+                                    "AES304 UNIMPLEMENTED: Forbidden unimplemented!() call detected.\nWHY? Found forbidden Python pattern: 'raise NotImplementedError'\nFIX: Either implement the missing logic or return a Result::Err.",
+                                ),
                             ));
                         } else if code_lower.contains("assert false") {
                             violations.push(LintResult::new_arch(
@@ -301,11 +293,9 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                format_code_analysis_violation(&AesCodeAnalysisViolation::Panic {
-                                    reason: Some(LintMessage::new(
-                                        "Found forbidden Python pattern: 'assert False'",
-                                    )),
-                                }),
+                                format!(
+                                    "AES304 PANIC: Forbidden panic call detected.\nWHY? Found forbidden Python pattern: 'assert False'\nFIX: Return a Result or handle the failure case gracefully without panicking.",
+                                ),
                             ));
                         }
                     }
@@ -326,12 +316,10 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                format_code_analysis_violation(&AesCodeAnalysisViolation::Panic {
-                                    reason: Some(LintMessage::new(format!(
-                                        "Found forbidden JS/TS pattern: '{}'",
-                                        display
-                                    ))),
-                                }),
+                                format!(
+                                    "AES304 PANIC: Forbidden panic call detected.\nWHY? Found forbidden JS/TS pattern: '{}'\nFIX: Return a Result or handle the failure case gracefully without panicking.",
+                                    display
+                                ),
                             ));
                         }
                     }

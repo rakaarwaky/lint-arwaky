@@ -1,6 +1,8 @@
 // Unit tests — TUI report formatter utility tests.
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared::common::{
+    AdapterName, ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, LocationList, Severity,
+};
 use shared::maintenance::{DependencyInfo, DependencyReport, ToolStatus, ToolchainDiagnostics};
 use tui_lint_arwaky::utility_report_formatter;
 
@@ -11,10 +13,10 @@ fn make_lint_result(code: &str, severity: Severity, msg: &str) -> LintResult {
         column: ColumnNumber::new(0),
         code: ErrorCode::raw(code),
         message: LintMessage::new(msg),
-        source: Some("clippy".to_string()),
+        source: Some(AdapterName::raw("clippy")),
         severity,
         enclosing_scope: None,
-        related_locations: vec![],
+        related_locations: LocationList::new(),
     }
 }
 

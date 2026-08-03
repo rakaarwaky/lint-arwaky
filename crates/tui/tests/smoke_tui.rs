@@ -1,7 +1,7 @@
 // Smoke tests — container creation, key types accessible within 5s.
 use shared::common::{DisplayContent, FilePath};
 use tui_lint_arwaky::utility_file_system;
-use tui_lint_arwaky::utility_report_formatter;
+use tui_lint_arwaky::utility_report_formatter as _;
 
 #[test]
 fn smoke_file_size_human_completes_quickly() {

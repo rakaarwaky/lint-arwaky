@@ -1,7 +1,7 @@
 use shared::cli_commands::LintResult;
-use shared::quality_rules::{AesCodeAnalysisViolation, format_code_analysis_violation, ILineCheckerProtocol};
+use shared::quality_rules::ILineCheckerProtocol;
 
-use shared::common::{LayerDefinition, LintMessage, Severity};
+use shared::common::{LayerDefinition, Severity};
 
 // PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES301 (file too large) and AES302 (file too short)
 // ALGORITHM:
@@ -54,14 +54,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 "AES302",
                 Severity::HIGH,
                 format!(
-                    "{} (min: {}).",
-                    format_code_analysis_violation(&AesCodeAnalysisViolation::FileTooShort {
-                        reason: Some(LintMessage::new(format!(
-                            "File has {} lines, less than minimum {} lines",
-                            count, def.code_analysis.min_lines.value
-                        ))),
-                    }),
-                    def.code_analysis.min_lines.value
+                    "AES302 FILE_TOO_SHORT: File contains fewer than the required minimum lines.\nWHY? File has {} lines, less than minimum {} lines\nFIX: Expand the component or merge this logic into a related module. (min: {}).",
+                    count, def.code_analysis.min_lines.value, def.code_analysis.min_lines.value
                 ),
             ));
         }
@@ -73,14 +67,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 "AES301",
                 Severity::HIGH,
                 format!(
-                    "{} (max: {}).",
-                    format_code_analysis_violation(&AesCodeAnalysisViolation::FileTooLarge {
-                        reason: Some(LintMessage::new(format!(
-                            "File has {} lines, exceeding maximum {} lines",
-                            count, def.code_analysis.max_lines.value
-                        ))),
-                    }),
-                    def.code_analysis.max_lines.value
+                    "AES301 FILE_TOO_LARGE: File exceeds the maximum allowed line count.\nWHY? File has {} lines, exceeding maximum {} lines\nFIX: Split the module into smaller, more focused files. (max: {}).",
+                    count, def.code_analysis.max_lines.value, def.code_analysis.max_lines.value
                 ),
             ));
         }

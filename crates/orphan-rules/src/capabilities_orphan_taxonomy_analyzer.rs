@@ -2,7 +2,7 @@ use crate::utility_orphan_filename::file_stem;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, ITaxonomyOrphanProtocol};
+use shared::orphan_rules::ITaxonomyOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
 
 pub struct TaxonomyOrphanAnalyzer;
@@ -28,33 +28,16 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         inbound_links: &InboundLinkMap,
     ) -> OrphanIndicatorResult {
         let stem = file_stem(f.value());
-        let suffix = match stem.rfind('_') {
-            Some(pos) => &stem[pos + 1..],
-            None => "",
-        };
-        let is_utility_or_helper = matches!(suffix, "utility" | "helper");
-        let category = if is_utility_or_helper {
-            "utility"
-        } else {
-            "taxonomy"
-        };
 
         let importers = match inbound_links.get_importers(f.value()) {
             Some(v) => v,
             None => {
                 return OrphanIndicatorResult::new(
                     true,
-                    format_orphan_violation(&AesOrphanViolation::TaxonomyOrphan {
-                        stem: stem.clone(),
-                        category,
-                        reason: Some(
-                            format!(
-                                "Taxonomy '{}' is not imported by any other layer file.",
-                                stem
-                            )
-                            .into(),
-                        ),
-                    }),
+                    format!(
+                        "AES501 TAXONOMY_ORPHAN: '{}' is not imported.\nWHY? Taxonomy file '{}' is not imported by any other layer file.\nFIX: Import '{}' in a contract_* file.",
+                        stem, stem, stem
+                    ),
                     Severity::LOW,
                 );
             }
@@ -75,17 +58,10 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         } else {
             OrphanIndicatorResult::new(
                 true,
-                format_orphan_violation(&AesOrphanViolation::TaxonomyOrphan {
-                    stem: stem.clone(),
-                    category,
-                    reason: Some(
-                        format!(
-                            "Taxonomy '{}' is not imported by any other layer file.",
-                            stem
-                        )
-                        .into(),
-                    ),
-                }),
+                format!(
+                    "AES501 TAXONOMY_ORPHAN: '{}' is not imported.\nWHY? Taxonomy file '{}' is not imported by any other layer file.\nFIX: Import '{}' in a contract_* file.",
+                    stem, stem, stem
+                ),
                 Severity::LOW,
             )
         }

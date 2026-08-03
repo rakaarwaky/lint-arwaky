@@ -2,7 +2,7 @@ use crate::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, ISurfacesOrphanProtocol};
+use shared::orphan_rules::ISurfacesOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
@@ -60,13 +60,10 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             };
             return OrphanIndicatorResult::new(
                 true,
-                format_orphan_violation(&AesOrphanViolation::SurfaceOrphan {
-                    category,
-                    stem: stem.clone(),
-                    reason: Some(
-                        format!("Surface '{}' is not reachable from any entry point.", stem).into(),
-                    ),
-                }),
+                format!(
+                    "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? Surface '{}' is not reachable from any entry point.\nFIX: Import '{}' in an appropriate importer file.",
+                    category, stem, stem, stem
+                ),
                 severity,
             );
         }
@@ -106,17 +103,10 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                 if !has_valid_consumer {
                     return OrphanIndicatorResult::new(
                         true,
-                        format_orphan_violation(&AesOrphanViolation::SurfaceOrphan {
-                            category,
-                            stem: stem.clone(),
-                            reason: Some(
-                                format!(
-                                    "Utility surface '{}' is not imported by any Smart surface.",
-                                    stem
-                                )
-                                .into(),
-                            ),
-                        }),
+                        format!(
+                            "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? The {} surface '{}' is not imported by any appropriate importer.\nFIX: Import '{}' in an appropriate importer file.",
+                            category, stem, category, stem, stem
+                        ),
                         Severity::MEDIUM,
                     );
                 }
@@ -151,11 +141,10 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                 if !has_valid_consumer {
                     return OrphanIndicatorResult::new(
                         true,
-                        format_orphan_violation(&AesOrphanViolation::SurfaceOrphan {
-                            category,
-                            stem: stem.clone(),
-                            reason: Some(format!("Passive surface '{}' is not imported by any Smart or Utility surface.", stem).into()),
-                        }),
+                        format!(
+                            "AES506 SURFACE_ORPHAN: {} surface '{}' is orphaned.\nWHY? The {} surface '{}' is not imported by any appropriate importer.\nFIX: Import '{}' in an appropriate importer file.",
+                            category, stem, category, stem, stem
+                        ),
                         Severity::LOW,
                     );
                 }

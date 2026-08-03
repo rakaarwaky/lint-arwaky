@@ -10,7 +10,7 @@ use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
-use shared::common::{FilePath, FilePathList, Identity, LintMessage, Severity};
+use shared::common::{FilePath, FilePathList, Identity, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
 use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
@@ -19,9 +19,7 @@ use crate::utility_import_resolver;
 use crate::utility_path_normalizer;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
-use shared::import_rules::format_import_violation;
 use shared::import_rules::taxonomy_import_error::ImportError;
-use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use std::collections::{HashMap, HashSet};
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -204,8 +202,6 @@ impl ArchImportForbiddenChecker {
             vec!["agent".into(), "capabilities".into()]
         };
 
-        let layer_name_vo = LayerNameVO::new(layer_name);
-
         for (idx, entry) in entries.iter().enumerate() {
             let module_val = utility_import_resolver::entry_module_path(entry);
 
@@ -253,33 +249,17 @@ impl ArchImportForbiddenChecker {
                 }
 
                 if is_forbidden {
-                    let allowed: Vec<LayerNameVO> = definition
-                        .allowed
-                        .values
-                        .iter()
-                        .map(|s| {
-                            LayerNameVO::new(
-                                utility_import_resolver::resolve_scope(&Identity::new(s))
-                                    .0
-                                    .value()
-                                    .to_string(),
-                            )
-                        })
-                        .collect();
                     violations.push(LintResult::new_arch(
                         file,
                         idx + 1,
                         "AES201",
                         Severity::CRITICAL,
-                        format_import_violation(&AesImportViolation::ForbiddenImport {
-                            source_layer: layer_name_vo.clone(),
-                            forbidden_layer: LayerNameVO::new(forbidden.clone()),
-                            allowed,
-                            reason: Some(LintMessage::new(format!(
-                                "File imports from '{}' which resolves to forbidden layer '{}'. Source file is in layer '{}'.",
-                                module_val, forbidden, layer_name
-                            ))),
-                        }),
+                        format!(
+                            "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
+                                WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
+                                FIX: Remove the import or refactor to use one of the allowed layers.",
+                            layer_name, forbidden, layer_name, forbidden
+                        ),
                     ));
                 }
             }
@@ -363,33 +343,17 @@ impl ArchImportForbiddenChecker {
                     }
 
                     if is_forbidden {
-                        let allowed: Vec<LayerNameVO> = rule
-                            .allowed
-                            .values
-                            .iter()
-                            .map(|s| {
-                                LayerNameVO::new(
-                                    utility_import_resolver::resolve_scope(&Identity::new(s))
-                                        .0
-                                        .value()
-                                        .to_string(),
-                                )
-                            })
-                            .collect();
                         violations.push(LintResult::new_arch(
                             file,
                             idx + 1,
                             "AES201",
                             Severity::CRITICAL,
-                            format_import_violation(&AesImportViolation::ForbiddenImport {
-                                source_layer: LayerNameVO::new(rule_layer_str.clone()),
-                                forbidden_layer: LayerNameVO::new(forbidden.clone()),
-                                allowed,
-                                reason: Some(LintMessage::new(format!(
-                                    "Scope rule violation: file imports from '{}' which resolves to forbidden layer '{}'.",
-                                    module_val, forbidden
-                                ))),
-                            }),
+                            format!(
+                                "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
+                                    WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
+                                    FIX: Remove the import or refactor to use one of the allowed layers.",
+                                rule_layer_str, forbidden, rule_layer_str, forbidden
+                            ),
                         ));
                     }
                 }

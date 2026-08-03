@@ -3,7 +3,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, ICapabilitiesOrphanProtocol};
+use shared::orphan_rules::ICapabilitiesOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::sync::Arc;
 
@@ -69,10 +69,10 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         if fp.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
-                format_orphan_violation(&AesOrphanViolation::CapabilitiesOrphan {
-                    stem,
-                    reason: Some("Not reachable from any entry point.".into()),
-                }),
+                format!(
+                    "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Not reachable from any entry point.\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs.",
+                    stem, stem
+                ),
                 Severity::MEDIUM,
             );
         }
@@ -100,12 +100,10 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
         OrphanIndicatorResult::new(
             true,
-            format_orphan_violation(&AesOrphanViolation::CapabilitiesOrphan {
-                stem,
-                reason: Some(
-                    "Capabilities file struct/trait is not wired in any container.".into(),
-                ),
-            }),
+            format!(
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is not wired in any container.\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs.",
+                stem, stem, stem
+            ),
             Severity::MEDIUM,
         )
     }

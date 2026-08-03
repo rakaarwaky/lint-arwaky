@@ -80,11 +80,10 @@ fn main() -> anyhow::Result<()> {
         project_setup::root_project_setup_container::SetupContainer::new(filesystem.clone());
     let setup_orchestrator = setup_container.aggregate();
 
-    // Build TUI surfaces directly from domain aggregates (no abstraction layers).
+    // Build TUI surfaces via dispatcher — SurfaceLintExecutor delegates to dispatcher functions.
     let lint_executor = std::sync::Arc::new(
         tui::surface_lint_executor::SurfaceLintExecutor::new(
             code_analysis_linter,
-            None,
             filesystem.clone(),
         )
         .with_fix(fix_orchestrator)

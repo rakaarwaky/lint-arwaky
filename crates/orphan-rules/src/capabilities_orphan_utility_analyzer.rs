@@ -2,7 +2,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, IUtilityOrphanProtocol};
+use shared::orphan_rules::IUtilityOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
 use std::collections::HashMap;
 
@@ -124,29 +124,23 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         }
 
         if !utility_importers.is_empty() {
+            let imported_by_str = utility_importers.join(", ");
             return OrphanIndicatorResult::new(
                 true,
-                format_orphan_violation(&AesOrphanViolation::UtilityDeadCode {
-                    stem: module_name.clone(),
-                    imported_by: utility_importers,
-                    reason: Some(format!("Utility file '{}' is only imported by other utility files, not by capability, agent, or surfaces layers.", module_name).into()),
-                }),
+                format!(
+                    "AES504 UTILITY_DEAD_CODE: '{}' has no consumers in capability/agent/surfaces layers.\nWHY? Utility file '{}' is only imported by other utility files ({}), not by capability, agent, or surfaces layers.\nFIX: Import '{}' in a capabilities_* file.",
+                    module_name, module_name, imported_by_str, module_name
+                ),
                 Severity::MEDIUM,
             );
         }
 
         OrphanIndicatorResult::new(
             true,
-            format_orphan_violation(&AesOrphanViolation::UtilityOrphan {
-                stem: module_name.clone(),
-                reason: Some(
-                    format!(
-                        "Utility file '{}' is not imported by any other file.",
-                        module_name
-                    )
-                    .into(),
-                ),
-            }),
+            format!(
+                "AES504 UTILITY_ORPHAN: '{}' is not imported.\nWHY? Utility file '{}' is not imported by any capabilities or other layer file.\nFIX: Import '{}' in a capabilities_* file.",
+                module_name, module_name, module_name
+            ),
             Severity::MEDIUM,
         )
     }

@@ -17,7 +17,6 @@ metadata:
     - role-tech-lead
     - role-fullstack-developer
 ---
-
 # role-business-analyst
 
 Expert Business Analyst specializing in business logic engineering and requirements analysis.
@@ -51,13 +50,14 @@ Follow this exact sequence. **Do not skip steps.**
 
 Analyze business flow, logic implementation, gaps, ambiguities, completeness, unimplemented or conflicting requirements.
 
+
 | Dimension                | Focus                                                                             |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| **Requirements Clarity** | Are requirements unambiguous, complete, and consistent?                          |
-| **Business Flow**        | Does the implementation match the specified flow? Are edge cases handled?        |
+| -------------------------- | ----------------------------------------------------------------------------------- |
+| **Requirements Clarity** | Are requirements unambiguous, complete, and consistent?                           |
+| **Business Flow**        | Does the implementation match the specified flow? Are edge cases handled?         |
 | **Logic Implementation** | Is business logic correctly translated from FRD to code? Are there missing paths? |
-| **Testability**          | Can each requirement be verified? Are acceptance criteria defined and testable?  |
-| **Traceability**         | Can each FRD requirement be traced to specific code, tests, and config?          |
+| **Testability**          | Can each requirement be verified? Are acceptance criteria defined and testable?   |
+| **Traceability**         | Can each FRD requirement be traced to specific code, tests, and config?           |
 
 Prioritize **clarity, testability, and traceability**.
 
@@ -117,18 +117,19 @@ Write a concrete, actionable plan to `.agents/plans/todo-<feature-name>-business
 
 ## Severity Convention
 
+
 | Level          | Meaning                                                                                         |
-| -------------- | ----------------------------------------------------------------------------------------------- |
-| 🔴 **CRITICAL** | Missing core requirement, wrong business logic, or data integrity risk. Requires immediate fix. |
-| 🟡 **WARNING**  | Ambiguous requirement, missing edge case, or incomplete acceptance criteria. Fix in this cycle. |
-| 🟢 **INFO**     | Suggestion, nice-to-have feature, or optimization. Can be deferred.                            |
+| ---------------- | ------------------------------------------------------------------------------------------------- |
+| 🔴**CRITICAL** | Missing core requirement, wrong business logic, or data integrity risk. Requires immediate fix. |
+| 🟡**WARNING**  | Ambiguous requirement, missing edge case, or incomplete acceptance criteria. Fix in this cycle. |
+| 🟢**INFO**     | Suggestion, nice-to-have feature, or optimization. Can be deferred.                             |
 
 ## Checklist
 
-- [ ] Preparatory reading completed (RULES_AES, ARCHITECTURE, PRD, FRD)
-- [ ] Feature folder and member modules identified
-- [ ] FRD requirements mapped to concrete code files
-- [ ] All 5 dimensions analyzed (clarity, flow, logic, testability, traceability)
-- [ ] Findings categorized by severity (CRITICAL / WARNING / INFO)
-- [ ] Plan written with concrete Fixed Code blocks
-- [ ] Plan saved to `.agents/plans/todo-<feature>-business-analyst-<timestamp>.md`
+- [ ]  Preparatory reading completed (RULES_AES, ARCHITECTURE, PRD, FRD)
+- [ ]  Feature folder and member modules identified
+- [ ]  FRD requirements mapped to concrete code files
+- [ ]  All 5 dimensions analyzed (clarity, flow, logic, testability, traceability)
+- [ ]  Findings categorized by severity (CRITICAL / WARNING / INFO)
+- [ ]  Plan written with concrete Fixed Code blocks
+- [ ]  Plan saved to `.agents/plans/todo-<feature>-business-analyst-<timestamp>.md`

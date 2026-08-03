@@ -1,5 +1,5 @@
 // Unit tests — TUI filesystem utility tests.
-use shared::common::{DisplayContent, FilePath};
+use shared::common::FilePath;
 use std::fs;
 use tempfile::TempDir;
 use tui_lint_arwaky::utility_file_system;

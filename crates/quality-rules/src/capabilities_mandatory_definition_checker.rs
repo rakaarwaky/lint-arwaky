@@ -1,12 +1,9 @@
 use shared::cli_commands::LintResult;
-use shared::quality_rules::{
-    AesCodeAnalysisViolation, format_code_analysis_violation, IDeadInheritanceProtocol,
-    IMandatoryClassProtocol,
-};
+use shared::quality_rules::{IDeadInheritanceProtocol, IMandatoryClassProtocol};
 
 use crate::utility_bypass_detector::skip_cfg_test_block;
 use crate::utility_mandatory_checker::rust_declares_type;
-use shared::common::{LayerDefinition, LintMessage, Severity};
+use shared::common::{LayerDefinition, Severity};
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/enum/trait/type (Rust) or class/interface/type (JS/TS)/class (Python) (IMandatoryClassProtocol).
@@ -72,13 +69,11 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
-                            reason: Some(LintMessage::new(format!(
-                                "Unit struct declared on line {} in {} without impl or derive",
-                                i + 1,
-                                file
-                            ))),
-                        }),
+                        format!(
+                            "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Unit struct declared on line {} in {} without impl or derive\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                            i + 1,
+                            file
+                        ),
                     ));
                 }
                 i += 1;
@@ -101,13 +96,11 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         i + 1,
                         "AES303",
                         Severity::MEDIUM,
-                        format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
-                            reason: Some(LintMessage::new(format!(
-                                "Empty Python class on line {} in {} (': pass')",
-                                i + 1,
-                                file
-                            ))),
-                        }),
+                        format!(
+                            "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (': pass')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                            i + 1,
+                            file
+                        ),
                     ));
                 } else if t.ends_with(':') && i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
@@ -117,14 +110,12 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                             i + 1,
                             "AES303",
                             Severity::MEDIUM,
-                            format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
-                                reason: Some(LintMessage::new(format!(
-                                    "Empty Python class on line {} in {} (body is '{}')",
-                                    i + 1,
-                                    file,
-                                    next
-                                ))),
-                            }),
+                            format!(
+                                "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (body is '{}')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                                i + 1,
+                                file,
+                                next
+                            ),
                         ));
                     }
                 }
@@ -136,13 +127,11 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     i + 1,
                     "AES303",
                     Severity::MEDIUM,
-                    format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
-                        reason: Some(LintMessage::new(format!(
-                            "Empty JS/TS class/interface on line {} in {}",
-                            i + 1,
-                            file
-                        ))),
-                    }),
+                    format!(
+                        "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty JS/TS class/interface on line {} in {}\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                        i + 1,
+                        file
+                    ),
                 ));
             }
             i += 1;
@@ -208,12 +197,10 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
                 0,
                 "AES303",
                 Severity::HIGH,
-                format_code_analysis_violation(&AesCodeAnalysisViolation::MandatoryClassDefinition {
-                    reason: Some(LintMessage::new(format!(
-                        "File {} has no class/struct/enum/trait definition",
-                        file
-                    ))),
-                }),
+                format!(
+                    "AES303 MANDATORY_DEFINITION: File is missing a struct, interface, or type definition.\nWHY? File {} has no class/struct/enum/trait definition\nFIX: Group functions into a struct or implement an interface.",
+                    file
+                ),
             ));
         }
     }

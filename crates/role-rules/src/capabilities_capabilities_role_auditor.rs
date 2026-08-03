@@ -13,7 +13,6 @@
 //
 // NOTE: Import checking is handled by import-rules crate, not role-rules.
 
-use shared::common::Language;
 use shared::common::LintResult;
 use shared::common::Severity;
 use shared::common::taxonomy_message_vo::LintMessage;
@@ -366,6 +365,56 @@ impl CapabilitiesRoleChecker {
                     ));
                 }
             }
+        }
+    }
+
+    fn fmt(v: &AesRoleViolation) -> String {
+        match v {
+            AesRoleViolation::CapabilityTooManyTypes { count, reason } => {
+                let why = reason.as_ref().map_or_else(
+                    || "Max 3 types (struct/enum) allowed in capabilities. Refactor excess types to taxonomy layer.".to_string(),
+                    |r| r.to_string(),
+                );
+                format!(
+                    "AES403 CAPABILITY_ROLE: Too many types ({count} struct/enum) in capabilities file.\n\
+                     WHY? {why}\n\
+                     FIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer."
+                )
+            }
+            AesRoleViolation::CapabilityNoImplementor { reason } => {
+                let why = reason.as_ref().map_or_else(
+                    || "At least one struct must implement a _protocol trait (impl Trait for Struct). Internal helper structs are allowed.".to_string(),
+                    |r| r.to_string(),
+                );
+                format!(
+                    "AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\n\
+                     WHY? {why}\n\
+                     FIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers."
+                )
+            }
+            AesRoleViolation::CapabilityNoProtocol { reason } => {
+                let why = reason.as_ref().map_or_else(
+                    || "file has 'capabilities_' prefix but no _protocol import — this file is broken/useless.".to_string(),
+                    |r| r.to_string(),
+                );
+                format!(
+                    "AES403 CAPABILITY_ROLE: Capabilities file has no _protocol implementation.\n\
+                     WHY? {why}\n\
+                     FIX: Rename the file if it is not a capability, delete if obsolete, or create the required contract protocol first then implement it here."
+                )
+            }
+            AesRoleViolation::SingleBottleneck { reason } => {
+                let why = reason.as_ref().map_or_else(
+                    || "Routing all commands to a single capability violates high-level decomposition and creates a single bottleneck.".to_string(),
+                    |r| r.to_string(),
+                );
+                format!(
+                    "AES403 CAPABILITY_ROLE: All orchestrator dispatch routes route to a single capability.\n\
+                     WHY? {why}\n\
+                     FIX: Distribute logic or route commands to multiple distinct capabilities."
+                )
+            }
+            _ => unreachable!("CapabilitiesRoleChecker::fmt called with non-capability violation"),
         }
     }
 }

@@ -4,7 +4,6 @@
 //   Uses ParseMetadata when available to detect forbidden type definitions.
 //   Falls back to comment-stripped line scanning.
 
-use shared::common::Language;
 use shared::common::LintResult;
 use shared::common::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
@@ -177,9 +176,9 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    format_role_violation(&AesRoleViolation::UtilityRole {
+                    Self::fmt(&AesRoleViolation::UtilityRole {
                         reason: Some("Utility files must not define classes or functions.".into()),
-                    }, Language::Rust),
+                    }),
                 ));
             }
         }
@@ -358,5 +357,17 @@ impl UtilityRoleChecker {
             result.push(c);
         }
         result
+    }
+
+    fn fmt(v: &AesRoleViolation) -> String {
+        match v {
+            AesRoleViolation::UtilityRole { reason } => {
+                let why = reason.as_ref().map(|r| r.to_string()).unwrap_or_else(|| {
+                    "file has 'utility_' prefix but does not contain stateless standalone functions — this file may be misplaced. Utility files must contain only pure, stateless functions that depend only on taxonomy.".to_string()
+                });
+                format!("AES404 UTILITY_ROLE: Utility file does not follow utility layer conventions.\nWHY? {why}\nFIX: Ensure the file contains only stateless standalone functions. If this is not a utility file, rename it to use the correct layer prefix. If obsolete, delete the file and remove its module declaration.")
+            }
+            _ => unreachable!(),
+        }
     }
 }
