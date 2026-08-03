@@ -13,8 +13,10 @@
 
 use serde::Deserialize;
 use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::{ColumnNumber, LineNumber};
+use shared::common::taxonomy_common_vo::{ColumnNumber, ErrorMessage, LineNumber, PatternList};
+use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_error_vo::ErrorCode;
 use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
@@ -22,16 +24,17 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
+use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
-use std::process::Command;
 use std::sync::Arc;
 use tracing::debug;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CargoAuditAdapter {
+    executor: Arc<dyn ICommandExecutorProtocol>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
@@ -76,28 +79,30 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
             return Ok(LintResultList::new(results));
         }
 
-        // Run cargo-audit as subprocess (sync, using std::process::Command)
-        let output = match Command::new("cargo")
-            .arg("audit")
-            .arg("--json")
-            .current_dir(working_dir_str)
-            .output()
-        {
-            Ok(o) => o,
-            Err(e) => {
-                debug!("Failed to run cargo-audit: {}", e);
-                return Ok(LintResultList::new(results));
-            }
-        };
+        // Run cargo-audit via executor protocol (consistent with other adapters)
+        let cmd = PatternList::new(vec![
+            "cargo".to_string(),
+            "audit".to_string(),
+            "--json".to_string(),
+        ]);
+        let response = self
+            .executor
+            .execute_command(cmd, working_dir.clone(), Some(Timeout::new(60.0)))
+            .map_err(|e| {
+                LinterOperationError::Adapter(AdapterError::new(
+                    self.name(),
+                    ErrorMessage::new(e.to_string()),
+                ))
+            })?;
 
-        if !output.status.success() {
-            debug!("cargo-audit exited with status: {:?}", output.status.code());
+        if response.returncode != 0 && response.returncode != 1 {
+            debug!("cargo-audit exited with code: {}", response.returncode);
             // cargo-audit exits non-zero when vulnerabilities are found — that's OK
         }
 
         // Parse the JSON output
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        let parsed: CargoAuditOutput = match serde_json::from_str(&stdout) {
+        let stdout = &response.stdout;
+        let parsed: CargoAuditOutput = match serde_json::from_str(stdout) {
             Ok(v) => v,
             Err(e) => {
                 debug!("Failed to parse cargo-audit JSON: {}", e);
@@ -149,7 +154,13 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CargoAuditAdapter {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { filesystem }
+    pub fn new(
+        executor: Arc<dyn ICommandExecutorProtocol>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
+        Self {
+            executor,
+            filesystem,
+        }
     }
 }

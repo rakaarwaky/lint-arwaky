@@ -3,6 +3,7 @@
 use std::sync::Arc;
 
 use crate::agent_watch_orchestrator::WatchOrchestrator;
+use crate::capabilities_change_analyzer::ChangeAnalyzer;
 use crate::capabilities_notify_provider::NotifyWatchProvider;
 use shared::file_watch::IWatchAggregate;
 use shared::file_watch::IWatchProviderProtocol;
@@ -12,6 +13,7 @@ use shared::quality_rules::ICodeAnalysisAggregate;
 
 pub struct FileWatchContainer {
     provider: Arc<dyn IWatchProviderProtocol>,
+    analyzer: Arc<ChangeAnalyzer>,
 }
 
 // ─── Block 2: Wiring & Factory ────────────────────────────
@@ -19,7 +21,8 @@ pub struct FileWatchContainer {
 impl FileWatchContainer {
     pub fn new() -> Self {
         let provider: Arc<dyn IWatchProviderProtocol> = Arc::new(NotifyWatchProvider::new());
-        Self { provider }
+        let analyzer: Arc<ChangeAnalyzer> = Arc::new(ChangeAnalyzer::new());
+        Self { provider, analyzer }
     }
 
     pub fn provider(&self) -> Arc<dyn IWatchProviderProtocol> {
@@ -27,11 +30,11 @@ impl FileWatchContainer {
     }
 
     pub fn aggregate(&self, linter: Arc<dyn ICodeAnalysisAggregate>) -> Arc<dyn IWatchAggregate> {
-        Arc::new(WatchOrchestrator::new(self.provider(), linter))
-    }
-
-    pub fn orchestrator(&self, linter: Arc<dyn ICodeAnalysisAggregate>) -> Arc<WatchOrchestrator> {
-        Arc::new(WatchOrchestrator::new(self.provider(), linter))
+        Arc::new(WatchOrchestrator::new(
+            self.provider(),
+            self.analyzer.clone(),
+            linter,
+        ))
     }
 }
 

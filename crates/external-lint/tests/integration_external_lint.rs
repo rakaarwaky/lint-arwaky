@@ -404,7 +404,10 @@ fn create_rustfmt_adapter_and_scan_returns_empty() {
 
 #[test]
 fn create_cargo_audit_adapter_and_scan_returns_empty() {
-    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(Arc::new(MockFilesystem));
+    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem),
+    );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
     assert!(result.values.is_empty()); // no Cargo.lock at /tmp
@@ -522,7 +525,10 @@ fn ruff_apply_fix_returns_true() {
 #[test]
 fn cargo_audit_apply_fix_returns_true() {
     // cargo-audit has no fix, but returns true (manual update needed)
-    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(Arc::new(MockFilesystem));
+    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem),
+    );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let status = adapter.apply_fix(&path).unwrap();
     assert!(status.value);

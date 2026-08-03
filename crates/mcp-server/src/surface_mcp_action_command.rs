@@ -125,8 +125,12 @@ impl McpActionSurface {
 
     /// Run fix — auto-fix with dry_run support via dispatcher.
     pub fn execute_fix(&self, path: &str, dry_run: bool) -> serde_json::Value {
-        let fp = FilePath::new(path.to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
+        let fp = match FilePath::new(path.to_string()) {
+            Ok(f) => f,
+            Err(_) => {
+                return serde_json::json!({"error": "Invalid path", "exit_code": 2});
+            }
+        };
         match dispatcher::surface_fix_action::collect_fix(
             Some(fp),
             dry_run,
@@ -134,7 +138,13 @@ impl McpActionSurface {
             self.deps.fix_orchestrator_factory.clone(),
         ) {
             Ok(report) => {
-                let exit_code = if report.success { 0 } else if report.fixed_count > 0 { 1 } else { 2 };
+                let exit_code = if report.success {
+                    0
+                } else if report.fixed_count > 0 {
+                    1
+                } else {
+                    2
+                };
                 serde_json::json!({
                     "status": if report.success { "success" } else { "partial" },
                     "action": "fix",
@@ -286,8 +296,12 @@ impl McpActionSurface {
 
     /// Run security scan via dispatcher.
     pub fn execute_security(&self, path: &str) -> serde_json::Value {
-        let fp = FilePath::new(path.to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
+        let fp = match FilePath::new(path.to_string()) {
+            Ok(f) => f,
+            Err(_) => {
+                return serde_json::json!({"error": "Invalid path", "exit_code": 2});
+            }
+        };
         match dispatcher::surface_maintenance_action::collect_security(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
@@ -323,8 +337,12 @@ impl McpActionSurface {
 
     /// Run dependency report via dispatcher.
     pub fn execute_dependencies(&self, path: &str) -> serde_json::Value {
-        let fp = FilePath::new(path.to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
+        let fp = match FilePath::new(path.to_string()) {
+            Ok(f) => f,
+            Err(_) => {
+                return serde_json::json!({"error": "Invalid path", "exit_code": 2});
+            }
+        };
         match dispatcher::surface_maintenance_action::collect_dependencies(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
@@ -388,16 +406,22 @@ impl McpActionSurface {
                     Err(e) => return e,
                 };
                 match self.deps.git_hooks_aggregate.install_hook(&fp) {
-                    Ok(status) => serde_json::json!({"status": "success", "action": "install-hook", "exit_code": 0, "message": status.value}),
+                    Ok(status) => {
+                        serde_json::json!({"status": "success", "action": "install-hook", "exit_code": 0, "message": status.value})
+                    }
                     Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
                 }
             }
             "uninstall-hook" => match self.deps.git_hooks_aggregate.uninstall_hook() {
-                Ok(status) => serde_json::json!({"status": "success", "action": "uninstall-hook", "exit_code": 0, "message": status.value}),
+                Ok(status) => {
+                    serde_json::json!({"status": "success", "action": "uninstall-hook", "exit_code": 0, "message": status.value})
+                }
                 Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
             },
             "init" | "install" => {
-                let items = dispatcher::surface_setup_action::collect_init(self.deps.setup_orchestrator.clone());
+                let items = dispatcher::surface_setup_action::collect_init(
+                    self.deps.setup_orchestrator.clone(),
+                );
                 let messages: Vec<String> = items.iter().map(|i| i.message.clone()).collect();
                 serde_json::json!({"status": "success", "action": action, "exit_code": 0, "items": messages})
             }
@@ -406,9 +430,9 @@ impl McpActionSurface {
             }
             "config-show" => {
                 let result = self.handle_get_config(path, None);
-                serde_json::from_str(&result).unwrap_or_else(|_| {
-                    serde_json::json!({"error": "Failed to serialize config", "exit_code": 2})
-                })
+                serde_json::from_str(&result).unwrap_or_else(
+                    |_| serde_json::json!({"error": "Failed to serialize config", "exit_code": 2}),
+                )
             }
             _ => {
                 serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2})
@@ -439,7 +463,10 @@ impl McpActionSurface {
             "adapters": adapters,
             "exit_code": 0,
         });
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        serde_json::to_string_pretty(&result).unwrap_or_else(|e| {
+            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
+                .to_string()
+        })
     }
 
     /// List CLI commands filtered by domain.
@@ -455,8 +482,12 @@ impl McpActionSurface {
                 serde_json::json!({"name": name, "description": desc, "example": example})
             })
             .collect();
-        let result = serde_json::json!({ "commands": commands, "total": commands.len(), "exit_code": 0 });
-        serde_json::to_string(&result).unwrap_or_default()
+        let result =
+            serde_json::json!({ "commands": commands, "total": commands.len(), "exit_code": 0 });
+        serde_json::to_string(&result).unwrap_or_else(|e| {
+            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
+                .to_string()
+        })
     }
 
     /// Read skill documentation by section.
@@ -506,7 +537,8 @@ impl McpActionSurface {
                         Some(i) => i + 1,
                         None => remaining.len(),
                     };
-                    serde_json::json!({"section": s, "content": &remaining[..end], "exit_code": 0}).to_string()
+                    serde_json::json!({"section": s, "content": &remaining[..end], "exit_code": 0})
+                        .to_string()
                 } else {
                     serde_json::json!({"error": format!("Section '{}' not found", s), "exit_code": 2}).to_string()
                 }
@@ -517,8 +549,12 @@ impl McpActionSurface {
 
     /// Effective architecture configuration for a target path/language.
     pub fn handle_get_config(&self, path: &str, language: Option<String>) -> String {
-        let fp = FilePath::new(path.to_string())
-            .unwrap_or_else(|_| FilePath::new(".".to_string()).unwrap_or_default());
+        let fp = match FilePath::new(path.to_string()) {
+            Ok(f) => f,
+            Err(_) => {
+                return serde_json::json!({"error": "Invalid path", "exit_code": 2}).to_string();
+            }
+        };
 
         let config_files = match self.deps.config_orchestrator.list_config_files(&fp) {
             Ok(files) => files,
@@ -577,7 +613,10 @@ impl McpActionSurface {
             "warnings": warnings,
             "exit_code": 0,
         });
-        serde_json::to_string_pretty(&result).unwrap_or_default()
+        serde_json::to_string_pretty(&result).unwrap_or_else(|e| {
+            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
+                .to_string()
+        })
     }
 }
 

@@ -12,6 +12,8 @@ pub enum GitDiffStatus {
     MissingFirst,
     /// Path2 does not exist.
     MissingSecond,
+    /// Both paths do not exist.
+    BothMissing,
     /// Either path is not a regular file.
     NotAFile,
 }

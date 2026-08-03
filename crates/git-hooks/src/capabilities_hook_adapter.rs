@@ -1,3 +1,9 @@
+// PURPOSE: GitHookAdapter — IHookManagerProtocol implementation for low-level hook file operations (capabilities layer)
+//
+// Handles .git/hooks/ directory creation, hook script writing, permission
+// setting, and hook removal. This is the lowest-level hook component that
+// interacts directly with the filesystem.
+
 use shared::common::{FilePath, LintMessage, SuccessStatus};
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;

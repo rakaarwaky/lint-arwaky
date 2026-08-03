@@ -20,7 +20,7 @@ impl IChangeAnalyzerProtocol for ChangeAnalyzer {
         deduped.into_values().collect()
     }
 
-    fn is_lintable(path: &str) -> bool {
+    fn is_lintable(&self, path: &str) -> bool {
         let lintable_exts = [
             ".rs", ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs", ".json", ".css", ".md",
             ".toml", ".yaml", ".yml",
@@ -31,7 +31,7 @@ impl IChangeAnalyzerProtocol for ChangeAnalyzer {
     fn filter_lintable(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent> {
         events
             .into_iter()
-            .filter(|e| Self::is_lintable(&e.path))
+            .filter(|e| self.is_lintable(&e.path))
             .collect()
     }
 }

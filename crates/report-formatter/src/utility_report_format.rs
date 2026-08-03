@@ -1,4 +1,4 @@
-// PURPOSE: Stateless utility functions for report formatting (AES406)
+// PURPOSE: Stateless utility functions for report formatting (AES404)
 // Pure functions only — no domain types, structs, or enums belong here
 
 use shared::cli_commands::ScanReport;

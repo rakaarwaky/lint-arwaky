@@ -183,10 +183,10 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
 
-        // FR-001: Search upward for config file (up to 5 levels)
+        // FR-001: Search upward for config file (up to depth 5 for deeply nested files)
         let mut current = root.to_path_buf();
         let mut depth = 0;
-        let mut config = None;
+        let mut source_content: Option<(String, String)> = None; // (path_str, raw_content)
         while !current.as_os_str().is_empty() && depth < 5 {
             for filename in language.config_file_names() {
                 let candidate = current.join(filename);
@@ -209,11 +209,11 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
                     }
                 }
                 if let Ok(content) = self.deps.filesystem.read_to_string(&candidate) {
-                    config = Some(parse_config_yaml(&content));
+                    source_content = Some((candidate.to_string_lossy().to_string(), content));
                     break;
                 }
             }
-            if config.is_some() {
+            if source_content.is_some() {
                 break;
             }
             if let Some(parent) = current.parent() {
@@ -224,12 +224,29 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             }
         }
 
-        let mut config = config.unwrap_or_else(|| default_config_for_language(language.as_str()));
+        let (path_str, raw_content) = match source_content {
+            Some(sc) => sc,
+            None => {
+                let mut config = default_config_for_language(language.as_str());
+                let (merged_layers, _) = crate::utility_config_merger::merge_config(&config);
+                config.layers = merged_layers;
+                return config;
+            }
+        };
 
-        // Merge layers into config (same as make_layer_map in entry points)
-        let (merged_layers, _) = crate::utility_config_merger::merge_config(&config);
+        // FR-007: Use DashMap cache — parse only once per file path
+        let parsed = self
+            .config_cache
+            .entry(path_str)
+            .or_insert_with(|| Arc::new(parse_config_yaml(&raw_content)))
+            .value()
+            .as_ref()
+            .clone();
+
+        // FR-005: Apply full merge protocol (layers merged, rules deduped)
+        let (merged_layers, _) = crate::utility_config_merger::merge_config(&parsed);
+        let mut config = parsed;
         config.layers = merged_layers;
-
         config
     }
 
@@ -278,14 +295,20 @@ fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
         "__pycache__",
     ];
 
+    // FR-008: Normalize default paths to platform separators for consistent dedup
+    let normalized_defaults: Vec<String> = DEFAULT_IGNORED
+        .iter()
+        .map(|s| s.replace('/', std::path::MAIN_SEPARATOR_STR))
+        .collect();
+
     let mut seen: std::collections::HashSet<String> =
-        std::collections::HashSet::from_iter(DEFAULT_IGNORED.iter().map(|s| s.to_string()));
+        std::collections::HashSet::from_iter(normalized_defaults.iter().cloned());
     // Pre-allocated capacity: 8 defaults + config count
     let mut ignored: Vec<String> = Vec::with_capacity(8 + config.ignored_paths.values.len());
 
     // Add default paths
-    for &name in &DEFAULT_IGNORED {
-        ignored.push(name.to_string());
+    for name in &normalized_defaults {
+        ignored.push(name.clone());
     }
 
     // FR-008: Config-specified paths appended with dedup, empty strings filtered

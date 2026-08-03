@@ -48,7 +48,7 @@ impl INamingConventionChecker for NamingConventionChecker {
                 let layer = self._detect_layer(&f_str, &layer_keys);
                 let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
                 let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
-                self._check_file_naming(&f_str, filename, &layer_name, def, min_words)
+                self.check_file_naming_internal(&f_str, filename, &layer_name, def, min_words)
             })
             .collect();
 
@@ -110,7 +110,7 @@ impl NamingConventionChecker {
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
-    pub fn _check_file_naming(
+    pub fn check_file_naming_internal(
         &self,
         file: &str,
         filename: &str,

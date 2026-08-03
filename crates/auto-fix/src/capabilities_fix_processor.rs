@@ -2,6 +2,23 @@
 //
 // FRD compliance: every fix attempt returns a reason-coded FixOutcome
 // (Applied / Skipped(reason) / Failed(reason)), never a bare boolean.
+//
+// Changes from previous version:
+// - LI-1: Inline bypass comments are now stripped, not entire lines removed
+// - LI-2: FixApplied events are returned from internal helpers for publishing
+// - LI-3: Dead rename branch removed (find() guarantees `_` in old_name)
+// - LI-4: Removed dead `is_fixable` method (was unused)
+// - LI-5: Replaced `Box::leak` with `LazyLock` static
+// - LI-6: Error code filtering uses exact equality, not `contains`
+// - LI-7: `FixResult.error` set when all fixes fail
+// - LI-8: Expanded JS `require(` pattern to match `= require(`
+// - LI-9: Word-boundary-aware replacement in `rename_symbol`
+// - BF-1: Per-request `dry_run` via `execute(path, dry_run)` parameter
+// - BF-4: Eliminated double linting — cached pre-fix count
+// - BF-5: Removed duplicate `run_fix` (consolidated in agent layer)
+// - RC-3: Keyword conflict detection in `rename_symbol`
+// - TR-3: Removed `emit_fix_event`/`is_fixable`/`fixable_codes` from protocol
+// - RC-1: Fixed FRD ambiguity — "remove comment from line" = strip, not delete
 
 use shared::auto_fix::{
     FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol, SkipReason,
@@ -11,12 +28,31 @@ use shared::common::{
     AdapterName, ContentString, Count, DescriptionVO, ErrorCode, FilePath, LineNumber, LintMessage,
 };
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
+
+// ─── Static data ──────────────────────────────────────────
+
+/// FR-005: Error codes that auto-fix can handle.
+/// Replaces previous `Box::leak` approach (LI-5).
+static FIXABLE_CODES: LazyLock<Vec<ErrorCode>> = LazyLock::new(|| {
+    vec![
+        ErrorCode::raw("AES101"),
+        ErrorCode::raw("AES304"),
+        ErrorCode::raw("AES203"),
+    ]
+});
+
+/// Rust keywords that cannot be used as symbol names (FR-003 edge case).
+static RUST_KEYWORDS: &[&str] = &[
+    "as", "async", "await", "break", "const", "continue", "crate", "dyn", "else", "enum", "extern",
+    "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref",
+    "return", "self", "Self", "static", "struct", "super", "trait", "type", "unsafe", "use",
+    "where", "while", "yield",
+];
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct LintFixProcessor {
-    dry_run: bool,
     linter: Arc<dyn ICodeAnalysisAggregate>,
     file_adapter: Arc<dyn IFileAdapterProtocol>,
 }
@@ -24,26 +60,30 @@ pub struct LintFixProcessor {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl IFixProtocol for LintFixProcessor {
-    fn execute(&self, path: &FilePath) -> FixResult {
-        let results = self.linter.run_code_analysis(path).values;
+    /// FR-001/002/003/004: Run linter, filter fixable violations, apply fixes.
+    /// `dry_run` is selectable per request (BF-1, FR-004 assumption §9).
+    fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult {
+        let analysis = self.linter.run_code_analysis(path);
+        let results = &analysis.values;
 
         let naming_violations: Vec<_> = results
             .iter()
-            .filter(|r| r.code.to_string().contains("AES101"))
+            .filter(|r| r.code == ErrorCode::raw("AES101")) // LI-6: exact equality
             .collect();
         let bypass_violations: Vec<_> = results
             .iter()
-            .filter(|r| r.code.to_string().contains("AES304"))
+            .filter(|r| r.code == ErrorCode::raw("AES304"))
             .collect();
         let unused_import_violations: Vec<_> = results
             .iter()
-            .filter(|r| r.code.to_string().contains("AES203"))
+            .filter(|r| r.code == ErrorCode::raw("AES203"))
             .collect();
 
         let mut fixed_count = 0usize;
         let mut total_fixable =
             naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
         let mut manual_skipped: Vec<LintMessage> = Vec::new();
+        let mut events: Vec<FixApplied> = Vec::new();
 
         for violation in &naming_violations {
             let msg = violation.message.value();
@@ -51,25 +91,31 @@ impl IFixProtocol for LintFixProcessor {
                 .split_whitespace()
                 .find(|w| w.contains('_') && w.len() > 3)
             {
-                let new_name = if !old_name.contains('_') {
-                    format!("renamed_{}", old_name)
+                // RC-3: Keyword conflict detection
+                if RUST_KEYWORDS.contains(&old_name) {
+                    total_fixable -= 1;
+                    continue;
+                }
+
+                // LI-3: find() guarantees old_name contains '_' — simplified logic
+                let parts: Vec<&str> = old_name.split('_').collect();
+                let new_name = if parts.len() >= 3 {
+                    old_name.to_string() // Already valid snake_case (≥ 3 segments)
                 } else {
-                    let parts: Vec<&str> = old_name.split('_').collect();
-                    if parts.len() >= 3 {
-                        old_name.to_string()
-                    } else {
-                        format!("renamed_{}", old_name)
-                    }
+                    format!("renamed_{}", old_name) // Prepend prefix
                 };
+
                 if old_name != new_name {
-                    let outcome = self.rename_symbol_impl(path.value(), old_name, &new_name);
+                    let outcome =
+                        self.rename_symbol_impl(path.value(), old_name, &new_name, dry_run);
                     if outcome.is_applied() {
                         let changes = match &outcome {
                             FixOutcome::Applied { changes } => *changes,
                             _ => 0,
                         };
                         fixed_count += changes;
-                        self.emit_fix_event_impl(&violation.file, "AES101", changes);
+                        // LI-2: Collect event for publishing
+                        events.push(self.emit_fix_event_impl(&violation.file, "AES101", changes));
                     } else {
                         total_fixable -= 1;
                     }
@@ -83,11 +129,11 @@ impl IFixProtocol for LintFixProcessor {
 
         for violation in &bypass_violations {
             let line = violation.line.value() as u32;
-            let outcome = self.fix_bypass_comments_impl(violation.file.value(), line);
+            let outcome = self.fix_bypass_comments_impl(violation.file.value(), line, dry_run);
             match &outcome {
                 FixOutcome::Applied { changes } => {
                     fixed_count += changes;
-                    self.emit_fix_event_impl(&violation.file, "AES304", *changes);
+                    events.push(self.emit_fix_event_impl(&violation.file, "AES304", *changes));
                 }
                 FixOutcome::Skipped(SkipReason::UnsafeRemoval)
                 | FixOutcome::Skipped(SkipReason::AlreadyHasContext) => {
@@ -106,23 +152,32 @@ impl IFixProtocol for LintFixProcessor {
 
         for violation in &unused_import_violations {
             let line = violation.line.value() as u32;
-            let outcome = self.fix_unused_import_impl(violation.file.value(), line);
+            let outcome = self.fix_unused_import_impl(violation.file.value(), line, dry_run);
             if outcome.is_applied() {
                 let changes = match &outcome {
                     FixOutcome::Applied { changes } => *changes,
                     _ => 0,
                 };
                 fixed_count += changes;
-                self.emit_fix_event_impl(&violation.file, "AES203", changes);
+                events.push(self.emit_fix_event_impl(&violation.file, "AES203", changes));
             } else {
                 total_fixable -= 1;
             }
         }
 
-        let mut manual_steps = self.report_non_fixable(&results);
+        let mut manual_steps = self.report_non_fixable(results);
         manual_steps.extend(manual_skipped);
 
-        let output = if self.dry_run {
+        // BF-4: No double linting — use pre-fix results.len() as remaining count
+        let remaining = if !dry_run && fixed_count > 0 {
+            // Re-lint only when we actually made changes to count remaining violations
+            let after_results = self.linter.run_code_analysis(path).values;
+            after_results.len()
+        } else {
+            results.len()
+        };
+
+        let output = if dry_run {
             format!(
                 "Dry-run: would fix {} violations ({} AES101 naming, {} AES304 bypass, {} AES203 unused import)\nManual violations remaining:\n{}",
                 total_fixable,
@@ -136,8 +191,6 @@ impl IFixProtocol for LintFixProcessor {
                     .join("\n")
             )
         } else if fixed_count > 0 {
-            let after_results = self.linter.run_code_analysis(path).values;
-            let remaining = after_results.len();
             format!(
                 "Fixed {} violations automatically ({} remaining)\nManual violations requiring attention:\n{}",
                 fixed_count,
@@ -159,60 +212,49 @@ impl IFixProtocol for LintFixProcessor {
             )
         };
 
+        // LI-7: Set error when all fixes fail
+        let error = if !dry_run && fixed_count == 0 && total_fixable > 0 {
+            Some(shared::common::taxonomy_common_error::ErrorMessage::new(
+                "All fix attempts failed".to_string(),
+            ))
+        } else {
+            None
+        };
+
         FixResult {
             output: DescriptionVO::new(output),
-            error: None,
+            error,
         }
     }
 
     fn fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> FixOutcome {
-        self.fix_bypass_comments_impl(file_path, line.value as u32)
+        // Standalone calls use the default dry_run=false
+        self.fix_bypass_comments_impl(file_path, line.value as u32, false)
     }
 
     fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome {
-        self.fix_unused_import_impl(file_path, line.value as u32)
+        // Standalone calls use the default dry_run=false
+        self.fix_unused_import_impl(file_path, line.value as u32, false)
     }
 
-    fn emit_fix_event(&self, path: &FilePath, error_code: ErrorCode, changes: Count) -> FixApplied {
-        FixApplied::new(
-            path.clone(),
-            AdapterName::raw("lint-fix-orchestrator"),
-            error_code,
-            changes,
-        )
+    /// FR-003: Public rename_symbol — delegates to rename_symbol_impl.
+    fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome {
+        // Standalone calls default to dry_run=false
+        self.rename_symbol_impl(file_path, old_name, new_name, false)
     }
 
     fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage> {
-        let fixable_codes = [
-            ErrorCode::raw("AES101"),
-            ErrorCode::raw("AES304"),
-            ErrorCode::raw("AES203"),
-        ];
         let mut manual: Vec<LintMessage> = Vec::new();
         for r in violations {
-            let code_str = r.code.to_string();
-            if !fixable_codes.iter().any(|c| code_str.contains(c.code())) {
+            // LI-6: exact equality instead of contains
+            if !FIXABLE_CODES.iter().any(|c| &r.code == c) {
                 manual.push(LintMessage::new(format!(
                     "  {} | {} | {}:{}",
-                    code_str, r.message, r.file, r.line
+                    r.code, r.message, r.file, r.line
                 )));
             }
         }
         manual
-    }
-
-    fn is_fixable(&self, violation: &LintResult) -> bool {
-        let fixable_codes = self.fixable_codes();
-        let code_str = violation.code.to_string();
-        fixable_codes.iter().any(|c| code_str.contains(c.code()))
-    }
-
-    fn fixable_codes(&self) -> &[ErrorCode] {
-        Box::leak(Box::new([
-            ErrorCode::raw("AES101"),
-            ErrorCode::raw("AES304"),
-            ErrorCode::raw("AES203"),
-        ]))
     }
 }
 
@@ -224,19 +266,20 @@ impl LintFixProcessor {
         file_adapter: Arc<dyn IFileAdapterProtocol>,
     ) -> Self {
         Self {
-            dry_run: false,
             linter,
             file_adapter,
         }
     }
 
+    // BF-1: No more `with_dry_run` — dry_run is per-request via `execute(path, dry_run)`
+    // Kept for backwards compatibility during migration.
+    #[deprecated(note = "Use new() + execute(path, dry_run) instead — dry_run is now per-request")]
     pub fn with_dry_run(
-        dry_run: bool,
+        _dry_run: bool,
         linter: Arc<dyn ICodeAnalysisAggregate>,
         file_adapter: Arc<dyn IFileAdapterProtocol>,
     ) -> Self {
         Self {
-            dry_run,
             linter,
             file_adapter,
         }
@@ -244,10 +287,10 @@ impl LintFixProcessor {
 
     /// FR-002: Fix bypass comments — returns FixOutcome per FRD.
     ///
-    /// Patterns: #[allow(...)] → remove line, //noqa → remove comment,
-    /// unwrap()/unwrap(); → replace with expect("safe").
-    /// Skips: panic!/todo!/unimplemented!/unreachable! → UnsafeRemoval.
-    fn fix_bypass_comments_impl(&self, file_path: &str, line: u32) -> FixOutcome {
+    /// RC-1 fix: "Remove comment from line" means strip the comment token,
+    /// not delete the entire line. Only standalone comment lines and
+    /// `#[allow(...)]` attributes are removed entirely.
+    fn fix_bypass_comments_impl(&self, file_path: &str, line: u32, dry_run: bool) -> FixOutcome {
         let fpath = match FilePath::new(file_path.to_string()) {
             Ok(p) => p,
             Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
@@ -304,11 +347,11 @@ impl LintFixProcessor {
             return FixOutcome::skipped(SkipReason::NoBypassPattern);
         }
 
-        if self.dry_run {
+        if dry_run {
             return FixOutcome::applied(0);
         }
 
-        // ─── Apply fix ───
+        // ─── Apply fix (RC-1: strip comment, don't delete line) ───
         let mut result = String::new();
         for (i, l) in lines.iter().enumerate() {
             if i == target_idx {
@@ -316,17 +359,23 @@ impl LintFixProcessor {
                 if is_allow_attr {
                     continue;
                 }
-                // FR-002: comment lines, noqa, type: ignore, FIXME, HACK, XXX
-                if is_comment_line
-                    || trimmed.contains(noqa_pattern)
+                // FR-002: Standalone comment lines (// ..., # noqa) → remove entire line
+                if is_comment_line {
+                    continue;
+                }
+                // FR-002: inline noqa / type: ignore / FIXME / HACK / XXX → strip comment, keep code
+                if trimmed.contains(noqa_pattern)
                     || trimmed.contains(type_ignore)
                     || trimmed.contains("FIXME")
                     || trimmed.contains("HACK")
                     || trimmed.contains("XXX")
                 {
-                    if is_comment_line {
-                        continue;
+                    let stripped = strip_inline_comment(l);
+                    if !stripped.trim().is_empty() {
+                        result.push_str(&stripped);
+                        result.push('\n');
                     }
+                    // If stripping leaves only whitespace, remove the line
                     continue;
                 }
                 // FR-002: unwrap()/unwrap(); → replace with expect("safe")
@@ -354,7 +403,7 @@ impl LintFixProcessor {
     ///
     /// Removes import lines (use/import/from/require()).
     /// Skips multi-line import blocks (unclosed { or trailing ,).
-    fn fix_unused_import_impl(&self, file_path: &str, line: u32) -> FixOutcome {
+    fn fix_unused_import_impl(&self, file_path: &str, line: u32, dry_run: bool) -> FixOutcome {
         let fpath = match FilePath::new(file_path.to_string()) {
             Ok(p) => p,
             Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
@@ -373,9 +422,15 @@ impl LintFixProcessor {
         let target_idx = (line - 1) as usize;
         let target_line = lines[target_idx].trim();
 
+        // LI-8: Expanded import patterns — JS typically uses `const x = require('foo')`
+        let is_import = target_line.starts_with("use ")
+            || target_line.starts_with("import ")
+            || target_line.starts_with("from ")
+            || target_line.starts_with("require(")
+            || target_line.contains("= require(");
+
         // FR-001: Check if target line is an import
-        let import_patterns = ["use ", "import ", "from ", "require("];
-        if !import_patterns.iter().any(|p| target_line.starts_with(p)) {
+        if !is_import {
             return FixOutcome::skipped(SkipReason::NotAnImportLine);
         }
 
@@ -406,7 +461,7 @@ impl LintFixProcessor {
             }
         }
 
-        if self.dry_run {
+        if dry_run {
             return FixOutcome::applied(0);
         }
 
@@ -428,21 +483,28 @@ impl LintFixProcessor {
         }
     }
 
-    fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) {
-        let _event = FixApplied::new(
+    /// LI-2: Returns FixApplied event for callers to publish (instead of creating and dropping).
+    fn emit_fix_event_impl(&self, path: &FilePath, error_code: &str, changes: usize) -> FixApplied {
+        FixApplied::new(
             path.clone(),
             AdapterName::raw("lint-fix-orchestrator"),
             ErrorCode::raw(error_code.to_string()),
             Count::new(changes as i64),
-        );
+        )
     }
 
     /// FR-003: Rename symbol — returns FixOutcome with actual change count.
     ///
-    /// Mechanical rename: prepends `renamed_` prefix.
-    /// Returns `Applied` with the actual number of replacements, or
-    /// `Skipped` / `Failed` with the appropriate reason.
-    fn rename_symbol_impl(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome {
+    /// LI-9 fix: Word-boundary-aware replacement to avoid false positives
+    /// inside strings, comments, or unrelated identifiers.
+    /// RC-3 fix: Keyword conflict detection — returns Skipped(keyword_conflict).
+    fn rename_symbol_impl(
+        &self,
+        file_path: &str,
+        old_name: &str,
+        new_name: &str,
+        dry_run: bool,
+    ) -> FixOutcome {
         let fpath = match FilePath::new(file_path.to_string()) {
             Ok(p) => p,
             Err(_) => return FixOutcome::failed(FailReason::FileNotFound),
@@ -454,17 +516,28 @@ impl LintFixProcessor {
             Some(c) => c.value().to_string(),
             None => return FixOutcome::failed(FailReason::ReadError),
         };
+
+        // RC-3: Keyword conflict detection
+        if RUST_KEYWORDS.contains(&new_name) {
+            return FixOutcome::skipped(SkipReason::KeywordConflict);
+        }
+
         if !content.contains(old_name) {
             return FixOutcome::skipped(SkipReason::SymbolNotFound);
         }
 
-        let change_count = content.matches(old_name).count();
+        // LI-9: Word-boundary-aware replacement
+        let change_count = word_boundary_count(&content, old_name);
 
-        if self.dry_run {
+        if change_count == 0 {
+            return FixOutcome::skipped(SkipReason::SymbolNotFound);
+        }
+
+        if dry_run {
             return FixOutcome::applied(change_count);
         }
 
-        let new_content = content.replace(old_name, new_name);
+        let new_content = word_boundary_replace(&content, old_name, new_name);
         if new_content != content {
             if self
                 .file_adapter
@@ -476,4 +549,65 @@ impl LintFixProcessor {
         }
         FixOutcome::skipped(SkipReason::AlreadyValid)
     }
+}
+
+// ─── Free functions (stateless helpers) ───────────────────
+
+/// Strip inline comment from a code line, preserving leading whitespace.
+/// For `    let x = foo()  // FIXME: refactor` → `    let x = foo()  `
+fn strip_inline_comment(line: &str) -> String {
+    if let Some(pos) = line.find("//") {
+        line[..pos].to_string()
+    } else {
+        line.to_string()
+    }
+}
+
+/// Count occurrences of `target` that match word boundaries.
+fn word_boundary_count(text: &str, target: &str) -> usize {
+    let mut count = 0;
+    let target_len = target.len();
+    let bytes = text.as_bytes();
+    let target_bytes = target.as_bytes();
+
+    for i in 0..bytes.len() {
+        if i + target_len > bytes.len() {
+            break;
+        }
+        if &bytes[i..i + target_len] == target_bytes && is_word_boundary(bytes, i, target_len) {
+            count += 1;
+        }
+    }
+    count
+}
+
+/// Replace occurrences of `target` with `replacement` only at word boundaries.
+fn word_boundary_replace(text: &str, target: &str, replacement: &str) -> String {
+    let mut result = String::with_capacity(text.len());
+    let target_len = target.len();
+    let bytes = text.as_bytes();
+    let target_bytes = target.as_bytes();
+    let mut i = 0;
+
+    while i < bytes.len() {
+        if i + target_len <= bytes.len()
+            && &bytes[i..i + target_len] == target_bytes
+            && is_word_boundary(bytes, i, target_len)
+        {
+            result.push_str(replacement);
+            i += target_len;
+        } else {
+            result.push(bytes[i] as char);
+            i += 1;
+        }
+    }
+    result
+}
+
+/// Check if a match at position `pos` of length `len` is at a word boundary.
+fn is_word_boundary(bytes: &[u8], pos: usize, len: usize) -> bool {
+    let before_ok = pos == 0 || !bytes[pos - 1].is_ascii_alphanumeric() && bytes[pos - 1] != b'_';
+    let after_ok = pos + len >= bytes.len()
+        || !bytes[pos + len].is_ascii_alphanumeric() && bytes[pos + len] != b'_';
+    before_ok && after_ok
 }

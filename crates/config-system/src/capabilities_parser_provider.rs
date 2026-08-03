@@ -20,10 +20,15 @@ impl IConfigParserProtocol for ConfigParserProvider {
         let err_path = path.clone();
         let content = match self.filesystem.read_to_string(std::path::Path::new(p)) {
             Ok(c) => c,
-            Err(_) => {
+            Err(e) => {
+                let msg = if e.kind() == std::io::ErrorKind::NotFound {
+                    "Failed to read config: file not found".to_string()
+                } else {
+                    format!("Failed to read config: {}", e)
+                };
                 return Err(ConfigError {
                     key: ConfigKey::new("yaml.parse"),
-                    message: ErrorMessage::new("Failed to read config: file not found".to_string()),
+                    message: ErrorMessage::new(msg),
                     config_file: err_path,
                     ..Default::default()
                 });
@@ -43,10 +48,15 @@ impl IConfigParserProtocol for ConfigParserProvider {
         let err_path = path.clone();
         let content = match self.filesystem.read_to_string(std::path::Path::new(p)) {
             Ok(c) => c,
-            Err(_) => {
+            Err(e) => {
+                let msg = if e.kind() == std::io::ErrorKind::NotFound {
+                    "Failed to read TOML: file not found".to_string()
+                } else {
+                    format!("Failed to read TOML: {}", e)
+                };
                 return Err(ConfigError {
                     key: ConfigKey::new("tool.lint-arwaky"),
-                    message: ErrorMessage::new("Failed to read TOML: file not found".to_string()),
+                    message: ErrorMessage::new(msg),
                     config_file: err_path,
                     ..Default::default()
                 });

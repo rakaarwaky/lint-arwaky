@@ -24,9 +24,7 @@ impl ICommandExecutorProtocol for StdioClient {
         working_dir: FilePath,
         timeout: Option<Timeout>,
     ) -> anyhow::Result<ResponseData> {
-        // NOTE: std::process::Command is blocking; timeout is tracked for future
-        // use with a thread-based timeout wrapper if needed.
-        let _timeout_val = match timeout {
+        let timeout_val = match timeout {
             Some(d) => Duration::from_secs_f64(d.value()),
             None => Duration::from_secs_f64(self.timeout.value()),
         };
@@ -41,26 +39,67 @@ impl ICommandExecutorProtocol for StdioClient {
         cmd.current_dir(working_dir.value())
             .env("PYTHONUNBUFFERED", "1");
 
-        let result = cmd.output();
-        match result {
-            Ok(output) => {
-                let mut meta_map = HashMap::new();
-                meta_map.insert(
-                    "protocol".to_string(),
-                    serde_json::Value::String("Stdio".to_string()),
-                );
-                Ok(ResponseData {
-                    value: Some(serde_json::Value::Null),
-                    stdout: String::from_utf8_lossy(&output.stdout).to_string(),
-                    stderr: String::from_utf8_lossy(&output.stderr).to_string(),
-                    returncode: match output.status.code() {
-                        Some(c) => c as i64,
-                        None => -1,
-                    },
-                    metadata: meta_map,
-                })
+        let mut child = cmd
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .map_err(|e| anyhow::anyhow!("Failed to spawn command: {}", e))?;
+
+        let start = std::time::Instant::now();
+        loop {
+            match child.try_wait() {
+                Ok(Some(status)) => {
+                    let stdout = child
+                        .stdout
+                        .take()
+                        .map(|mut h| {
+                            let mut buf = String::new();
+                            std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
+                            buf
+                        })
+                        .unwrap_or_default();
+                    let stderr = child
+                        .stderr
+                        .take()
+                        .map(|mut h| {
+                            let mut buf = String::new();
+                            std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
+                            buf
+                        })
+                        .unwrap_or_default();
+                    let mut meta_map = HashMap::new();
+                    meta_map.insert(
+                        "protocol".to_string(),
+                        serde_json::Value::String("Stdio".to_string()),
+                    );
+                    return Ok(ResponseData {
+                        value: Some(serde_json::Value::Null),
+                        stdout,
+                        stderr,
+                        returncode: match status.code() {
+                            Some(c) => c as i64,
+                            None => -1,
+                        },
+                        metadata: meta_map,
+                    });
+                }
+                Ok(None) => {
+                    if start.elapsed() >= timeout_val {
+                        let _ = child.kill();
+                        let _ = child.wait();
+                        anyhow::bail!(
+                            "Command timed out after {:.1}s: {}",
+                            timeout_val.as_secs_f64(),
+                            cmd_list.join(" ")
+                        );
+                    }
+                    std::thread::sleep(Duration::from_millis(50));
+                }
+                Err(e) => {
+                    let _ = child.kill();
+                    return Err(anyhow::anyhow!("Failed to check command status: {}", e));
+                }
             }
-            Err(e) => anyhow::bail!("Command execution failed: {}", e),
         }
     }
 

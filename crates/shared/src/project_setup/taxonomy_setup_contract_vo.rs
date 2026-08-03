@@ -84,6 +84,9 @@ pub enum SetupError {
     /// current project state (e.g. trying to install a dependency that the
     /// project's lockfile already pins to an incompatible version).
     InvalidState(String),
+    /// The requested language has no embedded config template.
+    /// Carries the comma-separated list of supported languages.
+    UnknownLanguage(String),
     /// Catch-all for setup errors that don't fit a specific variant.
     /// Wraps a human-readable diagnostic message.
     Other(String),
@@ -96,6 +99,9 @@ impl SetupError {
     pub fn invalid_state(message: impl Into<String>) -> Self {
         Self::InvalidState(message.into())
     }
+    pub fn unknown_language(supported: impl Into<String>) -> Self {
+        Self::UnknownLanguage(supported.into())
+    }
     pub fn other(message: impl Into<String>) -> Self {
         Self::Other(message.into())
     }
@@ -105,6 +111,7 @@ impl std::fmt::Display for SetupError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Io(m) | Self::InvalidState(m) | Self::Other(m) => write!(f, "{}", m),
+            Self::UnknownLanguage(m) => write!(f, "Unknown language. Supported: {}", m),
         }
     }
 }

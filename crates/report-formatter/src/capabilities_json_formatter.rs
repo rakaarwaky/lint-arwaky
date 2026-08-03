@@ -75,7 +75,7 @@ impl JsonFormatter {
             .collect();
 
         let summary = JsonSummary {
-            total_violations: report.results.len(),
+            total_violations: crit + high + med + low,
             critical: crit,
             high,
             medium: med,

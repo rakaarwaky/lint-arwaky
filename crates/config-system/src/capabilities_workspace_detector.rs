@@ -1,5 +1,4 @@
 use shared::common::FilePath;
-use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
@@ -19,7 +18,7 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::PathBuf::from(&path.value);
 
-        // Check for actual markers — filesystem defaults to Rust, we need Unknown
+        // BF-3: Check marker files directly — no unreachable fallback arms
         if has_rust_markers(&path_buf) {
             return WorkspaceType::Rust;
         }
@@ -30,16 +29,7 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
             return WorkspaceType::TypeScript;
         }
 
-        // Delegate to filesystem aggregate for parent directory name checks (crates/packages/modules)
-        let lang = self.filesystem.detect_language_from_path(&path.value);
-        match lang {
-            ConfigLanguage::Rust if has_rust_markers(&path_buf) => WorkspaceType::Rust,
-            ConfigLanguage::Python if has_python_markers(&path_buf) => WorkspaceType::Python,
-            ConfigLanguage::TypeScript if has_typescript_markers(&path_buf) => {
-                WorkspaceType::TypeScript
-            }
-            _ => WorkspaceType::Unknown,
-        }
+        WorkspaceType::Unknown
     }
 
     fn is_workspace(&self, path: &FilePath) -> bool {
@@ -66,6 +56,15 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
                     }
                 }
             }
+            return members;
+        }
+
+        // FR-004: If root's parent is a workspace directory, return root as single member
+        if let Some(parent) = root_path.parent()
+            && let Some(parent_name) = parent.file_name().and_then(|n| n.to_str())
+            && matches!(parent_name, "crates" | "packages" | "modules")
+        {
+            members.push(root.to_owned());
             return members;
         }
 
@@ -98,27 +97,109 @@ impl WorkspaceDetector {
     }
 }
 
+/// TR-1: Single-pass directory scan — use one `read_dir` syscall per directory
+/// instead of N `exists()` calls. Returns true if any of the target filenames
+/// exist in the given directory.
+fn dir_has_any_file(dir: &std::path::Path, targets: &[&str]) -> bool {
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if let Some(name) = entry.file_name().to_str() {
+                if targets.contains(&name) {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
+/// BF-4: Limit parent-dir matching to direct parent/grandparent, not arbitrary ancestors.
+/// FR-003: Walks up to 2 parent directories if no marker found at target path.
 fn has_rust_markers(path: &std::path::Path) -> bool {
-    path.join("Cargo.toml").exists()
-        || path
-            .components()
-            .any(|c| matches!(c, std::path::Component::Normal(name) if name == "crates"))
+    // Check the target path itself
+    if dir_has_any_file(path, &["Cargo.toml"]) {
+        return true;
+    }
+    // FR-003: Walk up to 2 parent directories
+    if let Some(parent) = path.parent() {
+        if dir_has_any_file(parent, &["Cargo.toml"]) {
+            return true;
+        }
+        // Direct parent name match: crates/ → Rust
+        if parent.file_name().map_or(false, |n| n == "crates") {
+            return true;
+        }
+        if let Some(grandparent) = parent.parent() {
+            if dir_has_any_file(grandparent, &["Cargo.toml"]) {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn has_python_markers(path: &std::path::Path) -> bool {
-    path.join("pyproject.toml").exists()
-        || path.join("setup.py").exists()
-        || path.join("requirements.txt").exists()
-        || path.join("__init__.py").exists()
-        || path
-            .components()
-            .any(|c| matches!(c, std::path::Component::Normal(name) if name == "modules"))
+    if dir_has_any_file(
+        path,
+        &[
+            "pyproject.toml",
+            "setup.py",
+            "requirements.txt",
+            "__init__.py",
+        ],
+    ) {
+        return true;
+    }
+    if let Some(parent) = path.parent() {
+        if dir_has_any_file(
+            parent,
+            &[
+                "pyproject.toml",
+                "setup.py",
+                "requirements.txt",
+                "__init__.py",
+            ],
+        ) {
+            return true;
+        }
+        // Direct parent name match: modules/ → Python
+        if parent.file_name().map_or(false, |n| n == "modules") {
+            return true;
+        }
+        if let Some(grandparent) = parent.parent() {
+            if dir_has_any_file(
+                grandparent,
+                &[
+                    "pyproject.toml",
+                    "setup.py",
+                    "requirements.txt",
+                    "__init__.py",
+                ],
+            ) {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 fn has_typescript_markers(path: &std::path::Path) -> bool {
-    path.join("package.json").exists()
-        || path.join("tsconfig.json").exists()
-        || path
-            .components()
-            .any(|c| matches!(c, std::path::Component::Normal(name) if name == "packages"))
+    if dir_has_any_file(path, &["package.json", "tsconfig.json"]) {
+        return true;
+    }
+    if let Some(parent) = path.parent() {
+        if dir_has_any_file(parent, &["package.json", "tsconfig.json"]) {
+            return true;
+        }
+        // Direct parent name match: packages/ → TypeScript
+        if parent.file_name().map_or(false, |n| n == "packages") {
+            return true;
+        }
+        if let Some(grandparent) = parent.parent() {
+            if dir_has_any_file(grandparent, &["package.json", "tsconfig.json"]) {
+                return true;
+            }
+        }
+    }
+    false
 }

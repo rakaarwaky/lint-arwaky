@@ -197,7 +197,7 @@ Consumer
 
 ## Consumer Access Pattern
 
-All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **65 methods**.
+All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **74 methods** (5 + 6 + 29 + 12 + 8 + 14).
 
 ### Setup
 
@@ -306,16 +306,25 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 | check_wired_in_container      | `&Path, &[String]`   | `bool`            |
 | resolve_orphan_module_path    | `&Path, &Path, &str` | `Option<PathBuf>` |
 
-### IFilesystemAggregate — Cache Accessors (5 operations)
+### IFilesystemAggregate — Cache Accessors & Orchestration (14 operations)
 
 
-| Operation            | Input       | Output                   |
-| ---------------------- | ------------- | -------------------------- |
-| file_list            | —          | `&[FileEntry]`           |
-| read_cached          | `&FilePath` | `ContentString`          |
-| get_file_content     | `&Path`     | `Option<String>`         |
-| has_file             | `&Path`     | `bool`                   |
-| collect_file_entries | `&[String]` | `Vec<(PathBuf, String)>` |
+| Operation                    | Input                          | Output                           |
+| ------------------------------ | -------------------------------- | ---------------------------------- |
+| file_list                    | —                              | `&[FileEntry]`                   |
+| read_cached                  | `&FilePath`                    | `ContentString`                  |
+| get_file_content             | `&Path`                        | `Option<String>`                 |
+| has_file                     | `&Path`                        | `bool`                           |
+| collect_file_entries         | `&[String]`                    | `Vec<(PathBuf, String)>`         |
+| discover_source_files        | `&Path, &[String]`             | `Vec<String>`                    |
+| read_file                    | `&Path`                        | `Option<String>`                 |
+| scan_directory               | `&Path`                        | `Vec<String>`                    |
+| discover_files               | `&Path`                        | `Vec<String>`                    |
+| collect_source_files         | `&Path, &[String]`             | `Vec<FilePath>`                  |
+| read_lintable_file           | `&str`                         | `Option<String>`                 |
+| used_identifiers_for         | `&Path`                        | `Vec<String>`                    |
+| build_file_index             | `&Path`                        | — (populates caches)             |
+| build_orphan_graph_context   | `&Path, &[String]`             | `GraphAnalysisContext`           |
 
 ---
 
@@ -398,7 +407,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 
 | Term                        | Definition                                                                 |
 | ----------------------------- | ---------------------------------------------------------------------------- |
-| **IFilesystemAggregate**    | Composed trait: all 5 protocols + cache accessors = 65 methods             |
+| **IFilesystemAggregate**    | Composed trait: all 5 protocols + cache/orchestration accessors = 74 methods |
 | **IParserProtocol**         | AST parse results and import extraction queries                            |
 | **IGraphProtocol**          | Dependency graph, definitions, implementations, reachability               |
 | **IFileSystemIOProtocol**   | Low-level file I/O, path ops, directory ops, process execution             |

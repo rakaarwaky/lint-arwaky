@@ -23,14 +23,13 @@ use shared::external_lint::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
-use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub config_parser: Arc<dyn IConfigParserProtocol>,
+    pub selector: Arc<dyn IExternalLintSelectorProtocol>,
 }
 
 pub struct ExternalLintOrchestrator {
@@ -55,9 +54,10 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             &*self.deps.filesystem,
         );
 
-        // FR-002: Select adapters using the selector + config entries.
-        let selector = CapabilitiesExternalLintSelector::with_defaults();
-        let selected: Vec<String> = selector
+        // FR-002: Select adapters using the injected selector + config entries.
+        let selected: Vec<String> = self
+            .deps
+            .selector
             .select_adapters(has_rs, has_py, has_js)
             .iter()
             .map(|a| a.value().to_string())
@@ -106,7 +106,7 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             }
         }
         if !ignored_paths.is_empty() {
-            all.retain(|v| self.deps.filesystem.should_ignore(&v.file, &ignored_paths));
+            all.retain(|v| !self.deps.filesystem.should_ignore(&v.file, &ignored_paths));
         }
         LintResultList::new(all)
     }

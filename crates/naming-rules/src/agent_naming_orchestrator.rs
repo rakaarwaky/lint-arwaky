@@ -49,27 +49,43 @@ impl NamingOrchestrator {
         Self { deps }
     }
 
+    /// Check if a specific AES rule is enabled in the configuration.
+    /// Returns true if the rule is found and enabled, or if not found (default enabled).
+    fn is_rule_enabled(config: &ArchitectureConfig, rule_code: &str) -> bool {
+        config
+            .rules
+            .iter()
+            .find(|r| r.rule_type.code() == rule_code)
+            .map_or(true, |r| r.enabled.value)
+    }
+
     fn run_checks(&self, files: &FilePathList, root_dir: &FilePath) -> Vec<LintResult> {
-        let mut naming_results = LintResultList::new(Vec::new());
-        let mut suffix_results = LintResultList::new(Vec::new());
+        let mut results: Vec<LintResult> = Vec::new();
 
-        self.deps.naming_convention_checker.check_file_naming(
-            self.deps.config.as_ref(),
-            self.deps.layer_map.as_ref(),
-            files,
-            root_dir,
-            &mut naming_results,
-        );
+        if Self::is_rule_enabled(&self.deps.config, "AES101") {
+            let mut naming_results = LintResultList::new(Vec::new());
+            self.deps.naming_convention_checker.check_file_naming(
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
+                files,
+                root_dir,
+                &mut naming_results,
+            );
+            results.extend(naming_results.values);
+        }
 
-        self.deps.suffix_prefix_checker.check_domain_suffixes(
-            self.deps.config.as_ref(),
-            self.deps.layer_map.as_ref(),
-            files,
-            root_dir,
-            &mut suffix_results,
-        );
+        if Self::is_rule_enabled(&self.deps.config, "AES102") {
+            let mut suffix_results = LintResultList::new(Vec::new());
+            self.deps.suffix_prefix_checker.check_domain_suffixes(
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
+                files,
+                root_dir,
+                &mut suffix_results,
+            );
+            results.extend(suffix_results.values);
+        }
 
-        naming_results.values.extend(suffix_results.values);
-        naming_results.values
+        results
     }
 }

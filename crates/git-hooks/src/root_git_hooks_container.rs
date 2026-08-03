@@ -1,3 +1,5 @@
+// PURPOSE: GitContainer — composition root that wires Capabilities to Contract traits and bootstraps the git hooks subsystem (root layer)
+
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::{GitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};

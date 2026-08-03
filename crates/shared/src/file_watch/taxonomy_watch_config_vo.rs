@@ -13,7 +13,7 @@ impl WatchConfig {
         Self {
             path: FilePath::new(path).unwrap_or_default(),
             recursive: true,
-            debounce_ms: 500,
+            debounce_ms: 200,
             ignore_patterns: vec![
                 ".git".to_string(),
                 "node_modules".to_string(),

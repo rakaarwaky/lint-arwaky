@@ -1,7 +1,6 @@
 // Agent layer — orchestrates FR-001 through FR-005
 // Only orchestration: delegates to capabilities & utility
 
-use crate::utility_filesystem_io;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
@@ -430,16 +429,22 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         let mut out = Vec::new();
         for file_str in files {
             let path = PathBuf::from(file_str);
-            let content = self.get_file_content(&path).unwrap_or_else(|| {
-                utility_filesystem_io::read_file_safe(file_str).unwrap_or_default()
-            });
+            let content = self
+                .get_file_content(&path)
+                .unwrap_or_else(|| self.deps.io.read_to_string(&path).unwrap_or_default());
             out.push((path, content));
         }
         out
     }
 
     fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<String> {
-        crate::utility_workspace_detection::discover_source_files(root, ignored)
+        self.deps
+            .io
+            .scan_directory_with_ignored(root, ignored)
+            .into_iter()
+            .filter(|p| self.deps.io.is_source_file(p))
+            .map(|p| p.to_string_lossy().to_string())
+            .collect()
     }
 
     fn read_file(&self, path: &Path) -> Option<String> {
@@ -447,24 +452,35 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn scan_directory(&self, root: &Path) -> Vec<String> {
-        crate::utility_workspace_detection::scan_directory(root)
+        self.deps
+            .io
+            .scan_directory_with_ignored(root, &[])
+            .into_iter()
+            .map(|p| p.to_string_lossy().to_string())
+            .collect()
     }
 
     fn discover_files(&self, root: &Path) -> Vec<String> {
-        crate::utility_workspace_detection::discover_files(root)
+        self.scan_directory(root)
     }
 
     fn collect_source_files(&self, dir: &Path, ignored: &[String]) -> Vec<FilePath> {
-        crate::utility_workspace_detection::discover_source_files(dir, ignored)
+        self.deps
+            .io
+            .scan_directory_with_ignored(dir, ignored)
             .into_iter()
-            .filter_map(|s| FilePath::new(s).ok())
+            .filter(|p| self.deps.io.is_source_file(p))
+            .filter_map(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .collect()
     }
 
     fn read_lintable_file(&self, path: &str) -> Option<String> {
-        crate::utility_filesystem_io::read_lintable_file(path)
-            .ok()
-            .flatten()
+        let p = Path::new(path);
+        let meta = self.deps.io.metadata(p).ok()?;
+        if meta.len() > 2 * 1024 * 1024 {
+            return None;
+        }
+        self.deps.io.read_to_string(p).ok()
     }
 
     fn used_identifiers_for(&self, path: &Path) -> Vec<String> {
@@ -489,7 +505,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
 
     fn build_file_index(&self, root: &Path) {
-        self.build_file_index(root);
+        self.build_file_index_impl(root, &[]);
     }
 
     fn build_orphan_graph_context(
@@ -582,12 +598,13 @@ impl FilesystemOrchestrator {
 
     /// Walk filesystem from root, discover source files, read content, parse imports.
     /// Populates files, file_index, imports, warnings caches.
-    pub fn build_file_index(&self, root: &Path) {
+    /// `extra_ignored` additional patterns beyond the built-in defaults.
+    pub fn build_file_index_impl(&self, root: &Path, extra_ignored: &[String]) {
         if self.files.get().is_some() {
             return;
         }
 
-        let ignored = vec![
+        let mut ignored: Vec<String> = vec![
             "target".into(),
             "node_modules".into(),
             ".git".into(),
@@ -595,8 +612,8 @@ impl FilesystemOrchestrator {
             "build".into(),
             "__pycache__".into(),
             ".venv".into(),
-            "tests".into(),
         ];
+        ignored.extend_from_slice(extra_ignored);
 
         let scanned = self.deps.io.scan_directory_with_ignored(root, &ignored);
 
@@ -629,6 +646,11 @@ impl FilesystemOrchestrator {
             };
             let imports = self.deps.parser.extract(path, &content, lang_enum);
             all_imports.extend(imports);
+
+            // parse_ok: true when content is non-empty and language is recognized
+            let parse_ok = !content.is_empty()
+                && lang_enum != shared::filesystem::taxonomy_filesystem_vo::Language::Unknown;
+
             let extension = path
                 .extension()
                 .and_then(|e| e.to_str())
@@ -641,7 +663,7 @@ impl FilesystemOrchestrator {
                 language: lang_enum,
                 size,
                 content,
-                parse_ok: false,
+                parse_ok,
                 parse_metadata: None,
             });
         }
@@ -664,7 +686,78 @@ impl FilesystemOrchestrator {
         }
         let files = self.files.get().cloned().unwrap_or_default();
         let imports = self.imports.get().cloned().unwrap_or_default();
-        self.deps.graph.build_graph(&imports, &files, &[], &[]);
+
+        // Extract definitions and implementations from parsed file metadata
+        let mut definitions: Vec<DefinitionEntry> = Vec::new();
+        let mut implementations: Vec<ImplEntry> = Vec::new();
+        for entry in &files {
+            if !entry.parse_ok {
+                continue;
+            }
+            if let Some(ref meta) = entry.parse_metadata {
+                match meta {
+                    shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(m) => {
+                        let lang = entry.language;
+                        // Collect all symbol definitions from Rust metadata
+                        for name in m
+                            .struct_definitions
+                            .iter()
+                            .chain(m.enum_definitions.iter())
+                            .chain(m.trait_definitions.iter())
+                            .chain(m.type_definitions.iter())
+                        {
+                            definitions.push(DefinitionEntry {
+                                name: name.clone(),
+                                file_path: entry.path.clone(),
+                                language: lang,
+                            });
+                        }
+                        // Collect trait implementations
+                        for item in &m.impl_blocks {
+                            if let Some(ref trait_name) = item.trait_name {
+                                implementations.push(ImplEntry {
+                                    trait_name: trait_name.clone(),
+                                    file_path: entry.path.clone(),
+                                    language: lang,
+                                });
+                            }
+                        }
+                    }
+                    shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Python(m) => {
+                        let lang = entry.language;
+                        for class in &m.class_declarations {
+                            definitions.push(DefinitionEntry {
+                                name: class.name.clone(),
+                                file_path: entry.path.clone(),
+                                language: lang,
+                            });
+                        }
+                    }
+                    shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(m) => {
+                        let lang = entry.language;
+                        for class in &m.class_declarations {
+                            definitions.push(DefinitionEntry {
+                                name: class.name.clone(),
+                                file_path: entry.path.clone(),
+                                language: lang,
+                            });
+                        }
+                        for iface in &m.interface_declarations {
+                            definitions.push(DefinitionEntry {
+                                name: iface.clone(),
+                                file_path: entry.path.clone(),
+                                language: lang,
+                            });
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        self.deps
+            .graph
+            .build_graph(&imports, &files, &definitions, &implementations);
 
         if let Some(rl) = self.deps.graph.reverse_links().clone().into() {
             let _ = self.cached_reverse_links.set(rl);

@@ -509,6 +509,9 @@ fn e2e_full_pipeline_rust_python() {
             has_js: false,
         }),
         config_parser: Arc::new(MockConfigParser),
+        selector: Arc::new(
+            external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
+        ),
     };
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let adapter_names = orchestrator.adapter_names();

@@ -4,10 +4,9 @@ use crate::file_watch::taxonomy_watch_event_vo::WatchEvent;
 /// Protocol for analysing file-system watch events.
 ///
 /// Implementations group, filter, and prioritise raw [`WatchEvent`]s so
-/// that only lintable changes trigger re-scans. The `is_lintable` method
-/// is a static check that can be called without an instance.
+/// that only lintable changes trigger re-scans.
 pub trait IChangeAnalyzerProtocol: Send + Sync {
     fn analyze(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent>;
-    fn is_lintable(path: &str) -> bool;
+    fn is_lintable(&self, path: &str) -> bool;
     fn filter_lintable(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent>;
 }

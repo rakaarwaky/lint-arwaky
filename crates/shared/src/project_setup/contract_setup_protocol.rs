@@ -13,21 +13,41 @@ use crate::project_setup::taxonomy_setup_contract_vo::{
     WriteConfigResult,
 };
 
+/// Result of a package-manager pre-flight check (FR-007).
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
+pub struct PackageManagerStatus {
+    pub tool: String,
+    pub status: String,
+}
+
+/// Type alias for the pre-flight check result.
+pub type PreFlightResult = Vec<PackageManagerStatus>;
+
 pub trait ISetupManagementProtocol: Send + Sync {
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO;
     fn generate_mcp_config(&self) -> McpConfigVO;
     fn mcp_config_claude(&self) -> McpConfigVO;
+    fn mcp_config_cursor(&self) -> McpConfigVO;
+    fn mcp_config_windsurf(&self) -> McpConfigVO;
+    fn mcp_config_copilot(&self) -> McpConfigVO;
     fn mcp_config_hermes(&self) -> McpConfigVO;
     fn mcp_config_vscode(&self) -> McpConfigVO;
-    /// Resolve the name of the MCP binary on the host PATH.
+    /// Generate MCP configs for all supported clients (FR-001).
+    fn mcp_config_all(&self) -> McpConfigVO;
+    /// Resolve the path to the lint-arwaky-mcp binary.
     fn which_mcp_binary(&self) -> McpBinaryNameVO;
     fn install_python_adapters(&self) -> SuccessStatus;
     fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus;
     /// Detect the dominant programming language of the current project.
-    fn detect_language(&self) -> ProjectLanguageVO;
-    /// Detect ALL languages present in the current project.
+    fn detect_language(&self) -> Option<ProjectLanguageVO>;
+    /// Detect ALL languages present in the current project (FR-003).
+    /// Returns empty list when no languages found — no default language.
     fn detect_languages(&self) -> ProjectLanguagesVO;
-    fn get_config_template(&self, language: &str) -> &'static str;
+    /// Get an embedded config template for the given language (FR-005).
+    /// Returns `Err(SetupError::UnknownLanguage)` for unsupported languages.
+    fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError>;
+    /// Pre-flight check: verify package managers are available (FR-007).
+    fn pre_flight_check(&self) -> PreFlightResult;
     /// Write a configuration file to disk. Returns a description of the
     /// operation on success, or a structured `SetupError` on failure.
     fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;

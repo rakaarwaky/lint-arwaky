@@ -3,6 +3,9 @@
 /// Rule code for AES101 — Naming Convention Consistency
 pub const RULE_CODE_NAMING_CONVENTION: &str = "AES101";
 
+/// Rule code for AES000 — Unknown Layer Prefix
+pub const RULE_CODE_UNKNOWN_PREFIX: &str = "AES000";
+
 /// Rule code for AES102 — Suffix/Prefix Layer Alignment
 pub const RULE_CODE_SUFFIX_PREFIX: &str = "AES102";
 

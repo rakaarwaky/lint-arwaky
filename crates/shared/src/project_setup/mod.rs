@@ -12,6 +12,8 @@ pub use contract_setup_protocol::ISetupManagementProtocol;
 // ── Taxonomy types ──
 pub use contract_setup_aggregate::SetupMgmtProtocol;
 pub use contract_setup_protocol::InstallPackagesResult;
+pub use contract_setup_protocol::PackageManagerStatus;
+pub use contract_setup_protocol::PreFlightResult;
 pub use taxonomy_setup_contract_vo::CreateConfigDirResult;
 pub use taxonomy_setup_contract_vo::McpBinaryNameVO;
 pub use taxonomy_setup_contract_vo::ProjectLanguageVO;

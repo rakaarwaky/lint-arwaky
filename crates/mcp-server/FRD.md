@@ -64,7 +64,7 @@ flowchart TD
 - **Input**: Action string and optional argument map (keys: `path`,
   `threshold`, `client`, `dry_run`, `format`, `member`, `base`, …).
 - **Output**: JSON with `status`, `action`, `exit_code`, and action-specific
-  fields (e.g., `total_violations`, `results`, `parse_warnings`, `error`).
+  fields (e.g., `total_violations`, `results`, `error`).
 - **Business Rules**:
 
   - Supported actions MUST match CLI capability:
@@ -80,7 +80,9 @@ flowchart TD
     or "returns action + path only" stubs for actions that perform real work
     on CLI.
   - `check` / `scan`: default path `"."`; run full pipeline; `exit_code`
-    0/1/2 per Exit Code Contract. `parse_warnings` array included in response.
+    0/1/2 per Exit Code Contract. Files that fail to parse are silently
+    skipped by the underlying analyzers (counted in `skipped_count` when
+    available); no separate `parse_warnings` array is emitted.
   - `ci`: default path `"."`, default threshold 80; pass/fail with
     `exit_code` 0/1/2.
   - `fix`: run auto-fix (remove/replace/rename); honor `dry_run`; report
@@ -102,8 +104,8 @@ flowchart TD
   - Missing `threshold`: defaults to 80.
   - Pipeline failure: `exit_code: 2` with error message.
   - Required tool missing (security): `exit_code: 3`.
-  - Files with `parse_ok = false`: included in `parse_warnings` array,
-    not counted as AES violations.
+  - Files with parse failures: silently skipped by analyzers, not counted
+    as violations.
 - **Error Handling**: Errors returned as JSON objects with `error` +
   `exit_code`; never silent success.
 
@@ -287,7 +289,7 @@ flowchart TD
 | 4 | `security` tool missing                       | exit_code 3                         | FR-001 |
 | 5 | Unknown action                                | Error + exit_code 2                 | FR-001 |
 | 6 | `watch` action                                | Explicit`unsupported` + exit_code 2 | FR-001 |
-| 7 | Files with parse_ok = false                   | parse_warnings array in response    | FR-001 |
+| 7 | Files with parse failures             | Silently skipped, not counted as violations | FR-001 |
 | 8 | Missing path argument                         | Defaults to "."                     | FR-001 |
 
 ### FR-002 — List Commands

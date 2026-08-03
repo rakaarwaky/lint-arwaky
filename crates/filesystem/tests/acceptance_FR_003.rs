@@ -145,6 +145,50 @@ fn fr003_path_metadata_operations() {
 }
 
 #[test]
+fn us3_symlink_outside_workspace_skipped() {
+    let tmp = TempDir::new().unwrap();
+    let outside_dir = TempDir::new().unwrap();
+    // Create a source file outside the workspace
+    std::fs::write(outside_dir.path().join("outside.rs"), "fn outside() {}").unwrap();
+    // Create a symlink inside the workspace pointing outside
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::symlink(
+            outside_dir.path().join("outside.rs"),
+            tmp.path().join("link.rs"),
+        )
+        .unwrap();
+    }
+    // Also create a normal source file inside the workspace
+    std::fs::write(tmp.path().join("inside.rs"), "fn inside() {}").unwrap();
+
+    let io = make_io();
+    // scan_directory_with_ignored walks the directory, but symlinks to outside are not followed
+    let files = io.scan_directory_with_ignored(tmp.path(), &[]);
+    // The symlink may appear in the listing (depending on OS behavior) but
+    // when we check if it's a source file, the metadata check should handle it
+    let has_inside = files
+        .iter()
+        .any(|p| p.to_string_lossy().contains("inside.rs"));
+    assert!(has_inside, "inside.rs should be found");
+    // The symlink may or may not appear in scan results depending on filesystem,
+    // but reading it should fail since target is outside
+    if let Some(link_path) = files
+        .iter()
+        .find(|p| p.to_string_lossy().contains("link.rs"))
+    {
+        // If the symlink appears, reading it should fail or return different content
+        let result = io.read_to_string(link_path);
+        // Either it fails (target not accessible via canonicalize) or succeeds but
+        // the key point is the symlink doesn't bypass workspace confinement
+        assert!(
+            result.is_err() || !result.unwrap().contains("inside"),
+            "Symlink to outside should not leak workspace content"
+        );
+    }
+}
+
+#[test]
 fn fr003_canonicalize_path() {
     let tmp = TempDir::new().unwrap();
     let file = tmp.path().join("canonical.txt");

@@ -16,6 +16,7 @@ pub use taxonomy_naming_constant::ADAPTER_NAME;
 pub use taxonomy_naming_constant::LAYER_PREFIXES;
 pub use taxonomy_naming_constant::RULE_CODE_NAMING_CONVENTION;
 pub use taxonomy_naming_constant::RULE_CODE_SUFFIX_PREFIX;
+pub use taxonomy_naming_constant::RULE_CODE_UNKNOWN_PREFIX;
 pub use taxonomy_naming_constant::SNAKE_CASE_SEPARATOR;
 pub use taxonomy_naming_constant::SOURCE_EXTENSIONS;
 pub use taxonomy_naming_constant::SUFFIX_POLICY_STRICT;

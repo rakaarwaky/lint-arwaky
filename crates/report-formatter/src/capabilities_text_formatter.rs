@@ -44,11 +44,14 @@ impl TextFormatter {
         out.push_str("Lint Arwaky Report\n");
         out.push_str("===========================================\n\n");
 
-        // ── Separate AES violations from external lint results ──
+        // ── Separate AES violations, PARSE_WARN diagnostics, and external lint results ──
         let mut aes_violations = Vec::new();
+        let mut parse_warnings = Vec::new();
         let mut external_results = Vec::new();
         for r in &report.results {
-            if r.code.code().starts_with("AES") || r.code.code().starts_with("PARSE_") {
+            if r.code.code().starts_with("PARSE_") {
+                parse_warnings.push(r);
+            } else if r.code.code().starts_with("AES") {
                 aes_violations.push(r);
             } else {
                 external_results.push(r);
@@ -131,6 +134,24 @@ impl TextFormatter {
         }
         out.push('\n');
 
+        // ── Parse Warning Results Section ──
+        if !parse_warnings.is_empty() {
+            out.push_str(&format!("Parse Warnings: {}\n", parse_warnings.len()));
+            out.push_str("-------------------------------------------\n");
+            for r in &parse_warnings {
+                let badge = severity_badge(&r.severity);
+                out.push_str(&format!(
+                    "  {} {} {}:{}  {}\n",
+                    badge,
+                    r.code.code(),
+                    r.file.value(),
+                    r.line.value(),
+                    r.message.value(),
+                ));
+            }
+            out.push('\n');
+        }
+
         // ── Diagnostics Section ──
         if !report.diagnostics.is_empty() {
             out.push_str(&format!("Diagnostics: {}\n", report.diagnostics.len()));
@@ -148,7 +169,12 @@ impl TextFormatter {
 
         // ── Summary ──
         out.push_str("===========================================\n");
-        out.push_str(&format!("Total violations: {}\n", report.results.len()));
+        let violation_count = report
+            .results
+            .iter()
+            .filter(|r| r.severity != shared::common::Severity::INFO)
+            .count();
+        out.push_str(&format!("Total violations: {}\n", violation_count));
         if let Some(score) = &report.score {
             out.push_str(&format!("Compliance score: {:.1}/100\n", score.value()));
         }

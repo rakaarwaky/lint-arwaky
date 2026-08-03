@@ -6,8 +6,8 @@
 // Architecture:
 //   1. Performs an initial full lint on startup (gives baseline)
 //   2. Starts the filesystem watcher (inotify on Linux, via `notify` crate)
-//   3. Event loop: receives file-change events, checks if the file is
-//      lintable (.rs, .py, .js, .ts, etc.), runs lint, prints results
+//   3. Event loop: receives file-change events, batches + deduplicates via
+//      IChangeAnalyzerProtocol, filters to lintable files, runs lint, prints results
 //   4. Graceful shutdown: Ctrl+C triggers AtomicBool flag, stops watcher
 
 use std::sync::Arc;
@@ -24,6 +24,7 @@ use shared::quality_rules::ICodeAnalysisAggregate;
 
 pub struct WatchOrchestrator {
     provider: Arc<dyn IWatchProviderProtocol>,
+    analyzer: Arc<dyn IChangeAnalyzerProtocol>,
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
@@ -68,8 +69,17 @@ impl IWatchAggregate for WatchOrchestrator {
         while running.load(Ordering::SeqCst) {
             match rx.try_recv() {
                 Ok(event) => {
-                    if crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(&event.path)
-                    {
+                    // Batch: collect all pending events before processing
+                    let mut batch = vec![event];
+                    while let Ok(ev) = rx.try_recv() {
+                        batch.push(ev);
+                    }
+
+                    // FR-004: deduplicate by path, FR-003: filter to lintable files
+                    let deduped = self.analyzer.analyze(batch);
+                    let lintable = self.analyzer.filter_lintable(deduped);
+
+                    for event in lintable {
                         let event_fp = match FilePath::new(&event.path) {
                             Ok(fp) => fp,
                             Err(_) => continue,
@@ -91,8 +101,10 @@ impl IWatchAggregate for WatchOrchestrator {
             thread::sleep(Duration::from_millis(100));
         }
 
-        // Stop watcher
-        let _ = rt.block_on(self.provider.stop());
+        // Stop watcher — log error on failure
+        if let Err(e) = rt.block_on(self.provider.stop()) {
+            eprintln!("Warning: failed to stop watcher cleanly: {}", e);
+        }
         println!("Watcher stopped.");
         ExitCode::OK
     }
@@ -102,7 +114,7 @@ impl IWatchAggregate for WatchOrchestrator {
     }
 
     fn is_lintable(&self, path: &str) -> bool {
-        crate::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(path)
+        self.analyzer.is_lintable(path)
     }
 }
 
@@ -111,8 +123,13 @@ impl IWatchAggregate for WatchOrchestrator {
 impl WatchOrchestrator {
     pub fn new(
         provider: Arc<dyn IWatchProviderProtocol>,
+        analyzer: Arc<dyn IChangeAnalyzerProtocol>,
         linter: Arc<dyn ICodeAnalysisAggregate>,
     ) -> Self {
-        Self { provider, linter }
+        Self {
+            provider,
+            analyzer,
+            linter,
+        }
     }
 }

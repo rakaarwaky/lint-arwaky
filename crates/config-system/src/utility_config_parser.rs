@@ -20,6 +20,7 @@ pub fn parse_score_threshold(yaml_str: &str) -> Option<f64> {
 
 /// Returns names of adapters whose status is "enabled" (default).
 /// Ignores special entries like "architecture" (internal analysis).
+/// Supports both `status` (string) and `enabled` (bool) fields per Appendix A.
 pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
     let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
         Ok(v) => v,
@@ -32,11 +33,21 @@ pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
         .iter()
         .filter_map(|entry| {
             let name = entry.get("name")?.as_str()?;
-            let status = entry
-                .get("status")
-                .and_then(|s| s.as_str())
-                .unwrap_or("enabled");
-            if status != "disabled" && name != "architecture" {
+            if name == "architecture" {
+                return None;
+            }
+            // Support both "enabled" (bool) and "status" (string) fields
+            let enabled = entry
+                .get("enabled")
+                .and_then(|v| v.as_bool())
+                .or_else(|| {
+                    entry
+                        .get("status")
+                        .and_then(|s| s.as_str())
+                        .map(|s| s != "disabled")
+                })
+                .unwrap_or(true);
+            if enabled {
                 Some(name.to_string())
             } else {
                 None

@@ -36,35 +36,12 @@ fn container_aggregate_is_trait_object() {
 }
 
 #[test]
-fn container_orchestrator_returns_struct() {
-    let container = FileWatchContainer::new();
-    let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
-    let _orch = container.orchestrator(qa.code_analysis_linter());
-}
-
-#[test]
-fn is_lintable_static_method() {
-    assert!(
-        file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(
-            "main.rs"
-        )
-    );
-    assert!(
-        file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::is_lintable("app.py")
-    );
-    assert!(
-        file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(
-            "index.ts"
-        )
-    );
-    assert!(
-        !file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(
-            "image.png"
-        )
-    );
-    assert!(
-        !file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::is_lintable(
-            "data.bin"
-        )
-    );
+fn is_lintable_via_protocol() {
+    use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+    let analyzer = file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::new();
+    assert!(analyzer.is_lintable("main.rs"));
+    assert!(analyzer.is_lintable("app.py"));
+    assert!(analyzer.is_lintable("index.ts"));
+    assert!(!analyzer.is_lintable("image.png"));
+    assert!(!analyzer.is_lintable("data.bin"));
 }

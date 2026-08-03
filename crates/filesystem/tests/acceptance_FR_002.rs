@@ -209,6 +209,50 @@ fn fr002_graph_stats() {
     assert_eq!(edges, 1);
 }
 
+#[test]
+fn us5_barrel_reexport_resolved_to_source() {
+    let graph = DependencyGraph::new();
+    let files = vec![
+        make_file_entry("/src/module.rs", Language::Rust),
+        make_file_entry("/src/lib.rs", Language::Rust),
+    ];
+    // lib.rs re-exports module::Foo — the import in lib.rs should resolve to module.rs
+    let mut imports = vec![ImportEntry {
+        source_file: PathBuf::from("/src/lib.rs"),
+        raw_path: "crate::module::Foo".to_string(),
+        resolved_path: Some(PathBuf::from("/src/module.rs")),
+        import_type: ImportType::ReExport,
+        language: Language::Rust,
+        is_dynamic: false,
+        is_resolved: true,
+        symbols: vec!["Foo".to_string()],
+        is_reexport: true,
+        is_wildcard: false,
+    }];
+    // A consumer imports from lib.rs
+    imports.push(ImportEntry {
+        source_file: PathBuf::from("/src/main.rs"),
+        raw_path: "crate::lib::Foo".to_string(),
+        resolved_path: Some(PathBuf::from("/src/lib.rs")),
+        import_type: ImportType::Use,
+        language: Language::Rust,
+        is_dynamic: false,
+        is_resolved: true,
+        symbols: vec!["Foo".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    });
+    graph.build_graph(&imports, &files, &[], &[]);
+
+    // The re-export edge should be present: lib.rs depends on module.rs
+    let deps = graph.dependencies(Path::new("/src/lib.rs"));
+    assert!(
+        deps.contains(&PathBuf::from("/src/module.rs")),
+        "Barrel re-export should resolve to original source: lib.rs -> module.rs, got {:?}",
+        deps
+    );
+}
+
 fn imports_empty() -> Vec<ImportEntry> {
     Vec::new()
 }

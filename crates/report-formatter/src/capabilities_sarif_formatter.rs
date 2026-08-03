@@ -1,5 +1,5 @@
 // PURPOSE: SarifFormatter — implements IReportFormatterProtocol for SARIF 2.1.0 output
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, LintResult, ScanReport};
@@ -42,13 +42,39 @@ impl SarifFormatter {
         let mut sarif_results = Vec::new();
         let mut rule_ids = BTreeSet::new();
 
+        // Track max severity level per rule for default_configuration_level
+        let mut rule_levels: BTreeMap<String, &str> = BTreeMap::new();
+        let level_priority = |l: &str| match l {
+            "error" => 3,
+            "warning" => 2,
+            "note" => 1,
+            _ => 0,
+        };
+
         // 1. Violations
         for r in &report.results {
             let rule_id = r.code.to_string();
             rule_ids.insert(rule_id.clone());
+
+            // PARSE_WARN diagnostics always map to "note" regardless of severity
+            let level = if r.code.code().starts_with("PARSE_") {
+                "note"
+            } else {
+                severity_to_sarif_level(&r.severity)
+            };
+
+            rule_levels
+                .entry(rule_id.clone())
+                .and_modify(|existing| {
+                    if level_priority(level) > level_priority(existing) {
+                        *existing = level;
+                    }
+                })
+                .or_insert(level);
+
             sarif_results.push(SarifResult {
                 rule_id,
-                level: severity_to_sarif_level(&r.severity).to_string(),
+                level: level.to_string(),
                 message: SarifMessage {
                     text: r.message.value().to_string(),
                 },
@@ -86,12 +112,16 @@ impl SarifFormatter {
             });
         }
 
-        // Rules metadata array
+        // Rules metadata array — uses max severity level per rule
         let rules: Vec<SarifRule> = rule_ids
             .into_iter()
             .map(|id| SarifRule {
-                id,
-                default_configuration_level: "error".to_string(),
+                id: id.clone(),
+                default_configuration_level: rule_levels
+                    .get(&id)
+                    .copied()
+                    .unwrap_or("error")
+                    .to_string(),
             })
             .collect();
 

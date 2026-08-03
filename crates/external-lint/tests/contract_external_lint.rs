@@ -407,7 +407,10 @@ fn rustfmt_adapter_implements_protocol() {
 
 #[test]
 fn cargo_audit_adapter_implements_protocol() {
-    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(Arc::new(MockFilesystem));
+    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem),
+    );
     assert_adapter_contract(&adapter, "cargo-audit");
 }
 
@@ -472,9 +475,11 @@ fn all_adapters_coerce_to_dyn_protocol() {
             None,
             Arc::new(MockFilesystem),
         ));
-    let _dyn_audit: Box<dyn ILinterAdapterProtocol> = Box::new(
-        external_lint_lint_arwaky::CargoAuditAdapter::new(Arc::new(MockFilesystem)),
-    );
+    let _dyn_audit: Box<dyn ILinterAdapterProtocol> =
+        Box::new(external_lint_lint_arwaky::CargoAuditAdapter::new(
+            Arc::new(MockCmdExecutor),
+            Arc::new(MockFilesystem),
+        ));
     let _dyn_eslint: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::ESLintAdapter::new(
             Arc::new(MockLintExecutor),
@@ -587,6 +592,9 @@ fn orchestrator_implements_aggregate_protocol() {
         adapters: HashMap::new(),
         filesystem: Arc::new(MockFilesystem),
         config_parser: Arc::new(MockConfigParser),
+        selector: Arc::new(
+            external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
+        ),
     };
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let _dyn_agg: &dyn IExternalLintAggregate = &orchestrator;

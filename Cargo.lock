@@ -4047,7 +4047,6 @@ name = "report-formatter-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "criterion",
- "rayon",
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",

@@ -423,7 +423,7 @@ fn smoke_all_adapters_created_quickly() {
     let _clippy =
         external_lint_lint_arwaky::RustLinterAdapter::new(cmd_exec.clone(), None, fs.clone());
     let _fmt = external_lint_lint_arwaky::RustFmtAdapter::new(cmd_exec.clone(), None, fs.clone());
-    let _audit = external_lint_lint_arwaky::CargoAuditAdapter::new(fs.clone());
+    let _audit = external_lint_lint_arwaky::CargoAuditAdapter::new(cmd_exec.clone(), fs.clone());
 
     // Scan each (should return immediately with mock filesystem)
     let _ = _ruff.scan(&path);

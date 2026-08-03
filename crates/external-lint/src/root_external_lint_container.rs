@@ -10,11 +10,14 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
+use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::external_lint::{IExternalLintAggregate, IExternalLintExecutorProtocol};
+use shared::external_lint::{
+    IExternalLintAggregate, IExternalLintExecutorProtocol, IExternalLintSelectorProtocol,
+};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 pub struct ExternalLintContainer {
@@ -106,15 +109,23 @@ impl ExternalLintContainer {
         adapters.insert(
             "cargo-audit".to_string(),
             Arc::new(
-                crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(filesystem.clone()),
+                crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(
+                    executor.clone(),
+                    filesystem.clone(),
+                ),
             ),
         );
+
+        // Create selector via DI (AES201: agent must not import capabilities directly)
+        let selector: Arc<dyn IExternalLintSelectorProtocol> =
+            Arc::new(CapabilitiesExternalLintSelector::with_defaults());
 
         Self {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
                 adapters,
                 filesystem,
                 config_parser,
+                selector,
             })),
         }
     }

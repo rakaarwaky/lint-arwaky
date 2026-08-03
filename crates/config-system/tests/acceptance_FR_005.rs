@@ -1,4 +1,7 @@
-// FR-005 — Config Security (symlink rejection, XDG fallback)
+// FR-005 — Config Security (symlink rejection, path injection prevention)
+// NOTE: These tests verify the security aspects of config loading (symlink
+// rejection, path injection prevention) which are part of FR-001/FR-005
+// boundary. Config merging tests are in unit_config_system_orchestrator.rs.
 mod common;
 
 use shared::common::FilePath;

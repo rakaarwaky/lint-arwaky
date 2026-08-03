@@ -21,7 +21,7 @@ fn layer_map() -> LayerMapVO {
 
 #[test]
 fn uppercase_single_word_produces_violation() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_User.rs",
         "capabilities_User.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -34,7 +34,7 @@ fn uppercase_single_word_produces_violation() {
 
 #[test]
 fn mixed_case_produces_violation() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_user_Checker.rs",
         "capabilities_user_Checker.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -46,7 +46,7 @@ fn mixed_case_produces_violation() {
 
 #[test]
 fn all_uppercase_produces_violation() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_USER_CHECKER.rs",
         "capabilities_USER_CHECKER.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -60,7 +60,7 @@ fn all_uppercase_produces_violation() {
 
 #[test]
 fn hyphen_separator_produces_violation() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities-user-checker.rs",
         "capabilities-user-checker.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -72,7 +72,7 @@ fn hyphen_separator_produces_violation() {
 
 #[test]
 fn mixed_separator_produces_violation() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_user-checker.rs",
         "capabilities_user-checker.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -86,7 +86,7 @@ fn mixed_separator_produces_violation() {
 
 #[test]
 fn single_word_produces_violation() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities.rs",
         "capabilities.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -98,7 +98,7 @@ fn single_word_produces_violation() {
 
 #[test]
 fn two_words_produces_violation_when_min_is_3() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_user.rs",
         "capabilities_user.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -112,7 +112,7 @@ fn two_words_produces_violation_when_min_is_3() {
 
 #[test]
 fn three_words_clean_underscore_passes() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_user_checker.rs",
         "capabilities_user_checker.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -124,7 +124,7 @@ fn three_words_clean_underscore_passes() {
 
 #[test]
 fn four_words_clean_underscore_passes() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_user_permission_checker.rs",
         "capabilities_user_permission_checker.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -136,7 +136,7 @@ fn four_words_clean_underscore_passes() {
 
 #[test]
 fn numeric_words_clean_underscore_passes() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities_v2_handler.rs",
         "capabilities_v2_handler.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -150,7 +150,7 @@ fn numeric_words_clean_underscore_passes() {
 
 #[test]
 fn mod_rs_is_skipped() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/capabilities/mod.rs",
         "mod.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -162,7 +162,7 @@ fn mod_rs_is_skipped() {
 
 #[test]
 fn lib_rs_is_skipped() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/lib.rs",
         "lib.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -174,7 +174,7 @@ fn lib_rs_is_skipped() {
 
 #[test]
 fn main_rs_is_skipped() {
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/main.rs",
         "main.rs",
         &Some(LayerNameVO::new("capabilities")),
@@ -192,7 +192,7 @@ fn excepted_filename_passes() {
         exceptions: shared::common::PatternList::new(vec!["special_file.rs".to_string()]),
         ..Default::default()
     };
-    let result = checker()._check_file_naming(
+    let result = checker().check_file_naming_internal(
         "src/special_file.rs",
         "special_file.rs",
         &Some(LayerNameVO::new("capabilities")),
