@@ -20,3 +20,8 @@ rayon.workspace = true
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
 filesystem.workspace = true
+
+[[bench]]
+name = "bench_naming_rules"
+path = "benches/bench_naming_rules.rs"
+harness = false

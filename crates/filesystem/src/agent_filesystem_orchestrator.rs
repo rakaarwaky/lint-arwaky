@@ -255,7 +255,7 @@ impl IToolResolutionProtocol for FilesystemOrchestrator {
     }
 }
 
-// ═══ IFileSystemIOProtocol (32 methods) ════════════════════
+// ═══ IFileSystemIOProtocol (29 methods) ════════════════════
 
 impl IFileSystemIOProtocol for FilesystemOrchestrator {
     // ── Path Operations (15) ─────────────────────────────────

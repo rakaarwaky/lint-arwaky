@@ -1,4 +1,4 @@
-// FR-006: Tool Resolution
+// FR-004: Tool Resolution
 // Produces: tool paths, availability, config presence
 // Consumers: external-lint, maintenance
 //

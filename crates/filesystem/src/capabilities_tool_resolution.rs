@@ -1,4 +1,4 @@
-// FR-006: Tool Resolution — Capabilities layer
+// FR-004: Tool Resolution — Capabilities layer
 // Implements IToolResolutionProtocol by delegating to utility_tool_resolution stateless functions.
 // 3-block structure per AES skill.
 

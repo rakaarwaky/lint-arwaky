@@ -1,4 +1,4 @@
-// FR-004: Graph Data Construction
+// FR-002: Dependency Graph Construction
 // Produces: DiGraph + ReverseLinkIndex + DefinitionMap + ImplMap
 // Consumer: orphan-detector, FR-003 (also uses FR-002 output)
 //
