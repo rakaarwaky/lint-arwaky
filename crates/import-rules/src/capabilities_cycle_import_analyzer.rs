@@ -113,7 +113,7 @@ impl DependencyCycleAnalyzer {
                 {
                     return None;
                 }
-                let content = content_map.get(file)?.clone();
+                content_map.get(file)?;
 
                 let filename = utility_layer_detector::extract_filename(file);
                 let file_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
@@ -132,15 +132,14 @@ impl DependencyCycleAnalyzer {
                     None => return None,
                 };
 
-                // Use ImportEntry from filesystem if available, fallback to line-based
-                let resolved_modules = if let Some(entries) = imports_map.get(file) {
-                    utility_import_module_parser::extract_import_modules_from_entries_resolved(
-                        entries, root_dir,
-                    )
-                } else {
-                    utility_import_module_parser::extract_import_modules_resolved(
-                        &content, root_dir,
-                    )
+                // Use ImportEntry from filesystem's AST parser
+                let resolved_modules = match imports_map.get(file) {
+                    Some(entries) => {
+                        utility_import_module_parser::extract_import_modules_from_entries_resolved(
+                            entries, root_dir,
+                        )
+                    }
+                    None => return None,
                 };
 
                 let modules: Vec<SymbolName> = resolved_modules

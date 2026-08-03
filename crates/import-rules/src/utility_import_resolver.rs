@@ -4,8 +4,6 @@ use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO, LineContentVO};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared::import_rules::taxonomy_resolved_import_vo::ResolvedImport;
-use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -17,43 +15,6 @@ pub fn filepath_or_default(result: Result<FilePath, impl std::fmt::Debug>) -> Fi
 /// Convert an optional OsStr reference to a string slice.
 pub fn os_str_to_str(opt: Option<&std::ffi::OsStr>) -> &str {
     opt.and_then(|o| o.to_str()).map_or("", |s| s)
-}
-
-/// Parse import lines from file content using AST.
-/// Replaces regex/line-based parse_import_lines_helper.
-pub fn parse_import_lines_helper(
-    file_path: &str,
-    content: &str,
-) -> Vec<(LineNumber, LineContentVO)> {
-    let mut result = Vec::new();
-    match parse_file_content(file_path, content) {
-        FileParseResultVO::Rust(parse_result) => {
-            for imp in &parse_result.imports {
-                result.push((
-                    LineNumber::new(imp.line as i64),
-                    LineContentVO::new(imp.raw_path.clone()),
-                ));
-            }
-        }
-        FileParseResultVO::Python(parse_result) => {
-            for imp in &parse_result.imports {
-                result.push((
-                    LineNumber::new(imp.line as i64),
-                    LineContentVO::new(imp.raw_path.clone()),
-                ));
-            }
-        }
-        FileParseResultVO::TypeScript(parse_result) => {
-            for imp in &parse_result.imports {
-                result.push((
-                    LineNumber::new(imp.line as i64),
-                    LineContentVO::new(imp.raw_path.clone()),
-                ));
-            }
-        }
-        FileParseResultVO::Unsupported => {}
-    }
-    result
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -391,18 +352,33 @@ fn normalize_module_path(module_path: &str) -> String {
 }
 
 /// Try to find a barrel file at the given base path with all candidate names.
-fn try_barrel_candidates(dir: &Path, candidates: &[&str]) -> Option<String> {
+/// Uses content_map when available to avoid filesystem I/O.
+fn try_barrel_candidates(
+    dir: &Path,
+    candidates: &[&str],
+    content_map: Option<&HashMap<String, String>>,
+) -> Option<String> {
     for candidate in candidates {
         let barrel_path = dir.join(candidate);
-        if barrel_path.exists() {
-            return Some(barrel_path.to_string_lossy().to_string());
+        let path_str = barrel_path.to_string_lossy().to_string();
+        let exists = match content_map {
+            Some(cm) => cm.contains_key(&path_str),
+            None => barrel_path.exists(),
+        };
+        if exists {
+            return Some(path_str);
         }
     }
     None
 }
 
 /// Find the barrel file for a module path.
-pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
+/// Uses content_map when available to avoid filesystem I/O.
+pub fn find_barrel_file(
+    module_path: &str,
+    root_dir: &str,
+    content_map: Option<&HashMap<String, String>>,
+) -> Option<String> {
     let base = Path::new(root_dir);
     let clean_path = normalize_module_path(module_path);
     let module_dir = base.join(&clean_path);
@@ -416,12 +392,12 @@ pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
         "mod.rs",
     ];
 
-    if let Some(found) = try_barrel_candidates(&module_dir, &barrel_candidates) {
+    if let Some(found) = try_barrel_candidates(&module_dir, &barrel_candidates, content_map) {
         return Some(found);
     }
 
     if let Some(parent) = module_dir.parent()
-        && let Some(found) = try_barrel_candidates(parent, &barrel_candidates)
+        && let Some(found) = try_barrel_candidates(parent, &barrel_candidates, content_map)
     {
         return Some(found);
     }
@@ -444,7 +420,9 @@ pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
                         continue;
                     }
                     let full_dir = crate_src.join(rem);
-                    if let Some(found) = try_barrel_candidates(&full_dir, &barrel_candidates) {
+                    if let Some(found) =
+                        try_barrel_candidates(&full_dir, &barrel_candidates, content_map)
+                    {
                         return Some(found);
                     }
                 }
@@ -455,12 +433,16 @@ pub fn find_barrel_file(module_path: &str, root_dir: &str) -> Option<String> {
                 let parent_path = Path::new(&remainder_str);
                 if let Some(parent_dir) = parent_path.parent() {
                     let dir = crate_src.join(parent_dir);
-                    if let Some(found) = try_barrel_candidates(&dir, &barrel_candidates) {
+                    if let Some(found) =
+                        try_barrel_candidates(&dir, &barrel_candidates, content_map)
+                    {
                         return Some(found);
                     }
                     let parent_hyphen = parent_dir.to_string_lossy().replace('_', "-");
                     let dir_hyphen = crate_src.join(&parent_hyphen);
-                    if let Some(found) = try_barrel_candidates(&dir_hyphen, &barrel_candidates) {
+                    if let Some(found) =
+                        try_barrel_candidates(&dir_hyphen, &barrel_candidates, content_map)
+                    {
                         return Some(found);
                     }
                 }
@@ -572,13 +554,18 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
 }
 
 /// Resolve an import through a barrel file to its original source file.
+/// Uses content_map when available to avoid filesystem I/O.
 pub fn resolve_barrel_import(
     module_path: &str,
     symbol_name: &str,
     root_dir: &str,
+    content_map: Option<&HashMap<String, String>>,
 ) -> Option<ResolvedImport> {
-    let barrel_path = find_barrel_file(module_path, root_dir)?;
-    let barrel_content = std::fs::read_to_string(&barrel_path).ok()?;
+    let barrel_path = find_barrel_file(module_path, root_dir, content_map)?;
+    let barrel_content = match content_map {
+        Some(cm) => cm.get(&barrel_path)?.clone(),
+        None => std::fs::read_to_string(&barrel_path).ok()?,
+    };
     let reexports = parse_barrel_reexports(&barrel_content);
     let resolved_file = reexports.get(symbol_name)?.clone();
     let resolved_layer = utility_path_normalizer::extract_layer_from_prefix(&resolved_file);
@@ -592,8 +579,13 @@ pub fn resolve_barrel_import(
 }
 
 /// Convenience wrapper: resolve a barrel import and return just the file stem.
-pub fn resolve_barrel_symbol(module_path: &str, symbol: &str, root_dir: &str) -> Option<String> {
-    resolve_barrel_import(module_path, symbol, root_dir).map(|r| r.resolved_file)
+pub fn resolve_barrel_symbol(
+    module_path: &str,
+    symbol: &str,
+    root_dir: &str,
+    content_map: Option<&HashMap<String, String>>,
+) -> Option<String> {
+    resolve_barrel_import(module_path, symbol, root_dir, content_map).map(|r| r.resolved_file)
 }
 
 /// Extract imported symbol names from an import line.

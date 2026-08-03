@@ -222,12 +222,8 @@ impl DummyImportChecker {
         import_entries: &[ImportEntry],
     ) {
         let lines = ctx.str_refs();
-        // Use ImportEntry from filesystem if available, fallback to line-based
-        let imported = if !import_entries.is_empty() {
-            utility_dummy_detector::imported_symbols_from_entries(import_entries)
-        } else {
-            utility_dummy_detector::imported_symbols(&lines, ctx.lang)
-        };
+        // Use ImportEntry from filesystem's AST parser
+        let imported = utility_dummy_detector::imported_symbols_from_entries(import_entries);
 
         for (symbol, line_no) in imported {
             let symbol_str = symbol.value().to_string();
@@ -312,12 +308,8 @@ impl DummyImportChecker {
         import_entries: &[ImportEntry],
     ) {
         let lines = ctx.str_refs();
-        // Use ImportEntry from filesystem if available, fallback to line-based
-        let imported = if !import_entries.is_empty() {
-            utility_dummy_detector::imported_symbols_from_entries(import_entries)
-        } else {
-            utility_dummy_detector::imported_symbols(&lines, ctx.lang)
-        };
+        // Use ImportEntry from filesystem's AST parser
+        let imported = utility_dummy_detector::imported_symbols_from_entries(import_entries);
 
         let mut has_dummy_function = false;
         let mut dummy_function_line = 0;

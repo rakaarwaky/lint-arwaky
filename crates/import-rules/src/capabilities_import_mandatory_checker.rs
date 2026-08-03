@@ -3,8 +3,7 @@ use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
 use shared::common::{
-    FileContentVO, FilePath, FilePathList, Identity, LineContentVO, LineNumber, LintMessage,
-    Severity, SymbolName,
+    FilePath, FilePathList, Identity, LineContentVO, LineNumber, LintMessage, Severity, SymbolName,
 };
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
@@ -35,7 +34,7 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         layer_map: &LayerMapVO,
         files: &FilePathList,
         root_dir: &FilePath,
-        content_map: &HashMap<String, String>,
+        _content_map: &HashMap<String, String>,
         imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Result<LintResultList, ImportError> {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
@@ -59,18 +58,10 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     return Vec::new();
                 }
 
-                // Use ImportEntry from filesystem if available, fallback to line-based
-                let import_lines: Vec<(LineNumber, LineContentVO)> = if let Some(entries) =
-                    imports_map.get(&f_str)
-                {
-                    utility_import_resolver::import_entries_to_lines(entries)
-                } else {
-                    let content = match content_map.get(&f_str) {
-                        Some(c) => c.clone(),
-                        None => return Vec::new(),
-                    };
-                    let file_content = FileContentVO::new(content);
-                    utility_import_resolver::parse_import_lines_helper(&f_str, file_content.value())
+                // Use ImportEntry from filesystem's AST parser
+                let import_lines: Vec<(LineNumber, LineContentVO)> = match imports_map.get(&f_str) {
+                    Some(entries) => utility_import_resolver::import_entries_to_lines(entries),
+                    None => return Vec::new(),
                 };
 
                 let mut local_violations = Vec::new();
@@ -311,9 +302,12 @@ impl ArchImportMandatoryChecker {
                 continue;
             }
 
-            let Some(resolved) =
-                utility_import_resolver::resolve_barrel_import(&module_val, &symbol_name, root_dir)
-            else {
+            let Some(resolved) = utility_import_resolver::resolve_barrel_import(
+                &module_val,
+                &symbol_name,
+                root_dir,
+                None,
+            ) else {
                 continue;
             };
 

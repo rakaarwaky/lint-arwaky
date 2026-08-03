@@ -110,7 +110,7 @@ impl NamingConventionChecker {
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
-    fn _check_file_naming(
+    pub fn _check_file_naming(
         &self,
         file: &str,
         filename: &str,
@@ -147,56 +147,5 @@ impl NamingConventionChecker {
         }
 
         None
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use shared::common::taxonomy_layer_vo::LayerNameVO;
-
-    fn checker() -> NamingConventionChecker {
-        NamingConventionChecker::new()
-    }
-
-    #[test]
-    fn construction_succeeds() {
-        let _ = checker();
-    }
-
-    #[test]
-    fn valid_snake_case_no_violation() {
-        let result = checker()._check_file_naming(
-            "src/capabilities_user_checker.rs",
-            "capabilities_user_checker.rs",
-            &Some(LayerNameVO::new("capabilities")),
-            None,
-            3,
-        );
-        assert!(result.is_none());
-    }
-
-    #[test]
-    fn uppercase_in_name_produces_violation() {
-        let result = checker()._check_file_naming(
-            "src/capabilities_User_Checker.rs",
-            "capabilities_User_Checker.rs",
-            &Some(LayerNameVO::new("capabilities")),
-            None,
-            3,
-        );
-        assert!(result.is_some());
-    }
-
-    #[test]
-    fn barrel_file_skipped() {
-        let result = checker()._check_file_naming(
-            "src/capabilities/mod.rs",
-            "mod.rs",
-            &Some(LayerNameVO::new("capabilities")),
-            None,
-            3,
-        );
-        assert!(result.is_none());
     }
 }

@@ -27,16 +27,9 @@ pub fn extract_layer_from_prefix(filename: &str) -> Option<String> {
 }
 
 pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
-    let normalized_file = std::fs::canonicalize(file_path)
-        .unwrap_or_else(|_| std::path::PathBuf::from(file_path))
-        .to_string_lossy()
-        .replace('\\', "/");
-    let normalized_root = std::fs::canonicalize(root_dir)
-        .unwrap_or_else(|_| std::path::PathBuf::from(root_dir))
-        .to_string_lossy()
-        .replace('\\', "/")
-        .trim_end_matches('/')
-        .to_string();
+    // String-based normalization — avoids std::fs::canonicalize() I/O
+    let normalized_file = normalize_path(file_path);
+    let normalized_root = normalize_path(root_dir).trim_end_matches('/').to_string();
 
     let file_path = Path::new(&normalized_file);
     let root_path = Path::new(&normalized_root);
@@ -45,7 +38,6 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
         Ok(rel) => rel.to_string_lossy().replace('\\', "/"),
         Err(_) => {
             // Fallback: try string-based prefix removal
-            // Ensure root ends with / for proper prefix matching
             let root_prefix = if normalized_root.ends_with('/') {
                 normalized_root.clone()
             } else {
@@ -61,4 +53,21 @@ pub fn get_relative_path(file_path: &str, root_dir: &str) -> String {
             }
         }
     }
+}
+
+/// Normalize a path string without filesystem I/O.
+/// Collapses `.`, `..`, and redundant separators.
+fn normalize_path(path: &str) -> String {
+    let normalized = path.replace('\\', "/");
+    let mut components: Vec<&str> = Vec::new();
+    for part in normalized.split('/') {
+        match part {
+            "" | "." => continue,
+            ".." => {
+                components.pop();
+            }
+            other => components.push(other),
+        }
+    }
+    format!("/{}", components.join("/"))
 }
