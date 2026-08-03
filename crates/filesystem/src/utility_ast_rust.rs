@@ -15,9 +15,13 @@ pub fn extract_rust_metadata(tree: &tree_sitter::Tree, content: &str) -> RustMet
     let root = tree.root_node();
     let mut cursor = root.walk();
 
+    // Collect byte ranges of use declarations to exclude them from identifier extraction.
+    let mut use_ranges: Vec<std::ops::Range<usize>> = Vec::new();
+
     for node in root.named_children(&mut cursor) {
         match node.kind() {
             "use_declaration" => {
+                use_ranges.push(node.byte_range());
                 meta.use_statements.push(extract_rust_use(node, content));
             }
             "mod_item" => {
@@ -60,6 +64,9 @@ pub fn extract_rust_metadata(tree: &tree_sitter::Tree, content: &str) -> RustMet
             _ => {}
         }
     }
+
+    // Extract all identifiers from the file, excluding use declarations.
+    meta.used_identifiers = extract_identifiers_excluding_uses(root, content, &use_ranges);
     meta
 }
 
@@ -161,4 +168,114 @@ fn extract_rust_impl(node: tree_sitter::Node, content: &str) -> RustImplItem {
         implementor_type,
         has_generics,
     }
+}
+
+/// Extract all identifiers from the AST, excluding those inside use declarations.
+fn extract_identifiers_excluding_uses(
+    root: tree_sitter::Node,
+    content: &str,
+    use_ranges: &[std::ops::Range<usize>],
+) -> Vec<String> {
+    let mut identifiers = std::collections::HashSet::new();
+
+    fn is_inside_use(node: tree_sitter::Node, use_ranges: &[std::ops::Range<usize>]) -> bool {
+        let range = node.byte_range();
+        use_ranges.iter().any(|ur| ur.start <= range.start && range.end <= ur.end)
+    }
+
+    fn walk_node(
+        node: tree_sitter::Node,
+        content: &str,
+        use_ranges: &[std::ops::Range<usize>],
+        identifiers: &mut std::collections::HashSet<String>,
+    ) {
+        if is_inside_use(node, use_ranges) {
+            return;
+        }
+        // Collect identifier nodes (field_name, identifier, type_identifier, etc.)
+        if matches!(
+            node.kind(),
+            "identifier" | "field_identifier" | "type_identifier" | "macro_identifier"
+        ) {
+            if let Some(text) = node.utf8_text(content.as_bytes()).ok() {
+                let name = text.to_string();
+                // Skip keywords and single-char identifiers
+                if name.len() > 1 && !is_rust_keyword(&name) {
+                    identifiers.insert(name);
+                }
+            }
+        }
+        // Recurse into children
+        let mut child_cursor = node.walk();
+        for child in node.named_children(&mut child_cursor) {
+            walk_node(child, content, use_ranges, identifiers);
+        }
+    }
+
+    walk_node(root, content, use_ranges, &mut identifiers);
+    identifiers.into_iter().collect()
+}
+
+/// Check if a name is a Rust keyword that should not be treated as an identifier.
+fn is_rust_keyword(name: &str) -> bool {
+    matches!(
+        name,
+        "fn"
+            | "let"
+            | "mut"
+            | "pub"
+            | "use"
+            | "mod"
+            | "struct"
+            | "enum"
+            | "trait"
+            | "impl"
+            | "self"
+            | "Self"
+            | "super"
+            | "crate"
+            | "return"
+            | "if"
+            | "else"
+            | "match"
+            | "for"
+            | "while"
+            | "loop"
+            | "in"
+            | "as"
+            | "ref"
+            | "move"
+            | "async"
+            | "await"
+            | "where"
+            | "type"
+            | "const"
+            | "static"
+            | "true"
+            | "false"
+            | "Some"
+            | "None"
+            | "Ok"
+            | "Err"
+            | "Box"
+            | "Vec"
+            | "String"
+            | "str"
+            | "u8"
+            | "u16"
+            | "u32"
+            | "u64"
+            | "u128"
+            | "usize"
+            | "i8"
+            | "i16"
+            | "i32"
+            | "i64"
+            | "i128"
+            | "isize"
+            | "f32"
+            | "f64"
+            | "bool"
+            | "char"
+    )
 }

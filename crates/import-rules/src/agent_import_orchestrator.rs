@@ -229,6 +229,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .iter()
             .filter_map(|f| {
                 let ids = match f.parse_metadata.as_ref()? {
+                    ParseMetadata::Rust(m) => Some(m.used_identifiers.clone()),
                     ParseMetadata::Python(m) => Some(m.used_identifiers.clone()),
                     ParseMetadata::TypeScript(m) => Some(m.used_identifiers.clone()),
                     ParseMetadata::JavaScript(m) => Some(m.used_identifiers.clone()),

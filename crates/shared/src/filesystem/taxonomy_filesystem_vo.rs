@@ -103,6 +103,8 @@ pub struct RustMetadata {
     pub impl_blocks: Vec<RustImplItem>,
     /// Function definitions (name, has_body).
     pub function_definitions: Vec<RustFnItem>,
+    /// All identifiers used in the file body (excluding use declarations).
+    pub used_identifiers: Vec<String>,
 }
 
 /// A Rust `use` statement.
