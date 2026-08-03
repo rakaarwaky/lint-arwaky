@@ -149,6 +149,18 @@ impl ArchOrphanAnalyzer {
         context: &GraphAnalysisContext,
         file_vo: &OrphanFileListVO,
     ) -> Vec<LintResult> {
+        let surface_count = files
+            .values
+            .iter()
+            .filter(|f| f.contains("surface"))
+            .count();
+        eprintln!(
+            "[debug _check_orphans_inner] root='{}', total_files={}, surface_files={}, all_ws={}",
+            root_dir.value,
+            files.values.len(),
+            surface_count,
+            context.all_workspace_files.len()
+        );
         let configured = self.get_orphan_entry_points();
         let configured_vo =
             shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
@@ -274,6 +286,12 @@ impl ArchOrphanAnalyzer {
         };
         let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
         let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename);
+        if filename.contains("surface") {
+            eprintln!(
+                "[debug surface] f='{}', filename='{}', base_layer={:?}, top_root='{}'",
+                f, filename, base_layer, top_root_str
+            );
+        }
         if base_layer.is_none() {
             if dc < 5 {
                 debug!(file = f, filename = filename, "SKIP no layer prefix");
@@ -335,6 +353,12 @@ impl ArchOrphanAnalyzer {
             top_root_str,
             content_map,
         );
+        if code == "AES506" {
+            eprintln!(
+                "[debug AES506] file='{}', abs='{}', is_orphan={}, reason='{}'",
+                f, abs_f_str, res.is_orphan, res.reason
+            );
+        }
         if res.is_orphan {
             return Some(self._make_result(f, &res.reason, res.severity, code));
         }
