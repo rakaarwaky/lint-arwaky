@@ -22,7 +22,7 @@ impl SurfacesOrphanAnalyzer {
 
     fn surface_category(suffix: &str) -> &'static str {
         match suffix {
-            "command" | "controller" | "page" | "router" => "smart",
+            "command" | "controller" | "page" | "router" | "entry" => "smart",
             "hook" | "store" | "action" | "screen" => "utility",
             "component" | "view" | "layout" => "passive",
             _ => "unknown",
@@ -45,6 +45,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         let stem = file_stem(fp_val);
         let suffix = file_suffix(&basename);
         let category = Self::surface_category(&suffix);
+
+        // FR-009: Unclassifiable suffixes → skipped (no orphan check)
+        if category == "unknown" {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
 
         if !is_reachable {
             let severity = match category {

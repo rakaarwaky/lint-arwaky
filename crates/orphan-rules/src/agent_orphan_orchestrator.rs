@@ -60,7 +60,9 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     ) -> GraphAnalysisContext {
         let root_path = std::path::Path::new(root_dir.value());
         let ignored = self.ignored_paths();
-        self.deps.filesystem.build_orphan_graph_context(root_path, &ignored)
+        self.deps
+            .filesystem
+            .build_orphan_graph_context(root_path, &ignored)
     }
 
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
@@ -83,7 +85,10 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         ignored: &[String],
     ) -> (GraphAnalysisContext, Vec<LintResult>) {
         let root_path = std::path::Path::new(root_dir.value());
-        let context = self.deps.filesystem.build_orphan_graph_context(root_path, ignored);
+        let context = self
+            .deps
+            .filesystem
+            .build_orphan_graph_context(root_path, ignored);
         let files_vo = OrphanFileListVO::new(context.all_workspace_files.clone());
         let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
         (context, results)
@@ -451,6 +456,8 @@ impl ArchOrphanAnalyzer {
             "main.js".into(),
             "index.ts".into(),
             "index.js".into(),
+            "index.tsx".into(),
+            "index.jsx".into(),
         ];
         for layer_def in self.config.layers.values() {
             entry_points.extend(layer_def.orphan.orphan_entry_points.values.iter().cloned());

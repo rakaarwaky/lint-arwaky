@@ -42,6 +42,8 @@ pub fn identify_entry_points(
                     || basename == "main.js"
                     || basename == "index.ts"
                     || basename == "index.js"
+                    || basename == "index.tsx"
+                    || basename == "index.jsx"
             })
             .cloned()
             .collect()
