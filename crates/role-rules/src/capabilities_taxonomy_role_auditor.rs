@@ -211,15 +211,11 @@ impl TaxonomyRoleChecker {
                             inner_trimmed == prim_clean || inner_trimmed.starts_with(prim_clean)
                         }) {
                             let primitive_clean = p.trim_end_matches('<');
-                            let msg = Self::fmt(&AesRoleViolation::PrimitiveUsage {
-                                primitive: SymbolName::new(primitive_clean),
-                                reason: Some(LintMessage::new(format!(
-                                    "Primitive type '{}' used on line {} of {}",
-                                    primitive_clean,
+                            let msg = 
+                            format!("AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY? Primitive type '{}' used on line {} of {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.", primitive_clean,
                                     i + 1,
-                                    path_str
-                                ))),
-                            });
+                                    path_str)
+;
 
                             violations.push(LintResult::new_arch(
                                 &path_str,
@@ -239,15 +235,11 @@ impl TaxonomyRoleChecker {
                             .starts_with(|c: char| c.is_alphanumeric() || c == '_'))
                 {
                     let primitive_clean = p.trim_end_matches('<');
-                    let msg = Self::fmt(&AesRoleViolation::PrimitiveUsage {
-                        primitive: SymbolName::new(primitive_clean),
-                        reason: Some(LintMessage::new(format!(
-                            "Primitive type '{}' used on line {} of {}",
-                            primitive_clean,
+                    let msg = 
+                    format!("AES401 TAXONOMY_ROLE: Direct primitive in taxonomy entity, error, or event.\nWHY? Primitive type '{}' used on line {} of {}\nFIX: Replace the primitive type with a domain Value Object (VO) or constant from the taxonomy layer.", primitive_clean,
                             i + 1,
-                            path_str
-                        ))),
-                    });
+                            path_str)
+;
 
                     violations.push(LintResult::new_arch(
                         &path_str,
@@ -277,12 +269,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Struct '{}' found in constant file {}",
-                                name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Struct '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
+,
                     ));
                 }
                 for name in &rust_meta.enum_definitions {
@@ -291,12 +280,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Enum '{}' found in constant file {}",
-                                name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Enum '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
+,
                     ));
                 }
                 for name in &rust_meta.trait_definitions {
@@ -305,12 +291,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Trait '{}' found in constant file {}",
-                                name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Trait '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
+,
                     ));
                 }
                 for fn_item in &rust_meta.function_definitions {
@@ -319,12 +302,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Function '{}' found in constant file {}",
-                                fn_item.name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Function '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name, path_str)
+,
                     ));
                 }
                 if !rust_meta.impl_blocks.is_empty() {
@@ -333,12 +313,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Impl block found in constant file {}",
-                                path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Impl block found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", path_str)
+,
                     ));
                 }
             }
@@ -349,12 +326,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Class '{}' found in constant file {}",
-                                class.name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Class '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", class.name, path_str)
+,
                     ));
                 }
                 for fn_item in &py_meta.function_definitions {
@@ -363,12 +337,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Function '{}' found in constant file {}",
-                                fn_item.name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Function '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name, path_str)
+,
                     ));
                 }
             }
@@ -379,12 +350,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Class '{}' found in constant file {}",
-                                class.name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Class '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", class.name, path_str)
+,
                     ));
                 }
                 for name in &ts_meta.interface_declarations {
@@ -393,12 +361,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Interface '{}' found in constant file {}",
-                                name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Interface '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
+,
                     ));
                 }
                 for name in &ts_meta.type_alias_declarations {
@@ -407,12 +372,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Type alias '{}' found in constant file {}",
-                                name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Type alias '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
+,
                     ));
                 }
                 for fn_item in &ts_meta.function_definitions {
@@ -421,12 +383,9 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::ConstantPurity {
-                            reason: Some(LintMessage::new(format!(
-                                "Function '{}' found in constant file {}",
-                                fn_item.name, path_str
-                            ))),
-                        }),
+                        
+                        format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Function '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name, path_str)
+,
                     ));
                 }
             }
@@ -472,14 +431,11 @@ impl TaxonomyRoleChecker {
                     i + 1,
                     "AES401",
                     Severity::HIGH,
-                    Self::fmt(&AesRoleViolation::ConstantPurity {
-                        reason: Some(LintMessage::new(format!(
-                            "Non-constant declaration '{}' found in constant file on line {} of {}",
-                            t,
+                    
+                    format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Non-constant declaration '{}' found in constant file on line {} of {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", t,
                             i + 1,
-                            path_str
-                        ))),
-                    }),
+                            path_str)
+,
                 ));
             }
         }
@@ -493,17 +449,4 @@ impl TaxonomyRoleChecker {
         }
     }
 
-    fn fmt(v: &AesRoleViolation) -> String {
-        match v {
-            AesRoleViolation::PrimitiveUsage { primitive, reason } => {
-                let why = reason.as_ref().map_or("Primitive type used in taxonomy layer — domain types must use VOs.".to_string(), |r| r.to_string());
-                format!("AES401 TAXONOMY_ROLE: Primitive type '{}' used in taxonomy file.\nWHY? {why}\nFIX: Wrap primitive in a dedicated Value Object.", primitive.value())
-            }
-            AesRoleViolation::ConstantPurity { reason } => {
-                let why = reason.as_ref().map_or("Non-constant declaration found in constant file.".to_string(), |r| r.to_string());
-                format!("AES401 TAXONOMY_ROLE: Constant purity violation.\nWHY? {why}\nFIX: Only const/static declarations allowed in taxonomy constant files.")
-            }
-            other => format!("AES401 TAXONOMY_ROLE: Taxonomy role violation.\nWHY? {other:?}\nFIX: Ensure file follows taxonomy conventions."),
-        }
-    }
 }

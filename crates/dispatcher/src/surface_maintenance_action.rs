@@ -37,3 +37,9 @@ pub fn collect_dependencies(
         .run_dependency_report(&fp)
         .map_err(|e| format!("Error: {e}"))
 }
+
+pub fn collect_health_check(
+    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+) -> HealthCheckResult {
+    maintenance.health_check()
+}

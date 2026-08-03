@@ -75,15 +75,9 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = Self::fmt(
-                    &AesRoleViolation::ContractPrimitive {
-                        reason: Some(LintMessage::new(format!(
-                            "Forbidden primitive types in signature: {}",
-                            forbidden.join(", ")
-                        ))),
-                    },
-                    lang,
-                );
+                let msg = 
+                format!("AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", forbidden.join(", "))
+;
                 violations.push(LintResult::new_arch(
                     &path_str,
                     line_no,
@@ -101,15 +95,9 @@ impl ContractRoleChecker {
                 if forbidden.is_empty() {
                     continue;
                 }
-                let msg = Self::fmt(
-                    &AesRoleViolation::ContractPrimitive {
-                        reason: Some(LintMessage::new(format!(
-                            "Forbidden primitive types in signature: {}",
-                            forbidden.join(", ")
-                        ))),
-                    },
-                    lang,
-                );
+                let msg = 
+                format!("AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", forbidden.join(", "))
+;
                 violations.push(LintResult::new_arch(
                     &path_str,
                     line_no,
@@ -126,15 +114,9 @@ impl ContractRoleChecker {
             if forbidden.is_empty() {
                 continue;
             }
-            let msg = Self::fmt(
-                &AesRoleViolation::ContractPrimitive {
-                    reason: Some(LintMessage::new(format!(
-                        "Forbidden primitive types in signature: {}",
-                        forbidden.join(", ")
-                    ))),
-                },
-                lang,
-            );
+            let msg = 
+            format!("AES402 CONTRACT_PRIMITIVE: Contract or method signature uses primitive types instead of taxonomy VO or constant.\nWHY? Forbidden primitive types in signature: {}\nFIX: Replace primitive types with appropriate Value Objects (VO) or constants from the taxonomy layer.", forbidden.join(", "))
+;
             violations.push(LintResult::new_arch(
                 &path_str,
                 line_no,
@@ -145,20 +127,4 @@ impl ContractRoleChecker {
         }
     }
 
-    fn fmt(v: &AesRoleViolation, lang: Language) -> String {
-        let lang_name = match lang {
-            Language::Rust => "Rust",
-            Language::Python => "Python",
-            Language::TypeScript => "TypeScript",
-            Language::JavaScript => "JavaScript",
-            _ => "Unknown",
-        };
-        match v {
-            AesRoleViolation::ContractPrimitive { reason } => {
-                let why = reason.as_ref().map_or("Contract signatures must not use primitive types.".to_string(), |r| r.to_string());
-                format!("AES402 CONTRACT_ROLE: Forbidden primitive type in {lang_name} contract signature.\nWHY? {why}\nFIX: Replace primitive with domain VO or abstract type.")
-            }
-            other => format!("AES402 CONTRACT_ROLE: Contract role violation.\nWHY? {other:?}\nFIX: Ensure contract follows conventions."),
-        }
-    }
 }

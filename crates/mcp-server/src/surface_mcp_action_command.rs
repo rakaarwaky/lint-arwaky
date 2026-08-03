@@ -452,7 +452,9 @@ impl McpActionSurface {
 
     /// Health check: adapter availability from maintenance aggregate.
     pub fn handle_health_check(&self) -> String {
-        let health = self.deps.maintenance_orchestrator.health_check();
+        let health = dispatcher::surface_maintenance_action::collect_health_check(
+            self.deps.maintenance_orchestrator.clone(),
+        );
         let adapters: Vec<serde_json::Value> = health
             .adapters
             .iter()

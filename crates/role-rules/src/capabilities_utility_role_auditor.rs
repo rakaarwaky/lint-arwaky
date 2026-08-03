@@ -56,20 +56,16 @@ impl UtilityRoleChecker {
                         .chain(rust_meta.trait_definitions.iter())
                         .map(|s| s.as_str())
                         .collect();
+                    let why = format!(
+                        "Utility files must not define structs or enums. Found: [{}]",
+                        items.join(", ")
+                    );
                     violations.push(LintResult::new_arch(
                         &path_str,
                         0,
                         "AES404",
                         Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::UtilityRole {
-                            reason: Some(
-                                format!(
-                                    "Utility files must not define structs or enums. Found: [{}]",
-                                    items.join(", ")
-                                )
-                                .into(),
-                            ),
-                        }),
+                        format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? {why}\nFIX: Remove type definitions; use stateless functions only."),
                     ));
                 }
             }
@@ -81,20 +77,16 @@ impl UtilityRoleChecker {
                         .iter()
                         .map(|c| c.name.as_str())
                         .collect();
+                    let why = format!(
+                        "Utility files must not define classes. Found: [{}]",
+                        names.join(", ")
+                    );
                     violations.push(LintResult::new_arch(
                         &path_str,
                         0,
                         "AES404",
                         Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::UtilityRole {
-                            reason: Some(
-                                format!(
-                                    "Utility files must not define classes. Found: [{}]",
-                                    names.join(", ")
-                                )
-                                .into(),
-                            ),
-                        }),
+                        format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? {why}\nFIX: Remove type definitions; use stateless functions only."),
                     ));
                 }
             }
@@ -111,14 +103,13 @@ impl UtilityRoleChecker {
                     forbidden.push(format!("type '{}'", name));
                 }
                 if !forbidden.is_empty() {
+                    let why = format!(
+                        "Utility files must not define classes, interfaces, enums, or types. Found: [{}]",
+                        forbidden.join(", ")
+                    );
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES404", Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::UtilityRole {
-                            reason: Some(format!(
-                                "Utility files must not define classes, interfaces, enums, or types. Found: [{}]",
-                                forbidden.join(", ")
-                            ).into()),
-                        }),
+                        format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? {why}\nFIX: Remove type definitions; use stateless functions only."),
                     ));
                 }
             }
@@ -139,9 +130,7 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    Self::fmt(&AesRoleViolation::UtilityRole {
-                        reason: Some("Utility files must not define structs or enums.".into()),
-                    }),
+                    format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define structs or enums.\nFIX: Remove type definitions; use stateless functions only."),
                 ));
             }
         } else if ext == "typescript" || ext == "ts" || ext == "tsx" {
@@ -156,12 +145,7 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    Self::fmt(&AesRoleViolation::UtilityRole {
-                        reason: Some(
-                            "Utility files must not define classes, interfaces, enums, or types."
-                                .into(),
-                        ),
-                    }),
+                    format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes, interfaces, enums, or types.\nFIX: Remove type definitions; use stateless functions only."),
                 ));
             }
         } else if ext == "python" || ext == "py" {
@@ -176,9 +160,7 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    Self::fmt(&AesRoleViolation::UtilityRole {
-                        reason: Some("Utility files must not define classes or functions.".into()),
-                    }),
+                    format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes or functions.\nFIX: Remove type definitions; use stateless functions only."),
                 ));
             }
         }
@@ -357,15 +339,5 @@ impl UtilityRoleChecker {
             result.push(c);
         }
         result
-    }
-
-    fn fmt(v: &AesRoleViolation) -> String {
-        match v {
-            AesRoleViolation::UtilityRole { reason } => {
-                let why = reason.as_ref().map_or("Utility files must be stateless free functions only — no structs, enums, classes, or interfaces.".to_string(), |r| r.to_string());
-                format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? {why}\nFIX: Remove type definitions; use stateless functions only.")
-            }
-            other => format!("AES404 UTILITY_ROLE: Utility role violation.\nWHY? {other:?}\nFIX: Ensure utility file follows conventions."),
-        }
     }
 }

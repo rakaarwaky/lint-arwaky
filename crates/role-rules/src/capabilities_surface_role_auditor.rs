@@ -89,12 +89,9 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                Self::fmt(&AesRoleViolation::SurfaceRoleViolation {
-                    reason: Some(LintMessage::new(format!(
-                        "File {} has too many function declarations (exceeds 15): found {}",
-                        path_str, fn_count
-                    ))),
-                }),
+                
+                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? File {} has too many function declarations (exceeds 15): found {}\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count)
+,
             ));
         }
     }
@@ -122,12 +119,9 @@ impl SurfaceRoleChecker {
                         0,
                         "AES406",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::SurfaceRoleViolation {
-                            reason: Some(LintMessage::new(format!(
-                                "File {} has too many function declarations (exceeds 15): found {}",
-                                path_str, count
-                            ))),
-                        }),
+                        
+                        format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? File {} has too many function declarations (exceeds 15): found {}\nFIX: Ensure surface only performs its designated responsibilities.", path_str, count)
+,
                     ));
                     return;
                 }
@@ -171,12 +165,9 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                Self::fmt(&AesRoleViolation::SurfaceRoleViolation {
-                    reason: Some(LintMessage::new(format!(
-                        "Surface file '{}' has {} public methods (max {})",
-                        path_str, pub_fn_count, MAX_PUBLIC_METHODS
-                    ))),
-                }),
+                
+                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} public methods (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, pub_fn_count, MAX_PUBLIC_METHODS)
+,
             ));
         }
     }
@@ -194,12 +185,9 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                Self::fmt(&AesRoleViolation::SurfaceRoleViolation {
-                    reason: Some(LintMessage::new(format!(
-                        "Surface file '{}' has {} functions (max {})",
-                        path_str, fn_count, MAX_PUBLIC_METHODS
-                    ))),
-                }),
+                
+                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
+,
             ));
         }
     }
@@ -217,12 +205,9 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                Self::fmt(&AesRoleViolation::SurfaceRoleViolation {
-                    reason: Some(LintMessage::new(format!(
-                        "Surface file '{}' has {} functions (max {})",
-                        path_str, fn_count, MAX_PUBLIC_METHODS
-                    ))),
-                }),
+                
+                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
+,
             ));
         }
     }
@@ -253,40 +238,11 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                Self::fmt(&AesRoleViolation::NoDomainLogic {
-                    reason: Some(LintMessage::new(format!(
-                        "Passive surface {} has {} control flow statements (max {})",
-                        path_str, control_flow_count, MAX_CONTROL_FLOW
-                    ))),
-                }),
+                
+                format!("AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\nWHY? Passive surface {} has {} control flow statements (max {})\nFIX: Move the complex domain/control logic into capabilities or orchestrator components.", path_str, control_flow_count, MAX_CONTROL_FLOW)
+,
             ));
         }
     }
 
-    fn fmt(v: &AesRoleViolation) -> String {
-        match v {
-            AesRoleViolation::SurfaceRoleViolation { reason } => {
-                let why = reason.as_ref().map_or(
-                    "Surface must adhere to its designated role.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? {why}\nFIX: Ensure surface only performs its designated responsibilities.")
-            }
-            AesRoleViolation::PassiveViolation { reason } => {
-                let why = reason.as_ref().map_or(
-                    "Passive surfaces must not contain logic that should be in capabilities or agents.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!("AES406 SURFACE_ROLE: Passive surface contains business logic.\nWHY? {why}\nFIX: Move logic to appropriate capability or agent.")
-            }
-            AesRoleViolation::NoDomainLogic { reason } => {
-                let why = reason.as_ref().map_or(
-                    "Complex domain logic detected in a passive role.".to_string(),
-                    |r| r.to_string(),
-                );
-                format!("AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\nWHY? {why}\nFIX: Move logic to capabilities or orchestrator.")
-            }
-            other => format!("AES406 SURFACE_ROLE: Unknown surface violation.\nWHY? {other:?}\nFIX: Check AesRoleViolation enum."),
-        }
-    }
 }

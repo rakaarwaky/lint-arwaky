@@ -74,14 +74,9 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::AgentTooManyTypes {
-                            count: type_count,
-                            names: all_names.iter().map(SymbolName::new).collect(),
-                            reason: Some(LintMessage::new(format!(
-                                "Found {} types (struct/enum) in {}, max 3 allowed: [{}]",
-                                type_count, path_str, names_str
-                            ))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types (struct/enum) in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
+,
                     ));
                     return;
                 }
@@ -94,12 +89,9 @@ impl AgentRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::AgentNoImplementor {
-                            reason: Some(LintMessage::new(format!(
-                                "No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.",
-                                path_str
-                            ))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
+,
                     ));
                 }
             }
@@ -122,26 +114,18 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::AgentTooManyTypes {
-                            count: type_count,
-                            names: names.iter().map(SymbolName::new).collect(),
-                            reason: Some(LintMessage::new(format!(
-                                "Found {} classes in {}, max 3 allowed: [{}]",
-                                type_count, path_str, names_str
-                            ))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} classes in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
+,
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::AgentNoImplementor {
-                            reason: Some(LintMessage::new(format!(
-                                "No class with parent/inheritance found in {}. At least one class must inherit from a parent class.",
-                                path_str
-                            ))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
+,
                     ));
                 }
             }
@@ -168,26 +152,18 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::AgentTooManyTypes {
-                            count: type_count,
-                            names: all_names.iter().map(SymbolName::new).collect(),
-                            reason: Some(LintMessage::new(format!(
-                                "Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]",
-                                type_count, path_str, names_str
-                            ))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
+,
                     ));
                     return;
                 }
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::AgentNoImplementor {
-                            reason: Some(LintMessage::new(format!(
-                                "No class with 'implements' keyword found in {}. At least one class must implement an aggregate interface.",
-                                path_str
-                            ))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with 'implements' keyword found in {}. At least one class must implement an aggregate interface.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
+,
                     ));
                 }
             }
@@ -248,16 +224,11 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::AgentTooManyTypes {
-                            count: type_names.len(),
-                            names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                            reason: Some(LintMessage::new(format!(
-                                "Found {} types in {}, max 3 allowed: [{}]",
-                                type_names.len(),
+                        
+                        format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
-                                names_str
-                            ))),
-                        }),
+                                names_str)
+,
                     ));
                     return;
                 }
@@ -270,9 +241,9 @@ impl AgentRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::AgentNoImplementor {
-                            reason: Some(LintMessage::new(format!("No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.", path_str))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
+,
                     ));
                 }
             }
@@ -305,16 +276,11 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::AgentTooManyTypes {
-                            count: type_names.len(),
-                            names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                            reason: Some(LintMessage::new(format!(
-                                "Found {} classes in {}, max 3 allowed: [{}]",
-                                type_names.len(),
+                        
+                        format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} classes in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
-                                names_str
-                            ))),
-                        }),
+                                names_str)
+,
                     ));
                     return;
                 }
@@ -324,12 +290,9 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::MEDIUM,
-                        Self::fmt(&AesRoleViolation::AgentNoImplementor {
-                            reason: Some(LintMessage::new(format!(
-                                "No class with parent/inheritance found in {}.",
-                                path_str
-                            ))),
-                        }),
+                        
+                        format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with parent/inheritance found in {}.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
+,
                     ));
                 }
             }
@@ -372,16 +335,11 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        Self::fmt(&AesRoleViolation::AgentTooManyTypes {
-                            count: type_names.len(),
-                            names: type_names.iter().map(|s| SymbolName::new(*s)).collect(),
-                            reason: Some(LintMessage::new(format!(
-                                "Found {} types in {}, max 3 allowed: [{}]",
-                                type_names.len(),
+                        
+                        format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
-                                names_str
-                            ))),
-                        }),
+                                names_str)
+,
                     ));
                     return;
                 }
@@ -391,58 +349,13 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::MEDIUM,
-                    Self::fmt(&AesRoleViolation::AgentNoImplementor {
-                            reason: Some(LintMessage::new(format!(
-                                "No class with 'implements' found in {}.",
-                                path_str
-                            ))),
-                        }),
+                    
+                    format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with 'implements' found in {}.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
+,
                     ));
                 }
             }
         }
     }
 
-    fn fmt(v: &AesRoleViolation) -> String {
-        match v {
-            AesRoleViolation::AgentTooManyTypes { count, names, reason } => {
-                let names_str: Vec<String> = names.iter().map(|n| n.to_string()).collect();
-                let names_list = names_str.join(", ");
-                let why = reason.as_ref().map_or("Max 3 types allowed in agent files.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: Too many types ({count}) in agent file: [{names_list}].\nWHY? {why}\nFIX: Keep at most 3 types. Move excess to taxonomy layer.")
-            }
-            AesRoleViolation::AgentNoImplementor { reason } => {
-                let why = reason.as_ref().map_or("At least one struct must implement an _aggregate trait.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? {why}\nFIX: At least one struct must implement the agent _aggregate.")
-            }
-            AesRoleViolation::StatelessExecution { reason } => {
-                let why = reason.as_ref().map_or("Agent execution components must be stateless.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: Non-stateless behavior detected.\nWHY? {why}\nFIX: Remove mutable state or move init to constructor.")
-            }
-            AesRoleViolation::HighLevelPolicy { reason } => {
-                let why = reason.as_ref().map_or("Agents must focus on high-level orchestration.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: Low-level implementation imported.\nWHY? {why}\nFIX: Reference components via contract interfaces.")
-            }
-            AesRoleViolation::CoordinatesMultiple { reason } => {
-                let why = reason.as_ref().map_or("Orchestrator agents coordinate multiple subsystems.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: Orchestrator coordinates too few subsystems.\nWHY? {why}\nFIX: Merge into caller or delegate at least two subsystems.")
-            }
-            AesRoleViolation::NoDomainLogic { reason } => {
-                let why = reason.as_ref().map_or("Complex domain logic in a passive role.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: Complex domain logic in passive role.\nWHY? {why}\nFIX: Move to capabilities or orchestrator.")
-            }
-            AesRoleViolation::LazyEagerInit { reason } => {
-                let why = reason.as_ref().map_or("Agent containers must only wire dependencies.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: Complex init logic in container.\nWHY? {why}\nFIX: Move init logic out of constructor.")
-            }
-            AesRoleViolation::MustImplementContract { reason } => {
-                let why = reason.as_ref().map_or("Agent containers must implement ServiceContainerAggregate.".to_string(), |r| r.to_string());
-                format!("AES405 AGENT_ROLE: Missing required contract implementation.\nWHY? {why}\nFIX: Add ServiceContainerAggregate implementation.")
-            }
-            AesRoleViolation::AgentFileSizeLimit { max_lines } => {
-                format!("AES405 AGENT_ROLE: Agent file exceeds {max_lines} lines.\nWHY? Agent files must remain compact.\nFIX: Split into smaller focused modules.")
-            }
-            other => format!("AES405 AGENT_ROLE: Unknown agent violation.\nWHY? {other:?}\nFIX: Check AesRoleViolation enum."),
-        }
-    }
 }
