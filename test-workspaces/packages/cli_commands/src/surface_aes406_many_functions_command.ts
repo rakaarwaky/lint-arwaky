@@ -1,17 +1,17 @@
-// AES406: surface with too many functions
-export function cmd1(): void { console.log("1"); }
-export function cmd2(): void { console.log("2"); }
-export function cmd3(): void { console.log("3"); }
-export function cmd4(): void { console.log("4"); }
-export function cmd5(): void { console.log("5"); }
-export function cmd6(): void { console.log("6"); }
-export function cmd7(): void { console.log("7"); }
-export function cmd8(): void { console.log("8"); }
-export function cmd9(): void { console.log("9"); }
-export function cmd10(): void { console.log("10"); }
-export function cmd11(): void { console.log("11"); }
-export function cmd12(): void { console.log("12"); }
-export function cmd13(): void { console.log("13"); }
-export function cmd14(): void { console.log("14"); }
-export function cmd15(): void { console.log("15"); }
-export function cmd16(): void { console.log("16"); }
+// AES406: too many functions
+function fn1(): void {}
+function fn2(): void {}
+function fn3(): void {}
+function fn4(): void {}
+function fn5(): void {}
+function fn6(): void {}
+function fn7(): void {}
+function fn8(): void {}
+function fn9(): void {}
+function fn10(): void {}
+function fn11(): void {}
+function fn12(): void {}
+function fn13(): void {}
+function fn14(): void {}
+function fn15(): void {}
+function fn16(): void {}
