@@ -1,9 +1,5 @@
-// AES402: contract importing capabilities (cross-layer violation)
-import { CapabilitiesHandler } from '../capabilities/handler';
-
-export class ConfigAggregate {
-    load(): void {
-        const handler = new CapabilitiesHandler();
-        handler.process();
-    }
+// AES402: contract uses primitive types instead of taxonomy VOs
+export interface ConfigProtocol {
+    load(id: number, name: string): boolean;
+    save(data: Uint8Array): void;
 }

@@ -1,11 +1,5 @@
-// AES402: contract importing capabilities (cross-layer violation)
-use capabilities::handler::CapabilitiesHandler;
-
-pub struct ConfigAggregate;
-
-impl ConfigAggregate {
-    pub fn load(&self) {
-        let handler = CapabilitiesHandler::new();
-        handler.process();
-    }
+// AES402: contract uses primitive types instead of taxonomy VOs
+pub trait ConfigProtocol {
+    fn load(&self, id: i32, name: &str) -> bool;
+    fn save(&self, data: Vec<u8>) -> Result<(), String>;
 }

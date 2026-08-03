@@ -1,16 +1,8 @@
-# AES404: utility with complex logic (should be pure function)
-def parse_complex(input_str):
-    if not input_str:
-        raise ValueError("empty input")
-    
-    result = ""
-    for ch in input_str:
-        if ch.isalnum():
-            result += ch
-        elif ch == ' ':
-            result += '_'
-    
-    if len(result) > 100:
-        raise ValueError("too long")
-    
-    return result
+# AES404: utility contains forbidden type definition (class)
+class ParserConfig:
+    def __init__(self):
+        self.max_depth = 10
+        self.strict = True
+
+def parse(input_str):
+    return input_str.upper()
