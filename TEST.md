@@ -1,14 +1,16 @@
- 1. Test Projects
+1. Test Projects
 
 There are 3 test workspaces with 2 variants each:
+
 - **`workspaces-bad/`** — files with intentional violations (linter SHOULD detect them)
 - **`workspaces-good/`** — clean files (linter should NOT flag them = false positive test)
 
-| Category         | Bad Path                        | Good Path                       | Purpose                                     |
-| ------------------ | ------------------------------- | ------------------------------- | --------------------------------------------- |
-| Rust (crates)    | `workspaces-bad/crates/`       | `workspaces-good/crates/`       | AES Rust rules + Clippy/Rustfmt/cargo-audit |
-| Python (modules) | `workspaces-bad/modules/`      | `workspaces-good/modules/`      | AES Python rules + Ruff/MyPy/Bandit         |
-| JS/TS (packages) | `workspaces-bad/packages/`     | `workspaces-good/packages/`     | AES JS/TS rules + ESLint/Prettier/tsc       |
+
+| Category         | Bad Path                   | Good Path                   | Purpose                                     |
+| ------------------ | ---------------------------- | ----------------------------- | --------------------------------------------- |
+| Rust (crates)    | `workspaces-bad/crates/`   | `workspaces-good/crates/`   | AES Rust rules + Clippy/Rustfmt/cargo-audit |
+| Python (modules) | `workspaces-bad/modules/`  | `workspaces-good/modules/`  | AES Python rules + Ruff/MyPy/Bandit         |
+| JS/TS (packages) | `workspaces-bad/packages/` | `workspaces-good/packages/` | AES JS/TS rules + ESLint/Prettier/tsc       |
 
 ### Workspace Structure
 
@@ -36,18 +38,23 @@ workspaces-good/                     # Clean files (no violations expected)
 
 ### Expected Violation Counts
 
-| Workspace | Language | Files | Violations | False Positives |
-| --------- | -------- | ----- | ---------- | --------------- |
-| bad       | Rust     | 64    | 64         | —               |
-| bad       | Python   | 526   | 526        | —               |
-| bad       | JS/TS    | 333   | 333        | —               |
-| good      | Rust     | 686   | 0          | 1 (AES504)      |
-| good      | Python   | 238   | 0          | 0               |
-| good      | JS/TS    | 211   | 0          | 0               |
+
+| Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
+| ----------- | ---------- | ------- | ------------ | ----------------- | -------------------- |
+| bad       | Rust     | 64    | 181        | —              | 20/24 (4 missing*) |
+| bad       | Python   | 526   | TBD        | —              | 24 unique codes    |
+| bad       | JS/TS    | 333   | TBD        | —              | 24 unique codes    |
+| good      | Rust     | 686   | 0          | 1 (AES504)      | —                 |
+| good      | Python   | 238   | 0          | 0               | —                 |
+| good      | JS/TS    | 211   | 0          | 0               | —                 |
 
 > **Note**: The 1 AES504 false positive in workspaces-good is expected —
 > `utility_has_consumer.rs` becomes orphaned because its consumer
-> (`capabilities_consumer.rs`) was moved to workspaces-bad (AES503 violation).
+> (`capabilities_consumer.rs`) was moved to workspaces-bad (AES303 violation).
+
+> **Missing codes* (Rust)**: AES205 (circular), AES301 (file too large),
+> AES305 (duplicate), AES401 (taxonomy purity) — trigger files not yet
+> added to test-workspaces. See Section 3.2 for detection matrix.
 
 See [README.md](README.md) for CLI reference and
 [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
