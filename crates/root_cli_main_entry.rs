@@ -4,7 +4,6 @@
 use clap::{Parser, Subcommand};
 use std::str::FromStr;
 use std::sync::Arc;
-use tracing_subscriber::prelude::*;
 
 use shared::cli_commands::Format;
 use shared::common::{FilePath, GitBranchName, Threshold};

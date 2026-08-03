@@ -401,14 +401,14 @@ impl IFilesystemAggregate for MockFilesystem {
 
 #[test]
 fn test_constructor() {
-    let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
+    let _parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
     let _analyzer = ContractOrphanAnalyzer::new(fs);
 }
 
 #[test]
 fn test_empty_content_is_not_orphan() {
-    let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
+    let _parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
     let analyzer = ContractOrphanAnalyzer::new(fs);
 
@@ -428,7 +428,7 @@ fn test_empty_content_is_not_orphan() {
 
 #[test]
 fn test_no_traits_is_not_orphan() {
-    let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
+    let _parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
     let analyzer = ContractOrphanAnalyzer::new(fs);
 
@@ -452,7 +452,7 @@ fn test_no_traits_is_not_orphan() {
 
 #[test]
 fn test_trait_not_implemented_is_orphan() {
-    let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
+    let _parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
     let analyzer = ContractOrphanAnalyzer::new(fs);
 
@@ -487,7 +487,7 @@ fn test_trait_not_implemented_is_orphan() {
 
 #[test]
 fn test_trait_implemented_is_not_orphan() {
-    let parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
+    let _parser: Arc<dyn IOrphanParserProtocol> = Arc::new(MockParser);
     let fs: Arc<dyn IFilesystemAggregate> = Arc::new(MockFilesystem);
     let analyzer = ContractOrphanAnalyzer::new(fs);
 
