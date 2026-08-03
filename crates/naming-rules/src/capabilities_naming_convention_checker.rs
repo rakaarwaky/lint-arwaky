@@ -9,13 +9,11 @@ use crate::utility_naming_checker::get_stem;
 use crate::utility_naming_checker::string_filename_result;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::INamingConventionChecker;
-use shared::naming_rules::NamingViolation;
-use shared::naming_rules::{RULE_CODE_NAMING_CONVENTION, SNAKE_CASE_SEPARATOR};
+use shared::naming_rules::RULE_CODE_NAMING_CONVENTION;
 
 use std::sync::OnceLock;
 
@@ -137,18 +135,13 @@ impl NamingConventionChecker {
             return Some(string_filename_result(
                 file,
                 RULE_CODE_NAMING_CONVENTION,
-                NamingViolation::NamingConvention {
-                    min_words,
-                    separator: SNAKE_CASE_SEPARATOR.to_string(),
-                    reason: Some(LintMessage::new(format!(
-                        "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
-                         Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
-                         Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'. \
-                         Issue: '{}' may have uppercase characters, wrong separator, or fewer than {} words.",
-                        stem, min_words, stem, min_words
-                    ))),
-                }
-                .to_string(),
+                format!(
+                    "The stem '{}' does not match the required pattern 'prefix_concept_suffix'. \
+                     Expected: lowercase alphanumeric words separated by underscores, minimum {} words. \
+                     Example valid names: 'capabilities_user_checker', 'capabilities_db_adapter'. \
+                     Issue: '{}' may have uppercase characters, wrong separator, or fewer than {} words.",
+                    stem, min_words, stem, min_words
+                ),
                 Severity::HIGH,
             ));
         }

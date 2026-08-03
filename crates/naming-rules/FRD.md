@@ -6,7 +6,7 @@
 
 The naming-rules crate enforces strict naming conventions across the codebase to ensure consistency, readability, and adherence to the 7-layer AES architecture. It validates that files conform to structural naming patterns (AES101) and that file prefixes/suffixes are consistent with their architectural layer (AES102), preventing naming chaos and ensuring every file can be correctly assigned to an architectural layer.
 
-**File system operations (file walking, directory traversal, file filtering) are handled by the external `filesystem` crate via `IFilesystemAggregate`.** The surface layer fetches the pre-populated file list from `filesystem.file_list()` and passes it to the naming orchestrator via `run_audit_with_entries(&[FileEntry])`. The naming-rules crate performs zero I/O — it receives data and delegates analysis to its internal checkers.
+File system operations  are handled by the external `filesystem` crate via `IFilesystemAggregate`. The surface layer fetches the pre-populated file list from `filesystem.file_list()` and passes it to the naming orchestrator via `run_audit_with_entries(&[FileEntry])`. The naming-rules crate performs zero I/O — it receives data and delegates analysis to its internal checkers.
 
 ### Architecture & Data Flow
 
@@ -239,7 +239,7 @@ flowchart TD
 | **Forbidden suffix**       | Suffix explicitly banned for a layer (belongs to another layer's domain)                                                                                                                  |
 | **Prefix-suffix mismatch** | File prefix indicates one layer but suffix belongs to a different layer's suffix set                                                                                                      |
 | **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Caches`FileEntry[]` in `OnceLock`. Surface layer fetches via `file_list()` and passes to naming-rules. |
-| **Unreadable skip**     | File paths returned by the filesystem crate with an error flag are skipped silently; no separate warning diagnostic is emitted. |
+| **Unreadable skip**        | File paths returned by the filesystem crate with an error flag are skipped silently; no separate warning diagnostic is emitted.                                                           |
 
 ---
 
