@@ -106,7 +106,26 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         }
 
         // Case 2: No aggregate traits — check reachability from entry points
-        if !alive_files.paths.iter().any(|af| af.value() == fp) {
+        // alive_files contains relative paths; fp is absolute. Compare by suffix.
+        let fp_path = std::path::Path::new(fp);
+        let is_alive = alive_files.paths.iter().any(|af| {
+            let af_val = af.value();
+            // Direct match
+            if af_val == fp {
+                return true;
+            }
+            // Suffix match: alive file path ends with fp, or fp ends with alive file path
+            if let Some(af_path) = std::path::Path::new(af_val).file_name() {
+                if let Some(fp_file) = fp_path.file_name() {
+                    if af_path == fp_file {
+                        return true;
+                    }
+                }
+            }
+            // Full path suffix match
+            af_val.ends_with(fp) || fp.ends_with(af_val)
+        });
+        if !is_alive {
             return OrphanIndicatorResult::new(
                 true,
                 format!(

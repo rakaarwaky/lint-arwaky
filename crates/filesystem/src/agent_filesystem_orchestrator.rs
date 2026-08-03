@@ -528,15 +528,60 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             )
             .unwrap_or_else(|| root_dir.to_path_buf());
 
+        // Build all_files first so we can resolve Mod imports
+        let all_files: Vec<String> = self
+            .files
+            .get()
+            .map(|entries| {
+                entries
+                    .iter()
+                    .map(|e| path_to_relative(&e.path, &top_root))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let all_files_set: std::collections::HashSet<&str> =
+            all_files.iter().map(|s| s.as_str()).collect();
+
         // Build forward graph from import entries (source → targets)
         let imports = self.imports.get().cloned().unwrap_or_default();
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
-            let target = imp.resolved_path.as_ref().unwrap_or(&imp.source_file);
-            let tgt_rel = path_to_relative(target, &top_root);
-            if src_rel != tgt_rel {
-                forward.entry(src_rel).or_default().push(tgt_rel);
+            let target = if imp.import_type == shared::filesystem::taxonomy_filesystem_vo::ImportType::Mod
+                && imp.resolved_path.is_none()
+            {
+                // Resolve `pub mod foo;` to the actual file path
+                let src_dir = std::path::Path::new(&src_rel)
+                    .parent()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_default();
+                let mod_name = &imp.raw_path;
+                let candidate_rs = if src_dir.is_empty() {
+                    format!("{}.rs", mod_name)
+                } else {
+                    format!("{}/{}.rs", src_dir, mod_name)
+                };
+                let candidate_mod = if src_dir.is_empty() {
+                    format!("{}/mod.rs", mod_name)
+                } else {
+                    format!("{}/{}/mod.rs", src_dir, mod_name)
+                };
+                if all_files_set.contains(candidate_rs.as_str()) {
+                    Some(candidate_rs)
+                } else if all_files_set.contains(candidate_mod.as_str()) {
+                    Some(candidate_mod)
+                } else {
+                    None
+                }
+            } else {
+                imp.resolved_path
+                    .as_ref()
+                    .map(|p| path_to_relative(p, &top_root))
+            };
+            if let Some(tgt_rel) = target {
+                if src_rel != tgt_rel {
+                    forward.entry(src_rel).or_default().push(tgt_rel);
+                }
             }
         }
 
@@ -563,17 +608,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                 (k.clone(), rel_v)
             })
             .collect();
-
-        let all_files: Vec<String> = self
-            .files
-            .get()
-            .map(|entries| {
-                entries
-                    .iter()
-                    .map(|e| path_to_relative(&e.path, &top_root))
-                    .collect()
-            })
-            .unwrap_or_default();
 
         GraphAnalysisContext::new(
             ImportGraph::new(forward),

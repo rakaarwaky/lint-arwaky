@@ -189,6 +189,15 @@ impl ArchOrphanAnalyzer {
             .workspace_root(root_dir)
             .unwrap_or_else(|| root_path.to_path_buf());
         let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
+
+        // Debug: check reachability for di_containers agent files
+        for f in &alive_set {
+            if f.contains("di_containers") && f.contains("agent_") {
+                eprintln!("[debug reachability] di_containers agent in alive_set: {}", f);
+            }
+        }
+        eprintln!("[debug reachability] alive_set count: {}, entry_points count: {}", alive_set.len(), entry_points.values.len());
+
         let alive_result = ReachabilityResult::new(
             alive_set
                 .iter()
