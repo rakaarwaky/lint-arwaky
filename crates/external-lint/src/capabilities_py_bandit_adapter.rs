@@ -173,6 +173,101 @@ mod tests {
     use shared::common::taxonomy_severity_vo::Severity;
     use std::sync::Arc;
 
+    struct MockFilesystem;
+    impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for MockFilesystem {
+        fn file_list(&self) -> &[shared::filesystem::taxonomy_filesystem_vo::FileEntry] {
+            &[]
+        }
+        fn read_cached(&self, _: &FilePath) -> shared::common::taxonomy_source_vo::ContentString {
+            shared::common::taxonomy_source_vo::ContentString::raw("")
+        }
+        fn get_file_content(&self, _: &std::path::Path) -> Option<String> {
+            None
+        }
+        fn has_file(&self, _: &std::path::Path) -> bool {
+            false
+        }
+        fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
+            vec![]
+        }
+        fn discover_source_files(&self, _: &std::path::Path, _: &[String]) -> Vec<String> {
+            vec![]
+        }
+        fn read_file(&self, _: &std::path::Path) -> Option<String> {
+            None
+        }
+        fn scan_directory(&self, _: &std::path::Path) -> Vec<String> {
+            vec![]
+        }
+        fn discover_files(&self, _: &std::path::Path) -> Vec<String> {
+            vec![]
+        }
+        fn collect_source_files(&self, _: &std::path::Path, _: &[String]) -> Vec<FilePath> {
+            vec![]
+        }
+        fn read_lintable_file(&self, _: &str) -> Option<String> {
+            None
+        }
+    }
+    impl shared::filesystem::contract_parser_protocol::IParserProtocol for MockFilesystem {
+        fn parse_file(
+            &self,
+            _: &std::path::Path,
+            _: &str,
+        ) -> Option<shared::filesystem::taxonomy_filesystem_vo::ParseMetadata> {
+            None
+        }
+        fn supported_languages(&self) -> Vec<shared::filesystem::taxonomy_filesystem_vo::Language> {
+            vec![]
+        }
+    }
+    impl shared::filesystem::contract_graph_protocol::IGraphProtocol for MockFilesystem {
+        fn dependency_graph(
+            &self,
+        ) -> &shared::filesystem::utility_dependency_graph::DependencyGraph {
+            todo!()
+        }
+        fn build_dependency_graph(&self) {}
+    }
+    impl shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol for MockFilesystem {
+        fn workspace_root(&self) -> &std::path::Path {
+            todo!()
+        }
+        fn config_path(&self) -> &std::path::Path {
+            todo!()
+        }
+        fn is_python_file_recursive(&self, _: &FilePath) -> bool {
+            false
+        }
+        fn default_working_dir(&self, path: &FilePath) -> FilePath {
+            path.clone()
+        }
+    }
+    impl shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol
+        for MockFilesystem
+    {
+        fn resolve_tool(&self, _: &str) -> Option<std::path::PathBuf> {
+            None
+        }
+        fn tool_exists(&self, _: &str) -> bool {
+            false
+        }
+    }
+    impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol for MockFilesystem {
+        fn read_content(&self, _: &std::path::Path) -> Option<String> {
+            None
+        }
+        fn write_content(&self, _: &std::path::Path, _: &str) -> Result<(), std::io::Error> {
+            Ok(())
+        }
+        fn file_exists(&self, _: &std::path::Path) -> bool {
+            false
+        }
+        fn dir_exists(&self, _: &std::path::Path) -> bool {
+            false
+        }
+    }
+
     fn make_adapter() -> BanditAdapter {
         use shared::common::taxonomy_adapter_name_vo::AdapterName;
         use shared::common::taxonomy_message_vo::ComplianceStatus;
@@ -213,11 +308,7 @@ mod tests {
         }
 
         let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
-        BanditAdapter::new(
-            executor,
-            None,
-            filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator(),
-        )
+        BanditAdapter::new(executor, None, Arc::new(MockFilesystem))
     }
 
     #[test]

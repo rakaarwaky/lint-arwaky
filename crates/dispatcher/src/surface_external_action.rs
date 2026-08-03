@@ -13,6 +13,37 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use crate::surface_output_component::ViolationItem;
 
+/// Direct external lint scan — no subprocess. Used by the CLI `external`
+/// subcommand so that subprocess self-invocation from `scan` terminates.
+pub fn collect_external_direct(
+    path: Option<FilePath>,
+    external_lint: Arc<dyn IExternalLintAggregate>,
+    filter: Option<String>,
+) -> Result<Vec<ViolationItem>, String> {
+    let root = match &path {
+        Some(p) => p.value().to_string(),
+        None => ".".to_string(),
+    };
+    if !std::path::Path::new(&root).exists() {
+        return Err(format!("Error: path '{}' does not exist", root));
+    }
+    let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
+
+    let scan_results = external_lint.scan_all(&root_fp);
+    let mut violations: Vec<ViolationItem> = scan_results
+        .values
+        .iter()
+        .map(ViolationItem::from_lint_result)
+        .collect();
+
+    if let Some(ref filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
+
+    Ok(violations)
+}
+
 pub fn collect_external(
     path: Option<FilePath>,
     _external_lint: Arc<dyn IExternalLintAggregate>,

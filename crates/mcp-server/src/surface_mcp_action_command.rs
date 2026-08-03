@@ -197,14 +197,13 @@ impl McpActionSurface {
         }
     }
 
-    /// Run role scan via dispatcher.
+    /// Run role scan via dispatcher (direct aggregate — no subprocess).
     pub fn execute_role(&self, path: &str) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let _fp = match Self::to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_role_action::collect_role(
-            Some(fp),
+        match dispatcher::surface_role_action::collect_role_direct(
             self.deps.role_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
@@ -242,17 +241,16 @@ impl McpActionSurface {
         }
     }
 
-    /// Run external lint via dispatcher.
+    /// Run external lint via dispatcher (direct aggregate — no subprocess).
     pub fn execute_external(&self, path: &str) -> serde_json::Value {
         let fp = match Self::to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_external_action::collect_external(
+        match dispatcher::surface_external_action::collect_external_direct(
             Some(fp),
             self.deps.external_lint.clone(),
             None,
-            self.deps.filesystem.clone(),
         ) {
             Ok(violations) => violations_response("external", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),

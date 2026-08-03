@@ -189,7 +189,6 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 name = "auto-fix-lint-arwaky"
 version = "1.11.0"
 dependencies = [
- "filesystem-lint-arwaky",
  "serde",
  "serde_json",
  "shared-lint-arwaky",
@@ -3026,7 +3025,6 @@ dependencies = [
 name = "maintenance-lint-arwaky"
 version = "1.11.0"
 dependencies = [
- "filesystem-lint-arwaky",
  "serde_json",
  "shared-lint-arwaky",
 ]
@@ -3391,7 +3389,6 @@ name = "orphan-rules-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "criterion",
- "filesystem-lint-arwaky",
  "once_cell",
  "rayon",
  "regex",
@@ -3691,7 +3688,6 @@ name = "project-setup-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "dirs",
- "filesystem-lint-arwaky",
  "serde_json",
  "shared-lint-arwaky",
 ]

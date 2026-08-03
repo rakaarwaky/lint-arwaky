@@ -12,6 +12,27 @@ use shared::role_rules::IRoleRunnerAggregate;
 
 use crate::surface_output_component::ViolationItem;
 
+/// Direct role scan — no subprocess. Used by the CLI `role` subcommand so that
+/// subprocess self-invocation from `scan` terminates (child never re-spawns).
+pub fn collect_role_direct(
+    role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    filter: Option<String>,
+    fs_agg: Arc<dyn IFilesystemAggregate>,
+) -> Result<Vec<ViolationItem>, String> {
+    let results = role_orchestrator.run_audit_with_entries(fs_agg.file_list());
+    let mut violations: Vec<ViolationItem> = results
+        .iter()
+        .map(ViolationItem::from_lint_result)
+        .collect();
+
+    if let Some(ref filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
+
+    Ok(violations)
+}
+
 pub fn collect_role(
     path: Option<FilePath>,
     _role_orchestrator: Arc<dyn IRoleRunnerAggregate>,

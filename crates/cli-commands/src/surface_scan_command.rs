@@ -170,7 +170,7 @@ pub fn handle_naming(
     }
 }
 
-/// `role` — role rules scan (subprocess in dispatcher).
+/// `role` — role rules scan (direct aggregate; subprocess variant used by `scan`).
 #[allow(clippy::too_many_arguments)]
 pub fn handle_role(
     path: Option<FilePath>,
@@ -181,8 +181,7 @@ pub fn handle_role(
     filter: Option<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
-    match dispatcher::surface_role_action::collect_role(
-        path.clone(),
+    match dispatcher::surface_role_action::collect_role_direct(
         role_orchestrator,
         filter,
         filesystem.clone(),
@@ -240,30 +239,24 @@ pub fn handle_orphan(
     }
 }
 
-/// `external` — external lint scan (subprocess in dispatcher).
+/// `external` — external lint scan (direct aggregate; subprocess variant used by `scan`).
 #[allow(clippy::too_many_arguments)]
 pub fn handle_external(
     path: Option<FilePath>,
     format: Format,
     external_lint: Arc<dyn shared::external_lint::IExternalLintAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    _filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
-    match dispatcher::surface_external_action::collect_external(
+    match dispatcher::surface_external_action::collect_external_direct(
         path.clone(),
         external_lint,
         filter,
-        filesystem.clone(),
     ) {
         Ok(violations) => {
-            output_violations(
-                &violations,
-                &root,
-                format,
-                is_member(&path, filesystem.as_ref()),
-            );
+            output_violations(&violations, &root, format, false);
             exit_for(violations.len())
         }
         Err(e) => {
