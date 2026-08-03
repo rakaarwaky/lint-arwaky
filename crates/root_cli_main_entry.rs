@@ -179,7 +179,6 @@ fn main() {
         quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
             &config_orchestrator,
             ".",
-            filesystem.clone(),
         )
         .code_analysis_linter();
 

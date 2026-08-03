@@ -26,6 +26,7 @@ use shared::quality_rules::{
 };
 
 use shared::common::DisplayContent;
+use shared::common::FilePath;
 use shared::common::Severity;
 use shared::common::utility_compliance_score::compute_score;
 use shared::common::utility_layer_detector::{
@@ -33,12 +34,10 @@ use shared::common::utility_layer_detector::{
     resolve_specialized_layer,
 };
 use shared::common::{BooleanVO, Score};
-use shared::common::{DirectoryPath, FilePath};
 use shared::common::{LayerMapVO, LayerNameVO};
 use shared::config_system::ArchitectureConfig;
 use shared::quality_rules::CodeAnalysisRuleVO;
 
-use std::path::Path;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -49,8 +48,6 @@ pub struct CodeAnalysisDeps {
     pub line_checker: Arc<dyn ILineCheckerProtocol>,
     pub class_checker: Arc<dyn IMandatoryClassProtocol>,
     pub duplication_checker: Arc<dyn ICodeMetricAnalyzerProtocol>,
-    pub filesystem:
-        Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
 }
 
 pub struct CodeAnalysisOrchestrator {
@@ -96,7 +93,10 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 
     fn collect_file_entries(&self, files: &[String]) -> Vec<(std::path::PathBuf, String)> {
-        self.deps.filesystem.collect_file_entries(files)
+        // Entries must be provided by the caller via run_analysis_with_entries.
+        // This legacy method returns empty — callers should use FileEntry-based flow.
+        let _ = files;
+        Vec::new()
     }
 
     fn scan_duplicate_blocks(
@@ -187,6 +187,40 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
             violations.extend(file_v);
         }
 
+        // AES305: duplication analysis on pre-fetched entries
+        let entries: Vec<(std::path::PathBuf, String)> = files
+            .iter()
+            .filter(|f| f.parse_ok && !f.content.is_empty())
+            .map(|f| (f.path.clone(), f.content.clone()))
+            .collect();
+        if !entries.is_empty() {
+            let aes305_rule = self.config.rules.iter().find(|r| r.name.value == "AES305");
+            for (file_path, aes_violation) in self
+                .deps
+                .duplication_checker
+                .handle_duplicates_entries(&entries)
+            {
+                // Check AES305 exceptions (match against file stem or full filename)
+                let file_name = std::path::Path::new(&file_path)
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("");
+                if let Some(rule) = aes305_rule
+                    && rule.exceptions.values.contains(&file_name.to_string())
+                {
+                    continue;
+                }
+                let msg = aes_violation.to_string();
+                violations.push(LintResult::new_arch(
+                    &file_path,
+                    1,
+                    "AES305",
+                    Severity::LOW,
+                    msg,
+                ));
+            }
+        }
+
         violations
     }
 }
@@ -209,175 +243,14 @@ impl CodeAnalysisOrchestrator {
         }
     }
 
-    /// Run AES analysis on the current project (self-lint).
-    pub fn run_self_lint(&self, project_root: &str) -> Vec<LintResult> {
-        let root = Path::new(project_root);
-        let src_dir = self.deps.filesystem.detect_source_dir(root);
-        self.run_lint_at(&src_dir)
+    /// Legacy self-lint path — deprecated, use run_analysis_with_entries instead.
+    pub fn run_self_lint(&self, _project_root: &str) -> Vec<LintResult> {
+        Vec::new()
     }
 
-    /// Run AES analysis on a specific directory.
-    pub fn run_scan(&self, target_dir: &str) -> Vec<LintResult> {
-        self.run_lint_at(Path::new(target_dir))
-    }
-
-    /// Core method: collect files and run all checks.
-    fn run_lint_at(&self, src_dir: &Path) -> Vec<LintResult> {
-        let config = &self.config;
-        let _dir_path = match DirectoryPath::new(src_dir.to_string_lossy().to_string()) {
-            Ok(dp) => dp,
-            Err(_) => return Vec::new(),
-        };
-        let ignored: Vec<String> = config
-            .ignored_paths
-            .values
-            .iter()
-            .map(|fp| fp.value.clone())
-            .collect();
-        let files = self.deps.filesystem.collect_source_files(src_dir, &ignored);
-        if files.is_empty() {
-            return Vec::new();
-        }
-        let root_dir = src_dir.to_string_lossy().to_string();
-        let files_str: Vec<String> = files.iter().map(|f| f.value.clone()).collect();
-        self.run_all_checks(&files_str, &root_dir)
-    }
-
-    /// Run quality-rules AES checks on the given files.
-    /// Only handles checks belonging to the quality-rules crate.
-    /// Other crates (import-rules, naming-rules, role-rules, orphan-rules)
-    /// have their own orchestrators called by the surface via contract aggregates.
-    pub fn run_all_checks(&self, files: &[String], root_dir: &str) -> Vec<LintResult> {
-        if !self.config.enabled.value {
-            return Vec::new();
-        }
-        let mut violations: Vec<LintResult> = Vec::new();
-
-        // Scan Cargo.toml for workspace clippy allow bypass (AES304)
-        let root_path = Path::new(root_dir);
-        let mut cargo_candidates: Vec<std::path::PathBuf> = Vec::new();
-        cargo_candidates.push(root_path.join("Cargo.toml"));
-        if let Some(parent) = root_path.parent() {
-            cargo_candidates.push(parent.join("Cargo.toml"));
-        }
-        for cargo_path in &cargo_candidates {
-            if let Some(cargo_content) = self
-                .deps
-                .filesystem
-                .read_lintable_file(&cargo_path.to_string_lossy())
-            {
-                self.deps
-                    .bypass_checker
-                    .check_cargo_toml(&cargo_content, &mut violations);
-            }
-        }
-
-        // Parallel per-file processing
-        let file_violations: Vec<Vec<LintResult>> = files
-            .par_iter()
-            .map(|file| {
-                let mut v = Vec::new();
-                let filename = Path::new(file)
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or_default();
-                let c = match self.deps.filesystem.read_lintable_file(file) {
-                    Some(content) => content,
-                    None => {
-                        v.push(LintResult::new_arch(
-                            file,
-                            0,
-                            "AES301",
-                            Severity::LOW,
-                            "File skipped: exceeds maximum lintable size (2 MiB)".to_string(),
-                        ));
-                        return v;
-                    }
-                };
-
-                // Layer-independent checks (run on ALL files)
-                self.deps
-                    .bypass_checker
-                    .check_bypass_comments(file, &c, &mut v);
-                self.deps
-                    .dead_inheritance_checker
-                    .check_dead_inheritance(file, &c, &mut v);
-
-                if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
-                    return v;
-                }
-
-                // Layer detection
-                let filename = extract_filename(file);
-                let layer = match detect_layer_from_prefix(filename) {
-                    Some(l) => l,
-                    None => return v,
-                };
-                let keys = collect_layer_keys(&self.layer_map);
-                let layer = LayerNameVO::new(resolve_specialized_layer(&layer, file, &keys));
-                let def = match get_layer_def(&layer.value, &self.config.layers) {
-                    Some(d) => d,
-                    None => return v,
-                };
-                if def.exceptions.values.contains(&filename.to_string()) {
-                    return v;
-                }
-
-                // Layer-dependent checks (quality-rules only)
-                self.deps
-                    .line_checker
-                    .check_line_counts(file, Some(def), &c, &mut v);
-
-                // Mandatory class definition check (AES303)
-                self.deps.class_checker.check_mandatory_class_definition(
-                    file,
-                    Some(def),
-                    &c,
-                    &mut v,
-                );
-
-                v
-            })
-            .collect();
-
-        for file_v in file_violations {
-            violations.extend(file_v);
-        }
-
-        // AES305: File-level similarity check
-        let src_dir = self
-            .deps
-            .filesystem
-            .detect_source_dir(std::path::Path::new(root_dir));
-        if let Ok(dp) = shared::common::taxonomy_path_vo::DirectoryPath::new(
-            src_dir.to_string_lossy().to_string(),
-        ) {
-            for (file_path, aes_violation) in
-                self.deps.duplication_checker.handle_duplicates(Some(dp))
-            {
-                // Check AES305 exceptions (match against file stem or full filename)
-                let file_name = Path::new(&file_path)
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("");
-                let aes305_rule = self.config.rules.iter().find(|r| r.name.value == "AES305");
-                if let Some(rule) = aes305_rule
-                    && rule.exceptions.values.contains(&file_name.to_string())
-                {
-                    continue;
-                }
-                let msg = aes_violation.to_string();
-                violations.push(LintResult::new_arch(
-                    &file_path,
-                    1,
-                    "AES305",
-                    Severity::LOW,
-                    msg,
-                ));
-            }
-        }
-
-        violations
+    /// Legacy scan path — deprecated, use run_analysis_with_entries instead.
+    pub fn run_scan(&self, _target_dir: &str) -> Vec<LintResult> {
+        Vec::new()
     }
 
     /// Format a compliance report from results.

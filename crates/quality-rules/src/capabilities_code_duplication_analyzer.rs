@@ -93,7 +93,7 @@ impl CodeDuplicationAnalyzer {
         fn hash_key(key: &str) -> u64 {
             let mut hasher = DefaultHasher::new();
             std::hash::Hash::hash(key, &mut hasher);
-            std::hash::Hasher::finish(&mut hasher)
+            std::hash::Hasher::finish(&hasher)
         }
 
         // First pass: build global map + cache per-file unique hashes (P2.1: normalize once)

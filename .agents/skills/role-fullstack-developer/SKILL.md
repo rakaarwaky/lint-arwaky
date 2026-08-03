@@ -16,7 +16,6 @@ metadata:
     - role-business-analyst
     - role-tech-lead
 ---
-
 # role-fullstack-developer
 
 Fullstack Developer running to execute plans and generate reports.
@@ -111,11 +110,12 @@ gh pr create --base main --head develop --title "feat({scope}): {title}" --body 
 
 ## Branch Strategy
 
-| Step | Action                                                     |
-| ---- | ---------------------------------------------------------- |
-| 1    | Commit changes to `develop` branch                        |
-| 2    | Push `develop` to remote: `git push origin develop`       |
-| 3    | Create PR from `develop` → `main`: `gh pr create ...`     |
+
+| Step | Action                                                |
+| ------ | ------------------------------------------------------- |
+| 1    | Commit changes to`develop` branch                     |
+| 2    | Push`develop` to remote: `git push origin develop`    |
+| 3    | Create PR from`develop` → `main`: `gh pr create ...` |
 
 **Rules:**
 
@@ -126,12 +126,12 @@ gh pr create --base main --head develop --title "feat({scope}): {title}" --body 
 
 ## Checklist
 
-- [ ] Plan file exists in `.agents/plans/`
-- [ ] Plan paths validated against codebase
-- [ ] Relevant skill workflows identified
-- [ ] Implementation matches plan exactly (no deviations)
-- [ ] `cargo clippy --all-targets -- -D warnings` passes
-- [ ] `cargo test --workspace` passes
-- [ ] `lint-arwaky-cli scan <path>` passes
-- [ ] Plan files deleted, report written
-- [ ] Committed to `develop`, PR created to `main`
+- [ ]  Plan file exists in `.agents/plans/`
+- [ ]  Plan paths validated against codebase
+- [ ]  Relevant skill workflows identified
+- [ ]  Implementation matches plan exactly (no deviations)
+- [ ]  `cargo clippy --all-targets -- -D warnings` passes
+- [ ]  `cargo test --workspace` passes
+- [ ]  `lint-arwaky-cli scan <path>` passes
+- [ ]  Plan files deleted, report written
+- [ ]  Committed to `develop`, PR created to `main`

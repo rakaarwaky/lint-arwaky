@@ -19,7 +19,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
             &config_orchestrator,
             ".",
-            filesystem.clone(),
         )
         .code_analysis_linter();
 
