@@ -363,7 +363,8 @@ impl McpActionSurface {
 
     /// Version info.
     pub fn execute_version(&self) -> serde_json::Value {
-        serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "name": "lint-arwaky", "exit_code": 0})
+        let report = dispatcher::surface_version_action::collect_version();
+        serde_json::json!({"version": report.version, "name": "lint-arwaky", "exit_code": 0})
     }
 
     /// Watch is not supported via MCP.
@@ -405,19 +406,26 @@ impl McpActionSurface {
                     Ok(f) => f,
                     Err(e) => return e,
                 };
-                match self.deps.git_hooks_aggregate.install_hook(&fp) {
-                    Ok(status) => {
-                        serde_json::json!({"status": "success", "action": "install-hook", "exit_code": 0, "message": status.value})
+                match dispatcher::surface_git_action::collect_install_hook(
+                    self.deps.git_hooks_aggregate.clone(),
+                    &fp,
+                ) {
+                    Ok(report) => {
+                        serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "install-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
                     Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
                 }
             }
-            "uninstall-hook" => match self.deps.git_hooks_aggregate.uninstall_hook() {
-                Ok(status) => {
-                    serde_json::json!({"status": "success", "action": "uninstall-hook", "exit_code": 0, "message": status.value})
+            "uninstall-hook" => {
+                match dispatcher::surface_git_action::collect_uninstall_hook(
+                    self.deps.git_hooks_aggregate.clone(),
+                ) {
+                    Ok(report) => {
+                        serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "uninstall-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
+                    }
+                    Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
                 }
-                Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
-            },
+            }
             "init" | "install" => {
                 let items = dispatcher::surface_setup_action::collect_init(
                     self.deps.setup_orchestrator.clone(),
@@ -456,8 +464,9 @@ impl McpActionSurface {
             .iter()
             .filter(|a| a["status"] == "available")
             .count();
+        let version_report = dispatcher::surface_version_action::collect_version();
         let result = serde_json::json!({
-            "version": env!("CARGO_PKG_VERSION"),
+            "version": version_report.version,
             "adapters_available": available,
             "adapters_total": adapters.len(),
             "adapters": adapters,

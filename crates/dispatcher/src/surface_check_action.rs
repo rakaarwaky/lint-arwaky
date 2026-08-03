@@ -83,6 +83,11 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
 
 pub use collect_scan as collect_check;
 
+/// Check if a path belongs to a workspace member.
+pub fn is_member_path(path: &FilePath, fs_agg: &dyn IFilesystemAggregate) -> bool {
+    fs_agg.is_member_path(path)
+}
+
 /// Run all 6 linters via subprocesses for a given path; return violations.
 pub fn collect_scan_json(
     path: &str,

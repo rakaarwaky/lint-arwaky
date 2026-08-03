@@ -3,7 +3,8 @@
 // No direct std::process::Command or filesystem I/O — aggregate handles subprocess execution.
 use shared::common::FilePath;
 use shared::maintenance::{
-    DependencyReport, MaintenanceCommandsAggregate, SecurityScanReport, ToolchainDiagnostics,
+    DependencyReport, HealthCheckResult, MaintenanceCommandsAggregate, SecurityScanReport,
+    ToolchainDiagnostics,
 };
 use std::sync::Arc;
 

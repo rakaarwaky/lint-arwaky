@@ -410,7 +410,8 @@ fn main() {
             Some(FilePath::new(path).unwrap_or_default()),
         ),
         Command::Version => {
-            println!("lint-arwaky {}", env!("CARGO_PKG_VERSION"));
+            let report = dispatcher::surface_version_action::collect_version();
+            println!("lint-arwaky {}", report.version);
             shared::common::ExitCode::OK
         }
     };

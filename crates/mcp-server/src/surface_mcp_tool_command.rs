@@ -94,11 +94,9 @@ impl ServerHandler for LintArwakyMcpServer {
         let mut builder = ServerCapabilities::builder();
         builder.tools = Some(ToolsCapability::default());
         let capabilities = builder.build();
+        let version_report = dispatcher::surface_version_action::collect_version();
         ServerInfo::new(capabilities)
-            .with_server_info(Implementation::new(
-                "lint-arwaky",
-                env!("CARGO_PKG_VERSION"),
-            ))
+            .with_server_info(Implementation::new("lint-arwaky", &version_report.version))
             .with_protocol_version(ProtocolVersion::default())
     }
 }

@@ -1,6 +1,5 @@
 use shared::cli_commands::LintResult;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::utility_layer_detector;
 use shared::common::{
     ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity,
 };
@@ -27,7 +26,7 @@ struct DummyFileContext {
 }
 
 impl DummyFileContext {
-    fn compute(file: &str, content: &str, layer_map: &LayerMapVO) -> Option<Self> {
+    fn compute(file: &str, content: &str, _layer_map: &LayerMapVO) -> Option<Self> {
         let basename = std::path::Path::new(file)
             .file_name()
             .and_then(|n| n.to_str())
@@ -50,18 +49,6 @@ impl DummyFileContext {
             dummy_ranges,
             dummy_impl_traits,
         })
-    }
-
-    fn detect_layer(file: &str, layer_map: &LayerMapVO) -> String {
-        let filename: &str = utility_layer_detector::extract_filename(file);
-        match utility_layer_detector::detect_layer_from_prefix(filename) {
-            Some(base) => {
-                let layer_keys: Vec<String> =
-                    layer_map.values.keys().map(|k| k.to_string()).collect();
-                utility_layer_detector::resolve_specialized_layer(&base, file, &layer_keys)
-            }
-            None => "any".to_string(),
-        }
     }
 
     fn str_refs(&self) -> Vec<&str> {

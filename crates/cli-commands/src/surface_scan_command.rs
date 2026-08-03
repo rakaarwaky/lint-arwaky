@@ -19,7 +19,10 @@ fn resolve_root(path: &Option<FilePath>) -> String {
 }
 
 fn is_member(path: &Option<FilePath>, fs: &dyn IFilesystemAggregate) -> bool {
-    fs.is_member_path(&FilePath::new(resolve_root(path)).unwrap_or_default())
+    dispatcher::surface_check_action::is_member_path(
+        &FilePath::new(resolve_root(path)).unwrap_or_default(),
+        fs,
+    )
 }
 
 fn exit_for(violations: usize) -> ExitCode {
