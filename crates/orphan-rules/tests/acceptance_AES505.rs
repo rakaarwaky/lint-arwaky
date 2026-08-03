@@ -156,14 +156,14 @@ fn aes505_no_aggregate_traits_is_not_orphan() {
 
 #[test]
 fn aes505_agent_violation_display_message() {
-    use shared::orphan_rules::AesOrphanViolation;
+    use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation};
     let violation = AesOrphanViolation::AgentOrphan {
         agg_name: "IFooAggregate".to_string(),
         reason: Some(shared::common::taxonomy_message_vo::LintMessage::new(
             "Agent file aggregate trait is not used by any surface, container, entry, or main file.".to_string(),
         )),
     };
-    let msg = violation.to_string();
+    let msg = format_orphan_violation(&violation);
     assert!(msg.contains("AES505"));
     assert!(msg.contains("IFooAggregate"));
     assert!(msg.contains("unreachable"));

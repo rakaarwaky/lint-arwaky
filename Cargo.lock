@@ -1088,6 +1088,7 @@ name = "external-lint-lint-arwaky"
 version = "1.11.0"
 dependencies = [
  "anyhow",
+ "criterion",
  "filesystem-lint-arwaky",
  "regex",
  "serde",

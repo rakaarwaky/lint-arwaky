@@ -1,7 +1,6 @@
 // Acceptance test — FR-001: MCP Configuration Generation.
 // Tests all 7 client formats, binary resolution, and alwaysAllow list.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::{ISetupManagementProtocol, SetupManagementAggregate};
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {

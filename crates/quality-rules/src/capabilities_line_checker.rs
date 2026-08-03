@@ -1,5 +1,5 @@
 use shared::cli_commands::LintResult;
-use shared::quality_rules::{AesCodeAnalysisViolation, ILineCheckerProtocol};
+use shared::quality_rules::{AesCodeAnalysisViolation, format_code_analysis_violation, ILineCheckerProtocol};
 
 use shared::common::{LayerDefinition, LintMessage, Severity};
 
@@ -55,12 +55,12 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 format!(
                     "{} (min: {}).",
-                    AesCodeAnalysisViolation::FileTooShort {
+                    format_code_analysis_violation(&AesCodeAnalysisViolation::FileTooShort {
                         reason: Some(LintMessage::new(format!(
                             "File has {} lines, less than minimum {} lines",
                             count, def.code_analysis.min_lines.value
                         ))),
-                    },
+                    }),
                     def.code_analysis.min_lines.value
                 ),
             ));
@@ -74,12 +74,12 @@ impl ILineCheckerProtocol for ArchLineChecker {
                 Severity::HIGH,
                 format!(
                     "{} (max: {}).",
-                    AesCodeAnalysisViolation::FileTooLarge {
+                    format_code_analysis_violation(&AesCodeAnalysisViolation::FileTooLarge {
                         reason: Some(LintMessage::new(format!(
                             "File has {} lines, exceeding maximum {} lines",
                             count, def.code_analysis.max_lines.value
                         ))),
-                    },
+                    }),
                     def.code_analysis.max_lines.value
                 ),
             ));

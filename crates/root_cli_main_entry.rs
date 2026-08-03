@@ -225,12 +225,14 @@ fn main() {
 
     let auto_fix_container =
         auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
+    // BF-1: dry_run is now per-request via execute(path, dry_run), not baked into orchestrator.
+    // Factory ignores the bool parameter for backwards compatibility; callers pass dry_run to execute().
     let fix_orchestrator_factory: Arc<
         dyn Fn(bool) -> Arc<dyn shared::auto_fix::LintFixOrchestratorAggregate> + Send + Sync,
     > = {
         let container = auto_fix_container;
         let fs_for_factory = filesystem.clone();
-        Arc::new(move |dry| container.orchestrator_with_filesystem(dry, fs_for_factory.clone()))
+        Arc::new(move |_dry| container.orchestrator_with_filesystem(fs_for_factory.clone()))
     };
 
     let maintenance_container =

@@ -1,7 +1,6 @@
 // Acceptance test — FR-002: Environment file generation produces valid .env with PHANTOM_ROOT.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::ISetupManagementProtocol;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
@@ -42,14 +41,12 @@ fn fr002_env_contains_header() {
 }
 
 #[test]
-fn fr002_env_empty_home_path() {
-    let container = make_container();
-    let proto = container.protocol();
-    let home = DirectoryPath::new("".to_string()).unwrap();
-    let env = proto.generate_env(&home);
+fn fr002_env_empty_home_path_rejected() {
+    // Empty directory path should be rejected by DirectoryPath VO
+    let result = DirectoryPath::new("".to_string());
     assert!(
-        env.value().contains("PHANTOM_ROOT=/"),
-        "FR-002 QA#2: empty home path → PHANTOM_ROOT=/"
+        result.is_err(),
+        "FR-002: empty home path should be rejected"
     );
 }
 

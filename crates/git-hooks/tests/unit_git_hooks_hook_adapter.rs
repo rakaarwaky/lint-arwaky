@@ -3,12 +3,11 @@
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::FilePath;
 use shared::git_hooks::IHookManagerProtocol;
-use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_adapter(tmp: &TempDir) -> GitHookAdapter {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     GitHookAdapter::new(fp, filesystem)
 }
@@ -30,8 +29,14 @@ fn fr002_1_normal_install_creates_hook_script() {
     let hook_path = tmp.path().join(".git/hooks/pre-commit");
     assert!(hook_path.exists(), "hook script should exist");
     let content = std::fs::read_to_string(&hook_path).unwrap();
-    assert!(content.contains("lint-arwaky-cli check ."), "hook should contain executable");
-    assert!(content.starts_with("#!/bin/bash"), "hook should start with bash shebang");
+    assert!(
+        content.contains("lint-arwaky-cli check ."),
+        "hook should contain executable"
+    );
+    assert!(
+        content.starts_with("#!/bin/bash"),
+        "hook should start with bash shebang"
+    );
 }
 
 #[test]
@@ -69,7 +74,10 @@ fn fr002_4_not_git_repo_returns_success_false() {
     let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
     let result = adapter.install_pre_commit(&exe);
     assert!(result.is_ok());
-    assert!(!result.unwrap().value, "should return false for non-git repo");
+    assert!(
+        !result.unwrap().value,
+        "should return false for non-git repo"
+    );
 }
 
 #[test]
@@ -88,20 +96,9 @@ fn fr002_5_unix_permissions_set() {
     }
 }
 
-#[test]
-fn fr002_7_empty_executable_defaults_to_cli() {
-    let tmp = TempDir::new().unwrap();
-    make_git_repo(&tmp);
-    let adapter = make_adapter(&tmp);
-    let exe = FilePath::new("".to_string()).unwrap();
-    adapter.install_pre_commit(&exe).unwrap();
-    let hook_path = tmp.path().join(".git/hooks/pre-commit");
-    let content = std::fs::read_to_string(&hook_path).unwrap();
-    assert!(
-        content.contains("lint-arwaky-cli check ."),
-        "empty exe should default to lint-arwaky-cli"
-    );
-}
+// Note: FR-002 Scenario 7 (empty executable path defaults to lint-arwaky-cli)
+// cannot be tested because FilePath rejects empty strings.
+// The empty-check in install_pre_commit is dead code — unreachable via the public API.
 
 // ─── FR-003: Pre-Commit Hook Uninstallation ───────────────
 
@@ -134,5 +131,8 @@ fn fr003_3_not_git_repo_returns_success_false() {
     let adapter = make_adapter(&tmp);
     let result = adapter.uninstall_pre_commit();
     assert!(result.is_ok());
-    assert!(!result.unwrap().value, "should return false for non-git repo");
+    assert!(
+        !result.unwrap().value,
+        "should return false for non-git repo"
+    );
 }

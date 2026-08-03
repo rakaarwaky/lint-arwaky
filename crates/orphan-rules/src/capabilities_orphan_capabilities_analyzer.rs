@@ -3,7 +3,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, ICapabilitiesOrphanProtocol};
+use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, ICapabilitiesOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::sync::Arc;
 
@@ -69,11 +69,10 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         if fp.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::CapabilitiesOrphan {
+                format_orphan_violation(&AesOrphanViolation::CapabilitiesOrphan {
                     stem,
                     reason: Some("Not reachable from any entry point.".into()),
-                }
-                .to_string(),
+                }),
                 Severity::MEDIUM,
             );
         }
@@ -101,13 +100,12 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
         OrphanIndicatorResult::new(
             true,
-            AesOrphanViolation::CapabilitiesOrphan {
+            format_orphan_violation(&AesOrphanViolation::CapabilitiesOrphan {
                 stem,
                 reason: Some(
                     "Capabilities file struct/trait is not wired in any container.".into(),
                 ),
-            }
-            .to_string(),
+            }),
             Severity::MEDIUM,
         )
     }

@@ -2,7 +2,7 @@ use crate::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::{AesOrphanViolation, ISurfacesOrphanProtocol};
+use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, ISurfacesOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
@@ -60,14 +60,13 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             };
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::SurfaceOrphan {
+                format_orphan_violation(&AesOrphanViolation::SurfaceOrphan {
                     category,
                     stem: stem.clone(),
                     reason: Some(
                         format!("Surface '{}' is not reachable from any entry point.", stem).into(),
                     ),
-                }
-                .to_string(),
+                }),
                 severity,
             );
         }
@@ -107,7 +106,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                 if !has_valid_consumer {
                     return OrphanIndicatorResult::new(
                         true,
-                        AesOrphanViolation::SurfaceOrphan {
+                        format_orphan_violation(&AesOrphanViolation::SurfaceOrphan {
                             category,
                             stem: stem.clone(),
                             reason: Some(
@@ -117,8 +116,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                                 )
                                 .into(),
                             ),
-                        }
-                        .to_string(),
+                        }),
                         Severity::MEDIUM,
                     );
                 }
@@ -153,11 +151,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                 if !has_valid_consumer {
                     return OrphanIndicatorResult::new(
                         true,
-                        AesOrphanViolation::SurfaceOrphan {
+                        format_orphan_violation(&AesOrphanViolation::SurfaceOrphan {
                             category,
                             stem: stem.clone(),
                             reason: Some(format!("Passive surface '{}' is not imported by any Smart or Utility surface.", stem).into()),
-                        }.to_string(),
+                        }),
                         Severity::LOW,
                     );
                 }

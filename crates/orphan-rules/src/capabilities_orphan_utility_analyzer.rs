@@ -2,7 +2,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, IUtilityOrphanProtocol};
+use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, IUtilityOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
 use std::collections::HashMap;
 
@@ -126,18 +126,18 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         if !utility_importers.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::UtilityDeadCode {
+                format_orphan_violation(&AesOrphanViolation::UtilityDeadCode {
                     stem: module_name.clone(),
                     imported_by: utility_importers,
                     reason: Some(format!("Utility file '{}' is only imported by other utility files, not by capability, agent, or surfaces layers.", module_name).into()),
-                }.to_string(),
+                }),
                 Severity::MEDIUM,
             );
         }
 
         OrphanIndicatorResult::new(
             true,
-            AesOrphanViolation::UtilityOrphan {
+            format_orphan_violation(&AesOrphanViolation::UtilityOrphan {
                 stem: module_name.clone(),
                 reason: Some(
                     format!(
@@ -146,8 +146,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                     )
                     .into(),
                 ),
-            }
-            .to_string(),
+            }),
             Severity::MEDIUM,
         )
     }

@@ -216,7 +216,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                 {
                     continue;
                 }
-                let msg = aes_violation.to_string();
+                let msg = shared::quality_rules::format_code_analysis_violation(&aes_violation);
                 violations.push(LintResult::new_arch(
                     &file_path,
                     1,

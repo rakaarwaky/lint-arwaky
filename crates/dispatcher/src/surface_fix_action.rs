@@ -48,7 +48,7 @@ pub fn collect_fix(
         .collect();
 
     let fix_orch = (fix_orchestrator_factory)(dry_run);
-    let fix_result = fix_orch.execute(&project_path);
+    let fix_result = fix_orch.execute(&project_path, dry_run);
 
     let (after_count, fixed_count, success) = if dry_run {
         (results.len(), 0usize, true)

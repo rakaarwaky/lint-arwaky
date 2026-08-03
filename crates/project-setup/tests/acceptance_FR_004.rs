@@ -1,6 +1,6 @@
 // Acceptance test — FR-004: Config file creation and global config directory.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::{ISetupManagementProtocol, SetupError};
+use shared::project_setup::SetupError;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {

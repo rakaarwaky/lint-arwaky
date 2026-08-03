@@ -19,6 +19,7 @@ use crate::utility_import_resolver;
 use crate::utility_path_normalizer;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::import_rules::format_import_violation;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use std::collections::{HashMap, HashSet};
@@ -270,7 +271,7 @@ impl ArchImportForbiddenChecker {
                         idx + 1,
                         "AES201",
                         Severity::CRITICAL,
-                        AesImportViolation::ForbiddenImport {
+                        format_import_violation(&AesImportViolation::ForbiddenImport {
                             source_layer: layer_name_vo.clone(),
                             forbidden_layer: LayerNameVO::new(forbidden.clone()),
                             allowed,
@@ -278,8 +279,7 @@ impl ArchImportForbiddenChecker {
                                 "File imports from '{}' which resolves to forbidden layer '{}'. Source file is in layer '{}'.",
                                 module_val, forbidden, layer_name
                             ))),
-                        }
-                        .to_string(),
+                        }),
                     ));
                 }
             }
@@ -381,7 +381,7 @@ impl ArchImportForbiddenChecker {
                             idx + 1,
                             "AES201",
                             Severity::CRITICAL,
-                            AesImportViolation::ForbiddenImport {
+                            format_import_violation(&AesImportViolation::ForbiddenImport {
                                 source_layer: LayerNameVO::new(rule_layer_str.clone()),
                                 forbidden_layer: LayerNameVO::new(forbidden.clone()),
                                 allowed,
@@ -389,8 +389,7 @@ impl ArchImportForbiddenChecker {
                                     "Scope rule violation: file imports from '{}' which resolves to forbidden layer '{}'.",
                                     module_val, forbidden
                                 ))),
-                            }
-                            .to_string(),
+                            }),
                         ));
                     }
                 }

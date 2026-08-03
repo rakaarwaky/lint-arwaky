@@ -35,3 +35,4 @@ pub use taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 pub use taxonomy_violation_code_analysis_vo::Language;
 pub use taxonomy_violation_code_analysis_vo::ViolationKind;
 pub use taxonomy_violation_code_analysis_vo::WORD_PATTERN_TOKENS;
+pub use taxonomy_violation_code_analysis_vo::format_code_analysis_violation;

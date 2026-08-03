@@ -74,13 +74,13 @@ impl FixOrchestrator {
     /// Convenience: apply a single bypass fix at the given line.
     pub fn fix_bypass(&self, file_path: &str, line: u32) -> FixOutcome {
         self.fix_protocol
-            .fix_bypass_comments(file_path, shared::common::LineNumber::new(line as usize))
+            .fix_bypass_comments(file_path, shared::common::LineNumber::new(line as i64))
     }
 
     /// Convenience: apply a single unused-import fix at the given line.
     pub fn fix_unused_import(&self, file_path: &str, line: u32) -> FixOutcome {
         self.fix_protocol
-            .fix_unused_import(file_path, shared::common::LineNumber::new(line as usize))
+            .fix_unused_import(file_path, shared::common::LineNumber::new(line as i64))
     }
 
     /// Convenience: rename a symbol across the file (FR-003).

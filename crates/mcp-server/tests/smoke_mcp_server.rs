@@ -18,7 +18,9 @@ fn smoke_mcp_action_surface_imports() {
 fn smoke_mcp_server_module_imports() {
     let start = std::time::Instant::now();
     // Verify the server module's types are accessible
-    let _ = std::any::type_name::<mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer>();
+    let _ = std::any::type_name::<
+        mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer,
+    >();
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

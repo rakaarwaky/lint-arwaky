@@ -16,6 +16,12 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 filesystem = { workspace = true }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [lints]
 workspace = true
+
+[[bench]]
+name = "bench_external_lint"
+path = "benches/bench_external_lint.rs"
+harness = false

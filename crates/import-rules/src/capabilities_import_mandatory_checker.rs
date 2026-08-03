@@ -11,6 +11,7 @@ use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::format_import_violation;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 use std::collections::{HashMap, HashSet};
@@ -144,15 +145,14 @@ impl ArchImportMandatoryChecker {
                     1,
                     "AES202",
                     Severity::HIGH,
-                    AesImportViolation::MissingImport {
+                    format_import_violation(&AesImportViolation::MissingImport {
                         source_layer: LayerNameVO::new(source_layer.to_string()),
                         required: SymbolName::new(required.clone()),
                         reason: Some(LintMessage::new(format!(
                             "File '{}' in layer '{}' is missing required import '{}'.",
                             basename, source_layer, required
                         ))),
-                    }
-                    .to_string(),
+                    }),
                 );
                 if !violations.contains(&v) {
                     violations.push(v);
@@ -225,15 +225,14 @@ impl ArchImportMandatoryChecker {
                 1,
                 "AES202",
                 Severity::HIGH,
-                AesImportViolation::MissingImport {
+                format_import_violation(&AesImportViolation::MissingImport {
                     source_layer: LayerNameVO::new(rule_layer_str.to_string()),
                     required: SymbolName::new(required.to_string()),
                     reason: Some(LintMessage::new(format!(
                         "File '{}' in scope '{}' is missing required import '{}'.",
                         basename, rule_layer_str, required
                     ))),
-                }
-                .to_string(),
+                }),
             );
             if !violations.contains(&v) {
                 violations.push(v);

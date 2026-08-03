@@ -64,8 +64,7 @@ fn main() -> anyhow::Result<()> {
 
     let auto_fix_container =
         auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
-    let fix_orchestrator =
-        auto_fix_container.orchestrator_with_filesystem(false, filesystem.clone());
+    let fix_orchestrator = auto_fix_container.orchestrator_with_filesystem(filesystem.clone());
 
     let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
         shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),

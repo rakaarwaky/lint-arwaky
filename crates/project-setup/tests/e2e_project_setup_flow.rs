@@ -1,7 +1,6 @@
 // E2E tests — full project setup flow: container → generate configs → write → verify.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::SetupManagementAggregate;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
@@ -19,10 +18,7 @@ fn e2e_generate_and_write_env() {
     assert!(env.value().contains("PHANTOM_ROOT="));
 
     let proto = container.protocol();
-    let result = proto.write_config_file(
-        &tmp.path().join(".env").to_string_lossy(),
-        env.value(),
-    );
+    let result = proto.write_config_file(&tmp.path().join(".env").to_string_lossy(), env.value());
     assert!(result.is_ok(), "Should write .env file: {:?}", result);
     let content = std::fs::read_to_string(tmp.path().join(".env")).unwrap();
     assert!(content.contains("PHANTOM_ROOT="));
@@ -55,7 +51,9 @@ fn e2e_generate_mcp_config_vscode_and_write() {
     let result = proto.write_config_file(&path.to_string_lossy(), &json_str);
     assert!(result.is_ok());
     let content = std::fs::read_to_string(&path).unwrap();
-    assert!(content.contains("mcp") || content.contains("vscode") || content.contains("lint-arwaky"));
+    assert!(
+        content.contains("mcp") || content.contains("vscode") || content.contains("lint-arwaky")
+    );
 }
 
 #[test]

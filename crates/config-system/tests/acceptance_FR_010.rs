@@ -68,8 +68,5 @@ fn us10_lists_single_rust_config() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = make_reader().list_config_files(&fp).unwrap();
     assert_eq!(files.len(), 1);
-    assert_eq!(
-        files[0].0,
-        shared::config_system::ConfigLanguage::Rust
-    );
+    assert_eq!(files[0].0, shared::config_system::ConfigLanguage::Rust);
 }

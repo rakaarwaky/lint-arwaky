@@ -1,7 +1,6 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::common::taxonomy_protocol_vo::TransportProtocol;
 use shared::project_setup::{ISetupManagementProtocol, SetupManagementAggregate};
 use std::sync::Arc;
 
@@ -20,7 +19,7 @@ fn bench_generate_mcp_config(c: &mut Criterion) {
     let container = SetupContainer::new(fs);
     let agg = container.aggregate();
     c.bench_function("setup_generate_mcp_config", |b| {
-        b.iter(|| agg.mcp_config_claude(&TransportProtocol::Stdio));
+        b.iter(|| agg.mcp_config_claude());
     });
 }
 
@@ -39,7 +38,7 @@ fn bench_generate_env(c: &mut Criterion) {
     let agg = container.aggregate();
     let home = DirectoryPath::new("/tmp/bench").unwrap();
     c.bench_function("setup_generate_env", |b| {
-        b.iter(|| agg.generate_env(&TransportProtocol::Stdio, &home));
+        b.iter(|| agg.generate_env(&home));
     });
 }
 

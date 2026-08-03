@@ -76,8 +76,7 @@ fn cli_parses_flagless_commands() {
     ] {
         let mut full_args = vec!["lint-arwaky"];
         full_args.extend_from_slice(&args);
-        let cli = Cli::try_parse_from(full_args)
-            .expect("valid clap args");
+        let cli = Cli::try_parse_from(full_args).expect("valid clap args");
         assert_eq!(format!("{:?}", cli.command), expected);
     }
 }

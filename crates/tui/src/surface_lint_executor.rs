@@ -349,7 +349,9 @@ impl SurfaceLintExecutor {
         match &self.setup_aggregate {
             Some(protocol) => {
                 let language = protocol.detect_language();
-                let lang_str = &language.value;
+                let lang_str = language
+                    .map(|l| l.value)
+                    .unwrap_or_else(|| "unknown".to_string());
                 let output = format!(
                     "Adapter dependency installation.\nDetected language: {}\n\nNote: Adapter installation requires async runtime.\nUse CLI: `lint-arwaky-cli setup install`",
                     lang_str
@@ -366,13 +368,11 @@ impl SurfaceLintExecutor {
     pub fn mcp_config(&self, flags: &ActionFlags) -> LintExecutionResult {
         match &self.setup_aggregate {
             Some(setup) => {
-                let transport =
-                    shared::cli_commands::taxonomy_protocol_vo::TransportProtocol::STDAggregate;
                 let config_vo = match flags.mcp_client.as_str() {
-                    "claude" => setup.mcp_config_claude(&transport),
-                    "hermes" => setup.mcp_config_hermes(&transport),
-                    "vscode" => setup.mcp_config_vscode(&transport),
-                    _ => setup.generate_mcp_config(&transport),
+                    "claude" => setup.mcp_config_claude(),
+                    "hermes" => setup.mcp_config_hermes(),
+                    "vscode" => setup.mcp_config_vscode(),
+                    _ => setup.generate_mcp_config(),
                 };
                 let json = match serde_json::to_string_pretty(&config_vo.value) {
                     Ok(j) => j,
@@ -619,7 +619,13 @@ impl SurfaceLintExecutor {
                         skipped.push(config_path);
                         continue;
                     }
-                    let template = protocol.get_config_template(lang_str);
+                    let template = match protocol.get_config_template(lang_str) {
+                        Ok(t) => t,
+                        Err(e) => {
+                            errors.push(format!("{} — template error: {}", config_path, e));
+                            continue;
+                        }
+                    };
                     match protocol.write_config_file(&config_path, template) {
                         Ok(desc) => {
                             created

@@ -1,4 +1,4 @@
-# FRD — tui (v1.11.0)
+# FRD — tui (v1.12.0)
 
 ---
 
@@ -22,8 +22,7 @@ TUI (Smart Surface)
 
 - TUI imports: shared (taxonomies, aggregates), dispatcher (optional)
 - TUI must NOT own business logic — delegates to aggregates via DI
-
----
+- **Note**: `dispatcher` is listed in `Cargo.toml` but never imported in any source file — should be removed per AES504
 
 ## Functional Requirements
 
@@ -33,11 +32,12 @@ TUI (Smart Surface)
 
 **What it produces**: Initialized terminal with raw mode, alternate screen, mouse capture, and blocking event loop.
 
-| Output           | Description                                    |
-| ------------------ | ------------------------------------------------ |
-| Terminal setup  | Raw mode, alternate screen, mouse capture      |
-| Event loop      | Poll crossterm events, dispatch to action handler |
-| Clean shutdown  | Disable raw mode, leave alternate screen       |
+
+| Output         | Description                                       |
+| ---------------- | --------------------------------------------------- |
+| Terminal setup | Raw mode, alternate screen, mouse capture         |
+| Event loop     | Poll crossterm events, dispatch to action handler |
+| Clean shutdown | Disable raw mode, leave alternate screen          |
 
 **Input**: `SurfaceActionHandler` (injected via `TuiCommandSurface`).
 
@@ -65,9 +65,10 @@ TUI (Smart Surface)
 
 **What it produces**: `TuiEvent` variants from crossterm events.
 
-| Output     | Description                                    |
-| ------------ | ------------------------------------------------ |
-| TuiEvent   | Normalized event for the action handler        |
+
+| Output   | Description                             |
+| ---------- | ----------------------------------------- |
+| TuiEvent | Normalized event for the action handler |
 
 **Input**: `crossterm::event::Event`, `&AppState`.
 
@@ -80,37 +81,38 @@ TUI (Smart Surface)
 - **Ctrl+ combos**: q=quit, s=security, p=dependencies, y=copy-to-file.
 - **Key mapping reference**:
 
-  | Key | TuiEvent | Category |
-  |-----|----------|----------|
-  | `j`/↓ | MoveDown | Navigation |
-  | `k`/↑ | MoveUp | Navigation |
-  | `h`/← | NavigateBack | Navigation |
-  | `l`/→/Enter | NavigateForward | Navigation |
-  | Home/End | MoveTop/MoveBottom | Navigation |
-  | PgUp/PgDn | PreviewScrollUp/PreviewScrollDown | Preview |
-  | Tab/BackTab | FocusNext/FocusPrev | Focus |
-  | `c` | ActionCheck | Lint (path) |
-  | `s` | ActionScan | Lint (path) |
-  | `f` | ActionFix | Lint (path) |
-  | `t` | ActionCi | Lint (path) |
-  | `o` | ActionOrphan | Lint (path) |
-  | `D` | ActionDuplicates | Lint (path) |
-  | `d` | ActionDoctor | Global |
-  | `i` | ActionInit | Global |
-  | `I` | ActionInstall | Global |
-  | `m` | ActionMcpConfig | Global |
-  | `C` | ActionConfigShow | Global |
-  | `H` | ActionInstallHook | Global |
-  | `U` | ActionUninstallHook | Global |
-  | `a` | ActionAdapters | Global |
-  | `v` | ActionVersion | Global |
-  | `y` | CopyToClipboard | Export |
-  | `?` | ToggleHelp | UI |
-  | `/` | ToggleSearch | UI |
-  | Esc/q | Quit | Exit |
-  | Ctrl+s | ActionSecurity | Lint (path) |
-  | Ctrl+p | ActionDependencies | Lint (path) |
-  | Ctrl+y | CopyToFile | Export |
+
+  | Key          | TuiEvent                          | Category    |
+  | -------------- | ----------------------------------- | ------------- |
+  | `j`/↓       | MoveDown                          | Navigation  |
+  | `k`/↑       | MoveUp                            | Navigation  |
+  | `h`/←       | NavigateBack                      | Navigation  |
+  | `l`/→/Enter | NavigateForward                   | Navigation  |
+  | Home/End     | MoveTop/MoveBottom                | Navigation  |
+  | PgUp/PgDn    | PreviewScrollUp/PreviewScrollDown | Preview     |
+  | Tab/BackTab  | FocusNext/FocusPrev               | Focus       |
+  | `c`          | ActionCheck                       | Lint (path) |
+  | `s`          | ActionScan                        | Lint (path) |
+  | `f`          | ActionFix                         | Lint (path) |
+  | `t`          | ActionCi                          | Lint (path) |
+  | `o`          | ActionOrphan                      | Lint (path) |
+  | `D`          | ActionDuplicates                  | Lint (path) |
+  | `d`          | ActionDoctor                      | Global      |
+  | `i`          | ActionInit                        | Global      |
+  | `I`          | ActionInstall                     | Global      |
+  | `m`          | ActionMcpConfig                   | Global      |
+  | `C`          | ActionConfigShow                  | Global      |
+  | `H`          | ActionInstallHook                 | Global      |
+  | `U`          | ActionUninstallHook               | Global      |
+  | `a`          | ActionAdapters                    | Global      |
+  | `v`          | ActionVersion                     | Global      |
+  | `y`          | CopyToClipboard                   | Export      |
+  | `?`          | ToggleHelp                        | UI          |
+  | `/`          | ToggleSearch                      | UI          |
+  | Esc/q        | Quit                              | Exit        |
+  | Ctrl+s       | ActionSecurity                    | Lint (path) |
+  | Ctrl+p       | ActionDependencies                | Lint (path) |
+  | Ctrl+y       | CopyToFile                        | Export      |
 
 **Edge Cases**:
 
@@ -127,11 +129,12 @@ TUI (Smart Surface)
 
 **What it produces**: Updated `AppState` with directory listings and file previews.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Directory listing  | Sorted entries (dirs first, then alpha)        |
-| File preview       | First 100 lines of selected file              |
-| Project root boundary | Cannot navigate above project root           |
+
+| Output                | Description                             |
+| ----------------------- | ----------------------------------------- |
+| Directory listing     | Sorted entries (dirs first, then alpha) |
+| File preview          | First 100 lines of selected file        |
+| Project root boundary | Cannot navigate above project root      |
 
 **Input**: `TuiEvent` variants (MoveDown/Up/Top/Bottom, NavigateBack/Forward).
 
@@ -159,11 +162,12 @@ TUI (Smart Surface)
 
 **What it produces**: `LintExecutionResult` with output text and violation count.
 
-| Output            | Description                                    |
-| ------------------- | ------------------------------------------------ |
-| Lint results     | Text output + violation count for preview panel |
-| Scan progress    | Async progress updates via channel             |
-| Action blocking  | Long actions blocked during active scan        |
+
+| Output          | Description                                     |
+| ----------------- | ------------------------------------------------- |
+| Lint results    | Text output + violation count for preview panel |
+| Scan progress   | Async progress updates via channel              |
+| Action blocking | Long actions blocked during active scan         |
 
 **Input**: `TuiEvent` variants (ActionCheck/Scan/Fix/Ci/Orphan/Security/Duplicates/Dependencies/…).
 
@@ -192,23 +196,24 @@ TUI (Smart Surface)
 
 **What it produces**: `LintExecutionResult` for each lint action, delegating to domain aggregates.
 
-| Output            | Description                                    |
-| ------------------- | ------------------------------------------------ |
-| check             | Code analysis via `ICodeAnalysisAggregate`     |
-| scan              | Comprehensive 6-linter scan                    |
-| fix               | Auto-fix via `LintFixOrchestratorAggregate`    |
-| ci                | CI threshold validation (quality+import+naming+orphan) |
-| orphan            | Orphan file detection                          |
-| security          | External lint adapter scan                     |
-| duplicates        | Code duplication detection                     |
-| dependencies      | Dependency report                              |
-| doctor            | Toolchain diagnostics                          |
-| init/install      | Project setup                                  |
-| mcp-config        | MCP client config generation                   |
-| config-show       | Active configuration display                   |
-| install/uninstall-hook | Git hook management                       |
-| adapters          | External adapter listing                       |
-| version           | Version display                                |
+
+| Output                 | Description                                            |
+| ------------------------ | -------------------------------------------------------- |
+| check                  | Code analysis via`ICodeAnalysisAggregate`              |
+| scan                   | Comprehensive 6-linter scan                            |
+| fix                    | Auto-fix via`LintFixOrchestratorAggregate`             |
+| ci                     | CI threshold validation (quality+import+naming+orphan) |
+| orphan                 | Orphan file detection                                  |
+| security               | External lint adapter scan                             |
+| duplicates             | Code duplication detection                             |
+| dependencies           | Dependency report                                      |
+| doctor                 | Toolchain diagnostics                                  |
+| init/install           | Project setup                                          |
+| mcp-config             | MCP client config generation                           |
+| config-show            | Active configuration display                           |
+| install/uninstall-hook | Git hook management                                    |
+| adapters               | External adapter listing                               |
+| version                | Version display                                        |
 
 **Input**: Action method + path + action flags.
 
@@ -234,10 +239,11 @@ TUI (Smart Surface)
 
 **What it produces**: Filtered file list based on incremental search query.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Filtered entries    | File list filtered by search query             |
-| Search persistence  | Filter persists after Enter, clears on Esc     |
+
+| Output             | Description                                |
+| -------------------- | -------------------------------------------- |
+| Filtered entries   | File list filtered by search query         |
+| Search persistence | Filter persists after Enter, clears on Esc |
 
 **Input**: Character input events.
 
@@ -265,10 +271,11 @@ TUI (Smart Surface)
 
 **What it produces**: Updated project root and current directory from user input.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Project root       | Set from typed path or CWD                    |
-| Directory reload   | Loads directory listing for new root           |
+
+| Output           | Description                          |
+| ------------------ | -------------------------------------- |
+| Project root     | Set from typed path or CWD           |
+| Directory reload | Loads directory listing for new root |
 
 **Input**: Character input events (when `show_path_dialog = true`).
 
@@ -295,11 +302,12 @@ TUI (Smart Surface)
 
 **What it produces**: Updated panel focus and scroll positions from mouse input.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Panel focus        | Click on panel sets focus                     |
-| Scroll position    | Click/drag on scrollbar jumps to position     |
-| Selection          | Click on file list selects entry              |
+
+| Output          | Description                               |
+| ----------------- | ------------------------------------------- |
+| Panel focus     | Click on panel sets focus                 |
+| Scroll position | Click/drag on scrollbar jumps to position |
+| Selection       | Click on file list selects entry          |
 
 **Input**: `MouseClick`, `MouseDrag`, `MouseScrollUp/Down` events.
 
@@ -328,16 +336,17 @@ TUI (Smart Surface)
 
 **What it produces**: Ratatui widgets for each panel.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Header bar        | Current path + quit hint                      |
-| Tree panel (20%)  | Directory tree view                           |
-| File list (35%)   | Sorted/filtered file entries                  |
-| Preview (45%)     | File content or lint results                  |
-| Shortcuts bar     | Key binding hints                             |
-| Status bar        | Current status message                        |
-| Path dialog       | Full-screen path input overlay                |
-| Help overlay      | Toggle-able help screen                      |
+
+| Output           | Description                    |
+| ------------------ | -------------------------------- |
+| Header bar       | Current path + quit hint       |
+| Tree panel (20%) | Directory tree view            |
+| File list (35%)  | Sorted/filtered file entries   |
+| Preview (45%)    | File content or lint results   |
+| Shortcuts bar    | Key binding hints              |
+| Status bar       | Current status message         |
+| Path dialog      | Full-screen path input overlay |
+| Help overlay     | Toggle-able help screen        |
 
 **Input**: `&AppState`.
 
@@ -363,10 +372,11 @@ TUI (Smart Surface)
 
 **What it produces**: Copied content to clipboard or `lint-results.txt`.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Clipboard copy     | Preview content → system clipboard via arboard |
-| File save          | Preview content → lint-results.txt            |
+
+| Output         | Description                                     |
+| ---------------- | ------------------------------------------------- |
+| Clipboard copy | Preview content → system clipboard via arboard |
+| File save      | Preview content → lint-results.txt             |
 
 **Input**: `CopyToClipboard`, `CopyToFile` events.
 
@@ -391,10 +401,11 @@ TUI (Smart Surface)
 
 **What it produces**: Structured tracing logs for TUI events.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Event logging      | Each `TuiEvent` variant logged at debug level  |
-| Log initialization | File-based tracing with rotation              |
+
+| Output             | Description                                  |
+| -------------------- | ---------------------------------------------- |
+| Event logging      | Each`TuiEvent` variant logged at debug level |
+| Log initialization | File-based tracing with rotation             |
 
 **Input**: `TuiEvent` variants.
 
@@ -419,17 +430,18 @@ TUI (Smart Surface)
 
 **What it produces**: Stateless helper functions for file operations and result formatting.
 
-| Output              | Description                                    |
-| --------------------- | ------------------------------------------------ |
-| Directory listing  | `list_directory` → sorted `DirectoryEntry`     |
-| File preview       | `read_file_preview` → first N lines           |
-| Parent directory   | `parent_directory` → parent `FilePath`        |
-| Valid directory    | `is_valid_directory` → bool                   |
-| Clipboard          | `copy_text_to_clipboard` → bool               |
-| Result formatting  | `format_results`, `format_config_result`      |
-| Human file size    | `file_size_human` → `DisplayContent` (unused in production) |
-| Path decomposition | `path_components` → `Vec<FilePath>` (unused in production) |
-| Doctor report      | `format_doctor_report` → `LintExecutionResult` (unused in production) |
+
+| Output             | Description                                                                |
+| -------------------- | ---------------------------------------------------------------------------- |
+| Directory listing  | `list_directory` → sorted `DirectoryEntry`                                |
+| File preview       | `read_file_preview` → first N lines                                       |
+| Parent directory   | `parent_directory` → parent `FilePath`                                    |
+| Valid directory    | `is_valid_directory` → bool                                               |
+| Clipboard          | `copy_text_to_clipboard` → bool                                           |
+| Result formatting  | `format_results`, `format_config_result`                                   |
+| Human file size    | `file_size_human` → `DisplayContent` (unused in production)               |
+| Path decomposition | `path_components` → `Vec<FilePath>` (unused in production)                |
+| Doctor report      | `format_doctor_report` → `LintExecutionResult` (unused in production)     |
 | Dependency report  | `format_dependency_report` → `LintExecutionResult` (unused in production) |
 
 **Input**: File paths, lint results.
@@ -472,46 +484,75 @@ container.run(lint_executor, filesystem)?;
 
 ### FR-002: Input Translation
 
-| # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
-| 1 | Press 'j' in normal mode           | TuiEvent::MoveDown                          |
-| 2 | Press 's' in normal mode           | TuiEvent::ActionScan                        |
-| 3 | Press 's' with Ctrl                | TuiEvent::ActionSecurity                    |
-| 4 | Type 'a' in search mode            | TuiEvent::SearchInput('a')                  |
-| 5 | Type 'a' in path dialog            | TuiEvent::PathInput('a')                    |
-| 6 | Unknown key                         | TuiEvent::None                              |
+
+| #  | Scenario                             | Expected                     |
+| ---- | -------------------------------------- | ------------------------------ |
+| 1  | Press 'j' in normal mode             | TuiEvent::MoveDown           |
+| 2  | Press 's' in normal mode             | TuiEvent::ActionScan         |
+| 3  | Press 's' with Ctrl                  | TuiEvent::ActionSecurity     |
+| 4  | Type 'a' in search mode              | TuiEvent::SearchInput('a')   |
+| 5  | Type 'a' in path dialog              | TuiEvent::PathInput('a')     |
+| 6  | Unknown key                          | TuiEvent::None               |
+| 7  | Press 'D' (uppercase) in normal mode | TuiEvent::ActionDuplicates   |
+| 8  | Press 'd' (lowercase) in normal mode | TuiEvent::ActionDoctor       |
+| 9  | Press 'p' with Ctrl                  | TuiEvent::ActionDependencies |
+| 10 | Press 'y' with Ctrl                  | TuiEvent::CopyToFile         |
+| 11 | Press '?' in normal mode             | TuiEvent::ToggleHelp         |
+| 12 | Press '/' in normal mode             | TuiEvent::ToggleSearch       |
 
 ### FR-003: File Navigation
 
-| # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
-| 1 | Navigate into directory             | Entries loaded, selection reset              |
-| 2 | Navigate into file                  | Preview loaded (up to 100 lines)            |
-| 3 | Navigate back from root             | No-op (clamped)                             |
-| 4 | Enter empty directory               | "Empty or inaccessible" status              |
+
+| # | Scenario                | Expected                         |
+| --- | ------------------------- | ---------------------------------- |
+| 1 | Navigate into directory | Entries loaded, selection reset  |
+| 2 | Navigate into file      | Preview loaded (up to 100 lines) |
+| 3 | Navigate back from root | No-op (clamped)                  |
+| 4 | Enter empty directory   | "Empty or inaccessible" status   |
 
 ### FR-004: Lint Actions
 
-| # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
-| 1 | Press 'c' (check) on file          | Code analysis results in preview            |
-| 2 | Press 's' (scan) on directory      | Background scan with progress updates       |
-| 3 | Press 'f' (fix) with dry-run       | Dry-run preview output                      |
-| 4 | Press 'w' (watch)                  | "Watch mode not supported in TUI" message   |
+
+| #  | Scenario                            | Expected                                  |
+| ---- | ------------------------------------- | ------------------------------------------- |
+| 1  | Press 'c' (check) on file           | Code analysis results in preview          |
+| 2  | Press 's' (scan) on directory       | Background scan with progress updates     |
+| 3  | Press 'f' (fix) with dry-run        | Dry-run preview output                    |
+| 4  | Press 'w' (watch)                   | "Watch mode not supported in TUI" message |
+| 5  | Press 'D' (duplicates) on directory | Duplication detection results in preview  |
+| 6  | Press 'o' (orphan) on directory     | Orphan file detection results in preview  |
+| 7  | Press 't' (ci) on directory         | CI threshold validation results           |
+| 8  | Press 'd' (doctor) globally         | Toolchain diagnostics output              |
+| 9  | Scan in progress, press 'c'         | Action blocked, no output change          |
+| 10 | Press 'p' (dependencies) on file    | Dependency report or CLI fallback message |
+
+### FR-005: Domain Aggregate Facade
+
+
+| # | Scenario                                   | Expected                                  |
+| --- | -------------------------------------------- | ------------------------------------------- |
+| 1 | check() with code_analysis aggregate       | LintExecutionResult with violation count  |
+| 2 | scan() delegates to run_comprehensive_scan | LintExecutionResult with full scan output |
+| 3 | fix() without fix_orchestrator             | CLI fallback message in output            |
+| 4 | fix() with fix_orchestrator                | Fix result with mode prefix               |
+| 5 | duplicates() with code_analysis            | Duplication violation list in output      |
+| 6 | doctor() without maintenance               | CLI fallback message                      |
+| 7 | version() always returns success           | Version string in output                  |
 
 ---
 
 ## Glossary
 
-| Term                          | Definition                                                    |
-| ------------------------------- | --------------------------------------------------------------- |
-| **Smart Surface**            | Thin UI wrapper — parses input, calls aggregates, renders output |
-| **SurfaceLintExecutor**      | Facade over domain aggregates for TUI lint actions             |
-| **SurfaceActionHandler**     | Event → action state machine                                   |
-| **TuiCommandSurface**        | crossterm event loop + ratatui rendering                       |
-| **AppState**                  | Mutable TUI state (selection, scroll, focus, preview)          |
-| **TuiEvent**                 | Normalized UI event dispatched to action handler               |
-| **LintExecutionResult**      | Output text + violation count from a lint action               |
+
+| Term                     | Definition                                                        |
+| -------------------------- | ------------------------------------------------------------------- |
+| **Smart Surface**        | Thin UI wrapper — parses input, calls aggregates, renders output |
+| **SurfaceLintExecutor**  | Facade over domain aggregates for TUI lint actions                |
+| **SurfaceActionHandler** | Event → action state machine                                     |
+| **TuiCommandSurface**    | crossterm event loop + ratatui rendering                          |
+| **AppState**             | Mutable TUI state (selection, scroll, focus, preview)             |
+| **TuiEvent**             | Normalized UI event dispatched to action handler                  |
+| **LintExecutionResult**  | Output text + violation count from a lint action                  |
 
 ---
 

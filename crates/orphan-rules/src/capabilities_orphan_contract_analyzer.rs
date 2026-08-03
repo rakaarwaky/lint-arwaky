@@ -3,7 +3,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, IContractOrphanProtocol};
+use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, IContractOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, OrphanIndicatorResult};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -229,7 +229,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         if !unimplemented.is_empty() {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::ContractOrphan {
+                format_orphan_violation(&AesOrphanViolation::ContractOrphan {
                     suffix: suffix.clone(),
                     trait_name: unimplemented.join(", "),
                     target_layer: "expected",
@@ -241,8 +241,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                         )
                         .into(),
                     ),
-                }
-                .to_string(),
+                }),
                 Severity::MEDIUM,
             );
         }
@@ -263,7 +262,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::ContractOrphan {
+                format_orphan_violation(&AesOrphanViolation::ContractOrphan {
                     suffix: suffix.clone(),
                     trait_name: trait_names.join(", "),
                     target_layer: "orchestrator/container",
@@ -275,8 +274,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                         )
                         .into(),
                     ),
-                }
-                .to_string(),
+                }),
                 Severity::MEDIUM,
             );
         }
@@ -297,7 +295,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::ContractOrphan {
+                format_orphan_violation(&AesOrphanViolation::ContractOrphan {
                     suffix: suffix.clone(),
                     trait_name: trait_names.join(", "),
                     target_layer: "surface",
@@ -308,8 +306,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                         )
                         .into(),
                     ),
-                }
-                .to_string(),
+                }),
                 Severity::MEDIUM,
             );
         }

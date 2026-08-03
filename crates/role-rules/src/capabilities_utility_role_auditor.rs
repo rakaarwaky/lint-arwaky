@@ -7,7 +7,7 @@
 use shared::common::LintResult;
 use shared::common::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::{AesRoleViolation, IUtilityRoleChecker};
+use shared::role_rules::{format_role_violation, AesRoleViolation, IUtilityRoleChecker};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct UtilityRoleChecker {}
@@ -61,7 +61,7 @@ impl UtilityRoleChecker {
                         0,
                         "AES404",
                         Severity::MEDIUM,
-                        AesRoleViolation::UtilityRole {
+                        format_role_violation(&AesRoleViolation::UtilityRole {
                             reason: Some(
                                 format!(
                                     "Utility files must not define structs or enums. Found: [{}]",
@@ -69,8 +69,7 @@ impl UtilityRoleChecker {
                                 )
                                 .into(),
                             ),
-                        }
-                        .to_string(),
+                        }, Language::Rust),
                     ));
                 }
             }

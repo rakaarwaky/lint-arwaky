@@ -1,6 +1,7 @@
 use shared::cli_commands::LintResult;
 use shared::quality_rules::{
-    AesCodeAnalysisViolation, IDeadInheritanceProtocol, IMandatoryClassProtocol,
+    AesCodeAnalysisViolation, format_code_analysis_violation, IDeadInheritanceProtocol,
+    IMandatoryClassProtocol,
 };
 
 use crate::utility_bypass_detector::skip_cfg_test_block;
@@ -77,8 +78,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                                 i + 1,
                                 file
                             ))),
-                        }
-                        .to_string(),
+                        }),
                     ));
                 }
                 i += 1;
@@ -107,8 +107,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                                 i + 1,
                                 file
                             ))),
-                        }
-                        .to_string(),
+                        }),
                     ));
                 } else if t.ends_with(':') && i + 1 < lines.len() {
                     let next = lines[i + 1].trim();
@@ -118,15 +117,14 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                             i + 1,
                             "AES303",
                             Severity::MEDIUM,
-                            AesCodeAnalysisViolation::DeadInheritance {
+                            format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
                                 reason: Some(LintMessage::new(format!(
                                     "Empty Python class on line {} in {} (body is '{}')",
                                     i + 1,
                                     file,
                                     next
                                 ))),
-                            }
-                            .to_string(),
+                            }),
                         ));
                     }
                 }
@@ -138,14 +136,13 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     i + 1,
                     "AES303",
                     Severity::MEDIUM,
-                    AesCodeAnalysisViolation::DeadInheritance {
+                    format_code_analysis_violation(&AesCodeAnalysisViolation::DeadInheritance {
                         reason: Some(LintMessage::new(format!(
                             "Empty JS/TS class/interface on line {} in {}",
                             i + 1,
                             file
                         ))),
-                    }
-                    .to_string(),
+                    }),
                 ));
             }
             i += 1;
@@ -211,13 +208,12 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
                 0,
                 "AES303",
                 Severity::HIGH,
-                AesCodeAnalysisViolation::MandatoryClassDefinition {
+                format_code_analysis_violation(&AesCodeAnalysisViolation::MandatoryClassDefinition {
                     reason: Some(LintMessage::new(format!(
                         "File {} has no class/struct/enum/trait definition",
                         file
                     ))),
-                }
-                .to_string(),
+                }),
             ));
         }
     }

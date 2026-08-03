@@ -2,7 +2,7 @@
 use cli_commands_lint_arwaky::surface_formatting::{group_by_member, status_icon};
 use dispatcher_lint_arwaky::surface_output_component::ViolationItem;
 use shared::cli_commands::Format;
-use shared::common::{ColumnNumber, ErrorCode, FilePath, LintMessage, LineNumber, Severity};
+use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 
 fn violation(file: &str, code: &str, line: i64) -> ViolationItem {
     ViolationItem {
@@ -25,7 +25,11 @@ fn group_by_member_groups_correctly() {
 
     let grouped = group_by_member(&violations, "crates", None);
     // Should have at least 2 groups (foo and bar)
-    assert!(grouped.len() >= 2, "Expected at least 2 groups, got {}", grouped.len());
+    assert!(
+        grouped.len() >= 2,
+        "Expected at least 2 groups, got {}",
+        grouped.len()
+    );
 }
 
 #[test]
@@ -71,9 +75,7 @@ fn status_icon_fail_returns_cross() {
 
 #[test]
 fn group_by_member_single_file_path() {
-    let violations = vec![
-        violation("src/main.rs", "AES201", 1),
-    ];
+    let violations = vec![violation("src/main.rs", "AES201", 1)];
 
     let grouped = group_by_member(&violations, "src/main.rs", None);
     // Should have at least one group

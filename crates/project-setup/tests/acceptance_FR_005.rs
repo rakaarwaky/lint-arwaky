@@ -1,6 +1,5 @@
-// Acceptance test — FR-005: MCP binary resolution finds lint-arwaky-mcp.
+// Acceptance test — FR-005: MCP binary resolution and pre-flight checks.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::ISetupManagementProtocol;
 
 fn make_container() -> SetupContainer {
     let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
@@ -34,7 +33,10 @@ fn fr005_which_mcp_binary_contains_lint_arwaky_mcp() {
 fn fr005_file_exists_check() {
     let container = make_container();
     let proto = container.protocol();
-    assert!(proto.file_exists("Cargo.toml"), "FR-005: Cargo.toml should exist");
+    assert!(
+        proto.file_exists("Cargo.toml"),
+        "FR-005: Cargo.toml should exist"
+    );
     assert!(!proto.file_exists("definitely_does_not_exist_12345.txt"));
 }
 
@@ -43,5 +45,8 @@ fn fr005_pre_flight_check() {
     let container = make_container();
     let proto = container.protocol();
     let results = proto.pre_flight_check();
-    assert!(!results.is_empty(), "FR-005: pre_flight_check should return results");
+    assert!(
+        !results.is_empty(),
+        "FR-005: pre_flight_check should return results"
+    );
 }

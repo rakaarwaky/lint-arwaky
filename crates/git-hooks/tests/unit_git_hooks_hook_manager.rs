@@ -2,16 +2,14 @@
 
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
-use shared::common::{FilePath, Identity};
-use shared::git_hooks::{
-    GitDiffStatus, GitHookError, HookIgnoreUpdateVO, IHookManagerProtocol, IHookProtocol,
-};
+use shared::common::FilePath;
+use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO, IHookManagerProtocol, IHookProtocol};
 use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_hook_manager(tmp: &TempDir) -> HookManager {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let adapter: Arc<dyn IHookManagerProtocol> =
         Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
@@ -150,9 +148,14 @@ fn fr006_1_add_ignore_rule() {
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     write_yaml_config(&config_path);
     let mgr = make_hook_manager(&tmp);
-    let request = HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
+    let request =
+        HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
-    assert!(result.value.contains("Added"), "should report Added: {}", result.value);
+    assert!(
+        result.value.contains("Added"),
+        "should report Added: {}",
+        result.value
+    );
     // Verify the rule was added
     let content = std::fs::read_to_string(&config_path).unwrap();
     assert!(content.contains("target"), "config should contain 'target'");
@@ -164,11 +167,19 @@ fn fr006_2_remove_ignore_rule() {
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     write_yaml_config(&config_path);
     let mgr = make_hook_manager(&tmp);
-    let request = HookIgnoreUpdateVO::new("vendor", true, config_path.to_str().unwrap().to_string());
+    let request =
+        HookIgnoreUpdateVO::new("vendor", true, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
-    assert!(result.value.contains("Removed"), "should report Removed: {}", result.value);
+    assert!(
+        result.value.contains("Removed"),
+        "should report Removed: {}",
+        result.value
+    );
     let content = std::fs::read_to_string(&config_path).unwrap();
-    assert!(!content.contains("- vendor"), "config should not contain 'vendor'");
+    assert!(
+        !content.contains("- vendor"),
+        "config should not contain 'vendor'"
+    );
 }
 
 #[test]
@@ -176,11 +187,7 @@ fn fr006_3_config_file_not_found() {
     let tmp = TempDir::new().unwrap();
     let config_path = tmp.path().join("nonexistent.yaml");
     let mgr = make_hook_manager(&tmp);
-    let request = HookIgnoreUpdateVO::new(
-        "rule",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
+    let request = HookIgnoreUpdateVO::new("rule", false, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
     assert!(
         result.value.contains("not found") || result.value.contains("Run lint-arwaky-cli"),
@@ -195,7 +202,8 @@ fn fr006_4_rule_already_exists_add_noop() {
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     write_yaml_config(&config_path);
     let mgr = make_hook_manager(&tmp);
-    let request = HookIgnoreUpdateVO::new("vendor", false, config_path.to_str().unwrap().to_string());
+    let request =
+        HookIgnoreUpdateVO::new("vendor", false, config_path.to_str().unwrap().to_string());
     let result = mgr.update_ignore_rule(request);
     assert!(
         result.value.contains("already present"),
@@ -219,7 +227,10 @@ fn initialize_config_creates_config_file() {
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     assert!(config_path.exists(), "config file should be created");
     let content = std::fs::read_to_string(&config_path).unwrap();
-    assert!(content.contains("ignored_paths"), "config should contain ignored_paths key");
+    assert!(
+        content.contains("ignored_paths"),
+        "config should contain ignored_paths key"
+    );
 }
 
 #[test]

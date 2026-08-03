@@ -14,7 +14,6 @@
 //   - `report_non_fixable(violations)` — FR-005: non-fixable violation reporting
 //   - `emit_fix_event` / `is_fixable` / `fixable_codes` removed from protocol
 //     (internal implementation details, not part of the public FRD API Contract)
-use crate::auto_fix::taxonomy_fix_applied_event::FixApplied;
 use crate::auto_fix::taxonomy_fix_outcome_vo::FixOutcome;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::cli_commands::taxonomy_result_vo::LintResult;

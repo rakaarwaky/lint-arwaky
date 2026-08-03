@@ -7,6 +7,7 @@ use shared::cli_commands::LintResult;
 use shared::common::{FilePath, LintMessage, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::format_import_violation;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_violation_import_vo::AesImportViolation;
 
@@ -99,13 +100,12 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
                 ast_line,
                 "AES203",
                 Severity::MEDIUM,
-                AesImportViolation::FixUnusedImport {
+                format_import_violation(&AesImportViolation::FixUnusedImport {
                     reason: Some(LintMessage::new(format!(
                         "Import '{}' is declared but never used in this file.",
                         alias_str
                     ))),
-                }
-                .to_string(),
+                }),
             ));
         }
         Ok(violations)

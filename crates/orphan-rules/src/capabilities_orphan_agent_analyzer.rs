@@ -1,7 +1,7 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::orphan_rules::{AesOrphanViolation, IAgentOrphanProtocol};
+use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, IAgentOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::OrphanIndicatorResult;
 use std::collections::HashMap;
 
@@ -92,10 +92,10 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         if !is_referenced {
             return OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::AgentOrphan {
+                format_orphan_violation(&AesOrphanViolation::AgentOrphan {
                     agg_name: aggregate_traits.join(", "),
                     reason: Some("Agent file aggregate trait is not used by any surface, container, entry, or main file.".into()),
-                }.to_string(),
+                }),
                 Severity::HIGH,
             );
         }

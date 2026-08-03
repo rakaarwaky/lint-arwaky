@@ -169,7 +169,7 @@ impl DiffChecker {
             "master...HEAD".to_string(),
         ];
         for variant in &variants {
-            let args = ["diff", "--name-only", "--diff-filter", filter, &variant];
+            let args = ["diff", "--name-only", "--diff-filter", filter, variant];
             if self.try_variant_with_args(&mut result_set, &args, project_path) {
                 break;
             }
@@ -196,7 +196,7 @@ impl DiffChecker {
             "master...HEAD".to_string(),
         ];
         for variant in &variants {
-            let args = ["diff", "--name-only", "--diff-filter=R", &variant];
+            let args = ["diff", "--name-only", "--diff-filter=R", variant];
             let (stdout, _, success) = self.filesystem.run_git_command(&args, &project_path.value);
             if success && !stdout.trim().is_empty() {
                 let pairs: Vec<RenamedFile> = self

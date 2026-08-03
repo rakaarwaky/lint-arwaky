@@ -2,7 +2,7 @@ use crate::utility_orphan_filename::file_stem;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::{AesOrphanViolation, ITaxonomyOrphanProtocol};
+use shared::orphan_rules::{AesOrphanViolation, format_orphan_violation, ITaxonomyOrphanProtocol};
 use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
 
 pub struct TaxonomyOrphanAnalyzer;
@@ -44,7 +44,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             None => {
                 return OrphanIndicatorResult::new(
                     true,
-                    AesOrphanViolation::TaxonomyOrphan {
+                    format_orphan_violation(&AesOrphanViolation::TaxonomyOrphan {
                         stem: stem.clone(),
                         category,
                         reason: Some(
@@ -54,8 +54,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                             )
                             .into(),
                         ),
-                    }
-                    .to_string(),
+                    }),
                     Severity::LOW,
                 );
             }
@@ -76,7 +75,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         } else {
             OrphanIndicatorResult::new(
                 true,
-                AesOrphanViolation::TaxonomyOrphan {
+                format_orphan_violation(&AesOrphanViolation::TaxonomyOrphan {
                     stem: stem.clone(),
                     category,
                     reason: Some(
@@ -86,8 +85,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                         )
                         .into(),
                     ),
-                }
-                .to_string(),
+                }),
                 Severity::LOW,
             )
         }

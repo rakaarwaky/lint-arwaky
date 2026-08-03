@@ -87,6 +87,12 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
+impl Default for WorkspaceDetector {
+    fn default() -> Self {
+        Self
+    }
+}
+
 impl WorkspaceDetector {
     pub fn new() -> Self {
         Self
@@ -109,12 +115,11 @@ fn dir_has_any_file(dir: &std::path::Path, targets: &[&str]) -> bool {
     false
 }
 
-/// BF-4: Limit parent-dir matching to direct parent/grandparent, not arbitrary ancestors.
 /// FR-003: Walks up parent directories looking for marker files and workspace dir names.
-/// Limits ancestor name matching to 2 levels (BF-4), but walks further for marker files.
+/// BF-4: Stops walking when any workspace dir name (crates/packages/modules) is encountered.
 fn has_rust_markers(path: &std::path::Path) -> bool {
     let marker_files = ["Cargo.toml"];
-    let workspace_name = "crates";
+    let workspace_names = ["crates", "packages", "modules"];
     let mut current = Some(path);
     let mut levels = 0;
 
@@ -122,14 +127,16 @@ fn has_rust_markers(path: &std::path::Path) -> bool {
         if levels == 0 && dir_has_any_file(p, &marker_files) {
             return true;
         }
-        if levels > 0 && levels <= 2 {
-            // BF-4: Only check workspace dir name at parent/grandparent level
-            if p.file_name().map_or(false, |n| n == workspace_name) {
+        if levels > 0 {
+            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
+                if workspace_names.contains(&name) {
+                    // BF-4: Stop walking — we've hit a workspace boundary
+                    return name == "crates";
+                }
+            }
+            if dir_has_any_file(p, &marker_files) {
                 return true;
             }
-        }
-        if levels > 0 && dir_has_any_file(p, &marker_files) {
-            return true;
         }
         levels += 1;
         if levels > 5 {
@@ -147,7 +154,7 @@ fn has_python_markers(path: &std::path::Path) -> bool {
         "requirements.txt",
         "__init__.py",
     ];
-    let workspace_name = "modules";
+    let workspace_names = ["crates", "packages", "modules"];
     let mut current = Some(path);
     let mut levels = 0;
 
@@ -155,13 +162,15 @@ fn has_python_markers(path: &std::path::Path) -> bool {
         if levels == 0 && dir_has_any_file(p, &marker_files) {
             return true;
         }
-        if levels > 0 && levels <= 2 {
-            if p.file_name().map_or(false, |n| n == workspace_name) {
+        if levels > 0 {
+            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
+                if workspace_names.contains(&name) {
+                    return name == "modules";
+                }
+            }
+            if dir_has_any_file(p, &marker_files) {
                 return true;
             }
-        }
-        if levels > 0 && dir_has_any_file(p, &marker_files) {
-            return true;
         }
         levels += 1;
         if levels > 5 {
@@ -174,7 +183,7 @@ fn has_python_markers(path: &std::path::Path) -> bool {
 
 fn has_typescript_markers(path: &std::path::Path) -> bool {
     let marker_files = ["package.json", "tsconfig.json"];
-    let workspace_name = "packages";
+    let workspace_names = ["crates", "packages", "modules"];
     let mut current = Some(path);
     let mut levels = 0;
 
@@ -182,13 +191,15 @@ fn has_typescript_markers(path: &std::path::Path) -> bool {
         if levels == 0 && dir_has_any_file(p, &marker_files) {
             return true;
         }
-        if levels > 0 && levels <= 2 {
-            if p.file_name().map_or(false, |n| n == workspace_name) {
+        if levels > 0 {
+            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
+                if workspace_names.contains(&name) {
+                    return name == "packages";
+                }
+            }
+            if dir_has_any_file(p, &marker_files) {
                 return true;
             }
-        }
-        if levels > 0 && dir_has_any_file(p, &marker_files) {
-            return true;
         }
         levels += 1;
         if levels > 5 {

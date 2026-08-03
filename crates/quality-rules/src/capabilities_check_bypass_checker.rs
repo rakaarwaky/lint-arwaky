@@ -16,6 +16,7 @@ use crate::utility_bypass_detector::{
 };
 use shared::quality_rules::{
     AesCodeAnalysisViolation, Language, ViolationKind, WORD_PATTERN_TOKENS,
+    format_code_analysis_violation,
 };
 
 use crate::utility_language_mapper::code_analysis_language_from_file;
@@ -174,13 +175,12 @@ impl IBypassCheckerProtocol for BypassChecker {
                     line_number,
                     "AES304",
                     Severity::CRITICAL,
-                    AesCodeAnalysisViolation::BypassComment {
+                    format_code_analysis_violation(&AesCodeAnalysisViolation::BypassComment {
                         reason: Some(LintMessage::new(format!(
                             "Found forbidden bypass attribute: '{}'",
                             code_trim.lines().next().unwrap_or(code_trim)
                         ))),
-                    }
-                    .to_string(),
+                    }),
                 ));
                 i += 1;
                 continue;
@@ -240,7 +240,7 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            vo.to_string(),
+                            format_code_analysis_violation(&vo),
                         ));
 
                         matched = true;
@@ -261,13 +261,12 @@ impl IBypassCheckerProtocol for BypassChecker {
                             line_number,
                             "AES304",
                             Severity::CRITICAL,
-                            AesCodeAnalysisViolation::BypassComment {
+                            format_code_analysis_violation(&AesCodeAnalysisViolation::BypassComment {
                                 reason: Some(LintMessage::new(format!(
                                     "Found forbidden bypass pattern: '{}'",
                                     token
                                 ))),
-                            }
-                            .to_string(),
+                            }),
                         ));
 
                         matched = true;
@@ -290,12 +289,11 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Unimplemented {
+                                format_code_analysis_violation(&AesCodeAnalysisViolation::Unimplemented {
                                     reason: Some(LintMessage::new(
                                         "Found forbidden Python pattern: 'raise NotImplementedError'",
                                     )),
-                                }
-                                .to_string(),
+                                }),
                             ));
                         } else if code_lower.contains("assert false") {
                             violations.push(LintResult::new_arch(
@@ -303,12 +301,11 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Panic {
+                                format_code_analysis_violation(&AesCodeAnalysisViolation::Panic {
                                     reason: Some(LintMessage::new(
                                         "Found forbidden Python pattern: 'assert False'",
                                     )),
-                                }
-                                .to_string(),
+                                }),
                             ));
                         }
                     }
@@ -329,13 +326,12 @@ impl IBypassCheckerProtocol for BypassChecker {
                                 line_number,
                                 "AES304",
                                 Severity::CRITICAL,
-                                AesCodeAnalysisViolation::Panic {
+                                format_code_analysis_violation(&AesCodeAnalysisViolation::Panic {
                                     reason: Some(LintMessage::new(format!(
                                         "Found forbidden JS/TS pattern: '{}'",
                                         display
                                     ))),
-                                }
-                                .to_string(),
+                                }),
                             ));
                         }
                     }

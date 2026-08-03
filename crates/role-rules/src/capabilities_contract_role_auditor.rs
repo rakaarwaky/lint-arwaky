@@ -14,7 +14,7 @@ use shared::common::utility_signature_parser::{
 };
 use shared::common::{Language, LintMessage, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::{AesRoleViolation, IContractRoleChecker};
+use shared::role_rules::{format_role_violation, AesRoleViolation, IContractRoleChecker};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractRoleChecker {}
