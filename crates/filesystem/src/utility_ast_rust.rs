@@ -279,3 +279,36 @@ fn is_rust_keyword(name: &str) -> bool {
             | "char"
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_rust_metadata_used_identifiers() {
+        let content = r#"
+use taxonomy::vo::UserVO;
+use contract::protocol::ContractProtocol;
+
+pub fn process() -> UserVO {
+    let proto = ContractProtocol::new();
+    proto.validate();
+    UserVO::new()
+}
+"#;
+        let mut parser = tree_sitter::Parser::new();
+        parser.set_language(&tree_sitter_rust::LANGUAGE.into()).unwrap();
+        let tree = parser.parse(content, None).unwrap();
+        let meta = extract_rust_metadata(&tree, content);
+        eprintln!("used_identifiers: {:?}", meta.used_identifiers);
+        assert!(
+            meta.used_identifiers.contains(&"UserVO".to_string()),
+            "UserVO should be in used_identifiers"
+        );
+        assert!(
+            meta.used_identifiers
+                .contains(&"ContractProtocol".to_string()),
+            "ContractProtocol should be in used_identifiers"
+        );
+    }
+}
