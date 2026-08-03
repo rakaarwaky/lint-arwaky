@@ -92,9 +92,9 @@ pub fn collect_orphan(
             )
             .analyzer();
 
-        // Build file index for this workspace
+        // Build file index for this workspace (respects config ignored_paths)
         let ws_path = std::path::Path::new(ws.path.value.as_str());
-        ws_filesystem.build_file_index(ws_path);
+        ws_filesystem.build_file_index_with_ignored(ws_path, &_ignored.values);
 
         // Build OrphanFileListVO from pre-fetched FileEntry data
         let file_list = ws_filesystem.file_list();
@@ -165,7 +165,7 @@ pub fn collect_orphan(
 fn scan_single_root(
     root: &str,
     root_fp: &FilePath,
-    orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
+    _orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     filter: &Option<String>,
     _fs_agg: &Arc<dyn IFilesystemAggregate>,
@@ -174,17 +174,13 @@ fn scan_single_root(
     let ws_filesystem: Arc<dyn IFilesystemAggregate> =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
 
-    // Build file index for this workspace
-    let root_path = std::path::Path::new(root);
-    ws_filesystem.build_file_index(root_path);
-    eprintln!(
-        "[debug] scan_single_root: root={}, files={}",
-        root,
-        ws_filesystem.file_list().len()
-    );
-
-    // Create a new orchestrator with config from the target path
+    // Load config for this path to get ignored_paths
     let ws_config = config_orchestrator.load_config_sync(root_fp);
+
+    // Build file index for this workspace (respects config ignored_paths)
+    let root_path = std::path::Path::new(root);
+    let ignored_strs: Vec<String> = ws_config.ignored_paths.values.iter().map(|fp| fp.value().to_string()).collect();
+    ws_filesystem.build_file_index_with_ignored(root_path, &ignored_strs);
     let ws_orchestrator: Arc<dyn IOrphanAggregate> =
         orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
             ws_config,

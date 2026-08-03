@@ -73,7 +73,7 @@ pub fn handle_check(
     _config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     filter: Option<String>,
 ) -> ExitCode {
-    handle_quality(path, format, code_analysis_linter, filesystem, filter)
+    handle_quality(path, format, code_analysis_linter, filesystem, filter, Vec::new())
 }
 
 /// `quality` — quality rules scan.
@@ -83,6 +83,7 @@ pub fn handle_quality(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
+    ignored_paths: Vec<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
     match dispatcher::surface_quality_action::collect_quality(
@@ -90,6 +91,7 @@ pub fn handle_quality(
         code_analysis_linter,
         filter,
         filesystem.clone(),
+        &ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
@@ -116,6 +118,7 @@ pub fn handle_import(
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
+    ignored_paths: Vec<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
     match dispatcher::surface_import_action::collect_import(
@@ -123,6 +126,7 @@ pub fn handle_import(
         import_orchestrator,
         filter,
         filesystem.clone(),
+        &ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
@@ -149,6 +153,7 @@ pub fn handle_naming(
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
+    ignored_paths: Vec<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
     match dispatcher::surface_naming_action::collect_naming(
@@ -156,6 +161,7 @@ pub fn handle_naming(
         naming_orchestrator,
         filter,
         filesystem.clone(),
+        &ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
@@ -182,6 +188,7 @@ pub fn handle_role(
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
+    ignored_paths: Vec<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
     match dispatcher::surface_role_action::collect_role_direct(
@@ -189,6 +196,7 @@ pub fn handle_role(
         filter,
         filesystem.clone(),
         &root,
+        &ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(

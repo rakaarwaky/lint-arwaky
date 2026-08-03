@@ -19,6 +19,7 @@ pub fn collect_naming(
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
+    ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
     // 1. Resolve target path (default: current directory)
     let root = match &path {
@@ -32,9 +33,9 @@ pub fn collect_naming(
     }
     let _root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
 
-    // 3. Build file index for target path
+    // 3. Build file index for target path (respects config ignored_paths)
     let root_path = std::path::Path::new(&root);
-    fs_agg.build_file_index(root_path);
+    fs_agg.build_file_index_with_ignored(root_path, ignored_paths);
 
     // 4. Run naming audit — orchestrator does zero I/O, only delegates
     //    to naming_convention_checker (AES101) and suffix_prefix_checker (AES102).

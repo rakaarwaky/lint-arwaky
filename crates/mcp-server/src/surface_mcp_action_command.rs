@@ -172,6 +172,7 @@ impl McpActionSurface {
             self.deps.code_analysis_linter.clone(),
             None,
             self.deps.filesystem.clone(),
+            &Vec::new(),
         ) {
             Ok(violations) => violations_response("quality", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -189,6 +190,7 @@ impl McpActionSurface {
             self.deps.import_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
+            &Vec::new(),
         ) {
             Ok(violations) => violations_response("import", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -206,6 +208,7 @@ impl McpActionSurface {
             self.deps.naming_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
+            &Vec::new(),
         ) {
             Ok(violations) => violations_response("naming", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -219,6 +222,7 @@ impl McpActionSurface {
             None,
             self.deps.filesystem.clone(),
             path,
+            &Vec::new(),
         ) {
             Ok(violations) => violations_response("role", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),

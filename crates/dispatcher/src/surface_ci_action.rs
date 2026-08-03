@@ -48,9 +48,11 @@ pub fn collect_ci(
     }
     let root = FilePath::new(root_str).map_err(|_| "invalid path".to_string())?;
 
-    // Build file index once — all rule checkers consume fresh data
+    // Build file index once — all rule checkers consume fresh data (respects config ignored_paths)
     let root_path = std::path::Path::new(root.value());
-    deps.filesystem.build_file_index(root_path);
+    let ignored = deps.config_orchestrator.ignored_paths(&root);
+    deps.filesystem
+        .build_file_index_with_ignored(root_path, &ignored.values);
 
     // Quality analysis (sync)
     let mut results = deps.code_analysis_linter.run_code_analysis_path(&root);
@@ -66,8 +68,7 @@ pub fn collect_ci(
         .run_audit_with_entries(deps.filesystem.file_list());
     results.extend(naming_res);
 
-    // Orphan detection (sync)
-    let ignored = deps.config_orchestrator.ignored_paths(&root);
+    // Orphan detection (sync) — reuse already-fetched ignored paths
     let (_, orphan_res) = deps
         .orphan_orchestrator
         .scan_orphans(&root, &ignored.values);

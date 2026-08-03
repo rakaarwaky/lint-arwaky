@@ -291,6 +291,7 @@ fn main() {
             code_analysis_linter.clone(),
             filesystem.clone(),
             filter,
+            Vec::new(),
         ),
         Command::Role {
             path,
@@ -303,6 +304,7 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
+            Vec::new(),
         ),
         Command::Import {
             path,
@@ -315,6 +317,7 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
+            Vec::new(),
         ),
         Command::Naming {
             path,
@@ -327,6 +330,7 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
+            Vec::new(),
         ),
         Command::Orphan {
             path,

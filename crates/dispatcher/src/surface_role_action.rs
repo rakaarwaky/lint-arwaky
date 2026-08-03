@@ -19,10 +19,11 @@ pub fn collect_role_direct(
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
     root: &str,
+    ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
     // Build file index for target path
     let root_path = std::path::Path::new(root);
-    fs_agg.build_file_index(root_path);
+    fs_agg.build_file_index_with_ignored(root_path, ignored_paths);
 
     // Pass pre-fetched FileEntry data to role orchestrator
     let results = role_orchestrator.run_audit_with_entries(fs_agg.file_list());

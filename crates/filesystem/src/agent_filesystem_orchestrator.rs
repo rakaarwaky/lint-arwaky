@@ -508,6 +508,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         self.build_file_index_impl(root, &[]);
     }
 
+    fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]) {
+        self.build_file_index_impl(root, ignored);
+    }
+
     fn build_orphan_graph_context(
         &self,
         root_dir: &Path,

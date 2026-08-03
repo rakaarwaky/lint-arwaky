@@ -67,6 +67,11 @@ pub trait IFilesystemAggregate:
     /// No-op if already built. Must be called before file_list() returns useful data.
     fn build_file_index(&self, root: &Path);
 
+    /// Build file index with additional ignored paths from config.
+    /// Combines built-in defaults (target, node_modules, .git, …) with the
+    /// caller-provided patterns before discovering source files.
+    fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]);
+
     /// Build orphan-detection graph context from workspace root.
     /// Discovers source files, reads content, extracts imports, builds import graph,
     /// and returns the analysis context with forward/reverse links and inheritance.

@@ -13,6 +13,7 @@ pub fn collect_import(
     import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     filter: Option<String>,
     fs_agg: Arc<dyn IFilesystemAggregate>,
+    ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -25,7 +26,7 @@ pub fn collect_import(
 
     // Build file index first — filesystem discovers files, reads content, parses imports
     let root_path = std::path::Path::new(root_fp.value());
-    fs_agg.build_file_index(root_path);
+    fs_agg.build_file_index_with_ignored(root_path, ignored_paths);
 
     // Pass pre-fetched FileEntry data to import orchestrator
     let file_list = fs_agg.file_list();

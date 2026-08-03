@@ -297,12 +297,15 @@ pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
     false
 }
 
-/// Discover source files under root, filtering by ignored patterns.
+/// Discover source files under root, skipping ignored directories during traversal.
 pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
-    let walker = ignore::WalkBuilder::new(root)
-        .hidden(false)
-        .git_ignore(true)
-        .build();
+    let mut builder = ignore::WalkBuilder::new(root);
+    builder.hidden(false).git_ignore(true);
+    // Skip ignored directories/subtrees during traversal (not after).
+    for pat in ignored {
+        builder.add_ignore(pat.as_str());
+    }
+    let walker = builder.build();
     let exts: Vec<&str> = vec!["rs", "py", "js", "ts", "jsx", "tsx"];
     walker
         .filter_map(|e| e.ok())
@@ -313,10 +316,6 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .and_then(|ext| ext.to_str())
                 .map(|ext| exts.contains(&ext))
                 .unwrap_or(false)
-        })
-        .filter(|e| {
-            let path_str = e.path().to_string_lossy();
-            !ignored.iter().any(|pat| path_str.contains(pat.as_str()))
         })
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()
