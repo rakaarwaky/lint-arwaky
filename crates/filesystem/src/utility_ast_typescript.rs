@@ -24,6 +24,29 @@ pub fn extract_ts_metadata(tree: &tree_sitter::Tree, content: &str) -> TypeScrip
                 if let Some(source) = extract_js_string_child(node, content) {
                     meta.export_from_statements.push(source);
                 }
+                // Handle exported class/interface/type declarations
+                let mut ec = node.walk();
+                for child in node.named_children(&mut ec) {
+                    match child.kind() {
+                        "class_declaration" => {
+                            let name = child_by_field(child, content, "name").unwrap_or_default();
+                            let implements = extract_ts_implements(child, content);
+                            meta.class_declarations
+                                .push(TSClassItem { name, implements });
+                        }
+                        "interface_declaration" => {
+                            if let Some(name) = child_by_field(child, content, "name") {
+                                meta.interface_declarations.push(name);
+                            }
+                        }
+                        "type_alias_declaration" => {
+                            if let Some(name) = child_by_field(child, content, "name") {
+                                meta.type_alias_declarations.push(name);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
             "class_declaration" => {
                 let name = child_by_field(node, content, "name").unwrap_or_default();
