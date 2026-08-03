@@ -13,9 +13,7 @@ fn bench_tool_args_parse(c: &mut Criterion) {
         &args_json,
         |b, json| {
             b.iter(|| {
-                std::hint::black_box(
-                    serde_json::from_str::<serde_json::Value>(json).unwrap(),
-                );
+                std::hint::black_box(serde_json::from_str::<serde_json::Value>(json).unwrap());
             });
         },
     );
@@ -24,9 +22,7 @@ fn bench_tool_args_parse(c: &mut Criterion) {
         &args_large,
         |b, json| {
             b.iter(|| {
-                std::hint::black_box(
-                    serde_json::from_str::<serde_json::Value>(json).unwrap(),
-                );
+                std::hint::black_box(serde_json::from_str::<serde_json::Value>(json).unwrap());
             });
         },
     );

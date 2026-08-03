@@ -1,6 +1,6 @@
 import { CalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
 import { ExpressionVO, createExpression } from "calculator-shared/src/taxonomy_expression_vo";
-import { OperationVO, operationFromSymbol } from "calculator-shared/src/taxonomy_operation_vo";
+import { operationFromSymbol } from "calculator-shared/src/taxonomy_operation_vo";
 import * as readline from "readline";
 
 export function run(calc: CalculatorAggregate): void {

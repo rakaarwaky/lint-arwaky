@@ -2,7 +2,7 @@ import sys
 from typing import List
 
 from shared.src.contract_calculator_aggregate import CalculatorAggregate
-from shared.src.taxonomy_expression_vo import ExpressionVO, create_expression
+from shared.src.taxonomy_expression_vo import create_expression
 from shared.src.taxonomy_operation_vo import operation_from_symbol
 
 

@@ -5,8 +5,8 @@ use shared::maintenance::MaintenanceCommandsAggregate;
 #[test]
 fn maintenance_container_creates() {
     let start = std::time::Instant::now();
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let _container = MaintenanceContainer::new(filesystem);
     let elapsed = start.elapsed();
     assert!(
@@ -19,8 +19,8 @@ fn maintenance_container_creates() {
 #[test]
 fn maintenance_orchestrator_creates() {
     let start = std::time::Instant::now();
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let container = MaintenanceContainer::new(filesystem);
     let _orch = container.orchestrator();
     let elapsed = start.elapsed();
@@ -34,8 +34,8 @@ fn maintenance_orchestrator_creates() {
 #[test]
 fn maintenance_orchestrator_is_trait_object() {
     let start = std::time::Instant::now();
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let container = MaintenanceContainer::new(filesystem);
     let orch = container.orchestrator();
     let _: std::sync::Arc<dyn MaintenanceCommandsAggregate> = orch;

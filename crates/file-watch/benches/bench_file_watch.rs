@@ -18,15 +18,11 @@ fn bench_change_analyzer_filter_lintable(c: &mut Criterion) {
         .collect();
 
     for n in [10, 50, 100] {
-        group.bench_with_input(
-            BenchmarkId::new("filter_batch", n),
-            &events[..n],
-            |b, e| {
-                b.iter(|| {
-                    std::hint::black_box(analyzer.filter_lintable(e.to_vec()));
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("filter_batch", n), &events[..n], |b, e| {
+            b.iter(|| {
+                std::hint::black_box(analyzer.filter_lintable(e.to_vec()));
+            });
+        });
     }
 
     group.finish();
@@ -47,15 +43,11 @@ fn bench_change_analyzer_analyze(c: &mut Criterion) {
         .collect();
 
     for n in [10, 50, 100] {
-        group.bench_with_input(
-            BenchmarkId::new("dedup_batch", n),
-            &events[..n],
-            |b, e| {
-                b.iter(|| {
-                    std::hint::black_box(analyzer.analyze(e.to_vec()));
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("dedup_batch", n), &events[..n], |b, e| {
+            b.iter(|| {
+                std::hint::black_box(analyzer.analyze(e.to_vec()));
+            });
+        });
     }
 
     group.finish();

@@ -54,7 +54,10 @@ pub fn string_filename_result(
 /// FRD FR-001/FR-002: "Files in the rule's exceptions list are skipped."
 /// This lookup is evaluated before layer detection so unknown-prefix files
 /// can also be excepted.
-pub fn rule_exception_set(config: &ArchitectureConfig, rule_code: &str) -> std::collections::HashSet<String> {
+pub fn rule_exception_set(
+    config: &ArchitectureConfig,
+    rule_code: &str,
+) -> std::collections::HashSet<String> {
     config
         .rules
         .iter()

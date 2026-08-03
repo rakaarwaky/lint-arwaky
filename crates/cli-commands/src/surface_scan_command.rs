@@ -74,7 +74,14 @@ pub fn handle_check(
     _config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     filter: Option<String>,
 ) -> ExitCode {
-    handle_quality(path, format, code_analysis_linter, filesystem, filter, Vec::new())
+    handle_quality(
+        path,
+        format,
+        code_analysis_linter,
+        filesystem,
+        filter,
+        Vec::new(),
+    )
 }
 
 /// `quality` — quality rules scan.

@@ -9,7 +9,8 @@ fn e2e_check_action_full_flow() {
         multi_project_orchestrator: None,
         filter: None,
         member: None,
-        filesystem: filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator(),
+        filesystem: filesystem::root_filesystem_container::FilesystemContainer::new()
+            .orchestrator(),
     };
     let result = dispatcher_lint_arwaky::surface_check_action::collect_scan(opts);
     assert!(result.is_ok());

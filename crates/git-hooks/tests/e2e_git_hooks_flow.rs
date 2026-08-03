@@ -7,7 +7,9 @@ use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
 use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
-use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
+use shared::git_hooks::{
+    GitDiffStatus, HookIgnoreUpdateVO, IDiffProtocol, IHookManagerProtocol, IHookProtocol,
+};
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -18,12 +20,13 @@ fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let hook_adapter: Arc<dyn IHookManagerProtocol> =
         Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
-    let diff_protocol: Arc<dyn IDiffProtocol> =
-        Arc::new(DiffChecker::new(filesystem.clone()));
+    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(filesystem.clone()));
     let hook_protocol: Arc<dyn IHookProtocol> =
         Arc::new(HookManager::new(hook_adapter.clone(), filesystem.clone()));
     let orch: Arc<dyn GitHooksAggregate> = Arc::new(GitHooksOrchestrator::new(
-        diff_protocol, hook_protocol, hook_adapter,
+        diff_protocol,
+        hook_protocol,
+        hook_adapter,
     ));
     (tmp, orch)
 }
@@ -35,12 +38,13 @@ fn make_orchestrator() -> (TempDir, Arc<GitHooksOrchestrator>) {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let hook_adapter: Arc<dyn IHookManagerProtocol> =
         Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
-    let diff_protocol: Arc<dyn IDiffProtocol> =
-        Arc::new(DiffChecker::new(filesystem.clone()));
+    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(filesystem.clone()));
     let hook_protocol: Arc<dyn IHookProtocol> =
         Arc::new(HookManager::new(hook_adapter.clone(), filesystem.clone()));
     let orch = Arc::new(GitHooksOrchestrator::new(
-        diff_protocol, hook_protocol, hook_adapter,
+        diff_protocol,
+        hook_protocol,
+        hook_adapter,
     ));
     (tmp, orch)
 }
@@ -68,7 +72,10 @@ fn e2e_hook_install_then_uninstall_round_trip() {
         install_result.err()
     );
     let status = install_result.unwrap();
-    assert!(status.value, "install_hook should return true for a git repo");
+    assert!(
+        status.value,
+        "install_hook should return true for a git repo"
+    );
 
     // Verify the hook script was written
     let hook_file = hooks_dir.join("pre-commit");
@@ -129,7 +136,10 @@ fn e2e_install_creates_hooks_directory_when_missing() {
         result.err()
     );
     // Non-git repo → SuccessStatus(false)
-    assert!(!result.unwrap().value, "should return false for non-git repo");
+    assert!(
+        !result.unwrap().value,
+        "should return false for non-git repo"
+    );
 }
 
 // ─── E2E: Config initialization → ignore rule management ──

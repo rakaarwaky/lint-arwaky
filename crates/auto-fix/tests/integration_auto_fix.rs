@@ -16,8 +16,8 @@ fn container_creates_with_quality_rules() {
 
 #[test]
 fn container_orchestrator_with_filesystem() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
@@ -26,8 +26,8 @@ fn container_orchestrator_with_filesystem() {
 
 #[test]
 fn container_orchestrator_with_custom_file_adapter() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
 
@@ -39,8 +39,8 @@ fn container_orchestrator_with_custom_file_adapter() {
 
 #[test]
 fn orchestrator_file_adapter_returns_adapter() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
@@ -49,8 +49,8 @@ fn orchestrator_file_adapter_returns_adapter() {
 
 #[test]
 fn file_adapter_read_write_path_exists() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let adapter = auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter::new(filesystem);
     let tmp = TempDir::new().unwrap();
     let file = tmp.path().join("test.txt");
@@ -67,8 +67,8 @@ fn file_adapter_read_write_path_exists() {
 
 #[test]
 fn orchestrator_execute_on_empty_project_dry_run() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
@@ -83,8 +83,8 @@ fn orchestrator_execute_on_empty_project_dry_run() {
 
 #[test]
 fn orchestrator_execute_per_request_dry_run_false() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
@@ -103,8 +103,8 @@ fn orchestrator_execute_per_request_dry_run_false() {
 
 #[test]
 fn orchestrator_manual_report_empty() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);

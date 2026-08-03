@@ -180,7 +180,9 @@ fn extract_identifiers_excluding_uses(
 
     fn is_inside_use(node: tree_sitter::Node, use_ranges: &[std::ops::Range<usize>]) -> bool {
         let range = node.byte_range();
-        use_ranges.iter().any(|ur| ur.start <= range.start && range.end <= ur.end)
+        use_ranges
+            .iter()
+            .any(|ur| ur.start <= range.start && range.end <= ur.end)
     }
 
     fn walk_node(
@@ -197,7 +199,7 @@ fn extract_identifiers_excluding_uses(
             node.kind(),
             "identifier" | "field_identifier" | "type_identifier" | "macro_identifier"
         ) {
-            if let Some(text) = node.utf8_text(content.as_bytes()).ok() {
+            if let Ok(text) = node.utf8_text(content.as_bytes()) {
                 let name = text.to_string();
                 // Skip keywords and single-char identifiers
                 if name.len() > 1 && !is_rust_keyword(&name) {
@@ -220,8 +222,7 @@ fn extract_identifiers_excluding_uses(
 fn is_rust_keyword(name: &str) -> bool {
     matches!(
         name,
-        "fn"
-            | "let"
+        "fn" | "let"
             | "mut"
             | "pub"
             | "use"
@@ -297,7 +298,9 @@ pub fn process() -> UserVO {
 }
 "#;
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(&tree_sitter_rust::LANGUAGE.into()).unwrap();
+        parser
+            .set_language(&tree_sitter_rust::LANGUAGE.into())
+            .unwrap();
         let tree = parser.parse(content, None).unwrap();
         let meta = extract_rust_metadata(&tree, content);
         eprintln!("used_identifiers: {:?}", meta.used_identifiers);

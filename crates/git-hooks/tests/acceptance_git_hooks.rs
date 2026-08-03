@@ -103,7 +103,10 @@ fn fr002_creates_hooks_directory_when_missing() {
         "install on non-git should not error: {:?}",
         result.err()
     );
-    assert!(!result.unwrap().value, "should return false for non-git repo");
+    assert!(
+        !result.unwrap().value,
+        "should return false for non-git repo"
+    );
 }
 
 #[test]
@@ -160,7 +163,10 @@ fn fr003_removes_existing_hook() {
         "uninstall should succeed: {:?}",
         result.err()
     );
-    assert!(result.unwrap().value, "should return true when hook existed");
+    assert!(
+        result.unwrap().value,
+        "should return true when hook existed"
+    );
     assert!(
         !hooks_dir.join("pre-commit").exists(),
         "pre-commit should be removed"

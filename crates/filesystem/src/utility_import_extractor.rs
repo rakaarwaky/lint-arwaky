@@ -223,9 +223,14 @@ fn extract_python_imports(
 
 fn extract_python_from_names(node: tree_sitter::Node, content: &str) -> Vec<String> {
     let mut names = Vec::new();
+    let module_name_node = node.child_by_field_name("module_name");
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         if child.kind() == "dotted_name" || child.kind() == "identifier" {
+            // Skip the module_name field — it's the import path, not an imported symbol
+            if Some(child.id()) == module_name_node.map(|n| n.id()) {
+                continue;
+            }
             let name = text_of(child, content);
             if name != "*" && !name.is_empty() {
                 names.push(name);
@@ -248,6 +253,7 @@ fn extract_js_imports(
         if let Some(source) = extract_js_string_child(node, content) {
             let text = text_of(node, content);
             let is_type = text.starts_with("import type");
+            let symbols = extract_js_named_imports(&text);
             imports.push(ImportEntry {
                 source_file: source_file.to_path_buf(),
                 raw_path: source,
@@ -260,7 +266,7 @@ fn extract_js_imports(
                 language,
                 is_dynamic: false,
                 is_resolved: false,
-                symbols: Vec::new(),
+                symbols,
                 is_reexport: false,
                 is_wildcard: text.contains("* as"),
             });
@@ -328,6 +334,28 @@ fn extract_js_imports(
 // ═══════════════════════════════════════════════════════════════
 // Shared helpers
 // ═══════════════════════════════════════════════════════════════
+
+/// Extract named import symbols from JS/TS import statement text.
+/// e.g. `import { CalculatorProtocol, ExpressionVO } from "..."` → ["CalculatorProtocol", "ExpressionVO"]
+fn extract_js_named_imports(text: &str) -> Vec<String> {
+    if let Some(brace_start) = text.find('{') {
+        if let Some(brace_end) = text.find('}') {
+            let inner = &text[brace_start + 1..brace_end];
+            return inner
+                .split(',')
+                .filter_map(|part| {
+                    let name = part.split_whitespace().next()?;
+                    if name.is_empty() || name == "*" || name == "type" {
+                        None
+                    } else {
+                        Some(name.to_string())
+                    }
+                })
+                .collect();
+        }
+    }
+    Vec::new()
+}
 
 fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<Vec<String>> {
     let text = text_of(node, content);

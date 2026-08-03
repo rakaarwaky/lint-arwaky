@@ -1,5 +1,3 @@
-from typing import Optional
-
 from .taxonomy_operation_vo import OperationVO
 
 

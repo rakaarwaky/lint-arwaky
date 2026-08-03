@@ -72,104 +72,93 @@ pub fn collect_orphan(
 
     let mut all_violations: Vec<ViolationItem> = Vec::new();
 
+    // Build a single unified filesystem across ALL workspace members so the orphan
+    // scanner can see cross-member imports (e.g., addition importing from shared).
+    // Build once from the workspace root to discover all source files.
+    let unified_fs: Arc<dyn IFilesystemAggregate> =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let root_path = std::path::Path::new(&root);
+    // Collect ignored paths from all members
+    let mut all_ignored: Vec<String> = Vec::new();
     for ws in workspaces.iter() {
         let lang = ws
             .workspace_type
             .parse::<ConfigLanguage>()
             .unwrap_or(ConfigLanguage::Rust);
-        let _ignored = deps
+        let ignored = deps
             .config_orchestrator
             .ignored_paths_for_language(&ws.path, lang);
+        all_ignored.extend(ignored.values.iter().cloned());
+    }
+    unified_fs.build_file_index_with_ignored(root_path, &all_ignored);
 
-        // Create a fresh filesystem instance for this workspace (shared singleton caches first scan)
-        let ws_filesystem: Arc<dyn IFilesystemAggregate> =
-            filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    // Use the first workspace's config for the orchestrator (configs should be similar)
+    let first_ws = &workspaces[0];
+    let unified_orchestrator: Arc<dyn IOrphanAggregate> =
+        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+            first_ws.config.clone(),
+            unified_fs.clone(),
+        )
+        .analyzer();
 
-        // Create a new orchestrator with the workspace's config and fresh filesystem
-        let ws_orchestrator: Arc<dyn IOrphanAggregate> =
-            orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                ws.config.clone(),
-                ws_filesystem.clone(),
-            )
-            .analyzer();
-
-        // Build file index for this workspace (respects config ignored_paths)
-        let ws_path = std::path::Path::new(ws.path.value.as_str());
-        ws_filesystem.build_file_index_with_ignored(ws_path, &_ignored.values);
-
-        // Build OrphanFileListVO — paths must be relative to top_root (workspace root),
-        // not CWD or ws.path, because orphan orchestrator joins them with top_root.
-        // top_root is determined by workspace_root() in the orchestrator.
-        let file_list = ws_filesystem.file_list();
-        // Find the workspace root (top_root) that the orchestrator will use
-        let ws_abs = std::env::current_dir()
-            .unwrap_or_default()
-            .join(&ws.path.value);
-        let ws_top_root = ws_filesystem.workspace_root(
-            &FilePath::new(ws_abs.to_string_lossy().to_string()).unwrap_or_default(),
-        );
-        let top_root = ws_top_root.unwrap_or_else(|| ws_abs.clone());
-        let top_root_str = top_root.to_string_lossy().to_string();
-        let file_paths: Vec<String> = file_list
-            .iter()
-            .map(|f| {
-                let path_str = f.path.to_string_lossy().to_string();
-                // Make path relative to top_root
-                if let Ok(canon) = std::fs::canonicalize(&f.path) {
-                    let canon_str = canon.to_string_lossy().to_string();
-                    if let Some(rel) = canon_str.strip_prefix(&top_root_str) {
-                        rel.strip_prefix('/').unwrap_or(rel).to_string()
-                    } else {
-                        path_str
-                    }
-                } else if let Some(rel) = path_str.strip_prefix(&top_root_str) {
+    // Build unified file list from all members
+    let all_file_list = unified_fs.file_list();
+    let root_abs = std::env::current_dir().unwrap_or_default().join(&root);
+    let ws_top_root = unified_fs
+        .workspace_root(&FilePath::new(root_abs.to_string_lossy().to_string()).unwrap_or_default());
+    let top_root = ws_top_root.unwrap_or_else(|| root_abs.clone());
+    let top_root_str = top_root.to_string_lossy().to_string();
+    let all_file_paths: Vec<String> = all_file_list
+        .iter()
+        .map(|f| {
+            let path_str = f.path.to_string_lossy().to_string();
+            if let Ok(canon) = std::fs::canonicalize(&f.path) {
+                let canon_str = canon.to_string_lossy().to_string();
+                if let Some(rel) = canon_str.strip_prefix(&top_root_str) {
                     rel.strip_prefix('/').unwrap_or(rel).to_string()
                 } else {
                     path_str
                 }
-            })
+            } else if let Some(rel) = path_str.strip_prefix(&top_root_str) {
+                rel.strip_prefix('/').unwrap_or(rel).to_string()
+            } else {
+                path_str
+            }
+        })
+        .collect();
+    let unified_orphan_files =
+        shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(all_file_paths);
+
+    // Build ONE graph context from ALL files — this sees cross-member imports
+    let unified_context =
+        unified_orchestrator.build_orphan_graph_context(&unified_orphan_files, &first_ws.path);
+
+    // Now run orphan checks using unified file list so cross-member imports are visible.
+    // Violations are filtered to each member afterward.
+    let results = unified_orchestrator.check_orphans_with_context(
+        &unified_orphan_files,
+        &first_ws.path,
+        &unified_context,
+    );
+
+    // Filter results per member — violation file paths are relative to workspace root
+    // (e.g., "crates/shared/src/taxonomy_operation_vo.rs"), member paths are like "crates/shared"
+    for ws in workspaces.iter() {
+        // member_path relative to workspace root: e.g., "crates/shared"
+        let member_rel = std::path::Path::new(&ws.path.value)
+            .strip_prefix(&top_root_str)
+            .unwrap_or(std::path::Path::new(&ws.path.value));
+        let member_rel_str = member_rel.to_string_lossy().to_string();
+        let filtered: Vec<_> = results
+            .iter()
+            .filter(|r| r.file.value.starts_with(&member_rel_str))
+            .cloned()
             .collect();
-        let orphan_files =
-            shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
-
-        // Build graph context from filesystem's pre-built data
-        let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, &ws.path);
-
-        // Run orphan checks on pre-fetched data with correct root_dir
-        let results = ws_orchestrator.check_orphans_with_context(&orphan_files, &ws.path, &context);
         debug!(
             ws = %ws.path.value,
-            violations = results.len(),
-            all_ws_files = context.all_workspace_files.len(),
-            "orphan results",
+            violations = filtered.len(),
+            "orphan results for member",
         );
-
-        // Filter results belonging to this workspace
-        let ws_abs = std::env::current_dir()
-            .unwrap_or_default()
-            .join(&ws.path.value);
-        let ws_top_root = ws_filesystem.workspace_root(
-            &FilePath::new(ws_abs.to_string_lossy().to_string()).unwrap_or_default(),
-        );
-        let ws_prefix = ws_top_root.as_ref().and_then(|top_root| {
-            ws_abs
-                .strip_prefix(top_root)
-                .ok()
-                .map(|p| p.to_string_lossy().to_string())
-        });
-
-        let filtered: Vec<_> = results
-            .into_iter()
-            .filter(|r| {
-                if let Some(ref prefix) = ws_prefix {
-                    r.file.value.starts_with(prefix.as_str())
-                        && (r.file.value.len() == prefix.len()
-                            || r.file.value[prefix.len()..].starts_with('/'))
-                } else {
-                    true
-                }
-            })
-            .collect();
 
         for r in &filtered {
             all_violations.push(ViolationItem::from_lint_result(r));

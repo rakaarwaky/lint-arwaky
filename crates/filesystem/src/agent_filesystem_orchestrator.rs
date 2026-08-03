@@ -547,7 +547,8 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
-            let target = if imp.import_type == shared::filesystem::taxonomy_filesystem_vo::ImportType::Mod
+            let target = if imp.import_type
+                == shared::filesystem::taxonomy_filesystem_vo::ImportType::Mod
                 && imp.resolved_path.is_none()
             {
                 // Resolve `pub mod foo;` to the actual file path

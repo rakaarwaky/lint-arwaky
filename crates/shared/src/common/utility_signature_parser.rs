@@ -110,10 +110,11 @@ pub fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str>
     if lower.contains(": float") {
         forbidden.push("float");
     }
-    if lower.contains(": list") {
+    // Only flag bare `list`/`dict` without type parameters (e.g., `List[ResultVO]` is OK)
+    if lower.contains(": list") && !lower.contains(": list[") {
         forbidden.push("list");
     }
-    if lower.contains(": dict") {
+    if lower.contains(": dict") && !lower.contains(": dict[") {
         forbidden.push("dict");
     }
 
@@ -128,10 +129,11 @@ pub fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str>
         if ret.starts_with("float") {
             forbidden.push("float");
         }
-        if ret.starts_with("list") {
+        // Only flag bare `list`/`dict` without type parameters
+        if ret.starts_with("list") && !ret.starts_with("list[") {
             forbidden.push("list");
         }
-        if ret.starts_with("dict") {
+        if ret.starts_with("dict") && !ret.starts_with("dict[") {
             forbidden.push("dict");
         }
     }

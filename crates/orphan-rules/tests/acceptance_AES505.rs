@@ -37,7 +37,8 @@ fn aes505_agent_with_aggregate_trait_not_used_by_surface_is_orphan() {
         "crates/shared/src/unrelated.rs".to_string(),
     ];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+    let result =
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         result.is_orphan,
         "Agent file with unreferenced aggregate should be orphan"
@@ -67,7 +68,8 @@ fn aes505_agent_with_aggregate_used_by_surface_is_not_orphan() {
         "crates/tui/src/surface_main_screen.rs".to_string(),
     ];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+    let result =
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         !result.is_orphan,
         "Agent aggregate used by surface should NOT be orphan"
@@ -95,7 +97,8 @@ fn aes505_agent_with_aggregate_used_by_container_is_not_orphan() {
         "crates/cli/src/root_cli_container.rs".to_string(),
     ];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+    let result =
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         !result.is_orphan,
         "Agent aggregate used by container should NOT be orphan"
@@ -120,7 +123,8 @@ fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
     );
     let all_files = vec![fp.value().to_string(), "crates/cli/src/main.rs".to_string()];
 
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+    let result =
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         !result.is_orphan,
         "Agent aggregate used by main.rs should NOT be orphan"
@@ -154,7 +158,8 @@ fn aes505_no_aggregate_traits_not_in_alive_set_is_orphan() {
     let all_files = vec![fp.value().to_string()];
 
     // Empty reachability — file is not reachable from entry points
-    let result = analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+    let result =
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
     assert!(
         result.is_orphan,
         "File without aggregate traits and not in alive set should be orphan"

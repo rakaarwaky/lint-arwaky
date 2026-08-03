@@ -1,5 +1,5 @@
 import { ExpressionVO, createExpression } from "./taxonomy_expression_vo";
-import { OperationVO, operationFromSymbol } from "./taxonomy_operation_vo";
+import { operationFromSymbol } from "./taxonomy_operation_vo";
 
 export function parseOperand(input: string): number | null {
   const n = parseFloat(input.trim());

@@ -7,8 +7,8 @@ use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_dry_run_orch() -> Arc<dyn LintFixOrchestratorAggregate> {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     container.orchestrator_with_filesystem(filesystem)
@@ -67,8 +67,8 @@ fn e2e_dry_run_file_with_bypass_comment() {
 
 #[test]
 fn e2e_file_adapter_round_trip() {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let adapter = auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter::new(filesystem);
 
     let tmp = TempDir::new().unwrap();

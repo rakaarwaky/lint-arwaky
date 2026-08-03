@@ -145,10 +145,7 @@ fn fix_unused_removes_js_require() {
 #[test]
 fn fix_unused_removes_python_import() {
     let fp = "/tmp/import.py";
-    let p = make_processor(make_files(&[(
-        fp,
-        "import os\nprint('hello')\n",
-    )]));
+    let p = make_processor(make_files(&[(fp, "import os\nprint('hello')\n")]));
     let outcome = p.fix_unused_import(fp, shared::common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
@@ -175,10 +172,7 @@ fn fix_unused_skips_non_import_line() {
 #[test]
 fn rename_replaces_word_boundaries() {
     let fp = "/tmp/rename.rs";
-    let p = make_processor(make_files(&[(
-        fp,
-        "fn bad_name() { let bad_name = 1; }\n",
-    )]));
+    let p = make_processor(make_files(&[(fp, "fn bad_name() { let bad_name = 1; }\n")]));
     let outcome = p.rename_symbol(fp, "bad_name", "renamed_bad_name");
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }

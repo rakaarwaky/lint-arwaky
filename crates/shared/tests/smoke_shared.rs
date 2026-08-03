@@ -31,7 +31,9 @@ fn shared_config_system_vos_construct() {
 fn shared_role_violation_vo_construct() {
     let start = std::time::Instant::now();
     let _violation = shared_lint_arwaky::role_rules::AesRoleViolation::ConstantPurity {
-        reason: Some(shared_lint_arwaky::common::LintMessage::new("test".to_string())),
+        reason: Some(shared_lint_arwaky::common::LintMessage::new(
+            "test".to_string(),
+        )),
     };
     let elapsed = start.elapsed();
     assert!(

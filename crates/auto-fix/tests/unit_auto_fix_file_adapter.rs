@@ -5,8 +5,8 @@ use shared::common::FilePath;
 use tempfile::TempDir;
 
 fn make_adapter() -> (FileAdapter, tempfile::TempDir) {
-    let filesystem = filesystem::root_filesystem_container::FilesystemContainer::new()
-        .orchestrator();
+    let filesystem =
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let tmp = TempDir::new().unwrap();
     let adapter = FileAdapter::new(filesystem);
     (adapter, tmp)

@@ -101,10 +101,7 @@ impl NamingConventionChecker {
         let clamped = min_words.clamp(1, 10);
         REGEX_TABLE[clamped - 1]
             .get_or_init(|| {
-                let pattern = format!(
-                    r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$",
-                    clamped.saturating_sub(1)
-                );
+                let pattern = format!(r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$", clamped.saturating_sub(1));
                 Regex::new(&pattern).ok()
             })
             .as_ref()

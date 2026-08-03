@@ -11,7 +11,10 @@ fn bench_output_json(c: &mut Criterion) {
             line: shared::common::LineNumber::new(i as i64),
             column: Default::default(),
             code: shared::common::ErrorCode::raw(format!("AES{}", 100 + (i % 15))),
-            message: shared::common::LintMessage::new(format!("violation at module_{}.rs:{}", i, i)),
+            message: shared::common::LintMessage::new(format!(
+                "violation at module_{}.rs:{}",
+                i, i
+            )),
             source: None,
             severity: if i % 3 == 0 {
                 shared::common::Severity::HIGH

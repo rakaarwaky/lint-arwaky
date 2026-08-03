@@ -34,7 +34,10 @@ pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
             })
             .clone(),
         _ => {
-            tracing::warn!(language = language, "unknown language, using empty default config");
+            tracing::warn!(
+                language = language,
+                "unknown language, using empty default config"
+            );
             ArchitectureConfig::default()
         }
     }

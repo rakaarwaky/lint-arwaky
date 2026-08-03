@@ -79,11 +79,26 @@ fn extract_ts_implements(node: tree_sitter::Node, content: &str) -> Vec<String> 
     let mut implements = Vec::new();
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        if child.kind() == "implements_clause" {
-            let mut c2 = child.walk();
-            for iface in child.named_children(&mut c2) {
-                implements.push(text_of(iface, content));
+        match child.kind() {
+            "implements_clause" => {
+                let mut c2 = child.walk();
+                for iface in child.named_children(&mut c2) {
+                    implements.push(text_of(iface, content));
+                }
             }
+            "class_heritage" => {
+                // class_heritage contains both extends_clause and implements_clause
+                let mut c2 = child.walk();
+                for heritage_child in child.named_children(&mut c2) {
+                    if heritage_child.kind() == "implements_clause" {
+                        let mut c3 = heritage_child.walk();
+                        for iface in heritage_child.named_children(&mut c3) {
+                            implements.push(text_of(iface, content));
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
     }
     implements
@@ -106,8 +121,9 @@ fn extract_identifiers_recursive(
 ) {
     let kind = node.kind();
 
-    // Skip import/export statements entirely
-    if kind == "import_statement" || kind == "export_statement" {
+    // Skip import statements (don't extract identifiers from import source paths)
+    // But recurse into export_statement to find identifiers in exported declarations
+    if kind == "import_statement" {
         return;
     }
 
@@ -121,8 +137,9 @@ fn extract_identifiers_recursive(
         return;
     }
 
-    // If this is an identifier or property access, extract the identifier
-    if kind == "identifier" {
+    // If this is an identifier, type_identifier, or property access, extract it
+    // type_identifier covers TypeScript type annotations like `: ExpressionVO`
+    if kind == "identifier" || kind == "type_identifier" {
         let text = text_of(node, content);
         if !text.is_empty()
             && text

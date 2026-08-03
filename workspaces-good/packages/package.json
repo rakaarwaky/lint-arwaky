@@ -1,0 +1,26 @@
+{
+  "name": "packages",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "calculator-addition": "^1.0.0",
+    "calculator-cli": "^1.0.0",
+    "calculator-division": "^1.0.0",
+    "calculator-multiplication": "^1.0.0",
+    "calculator-shared": "^1.0.0",
+    "calculator-subtraction": "^1.0.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.23.5",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.2"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

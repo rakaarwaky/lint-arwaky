@@ -544,8 +544,9 @@ fn extract_trait_method_signatures_rust() {
 fn extract_python_method_signatures_with_primitives() {
     let content = "class Foo:\n    def run(self) -> str:\n        pass\n    def safe(self, value) -> str:\n        return value\n";
     let sigs = extract_python_method_signatures(content);
-    assert_eq!(sigs.len(), 1);
+    assert_eq!(sigs.len(), 2);
     assert!(sigs[0].1.contains("def run"));
+    assert!(sigs[1].1.contains("def safe"));
 }
 
 #[test]
