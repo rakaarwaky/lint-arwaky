@@ -1433,6 +1433,7 @@ dependencies = [
 name = "git-hooks-lint-arwaky"
 version = "1.11.0"
 dependencies = [
+ "criterion",
  "filesystem-lint-arwaky",
  "serde_yaml_ng",
  "shared-lint-arwaky",
