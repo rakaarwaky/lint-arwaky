@@ -18,7 +18,7 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
 
     let fs = common::make_fs();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
+        workspace_detector: Arc::new(WorkspaceDetector::new()),
         config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
         parser: Arc::new(ConfigParserProvider::new(fs.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),

@@ -39,7 +39,7 @@ fn bench_workspace_detect(c: &mut Criterion) {
     let fs: std::sync::Arc<
         dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
     > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    let detector = WorkspaceDetector::new(fs);
+    let detector = WorkspaceDetector::new();
     let mut group = c.benchmark_group("workspace_detect");
     group.sample_size(30);
     group.bench_with_input(

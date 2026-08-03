@@ -1,6 +1,5 @@
 use shared::common::FilePath;
 use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
-use std::sync::Arc;
 
 // PURPOSE: WorkspaceDetector — detects workspace type from marker files
 // Maps ConfigLanguage ↔ WorkspaceType and adds discover_workspace_members

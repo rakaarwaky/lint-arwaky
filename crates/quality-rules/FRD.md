@@ -62,7 +62,7 @@ flowchart TD
 
   - Max line count is read from the rule's YAML configuration (`max_lines`).
   - Default max: 1000 lines.
-  - Applies to: Rust, Python, TypeScript, JavaScript source files.
+  - Applies to: Rust, Python, TypeScript, JavaScript source files with AES-compliant naming (layer prefix detected by `detect_layer_from_prefix`). Files without a recognized layer prefix are silently skipped.
   - Barrel files (`mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js`) are skipped.
   - Files in the rule's `exceptions` list are skipped.
   - All lines are counted, including blank lines, comments, and docstrings.
@@ -85,7 +85,7 @@ flowchart TD
 
   - Min line count is read from the rule's YAML configuration (`min_lines`).
   - Default min: 10 lines.
-  - Applies to: Rust, Python, TypeScript, JavaScript source files.
+  - Applies to: Rust, Python, TypeScript, JavaScript source files with AES-compliant naming (layer prefix detected by `detect_layer_from_prefix`). Files without a recognized layer prefix are silently skipped.
   - Barrel files and exception files are skipped.
   - Files at exactly `min_lines` → passes (comparison is strict `<`).
 - **Edge Cases**:
@@ -110,6 +110,7 @@ flowchart TD
     - TypeScript/JavaScript: `class`, `interface`, `type` declarations (including `export`, `export default`, `abstract`, `declare` prefixes).
     - Detection via token matching on file content (no AST parsing in this crate).
     - If no primary symbol is found → AES303 (`MissingDefinition`).
+  - Applies to files with AES-compliant naming (layer prefix detected by `detect_layer_from_prefix`). Files without a recognized layer prefix are silently skipped.
   - **Dead inheritance check**:
 
     - Unit structs (`struct Foo;`) without a following `impl` block in the same file → AES303 (`DeadInheritance`).
@@ -238,9 +239,9 @@ flowchart TD
 
 ## Non-functional Requirements
 
-- **Performance**: Analyze 1,000 source files in < 3 seconds (single-pass checks, hash-based duplication). Line pre-processing for AES305 is O(n) per file.
+- **Performance**: Analyze 1,000 source files in < 3 seconds (single-pass checks, hash-based duplication). Line normalization for AES305 is O(n) per file.
 - **Memory**: O(n) where n = total file content across workspace. Pre-read entries from filesystem crate avoid re-reading. Duplication analyzer stores window hashes, not full content.
-- **Accuracy**: Zero false positives for valid code. Bypass detection uses string-literal position awareness to avoid false matches inside strings. Duplication detection excludes imports, blank lines, and comment-only lines to avoid boilerplate false positives.
+- **Accuracy**: Zero false positives for valid code. Bypass detection uses string-literal position awareness to avoid false matches inside strings. Duplication detection uses line normalization to reduce false positives from punctuation and formatting differences.
 
 ---
 
@@ -362,7 +363,6 @@ flowchart TD
 | **Dead inheritance** | Empty or stub definitions (unit structs without impl, empty classes) that provide no real implementation            |
 | **Primary symbol**   | A meaningful type declaration (struct, enum, trait, class, interface, type alias)                                   |
 | **Window**           | A contiguous block of N normalized lines used for duplication comparison                                            |
-| **Pre-processing**   | Removal of import lines, blank lines, and comment-only lines before duplication window comparison                   |
 | **Safe variant**     | `unwrap_or()`, `unwrap_or_else()`, `unwrap_or_default()` — not flagged as bypass                                   |
 | **Severity levels**  | CRITICAL (bypasses), HIGH (line count), MEDIUM (dead inheritance, duplication)                                      |
 | **Filesystem crate** | External crate that handles file walking, reading, and filtering. Returns file data to quality-rules.               |
@@ -398,9 +398,6 @@ AES3XX:
   patterns: { ... }                  # AES304 only
   safe_variants: ["<string>", ...]   # AES304 only
   duplication_threshold: <integer>   # AES305 only (percentage)
-  exclude_imports: <bool>            # AES305 only
-  exclude_blank_lines: <bool>        # AES305 only
-  exclude_comments: <bool>           # AES305 only
 ```
 
 ---

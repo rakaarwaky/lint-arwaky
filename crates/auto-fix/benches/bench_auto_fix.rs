@@ -11,7 +11,7 @@ fn make_dry_run_orch() -> Arc<dyn LintFixOrchestratorAggregate> {
         .orchestrator();
     let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    container.orchestrator_with_filesystem(true, filesystem)
+    container.orchestrator_with_filesystem(filesystem)
 }
 
 fn generate_rust_files(dir: &std::path::Path, n: usize) -> Vec<FilePath> {
@@ -44,7 +44,7 @@ fn bench_dry_run_single(c: &mut Criterion) {
 
     group.bench_function("single_file", |b| {
         b.iter(|| {
-            std::hint::black_box(orch.execute(&fp));
+            std::hint::black_box(orch.execute(&fp, true)); // per-request dry_run
         });
     });
 
@@ -63,7 +63,7 @@ fn bench_dry_run_batch(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("files", n), &fps, |b, fps| {
             b.iter(|| {
                 for fp in fps {
-                    std::hint::black_box(orch.execute(fp));
+                    std::hint::black_box(orch.execute(fp, true)); // per-request dry_run
                 }
             });
         });

@@ -21,7 +21,7 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
 
     let fs = common::make_fs();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
+        workspace_detector: Arc::new(WorkspaceDetector::new()),
         config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
         parser: Arc::new(ConfigParserProvider::new(fs.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
@@ -71,9 +71,7 @@ fn us7_concurrent_requests_for_same_key_are_safe() {
         .map(|_| {
             let fp = FilePath::new(path_str.clone()).unwrap();
             let sut_ref = &sut;
-            thread::spawn(move || {
-                sut_ref.load_config_for_language(&fp, ConfigLanguage::Rust)
-            })
+            thread::spawn(move || sut_ref.load_config_for_language(&fp, ConfigLanguage::Rust))
         })
         .collect();
 

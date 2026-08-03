@@ -9,13 +9,11 @@ fn make_dry_run_orch() -> std::sync::Arc<dyn LintFixOrchestratorAggregate> {
         .orchestrator();
     let qa = quality_rules_lint_arwaky::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    container.orchestrator_with_filesystem(true, filesystem)
+    container.orchestrator_with_filesystem(filesystem)
 }
 
 #[test]
 fn aes304_bypass_comment_is_fixable() {
-    // AES304 violations (bypass comments like #[allow(...)], noqa, unwrap())
-    // should be fixable by the auto-fix processor.
     let orch = make_dry_run_orch();
     let tmp = TempDir::new().unwrap();
 
@@ -32,7 +30,7 @@ fn aes304_bypass_comment_is_fixable() {
     )
     .unwrap();
 
-    let result = orch.execute(&fp);
+    let result = orch.execute(&fp, true); // per-request dry_run
     assert!(
         result.is_success(),
         "AES304 fix dry-run should succeed: {}",
@@ -67,7 +65,7 @@ fn aes304_unwrap_pattern_detected() {
     )
     .unwrap();
 
-    let result = orch.execute(&fp);
+    let result = orch.execute(&fp, true); // per-request dry_run
     assert!(
         result.is_success(),
         "AES304 unwrap dry-run should succeed: {}",
@@ -90,7 +88,7 @@ fn aes304_dry_run_does_not_modify_file() {
     )
     .unwrap();
 
-    let _result = orch.execute(&fp);
+    let _result = orch.execute(&fp, true); // per-request dry_run
     let content = std::fs::read_to_string(tmp.path().join("aes304_nomod.rs")).unwrap();
     assert_eq!(content, original, "Dry-run must not modify the file");
 }

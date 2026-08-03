@@ -69,7 +69,7 @@ impl SurfaceLintExecutor {
             Some(orchestrator) => {
                 let file_path =
                     shared::common::taxonomy_path_vo::FilePath::new(path).unwrap_or_default();
-                let fix_result: FixResult = orchestrator.execute(&file_path);
+                let fix_result: FixResult = orchestrator.execute(&file_path, flags.dry_run);
                 let output = format!("[{}] {}", mode, fix_result.output);
                 if fix_result.is_success() {
                     LintExecutionResult::success(output, 0)

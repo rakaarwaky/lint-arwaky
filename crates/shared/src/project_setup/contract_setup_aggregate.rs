@@ -1,5 +1,4 @@
 // PURPOSE: SetupAggregate — aggregate trait for project setup orchestration
-use crate::cli_commands::taxonomy_protocol_vo::TransportProtocol;
 use crate::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use crate::common::taxonomy_job_vo::EnvContentVO;
 use crate::common::taxonomy_job_vo::McpConfigVO;
