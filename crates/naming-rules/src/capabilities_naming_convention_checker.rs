@@ -35,6 +35,7 @@ impl INamingConventionChecker for NamingConventionChecker {
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let min_words = Self::min_words_from_config(config);
+        let exceptions = rule_exception_set(config, RULE_CODE_NAMING_CONVENTION);
 
         let violations: Vec<LintResult> = files
             .values
@@ -45,6 +46,10 @@ impl INamingConventionChecker for NamingConventionChecker {
                     Some(name) => name,
                     None => &f_str,
                 };
+                // Rule-level exceptions evaluated before layer detection (FRD FR-001).
+                if exceptions.contains(filename) {
+                    return None;
+                }
                 let layer = self._detect_layer(&f_str, &layer_keys);
                 let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
                 let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));

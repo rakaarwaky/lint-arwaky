@@ -1,6 +1,6 @@
 // PURPOSE: SuffixPrefixChecker — Handles AES102 suffix/prefix rules (allowed, forbidden, mandatory strict, cross-layer)
 use crate::utility_naming_checker::string_filename_result;
-use crate::utility_naming_checker::{get_stem, get_suffix};
+use crate::utility_naming_checker::{get_stem, get_suffix, rule_exception_set};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
@@ -31,6 +31,7 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let suffix_to_layer = Self::build_suffix_to_layer_map(layer_map);
+        let exceptions = rule_exception_set(_config, RULE_CODE_SUFFIX_PREFIX);
 
         let violations: Vec<LintResult> = files
             .values
@@ -38,14 +39,16 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
             .filter_map(|f| {
                 let f_str = f.to_string();
                 let filename = f.rsplit('/').next().unwrap_or(&f_str);
+                // Rule-level exceptions evaluated before layer detection (FRD FR-002).
+                if exceptions.contains(filename) {
+                    return None;
+                }
                 let layer = self._detect_layer(&f_str, &layer_keys);
                 let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
 
                 // No recognised layer prefix → no suffix policy applies → skip.
                 // (AES000 removed: unknown-prefix signalling is out of scope.)
-                if layer.is_none() {
-                    return None;
-                }
+                layer.as_ref()?;
 
                 let def = layer_name.as_ref().and_then(|l| layer_map.values.get(l));
                 self.check_domain_suffixes_internal(
