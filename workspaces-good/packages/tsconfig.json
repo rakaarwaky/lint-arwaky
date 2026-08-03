@@ -13,8 +13,8 @@
     "outDir": "./dist",
     "rootDir": ".",
     "paths": {
-      "calculator-shared/*": ["./*"]
+      "calculator-shared/*": ["./shared/*"]
     }
   },
-  "include": ["shared/src/**/*.ts", "addition/src/**/*.ts", "subtraction/src/**/*.ts", "multiplication/src/**/*.ts", "division/src/**/*.ts", "cli/src/**/*.ts", "root/src/**/*.ts"]
+  "include": ["src/**/*.ts", "shared/src/**/*.ts", "addition/src/**/*.ts", "subtraction/src/**/*.ts", "multiplication/src/**/*.ts", "division/src/**/*.ts", "cli/src/**/*.ts"]
 }
