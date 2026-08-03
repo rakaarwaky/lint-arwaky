@@ -12,11 +12,6 @@ struct MockAdapter {
 }
 
 impl MockAdapter {
-    fn new() -> Self {
-        Self {
-            files: Mutex::new(HashMap::new()),
-        }
-    }
     fn with_files(files: HashMap<String, String>) -> Self {
         Self {
             files: Mutex::new(files),
