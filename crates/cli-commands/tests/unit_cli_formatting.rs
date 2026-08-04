@@ -1,5 +1,5 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
-use cli_commands::surface_formatting::{group_by_member, status_icon};
+use cli_commands::surface_output_text_formatter::{group_by_member, status_icon};
 use dispatcher::surface_output_component::ViolationItem;
 use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 

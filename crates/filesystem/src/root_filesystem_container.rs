@@ -9,7 +9,7 @@ use crate::capabilities_ast_parser::ASTParser;
 use crate::capabilities_dependency_graph::DependencyGraph;
 use crate::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use crate::capabilities_tool_resolution::CapabilitiesToolResolution;
-use crate::capabilities_workspace::CapabilitiesWorkspace;
+use crate::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_graph_protocol::IGraphProtocol;

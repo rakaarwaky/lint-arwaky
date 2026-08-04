@@ -1,5 +1,5 @@
 // Unit tests for CapabilitiesWorkspace — FR-005: Workspace Detection.
-use filesystem_lint_arwaky::capabilities_workspace::CapabilitiesWorkspace;
+use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;

@@ -5,7 +5,7 @@ use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
 use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
-use filesystem_lint_arwaky::capabilities_workspace::CapabilitiesWorkspace;
+use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;

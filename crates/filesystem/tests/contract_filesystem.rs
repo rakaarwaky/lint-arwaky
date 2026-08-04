@@ -4,7 +4,7 @@ use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
 use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
-use filesystem_lint_arwaky::capabilities_workspace::CapabilitiesWorkspace;
+use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_graph_protocol::IGraphProtocol;
@@ -37,7 +37,7 @@ fn capabilities_tool_resolution_implements_tool_resolution_protocol() {
 }
 
 #[test]
-fn capabilities_workspace_implements_workspace_protocol() {
+fn capabilities_workspace_root_finder_implements_workspace_protocol() {
     fn assert_trait<T: IWorkspaceProtocol>() {}
     assert_trait::<CapabilitiesWorkspace>();
 }

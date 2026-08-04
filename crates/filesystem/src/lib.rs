@@ -7,14 +7,14 @@
 // FR-002: Dependency Graph Construction     → capabilities_dependency_graph
 // FR-003: File I/O & Directory Operations   → capabilities_filesystem_io + utility_filesystem_io
 // FR-004: Tool Resolution                   → capabilities_tool_resolution + utility_tool_resolution
-// FR-005: Workspace Detection               → capabilities_workspace + utility_workspace_detection
+// FR-005: Workspace Detection               → capabilities_workspace_root_finder + utility_workspace_detection
 
 // ── Capabilities (stateful, produce structured data) ──
 pub mod capabilities_ast_parser; // FR-001
 pub mod capabilities_dependency_graph; // FR-002
 pub mod capabilities_filesystem_io; // FR-003
 pub mod capabilities_tool_resolution; // FR-004
-pub mod capabilities_workspace; // FR-005
+pub mod capabilities_workspace_root_finder; // FR-005
 
 // ── Utility (stateless, technical mechanics) ──
 pub mod utility_ast_python; // FR-001

@@ -249,17 +249,45 @@ impl ArchImportForbiddenChecker {
                 }
 
                 if is_forbidden {
-                    violations.push(LintResult::new_arch(
-                        file,
-                        idx + 1,
-                        "AES201",
-                        Severity::CRITICAL,
+                    let message = if layer_name == forbidden {
+                        // Same-layer import — provide specific guidance
+                        match layer_name.as_ref() {
+                            "utility" => format!(
+                                "AES201 FORBIDDEN_IMPORT: Layer 'utility' is importing from itself.\n\
+                                    WHY? Utility files must be stateless and independent. Utility→utility imports create hidden dependencies.\n\
+                                    FIX: Extract the dependent function to a taxonomy VO if it's data, or consolidate both utilities into a single file if they are tightly coupled."
+                            ),
+                            "capabilities" => format!(
+                                "AES201 FORBIDDEN_IMPORT: Layer 'capabilities' is importing from itself.\n\
+                                    WHY? Capabilities must communicate through contract protocols to maintain loose coupling.\n\
+                                    FIX: Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation."
+                            ),
+                            "agent" => format!(
+                                "AES201 FORBIDDEN_IMPORT: Layer 'agent' is importing from itself.\n\
+                                    WHY? Agent orchestrators must coordinate through contract aggregates, not directly reference each other.\n\
+                                    FIX: Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation."
+                            ),
+                            _ => format!(
+                                "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
+                                    WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
+                                    FIX: Remove the import or refactor to use one of the allowed layers.",
+                                layer_name, forbidden, layer_name, forbidden
+                            ),
+                        }
+                    } else {
                         format!(
                             "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
                                 WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
                                 FIX: Remove the import or refactor to use one of the allowed layers.",
                             layer_name, forbidden, layer_name, forbidden
-                        ),
+                        )
+                    };
+                    violations.push(LintResult::new_arch(
+                        file,
+                        idx + 1,
+                        "AES201",
+                        Severity::CRITICAL,
+                        message,
                     ));
                 }
             }
@@ -343,17 +371,45 @@ impl ArchImportForbiddenChecker {
                     }
 
                     if is_forbidden {
-                        violations.push(LintResult::new_arch(
-                            file,
-                            idx + 1,
-                            "AES201",
-                            Severity::CRITICAL,
+                        let message = if rule_layer_str == *forbidden {
+                            // Same-layer import — provide specific guidance
+                            match rule_layer_str.as_ref() {
+                                "utility" => format!(
+                                    "AES201 FORBIDDEN_IMPORT: Layer 'utility' is importing from itself.\n\
+                                        WHY? Utility files must be stateless and independent. Utility→utility imports create hidden dependencies.\n\
+                                        FIX: Extract the dependent function to a taxonomy VO if it's data, or consolidate both utilities into a single file if they are tightly coupled."
+                                ),
+                                "capabilities" => format!(
+                                    "AES201 FORBIDDEN_IMPORT: Layer 'capabilities' is importing from itself.\n\
+                                        WHY? Capabilities must communicate through contract protocols to maintain loose coupling.\n\
+                                        FIX: Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation."
+                                ),
+                                "agent" => format!(
+                                    "AES201 FORBIDDEN_IMPORT: Layer 'agent' is importing from itself.\n\
+                                        WHY? Agent orchestrators must coordinate through contract aggregates, not directly reference each other.\n\
+                                        FIX: Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation."
+                                ),
+                                _ => format!(
+                                    "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
+                                        WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
+                                        FIX: Remove the import or refactor to use one of the allowed layers.",
+                                    rule_layer_str, forbidden, rule_layer_str, forbidden
+                                ),
+                            }
+                        } else {
                             format!(
                                 "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
                                     WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
                                     FIX: Remove the import or refactor to use one of the allowed layers.",
                                 rule_layer_str, forbidden, rule_layer_str, forbidden
-                            ),
+                            )
+                        };
+                        violations.push(LintResult::new_arch(
+                            file,
+                            idx + 1,
+                            "AES201",
+                            Severity::CRITICAL,
+                            message,
                         ));
                     }
                 }

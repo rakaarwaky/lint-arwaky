@@ -10,7 +10,7 @@ use shared::config_system::IConfigOrchestratorAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
-use crate::surface_formatting::output_violations;
+use crate::surface_output_text_formatter::output_violations;
 
 fn resolve_root(path: &Option<FilePath>) -> String {
     match path {
