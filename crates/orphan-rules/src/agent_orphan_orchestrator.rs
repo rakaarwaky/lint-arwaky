@@ -416,6 +416,7 @@ impl ArchOrphanAnalyzer {
                 &root,
                 None,
                 &context.inbound_links,
+                alive_result,
             );
         }
 
@@ -426,6 +427,7 @@ impl ArchOrphanAnalyzer {
                 &context.inheritance_map,
                 all_files,
                 content_map,
+                alive_result,
             );
         }
 
@@ -444,6 +446,7 @@ impl ArchOrphanAnalyzer {
                 all_files,
                 &context.inbound_links,
                 content_map,
+                alive_result,
             );
         }
 
@@ -471,26 +474,14 @@ impl ArchOrphanAnalyzer {
     }
 
     fn get_orphan_entry_points(&self) -> Vec<String> {
+        // Entry points: only _entry suffix files
+        // e.g. root_cli_main_entry.rs, root_mcp_main_entry.rs
         let mut entry_points = vec![
-            "_container.rs".into(),
-            "_container.py".into(),
-            "_container.ts".into(),
-            "_container.js".into(),
             "_entry.rs".into(),
             "_entry.py".into(),
             "_entry.ts".into(),
             "_entry.js".into(),
-            "root_".into(),
-            "main.rs".into(),
-            "main.py".into(),
-            "__main__.py".into(),
-            "main.ts".into(),
-            "main.js".into(),
         ];
-        // Add barrel files from single source (shared::common::DEFAULT_RULE_EXCEPTIONS)
-        for pat in shared::common::DEFAULT_RULE_EXCEPTIONS {
-            entry_points.push(pat.to_string());
-        }
         for layer_def in self.config.layers.values() {
             entry_points.extend(layer_def.orphan.orphan_entry_points.values.iter().cloned());
         }

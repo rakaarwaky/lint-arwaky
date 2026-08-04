@@ -4,7 +4,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::IContractOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, OrphanIndicatorResult};
+use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -87,30 +87,6 @@ impl ContractOrphanAnalyzer {
                     }
                 }
                 FileParseResultVO::Unsupported => {}
-            }
-        }
-        false
-    }
-
-    fn is_referenced_by_layers(
-        trait_names: &[String],
-        search_files: &[String],
-        prefix_patterns: &[&str],
-        suffix_patterns: &[&str],
-        content_map: &HashMap<String, String>,
-    ) -> bool {
-        for cf in search_files {
-            let cb = file_basename(cf);
-            let matches_prefix = prefix_patterns.iter().any(|p| cb.starts_with(p));
-            let matches_suffix = suffix_patterns.iter().any(|s| cb.ends_with(s));
-            if !matches_prefix && !matches_suffix {
-                continue;
-            }
-            let content = content_map.get(cf).cloned().unwrap_or_default();
-            for trait_name in trait_names {
-                if content_contains_whole_word(&content, trait_name) {
-                    return true;
-                }
             }
         }
         false
@@ -200,6 +176,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         _inheritance_map: &InheritanceMap,
         all_files: &[String],
         content_map: &HashMap<String, String>,
+        alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
         let suffix = file_suffix(fp);
@@ -213,89 +190,69 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
+        // Condition 1: not reachable from any _entry file
+        let is_reachable = alive_files.paths.contains(f);
+        if !is_reachable {
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
+                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY? Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                    suffix,
+                    trait_names.join(", "),
+                    suffix,
+                    trait_names.join(", "),
+                    trait_names.join(", ")
+                ),
+                Severity::MEDIUM,
+            );
+        }
+
         let search_files = self.cached_search_files(root_dir, all_files);
 
         if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        let unimplemented: Vec<String> = trait_names
-            .iter()
-            .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
-            .cloned()
-            .collect();
-        if !unimplemented.is_empty() {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is orphaned.\nWHY? Contract {} '{}' is not implemented by any {} file.\nFIX: Implement '{}' in a capabilities_* file.",
-                    suffix,
-                    unimplemented.join(", "),
-                    suffix,
-                    unimplemented.join(", "),
-                    "expected",
-                    unimplemented.join(", ")
-                ),
-                Severity::MEDIUM,
-            );
+        // Condition 2: protocol not implemented by capabilities
+        if suffix == "protocol" {
+            let unimplemented: Vec<String> = trait_names
+                .iter()
+                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .cloned()
+                .collect();
+            if !unimplemented.is_empty() {
+                return OrphanIndicatorResult::new(
+                    true,
+                    format!(
+                        "AES502 CONTRACT_ORPHAN: Contract protocol '{}' is not implemented.\nWHY? Contract protocol '{}' is not implemented by any capabilities_* file.\nFIX: Implement '{}' in a capabilities_* file.",
+                        unimplemented.join(", "),
+                        unimplemented.join(", "),
+                        unimplemented.join(", ")
+                    ),
+                    Severity::MEDIUM,
+                );
+            }
         }
 
-        if suffix == "protocol"
-            && !Self::is_referenced_by_layers(
-                &trait_names,
-                &search_files,
-                &["agent_", "capabilities_", "surface_"],
-                &[
-                    "_container.rs",
-                    "_container.py",
-                    "_container.ts",
-                    "_container.js",
-                ],
-                content_map,
-            )
-        {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is orphaned.\nWHY? Contract {} '{}' is not implemented by any {} file.\nFIX: Implement '{}' in a capabilities_* file.",
-                    suffix,
-                    trait_names.join(", "),
-                    suffix,
-                    trait_names.join(", "),
-                    "orchestrator/container",
-                    trait_names.join(", ")
-                ),
-                Severity::MEDIUM,
-            );
-        }
-
-        if suffix == "aggregate"
-            && !Self::is_referenced_by_layers(
-                &trait_names,
-                &search_files,
-                &["surface_"],
-                &[
-                    "_container.rs",
-                    "_container.py",
-                    "_container.ts",
-                    "_container.js",
-                ],
-                content_map,
-            )
-        {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is orphaned.\nWHY? Contract {} '{}' is not implemented by any {} file.\nFIX: Implement '{}' in a capabilities_* file.",
-                    suffix,
-                    trait_names.join(", "),
-                    suffix,
-                    trait_names.join(", "),
-                    "surface",
-                    trait_names.join(", ")
-                ),
-                Severity::MEDIUM,
-            );
+        // Condition 3: aggregate not implemented by agent
+        if suffix == "aggregate" {
+            let unimplemented: Vec<String> = trait_names
+                .iter()
+                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .cloned()
+                .collect();
+            if !unimplemented.is_empty() {
+                return OrphanIndicatorResult::new(
+                    true,
+                    format!(
+                        "AES502 CONTRACT_ORPHAN: Contract aggregate '{}' is not implemented.\nWHY? Contract aggregate '{}' is not implemented by any agent_* file.\nFIX: Implement '{}' in an agent_* file.",
+                        unimplemented.join(", "),
+                        unimplemented.join(", "),
+                        unimplemented.join(", ")
+                    ),
+                    Severity::MEDIUM,
+                );
+            }
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)

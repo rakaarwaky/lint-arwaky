@@ -759,7 +759,12 @@ impl FilesystemOrchestrator {
                     }
                     if let Ok(rel) = p.strip_prefix(&abs_root) {
                         let rel_str = rel.to_string_lossy();
-                        member_dirs.iter().any(|d| rel_str.starts_with(&format!("{}/", d)))
+                        // Include files inside member directories
+                        if member_dirs.iter().any(|d| rel_str.starts_with(&format!("{}/", d))) {
+                            return true;
+                        }
+                        // Also include root-level source files (e.g. root_*_entry.rs)
+                        !rel_str.contains('/')
                     } else {
                         true
                     }

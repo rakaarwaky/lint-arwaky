@@ -3,7 +3,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::IUtilityOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
+use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 
 const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "surfaces", "root"];
@@ -55,6 +55,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         all_files: &[String],
         inbound_links: &InboundLinkMap,
         content_map: &HashMap<String, String>,
+        alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
         let module_name = match std::path::Path::new(fp)
@@ -67,6 +68,20 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             }
         };
 
+        // Condition 1: not reachable from any _entry file
+        let is_reachable = alive_files.paths.contains(f);
+        if !is_reachable {
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
+                    "AES504 UTILITY_ORPHAN: '{}' is not reachable.\nWHY? Utility file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                    module_name, module_name, module_name
+                ),
+                Severity::MEDIUM,
+            );
+        }
+
+        // Condition 2: not imported by capabilities/agent/surface
         let mut consumer_importers: Vec<String> = Vec::new();
         let mut utility_importers: Vec<String> = Vec::new();
 
@@ -128,7 +143,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "AES504 UTILITY_DEAD_CODE: '{}' has no consumers in capability/agent/surfaces layers.\nWHY? Utility file '{}' is only imported by other utility files ({}), not by capability, agent, or surfaces layers.\nFIX: Import '{}' in a capabilities_* file.",
+                    "AES504 UTILITY_ORPHAN: '{}' is not imported by any consumer layer.\nWHY? Utility file '{}' is only imported by other utility files ({}), not by capabilities_*, agent_*, or surface_* files.\nFIX: Import '{}' in a capabilities_* file.",
                     module_name, module_name, imported_by_str, module_name
                 ),
                 Severity::MEDIUM,
@@ -138,7 +153,7 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         OrphanIndicatorResult::new(
             true,
             format!(
-                "AES504 UTILITY_ORPHAN: '{}' is not imported.\nWHY? Utility file '{}' is not imported by any capabilities or other layer file.\nFIX: Import '{}' in a capabilities_* file.",
+                "AES504 UTILITY_ORPHAN: '{}' is not imported by any consumer layer.\nWHY? Utility file '{}' is not imported by any capabilities_*, agent_*, or surface_* file.\nFIX: Import '{}' in a capabilities_* file.",
                 module_name, module_name, module_name
             ),
             Severity::MEDIUM,

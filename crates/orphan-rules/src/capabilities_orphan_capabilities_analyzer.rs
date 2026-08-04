@@ -59,22 +59,25 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         root_dir: &FilePath,
         alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
-        let is_reachable = alive_files.paths.contains(f);
-        if is_reachable {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
         let fp = f.value();
         let stem = file_stem(fp);
-        if fp.is_empty() {
+
+        // Condition 1: not reachable from any _entry file
+        let is_reachable = alive_files.paths.contains(f);
+        if !is_reachable {
             return OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Not reachable from any entry point.\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs.",
-                    stem, stem
+                    "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable.\nWHY? Capabilities file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                    stem, stem, stem
                 ),
                 Severity::MEDIUM,
             );
+        }
+
+        // Condition 2: not wired in container
+        if fp.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
         let path = match FilePath::new(fp) {
@@ -101,7 +104,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         OrphanIndicatorResult::new(
             true,
             format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is not wired in any container.\nFIX: Register '{}' in root_*_entry.rs or root_*_container.rs.",
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container.rs.",
                 stem, stem, stem
             ),
             Severity::MEDIUM,

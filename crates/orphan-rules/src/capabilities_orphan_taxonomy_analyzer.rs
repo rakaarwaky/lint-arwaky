@@ -3,7 +3,7 @@ use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::ITaxonomyOrphanProtocol;
-use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult};
+use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult, ReachabilityResult};
 
 pub struct TaxonomyOrphanAnalyzer;
 
@@ -26,16 +26,31 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         _root_dir: &FilePath,
         _definition: Option<&LayerDefinition>,
         inbound_links: &InboundLinkMap,
+        alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult {
         let stem = file_stem(f.value());
 
+        // Condition 1: not reachable from any _entry file
+        let is_reachable = alive_files.paths.contains(f);
+        if !is_reachable {
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
+                    "AES501 TAXONOMY_ORPHAN: '{}' is not reachable.\nWHY? Taxonomy file '{}' is not reachable from any _entry file.\nFIX: Import '{}' in a contract_* file.",
+                    stem, stem, stem
+                ),
+                Severity::LOW,
+            );
+        }
+
+        // Condition 2: not imported by any contract_ file
         let importers = match inbound_links.get_importers(f.value()) {
             Some(v) => v,
             None => {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "AES501 TAXONOMY_ORPHAN: '{}' is not imported.\nWHY? Taxonomy file '{}' is not imported by any other layer file.\nFIX: Import '{}' in a contract_* file.",
+                        "AES501 TAXONOMY_ORPHAN: '{}' is not imported by any contract_* file.\nWHY? Taxonomy file '{}' has no importers in contract layer.\nFIX: Import '{}' in a contract_* file.",
                         stem, stem, stem
                     ),
                     Severity::LOW,
@@ -43,23 +58,21 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
-        let has_other_layer_importer = importers.iter().any(|importer| {
+        let has_contract_importer = importers.iter().any(|importer| {
             if importer == f.value() {
                 return false;
             }
             let imp_filename = shared::common::utility_layer_detector::extract_filename(importer);
-            let imp_layer =
-                shared::common::utility_layer_detector::detect_layer_from_prefix(imp_filename);
-            imp_layer.as_deref() != Some("taxonomy")
+            imp_filename.starts_with("contract_")
         });
 
-        if has_other_layer_importer {
+        if has_contract_importer {
             OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
         } else {
             OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "AES501 TAXONOMY_ORPHAN: '{}' is not imported.\nWHY? Taxonomy file '{}' is not imported by any other layer file.\nFIX: Import '{}' in a contract_* file.",
+                    "AES501 TAXONOMY_ORPHAN: '{}' is not imported by any contract_* file.\nWHY? Taxonomy file '{}' has no importers in contract layer.\nFIX: Import '{}' in a contract_* file.",
                     stem, stem, stem
                 ),
                 Severity::LOW,

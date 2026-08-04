@@ -53,7 +53,36 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
 
         let aggregate_traits = self.extract_aggregate_traits(fp, &content);
 
-        // Case 1: Agent implements aggregate traits — check if any surface references them
+        // Condition 1: not reachable from any _entry file
+        let fp_path = std::path::Path::new(fp);
+        let is_alive = alive_files.paths.iter().any(|af| {
+            let af_val = af.value();
+            if af_val == fp {
+                return true;
+            }
+            if let Some(af_path) = std::path::Path::new(af_val).file_name() {
+                if let Some(fp_file) = fp_path.file_name() {
+                    if af_path == fp_file {
+                        return true;
+                    }
+                }
+            }
+            af_val.ends_with(fp) || fp.ends_with(af_val)
+        });
+        if !is_alive {
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
+                    "AES505 AGENT_ORPHAN: '{}' is not reachable.\nWHY? Agent file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                    shared::common::utility_layer_detector::extract_filename(fp),
+                    shared::common::utility_layer_detector::extract_filename(fp),
+                    shared::common::utility_layer_detector::extract_filename(fp)
+                ),
+                Severity::HIGH,
+            );
+        }
+
+        // Condition 2: not wired in container — check aggregate traits
         if !aggregate_traits.is_empty() {
             let candidates: Vec<&String> = all_files
                 .iter()
@@ -71,10 +100,6 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                         || cb.ends_with("_entry.py")
                         || cb.ends_with("_entry.ts")
                         || cb.ends_with("_entry.js")
-                        || cb == "main.rs"
-                        || cb == "main.py"
-                        || cb == "main.ts"
-                        || cb == "main.js"
                 })
                 .collect();
 
@@ -89,49 +114,14 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "AES505 AGENT_ORPHAN: Aggregate '{}' is unreachable from any surface.\nWHY? Agent aggregate '{}' is not called by any surface or container.\nFIX: Import and use '{}' in a surface_* file or root_*_container.rs.",
-                        aggregate_traits.join(", "),
-                        aggregate_traits.join(", "),
-                        aggregate_traits.join(", ")
+                        "AES505 AGENT_ORPHAN: '{}' is not wired.\nWHY? Agent file '{}' is not wired in any root_*_container file.\nFIX: Import '{}' in a root_*_container.rs.",
+                        shared::common::utility_layer_detector::extract_filename(fp),
+                        shared::common::utility_layer_detector::extract_filename(fp),
+                        shared::common::utility_layer_detector::extract_filename(fp)
                     ),
                     Severity::HIGH,
                 );
             }
-
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
-        // Case 2: No aggregate traits — check reachability from entry points
-        // alive_files contains relative paths; fp is absolute. Compare by suffix.
-        let fp_path = std::path::Path::new(fp);
-        let is_alive = alive_files.paths.iter().any(|af| {
-            let af_val = af.value();
-            // Direct match
-            if af_val == fp {
-                return true;
-            }
-            // Suffix match: alive file path ends with fp, or fp ends with alive file path
-            if let Some(af_path) = std::path::Path::new(af_val).file_name() {
-                if let Some(fp_file) = fp_path.file_name() {
-                    if af_path == fp_file {
-                        return true;
-                    }
-                }
-            }
-            // Full path suffix match
-            af_val.ends_with(fp) || fp.ends_with(af_val)
-        });
-        if !is_alive {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES505 AGENT_ORPHAN: '{}' is unreachable from any entry point.\nWHY? Agent file '{}' is not reachable from any entry point (main, lib, container, surface).\nFIX: Import '{}' in a surface_* file or root_*_container.rs, or add it to lib.rs.",
-                    shared::common::utility_layer_detector::extract_filename(fp),
-                    shared::common::utility_layer_detector::extract_filename(fp),
-                    shared::common::utility_layer_detector::extract_filename(fp)
-                ),
-                Severity::HIGH,
-            );
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
