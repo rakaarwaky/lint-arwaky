@@ -146,7 +146,6 @@ fn is_trait_import(raw_path: &str, alias_str: &str) -> bool {
         || alias_str.ends_with("Iterator")
         || alias_str.ends_with("Stream")
         || alias_str.ends_with("Protocol")
-        || alias_str.ends_with("Analyzer")
         || alias_str == "Write"
     {
         return true;

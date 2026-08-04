@@ -1,121 +1,5 @@
 # Agentic Engineering System Architecture
 
-## CRITICAL: Folder Structure Is BY FEATURE, NOT BY LAYER
-
-> **AI agents frequently make this mistake.** Do NOT create `surface/`, `taxonomy/`,
-> `contract/`, `capabilities/`, `utility/`, `agent/` folders. The correct structure
-> groups files **by feature**, with layers as **filenames**, not directories.
-
-### WRONG -- Folder by Layer (DO NOT DO THIS)
-
-```
-my-feature/
-├── surface/           <- WRONG! No layer directories!
-│   └── surface_<concern>_<role>.rs
-├── taxonomy/
-│   └── taxonomy_<concern>_vo.rs
-├── contract/
-│   └── taxonomy_<concern>_protocol.rs
-├── capabilities/
-│   └── capabilities_<concern>_<role>.rs
-├── utility/
-│   └── utility_<concern>_<role>.rs
-└── agent/
-    └── agent_<concern>_orchestrator.rs
-```
-
-### CORRECT -- Folder by Feature, Files by Layer
-
-```
-my-feature/
-├── src/                               <- ONE flat src/ directory
-│   │
-│   │  +=====================================================+
-│   │  |  LAYER ORDER (top to bottom = outside-in)           |
-│   │  +=====================================================+
-│   │
-│   ├── surface_<concern>_<role>.rs    <- Surface layer (entry point)
-│   │
-│   ├── agent_<concern>_orchestrator.rs <- Agent layer (orchestration)
-│   │
-│   ├── capabilities_<concern>_<role>.rs <- Capabilities (business logic)
-│   │
-│   ├── utility_<concern>_<role>.rs     <- Utility (technical helpers)
-│   │
-│   ├── contract_<concern>_protocol.rs  <- Contract (interfaces)   [in shared/]
-│   └── taxonomy_<concern>_vo.rs        <- Taxonomy (domain types) [in shared/]
-│
-├── tests/
-└── Cargo.toml
-```
-
-### General Workspace Layout
-
-```
-project-root/                             <- Project workspace root
-│
-├── crates/                               <- Rust workspace members
-│   ├── shared/                           <- SHARED: Taxonomy + Contract (all features)
-│   │   └── src/
-│   │       ├── taxonomy_<domain>_vo.rs
-│   │       ├── taxonomy_<domain>_entity.rs
-│   │       ├── taxonomy_<domain>_event.rs
-│   │       ├── taxonomy_<domain>_error.rs
-│   │       ├── taxonomy_<domain>_constant.rs
-│   │       ├── contract_<domain>_protocol.rs
-│   │       └── contract_<domain>_aggregate.rs
-│   │
-│   ├── <feature-a>/                      <- FEATURE: <feature-a description>
-│   │   └── src/
-│   │       ├── agent_<feature-a>_orchestrator.rs        <- Agent
-│   │       ├── capabilities_<feature-a>_<role>.rs       <- Capabilities
-│   │       ├── capabilities_<feature-a>_<role>.rs       <- Capabilities
-│   │       ├── utility_<feature-a>_<role>.rs            <- Utility
-│   │       ├── utility_<feature-a>_<role>.rs            <- Utility
-│   │       ├── root_<feature-a>_container.rs            <- Root
-│   │       └── lib.rs
-│   │
-│   ├── <feature-b>/                      <- FEATURE: <feature-b description>
-│   │   └── src/
-│   │       ├── agent_<feature-b>_orchestrator.rs        <- Agent
-│   │       ├── capabilities_<feature-b>_<role>.rs       <- Capabilities
-│   │       ├── utility_<feature-b>_<role>.rs            <- Utility
-│   │       ├── root_<feature-b>_container.rs            <- Root
-│   │       └── lib.rs
-│   │
-│   ├── <feature-c>/                      <- FEATURE: <feature-c description>
-│   │   └── src/
-│   │       ├── surface_<feature-c>_<role>.rs            <- Surface
-│   │       └── lib.rs
-│   │
-│   └── ...
-│
-├── packages/                             <- TypeScript workspace members
-├── modules/                              <- Python modules
-│
-└── Cargo.toml                            <- Workspace manifest
-```
-
-### Key Rules
-
-| Rule | Explanation |
-|------|-------------|
-| **File naming = layer indicator** | `surface_*`, `agent_*`, `capabilities_*`, `utility_*` prefixes identify the layer |
-| **Layer is filename, not folder** | Files live in `src/`, NOT in `src/surface/`, `src/agent/`, etc. |
-| **Shared = separate crate** | Taxonomy + Contract live in `shared/` crate, not inside each feature |
-| **Features are independent** | Each feature crate contains its own Surface, Agent, Capabilities, Utility |
-| **One feature = one crate** | Each feature is its own crate under `crates/`, `packages/`, or `modules/` |
-
-### Common AI Agent Mistakes
-
-1. **Creating layer folders** (`src/surface/`, `src/taxonomy/`) -- NEVER DO THIS
-2. **Putting taxonomy in feature crate** -- Taxonomy belongs in `shared/`
-3. **Creating empty `__init__.py` / `mod.rs`** -- Use `lib.rs` or `index.ts` only
-4. **Mixing layers in same file** -- One file = one layer = one role
-5. **Importing capabilities from agent** -- Agent imports from Contract, not Capabilities
-
----
-
 ## 1. Purpose
 
 The Agentic Engineering System is a layered, AI-native architecture pattern. It keeps domain models stable, business logic readable, technical detail isolated, and layer boundaries explicit enough for both humans and AI agents to modify the system safely.
@@ -132,7 +16,7 @@ The architecture supports multi-language workspaces.
 | Workspace Member   | One self-contained crate, package, or module inside the workspace |
 | Crates directory   | Rust workspace members                                            |
 | Packages directory | TypeScript or JavaScript packages                                 |
-| Modules directory  | Python modules                                                   |
+| Modules directory  | Python modules                                                    |
 
 ---
 
@@ -152,7 +36,9 @@ The parts are joined by underscores, followed by the normal file extension for t
 
 ## 4. Vertical Slicing Folder Structure
 
-The recommended folder structure follows this order:
+AI agents frequently make this mistake. Do NOT create `surface/`, `taxonomy/`,
+`contract/`, `capabilities/`, `utility/`, `agent/` folders. The correct structure
+groups files by feature, with layers as filenames, not directories.
 
 #### Features member
 
@@ -181,6 +67,53 @@ taxonomy_<concern>_constant.rs/py/ts             ← taxonomy layer
 ```
 
 `shared` folder groups by domain. Use `shared/common/` for generic files.
+
+### General Workspace Layout
+
+```
+project-root/                             <- Project workspace root
+│
+├── crates|packages|modules/              <- workspace members
+│   ├── shared/                           <- SHARED: Taxonomy + Contract (all features)
+│   │   └── src/
+│   │       ├── taxonomy_<domain>_vo.rs/py/ts 
+│   │       ├── taxonomy_<domain>_entity.rs/py/ts 
+│   │       ├── taxonomy_<domain>_event.rs/py/ts 
+│   │       ├── taxonomy_<domain>_error.rs/py/ts 
+│   │       ├── taxonomy_<domain>_constant.rs/py/ts 
+│   │       ├── contract_<domain>_protocol.rs/py/ts 
+│   │       └── contract_<domain>_aggregate.rs/py/ts 
+│   │
+│   ├── <feature-a>/                      <- FEATURE: <feature-a description>
+│   │   └── src/
+│   │       ├── agent_<feature-a>_orchestrator.rs/py/ts         <- Agent
+│   │       ├── capabilities_<feature-a>_<role>.rs/py/ts        <- Capabilities
+│   │       ├── capabilities_<feature-a>_<role>.rs/py/ts        <- Capabilities
+│   │       ├── utility_<feature-a>_<role>.rs/py/ts             <- Utility
+│   │       ├── utility_<feature-a>_<role>.rs/py/ts             <- Utility
+│   │       ├── root_<feature-a>_container.rs/py/ts            <- Root
+│   │       └── lib.rs
+│   │
+│   ├── <feature-b>/                      <- FEATURE: <feature-b description>
+│   │   └── src/
+│   │       ├── agent_<feature-b>_orchestrator.rs/py/ts         <- Agent
+│   │       ├── capabilities_<feature-b>_<role>.rs/py/ts        <- Capabilities
+│   │       ├── utility_<feature-b>_<role>.rs/py/ts             <- Utility
+│   │       ├── root_<feature-b>_container.rs/py/ts             <- Root
+│   │       └── lib.rs
+│   │
+│   ├── <feature-c>/                      <- FEATURE: <feature-c description>
+│   │   └── src/
+│   │       ├── surface_<feature-c>_<role>.rs/py/ts             <- Surface
+│   │       └── lib.rs
+│   │
+│   └── ...
+│
+│
+├── Cargo.toml                        
+├── package.json
+└── pyproject.toml
+```
 
 ---
 
