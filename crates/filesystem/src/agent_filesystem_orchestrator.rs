@@ -544,6 +544,11 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
         // Build forward graph from import entries (source → targets)
         let imports = self.imports.get().cloned().unwrap_or_default();
+        eprintln!(
+            "[debug build_graph] imports count={}, first few: {:?}",
+            imports.len(),
+            imports.iter().take(3).map(|i| (&i.raw_path, i.resolved_path.as_ref().map(|p| p.to_string_lossy().to_string()))).collect::<Vec<_>>()
+        );
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);

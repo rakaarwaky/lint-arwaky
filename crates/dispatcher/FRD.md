@@ -6,27 +6,59 @@
 
 The dispatcher crate is a **Utility Surface** that centralizes all business logic for Smart surfaces (CLI, MCP, TUI, API). Smart surfaces are thin wrappers that parse input, call dispatcher functions, and format output. Dispatcher owns the business logic; surfaces own the rendering.
 
-### Architecture
+### Architecture & Data Flow
 
-```
-Smart Surface (thin)
-  └→ Dispatcher (Utility Surface)
-       ├→ surface_check_action    — unified scan
-       ├→ surface_ci_action       — CI threshold validation
-       ├→ surface_naming_action   — naming convention scan
-       ├→ surface_import_action   — import audit
-       ├→ surface_quality_action  — code analysis scan
-       ├→ surface_orphan_action   — orphan file detection
-       ├→ surface_role_action     — role classification scan
-       ├→ surface_external_action — external linter adapter scan
-       ├→ surface_fix_action      — auto-fix with dry-run
-       ├→ surface_config_action   — config display
-       ├→ surface_git_action      — git-diff lint
-       ├→ surface_maintenance_action — doctor/security/dependencies
-       ├→ surface_plugin_action   — adapter listing
-       ├→ surface_setup_action    — project init/install/MCP config
-       ├→ surface_watch_action    — file watching
-       └→ surface_output_component — shared ViolationItem type
+```mermaid
+flowchart TD
+    A["Smart Surface\n(CLI / MCP / TUI / API)"] -->|"call action function"| D["dispatcher\n(Utility Surface)"]
+
+    subgraph DIS ["dispatcher crate"]
+        D --> D1["surface_check_action\n(unified scan)"]
+        D --> D2["surface_ci_action\n(CI threshold)"]
+        D --> D3["surface_naming_action"]
+        D --> D4["surface_import_action"]
+        D --> D5["surface_quality_action"]
+        D --> D6["surface_orphan_action"]
+        D --> D7["surface_role_action"]
+        D --> D8["surface_external_action"]
+        D --> D9["surface_fix_action"]
+        D --> D10["surface_config_action"]
+        D --> D11["surface_git_action"]
+        D --> D12["surface_maintenance_action"]
+        D --> D13["surface_plugin_action"]
+        D --> D14["surface_setup_action"]
+        D --> D15["surface_watch_action"]
+        D --> D16["surface_output_component\n(ViolationItem)"]
+    end
+
+    D1 -->|"subprocess self-invocation\n(--format json)"| C1["naming / import / quality\norphan / role / external"]
+    D3 -->|"run_audit_with_entries"| B1["naming_aggregate"]
+    D4 -->|"run_audit_with_entries"| B2["import_aggregate"]
+    D5 -->|"run_analysis_with_entries"| B3["quality_aggregate"]
+    D6 -->|"check_orphans_with_entries"| B4["orphan_aggregate"]
+    D7 -->|"subprocess"| C1
+    D8 -->|"subprocess\nor direct call"| C1
+    D2 -->|"build_file_index +\nrun 4 rules"| B5["filesystem + quality +\nimport + naming + orphan"]
+    D9 -->|"lint → fix → re-lint"| B6["auto_fix_aggregate"]
+    D10 -->|"read_config"| B7["config_aggregate"]
+    D11 -->|"git diff + code analysis"| B3
+    D12 -->|"doctor / security / deps"| B8["maintenance_aggregate"]
+    D13 -->|"adapter_names"| B9["external_aggregate"]
+    D14 -->|"init / install / mcp_config"| B10["setup_aggregate"]
+    D15 -->|"run(watch_config)"| B11["watch_aggregate"]
+
+    C1 -->|"ViolationItem[]"| D16
+    B1 -->|"LintResult"| D16
+    B2 -->|"LintResult"| D16
+    B3 -->|"LintResult"| D16
+    B4 -->|"LintResult"| D16
+    B6 -->|"FixReport"| D16
+    D16 -->|"Vec<ViolationItem>\nor Report"| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style DIS fill:#fff3e0,stroke:#e65100
+    style D16 fill:#f3e5f5,stroke:#7b1fa2
+    style C1 fill:#fce4ec,stroke:#c62828
 ```
 
 ### Dependency Rule

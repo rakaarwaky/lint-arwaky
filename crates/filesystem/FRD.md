@@ -6,18 +6,50 @@
 
 The filesystem crate produces filesystem data for all feature crates.
 
-### Architecture
+### Architecture & Data Flow
 
-```
-Consumer 
-  └→ import IFilesystemAggregate
-       └→ Container (root) — creates capabilities, injects via Arc<dyn Trait>
-            └→ Orchestrator (agent) — zero I/O, delegates to 5 protocol traits
-                 ├→ IParserProtocol
-                 ├→ IGraphProtocol
-                 ├→ IFileSystemIOProtocol
-                 ├→ IToolResolutionProtocol
-                 └→ IWorkspaceProtocol
+```mermaid
+flowchart TD
+    A["Consumer\n(any feature crate)"] -->|"import IFilesystemAggregate"| D["filesystem_aggregate"]
+
+    subgraph FS ["filesystem crate"]
+        D --> O["orchestrator\n(zero I/O, agent layer)"]
+        O --> P1["IParserProtocol\n(FR-001)"]
+        O --> P2["IGraphProtocol\n(FR-002)"]
+        O --> P3["IFileSystemIOProtocol\n(FR-003)"]
+        O --> P4["IToolResolutionProtocol\n(FR-004)"]
+        O --> P5["IWorkspaceProtocol\n(FR-005)"]
+        O --> C["Cache\n(DashMap)"]
+
+        P1 --> T1["tree-sitter parsers\n(Rust, Python, TS, JS)"]
+        P1 --> T2["import extractor"]
+        P3 --> T3["ignore crate\n(directory walker)"]
+        P3 --> T4["process executor"]
+        P4 --> T5["PATH / local binary\nresolver"]
+        P5 --> T6["manifest detector\n(Cargo.toml, pyproject, package.json)"]
+
+        T1 --> R1["ParsedEntry[]\n+ ImportEntry[]"]
+        T2 --> R1
+        P2 --> R2["DependencyGraph\n(forward/reverse edges,\nsymbol maps)"]
+        T3 --> R3["FileEntry[]\n+ content_map"]
+        T4 --> R3
+        P3 --> R3
+        T5 --> R4["ToolInfo\n(available + paths)"]
+        T6 --> R5["WorkspaceInfo\n(root, member, lang)"]
+    end
+
+    R1 --> D
+    R2 --> D
+    R3 --> D
+    R4 --> D
+    R5 --> D
+    D -->|"74 methods via\n&dyn IFilesystemAggregate"| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style FS fill:#fff3e0,stroke:#e65100
+    style D fill:#e3f2fd,stroke:#1565c0
+    style O fill:#e8f5e9,stroke:#2e7d32
+    style C fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ### Data Production Map

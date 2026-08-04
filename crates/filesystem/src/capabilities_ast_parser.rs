@@ -14,14 +14,14 @@ use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ImportEntry, ParseMetadata, ParseWarning,
 };
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, OnceLock, RwLock};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ASTParser {
     asts: DashMap<PathBuf, Arc<tree_sitter::Tree>>,
     warnings: OnceLock<Vec<ParseWarning>>,
-    imports: OnceLock<Vec<ImportEntry>>,
+    imports: RwLock<Vec<ImportEntry>>,
 }
 
 impl ASTParser {
@@ -29,7 +29,7 @@ impl ASTParser {
         Self {
             asts: DashMap::new(),
             warnings: OnceLock::new(),
-            imports: OnceLock::new(),
+            imports: RwLock::new(Vec::new()),
         }
     }
 }
@@ -42,7 +42,10 @@ impl IParserProtocol for ASTParser {
     }
 
     fn import_list(&self) -> &[ImportEntry] {
-        self.imports.get().map(|v| v.as_slice()).unwrap_or(&[])
+        self.imports
+            .read()
+            .map(|v| v.as_slice())
+            .unwrap_or(&[])
     }
 
     fn parse_all(&self, files: &mut [FileEntry]) {
@@ -67,6 +70,7 @@ impl IParserProtocol for ASTParser {
 
     fn resolve_barrel_imports(&self, root_dir: &Path) {
         if let Some(imports) = self.imports.get() {
+            let count = imports.len();
             let resolved: Vec<ImportEntry> = imports
                 .iter()
                 .cloned()
@@ -74,6 +78,11 @@ impl IParserProtocol for ASTParser {
                     crate::utility_barrel_resolution::resolve_single_import(entry, root_dir)
                 })
                 .collect();
+            let resolved_count = resolved.iter().filter(|e| e.is_resolved).count();
+            eprintln!(
+                "[debug resolve_barrel] input={}, resolved={}, root={}",
+                count, resolved_count, root_dir.display()
+            );
             let _ = imports;
             let _ = self.imports.set(resolved);
         }
