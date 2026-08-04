@@ -29,21 +29,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     ) -> OrphanIndicatorResult {
         let stem = file_stem(f.value());
 
-        // In unified workspace scans, f.value() is absolute but inbound_links keys
-        // are relative paths. get_importers already handles /crates/ prefix stripping,
-        // but as a last resort try suffix matching against the mapping keys.
-        let importers = inbound_links.get_importers(f.value()).or_else(|| {
-            let path_str = f.value();
-            inbound_links.mapping.keys().find_map(|key| {
-                if path_str.ends_with(key) {
-                    inbound_links.mapping.get(key)
-                } else {
-                    None
-                }
-            })
-        });
-
-        let importers = match importers {
+        let importers = match inbound_links.get_importers(f.value()) {
             Some(v) => v,
             None => {
                 return OrphanIndicatorResult::new(
