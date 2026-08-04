@@ -503,16 +503,6 @@ impl InboundLinkMap {
     pub fn get_importers(&self, path: &str) -> Option<&Vec<String>> {
         let mut result: Option<&Vec<String>> = None;
 
-        // DEBUG: dump ALL mapping keys once
-        if !self.mapping.is_empty() {
-            use std::sync::atomic::{AtomicBool, Ordering};
-            static DUMPED: AtomicBool = AtomicBool::new(false);
-            if !DUMPED.swap(true, Ordering::Relaxed) {
-                for (i, k) in self.mapping.keys().enumerate() {
-                    eprintln!("[debug mapping key {}]: '{}'", i, k);
-                }
-            }
-        }
 
         if let Some(v) = self.mapping.get(path) {
             result = Some(v);
@@ -572,14 +562,32 @@ impl InboundLinkMap {
             }
         }
 
+        // Broad suffix matching — skip empty keys to avoid `"".ends_with("") == true`.
+        // Also require the suffix boundary to align on a path separator so that
+        // e.g. `foo_vo.rs` doesn't match `bar_vo.rs`.
         if result.is_none() {
             let clean = path.strip_prefix("./").unwrap_or(path);
             for (k, v) in &self.mapping {
                 let k_clean = k.strip_prefix("./").unwrap_or(k);
-                if k_clean.ends_with(clean) || clean.ends_with(k_clean) {
-                    eprintln!("[debug get_importers] BROAD MATCH: path='{}' clean='{}' matched_key='{}' importers={:?}", path, clean, k, v.iter().take(3).collect::<Vec<_>>());
-                    result = Some(v);
-                    break;
+                if k_clean.is_empty() || clean.is_empty() {
+                    continue;
+                }
+                // k_clean ends with clean: the mapping key's last chars == the lookup path
+                // Must align on a path separator or be the full path
+                if k_clean.ends_with(clean) {
+                    let before = k_clean.len() - clean.len();
+                    if before == 0 || k_clean.as_bytes().get(before).is_some_and(|b| *b == b'/' || *b == b'\\') {
+                        result = Some(v);
+                        break;
+                    }
+                }
+                // clean ends with k_clean: the lookup path's last chars == the mapping key
+                if clean.ends_with(k_clean) {
+                    let before = clean.len() - k_clean.len();
+                    if before == 0 || clean.as_bytes().get(before).is_some_and(|b| *b == b'/' || *b == b'\\') {
+                        result = Some(v);
+                        break;
+                    }
                 }
             }
         }

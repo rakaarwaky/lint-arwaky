@@ -30,12 +30,8 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         let stem = file_stem(f.value());
 
         let importers = match inbound_links.get_importers(f.value()) {
-            Some(v) => {
-                eprintln!("[debug AES501] path='{}' found {} importers: {:?}", f.value(), v.len(), v.iter().take(3).collect::<Vec<_>>());
-                v
-            }
+            Some(v) => v,
             None => {
-                eprintln!("[debug AES501] path='{}' NO importers → orphan", f.value());
                 return OrphanIndicatorResult::new(
                     true,
                     format!(

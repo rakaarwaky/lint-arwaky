@@ -611,46 +611,61 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                 } else {
                     None
                 }
-            } else {
+            } else if imp.resolved_path.is_some() {
                 imp.resolved_path
                     .as_ref()
-                    .map(|p| {
-                        let rel = path_to_relative(p, &top_root);
-                        eprintln!(
-                            "[debug build_graph] resolved_path={}, top_root={}, rel={}",
-                            p.display(), top_root.display(), rel
-                        );
-                        rel
-                    })
+                    .map(|p| path_to_relative(p, &top_root))
+            } else {
+                // Resolve Use imports (e.g. `use crate::foo::Bar`) to file paths
+                // by stripping the `crate::` prefix, taking the first segment,
+                // and looking up `{segment}.rs` in the same directory.
+                let raw = &imp.raw_path;
+                let module = raw
+                    .strip_prefix("crate::")
+                    .or_else(|| raw.strip_prefix("super::"))
+                    .unwrap_or(raw);
+                let root_seg = module.split("::").next().unwrap_or("");
+                if !root_seg.is_empty() {
+                    let src_dir = std::path::Path::new(&src_rel)
+                        .parent()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    let candidate = if src_dir.is_empty() {
+                        format!("{}.rs", root_seg)
+                    } else {
+                        format!("{}/{}.rs", src_dir, root_seg)
+                    };
+                    if all_files_set.contains(candidate.as_str()) {
+                        Some(candidate)
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
             };
             if let Some(tgt_rel) = target {
-                eprintln!(
-                    "[debug build_graph] src={}, tgt={}, src_rel={}",
-                    imp.source_file.display(), tgt_rel, src_rel
-                );
                 if src_rel != tgt_rel {
                     forward.entry(src_rel).or_default().push(tgt_rel);
                 }
             }
         }
 
+        // Build reverse links from the forward graph so that Use imports
+        // (e.g. `use crate::foo::Bar`) are also visible as inbound links.
+        // The graph protocol's reverse_links() only tracks Mod imports because
+        // Use imports have no resolved_path and create edges to phantom external nodes.
         eprintln!(
             "[debug build_graph] forward graph size={}, keys: {:?}",
             forward.len(),
             forward.keys().take(5).collect::<Vec<_>>()
         );
-
-        let reverse: HashMap<String, Vec<String>> = self
-            .deps
-            .graph
-            .reverse_links()
-            .iter()
-            .map(|(k, v)| {
-                let rel = path_to_relative(k, &top_root);
-                let rel_v: Vec<String> = v.iter().map(|p| path_to_relative(p, &top_root)).collect();
-                (rel, rel_v)
-            })
-            .collect();
+        let mut reverse: HashMap<String, Vec<String>> = HashMap::new();
+        for (src, targets) in &forward {
+            for tgt in targets {
+                reverse.entry(tgt.clone()).or_default().push(src.clone());
+            }
+        }
 
         // implementations() keys are symbol/trait names (String), values are file paths
         let inheritance: HashMap<String, Vec<String>> = self
@@ -708,10 +723,35 @@ impl FilesystemOrchestrator {
         ];
         ignored.extend_from_slice(extra_ignored);
 
+        // Canonicalize root so discovered paths are absolute, matching the
+        // absolute-path lookups used by the orphan analyzer's content_map.
+        let abs_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+
+        // Detect workspace member directories (crates/, packages/, modules/).
+        // When scanning a workspace root, only include files inside these member
+        // directories — exclude root-level files like setup.py, package.json, etc.
+        let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
+            .iter()
+            .filter(|d| abs_root.join(d).is_dir())
+            .copied()
+            .collect();
+
         let scanned: Vec<PathBuf> =
-            crate::utility_workspace_detection::discover_source_files(root, &ignored)
+            crate::utility_workspace_detection::discover_source_files(&abs_root, &ignored)
                 .into_iter()
                 .map(PathBuf::from)
+                .filter(|p| {
+                    if member_dirs.is_empty() {
+                        // No member dirs — scanning a single member or standalone project.
+                        return true;
+                    }
+                    if let Ok(rel) = p.strip_prefix(&abs_root) {
+                        let rel_str = rel.to_string_lossy();
+                        member_dirs.iter().any(|d| rel_str.starts_with(&format!("{}/", d)))
+                    } else {
+                        true
+                    }
+                })
                 .collect();
 
         let mut entries = Vec::new();
@@ -767,7 +807,7 @@ impl FilesystemOrchestrator {
 
         // Resolve imports through barrel files (__init__.py, mod.rs, index.ts, etc.)
         // so that resolved_path is populated for the forward dependency graph.
-        self.resolve_barrel_imports(root);
+        self.resolve_barrel_imports(&abs_root);
         let resolved_imports = self.deps.parser.import_list().to_vec();
 
         let _ = self.files.set(entries.clone());

@@ -170,8 +170,14 @@ impl ContractOrphanAnalyzer {
                 if self.filesystem.is_dir(&ws_path) {
                     let discovered = self.filesystem.discover_source_files(&ws_path, &ignored);
                     for f in discovered {
-                        if search_files.iter().all(|existing| existing != &f) {
-                            search_files.push(f);
+                        // Normalize relative paths to absolute so content_map lookups work.
+                        let abs = if std::path::Path::new(&f).is_relative() {
+                            top_root.join(&f).to_string_lossy().to_string()
+                        } else {
+                            f.clone()
+                        };
+                        if search_files.iter().all(|existing| existing != &abs) {
+                            search_files.push(abs);
                         }
                     }
                 }
