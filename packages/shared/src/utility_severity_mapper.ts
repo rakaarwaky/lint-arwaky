@@ -1,25 +1,20 @@
-/** Utility: Maps SeverityVO to VS Code diagnostic severity integers.
+/** Utility: Maps SeverityVO to VS Code diagnostic severity. */
 
-Stateless, pure, domain-agnostic mapping function.
-DiagnosticSeverity enum values: Error=0, Warning=1, Information=2, Hint=3.
-*/
-
+import type { DiagnosticSeverity } from "vscode";
 import { SeverityVO } from "./taxonomy_severity_vo";
 
-/** Map a SeverityVO to VS Code DiagnosticSeverity integer value. */
+const SEVERITY_MAP: Record<SeverityVO, DiagnosticSeverity> = {
+  [SeverityVO.Critical]: 0, // Error
+  [SeverityVO.High]: 0, // Error
+  [SeverityVO.Medium]: 1, // Warning
+  [SeverityVO.Low]: 2, // Information
+  [SeverityVO.Info]: 3, // Hint
+};
+
+/**
+ * Map a SeverityVO to a VS Code DiagnosticSeverity numeric value.
+ * Uses raw numbers to avoid importing vscode types in utility layer.
+ */
 export function mapSeverityToVscode(severity: SeverityVO): number {
-  switch (severity) {
-    case SeverityVO.Critical:
-      return 0; // Error
-    case SeverityVO.High:
-      return 0; // Error
-    case SeverityVO.Medium:
-      return 1; // Warning
-    case SeverityVO.Low:
-      return 2; // Information
-    case SeverityVO.Info:
-      return 3; // Hint
-    default:
-      return 1; // Warning
-  }
+  return SEVERITY_MAP[severity] ?? 1;
 }

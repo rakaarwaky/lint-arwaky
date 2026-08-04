@@ -1,137 +1,118 @@
 # Agentic Engineering System Architecture
 
-## ⚠️ CRITICAL: Folder Structure Is BY FEATURE, NOT BY LAYER
+## CRITICAL: Folder Structure Is BY FEATURE, NOT BY LAYER
 
 > **AI agents frequently make this mistake.** Do NOT create `surface/`, `taxonomy/`,
 > `contract/`, `capabilities/`, `utility/`, `agent/` folders. The correct structure
 > groups files **by feature**, with layers as **filenames**, not directories.
 
-### ❌ WRONG — Folder by Layer (DO NOT DO THIS)
+### WRONG -- Folder by Layer (DO NOT DO THIS)
 
 ```
 my-feature/
-├── surface/           ← WRONG! No layer directories!
-│   └── surface_cli.rs
+├── surface/           <- WRONG! No layer directories!
+│   └── surface_<concern>_<role>.rs
 ├── taxonomy/
-│   └── taxonomy_path_vo.rs
+│   └── taxonomy_<concern>_vo.rs
 ├── contract/
-│   └── contract_scan_protocol.rs
+│   └── taxonomy_<concern>_protocol.rs
 ├── capabilities/
-│   └── capabilities_checker.rs
+│   └── capabilities_<concern>_<role>.rs
 ├── utility/
-│   └── utility_parser.rs
+│   └── utility_<concern>_<role>.rs
 └── agent/
-    └── agent_orchestrator.rs
+    └── agent_<concern>_orchestrator.rs
 ```
 
-### ✅ CORRECT — Folder by Feature, Files by Layer
+### CORRECT -- Folder by Feature, Files by Layer
 
 ```
 my-feature/
-├── src/                               ← ONE flat src/ directory
+├── src/                               <- ONE flat src/ directory
 │   │
-│   │  ╔══════════════════════════════════════════════╗
-│   │  ║  LAYER ORDER (top to bottom = outside-in)    ║
-│   │  ╚══════════════════════════════════════════════╝
+│   │  +=====================================================+
+│   │  |  LAYER ORDER (top to bottom = outside-in)           |
+│   │  +=====================================================+
 │   │
-│   ├── surface_scan_command.rs        ← Surface layer (entry point)
+│   ├── surface_<concern>_<role>.rs    <- Surface layer (entry point)
 │   │
-│   ├── agent_scan_orchestrator.rs     ← Agent layer (orchestration)
+│   ├── agent_<concern>_orchestrator.rs <- Agent layer (orchestration)
 │   │
-│   ├── capabilities_scan_checker.rs   ← Capabilities (business logic)
+│   ├── capabilities_<concern>_<role>.rs <- Capabilities (business logic)
 │   │
-│   ├── utility_scan_parser.rs         ← Utility (technical helpers)
+│   ├── utility_<concern>_<role>.rs     <- Utility (technical helpers)
 │   │
-│   ├── contract_scan_protocol.rs      ← Contract (interfaces)     [in shared/]
-│   └── taxonomy_scan_vo.rs            ← Taxonomy (domain types)   [in shared/]
+│   ├── contract_<concern>_protocol.rs  <- Contract (interfaces)   [in shared/]
+│   └── taxonomy_<concern>_vo.rs        <- Taxonomy (domain types) [in shared/]
 │
 ├── tests/
 └── Cargo.toml
 ```
 
-### 📐 Real Project Structure (lint-arwaky)
+### General Workspace Layout
 
 ```
-lint-arwaky/                              ← Project workspace root
+project-root/                             <- Project workspace root
 │
-├── crates/                               ← Rust workspace members
-│   ├── shared/                           ← SHARED: Taxonomy + Contract (all features)
+├── crates/                               <- Rust workspace members
+│   ├── shared/                           <- SHARED: Taxonomy + Contract (all features)
 │   │   └── src/
-│   │       ├── taxonomy_path_vo.rs
-│   │       ├── taxonomy_severity_vo.rs
-│   │       ├── taxonomy_scan_result_entity.rs
-│   │       ├── contract_scan_protocol.rs
-│   │       └── contract_lint_aggregate.rs
+│   │       ├── taxonomy_<domain>_vo.rs
+│   │       ├── taxonomy_<domain>_entity.rs
+│   │       ├── taxonomy_<domain>_event.rs
+│   │       ├── taxonomy_<domain>_error.rs
+│   │       ├── taxonomy_<domain>_constant.rs
+│   │       ├── contract_<domain>_protocol.rs
+│   │       └── contract_<domain>_aggregate.rs
 │   │
-│   ├── filesystem/                       ← FEATURE: File walking + AST parsing
+│   ├── <feature-a>/                      <- FEATURE: <feature-a description>
 │   │   └── src/
-│   │       ├── agent_filesystem_orchestrator.rs      ← Agent
-│   │       ├── capabilities_ast_parser.rs            ← Capabilities
-│   │       ├── capabilities_dependency_graph.rs      ← Capabilities
-│   │       ├── capabilities_filesystem_io.rs         ← Capabilities
-│   │       ├── capabilities_tool_resolution.rs       ← Capabilities
-│   │       ├── capabilities_workspace.rs             ← Capabilities
-│   │       ├── utility_ast_python.rs                 ← Utility
-│   │       ├── utility_ast_rust.rs                   ← Utility
-│   │       ├── utility_ast_typescript.rs             ← Utility
-│   │       ├── utility_barrel_resolution.rs          ← Utility
-│   │       ├── utility_filesystem_io.rs              ← Utility
-│   │       ├── utility_import_extractor.rs           ← Utility
-│   │       ├── utility_tree_sitter_helpers.rs        ← Utility
-│   │       ├── root_filesystem_container.rs          ← Root
+│   │       ├── agent_<feature-a>_orchestrator.rs        <- Agent
+│   │       ├── capabilities_<feature-a>_<role>.rs       <- Capabilities
+│   │       ├── capabilities_<feature-a>_<role>.rs       <- Capabilities
+│   │       ├── utility_<feature-a>_<role>.rs            <- Utility
+│   │       ├── utility_<feature-a>_<role>.rs            <- Utility
+│   │       ├── root_<feature-a>_container.rs            <- Root
 │   │       └── lib.rs
 │   │
-│   ├── naming-rules/                     ← FEATURE: Naming convention checks
+│   ├── <feature-b>/                      <- FEATURE: <feature-b description>
 │   │   └── src/
-│   │       ├── agent_naming_orchestrator.rs
-│   │       ├── capabilities_naming_checker.rs
-│   │       ├── utility_naming_resolver.rs
-│   │       ├── root_naming_container.rs
+│   │       ├── agent_<feature-b>_orchestrator.rs        <- Agent
+│   │       ├── capabilities_<feature-b>_<role>.rs       <- Capabilities
+│   │       ├── utility_<feature-b>_<role>.rs            <- Utility
+│   │       ├── root_<feature-b>_container.rs            <- Root
 │   │       └── lib.rs
 │   │
-│   ├── import-rules/                     ← FEATURE: Import boundary checks
+│   ├── <feature-c>/                      <- FEATURE: <feature-c description>
 │   │   └── src/
-│   │       ├── agent_import_orchestrator.rs
-│   │       ├── capabilities_import_checker.rs
-│   │       ├── capabilities_import_module_parser.rs
-│   │       ├── utility_import_module_parser.rs
-│   │       ├── root_import_rules_container.rs
+│   │       ├── surface_<feature-c>_<role>.rs            <- Surface
 │   │       └── lib.rs
 │   │
-│   ├── cli-commands/                     ← FEATURE: CLI surface
-│   │   └── src/
-│   │       ├── surface_scan_command.rs
-│   │       ├── surface_fix_command.rs
-│   │       ├── surface_config_command.rs
-│   │       ├── surface_ci_command.rs
-│   │       ├── surface_formatting.rs
-│   │       └── lib.rs
-│   │
-│   └── ... (18 crates total)
+│   └── ...
 │
-├── packages/                             ← TypeScript workspace members
-├── modules/                              ← Python modules
+├── packages/                             <- TypeScript workspace members
+├── modules/                              <- Python modules
 │
-└── Cargo.toml                            ← Workspace manifest
+└── Cargo.toml                            <- Workspace manifest
 ```
 
-### 🔑 Key Rules
+### Key Rules
 
 | Rule | Explanation |
 |------|-------------|
 | **File naming = layer indicator** | `surface_*`, `agent_*`, `capabilities_*`, `utility_*` prefixes identify the layer |
 | **Layer is filename, not folder** | Files live in `src/`, NOT in `src/surface/`, `src/agent/`, etc. |
 | **Shared = separate crate** | Taxonomy + Contract live in `shared/` crate, not inside each feature |
-| **Features are independent** | Each feature crate contains its own Surface → Agent → Capabilities → Utility |
-| **One feature = one crate** | `filesystem/`, `naming-rules/`, `import-rules/` are separate crates |
+| **Features are independent** | Each feature crate contains its own Surface, Agent, Capabilities, Utility |
+| **One feature = one crate** | Each feature is its own crate under `crates/`, `packages/`, or `modules/` |
 
-### 🚫 Common AI Agent Mistakes
+### Common AI Agent Mistakes
 
-1. **Creating layer folders** (`src/surface/`, `src/taxonomy/`) — NEVER DO THIS
-2. **Putting taxonomy in feature crate** — Taxonomy belongs in `shared/`
-3. **Creating empty `__init__.py` / `mod.rs`** — Use `lib.rs` or `index.ts` only
-4. **Mixing layers in same file** — One file = one layer = one role
-5. **Importing capabilities from agent** — Agent imports from Contract, not Capabilities
+1. **Creating layer folders** (`src/surface/`, `src/taxonomy/`) -- NEVER DO THIS
+2. **Putting taxonomy in feature crate** -- Taxonomy belongs in `shared/`
+3. **Creating empty `__init__.py` / `mod.rs`** -- Use `lib.rs` or `index.ts` only
+4. **Mixing layers in same file** -- One file = one layer = one role
+5. **Importing capabilities from agent** -- Agent imports from Contract, not Capabilities
 
 ---
 
