@@ -1,28 +1,21 @@
 [package]
-name = "calculator"
+name = "calculator-workspace"
 version = "0.1.0"
 edition = "2021"
-
-[workspace]
-resolver = "2"
-members = [
-    "crates/shared",
-    "crates/addition",
-    "crates/subtraction",
-    "crates/multiplication",
-    "crates/division",
-    "crates/cli",
-]
 
 [[bin]]
 name = "calculator"
 path = "crates/root_calculator_entry.rs"
 
 [dependencies]
+calculator = { path = "crates/calculator" }
 calculator-shared = { path = "crates/shared" }
-calculator-addition = { path = "crates/addition" }
-calculator-subtraction = { path = "crates/subtraction" }
-calculator-multiplication = { path = "crates/multiplication" }
-calculator-division = { path = "crates/division" }
-calculator-cli = { path = "crates/cli" }
 clap = { version = "4", features = ["derive"] }
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/shared",
+    "crates/cli",
+    "crates/calculator",
+]

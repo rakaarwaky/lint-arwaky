@@ -1,1 +1,0 @@
-pub mod capabilities_multiplication_analyzer;

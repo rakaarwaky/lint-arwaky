@@ -1,15 +1,7 @@
 use clap::{Parser, Subcommand};
-
-use calculator_addition::capabilities_addition_analyzer::AdditionAnalyzer;
-use calculator_cli::surface_calculator_command;
-use calculator_division::capabilities_division_analyzer::DivisionAnalyzer;
-use calculator_multiplication::capabilities_multiplication_analyzer::MultiplicationAnalyzer;
-use calculator_shared::contract_calculator_aggregate::CalculatorAggregate;
-use calculator_shared::contract_calculator_protocol::CalculatorProtocol;
+use calculator::root_calculator_container::CalculatorContainer;
 use calculator_shared::taxonomy_expression_vo::ExpressionVO;
 use calculator_shared::taxonomy_operation_vo::OperationVO;
-use calculator_shared::taxonomy_result_vo::ResultVO;
-use calculator_subtraction::capabilities_subtraction_analyzer::SubtractionAnalyzer;
 
 #[derive(Parser)]
 #[command(name = "calculator", version, about = "Interactive calculator")]
@@ -20,50 +12,77 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Run the interactive calculator
     Run {
-        /// Optional working path
         #[arg(long)]
         path: Option<String>,
     },
 }
 
-struct Calculator {
-    history: Vec<ResultVO>,
-}
-
-impl Calculator {
-    fn new() -> Self {
-        Self { history: Vec::new() }
-    }
-}
-
-impl CalculatorAggregate for Calculator {
-    fn delegate(&mut self, expr: &ExpressionVO) -> Option<ResultVO> {
-        let result = match expr.op {
-            OperationVO::Add => AdditionAnalyzer.evaluate(expr),
-            OperationVO::Subtract => SubtractionAnalyzer.evaluate(expr),
-            OperationVO::Multiply => MultiplicationAnalyzer.evaluate(expr),
-            OperationVO::Divide => DivisionAnalyzer.evaluate(expr),
-        };
-        if let Some(ref r) = result {
-            self.history.push(r.clone());
-        }
-        result
-    }
-
-    fn history(&self) -> Vec<ResultVO> {
-        self.history.clone()
-    }
-}
-
 fn main() {
     let cli = Cli::parse();
-    let mut calc = Calculator::new();
+    let mut container = CalculatorContainer::new();
 
     match cli.command {
         Some(Command::Run { path: _ }) | None => {
-            surface_calculator_command::run(&mut calc);
+            eprintln!("=== Calculator ===");
+            eprintln!("Ketik operasi: <angka> <operator> <angka>");
+            eprintln!("Contoh: 2 + 3");
+            eprintln!("Ketik 'h' untuk riwayat, 'q' untuk keluar");
+            loop {
+                eprint!("> ");
+                let mut input = String::new();
+                if std::io::stdin().read_line(&mut input).is_err() {
+                    eprintln!("  Gagal membaca input");
+                    continue;
+                }
+                let input = input.trim();
+                if input == "q" {
+                    break;
+                }
+                if input == "h" {
+                    let history = container.orchestrator().history();
+                    if history.is_empty() {
+                        eprintln!("  Belum ada riwayat");
+                    } else {
+                        for r in &history {
+                            eprintln!("  {}", r.expression);
+                        }
+                    }
+                    continue;
+                }
+                let parts: Vec<&str> = input.split_whitespace().collect();
+                if parts.len() != 3 {
+                    eprintln!("  Format: <angka> <operator> <angka>");
+                    continue;
+                }
+                let left: f64 = match parts[0].parse() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        eprintln!("  '{}' bukan angka", parts[0]);
+                        continue;
+                    }
+                };
+                let op = match OperationVO::from_symbol(parts[1]) {
+                    Some(v) => v,
+                    None => {
+                        eprintln!("  '{}' bukan operator valid", parts[1]);
+                        continue;
+                    }
+                };
+                let right: f64 = match parts[2].parse() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        eprintln!("  '{}' bukan angka", parts[2]);
+                        continue;
+                    }
+                };
+                let expr = ExpressionVO::new(left, op, right);
+                match container.orchestrator().delegate(&expr) {
+                    Some(r) => eprintln!("  = {}", r.value),
+                    None => eprintln!("  Error: tidak bisa hitung"),
+                }
+            }
+            eprintln!("Sampai jumpa!");
         }
     }
 }

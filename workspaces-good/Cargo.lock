@@ -56,19 +56,6 @@ dependencies = [
 name = "calculator"
 version = "0.1.0"
 dependencies = [
- "calculator-addition",
- "calculator-cli",
- "calculator-division",
- "calculator-multiplication",
- "calculator-shared",
- "calculator-subtraction",
- "clap",
-]
-
-[[package]]
-name = "calculator-addition"
-version = "0.1.0"
-dependencies = [
  "calculator-shared",
 ]
 
@@ -80,28 +67,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "calculator-division"
-version = "0.1.0"
-dependencies = [
- "calculator-shared",
-]
-
-[[package]]
-name = "calculator-multiplication"
-version = "0.1.0"
-dependencies = [
- "calculator-shared",
-]
-
-[[package]]
 name = "calculator-shared"
 version = "0.1.0"
 
 [[package]]
-name = "calculator-subtraction"
+name = "calculator-workspace"
 version = "0.1.0"
 dependencies = [
+ "calculator",
  "calculator-shared",
+ "clap",
 ]
 
 [[package]]
