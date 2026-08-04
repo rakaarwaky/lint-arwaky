@@ -11,8 +11,8 @@ impl shared::filesystem::contract_parser_protocol::IParserProtocol for MinimalFi
     fn parse_warnings(&self) -> &[shared::filesystem::taxonomy_filesystem_vo::ParseWarning] {
         &[]
     }
-    fn import_list(&self) -> &[shared::filesystem::taxonomy_filesystem_vo::ImportEntry] {
-        Vec::new()
+    fn import_list(&self) -> Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        vec![]
     }
     fn parse_all(&self, _: &mut [shared::filesystem::taxonomy_filesystem_vo::FileEntry]) {}
     fn imports_for(

@@ -1,4 +1,4 @@
-// PURPOSE: taxonomy_rust_parser — Rust AST parsing via syn crate.
+// PURPOSE: utility_rust_parser — Rust AST parsing via syn crate.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
 use crate::orphan_rules::taxonomy_orphan_parse_result_vo::{

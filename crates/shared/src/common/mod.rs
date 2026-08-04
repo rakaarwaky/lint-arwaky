@@ -39,9 +39,13 @@ pub mod utility_command_runner;
 pub mod utility_compliance_score;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
+pub mod utility_parser_dispatcher;
 pub mod utility_path_normalization;
+pub mod utility_python_parser;
+pub mod utility_rust_parser;
 pub mod utility_scope_matcher;
 pub mod utility_signature_parser;
+pub mod utility_ts_parser;
 pub mod utility_value_object_generator;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -119,3 +123,5 @@ pub use taxonomy_suggestion_vo::DescriptionVO;
 pub use taxonomy_suggestion_vo::MetadataVO;
 pub use taxonomy_threshold_vo::Threshold;
 pub use taxonomy_violation_item_vo::ViolationItem;
+pub use utility_parser_dispatcher::parse_file_content;
+pub use utility_parser_dispatcher::is_supported;

@@ -16,14 +16,24 @@ handled by the async runtime.
 flowchart TD
     A["AI Agent / IDE"] -->|"JSON-RPC\nstdin"| B["mcp-server\n(Smart Surface)"]
 
-    B -->|"5 tools:\nexecute_command\nlist_commands\nread_skill\nhealth_check\nget_config"| D["dispatcher\n(Utility Surface)"]
+    B -->|"execute_command\n(lint / fix / ci / setup /\ngit / maintenance / ...)"| D["dispatcher\n(Utility Surface)"]
+    B -->|"health_check\n(adapters + version)"| D
+    B -->|"list_commands\n(static catalog)"| LC["shared\nCOMMAND_CATALOG"]
+    B -->|"read_skill\n(skill docs)"| SK["filesystem\n(file read)"]
+    B -->|"get_config\n(config orchestrator)"| CFG["config_system\n(direct call)"]
 
     D -->|"ViolationItem[]\nCiReport / FixReport\nSetupReport / ..."| B
+    LC -->|"command list"| B
+    SK -->|"skill content"| B
+    CFG -->|"config data"| B
     B -->|"JSON-RPC\nstdout"| A
 
     style A fill:#e1f5fe,stroke:#0288d1
     style B fill:#e8f5e9,stroke:#2e7d32
     style D fill:#fff3e0,stroke:#e65100
+    style LC fill:#f3e5f5,stroke:#7b1fa2
+    style SK fill:#f3e5f5,stroke:#7b1fa2
+    style CFG fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ### Product Policy (locked)
@@ -32,6 +42,21 @@ flowchart TD
   `health_check`, `get_config`.
 - **Full CLI parity** for every action under `execute_command` — no silent
   stubs or placeholder success responses.
+
+### Tool Routing
+
+| MCP Tool | Target | How |
+|----------|--------|-----|
+| `execute_command` | `dispatcher::surface_*_action::*` | All lint/fix/ci/setup/git/maintenance actions |
+| `health_check` | `dispatcher::surface_maintenance_action::collect_health_check` + `collect_version` | Adapter availability + version |
+| `list_commands` | `shared::COMMAND_CATALOG` (static) | Local catalog filter by domain |
+| `read_skill` | Filesystem (file read) | Skill `.md` docs from `.agents/skills/` |
+| `get_config` | `config_orchestrator` (direct call) | Config files, rules, thresholds |
+
+### Dependency Rule
+
+- MCP server imports: shared (taxonomies, aggregates), dispatcher (surface_*_action), config_system (for get_config)
+- MCP server must NOT import: rule crates, filesystem aggregate (except read_skill)
 - JSON responses include `exit_code` aligned with the workspace Exit Code
   Contract (`0` / `1` / `2` / `3`) from the root PRD.
 - Files that fail to parse are skipped by the underlying analyzers; the MCP

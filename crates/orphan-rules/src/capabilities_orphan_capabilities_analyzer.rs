@@ -18,7 +18,7 @@ impl CapabilitiesOrphanAnalyzer {
 
     fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
         let mut identifiers: Vec<String> = Vec::new();
-        match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(
+        match shared::common::parse_file_content(
             file_path, content,
         ) {
             FileParseResultVO::Rust(result) => {

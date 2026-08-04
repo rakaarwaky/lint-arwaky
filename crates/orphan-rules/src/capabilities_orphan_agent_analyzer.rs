@@ -24,7 +24,7 @@ impl AgentOrphanAnalyzer {
     }
 
     fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
-        let mut traits = match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(
+        let mut traits = match shared::common::parse_file_content(
             file_path, content,
         ) {
             FileParseResultVO::Rust(result) => result.aggregate_trait_names(),

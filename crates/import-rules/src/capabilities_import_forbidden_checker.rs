@@ -13,7 +13,7 @@ use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Identity, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
-use shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content;
+use shared::common::parse_file_content;
 
 use crate::utility_import_resolver;
 use crate::utility_path_normalizer;

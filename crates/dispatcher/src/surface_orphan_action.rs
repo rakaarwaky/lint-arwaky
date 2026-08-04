@@ -32,6 +32,31 @@ pub struct OrphanScanDeps {
     pub orphan_factory: Arc<OrphanFactory>,
 }
 
+impl OrphanScanDeps {
+    /// Create deps with default factories that instantiate root containers directly.
+    /// Use this at entry points where root containers are available.
+    pub fn with_defaults(
+        orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+        config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+        fs_agg: Arc<dyn IFilesystemAggregate>,
+    ) -> Self {
+        Self {
+            orphan_orchestrator,
+            config_orchestrator,
+            fs_agg,
+            fs_factory: Arc::new(|| {
+                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+            }),
+            orphan_factory: Arc::new(|config, fs| {
+                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                    config, fs,
+                )
+                .analyzer()
+            }),
+        }
+    }
+}
+
 pub fn collect_orphan(
     path: Option<FilePath>,
     member: Option<String>,
@@ -191,8 +216,8 @@ fn scan_single_root(
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     filter: &Option<String>,
     _fs_agg: &Arc<dyn IFilesystemAggregate>,
-    fs_factory: &FilesystemFactory,
-    orphan_factory: &OrphanFactory,
+    fs_factory: &Arc<FilesystemFactory>,
+    orphan_factory: &Arc<OrphanFactory>,
 ) -> Result<Vec<ViolationItem>, String> {
     // Create a fresh filesystem instance via factory (no direct root-container)
     let ws_filesystem: Arc<dyn IFilesystemAggregate> = fs_factory();

@@ -22,7 +22,7 @@ impl UtilityOrphanAnalyzer {
     }
 
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match shared::orphan_rules::taxonomy_parser_dispatcher::parse_file_content(
+        match shared::common::parse_file_content(
             file_path, content,
         ) {
             FileParseResultVO::Rust(result) => {

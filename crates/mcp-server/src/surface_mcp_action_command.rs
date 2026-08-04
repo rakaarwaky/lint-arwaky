@@ -238,11 +238,11 @@ impl McpActionSurface {
         match dispatcher::surface_orphan_action::collect_orphan(
             Some(fp),
             None,
-            dispatcher::surface_orphan_action::OrphanScanDeps {
-                orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
-                config_orchestrator: self.deps.config_orchestrator.clone(),
-                fs_agg: self.deps.filesystem.clone(),
-            },
+            dispatcher::surface_orphan_action::OrphanScanDeps::with_defaults(
+                self.deps.orphan_orchestrator.clone(),
+                self.deps.config_orchestrator.clone(),
+                self.deps.filesystem.clone(),
+            ),
             None,
         ) {
             Ok(violations) => {

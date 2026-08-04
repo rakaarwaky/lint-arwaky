@@ -1,4 +1,4 @@
-// PURPOSE: taxonomy_ts_parser — comment-aware structured parsing for TypeScript/JavaScript.
+// PURPOSE: utility_ts_parser — comment-aware structured parsing for TypeScript/JavaScript.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
 use crate::orphan_rules::taxonomy_orphan_parse_result_vo::{

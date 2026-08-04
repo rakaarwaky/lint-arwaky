@@ -238,11 +238,11 @@ pub fn handle_orphan(
     match dispatcher::surface_orphan_action::collect_orphan(
         path.clone(),
         member,
-        dispatcher::surface_orphan_action::OrphanScanDeps {
+        dispatcher::surface_orphan_action::OrphanScanDeps::with_defaults(
             orphan_orchestrator,
             config_orchestrator,
-            fs_agg: filesystem.clone(),
-        },
+            filesystem.clone(),
+        ),
         filter,
     ) {
         Ok(violations) => {
