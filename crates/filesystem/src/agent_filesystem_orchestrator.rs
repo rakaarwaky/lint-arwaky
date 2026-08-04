@@ -711,8 +711,13 @@ impl FilesystemOrchestrator {
         // Populate parse_metadata (including used_identifiers) via AST parser BEFORE caching.
         self.parse_all(&mut entries);
 
+        // Resolve imports through barrel files (__init__.py, mod.rs, index.ts, etc.)
+        // so that resolved_path is populated for the forward dependency graph.
+        self.resolve_barrel_imports(root);
+        let resolved_imports = self.deps.parser.import_list().to_vec();
+
         let _ = self.files.set(entries.clone());
-        let _ = self.imports.set(all_imports);
+        let _ = self.imports.set(resolved_imports);
         let _ = self.warnings.set(all_warnings);
 
         let index: HashMap<PathBuf, usize> = entries
