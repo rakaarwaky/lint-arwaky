@@ -69,7 +69,13 @@ fn aes203_used_import_no_violation() {
         "use std::collections::HashMap;\n\nfn main() {\n    let _map = HashMap::new();\n}\n";
     let imports = vec![rust_use("std::collections::HashMap")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[], &no_traits())
+        .check_unused_imports(
+            "/tmp/test/src/app.rs",
+            content,
+            &imports,
+            &["HashMap".to_string()],
+            &no_traits(),
+        )
         .unwrap();
     assert!(
         results.is_empty(),
@@ -229,9 +235,10 @@ fn aes203_used_identifiers_prevents_false_positive() {
 
 #[test]
 fn aes203_trait_protocol_import_not_flagged() {
-    // ContractProtocol imported for method dispatch scope —
+    // CalculatorProtocol imported for method dispatch scope —
     // the trait is never named explicitly at call sites,
     // but the compiler needs it in scope to resolve methods.
+    // Cross-file analysis: Calculator implements CalculatorProtocol (from trait map).
     let content = "use calculator_shared::contract_calculator_protocol::CalculatorProtocol;\n\n"
         .to_string()
         + "struct AdditionAnalyzer;\n\n"
@@ -241,8 +248,16 @@ fn aes203_trait_protocol_import_not_flagged() {
     let imports = vec![rust_use(
         "calculator_shared::contract_calculator_protocol::CalculatorProtocol",
     )];
+    let used_ids = vec!["AdditionAnalyzer".to_string()];
+
+    let mut traits = std::collections::HashMap::new();
+    traits.insert(
+        "CalculatorProtocol".to_string(),
+        vec!["AdditionAnalyzer".to_string()],
+    );
+
     let results = checker()
-        .check_unused_imports("/tmp/test/src/main.rs", &content, &imports, &[], &no_traits())
+        .check_unused_imports("/tmp/test/src/app.rs", &content, &imports, &used_ids, &traits)
         .unwrap();
     assert!(
         results.is_empty(),
@@ -252,15 +267,27 @@ fn aes203_trait_protocol_import_not_flagged() {
 }
 
 #[test]
-fn aes203_trait_suffix_protocol_not_flagged() {
+fn aes203_trait_suffix_not_flagged_when_used() {
     let content = "use some_crate::MyTrait;\n\nfn main() {\n    println!(\"hi\");\n}\n";
     let imports = vec![rust_use("some_crate::MyTrait")];
+    let used_ids = vec!["main".to_string()];
+
+    let mut traits = std::collections::HashMap::new();
+    traits.insert("MyTrait".to_string(), vec!["SomeType".to_string()]);
+
+    // MyTrait not implemented for any type used in this file → should flag
     let results = checker()
-        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[], &no_traits())
+        .check_unused_imports(
+            "/tmp/test/src/app.rs",
+            content,
+            &imports,
+            &used_ids,
+            &traits,
+        )
         .unwrap();
     assert!(
-        results.is_empty(),
-        "Import with 'Trait' suffix should not be flagged"
+        !results.is_empty(),
+        "Import with no matching trait impl should be flagged"
     );
 }
 
@@ -295,7 +322,7 @@ fn aes203_trait_map_detects_implicit_usage() {
 
     let results = checker()
         .check_unused_imports(
-            "/tmp/test/src/main.rs",
+            "/tmp/test/src/app.rs",
             content,
             &imports,
             &used_ids,
@@ -324,7 +351,7 @@ fn aes203_trait_map_no_match_still_flags() {
 
     let results = checker()
         .check_unused_imports(
-            "/tmp/test/src/main.rs",
+            "/tmp/test/src/app.rs",
             content,
             &imports,
             &used_ids,

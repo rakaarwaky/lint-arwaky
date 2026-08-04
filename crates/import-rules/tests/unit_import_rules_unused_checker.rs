@@ -62,7 +62,7 @@ fn main() {
 "#;
     let imports = vec![rust_use("std::collections::HashMap")];
     let result = checker
-        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[], &no_traits())
+        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &["HashMap".to_string()], &no_traits())
         .unwrap();
     assert!(
         result.is_empty(),

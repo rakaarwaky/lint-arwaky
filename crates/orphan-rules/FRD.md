@@ -249,7 +249,7 @@ flowchart TD
 
   - **Surface classification by filename suffix** (configurable via YAML):
 
-    - **Smart**: `_command`, `_controller`, `_page`, `_entry`, `_router` — must be imported by entry point or container. Severity: HIGH.
+    - **Smart**: `_command`, `_controller`, `_page`, `_router` — must be imported by entry point or container. Severity: HIGH.
     - **Utility**: `_hook`, `_store`, `_action`, `_screen` — must be imported by a Smart surface. Severity: MEDIUM.
     - **Passive**: `_component`, `_view`, `_layout`, and all other recognized surface suffixes — must be imported by Smart OR Utility surface. Severity: LOW.
   - Dependency chain: `Entry → Smart → Utility → Passive`.
@@ -284,22 +284,21 @@ flowchart TD
 
 ## API Contract
 
-
-| Function                           | Input                                                             | Output                     | Description                                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| Full orphan scan                   | Target path                                                       | Lint results               | Build graph context internally, discover entry points, trace reachability, run all analyzers |
-| Orphan scan with context           | Pre-built analysis context                                        | Lint results               | Orphan scan with pre-built context (avoids filesystem crate call)                                 |
-| Identify entry points              | File list from analysis context, configured patterns              | Set of entry point paths   | Discover all valid entry points                                                                   |
-| Trace reachability                 | Entry point set, import graph                                     | Alive file set             | BFS from entry points through import graph                                                        |
-| Check taxonomy orphan              | File path, reverse link index                                     | Orphan indicator result    | AES501 — taxonomy file orphan check                                                              |
-| Check contract orphan              | File path, inheritance map, workspace file list, content map       | Orphan indicator result    | AES502 — contract file orphan check                                                              |
-| Check capabilities orphan          | File path, alive set                                               | Orphan indicator result    | AES503 — capabilities file orphan check                                                          |
-| Check utility orphan               | File path, reverse link index                                     | Orphan indicator result    | AES504 — utility file orphan check                                                               |
-| Check agent orphan                 | File path, workspace file list, content map                       | Orphan indicator result    | AES505 — agent file orphan check                                                                 |
-| Check surface orphan               | File path, alive set, reverse link index, config                  | Orphan indicator result    | AES506 — surface file orphan check                                                               |
-| Create default DI container        | —                                                                | Orphan detection container | Default dependency injection container                                                            |
-| Create DI container with config    | Architecture configuration                                        | Orphan detection container | DI container with custom config                                                                   |
-| Create DI from config orchestrator | Config orchestrator reference, root directory                     | Orphan detection container | Canonical DI from config orchestrator                                                             |
+| Function                           | Input                                                        | Output                     | Description                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------------- |
+| Full orphan scan                   | Target path                                                  | Lint results               | Build graph context internally, discover entry points, trace reachability, run all analyzers |
+| Orphan scan with context           | Pre-built analysis context                                   | Lint results               | Orphan scan with pre-built context (avoids filesystem crate call)                            |
+| Identify entry points              | File list from analysis context, configured patterns         | Set of entry point paths   | Discover all valid entry points                                                              |
+| Trace reachability                 | Entry point set, import graph                                | Alive file set             | BFS from entry points through import graph                                                   |
+| Check taxonomy orphan              | File path, reverse link index                                | Orphan indicator result    | AES501 — taxonomy file orphan check                                                         |
+| Check contract orphan              | File path, inheritance map, workspace file list, content map | Orphan indicator result    | AES502 — contract file orphan check                                                         |
+| Check capabilities orphan          | File path, alive set                                         | Orphan indicator result    | AES503 — capabilities file orphan check                                                     |
+| Check utility orphan               | File path, reverse link index                                | Orphan indicator result    | AES504 — utility file orphan check                                                          |
+| Check agent orphan                 | File path, workspace file list, content map                  | Orphan indicator result    | AES505 — agent file orphan check                                                            |
+| Check surface orphan               | File path, alive set, reverse link index, config             | Orphan indicator result    | AES506 — surface file orphan check                                                          |
+| Create default DI container        | —                                                           | Orphan detection container | Default dependency injection container                                                       |
+| Create DI container with config    | Architecture configuration                                   | Orphan detection container | DI container with custom config                                                              |
+| Create DI from config orchestrator | Config orchestrator reference, root directory                | Orphan detection container | Canonical DI from config orchestrator                                                        |
 
 ---
 
@@ -367,21 +366,19 @@ flowchart TD
 
 ### Core Detection
 
-
 | # | Scenario                                            | Expected                                   | Rule   |
-| --- | ----------------------------------------------------- | -------------------------------------------- | -------- |
+| - | --------------------------------------------------- | ------------------------------------------ | ------ |
 | 1 | Workspace with 100 files, 5 orphans across 3 layers | All 5 detected, 0 false positives          | all    |
 | 2 | Circular imports between two capabilities           | Both reachable, neither flagged            | pass   |
 | 3 | Workspace with zero entry points                    | All non-barrel files flagged as orphans    | all    |
 | 4 | Cross-crate imports (crate A imports from crate B)  | Graph resolves correctly                   | pass   |
 | 5 | Configuration disabled                              | Full orphan scan returns empty immediately | config |
-| 6 | File with parse failure                    | Flagged as orphan (fail-strict)            | all    |
+| 6 | File with parse failure                             | Flagged as orphan (fail-strict)            | all    |
 
 ### Barrel Files
 
-
-| # | Scenario                               | Expected             | Rule |
-| --- | ---------------------------------------- | ---------------------- | ------ |
+| # | Scenario                                 | Expected             | Rule |
+| - | ---------------------------------------- | -------------------- | ---- |
 | 1 | Python`__init__.py` package marker     | Skipped, not flagged | excl |
 | 2 | TypeScript barrel`index.ts` re-exports | Skipped, not flagged | excl |
 | 3 | Rust`mod.rs` re-exports                | Skipped, not flagged | excl |
@@ -389,9 +386,8 @@ flowchart TD
 
 ### AES501 — Taxonomy Orphan
 
-
 | # | Scenario                                            | Expected                          | Rule   |
-| --- | ----------------------------------------------------- | ----------------------------------- | -------- |
+| - | --------------------------------------------------- | --------------------------------- | ------ |
 | 1 | Taxonomy file imported by a contract file           | Not orphan                        | pass   |
 | 2 | Taxonomy file imported only by other taxonomy files | Orphan (no non-taxonomy consumer) | AES501 |
 | 3 | Taxonomy file with no inbound links                 | Orphan                            | AES501 |
@@ -399,9 +395,8 @@ flowchart TD
 
 ### AES502 — Contract Orphan
 
-
 | # | Scenario                                          | Expected                      | Rule   |
-| --- | --------------------------------------------------- | ------------------------------- | -------- |
+| - | ------------------------------------------------- | ----------------------------- | ------ |
 | 1 | Protocol with implementation AND callers          | Not orphan                    | pass   |
 | 2 | Protocol with implementation but zero callers     | Orphan                        | AES502 |
 | 3 | Protocol with callers but no implementation       | Orphan                        | AES502 |
@@ -411,9 +406,8 @@ flowchart TD
 
 ### AES503 — Capabilities Orphan
 
-
 | # | Scenario                                                           | Expected                 | Rule   |
-| --- | -------------------------------------------------------------------- | -------------------------- | -------- |
+| - | ------------------------------------------------------------------ | ------------------------ | ------ |
 | 1 | Capability struct referenced in container file                     | Not orphan               | pass   |
 | 2 | Capability file transitively reachable from entry point            | Not orphan               | pass   |
 | 3 | Capability file not in alive set, not in any container             | Orphan                   | AES503 |
@@ -421,9 +415,8 @@ flowchart TD
 
 ### AES504 — Utility Orphan
 
-
 | # | Scenario                                 | Expected                           | Rule   |
-| --- | ------------------------------------------ | ------------------------------------ | -------- |
+| - | ---------------------------------------- | ---------------------------------- | ------ |
 | 1 | Utility imported by a capabilities file  | Not orphan                         | pass   |
 | 2 | Utility imported only by other utilities | Orphan (utility chain = dead code) | AES504 |
 | 3 | Utility with no inbound links            | Orphan                             | AES504 |
@@ -431,9 +424,8 @@ flowchart TD
 
 ### AES505 — Agent Orphan
 
-
 | # | Scenario                                                  | Expected                      | Rule   |
-| --- | ----------------------------------------------------------- | ------------------------------- | -------- |
+| - | --------------------------------------------------------- | ----------------------------- | ------ |
 | 1 | Agent aggregate called by surface file                    | Not orphan                    | pass   |
 | 2 | Agent aggregate not called by any surface/entry/container | Orphan (HIGH)                 | AES505 |
 | 3 | Agent with no aggregate implementation                    | Not orphan (skip check)       | pass   |
@@ -442,14 +434,13 @@ flowchart TD
 
 ### AES506 — Surface Orphan
 
-
 | # | Scenario                                                          | Expected                                | Rule   |
-| --- | ------------------------------------------------------------------- | ----------------------------------------- | -------- |
-| 1 | Smart surface (`_command`) imported by entry point                | Not orphan                              | pass   |
+| - | ----------------------------------------------------------------- | --------------------------------------- | ------ |
+| 1 | Smart surface (`_command`) imported by entry point              | Not orphan                              | pass   |
 | 2 | Smart surface not imported by any entry/container                 | Orphan (HIGH)                           | AES506 |
-| 3 | Utility surface (`_hook`) imported by Smart surface               | Not orphan                              | pass   |
+| 3 | Utility surface (`_hook`) imported by Smart surface             | Not orphan                              | pass   |
 | 4 | Utility surface not imported by any Smart surface                 | Orphan (MEDIUM)                         | AES506 |
-| 5 | Passive surface (`_component`) imported by Smart surface          | Not orphan                              | pass   |
+| 5 | Passive surface (`_component`) imported by Smart surface        | Not orphan                              | pass   |
 | 6 | Passive surface imported only by another Passive surface          | Orphan (LOW)                            | AES506 |
 | 7 | Dependency chain: Entry → Smart → Utility → Passive, all alive | No violations                           | pass   |
 | 8 | Remove Smart import → Utility + Passive flagged                  | Utility (MEDIUM) + Passive (LOW) orphan | AES506 |
@@ -457,20 +448,18 @@ flowchart TD
 
 ### Configuration
 
-
-| # | Scenario                                | Expected                                     | Rule   |
-| --- | ----------------------------------------- | ---------------------------------------------- | -------- |
-| 1 | Config`check_orphan: false` for a layer | No violations for that layer                 | config |
-| 2 | Config with exceptions list             | Excepted files produce no violations         | config |
+| # | Scenario                                  | Expected                                       | Rule   |
+| - | ----------------------------------------- | ---------------------------------------------- | ------ |
+| 1 | Config`check_orphan: false` for a layer | No violations for that layer                   | config |
+| 2 | Config with exceptions list               | Excepted files produce no violations           | config |
 | 3 | Config with`ignored_paths: ["tests"]`   | `tests/` segment files produce no violations | config |
-| 4 | Config with AES501 disabled             | No taxonomy orphan violations                | config |
-| 5 | Config with custom entry point patterns | Additional entry points recognized           | config |
+| 4 | Config with AES501 disabled               | No taxonomy orphan violations                  | config |
+| 5 | Config with custom entry point patterns   | Additional entry points recognized             | config |
 
 ### Performance
 
-
 | # | Scenario                                      | Expected                                   | Rule |
-| --- | ----------------------------------------------- | -------------------------------------------- | ------ |
+| - | --------------------------------------------- | ------------------------------------------ | ---- |
 | 1 | 10,000 file workspace                         | Completes in under 5 seconds               | perf |
 | 2 | Contract analyzer with 50 traits × 500 files | Completes in under 2 seconds (map lookups) | perf |
 
@@ -493,28 +482,27 @@ flowchart TD
 
 ## Glossary
 
-
-| Term                     | Definition                                                                                                                                      |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **AES**                  | Agentic Engineering System — the 7-layer coding convention                                                                                     |
-| **Orphan**               | A source file not transitively reachable from any entry point, or failing layer-specific consumer requirements                                  |
-| **Entry point**          | A file that anchors the reachability graph (main, lib, container, entry, root)                                                                  |
-| **Barrel file**          | A package marker or re-export file (`__init__.py`, `mod.rs`, `lib.rs`, `index.ts`)                                                              |
-| **Alive file**           | A file reachable via BFS from any entry point through the import graph                                                                          |
-| **DI**                   | Dependency Injection — wiring implementations to trait/interface contracts                                                                     |
-| **Inbound link**         | A file that imports the target file (reverse import edge)                                                                                       |
-| **AST**                  | Abstract Syntax Tree — structured representation of source code produced by a parser                                                           |
-| **GraphAnalysisContext** | Analysis context built in-crate by `OrphanGraphResolver` containing file list, import graph, reverse link index, and inheritance map |
-| **InheritanceMap** | Map of file to inherited/implemented trait, class, or interface names (class bases, class implements, trait impls) |
-| **ReverseLinkIndex** | Map of file path to list of files that import it                                                                                |
-| **ReverseLinkIndex**     | Map of file path to list of files that import it                                                                                |
-| **Re-export**            | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                                      |
-| **Glob import**          | `use foo::*` (Rust) or `export * from` (TS) — imports all symbols from a module                                                                |
-| **Smart surface**        | Surface with`_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration                                         |
-| **Utility surface**      | Surface with`_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces                                                           |
-| **Passive surface**      | Surface with`_component`, `_view`, `_layout`, or other recognized suffix — presentation-only                                                   |
+| Term                           | Definition                                                                                                                                                                         |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AES**                  | Agentic Engineering System — the 7-layer coding convention                                                                                                                        |
+| **Orphan**               | A source file not transitively reachable from any entry point, or failing layer-specific consumer requirements                                                                     |
+| **Entry point**          | A file that anchors the reachability graph (main, lib, container, entry, root)                                                                                                     |
+| **Barrel file**          | A package marker or re-export file (`__init__.py`, `mod.rs`, `lib.rs`, `index.ts`)                                                                                         |
+| **Alive file**           | A file reachable via BFS from any entry point through the import graph                                                                                                             |
+| **DI**                   | Dependency Injection — wiring implementations to trait/interface contracts                                                                                                        |
+| **Inbound link**         | A file that imports the target file (reverse import edge)                                                                                                                          |
+| **AST**                  | Abstract Syntax Tree — structured representation of source code produced by a parser                                                                                              |
+| **GraphAnalysisContext** | Analysis context built in-crate by`OrphanGraphResolver` containing file list, import graph, reverse link index, and inheritance map                                              |
+| **InheritanceMap**       | Map of file to inherited/implemented trait, class, or interface names (class bases, class implements, trait impls)                                                                 |
+| **ReverseLinkIndex**     | Map of file path to list of files that import it                                                                                                                                   |
+| **ReverseLinkIndex**     | Map of file path to list of files that import it                                                                                                                                   |
+| **Re-export**            | A`pub use` (Rust) or `export { X } from` (TS) that re-exports a symbol from another module                                                                                     |
+| **Glob import**          | `use foo::*` (Rust) or `export * from` (TS) — imports all symbols from a module                                                                                               |
+| **Smart surface**        | Surface with`_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration                                                                  |
+| **Utility surface**      | Surface with`_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces                                                                                      |
+| **Passive surface**      | Surface with`_component`, `_view`, `_layout`, or other recognized suffix — presentation-only                                                                                |
 | **Filesystem crate**     | External crate providing helper operations to orphan-rules (workspace root, ignore filtering, content reads, module path resolution). Parsing and graph construction are in-crate. |
-| **Segment matching**     | Path matching by splitting on`/` and comparing individual segments (not substring containment)                                                  |
+| **Segment matching**     | Path matching by splitting on`/` and comparing individual segments (not substring containment)                                                                                   |
 
 ---
 

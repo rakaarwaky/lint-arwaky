@@ -29,18 +29,13 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     ) -> OrphanIndicatorResult {
         let stem = file_stem(f.value());
 
-        eprintln!(
-            "[debug AES501] is_taxonomy_orphan called: f='{}'",
-            f.value()
-        );
-
         let importers = match inbound_links.get_importers(f.value()) {
-            Some(v) => v,
+            Some(v) => {
+                eprintln!("[debug AES501] path='{}' found {} importers: {:?}", f.value(), v.len(), v.iter().take(3).collect::<Vec<_>>());
+                v
+            }
             None => {
-                eprintln!(
-                    "[debug AES501] no importers found for '{}', marking as orphan",
-                    stem
-                );
+                eprintln!("[debug AES501] path='{}' NO importers → orphan", f.value());
                 return OrphanIndicatorResult::new(
                     true,
                     format!(

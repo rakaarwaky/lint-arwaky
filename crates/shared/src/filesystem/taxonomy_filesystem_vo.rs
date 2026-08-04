@@ -503,6 +503,17 @@ impl InboundLinkMap {
     pub fn get_importers(&self, path: &str) -> Option<&Vec<String>> {
         let mut result: Option<&Vec<String>> = None;
 
+        // DEBUG: dump ALL mapping keys once
+        if !self.mapping.is_empty() {
+            use std::sync::atomic::{AtomicBool, Ordering};
+            static DUMPED: AtomicBool = AtomicBool::new(false);
+            if !DUMPED.swap(true, Ordering::Relaxed) {
+                for (i, k) in self.mapping.keys().enumerate() {
+                    eprintln!("[debug mapping key {}]: '{}'", i, k);
+                }
+            }
+        }
+
         if let Some(v) = self.mapping.get(path) {
             result = Some(v);
         }
@@ -566,6 +577,7 @@ impl InboundLinkMap {
             for (k, v) in &self.mapping {
                 let k_clean = k.strip_prefix("./").unwrap_or(k);
                 if k_clean.ends_with(clean) || clean.ends_with(k_clean) {
+                    eprintln!("[debug get_importers] BROAD MATCH: path='{}' clean='{}' matched_key='{}' importers={:?}", path, clean, k, v.iter().take(3).collect::<Vec<_>>());
                     result = Some(v);
                     break;
                 }

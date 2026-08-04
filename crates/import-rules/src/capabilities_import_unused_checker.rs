@@ -161,9 +161,13 @@ fn is_trait_used_for_method_dispatch(
     types.iter().any(|t| id_set.contains(t.as_str()))
 }
 
-/// Fallback: check well-known trait patterns that tree-sitter can't resolve.
-/// Covers std library traits, async_trait, and common naming patterns.
+/// Covers std library traits, async_trait, common naming patterns,
+/// and AES contract protocol naming conventions.
 fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
+    // ─── AES naming convention: contract_*_protocol or *_protocol ───
+    if raw_path.contains("protocol") || raw_path.contains("contract") {
+        return true;
+    }
     // ─── Well-known Rust trait paths ───
     if raw_path.contains("prelude")
         || raw_path.contains("async_trait")

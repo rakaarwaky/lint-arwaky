@@ -193,7 +193,6 @@ pub fn is_barrel_file(filename: &str) -> bool {
         "__init__.py"
             | "mod.rs"
             | "lib.rs"
-            | "main.rs"
             | "index.ts"
             | "index.js"
             | "index.tsx"

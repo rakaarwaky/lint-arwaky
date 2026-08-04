@@ -78,6 +78,9 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
     fn used_identifiers_for(&self, _: &std::path::Path) -> Vec<String> {
         vec![]
     }
+    fn implemented_traits_map(&self) -> std::collections::HashMap<String, Vec<String>> {
+        std::collections::HashMap::new()
+    }
     fn build_file_index(&self, _: &std::path::Path) {}
     fn build_file_index_with_ignored(&self, _: &std::path::Path, _: &[String]) {}
     fn build_orphan_graph_context(
