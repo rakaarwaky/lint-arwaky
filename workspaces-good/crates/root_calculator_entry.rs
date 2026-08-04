@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 
 use calculator_shared::contract_calculator_aggregate::CalculatorAggregate;
+use calculator_shared::contract_calculator_protocol::CalculatorProtocol;
 use calculator_shared::taxonomy_expression_vo::ExpressionVO;
 use calculator_shared::taxonomy_operation_vo::OperationVO;
 use calculator_shared::taxonomy_result_vo::ResultVO;
