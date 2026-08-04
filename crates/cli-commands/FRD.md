@@ -5,40 +5,28 @@
 
 ## System Overview
 
-The cli-commands crate provides the unified command-line interface that drives
-the entire lint-arwaky linting pipeline. Surface handlers are thin dispatchers
-that parse CLI args and delegate all business logic to agent/orchestration
-layers. Report formatting is delegated to the report-formatter crate via the
-report formatter aggregate.
+The cli-commands crate is a **Smart Surface** — a thin CLI wrapper that
+parses command-line args, delegates **all business logic** to the
+`dispatcher` crate via `dispatcher::surface_*_action::*` functions, and
+formats the output for terminal display. CLI never calls rule aggregates
+directly; dispatcher owns every scan, fix, config, and setup action.
 
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["cli commands"]
-    B --> C{"command type"}
+    A["Terminal\n(user input)"] -->|"parse args"| B["cli-commands\n(Smart Surface)"]
 
-    C -->|"check / scan / quality / import\nnaming / role / orphan / external"| D["linter aggregates"]
-    C -->|"ci"| E["ci threshold check"]
-    C -->|"fix"| F["auto-fix"]
-    C -->|"doctor / security / dependencies"| G["maintenance"]
-    C -->|"init / install / mcp-config / config-show"| H["project-setup"]
-    C -->|"install-hook / uninstall-hook / git-diff"| I["git-hooks"]
-    C -->|"watch"| J["file-watch"]
-    C -->|"adapters / version"| K["thin dispatch"]
+    B -->|"scan actions\n(check, naming, import,\nquality, orphan, role,\nexternal, ci)"| D["dispatcher\n(Utility Surface)"]
+    B -->|"fix & watch\n(fix, watch)"| D
+    B -->|"config & setup\n(config, git, setup,\nmaintenance, plugin)"| D
 
-    D --> L["report formatter"]
-    E --> L
-    G --> L
-    I --> L
-
-    L --> M["Lint Results"]
-    M --> B
-    B -->|output| A
+    D -->|"ViolationItem[]\nCiReport / FixReport\nSetupReport / ..."| B
+    B -->|"format + exit code"| A
 
     style A fill:#e1f5fe,stroke:#0288d1
-    style C fill:#fff3e0,stroke:#e65100
-    style M fill:#fce4ec,stroke:#c62828
+    style B fill:#e8f5e9,stroke:#2e7d32
+    style D fill:#fff3e0,stroke:#e65100
 ```
 
 ### Exit Code Contract

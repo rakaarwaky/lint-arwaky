@@ -1,21 +1,35 @@
 // PURPOSE: Orphan rules scan business logic, no formatting.
-// Adapted: sync — all orphan calls are sync. Removed orphan_detector crate dependency;
-// uses injected IOrphanAggregate via DI. Simplified workspace handling.
+// Adapted: sync — all orphan calls are sync. Uses injected factories for
+// filesystem and orphan aggregate creation to avoid direct root-container
+// instantiation (AES201 compliance — surface layer must not bypass contracts).
 use std::sync::Arc;
 use tracing::debug;
 
 use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::{ArchitectureConfig, ConfigLanguage, IConfigOrchestratorAggregate};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 
 use crate::surface_output_component::ViolationItem;
+
+/// Factory function type: creates a fresh filesystem aggregate (uncached pipeline).
+pub type FilesystemFactory = dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync;
+
+/// Factory function type: creates an orphan aggregate from config and filesystem.
+pub type OrphanFactory =
+    dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate>
+        + Send
+        + Sync;
 
 /// DI container for all aggregates needed by orphan scanning.
 pub struct OrphanScanDeps {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub fs_agg: Arc<dyn IFilesystemAggregate>,
+    /// Factory for creating fresh filesystem instances (multi-workspace / single-root).
+    pub fs_factory: Arc<FilesystemFactory>,
+    /// Factory for creating orphan aggregate from config + filesystem.
+    pub orphan_factory: Arc<OrphanFactory>,
 }
 
 pub fn collect_orphan(
@@ -45,6 +59,8 @@ pub fn collect_orphan(
             &deps.config_orchestrator,
             &filter,
             &deps.fs_agg,
+            &deps.fs_factory,
+            &deps.orphan_factory,
         );
     }
 
@@ -75,8 +91,7 @@ pub fn collect_orphan(
     // Build a single unified filesystem across ALL workspace members so the orphan
     // scanner can see cross-member imports (e.g., addition importing from shared).
     // Build once from the workspace root to discover all source files.
-    let unified_fs: Arc<dyn IFilesystemAggregate> =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let unified_fs: Arc<dyn IFilesystemAggregate> = (deps.fs_factory)();
     let root_path = std::path::Path::new(&root);
     // Collect ignored paths from all members
     let mut all_ignored: Vec<String> = Vec::new();
@@ -95,11 +110,7 @@ pub fn collect_orphan(
     // Use the first workspace's config for the orchestrator (configs should be similar)
     let first_ws = &workspaces[0];
     let unified_orchestrator: Arc<dyn IOrphanAggregate> =
-        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-            first_ws.config.clone(),
-            unified_fs.clone(),
-        )
-        .analyzer();
+        (deps.orphan_factory)(first_ws.config.clone(), unified_fs.clone());
 
     // Build unified file list from all members
     let all_file_list = unified_fs.file_list();
@@ -180,10 +191,11 @@ fn scan_single_root(
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     filter: &Option<String>,
     _fs_agg: &Arc<dyn IFilesystemAggregate>,
+    fs_factory: &FilesystemFactory,
+    orphan_factory: &OrphanFactory,
 ) -> Result<Vec<ViolationItem>, String> {
-    // Create a fresh filesystem instance (shared singleton caches first scan)
-    let ws_filesystem: Arc<dyn IFilesystemAggregate> =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    // Create a fresh filesystem instance via factory (no direct root-container)
+    let ws_filesystem: Arc<dyn IFilesystemAggregate> = fs_factory();
 
     // Load config for this path to get ignored_paths
     let ws_config = config_orchestrator.load_config_sync(root_fp);
@@ -198,11 +210,7 @@ fn scan_single_root(
         .collect();
     ws_filesystem.build_file_index_with_ignored(root_path, &ignored_strs);
     let ws_orchestrator: Arc<dyn IOrphanAggregate> =
-        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-            ws_config,
-            ws_filesystem.clone(),
-        )
-        .analyzer();
+        orphan_factory(ws_config, ws_filesystem.clone());
 
     // Build OrphanFileListVO — paths relative to workspace root (top_root)
     let file_list = ws_filesystem.file_list();

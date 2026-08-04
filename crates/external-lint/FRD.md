@@ -18,39 +18,26 @@ flowchart TD
     C -->|"discover_files()"| D["filesystem_aggregate\n(external crate)"]
     D -->|"(has_rust, has_python, has_js)"| C
 
-    C --> E["adapter_selection"]
-    E -->|"adapter list"| F["adapter loop\n(sequential)"]
+    C -->|"Rust adapters"| R["clippy\nrustfmt\ncargo-audit"]
+    C -->|"Python adapters"| P["ruff\nmypy\nbandit"]
+    C -->|"JS/TS adapters"| J["eslint\nprettier\ntsc"]
 
-    F --> G1["clippy"]
-    F --> G2["rustfmt"]
-    F --> G3["cargo-audit"]
-    F --> G4["ruff"]
-    F --> G5["mypy"]
-    F --> G6["bandit"]
-    F --> G7["eslint"]
-    F --> G8["prettier"]
-    F --> G9["tsc"]
+    R -->|"subprocess\n(std::process::Command)"| H["result normalization\n(tool-native codes\n+ severity mapping)"]
+    P -->|"subprocess"| H
+    J -->|"subprocess"| H
 
-    G1 --> H["subprocess execution\n(std::process::Command)"]
-    G2 --> H
-    G3 --> H
-    G4 --> H
-    G5 --> H
-    G6 --> H
-    G7 --> H
-    G8 --> H
-    G9 --> H
-
-    H --> I["result normalization\n(tool-native codes\n+ severity mapping)"]
-    I --> J["Lint Results"]
-    J --> C
+    H --> L["Lint Results"]
+    L --> C
     C --> B
     B -->|output| A
 
     style A fill:#e1f5fe,stroke:#0288d1
     style D fill:#fff3e0,stroke:#e65100
+    style R fill:#fff3e0,stroke:#e65100
+    style P fill:#fff3e0,stroke:#e65100
+    style J fill:#fff3e0,stroke:#e65100
     style H fill:#fce4ec,stroke:#c62828
-    style J fill:#f3e5f5,stroke:#7b1fa2
+    style L fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ## Functional Requirements

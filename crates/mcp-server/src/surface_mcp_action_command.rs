@@ -270,6 +270,7 @@ impl McpActionSurface {
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
             None,
+            &[],
         ) {
             Ok(violations) => violations_response("external", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),

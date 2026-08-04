@@ -81,13 +81,6 @@ fn resolve_python_relative_import(mut entry: ImportEntry, root_dir: &Path) -> Im
     // Build the module name (without dots)
     let module_name = raw_path.trim_start_matches('.');
 
-    eprintln!(
-        raw_path,
-        entry.source_file.display(),
-        module_name,
-        dot_count
-    );
-
     // Resolve the relative path
     let base_dir = if dot_count >= 2 {
         // '..' means go up one directory

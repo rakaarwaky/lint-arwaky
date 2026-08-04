@@ -14,32 +14,16 @@ handled by the async runtime.
 
 ```mermaid
 flowchart TD
-    A["AI Agent / IDE"] -->|"JSON-RPC\nstdin"| B["mcp server\n(async, Tokio)"]
-    B --> C{"tool"}
+    A["AI Agent / IDE"] -->|"JSON-RPC\nstdin"| B["mcp-server\n(Smart Surface)"]
 
-    C -->|"execute_command"| D["action dispatcher"]
-    C -->|"list_commands"| E["command catalog"]
-    C -->|"read_skill"| F["skill reader"]
-    C -->|"health_check"| G["adapter checker"]
-    C -->|"get_config"| H["config loader"]
+    B -->|"5 tools:\nexecute_command\nlist_commands\nread_skill\nhealth_check\nget_config"| D["dispatcher\n(Utility Surface)"]
 
-    D --> I{"action type"}
-    I -->|"check / scan / orphan / role\nnaming / import / quality / external"| J["linter aggregates\n(same as CLI)"]
-    I -->|"fix / ci / doctor / security\ninit / install / hooks"| K["operation aggregates"]
-
-    J --> L["JSON Response\nstdout"]
-    K --> L
-    E --> L
-    F --> L
-    G --> L
-    H --> L
-
-    L --> B
+    D -->|"ViolationItem[]\nCiReport / FixReport\nSetupReport / ..."| B
     B -->|"JSON-RPC\nstdout"| A
 
     style A fill:#e1f5fe,stroke:#0288d1
-    style C fill:#fff3e0,stroke:#e65100
-    style L fill:#f3e5f5,stroke:#7b1fa2
+    style B fill:#e8f5e9,stroke:#2e7d32
+    style D fill:#fff3e0,stroke:#e65100
 ```
 
 ### Product Policy (locked)

@@ -1,9 +1,11 @@
 // PURPOSE: External lint scan business logic, no formatting.
-// AES406 NOTE: Uses subprocess approach (self-invocation) to run external lint scanning
-// because IExternalLintAggregate::scan_all is async and no tokio runtime is available.
-// This is a known gap — a sync scan method or async-aware surface layer should replace this.
-// Adapted: uses subprocess approach since IExternalLintAggregate::scan_all is async
-// and no tokio runtime is available in this crate.
+//
+// Data Flow:
+//   CLI → collect_external_direct → filesystem.build_file_index_with_ignored → external_lint.scan_all → violations
+//
+// The external-lint orchestrator receives a pre-built file index and
+// performs language detection + adapter execution. All filesystem access
+// is handled by the filesystem aggregate before orchestrator delegation.
 use std::process::Command;
 use std::sync::Arc;
 
@@ -20,6 +22,7 @@ pub fn collect_external_direct(
     external_lint: Arc<dyn IExternalLintAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
+    ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
@@ -28,7 +31,11 @@ pub fn collect_external_direct(
     if !filesystem.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
-    let root_fp = FilePath::new(root).map_err(|_| "invalid path".to_string())?;
+    let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
+
+    // Build file index for target path (respects config ignored_paths)
+    let root_path = std::path::Path::new(&root);
+    filesystem.build_file_index_with_ignored(root_path, ignored_paths);
 
     let scan_results = external_lint.scan_all(&root_fp);
     let mut violations: Vec<ViolationItem> = scan_results

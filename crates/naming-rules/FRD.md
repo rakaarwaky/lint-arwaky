@@ -21,7 +21,7 @@ flowchart TD
     A -->|"run_audit_with_entries(&[FileEntry])"| B["naming_aggregate"]
     B --> C["naming_orchestrator"]
 
-    subgraph FS2 ["filesystem crate (external)"]
+    subgraph FS ["filesystem crate (external)"]
         FS --> E["file_walker"]
         E --> G["FileEntry[]"]
         G -.->|"cached in OnceLock"| FS
@@ -38,7 +38,6 @@ flowchart TD
     B -->|output| A
 
     style A fill:#e1f5fe,stroke:#0288d1
-    style FS2 fill:#fff3e0,stroke:#e65100
     style FS fill:#fff3e0,stroke:#e65100
     style I fill:#fce4ec,stroke:#c62828
     style J fill:#f3e5f5,stroke:#7b1fa2

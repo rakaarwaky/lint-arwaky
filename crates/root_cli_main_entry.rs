@@ -367,6 +367,7 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
+            Vec::new(),
         ),
         Command::Ci { path, threshold } => cli_commands::surface_ci_command::handle_ci(
             code_analysis_linter.clone(),

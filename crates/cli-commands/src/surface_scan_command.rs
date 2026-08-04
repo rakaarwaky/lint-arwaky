@@ -270,6 +270,7 @@ pub fn handle_external(
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     _filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
+    ignored_paths: Vec<String>,
 ) -> ExitCode {
     let root = resolve_root(&path);
     match dispatcher::surface_external_action::collect_external_direct(
@@ -277,6 +278,7 @@ pub fn handle_external(
         external_lint,
         _filesystem,
         filter,
+        &ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(&violations, &root, format, false);

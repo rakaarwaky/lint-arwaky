@@ -4,25 +4,30 @@
 
 ## System Overview
 
-The tui crate is a **Smart Surface** — a Ratatui-based interactive terminal UI for lint-arwaky. It is a thin wrapper that parses keyboard/mouse input, calls dispatcher/aggregate functions, and renders output. No business logic lives here.
+The tui crate is a **Smart Surface** — a Ratatui-based interactive terminal UI for lint-arwaky. It is a thin wrapper that parses keyboard/mouse input, delegates **all business logic** to the `dispatcher` crate via `dispatcher::surface_*_action::*`, and renders output. No business logic lives here.
 
-### Architecture
+### Architecture & Data Flow
 
-```
-TUI (Smart Surface)
-  ├→ TuiContainer (root) — wires aggregates, starts event loop
-  │    └→ TuiCommandSurface — crossterm event loop + ratatui rendering
-  │         └→ SurfaceActionHandler — event → action state machine
-  │              └→ SurfaceLintExecutor — facade over domain aggregates
-  ├→ Views: FileList, Preview, Tree, Path, Shortcuts, Status
-  └→ Utilities: file_system, report_formatter
+```mermaid
+flowchart TD
+    A["Terminal\n(keyboard / mouse)"] -->|"crossterm events"| B["tui\n(Smart Surface)"]
+
+    B -->|"SurfaceLintExecutor:\nscan actions\n(check, ci, orphan)"| D["dispatcher\n(Utility Surface)"]
+    B -->|"SurfaceLintExecutor:\nfix & setup\n(fix, init, install, config)"| D
+    B -->|"SurfaceLintExecutor:\nops\n(doctor, security, deps,\ngit, plugin, version)"| D
+
+    D -->|"Vec<ViolationItem>\nCiReport / FixReport\nSetupReport / ..."| B
+    B -->|"ratatui render\n(finalize / draw)"| A
+
+    style A fill:#e1f5fe,stroke:#0288d1
+    style B fill:#e8f5e9,stroke:#2e7d32
+    style D fill:#fff3e0,stroke:#e65100
 ```
 
 ### Dependency Rule
 
-- TUI imports: shared (taxonomies, aggregates), dispatcher (optional)
-- TUI must NOT own business logic — delegates to aggregates via DI
-- **Note**: `dispatcher` is listed in `Cargo.toml` but never imported in any source file — should be removed per AES504
+- TUI imports: shared (taxonomies, aggregates), dispatcher (surface_*_action)
+- TUI must NOT own business logic — delegates to dispatcher via DI
 
 ## Functional Requirements
 
