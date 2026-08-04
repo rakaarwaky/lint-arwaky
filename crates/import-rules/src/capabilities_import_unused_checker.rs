@@ -80,14 +80,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             }
             if let Some(raw_path) = imported_aliases.get(alias) {
                 let rp = raw_path.value();
-                let is_likely_trait = rp.contains("prelude")
-                    || rp.contains("async_trait")
-                    || rp.ends_with("::io::Write")
-                    || alias_str.ends_with("Ext")
-                    || alias_str.ends_with("Iterator")
-                    || alias_str.ends_with("Stream")
-                    || alias_str == "Write";
-                if is_likely_trait {
+                if is_trait_import(&rp, alias_str) {
                     continue;
                 }
             }
@@ -118,4 +111,45 @@ impl UnusedImportRuleChecker {
     pub fn new() -> Self {
         Self
     }
+}
+
+/// Check if an import is a trait used for method dispatch scope.
+///
+/// In Rust, importing a trait is required even when calling its methods
+/// without explicitly naming the trait (method dispatch). The compiler
+/// resolves the method via the trait being in scope. Tree-sitter AST
+/// doesn't see an explicit identifier at the call site, so these imports
+/// appear "unused" but are semantically necessary.
+fn is_trait_import(raw_path: &str, alias_str: &str) -> bool {
+    // ─── AES naming convention: contract_*_protocol or *_protocol ───
+    if raw_path.contains("protocol") || raw_path.contains("contract") {
+        return true;
+    }
+    // ─── Well-known Rust trait paths ───
+    if raw_path.contains("prelude")
+        || raw_path.contains("async_trait")
+        || raw_path.ends_with("::io::Write")
+        || raw_path.ends_with("::fmt::Display")
+        || raw_path.ends_with("::fmt::Debug")
+        || raw_path.ends_with("::fmt::From")
+        || raw_path.ends_with("::fmt::Into")
+        || raw_path.ends_with("::clone::Clone")
+        || raw_path.ends_with("::cmp::PartialEq")
+        || raw_path.ends_with("::cmp::PartialOrd")
+        || raw_path.ends_with("::ops::Add")
+        || raw_path.ends_with("::ops::Deref")
+    {
+        return true;
+    }
+    // ─── Common trait suffix patterns ───
+    if alias_str.ends_with("Ext")
+        || alias_str.ends_with("Iterator")
+        || alias_str.ends_with("Stream")
+        || alias_str.ends_with("Protocol")
+        || alias_str.ends_with("Analyzer")
+        || alias_str == "Write"
+    {
+        return true;
+    }
+    false
 }

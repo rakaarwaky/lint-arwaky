@@ -217,3 +217,55 @@ fn aes203_used_identifiers_prevents_false_positive() {
         "Pre-extracted used identifiers should prevent false positives"
     );
 }
+
+// ─── AES203: Rust trait method dispatch ───────────────────
+
+#[test]
+fn aes203_trait_protocol_import_not_flagged() {
+    // ContractProtocol imported for method dispatch scope —
+    // the trait is never named explicitly at call sites,
+    // but the compiler needs it in scope to resolve methods.
+    let content = "use calculator_shared::contract_calculator_protocol::CalculatorProtocol;\n\n"
+        .to_string()
+        + "struct AdditionAnalyzer;\n\n"
+        + "impl AdditionAnalyzer {\n"
+        + "    fn evaluate(&self, x: i32) -> i32 { x }\n"
+        + "}\n";
+    let imports = vec![rust_use(
+        "calculator_shared::contract_calculator_protocol::CalculatorProtocol",
+    )];
+    let results = checker()
+        .check_unused_imports("/tmp/test/src/main.rs", &content, &imports, &[])
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Trait import used for method dispatch should not be flagged, got {} violations",
+        results.len()
+    );
+}
+
+#[test]
+fn aes203_trait_suffix_protocol_not_flagged() {
+    let content = "use some_crate::MyTrait;\n\nfn main() {\n    println!(\"hi\");\n}\n";
+    let imports = vec![rust_use("some_crate::MyTrait")];
+    let results = checker()
+        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[])
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Import with 'Trait' suffix should not be flagged"
+    );
+}
+
+#[test]
+fn aes203_actual_unused_still_flagged() {
+    let content = "use std::collections::HashMap;\n\nfn main() {\n    println!(\"hello\");\n}\n";
+    let imports = vec![rust_use("std::collections::HashMap")];
+    let results = checker()
+        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &[])
+        .unwrap();
+    assert!(
+        !results.is_empty(),
+        "Actual unused import must still be flagged"
+    );
+}

@@ -1,5 +1,140 @@
 # Agentic Engineering System Architecture
 
+## ⚠️ CRITICAL: Folder Structure Is BY FEATURE, NOT BY LAYER
+
+> **AI agents frequently make this mistake.** Do NOT create `surface/`, `taxonomy/`,
+> `contract/`, `capabilities/`, `utility/`, `agent/` folders. The correct structure
+> groups files **by feature**, with layers as **filenames**, not directories.
+
+### ❌ WRONG — Folder by Layer (DO NOT DO THIS)
+
+```
+my-feature/
+├── surface/           ← WRONG! No layer directories!
+│   └── surface_cli.rs
+├── taxonomy/
+│   └── taxonomy_path_vo.rs
+├── contract/
+│   └── contract_scan_protocol.rs
+├── capabilities/
+│   └── capabilities_checker.rs
+├── utility/
+│   └── utility_parser.rs
+└── agent/
+    └── agent_orchestrator.rs
+```
+
+### ✅ CORRECT — Folder by Feature, Files by Layer
+
+```
+my-feature/
+├── src/                               ← ONE flat src/ directory
+│   │
+│   │  ╔══════════════════════════════════════════════╗
+│   │  ║  LAYER ORDER (top to bottom = outside-in)    ║
+│   │  ╚══════════════════════════════════════════════╝
+│   │
+│   ├── surface_scan_command.rs        ← Surface layer (entry point)
+│   │
+│   ├── agent_scan_orchestrator.rs     ← Agent layer (orchestration)
+│   │
+│   ├── capabilities_scan_checker.rs   ← Capabilities (business logic)
+│   │
+│   ├── utility_scan_parser.rs         ← Utility (technical helpers)
+│   │
+│   ├── contract_scan_protocol.rs      ← Contract (interfaces)     [in shared/]
+│   └── taxonomy_scan_vo.rs            ← Taxonomy (domain types)   [in shared/]
+│
+├── tests/
+└── Cargo.toml
+```
+
+### 📐 Real Project Structure (lint-arwaky)
+
+```
+lint-arwaky/                              ← Project workspace root
+│
+├── crates/                               ← Rust workspace members
+│   ├── shared/                           ← SHARED: Taxonomy + Contract (all features)
+│   │   └── src/
+│   │       ├── taxonomy_path_vo.rs
+│   │       ├── taxonomy_severity_vo.rs
+│   │       ├── taxonomy_scan_result_entity.rs
+│   │       ├── contract_scan_protocol.rs
+│   │       └── contract_lint_aggregate.rs
+│   │
+│   ├── filesystem/                       ← FEATURE: File walking + AST parsing
+│   │   └── src/
+│   │       ├── agent_filesystem_orchestrator.rs      ← Agent
+│   │       ├── capabilities_ast_parser.rs            ← Capabilities
+│   │       ├── capabilities_dependency_graph.rs      ← Capabilities
+│   │       ├── capabilities_filesystem_io.rs         ← Capabilities
+│   │       ├── capabilities_tool_resolution.rs       ← Capabilities
+│   │       ├── capabilities_workspace.rs             ← Capabilities
+│   │       ├── utility_ast_python.rs                 ← Utility
+│   │       ├── utility_ast_rust.rs                   ← Utility
+│   │       ├── utility_ast_typescript.rs             ← Utility
+│   │       ├── utility_barrel_resolution.rs          ← Utility
+│   │       ├── utility_filesystem_io.rs              ← Utility
+│   │       ├── utility_import_extractor.rs           ← Utility
+│   │       ├── utility_tree_sitter_helpers.rs        ← Utility
+│   │       ├── root_filesystem_container.rs          ← Root
+│   │       └── lib.rs
+│   │
+│   ├── naming-rules/                     ← FEATURE: Naming convention checks
+│   │   └── src/
+│   │       ├── agent_naming_orchestrator.rs
+│   │       ├── capabilities_naming_checker.rs
+│   │       ├── utility_naming_resolver.rs
+│   │       ├── root_naming_container.rs
+│   │       └── lib.rs
+│   │
+│   ├── import-rules/                     ← FEATURE: Import boundary checks
+│   │   └── src/
+│   │       ├── agent_import_orchestrator.rs
+│   │       ├── capabilities_import_checker.rs
+│   │       ├── capabilities_import_module_parser.rs
+│   │       ├── utility_import_module_parser.rs
+│   │       ├── root_import_rules_container.rs
+│   │       └── lib.rs
+│   │
+│   ├── cli-commands/                     ← FEATURE: CLI surface
+│   │   └── src/
+│   │       ├── surface_scan_command.rs
+│   │       ├── surface_fix_command.rs
+│   │       ├── surface_config_command.rs
+│   │       ├── surface_ci_command.rs
+│   │       ├── surface_formatting.rs
+│   │       └── lib.rs
+│   │
+│   └── ... (18 crates total)
+│
+├── packages/                             ← TypeScript workspace members
+├── modules/                              ← Python modules
+│
+└── Cargo.toml                            ← Workspace manifest
+```
+
+### 🔑 Key Rules
+
+| Rule | Explanation |
+|------|-------------|
+| **File naming = layer indicator** | `surface_*`, `agent_*`, `capabilities_*`, `utility_*` prefixes identify the layer |
+| **Layer is filename, not folder** | Files live in `src/`, NOT in `src/surface/`, `src/agent/`, etc. |
+| **Shared = separate crate** | Taxonomy + Contract live in `shared/` crate, not inside each feature |
+| **Features are independent** | Each feature crate contains its own Surface → Agent → Capabilities → Utility |
+| **One feature = one crate** | `filesystem/`, `naming-rules/`, `import-rules/` are separate crates |
+
+### 🚫 Common AI Agent Mistakes
+
+1. **Creating layer folders** (`src/surface/`, `src/taxonomy/`) — NEVER DO THIS
+2. **Putting taxonomy in feature crate** — Taxonomy belongs in `shared/`
+3. **Creating empty `__init__.py` / `mod.rs`** — Use `lib.rs` or `index.ts` only
+4. **Mixing layers in same file** — One file = one layer = one role
+5. **Importing capabilities from agent** — Agent imports from Contract, not Capabilities
+
+---
+
 ## 1. Purpose
 
 The Agentic Engineering System is a layered, AI-native architecture pattern. It keeps domain models stable, business logic readable, technical detail isolated, and layer boundaries explicit enough for both humans and AI agents to modify the system safely.
@@ -10,14 +145,13 @@ The Agentic Engineering System is a layered, AI-native architecture pattern. It 
 
 The architecture supports multi-language workspaces.
 
-
 | Term               | Meaning                                                           |
-| -------------------- | ------------------------------------------------------------------- |
+| ------------------ | ----------------------------------------------------------------- |
 | Project Workspaces | Project root containing all configuration and language members    |
 | Workspace Member   | One self-contained crate, package, or module inside the workspace |
 | Crates directory   | Rust workspace members                                            |
 | Packages directory | TypeScript or JavaScript packages                                 |
-| Modules directory  | Python modules or sub-projects                                    |
+| Modules directory  | Python modules                                                   |
 
 ---
 
@@ -77,9 +211,8 @@ Taxonomy is the domain foundation layer. It defines the stable language of the d
 
 ### Components
 
-
 | Role         | Meaning                               |
-| -------------- | --------------------------------------- |
+| ------------ | ------------------------------------- |
 | Value object | Immutable data concept                |
 | Entity       | Stateful domain concept with identity |
 | Event        | Immutable domain fact                 |
@@ -107,9 +240,8 @@ Contract defines the public behavior of the system without exposing implementati
 
 ### Components
 
-
 | Role      | Meaning                                                                                           |
-| ----------- | --------------------------------------------------------------------------------------------------- |
+| --------- | ------------------------------------------------------------------------------------------------- |
 | Protocol  | Interface defining inbound behavior. It is implemented by Capabilities and consumed by the Agent. |
 | Aggregate | Facade definition implemented by Agent, used by Surface to access feature behavior.               |
 
@@ -173,9 +305,8 @@ Utility may depend only on Taxonomy.
 
 ### Technical Concern Examples
 
-
 | Concern                 | Responsibility                                      |
-| ------------------------- | ----------------------------------------------------- |
+| ----------------------- | --------------------------------------------------- |
 | File discovery          | Walk directories, detect files, apply ignore        |
 | External tool execution | Run linters, compilers, formatters, analyzers       |
 | Parsing and matching    | Parse text, match patterns, extract structured data |
@@ -257,17 +388,16 @@ monitor
 
 Capabilities generally handle two types of concerns:
 
-
-| Category                | Concern        | Responsibility                                 |
-| ------------------------- | ---------------- | ------------------------------------------------ |
+| Category                      | Concern        | Responsibility                                 |
+| ----------------------------- | -------------- | ---------------------------------------------- |
 | **Business Logic**      | Validation     | Check domain conditions or input correctness   |
-|                         | Computation    | Calculate scores, totals, or derived values    |
-|                         | Transformation | Map, filter, reduce, or reshape data           |
-|                         | Resolution     | Apply rules and decide outcomes                |
-|                         | Assessment     | Judge severity, compliance, grade, or quality  |
+|                               | Computation    | Calculate scores, totals, or derived values    |
+|                               | Transformation | Map, filter, reduce, or reshape data           |
+|                               | Resolution     | Apply rules and decide outcomes                |
+|                               | Assessment     | Judge severity, compliance, grade, or quality  |
 | **External Adaptation** | Repository     | Fetch or persist domain entities to a database |
-|                         | Integration    | Communicate with third-party services or APIs  |
-|                         | Provider       | Generate data from external systems            |
+|                               | Integration    | Communicate with third-party services or APIs  |
+|                               | Provider       | Generate data from external systems            |
 
 ### Special Rules
 
@@ -298,9 +428,8 @@ Agent may depend only on Taxonomy, Contract, and Utility.
 
 ### Allowed Flow Control
 
-
 | Flow Type               | Purpose                                |
-| ------------------------- | ---------------------------------------- |
+| ----------------------- | -------------------------------------- |
 | Sequential execution    | Run steps in order                     |
 | Looping                 | Process multiple items or events       |
 | Branching               | Choose path based on result            |
@@ -340,9 +469,8 @@ Surface roles include:
 
 ### Surface Groups
 
-
 | Group            | Roles                             | Dependencies                          | Rule                                                      |
-| ------------------ | ----------------------------------- | --------------------------------------- | ----------------------------------------------------------- |
+| ---------------- | --------------------------------- | ------------------------------------- | --------------------------------------------------------- |
 | Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate           |
 | Utility surfaces | hook, store, action, screen       | Taxonomy, Contract Aggregate, Utility | Support smart surfaces but must not import smart surfaces |
 | Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration              |
@@ -363,9 +491,8 @@ Root is the composition layer. It assembles the system by connecting concrete im
 
 ### Components
 
-
 | Role      | Meaning                                                                           |
-| ----------- | ----------------------------------------------------------------------------------- |
+| --------- | --------------------------------------------------------------------------------- |
 | Container | Wires one feature by connecting Capabilities to Contract protocols and aggregates |
 | Entry     | Bootstraps the application and composes feature containers                        |
 

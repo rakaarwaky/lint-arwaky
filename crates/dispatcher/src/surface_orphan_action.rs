@@ -181,9 +181,15 @@ pub fn collect_orphan(
     // (e.g., "crates/shared/src/taxonomy_operation_vo.rs"), member paths are like "crates/shared"
     for ws in workspaces.iter() {
         // member_path relative to workspace root: e.g., "crates/shared"
-        let member_rel = std::path::Path::new(&ws.path.value)
+        // BUG-FIX: ws.path.value may be relative (e.g., "workspaces-bad/crates/foo")
+        // while top_root_str is absolute. Canonicalize the member path first so
+        // strip_prefix works correctly in both relative and absolute input modes.
+        let ws_canonical = std::fs::canonicalize(&ws.path.value)
+            .unwrap_or_else(|_| top_root.join(&ws.path.value));
+        let member_rel = std::path::PathBuf::from(&ws_canonical)
             .strip_prefix(&top_root_str)
-            .unwrap_or(std::path::Path::new(&ws.path.value));
+            .unwrap_or_else(|_| std::path::Path::new(&ws.path.value))
+            .to_path_buf();
         let member_rel_str = member_rel.to_string_lossy().to_string();
         let filtered: Vec<_> = results
             .iter()
