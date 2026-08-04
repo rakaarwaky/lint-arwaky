@@ -123,11 +123,8 @@ impl ContractOrphanAnalyzer {
     ) -> bool {
         for cf in search_files {
             let cb = file_basename(cf);
-            let is_barrel = matches!(
-                cb.as_str(),
-                "__init__.py" | "mod.rs" | "index.ts" | "index.js"
-            );
-            if !is_barrel {
+            // Barrel file check (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+            if !shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&cb.as_str()) {
                 continue;
             }
             let barrel_content = content_map.get(cf).cloned().unwrap_or_default();

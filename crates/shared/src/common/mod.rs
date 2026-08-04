@@ -1,4 +1,5 @@
 // common — truly shared types used by multiple features
+pub mod taxonomy_default_constant;
 pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_list_vo;
@@ -49,6 +50,8 @@ pub mod utility_ts_parser;
 pub mod utility_value_object_generator;
 
 // ─── Re-exports ────────────────────────────────────────────
+pub use taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
+pub use taxonomy_default_constant::DEFAULT_RULE_EXCEPTIONS;
 pub use taxonomy_action_vo::ActionName;
 pub use taxonomy_action_vo::JobId;
 pub use taxonomy_adapter_error::AdapterError;

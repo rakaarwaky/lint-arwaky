@@ -138,14 +138,8 @@ fn find_barrel_file(module_path: &str, root_dir: &Path) -> Option<String> {
     let clean_path = normalize_module_path(module_path);
     let module_dir = base.join(&clean_path);
 
-    let barrel_candidates = [
-        "__init__.py",
-        "index.ts",
-        "index.js",
-        "index.tsx",
-        "index.jsx",
-        "mod.rs",
-    ];
+    // Use single source: shared::common::DEFAULT_RULE_EXCEPTIONS
+    let barrel_candidates: Vec<&str> = shared::common::DEFAULT_RULE_EXCEPTIONS.to_vec();
 
     // Check the module directory itself
     if let Some(found) = try_barrel_candidates(&module_dir, &barrel_candidates) {

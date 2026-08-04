@@ -728,17 +728,11 @@ impl FilesystemOrchestrator {
             return;
         }
 
-        let mut ignored: Vec<String> = vec![
-            "target/".into(),
-            "node_modules/".into(),
-            ".git/".into(),
-            "dist/".into(),
-            "build/".into(),
-            "__pycache__/".into(),
-            ".venv/".into(),
-            "tests/".into(),
-            "benches/".into(),
-        ];
+        // Merge single-source defaults + caller-provided patterns
+        let mut ignored: Vec<String> = shared::common::DEFAULT_IGNORED_PATHS
+            .iter()
+            .map(|s| format!("{}/", s))
+            .collect();
         ignored.extend_from_slice(extra_ignored);
 
         // Canonicalize root so discovered paths are absolute, matching the

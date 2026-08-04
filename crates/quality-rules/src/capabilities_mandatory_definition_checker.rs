@@ -153,10 +153,12 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             None => return,
         };
 
-        if matches!(
-            basename.as_str(),
-            "__init__.py" | "main.py" | "py.typed" | "mod.rs" | "lib.rs" | "main.rs"
-        ) {
+        // Skip barrel files + main.py (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+        if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&basename.as_str())
+            || basename == "main.py"
+            || basename == "py.typed"
+            || basename == "main.rs"
+        {
             return;
         }
         if basename.ends_with("_constant.rs") || basename.ends_with("_constant.py") {

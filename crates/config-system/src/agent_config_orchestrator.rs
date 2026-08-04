@@ -276,37 +276,13 @@ impl ConfigOrchestrator {
     }
 }
 
-/// FR-008: Build complete ignored paths from hardcoded defaults + config-specified paths.
+/// FR-008: Build ignored paths from config only.
+/// Defaults are owned by filesystem crate (DEFAULT_IGNORED_PATHS).
 fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
-    // FR-008: Default ignored paths (hardcoded, universal)
-    const DEFAULT_IGNORED: [&str; 8] = [
-        ".git",
-        "node_modules",
-        "target",
-        "dist",
-        "build",
-        "coverage",
-        ".venv",
-        "__pycache__",
-    ];
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut ignored: Vec<String> = Vec::with_capacity(config.ignored_paths.values.len());
 
-    // FR-008: Normalize default paths to platform separators for consistent dedup
-    let normalized_defaults: Vec<String> = DEFAULT_IGNORED
-        .iter()
-        .map(|s| s.replace('/', std::path::MAIN_SEPARATOR_STR))
-        .collect();
-
-    let mut seen: std::collections::HashSet<String> =
-        std::collections::HashSet::from_iter(normalized_defaults.iter().cloned());
-    // Pre-allocated capacity: 8 defaults + config count
-    let mut ignored: Vec<String> = Vec::with_capacity(8 + config.ignored_paths.values.len());
-
-    // Add default paths
-    for name in &normalized_defaults {
-        ignored.push(name.clone());
-    }
-
-    // FR-008: Config-specified paths appended with dedup, empty strings filtered
+    // Config-specified paths with dedup, empty strings filtered
     for fp in config.ignored_paths.values.iter() {
         let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
         if !v.is_empty() && seen.insert(v.clone()) {

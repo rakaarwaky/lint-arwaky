@@ -97,29 +97,19 @@ impl FilePath {
     }
 
     /// Check if the path is a barrel file (module re-export aggregator).
+    /// Uses shared::common::DEFAULT_RULE_EXCEPTIONS as single source of truth.
     pub fn is_barrel_file(&self) -> bool {
         let f = self.basename();
-        matches!(
-            f.as_ref(),
-            "__init__.py" | "mod.rs" | "index.ts" | "index.js" | "index.tsx" | "index.jsx"
-        )
+        super::DEFAULT_RULE_EXCEPTIONS.contains(&f.as_ref())
     }
 
     /// Check if the path is a module/layer entry point file.
+    /// Uses shared::common::DEFAULT_RULE_EXCEPTIONS for barrel files.
     pub fn is_entry_point(&self) -> bool {
         let f = self.basename();
-        matches!(
-            f.as_ref(),
-            "__init__.py"
-                | "py.typed"
-                | "lib.rs"
-                | "main.rs"
-                | "build.rs"
-                | "index.ts"
-                | "index.js"
-                | "index.tsx"
-                | "index.jsx"
-        )
+        super::DEFAULT_RULE_EXCEPTIONS.contains(&f.as_ref())
+            || f == "py.typed"
+            || f == "main.rs"
     }
 }
 

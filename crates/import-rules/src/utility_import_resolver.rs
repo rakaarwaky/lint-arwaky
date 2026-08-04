@@ -187,17 +187,9 @@ pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
 }
 
 /// Check if a filename is a barrel/re-export file.
+/// Uses shared::common::DEFAULT_RULE_EXCEPTIONS as single source of truth.
 pub fn is_barrel_file(filename: &str) -> bool {
-    matches!(
-        filename,
-        "__init__.py"
-            | "mod.rs"
-            | "lib.rs"
-            | "index.ts"
-            | "index.js"
-            | "index.tsx"
-            | "index.jsx"
-    )
+    shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename)
 }
 
 /// Check if a symbol is a Python `__future__` import.

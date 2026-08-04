@@ -25,6 +25,7 @@ pub fn identify_entry_points(
             .iter()
             .filter(|f| {
                 let basename = f.rsplit('/').next().unwrap_or(f);
+                // Entry point patterns (not orphans)
                 basename.ends_with("_container.rs")
                     || basename.ends_with("_container.py")
                     || basename.ends_with("_container.ts")
@@ -35,15 +36,12 @@ pub fn identify_entry_points(
                     || basename.ends_with("_entry.js")
                     || basename.starts_with("root_")
                     || basename == "main.rs"
-                    || basename == "lib.rs"
                     || basename == "main.py"
                     || basename == "__main__.py"
                     || basename == "main.ts"
                     || basename == "main.js"
-                    || basename == "index.ts"
-                    || basename == "index.js"
-                    || basename == "index.tsx"
-                    || basename == "index.jsx"
+                    // Barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+                    || shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&basename)
             })
             .cloned()
             .collect()

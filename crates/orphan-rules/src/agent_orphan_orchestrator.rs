@@ -392,19 +392,9 @@ impl ArchOrphanAnalyzer {
         top_root: &str,
         content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult {
-        // Barrel file exceptions — package markers and re-export files, not logic
-        if f.ends_with("__init__.py")
-            || f.ends_with("/mod.rs")
-            || f.ends_with("\\mod.rs")
-            || f.ends_with("/index.ts")
-            || f.ends_with("\\index.ts")
-            || f.ends_with("/index.js")
-            || f.ends_with("\\index.js")
-            || f.ends_with("/index.tsx")
-            || f.ends_with("\\index.tsx")
-            || f.ends_with("/index.jsx")
-            || f.ends_with("\\index.jsx")
-        {
+        // Barrel file exceptions (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+        let basename = f.rsplit(['/', '\\']).next().unwrap_or(f);
+        if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&basename) {
             return OrphanIndicatorResult::new(false, String::new(), Severity::HIGH);
         }
 
@@ -492,16 +482,15 @@ impl ArchOrphanAnalyzer {
             "_entry.js".into(),
             "root_".into(),
             "main.rs".into(),
-            "lib.rs".into(),
             "main.py".into(),
             "__main__.py".into(),
             "main.ts".into(),
             "main.js".into(),
-            "index.ts".into(),
-            "index.js".into(),
-            "index.tsx".into(),
-            "index.jsx".into(),
         ];
+        // Add barrel files from single source (shared::common::DEFAULT_RULE_EXCEPTIONS)
+        for pat in shared::common::DEFAULT_RULE_EXCEPTIONS {
+            entry_points.push(pat.to_string());
+        }
         for layer_def in self.config.layers.values() {
             entry_points.extend(layer_def.orphan.orphan_entry_points.values.iter().cloned());
         }

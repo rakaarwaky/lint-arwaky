@@ -1,7 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════
 # lint_arwaky.config.yaml — Unified configuration for all languages
-# Replaces: lint_arwaky.config.rust.yaml, lint_arwaky.config.python.yaml,
-#           lint_arwaky.config.typescript.yaml, lint_arwaky.config.javascript.yaml
 # ═══════════════════════════════════════════════════════════════════════
 
 thresholds:
@@ -39,28 +37,12 @@ adapters:
 ignored_rules: []
 
 ignored_paths:
-  - "/target"
-  - "/.git"
-  - "/node_modules"
   - ".min.js"
   - ".min.css"
   - "/.dsc_cache"
-  - "/tests"
-  - "/benches"
-  - "./output"
-  - "/dist"
-  - "/build"
   - "/.tsbuildinfo"
   - "/.next"
-  - "/coverage"
   - "/__pycache__"
-  - "/.venv"
-  - "/venv"
-  - "/.mypy_cache"
-  - "/.ruff_cache"
-  - "build.rs"
-  - "/build.rs"
-  - "**/build.rs"
 
 # ─── Architecture rules (superset, shared across all languages) ───────
 architecture:
@@ -79,16 +61,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions:
-        [
-          "lib.rs",
-          "mod.rs",
-          "build.rs",
-          "__init__.py",
-          "index.js",
-          "index.ts",
-          "index.tsx"
-        ]
+      exceptions: []
 
     AES102:
       enabled: true
@@ -102,18 +75,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "build.rs",
-          "__init__.py",
-          "main.py",
-          "lib.py",
-          "index.js",
-          "index.ts",
-        ]
+      exceptions: []
       layers:
         taxonomy:
           suffix:
@@ -185,27 +147,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -299,27 +241,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "main.ts",
-          "main.js",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -404,25 +326,17 @@ architecture:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "root_cli_main_entry.rs",
-          "root_mcp_main_entry.rs",
-          "root_tui_main_entry.rs",
-        ]
+      exceptions: []
 
     AES204:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: []
 
     AES205:
       enabled: true
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: []
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
 
@@ -432,70 +346,20 @@ architecture:
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
       max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
 
     AES302:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
       min_lines: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
 
     AES303:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "main.ts",
-          "main.js",
-        ]
+      exceptions: []
 
     AES304:
       enabled: true
@@ -525,25 +389,13 @@ architecture:
           "// @ts-expect-error",
           "// @ts-nocheck",
         ]
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: []
 
     AES305:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "surface_check_command.rs",
-          "surface_external_action.rs",
-          "surface_import_action.rs",
-          "surface_naming_action.rs",
-          "surface_orphan_action.rs",
-          "surface_quality_action.rs",
-          "surface_role_action.rs",
-        ]
+      exceptions: []
 
     # ─── AES400: Role ───
     AES401:
@@ -554,97 +406,25 @@ architecture:
     AES402:
       enabled: true
       scope: ["contract(aggregate)", "contract(protocol)"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
 
     AES403:
       enabled: true
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
 
     AES404:
       enabled: true
       scope: ["utility"]
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
 
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
       max_lines: 1000
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
 
     AES406:
       enabled: true
@@ -655,25 +435,7 @@ architecture:
           "surface(component|view|layout)",
         ]
       max_functions: 15
-      exceptions:
-        [
-          "main.rs",
-          "lib.rs",
-          "mod.rs",
-          "__init__.py",
-          "__main__.py",
-          "main.py",
-          "index.ts",
-          "index.js",
-          "index.tsx",
-          "index.jsx",
-          "cli_main_entry.ts",
-          "cli_main_entry.js",
-          "mcp_main_entry.ts",
-          "mcp_main_entry.js",
-          "tui_main_entry.ts",
-          "tui_main_entry.js",
-        ]
+      exceptions: []
 
     # ─── AES500: Orphan ───
     AES501:

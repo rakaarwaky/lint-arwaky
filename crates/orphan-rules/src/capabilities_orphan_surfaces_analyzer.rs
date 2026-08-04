@@ -88,17 +88,13 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                         || imp_b.ends_with("_entry.ts")
                         || imp_b.ends_with("_entry.js")
                         || imp_b.starts_with("root_")
-                        || matches!(
-                            imp_b.as_str(),
-                            "main.rs"
-                                | "lib.rs"
-                                | "main.py"
-                                | "__main__.py"
-                                | "main.ts"
-                                | "main.js"
-                                | "index.ts"
-                                | "index.js"
-                        )
+                        || imp_b == "main.rs"
+                        || imp_b == "main.py"
+                        || imp_b == "__main__.py"
+                        || imp_b == "main.ts"
+                        || imp_b == "main.js"
+                        // Barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+                        || shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&imp_b.as_str())
                 });
                 if !has_valid_consumer {
                     return OrphanIndicatorResult::new(
@@ -126,17 +122,13 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                         || imp_b.ends_with("_entry.ts")
                         || imp_b.ends_with("_entry.js")
                         || imp_b.starts_with("root_")
-                        || matches!(
-                            imp_b.as_str(),
-                            "main.rs"
-                                | "lib.rs"
-                                | "main.py"
-                                | "__main__.py"
-                                | "main.ts"
-                                | "main.js"
-                                | "index.ts"
-                                | "index.js"
-                        )
+                        || imp_b == "main.rs"
+                        || imp_b == "main.py"
+                        || imp_b == "__main__.py"
+                        || imp_b == "main.ts"
+                        || imp_b == "main.js"
+                        // Barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+                        || shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&imp_b.as_str())
                 });
                 if !has_valid_consumer {
                     return OrphanIndicatorResult::new(

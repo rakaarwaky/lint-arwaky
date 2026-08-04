@@ -32,7 +32,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
             None => return,
         };
 
-        if basename == "__init__.py" || basename == "mod.rs" {
+        // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+        if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&basename.as_str()) {
             return;
         }
 

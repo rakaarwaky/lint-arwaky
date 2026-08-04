@@ -154,7 +154,8 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                     return v;
                 }
 
-                if matches!(filename, "__init__.py" | "mod.rs" | "index.ts" | "index.js") {
+                // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+                if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) {
                     return v;
                 }
 

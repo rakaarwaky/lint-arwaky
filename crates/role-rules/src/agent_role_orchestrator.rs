@@ -83,13 +83,9 @@ impl RoleOrchestrator {
                 .unwrap_or_default();
             let prefix = stem.split('_').next().unwrap_or_default();
 
-            // Skip barrel files
-            if filename == "mod.rs"
-                || filename == "lib.rs"
+            // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+            if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename)
                 || filename == "main.rs"
-                || filename == "__init__.py"
-                || filename == "index.ts"
-                || filename == "index.js"
             {
                 continue;
             }
