@@ -576,11 +576,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
         // Build forward graph from import entries (source → targets)
         let imports = self.imports.get().cloned().unwrap_or_default();
-        eprintln!(
-            "[debug build_graph] imports count={}, first few: {:?}",
-            imports.len(),
-            imports.iter().take(3).map(|i| (&i.raw_path, i.resolved_path.as_ref().map(|p| p.to_string_lossy().to_string()))).collect::<Vec<_>>()
-        );
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
@@ -616,32 +611,58 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                     .as_ref()
                     .map(|p| path_to_relative(p, &top_root))
             } else {
-                // Resolve Use imports (e.g. `use crate::foo::Bar`) to file paths
-                // by stripping the `crate::` prefix, taking the first segment,
-                // and looking up `{segment}.rs` in the same directory.
+                // Resolve unresolved imports to file paths:
+                // 1. Rust `use crate::foo::Bar` → look up `foo.rs` in same dir
+                // 2. TS/JS `import from "./foo"` or `export from "./foo"` → resolve relative path
                 let raw = &imp.raw_path;
-                let module = raw
-                    .strip_prefix("crate::")
-                    .or_else(|| raw.strip_prefix("super::"))
-                    .unwrap_or(raw);
-                let root_seg = module.split("::").next().unwrap_or("");
-                if !root_seg.is_empty() {
-                    let src_dir = std::path::Path::new(&src_rel)
-                        .parent()
-                        .map(|p| p.to_string_lossy().to_string())
-                        .unwrap_or_default();
-                    let candidate = if src_dir.is_empty() {
-                        format!("{}.rs", root_seg)
-                    } else {
-                        format!("{}/{}.rs", src_dir, root_seg)
-                    };
+                let src_dir = std::path::Path::new(&src_rel)
+                    .parent()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_default();
+
+                if raw.starts_with("./") || raw.starts_with("../") {
+                    // Relative path (TS/JS) — resolve relative to source file directory
+                    let base = std::path::Path::new(&src_dir);
+                    let rel = raw.strip_prefix("./").unwrap_or(raw);
+                    let candidate = base.join(rel).to_string_lossy().to_string();
+                    // Try with extensions if no extension present
                     if all_files_set.contains(candidate.as_str()) {
                         Some(candidate)
+                    } else if !candidate.contains('.') {
+                        // Try common extensions
+                        let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
+                        exts.iter().find_map(|ext| {
+                            let c = format!("{}{}", candidate, ext);
+                            if all_files_set.contains(c.as_str()) {
+                                Some(c)
+                            } else {
+                                None
+                            }
+                        })
                     } else {
                         None
                     }
                 } else {
-                    None
+                    // Rust `use crate::foo::Bar` — strip prefix, take root segment
+                    let module = raw
+                        .strip_prefix("crate::")
+                        .or_else(|| raw.strip_prefix("super::"))
+                        .unwrap_or(raw);
+                    let root_seg = module.split("::").next().unwrap_or("");
+                    if !root_seg.is_empty() {
+                        let candidate = if src_dir.is_empty() {
+                            format!("{}.rs", root_seg)
+                        } else {
+                            format!("{}/{}.rs", src_dir, root_seg)
+                        };
+                        if all_files_set.contains(candidate.as_str()) {
+                            Some(candidate)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
                 }
             };
             if let Some(tgt_rel) = target {
@@ -655,11 +676,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         // (e.g. `use crate::foo::Bar`) are also visible as inbound links.
         // The graph protocol's reverse_links() only tracks Mod imports because
         // Use imports have no resolved_path and create edges to phantom external nodes.
-        eprintln!(
-            "[debug build_graph] forward graph size={}, keys: {:?}",
-            forward.len(),
-            forward.keys().take(5).collect::<Vec<_>>()
-        );
         let mut reverse: HashMap<String, Vec<String>> = HashMap::new();
         for (src, targets) in &forward {
             for tgt in targets {
@@ -713,13 +729,15 @@ impl FilesystemOrchestrator {
         }
 
         let mut ignored: Vec<String> = vec![
-            "target".into(),
-            "node_modules".into(),
-            ".git".into(),
-            "dist".into(),
-            "build".into(),
-            "__pycache__".into(),
-            ".venv".into(),
+            "target/".into(),
+            "node_modules/".into(),
+            ".git/".into(),
+            "dist/".into(),
+            "build/".into(),
+            "__pycache__/".into(),
+            ".venv/".into(),
+            "tests/".into(),
+            "benches/".into(),
         ];
         ignored.extend_from_slice(extra_ignored);
 

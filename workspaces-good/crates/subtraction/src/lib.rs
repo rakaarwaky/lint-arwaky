@@ -1,1 +1,1 @@
-pub mod capability_subtraction_analyzer;
+pub mod capabilities_subtraction_analyzer;

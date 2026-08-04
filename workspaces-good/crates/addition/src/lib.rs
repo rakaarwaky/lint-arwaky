@@ -1,1 +1,1 @@
-pub mod capability_addition_analyzer;
+pub mod capabilities_addition_analyzer;

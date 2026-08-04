@@ -36,6 +36,7 @@ ignored_paths:
   - "/venv"
   - "/.mypy_cache"
   - "/.ruff_cache"
+  - "/webview/"
 
 architecture:
   enabled: true
@@ -62,6 +63,13 @@ architecture:
           "tui_main_entry.py",
           "index.js",
           "index.ts",
+          "App.tsx",
+          "index.tsx",
+          "types.ts",
+          "DependencyGraph.tsx",
+          "ViolationList.tsx",
+          "LayerBadge.tsx",
+          "useGraphData.ts",
         ]
 
     AES102:

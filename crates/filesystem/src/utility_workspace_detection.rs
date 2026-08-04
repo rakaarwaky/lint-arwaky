@@ -298,15 +298,18 @@ pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
 }
 
 /// Discover source files under root, skipping ignored directories during traversal.
+/// Uses `ignore::WalkBuilder` for efficient directory skipping plus a post-walk
+/// filter using `is_path_ignored` to handle all config-specified patterns.
 pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
     let mut builder = ignore::WalkBuilder::new(root);
     builder.hidden(false).git_ignore(true);
-    // Skip ignored directories/subtrees during traversal (not after).
+    // Also add to ignore::WalkBuilder for efficient subtree skipping.
     for pat in ignored {
         builder.add_ignore(pat.as_str());
     }
     let walker = builder.build();
     let exts: Vec<&str> = vec!["rs", "py", "js", "ts", "jsx", "tsx"];
+    let abs_root = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
     walker
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().map(|ft| ft.is_file()).unwrap_or(false))
@@ -316,6 +319,14 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .and_then(|ext| ext.to_str())
                 .map(|ext| exts.contains(&ext))
                 .unwrap_or(false)
+        })
+        // Post-walk filter: convert to relative path then use is_path_ignored.
+        // This handles patterns like "/tests", "/benches", "tests/", "tests", etc.
+        .filter(|e| {
+            let abs_path = e.path().canonicalize().unwrap_or_else(|_| e.path().to_path_buf());
+            let rel_path = abs_path.strip_prefix(&abs_root).unwrap_or(e.path());
+            let rel_str = rel_path.to_string_lossy();
+            !crate::utility_filesystem_io::is_path_ignored(&rel_str, ignored)
         })
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()

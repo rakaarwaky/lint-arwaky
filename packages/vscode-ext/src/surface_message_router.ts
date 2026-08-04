@@ -4,7 +4,7 @@ Maps message commands to webview posting.
 */
 
 import * as vscode from "vscode";
-import { ExtensionToWebviewMessage } from "@lint-arwaky/shared/src/taxonomy_webview_message";
+import { ExtensionToWebviewMessage } from "@lint-arwaky/shared/src/taxonomy_webview_vo";
 
 export class MessageRouter {
   constructor(private readonly webview: vscode.Webview | undefined) {}

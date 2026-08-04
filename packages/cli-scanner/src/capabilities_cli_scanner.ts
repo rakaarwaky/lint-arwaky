@@ -38,7 +38,7 @@ export class CliScannerAdapter implements IScannerProtocol {
   private resolveCliPath(): string {
     const config = vscode.workspace.getConfiguration("lint-arwaky");
     const configured = config.get<string>("cliPath", this.cliPath);
-    const resolved = whichSync(configured, { nothrow: true });
+    const resolved = whichSync(configured);
 
     if (!resolved) {
       const installCmd =

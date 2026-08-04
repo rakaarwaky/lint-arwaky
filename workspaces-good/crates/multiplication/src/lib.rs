@@ -1,1 +1,1 @@
-pub mod capability_multiplication_analyzer;
+pub mod capabilities_multiplication_analyzer;

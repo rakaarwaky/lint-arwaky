@@ -1,1 +1,1 @@
-pub mod capability_division_analyzer;
+pub mod capabilities_division_analyzer;

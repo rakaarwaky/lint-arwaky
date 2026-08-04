@@ -8,7 +8,7 @@ import * as vscode from "vscode";
 import { ScanRequestVO, createScanRequest } from "@lint-arwaky/shared/src/taxonomy_scan_request_vo";
 import { IScannerAggregate } from "@lint-arwaky/shared/src/contract_scanner_aggregate";
 import { IGraphAggregate } from "@lint-arwaky/shared/src/contract_graph_aggregate";
-import { WebviewToExtensionMessage } from "@lint-arwaky/shared/src/taxonomy_webview_message";
+import { WebviewToExtensionMessage } from "@lint-arwaky/shared/src/taxonomy_webview_vo";
 import { WebviewManager } from "./surface_webview_manager";
 
 // ─── Block 1: Class Definition & Constructor ──────────────
