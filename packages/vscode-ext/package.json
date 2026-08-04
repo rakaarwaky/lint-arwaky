@@ -1,0 +1,14 @@
+{
+  "name": "@lint-arwaky/vscode-ext",
+  "version": "0.0.1",
+  "description": "Surface: VS Code command entry points for lint-arwaky",
+  "main": "src/surface_scan_command.ts",
+  "private": true,
+  "dependencies": {
+    "@lint-arwaky/shared": "*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0"
+  }
+}

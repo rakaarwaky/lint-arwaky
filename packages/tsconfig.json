@@ -1,18 +1,19 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES2022",
-    "lib": ["ES2022"],
     "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "declaration": false,
-    "sourceMap": true
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@lint-arwaky/shared/*": ["shared/src/*"],
+      "@lint-arwaky/cli-scanner/*": ["cli-scanner/src/*"],
+      "@lint-arwaky/vscode-ext/*": ["vscode-ext/src/*"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "root_extension_entry.ts",
+    "shared/src/**/*",
+    "cli-scanner/src/**/*",
+    "vscode-ext/src/**/*"
+  ]
 }
