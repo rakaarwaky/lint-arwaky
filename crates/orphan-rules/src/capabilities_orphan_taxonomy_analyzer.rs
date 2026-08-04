@@ -29,7 +29,21 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     ) -> OrphanIndicatorResult {
         let stem = file_stem(f.value());
 
-        let importers = match inbound_links.get_importers(f.value()) {
+        // In unified workspace scans, f.value() is absolute but inbound_links keys
+        // are relative paths. Try the absolute path first, then fall back to matching
+        // by suffix (relative path is always a suffix of the absolute path).
+        let importers = inbound_links.get_importers(f.value()).or_else(|| {
+            let path_str = f.value();
+            inbound_links.0.keys().find_map(|key| {
+                if path_str.ends_with(key) {
+                    inbound_links.0.get(key)
+                } else {
+                    None
+                }
+            })
+        });
+
+        let importers = match importers {
             Some(v) => v,
             None => {
                 return OrphanIndicatorResult::new(

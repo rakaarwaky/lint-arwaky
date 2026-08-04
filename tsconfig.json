@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./packages/dist",
+    "rootDir": "./packages",
+    "baseUrl": ".",
+    "paths": {
+      "@lint-arwaky/shared/*": ["packages/shared/*"],
+      "@lint-arwaky/cli-scanner/*": ["packages/cli-scanner/*"],
+      "@lint-arwaky/vscode-ext/*": ["packages/vscode-ext/*"]
+    }
+  },
+  "include": [
+    "packages/root_extension_entry.ts",
+    "packages/shared/src/**/*",
+    "packages/cli-scanner/src/**/*",
+    "packages/vscode-ext/src/**/*"
+  ]
+}

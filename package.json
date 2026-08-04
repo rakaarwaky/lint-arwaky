@@ -11,7 +11,7 @@
     "Linters"
   ],
   "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./packages/dist/root_extension_entry.js",
   "contributes": {
     "commands": [
       {
@@ -46,8 +46,13 @@
   "scripts": {
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint packages --ext ts"
   },
+  "workspaces": [
+    "packages/shared",
+    "packages/cli-scanner",
+    "packages/vscode-ext"
+  ],
   "devDependencies": {
     "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",

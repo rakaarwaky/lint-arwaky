@@ -12,4 +12,12 @@ workspaces-bad/**
 workspaces-good/**
 target/**
 *.md
-!README.md
+AGENTS.md
+ARCHITECTURE.md
+CONTRIBUTING.md
+MIGRATION_*.md
+PRD.md
+TEST.md
+DEPLOY.md
+CHANGELOG.md
+LICENSE

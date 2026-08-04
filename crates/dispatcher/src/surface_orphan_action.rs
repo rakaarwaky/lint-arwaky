@@ -165,15 +165,20 @@ pub fn collect_orphan(
     let unified_orphan_files =
         shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(all_file_paths);
 
-    // Build ONE graph context from ALL files — this sees cross-member imports
+    // Build ONE graph context from ALL files — this sees cross-member imports.
+    // Use top_root (absolute workspace root) as root_dir so that path resolution
+    // in _check_orphans_inner computes the correct top_root for joining relative
+    // file paths. Using a member path (first_ws.path) would cause path mismatch
+    // since unified_orphan_files are relative to the workspace root.
+    let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
     let unified_context =
-        unified_orchestrator.build_orphan_graph_context(&unified_orphan_files, &first_ws.path);
+        unified_orchestrator.build_orphan_graph_context(&unified_orphan_files, &root_fp);
 
     // Now run orphan checks using unified file list so cross-member imports are visible.
     // Violations are filtered to each member afterward.
     let results = unified_orchestrator.check_orphans_with_context(
         &unified_orphan_files,
-        &first_ws.path,
+        &root_fp,
         &unified_context,
     );
 
