@@ -1,3 +1,4 @@
+use crate::utility_orphan_filename::content_contains_whole_word;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::IAgentOrphanProtocol;
@@ -16,11 +17,6 @@ impl Default for AgentOrphanAnalyzer {
 impl AgentOrphanAnalyzer {
     pub fn new() -> Self {
         Self
-    }
-
-    fn content_contains_word(text: &str, word: &str) -> bool {
-        text.split(|c: char| !c.is_alphanumeric() && c != '_')
-            .any(|w| w == word)
     }
 
     fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
@@ -86,7 +82,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                 let candidate_content = content_map.get(&**cf).cloned().unwrap_or_default();
                 aggregate_traits
                     .iter()
-                    .any(|t| Self::content_contains_word(&candidate_content, t))
+                    .any(|t| content_contains_whole_word(&candidate_content, t))
             });
 
             if !is_referenced {

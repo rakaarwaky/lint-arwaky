@@ -101,3 +101,11 @@ pub fn file_suffix(path: &str) -> String {
         None => String::new(),
     }
 }
+
+/// Check if a whole word exists in the text, ignoring punctuation and whitespace.
+/// Used for identifier matching in contract and agent orphan detection.
+/// Pure function — no state, no I/O.
+pub fn content_contains_whole_word(text: &str, word: &str) -> bool {
+    text.split(|c: char| !c.is_alphanumeric() && c != '_')
+        .any(|w| w == word)
+}

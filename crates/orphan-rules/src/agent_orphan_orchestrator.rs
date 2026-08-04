@@ -1,6 +1,6 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
 use shared::quality_rules::taxonomy_analysis_vo::{
-    GraphAnalysisContext, ImportGraph, OrphanIndicatorResult, ReachabilityResult,
+    GraphAnalysisContext, OrphanIndicatorResult, ReachabilityResult,
 };
 
 use shared::common::taxonomy_path_vo::FilePath;
@@ -27,12 +27,11 @@ use shared::role_rules::taxonomy_layer_names_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
 
-use std::collections::VecDeque;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use tracing::{debug, instrument};
+use tracing::{debug, instrument, trace};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -154,12 +153,12 @@ impl ArchOrphanAnalyzer {
             .iter()
             .filter(|f| f.contains("surface"))
             .count();
-        eprintln!(
-            "[debug _check_orphans_inner] root='{}', total_files={}, surface_files={}, all_ws={}",
-            root_dir.value,
-            files.values.len(),
-            surface_count,
-            context.all_workspace_files.len()
+        debug!(
+            root = root_dir.value,
+            total_files = files.values.len(),
+            surface_files = surface_count,
+            all_ws = context.all_workspace_files.len(),
+            "orphan inner scan started"
         );
         let configured = self.get_orphan_entry_points();
         let configured_vo =
@@ -188,7 +187,8 @@ impl ArchOrphanAnalyzer {
             .filesystem
             .workspace_root(root_dir)
             .unwrap_or_else(|| root_path.to_path_buf());
-        let alive_set = self._trace_reachability(&entry_points.values, &context.import_graph);
+        let alive_set =
+            crate::utility_orphan_graph::trace_reachability(&entry_points.values, &context.import_graph);
         let alive_result = ReachabilityResult::new(
             alive_set
                 .iter()
@@ -219,19 +219,18 @@ impl ArchOrphanAnalyzer {
                 abs.to_string_lossy().to_string()
             })
             .collect();
-        // Pre-read all file contents into a map so capabilities don't do I/O.
+        // Pre-read all file contents from bounded cache so capabilities don't do I/O.
         let content_map: HashMap<String, String> = all_files
             .iter()
             .filter_map(|f| {
-                let c = self
-                    .deps
-                    .filesystem
-                    .read_to_string(std::path::Path::new(f))
-                    .unwrap_or_default();
+                let path = FilePath::new(f.clone()).ok()?;
+                let content = self.deps.filesystem.read_cached(&path);
+                let c = content.value();
                 if c.is_empty() {
+                    tracing::warn!(file = %f, "file content empty or not in cache");
                     None
                 } else {
-                    Some((f.clone(), c))
+                    Some((f.clone(), c.to_string()))
                 }
             })
             .collect();
@@ -270,32 +269,29 @@ impl ArchOrphanAnalyzer {
         top_root_str: &str,
         content_map: &HashMap<String, String>,
     ) -> Option<LintResult> {
-        static DEBUG_COUNT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-        let dc = DEBUG_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         // Resolve relative path to absolute so sub-analyzers can read file contents
         let abs_f = std::path::Path::new(top_root_str).join(f);
         let abs_f_str = abs_f.to_string_lossy().to_string();
         let file_fp = match FilePath::new(&abs_f_str) {
             Ok(fp) => fp,
             Err(_) => {
-                if dc < 5 {
-                    debug!(file = f, abs_path = abs_f_str, "SKIP bad path");
-                }
+                trace!(file = f, abs_path = abs_f_str, "SKIP bad path");
                 return None;
             }
         };
         let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
         let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename);
         if filename.contains("surface") {
-            eprintln!(
-                "[debug surface] f='{}', filename='{}', base_layer={:?}, top_root='{}'",
-                f, filename, base_layer, top_root_str
+            trace!(
+                file = f,
+                filename = filename,
+                base_layer = ?base_layer,
+                top_root = top_root_str,
+                "processing surface file"
             );
         }
         if base_layer.is_none() {
-            if dc < 5 {
-                debug!(file = f, filename = filename, "SKIP no layer prefix");
-            }
+            trace!(file = f, filename = filename, "SKIP no layer prefix");
             return None;
         }
         let base_layer = base_layer.unwrap();
@@ -317,15 +313,11 @@ impl ArchOrphanAnalyzer {
 
         let basename = file_fp.basename();
         if definition.exceptions.values.contains(&basename) {
-            if dc < 5 {
-                debug!(file = f, basename = basename, "SKIP exception");
-            }
+            trace!(file = f, basename = basename, "SKIP exception");
             return None;
         }
         if !definition.orphan.check_orphan.value {
-            if dc < 5 {
-                debug!(file = f, "SKIP no orphan check");
-            }
+            trace!(file = f, "SKIP no orphan check");
             return None;
         }
 
@@ -354,9 +346,12 @@ impl ArchOrphanAnalyzer {
             content_map,
         );
         if code == "AES506" {
-            eprintln!(
-                "[debug AES506] file='{}', abs='{}', is_orphan={}, reason='{}'",
-                f, abs_f_str, res.is_orphan, res.reason
+            trace!(
+                file = f,
+                abs_path = abs_f_str,
+                is_orphan = res.is_orphan,
+                reason = %res.reason,
+                "AES506 surface check"
             );
         }
         if res.is_orphan {
@@ -385,23 +380,6 @@ impl ArchOrphanAnalyzer {
             }),
             related_locations: LocationList::new(),
         }
-    }
-
-    fn _trace_reachability(&self, entry_points: &[String], graph: &ImportGraph) -> HashSet<String> {
-        let mut reachable: HashSet<String> = entry_points.iter().cloned().collect();
-        let mut queue: VecDeque<String> = entry_points.iter().cloned().collect();
-
-        while let Some(current) = queue.pop_front() {
-            if let Some(neighbors) = graph.mapping.get(&current) {
-                for neighbor in neighbors {
-                    if reachable.insert(neighbor.clone()) {
-                        queue.push_back(neighbor.clone());
-                    }
-                }
-            }
-        }
-
-        reachable
     }
 
     fn _evaluate_layer(

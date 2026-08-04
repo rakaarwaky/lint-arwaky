@@ -1,4 +1,4 @@
-use crate::utility_orphan_filename::{file_basename, file_suffix};
+use crate::utility_orphan_filename::{content_contains_whole_word, file_basename, file_suffix};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -108,7 +108,7 @@ impl ContractOrphanAnalyzer {
             }
             let content = content_map.get(cf).cloned().unwrap_or_default();
             for trait_name in trait_names {
-                if Self::content_contains_word(&content, trait_name) {
+                if content_contains_whole_word(&content, trait_name) {
                     return true;
                 }
             }
@@ -132,17 +132,12 @@ impl ContractOrphanAnalyzer {
             }
             let barrel_content = content_map.get(cf).cloned().unwrap_or_default();
             for trait_name in trait_names {
-                if Self::content_contains_word(&barrel_content, trait_name) {
+                if content_contains_whole_word(&barrel_content, trait_name) {
                     return true;
                 }
             }
         }
         false
-    }
-
-    fn content_contains_word(text: &str, word: &str) -> bool {
-        text.split(|c: char| !c.is_alphanumeric() && c != '_')
-            .any(|w| w == word)
     }
 
     fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {

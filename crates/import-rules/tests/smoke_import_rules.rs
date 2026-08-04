@@ -111,6 +111,7 @@ fn smoke_unused_checker_with_sample_imports() {
             "use std::collections::HashMap;\n\nfn main() { println!(\"hi\"); }\n",
             &[],
             &[],
+            &std::collections::HashMap::new(),
         )
         .unwrap();
     // Result may be empty if no ImportEntry provided — but no panic

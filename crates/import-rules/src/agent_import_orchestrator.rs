@@ -109,6 +109,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             })
             .collect();
 
+        // Build cross-file trait implementation map for implicit trait usage detection.
+        // Maps trait_name → [type_names that implement it] across all Rust files.
+        let implemented_traits = self.deps.filesystem.implemented_traits_map();
+
         let mandatory_result = self.deps.mandatory.run_mandatory_imports(
             &self.config,
             &self.layer_map,
@@ -131,6 +135,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         let root_dir_clone = root_dir.clone();
         let deps = &self.deps;
         let layer_map = &self.layer_map;
+        let implemented_traits_arc = &implemented_traits;
 
         let file_violations: Vec<LintResult> =
             ParallelIterator::flat_map(IntoParallelRefIterator::par_iter(&files.values), |file| {
@@ -149,10 +154,13 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     .get(file.value())
                     .map(|v| v.as_slice())
                     .unwrap_or(&[]);
-                if let Ok(unused) =
-                    deps.unused
-                        .check_unused_imports(file.value(), &content, file_imports, file_ids)
-                {
+                if let Ok(unused) = deps.unused.check_unused_imports(
+                    file.value(),
+                    &content,
+                    file_imports,
+                    file_ids,
+                    implemented_traits_arc,
+                ) {
                     local_results.extend(unused);
                 }
 
@@ -239,6 +247,32 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             })
             .collect();
 
+        // Build cross-file trait implementation map for implicit trait usage detection.
+        let implemented_traits: HashMap<String, Vec<String>> = {
+            use std::collections::hash_map::Entry;
+            let mut map: HashMap<String, Vec<String>> = HashMap::new();
+            for entry in files.iter() {
+                if let Some(ParseMetadata::Rust(meta)) = &entry.parse_metadata {
+                    for impl_block in &meta.impl_blocks {
+                        if let Some(ref trait_name) = impl_block.trait_name {
+                            match map.entry(trait_name.clone()) {
+                                Entry::Vacant(v) => {
+                                    v.insert(vec![impl_block.implementor_type.clone()]);
+                                }
+                                Entry::Occupied(mut o) => {
+                                    let types = o.get_mut();
+                                    if !types.contains(&impl_block.implementor_type) {
+                                        types.push(impl_block.implementor_type.clone());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            map
+        };
+
         let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
         let mut results = Vec::new();
 
@@ -302,6 +336,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                     content_str,
                     file_imports,
                     file_ids,
+                    &implemented_traits,
                 ) {
                     local.extend(v);
                 }

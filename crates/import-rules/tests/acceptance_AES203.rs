@@ -3,10 +3,16 @@ use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRu
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared::import_rules::IUnusedImportProtocol;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 fn checker() -> UnusedImportRuleChecker {
     UnusedImportRuleChecker::new()
+}
+
+/// Empty trait map for tests that don't test cross-file trait detection.
+fn no_traits() -> HashMap<String, Vec<String>> {
+    HashMap::new()
 }
 
 /// Build a simple ImportEntry for a Rust `use` statement.
@@ -48,7 +54,7 @@ fn aes203_unused_std_import_detected() {
     let content = "use std::collections::HashMap;\n\nfn main() {\n    println!(\"hello\");\n}\n";
     let imports = vec![rust_use("std::collections::HashMap")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(
         !results.is_empty(),
@@ -63,7 +69,7 @@ fn aes203_used_import_no_violation() {
         "use std::collections::HashMap;\n\nfn main() {\n    let _map = HashMap::new();\n}\n";
     let imports = vec![rust_use("std::collections::HashMap")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(
         results.is_empty(),
@@ -86,7 +92,7 @@ fn main() {
         rust_use("std::collections::BTreeMap"),
     ];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/multi.rs", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/multi.rs", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(
         results.len() >= 2,
@@ -102,7 +108,7 @@ fn aes203_lib_rs_skipped() {
     let content = "use something::unused;\n";
     let imports = vec![rust_use("something::unused")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/lib.rs", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/lib.rs", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(results.is_empty(), "lib.rs should be skipped");
 }
@@ -112,7 +118,7 @@ fn aes203_mod_rs_skipped() {
     let content = "use something::unused;\n";
     let imports = vec![rust_use("something::unused")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/mod.rs", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/mod.rs", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(results.is_empty(), "mod.rs should be skipped");
 }
@@ -133,7 +139,7 @@ fn aes203_index_ts_skipped() {
         is_wildcard: false,
     }];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/index.ts", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/index.ts", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(results.is_empty(), "index.ts should be skipped");
 }
@@ -143,7 +149,7 @@ fn aes203_index_ts_skipped() {
 #[test]
 fn aes203_empty_content_no_violation() {
     let results = checker()
-        .check_unused_imports("/tmp/test/src/file.rs", "", &[], &[])
+        .check_unused_imports("/tmp/test/src/file.rs", "", &[], &[], &no_traits())
         .unwrap();
     assert!(
         results.is_empty(),
@@ -155,7 +161,7 @@ fn aes203_empty_content_no_violation() {
 fn aes203_no_imports_no_violation() {
     let content = "fn main() {\n    println!(\"hello\");\n}\n";
     let results = checker()
-        .check_unused_imports("/tmp/test/src/main.rs", content, &[], &[])
+        .check_unused_imports("/tmp/test/src/main.rs", content, &[], &[], &no_traits())
         .unwrap();
     assert!(results.is_empty(), "No imports means no violations");
 }
@@ -188,7 +194,7 @@ fn aes203_future_import_not_flagged() {
     let content = "from __future__ import annotations\n\nx: int = 1\n";
     let imports = vec![python_use("annotations")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/app.py", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/app.py", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(
         results.is_empty(),
@@ -210,6 +216,7 @@ fn aes203_used_identifiers_prevents_false_positive() {
             content,
             &imports,
             &["HashMap".to_string()],
+            &no_traits(),
         )
         .unwrap();
     assert!(
@@ -235,7 +242,7 @@ fn aes203_trait_protocol_import_not_flagged() {
         "calculator_shared::contract_calculator_protocol::CalculatorProtocol",
     )];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/main.rs", &content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/main.rs", &content, &imports, &[], &no_traits())
         .unwrap();
     assert!(
         results.is_empty(),
@@ -249,7 +256,7 @@ fn aes203_trait_suffix_protocol_not_flagged() {
     let content = "use some_crate::MyTrait;\n\nfn main() {\n    println!(\"hi\");\n}\n";
     let imports = vec![rust_use("some_crate::MyTrait")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/main.rs", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(
         results.is_empty(),
@@ -262,10 +269,95 @@ fn aes203_actual_unused_still_flagged() {
     let content = "use std::collections::HashMap;\n\nfn main() {\n    println!(\"hello\");\n}\n";
     let imports = vec![rust_use("std::collections::HashMap")];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &[])
+        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &[], &no_traits())
         .unwrap();
     assert!(
         !results.is_empty(),
         "Actual unused import must still be flagged"
+    );
+}
+
+// ─── AES203: cross-file trait map detection ───────────────
+
+#[test]
+fn aes203_trait_map_detects_implicit_usage() {
+    // Import a trait that is NOT caught by naming heuristic but IS
+    // implemented for a type used in this file via the trait map.
+    let content = "use my_crate::MyCustomTrait;\n\nfn main() {\n    let _ = MyStruct;\n}\n";
+    let imports = vec![rust_use("my_crate::MyCustomTrait")];
+    let used_ids = vec!["MyStruct".to_string(), "main".to_string()];
+
+    let mut traits = HashMap::new();
+    traits.insert(
+        "MyCustomTrait".to_string(),
+        vec!["MyStruct".to_string()],
+    );
+
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/main.rs",
+            content,
+            &imports,
+            &used_ids,
+            &traits,
+        )
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Trait import should be allowed when cross-file map shows impl for used type, got {}",
+        results.len()
+    );
+}
+
+#[test]
+fn aes203_trait_map_no_match_still_flags() {
+    // Import a trait that is implemented for a DIFFERENT type than what's used here.
+    let content = "use my_crate::MyCustomTrait;\n\nfn main() {\n    let _ = OtherStruct;\n}\n";
+    let imports = vec![rust_use("my_crate::MyCustomTrait")];
+    let used_ids = vec!["OtherStruct".to_string(), "main".to_string()];
+
+    let mut traits = HashMap::new();
+    traits.insert(
+        "MyCustomTrait".to_string(),
+        vec!["UnrelatedStruct".to_string()],
+    );
+
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/main.rs",
+            content,
+            &imports,
+            &used_ids,
+            &traits,
+        )
+        .unwrap();
+    assert!(
+        !results.is_empty(),
+        "Trait import should be flagged when no type in this file implements it"
+    );
+}
+
+#[test]
+fn aes203_trait_map_last_segment_match() {
+    // Import full path "crate::traits::MyTrait" — the map has "MyTrait"
+    let content = "use crate::traits::MyTrait;\n\nfn main() {\n    let _ = Foo;\n}\n";
+    let imports = vec![rust_use("crate::traits::MyTrait")];
+    let used_ids = vec!["Foo".to_string()];
+
+    let mut traits = HashMap::new();
+    traits.insert("MyTrait".to_string(), vec!["Foo".to_string()]);
+
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/main.rs",
+            content,
+            &imports,
+            &used_ids,
+            &traits,
+        )
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Should match trait by last segment of import path"
     );
 }

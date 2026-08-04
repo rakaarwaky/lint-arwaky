@@ -1,5 +1,7 @@
 // PURPOSE: UnusedImportRuleChecker — AES203: detect unused imports.
-// AST-based: uses syn visitor for usage tracking. No dynamic regex. No DERIVE_MACROS whitelist.
+// V2: Cross-file trait usage analysis using implemented_traits_map.
+// When a trait import appears unused, checks if any type used in the file
+// implements that trait anywhere in the project (needed for method dispatch).
 
 use crate::utility_import_resolver;
 use crate::utility_import_symbol_extractor;
@@ -8,6 +10,7 @@ use shared::common::{FilePath, LintMessage, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
+use std::collections::HashMap;
 
 pub struct UnusedImportRuleChecker;
 
@@ -51,6 +54,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         content: &str,
         import_entries: &[ImportEntry],
         used_identifiers: &[String],
+        implemented_traits: &HashMap<String, Vec<String>>,
     ) -> Result<Vec<LintResult>, ImportError> {
         let basename = std::path::Path::new(file)
             .file_name()
@@ -78,9 +82,20 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             if used_symbols.contains(alias) || exported_symbols.contains(alias) {
                 continue;
             }
+            // ─── Cross-file trait usage detection ───────────────
+            // If the trait is implemented for any type used in this file,
+            // the import is needed for method dispatch (not truly unused).
+            if is_trait_used_for_method_dispatch(
+                alias_str,
+                implemented_traits,
+                used_identifiers,
+            ) {
+                continue;
+            }
+            // ─── Fallback: well-known trait patterns ────────────
             if let Some(raw_path) = imported_aliases.get(alias) {
                 let rp = raw_path.value();
-                if is_trait_import(&rp, alias_str) {
+                if is_known_trait_pattern(rp, alias_str) {
                     continue;
                 }
             }
@@ -113,18 +128,42 @@ impl UnusedImportRuleChecker {
     }
 }
 
-/// Check if an import is a trait used for method dispatch scope.
+/// Check if a trait import is used for method dispatch.
 ///
-/// In Rust, importing a trait is required even when calling its methods
-/// without explicitly naming the trait (method dispatch). The compiler
-/// resolves the method via the trait being in scope. Tree-sitter AST
-/// doesn't see an explicit identifier at the call site, so these imports
-/// appear "unused" but are semantically necessary.
-fn is_trait_import(raw_path: &str, alias_str: &str) -> bool {
-    // ─── AES naming convention: contract_*_protocol or *_protocol ───
-    if raw_path.contains("protocol") || raw_path.contains("contract") {
-        return true;
-    }
+/// In Rust, importing a trait is required for calling its methods via
+/// method dispatch (even without explicitly naming the trait). Tree-sitter
+/// AST doesn't see the implicit trait usage at call sites, so these
+/// imports appear "unused" but are semantically necessary.
+///
+/// This function uses the cross-file `implemented_traits` map to check:
+/// 1. Is the trait name found in the project's impl blocks?
+/// 2. Does any type that implements this trait appear in the file's used identifiers?
+///
+/// If both conditions are true, the import is needed for method dispatch.
+fn is_trait_used_for_method_dispatch(
+    trait_alias: &str,
+    implemented_traits: &HashMap<String, Vec<String>>,
+    used_identifiers: &[String],
+) -> bool {
+    // Find trait implementations — check both short name and full paths
+    let implementing_types: Option<&Vec<String>> = implemented_traits.get(trait_alias).or_else(|| {
+        // Try matching the last segment of the alias
+        let last_segment = trait_alias.rsplit("::").next()?;
+        implemented_traits.get(last_segment)
+    });
+    let types = match implementing_types {
+        Some(t) => t,
+        None => return false,
+    };
+    // Check if any type that implements this trait is used in the file
+    let id_set: std::collections::HashSet<&str> =
+        used_identifiers.iter().map(|s| s.as_str()).collect();
+    types.iter().any(|t| id_set.contains(t.as_str()))
+}
+
+/// Fallback: check well-known trait patterns that tree-sitter can't resolve.
+/// Covers std library traits, async_trait, and common naming patterns.
+fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
     // ─── Well-known Rust trait paths ───
     if raw_path.contains("prelude")
         || raw_path.contains("async_trait")
@@ -145,10 +184,81 @@ fn is_trait_import(raw_path: &str, alias_str: &str) -> bool {
     if alias_str.ends_with("Ext")
         || alias_str.ends_with("Iterator")
         || alias_str.ends_with("Stream")
-        || alias_str.ends_with("Protocol")
         || alias_str == "Write"
     {
         return true;
     }
     false
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn trait_used_for_method_dispatch_detected() {
+        let mut traits = HashMap::new();
+        traits.insert(
+            "CalculatorProtocol".to_string(),
+            vec!["Calculator".to_string()],
+        );
+        let used_ids = vec!["Calculator".to_string(), "main".to_string()];
+        assert!(is_trait_used_for_method_dispatch(
+            "CalculatorProtocol",
+            &traits,
+            &used_ids,
+        ));
+    }
+
+    #[test]
+    fn trait_not_used_for_method_dispatch() {
+        let mut traits = HashMap::new();
+        traits.insert(
+            "CalculatorProtocol".to_string(),
+            vec!["Calculator".to_string()],
+        );
+        let used_ids = vec!["SomeOtherType".to_string()];
+        assert!(!is_trait_used_for_method_dispatch(
+            "CalculatorProtocol",
+            &traits,
+            &used_ids,
+        ));
+    }
+
+    #[test]
+    fn trait_not_in_project_not_dispatch() {
+        let traits: HashMap<String, Vec<String>> = HashMap::new();
+        let used_ids = vec!["Foo".to_string()];
+        assert!(!is_trait_used_for_method_dispatch("Foo", &traits, &used_ids));
+    }
+
+    #[test]
+    fn known_trait_pattern_std_prelude() {
+        assert!(is_known_trait_pattern("std::prelude::v1::*", "*"));
+        assert!(is_known_trait_pattern(
+            r#"async_trait::async_trait"#,
+            "async_trait"
+        ));
+        assert!(is_known_trait_pattern(
+            r#"std::fmt::Display"#,
+            "Display"
+        ));
+        assert!(is_known_trait_pattern(r#"std::fmt::Debug"#, "Debug"));
+        assert!(is_known_trait_pattern(r#"std::clone::Clone"#, "Clone"));
+        assert!(is_known_trait_pattern(r#"std::cmp::PartialEq"#, "PartialEq"));
+        assert!(is_known_trait_pattern(
+            r#"std::io::Write"#,
+            "Write"
+        ));
+    }
+
+    #[test]
+    fn known_trait_pattern_suffix() {
+        assert!(is_known_trait_pattern(r#"foo::BarExt"#, "BarExt"));
+        assert!(is_known_trait_pattern(
+            r#"foo::Stream"#,
+            "Stream"
+        ));
+        assert!(!is_known_trait_pattern(r#"foo::MyTrait"#, "MyTrait"));
+    }
 }
