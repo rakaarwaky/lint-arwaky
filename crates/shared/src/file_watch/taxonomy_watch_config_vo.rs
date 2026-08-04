@@ -14,15 +14,10 @@ impl WatchConfig {
             path: FilePath::new(path).unwrap_or_default(),
             recursive: true,
             debounce_ms: 200,
-            ignore_patterns: vec![
-                ".git".to_string(),
-                "node_modules".to_string(),
-                "__pycache__".to_string(),
-                "target".to_string(),
-                ".venv".to_string(),
-                "dist".to_string(),
-                "build".to_string(),
-            ],
+            ignore_patterns: crate::common::DEFAULT_IGNORED_PATHS
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
         }
     }
 }

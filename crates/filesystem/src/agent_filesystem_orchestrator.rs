@@ -572,17 +572,9 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             .unwrap_or_default();
         let all_files_set: std::collections::HashSet<&str> =
             all_files.iter().map(|s| s.as_str()).collect();
-        eprintln!("[DEBUG-GRAPH] all_files_set contains root_calculator_entry: {}", all_files_set.contains("root_calculator_entry.rs"));
-        for f in all_files.iter().filter(|f| f.contains("root_") || f.contains("entry")) {
-            eprintln!("[DEBUG-GRAPH] file: {}", f);
-        }
 
         // Build forward graph from import entries (source → targets)
         let imports = self.imports.get().cloned().unwrap_or_default();
-        eprintln!("[DEBUG-GRAPH] total imports={}, all_files={}", imports.len(), all_files.len());
-        for imp in imports.iter().filter(|i| i.raw_path.contains("calculator")) {
-            eprintln!("[DEBUG-GRAPH] import: source={}, raw_path={}, resolved={:?}", imp.source_file.display(), imp.raw_path, imp.resolved_path);
-        }
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
@@ -678,10 +670,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                                 &sub_path,
                                 &top_root,
                                 &all_files_set,
-                            ).or_else(|| {
-                                eprintln!("[DEBUG-EXT] unresolved: raw={}, root_seg={}, sub_path={}, src_dir={}", raw, root_seg, sub_path, src_dir);
-                                None
-                            })
+                            )
                         }
                     } else {
                         None
@@ -739,7 +728,6 @@ impl FilesystemOrchestrator {
         top_root: &std::path::Path,
         all_files_set: &std::collections::HashSet<&str>,
     ) -> Option<String> {
-        eprintln!("[DEBUG-EXT] resolve_external_crate_import: crate={}, sub_path={}, top_root={}", crate_name, sub_path, top_root.display());
         // Scan member directories for Cargo.toml files to build package→dir mapping
         let member_dirs = ["crates", "packages", "modules"];
         for member_dir in &member_dirs {
@@ -761,7 +749,7 @@ impl FilesystemOrchestrator {
                         for line in content.lines() {
                             let trimmed = line.trim();
                             if trimmed.starts_with("name") && trimmed.contains('=') {
-                                if let Some(val) = trimmed.splitn(2, '=').nth(1) {
+                                if let Some((_, val)) = trimmed.split_once('=') {
                                     let pkg_name = val.trim().trim_matches('"');
                                     // Match: package name with hyphens → underscores
                                     let normalized = pkg_name.replace('-', "_");

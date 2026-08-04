@@ -110,7 +110,7 @@ project-root/                             <- Project workspace root
 │   └── ...
 │
 │
-├── Cargo.toml                        
+├── Cargo.toml                    
 ├── package.json
 └── pyproject.toml
 ```
@@ -180,39 +180,6 @@ Utility contains low-level technical mechanics. It exists so that Capabilities c
 
 Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.
 
-parser
-splitter
-trimmer
-slugifier
-sanitizer
-normalizer
-extractor
-replacer
-converter
-counter
-resolver
-detector
-builder
-joiner
-serializer
-deserializer
-encoder
-decoder
-hasher
-generator
-formatter
-comparator
-differ
-matcher
-checker
-calculator
-mapper
-merger
-grouper
-sorter
-deduplicator
-printer
-
 ### Dependencies
 
 Utility may depend only on Taxonomy.
@@ -247,51 +214,7 @@ Capabilities contain the concrete implementation of the system's behavior. This 
 
 ### Role Naming
 
-#### Internal Examples
-
-validator
-assessor
-calculator
-resolver
-classifier
-selector
-mapper
-transformer
-policy
-enricher
-evaluator
-analyzer
-scorer
-grader
-ranker
-filter
-checker
-reviewer
-approver
-rejector
-
-#### External Examples
-
-repository
-gateway
-client
-provider
-fetcher
-reader
-writer
-scanner
-executor
-publisher
-subscriber
-adapter
-connector
-uploader
-downloader
-sender
-receiver
-dispatcher
-watcher
-monitor
+Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.
 
 ### Dependencies
 

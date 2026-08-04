@@ -64,50 +64,48 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
 
         // Condition 1: not reachable from any _entry file
         let is_reachable = alive_files.paths.contains(f);
-        if !is_reachable {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable.\nWHY? Capabilities file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                    stem, stem, stem
-                ),
-                Severity::MEDIUM,
-            );
+
+        // Condition 2: not wired in any root_*_container
+        let mut is_wired = false;
+        if !fp.is_empty() {
+            if let Ok(path) = FilePath::new(fp) {
+                let content = self.filesystem.read_cached(&path);
+                let content_ref = content.value();
+                let identifiers = self.extract_identifiers(fp, content_ref, &stem);
+                let root = std::path::Path::new(root_dir.value());
+                if let Ok(workspace_root) =
+                    self.filesystem.find_workspace_root_from_path(root)
+                {
+                    is_wired = self
+                        .filesystem
+                        .check_wired_in_container(&workspace_root, &identifiers);
+                }
+            }
         }
 
-        // Condition 2: not wired in container
-        if fp.is_empty() {
+        // Both conditions must be satisfied for non-orphan
+        if is_reachable && is_wired {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        let path = match FilePath::new(fp) {
-            Ok(p) => p,
-            Err(_) => {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-            }
-        };
-        let content = self.filesystem.read_cached(&path);
-        let content_ref = content.value();
-
-        let identifiers = self.extract_identifiers(fp, content_ref, &stem);
-
-        let root = std::path::Path::new(root_dir.value());
-        if let Ok(workspace_root) = self.filesystem.find_workspace_root_from_path(root) {
-            let wired = self
-                .filesystem
-                .check_wired_in_container(&workspace_root, &identifiers);
-            if wired {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-            }
-        }
-
-        OrphanIndicatorResult::new(
-            true,
+        // Build diagnostic message
+        let reason = if !is_reachable && !is_wired {
+            format!(
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable and not wired.\nWHY? Capabilities file '{}' is not reachable from any _entry file AND not wired in any root_*_container.\nFIX: Import '{}' from a _entry file AND register it in a root_*_container.rs.",
+                stem, stem, stem
+            )
+        } else if !is_reachable {
+            format!(
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable.\nWHY? Capabilities file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                stem, stem, stem
+            )
+        } else {
             format!(
                 "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container.rs.",
                 stem, stem, stem
-            ),
-            Severity::MEDIUM,
-        )
+            )
+        };
+
+        OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)
     }
 }

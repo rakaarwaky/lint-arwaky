@@ -130,7 +130,7 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define structs or enums.\nFIX: Remove type definitions; use stateless functions only."),
+                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define structs or enums.\nFIX: Remove type definitions; use stateless functions only.",
                 ));
             }
         } else if ext == "typescript" || ext == "ts" || ext == "tsx" {
@@ -145,7 +145,7 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes, interfaces, enums, or types.\nFIX: Remove type definitions; use stateless functions only."),
+                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes, interfaces, enums, or types.\nFIX: Remove type definitions; use stateless functions only.",
                 ));
             }
         } else if ext == "python" || ext == "py" {
@@ -160,7 +160,7 @@ impl UtilityRoleChecker {
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    format!("AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes or functions.\nFIX: Remove type definitions; use stateless functions only."),
+                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes or functions.\nFIX: Remove type definitions; use stateless functions only.",
                 ));
             }
         }

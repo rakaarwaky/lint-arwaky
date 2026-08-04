@@ -58,6 +58,8 @@ fn aes505_agent_with_aggregate_trait_not_used_by_surface_is_orphan() {
 
 #[test]
 fn aes505_agent_with_aggregate_used_by_surface_is_not_orphan() {
+    // In proper architecture, agents are wired in _container files, not surface files.
+    // This test verifies that surface references are NOT considered valid wiring.
     let analyzer = agent_analyzer();
     let fp =
         FilePath::new("crates/orphan-rules/src/agent_foo_orchestrator.rs".to_string()).unwrap();
@@ -67,7 +69,7 @@ fn aes505_agent_with_aggregate_used_by_surface_is_not_orphan() {
         fp.value().to_string(),
         "impl IFooAggregate for FooOrchestrator {\n    fn run(&self) {}\n}".to_string(),
     );
-    // Surface file references IFooAggregate
+    // Surface file references IFooAggregate — should NOT count as wiring
     content_map.insert(
         "crates/tui/src/surface_main_screen.rs".to_string(),
         "use agent_foo_orchestrator::IFooAggregate;".to_string(),
@@ -80,8 +82,8 @@ fn aes505_agent_with_aggregate_used_by_surface_is_not_orphan() {
     let result =
         analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &reachable_for(&fp));
     assert!(
-        !result.is_orphan,
-        "Agent aggregate used by surface should NOT be orphan"
+        result.is_orphan,
+        "Agent aggregate only used by surface (not container) SHOULD be orphan"
     );
 }
 
@@ -116,6 +118,8 @@ fn aes505_agent_with_aggregate_used_by_container_is_not_orphan() {
 
 #[test]
 fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
+    // In proper architecture, agents are wired in _container files, not entry files.
+    // This test verifies that entry file references are NOT considered valid wiring.
     let analyzer = agent_analyzer();
     let fp =
         FilePath::new("crates/orphan-rules/src/agent_baz_orchestrator.rs".to_string()).unwrap();
@@ -125,7 +129,7 @@ fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
         fp.value().to_string(),
         "impl IBazAggregate for BazOrchestrator {\n    fn run(&self) {}\n}".to_string(),
     );
-    // root entry file references IBazAggregate
+    // root entry file references IBazAggregate — should NOT count as wiring
     content_map.insert(
         "crates/cli/src/root_cli_entry.rs".to_string(),
         "use agent_baz_orchestrator::IBazAggregate;".to_string(),
@@ -135,8 +139,8 @@ fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
     let result =
         analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &reachable_for(&fp));
     assert!(
-        !result.is_orphan,
-        "Agent aggregate used by entry file should NOT be orphan"
+        result.is_orphan,
+        "Agent aggregate only used by entry file (not container) SHOULD be orphan"
     );
 }
 

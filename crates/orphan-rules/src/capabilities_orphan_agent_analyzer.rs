@@ -91,15 +91,10 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                         Some(b) => b,
                         None => return false,
                     };
-                    cb.starts_with("surface_")
-                        || cb.ends_with("_container.rs")
+                    cb.ends_with("_container.rs")
                         || cb.ends_with("_container.py")
                         || cb.ends_with("_container.ts")
                         || cb.ends_with("_container.js")
-                        || cb.ends_with("_entry.rs")
-                        || cb.ends_with("_entry.py")
-                        || cb.ends_with("_entry.ts")
-                        || cb.ends_with("_entry.js")
                 })
                 .collect();
 

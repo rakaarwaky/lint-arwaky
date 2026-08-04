@@ -77,7 +77,6 @@ pub fn collect_orphan(
     let workspaces = deps.config_orchestrator.discover_workspaces(&root_fp);
 
     if workspaces.is_empty() {
-        eprintln!("[DEBUG-DISP] collect_orphan: EMPTY workspaces → scan_single_root, root={}", root);
         return scan_single_root(
             &root,
             &root_fp,
@@ -135,7 +134,6 @@ pub fn collect_orphan(
 
     // Use the first workspace's config for the orchestrator (configs should be similar)
     let first_ws = &workspaces[0];
-    eprintln!("[DEBUG-DISP] collect_orphan: {} workspaces found, using unified path, root={}", workspaces.len(), root);
     let unified_orchestrator: Arc<dyn IOrphanAggregate> =
         (deps.orphan_factory)(first_ws.config.clone(), unified_fs.clone());
 
@@ -173,7 +171,6 @@ pub fn collect_orphan(
     // file paths. Using a member path (first_ws.path) would cause path mismatch
     // since unified_orphan_files are relative to the workspace root.
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
-    eprintln!("[DEBUG-DISP] about to call build_orphan_graph_context on unified_orchestrator, root={}", root);
     let unified_context =
         unified_orchestrator.build_orphan_graph_context(&unified_orphan_files, &root_fp);
 
@@ -279,7 +276,6 @@ fn scan_single_root(
         shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
 
     // Build graph context from filesystem's pre-built data
-    eprintln!("[DEBUG-DISP] scan_single_root: calling build_orphan_graph_context, root={}", root);
     let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, root_fp);
 
     // Run orphan checks on pre-fetched data with correct root_dir

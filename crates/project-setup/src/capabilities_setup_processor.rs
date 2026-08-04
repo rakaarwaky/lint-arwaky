@@ -382,14 +382,7 @@ impl SetupManagementProcessor {
                     Some(n) => n,
                     None => continue,
                 };
-                if name.starts_with('.')
-                    || name == "target"
-                    || name == "node_modules"
-                    || name == "vendor"
-                    || name == "dist"
-                    || name == "build"
-                    || name == "__pycache__"
-                {
+                if name.starts_with('.') || shared::common::DEFAULT_IGNORED_PATHS.contains(&name) {
                     continue;
                 }
                 self.scan_source_extensions(

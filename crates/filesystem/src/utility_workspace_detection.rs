@@ -7,11 +7,6 @@
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
-// ═══════════════════════════════════════════════════════════════
-// Built-in Skip Directories
-// ═══════════════════════════════════════════════════════════════
-
-// BUILTIN_SKIP_DIRS removed — use shared::common::DEFAULT_IGNORED_PATHS
 
 // ═══════════════════════════════════════════════════════════════
 // Workspace Root Detection
@@ -207,7 +202,7 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
                     Some(n) => n,
                     None => continue,
                 };
-                if matches!(name, "node_modules" | "target" | ".git" | "tests") {
+                if shared::common::DEFAULT_IGNORED_PATHS.contains(&name) {
                     continue;
                 }
                 walk_detect(&path, has_rs, has_py, has_js);
@@ -270,27 +265,14 @@ pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
 pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
     for path in crate::utility_filesystem_io::scan_directory(dir) {
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if matches!(
-            name,
-            "target"
-                | ".git"
-                | "node_modules"
-                | "dist"
-                | "build"
-                | "__pycache__"
-                | ".venv"
-                | "tests"
-        ) {
+        if shared::common::DEFAULT_IGNORED_PATHS.contains(&name) {
             continue;
         }
         if path.is_dir() && check_dir_containers(&path, identifiers) {
             return true;
         } else if (name.ends_with("_container.rs")
             || name.ends_with("_container.py")
-            || name.ends_with("_container.ts")
-            || name.ends_with("_entry.rs")
-            || name.ends_with("_entry.py")
-            || name.ends_with("_entry.ts"))
+            || name.ends_with("_container.ts"))
             && let Ok(content) = crate::utility_filesystem_io::read_to_string(&path)
         {
             for id in identifiers {
