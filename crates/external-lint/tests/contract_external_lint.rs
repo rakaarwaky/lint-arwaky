@@ -549,50 +549,9 @@ fn orchestrator_implements_aggregate_protocol() {
     };
     use std::collections::HashMap;
 
-    struct MockConfigParser;
-    impl shared::config_system::contract_parser_protocol::IConfigParserProtocol for MockConfigParser {
-        fn parse_yaml_config(
-            &self,
-            _: &FilePath,
-        ) -> Result<
-            shared::config_system::taxonomy_setting_vo::ProjectConfig,
-            shared::config_system::taxonomy_config_error::ConfigError,
-        > {
-            Err(shared::config_system::taxonomy_config_error::ConfigError::default())
-        }
-        fn parse_toml_config(
-            &self,
-            _: &FilePath,
-        ) -> Result<
-            Option<shared::config_system::taxonomy_setting_vo::ProjectConfig>,
-            shared::config_system::taxonomy_config_error::ConfigError,
-        > {
-            Ok(None)
-        }
-        fn parse_config_yaml_with_warnings(
-            &self,
-            _: &str,
-        ) -> (
-            shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-            Vec<String>,
-        ) {
-            (
-                shared::config_system::taxonomy_config_vo::ArchitectureConfig::default(),
-                vec![],
-            )
-        }
-        fn parse_adapter_entries_from_yaml(
-            &self,
-            _: &str,
-        ) -> Vec<shared::config_system::taxonomy_setting_vo::AdapterEntry> {
-            vec![]
-        }
-    }
-
     let deps = ExternalLintDeps {
         adapters: HashMap::new(),
         filesystem: Arc::new(MockFilesystem),
-        config_parser: Arc::new(MockConfigParser),
         selector: Arc::new(
             external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
         ),

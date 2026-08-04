@@ -12,7 +12,6 @@ use std::sync::Arc;
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use shared::common::taxonomy_duration_vo::Timeout;
-use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::external_lint::{
@@ -27,7 +26,7 @@ pub struct ExternalLintContainer {
 impl ExternalLintContainer {
     pub fn new(
         filesystem: Arc<dyn IFilesystemAggregate>,
-        config_parser: Arc<dyn IConfigParserProtocol>,
+
     ) -> Self {
         let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(
             crate::capabilities_stdio_client::StdioClient::new(Timeout::new(60.0)),
@@ -124,7 +123,6 @@ impl ExternalLintContainer {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
                 adapters,
                 filesystem,
-                config_parser,
                 selector,
             })),
         }

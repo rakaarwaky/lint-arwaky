@@ -223,7 +223,6 @@ fn main() {
 
     let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
         filesystem.clone(),
-        config_container.parser(),
     );
     let external_lint = ext_container.aggregate();
 
@@ -366,6 +365,7 @@ fn main() {
             external_lint.clone(),
             report_formatter.clone(),
             filesystem.clone(),
+            config_orchestrator.clone(),
             filter,
             Vec::new(),
         ),

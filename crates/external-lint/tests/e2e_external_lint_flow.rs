@@ -347,6 +347,7 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
     }
 }
 
+#[allow(dead_code)]
 struct MockConfigParser;
 impl shared::config_system::contract_parser_protocol::IConfigParserProtocol for MockConfigParser {
     fn parse_yaml_config(
@@ -509,7 +510,6 @@ fn e2e_full_pipeline_rust_python() {
             has_py: true,
             has_js: false,
         }),
-        config_parser: Arc::new(MockConfigParser),
         selector: Arc::new(
             external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
         ),

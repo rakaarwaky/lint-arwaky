@@ -269,6 +269,7 @@ pub fn handle_external(
     external_lint: Arc<dyn shared::external_lint::IExternalLintAggregate>,
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     _filesystem: Arc<dyn IFilesystemAggregate>,
+    config_parser: Arc<dyn shared::config_system::IConfigParserProtocol>,
     filter: Option<String>,
     ignored_paths: Vec<String>,
 ) -> ExitCode {
@@ -277,6 +278,7 @@ pub fn handle_external(
         path.clone(),
         external_lint,
         _filesystem,
+        config_parser,
         filter,
         &ignored_paths,
     ) {

@@ -269,6 +269,7 @@ impl McpActionSurface {
             Some(fp),
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
+            self.deps.config_orchestrator.clone(),
             None,
             &[],
         ) {

@@ -51,7 +51,6 @@ fn main() -> anyhow::Result<()> {
 
     let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
         filesystem.clone(),
-        config_container.parser(),
     );
     let external_lint = ext_container.aggregate();
 
