@@ -42,6 +42,8 @@ tracing.workspace = true
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
+tree-sitter = "0.26.11"
+tree-sitter-rust = "0.24.2"
 
 [[bench]]
 name = "bench_filesystem"

@@ -140,7 +140,8 @@ impl UnusedImportRuleChecker {
 /// 2. Does any type that implements this trait appear in the file's used identifiers?
 ///
 /// If both conditions are true, the import is needed for method dispatch.
-fn is_trait_used_for_method_dispatch(
+#[doc(hidden)]
+pub fn is_trait_used_for_method_dispatch(
     trait_alias: &str,
     implemented_traits: &HashMap<String, Vec<String>>,
     used_identifiers: &[String],
@@ -163,7 +164,8 @@ fn is_trait_used_for_method_dispatch(
 
 /// Covers std library traits, async_trait, common naming patterns,
 /// and AES contract protocol naming conventions.
-fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
+#[doc(hidden)]
+pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
     // ─── AES naming convention: contract_*_protocol or *_protocol ───
     if raw_path.contains("protocol") || raw_path.contains("contract") {
         return true;
@@ -193,76 +195,4 @@ fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
         return true;
     }
     false
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn trait_used_for_method_dispatch_detected() {
-        let mut traits = HashMap::new();
-        traits.insert(
-            "CalculatorProtocol".to_string(),
-            vec!["Calculator".to_string()],
-        );
-        let used_ids = vec!["Calculator".to_string(), "main".to_string()];
-        assert!(is_trait_used_for_method_dispatch(
-            "CalculatorProtocol",
-            &traits,
-            &used_ids,
-        ));
-    }
-
-    #[test]
-    fn trait_not_used_for_method_dispatch() {
-        let mut traits = HashMap::new();
-        traits.insert(
-            "CalculatorProtocol".to_string(),
-            vec!["Calculator".to_string()],
-        );
-        let used_ids = vec!["SomeOtherType".to_string()];
-        assert!(!is_trait_used_for_method_dispatch(
-            "CalculatorProtocol",
-            &traits,
-            &used_ids,
-        ));
-    }
-
-    #[test]
-    fn trait_not_in_project_not_dispatch() {
-        let traits: HashMap<String, Vec<String>> = HashMap::new();
-        let used_ids = vec!["Foo".to_string()];
-        assert!(!is_trait_used_for_method_dispatch("Foo", &traits, &used_ids));
-    }
-
-    #[test]
-    fn known_trait_pattern_std_prelude() {
-        assert!(is_known_trait_pattern("std::prelude::v1::*", "*"));
-        assert!(is_known_trait_pattern(
-            r#"async_trait::async_trait"#,
-            "async_trait"
-        ));
-        assert!(is_known_trait_pattern(
-            r#"std::fmt::Display"#,
-            "Display"
-        ));
-        assert!(is_known_trait_pattern(r#"std::fmt::Debug"#, "Debug"));
-        assert!(is_known_trait_pattern(r#"std::clone::Clone"#, "Clone"));
-        assert!(is_known_trait_pattern(r#"std::cmp::PartialEq"#, "PartialEq"));
-        assert!(is_known_trait_pattern(
-            r#"std::io::Write"#,
-            "Write"
-        ));
-    }
-
-    #[test]
-    fn known_trait_pattern_suffix() {
-        assert!(is_known_trait_pattern(r#"foo::BarExt"#, "BarExt"));
-        assert!(is_known_trait_pattern(
-            r#"foo::Stream"#,
-            "Stream"
-        ));
-        assert!(!is_known_trait_pattern(r#"foo::MyTrait"#, "MyTrait"));
-    }
 }

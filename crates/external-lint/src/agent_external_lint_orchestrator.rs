@@ -18,7 +18,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::taxonomy_external_lint_context::ExternalLintContext;
+use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use tracing::warn;
 

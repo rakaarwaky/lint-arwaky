@@ -4,7 +4,7 @@ pub mod contract_executor_protocol;
 pub mod contract_external_lint_aggregate;
 pub mod contract_external_lint_executor_protocol;
 pub mod contract_external_lint_selector_protocol;
-pub mod taxonomy_external_lint_context;
+pub mod taxonomy_external_lint_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -17,4 +17,4 @@ pub use contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
 pub use contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 // ── Taxonomy VOs ──
-pub use taxonomy_external_lint_context::ExternalLintContext;
+pub use taxonomy_external_lint_vo::ExternalLintContext;

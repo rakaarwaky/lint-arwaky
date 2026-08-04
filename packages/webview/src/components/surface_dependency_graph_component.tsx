@@ -5,8 +5,8 @@ Uses SVG for simple graph visualization.
 */
 
 import React, { useMemo } from 'react';
-import { DependencyGraphVO, DependencyNodeVO } from '../types';
-import { LayerBadge } from './LayerBadge';
+import { DependencyGraphVO, DependencyNodeVO } from '../taxonomy_webview_vo';
+import { LayerBadge } from './surface_layer_badge_component';
 
 interface DependencyGraphProps {
   graph: DependencyGraphVO;

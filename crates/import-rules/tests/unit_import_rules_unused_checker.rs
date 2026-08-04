@@ -124,3 +124,76 @@ fn main() {
         result.len()
     );
 }
+
+// ── Migrated from inline #[cfg(test)] in capabilities_import_unused_checker.rs ──
+
+use import_rules_lint_arwaky::capabilities_import_unused_checker::{
+    is_known_trait_pattern, is_trait_used_for_method_dispatch,
+};
+
+#[test]
+fn trait_used_for_method_dispatch_detected() {
+    let mut traits = HashMap::new();
+    traits.insert(
+        "CalculatorProtocol".to_string(),
+        vec!["Calculator".to_string()],
+    );
+    let used_ids = vec!["Calculator".to_string(), "main".to_string()];
+    assert!(is_trait_used_for_method_dispatch(
+        "CalculatorProtocol",
+        &traits,
+        &used_ids,
+    ));
+}
+
+#[test]
+fn trait_not_used_for_method_dispatch() {
+    let mut traits = HashMap::new();
+    traits.insert(
+        "CalculatorProtocol".to_string(),
+        vec!["Calculator".to_string()],
+    );
+    let used_ids = vec!["SomeOtherType".to_string()];
+    assert!(!is_trait_used_for_method_dispatch(
+        "CalculatorProtocol",
+        &traits,
+        &used_ids,
+    ));
+}
+
+#[test]
+fn trait_not_in_project_not_dispatch() {
+    let traits: HashMap<String, Vec<String>> = HashMap::new();
+    let used_ids = vec!["Foo".to_string()];
+    assert!(!is_trait_used_for_method_dispatch("Foo", &traits, &used_ids));
+}
+
+#[test]
+fn known_trait_pattern_std_prelude() {
+    assert!(is_known_trait_pattern("std::prelude::v1::*", "*"));
+    assert!(is_known_trait_pattern(
+        r#"async_trait::async_trait"#,
+        "async_trait"
+    ));
+    assert!(is_known_trait_pattern(
+        r#"std::fmt::Display"#,
+        "Display"
+    ));
+    assert!(is_known_trait_pattern(r#"std::fmt::Debug"#, "Debug"));
+    assert!(is_known_trait_pattern(r#"std::clone::Clone"#, "Clone"));
+    assert!(is_known_trait_pattern(r#"std::cmp::PartialEq"#, "PartialEq"));
+    assert!(is_known_trait_pattern(
+        r#"std::io::Write"#,
+        "Write"
+    ));
+}
+
+#[test]
+fn known_trait_pattern_suffix() {
+    assert!(is_known_trait_pattern(r#"foo::BarExt"#, "BarExt"));
+    assert!(is_known_trait_pattern(
+        r#"foo::Stream"#,
+        "Stream"
+    ));
+    assert!(!is_known_trait_pattern(r#"foo::MyTrait"#, "MyTrait"));
+}

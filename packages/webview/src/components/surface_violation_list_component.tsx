@@ -4,7 +4,7 @@ Displays violations in a table with filtering.
 */
 
 import React, { useMemo } from 'react';
-import { ViolationVO } from '../types';
+import { ViolationVO } from '../taxonomy_webview_vo';
 
 interface ViolationListProps {
   violations: readonly ViolationVO[];

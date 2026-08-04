@@ -6,7 +6,7 @@ use shared::config_system::{
     IConfigValidatorProtocol, IWorkspaceDetectorProtocol, ProjectConfig, ValidationResult,
     WorkspaceInfo, WorkspaceType,
 };
-
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use crate::utility_config_defaults::default_config_for_language;
 use crate::utility_config_parser::parse_config_yaml;
 use std::sync::Arc;
@@ -15,7 +15,7 @@ use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+
 
 pub struct ConfigOrchestratorDeps {
     pub workspace_detector: Arc<dyn IWorkspaceDetectorProtocol>,

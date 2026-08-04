@@ -1,10 +1,10 @@
 /** Passive Surface: Main React App — receives extension messages, renders UI. */
 
 import React, { useState, useEffect } from 'react';
-import { DependencyGraphVO } from './types';
-import { useGraphData } from './hooks/useGraphData';
-import { DependencyGraph } from './components/DependencyGraph';
-import { ViolationList } from './components/ViolationList';
+import { DependencyGraphVO } from './taxonomy_webview_vo';
+import { useGraphData } from './hooks/surface_graph_data_hook';
+import { DependencyGraph } from './components/surface_dependency_graph_component';
+import { ViolationList } from './components/surface_violation_list_component';
 
 declare function acquireVsCodeApi(): {
   postMessage(msg: unknown): void;

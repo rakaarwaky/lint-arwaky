@@ -15,7 +15,7 @@ use shared::common::FilePath;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::external_lint::IExternalLintAggregate;
-use shared::external_lint::taxonomy_external_lint_context::ExternalLintContext;
+use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use crate::surface_output_component::ViolationItem;

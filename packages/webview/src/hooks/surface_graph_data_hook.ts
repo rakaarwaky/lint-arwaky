@@ -1,7 +1,7 @@
 /** Passive Surface: Hook to receive messages from VS Code extension. */
 
 import { useEffect } from 'react';
-import { DependencyGraphVO, ExtensionToWebviewMessage } from '../types';
+import { DependencyGraphVO, ExtensionToWebviewMessage } from '../taxonomy_webview_vo';
 
 interface UseGraphDataProps {
   setGraph: (graph: DependencyGraphVO | null) => void;
