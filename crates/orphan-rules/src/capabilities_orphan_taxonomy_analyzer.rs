@@ -50,7 +50,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 return OrphanIndicatorResult::new(
                     true,
                     format!(
-                        "AES501 TAXONOMY_ORPHAN: '{}' is not imported by any contract_* file.\nWHY? Taxonomy file '{}' has no importers in contract layer.\nFIX: Import '{}' in a contract_* file.",
+                        "AES501 TAXONOMY_ORPHAN: '{}' is not imported by any higher-layer file.\nWHY? Taxonomy file '{}' has no importers.\nFIX: Import '{}' in a contract_* or higher-layer file.",
                         stem, stem, stem
                     ),
                     Severity::LOW,
@@ -58,21 +58,27 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
             }
         };
 
-        let has_contract_importer = importers.iter().any(|importer| {
+        let has_higher_layer_importer = importers.iter().any(|importer| {
             if importer == f.value() {
                 return false;
             }
             let imp_filename = shared::common::utility_layer_detector::extract_filename(importer);
+            // Taxonomy is the foundation layer — valid importers are ANY higher layer:
+            // contract_*, capabilities_*, agent_*, surface_*, root_*
             imp_filename.starts_with("contract_")
+                || imp_filename.starts_with("capabilities_")
+                || imp_filename.starts_with("agent_")
+                || imp_filename.starts_with("surface_")
+                || imp_filename.starts_with("root_")
         });
 
-        if has_contract_importer {
+        if has_higher_layer_importer {
             OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
         } else {
             OrphanIndicatorResult::new(
                 true,
                 format!(
-                    "AES501 TAXONOMY_ORPHAN: '{}' is not imported by any contract_* file.\nWHY? Taxonomy file '{}' has no importers in contract layer.\nFIX: Import '{}' in a contract_* file.",
+                    "AES501 TAXONOMY_ORPHAN: '{}' is not imported by any higher-layer file.\nWHY? Taxonomy file '{}' has no importers in contract, capabilities, agent, or surface layers.\nFIX: Import '{}' in a contract_* or higher-layer file.",
                     stem, stem, stem
                 ),
                 Severity::LOW,

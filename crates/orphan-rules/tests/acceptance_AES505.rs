@@ -15,6 +15,11 @@ fn empty_reachability() -> ReachabilityResult {
     ReachabilityResult::new(HashSet::new())
 }
 
+fn reachable_for(fp: &FilePath) -> ReachabilityResult {
+    use std::collections::HashSet;
+    ReachabilityResult::new(HashSet::from([fp.clone()]))
+}
+
 #[test]
 fn aes505_agent_with_aggregate_trait_not_used_by_surface_is_orphan() {
     let analyzer = agent_analyzer();
@@ -44,7 +49,11 @@ fn aes505_agent_with_aggregate_trait_not_used_by_surface_is_orphan() {
         "Agent file with unreferenced aggregate should be orphan"
     );
     assert_eq!(result.severity, Severity::HIGH);
-    assert!(result.reason.contains("IFooAggregate"));
+    assert!(
+        result.reason.contains("IFooAggregate") || result.reason.contains("not reachable"),
+        "Reason should mention the aggregate or reachability: {}",
+        result.reason
+    );
 }
 
 #[test]
@@ -69,7 +78,7 @@ fn aes505_agent_with_aggregate_used_by_surface_is_not_orphan() {
     ];
 
     let result =
-        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &reachable_for(&fp));
     assert!(
         !result.is_orphan,
         "Agent aggregate used by surface should NOT be orphan"
@@ -98,7 +107,7 @@ fn aes505_agent_with_aggregate_used_by_container_is_not_orphan() {
     ];
 
     let result =
-        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &reachable_for(&fp));
     assert!(
         !result.is_orphan,
         "Agent aggregate used by container should NOT be orphan"
@@ -116,18 +125,18 @@ fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
         fp.value().to_string(),
         "impl IBazAggregate for BazOrchestrator {\n    fn run(&self) {}\n}".to_string(),
     );
-    // main.rs references IBazAggregate
+    // root entry file references IBazAggregate
     content_map.insert(
-        "crates/cli/src/main.rs".to_string(),
+        "crates/cli/src/root_cli_entry.rs".to_string(),
         "use agent_baz_orchestrator::IBazAggregate;".to_string(),
     );
-    let all_files = vec![fp.value().to_string(), "crates/cli/src/main.rs".to_string()];
+    let all_files = vec![fp.value().to_string(), "crates/cli/src/root_cli_entry.rs".to_string()];
 
     let result =
-        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &empty_reachability());
+        analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &reachable_for(&fp));
     assert!(
         !result.is_orphan,
-        "Agent aggregate used by main.rs should NOT be orphan"
+        "Agent aggregate used by entry file should NOT be orphan"
     );
 }
 

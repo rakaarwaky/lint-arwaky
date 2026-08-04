@@ -2,7 +2,12 @@
 use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::{IContractOrphanProtocol, IOrphanParserProtocol};
-use shared::quality_rules::taxonomy_analysis_vo::InheritanceMap;
+use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, ReachabilityResult};
+use std::collections::HashSet;
+
+fn empty_reachability() -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::new())
+}
 use std::sync::Arc;
 
 use once_cell::sync::Lazy;
@@ -400,6 +405,10 @@ impl IFilesystemAggregate for MockFilesystem {
     }
 }
 
+fn reachable_for(fp: &FilePath) -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::from([fp.clone()]))
+}
+
 // ── Tests ───────────────────────────────────────────────
 
 #[test]
@@ -425,6 +434,7 @@ fn test_empty_content_is_not_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &[],
         &content_map,
+        &empty_reachability(),
     );
     assert!(!result.is_orphan);
 }
@@ -449,6 +459,7 @@ fn test_no_traits_is_not_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &[],
         &content_map,
+        &empty_reachability(),
     );
     assert!(!result.is_orphan);
 }
@@ -482,6 +493,7 @@ fn test_trait_not_implemented_is_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &empty_reachability(),
     );
     assert!(result.is_orphan);
     assert!(result.severity == Severity::MEDIUM);
@@ -517,6 +529,7 @@ fn test_trait_implemented_is_not_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &reachable_for(&fp),
     );
     assert!(!result.is_orphan);
 }

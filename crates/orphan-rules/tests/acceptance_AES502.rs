@@ -7,8 +7,16 @@ use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrp
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::IContractOrphanProtocol;
-use shared::quality_rules::taxonomy_analysis_vo::InheritanceMap;
-use std::collections::HashMap;
+use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, ReachabilityResult};
+use std::collections::{HashMap, HashSet};
+
+fn empty_reachability() -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::new())
+}
+
+fn reachable_for(fp: &FilePath) -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::from([fp.clone()]))
+}
 
 fn contract_analyzer() -> ContractOrphanAnalyzer {
     ContractOrphanAnalyzer::new(mock_filesystem())
@@ -40,6 +48,7 @@ fn aes502_protocol_trait_not_implemented_is_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &empty_reachability(),
     );
     assert!(result.is_orphan);
     assert_eq!(result.severity, Severity::MEDIUM);
@@ -72,6 +81,7 @@ fn aes502_protocol_trait_implemented_is_not_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &reachable_for(&fp),
     );
     assert!(
         !result.is_orphan,
@@ -105,6 +115,7 @@ fn aes502_aggregate_not_called_by_surface_is_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &empty_reachability(),
     );
     assert!(result.is_orphan);
     assert!(result.reason.contains("IFooAggregate"));
@@ -123,6 +134,7 @@ fn aes502_empty_content_is_not_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &[],
         &content_map,
+        &empty_reachability(),
     );
     assert!(!result.is_orphan);
 }
@@ -144,6 +156,7 @@ fn aes502_no_traits_in_content_is_not_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &[],
         &content_map,
+        &empty_reachability(),
     );
     assert!(!result.is_orphan);
 }
@@ -174,6 +187,7 @@ fn aes502_trait_reexported_in_barrel_is_not_orphan() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &reachable_for(&fp),
     );
     assert!(
         !result.is_orphan,
@@ -207,6 +221,7 @@ fn aes502_multiple_traits_one_not_implemented() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &empty_reachability(),
     );
     assert!(
         result.is_orphan,
@@ -244,6 +259,7 @@ fn aes502_non_protocol_suffix_not_checked_for_orchestration() {
         &InheritanceMap::new(HashMap::new()),
         &all_files,
         &content_map,
+        &empty_reachability(),
     );
     // "entity" suffix: the analyzer checks trait implementation first
     assert!(

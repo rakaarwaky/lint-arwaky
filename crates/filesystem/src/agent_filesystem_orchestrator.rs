@@ -31,7 +31,6 @@ pub struct FilesystemOrchestratorDeps {
 
 pub struct FilesystemOrchestrator {
     deps: FilesystemOrchestratorDeps,
-
     // Pipeline state (owned by agent, not by capabilities)
     files: OnceLock<Vec<FileEntry>>,
     file_index: OnceLock<HashMap<PathBuf, usize>>,
@@ -573,9 +572,17 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             .unwrap_or_default();
         let all_files_set: std::collections::HashSet<&str> =
             all_files.iter().map(|s| s.as_str()).collect();
+        eprintln!("[DEBUG-GRAPH] all_files_set contains root_calculator_entry: {}", all_files_set.contains("root_calculator_entry.rs"));
+        for f in all_files.iter().filter(|f| f.contains("root_") || f.contains("entry")) {
+            eprintln!("[DEBUG-GRAPH] file: {}", f);
+        }
 
         // Build forward graph from import entries (source → targets)
         let imports = self.imports.get().cloned().unwrap_or_default();
+        eprintln!("[DEBUG-GRAPH] total imports={}, all_files={}", imports.len(), all_files.len());
+        for imp in imports.iter().filter(|i| i.raw_path.contains("calculator")) {
+            eprintln!("[DEBUG-GRAPH] import: source={}, raw_path={}, resolved={:?}", imp.source_file.display(), imp.raw_path, imp.resolved_path);
+        }
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
@@ -658,7 +665,23 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                         if all_files_set.contains(candidate.as_str()) {
                             Some(candidate)
                         } else {
-                            None
+                            // External crate import: resolve via workspace member lookup.
+                            // e.g. `use calculator_addition::foo::Bar` → look up
+                            // `addition/src/foo.rs` by scanning member Cargo.toml files.
+                            let sub_path = module
+                                .split("::")
+                                .skip(1)
+                                .collect::<Vec<_>>()
+                                .join("/");
+                            Self::resolve_external_crate_import(
+                                root_seg,
+                                &sub_path,
+                                &top_root,
+                                &all_files_set,
+                            ).or_else(|| {
+                                eprintln!("[DEBUG-EXT] unresolved: raw={}, root_seg={}, sub_path={}, src_dir={}", raw, root_seg, sub_path, src_dir);
+                                None
+                            })
                         }
                     } else {
                         None
@@ -707,6 +730,79 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 
 impl FilesystemOrchestrator {
+    /// Resolve an external crate import (e.g. `use calculator_addition::foo::Bar`)
+    /// by scanning workspace member Cargo.toml files for a matching package name.
+    /// Returns the relative path to the target file if found.
+    fn resolve_external_crate_import(
+        crate_name: &str,
+        sub_path: &str,
+        top_root: &std::path::Path,
+        all_files_set: &std::collections::HashSet<&str>,
+    ) -> Option<String> {
+        eprintln!("[DEBUG-EXT] resolve_external_crate_import: crate={}, sub_path={}, top_root={}", crate_name, sub_path, top_root.display());
+        // Scan member directories for Cargo.toml files to build package→dir mapping
+        let member_dirs = ["crates", "packages", "modules"];
+        for member_dir in &member_dirs {
+            let base = top_root.join(member_dir);
+            if !base.is_dir() {
+                continue;
+            }
+            if let Ok(entries) = std::fs::read_dir(&base) {
+                for entry in entries.flatten() {
+                    if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
+                        continue;
+                    }
+                    let cargo_toml = entry.path().join("Cargo.toml");
+                    if !cargo_toml.exists() {
+                        continue;
+                    }
+                    // Parse package name from Cargo.toml (simple string scan)
+                    if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+                        for line in content.lines() {
+                            let trimmed = line.trim();
+                            if trimmed.starts_with("name") && trimmed.contains('=') {
+                                if let Some(val) = trimmed.splitn(2, '=').nth(1) {
+                                    let pkg_name = val.trim().trim_matches('"');
+                                    // Match: package name with hyphens → underscores
+                                    let normalized = pkg_name.replace('-', "_");
+                                    if normalized == crate_name {
+                                        // Found the member — resolve sub_path
+                                        let member_name = entry.file_name().to_string_lossy().to_string();
+                                        let member_base = format!("{}/{}", member_dir, member_name);
+                                        // sub_path is like "foo/bar" from `use pkg::foo::bar::...`
+                                        // Try: member_base/src/sub_path.rs and member_base/src/sub_path/mod.rs
+                                        let src_dir = format!("{}/src", member_base);
+                                        // Try progressively shorter sub-paths.
+                                        // e.g. `use pkg::foo::bar::Baz` → sub_path = "foo/bar/Baz"
+                                        // Try "foo/bar/Baz.rs", "foo/bar.rs", "foo.rs", "lib.rs"
+                                        let parts: Vec<&str> = sub_path.split('/').collect();
+                                        for i in (0..=parts.len()).rev() {
+                                            let candidate_base = if i == 0 {
+                                                format!("{}/lib", src_dir)
+                                            } else {
+                                                format!("{}/{}", src_dir, parts[..i].join("/"))
+                                            };
+                                            let candidates = vec![
+                                                format!("{}.rs", candidate_base),
+                                                format!("{}/mod.rs", candidate_base),
+                                            ];
+                                            for candidate in &candidates {
+                                                if all_files_set.contains(candidate.as_str()) {
+                                                    return Some(candidate.clone());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
         Self {
             deps,

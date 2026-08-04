@@ -79,20 +79,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                     let imp_suf = file_suffix(&imp_b);
                     let imp_cat = Self::surface_category(&imp_suf);
                     imp_cat == "smart"
-                        || imp_b.ends_with("_container.rs")
-                        || imp_b.ends_with("_container.py")
-                        || imp_b.ends_with("_container.ts")
-                        || imp_b.ends_with("_container.js")
                         || imp_b.ends_with("_entry.rs")
                         || imp_b.ends_with("_entry.py")
                         || imp_b.ends_with("_entry.ts")
                         || imp_b.ends_with("_entry.js")
                         || imp_b.starts_with("root_")
-                        || imp_b == "main.rs"
-                        || imp_b == "main.py"
-                        || imp_b == "__main__.py"
-                        || imp_b == "main.ts"
-                        || imp_b == "main.js"
                         // Barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
                         || shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&imp_b.as_str())
                 });
@@ -113,20 +104,11 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
                     let imp_cat = Self::surface_category(&imp_suf);
                     imp_cat == "smart"
                         || imp_cat == "utility"
-                        || imp_b.ends_with("_container.rs")
-                        || imp_b.ends_with("_container.py")
-                        || imp_b.ends_with("_container.ts")
-                        || imp_b.ends_with("_container.js")
                         || imp_b.ends_with("_entry.rs")
                         || imp_b.ends_with("_entry.py")
                         || imp_b.ends_with("_entry.ts")
                         || imp_b.ends_with("_entry.js")
                         || imp_b.starts_with("root_")
-                        || imp_b == "main.rs"
-                        || imp_b == "main.py"
-                        || imp_b == "__main__.py"
-                        || imp_b == "main.ts"
-                        || imp_b == "main.js"
                         // Barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
                         || shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&imp_b.as_str())
                 });

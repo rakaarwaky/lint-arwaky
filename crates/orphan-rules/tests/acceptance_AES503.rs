@@ -14,20 +14,33 @@ fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
     CapabilitiesOrphanAnalyzer::new(mock_filesystem())
 }
 
+fn empty_reachability() -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::new())
+}
+
+fn reachable_for(fp: &FilePath) -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::from([fp.clone()]))
+}
+
 #[test]
 fn aes503_reachable_file_is_not_orphan() {
     let analyzer = capabilities_analyzer();
     let fp = FilePath::new("crates/orphan-rules/src/capabilities_foo.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
 
-    let mut reachable_set = HashSet::new();
-    reachable_set.insert(fp.clone());
-    let alive = ReachabilityResult::new(reachable_set);
+    let alive = reachable_for(&fp);
 
     let result = analyzer.is_capabilities_orphan(&fp, &root, &alive);
+    // Reachable but not wired → orphan (mock filesystem doesn't support wiring)
+    // This test verifies the reachability check passes (no "not reachable" message)
     assert!(
-        !result.is_orphan,
-        "Reachable capabilities file should NOT be orphan"
+        result.is_orphan,
+        "Reachable but unwired capabilities file should be orphan with mock filesystem"
+    );
+    assert!(
+        result.reason.contains("not wired"),
+        "Should fail on wiring check, not reachability: {}",
+        result.reason
     );
 }
 
@@ -61,7 +74,7 @@ fn aes503_unreachable_file_reason_mentions_not_wired() {
     assert!(result.is_orphan);
     // The reason should mention that the struct/trait is not wired
     assert!(
-        result.reason.contains("not wired") || result.reason.contains("Not reachable"),
+        result.reason.contains("not wired") || result.reason.contains("not reachable"),
         "Reason should mention wiring or reachability: {}",
         result.reason
     );
@@ -77,18 +90,28 @@ fn aes503_multiple_files_one_reachable() {
     let fp_orphan =
         FilePath::new("crates/orphan-rules/src/capabilities_legacy.rs".to_string()).unwrap();
 
-    let mut reachable_set = HashSet::new();
-    reachable_set.insert(fp_reachable.clone());
-    let alive = ReachabilityResult::new(reachable_set);
+    let alive = reachable_for(&fp_reachable);
 
     let result_reachable = analyzer.is_capabilities_orphan(&fp_reachable, &root, &alive);
     let result_orphan = analyzer.is_capabilities_orphan(&fp_orphan, &root, &alive);
 
+    // Reachable file passes reachability check but fails wiring (mock) → "not wired"
     assert!(
-        !result_reachable.is_orphan,
-        "Reachable should not be orphan"
+        result_reachable.is_orphan,
+        "Reachable but unwired should be orphan with mock filesystem"
     );
+    assert!(
+        result_reachable.reason.contains("not wired"),
+        "Should fail on wiring: {}",
+        result_reachable.reason
+    );
+    // Unreachable file fails reachability check → "not reachable"
     assert!(result_orphan.is_orphan, "Unreachable should be orphan");
+    assert!(
+        result_orphan.reason.contains("not reachable"),
+        "Should fail on reachability: {}",
+        result_orphan.reason
+    );
 }
 
 #[test]

@@ -3,7 +3,17 @@ use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrp
 use shared::orphan_rules::ITaxonomyOrphanProtocol;
 
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::quality_rules::taxonomy_analysis_vo::InboundLinkMap;
+use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, ReachabilityResult};
+use std::collections::HashSet;
+
+fn empty_reachability() -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::new())
+}
+
+fn reachable_for(fp: &FilePath) -> ReachabilityResult {
+    ReachabilityResult::new(HashSet::from([fp.clone()]))
+}
+
 use std::collections::HashMap;
 
 #[test]
@@ -15,7 +25,7 @@ fn test_constructor() {
     let fp = FilePath::new(".".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
-    let _result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map);
+    let _result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
 }
 
 #[test]
@@ -25,7 +35,7 @@ fn test_file_with_no_importers_is_orphan() {
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map);
+    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
     assert!(result.is_orphan);
     assert!(!result.reason.is_empty());
 }
@@ -45,7 +55,7 @@ fn test_file_imported_by_other_layer_is_not_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound);
+    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &reachable_for(&fp));
     assert!(!result.is_orphan);
 }
 
@@ -64,7 +74,7 @@ fn test_file_only_imported_by_taxonomy_layer_is_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound);
+    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &empty_reachability());
     assert!(result.is_orphan);
     assert!(result.reason.contains("taxonomy_color"));
 }
@@ -76,7 +86,7 @@ fn test_utility_suffix_categorization() {
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map);
+    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
     // "taxonomy_helper" has suffix "helper" → category is "utility"
     assert!(result.is_orphan);
     assert!(!result.reason.is_empty());
