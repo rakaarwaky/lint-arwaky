@@ -4,6 +4,7 @@
   "description": "AES architecture linting for Rust, Python, TypeScript projects",
   "version": "0.0.1",
   "publisher": "lint-arwaky",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.85.0"
   },

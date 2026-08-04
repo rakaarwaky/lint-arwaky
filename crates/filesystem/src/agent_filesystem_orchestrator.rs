@@ -490,6 +490,9 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             .and_then(|&i| self.files.get()?.get(i))
             .and_then(|entry| entry.parse_metadata.as_ref())
             .map(|meta| match meta {
+                shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(m) => {
+                    m.used_identifiers.clone()
+                }
                 shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Python(m) => {
                     m.used_identifiers.clone()
                 }
@@ -502,6 +505,35 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                 _ => Vec::new(),
             })
             .unwrap_or_default()
+    }
+
+    fn implemented_traits_map(&self) -> HashMap<String, Vec<String>> {
+        use std::collections::hash_map::Entry;
+        let mut map: HashMap<String, Vec<String>> = HashMap::new();
+        if let Some(files) = self.files.get() {
+            for entry in files.iter() {
+                if let Some(shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(meta)) =
+                    &entry.parse_metadata
+                {
+                    for impl_block in &meta.impl_blocks {
+                        if let Some(ref trait_name) = impl_block.trait_name {
+                            match map.entry(trait_name.clone()) {
+                                Entry::Vacant(v) => {
+                                    v.insert(vec![impl_block.implementor_type.clone()]);
+                                }
+                                Entry::Occupied(mut o) => {
+                                    let types = o.get_mut();
+                                    if !types.contains(&impl_block.implementor_type) {
+                                        types.push(impl_block.implementor_type.clone());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        map
     }
 
     fn build_file_index(&self, root: &Path) {

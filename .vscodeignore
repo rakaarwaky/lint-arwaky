@@ -1,17 +1,48 @@
+# ── Dev & Config ───────────────────────────────────────────
 .vscode/**
 .vscode-test/**
 **/node_modules/**
 **/*.map
 **/tsconfig.json
 **/tsconfig.base.json
-**/package.json
 **/package-lock.json
-crates/**
-scripts/**
-workspaces-bad/**
-workspaces-good/**
-target/**
-*.md
+**/.gitignore
+**/.gitmodules
+
+# ── Non-extension directories ──────────────────────────────
+crates/
+scripts/
+workspaces-bad/
+workspaces-good/
+target/
+log/
+Graph-It-Live/
+tools/
+
+# ── Rust build ─────────────────────────────────────────────
+Cargo.lock
+Cargo.toml
+rust-toolchain.toml
+rustfmt.toml
+deny.toml
+justfile
+librust_out.rlib
+
+# ── Config files ───────────────────────────────────────────
+mcp.local.json
+mcp.remote.json
+lint_arwaky.config.*
+
+# ── Agent/AI configs ───────────────────────────────────────
+.agents/
+.cargo/
+.github/
+.kilo/
+.qwen/
+.qoder/
+.ruff_cache/
+
+# ── Docs (except README) ───────────────────────────────────
 AGENTS.md
 ARCHITECTURE.md
 CONTRIBUTING.md
@@ -20,4 +51,5 @@ PRD.md
 TEST.md
 DEPLOY.md
 CHANGELOG.md
-LICENSE
+LICENSE.txt
+.prettierignore

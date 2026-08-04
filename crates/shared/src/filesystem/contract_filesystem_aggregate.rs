@@ -12,6 +12,7 @@ use crate::filesystem::contract_tool_resolution_protocol::IToolResolutionProtoco
 use crate::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// Aggregate trait — composes all 5 focused filesystem protocol traits.
@@ -61,6 +62,11 @@ pub trait IFilesystemAggregate:
     /// Get tree-sitter-extracted used identifiers for a file (from ParseMetadata).
     /// Returns empty vec if file not in cache or parse_metadata is None.
     fn used_identifiers_for(&self, path: &Path) -> Vec<String>;
+
+    /// Build a cross-file trait implementation map from all cached ParseMetadata.
+    /// Returns HashMap<trait_name, Vec<implementor_type_name>>.
+    /// Used by AES203 for implicit Rust trait usage detection (method dispatch scope).
+    fn implemented_traits_map(&self) -> HashMap<String, Vec<String>>;
 
     /// Build file index from root — discovers source files, reads content, parses imports.
     /// Populates file_list(), import_list(), and parse_metadata caches.

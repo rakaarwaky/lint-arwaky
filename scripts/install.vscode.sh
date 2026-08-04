@@ -99,7 +99,9 @@ mkdir -p "$PROJECT_ROOT/dist"
 
 # Use npx vsce to package (run from project root, provide base URL for README links)
 cd "$PROJECT_ROOT"
-if npx @vscode/vsce package --out "$VSIX_PATH" --no-dependencies --baseContentUrl "https://github.com/lint-arwaky/lint-arwaky" 2>&1; then
+if npx @vscode/vsce package --out "$VSIX_PATH" --no-dependencies \
+    --baseContentUrl "https://github.com/lint-arwaky/lint-arwaky" \
+    --allow-missing-repository 2>&1; then
     pass "VSIX created: $VSIX_PATH"
 else
     die "VSIX packaging failed"
