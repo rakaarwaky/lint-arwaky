@@ -36,7 +36,7 @@ ignored_paths:
   - "/venv"
   - "/.mypy_cache"
   - "/.ruff_cache"
-  - "/webview/"
+  - "webview/"
 
 architecture:
   enabled: true

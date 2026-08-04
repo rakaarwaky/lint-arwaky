@@ -27,4 +27,3 @@ export * from "./contract_graph_aggregate";
 
 // Utility
 export * from "./utility_which_resolver";
-export * from "./utility_severity_mapper";

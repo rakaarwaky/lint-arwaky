@@ -139,14 +139,13 @@ flowchart TD
 
   - **Forbidden patterns** (configurable via YAML, defaults below):
 
-
-    | Category                    | Patterns                                                                                                           | Language   |
-    | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-    | Rust forbidden tokens       | `unwrap()`, `expect()`, `panic!`, `todo!`, `unimplemented!`, `unreachable!`                                        | Rust       |
-    | Rust attribute bypasses     | `#[allow(`, `#[warn(`, `#[deny(`                                                                                   | Rust       |
-    | Python bypasses             | `raise NotImplementedError`, `assert false`                                                                        | Python     |
+    | Category                    | Patterns                                                                                                                             | Language   |
+    | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
+    | Rust forbidden tokens       | `unwrap()`, `expect()`, `panic!`, `todo!`, `unimplemented!`, `unreachable!`                                              | Rust       |
+    | Rust attribute bypasses     | `#[allow(`, `#[warn(`, `#[deny(`                                                                                               | Rust       |
+    | Python bypasses             | `raise NotImplementedError`, `assert false`                                                                                      | Python     |
     | Comment/annotation bypasses | `type: ignore`, `noqa`, `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `lint-disable`, `FIXME`, `HACK`, `XXX` | All        |
-    | Cargo.toml bypass           | `level = "allow"` under `[workspace.lints.clippy]` or `[lints.clippy]`                                             | Cargo.toml |
+    | Cargo.toml bypass           | `level = "allow"` under `[workspace.lints.clippy]` or `[lints.clippy]`                                                         | Cargo.toml |
   - **Matching rules**:
 
     - All patterns are matched as **substrings** against each line.
@@ -199,9 +198,8 @@ flowchart TD
 
 ## API Contract
 
-
 | Operation                        | Input                                   | Output                   | Purpose                                                   |
-| ---------------------------------- | ----------------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| -------------------------------- | --------------------------------------- | ------------------------ | --------------------------------------------------------- |
 | Line count check (AES301/AES302) | File data from filesystem crate         | AES301/AES302 violations | Check max/min file line counts                            |
 | Definition check (AES303)        | File data from filesystem crate         | AES303 violations        | Verify file declares at least one primary symbol          |
 | Dead inheritance check (AES303)  | File data from filesystem crate         | AES303 violations        | Detect empty unit structs and empty classes               |
@@ -249,94 +247,88 @@ flowchart TD
 
 ### AES301 — Maximum File Line Count
 
-
 | # | Scenario                                            | Expected                              | Rule   |
-| --- | ----------------------------------------------------- | --------------------------------------- | -------- |
+| - | --------------------------------------------------- | ------------------------------------- | ------ |
 | 1 | File with 1500 lines, max = 1000                    | AES301 violation                      | AES301 |
-| 2 | File with exactly 1000 lines, max = 1000            | No violation (strict`>`)              | pass   |
+| 2 | File with exactly 1000 lines, max = 1000            | No violation (strict`>`)            | pass   |
 | 3 | File with 999 lines, max = 1000                     | No violation                          | pass   |
-| 4 | Barrel file (`mod.rs`) with 2000 lines              | No violation — exception             | excl   |
+| 4 | Barrel file (`mod.rs`) with 2000 lines            | No violation — exception             | excl   |
 | 5 | File in exceptions list with 2000 lines             | No violation — exception             | excl   |
 | 6 | File with 500 lines of comments + 500 lines of code | No violation (1000 total, not > 1000) | pass   |
 
 ### AES302 — Minimum File Line Count
 
-
 | # | Scenario                             | Expected                          | Rule   |
-| --- | -------------------------------------- | ----------------------------------- | -------- |
+| - | ------------------------------------ | --------------------------------- | ------ |
 | 1 | File with 3 lines, min = 10          | AES302 violation                  | AES302 |
-| 2 | File with exactly 10 lines, min = 10 | No violation (strict`<`)          | pass   |
+| 2 | File with exactly 10 lines, min = 10 | No violation (strict`<`)        | pass   |
 | 3 | File with 15 lines, min = 10         | No violation                      | pass   |
-| 4 | `__init__.py` with 1 line            | No violation — exception         | excl   |
+| 4 | `__init__.py` with 1 line          | No violation — exception         | excl   |
 | 5 | File with only comments (5 lines)    | AES302 violation (comments count) | AES302 |
 
 ### AES303 — Mandatory Definitions & Dead Inheritance
 
-
-| #  | Scenario                                                       | Expected                          | Rule   |
-| ---- | ---------------------------------------------------------------- | ----------------------------------- | -------- |
+| #  | Scenario                                                         | Expected                          | Rule   |
+| -- | ---------------------------------------------------------------- | --------------------------------- | ------ |
 | 1  | Rust file with`pub struct Foo { ... }`                         | No violation                      | pass   |
 | 2  | Rust file with only`use` statements, no struct/enum/trait/type | AES303 — MissingDefinition       | AES303 |
 | 3  | Python file with`class Foo:`                                   | No violation                      | pass   |
-| 4  | Python file with only imports                                  | AES303 — MissingDefinition       | AES303 |
+| 4  | Python file with only imports                                    | AES303 — MissingDefinition       | AES303 |
 | 5  | TS file with`export interface IFoo { ... }`                    | No violation                      | pass   |
-| 6  | Rust file with`struct Foo;` and no `impl` block                | AES303 — DeadInheritance         | AES303 |
-| 7  | Rust file with`struct Foo;` followed by `impl Foo { ... }`     | No violation (has implementation) | pass   |
+| 6  | Rust file with`struct Foo;` and no `impl` block              | AES303 — DeadInheritance         | AES303 |
+| 7  | Rust file with`struct Foo;` followed by `impl Foo { ... }`   | No violation (has implementation) | pass   |
 | 8  | Rust file with`struct Foo(i32)` (tuple struct)                 | No violation (not unit struct)    | pass   |
 | 9  | Python file with`class Foo: pass`                              | AES303 — DeadInheritance         | AES303 |
 | 10 | TS file with`class Foo {}`                                     | AES303 — DeadInheritance         | AES303 |
 | 11 | `*_constant.rs` file with no definitions                       | No violation — skipped           | excl   |
-| 12 | `#[cfg(test)]` module with `struct TestFoo;` and no impl       | No violation — cfg(test) skipped | pass   |
-| 13 | File in exceptions list                                        | No violation — exception         | excl   |
+| 12 | `#[cfg(test)]` module with `struct TestFoo;` and no impl     | No violation — cfg(test) skipped | pass   |
+| 13 | File in exceptions list                                          | No violation — exception         | excl   |
 
 ### AES304 — Bypass Detection
 
-
-| #  | Scenario                                                | Expected                                | Rule   |
-| ---- | --------------------------------------------------------- | ----------------------------------------- | -------- |
-| 1  | Rust file with`foo.unwrap()`                            | AES304 violation                        | AES304 |
-| 2  | Rust file with`foo.expect("msg")`                       | AES304 violation                        | AES304 |
-| 3  | Rust file with`panic!("error")`                         | AES304 violation                        | AES304 |
-| 4  | Rust file with`todo!()`                                 | AES304 violation                        | AES304 |
-| 5  | Rust file with`#[allow(unused)]`                        | AES304 violation                        | AES304 |
-| 6  | Rust file with`foo.unwrap_or_default()`                 | No violation (safe variant)             | pass   |
-| 7  | Rust file with`foo.unwrap_or(42)`                       | No violation (safe variant)             | pass   |
-| 8  | Rust file with`let s = "unwrap()"` (string literal)     | No violation (inside string)            | pass   |
-| 9  | Python file with`# type: ignore`                        | AES304 violation                        | AES304 |
-| 10 | Python file with`# noqa`                                | AES304 violation                        | AES304 |
-| 11 | Python file with`raise NotImplementedError`             | AES304 violation                        | AES304 |
-| 12 | TS file with`// @ts-ignore`                             | AES304 violation                        | AES304 |
-| 13 | TS file with`// @ts-expect-error`                       | AES304 violation                        | AES304 |
-| 14 | Any file with`// FIXME: refactor this`                  | AES304 violation                        | AES304 |
-| 15 | Any file with`// HACK: temporary workaround`            | AES304 violation                        | AES304 |
-| 16 | Any file with`// TODO: implement later`                 | No violation (TODO not in pattern list) | pass   |
+| #  | Scenario                                                    | Expected                                | Rule   |
+| -- | ----------------------------------------------------------- | --------------------------------------- | ------ |
+| 1  | Rust file with`foo.unwrap()`                              | AES304 violation                        | AES304 |
+| 2  | Rust file with`foo.expect("msg")`                         | AES304 violation                        | AES304 |
+| 3  | Rust file with`panic!("error")`                           | AES304 violation                        | AES304 |
+| 4  | Rust file with`todo!()`                                   | AES304 violation                        | AES304 |
+| 5  | Rust file with`#[allow(unused)]`                          | AES304 violation                        | AES304 |
+| 6  | Rust file with`foo.unwrap_or_default()`                   | No violation (safe variant)             | pass   |
+| 7  | Rust file with`foo.unwrap_or(42)`                         | No violation (safe variant)             | pass   |
+| 8  | Rust file with`let s = "unwrap()"` (string literal)       | No violation (inside string)            | pass   |
+| 9  | Python file with`# type: ignore`                          | AES304 violation                        | AES304 |
+| 10 | Python file with`# noqa`                                  | AES304 violation                        | AES304 |
+| 11 | Python file with`raise NotImplementedError`               | AES304 violation                        | AES304 |
+| 12 | TS file with`// @ts-ignore`                               | AES304 violation                        | AES304 |
+| 13 | TS file with`// @ts-expect-error`                         | AES304 violation                        | AES304 |
+| 14 | Any file with`// FIXME: refactor this`                    | AES304 violation                        | AES304 |
+| 15 | Any file with`// HACK: temporary workaround`              | AES304 violation                        | AES304 |
+| 16 | Any file with`// TODO: implement later`                   | No violation (TODO not in pattern list) | pass   |
 | 17 | Rust file with`unwrap()` inside `#[cfg(test)]` module   | No violation — cfg(test) skipped       | pass   |
 | 18 | Cargo.toml with`level = "allow"` under `[lints.clippy]` | AES304 violation                        | AES304 |
-| 19 | Rust file with`print!("unwrap()")` (string literal)     | No violation (inside string)            | pass   |
-| 20 | File in exceptions list                                 | No violation — exception               | excl   |
+| 19 | Rust file with`print!("unwrap()")` (string literal)       | No violation (inside string)            | pass   |
+| 20 | File in exceptions list                                     | No violation — exception               | excl   |
 
 ### AES305 — Duplicate Code Detection
 
-
 | # | Scenario                                                         | Expected                           | Rule   |
-| --- | ------------------------------------------------------------------ | ------------------------------------ | -------- |
+| - | ---------------------------------------------------------------- | ---------------------------------- | ------ |
 | 1 | Two files with 80% identical code blocks                         | AES305 violation (both files)      | AES305 |
 | 2 | Two files with 30% overlap, threshold = 50%                      | No violation                       | pass   |
-| 3 | File shorter than`min_lines`                                    | No violation — skipped            | pass   |
+| 3 | File shorter than`min_lines`                                   | No violation — skipped            | pass   |
 | 4 | Single file in workspace                                         | No violation (nothing to compare)  | pass   |
 | 5 | Three files all identical                                        | AES305 violation (all three files) | AES305 |
 | 6 | File with only whitespace lines (very short after normalization) | No violation — skipped            | pass   |
 
 ### Configuration
 
-
-| # | Scenario                          | Expected                        | Rule   |
-| --- | ----------------------------------- | --------------------------------- | -------- |
-| 1 | Rule AES301 disabled in config    | No AES301 violations            | config |
-| 2 | Rule AES304 disabled in config    | No AES304 violations            | config |
-| 3 | File in exceptions list           | No violation for that file      | config |
+| # | Scenario                            | Expected                        | Rule   |
+| - | ----------------------------------- | ------------------------------- | ------ |
+| 1 | Rule AES301 disabled in config      | No AES301 violations            | config |
+| 2 | Rule AES304 disabled in config      | No AES304 violations            | config |
+| 3 | File in exceptions list             | No violation for that file      | config |
 | 4 | Custom`max_lines = 500` in config | AES301 uses 500 instead of 1000 | config |
-| 5 | Custom bypass patterns in config  | AES304 uses custom patterns     | config |
+| 5 | Custom bypass patterns in config    | AES304 uses custom patterns     | config |
 
 ---
 
@@ -354,18 +346,17 @@ flowchart TD
 
 ## Glossary
 
-
-| Term                 | Definition                                                                                                          |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **AES**              | Agentic Engineering System — the 7-layer architecture framework                                                    |
+| Term                       | Definition                                                                                                                  |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **AES**              | Agentic Engineering System — the 7-layer architecture framework                                                            |
 | **Bypass**           | Any attempt to suppress, ignore, or work around warnings/errors (e.g.,`unwrap()`, `#[allow(...)]`, `noqa`, `FIXME`) |
-| **Diagnostic**       | Violation report with file location, rule code, severity, and message                                               |
-| **Dead inheritance** | Empty or stub definitions (unit structs without impl, empty classes) that provide no real implementation            |
-| **Primary symbol**   | A meaningful type declaration (struct, enum, trait, class, interface, type alias)                                   |
-| **Window**           | A contiguous block of N normalized lines used for duplication comparison                                            |
-| **Safe variant**     | `unwrap_or()`, `unwrap_or_else()`, `unwrap_or_default()` — not flagged as bypass                                   |
-| **Severity levels**  | CRITICAL (bypasses), HIGH (line count), MEDIUM (dead inheritance, duplication)                                      |
-| **Filesystem crate** | External crate that handles file walking, reading, and filtering. Returns file data to quality-rules.               |
+| **Diagnostic**       | Violation report with file location, rule code, severity, and message                                                       |
+| **Dead inheritance** | Empty or stub definitions (unit structs without impl, empty classes) that provide no real implementation                    |
+| **Primary symbol**   | A meaningful type declaration (struct, enum, trait, class, interface, type alias)                                           |
+| **Window**           | A contiguous block of N normalized lines used for duplication comparison                                                    |
+| **Safe variant**     | `unwrap_or()`, `unwrap_or_else()`, `unwrap_or_default()` — not flagged as bypass                                     |
+| **Severity levels**  | CRITICAL (bypasses), HIGH (line count), MEDIUM (dead inheritance, duplication)                                              |
+| **Filesystem crate** | External crate that handles file walking, reading, and filtering. Returns file data to quality-rules.                       |
 
 ---
 
@@ -384,7 +375,7 @@ architecture:
     AES305: { ... }
 ```
 
-```### Rule Configuration Schema
+```###
 
 ```yaml
 AES3XX:

@@ -28,6 +28,7 @@ ignored_paths:
   - "/benches"
   - "./output"
   - "/dist"
+  - "webview/"
   - "/build"
   - "/.tsbuildinfo"
   - "/.next"

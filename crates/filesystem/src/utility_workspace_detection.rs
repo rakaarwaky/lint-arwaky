@@ -8,6 +8,15 @@ use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
 // ═══════════════════════════════════════════════════════════════
+// Built-in Skip Directories
+// ═══════════════════════════════════════════════════════════════
+
+/// Directories always skipped by the filesystem walker, regardless of caller config.
+/// These contain test/bench code where bypass patterns (unwrap, #[allow], FIXME)
+/// are idiomatic and correct — not architectural violations.
+const BUILTIN_SKIP_DIRS: &[&str] = &["tests", "benches"];
+
+// ═══════════════════════════════════════════════════════════════
 // Workspace Root Detection
 // ═══════════════════════════════════════════════════════════════
 
@@ -300,11 +309,21 @@ pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
 /// Discover source files under root, skipping ignored directories during traversal.
 /// Uses `ignore::WalkBuilder` for efficient directory skipping plus a post-walk
 /// filter using `is_path_ignored` to handle all config-specified patterns.
+/// Always skips `tests/` and `benches/` directories (test/bench code is exempt
+/// from quality rules — bypass patterns like unwrap/expect are idiomatic there).
 pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
+    // Merge caller-provided ignores with built-in skip dirs (tests/benches).
+    let mut merged_ignored: Vec<String> = BUILTIN_SKIP_DIRS.iter().map(|s| s.to_string()).collect();
+    for pat in ignored {
+        if !merged_ignored.contains(pat) {
+            merged_ignored.push(pat.clone());
+        }
+    }
+
     let mut builder = ignore::WalkBuilder::new(root);
     builder.hidden(false).git_ignore(true);
     // Also add to ignore::WalkBuilder for efficient subtree skipping.
-    for pat in ignored {
+    for pat in &merged_ignored {
         builder.add_ignore(pat.as_str());
     }
     let walker = builder.build();
@@ -326,7 +345,7 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
             let abs_path = e.path().canonicalize().unwrap_or_else(|_| e.path().to_path_buf());
             let rel_path = abs_path.strip_prefix(&abs_root).unwrap_or(e.path());
             let rel_str = rel_path.to_string_lossy();
-            !crate::utility_filesystem_io::is_path_ignored(&rel_str, ignored)
+            !crate::utility_filesystem_io::is_path_ignored(&rel_str, &merged_ignored)
         })
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()

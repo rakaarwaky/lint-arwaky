@@ -263,6 +263,12 @@ fn main() {
         }),
     );
 
+    // Extract ignored_paths from config for all sub-commands.
+    let ignored_paths: Vec<String> = config_orchestrator
+        .ignored_paths(&FilePath::new(".".to_string()).unwrap_or_default())
+        .values
+        .clone();
+
     let exit_code = match cli.command {
         Command::Scan {
             path,
@@ -299,7 +305,7 @@ fn main() {
             code_analysis_linter.clone(),
             filesystem.clone(),
             filter,
-            Vec::new(),
+            ignored_paths.clone(),
         ),
         Command::Role {
             path,
@@ -312,7 +318,7 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
-            Vec::new(),
+            ignored_paths.clone(),
         ),
         Command::Import {
             path,
@@ -325,7 +331,7 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
-            Vec::new(),
+            ignored_paths.clone(),
         ),
         Command::Naming {
             path,
@@ -338,7 +344,7 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
-            Vec::new(),
+            ignored_paths.clone(),
         ),
         Command::Orphan {
             path,
@@ -367,7 +373,7 @@ fn main() {
             filesystem.clone(),
             config_orchestrator.clone(),
             filter,
-            Vec::new(),
+            ignored_paths.clone(),
         ),
         Command::Ci { path, threshold } => cli_commands::surface_ci_command::handle_ci(
             code_analysis_linter.clone(),
