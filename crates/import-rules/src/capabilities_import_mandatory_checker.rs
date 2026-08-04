@@ -2,7 +2,7 @@
 // Uses ImportEntry fields directly — no text-based parsing, no bridge functions.
 
 use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Identity, Severity};
@@ -14,6 +14,8 @@ use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryPr
 use shared::import_rules::taxonomy_import_error::ImportError;
 use std::collections::{HashMap, HashSet};
 
+const AES202_RULE_CODE: &str = "AES202";
+
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ArchImportMandatoryChecker;
@@ -22,7 +24,7 @@ pub struct ArchImportMandatoryChecker;
 
 impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
     fn rule_name(&self) -> Identity {
-        Identity::new("AES202")
+        Identity::new(AES202_RULE_CODE)
     }
 
     fn run_mandatory_imports(
@@ -59,29 +61,12 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                 };
 
                 let mut local_violations = Vec::new();
-                let filename = utility_layer_detector::extract_filename(&f_str);
-                if let Some(base_layer) = utility_layer_detector::detect_layer_from_prefix(filename)
-                {
-                    let specialized = utility_layer_detector::resolve_specialized_layer(
-                        &base_layer,
-                        &f_str,
-                        &layer_keys,
-                    );
-                    let layer_name = LayerNameVO::new(specialized.as_str());
-                    if let Some(def) = layer_map.values.get(&layer_name) {
-                        self._check_mandatory_imports(
-                            &f_str,
-                            &basename,
-                            def,
-                            entries,
-                            &mut local_violations,
-                        );
-                    }
-                }
-                self._check_scope_mandatory_imports(
+                self.check_file_mandatory(
                     &f_str,
                     &basename,
                     config,
+                    layer_map,
+                    &layer_keys,
                     entries,
                     &mut local_violations,
                 );
@@ -109,33 +94,151 @@ impl ArchImportMandatoryChecker {
         Self
     }
 
-    fn _check_mandatory_imports(
+    /// Unified mandatory import check: layer definitions + config overrides.
+    fn check_file_mandatory(
         &self,
         file: &str,
         basename: &str,
-        definition: &LayerDefinition,
+        config: &ArchitectureConfig,
+        layer_map: &LayerMapVO,
+        layer_keys: &[String],
         entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
     ) {
-        if definition.mandatory.values.is_empty() || basename == "__init__.py" {
-            return;
-        }
-        if definition.exceptions.values.contains(&basename.to_string()) {
+        if basename == "__init__.py" || basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
             return;
         }
 
-        let stem: &str = basename.rsplit('.').next_back().map_or(basename, |s| s);
-        let source_layer: &str = stem.split('_').next().map_or("unknown", |s| s);
+        // 1. Determine the file's layer
+        let filename = utility_layer_detector::extract_filename(file);
+        let source_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
+            Some(base) => {
+                let specialized = utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys);
+                // Extract clean layer name from stem for message
+                let stem: &str = basename.rsplit('.').next_back().map_or(basename, |s| s);
+                let clean_layer = stem.split('_').next().map_or("unknown", |s| s);
+                (specialized, clean_layer.to_string())
+            }
+            None => {
+                // No layer prefix — fall back to config scope rules only
+                self.check_scope_rules(file, basename, config, entries, violations);
+                return;
+            }
+        };
+        let (layer_name, source_layer_clean) = source_layer;
 
-        for required in &definition.mandatory.values {
+        // 2. Get default mandatory list from layer definitions
+        let layer_name_vo = LayerNameVO::new(layer_name.as_str());
+        let default_mandatory: Vec<String> = layer_map
+            .values
+            .get(&layer_name_vo)
+            .map(|def| def.mandatory.values.clone())
+            .unwrap_or_default();
+
+        // 3. Check if config overrides
+        let config_overrides = self.find_config_overrides(&layer_name, basename, config);
+
+        // 4. Use config overrides if present, otherwise defaults
+        let mandatory_list = config_overrides.unwrap_or(default_mandatory);
+
+        if mandatory_list.is_empty() {
+            return;
+        }
+
+        // 5. Check exceptions from both sources
+        let layer_exceptions: HashSet<String> = layer_map
+            .values
+            .get(&layer_name_vo)
+            .map(|def| def.exceptions.values.iter().cloned().collect())
+            .unwrap_or_default();
+        let config_exceptions: HashSet<String> = config
+            .rules
+            .iter()
+            .filter(|r| r.name.value == "AES202")
+            .flat_map(|r| r.exceptions.values.iter().cloned())
+            .collect();
+        if layer_exceptions.contains(basename) || config_exceptions.contains(basename) {
+            return;
+        }
+
+        // 6. Single pass: check all requirements
+        self.check_requirements(file, &source_layer_clean, &mandatory_list, entries, violations);
+    }
+
+    /// Find config rules that override the default mandatory list for a layer.
+    fn find_config_overrides(
+        &self,
+        layer_name: &str,
+        basename: &str,
+        config: &ArchitectureConfig,
+    ) -> Option<Vec<String>> {
+        for rule in &config.rules {
+            if rule.name.value != "AES202" && rule.rule_type.code() != "AES202" {
+                continue;
+            }
+            if rule.mandatory.values.is_empty() {
+                continue;
+            }
+            let scope_identity = Identity::new(&rule.scope.value);
+            if let Some((rule_layer, _)) =
+                shared::common::utility_scope_matcher::file_belongs_to_scope(
+                    basename,
+                    &scope_identity,
+                )
+            {
+                if rule_layer == layer_name {
+                    return Some(rule.mandatory.values.clone());
+                }
+            }
+        }
+        None
+    }
+
+    /// Scope-based fallback for files without layer prefix.
+    fn check_scope_rules(
+        &self,
+        file: &str,
+        basename: &str,
+        config: &ArchitectureConfig,
+        entries: &[ImportEntry],
+        violations: &mut Vec<LintResult>,
+    ) {
+        for rule in &config.rules {
+            if rule.name.value != "AES202" && rule.rule_type.code() != "AES202" {
+                continue;
+            }
+            if rule.exceptions.values.contains(&basename.to_string()) {
+                continue;
+            }
+            let scope_identity = Identity::new(&rule.scope.value);
+            if let Some((rule_layer, _)) =
+                shared::common::utility_scope_matcher::file_belongs_to_scope(
+                    basename,
+                    &scope_identity,
+                )
+            {
+                self.check_requirements(file, &rule_layer, &rule.mandatory.values, entries, violations);
+            }
+        }
+    }
+
+    /// Core requirement check — shared by all code paths.
+    fn check_requirements(
+        &self,
+        file: &str,
+        source_layer: &str,
+        required_list: &[String],
+        entries: &[ImportEntry],
+        violations: &mut Vec<LintResult>,
+    ) {
+        for required in required_list {
             let required_identity = Identity::new(required);
-            let (layer, suffixes) = utility_import_resolver::resolve_scope(&required_identity);
-            let layer_str: &str = layer.value();
+            let (req_layer, req_suffixes) = utility_import_resolver::resolve_scope(&required_identity);
+            let req_layer_str = req_layer.value();
 
             let is_present = entries.iter().any(|entry| {
-                utility_import_resolver::entry_matches_scope(entry, &layer, &suffixes)
-            }) || self
-                ._check_barrel_mandatory(entries, &layer, &suffixes, layer_str);
+                utility_import_resolver::entry_matches_scope(entry, &req_layer, &req_suffixes)
+            }) || self._check_barrel_mandatory(entries, &req_layer, &req_suffixes, req_layer_str);
 
             if !is_present {
                 let v = LintResult::new_arch(
@@ -153,83 +256,6 @@ impl ArchImportMandatoryChecker {
                 if !violations.contains(&v) {
                     violations.push(v);
                 }
-            }
-        }
-    }
-
-    fn _check_scope_mandatory_imports(
-        &self,
-        file: &str,
-        basename: &str,
-        config: &ArchitectureConfig,
-        entries: &[ImportEntry],
-        violations: &mut Vec<LintResult>,
-    ) {
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
-            return;
-        }
-
-        for rule in &config.rules {
-            if rule.name.value != "AES202" && rule.rule_type.code() != "AES202" {
-                continue;
-            }
-
-            if !rule.mandatory.values.is_empty() {
-                let scope_identity = Identity::new(&rule.scope.value);
-                if let Some((rule_layer_str, _rule_suffixes)) =
-                    shared::common::utility_scope_matcher::file_belongs_to_scope(
-                        basename,
-                        &scope_identity,
-                    )
-                {
-                    for required in &rule.mandatory.values {
-                        self._check_single_scope_requirement(
-                            file,
-                            basename,
-                            &rule_layer_str,
-                            required,
-                            entries,
-                            violations,
-                        );
-                    }
-                }
-            }
-        }
-    }
-
-    fn _check_single_scope_requirement(
-        &self,
-        file: &str,
-        _basename: &str,
-        rule_layer_str: &str,
-        required: &str,
-        entries: &[ImportEntry],
-        violations: &mut Vec<LintResult>,
-    ) {
-        let required_identity = Identity::new(required);
-        let (req_layer, req_suffixes) = utility_import_resolver::resolve_scope(&required_identity);
-        let req_layer_str = req_layer.value();
-
-        let is_present =
-            entries.iter().any(|entry| {
-                utility_import_resolver::entry_matches_scope(entry, &req_layer, &req_suffixes)
-            }) || self._check_barrel_mandatory(entries, &req_layer, &req_suffixes, req_layer_str);
-
-        if !is_present {
-            let v = LintResult::new_arch(
-                file,
-                1,
-                "AES202",
-                Severity::HIGH,
-                format!(
-                    "AES202 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
-                        WHY? Layer '{}' must import '{}' to satisfy architectural requirements.\n\
-                        FIX: Add the required import statement.",
-                    rule_layer_str, required, rule_layer_str, required
-                ),
-            );
-            if !violations.contains(&v) {
-                violations.push(v);
             }
         }
     }

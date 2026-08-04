@@ -18,14 +18,7 @@ impl ConfigLanguage {
     }
 
     pub fn config_file_names(&self) -> &'static [&'static str] {
-        match self {
-            ConfigLanguage::Rust => &["lint_arwaky.config.rust.yaml"],
-            ConfigLanguage::Python => &["lint_arwaky.config.python.yaml"],
-            ConfigLanguage::TypeScript => &[
-                "lint_arwaky.config.typescript.yaml",
-                "lint_arwaky.config.javascript.yaml",
-            ],
-        }
+        &["lint_arwaky.config.yaml"]
     }
 }
 

@@ -15,27 +15,20 @@ fn main() {
     // Config files live in <manifest>/config/ (within the crate, safe for crates.io)
     let config_dir = Path::new(&manifest_dir).join("config");
 
-    for name in &[
-        "lint_arwaky.config.rust.yaml",
-        "lint_arwaky.config.python.yaml",
-        "lint_arwaky.config.javascript.yaml",
-    ] {
-        let src = config_dir.join(name);
-        let dst = Path::new(&out_dir).join(name);
+    let name = "lint_arwaky.config.yaml";
+    let src = config_dir.join(name);
+    let dst = Path::new(&out_dir).join(name);
 
-        if !src.exists() {
-            panic!(
-                "Config file not found at {:?}. Check that config/ is in the crate root.",
-                src
-            );
-        }
-
-        if let Err(e) = fs::copy(&src, &dst) {
-            panic!("Failed to copy config file {name}: {e}");
-        }
+    if !src.exists() {
+        panic!(
+            "Config file not found at {:?}. Check that config/ is in the crate root.",
+            src
+        );
     }
 
-    println!("cargo:rerun-if-changed=config/lint_arwaky.config.rust.yaml");
-    println!("cargo:rerun-if-changed=config/lint_arwaky.config.python.yaml");
-    println!("cargo:rerun-if-changed=config/lint_arwaky.config.javascript.yaml");
+    if let Err(e) = fs::copy(&src, &dst) {
+        panic!("Failed to copy config file {name}: {e}");
+    }
+
+    println!("cargo:rerun-if-changed=config/lint_arwaky.config.yaml");
 }

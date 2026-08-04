@@ -32,7 +32,7 @@ pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Ve
     let languages = setup_orchestrator.detect_languages();
     for lang in languages.iter() {
         let lang_str = lang.value();
-        let target = format!("lint_arwaky.config.{}.yaml", lang_str);
+        let target = "lint_arwaky.config.yaml".to_string();
         let content = match setup_orchestrator.get_config_template(lang_str) {
             Ok(c) => c,
             Err(e) => {

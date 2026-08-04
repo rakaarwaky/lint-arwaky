@@ -18,10 +18,11 @@ use shared::common::parse_file_content;
 use crate::utility_import_resolver;
 use crate::utility_path_normalizer;
 use shared::config_system::ArchitectureConfig;
-// ArchitectureRule not needed — we use rule.forbidden.values directly.
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use std::collections::{HashMap, HashSet};
+
+const AES201_RULE_CODE: &str = "AES201";
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -31,7 +32,7 @@ pub struct ArchImportForbiddenChecker;
 
 impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
     fn rule_name(&self) -> Identity {
-        Identity::new("AES201")
+        Identity::new(AES201_RULE_CODE)
     }
 
     fn check_forbidden_imports(
@@ -48,7 +49,7 @@ impl IImportForbiddenProtocol for ArchImportForbiddenChecker {
         let aes201_exceptions: HashSet<String> = config
             .rules
             .iter()
-            .filter(|r| r.name.value == "AES201")
+            .filter(|r| r.name.value == AES201_RULE_CODE)
             .flat_map(|r| r.exceptions.values.iter().cloned())
             .collect();
 
@@ -94,7 +95,7 @@ impl Default for ArchImportForbiddenChecker {
 }
 
 /// Build ImportEntry list from file content — test helper.
-pub fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEntry> {
+pub(crate) fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEntry> {
     let language = if file_path.ends_with(".rs") {
         Language::Rust
     } else if file_path.ends_with(".py") {
@@ -136,7 +137,7 @@ impl ArchImportForbiddenChecker {
     }
 
     /// Check a single file's content for forbidden imports — test helper.
-    pub fn check_single_file(
+    pub(crate) fn check_single_file(
         &self,
         file_path: &str,
         content: &str,
@@ -191,7 +192,7 @@ impl ArchImportForbiddenChecker {
                 if !def.forbidden.values.is_empty() {
                     def.forbidden.values.clone()
                 } else if is_surfaces {
-                    vec!["agent".into(), "capabilities".into()]
+                    vec!["agent".into(), "capabilities".into(), "utility".into()]
                 } else {
                     vec![]
                 }
@@ -202,128 +203,26 @@ impl ArchImportForbiddenChecker {
         let config_overrides = self.find_config_overrides(&layer_name, basename, config);
 
         // 4. Use config overrides if present, otherwise use layer definition defaults
-        let forbidden_list = if config_overrides.is_some() {
-            config_overrides.unwrap()
-        } else {
-            default_forbidden
-        };
+        let forbidden_list = config_overrides.unwrap_or(default_forbidden);
 
-        // 5. Check exceptions from both sources
+        // 5. Check layer exceptions (config exceptions already filtered at top level)
         let layer_exceptions: HashSet<String> = layer_map
             .values
             .get(&layer_name_vo)
             .map(|def| def.exceptions.values.iter().cloned().collect())
             .unwrap_or_default();
-        let config_exceptions: HashSet<String> = config
-            .rules
-            .iter()
-            .filter(|r| r.name.value == "AES201")
-            .flat_map(|r| r.exceptions.values.iter().cloned())
-            .collect();
-        if layer_exceptions.contains(basename) || config_exceptions.contains(basename) {
+        if layer_exceptions.contains(basename) {
             return;
         }
 
-        if forbidden_list.is_empty() {
-            return;
-        }
-
-        // 6. Single pass: check all imports against the resolved forbidden list
-        for (idx, entry) in entries.iter().enumerate() {
-            let module_val = utility_import_resolver::entry_module_path(entry);
-
-            for forbidden in &forbidden_list {
-                let forbidden_identity = Identity::new(forbidden);
-                let (forbidden_layer, forbidden_suffixes) =
-                    utility_import_resolver::resolve_scope(&forbidden_identity);
-
-                let mut is_forbidden = if forbidden_suffixes.is_empty() {
-                    module_val
-                        .split([':', '.', '/', '\\'])
-                        .filter(|s| !s.is_empty())
-                        .any(|seg| {
-                            let cleaned = Identity::new(seg.trim_end_matches(';').trim());
-                            match utility_import_resolver::extract_layer_from_import(&cleaned) {
-                                Some(l) => l == forbidden_layer,
-                                None => false,
-                            }
-                        })
-                } else {
-                    utility_import_resolver::entry_matches_scope(
-                        entry,
-                        &forbidden_layer,
-                        &forbidden_suffixes,
-                    )
-                };
-
-                // Barrel file resolution
-                if !is_forbidden {
-                    if let Some(ref resolved_path) = entry.resolved_path {
-                        let resolved_file = resolved_path
-                            .file_name()
-                            .map(|n| n.to_string_lossy().to_string())
-                            .unwrap_or_default();
-                        let resolved_layer =
-                            utility_path_normalizer::extract_layer_from_prefix(&resolved_file);
-                        let layer_matches =
-                            resolved_layer.as_deref() == Some(forbidden_layer.value());
-                        let suffix_matches = forbidden_suffixes.is_empty()
-                            || forbidden_suffixes.iter().any(|s| {
-                                let suffix_lower = s.value().to_lowercase();
-                                resolved_file
-                                    .to_lowercase()
-                                    .contains(&format!("_{}", suffix_lower))
-                            });
-                        if layer_matches && suffix_matches {
-                            is_forbidden = true;
-                        }
-                    }
-                }
-
-                if is_forbidden {
-                    let message = if layer_name == *forbidden {
-                        // Same-layer import — provide specific guidance
-                        match layer_name.as_str() {
-                            "utility" => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer 'utility' is importing from itself.\n\
-                                    WHY? Utility files must be stateless and independent. Utility→utility imports create hidden dependencies.\n\
-                                    FIX: Extract the dependent function to a taxonomy VO if it's data, or consolidate both utilities into a single file if they are tightly coupled."
-                            ),
-                            "capabilities" => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer 'capabilities' is importing from itself.\n\
-                                    WHY? Capabilities must communicate through contract protocols to maintain loose coupling.\n\
-                                    FIX: Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation."
-                            ),
-                            "agent" => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer 'agent' is importing from itself.\n\
-                                    WHY? Agent orchestrators must coordinate through contract aggregates, not directly reference each other.\n\
-                                    FIX: Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation."
-                            ),
-                            _ => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
-                                    WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
-                                    FIX: Remove the import or refactor to use one of the allowed layers.",
-                                layer_name, forbidden, layer_name, forbidden
-                            ),
-                        }
-                    } else {
-                        format!(
-                            "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
-                                WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
-                                FIX: Remove the import or refactor to use one of the allowed layers.",
-                            layer_name, forbidden, layer_name, forbidden
-                        )
-                    };
-                    violations.push(LintResult::new_arch(
-                        file,
-                        idx + 1,
-                        "AES201",
-                        Severity::CRITICAL,
-                        message,
-                    ));
-                }
-            }
-        }
+        // 6. Delegate to shared import-vs-forbidden check
+        self.check_imports_against_forbidden(
+            file,
+            &layer_name,
+            &forbidden_list,
+            entries,
+            violations,
+        );
     }
 
     /// Find config rules that override the default forbidden list for a layer.
@@ -335,7 +234,7 @@ impl ArchImportForbiddenChecker {
         config: &ArchitectureConfig,
     ) -> Option<Vec<String>> {
         for rule in &config.rules {
-            if rule.name.value != "AES201" {
+            if rule.name.value != AES201_RULE_CODE {
                 continue;
             }
             if rule.forbidden.values.is_empty() {
@@ -365,12 +264,12 @@ impl ArchImportForbiddenChecker {
         entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
     ) {
-        if basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+        if utility_import_resolver::is_barrel_file(basename) {
             return;
         }
 
         for rule in &config.rules {
-            if rule.name.value != "AES201" {
+            if rule.name.value != AES201_RULE_CODE {
                 continue;
             }
             if rule.exceptions.values.contains(&basename.to_string()) {
@@ -404,30 +303,42 @@ impl ArchImportForbiddenChecker {
         entries: &[ImportEntry],
         violations: &mut Vec<LintResult>,
     ) {
-        for (idx, entry) in entries.iter().enumerate() {
-            let module_val = utility_import_resolver::entry_module_path(entry);
-
-            for forbidden in forbidden_list {
+        // Pre-resolve all forbidden scopes once (not per entry)
+        let resolved_forbidden: Vec<(&str, LayerNameVO, Vec<Identity>)> = forbidden_list
+            .iter()
+            .map(|forbidden| {
                 let forbidden_identity = Identity::new(forbidden);
                 let (forbidden_layer, forbidden_suffixes) =
                     utility_import_resolver::resolve_scope(&forbidden_identity);
+                (forbidden.as_str(), forbidden_layer, forbidden_suffixes)
+            })
+            .collect();
+
+        for (idx, entry) in entries.iter().enumerate() {
+            let module_val = utility_import_resolver::entry_module_path(entry);
+
+            // Pre-split module path once per entry (not per forbidden item)
+            let module_segments: Vec<&str> = module_val
+                .split([':', '.', '/', '\\'])
+                .filter(|s| !s.is_empty())
+                .map(|s| s.trim_end_matches(';').trim())
+                .collect();
+
+            for &(forbidden, ref forbidden_layer, ref forbidden_suffixes) in &resolved_forbidden {
 
                 let mut is_forbidden = if forbidden_suffixes.is_empty() {
-                    module_val
-                        .split([':', '.', '/', '\\'])
-                        .filter(|s| !s.is_empty())
-                        .any(|seg| {
-                            let cleaned = Identity::new(seg.trim_end_matches(';').trim());
-                            match utility_import_resolver::extract_layer_from_import(&cleaned) {
-                                Some(l) => l == forbidden_layer,
-                                None => false,
-                            }
-                        })
+                    module_segments.iter().any(|seg| {
+                        let cleaned = Identity::new(seg);
+                        match utility_import_resolver::extract_layer_from_import(&cleaned) {
+                            Some(l) => l == *forbidden_layer,
+                            None => false,
+                        }
+                    })
                 } else {
                     utility_import_resolver::entry_matches_scope(
                         entry,
-                        &forbidden_layer,
-                        &forbidden_suffixes,
+                        forbidden_layer,
+                        forbidden_suffixes,
                     )
                 };
 
@@ -445,9 +356,13 @@ impl ArchImportForbiddenChecker {
                         let suffix_matches = forbidden_suffixes.is_empty()
                             || forbidden_suffixes.iter().any(|s| {
                                 let suffix_lower = s.value().to_lowercase();
-                                resolved_file
-                                    .to_lowercase()
-                                    .contains(&format!("_{}", suffix_lower))
+                                let resolved_lower = resolved_file.to_lowercase();
+                                let resolved_stem = std::path::Path::new(&resolved_lower)
+                                    .file_stem()
+                                    .and_then(|st| st.to_str())
+                                    .unwrap_or(&resolved_lower);
+                                // Whole-word segment matching per FRD
+                                resolved_stem.split('_').any(|seg| seg == suffix_lower)
                             });
                         if layer_matches && suffix_matches {
                             is_forbidden = true;
@@ -456,7 +371,7 @@ impl ArchImportForbiddenChecker {
                 }
 
                 if is_forbidden {
-                    let message = if source_layer == forbidden.as_str() {
+                    let message = if source_layer == forbidden {
                         match source_layer {
                             "utility" => format!(
                                 "AES201 FORBIDDEN_IMPORT: Layer 'utility' is importing from itself.\n\
