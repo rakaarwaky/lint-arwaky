@@ -41,8 +41,20 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
         let aes202_exceptions: HashSet<String> = config
             .rules
             .iter()
-            .filter(|r| r.name.value == "AES202")
+            .filter(|r| r.name.value == AES202_RULE_CODE)
             .flat_map(|r| r.exceptions.values.iter().cloned())
+            .collect();
+
+        // Pre-compute layer exceptions map (avoids per-file rebuild)
+        let layer_exceptions_map: HashMap<String, HashSet<String>> = layer_map
+            .values
+            .iter()
+            .map(|(name, def)| {
+                (
+                    name.value().to_string(),
+                    def.exceptions.values.iter().cloned().collect(),
+                )
+            })
             .collect();
 
         let mut file_violations: Vec<LintResult> = files
@@ -68,14 +80,23 @@ impl IImportMandatoryProtocol for ArchImportMandatoryChecker {
                     layer_map,
                     &layer_keys,
                     entries,
+                    &aes202_exceptions,
+                    &layer_exceptions_map,
                     &mut local_violations,
                 );
                 local_violations
             })
             .collect();
 
-        // Deduplicate violations by (file, line, code)
-        file_violations.dedup_by(|a, b| a.file == b.file && a.line == b.line && a.code == b.code);
+        // Deduplicate violations by (file, line, code) — HashSet for non-consecutive dedup
+        let mut seen: HashSet<(String, i64, String)> = HashSet::new();
+        file_violations.retain(|v| {
+            seen.insert((
+                v.file.value().to_string(),
+                v.line.value(),
+                v.code.code().to_string(),
+            ))
+        });
 
         Ok(LintResultList::new(file_violations))
     }

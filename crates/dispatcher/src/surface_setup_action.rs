@@ -30,35 +30,36 @@ pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Ve
     let mut items: Vec<SetupInitItem> = Vec::new();
 
     let languages = setup_orchestrator.detect_languages();
-    for lang in languages.iter() {
-        let lang_str = lang.value();
-        let target = "lint_arwaky.config.yaml".to_string();
-        let content = match setup_orchestrator.get_config_template(lang_str) {
-            Ok(c) => c,
-            Err(e) => {
-                items.push(SetupInitItem {
-                    message: format!("No config template for {}: {e}", lang_str),
-                    ok: false,
-                });
-                continue;
-            }
-        };
-        match setup_orchestrator.write_config_file(&target, content) {
-            Ok(desc) => {
-                items.push(SetupInitItem {
-                    message: format!(
-                        "Config written/overwritten: {} (language: {}) — {}",
-                        target, lang_str, desc.value
-                    ),
-                    ok: true,
-                });
-            }
-            Err(e) => {
-                items.push(SetupInitItem {
-                    message: format!("Error creating config for {}: {e}", lang_str),
-                    ok: false,
-                });
-            }
+    let target = "lint_arwaky.config.yaml";
+
+    // Write unified config once — all languages share the same template
+    let first_lang = languages.iter().next().map(|l| l.value().to_string());
+    let lang_str = first_lang.as_deref().unwrap_or("all");
+    let content = match setup_orchestrator.get_config_template(lang_str) {
+        Ok(c) => c,
+        Err(e) => {
+            items.push(SetupInitItem {
+                message: format!("No config template: {e}"),
+                ok: false,
+            });
+            return items;
+        }
+    };
+    match setup_orchestrator.write_config_file(target, content) {
+        Ok(desc) => {
+            items.push(SetupInitItem {
+                message: format!(
+                    "Config written/overwritten: {} (unified) — {}",
+                    target, desc.value
+                ),
+                ok: true,
+            });
+        }
+        Err(e) => {
+            items.push(SetupInitItem {
+                message: format!("Error creating config: {e}"),
+                ok: false,
+            });
         }
     }
 

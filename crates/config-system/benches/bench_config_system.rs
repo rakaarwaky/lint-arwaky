@@ -78,7 +78,7 @@ fn bench_validate_thresholds(c: &mut Criterion) {
 fn bench_load_config_sync(c: &mut Criterion) {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
