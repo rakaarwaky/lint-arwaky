@@ -31,6 +31,13 @@ pub fn resolve_single_import(mut entry: ImportEntry, root_dir: &Path) -> ImportE
         return entry;
     }
 
+    // Handle Python relative imports (starting with '.')
+    if entry.language == shared::filesystem::taxonomy_filesystem_vo::Language::Python
+        && (entry.raw_path.starts_with('.') || entry.raw_path.starts_with(".."))
+    {
+        return resolve_python_relative_import(entry, root_dir);
+    }
+
     let symbols = if !entry.symbols.is_empty() {
         entry.symbols.clone()
     } else {
@@ -57,6 +64,47 @@ pub fn resolve_single_import(mut entry: ImportEntry, root_dir: &Path) -> ImportE
             entry.is_resolved = true;
             return entry;
         }
+    }
+
+    entry
+}
+
+/// Resolve Python relative imports (e.g., '.taxonomy_expression_vo', '..utils').
+/// Uses the source file's directory as the base for resolution.
+fn resolve_python_relative_import(mut entry: ImportEntry, root_dir: &Path) -> ImportEntry {
+    let source_dir = entry.source_file.parent().unwrap_or(root_dir);
+
+    // Count leading dots to determine relative depth
+    let raw_path = &entry.raw_path;
+    let dot_count = raw_path.chars().take_while(|&c| c == '.').count();
+
+    // Build the module name (without dots)
+    let module_name = raw_path.trim_start_matches('.');
+
+    // Resolve the relative path
+    let base_dir = if dot_count >= 2 {
+        // '..' means go up one directory
+        source_dir.parent().unwrap_or(source_dir)
+    } else {
+        // '.' means current directory
+        source_dir
+    };
+
+    // Try to find the module as a .py file
+    let py_file = base_dir.join(format!("{}.py", module_name));
+    if py_file.exists() {
+        entry.resolved_path = Some(py_file);
+        entry.is_resolved = true;
+        return entry;
+    }
+
+    // Try to find as a package (directory with __init__.py)
+    let pkg_dir = base_dir.join(module_name);
+    let init_file = pkg_dir.join("__init__.py");
+    if init_file.exists() {
+        entry.resolved_path = Some(init_file);
+        entry.is_resolved = true;
+        return entry;
     }
 
     entry
