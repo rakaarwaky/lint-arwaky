@@ -12,7 +12,7 @@ impl shared::filesystem::contract_parser_protocol::IParserProtocol for MinimalFi
         &[]
     }
     fn import_list(&self) -> &[shared::filesystem::taxonomy_filesystem_vo::ImportEntry] {
-        &[]
+        Vec::new()
     }
     fn parse_all(&self, _: &mut [shared::filesystem::taxonomy_filesystem_vo::FileEntry]) {}
     fn imports_for(

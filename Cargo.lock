@@ -996,12 +996,9 @@ dependencies = [
 name = "dispatcher-lint-arwaky"
 version = "1.11.0"
 dependencies = [
- "config-system-lint-arwaky",
  "criterion",
  "ctrlc",
  "dirs",
- "filesystem-lint-arwaky",
- "orphan-rules-lint-arwaky",
  "regex",
  "serde",
  "serde_json",

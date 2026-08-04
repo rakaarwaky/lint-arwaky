@@ -51,8 +51,8 @@ impl IParserProtocol for FilesystemOrchestrator {
         self.warnings.get().map(|v| v.as_slice()).unwrap_or(&[])
     }
 
-    fn import_list(&self) -> &[ImportEntry] {
-        self.imports.get().map(|v| v.as_slice()).unwrap_or(&[])
+    fn import_list(&self) -> Vec<ImportEntry> {
+        self.imports.get().cloned().unwrap_or_default()
     }
 
     fn parse_all(&self, files: &mut [FileEntry]) {
@@ -582,14 +582,31 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             } else {
                 imp.resolved_path
                     .as_ref()
-                    .map(|p| path_to_relative(p, &top_root))
+                    .map(|p| {
+                        let rel = path_to_relative(p, &top_root);
+                        eprintln!(
+                            "[debug build_graph] resolved_path={}, top_root={}, rel={}",
+                            p.display(), top_root.display(), rel
+                        );
+                        rel
+                    })
             };
             if let Some(tgt_rel) = target {
+                eprintln!(
+                    "[debug build_graph] src={}, tgt={}, src_rel={}",
+                    imp.source_file.display(), tgt_rel, src_rel
+                );
                 if src_rel != tgt_rel {
                     forward.entry(src_rel).or_default().push(tgt_rel);
                 }
             }
         }
+
+        eprintln!(
+            "[debug build_graph] forward graph size={}, keys: {:?}",
+            forward.len(),
+            forward.keys().take(5).collect::<Vec<_>>()
+        );
 
         let reverse: HashMap<String, Vec<String>> = self
             .deps

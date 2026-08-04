@@ -2,17 +2,29 @@
 name: lint-arwaky-python
 description: "Run lint-arwaky CLI scanner and MCP server for Python projects — validate AES compliance, check layer violations, and fix architecture issues."
 metadata:
-  tags: [python, lint, aes, compliance, scanning, mcp]
+  tags: [python, lint, aes, compliance, scanning, mcp, fix]
   triggers:
     - "lint arwaky python"
     - "scan python project"
     - "verify aes compliance python"
+    - "fix architecture violations python"
+    - "fix violations python"
+    - "scan and fix python"
+    - "audit python codebase"
   dependencies: []
   related:
     - cleanup-consolidate-python
+    - fix-bypass-python
+    - create-taxonomy-python
+    - create-contract-python
+    - create-utility-python
     - create-capabilities-python
+    - create-agent-python
+    - create-surface-python
+    - create-root-python
+    - role-architect
+    - role-tech-lead
 ---
-
 # lint-arwaky-python — Complete Command & Argument Reference
 
 Run `lint-arwaky-cli` scanner and MCP server for Python projects. Validates AES (Architecture Error Standards) compliance, checks layer violations, and helps fix architecture issues.
@@ -23,12 +35,11 @@ Run `lint-arwaky-cli` scanner and MCP server for Python projects. Validates AES 
 
 Shortcut aliases are available for fast terminal access (automatically added to `~/.bashrc` / `~/.zshrc`):
 
-
-| Alias | Target Binary     | Description                               | Example Usage                            |
-| :------ | :------------------ | :------------------------------------------ | :----------------------------------------- |
-| `lac` | `lint-arwaky-cli` | Primary CLI gatekeeper & scanner          | `lac scan .`, `lac fix`, `lac doctor`    |
-| `lat` | `lint-arwaky-tui` | Terminal User Interface (TUI) dashboard   | `lat`                                    |
-| `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) | Configured in Claude / Cursor / Windsurf |
+| Alias   | Target Binary       | Description                               | Example Usage                               |
+| :------ | :------------------ | :---------------------------------------- | :------------------------------------------ |
+| `lac` | `lint-arwaky-cli` | Primary CLI gatekeeper & scanner          | `lac scan .`, `lac fix`, `lac doctor` |
+| `lat` | `lint-arwaky-tui` | Terminal User Interface (TUI) dashboard   | `lat`                                     |
+| `lam` | `lint-arwaky-mcp` | MCP Server (STDIO backend for AI clients) | Configured in Claude / Cursor / Windsurf    |
 
 ---
 
@@ -36,15 +47,14 @@ Shortcut aliases are available for fast terminal access (automatically added to 
 
 These options apply globally across all `lint-arwaky-cli` subcommands:
 
-
-| Option | Long Flag            | Description                                                                       |
-| :------- | :--------------------- | :---------------------------------------------------------------------------------- |
-| `-v`   | `--verbose`          | Enable debug logging and detailed diagnostic traces.                              |
-| `-q`   | `--quiet`            | Minimize console output (suppress non-error messages).                            |
-| `-o`   | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration).             |
+| Option | Long Flag              | Description                                                                             |
+| :----- | :--------------------- | :-------------------------------------------------------------------------------------- |
+| `-v` | `--verbose`          | Enable debug logging and detailed diagnostic traces.                                    |
+| `-q` | `--quiet`            | Minimize console output (suppress non-error messages).                                  |
+| `-o` | `--output-dir <DIR>` | Directory to save generated reports (overrides active configuration).                   |
 |        | `--filter <CODE>`    | Filter scan results by specific AES rule code (e.g.`AES101`, `AES301`, `AES401`). |
-| `-h`   | `--help`             | Print help information for the CLI or specific subcommand.                        |
-| `-V`   | `--version`          | Print CLI binary version.                                                         |
+| `-h` | `--help`             | Print help information for the CLI or specific subcommand.                              |
+| `-V` | `--version`          | Print CLI binary version.                                                               |
 
 ---
 
@@ -244,13 +254,13 @@ lint-arwaky-cli version
 
 `lint-arwaky-mcp` exposes 5 JSON-RPC 2.0 tools over STDIO for AI clients (Claude Code, Cursor, Windsurf, Hermes):
 
-| Tool Name | Description | Arguments / Parameters |
-| :--- | :--- | :--- |
-| `execute_command` | Execute any CLI command action | `action` (required: `"scan"`, `"check"`, `"fix"`, `"security"`, `"doctor"`, etc.), `args` (optional JSON object, e.g. `{"path": "/abs/path"}`) |
-| `list_commands` | List available CLI commands catalog | `domain` (optional: filter by domain string, e.g. `"setup"`, `"check"`) |
-| `read_skill` | Read `SKILL.md` documentation by section | `section` (optional: header name to extract) |
-| `health_check` | Check MCP server & adapter health | None (0 parameters) |
-| `get_config` | Get active architecture config | `path` (optional project path), `language` (optional: `"rust"`, `"python"`, `"javascript"`) |
+| Tool Name           | Description                               | Arguments / Parameters                                                                                                                                         |
+| :------------------ | :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `execute_command` | Execute any CLI command action            | `action` (required: `"scan"`, `"check"`, `"fix"`, `"security"`, `"doctor"`, etc.), `args` (optional JSON object, e.g. `{"path": "/abs/path"}`) |
+| `list_commands`   | List available CLI commands catalog       | `domain` (optional: filter by domain string, e.g. `"setup"`, `"check"`)                                                                                  |
+| `read_skill`      | Read`SKILL.md` documentation by section | `section` (optional: header name to extract)                                                                                                                 |
+| `health_check`    | Check MCP server & adapter health         | None (0 parameters)                                                                                                                                            |
+| `get_config`      | Get active architecture config            | `path` (optional project path), `language` (optional: `"rust"`, `"python"`, `"javascript"`)                                                          |
 
 ### Example MCP JSON-RPC Payload
 
@@ -297,9 +307,8 @@ FORBIDDEN:  capabilities_*, agent_* (peer layers)
 
 ### Layer Boundaries (AES404)
 
-
 | Layer        | Can Contain                  | Cannot Contain             |
-| :------------- | :----------------------------- | :--------------------------- |
+| :----------- | :--------------------------- | :------------------------- |
 | capabilities | Pure computation, validation | I/O, network, database     |
 | agent        | Orchestration flow           | Computation, I/O, business |
 
@@ -307,19 +316,179 @@ FORBIDDEN:  capabilities_*, agent_* (peer layers)
 
 ## 5. Verification Checklist
 
-- [ ]  All layer imports follow AES201 rules
-- [ ]  All classes inherit appropriate protocol ABCs (AES403)
-- [ ]  No mixed responsibilities in layers (AES404)
-- [ ]  No magic constants in layers (AES405)
-- [ ]  Surface files follow role-based imports (AES406)
+- [ ] All layer imports follow AES201 rules
+- [ ] All classes inherit appropriate protocol ABCs (AES403)
+- [ ] No mixed responsibilities in layers (AES404)
+- [ ] No magic constants in layers (AES405)
+- [ ] Surface files follow role-based imports (AES406)
 
 ---
 
+## 6. Scan → Diagnose → Fix → Verify Workflow
+
+End-to-end workflow for an AI agent when asked to fix architecture violations in a Python codebase.
+
+### 6.1 Pre-flight
+
+```bash
+# Verify Python environment works
+python3 -c "import sys; print(sys.version)"
+
+# Check that key dependencies are importable
+python3 -c "import ruff; print('ruff ok')" 2>/dev/null || echo "ruff not installed"
+```
+
+### 6.2 Scan (detect all violations)
+
+```bash
+# Full scan — get total count and breakdown by rule
+lint-arwaky-cli scan <target-path> --format json > /tmp/arwaky-scan.json
+
+# Count total violations
+cat /tmp/arwaky-scan.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"Total: {d.get('total_violations', len(d.get('violations', [])))}\")"
+
+# Filter by severity — focus on CRITICAL first (AES201, AES205, AES304)
+lint-arwaky-cli scan <target-path> --filter AES201
+lint-arwaky-cli scan <target-path> --filter AES304
+```
+
+**Priority order for fixes:**
+
+1. 🔴 **CRITICAL**: AES201 (forbidden import), AES205 (circular import), AES304 (bypass comment)
+2. 🟡 **HIGH**: AES101–102 (naming), AES202 (mandatory import), AES301–303 (quality), AES401–403, AES406, AES505–506
+3. 🟢 **MEDIUM/LOW**: AES203–204, AES305, AES404–405, AES501–504
+
+### 6.3 Diagnose (understand each violation)
+
+For each violation, read the affected file and determine:
+
+| Question                        | What to look for                                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Which rule?**           | AES code from scan output (e.g. AES201)                                                               |
+| **Which layer?**          | File prefix:`taxonomy_`, `contract_`, `capabilities_`, etc.                                     |
+| **What's wrong?**         | Read the violation message and the source file                                                        |
+| **Can it be auto-fixed?** | AES101 (rename), AES203 (unused import), AES304 (bypass) → yes. AES201 (wrong dependency) → manual. |
+| **Root cause?**           | Is it a naming issue, a wrong import, a missing implementation, or dead code?                         |
+
+### 6.4 Fix (apply changes)
+
+**Auto-fixable violations** (use the CLI):
+
+```bash
+# Preview first
+lint-arwaky-cli fix <target-path> --dry-run
+
+# Fix all auto-fixable violations
+lint-arwaky-cli fix <target-path>
+
+# Fix specific rule
+lint-arwaky-cli fix <target-path> --filter AES101
+lint-arwaky-cli fix <target-path> --filter AES304
+```
+
+**Manual fixes** (by violation type):
+
+| Violation                 | Fix approach                                    | Skill to use                                           |
+| ------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
+| AES101 (naming)           | Rename file to`layer_concern_role.py`         | `create-{taxonomy,contract,capabilities,...}-python` |
+| AES102 (suffix)           | Change suffix to match layer rule               | `create-{layer}-python`                              |
+| AES201 (forbidden import) | Remove cross-layer import; use DI via contract  | `role-architect`                                     |
+| AES202 (mandatory import) | Add the required import                         | —                                                     |
+| AES203 (unused import)    | Remove unused import line                       | —                                                     |
+| AES204 (dummy import)     | Remove dummy import + stub usage                | `fix-bypass-python`                                  |
+| AES205 (circular import)  | Break cycle by extracting to lower layer        | `role-architect`                                     |
+| AES301 (max lines)        | Split file by responsibility                    | `cleanup-consolidate-python`                         |
+| AES302 (min lines)        | Merge thin file into parent or delete           | `cleanup-consolidate-python`                         |
+| AES303 (mandatory def)    | Add class/function definition                   | —                                                     |
+| AES304 (bypass)           | Fix root cause, remove`noqa`/`type: ignore` | `fix-bypass-python`                                  |
+| AES305 (duplication)      | Extract shared logic to utility                 | `create-utility-python`                              |
+| AES401–406 (role)        | Move code to correct layer                      | `create-{layer}-python`                              |
+| AES501–506 (orphan)      | Wire into container or delete dead code         | `cleanup-consolidate-python`                         |
+
+### 6.5 Verify (confirm all clean)
+
+```bash
+# 1. Re-scan — should show 0 violations
+lint-arwaky-cli scan <target-path>
+
+# 2. Syntax check
+python3 -m py_compile src/<module>.py
+
+# 3. Import check
+python3 -c "import <module>"
+
+# 4. Run ruff (if available)
+ruff check src/
+
+# 5. Run mypy (if available)
+mypy src/
+```
+
+### 6.6 Commit
+
+```bash
+git add -A
+git commit -m "fix: resolve <N> AES violations (<list of rules>)"
+```
+
+---
+
+## 7. Quick Fix Recipes
+
+### Rename file (AES101/102)
+
+```bash
+# Before: capabilities_scanner.py (wrong — missing concern + suffix mismatch)
+# After:  capabilities_file_scanner.py
+git mv src/capabilities_scanner.py src/capabilities_file_scanner.py
+# Update __init__.py imports
+```
+
+### Remove unused import (AES203)
+
+```bash
+lint-arwaky-cli fix src/file.py --filter AES203
+# Or manually: remove the unused import line
+```
+
+### Fix bypass comments (AES304)
+
+```bash
+# Find all bypass patterns
+grep -rn 'noqa\|type: ignore\|pragma: no cover\|FIXME\|TODO' src/
+
+# Fix each one:
+# noqa → fix the underlying lint issue
+# type: ignore → add proper type annotation
+# pragma: no cover → ensure code is testable
+```
+
+### Remove dead code (AES501–506)
+
+```bash
+# Find orphan files
+lint-arwaky-cli orphan modules/ --format json
+
+# If orphan is truly dead → delete it
+# If orphan should be wired → add to container or import chain
+```
+
+### Fix layer role violation (AES401–406)
+
+```bash
+# Identify which role rule is violated
+lint-arwaky-cli role modules/ --filter AES403
+
+# Common fixes:
+# - Move I/O code from capabilities to utility
+# - Move business logic from surface to capabilities
+# - Move orchestration from capabilities to agent
+```
+
 ## 6. Common Issues & Fix Strategies
 
-
 | Issue                          | Fix Strategy                        |
-| :------------------------------- | :------------------------------------ |
+| :----------------------------- | :---------------------------------- |
 | Cross-layer imports            | Use contract layer protocols via DI |
 | Missing protocol inheritance   | Create protocol ABC and inherit     |
 | Mixed layer responsibilities   | Move code to appropriate layer      |

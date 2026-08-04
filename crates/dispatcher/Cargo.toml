@@ -7,9 +7,6 @@ license = "MIT"
 
 [dependencies]
 shared = { workspace = true }
-orphan-rules = { workspace = true }
-filesystem = { workspace = true }
-config-system = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 regex = { workspace = true }

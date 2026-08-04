@@ -10,7 +10,7 @@ use std::path::Path;
 /// Consumers import only this trait when they need parse warnings or import data.
 pub trait IParserProtocol: Send + Sync {
     fn parse_warnings(&self) -> &[ParseWarning];
-    fn import_list(&self) -> &[ImportEntry];
+    fn import_list(&self) -> Vec<ImportEntry>;
     fn parse_all(&self, files: &mut [FileEntry]);
     fn imports_for(&self, path: &Path) -> Vec<ImportEntry>;
     fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry>;

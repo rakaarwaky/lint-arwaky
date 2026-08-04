@@ -41,11 +41,11 @@ impl IParserProtocol for ASTParser {
         self.warnings.get().map(|v| v.as_slice()).unwrap_or(&[])
     }
 
-    fn import_list(&self) -> &[ImportEntry] {
+    fn import_list(&self) -> Vec<ImportEntry> {
         self.imports
             .read()
-            .map(|v| v.as_slice())
-            .unwrap_or(&[])
+            .map(|v| v.clone())
+            .unwrap_or_default()
     }
 
     fn parse_all(&self, files: &mut [FileEntry]) {
@@ -54,7 +54,7 @@ impl IParserProtocol for ASTParser {
 
     fn imports_for(&self, path: &Path) -> Vec<ImportEntry> {
         self.imports
-            .get()
+            .read()
             .map(|v| {
                 v.iter()
                     .filter(|i| i.source_file == path)
@@ -69,22 +69,25 @@ impl IParserProtocol for ASTParser {
     }
 
     fn resolve_barrel_imports(&self, root_dir: &Path) {
-        if let Some(imports) = self.imports.get() {
-            let count = imports.len();
-            let resolved: Vec<ImportEntry> = imports
-                .iter()
-                .cloned()
-                .map(|entry| {
-                    crate::utility_barrel_resolution::resolve_single_import(entry, root_dir)
-                })
-                .collect();
-            let resolved_count = resolved.iter().filter(|e| e.is_resolved).count();
-            eprintln!(
-                "[debug resolve_barrel] input={}, resolved={}, root={}",
-                count, resolved_count, root_dir.display()
-            );
-            let _ = imports;
-            let _ = self.imports.set(resolved);
+        let imports = match self.imports.read() {
+            Ok(v) => v.clone(),
+            Err(_) => return,
+        };
+        let count = imports.len();
+        let resolved: Vec<ImportEntry> = imports
+            .iter()
+            .cloned()
+            .map(|entry| {
+                crate::utility_barrel_resolution::resolve_single_import(entry, root_dir)
+            })
+            .collect();
+        let resolved_count = resolved.iter().filter(|e| e.is_resolved).count();
+        eprintln!(
+            "[debug resolve_barrel] input={}, resolved={}, root={}",
+            count, resolved_count, root_dir.display()
+        );
+        if let Ok(mut w) = self.imports.write() {
+            *w = resolved;
         }
     }
 }
@@ -195,7 +198,9 @@ impl ASTParser {
             .collect();
         let all_imports: Vec<ImportEntry> = results.into_iter().flat_map(|(_, i)| i).collect();
         let _ = self.warnings.set(all_warnings);
-        let _ = self.imports.set(all_imports);
+        if let Ok(mut w) = self.imports.write() {
+            *w = all_imports;
+        }
     }
 }
 

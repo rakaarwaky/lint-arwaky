@@ -74,8 +74,8 @@ impl shared::filesystem::contract_parser_protocol::IParserProtocol for MockFiles
     fn parse_warnings(&self) -> &[ParseWarning] {
         &[]
     }
-    fn import_list(&self) -> &[ImportEntry] {
-        &[]
+    fn import_list(&self) -> Vec<ImportEntry> {
+        Vec::new()
     }
     fn parse_all(&self, _: &mut [FE]) {}
     fn imports_for(&self, _: &std::path::Path) -> Vec<ImportEntry> {

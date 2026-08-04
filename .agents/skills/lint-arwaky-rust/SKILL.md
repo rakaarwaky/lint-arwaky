@@ -2,16 +2,29 @@
 name: lint-arwaky-rust
 description: "Run lint-arwaky CLI scanner and MCP server for Rust projects — validate AES compliance, check layer violations, and fix architecture issues."
 metadata:
-  tags: [rust, lint, aes, compliance, scanning, mcp, clippy]
+  tags: [rust, lint, aes, compliance, scanning, mcp, clippy, fix]
   triggers:
     - "lint arwaky rust"
     - "lint code rust"
     - "check compliance rust"
     - "scan rust project"
+    - "fix architecture violations rust"
+    - "fix violations rust"
+    - "scan and fix rust"
+    - "audit rust codebase"
   dependencies: []
   related:
     - cleanup-consolidate-rust
-    - build-verify-all
+    - fix-bypass-rust
+    - create-taxonomy-rust
+    - create-contract-rust
+    - create-utility-rust
+    - create-capabilities-rust
+    - create-agent-rust
+    - create-surface-rust
+    - create-root-rust
+    - role-architect
+    - role-tech-lead
 ---
 
 # lint-arwaky-rust — Complete Command & Argument Reference
@@ -292,3 +305,164 @@ lint-arwaky-cli scan crates/ --format sarif > ~/.local/share/lint-arwaky/reports
 - [ ] `cargo clippy --all-targets -- -D warnings` clean
 - [ ] `cargo test --workspace` passes
 - [ ] `lint-arwaky-cli scan .` reports 0 violations
+
+---
+
+## 6. Scan → Diagnose → Fix → Verify Workflow
+
+This is the **end-to-end workflow** for an AI agent when asked to fix architecture violations in a Rust codebase.
+
+### 6.1 Pre-flight
+
+```bash
+# Ensure project builds
+CARGO_INCREMENTAL=0 cargo build -p <crate> 2>&1 | tail -20
+```
+
+If build fails, fix compilation errors first. Violations on broken code are unreliable.
+
+### 6.2 Scan (detect all violations)
+
+```bash
+# Full scan — get total count and breakdown by rule
+lint-arwaky-cli scan <target-path> --format json > /tmp/arwaky-scan.json
+
+# Count total violations
+cat /tmp/arwaky-scan.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"Total: {d.get('total_violations', len(d.get('violations', [])))}\")"
+
+# Filter by severity — focus on CRITICAL first (AES201, AES205, AES304)
+lint-arwaky-cli scan <target-path> --filter AES201
+lint-arwaky-cli scan <target-path> --filter AES304
+```
+
+**Priority order for fixes:**
+1. 🔴 **CRITICAL**: AES201 (forbidden import), AES205 (circular import), AES304 (bypass comment)
+2. 🟡 **HIGH**: AES101–102 (naming), AES202 (mandatory import), AES301–303 (quality), AES401–403, AES406, AES505–506
+3. 🟢 **MEDIUM/LOW**: AES203–204, AES305, AES404–405, AES501–504
+
+### 6.3 Diagnose (understand each violation)
+
+For each violation, read the affected file and determine:
+
+| Question | What to look for |
+|---|---|
+| **Which rule?** | AES code from scan output (e.g. AES201) |
+| **Which layer?** | File prefix: `taxonomy_`, `contract_`, `capabilities_`, etc. |
+| **What's wrong?** | Read the violation message and the source file |
+| **Can it be auto-fixed?** | AES101 (rename), AES203 (unused import), AES304 (bypass) → yes. AES201 (wrong dependency) → manual. |
+| **Root cause?** | Is it a naming issue, a wrong import, a missing implementation, or dead code? |
+
+### 6.4 Fix (apply changes)
+
+**Auto-fixable violations** (use the CLI):
+
+```bash
+# Preview first
+lint-arwaky-cli fix <target-path> --dry-run
+
+# Fix all auto-fixable violations
+lint-arwaky-cli fix <target-path>
+
+# Fix specific rule
+lint-arwaky-cli fix <target-path> --filter AES101
+lint-arwaky-cli fix <target-path> --filter AES304
+```
+
+**Manual fixes** (by violation type):
+
+| Violation | Fix approach | Skill to use |
+|---|---|---|
+| AES101 (naming) | Rename file to `layer_concern_role.rs` | `create-{taxonomy,contract,capabilities,...}-rust` |
+| AES102 (suffix) | Change suffix to match layer rule | `create-{layer}-rust` |
+| AES201 (forbidden import) | Remove cross-layer import; use DI via contract | `role-architect` |
+| AES202 (mandatory import) | Add the required import | — |
+| AES203 (unused import) | Remove unused import line | — |
+| AES204 (dummy import) | Remove dummy import + stub usage | `fix-bypass-rust` |
+| AES205 (circular import) | Break cycle by extracting to lower layer | `role-architect` |
+| AES301 (max lines) | Split file by responsibility | `cleanup-consolidate-rust` |
+| AES302 (min lines) | Merge thin file into parent or delete | `cleanup-consolidate-rust` |
+| AES303 (mandatory def) | Add struct/enum/trait definition | — |
+| AES304 (bypass) | Fix root cause, remove `#[allow]`/`unwrap()` | `fix-bypass-rust` |
+| AES305 (duplication) | Extract shared logic to utility | `create-utility-rust` |
+| AES401–406 (role) | Move code to correct layer | `create-{layer}-rust` |
+| AES501–506 (orphan) | Wire into container or delete dead code | `cleanup-consolidate-rust` |
+
+### 6.5 Verify (confirm all clean)
+
+```bash
+# 1. Re-scan — should show 0 violations
+lint-arwaky-cli scan <target-path>
+lint-arwaky-cli scan .  # self-lint for the lint-arwaky project itself
+
+# 2. Build check
+CARGO_INCREMENTAL=0 cargo check -p <crate>
+
+# 3. Tests pass
+cargo nextest run -p <crate> --lib --tests
+
+# 4. Format + clippy
+cargo fmt --all
+CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
+```
+
+### 6.6 Commit
+
+```bash
+# Stage and commit with descriptive message
+git add -A
+git commit -m "fix: resolve <N> AES violations (<list of rules>)"
+```
+
+---
+
+## 7. Quick Fix Recipes
+
+### Rename file (AES101/102)
+
+```bash
+# Before: capabilities_scanner.rs (wrong — no underscore prefix for capabilities)
+# After:  capabilities_file_scanner.rs
+git mv src/capabilities_scanner.rs src/capabilities_file_scanner.rs
+# Update mod.rs references
+```
+
+### Remove unused import (AES203)
+
+```bash
+# Auto-fixable
+lint-arwaky-cli fix src/file.rs --filter AES203
+```
+
+### Fix bypass comments (AES304)
+
+```bash
+# Find all bypass patterns
+grep -rn 'unwrap\|expect\|panic!\|#\[allow' src/
+
+# Fix each one:
+# unwrap() → use ? or match
+# expect("msg") → use ? with context
+# panic!("msg") → return Result::Err
+# #[allow(...)] → fix the underlying warning
+```
+
+### Remove dead code (AES501–506)
+
+```bash
+# Find orphan files
+lint-arwaky-cli orphan crates/ --format json
+
+# If orphan is truly dead → delete it
+# If orphan should be wired → add to container or import chain
+```
+
+### Break circular dependency (AES205)
+
+```bash
+# Identify the cycle
+lint-arwaky-cli import <target-path> --filter AES205
+
+# Solution: extract shared types/traits to a lower layer (taxonomy or contract)
+# Move the shared interface to contract_<concern>_protocol.rs
+# Both sides import from contract instead of importing each other
+```

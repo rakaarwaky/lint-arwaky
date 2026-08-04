@@ -2,15 +2,30 @@
 name: lint-arwaky-typescript
 description: "Run lint-arwaky CLI scanner and MCP server for TypeScript projects — validate AES compliance, check layer violations, and fix architecture issues."
 metadata:
-  tags: [typescript, lint, aes, compliance, scanning, mcp]
+  tags: [typescript, lint, aes, compliance, scanning, mcp, fix]
   triggers:
     - "lint arwaky typescript"
     - "scan typescript project"
     - "verify aes compliance typescript"
+    - "fix architecture violations typescript"
+    - "fix violations typescript"
+    - "scan and fix typescript"
+    - "audit typescript codebase"
+    - "lint arwaky javascript"
+    - "fix violations javascript"
   dependencies: []
   related:
     - cleanup-consolidate-typescript
+    - fix-bypass-typescript
+    - create-taxonomy-typescript
+    - create-contract-typescript
+    - create-utility-typescript
     - create-capabilities-typescript
+    - create-agent-typescript
+    - create-surface-typescript
+    - create-root-typescript
+    - role-architect
+    - role-tech-lead
 ---
 
 # lint-arwaky-typescript — Complete Command & Argument Reference
@@ -301,12 +316,163 @@ FORBIDDEN:  capabilities_*, agent_* (peer layers)
 
 ---
 
-## 6. Common Issues & Fix Strategies
+## 6. Scan → Diagnose → Fix → Verify Workflow
 
-| Issue | Fix Strategy |
-| :--- | :--- |
-| Cross-layer imports | Use contract layer interfaces via DI |
-| Missing interface inheritance | Create protocol interface and implement |
-| Mixed layer responsibilities | Move code to appropriate layer |
-| Magic constants | Extract to taxonomy constants |
-| Surface importing capabilities | Use aggregate interfaces instead |
+End-to-end workflow for an AI agent when asked to fix architecture violations in a TypeScript/JavaScript codebase.
+
+### 6.1 Pre-flight
+
+```bash
+# Verify Node.js environment
+node --version && npm --version
+
+# Install dependencies if needed
+npm install
+
+# Check TypeScript compiles
+npx tsc --noEmit
+```
+
+### 6.2 Scan (detect all violations)
+
+```bash
+# Full scan — get total count and breakdown by rule
+lint-arwaky-cli scan <target-path> --format json > /tmp/arwaky-scan.json
+
+# Count total violations
+cat /tmp/arwaky-scan.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(f\"Total: {d.get('total_violations', len(d.get('violations', [])))}\")"
+
+# Filter by severity — focus on CRITICAL first (AES201, AES205, AES304)
+lint-arwaky-cli scan <target-path> --filter AES201
+lint-arwaky-cli scan <target-path> --filter AES304
+```
+
+**Priority order for fixes:**
+1. 🔴 **CRITICAL**: AES201 (forbidden import), AES205 (circular import), AES304 (bypass comment)
+2. 🟡 **HIGH**: AES101–102 (naming), AES202 (mandatory import), AES301–303 (quality), AES401–403, AES406, AES505–506
+3. 🟢 **MEDIUM/LOW**: AES203–204, AES305, AES404–405, AES501–504
+
+### 6.3 Diagnose (understand each violation)
+
+For each violation, read the affected file and determine:
+
+| Question | What to look for |
+|---|---|
+| **Which rule?** | AES code from scan output (e.g. AES201) |
+| **Which layer?** | File prefix: `taxonomy_`, `contract_`, `capabilities_`, etc. |
+| **What's wrong?** | Read the violation message and the source file |
+| **Can it be auto-fixed?** | AES101 (rename), AES203 (unused import), AES304 (bypass) → yes. AES201 (wrong dependency) → manual. |
+| **Root cause?** | Is it a naming issue, a wrong import, a missing implementation, or dead code? |
+
+### 6.4 Fix (apply changes)
+
+**Auto-fixable violations** (use the CLI):
+
+```bash
+# Preview first
+lint-arwaky-cli fix <target-path> --dry-run
+
+# Fix all auto-fixable violations
+lint-arwaky-cli fix <target-path>
+
+# Fix specific rule
+lint-arwaky-cli fix <target-path> --filter AES101
+lint-arwaky-cli fix <target-path> --filter AES304
+```
+
+**Manual fixes** (by violation type):
+
+| Violation | Fix approach | Skill to use |
+|---|---|---|
+| AES101 (naming) | Rename file to `layer_concern_role.ts` | `create-{taxonomy,contract,capabilities,...}-typescript` |
+| AES102 (suffix) | Change suffix to match layer rule | `create-{layer}-typescript` |
+| AES201 (forbidden import) | Remove cross-layer import; use DI via contract | `role-architect` |
+| AES202 (mandatory import) | Add the required import | — |
+| AES203 (unused import) | Remove unused import line | — |
+| AES204 (dummy import) | Remove dummy import + stub usage | `fix-bypass-typescript` |
+| AES205 (circular import) | Break cycle by extracting to lower layer | `role-architect` |
+| AES301 (max lines) | Split file by responsibility | `cleanup-consolidate-typescript` |
+| AES302 (min lines) | Merge thin file into parent or delete | `cleanup-consolidate-typescript` |
+| AES303 (mandatory def) | Add class/interface/function definition | — |
+| AES304 (bypass) | Fix root cause, remove `@ts-ignore`/`@ts-expect-error` | `fix-bypass-typescript` |
+| AES305 (duplication) | Extract shared logic to utility | `create-utility-typescript` |
+| AES401–406 (role) | Move code to correct layer | `create-{layer}-typescript` |
+| AES501–506 (orphan) | Wire into container or delete dead code | `cleanup-consolidate-typescript` |
+
+### 6.5 Verify (confirm all clean)
+
+```bash
+# 1. Re-scan — should show 0 violations
+lint-arwaky-cli scan <target-path>
+
+# 2. TypeScript compiles
+npx tsc --noEmit
+
+# 3. ESLint passes (if configured)
+npx eslint src/ --ext .ts,.tsx,.js,.jsx
+
+# 4. Tests pass (if configured)
+npx vitest run  # or npm test
+```
+
+### 6.6 Commit
+
+```bash
+git add -A
+git commit -m "fix: resolve <N> AES violations (<list of rules>)"
+```
+
+---
+
+## 7. Quick Fix Recipes
+
+### Rename file (AES101/102)
+
+```bash
+# Before: capabilities_scanner.ts (wrong — missing concern + suffix mismatch)
+# After:  capabilities_file_scanner.ts
+git mv src/capabilities_scanner.ts src/capabilities_file_scanner.ts
+# Update index.ts barrel exports
+```
+
+### Remove unused import (AES203)
+
+```bash
+lint-arwaky-cli fix src/file.ts --filter AES203
+# Or manually: remove the unused import line
+```
+
+### Fix bypass comments (AES304)
+
+```bash
+# Find all bypass patterns
+grep -rn '@ts-ignore\|@ts-expect-error\|@ts-nocheck\|eslint-disable\|FIXME\|TODO' src/
+
+# Fix each one:
+# @ts-ignore → fix the type error properly
+# @ts-expect-error → add proper type assertion or narrowing
+# eslint-disable → fix the underlying lint rule
+```
+
+### Remove dead code (AES501–506)
+
+```bash
+# Find orphan files
+lint-arwaky-cli orphan packages/ --format json
+
+# If orphan is truly dead → delete it
+# If orphan should be wired → add to container or import chain
+```
+
+### Fix layer role violation (AES401–406)
+
+```bash
+# Identify which role rule is violated
+lint-arwaky-cli role packages/ --filter AES403
+
+# Common fixes:
+# - Move I/O code from capabilities to utility
+# - Move business logic from surface to capabilities
+# - Move orchestration from capabilities to agent
+# - Use aggregate interfaces from contract instead of importing capabilities directly
+```
