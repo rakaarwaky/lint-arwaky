@@ -82,7 +82,6 @@ fn resolve_python_relative_import(mut entry: ImportEntry, root_dir: &Path) -> Im
     let module_name = raw_path.trim_start_matches('.');
 
     eprintln!(
-        "[debug resolve_python] raw_path='{}', source='{}', module='{}', dots={}",
         raw_path,
         entry.source_file.display(),
         module_name,
@@ -100,7 +99,6 @@ fn resolve_python_relative_import(mut entry: ImportEntry, root_dir: &Path) -> Im
 
     // Try to find the module as a .py file
     let py_file = base_dir.join(format!("{}.py", module_name));
-    eprintln!("[debug resolve_python] looking for: {}", py_file.display());
     if py_file.exists() {
         entry.resolved_path = Some(py_file);
         entry.is_resolved = true;
@@ -116,7 +114,6 @@ fn resolve_python_relative_import(mut entry: ImportEntry, root_dir: &Path) -> Im
         return entry;
     }
 
-    eprintln!("[debug resolve_python] NOT FOUND");
     entry
 }
 
