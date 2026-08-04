@@ -45,7 +45,7 @@ flowchart TD
 
 ```
 Priority 1: Project root
-  lint_arwaky.config.<language>.yaml at project root
+  lint_arwaky.config.yaml at project root
       │ (not found)
       ▼
 Priority 2: Parent directories (up to depth 3)
@@ -53,7 +53,7 @@ Priority 2: Parent directories (up to depth 3)
       │ (not found)
       ▼
 Priority 3: XDG user config
-  ~/.config/lint-arwaky/lint_arwaky.config.<language>.yaml
+  ~/.config/lint-arwaky/lint_arwaky.config.yaml
       │ (not found)
       ▼
 Priority 4: XDG system dirs
@@ -103,14 +103,11 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Output**: Config filenames to search in priority order.
 - **Business Rules**:
 
-  - Rust → `lint_arwaky.config.rust.yaml`
-  - Python → `lint_arwaky.config.python.yaml`
-  - TypeScript → `lint_arwaky.config.typescript.yaml`, fallback to `lint_arwaky.config.javascript.yaml`
+  - All languages → `lint_arwaky.config.yaml` (unified config for Rust, Python, TypeScript).
   - `ConfigLanguage` is a typed enum, not a string — prevents path injection.
 - **Edge Cases**:
 
   - Unknown language → no config files returned, embedded defaults used.
-  - TypeScript config not found but JavaScript config exists → uses JavaScript config.
 - **Error Handling**: None — pure mapping function.
 
 ---
@@ -363,10 +360,8 @@ Loaded config is merged with embedded defaults (FR-005).
 
 | # | Scenario                                 | Expected                       | Rule   |
 | --- | ------------------------------------------ | -------------------------------- | -------- |
-| 1 | Rust language                            | `lint_arwaky.config.rust.yaml` | FR-002 |
-| 2 | TypeScript, .typescript.yaml exists      | Uses .typescript.yaml          | FR-002 |
-| 3 | TypeScript, only .javascript.yaml exists | Falls back to .javascript.yaml | FR-002 |
-| 4 | Unknown language                         | Empty list, embedded defaults  | FR-002 |
+| 1 | Any language (Rust/Python/TypeScript)     | `lint_arwaky.config.yaml`     | FR-002 |
+| 2 | Unknown language                         | Empty list, embedded defaults  | FR-002 |
 
 ### FR-003 — Workspace Detection
 
@@ -446,7 +441,7 @@ Loaded config is merged with embedded defaults (FR-005).
 ## Assumptions & Constraints
 
 - `ConfigLanguage` enum restricts input to exactly Rust, Python, TypeScript — no arbitrary strings allowed.
-- Config file naming follows a strict convention per language (`lint_arwaky.config.<language>.yaml`).
+- Config file naming follows a unified convention: `lint_arwaky.config.yaml` for all languages.
 - Workspace structure must follow `crates/`, `packages/`, `modules/` convention.
 - Maximum 8 XDG_CONFIG_DIRS entries; only absolute paths accepted.
 - No config file size limit.
@@ -480,10 +475,7 @@ Loaded config is merged with embedded defaults (FR-005).
 ### File Naming Convention
 
 ```
-lint_arwaky.config.rust.yaml
-lint_arwaky.config.python.yaml
-lint_arwaky.config.typescript.yaml  
-lint_arwaky.config.javascript.yaml    # fallback for TypeScript
+lint_arwaky.config.yaml  — unified config for all languages (Rust, Python, TypeScript)
 ```
 
 ### Top-Level Structure

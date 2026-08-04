@@ -434,6 +434,7 @@ impl McpActionSurface {
             "init" | "install" => {
                 let items = dispatcher::surface_setup_action::collect_init(
                     self.deps.setup_orchestrator.clone(),
+                    self.deps.filesystem.clone(),
                 );
                 let messages: Vec<String> = items.iter().map(|i| i.message.clone()).collect();
                 serde_json::json!({"status": "success", "action": action, "exit_code": 0, "items": messages})
@@ -536,7 +537,7 @@ impl McpActionSurface {
             .iter()
             .map(std::path::Path::new)
             .find(|p| p.exists())
-            .and_then(|p| std::fs::read_to_string(p).ok());
+            .and_then(|p| self.deps.filesystem.read_file(p));
         let content = match content {
             Some(c) => c,
             None => {

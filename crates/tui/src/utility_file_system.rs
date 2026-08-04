@@ -1,21 +1,18 @@
 // PURPOSE: utility_file_system — stateless filesystem utilities for TUI surfaces
 use shared::common::{DisplayContent, FilePath};
+use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 
 use shared::tui::FileEntry;
 use std::io::Write;
 use std::path::Path;
 
 /// List directory entries, skipping hidden files (starting with '.').
-pub fn list_directory(path: &FilePath) -> Vec<FileEntry> {
+pub fn list_directory(path: &FilePath, fs: &dyn IFileSystemIOProtocol) -> Vec<FileEntry> {
     let dir_path = Path::new(path.value());
-    let read_dir = match dir_path.read_dir() {
-        Ok(rd) => rd,
-        Err(_) => return Vec::new(),
-    };
+    let paths = fs.read_dir_entries_as_pathbuf(dir_path).unwrap_or_default();
 
     let mut entries = Vec::new();
-    for dir_entry in read_dir.flatten() {
-        let entry_path = dir_entry.path();
+    for entry_path in paths {
         let name = match entry_path.file_name().and_then(|n| n.to_str()) {
             Some(n) => n.to_string(),
             None => continue,
@@ -32,9 +29,9 @@ pub fn list_directory(path: &FilePath) -> Vec<FileEntry> {
 
 /// Read up to `max_lines` lines of a file with line-numbered formatting.
 /// Truncates with "... (N more lines)" note if the file exceeds max_lines.
-pub fn read_file_preview(path: &FilePath, max_lines: usize) -> DisplayContent {
+pub fn read_file_preview(path: &FilePath, max_lines: usize, fs: &dyn IFileSystemIOProtocol) -> DisplayContent {
     let file_path = Path::new(path.value());
-    let content = match std::fs::read_to_string(file_path) {
+    let content = match fs.read_to_string(file_path) {
         Ok(c) => c,
         Err(e) => return DisplayContent::new(format!("Cannot read file: {e}")),
     };

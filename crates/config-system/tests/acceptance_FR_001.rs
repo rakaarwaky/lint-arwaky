@@ -9,7 +9,7 @@ use tempfile::TempDir;
 fn us1_config_in_project_root_is_found() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -23,7 +23,7 @@ fn us1_config_in_project_root_is_found() {
             .source
             .path
             .value
-            .contains("lint_arwaky.config.rust.yaml")
+            .contains("lint_arwaky.config.yaml")
     );
     assert!(
         !result
@@ -37,7 +37,7 @@ fn us1_config_in_project_root_is_found() {
 fn us1_config_in_parent_directory_is_found() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -52,7 +52,7 @@ fn us1_config_in_parent_directory_is_found() {
             .source
             .path
             .value
-            .contains("lint_arwaky.config.rust.yaml")
+            .contains("lint_arwaky.config.yaml")
     );
 }
 

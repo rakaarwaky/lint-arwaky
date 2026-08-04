@@ -109,7 +109,7 @@ and receive dependencies via `Arc<dyn Trait>`:
 ```
 project-root/
 ├── Cargo.toml              ← workspace manifest (members = ["crates/*"])
-├── lint_arwaky.config.rust.yaml  ← AES config (created in Phase 0)
+├── lint_arwaky.config.yaml  ← AES config (created in Phase 0)
 ├── crates/
 │   ├── shared/             ← shared types (subfolders per feature + common/)
 │   │   ├── Cargo.toml
@@ -176,7 +176,7 @@ cd your-project/
 lint-arwaky-cli init
 ```
 
-This creates `lint_arwaky.config.rust.yaml` with default AES rules.
+This creates `lint_arwaky.config.yaml` with default AES rules.
 
 ### Step 2: Run Initial Audit
 

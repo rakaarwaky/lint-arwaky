@@ -45,16 +45,16 @@ fn config_language_from_str_cases() {
 fn config_language_file_names_per_language() {
     assert_eq!(
         ConfigLanguage::Rust.config_file_names(),
-        &["lint_arwaky.config.rust.yaml"]
+        &["lint_arwaky.config.yaml"]
     );
     assert_eq!(
         ConfigLanguage::Python.config_file_names(),
-        &["lint_arwaky.config.python.yaml"]
+        &["lint_arwaky.config.yaml"]
     );
     assert!(
         ConfigLanguage::TypeScript
             .config_file_names()
-            .contains(&"lint_arwaky.config.javascript.yaml")
+            .contains(&"lint_arwaky.config.yaml")
     );
 }
 

@@ -99,68 +99,6 @@ languages:
       - "except:"
       - "pass"
     entry_points: []
-    suffix_flexible_utility:
-      - "parser"
-      - "splitter"
-      - "trimmer"
-      - "slugifier"
-      - "sanitizer"
-      - "normalizer"
-      - "extractor"
-      - "replacer"
-      - "converter"
-      - "counter"
-      - "resolver"
-      - "detector"
-      - "builder"
-      - "joiner"
-      - "serializer"
-      - "deserializer"
-      - "encoder"
-      - "decoder"
-      - "hasher"
-      - "generator"
-      - "formatter"
-      - "comparator"
-      - "differ"
-      - "matcher"
-      - "checker"
-      - "calculator"
-      - "mapper"
-      - "merger"
-      - "grouper"
-      - "sorter"
-      - "deduplicator"
-      - "printer"
-    suffix_flexible_capabilities:
-      - "analyzer"
-      - "checker"
-      - "processor"
-      - "evaluator"
-      - "resolver"
-      - "validator"
-      - "formatter"
-      - "executor"
-      - "transformer"
-      - "calculator"
-      - "builder"
-      - "compiler"
-      - "aggregator"
-      - "classifier"
-      - "extractor"
-      - "reporter"
-      - "mapper"
-      - "filter"
-      - "collector"
-      - "comparator"
-      - "scorer"
-      - "inspector"
-      - "reviewer"
-      - "assessor"
-      - "auditor"
-      - "actions"
-      - "helper"
-
   typescript:
     exceptions:
       - "__init__.py"
@@ -327,41 +265,7 @@ architecture:
             - strict: ["protocol", "aggregate"]
         utility:
           suffix:
-            - flexible:
-                [
-                  "parser",
-                  "splitter",
-                  "trimmer",
-                  "slugifier",
-                  "sanitizer",
-                  "normalizer",
-                  "extractor",
-                  "replacer",
-                  "converter",
-                  "counter",
-                  "resolver",
-                  "detector",
-                  "builder",
-                  "joiner",
-                  "serializer",
-                  "deserializer",
-                  "encoder",
-                  "decoder",
-                  "hasher",
-                  "generator",
-                  "formatter",
-                  "comparator",
-                  "differ",
-                  "matcher",
-                  "checker",
-                  "calculator",
-                  "mapper",
-                  "merger",
-                  "grouper",
-                  "sorter",
-                  "deduplicator",
-                  "printer",
-                ]
+            - flexible: []
             - forbidden:
                 [
                   "vo",
@@ -374,36 +278,7 @@ architecture:
                 ]
         capabilities:
           suffix:
-            - flexible:
-                [
-                  "analyzer",
-                  "checker",
-                  "processor",
-                  "evaluator",
-                  "resolver",
-                  "validator",
-                  "formatter",
-                  "executor",
-                  "transformer",
-                  "calculator",
-                  "builder",
-                  "compiler",
-                  "aggregator",
-                  "classifier",
-                  "extractor",
-                  "reporter",
-                  "mapper",
-                  "filter",
-                  "collector",
-                  "comparator",
-                  "scorer",
-                  "inspector",
-                  "reviewer",
-                  "assessor",
-                  "auditor",
-                  "actions",
-                  "helper",
-                ]
+            - flexible: []
             - forbidden:
                 [
                   "vo",
@@ -588,7 +463,6 @@ architecture:
           "__init__.py",
           "__main__.py",
           "main.py",
-          "capabilities_orphan_parser_dispatcher.rs",
           "index.ts",
           "index.js",
           "index.tsx",
@@ -809,23 +683,10 @@ architecture:
           "unreachable",
           "noqa",
           "type: ignore",
-          "# noqa",
-          "# fmt: off",
-          "# ruff: noqa",
-          "# pylint: disable",
           "eslint-disable",
-          "eslint-disable-next-line",
-          "ts-ignore",
-          "ts-expect-error",
           "// @ts-ignore",
           "// @ts-expect-error",
           "// @ts-nocheck",
-          "pylint: disable",
-          "Any",
-          "except:",
-          "pass",
-          "any",
-          "as any",
         ]
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 

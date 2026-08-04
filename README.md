@@ -235,7 +235,7 @@ but are not part of the 24-rule count.
 Configuration is loaded from YAML files with a 5-level priority chain:
 
 ```
-1. Project root       lint_arwaky.config.<language>.yaml
+1. Project root       lint_arwaky.config.yaml
 2. Parent dirs        up to 3 levels up
 3. XDG user           ~/.config/lint-arwaky/
 4. XDG system         /etc/xdg/lint-arwaky/

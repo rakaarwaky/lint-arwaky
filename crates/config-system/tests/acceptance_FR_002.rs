@@ -30,7 +30,7 @@ fn us2_python_workspace_loads_python_config() {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("pyproject.toml"), "[project]\nname=\"x\"\n").unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.python.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -50,7 +50,7 @@ fn us2_typescript_workspace_loads_typescript_config() {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("package.json"), r#"{"name":"x"}"#).unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.typescript.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();

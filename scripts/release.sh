@@ -113,7 +113,7 @@ fi
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 cleanup() {
     [ -n "${CHANGELOG_FILE:-}" ] && [ -f "${CHANGELOG_FILE:-}" ] && rm -f "$CHANGELOG_FILE"
-    rm -f crates/shared/src/config-system/lint_arwaky.config.*.yaml 2>/dev/null || true
+    rm -f crates/shared/config/lint_arwaky.config.yaml 2>/dev/null || true
 }
 trap cleanup EXIT
 

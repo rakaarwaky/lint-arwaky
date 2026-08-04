@@ -17,7 +17,7 @@ pub struct ConfigContainer {
 impl ConfigContainer {
     pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let workspace_detector =
-            Arc::new(crate::capabilities_workspace_detector::WorkspaceDetector::new());
+            Arc::new(crate::capabilities_workspace_detector::WorkspaceDetector::new(filesystem.clone()));
         let yaml_reader = Arc::new(crate::capabilities_yaml_reader::ConfigYamlReader::new(
             filesystem.clone(),
         ));

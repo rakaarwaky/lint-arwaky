@@ -18,7 +18,7 @@ use tempfile::TempDir;
 fn make_orchestrator() -> ConfigOrchestrator {
     let fs = common::make_fs();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new()),
+        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
         parser: Arc::new(ConfigParserProvider::new(fs.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
@@ -45,7 +45,7 @@ fn load_project_config_uses_defaults_when_no_file() {
 fn load_project_config_reads_existing_yaml() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -58,7 +58,7 @@ fn load_project_config_reads_existing_yaml() {
             .source
             .path
             .value
-            .contains("lint_arwaky.config.rust.yaml")
+            .contains("lint_arwaky.config.yaml")
     );
 }
 
@@ -66,7 +66,7 @@ fn load_project_config_reads_existing_yaml() {
 fn load_config_for_language_python() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.python.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n",
     )
     .unwrap();
@@ -79,7 +79,7 @@ fn load_config_for_language_python() {
 fn load_config_for_language_injects_defaults_when_no_layers() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -105,7 +105,7 @@ fn load_config_sync_returns_defaults_for_empty_dir() {
 fn load_config_sync_finds_config_in_current_dir() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: false\n  rules: []\n",
     )
     .unwrap();
@@ -148,7 +148,7 @@ fn discover_workspaces_returns_empty_for_non_workspace() {
 fn config_cache_returns_same_arc_on_second_load() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -170,7 +170,7 @@ fn load_config_sync_finds_config_from_deep_file_path() {
     let tmp = TempDir::new().unwrap();
     // Create config at project root
     fs::write(
-        tmp.path().join("lint_arwaky.config.python.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: false\n  rules: []\n",
     )
     .unwrap();
@@ -197,7 +197,7 @@ fn load_config_sync_finds_config_from_deep_file_path() {
 fn load_config_sync_finds_config_from_very_deep_file_path() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.python.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: false\n  rules: []\n",
     )
     .unwrap();
@@ -242,7 +242,7 @@ fn load_config_sync_returns_defaults_for_deep_file_with_no_config() {
 fn load_config_sync_finds_rust_config_from_deep_crate_file() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: false\n  rules: []\n",
     )
     .unwrap();

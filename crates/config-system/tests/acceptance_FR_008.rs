@@ -18,7 +18,7 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
 
     let fs = common::make_fs();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new()),
+        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
         parser: Arc::new(ConfigParserProvider::new(fs.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
@@ -33,7 +33,7 @@ use std::sync::Arc;
 fn us8_no_config_returns_8_default_ignored_paths() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -57,7 +57,7 @@ fn us8_no_config_returns_8_default_ignored_paths() {
 fn us8_config_adds_new_path() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\nignored_paths:\n  - tests\n",
     )
     .unwrap();
@@ -75,7 +75,7 @@ fn us8_config_adds_new_path() {
 fn us8_config_duplicate_path_is_deduplicated() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\nignored_paths:\n  - .git\n",
     )
     .unwrap();
@@ -95,7 +95,7 @@ fn us8_config_duplicate_path_is_deduplicated() {
 fn us8_config_empty_string_is_filtered() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\nignored_paths:\n  - \"\"\n",
     )
     .unwrap();

@@ -21,7 +21,7 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
 
     let fs = common::make_fs();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new()),
+        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
         parser: Arc::new(ConfigParserProvider::new(fs.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
@@ -34,7 +34,7 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
 fn us7_same_config_file_cached_on_second_load() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -57,7 +57,7 @@ fn us7_same_config_file_cached_on_second_load() {
 fn us7_concurrent_requests_for_same_key_are_safe() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -89,7 +89,7 @@ fn us7_concurrent_requests_for_same_key_are_safe() {
 fn us7_load_config_sync_uses_cache_for_same_path() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: false\n  rules: []\n",
     )
     .unwrap();

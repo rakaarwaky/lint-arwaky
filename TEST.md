@@ -195,7 +195,7 @@ The base codebase must be clean of internal architecture rule violations.
 - [ ]  **Criteria**: Output must show **`Total violations: 0`**.
 - [ ]  **Safety net**: No inline bypasses (`#[allow(...)]`, `unwrap()`, `todo!()`,
   `FIXME`, `HACK`). If an external module strictly requires an exception,
-  register it in `lint_arwaky.config.rust.yaml` under the `exceptions`
+  register it in `lint_arwaky.config.yaml` under the `exceptions`
   block — never use inline bypass comments.
 
 ### 4.2 Cross-Language Functional Verification

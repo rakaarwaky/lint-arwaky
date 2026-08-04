@@ -207,10 +207,7 @@ flowchart TD
   content, or error for unknown language.
 - **Business Rules**:
 
-  - `"rust"` → `lint_arwaky.config.rust.yaml`
-  - `"python"` → `lint_arwaky.config.python.yaml`
-  - `"javascript"` → `lint_arwaky.config.javascript.yaml`
-  - `"typescript"` → `lint_arwaky.config.typescript.yaml`
+  - `"rust"`, `"python"`, `"javascript"`, `"typescript"` → `lint_arwaky.config.yaml` (unified)
   - Unknown language → returns `Err(SetupError::UnknownLanguage)` with
     list of supported languages. **No silent default.**
   - Templates are embedded at compile time.

@@ -75,7 +75,7 @@ and receive dependencies via constructor injection:
 ```
 project-root/
 ├── pyproject.toml           ← workspace root config
-├── lint_arwaky.config.python.yaml  ← AES config (created in Phase 0)
+├── lint_arwaky.config.yaml  ← AES config (created in Phase 0)
 ├── modules/
 │   ├── shared/              ← shared taxonomy + contract + utility types
 │   │   ├── pyproject.toml
@@ -145,7 +145,7 @@ cd your-project/
 lint-arwaky-cli init
 ```
 
-This creates `lint_arwaky.config.python.yaml` with default AES rules.
+This creates `lint_arwaky.config.yaml` with default AES rules.
 
 ### Step 2: Run Initial Audit
 

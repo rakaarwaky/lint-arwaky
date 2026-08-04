@@ -1,6 +1,6 @@
-use crate::utility_path_normalizer;
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO};
+use shared::common::utility_layer_detector;
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 // ═══════════════════════════════════════════════════════════════
@@ -152,7 +152,7 @@ pub fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
 /// Extract layer name from an import segment.
 pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
     let segment_str = segment.value();
-    if let Some(layer) = utility_path_normalizer::extract_layer_from_prefix(segment_str) {
+    if let Some(layer) = utility_layer_detector::detect_layer_from_prefix(segment_str) {
         return Some(LayerNameVO::new(layer));
     }
     match segment_str {

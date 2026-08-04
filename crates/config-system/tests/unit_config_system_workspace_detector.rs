@@ -8,7 +8,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_detector() -> WorkspaceDetector {
-    WorkspaceDetector::new()
+    WorkspaceDetector::new(common::make_fs())
 }
 fn create_file(dir: &std::path::Path, name: &str) {
     fs::write(dir.join(name), "").unwrap();
@@ -265,8 +265,8 @@ fn detect_unknown_for_file_not_in_workspace() {
 
 #[test]
 fn new_creates_equivalent_instances() {
-    let a = WorkspaceDetector::new();
-    let b = WorkspaceDetector::new();
+    let a = WorkspaceDetector::new(common::make_fs());
+    let b = WorkspaceDetector::new(common::make_fs());
     let tmp = TempDir::new().unwrap();
     create_file(tmp.path(), "Cargo.toml");
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();

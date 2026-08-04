@@ -13,8 +13,10 @@ use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use std::collections::{HashMap, HashSet};
+use std::sync::LazyLock;
 
 const AES202_RULE_CODE: &str = "AES202";
+static EMPTY_HASHSET: LazyLock<HashSet<String>> = LazyLock::new(HashSet::new);
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -124,9 +126,11 @@ impl ArchImportMandatoryChecker {
         layer_map: &LayerMapVO,
         layer_keys: &[String],
         entries: &[ImportEntry],
+        config_exceptions: &HashSet<String>,
+        layer_exceptions_map: &HashMap<String, HashSet<String>>,
         violations: &mut Vec<LintResult>,
     ) {
-        if basename == "__init__.py" || basename == "mod.rs" || basename == "lib.rs" || basename == "main.rs" {
+        if utility_import_resolver::is_barrel_file(basename) {
             return;
         }
 
@@ -141,8 +145,7 @@ impl ArchImportMandatoryChecker {
                 (specialized, clean_layer.to_string())
             }
             None => {
-                // No layer prefix — fall back to config scope rules only
-                self.check_scope_rules(file, basename, config, entries, violations);
+                // No layer prefix — skip (naming rules handles prefix correctness)
                 return;
             }
         };
@@ -166,18 +169,11 @@ impl ArchImportMandatoryChecker {
             return;
         }
 
-        // 5. Check exceptions from both sources
-        let layer_exceptions: HashSet<String> = layer_map
-            .values
-            .get(&layer_name_vo)
-            .map(|def| def.exceptions.values.iter().cloned().collect())
-            .unwrap_or_default();
-        let config_exceptions: HashSet<String> = config
-            .rules
-            .iter()
-            .filter(|r| r.name.value == "AES202")
-            .flat_map(|r| r.exceptions.values.iter().cloned())
-            .collect();
+        // 5. Check exceptions using pre-computed sets (no per-file rebuild)
+        let layer_exceptions: &HashSet<String> = layer_exceptions_map
+            .get(&layer_name)
+            .unwrap_or(&EMPTY_HASHSET);
+
         if layer_exceptions.contains(basename) || config_exceptions.contains(basename) {
             return;
         }
@@ -194,7 +190,7 @@ impl ArchImportMandatoryChecker {
         config: &ArchitectureConfig,
     ) -> Option<Vec<String>> {
         for rule in &config.rules {
-            if rule.name.value != "AES202" && rule.rule_type.code() != "AES202" {
+            if rule.name.value != AES202_RULE_CODE && rule.rule_type.code() != AES202_RULE_CODE {
                 continue;
             }
             if rule.mandatory.values.is_empty() {
@@ -213,34 +209,6 @@ impl ArchImportMandatoryChecker {
             }
         }
         None
-    }
-
-    /// Scope-based fallback for files without layer prefix.
-    fn check_scope_rules(
-        &self,
-        file: &str,
-        basename: &str,
-        config: &ArchitectureConfig,
-        entries: &[ImportEntry],
-        violations: &mut Vec<LintResult>,
-    ) {
-        for rule in &config.rules {
-            if rule.name.value != "AES202" && rule.rule_type.code() != "AES202" {
-                continue;
-            }
-            if rule.exceptions.values.contains(&basename.to_string()) {
-                continue;
-            }
-            let scope_identity = Identity::new(&rule.scope.value);
-            if let Some((rule_layer, _)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(
-                    basename,
-                    &scope_identity,
-                )
-            {
-                self.check_requirements(file, &rule_layer, &rule.mandatory.values, entries, violations);
-            }
-        }
     }
 
     /// Core requirement check — shared by all code paths.
@@ -265,7 +233,7 @@ impl ArchImportMandatoryChecker {
                 let v = LintResult::new_arch(
                     file,
                     1,
-                    "AES202",
+                    AES202_RULE_CODE,
                     Severity::HIGH,
                     format!(
                         "AES202 MANDATORY_IMPORT: Layer '{}' is missing required import '{}'.\n\
@@ -296,14 +264,18 @@ impl ArchImportMandatoryChecker {
                     .map(|n| n.to_string_lossy().to_string())
                     .unwrap_or_default();
                 let resolved_layer =
-                    crate::utility_path_normalizer::extract_layer_from_prefix(&resolved_file);
+                    shared::common::utility_layer_detector::detect_layer_from_prefix(&resolved_file);
                 let layer_matches = resolved_layer.as_deref() == Some(layer_str);
                 let suffix_matches = suffixes.is_empty()
                     || suffixes.iter().any(|s| {
                         let suffix_lower = s.value().to_lowercase();
-                        resolved_file
-                            .to_lowercase()
-                            .contains(&format!("_{}", suffix_lower))
+                        let resolved_lower = resolved_file.to_lowercase();
+                        let resolved_stem = std::path::Path::new(&resolved_lower)
+                            .file_stem()
+                            .and_then(|st| st.to_str())
+                            .unwrap_or(&resolved_lower);
+                        // Whole-word segment matching per FRD
+                        resolved_stem.split('_').any(|seg| seg == suffix_lower)
                     });
                 if layer_matches && suffix_matches {
                     return true;

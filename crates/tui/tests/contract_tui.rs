@@ -13,9 +13,9 @@ fn tui_utility_modules_importable() {
 
     // Verify key functions are accessible
     let _ = utility_file_system::list_directory
-        as fn(&shared::common::FilePath) -> Vec<shared::tui::FileEntry>;
+        as fn(&shared::common::FilePath, &dyn shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol) -> Vec<shared::tui::FileEntry>;
     let _ = utility_file_system::read_file_preview
-        as fn(&shared::common::FilePath, usize) -> shared::common::DisplayContent;
+        as fn(&shared::common::FilePath, usize, &dyn shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol) -> shared::common::DisplayContent;
     let _ = utility_file_system::is_valid_directory as fn(&shared::common::FilePath) -> bool;
     let _ = utility_file_system::parent_directory
         as fn(&shared::common::FilePath) -> Option<shared::common::FilePath>;

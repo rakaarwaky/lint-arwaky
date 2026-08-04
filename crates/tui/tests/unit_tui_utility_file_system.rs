@@ -1,8 +1,14 @@
 // Unit tests — TUI filesystem utility tests.
 use shared::common::FilePath;
+use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use std::fs;
+use std::sync::Arc;
 use tempfile::TempDir;
 use tui_lint_arwaky::utility_file_system;
+
+fn make_fs() -> Arc<dyn IFileSystemIOProtocol> {
+    filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+}
 
 #[test]
 fn file_size_human_bytes() {
@@ -43,7 +49,7 @@ fn list_directory_returns_entries() {
     fs::create_dir(&dir_path).unwrap();
 
     let path = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let entries = utility_file_system::list_directory(&path);
+    let entries = utility_file_system::list_directory(&path, &*make_fs());
 
     assert!(!entries.is_empty());
     let names: Vec<String> = entries.iter().map(|e| e.name.clone()).collect();
@@ -58,7 +64,7 @@ fn list_directory_skips_hidden_files() {
     fs::write(tmp.path().join("visible_file"), "visible").unwrap();
 
     let path = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let entries = utility_file_system::list_directory(&path);
+    let entries = utility_file_system::list_directory(&path, &*make_fs());
 
     let names: Vec<String> = entries.iter().map(|e| e.name.clone()).collect();
     assert!(!names.contains(&".hidden_file".to_string()));
@@ -68,7 +74,7 @@ fn list_directory_skips_hidden_files() {
 #[test]
 fn list_directory_nonexistent_path() {
     let path = FilePath::new("/nonexistent/path".to_string()).unwrap();
-    let entries = utility_file_system::list_directory(&path);
+    let entries = utility_file_system::list_directory(&path, &*make_fs());
     assert!(entries.is_empty());
 }
 
@@ -119,7 +125,7 @@ fn read_file_preview_shows_content() {
     fs::write(&file_path, "line1\nline2\nline3").unwrap();
 
     let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap();
-    let result = utility_file_system::read_file_preview(&path, 10);
+    let result = utility_file_system::read_file_preview(&path, 10, &*make_fs());
 
     assert!(result.value.contains("line1"));
     assert!(result.value.contains("line2"));
@@ -134,7 +140,7 @@ fn read_file_preview_truncates() {
     fs::write(&file_path, &content).unwrap();
 
     let path = FilePath::new(file_path.to_string_lossy().to_string()).unwrap();
-    let result = utility_file_system::read_file_preview(&path, 5);
+    let result = utility_file_system::read_file_preview(&path, 5, &*make_fs());
 
     assert!(result.value.contains("100 more lines"));
     // Should only contain first 5 lines
@@ -146,7 +152,7 @@ fn read_file_preview_truncates() {
 #[test]
 fn read_file_preview_nonexistent_file() {
     let path = FilePath::new("/nonexistent/file.txt".to_string()).unwrap();
-    let result = utility_file_system::read_file_preview(&path, 10);
+    let result = utility_file_system::read_file_preview(&path, 10, &*make_fs());
     assert!(result.value.contains("Cannot read file"));
 }
 

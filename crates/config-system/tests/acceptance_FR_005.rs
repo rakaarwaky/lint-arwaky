@@ -20,7 +20,7 @@ fn us5_symlink_outside_root_is_rejected() {
     fs::create_dir_all(&root).unwrap();
     let outside = tmp.path().join("secret.txt");
     fs::write(&outside, "sensitive data").unwrap();
-    let link = root.join("lint_arwaky.config.rust.yaml");
+    let link = root.join("lint_arwaky.config.yaml");
     #[cfg(unix)]
     std::os::unix::fs::symlink(&outside, &link).unwrap();
     #[cfg(not(unix))]
@@ -37,7 +37,7 @@ fn us5_symlink_outside_root_is_rejected() {
 #[test]
 fn us5_valid_file_within_root_is_read() {
     let tmp = TempDir::new().unwrap();
-    let config_file = tmp.path().join("lint_arwaky.config.rust.yaml");
+    let config_file = tmp.path().join("lint_arwaky.config.yaml");
     fs::write(&config_file, "architecture:\n  enabled: true\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = make_reader().read_config(&fp, ConfigLanguage::Rust);

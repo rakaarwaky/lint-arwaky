@@ -16,7 +16,6 @@ use shared::orphan_rules::taxonomy_orphan_parse_result_vo::{AstImportVO, FilePar
 use shared::common::parse_file_content;
 
 use crate::utility_import_resolver;
-use crate::utility_path_normalizer;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
@@ -95,7 +94,7 @@ impl Default for ArchImportForbiddenChecker {
 }
 
 /// Build ImportEntry list from file content — test helper.
-pub(crate) fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEntry> {
+pub fn build_test_import_entries(file_path: &str, content: &str) -> Vec<ImportEntry> {
     let language = if file_path.ends_with(".rs") {
         Language::Rust
     } else if file_path.ends_with(".py") {
@@ -137,7 +136,7 @@ impl ArchImportForbiddenChecker {
     }
 
     /// Check a single file's content for forbidden imports — test helper.
-    pub(crate) fn check_single_file(
+    pub fn check_single_file(
         &self,
         file_path: &str,
         content: &str,
@@ -176,8 +175,7 @@ impl ArchImportForbiddenChecker {
         let layer_name = match utility_layer_detector::detect_layer_from_prefix(filename) {
             Some(base) => utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys),
             None => {
-                // No layer prefix detected — fall back to scope-based config rules only
-                self.check_scope_rules(file, basename, config, entries, violations);
+                // No layer prefix — skip (naming rules handles prefix correctness)
                 return;
             }
         };
@@ -255,45 +253,6 @@ impl ArchImportForbiddenChecker {
         None
     }
 
-    /// Scope-based fallback for files without layer prefix (non-convention files).
-    fn check_scope_rules(
-        &self,
-        file: &str,
-        basename: &str,
-        config: &ArchitectureConfig,
-        entries: &[ImportEntry],
-        violations: &mut Vec<LintResult>,
-    ) {
-        if utility_import_resolver::is_barrel_file(basename) {
-            return;
-        }
-
-        for rule in &config.rules {
-            if rule.name.value != AES201_RULE_CODE {
-                continue;
-            }
-            if rule.exceptions.values.contains(&basename.to_string()) {
-                continue;
-            }
-            let Some((rule_layer, _rule_suffixes)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(
-                    basename,
-                    &Identity::new(&rule.scope.value),
-                )
-            else {
-                continue;
-            };
-
-            self.check_imports_against_forbidden(
-                file,
-                &rule_layer,
-                &rule.forbidden.values,
-                entries,
-                violations,
-            );
-        }
-    }
-
     /// Core import-vs-forbidden check — shared by all code paths.
     fn check_imports_against_forbidden(
         &self,
@@ -328,7 +287,7 @@ impl ArchImportForbiddenChecker {
 
                 let mut is_forbidden = if forbidden_suffixes.is_empty() {
                     module_segments.iter().any(|seg| {
-                        let cleaned = Identity::new(seg);
+                        let cleaned = Identity::new(*seg);
                         match utility_import_resolver::extract_layer_from_import(&cleaned) {
                             Some(l) => l == *forbidden_layer,
                             None => false,
@@ -350,7 +309,7 @@ impl ArchImportForbiddenChecker {
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_default();
                         let resolved_layer =
-                            utility_path_normalizer::extract_layer_from_prefix(&resolved_file);
+                            shared::common::utility_layer_detector::detect_layer_from_prefix(&resolved_file);
                         let layer_matches =
                             resolved_layer.as_deref() == Some(forbidden_layer.value());
                         let suffix_matches = forbidden_suffixes.is_empty()
@@ -373,21 +332,15 @@ impl ArchImportForbiddenChecker {
                 if is_forbidden {
                     let message = if source_layer == forbidden {
                         match source_layer {
-                            "utility" => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer 'utility' is importing from itself.\n\
+                            "utility" => "AES201 FORBIDDEN_IMPORT: Layer 'utility' is importing from itself.\n\
                                     WHY? Utility files must be stateless and independent. Utility→utility imports create hidden dependencies.\n\
-                                    FIX: Extract the dependent function to a taxonomy VO if it's data, or consolidate both utilities into a single file if they are tightly coupled."
-                            ),
-                            "capabilities" => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer 'capabilities' is importing from itself.\n\
+                                    FIX: Extract the dependent function to a taxonomy VO if it's data, or consolidate both utilities into a single file if they are tightly coupled.".to_string(),
+                            "capabilities" => "AES201 FORBIDDEN_IMPORT: Layer 'capabilities' is importing from itself.\n\
                                     WHY? Capabilities must communicate through contract protocols to maintain loose coupling.\n\
-                                    FIX: Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation."
-                            ),
-                            "agent" => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer 'agent' is importing from itself.\n\
+                                    FIX: Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation.".to_string(),
+                            "agent" => "AES201 FORBIDDEN_IMPORT: Layer 'agent' is importing from itself.\n\
                                     WHY? Agent orchestrators must coordinate through contract aggregates, not directly reference each other.\n\
-                                    FIX: Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation."
-                            ),
+                                    FIX: Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation.".to_string(),
                             _ => format!(
                                 "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
                                     WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\

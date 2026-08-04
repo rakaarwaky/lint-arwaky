@@ -11,7 +11,6 @@ use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ParseMetadata};
-
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;

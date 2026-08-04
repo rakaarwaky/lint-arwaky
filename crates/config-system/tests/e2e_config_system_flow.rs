@@ -44,7 +44,7 @@ fn full_config_lifecycle_rust_workspace() {
     - target
     - .git
 "#;
-    fs::write(root.join("lint_arwaky.config.rust.yaml"), config_yaml).unwrap();
+    fs::write(root.join("lint_arwaky.config.yaml"), config_yaml).unwrap();
     let container = common::make_container();
     let orch = container.orchestrator();
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
@@ -68,7 +68,7 @@ fn full_config_lifecycle_typescript_fallback() {
     let root = tmp.path();
     fs::write(root.join("package.json"), r#"{"name": "my-app"}"#).unwrap();
     fs::write(
-        root.join("lint_arwaky.config.javascript.yaml"),
+        root.join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -77,21 +77,18 @@ fn full_config_lifecycle_typescript_fallback() {
         .orchestrator()
         .load_config_for_language(&fp, ConfigLanguage::TypeScript);
     assert_eq!(result.source.language, "typescript");
-    assert!(result.source.path.value.contains("javascript"));
+    assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
 }
 
 #[test]
 fn e2e_reader_lists_multi_language_configs() {
     let tmp = TempDir::new().unwrap();
-    fs::write(tmp.path().join("lint_arwaky.config.rust.yaml"), "a: 1").unwrap();
-    fs::write(tmp.path().join("lint_arwaky.config.python.yaml"), "b: 2").unwrap();
+    fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = common::make_container()
         .reader()
         .list_config_files(&fp)
         .unwrap();
-    assert_eq!(files.len(), 2);
-    let langs: Vec<ConfigLanguage> = files.iter().map(|(l, _)| *l).collect();
-    assert!(langs.contains(&ConfigLanguage::Rust));
-    assert!(langs.contains(&ConfigLanguage::Python));
+    // Unified config: all languages share one file, so list returns 1 entry
+    assert_eq!(files.len(), 1);
 }

@@ -1,6 +1,12 @@
 // Smoke tests — container creation, key types accessible within 5s.
 use shared::common::{DisplayContent, FilePath};
+use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
+use std::sync::Arc;
 use tui_lint_arwaky::utility_file_system;
+
+fn make_fs() -> Arc<dyn IFileSystemIOProtocol> {
+    filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+}
 
 #[test]
 fn smoke_file_size_human_completes_quickly() {
@@ -21,7 +27,7 @@ fn smoke_file_size_human_completes_quickly() {
 fn smoke_list_directory_completes_quickly() {
     let start = std::time::Instant::now();
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let _ = utility_file_system::list_directory(&path);
+    let _ = utility_file_system::list_directory(&path, &*make_fs());
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -47,7 +53,7 @@ fn smoke_is_valid_directory_completes_quickly() {
 fn smoke_read_file_preview_completes_quickly() {
     let start = std::time::Instant::now();
     let path = FilePath::new("/etc/hostname".to_string()).unwrap();
-    let _ = utility_file_system::read_file_preview(&path, 10);
+    let _ = utility_file_system::read_file_preview(&path, 10, &*make_fs());
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

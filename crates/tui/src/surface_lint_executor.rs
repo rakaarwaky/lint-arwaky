@@ -306,7 +306,7 @@ impl SurfaceLintExecutor {
                 );
             }
         };
-        let items = collect_init(setup);
+        let items = collect_init(setup, self.filesystem.clone());
         let mut output = String::from("Config initialization.\n");
         let mut has_errors = false;
         for item in &items {

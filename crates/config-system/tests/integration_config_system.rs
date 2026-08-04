@@ -38,7 +38,7 @@ fn container_orchestrator_loads_defaults_for_empty_project() {
 fn container_orchestrator_loads_real_config() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n  rules: []\n",
     )
     .unwrap();
@@ -53,7 +53,7 @@ fn container_orchestrator_loads_real_config() {
 #[test]
 fn container_reader_lists_config_files() {
     let tmp = TempDir::new().unwrap();
-    fs::write(tmp.path().join("lint_arwaky.config.rust.yaml"), "a: 1").unwrap();
+    fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = common::make_container()
         .reader()

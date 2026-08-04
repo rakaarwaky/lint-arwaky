@@ -213,15 +213,7 @@ impl HookManager {
 
     /// Read file as raw bytes, used as fallback when text read fails (binary files).
     fn read_raw_bytes(&self, path: &str) -> Vec<u8> {
-        use std::io::Read;
         let p = std::path::Path::new(path);
-        match std::fs::File::open(p) {
-            Ok(mut f) => {
-                let mut buf = Vec::new();
-                let _ = f.read_to_end(&mut buf);
-                buf
-            }
-            Err(_) => Vec::new(),
-        }
+        std::fs::read(p).unwrap_or_default()
     }
 }

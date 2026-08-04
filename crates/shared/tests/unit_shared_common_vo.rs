@@ -256,9 +256,9 @@ fn config_language_parse_and_format() {
 fn config_language_file_names() {
     assert_eq!(
         ConfigLanguage::Rust.config_file_names(),
-        &["lint_arwaky.config.rust.yaml"]
+        &["lint_arwaky.config.yaml"]
     );
-    assert_eq!(ConfigLanguage::TypeScript.config_file_names().len(), 2);
+    assert_eq!(ConfigLanguage::TypeScript.config_file_names().len(), 1);
 }
 
 #[test]

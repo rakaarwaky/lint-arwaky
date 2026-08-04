@@ -46,9 +46,7 @@ critical_files=(
     "MIGRATION_PYTHON.md"
     "MIGRATION_TYPESCRIPT.md"
     "Cargo.toml"
-    "lint_arwaky.config.rust.yaml"
-    "lint_arwaky.config.python.yaml"
-    "lint_arwaky.config.javascript.yaml"
+    "lint_arwaky.config.yaml"
 )
 
 save_checksums() {

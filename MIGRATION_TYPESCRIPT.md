@@ -77,7 +77,7 @@ project-root/
 ├── package.json             ← workspace root config
 ├── pnpm-workspace.yaml      ← pnpm workspace definition (if using pnpm)
 ├── tsconfig.json            ← TypeScript config
-├── lint_arwaky.config.typescript.yaml  ← AES config (created in Phase 0)
+├── lint_arwaky.config.yaml  ← AES config (created in Phase 0)
 ├── packages/
 │   ├── shared/              ← shared taxonomy + contract + utility types
 │   │   ├── package.json
@@ -149,7 +149,7 @@ cd your-project/
 lint-arwaky-cli init
 ```
 
-This creates `lint_arwaky.config.typescript.yaml` with default AES rules.
+This creates `lint_arwaky.config.yaml` with default AES rules.
 
 ### Step 2: Run Initial Audit
 

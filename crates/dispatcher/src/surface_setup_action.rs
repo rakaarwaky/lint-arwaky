@@ -1,6 +1,7 @@
 // PURPOSE: SetupCommandsSurface — project setup business logic, no formatting.
 // handle_install delegates to SetupManagementAggregate.
 // No direct std::process::Command calls.
+use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 
@@ -26,7 +27,7 @@ pub struct McpConfigReport {
     pub config_json: String,
 }
 
-pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Vec<SetupInitItem> {
+pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>, filesystem: Arc<dyn IFileSystemIOProtocol>) -> Vec<SetupInitItem> {
     let mut items: Vec<SetupInitItem> = Vec::new();
 
     let languages = setup_orchestrator.detect_languages();
@@ -82,7 +83,7 @@ pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Ve
                 });
                 continue;
             }
-            match std::fs::read_to_string(&xdg_src) {
+            match filesystem.read_to_string(&xdg_src) {
                 Ok(content) => match setup_orchestrator.write_config_file(doc, &content) {
                     Ok(_) => items.push(SetupInitItem {
                         message: format!("  {doc} — copied/overwritten from XDG config"),
@@ -104,7 +105,7 @@ pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Ve
         let xdg_agents = xdg_base.join(".agents");
         if xdg_agents.exists() && xdg_agents.is_dir() {
             let target_agents = std::path::Path::new(".agents");
-            match copy_dir_all(&xdg_agents, target_agents) {
+            match copy_dir_all(&xdg_agents, target_agents, &*filesystem) {
                 Ok(count) => {
                     items.push(SetupInitItem {
                         message: format!(
@@ -136,17 +137,16 @@ pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>) -> Ve
     items
 }
 
-fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path) -> std::io::Result<usize> {
-    std::fs::create_dir_all(dst)?;
+fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> std::io::Result<usize> {
+    fs.create_dir_all(dst)?;
     let mut count = 0;
-    for entry in std::fs::read_dir(src)? {
-        let entry = entry?;
-        let file_name = entry.file_name();
-        let dst_path = dst.join(&file_name);
-        if entry.file_type()?.is_dir() {
-            count += copy_dir_all(&entry.path(), &dst_path)?;
+    for entry_path in fs.read_dir_entries_as_pathbuf(src)? {
+        let file_name = entry_path.file_name().unwrap_or_default();
+        let dst_path = dst.join(file_name);
+        if entry_path.is_dir() {
+            count += copy_dir_all(&entry_path, &dst_path, fs)?;
         } else {
-            std::fs::copy(entry.path(), &dst_path)?;
+            fs.copy_file(&entry_path, &dst_path)?;
             count += 1;
         }
     }

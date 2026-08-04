@@ -417,7 +417,7 @@ fn main() {
             cli_commands::surface_plugin_command::handle_adapters(external_lint.clone())
         }
         Command::Init => {
-            cli_commands::surface_setup_command::handle_init(setup_orchestrator.clone())
+            cli_commands::surface_setup_command::handle_init(setup_orchestrator.clone(), filesystem.clone())
         }
         Command::Install { sudo } => {
             cli_commands::surface_setup_command::handle_install(setup_orchestrator.clone(), sudo)

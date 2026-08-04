@@ -84,12 +84,7 @@ fn load_config_entries(
     config_parser: &dyn IConfigParserProtocol,
     fs: &dyn IFilesystemAggregate,
 ) -> Vec<AdapterEntry> {
-    let config_names = vec![
-        "lint_arwaky.config.yaml",
-        "lint_arwaky.config.python.yaml",
-        "lint_arwaky.config.rust.yaml",
-        "lint_arwaky.config.javascript.yaml",
-    ];
+    let config_names = vec!["lint_arwaky.config.yaml"];
     let start = if root_path.is_file() {
         root_path.parent().unwrap_or(root_path)
     } else {

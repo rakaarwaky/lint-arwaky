@@ -215,7 +215,7 @@ flowchart TD
 - **Business Rules**:
 
   - Locates config file using config-system resolution
-    (`lint_arwaky.config.<language>.yaml`).
+    (`lint_arwaky.config.yaml`).
   - Adds or removes a path from the `ignored_paths` list in the config file.
   - If config file not found → returns error message suggesting
     `lint-arwaky-cli init`.
@@ -366,7 +366,7 @@ flowchart TD
 - Git commands execute within a reasonable timeout (subprocess-based).
 - The pre-commit hook runs `lint-arwaky-cli check .` which must be in PATH
   or specified via executable path.
-- Config file format (`lint_arwaky.config.<language>.yaml`) is stable and
+- Config file format (`lint_arwaky.config.yaml`) is stable and
   parseable.
 - Config initialization is handled by the project-setup crate, not
   git-hooks.

@@ -16,7 +16,7 @@ fn make_reader() -> ConfigYamlReader {
 fn read_config_finds_rust_yaml_in_project_root() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n",
     )
     .unwrap();
@@ -34,7 +34,7 @@ fn read_config_finds_rust_yaml_in_project_root() {
 fn read_config_finds_python_yaml_in_project_root() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.python.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n",
     )
     .unwrap();
@@ -48,10 +48,10 @@ fn read_config_finds_python_yaml_in_project_root() {
 }
 
 #[test]
-fn read_config_typescript_falls_back_to_javascript_yaml() {
+fn read_config_typescript_finds_unified_yaml() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.javascript.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n",
     )
     .unwrap();
@@ -60,14 +60,14 @@ fn read_config_typescript_falls_back_to_javascript_yaml() {
         .read_config(&fp, ConfigLanguage::TypeScript)
         .unwrap();
     assert!(result.is_some());
-    assert!(result.unwrap().path.value.contains("javascript"));
+    assert!(result.unwrap().path.value.contains("lint_arwaky.config.yaml"));
 }
 
 #[test]
 fn read_config_searches_parent_directories_up_to_depth_3() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.rust.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "architecture:\n  enabled: true\n",
     )
     .unwrap();
@@ -95,17 +95,13 @@ fn read_config_returns_none_when_no_file_found() {
 }
 
 #[test]
-fn list_config_files_finds_all_languages() {
+fn list_config_files_finds_unified_config() {
     let tmp = TempDir::new().unwrap();
-    fs::write(tmp.path().join("lint_arwaky.config.rust.yaml"), "a: 1").unwrap();
-    fs::write(tmp.path().join("lint_arwaky.config.python.yaml"), "b: 2").unwrap();
-    fs::write(
-        tmp.path().join("lint_arwaky.config.typescript.yaml"),
-        "c: 3",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert_eq!(make_reader().list_config_files(&fp).unwrap().len(), 3);
+    let files = make_reader().list_config_files(&fp).unwrap();
+    // All languages share one config file — list returns entries for each language
+    assert!(!files.is_empty());
 }
 
 #[test]
@@ -116,25 +112,17 @@ fn list_config_files_returns_empty_when_none_exist() {
 }
 
 #[test]
-fn list_config_files_deduplicates_typescript_javascript() {
+fn list_config_files_deduplicates_unified_config() {
     let tmp = TempDir::new().unwrap();
     fs::write(
-        tmp.path().join("lint_arwaky.config.typescript.yaml"),
+        tmp.path().join("lint_arwaky.config.yaml"),
         "x: 1",
-    )
-    .unwrap();
-    fs::write(
-        tmp.path().join("lint_arwaky.config.javascript.yaml"),
-        "y: 2",
     )
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = make_reader().list_config_files(&fp).unwrap();
-    let ts_count = files
-        .iter()
-        .filter(|(lang, _)| *lang == ConfigLanguage::TypeScript)
-        .count();
-    assert_eq!(ts_count, 1);
+    // Unified config: all languages share one file, dedup reduces to 1 entry
+    assert_eq!(files.len(), 1);
 }
 
 #[test]

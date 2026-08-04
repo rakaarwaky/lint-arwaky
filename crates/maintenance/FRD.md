@@ -50,9 +50,7 @@ flowchart TD
   issues list, and overall health status.
 - **Business Rules**:
 
-  - Checks for config files: `lint_arwaky.config.rust.yaml`,
-    `lint_arwaky.config.python.yaml`, `lint_arwaky.config.typescript.yaml`,
-    `lint_arwaky.config.javascript.yaml`, `pyproject.toml`, `Cargo.toml`,
+  - Checks for config file: `lint_arwaky.config.yaml`, `pyproject.toml`, `Cargo.toml`,
     `package.json`.
   - Checks all 9 adapter availability via `which` command:
 

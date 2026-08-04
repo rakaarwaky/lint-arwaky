@@ -343,7 +343,7 @@ impl SurfaceActionHandler {
     /// Resets selection and scroll position after loading.
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
-        state.entries = utility_file_system::list_directory(&fp);
+        state.entries = utility_file_system::list_directory(&fp, &*self.filesystem);
         if state.entries.is_empty() {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }
@@ -363,7 +363,7 @@ impl SurfaceActionHandler {
     /// Read up to 100 lines of a file for inline preview.
     pub fn load_file_preview(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path.to_string()).unwrap_or_default();
-        let display = utility_file_system::read_file_preview(&fp, 100);
+        let display = utility_file_system::read_file_preview(&fp, 100, &*self.filesystem);
         state.preview_text = display.to_string();
         state.preview_scroll = 0;
         state.preview_mode = PreviewMode::FileContent;

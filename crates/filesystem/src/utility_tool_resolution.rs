@@ -102,7 +102,6 @@ pub fn resolve_js_working_dir(path: &std::path::Path) -> PathBuf {
     };
     for _ in 0..10 {
         if is_file(current.join("lint_arwaky.config.yaml"))
-            || is_file(current.join("lint_arwaky.config.python.yaml"))
             || is_file(current.join("package.json"))
             || current.join(".git").is_dir()
         {
