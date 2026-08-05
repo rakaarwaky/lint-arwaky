@@ -285,6 +285,12 @@ impl ArchImportForbiddenChecker {
                 .map(|s| s.trim_end_matches(';').trim())
                 .collect();
 
+            // DEBUG: print what we're checking
+            if file.contains("utility_import_extractor") {
+                eprintln!("[DEBUG-AES201] file={}, entry[{}], raw_path={}, module={}, segments={:?}",
+                    file, idx, entry.raw_path, module_val, module_segments);
+            }
+
             for &(forbidden, ref forbidden_layer, ref forbidden_suffixes) in &resolved_forbidden {
                 let mut is_forbidden = if forbidden_suffixes.is_empty() {
                     module_segments.iter().any(|seg| {
@@ -332,6 +338,10 @@ impl ArchImportForbiddenChecker {
                     }
                 }
 
+                if is_forbidden && file.contains("utility_import_extractor") {
+                    eprintln!("[DEBUG-AES201-VIOLATION] file={}, entry[{}], raw_path={}, forbidden_layer={:?}, forbidden_suffixes={:?}",
+                        file, idx, entry.raw_path, forbidden_layer.value(), forbidden_suffixes.iter().map(|s| s.value()).collect::<Vec<_>>());
+                }
                 if is_forbidden {
                     let why = if source_layer == forbidden {
                         format!(

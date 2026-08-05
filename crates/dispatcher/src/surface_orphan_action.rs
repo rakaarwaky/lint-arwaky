@@ -32,26 +32,19 @@ pub struct OrphanScanDeps {
 }
 
 impl OrphanScanDeps {
-    /// Create deps with default factories that instantiate root containers directly.
-    /// Use this at entry points where root containers are available.
-    pub fn with_defaults(
+    pub fn new(
         orphan_orchestrator: Arc<dyn IOrphanAggregate>,
         config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         fs_agg: Arc<dyn IFilesystemAggregate>,
+        fs_factory: Arc<FilesystemFactory>,
+        orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
         Self {
             orphan_orchestrator,
             config_orchestrator,
             fs_agg,
-            fs_factory: Arc::new(|| {
-                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-            }),
-            orphan_factory: Arc::new(|config, fs| {
-                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                    config, fs,
-                )
-                .analyzer()
-            }),
+            fs_factory,
+            orphan_factory,
         }
     }
 }
@@ -236,8 +229,8 @@ fn scan_single_root(
     // build file index from workspace root so orphan detection has full visibility.
     let root_path = std::path::Path::new(root);
     let scan_root =
-        filesystem::utility_workspace_detection::find_workspace_root_from_path(root_path)
-            .unwrap_or_else(|_| root_path.to_path_buf());
+        fs_agg.find_workspace_root(root_path)
+            .unwrap_or_else(|| root_path.to_path_buf());
     let scan_root_str = scan_root.to_string_lossy().to_string();
     let scan_root_fp = FilePath::new(scan_root_str.clone()).unwrap_or_else(|_| root_fp.clone());
 

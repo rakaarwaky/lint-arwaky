@@ -9,6 +9,7 @@ license = "MIT"
 shared = { workspace = true }
 filesystem = { workspace = true }
 dispatcher = { workspace = true }
+orphan-rules = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
