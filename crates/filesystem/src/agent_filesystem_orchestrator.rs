@@ -448,6 +448,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
 
     fn read_file(&self, path: &Path) -> Option<String> {
         self.get_file_content(path)
+            .or_else(|| self.deps.io.read_to_string(path).ok())
     }
 
     fn scan_directory(&self, root: &Path) -> Vec<String> {

@@ -2,6 +2,7 @@ use crate::utility_config_defaults::default_config_for_language;
 use dashmap::DashMap;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
@@ -256,7 +257,16 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
     fn ignored_paths(&self, project_root: &FilePath) -> PatternList {
         let config = self.load_config_sync(project_root);
-        PatternList::new(ignored_paths_from_config(&config))
+        let config_paths = ignored_paths_from_config(&config);
+        // Merge defaults + config paths (deduplicated)
+        let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let mut merged: Vec<String> = Vec::new();
+        for p in DEFAULT_IGNORED_PATHS.iter().map(|s| s.to_string()).chain(config_paths) {
+            if seen.insert(p.clone()) {
+                merged.push(p);
+            }
+        }
+        PatternList::new(merged)
     }
 
     fn ignored_paths_for_language(

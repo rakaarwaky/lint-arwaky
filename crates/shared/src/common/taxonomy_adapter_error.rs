@@ -110,7 +110,7 @@ pub struct ValidationError {
     #[serde(default)]
     pub constraint: Option<Constraint>,
     #[serde(default)]
-    pub value: Option<String>,
+    pub value: Option<ContentString>,
 }
 
 impl ValidationError {
