@@ -361,6 +361,10 @@ fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<V
     let text = text_of(node, content);
     let brace_start = text.find('{')?;
     let brace_end = text.find('}')?;
+    // Module path: everything before '{', trimmed of trailing whitespace/colons.
+    let module_path = text[..brace_start]
+        .trim_end_matches("::")
+        .trim();
     let inner = &text[brace_start + 1..brace_end];
     let names: Vec<String> = inner
         .split(',')
@@ -368,8 +372,10 @@ fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<V
             let name = part.split_whitespace().next()?;
             if name.is_empty() || name == "*" {
                 None
-            } else {
+            } else if module_path.is_empty() {
                 Some(name.to_string())
+            } else {
+                Some(format!("{}::{}", module_path, name))
             }
         })
         .collect();

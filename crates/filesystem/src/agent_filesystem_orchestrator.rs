@@ -750,32 +750,20 @@ impl FilesystemOrchestrator {
                                     // Match: package name with hyphens → underscores
                                     let normalized = pkg_name.replace('-', "_");
                                     if normalized == crate_name {
-                                        // Found the member — resolve sub_path
+                                        // Found the member — always resolve to crate root (lib.rs).
+                                        // In Rust, `use pkg::foo::Bar` always goes through the
+                                        // crate root. The lib.rs `pub mod` declarations provide
+                                        // reachability edges to all sub-modules, so resolving
+                                        // directly to a sub-module would bypass lib.rs and
+                                        // break reachability for modules only referenced via
+                                        // lib.rs (e.g. agent_*_orchestrator.rs).
                                         let member_name =
                                             entry.file_name().to_string_lossy().to_string();
                                         let member_base = format!("{}/{}", member_dir, member_name);
-                                        // sub_path is like "foo/bar" from `use pkg::foo::bar::...`
-                                        // Try: member_base/src/sub_path.rs and member_base/src/sub_path/mod.rs
                                         let src_dir = format!("{}/src", member_base);
-                                        // Try progressively shorter sub-paths.
-                                        // e.g. `use pkg::foo::bar::Baz` → sub_path = "foo/bar/Baz"
-                                        // Try "foo/bar/Baz.rs", "foo/bar.rs", "foo.rs", "lib.rs"
-                                        let parts: Vec<&str> = sub_path.split('/').collect();
-                                        for i in (0..=parts.len()).rev() {
-                                            let candidate_base = if i == 0 {
-                                                format!("{}/lib", src_dir)
-                                            } else {
-                                                format!("{}/{}", src_dir, parts[..i].join("/"))
-                                            };
-                                            let candidates = vec![
-                                                format!("{}.rs", candidate_base),
-                                                format!("{}/mod.rs", candidate_base),
-                                            ];
-                                            for candidate in &candidates {
-                                                if all_files_set.contains(candidate.as_str()) {
-                                                    return Some(candidate.clone());
-                                                }
-                                            }
+                                        let lib_rs = format!("{}/lib.rs", src_dir);
+                                        if all_files_set.contains(lib_rs.as_str()) {
+                                            return Some(lib_rs);
                                         }
                                     }
                                 }
