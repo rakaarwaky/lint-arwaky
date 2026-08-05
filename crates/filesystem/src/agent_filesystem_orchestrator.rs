@@ -710,6 +710,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             all_files,
         )
     }
+
+    fn find_workspace_root(&self, start: &Path) -> Option<PathBuf> {
+        crate::utility_workspace_detection::find_workspace_root_from_path(start).ok()
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
