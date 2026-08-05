@@ -1,3 +1,6 @@
+// Capabilities layer — provides default configuration values
+// Used by both agent and root layers to avoid circular dependencies
+
 use shared::config_system::utility_config_parser::parse_config_yaml;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::sync::OnceLock;

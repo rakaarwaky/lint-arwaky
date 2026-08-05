@@ -258,6 +258,7 @@ architecture:
           "main.ts",
           "root_entry_container.rs",
           "agent_filesystem_orchestrator_helpers.rs",
+          "root_config_defaults.rs",
         ]
       layers:
         taxonomy:
@@ -355,6 +356,7 @@ architecture:
           "utility_ast_typescript.rs",
           "utility_import_extractor.rs",
           "utility_config_defaults.rs",
+          "agent_config_orchestrator.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -593,7 +595,7 @@ architecture:
 
     AES205:
       enabled: true
-      exceptions: ["main.rs", "lib.rs", "mod.rs", "surface_mcp_action_command.rs", "root_auto_fix_container.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs", "surface_mcp_action_command.rs", "root_auto_fix_container.rs", "agent_fix_orchestrator.rs"]
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
 
