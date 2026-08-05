@@ -139,7 +139,7 @@ fn regression_bad_rust_workspace() {
 
 #[test]
 fn regression_bad_python_single_file() {
-    let json = cli_scan("workspaces-bad/modules/naming_violations/src/capabilities_addition_analyzer.py");
+    let json = cli_scan("workspaces-bad/modules/naming_violations/src/capabilities_user_vo.py");
     assert!(has_violation_code(&json, "AES102"), "must detect AES102");
 }
 
@@ -157,7 +157,7 @@ fn regression_bad_python_workspace() {
 
 #[test]
 fn regression_bad_typescript_single_file() {
-    let json = cli_scan("workspaces-bad/packages/naming_violations/src/capabilities_calculator_analyzer.ts");
+    let json = cli_scan("workspaces-bad/packages/naming_violations/src/capabilities_user_vo.ts");
     assert!(has_violation_code(&json, "AES102"), "must detect AES102");
 }
 

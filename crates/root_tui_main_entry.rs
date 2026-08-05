@@ -1,5 +1,6 @@
 // PURPOSE: TUI binary entry point — composition root wiring domain aggregates
 // directly into TUI surfaces (surface-only: no contract/aggregate/capabilities).
+use dispatcher::surface_orphan_action::OrphanFactory;
 use lint_arwaky::root_entry_container::CommonDeps;
 use std::sync::Arc;
 
@@ -17,14 +18,7 @@ fn main() -> anyhow::Result<()> {
     > = Arc::new(|| {
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
     });
-    let orphan_factory: Arc<
-        dyn Fn(
-                shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-                Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
-            ) -> Arc<dyn shared::orphan_rules::IOrphanAggregate>
-            + Send
-            + Sync,
-    > = Arc::new(|config, fs| {
+    let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs| {
         orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs)
             .analyzer()
     });

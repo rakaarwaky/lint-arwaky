@@ -1,5 +1,6 @@
 // PURPOSE: Check/scan commands — CLI formatting + exit-code mapping.
 // Calls dispatcher for business logic, only adds CLI output.
+use dispatcher::surface_orphan_action::OrphanFactory;
 use shared::common::ExitCode;
 use std::sync::Arc;
 use tracing::error;
@@ -66,14 +67,7 @@ pub struct OrphanCommandParams {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filter: Option<String>,
     pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
-    pub orphan_factory: Arc<
-        dyn Fn(
-                shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-                Arc<dyn IFilesystemAggregate>,
-            ) -> Arc<dyn shared::orphan_rules::IOrphanAggregate>
-            + Send
-            + Sync,
-    >,
+    pub orphan_factory: Arc<OrphanFactory>,
 }
 
 /// Parameters for the `external` command.
