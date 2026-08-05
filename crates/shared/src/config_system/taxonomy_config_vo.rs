@@ -3,7 +3,7 @@ use crate::common::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_common_vo::Count;
 use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_definition_vo::LayerDefinition;
+pub use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_definition_vo::NamingConfig;
 use crate::common::taxonomy_definition_vo::OrphanRuleVO;
 use crate::common::taxonomy_error_vo::ErrorCode;
