@@ -86,10 +86,4 @@ pub trait IFilesystemAggregate:
         root_dir: &Path,
         ignored: &[String],
     ) -> GraphAnalysisContext;
-
-    /// List directory entries, skipping hidden files (starting with '.').
-    fn list_directory_filtered(&self, path: &FilePath) -> Vec<FileEntry>;
-
-    /// Read up to `max_lines` lines of a file with line-numbered formatting.
-    fn read_file_preview(&self, path: &FilePath, max_lines: usize) -> DisplayContent;
 }

@@ -216,12 +216,61 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         };
 
         // Both conditions must be satisfied for non-orphan
-        if is_reachable && (is_barrel_reexported || is_implemented) {
+        let has_valid_contracts = is_barrel_reexported || is_implemented;
+        if is_reachable && has_valid_contracts {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
         // Build diagnostic message
-        let reason = if !is_reachable {
+        let reason = if !is_reachable && !has_valid_contracts {
+            let unimplemented: Vec<String> = trait_names
+                .iter()
+                .filter(|tn| {
+                    if suffix == "protocol" {
+                        !self.has_layer_prefixed_implementation(
+                            &search_files,
+                            tn,
+                            "capabilities_",
+                            content_map,
+                        )
+                    } else {
+                        !self.has_layer_prefixed_implementation(
+                            &search_files,
+                            tn,
+                            "agent_",
+                            content_map,
+                        )
+                    }
+                })
+                .cloned()
+                .collect();
+            let impl_layer = if suffix == "protocol" {
+                "capabilities_*"
+            } else {
+                "agent_*"
+            };
+            if unimplemented.is_empty() {
+                format!(
+                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable and not re-exported in barrel.\nWHY? Contract {} '{}' is not reachable from any _entry file AND not re-exported in any barrel file (mod.rs / __init__.py / index.ts).\nFIX: Import '{}' from a _entry file AND re-export it in a barrel file.",
+                    suffix,
+                    trait_names.join(", "),
+                    suffix,
+                    trait_names.join(", "),
+                    trait_names.join(", ")
+                )
+            } else {
+                format!(
+                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable and not implemented.\nWHY? Contract {} '{}' is not reachable from any _entry file AND not implemented by any {} file.\nFIX: Import '{}' from a _entry file AND implement it in a {} file.",
+                    suffix,
+                    unimplemented.join(", "),
+                    suffix,
+                    unimplemented.join(", "),
+                    impl_layer,
+                    unimplemented.join(", "),
+                    impl_layer
+                )
+            }
+        } else if !is_reachable {
             format!(
                 "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY? Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
                 suffix,

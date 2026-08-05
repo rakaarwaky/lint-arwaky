@@ -344,7 +344,13 @@ impl SurfaceActionHandler {
     /// Resets selection and scroll position after loading.
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
-        state.entries = self.filesystem.list_directory_filtered(&fp);
+        let dir_path = std::path::Path::new(fp.value());
+        let paths = self.filesystem.read_dir_entries_as_pathbuf(dir_path).unwrap_or_default();
+        state.entries = paths.into_iter().filter_map(|entry_path| {
+            let name = entry_path.file_name()?.to_str()?;
+            if name.starts_with('.') { return None; }
+            shared::tui::FileEntry::from_path(&entry_path)
+        }).collect();
         if state.entries.is_empty() {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }
@@ -364,7 +370,23 @@ impl SurfaceActionHandler {
     /// Read up to 100 lines of a file for inline preview.
     pub fn load_file_preview(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path.to_string()).unwrap_or_default();
-        let display = self.filesystem.read_file_preview(&fp, 100);
+        let file_path = std::path::Path::new(fp.value());
+        let max_lines = 100;
+        let display = match self.filesystem.read_to_string(file_path) {
+            Ok(content) => {
+                let lines: Vec<&str> = content.lines().take(max_lines).collect();
+                let mut output = String::new();
+                for (i, line) in lines.iter().enumerate() {
+                    output.push_str(&format!("{:>4} │ {}\n", i + 1, line));
+                }
+                let total = content.lines().count();
+                if total > max_lines {
+                    output.push_str(&format!("\n... ({} more lines)", total - max_lines));
+                }
+                shared::common::DisplayContent::new(output)
+            }
+            Err(e) => shared::common::DisplayContent::new(format!("Cannot read file: {e}")),
+        };
         state.preview_text = display.to_string();
         state.preview_scroll = 0;
         state.preview_mode = PreviewMode::FileContent;

@@ -3,10 +3,9 @@
 // 3-block structure per AES skill.
 
 use crate::utility_filesystem_io;
-use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, FileExtension, ScanTiming};
+use shared::filesystem::taxonomy_filesystem_vo::{FileExtension, ScanTiming};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -100,47 +99,6 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
 
     fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
         utility_filesystem_io::read_dir_entries_as_pathbuf(dir)
-    }
-
-    fn list_directory_filtered(&self, path: &FilePath) -> Vec<FileEntry> {
-        let dir_path = Path::new(path.value());
-        let paths = self
-            .read_dir_entries_as_pathbuf(dir_path)
-            .unwrap_or_default();
-
-        let mut entries = Vec::new();
-        for entry_path in paths {
-            let name = match entry_path.file_name().and_then(|n| n.to_str()) {
-                Some(n) => n.to_string(),
-                None => continue,
-            };
-            if name.starts_with('.') {
-                continue;
-            }
-            if let Some(file_entry) = FileEntry::from_path(&entry_path) {
-                entries.push(file_entry);
-            }
-        }
-        entries
-    }
-
-    fn read_file_preview(&self, path: &FilePath, max_lines: usize) -> DisplayContent {
-        let file_path = Path::new(path.value());
-        let content = match self.read_to_string(file_path) {
-            Ok(c) => c,
-            Err(e) => return DisplayContent::new(format!("Cannot read file: {e}")),
-        };
-
-        let lines: Vec<&str> = content.lines().take(max_lines).collect();
-        let mut output = String::new();
-        for (i, line) in lines.iter().enumerate() {
-            output.push_str(&format!("{:>4} │ {}\n", i + 1, line));
-        }
-        let total_lines = content.lines().count();
-        if total_lines > max_lines {
-            output.push_str(&format!("\n... ({} more lines)", total_lines - max_lines));
-        }
-        DisplayContent::new(output)
     }
 
     // ── File Read/Write (7) ──────────────────────────────────

@@ -67,21 +67,9 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
             }
             af_val.ends_with(fp) || fp.ends_with(af_val)
         });
-        if !is_alive {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES505 AGENT_ORPHAN: '{}' is not reachable.\nWHY? Agent file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                    shared::common::utility_layer_detector::extract_filename(fp),
-                    shared::common::utility_layer_detector::extract_filename(fp),
-                    shared::common::utility_layer_detector::extract_filename(fp)
-                ),
-                Severity::HIGH,
-            );
-        }
 
         // Condition 2: not wired in container — check aggregate traits
-        if !aggregate_traits.is_empty() {
+        let is_wired = if !aggregate_traits.is_empty() {
             let candidates: Vec<&String> = all_files
                 .iter()
                 .filter(|cf| {
@@ -96,27 +84,40 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                 })
                 .collect();
 
-            let is_referenced = candidates.iter().any(|cf| {
+            candidates.iter().any(|cf| {
                 let candidate_content = content_map.get(&**cf).cloned().unwrap_or_default();
                 aggregate_traits
                     .iter()
                     .any(|t| content_contains_whole_word(&candidate_content, t))
-            });
+            })
+        } else {
+            true // no aggregate traits to wire → condition 2 passes vacuously
+        };
 
-            if !is_referenced {
-                return OrphanIndicatorResult::new(
-                    true,
-                    format!(
-                        "AES505 AGENT_ORPHAN: '{}' is not wired.\nWHY? Agent file '{}' is not wired in any root_*_container file.\nFIX: Import '{}' in a root_*_container.rs.",
-                        shared::common::utility_layer_detector::extract_filename(fp),
-                        shared::common::utility_layer_detector::extract_filename(fp),
-                        shared::common::utility_layer_detector::extract_filename(fp)
-                    ),
-                    Severity::HIGH,
-                );
-            }
+        // Both conditions must be satisfied for non-orphan
+        if is_alive && is_wired {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+        // Build diagnostic message
+        let filename = shared::common::utility_layer_detector::extract_filename(fp);
+        let reason = if !is_alive && !is_wired {
+            format!(
+                "AES505 AGENT_ORPHAN: '{}' is not reachable and not wired.\nWHY? Agent file '{}' is not reachable from any _entry file AND not wired in any root_*_container.\nFIX: Import '{}' from a _entry file AND register it in a root_*_container.rs.",
+                filename, filename, filename
+            )
+        } else if !is_alive {
+            format!(
+                "AES505 AGENT_ORPHAN: '{}' is not reachable.\nWHY? Agent file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                filename, filename, filename
+            )
+        } else {
+            format!(
+                "AES505 AGENT_ORPHAN: '{}' is not wired.\nWHY? Agent file '{}' is not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container",
+                filename, filename, filename
+            )
+        };
+
+        OrphanIndicatorResult::new(true, reason, Severity::HIGH)
     }
 }

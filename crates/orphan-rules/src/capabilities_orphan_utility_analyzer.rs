@@ -70,16 +70,6 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
 
         // Condition 1: not reachable from any _entry file
         let is_reachable = alive_files.paths.contains(f);
-        if !is_reachable {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES504 UTILITY_ORPHAN: '{}' is not reachable.\nWHY? Utility file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                    module_name, module_name, module_name
-                ),
-                Severity::MEDIUM,
-            );
-        }
 
         // Condition 2: not imported by capabilities/agent/surface
         let mut consumer_importers: Vec<String> = Vec::new();
@@ -102,61 +92,75 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
                     utility_importers.push(stem);
                 }
             }
-            if !consumer_importers.is_empty() {
-                return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        if consumer_importers.is_empty() {
+            for other_file in all_files {
+                if other_file == fp {
+                    continue;
+                }
+                let filename = utility_layer_detector::extract_filename(other_file);
+                let is_consumer = utility_layer_detector::detect_layer_from_prefix(filename)
+                    .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                    .unwrap_or(false);
+                if !is_consumer {
+                    continue;
+                }
+
+                let other_content = content_map.get(other_file).cloned().unwrap_or_default();
+                if other_content.is_empty() {
+                    continue;
+                }
+
+                if Self::is_module_imported(other_file, &other_content, &module_name) {
+                    let stem = std::path::Path::new(other_file)
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("unknown")
+                        .to_string();
+                    consumer_importers.push(stem);
+                }
             }
         }
 
-        for other_file in all_files {
-            if other_file == fp {
-                continue;
-            }
-            let filename = utility_layer_detector::extract_filename(other_file);
-            let is_consumer = utility_layer_detector::detect_layer_from_prefix(filename)
-                .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
-                .unwrap_or(false);
-            if !is_consumer {
-                continue;
-            }
+        let has_consumer_importers = !consumer_importers.is_empty();
+        let has_any_importers = has_consumer_importers || !utility_importers.is_empty();
 
-            let other_content = content_map.get(other_file).cloned().unwrap_or_default();
-            if other_content.is_empty() {
-                continue;
-            }
-
-            if Self::is_module_imported(other_file, &other_content, &module_name) {
-                let stem = std::path::Path::new(other_file)
-                    .file_stem()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("unknown")
-                    .to_string();
-                consumer_importers.push(stem);
-            }
-        }
-
-        if !consumer_importers.is_empty() {
+        // Both conditions must be satisfied for non-orphan
+        if is_reachable && has_consumer_importers {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        if !utility_importers.is_empty() {
+        // Build diagnostic message
+        let reason = if !is_reachable && !has_any_importers {
+            format!(
+                "AES504 UTILITY_ORPHAN: '{}' is not reachable and has no importers.\nWHY? Utility file '{}' is not reachable from any _entry file AND not imported by any capabilities_*, agent_*, or surface_* file.\nFIX: Import '{}' from a _entry file AND a consumer layer file.",
+                module_name, module_name, module_name
+            )
+        } else if !is_reachable && !has_consumer_importers {
             let imported_by_str = utility_importers.join(", ");
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES504 UTILITY_ORPHAN: '{}' is not imported by any consumer layer.\nWHY? Utility file '{}' is only imported by other utility files ({}), not by capabilities_*, agent_*, or surface_* files.\nFIX: Import '{}' in a capabilities_* file.",
-                    module_name, module_name, imported_by_str, module_name
-                ),
-                Severity::MEDIUM,
-            );
-        }
-
-        OrphanIndicatorResult::new(
-            true,
+            format!(
+                "AES504 UTILITY_ORPHAN: '{}' is not reachable and not imported by consumer layer.\nWHY? Utility file '{}' is not reachable from any _entry file AND only imported by other utility files ({}).\nFIX: Import '{}' from a _entry file AND a capabilities_* file.",
+                module_name, module_name, imported_by_str, module_name
+            )
+        } else if !is_reachable {
+            format!(
+                "AES504 UTILITY_ORPHAN: '{}' is not reachable.\nWHY? Utility file '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                module_name, module_name, module_name
+            )
+        } else if !has_any_importers {
             format!(
                 "AES504 UTILITY_ORPHAN: '{}' is not imported by any consumer layer.\nWHY? Utility file '{}' is not imported by any capabilities_*, agent_*, or surface_* file.\nFIX: Import '{}' in a capabilities_* file.",
                 module_name, module_name, module_name
-            ),
-            Severity::MEDIUM,
-        )
+            )
+        } else {
+            let imported_by_str = utility_importers.join(", ");
+            format!(
+                "AES504 UTILITY_ORPHAN: '{}' is not imported by any consumer layer.\nWHY? Utility file '{}' is only imported by other utility files ({}), not by capabilities_*, agent_*, or surface_* files.\nFIX: Import '{}' in a capabilities_* file.",
+                module_name, module_name, imported_by_str, module_name
+            )
+        };
+
+        OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)
     }
 }
