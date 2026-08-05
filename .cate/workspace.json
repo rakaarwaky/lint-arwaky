@@ -43,45 +43,17 @@
       "type": "terminal",
       "title": "Qwen - lint-arwaky"
     },
-    "78c1c7de-aefe-46b6-9bbe-99edc5405520": {
-      "type": "terminal",
-      "title": "Qwen - lint-arwaky 2"
-    },
     "955c1849-3dd5-4bae-82c0-2307478dc0ea": {
       "type": "terminal",
       "title": "raka@fedora:~/mcp-arwaky/lint-arwaky 2"
     },
     "efe0a38d-9ced-4fc1-9f37-32b54d795128": {
       "type": "terminal",
-      "title": "OC | Fixing remaining violations"
+      "title": "raka@fedora:~/mcp-arwaky/lint-arwaky 4"
     },
     "168a5096-a012-475a-a61d-7485223ba3b4": {
       "type": "terminal",
-      "title": "raka@fedora:~/mcp-arwaky/lint-arwaky"
-    },
-    "374c14f3-efdf-4aa2-8b70-fafb7fabe14d": {
-      "type": "browser",
-      "title": "Browser",
-      "tabs": [
-        {
-          "id": "6acca6a2-54b2-4bd9-87d1-f4d41f88c33a",
-          "url": "https://chat.qwen.ai/",
-          "title": ""
-        }
-      ],
-      "activeTabId": "6acca6a2-54b2-4bd9-87d1-f4d41f88c33a"
-    },
-    "8de9eb8e-1196-406c-8e3a-714a9ebd9835": {
-      "type": "browser",
-      "title": "Browser",
-      "tabs": [
-        {
-          "id": "6259985c-fe53-4e08-b474-61f8ecfa7670",
-          "url": "https://chat.qwen.ai/",
-          "title": ""
-        }
-      ],
-      "activeTabId": "6259985c-fe53-4e08-b474-61f8ecfa7670"
+      "title": "✓ Pengaturan gitignore untuk … · mimo-v2.5 · ~/mcp-arwaky/lint-arwaky"
     },
     "c718d66c-af56-40d8-aafb-53ed03d35fd5": {
       "type": "terminal",
@@ -110,15 +82,14 @@
             "width": 820.4092774231067,
             "height": 590.6946797446368
           },
-          "zOrder": 633,
+          "zOrder": 653,
           "creationIndex": 0,
           "animationState": "idle",
           "dockLayout": {
             "type": "tabs",
             "id": "bc42fe60-3c9f-424c-a2f9-630c873b57e7",
             "panelIds": [
-              "e5bc824f-70b2-46f8-95dd-e7e7edb348e7",
-              "78c1c7de-aefe-46b6-9bbe-99edc5405520"
+              "e5bc824f-70b2-46f8-95dd-e7e7edb348e7"
             ],
             "activeIndex": 0
           }
@@ -133,7 +104,7 @@
             "width": 820.4092774231067,
             "height": 590.6946797446368
           },
-          "zOrder": 634,
+          "zOrder": 636,
           "creationIndex": 1,
           "animationState": "idle",
           "dockLayout": {
@@ -155,7 +126,7 @@
             "width": 820.4092774231067,
             "height": 590.6946797446368
           },
-          "zOrder": 615,
+          "zOrder": 654,
           "creationIndex": 11,
           "animationState": "idle",
           "dockLayout": {
@@ -177,7 +148,7 @@
             "width": 820.4092774231067,
             "height": 590.6946797446368
           },
-          "zOrder": 631,
+          "zOrder": 655,
           "creationIndex": 37,
           "animationState": "idle",
           "dockLayout": {
@@ -188,56 +159,12 @@
             ],
             "activeIndex": 0
           }
-        },
-        "6cacc0cf-b904-4d7a-818b-158e7314a1fc": {
-          "id": "6cacc0cf-b904-4d7a-818b-158e7314a1fc",
-          "origin": {
-            "x": 832.4092774231067,
-            "y": 602.6946797446368
-          },
-          "size": {
-            "width": 820.4092774231067,
-            "height": 590.6946797446368
-          },
-          "zOrder": 635,
-          "creationIndex": 40,
-          "animationState": "idle",
-          "dockLayout": {
-            "type": "tabs",
-            "id": "1f45c432-11c9-4c43-970f-ab1709937d3b",
-            "panelIds": [
-              "374c14f3-efdf-4aa2-8b70-fafb7fabe14d"
-            ],
-            "activeIndex": 0
-          }
-        },
-        "d5f00e8b-f797-41c0-ace9-5fb11ba86754": {
-          "id": "d5f00e8b-f797-41c0-ace9-5fb11ba86754",
-          "origin": {
-            "x": 1658.8185548462134,
-            "y": 602.6946797446368
-          },
-          "size": {
-            "width": 820.4092774231067,
-            "height": 590.6946797446368
-          },
-          "zOrder": 626,
-          "creationIndex": 41,
-          "animationState": "idle",
-          "dockLayout": {
-            "type": "tabs",
-            "id": "c905dc8d-dd4d-4127-b962-ded05bd3ed71",
-            "panelIds": [
-              "8de9eb8e-1196-406c-8e3a-714a9ebd9835"
-            ],
-            "activeIndex": 0
-          }
         }
       },
-      "zoomLevel": 0.43404841256619975,
+      "zoomLevel": 0.6215770866200928,
       "viewportOffset": {
-        "x": -172.47753136575324,
-        "y": 247.69201343524594
+        "x": 325.04512983305494,
+        "y": 19.655675142238238
       }
     },
     "76265a7f-60a9-4fd8-84dc-67911425594c": {
