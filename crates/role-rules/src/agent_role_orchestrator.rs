@@ -166,9 +166,13 @@ impl RoleOrchestrator {
     }
 
     fn is_exception(&self, filename: &str) -> bool {
-        // Check if filename is in any rule's exceptions list
+        // Check if filename (without extension) is in any rule's exceptions list
+        let stem = std::path::Path::new(filename)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or(filename);
         for rule in &self.config.rules {
-            if rule.exceptions.values.iter().any(|e| e == filename) {
+            if rule.exceptions.values.iter().any(|e| e == stem) {
                 return true;
             }
         }
