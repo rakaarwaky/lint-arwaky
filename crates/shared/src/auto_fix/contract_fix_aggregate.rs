@@ -6,6 +6,7 @@
 use crate::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
@@ -19,7 +20,7 @@ pub trait LintFixOrchestratorAggregate: Send + Sync {
     fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult;
 
     /// FR-005: Report violations that require manual intervention.
-    fn manual_report(&self, violations: &[LintResult]) -> Vec<String>;
+    fn manual_report(&self, violations: &[LintResult]) -> Vec<LintMessage>;
 
     /// Expose the file adapter so that upstream consumers (e.g. mcp-server)
     /// can access file I/O without depending on `IFileAdapterProtocol` directly.
