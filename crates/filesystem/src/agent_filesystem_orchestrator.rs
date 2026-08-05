@@ -392,6 +392,14 @@ impl IFileSystemIOProtocol for FilesystemOrchestrator {
     fn timing(&self) -> &ScanTiming {
         self.deps.io.timing()
     }
+
+    fn list_directory_filtered(&self, path: &FilePath) -> Vec<FileEntry> {
+        self.deps.io.list_directory_filtered(path)
+    }
+
+    fn read_file_preview(&self, path: &FilePath, max_lines: usize) -> DisplayContent {
+        self.deps.io.read_file_preview(path, max_lines)
+    }
 }
 
 // ═══ IFilesystemAggregate (5 cache methods) ════════════════
@@ -710,14 +718,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             InheritanceMap::new(inheritance),
             all_files,
         )
-    }
-
-    fn list_directory_filtered(&self, path: &FilePath) -> Vec<FileEntry> {
-        self.deps.io.list_directory_filtered(path)
-    }
-
-    fn read_file_preview(&self, path: &FilePath, max_lines: usize) -> DisplayContent {
-        self.deps.io.read_file_preview(path, max_lines)
     }
 }
 
