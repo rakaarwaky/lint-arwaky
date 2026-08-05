@@ -32,6 +32,7 @@ log/
 .mimocode
 mimocode.jsonc
 .qwen
+.cate
 .worktree/
 credentials.json
 serviceAccountKey
