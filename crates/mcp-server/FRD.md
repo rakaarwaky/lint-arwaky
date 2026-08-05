@@ -28,12 +28,6 @@ flowchart TD
     CFG -->|"config data"| B
     B -->|"JSON-RPC\nstdout"| A
 
-    style A fill:#e1f5fe,stroke:#0288d1
-    style B fill:#e8f5e9,stroke:#2e7d32
-    style D fill:#fff3e0,stroke:#e65100
-    style LC fill:#f3e5f5,stroke:#7b1fa2
-    style SK fill:#f3e5f5,stroke:#7b1fa2
-    style CFG fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ### Product Policy (locked)

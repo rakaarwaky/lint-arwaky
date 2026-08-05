@@ -222,9 +222,9 @@ impl DependencyCycleAnalyzer {
             let file = file_by_layer.get(source).cloned().unwrap_or_else(|| source.to_string());
             LintResult::new_arch(&file, 1, "AES205", Severity::CRITICAL,
                 format!(
-                    "AES205 IMPORT_VIOLATION: Circular dependency.\n\
+                    "AES205 CIRCULAR_IMPORT: Circular dependency.\n\
                      WHY? Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
-                     FIX: Break the dependency cycle.",
+                     FIX: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction.",
                     source, target
                 ),
             )

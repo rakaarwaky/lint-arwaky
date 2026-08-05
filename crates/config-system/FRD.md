@@ -36,9 +36,6 @@ flowchart TD
     P["orphan-rules"] -->|"config"| A
     Q["external-lint"] -->|"config"| A
 
-    style CS fill:#e8f5e9,stroke:#388e3c
-    style A fill:#e3f2fd,stroke:#1565c0
-    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ### Config Loading Priority Chain

@@ -45,11 +45,6 @@ flowchart TD
     R5 --> D
     D -->|"74 methods via\n&dyn IFilesystemAggregate"| A
 
-    style A fill:#e1f5fe,stroke:#0288d1
-    style FS fill:#fff3e0,stroke:#e65100
-    style D fill:#e3f2fd,stroke:#1565c0
-    style O fill:#e8f5e9,stroke:#2e7d32
-    style C fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ### Data Production Map

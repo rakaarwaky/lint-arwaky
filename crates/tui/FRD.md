@@ -19,9 +19,6 @@ flowchart TD
     D -->|"Vec<ViolationItem>\nCiReport / FixReport\nSetupReport / ..."| B
     B -->|"ratatui render\n(finalize / draw)"| A
 
-    style A fill:#e1f5fe,stroke:#0288d1
-    style B fill:#e8f5e9,stroke:#2e7d32
-    style D fill:#fff3e0,stroke:#e65100
 ```
 
 ### Dependency Rule

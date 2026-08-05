@@ -20,9 +20,6 @@ flowchart TD
     H --> B
     B -->|output| A
 
-    style A fill:#e1f5fe,stroke:#0288d1
-    style E fill:#fff3e0,stroke:#e65100
-    style H fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ## Functional Requirements

@@ -226,9 +226,9 @@ impl DummyImportChecker {
                 continue;
             }
             violations.push(LintResult::new_arch(file, line_no.value() as usize, "AES204", Severity::HIGH,
-                "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                "AES204 DUMMY_IMPORT: Import intent mismatch.\n\
                      WHY? Imported symbols placed inside _use_ dummy functions are dead code — they exist only to suppress unused-import warnings.\n\
-                     FIX: Ensure imports match the file's layer intent.".to_string(),
+                     FIX: Remove the dummy function and its imports, or move imports to where they're actually used.".to_string(),
             ));
         }
     }
@@ -245,9 +245,9 @@ impl DummyImportChecker {
                 "AES204",
                 Severity::HIGH,
                 format!(
-                    "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
-                     WHY? Dummy function range ends at line {}\n\
-                     FIX: Ensure imports match the file's layer intent.",
+                    "AES204 DUMMY_IMPORT: Dummy function detected.\n\
+                     WHY? Dummy function range ends at line {} — these functions exist only to suppress unused-import warnings.\n\
+                     FIX: Remove the dummy function and ensure all imports are used in real code.",
                     end
                 ),
             ));
@@ -262,9 +262,9 @@ impl DummyImportChecker {
                 start.value() as usize,
                 "AES204",
                 Severity::HIGH,
-                "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                "AES204 DUMMY_IMPORT: Empty trait implementation.\n\
                      WHY? Trait implementations with empty bodies violate the contract abstraction.\n\
-                     FIX: Ensure imports match the file's layer intent.".to_string(),
+                     FIX: Implement the trait properly or remove the empty impl.".to_string(),
             ));
         }
     }
@@ -354,9 +354,9 @@ impl DummyImportChecker {
             });
             if has_taxonomy_import {
                 violations.push(LintResult::new_arch(file, dummy_function_line, "AES204", Severity::HIGH,
-                    "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                    "AES204 DUMMY_IMPORT: Taxonomy intent mismatch.\n\
                          WHY? Taxonomy VOs encode domain concepts — using raw primitives defeats the purpose.\n\
-                         FIX: Ensure imports match the file's layer intent.".to_string(),
+                         FIX: Use taxonomy VOs (taxonomy_*.rs) instead of raw primitives like String or i32.".to_string(),
                 ));
             }
         }
@@ -390,9 +390,9 @@ impl DummyImportChecker {
                     || trimmed.contains(&format!("'{}", pattern));
                 if trimmed.contains(pattern) && !is_string_lit {
                     violations.push(LintResult::new_arch(file, i + 1, "AES204", Severity::MEDIUM,
-                        "AES201 IMPORT_VIOLATION: Import intent mismatch.\n\
+                        "AES204 DUMMY_IMPORT: Business logic in surface layer.\n\
                              WHY? Surface-layer code must delegate business logic to the aggregate layer.\n\
-                             FIX: Ensure imports match the file's layer intent.".to_string(),
+                             FIX: Move the logic to a capabilities module and call it through a contract aggregate.".to_string(),
                     ));
                 }
             }

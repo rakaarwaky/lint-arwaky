@@ -28,13 +28,6 @@ flowchart TD
 
     OUT -->|"Vec<ViolationItem>\nor Report"| A
 
-    style A fill:#e1f5fe,stroke:#0288d1
-    style D fill:#fff3e0,stroke:#e65100
-    style S fill:#fce4ec,stroke:#c62828
-    style B1 fill:#e8f5e9,stroke:#2e7d32
-    style B2 fill:#e8f5e9,stroke:#2e7d32
-    style B6 fill:#e8f5e9,stroke:#2e7d32
-    style OUT fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ### Dependency Rule

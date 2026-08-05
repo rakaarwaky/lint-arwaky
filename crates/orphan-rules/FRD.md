@@ -48,11 +48,6 @@ flowchart TD
     C --> B
     B -->|output| A
 
-    style A fill:#e1f5fe,stroke:#0288d1
-    style FS fill:#fff3e0,stroke:#e65100
-    style D fill:#fff3e0,stroke:#e65100
-    style I fill:#fce4ec,stroke:#c62828
-    style J fill:#f3e5f5,stroke:#7b1fa2
 ```
 
 ---
