@@ -675,7 +675,19 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             };
             if let Some(tgt_rel) = target {
                 if src_rel != tgt_rel {
-                    forward.entry(src_rel).or_default().push(tgt_rel);
+                    forward.entry(src_rel.clone()).or_default().push(tgt_rel.clone());
+                    // For Rust external crate imports, also add an edge to the crate's lib.rs.
+                    // In Rust, `use pkg::foo::Bar` goes through the crate root, and lib.rs's
+                    // pub mod declarations provide reachability to all sub-modules. Without
+                    // this extra edge, modules only referenced via lib.rs (e.g. agent_* files)
+                    // would appear unreachable from the entry point.
+                    if tgt_rel.ends_with(".rs") && !tgt_rel.ends_with("lib.rs") {
+                        if let Some(lib_path) = Self::derive_crate_lib_rs(&tgt_rel) {
+                            if all_files_set.contains(lib_path.as_str()) && lib_path != src_rel {
+                                forward.entry(src_rel).or_default().push(lib_path);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -754,20 +766,30 @@ impl FilesystemOrchestrator {
                                     // Match: package name with hyphens → underscores
                                     let normalized = pkg_name.replace('-', "_");
                                     if normalized == crate_name {
-                                        // Found the member — always resolve to crate root (lib.rs).
-                                        // In Rust, `use pkg::foo::Bar` always goes through the
-                                        // crate root. The lib.rs `pub mod` declarations provide
-                                        // reachability edges to all sub-modules, so resolving
-                                        // directly to a sub-module would bypass lib.rs and
-                                        // break reachability for modules only referenced via
-                                        // lib.rs (e.g. agent_*_orchestrator.rs).
+                                        // Found the member — resolve sub_path to actual target file.
                                         let member_name =
                                             entry.file_name().to_string_lossy().to_string();
                                         let member_base = format!("{}/{}", member_dir, member_name);
                                         let src_dir = format!("{}/src", member_base);
-                                        let lib_rs = format!("{}/lib.rs", src_dir);
-                                        if all_files_set.contains(lib_rs.as_str()) {
-                                            return Some(lib_rs);
+                                        // Try progressively shorter sub-paths.
+                                        // e.g. `use pkg::foo::bar::Baz` → sub_path = "foo/bar/Baz"
+                                        // Try "foo/bar/Baz.rs", "foo/bar.rs", "foo.rs", "lib.rs"
+                                        let parts: Vec<&str> = sub_path.split('/').collect();
+                                        for i in (0..=parts.len()).rev() {
+                                            let candidate_base = if i == 0 {
+                                                format!("{}/lib", src_dir)
+                                            } else {
+                                                format!("{}/{}", src_dir, parts[..i].join("/"))
+                                            };
+                                            let candidates = vec![
+                                                format!("{}.rs", candidate_base),
+                                                format!("{}/mod.rs", candidate_base),
+                                            ];
+                                            for candidate in &candidates {
+                                                if all_files_set.contains(candidate.as_str()) {
+                                                    return Some(candidate.clone());
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -778,6 +800,20 @@ impl FilesystemOrchestrator {
             }
         }
         None
+    }
+
+    /// Given a resolved external crate file path (e.g. "crates/shared/src/taxonomy_result_vo.rs"),
+    /// derive the crate root lib.rs (e.g. "crates/shared/src/lib.rs").
+    /// Returns Some(lib.rs path) if found within a src/ directory of a workspace member.
+    fn derive_crate_lib_rs(resolved_path: &str) -> Option<String> {
+        // Find the "src/" segment and derive lib.rs from it
+        let parts: Vec<&str> = resolved_path.split('/').collect();
+        if let Some(src_idx) = parts.iter().position(|&p| p == "src") {
+            let lib_rs = format!("{}/lib.rs", parts[..=src_idx].join("/"));
+            Some(lib_rs)
+        } else {
+            None
+        }
     }
 
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {

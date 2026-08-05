@@ -218,7 +218,7 @@ fn scan_single_root(
     _orphan_orchestrator: &Arc<dyn IOrphanAggregate>,
     config_orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
     filter: &Option<String>,
-    _fs_agg: &Arc<dyn IFilesystemAggregate>,
+    fs_agg: &Arc<dyn IFilesystemAggregate>,
     fs_factory: &Arc<FilesystemFactory>,
     orphan_factory: &Arc<OrphanFactory>,
 ) -> Result<Vec<ViolationItem>, String> {

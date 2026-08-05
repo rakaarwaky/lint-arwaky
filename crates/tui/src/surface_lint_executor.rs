@@ -556,10 +556,19 @@ impl SurfaceLintExecutor {
     }
 
     fn build_orphan_deps(&self) -> Option<OrphanScanDeps> {
-        Some(OrphanScanDeps::with_defaults(
+        Some(OrphanScanDeps::new(
             self.orphan_aggregate.clone()?,
             self.config_orchestrator.clone()?,
             self.filesystem.clone(),
+            Arc::new(|| {
+                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+            }),
+            Arc::new(|config, fs| {
+                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                    config, fs,
+                )
+                .analyzer()
+            }),
         ))
     }
 }
