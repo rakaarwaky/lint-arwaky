@@ -5,13 +5,13 @@ use std::time::Duration;
 
 use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
-use shared::common::BooleanVO;
-use shared::common::LintMessage;
-use shared::file_watch::IWatchProviderProtocol;
-use shared::file_watch::WatchConfig;
-use shared::file_watch::WatchEvent;
-use shared::file_watch::WatchEventKind;
-use shared::file_watch::WatchServiceError;
+use shared::common::taxonomy_common_vo::BooleanVO;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
+use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
+use shared::file_watch::taxonomy_watch_event_vo::WatchEventKind;
+use shared::file_watch::taxonomy_service_error::WatchServiceError;
 use tokio::sync::broadcast;
 
 // ─── Block 1: Struct Definition ───────────────────────────

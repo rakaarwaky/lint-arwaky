@@ -12,8 +12,9 @@
 // The orchestrator itself contains no git logic — it's pure composition.
 
 use shared::cli_commands::LintResultList;
-use shared::common::Identity;
-use shared::common::{FilePath, SuccessStatus};
+use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::git_hooks::{
     GitHookError, GitHooksAggregate, HookManagementOrchestratorAggregate, IDiffProtocol,
     IHookManagerProtocol, IHookProtocol,

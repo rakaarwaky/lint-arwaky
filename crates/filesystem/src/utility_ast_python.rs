@@ -5,7 +5,16 @@
 
 use shared::filesystem::taxonomy_filesystem_vo::{PythonClassItem, PythonFnItem, PythonMetadata};
 
-use crate::utility_tree_sitter_helpers::{child_by_field, text_of};
+// ─── Inlined from utility_tree_sitter_helpers (AES201: utility cannot import utility) ───
+
+fn text_of(node: tree_sitter::Node, content: &str) -> String {
+    content[node.byte_range()].to_string()
+}
+
+fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option<String> {
+    let child = node.child_by_field_name(field)?;
+    Some(text_of(child, content))
+}
 
 /// Extract Python-specific metadata from a parsed AST.
 pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> PythonMetadata {

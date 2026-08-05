@@ -5,9 +5,14 @@
 // Utility: stateless functions
 // Consumers: import-rules (via IFilesystemAggregate), agent orchestrator
 
-use crate::utility_filesystem_io;
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::HashMap;
+
+// ─── Inlined from utility_filesystem_io (AES201: utility cannot import utility) ───
+
+fn read_file_safe<P: AsRef<std::path::Path>>(path: P) -> Result<String, std::io::Error> {
+    std::fs::read_to_string(path.as_ref())
+}
 use std::path::{Path, PathBuf};
 
 // ═══════════════════════════════════════════════════════════════
@@ -232,7 +237,10 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                 for name in clean.split(',') {
                     let name = name.trim().split(" as ").last().unwrap_or("").trim();
                     if !name.is_empty() && name != "*" {
-                        let rel_path = source_module.replace('.', "/");
+                        // Strip leading dots (relative prefix) before replacing dots with /
+                        // e.g. `.contract_calculator_aggregate` → `contract_calculator_aggregate`
+                        let clean_module = source_module.trim_start_matches('.');
+                        let rel_path = clean_module.replace('.', "/");
                         reexports.insert(name.to_string(), rel_path);
                     }
                 }
@@ -287,10 +295,40 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
 }
 
 /// Resolve an import through a barrel file to its original source file.
-/// Returns the resolved file path as a string.
+/// Returns the resolved file path as a workspace-relative string.
 fn resolve_barrel_import(module_path: &str, symbol_name: &str, root_dir: &Path) -> Option<String> {
     let barrel_path = find_barrel_file(module_path, root_dir)?;
-    let barrel_content = utility_filesystem_io::read_file_safe(&barrel_path).ok()?;
+    let barrel_content = read_file_safe(&barrel_path).ok()?;
     let reexports = parse_barrel_reexports(&barrel_content);
-    reexports.get(symbol_name).cloned()
+    let rel = reexports.get(symbol_name)?;
+
+    // rel is relative to barrel's directory; resolve to absolute first
+    let barrel_dir = std::path::Path::new(&barrel_path)
+        .parent()
+        .unwrap_or(root_dir);
+
+    // Try with common extensions
+    let exts = [".py", ".ts", ".js", ".rs", ".tsx", ".jsx"];
+    for ext in &exts {
+        let candidate = barrel_dir.join(format!("{}{}", rel, ext));
+        if candidate.exists() {
+            return candidate.strip_prefix(root_dir)
+                .map(|p| p.to_string_lossy().to_string())
+                .ok();
+        }
+    }
+
+    // Try as package (__init__.py, index.ts, mod.rs, etc.)
+    let init_candidates = ["__init__.py", "index.ts", "index.js", "mod.rs"];
+    for init in &init_candidates {
+        let candidate = barrel_dir.join(rel).join(init);
+        if candidate.exists() {
+            return candidate.strip_prefix(root_dir)
+                .map(|p| p.to_string_lossy().to_string())
+                .ok();
+        }
+    }
+
+    // Fallback: return as-is (barrel-relative)
+    Some(rel.to_string())
 }

@@ -13,10 +13,10 @@
 //
 // NOTE: Import checking is handled by import-rules crate, not role-rules.
 
-use shared::common::LintResult;
-use shared::common::Severity;
+use shared::common::taxonomy_lint_result_vo::LintResult;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::ICapabilitiesRoleChecker;
+use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct CapabilitiesRoleChecker {}

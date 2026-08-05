@@ -1,10 +1,9 @@
 // PURPOSE: JsonFormatter — implements IReportFormatterProtocol for JSON output per FR-002
 use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, ScanReport};
-use shared::common::DisplayContent;
-use shared::report_formatter::{
-    IReportFormatterProtocol, JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,
-};
+use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
+use shared::report_formatter::taxonomy_json_dto_vo::{JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation};
 
 /// JsonFormatter — produces structured pretty-printed JSON output from ScanReport.
 pub struct JsonFormatter;

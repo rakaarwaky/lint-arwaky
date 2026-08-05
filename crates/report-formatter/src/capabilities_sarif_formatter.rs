@@ -3,11 +3,14 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, LintResult, ScanReport};
-use shared::common::DisplayContent;
-use shared::report_formatter::{
-    IReportFormatterProtocol, SarifArtifactLocation, SarifDriver, SarifLocation, SarifLog,
-    SarifMessage, SarifPhysicalLocation, SarifRegion, SarifResult, SarifRule, SarifRun, SarifTool,
+use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
+use shared::report_formatter::taxonomy_sarif_driver_vo::{SarifDriver, SarifRule};
+use shared::report_formatter::taxonomy_sarif_location_vo::{
+    SarifArtifactLocation, SarifLocation, SarifPhysicalLocation, SarifRegion,
 };
+use shared::report_formatter::taxonomy_sarif_log_vo::{SarifLog, SarifRun, SarifTool};
+use shared::report_formatter::taxonomy_sarif_result_vo::{SarifMessage, SarifResult};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.

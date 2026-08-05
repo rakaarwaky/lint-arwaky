@@ -7,10 +7,10 @@
 //   For constant purity, uses ParseMetadata struct/enum/trait/fn definitions to
 //   detect non-constant declarations.
 
-use shared::common::LintResult;
-use shared::common::Severity;
+use shared::common::taxonomy_lint_result_vo::LintResult;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::ITaxonomyRoleChecker;
+use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TaxonomyRoleChecker {}

@@ -3,8 +3,9 @@
 //! Implements IReportFormatterAggregate by delegating to the appropriate
 //! capabilities formatter based on the requested format.
 use shared::cli_commands::{Format, ScanReport};
-use shared::common::DisplayContent;
-use shared::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
+use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::report_formatter::contract_report_formatter_aggregate::IReportFormatterAggregate;
+use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
 
 use std::sync::Arc;
 

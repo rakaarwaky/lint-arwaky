@@ -3,12 +3,15 @@
 // FRD-compliant: accepts pre-parsed FileEntry from the filesystem crate.
 // No file I/O or AST parsing is performed internally.
 
-use shared::common::LintResult;
+use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::{
-    IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
-    ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
-};
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
+use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
+use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
 use std::path::Path;
 use std::sync::Arc;
 

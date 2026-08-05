@@ -5,16 +5,17 @@
 //   method signatures. Uses content line scanning for signature detection since
 //   ParseMetadata does not yet expose method parameter/return types.
 
-use shared::common::LintResult;
+use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::utility_language_detector::detect_language_info;
 use shared::common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
-use shared::common::{Language, Severity};
+use shared::common::taxonomy_language_vo::Language;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::IContractRoleChecker;
+use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractRoleChecker {}

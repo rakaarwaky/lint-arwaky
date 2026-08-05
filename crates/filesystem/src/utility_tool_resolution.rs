@@ -6,7 +6,36 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::utility_filesystem_io::{canonicalize_path, is_file, path_exists};
+// ─── Inlined from utility_filesystem_io (AES201: utility cannot import utility) ───
+
+fn path_exists<P: AsRef<Path>>(path: P) -> bool {
+    path.as_ref().exists()
+}
+
+fn is_file<P: AsRef<Path>>(path: P) -> bool {
+    path.as_ref().is_file()
+}
+
+fn canonicalize_path(path_str: &str) -> PathBuf {
+    let path = Path::new(path_str);
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        std::env::current_dir()
+            .unwrap_or_else(|_| PathBuf::from("."))
+            .join(path)
+    }
+}
+
+fn scan_directory(dir: &Path) -> Vec<PathBuf> {
+    let mut entries = Vec::new();
+    if let Ok(read_dir) = dir.read_dir() {
+        for entry in read_dir.flatten() {
+            entries.push(entry.path());
+        }
+    }
+    entries
+}
 
 // ═══════════════════════════════════════════════════════════════
 // PATH Detection
@@ -177,7 +206,7 @@ pub fn has_config_file(dir_path: &Path) -> bool {
         "setup.cfg",
         ".flake8",
     ];
-    crate::utility_filesystem_io::scan_directory(dir_path)
+    scan_directory(dir_path)
         .iter()
         .any(|path| {
             let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -223,7 +252,7 @@ pub fn has_python_files_recursive(path: &Path) -> bool {
 }
 
 fn has_py_in_dir_recursive(dir: &Path) -> bool {
-    for path in crate::utility_filesystem_io::scan_directory(dir) {
+    for path in scan_directory(dir) {
         if path.is_dir() {
             if has_py_in_dir_recursive(&path) {
                 return true;

@@ -1,19 +1,16 @@
 // PURPOSE: Stateless utility functions for mapping language detection results
-use shared::common::taxonomy_language_vo::Language as CommonLanguage;
+use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::utility_language_detector;
-use shared::quality_rules::taxonomy_violation_code_analysis_vo::Language as CodeAnalysisLanguage;
 
-/// Map a file path to the quality-rules Language enum.
-pub fn code_analysis_language_from_file(file: &str) -> CodeAnalysisLanguage {
+/// Map a file path to the Language enum by extension.
+pub fn code_analysis_language_from_file(file: &str) -> Language {
     let Ok(fp) = FilePath::new(file.to_string()) else {
-        return CodeAnalysisLanguage::Rust;
+        return Language::Rust;
     };
-    match utility_language_detector::detect_language(&fp) {
-        CommonLanguage::Rust => CodeAnalysisLanguage::Rust,
-        CommonLanguage::Python => CodeAnalysisLanguage::Python,
-        CommonLanguage::JavaScript => CodeAnalysisLanguage::JavaScript,
-        CommonLanguage::TypeScript => CodeAnalysisLanguage::TypeScript,
-        CommonLanguage::Unknown => CodeAnalysisLanguage::Rust,
+    match fp.extension().as_str() {
+        "py" => Language::Python,
+        "js" | "jsx" | "mjs" | "cjs" => Language::JavaScript,
+        "ts" | "tsx" | "mts" | "cts" => Language::TypeScript,
+        _ => Language::Rust,
     }
 }

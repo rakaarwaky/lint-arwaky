@@ -5,7 +5,37 @@
 
 use shared::filesystem::taxonomy_filesystem_vo::{TSClassItem, TSFnItem, TypeScriptMetadata};
 
-use crate::utility_tree_sitter_helpers::{child_by_field, extract_js_string_child, text_of};
+// ─── Inlined from utility_tree_sitter_helpers (AES201: utility cannot import utility) ───
+
+fn text_of(node: tree_sitter::Node, content: &str) -> String {
+    content[node.byte_range()].to_string()
+}
+
+fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option<String> {
+    let child = node.child_by_field_name(field)?;
+    Some(text_of(child, content))
+}
+
+fn extract_js_string_child(node: tree_sitter::Node, content: &str) -> Option<String> {
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        match child.kind() {
+            "string" | "template_string" => {
+                let text = text_of(child, content);
+                let stripped = text
+                    .trim_start_matches('\'')
+                    .trim_start_matches('"')
+                    .trim_end_matches('\'')
+                    .trim_end_matches('"');
+                if !stripped.is_empty() {
+                    return Some(stripped.to_string());
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
 
 /// Extract TypeScript/JavaScript-specific metadata from a parsed AST.
 pub fn extract_ts_metadata(tree: &tree_sitter::Tree, content: &str) -> TypeScriptMetadata {

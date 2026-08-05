@@ -2,8 +2,8 @@
 
 use std::collections::HashMap;
 
-use shared::file_watch::IChangeAnalyzerProtocol;
-use shared::file_watch::WatchEvent;
+use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

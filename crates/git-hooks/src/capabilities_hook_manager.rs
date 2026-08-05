@@ -3,7 +3,10 @@
 // Delegates low-level hook file operations to the adapter and implements
 // config initialization, ignore rule management, and diff data comparison.
 
-use shared::common::{DescriptionVO, FilePath, Identity, SuccessStatus};
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::taxonomy_job_vo::SuccessStatus;
 
 use shared::git_hooks::{IHookManagerProtocol, IHookProtocol};
 

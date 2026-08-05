@@ -129,13 +129,3 @@ impl ExternalLintContainer {
         self.aggregate.clone()
     }
 }
-
-impl Default for ExternalLintContainer {
-    fn default() -> Self {
-        // NOTE: In production, inject real filesystem and config_parser via new().
-        // Default implementation is for testing/quick-start only.
-        panic!(
-            "ExternalLintContainer::default() requires injected dependencies. Use new() instead."
-        )
-    }
-}

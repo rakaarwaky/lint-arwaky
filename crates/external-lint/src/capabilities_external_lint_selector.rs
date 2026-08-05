@@ -1,6 +1,6 @@
 use shared::common::AdapterNameList;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::external_lint::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
 
 pub struct CapabilitiesExternalLintSelector {
     rust_adapters: Vec<AdapterName>,
