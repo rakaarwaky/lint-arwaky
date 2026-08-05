@@ -86,4 +86,8 @@ pub trait IFilesystemAggregate:
         root_dir: &Path,
         ignored: &[String],
     ) -> GraphAnalysisContext;
+
+    /// Find workspace root by walking up from `start` looking for
+    /// marker files (Cargo.toml, package.json, pyproject.toml) + member dirs.
+    fn find_workspace_root(&self, start: &Path) -> Option<PathBuf>;
 }
