@@ -363,7 +363,7 @@ impl SurfaceActionHandler {
     /// Read up to 100 lines of a file for inline preview.
     pub fn load_file_preview(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path.to_string()).unwrap_or_default();
-        let display = utility_file_system::read_file_preview(&fp, 100, &*self.filesystem);
+        let display = self.filesystem.read_file_preview(&fp, 100);
         state.preview_text = display.to_string();
         state.preview_scroll = 0;
         state.preview_mode = PreviewMode::FileContent;

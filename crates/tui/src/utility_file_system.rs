@@ -1,56 +1,8 @@
 // PURPOSE: utility_file_system — stateless filesystem utilities for TUI surfaces
+// Pure functions only — no DI, no trait params, no contract imports.
 use shared::common::{DisplayContent, FilePath};
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-
-use shared::tui::FileEntry;
 use std::io::Write;
 use std::path::Path;
-
-/// List directory entries, skipping hidden files (starting with '.').
-pub fn list_directory(path: &FilePath, fs: &dyn IFileSystemIOProtocol) -> Vec<FileEntry> {
-    let dir_path = Path::new(path.value());
-    let paths = fs.read_dir_entries_as_pathbuf(dir_path).unwrap_or_default();
-
-    let mut entries = Vec::new();
-    for entry_path in paths {
-        let name = match entry_path.file_name().and_then(|n| n.to_str()) {
-            Some(n) => n.to_string(),
-            None => continue,
-        };
-        if name.starts_with('.') {
-            continue;
-        }
-        if let Some(file_entry) = FileEntry::from_path(&entry_path) {
-            entries.push(file_entry);
-        }
-    }
-    entries
-}
-
-/// Read up to `max_lines` lines of a file with line-numbered formatting.
-/// Truncates with "... (N more lines)" note if the file exceeds max_lines.
-pub fn read_file_preview(
-    path: &FilePath,
-    max_lines: usize,
-    fs: &dyn IFileSystemIOProtocol,
-) -> DisplayContent {
-    let file_path = Path::new(path.value());
-    let content = match fs.read_to_string(file_path) {
-        Ok(c) => c,
-        Err(e) => return DisplayContent::new(format!("Cannot read file: {e}")),
-    };
-
-    let lines: Vec<&str> = content.lines().take(max_lines).collect();
-    let mut output = String::new();
-    for (i, line) in lines.iter().enumerate() {
-        output.push_str(&format!("{:>4} \u{2502} {}\n", i + 1, line));
-    }
-    let total_lines = content.lines().count();
-    if total_lines > max_lines {
-        output.push_str(&format!("\n... ({} more lines)", total_lines - max_lines));
-    }
-    DisplayContent::new(output)
-}
 
 /// Check whether a path points to a valid directory.
 pub fn is_valid_directory(path: &FilePath) -> bool {

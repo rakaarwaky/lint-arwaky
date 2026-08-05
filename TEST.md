@@ -36,9 +36,9 @@ workspaces-good/                     # Clean files (0 violations expected)
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 142   | 382        | —              | 24 unique codes    |
-| bad       | Python   | 154   | 384        | —              | 24 unique codes    |
-| bad       | JS/TS    | 144   | 526        | —              | 24 unique codes    |
+| bad       | Rust     | 100+  | 100+       | —              | 24 unique codes    |
+| bad       | Python   | 100+  | 100+       | —              | 24 unique codes    |
+| bad       | JS/TS    | 100+  | 100+       | —              | 24 unique codes    |
 | good      | Rust     | 29    | 0          | 0               | —                 |
 | good      | Python   | 69    | 0          | 0               | —                 |
 | good      | JS/TS    | 50    | 0          | 0               | —                 |
@@ -99,15 +99,15 @@ cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 
 ### 3.1 Thresholds
 
-| Criteria                       | PASS   | FAIL        |
-| ------------------------------ | ------ | ----------- |
-| Total violations (Rust scan)   | >= 300 | < 300 or 0  |
-| Total violations (Python scan) | >= 300 | < 300 or 0  |
-| Total violations (JS/TS scan)  | >= 300 | < 300 or 0  |
-| Unique AES codes (Rust)        | >= 24   | < 24        |
-| Unique AES codes (Python)      | >= 24   | < 24        |
-| Unique AES codes (JS/TS)       | >= 24   | < 24        |
-| Self-lint violations           | 0       | > 0         |
+| Criteria                       | PASS   | FAIL       |
+| ------------------------------ | ------ | ---------- |
+| Total violations (Rust scan)   | >= 300 | < 300 or 0 |
+| Total violations (Python scan) | >= 300 | < 300 or 0 |
+| Total violations (JS/TS scan)  | >= 300 | < 300 or 0 |
+| Unique AES codes (Rust)        | >= 24  | < 24       |
+| Unique AES codes (Python)      | >= 24  | < 24       |
+| Unique AES codes (JS/TS)       | >= 24  | < 24       |
+| Self-lint violations           | 0      | > 0        |
 
 ### 3.2 Per-Rule Detection Matrix
 

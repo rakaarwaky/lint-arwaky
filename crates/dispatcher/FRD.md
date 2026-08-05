@@ -45,10 +45,10 @@ flowchart TD
 
 **What it produces**: Aggregated `Vec<ViolationItem>` from all 6 linters executed as subprocesses.
 
-| Output          | Description                                          |
-| ----------------- | ------------------------------------------------------ |
+| Output          | Description                                                              |
+| --------------- | ------------------------------------------------------------------------ |
 | Violation items | Combined violations from quality, role, import, naming, orphan, external |
-| Error message   | User-facing error if path not found or member invalid |
+| Error message   | User-facing error if path not found or member invalid                    |
 
 **Input**: `ScanOptions` — optional path, filter, member, filesystem aggregate, multi-project orchestrator.
 
@@ -78,13 +78,13 @@ flowchart TD
 
 **What it produces**: `CiReport` with pass/fail decision based on score and critical violations.
 
-| Output            | Description                                    |
-| ------------------- | ------------------------------------------------ |
-| Score             | Computed quality score (0–100)                  |
-| Pass/fail         | Whether all CI checks passed                   |
-| Reasons           | List of failure reasons (critical, below threshold) |
-| Severity counts   | Critical, high, medium, low violation counts   |
-| Total violations  | Total number of violations found                |
+| Output           | Description                                         |
+| ---------------- | --------------------------------------------------- |
+| Score            | Computed quality score (0–100)                     |
+| Pass/fail        | Whether all CI checks passed                        |
+| Reasons          | List of failure reasons (critical, below threshold) |
+| Severity counts  | Critical, high, medium, low violation counts        |
+| Total violations | Total number of violations found                    |
 
 **Input**: All aggregate dependencies (code analysis, import, naming, config, orphan, filesystem) + optional path + threshold.
 
@@ -113,10 +113,10 @@ flowchart TD
 
 **What it produces**: `Vec<ViolationItem>` from a single linter category.
 
-| Output          | Description                              |
-| ----------------- | ------------------------------------------ |
-| Violation items | Violations from one specific linter      |
-| Error message   | User-facing error if path not found      |
+| Output          | Description                         |
+| --------------- | ----------------------------------- |
+| Violation items | Violations from one specific linter |
+| Error message   | User-facing error if path not found |
 
 **Input**: Optional path, linter orchestrator aggregate, filter string, filesystem aggregate.
 
@@ -146,13 +146,13 @@ flowchart TD
 
 **What it produces**: `FixReport` with before/after violation counts and fix details.
 
-| Output          | Description                                    |
-| ----------------- | ------------------------------------------------ |
-| Before count    | Number of violations before fix                |
-| After count     | Number of violations after fix (0 in dry-run)  |
-| Fixed count     | Number of violations resolved                  |
-| Fixable list    | Violations matching fixable rules (AES101/203/304) |
-| Success flag    | Whether all violations resolved                |
+| Output       | Description                                        |
+| ------------ | -------------------------------------------------- |
+| Before count | Number of violations before fix                    |
+| After count  | Number of violations after fix (0 in dry-run)      |
+| Fixed count  | Number of violations resolved                      |
+| Fixable list | Violations matching fixable rules (AES101/203/304) |
+| Success flag | Whether all violations resolved                    |
 
 **Input**: Optional path, dry_run flag, code analysis aggregate, fix orchestrator factory closure.
 
@@ -179,11 +179,11 @@ flowchart TD
 
 **What it produces**: `GitDiffReport` with changed files and their violations.
 
-| Output            | Description                                    |
-| ------------------- | ------------------------------------------------ |
-| Changed files     | `Vec<FilePath>` of lintable changed files      |
-| Results           | `Vec<LintResult>` per changed file             |
-| Total violations  | Count of all violations in changed files       |
+| Output           | Description                                 |
+| ---------------- | ------------------------------------------- |
+| Changed files    | `Vec<FilePath>` of lintable changed files |
+| Results          | `Vec<LintResult>` per changed file        |
+| Total violations | Count of all violations in changed files    |
 
 **Input**: Code analysis aggregate, git base branch name, optional project path, optional filter.
 
@@ -210,10 +210,10 @@ flowchart TD
 
 **What it produces**: `ConfigShowReport` with redacted config content per language.
 
-| Output          | Description                                    |
-| ----------------- | ------------------------------------------------ |
-| Entries         | Config file content per language (redacted)    |
-| Warnings        | Errors encountered during config reading       |
+| Output   | Description                                 |
+| -------- | ------------------------------------------- |
+| Entries  | Config file content per language (redacted) |
+| Warnings | Errors encountered during config reading    |
 
 **Input**: Config orchestrator aggregate.
 
@@ -239,11 +239,11 @@ flowchart TD
 
 **What it produces**: Setup items, install report, MCP config snippet.
 
-| Output            | Description                                    |
-| ------------------- | ------------------------------------------------ |
-| Init items       | List of setup steps with success/failure       |
-| Install report   | Python and JS adapter installation status      |
-| MCP config       | JSON config snippet for specified MCP client   |
+| Output         | Description                                  |
+| -------------- | -------------------------------------------- |
+| Init items     | List of setup steps with success/failure     |
+| Install report | Python and JS adapter installation status    |
+| MCP config     | JSON config snippet for specified MCP client |
 
 **Input**: Setup management aggregate, optional sudo flag, client name.
 
@@ -270,11 +270,11 @@ flowchart TD
 
 **What it produces**: Toolchain diagnostics, security scan report, dependency report.
 
-| Output              | Description                              |
-| --------------------- | ------------------------------------------ |
-| Toolchain diagnostics | Tool availability and version info       |
-| Security scan        | Vulnerability scan results               |
-| Dependency report    | Dependency health and metadata           |
+| Output                | Description                        |
+| --------------------- | ---------------------------------- |
+| Toolchain diagnostics | Tool availability and version info |
+| Security scan         | Vulnerability scan results         |
+| Dependency report     | Dependency health and metadata     |
 
 **Input**: Maintenance commands aggregate, optional path.
 
@@ -295,9 +295,9 @@ flowchart TD
 
 **What it produces**: `AdapterNameList` of available external lint adapters.
 
-| Output          | Description                              |
-| ----------------- | ------------------------------------------ |
-| Adapter names  | List of registered adapter names         |
+| Output        | Description                      |
+| ------------- | -------------------------------- |
+| Adapter names | List of registered adapter names |
 
 **Input**: External lint aggregate.
 
@@ -316,10 +316,10 @@ flowchart TD
 
 **What it produces**: Blocking watch session with Ctrl+C signal handling.
 
-| Output          | Description                              |
-| ----------------- | ------------------------------------------ |
-| Watch session  | Blocks until interrupted                 |
-| Stop callback  | Invoked on Ctrl+C for cleanup           |
+| Output        | Description                   |
+| ------------- | ----------------------------- |
+| Watch session | Blocks until interrupted      |
+| Stop callback | Invoked on Ctrl+C for cleanup |
 
 **Input**: Watch aggregate, optional path, `on_stop` callback.
 
@@ -345,9 +345,9 @@ flowchart TD
 
 **What it produces**: `ViolationItem` — the shared violation data type used by all surface actions.
 
-| Output          | Description                                    |
-| ------------------- | ------------------------------------------------ |
-| ViolationItem    | Normalized violation with code, file, line, column, message, severity |
+| Output        | Description                                                           |
+| ------------- | --------------------------------------------------------------------- |
+| ViolationItem | Normalized violation with code, file, line, column, message, severity |
 
 **Input**: `LintResult` (from rule orchestrators) or `serde_json::Value` (from subprocess JSON).
 
@@ -373,10 +373,8 @@ flowchart TD
 
 **What it produces**: `VersionReport` with compile-time version and edition info.
 
-|| Output       | Description                              ||
-|| ------------ | ------------------------------------------ ||
-|| version      | Crate version from `CARGO_PKG_VERSION`   ||
-|| edition      | Rust edition from `CARGO_PKG_RUST_VERSION` ||
+version      Crate version from `CARGO_PKG_VERSION`
+edition       Rust edition from `CARGO_PKG_RUST_VERSION`
 
 **Input**: None (reads compile-time environment variables).
 
@@ -391,30 +389,6 @@ flowchart TD
 
 ---
 
-## Consumer Access Pattern
-
-Smart surfaces import dispatcher functions directly — no aggregate trait. Each function is a free function accepting injected dependencies.
-
-### Setup
-
-```rust
-// CLI surface
-use dispatcher_lint_arwaky::surface_check_action::collect_scan;
-
-let opts = ScanOptions { path, filter, member, filesystem, multi_project_orchestrator };
-let violations = collect_scan(opts)?;
-// CLI formats violations as text/json/sarif/junit
-```
-
-```rust
-// MCP surface
-use dispatcher_lint_arwaky::surface_ci_action::collect_ci;
-
-let report = collect_ci(code_analysis, imports, naming, config, orphan, fs, path, threshold)?;
-// MCP serializes report as JSON-RPC response
-```
-
----
 
 ## Non-functional Requirements
 
@@ -430,62 +404,62 @@ let report = collect_ci(code_analysis, imports, naming, config, orphan, fs, path
 
 ### FR-001: Unified Scan
 
-| # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
-| 1 | Scan valid project path            | Returns violations from all 6 linters       |
-| 2 | Scan non-existent path             | Returns `Err("Error: path ... does not exist")` |
-| 3 | Scan with filter "AES101"          | Only AES101 violations returned             |
-| 4 | Scan with invalid member           | Returns `Err("no workspace member matching")` |
-| 5 | Scan empty project                 | Returns empty Vec                           |
+| # | Scenario                  | Expected                                         |
+| - | ------------------------- | ------------------------------------------------ |
+| 1 | Scan valid project path   | Returns violations from all 6 linters            |
+| 2 | Scan non-existent path    | Returns`Err("Error: path ... does not exist")` |
+| 3 | Scan with filter "AES101" | Only AES101 violations returned                  |
+| 4 | Scan with invalid member  | Returns`Err("no workspace member matching")`   |
+| 5 | Scan empty project        | Returns empty Vec                                |
 
 ### FR-002: CI Validation
 
-| # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
-| 1 | CI with high threshold (90)        | Pass = true if score >= 90                  |
-| 2 | CI with CRITICAL violation          | Pass = false (auto-fail)                    |
-| 3 | CI with score below threshold      | Pass = false, reasons contains score msg    |
-| 4 | CI with no violations              | Pass = true, score = 100                    |
+| # | Scenario                      | Expected                                 |
+| - | ----------------------------- | ---------------------------------------- |
+| 1 | CI with high threshold (90)   | Pass = true if score >= 90               |
+| 2 | CI with CRITICAL violation    | Pass = false (auto-fail)                 |
+| 3 | CI with score below threshold | Pass = false, reasons contains score msg |
+| 4 | CI with no violations         | Pass = true, score = 100                 |
 
 ### FR-003: Individual Linters
 
-| # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
-| 1 | Naming scan on valid project       | Returns naming violations                   |
-| 2 | Import scan with filter            | Only matching violations returned           |
-| 3 | Orphan scan on multi-workspace     | Iterates each workspace member              |
-| 4 | Role scan via subprocess           | Returns violations (or empty on fail)       |
+| # | Scenario                       | Expected                              |
+| - | ------------------------------ | ------------------------------------- |
+| 1 | Naming scan on valid project   | Returns naming violations             |
+| 2 | Import scan with filter        | Only matching violations returned     |
+| 3 | Orphan scan on multi-workspace | Iterates each workspace member        |
+| 4 | Role scan via subprocess       | Returns violations (or empty on fail) |
 
 ### FR-004: Auto-Fix
 
 | # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
+| - | ---------------------------------- | ------------------------------------------- |
 | 1 | Dry-run mode                       | after_count = before_count, fixed_count = 0 |
 | 2 | Execute with fixable violations    | fixed_count > 0                             |
 | 3 | Execute with no fixable violations | fixable list is empty, no changes           |
 
 ### FR-005: Git Diff
 
-| # | Scenario                           | Expected                                    |
-| --- | ------------------------------------ | --------------------------------------------- |
-| 1 | Diff with 3 changed lintable files | 3 files in report, violations per file      |
-| 2 | Diff with non-existent base        | Returns git diff error                      |
-| 3 | Diff with filter                   | Only matching files included                |
+| # | Scenario                           | Expected                               |
+| - | ---------------------------------- | -------------------------------------- |
+| 1 | Diff with 3 changed lintable files | 3 files in report, violations per file |
+| 2 | Diff with non-existent base        | Returns git diff error                 |
+| 3 | Diff with filter                   | Only matching files included           |
 
 ---
 
 ## Glossary
 
-| Term                          | Definition                                                    |
-| ------------------------------- | --------------------------------------------------------------- |
-| **Utility Surface**          | Crate that centralizes business logic for Smart surfaces       |
-| **Smart Surface**            | Thin UI wrapper (CLI, MCP, TUI) that calls dispatcher         |
-| **ViolationItem**            | Shared data type for lint violations across all actions       |
-| **ScanOptions**              | Input VO for unified scan (path, filter, member, aggregates)  |
-| **CiReport**                 | CI evaluation result with score, threshold, pass/fail         |
-| **FixReport**                | Auto-fix outcome with before/after counts                     |
-| **GitDiffReport**            | Git-diff lint result with changed files and violations        |
-| **Self-invocation pattern**  | Subprocess spawning the same binary for linter execution      |
+| Term                              | Definition                                                   |
+| --------------------------------- | ------------------------------------------------------------ |
+| **Utility Surface**         | Crate that centralizes business logic for Smart surfaces     |
+| **Smart Surface**           | Thin UI wrapper (CLI, MCP, TUI) that calls dispatcher        |
+| **ViolationItem**           | Shared data type for lint violations across all actions      |
+| **ScanOptions**             | Input VO for unified scan (path, filter, member, aggregates) |
+| **CiReport**                | CI evaluation result with score, threshold, pass/fail        |
+| **FixReport**               | Auto-fix outcome with before/after counts                    |
+| **GitDiffReport**           | Git-diff lint result with changed files and violations       |
+| **Self-invocation pattern** | Subprocess spawning the same binary for linter execution     |
 
 ---
 
