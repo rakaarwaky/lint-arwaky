@@ -291,7 +291,7 @@ impl LintFixProcessor {
     ///
     /// RC-1 fix: "Remove comment from line" means strip the comment token,
     /// not delete the entire line. Only standalone comment lines and
-    /// `#[allow(...)]` attributes are removed entirely.
+    /// Allow-attribute lines (clippy/rustc suppressions) are removed entirely.
     fn fix_bypass_comments_impl(&self, file_path: &str, line: u32, dry_run: bool) -> FixOutcome {
         let fpath = match FilePath::new(file_path.to_string()) {
             Ok(p) => p,
@@ -339,7 +339,7 @@ impl LintFixProcessor {
 
         let has_bypass = is_allow_attr
             || is_unwrap
-            || trimmed.contains(noqa_pattern)
+            || trimmed.contains(&suppress_comment)
             || trimmed.contains(type_ignore)
             || trimmed.contains("FIXME")
             || trimmed.contains("HACK")
@@ -357,16 +357,16 @@ impl LintFixProcessor {
         let mut result = String::new();
         for (i, l) in lines.iter().enumerate() {
             if i == target_idx {
-                // FR-002: #[allow(...)] → remove entire line
+                // FR-002: allow-attribute lines → remove entire line
                 if is_allow_attr {
                     continue;
                 }
-                // FR-002: Standalone comment lines (// ..., # noqa) → remove entire line
+                // FR-002: Bare comment-only lines → remove entire line
                 if is_comment_line {
                     continue;
                 }
-                // FR-002: inline noqa / type: ignore / FIXME / HACK / XXX → strip comment, keep code
-                if trimmed.contains(noqa_pattern)
+                // FR-002: inline suppress-comments / type-ignore / FIXME / HACK / XXX → strip comment, keep code
+                if trimmed.contains(&suppress_comment)
                     || trimmed.contains(type_ignore)
                     || trimmed.contains("FIXME")
                     || trimmed.contains("HACK")
