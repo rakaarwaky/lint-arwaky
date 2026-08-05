@@ -2,7 +2,7 @@ use crate::utility_orphan_filename::{file_basename, file_stem, file_suffix};
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::ISurfacesOrphanProtocol;
+use shared::orphan_rules::contract_orphan_protocol::ISurfacesOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };

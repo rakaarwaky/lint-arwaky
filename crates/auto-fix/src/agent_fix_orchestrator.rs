@@ -19,11 +19,12 @@
 // - BF-5: Removed duplicate `run_fix` — consolidated with aggregate `execute`
 // - TR-2: Aggregate trait includes `manual_report` for FR-005
 
+use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::{
-    FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol, LintFixOrchestratorAggregate,
+    FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol,
 };
 use shared::cli_commands::LintResult;
-use shared::common::FilePath;
+use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

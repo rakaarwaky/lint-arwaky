@@ -10,8 +10,8 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::ISuffixPrefixChecker;
-use shared::naming_rules::{RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
+use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker;
+use shared::naming_rules::taxonomy_naming_constant::{RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

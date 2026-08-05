@@ -8,7 +8,8 @@
 // The npm installer supports `sudo` prefix for global installations that need
 // elevated permissions.
 
-use shared::project_setup::{ISetupInstallerProtocol, InstallPackagesResult, SetupError};
+use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
+use shared::project_setup::{InstallPackagesResult, SetupError};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

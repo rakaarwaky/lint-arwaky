@@ -1,7 +1,7 @@
 use crate::utility_orphan_filename::content_contains_whole_word;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::IAgentOrphanProtocol;
+use shared::orphan_rules::contract_orphan_protocol::IAgentOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;

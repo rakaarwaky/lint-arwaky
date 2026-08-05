@@ -83,6 +83,15 @@ fn main() -> anyhow::Result<()> {
         tui::surface_lint_executor::SurfaceLintExecutor::new(
             code_analysis_linter,
             filesystem.clone(),
+            Arc::new(|| {
+                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+            }),
+            Arc::new(|config, fs| {
+                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                    config, fs,
+                )
+                .analyzer()
+            }),
         )
         .with_fix(fix_orchestrator)
         .with_setup(setup_orchestrator)

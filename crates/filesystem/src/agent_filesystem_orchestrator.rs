@@ -641,6 +641,47 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                     } else {
                         None
                     }
+                } else if imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::Python {
+                    // Python absolute import: `from shared.src.foo import Bar`
+                    // raw_path = "shared.src.foo" → try modules/shared/src/foo.py, etc.
+                    let module_path = raw.replace('.', "/");
+                    let member_dirs = ["modules", "packages", "crates"];
+                    member_dirs.iter().find_map(|md| {
+                        let py = format!("{}/{}.py", md, module_path);
+                        if all_files_set.contains(py.as_str()) {
+                            return Some(py);
+                        }
+                        let init = format!("{}/{}/__init__.py", md, module_path);
+                        if all_files_set.contains(init.as_str()) {
+                            return Some(init);
+                        }
+                        None
+                    })
+                } else if imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+                    || imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript
+                {
+                    // TS/JS bare specifier: `calculator-shared/src/foo`
+                    // Replace hyphens with slashes to match directory structure
+                    let member_dirs = ["packages", "crates", "modules"];
+                    // Try replacing hyphens with path separator
+                    let slash_path = raw.replace('-', "/");
+                    member_dirs.iter().find_map(|md| {
+                        // Try as .ts/.js file
+                        for ext in &[".ts", ".js", ".tsx", ".jsx"] {
+                            let candidate = format!("{}/{}{}", md, slash_path, ext);
+                            if all_files_set.contains(candidate.as_str()) {
+                                return Some(candidate);
+                            }
+                        }
+                        // Try as index file in directory
+                        for ext in &[".ts", ".js", ".tsx", ".jsx"] {
+                            let candidate = format!("{}/{}/index{}", md, slash_path, ext);
+                            if all_files_set.contains(candidate.as_str()) {
+                                return Some(candidate);
+                            }
+                        }
+                        None
+                    })
                 } else {
                     // Rust `use crate::foo::Bar` — strip prefix, take root segment
                     let module = raw

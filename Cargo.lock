@@ -5339,8 +5339,6 @@ dependencies = [
  "criterion",
  "crossterm",
  "dispatcher-lint-arwaky",
- "filesystem-lint-arwaky",
- "orphan-rules-lint-arwaky",
  "ratatui",
  "rayon",
  "serde_json",

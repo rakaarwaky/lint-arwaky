@@ -3,8 +3,9 @@
 // Wraps IFilesystemAggregate behind IFileAdapterProtocol so that
 // auto-fix consumers never depend on std::fs directly.
 
-use shared::auto_fix::IFileAdapterProtocol;
-use shared::common::{ContentString, FilePath};
+use shared::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 

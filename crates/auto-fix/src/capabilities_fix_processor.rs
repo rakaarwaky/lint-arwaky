@@ -25,8 +25,9 @@ use shared::auto_fix::{
 };
 use shared::cli_commands::LintResult;
 use shared::common::{
-    AdapterName, ContentString, Count, DescriptionVO, ErrorCode, FilePath, LineNumber, LintMessage,
+    AdapterName, ContentString, Count, DescriptionVO, ErrorCode, LineNumber, LintMessage,
 };
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::{Arc, LazyLock};
 

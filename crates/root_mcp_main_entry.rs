@@ -3,6 +3,8 @@ use mcp_server::surface_mcp_action_command::{McpActionSurface, McpServerDependen
 use mcp_server::surface_mcp_tool_command::LintArwakyMcpServer;
 use rmcp::ServiceExt;
 use rmcp::transport::stdio;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::orphan_rules::IOrphanAggregate;
 use std::sync::Arc;
 use tracing_subscriber::prelude::*;
 
@@ -125,7 +127,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         filesystem,
         fs_factory,
         orphan_factory,
-        parse_config_yaml: config_system::utility_config_parser::parse_config_yaml,
+        parse_config_yaml: config_system::taxonomy_config_parser::parse_config_yaml,
         parse_adapter_names: config_system::utility_config_parser::parse_adapter_names_from_yaml,
         parse_score_threshold: config_system::utility_config_parser::parse_score_threshold,
     };
