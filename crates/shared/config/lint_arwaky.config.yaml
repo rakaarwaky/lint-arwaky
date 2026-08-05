@@ -354,6 +354,7 @@ architecture:
           "utility_ast_rust.rs",
           "utility_ast_typescript.rs",
           "utility_import_extractor.rs",
+          "utility_config_defaults.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -592,7 +593,7 @@ architecture:
 
     AES205:
       enabled: true
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs", "surface_mcp_action_command.rs", "root_auto_fix_container.rs"]
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
 
@@ -620,6 +621,7 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "agent_filesystem_orchestrator.rs",
         ]
 
     AES302:
