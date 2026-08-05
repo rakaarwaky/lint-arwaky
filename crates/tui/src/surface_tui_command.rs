@@ -9,7 +9,6 @@ use crossterm::event;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
 use crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
-    size as terminal_size,
 };
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;

@@ -1,5 +1,6 @@
 // Responsibilities: forward links, definitions, implementations, cycles, orphans
 
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImplEntry, ImportEntry,
 };
