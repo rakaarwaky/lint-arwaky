@@ -2,8 +2,74 @@
 // Shared across orphan-rules and import-rules. All parsers return these types.
 
 use serde::{Deserialize, Serialize};
+use syn::visit::Visit;
 
-// ─── Block 1: Import Edge ─────────────────────────────────
+// ─── Block 1: Identifier Visitor (for Rust AST walking) ───
+
+/// Walks a Rust AST and collects all identifier references.
+/// Used by `utility_rust_parser::parse_rust` to populate `used_identifiers`.
+pub struct IdentifierVisitor {
+    pub identifiers: Vec<String>,
+}
+
+impl<'ast> Visit<'ast> for IdentifierVisitor {
+    fn visit_item_use(&mut self, _node: &'ast syn::ItemUse) {}
+    fn visit_use_tree(&mut self, _node: &'ast syn::UseTree) {}
+    fn visit_path_segment(&mut self, node: &'ast syn::PathSegment) {
+        self.identifiers.push(node.ident.to_string());
+        syn::visit::visit_path_segment(self, node);
+    }
+    fn visit_ident(&mut self, node: &'ast syn::Ident) {
+        self.identifiers.push(node.to_string());
+    }
+    fn visit_expr_path(&mut self, node: &'ast syn::ExprPath) {
+        for seg in &node.path.segments {
+            self.identifiers.push(seg.ident.to_string());
+        }
+        syn::visit::visit_expr_path(self, node);
+    }
+    fn visit_type_path(&mut self, node: &'ast syn::TypePath) {
+        for seg in &node.path.segments {
+            self.identifiers.push(seg.ident.to_string());
+        }
+        syn::visit::visit_type_path(self, node);
+    }
+    fn visit_attribute(&mut self, node: &'ast syn::Attribute) {
+        if node.path().is_ident("derive") {
+            if let Ok(nested) = node.parse_args_with(
+                syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated,
+            ) {
+                for path in nested {
+                    if let Some(seg) = path.segments.last() {
+                        self.identifiers.push(seg.ident.to_string());
+                    }
+                }
+            }
+        }
+        syn::visit::visit_attribute(self, node);
+    }
+    fn visit_macro(&mut self, node: &'ast syn::Macro) {
+        extract_idents_from_stream(node.tokens.clone(), &mut self.identifiers);
+        syn::visit::visit_macro(self, node);
+    }
+}
+
+/// Recursively extract identifiers from a token stream (for macro bodies).
+pub fn extract_idents_from_stream(stream: proc_macro2::TokenStream, out: &mut Vec<String>) {
+    for tt in stream {
+        match tt {
+            proc_macro2::TokenTree::Ident(ident) => {
+                out.push(ident.to_string());
+            }
+            proc_macro2::TokenTree::Group(group) => {
+                extract_idents_from_stream(group.stream(), out);
+            }
+            _ => {}
+        }
+    }
+}
+
+// ─── Block 2: Import Edge ─────────────────────────────────
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstImportVO {

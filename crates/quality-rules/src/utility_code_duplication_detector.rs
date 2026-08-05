@@ -9,16 +9,11 @@ use std::path::PathBuf;
 
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::quality_rules::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::quality_rules::taxonomy_violation_code_analysis_vo::BlockHits;
 
 const MAX_LOCATIONS_PER_BLOCK: usize = 128;
 
 type BlockKey = (u64, u64);
-
-#[derive(Debug, Default)]
-struct BlockHits {
-    count: usize,
-    locations: Vec<(PathBuf, usize)>,
-}
 
 /// Normalize a single line: trim, keep only alphanumeric and whitespace.
 pub fn normalize_line(s: &str) -> String {

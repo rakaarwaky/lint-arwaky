@@ -6,7 +6,7 @@ use shared::maintenance::MaintenanceCommandsAggregate;
 use std::sync::Arc;
 use tracing::error;
 
-use crate::surface_output_text_formatter::status_icon;
+use crate::utility_output_text_formatter::status_icon;
 
 pub fn handle_doctor(maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> ExitCode {
     let diag = dispatcher::surface_maintenance_action::collect_doctor(maintenance);

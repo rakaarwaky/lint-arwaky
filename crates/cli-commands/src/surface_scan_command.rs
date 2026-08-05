@@ -10,7 +10,7 @@ use shared::config_system::IConfigOrchestratorAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
-use crate::surface_output_text_formatter::output_violations;
+use crate::utility_output_text_formatter::output_violations;
 
 /// Parameters for the `scan` command.
 pub struct ScanCommandParams {

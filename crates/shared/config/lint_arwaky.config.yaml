@@ -862,7 +862,7 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
-          "surface_output_text_formatter.rs",
+          "utility_output_text_formatter.rs",
         ]
 
     # ─── AES500: Orphan ───

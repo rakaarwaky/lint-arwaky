@@ -9,13 +9,33 @@ fn main() -> anyhow::Result<()> {
     // TUI needs a direct fix orchestrator (not a factory).
     let fix_orchestrator = (deps.fix_orchestrator_factory)(false);
 
+    // DI: inject filesystem and orphan factories for SurfaceLintExecutor
+    let fs_factory: Arc<
+        dyn Fn() -> Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>
+            + Send
+            + Sync,
+    > = Arc::new(|| {
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+    });
+    let orphan_factory: Arc<
+        dyn Fn(
+                shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+                Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+            ) -> Arc<dyn shared::orphan_rules::IOrphanAggregate>
+            + Send
+            + Sync,
+    > = Arc::new(|config, fs| {
+        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs)
+            .analyzer()
+    });
+
     // Build TUI surfaces via dispatcher — SurfaceLintExecutor delegates to dispatcher functions.
     let lint_executor = Arc::new(
         tui::surface_lint_executor::SurfaceLintExecutor::new(
             deps.code_analysis_linter,
             deps.filesystem.clone(),
-            deps.fs_factory,
-            deps.orphan_factory,
+            fs_factory,
+            orphan_factory,
         )
         .with_fix(fix_orchestrator)
         .with_setup(deps.setup_orchestrator)
