@@ -233,6 +233,8 @@ pub fn handle_orphan(
     _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filter: Option<String>,
+    fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    orphan_factory: Arc<dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn shared::orphan_rules::IOrphanAggregate> + Send + Sync>,
 ) -> ExitCode {
     let root = resolve_root(&path);
     match dispatcher::surface_orphan_action::collect_orphan(
@@ -242,15 +244,8 @@ pub fn handle_orphan(
             orphan_orchestrator,
             config_orchestrator,
             filesystem.clone(),
-            Arc::new(|| {
-                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-            }),
-            Arc::new(|config, fs| {
-                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                    config, fs,
-                )
-                .analyzer()
-            }),
+            fs_factory,
+            orphan_factory,
         ),
         filter,
     ) {

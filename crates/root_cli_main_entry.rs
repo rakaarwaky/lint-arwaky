@@ -360,6 +360,15 @@ fn main() {
             report_formatter.clone(),
             filesystem.clone(),
             filter,
+            Arc::new(|| {
+                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+            }),
+            Arc::new(|config, fs| {
+                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                    config, fs,
+                )
+                .analyzer()
+            }),
         ),
         Command::External {
             path,

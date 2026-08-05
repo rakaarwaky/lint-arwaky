@@ -69,7 +69,7 @@ impl TuiCommandSurface {
         // Initialize terminal_height so mouse clicks work from the start.
         // Without this, the h < 5 guard in handle_mouse_click drops ALL
         // clicks until the first Resize event arrives.
-        if let Ok((w, h)) = terminal_size() {
+        if let Ok((w, h)) = crossterm::terminal::size() {
             state.terminal_height = h;
             state.terminal_width = w;
         }
