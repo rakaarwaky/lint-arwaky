@@ -58,7 +58,7 @@ just test-fast                              # same via justfile
 ## Self-lint (must be clean — 0 violations)
 
 ```bash
-cargo run --bin lint-arwaky-cli -- check .   # scans own codebase under AES rules
+cargo run --bin lint-arwaky-cli -- scan .   # runs ALL 6 linters on own codebase
 just self-lint                              # same via justfile
 ```
 

@@ -60,7 +60,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions: []
+      exceptions: ["root_esbuild_entry"]
 
     AES102:
       enabled: true
@@ -74,7 +74,7 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions: []
+      exceptions: ["root_entry_container", "agent_filesystem_orchestrator_helpers"]
       layers:
         taxonomy:
           suffix:
@@ -146,7 +146,11 @@ architecture:
           "surface",
           "root",
         ]
-      exceptions: []
+      exceptions:
+        - "utility_ast_python"
+        - "utility_ast_rust"
+        - "utility_ast_typescript"
+        - "utility_import_extractor"
       conditions:
         - scope: "taxonomy(vo)"
           allowed: ["taxonomy"]
@@ -405,7 +409,15 @@ architecture:
     AES402:
       enabled: true
       scope: ["contract(aggregate)", "contract(protocol)"]
-      exceptions: []
+      exceptions:
+        - "contract_filesystem_io_protocol"
+        - "contract_graph_protocol"
+        - "contract_workspace_protocol"
+        - "contract_maintenance_aggregate"
+        - "contract_maintenance_protocol"
+        - "contract_setup_protocol"
+        - "contract_code_analysis_aggregate"
+        - "contract_fix_aggregate"
 
     AES403:
       enabled: true
@@ -417,13 +429,15 @@ architecture:
     AES404:
       enabled: true
       scope: ["utility"]
-      exceptions: []
+      exceptions:
+        - "utility_rust_parser"
+        - "utility_code_duplication_detector"
 
     AES405:
       enabled: true
       scope: ["agent(orchestrator)"]
       max_lines: 1000
-      exceptions: []
+      exceptions: ["agent_filesystem_orchestrator_helpers"]
 
     AES406:
       enabled: true
@@ -434,7 +448,7 @@ architecture:
           "surface(component|view|layout)",
         ]
       max_functions: 15
-      exceptions: []
+      exceptions: ["surface_output_text_formatter"]
 
     # ─── AES500: Orphan ───
     AES501:

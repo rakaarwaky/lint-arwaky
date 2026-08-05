@@ -57,10 +57,10 @@ See [README.md](README.md) for CLI reference and
 
 ```bash
 cd /home/raka/mcp-arwaky/lint-arwaky
-cargo run --bin lint-arwaky-cli -- check .
+cargo run --bin lint-arwaky-cli -- scan .
 ```
 
-> `check .` scans the lint-arwaky codebase itself. Expected: **0 violations**.
+> `scan .` runs ALL 6 linters (quality, role, import, naming, orphan, external) on the lint-arwaky codebase itself. Expected: **0 violations**.
 
 ### 2.2 Scan Test Projects
 
