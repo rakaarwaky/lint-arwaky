@@ -7,6 +7,117 @@
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
+// ─── Inlined from utility_filesystem_io (AES201: utility cannot import utility) ───
+
+fn read_to_string(path: &Path) -> Result<String, std::io::Error> {
+    std::fs::read_to_string(path)
+}
+
+fn list_dir_entries(dir: &Path) -> Vec<PathBuf> {
+    let mut entries = Vec::new();
+    if let Ok(read_dir) = dir.read_dir() {
+        for entry in read_dir.flatten() {
+            entries.push(entry.path());
+        }
+    }
+    entries
+}
+
+fn canonicalize(path: &Path) -> Result<PathBuf, std::io::Error> {
+    std::fs::canonicalize(path)
+}
+
+fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
+    if rel_path.is_empty() {
+        return false;
+    }
+    let segments: Vec<&str> = rel_path
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty())
+        .collect();
+    for pat in ignored {
+        if pat.is_empty() {
+            continue;
+        }
+        if let Some(stripped) = pat.strip_prefix('/') {
+            if stripped.is_empty() {
+                continue;
+            }
+            let pat_segments: Vec<&str> = stripped
+                .split(['/', '\\'])
+                .filter(|s| !s.is_empty())
+                .collect();
+            if pat_segments.is_empty() {
+                continue;
+            }
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg < n_pat {
+                continue;
+            }
+            for start in 0..=(n_seg - n_pat) {
+                if segments[start..start + n_pat] == pat_segments[..] {
+                    return true;
+                }
+            }
+            continue;
+        }
+        if pat.starts_with("**/") {
+            let suffix = pat.strip_prefix("**/").unwrap_or(pat);
+            if let Some(ext_pattern) = suffix.strip_prefix("*.") {
+                let ext = ext_pattern.trim_start_matches('.');
+                if !ext.is_empty() {
+                    let basename = segments.last().copied().unwrap_or_default();
+                    if basename.ends_with(&format!(".{ext}")) {
+                        return true;
+                    }
+                }
+            }
+            continue;
+        }
+        if let Some(prefix) = pat.strip_suffix("/*") {
+            if !prefix.is_empty() && segments.first() == Some(&prefix) {
+                return true;
+            }
+            continue;
+        }
+        if let Some(suffix) = pat.strip_prefix("*.") {
+            let suffix = suffix.trim_start_matches('.');
+            if suffix.is_empty() {
+                continue;
+            }
+            let basename = segments.last().copied().unwrap_or_default();
+            if basename.ends_with(&format!(".{suffix}")) {
+                return true;
+            }
+            continue;
+        }
+        if pat.starts_with('.') {
+            if segments.iter().any(|seg| *seg == pat) {
+                return true;
+            }
+            continue;
+        }
+        let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+        if pat_segments.len() == 1 {
+            if segments.contains(&pat_segments[0]) {
+                return true;
+            }
+        } else if pat_segments.len() > 1 {
+            let n_pat = pat_segments.len();
+            let n_seg = segments.len();
+            if n_seg >= n_pat {
+                for start in 0..=(n_seg - n_pat) {
+                    if segments[start..start + n_pat] == pat_segments[..] {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
 // ═══════════════════════════════════════════════════════════════
 // Workspace Root Detection
 // ═══════════════════════════════════════════════════════════════
@@ -82,7 +193,7 @@ pub fn is_member_path(path: &str) -> bool {
     // Rust: Cargo.toml without [workspace]
     let cargo_toml = p.join("Cargo.toml");
     if cargo_toml.exists() {
-        if let Ok(content) = crate::utility_filesystem_io::read_to_string(&cargo_toml) {
+        if let Ok(content) = read_to_string(&cargo_toml) {
             return !content.contains("[workspace]");
         }
         return true;
@@ -108,7 +219,7 @@ pub fn is_leaf_member_path(path: &str) -> bool {
     }
     let skip_dirs: &[&str] = &["src", "lib", "bin", "tests", "benches", "examples"];
     let p = Path::new(path);
-    for entry_path in crate::utility_filesystem_io::scan_directory(p) {
+    for entry_path in list_dir_entries(p) {
         let name = entry_path
             .file_name()
             .and_then(|n| n.to_str())
@@ -144,7 +255,7 @@ pub fn detect_source_dir(project_root: &Path) -> PathBuf {
 }
 
 fn has_source_files(dir: &Path) -> bool {
-    for entry_path in crate::utility_filesystem_io::scan_directory(dir) {
+    for entry_path in list_dir_entries(dir) {
         if let Some(name) = entry_path.file_name().and_then(|n| n.to_str())
             && (name.ends_with(".rs")
                 || name.ends_with(".py")
@@ -195,7 +306,7 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
     let mut has_js = false;
 
     fn walk_detect(dir: &std::path::Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {
-        for path in crate::utility_filesystem_io::scan_directory(dir) {
+        for path in list_dir_entries(dir) {
             if path.is_dir() {
                 let name = match path.file_name().and_then(|n| n.to_str()) {
                     Some(n) => n,
@@ -240,20 +351,20 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
 
 /// Confine a candidate path under a root directory. Returns canonicalized path if valid.
 pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
-    let canonical_root = crate::utility_filesystem_io::canonicalize(root).ok()?;
+    let canonical_root = canonicalize(root).ok()?;
     let absolute = if candidate.is_absolute() {
         candidate.to_path_buf()
     } else {
         canonical_root.join(candidate)
     };
-    if let Ok(canonical_candidate) = crate::utility_filesystem_io::canonicalize(&absolute) {
+    if let Ok(canonical_candidate) = canonicalize(&absolute) {
         return canonical_candidate
             .starts_with(&canonical_root)
             .then_some(canonical_candidate);
     }
     let parent = absolute.parent()?;
     let file_name = absolute.file_name()?;
-    let canonical_parent = crate::utility_filesystem_io::canonicalize(parent).ok()?;
+    let canonical_parent = canonicalize(parent).ok()?;
     let canonical_candidate = canonical_parent.join(file_name);
     canonical_candidate
         .starts_with(&canonical_root)
@@ -262,7 +373,7 @@ pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
 
 /// Check if a directory contains files matching identifiers (recursive).
 pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
-    for path in crate::utility_filesystem_io::scan_directory(dir) {
+    for path in list_dir_entries(dir) {
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         if shared::common::DEFAULT_IGNORED_PATHS.contains(&name) {
             continue;
@@ -272,7 +383,7 @@ pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
         } else if (name.ends_with("_container.rs")
             || name.ends_with("_container.py")
             || name.ends_with("_container.ts"))
-            && let Ok(content) = crate::utility_filesystem_io::read_to_string(&path)
+            && let Ok(content) = read_to_string(&path)
         {
             for id in identifiers {
                 if content.contains(id) {
@@ -302,7 +413,6 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
 
     let mut builder = ignore::WalkBuilder::new(root);
     builder.hidden(false).git_ignore(true);
-    // Also add to ignore::WalkBuilder for efficient subtree skipping.
     for pat in &merged_ignored {
         builder.add_ignore(pat.as_str());
     }
@@ -319,20 +429,18 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .map(|ext| exts.contains(&ext))
                 .unwrap_or(false)
         })
-        // Post-walk filter: convert to relative path then use is_path_ignored.
-        // This handles patterns like "/tests", "/benches", "tests/", "tests", etc.
         .filter(|e| {
             let abs_path = e.path().canonicalize().unwrap_or_else(|_| e.path().to_path_buf());
             let rel_path = abs_path.strip_prefix(&abs_root).unwrap_or(e.path());
             let rel_str = rel_path.to_string_lossy();
-            !crate::utility_filesystem_io::is_path_ignored(&rel_str, &merged_ignored)
+            !is_path_ignored(&rel_str, &merged_ignored)
         })
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()
 }
 
-/// Scan directory recursively for all files.
-pub fn scan_directory(root: &Path) -> Vec<String> {
+/// Scan directory recursively for all paths as PathBuf.
+pub fn scan_directory_paths(root: &Path) -> Vec<PathBuf> {
     let walker = ignore::WalkBuilder::new(root)
         .hidden(false)
         .git_ignore(true)
@@ -340,7 +448,15 @@ pub fn scan_directory(root: &Path) -> Vec<String> {
     walker
         .filter_map(|e| e.ok())
         .filter(|e| e.file_type().map(|ft| ft.is_file()).unwrap_or(false))
-        .map(|e| e.path().to_string_lossy().to_string())
+        .map(|e| e.path().to_path_buf())
+        .collect()
+}
+
+/// Scan directory recursively for all files as strings.
+pub fn scan_directory(root: &Path) -> Vec<String> {
+    scan_directory_paths(root)
+        .iter()
+        .map(|p| p.to_string_lossy().to_string())
         .collect()
 }
 
