@@ -19,7 +19,11 @@ fn us10_lists_config_files_for_all_languages() {
     fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = make_reader().list_config_files(&fp).unwrap();
-    assert!(files.len() >= 1, "Expected at least 1 config file, got {}", files.len());
+    assert!(
+        files.len() >= 1,
+        "Expected at least 1 config file, got {}",
+        files.len()
+    );
 }
 
 // FR-010: No config files for any language → returns empty list
@@ -34,11 +38,7 @@ fn us10_returns_empty_when_no_configs_exist() {
 #[test]
 fn us10_unified_config_single_entry() {
     let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("lint_arwaky.config.yaml"),
-        "x: 1",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("lint_arwaky.config.yaml"), "x: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = make_reader().list_config_files(&fp).unwrap();
     // Unified config: one file, one entry

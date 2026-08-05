@@ -29,7 +29,11 @@ pub fn list_directory(path: &FilePath, fs: &dyn IFileSystemIOProtocol) -> Vec<Fi
 
 /// Read up to `max_lines` lines of a file with line-numbered formatting.
 /// Truncates with "... (N more lines)" note if the file exceeds max_lines.
-pub fn read_file_preview(path: &FilePath, max_lines: usize, fs: &dyn IFileSystemIOProtocol) -> DisplayContent {
+pub fn read_file_preview(
+    path: &FilePath,
+    max_lines: usize,
+    fs: &dyn IFileSystemIOProtocol,
+) -> DisplayContent {
     let file_path = Path::new(path.value());
     let content = match fs.read_to_string(file_path) {
         Ok(c) => c,

@@ -85,11 +85,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
             // ─── Cross-file trait usage detection ───────────────
             // If the trait is implemented for any type used in this file,
             // the import is needed for method dispatch (not truly unused).
-            if is_trait_used_for_method_dispatch(
-                alias_str,
-                implemented_traits,
-                used_identifiers,
-            ) {
+            if is_trait_used_for_method_dispatch(alias_str, implemented_traits, used_identifiers) {
                 continue;
             }
             // ─── Fallback: well-known trait patterns ────────────
@@ -147,11 +143,12 @@ pub fn is_trait_used_for_method_dispatch(
     used_identifiers: &[String],
 ) -> bool {
     // Find trait implementations — check both short name and full paths
-    let implementing_types: Option<&Vec<String>> = implemented_traits.get(trait_alias).or_else(|| {
-        // Try matching the last segment of the alias
-        let last_segment = trait_alias.rsplit("::").next()?;
-        implemented_traits.get(last_segment)
-    });
+    let implementing_types: Option<&Vec<String>> =
+        implemented_traits.get(trait_alias).or_else(|| {
+            // Try matching the last segment of the alias
+            let last_segment = trait_alias.rsplit("::").next()?;
+            implemented_traits.get(last_segment)
+        });
     let types = match implementing_types {
         Some(t) => t,
         None => return false,

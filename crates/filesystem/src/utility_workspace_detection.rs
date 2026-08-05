@@ -7,7 +7,6 @@
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
-
 // ═══════════════════════════════════════════════════════════════
 // Workspace Root Detection
 // ═══════════════════════════════════════════════════════════════

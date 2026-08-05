@@ -138,7 +138,8 @@ impl ArchImportMandatoryChecker {
         let filename = utility_layer_detector::extract_filename(file);
         let source_layer = match utility_layer_detector::detect_layer_from_prefix(filename) {
             Some(base) => {
-                let specialized = utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys);
+                let specialized =
+                    utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys);
                 // Extract clean layer name from stem for message
                 let stem: &str = basename.rsplit('.').next_back().map_or(basename, |s| s);
                 let clean_layer = stem.split('_').next().map_or("unknown", |s| s);
@@ -179,7 +180,13 @@ impl ArchImportMandatoryChecker {
         }
 
         // 6. Single pass: check all requirements
-        self.check_requirements(file, &source_layer_clean, &mandatory_list, entries, violations);
+        self.check_requirements(
+            file,
+            &source_layer_clean,
+            &mandatory_list,
+            entries,
+            violations,
+        );
     }
 
     /// Find config rules that override the default mandatory list for a layer.
@@ -222,12 +229,18 @@ impl ArchImportMandatoryChecker {
     ) {
         for required in required_list {
             let required_identity = Identity::new(required);
-            let (req_layer, req_suffixes) = utility_import_resolver::resolve_scope(&required_identity);
+            let (req_layer, req_suffixes) =
+                utility_import_resolver::resolve_scope(&required_identity);
             let req_layer_str = req_layer.value();
 
             let is_present = entries.iter().any(|entry| {
                 utility_import_resolver::entry_matches_scope(entry, &req_layer, &req_suffixes)
-            }) || self._check_barrel_mandatory(entries, &req_layer, &req_suffixes, req_layer_str);
+            }) || self._check_barrel_mandatory(
+                entries,
+                &req_layer,
+                &req_suffixes,
+                req_layer_str,
+            );
 
             if !is_present {
                 let v = LintResult::new_arch(
@@ -264,7 +277,9 @@ impl ArchImportMandatoryChecker {
                     .map(|n| n.to_string_lossy().to_string())
                     .unwrap_or_default();
                 let resolved_layer =
-                    shared::common::utility_layer_detector::detect_layer_from_prefix(&resolved_file);
+                    shared::common::utility_layer_detector::detect_layer_from_prefix(
+                        &resolved_file,
+                    );
                 let layer_matches = resolved_layer.as_deref() == Some(layer_str);
                 let suffix_matches = suffixes.is_empty()
                     || suffixes.iter().any(|s| {

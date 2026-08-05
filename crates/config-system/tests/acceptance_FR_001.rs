@@ -18,13 +18,7 @@ fn us1_config_in_project_root_is_found() {
     let result = common::make_container()
         .orchestrator()
         .load_project_config(&fp);
-    assert!(
-        result
-            .source
-            .path
-            .value
-            .contains("lint_arwaky.config.yaml")
-    );
+    assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
     assert!(
         !result
             .warnings
@@ -47,13 +41,7 @@ fn us1_config_in_parent_directory_is_found() {
     let result = common::make_container()
         .orchestrator()
         .load_config_for_language(&fp, ConfigLanguage::Rust);
-    assert!(
-        result
-            .source
-            .path
-            .value
-            .contains("lint_arwaky.config.yaml")
-    );
+    assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
 }
 
 use shared::config_system::ConfigLanguage;

@@ -16,10 +16,9 @@ use crate::surface_output_component::ViolationItem;
 pub type FilesystemFactory = dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync;
 
 /// Factory function type: creates an orphan aggregate from config and filesystem.
-pub type OrphanFactory =
-    dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate>
-        + Send
-        + Sync;
+pub type OrphanFactory = dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate>
+    + Send
+    + Sync;
 
 /// DI container for all aggregates needed by orphan scanning.
 pub struct OrphanScanDeps {
@@ -189,8 +188,8 @@ pub fn collect_orphan(
         // BUG-FIX: ws.path.value may be relative (e.g., "workspaces-bad/crates/foo")
         // while top_root_str is absolute. Canonicalize the member path first so
         // strip_prefix works correctly in both relative and absolute input modes.
-        let ws_canonical = std::fs::canonicalize(&ws.path.value)
-            .unwrap_or_else(|_| top_root.join(&ws.path.value));
+        let ws_canonical =
+            std::fs::canonicalize(&ws.path.value).unwrap_or_else(|_| top_root.join(&ws.path.value));
         let member_rel = std::path::PathBuf::from(&ws_canonical)
             .strip_prefix(&top_root_str)
             .unwrap_or_else(|_| std::path::Path::new(&ws.path.value))
@@ -233,26 +232,33 @@ fn scan_single_root(
     // Create a fresh filesystem instance via factory (no direct root-container)
     let ws_filesystem: Arc<dyn IFilesystemAggregate> = fs_factory();
 
-    // Load config for this path to get ignored_paths
-    let ws_config = config_orchestrator.load_config_sync(root_fp);
-
-    // Build file index for this workspace (respects config ignored_paths)
+    // Detect workspace root — when scanning a subdirectory inside a workspace,
+    // build file index from workspace root so orphan detection has full visibility.
     let root_path = std::path::Path::new(root);
+    let scan_root =
+        filesystem::utility_workspace_detection::find_workspace_root_from_path(root_path)
+            .unwrap_or_else(|_| root_path.to_path_buf());
+    let scan_root_str = scan_root.to_string_lossy().to_string();
+    let scan_root_fp = FilePath::new(scan_root_str.clone()).unwrap_or_else(|_| root_fp.clone());
+
+    // Load config for workspace root to get ignored_paths
+    let ws_config = config_orchestrator.load_config_sync(&scan_root_fp);
+
+    // Build file index for the entire workspace (respects config ignored_paths)
     let ignored_strs: Vec<String> = ws_config
         .ignored_paths
         .values
         .iter()
         .map(|fp| fp.value().to_string())
         .collect();
-    ws_filesystem.build_file_index_with_ignored(root_path, &ignored_strs);
+    ws_filesystem.build_file_index_with_ignored(&scan_root, &ignored_strs);
     let ws_orchestrator: Arc<dyn IOrphanAggregate> =
         orphan_factory(ws_config, ws_filesystem.clone());
 
     // Build OrphanFileListVO — paths relative to workspace root (top_root)
     let file_list = ws_filesystem.file_list();
-    let root_abs = std::env::current_dir().unwrap_or_default().join(root);
-    let ws_top_root = ws_filesystem.workspace_root(root_fp);
-    let top_root = ws_top_root.unwrap_or_else(|| root_abs.clone());
+    let ws_top_root = ws_filesystem.workspace_root(&scan_root_fp);
+    let top_root = ws_top_root.unwrap_or_else(|| scan_root.clone());
     let top_root_str = top_root.to_string_lossy().to_string();
     let file_paths: Vec<String> = file_list
         .iter()
@@ -276,15 +282,39 @@ fn scan_single_root(
         shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
 
     // Build graph context from filesystem's pre-built data
-    let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, root_fp);
+    let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, &scan_root_fp);
 
     // Run orphan checks on pre-fetched data with correct root_dir
-    let results = ws_orchestrator.check_orphans_with_context(&orphan_files, root_fp, &context);
+    let results =
+        ws_orchestrator.check_orphans_with_context(&orphan_files, &scan_root_fp, &context);
 
     let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)
         .collect();
+
+    // Filter to only violations within the scanned subdirectory
+    if scan_root != root_path {
+        // target is like "workspaces-good/crates/calculator"
+        // workspace root is like "workspaces-good"
+        // violation file paths are relative to workspace root like "crates/calculator/src/foo.rs"
+        // Build the relative member path: "crates/calculator"
+        let target = root_path.to_string_lossy().to_string();
+        let ws_root_str = scan_root.to_string_lossy().to_string();
+        let member_rel = if let Some(rel) = target.strip_prefix(&ws_root_str) {
+            rel.trim_start_matches('/').to_string()
+        } else {
+            // Fallback: extract member name
+            std::path::Path::new(&target)
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default()
+        };
+        violations.retain(|v| {
+            let fp = v.file.value();
+            fp.starts_with(&member_rel)
+        });
+    }
 
     if let Some(filter_str) = filter {
         let filter_upper = filter_str.to_uppercase();

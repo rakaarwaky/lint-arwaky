@@ -3,7 +3,9 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::IUtilityOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, OrphanIndicatorResult, ReachabilityResult};
+use shared::quality_rules::taxonomy_analysis_vo::{
+    InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
+};
 use std::collections::HashMap;
 
 const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "surfaces", "root"];
@@ -22,9 +24,7 @@ impl UtilityOrphanAnalyzer {
     }
 
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match shared::common::parse_file_content(
-            file_path, content,
-        ) {
+        match shared::common::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 let in_imports = result.imports.iter().any(|imp| {
                     imp.segments.iter().any(|seg| {

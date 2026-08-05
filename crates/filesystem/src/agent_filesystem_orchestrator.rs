@@ -660,11 +660,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                             // External crate import: resolve via workspace member lookup.
                             // e.g. `use calculator_addition::foo::Bar` → look up
                             // `addition/src/foo.rs` by scanning member Cargo.toml files.
-                            let sub_path = module
-                                .split("::")
-                                .skip(1)
-                                .collect::<Vec<_>>()
-                                .join("/");
+                            let sub_path = module.split("::").skip(1).collect::<Vec<_>>().join("/");
                             Self::resolve_external_crate_import(
                                 root_seg,
                                 &sub_path,
@@ -755,7 +751,8 @@ impl FilesystemOrchestrator {
                                     let normalized = pkg_name.replace('-', "_");
                                     if normalized == crate_name {
                                         // Found the member — resolve sub_path
-                                        let member_name = entry.file_name().to_string_lossy().to_string();
+                                        let member_name =
+                                            entry.file_name().to_string_lossy().to_string();
                                         let member_base = format!("{}/{}", member_dir, member_name);
                                         // sub_path is like "foo/bar" from `use pkg::foo::bar::...`
                                         // Try: member_base/src/sub_path.rs and member_base/src/sub_path/mod.rs
@@ -844,7 +841,10 @@ impl FilesystemOrchestrator {
                     if let Ok(rel) = p.strip_prefix(&abs_root) {
                         let rel_str = rel.to_string_lossy();
                         // Include files inside member directories
-                        if member_dirs.iter().any(|d| rel_str.starts_with(&format!("{}/", d))) {
+                        if member_dirs
+                            .iter()
+                            .any(|d| rel_str.starts_with(&format!("{}/", d)))
+                        {
                             return true;
                         }
                         // Also include root-level source files (e.g. root_*_entry.rs)

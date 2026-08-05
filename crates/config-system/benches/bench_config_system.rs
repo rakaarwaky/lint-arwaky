@@ -36,8 +36,9 @@ fn bench_workspace_detect(c: &mut Criterion) {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let fs_arc: std::sync::Arc<dyn shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol> =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_arc: std::sync::Arc<
+        dyn shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol,
+    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let detector = WorkspaceDetector::new(fs_arc);
     let mut group = c.benchmark_group("workspace_detect");
     group.sample_size(30);

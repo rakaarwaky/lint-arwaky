@@ -65,9 +65,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     let orphan_orchestrator = orphan_container.analyzer();
 
-    let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
-        filesystem.clone(),
-    );
+    let ext_container =
+        external_lint::root_external_lint_container::ExternalLintContainer::new(filesystem.clone());
     let external_lint = ext_container.aggregate();
 
     let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(

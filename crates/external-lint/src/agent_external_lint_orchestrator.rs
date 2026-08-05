@@ -61,7 +61,12 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
         } else {
             selected
                 .iter()
-                .filter(|name| context.config_entries.iter().any(|e| e.name.value() == **name))
+                .filter(|name| {
+                    context
+                        .config_entries
+                        .iter()
+                        .any(|e| e.name.value() == **name)
+                })
                 .map(|s| s.as_str())
                 .collect()
         };

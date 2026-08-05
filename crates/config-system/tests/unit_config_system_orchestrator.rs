@@ -53,13 +53,7 @@ fn load_project_config_reads_existing_yaml() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = make_orchestrator().load_project_config(&fp);
     assert_eq!(result.source.language, "rust");
-    assert!(
-        result
-            .source
-            .path
-            .value
-            .contains("lint_arwaky.config.yaml")
-    );
+    assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
 }
 
 #[test]

@@ -18,9 +18,7 @@ impl CapabilitiesOrphanAnalyzer {
 
     fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
         let mut identifiers: Vec<String> = Vec::new();
-        match shared::common::parse_file_content(
-            file_path, content,
-        ) {
+        match shared::common::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 identifiers.extend(result.struct_names());
                 identifiers.extend(result.trait_names());
@@ -73,9 +71,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
                 let content_ref = content.value();
                 let identifiers = self.extract_identifiers(fp, content_ref, &stem);
                 let root = std::path::Path::new(root_dir.value());
-                if let Ok(workspace_root) =
-                    self.filesystem.find_workspace_root_from_path(root)
-                {
+                if let Ok(workspace_root) = self.filesystem.find_workspace_root_from_path(root) {
                     is_wired = self
                         .filesystem
                         .check_wired_in_container(&workspace_root, &identifiers);

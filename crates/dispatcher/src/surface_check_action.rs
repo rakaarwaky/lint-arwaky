@@ -145,6 +145,12 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
 
     // Normalize relative paths to absolute before filtering.
     let target_canonical = fs_agg.canonicalize(std::path::Path::new(path)).ok();
+    // Detect workspace root for resolving relative paths from orphan scan
+    // (orphan scan returns paths like "crates/calculator/src/foo.rs" relative to workspace root)
+    let ws_root = {
+        let p = std::path::Path::new(path);
+        filesystem::utility_workspace_detection::find_workspace_root_from_path(p).ok()
+    };
     {
         let cwd = std::env::current_dir().ok();
         let target_parent = target_canonical.as_ref().and_then(|t| t.parent());
@@ -154,6 +160,15 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
             }
             let rel = v.file.value.clone();
             let file_path = std::path::Path::new(&rel);
+
+            // Try workspace root first (orphan scan paths are relative to workspace root)
+            if let Some(ref ws) = ws_root {
+                if let Ok(canon) = fs_agg.canonicalize(&ws.join(file_path)) {
+                    v.file = FilePath::new(canon.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| v.file.clone());
+                    continue;
+                }
+            }
             if let Some(ref cwd) = cwd {
                 if let Ok(canon) = fs_agg.canonicalize(&cwd.join(file_path)) {
                     v.file = FilePath::new(canon.to_string_lossy().to_string())

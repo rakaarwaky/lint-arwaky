@@ -7,13 +7,13 @@
 // 3. Single check per file — no duplicate violations.
 
 use shared::cli_commands::{LintResult, LintResultList};
+use shared::common::parse_file_content;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Identity, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::{AstImportVO, FileParseResultVO};
-use shared::common::parse_file_content;
 
 use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
@@ -173,7 +173,9 @@ impl ArchImportForbiddenChecker {
         // 1. Determine the file's layer from its filename prefix
         let filename = utility_layer_detector::extract_filename(file);
         let layer_name = match utility_layer_detector::detect_layer_from_prefix(filename) {
-            Some(base) => utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys),
+            Some(base) => {
+                utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys)
+            }
             None => {
                 // No layer prefix — skip (naming rules handles prefix correctness)
                 return;
@@ -284,7 +286,6 @@ impl ArchImportForbiddenChecker {
                 .collect();
 
             for &(forbidden, ref forbidden_layer, ref forbidden_suffixes) in &resolved_forbidden {
-
                 let mut is_forbidden = if forbidden_suffixes.is_empty() {
                     module_segments.iter().any(|seg| {
                         let cleaned = Identity::new(*seg);
@@ -309,7 +310,9 @@ impl ArchImportForbiddenChecker {
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_default();
                         let resolved_layer =
-                            shared::common::utility_layer_detector::detect_layer_from_prefix(&resolved_file);
+                            shared::common::utility_layer_detector::detect_layer_from_prefix(
+                                &resolved_file,
+                            );
                         let layer_matches =
                             resolved_layer.as_deref() == Some(forbidden_layer.value());
                         let suffix_matches = forbidden_suffixes.is_empty()

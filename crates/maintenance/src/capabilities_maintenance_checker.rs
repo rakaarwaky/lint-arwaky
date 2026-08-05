@@ -217,10 +217,17 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let mut python_files = 0u64;
         let mut rust_files = 0u64;
         let mut js_files = 0u64;
-        for entry_path in self.filesystem.read_dir_entries_as_pathbuf(root_path).unwrap_or_default() {
+        for entry_path in self
+            .filesystem
+            .read_dir_entries_as_pathbuf(root_path)
+            .unwrap_or_default()
+        {
             if entry_path.is_file() {
                 total_files += 1;
-                let name = entry_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let name = entry_path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
                 if name.contains("test") || name.contains("spec") {
                     test_files += 1;
                 }

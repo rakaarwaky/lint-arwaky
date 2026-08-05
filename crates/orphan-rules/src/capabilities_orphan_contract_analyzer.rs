@@ -4,7 +4,9 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::IContractOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, OrphanIndicatorResult, ReachabilityResult};
+use shared::quality_rules::taxonomy_analysis_vo::{
+    InheritanceMap, OrphanIndicatorResult, ReachabilityResult,
+};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -40,9 +42,7 @@ impl ContractOrphanAnalyzer {
     }
 
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
-        match shared::common::parse_file_content(
-            file_path, content,
-        ) {
+        match shared::common::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
             FileParseResultVO::TypeScript(result) => result.trait_names(),
@@ -210,12 +210,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
                 )
             }),
             "aggregate" => trait_names.iter().all(|tn| {
-                self.has_layer_prefixed_implementation(
-                    &search_files,
-                    tn,
-                    "agent_",
-                    content_map,
-                )
+                self.has_layer_prefixed_implementation(&search_files, tn, "agent_", content_map)
             }),
             _ => true,
         };

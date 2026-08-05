@@ -60,7 +60,13 @@ fn read_config_typescript_finds_unified_yaml() {
         .read_config(&fp, ConfigLanguage::TypeScript)
         .unwrap();
     assert!(result.is_some());
-    assert!(result.unwrap().path.value.contains("lint_arwaky.config.yaml"));
+    assert!(
+        result
+            .unwrap()
+            .path
+            .value
+            .contains("lint_arwaky.config.yaml")
+    );
 }
 
 #[test]
@@ -114,11 +120,7 @@ fn list_config_files_returns_empty_when_none_exist() {
 #[test]
 fn list_config_files_deduplicates_unified_config() {
     let tmp = TempDir::new().unwrap();
-    fs::write(
-        tmp.path().join("lint_arwaky.config.yaml"),
-        "x: 1",
-    )
-    .unwrap();
+    fs::write(tmp.path().join("lint_arwaky.config.yaml"), "x: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = make_reader().list_config_files(&fp).unwrap();
     // Unified config: all languages share one file, dedup reduces to 1 entry

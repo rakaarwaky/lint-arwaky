@@ -13,6 +13,7 @@ fn init_tracing() {
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn".into()),
         )
+        .with_writer(std::io::stderr)
         .init();
 }
 
@@ -221,9 +222,8 @@ fn main() {
         );
     let orphan_orchestrator = orphan_container.analyzer();
 
-    let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
-        filesystem.clone(),
-    );
+    let ext_container =
+        external_lint::root_external_lint_container::ExternalLintContainer::new(filesystem.clone());
     let external_lint = ext_container.aggregate();
 
     let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
@@ -416,9 +416,10 @@ fn main() {
         Command::Adapters => {
             cli_commands::surface_plugin_command::handle_adapters(external_lint.clone())
         }
-        Command::Init => {
-            cli_commands::surface_setup_command::handle_init(setup_orchestrator.clone(), filesystem.clone())
-        }
+        Command::Init => cli_commands::surface_setup_command::handle_init(
+            setup_orchestrator.clone(),
+            filesystem.clone(),
+        ),
         Command::Install { sudo } => {
             cli_commands::surface_setup_command::handle_install(setup_orchestrator.clone(), sudo)
         }

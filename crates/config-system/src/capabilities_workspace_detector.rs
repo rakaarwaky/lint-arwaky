@@ -93,7 +93,9 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 
 impl Default for WorkspaceDetector {
     fn default() -> Self {
-        panic!("WorkspaceDetector::default() requires filesystem — use WorkspaceDetector::new(fs) instead");
+        panic!(
+            "WorkspaceDetector::default() requires filesystem — use WorkspaceDetector::new(fs) instead"
+        );
     }
 }
 
@@ -106,7 +108,11 @@ impl WorkspaceDetector {
 /// TR-1: Single-pass directory scan — use one `read_dir` syscall per directory
 /// instead of N `exists()` calls. Returns true if any of the target filenames
 /// exist in the given directory.
-fn dir_has_any_file(dir: &std::path::Path, targets: &[&str], fs: &dyn IFileSystemIOProtocol) -> bool {
+fn dir_has_any_file(
+    dir: &std::path::Path,
+    targets: &[&str],
+    fs: &dyn IFileSystemIOProtocol,
+) -> bool {
     if let Ok(entries) = fs.read_dir_entries_as_pathbuf(dir) {
         for entry_path in entries {
             if let Some(name) = entry_path.file_name().and_then(|n| n.to_str()) {

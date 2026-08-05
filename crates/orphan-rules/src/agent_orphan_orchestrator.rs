@@ -187,8 +187,10 @@ impl ArchOrphanAnalyzer {
             .filesystem
             .workspace_root(root_dir)
             .unwrap_or_else(|| root_path.to_path_buf());
-        let alive_set =
-            crate::utility_orphan_graph::trace_reachability(&entry_points.values, &context.import_graph);
+        let alive_set = crate::utility_orphan_graph::trace_reachability(
+            &entry_points.values,
+            &context.import_graph,
+        );
         let alive_result = ReachabilityResult::new(
             alive_set
                 .iter()

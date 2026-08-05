@@ -24,10 +24,7 @@ pub struct ExternalLintContainer {
 }
 
 impl ExternalLintContainer {
-    pub fn new(
-        filesystem: Arc<dyn IFilesystemAggregate>,
-
-    ) -> Self {
+    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(
             crate::capabilities_stdio_client::StdioClient::new(Timeout::new(60.0)),
         );

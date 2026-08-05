@@ -27,7 +27,10 @@ pub struct McpConfigReport {
     pub config_json: String,
 }
 
-pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>, filesystem: Arc<dyn IFileSystemIOProtocol>) -> Vec<SetupInitItem> {
+pub fn collect_init(
+    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    filesystem: Arc<dyn IFileSystemIOProtocol>,
+) -> Vec<SetupInitItem> {
     let mut items: Vec<SetupInitItem> = Vec::new();
 
     let languages = setup_orchestrator.detect_languages();
@@ -137,7 +140,11 @@ pub fn collect_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>, files
     items
 }
 
-fn copy_dir_all(src: &std::path::Path, dst: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> std::io::Result<usize> {
+fn copy_dir_all(
+    src: &std::path::Path,
+    dst: &std::path::Path,
+    fs: &dyn IFileSystemIOProtocol,
+) -> std::io::Result<usize> {
     fs.create_dir_all(dst)?;
     let mut count = 0;
     for entry_path in fs.read_dir_entries_as_pathbuf(src)? {

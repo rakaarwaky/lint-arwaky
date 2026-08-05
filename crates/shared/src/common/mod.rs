@@ -1,5 +1,4 @@
 // common — truly shared types used by multiple features
-pub mod taxonomy_default_constant;
 pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_list_vo;
@@ -8,6 +7,7 @@ pub mod taxonomy_code_analysis_vo;
 pub mod taxonomy_common_error;
 pub mod taxonomy_common_vo;
 pub mod taxonomy_config_language_vo;
+pub mod taxonomy_default_constant;
 pub mod taxonomy_definition_vo;
 pub mod taxonomy_display_content_vo;
 pub mod taxonomy_duration_vo;
@@ -50,8 +50,6 @@ pub mod utility_ts_parser;
 pub mod utility_value_object_generator;
 
 // ─── Re-exports ────────────────────────────────────────────
-pub use taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
-pub use taxonomy_default_constant::DEFAULT_RULE_EXCEPTIONS;
 pub use taxonomy_action_vo::ActionName;
 pub use taxonomy_action_vo::JobId;
 pub use taxonomy_adapter_error::AdapterError;
@@ -83,6 +81,8 @@ pub use taxonomy_common_vo::Score;
 pub use taxonomy_common_vo::SuffixPolicyVO;
 pub use taxonomy_common_vo::SuffixVO;
 pub use taxonomy_common_vo::Timestamp;
+pub use taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
+pub use taxonomy_default_constant::DEFAULT_RULE_EXCEPTIONS;
 pub use taxonomy_definition_vo::LayerDefinition;
 pub use taxonomy_definition_vo::LayerMapVO;
 pub use taxonomy_definition_vo::LayerNamingConfig;
@@ -126,5 +126,5 @@ pub use taxonomy_suggestion_vo::DescriptionVO;
 pub use taxonomy_suggestion_vo::MetadataVO;
 pub use taxonomy_threshold_vo::Threshold;
 pub use taxonomy_violation_item_vo::ViolationItem;
-pub use utility_parser_dispatcher::parse_file_content;
 pub use utility_parser_dispatcher::is_supported;
+pub use utility_parser_dispatcher::parse_file_content;

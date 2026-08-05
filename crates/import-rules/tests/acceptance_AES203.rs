@@ -98,7 +98,13 @@ fn main() {
         rust_use("std::collections::BTreeMap"),
     ];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/multi.rs", content, &imports, &[], &no_traits())
+        .check_unused_imports(
+            "/tmp/test/src/multi.rs",
+            content,
+            &imports,
+            &[],
+            &no_traits(),
+        )
         .unwrap();
     assert!(
         results.len() >= 2,
@@ -145,7 +151,13 @@ fn aes203_index_ts_skipped() {
         is_wildcard: false,
     }];
     let results = checker()
-        .check_unused_imports("/tmp/test/src/index.ts", content, &imports, &[], &no_traits())
+        .check_unused_imports(
+            "/tmp/test/src/index.ts",
+            content,
+            &imports,
+            &[],
+            &no_traits(),
+        )
         .unwrap();
     assert!(results.is_empty(), "index.ts should be skipped");
 }
@@ -257,7 +269,13 @@ fn aes203_trait_protocol_import_not_flagged() {
     );
 
     let results = checker()
-        .check_unused_imports("/tmp/test/src/app.rs", &content, &imports, &used_ids, &traits)
+        .check_unused_imports(
+            "/tmp/test/src/app.rs",
+            &content,
+            &imports,
+            &used_ids,
+            &traits,
+        )
         .unwrap();
     assert!(
         results.is_empty(),
@@ -315,10 +333,7 @@ fn aes203_trait_map_detects_implicit_usage() {
     let used_ids = vec!["MyStruct".to_string(), "main".to_string()];
 
     let mut traits = HashMap::new();
-    traits.insert(
-        "MyCustomTrait".to_string(),
-        vec!["MyStruct".to_string()],
-    );
+    traits.insert("MyCustomTrait".to_string(), vec!["MyStruct".to_string()]);
 
     let results = checker()
         .check_unused_imports(

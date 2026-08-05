@@ -134,7 +134,10 @@ fn aes505_agent_with_aggregate_used_by_main_is_not_orphan() {
         "crates/cli/src/root_cli_entry.rs".to_string(),
         "use agent_baz_orchestrator::IBazAggregate;".to_string(),
     );
-    let all_files = vec![fp.value().to_string(), "crates/cli/src/root_cli_entry.rs".to_string()];
+    let all_files = vec![
+        fp.value().to_string(),
+        "crates/cli/src/root_cli_entry.rs".to_string(),
+    ];
 
     let result =
         analyzer.is_agent_orphan(&fp, &root, &all_files, &content_map, &reachable_for(&fp));

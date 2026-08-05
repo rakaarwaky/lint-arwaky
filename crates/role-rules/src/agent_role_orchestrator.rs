@@ -84,8 +84,7 @@ impl RoleOrchestrator {
             let prefix = stem.split('_').next().unwrap_or_default();
 
             // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
-            if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename)
-                || filename == "main.rs"
+            if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) || filename == "main.rs"
             {
                 continue;
             }

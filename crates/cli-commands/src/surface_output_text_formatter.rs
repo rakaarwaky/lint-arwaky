@@ -154,12 +154,13 @@ fn render_text(
             }
             for (file_path, file_results) in &file_violations {
                 println!("  {file_path}");
-                let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
                 for r in file_results {
-                    *code_counts.entry(r.code.code().to_string()).or_insert(0) += 1;
-                }
-                for (code, count) in &code_counts {
-                    println!("    [{code}] {count}");
+                    let loc = match (r.line.value(), r.column.value()) {
+                        (l, c) if l > 0 && c > 0 => format!("{}:{}:{}", r.file.value, l, c),
+                        (l, _) if l > 0 => format!("{}:{}", r.file.value, l),
+                        _ => r.file.value.clone(),
+                    };
+                    println!("    {} [{}] {}", loc, r.code.code(), r.message.value);
                 }
             }
             println!();
@@ -181,12 +182,12 @@ fn render_text(
 
     if !is_specific_member {
         println!();
-        println!("Tip: Scan specific feature folder for file-level violations:");
+        println!("Tip: Scan specific feature folder for detailed violations:");
         println!("  lint-arwaky-cli scan <member-path>");
         println!("  lint-arwaky-cli scan <root> --member <member-name>");
     } else if !is_single_file {
         println!();
-        println!("Tip: Scan specific files to get detailed violation messages:");
+        println!("Tip: Scan specific file for focused output:");
         println!("  lint-arwaky-cli scan <file-path>");
     }
 }

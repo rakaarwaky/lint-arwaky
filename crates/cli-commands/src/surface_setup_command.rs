@@ -5,7 +5,10 @@ use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::project_setup::SetupManagementAggregate;
 use std::sync::Arc;
 
-pub fn handle_init(setup_orchestrator: Arc<dyn SetupManagementAggregate>, filesystem: Arc<dyn IFileSystemIOProtocol>) -> ExitCode {
+pub fn handle_init(
+    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    filesystem: Arc<dyn IFileSystemIOProtocol>,
+) -> ExitCode {
     let items = dispatcher::surface_setup_action::collect_init(setup_orchestrator, filesystem);
     let mut all_ok = true;
     for item in &items {

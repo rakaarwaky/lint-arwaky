@@ -42,10 +42,7 @@ impl IParserProtocol for ASTParser {
     }
 
     fn import_list(&self) -> Vec<ImportEntry> {
-        self.imports
-            .read()
-            .map(|v| v.clone())
-            .unwrap_or_default()
+        self.imports.read().map(|v| v.clone()).unwrap_or_default()
     }
 
     fn parse_all(&self, files: &mut [FileEntry]) {
@@ -77,14 +74,14 @@ impl IParserProtocol for ASTParser {
         let resolved: Vec<ImportEntry> = imports
             .iter()
             .cloned()
-            .map(|entry| {
-                crate::utility_barrel_resolution::resolve_single_import(entry, root_dir)
-            })
+            .map(|entry| crate::utility_barrel_resolution::resolve_single_import(entry, root_dir))
             .collect();
         let resolved_count = resolved.iter().filter(|e| e.is_resolved).count();
         eprintln!(
             "[debug resolve_barrel] input={}, resolved={}, root={}",
-            count, resolved_count, root_dir.display()
+            count,
+            resolved_count,
+            root_dir.display()
         );
         if let Ok(mut w) = self.imports.write() {
             *w = resolved;

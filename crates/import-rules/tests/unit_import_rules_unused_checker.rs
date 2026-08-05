@@ -62,7 +62,13 @@ fn main() {
 "#;
     let imports = vec![rust_use("std::collections::HashMap")];
     let result = checker
-        .check_unused_imports("/tmp/test/src/app.rs", content, &imports, &["HashMap".to_string()], &no_traits())
+        .check_unused_imports(
+            "/tmp/test/src/app.rs",
+            content,
+            &imports,
+            &["HashMap".to_string()],
+            &no_traits(),
+        )
         .unwrap();
     assert!(
         result.is_empty(),
@@ -115,7 +121,13 @@ fn main() {
         rust_use("std::io::Read"),
     ];
     let result = checker
-        .check_unused_imports("/tmp/test/src/multi.rs", content, &imports, &[], &no_traits())
+        .check_unused_imports(
+            "/tmp/test/src/multi.rs",
+            content,
+            &imports,
+            &[],
+            &no_traits(),
+        )
         .unwrap();
     // At least HashMap and BTreeMap should be flagged (Read is a trait — may be skipped)
     assert!(
@@ -165,7 +177,9 @@ fn trait_not_used_for_method_dispatch() {
 fn trait_not_in_project_not_dispatch() {
     let traits: HashMap<String, Vec<String>> = HashMap::new();
     let used_ids = vec!["Foo".to_string()];
-    assert!(!is_trait_used_for_method_dispatch("Foo", &traits, &used_ids));
+    assert!(!is_trait_used_for_method_dispatch(
+        "Foo", &traits, &used_ids
+    ));
 }
 
 #[test]
@@ -175,25 +189,19 @@ fn known_trait_pattern_std_prelude() {
         r#"async_trait::async_trait"#,
         "async_trait"
     ));
-    assert!(is_known_trait_pattern(
-        r#"std::fmt::Display"#,
-        "Display"
-    ));
+    assert!(is_known_trait_pattern(r#"std::fmt::Display"#, "Display"));
     assert!(is_known_trait_pattern(r#"std::fmt::Debug"#, "Debug"));
     assert!(is_known_trait_pattern(r#"std::clone::Clone"#, "Clone"));
-    assert!(is_known_trait_pattern(r#"std::cmp::PartialEq"#, "PartialEq"));
     assert!(is_known_trait_pattern(
-        r#"std::io::Write"#,
-        "Write"
+        r#"std::cmp::PartialEq"#,
+        "PartialEq"
     ));
+    assert!(is_known_trait_pattern(r#"std::io::Write"#, "Write"));
 }
 
 #[test]
 fn known_trait_pattern_suffix() {
     assert!(is_known_trait_pattern(r#"foo::BarExt"#, "BarExt"));
-    assert!(is_known_trait_pattern(
-        r#"foo::Stream"#,
-        "Stream"
-    ));
+    assert!(is_known_trait_pattern(r#"foo::Stream"#, "Stream"));
     assert!(!is_known_trait_pattern(r#"foo::MyTrait"#, "MyTrait"));
 }

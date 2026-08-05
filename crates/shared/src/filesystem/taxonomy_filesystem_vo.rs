@@ -503,7 +503,6 @@ impl InboundLinkMap {
     pub fn get_importers(&self, path: &str) -> Option<&Vec<String>> {
         let mut result: Option<&Vec<String>> = None;
 
-
         if let Some(v) = self.mapping.get(path) {
             result = Some(v);
         }
@@ -576,7 +575,12 @@ impl InboundLinkMap {
                 // Must align on a path separator or be the full path
                 if k_clean.ends_with(clean) {
                     let before = k_clean.len() - clean.len();
-                    if before == 0 || k_clean.as_bytes().get(before).is_some_and(|b| *b == b'/' || *b == b'\\') {
+                    if before == 0
+                        || k_clean
+                            .as_bytes()
+                            .get(before)
+                            .is_some_and(|b| *b == b'/' || *b == b'\\')
+                    {
                         result = Some(v);
                         break;
                     }
@@ -584,7 +588,12 @@ impl InboundLinkMap {
                 // clean ends with k_clean: the lookup path's last chars == the mapping key
                 if clean.ends_with(k_clean) {
                     let before = clean.len() - k_clean.len();
-                    if before == 0 || clean.as_bytes().get(before).is_some_and(|b| *b == b'/' || *b == b'\\') {
+                    if before == 0
+                        || clean
+                            .as_bytes()
+                            .get(before)
+                            .is_some_and(|b| *b == b'/' || *b == b'\\')
+                    {
                         result = Some(v);
                         break;
                     }

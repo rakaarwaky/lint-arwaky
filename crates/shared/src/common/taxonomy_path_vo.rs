@@ -107,9 +107,7 @@ impl FilePath {
     /// Uses shared::common::DEFAULT_RULE_EXCEPTIONS for barrel files.
     pub fn is_entry_point(&self) -> bool {
         let f = self.basename();
-        super::DEFAULT_RULE_EXCEPTIONS.contains(&f.as_ref())
-            || f == "py.typed"
-            || f == "main.rs"
+        super::DEFAULT_RULE_EXCEPTIONS.contains(&f.as_ref()) || f == "py.typed" || f == "main.rs"
     }
 }
 
