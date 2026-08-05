@@ -30,8 +30,7 @@
           "type": "tabs",
           "id": "5a0924ad-a48d-4f33-a0e3-d5f1aac99a50",
           "panelIds": [
-            "272c4838-a4f0-4b30-af14-18bdd788cb5b",
-            "1ad99471-ff77-44fc-bee8-2384566ef6b5"
+            "272c4838-a4f0-4b30-af14-18bdd788cb5b"
           ],
           "activeIndex": 0
         }
@@ -41,28 +40,23 @@
   "panels": {
     "e5bc824f-70b2-46f8-95dd-e7e7edb348e7": {
       "type": "terminal",
-      "title": "✓ mimo-v2.5 · ~/mcp-arwaky/lint-arwaky"
+      "title": "Qwen - lint-arwaky"
     },
     "955c1849-3dd5-4bae-82c0-2307478dc0ea": {
       "type": "terminal",
-      "title": "Qwen - lint-arwaky"
+      "title": "raka@fedora:~/mcp-arwaky/lint-arwaky 2"
     },
-    "aae57643-1846-4f36-96e8-22857f20a507": {
-      "type": "terminal",
-      "title": "Qwen - lint-arwaky 2"
+    "220e853c-bd35-4db2-bce2-5994978d91a0": {
+      "type": "agent",
+      "title": "Agent 1"
     },
-    "15413b54-131e-44d0-b16c-2fee06246882": {
+    "39874920-b020-4e28-8016-7e4acbed3785": {
       "type": "terminal",
-      "title": "raka@fedora:~/mcp-arwaky/lint-arwaky"
+      "title": "OC | Fix all self violations"
     },
     "272c4838-a4f0-4b30-af14-18bdd788cb5b": {
       "type": "canvas",
       "title": "Canvas"
-    },
-    "1ad99471-ff77-44fc-bee8-2384566ef6b5": {
-      "type": "editor",
-      "title": "workspace.json",
-      "filePath": ".cate/workspace.json"
     }
   },
   "canvases": {
@@ -72,14 +66,14 @@
         "446a0188-f6c9-434f-80d6-5b184f3b05b0": {
           "id": "446a0188-f6c9-434f-80d6-5b184f3b05b0",
           "origin": {
-            "x": -2060,
-            "y": -40
+            "x": 6,
+            "y": 6
           },
           "size": {
-            "width": 1540,
-            "height": 960
+            "width": 589.9937294608017,
+            "height": 424.7954852117772
           },
-          "zOrder": 122,
+          "zOrder": 243,
           "creationIndex": 0,
           "animationState": "idle",
           "dockLayout": {
@@ -94,14 +88,14 @@
         "0538b272-9f0c-45ae-9d82-123344c80890": {
           "id": "0538b272-9f0c-45ae-9d82-123344c80890",
           "origin": {
-            "x": 820,
-            "y": -120
+            "x": 601.9937294608017,
+            "y": 6
           },
           "size": {
-            "width": 1300,
-            "height": 1020
+            "width": 589.9937294608017,
+            "height": 424.7954852117772
           },
-          "zOrder": 131,
+          "zOrder": 239,
           "creationIndex": 1,
           "animationState": "idle",
           "dockLayout": {
@@ -113,55 +107,56 @@
             "activeIndex": 0
           }
         },
-        "bd3b1794-c59c-4458-bc55-9568fa0a4746": {
-          "id": "bd3b1794-c59c-4458-bc55-9568fa0a4746",
+        "bd19ce1d-7a21-46eb-9017-0214531d38db": {
+          "id": "bd19ce1d-7a21-46eb-9017-0214531d38db",
           "origin": {
-            "x": 2140,
-            "y": -120
+            "x": 6,
+            "y": 436.7954852117772
           },
           "size": {
-            "width": 1180,
-            "height": 1020
+            "width": 589.9937294608017,
+            "height": 424.7954852117772
           },
-          "zOrder": 133,
-          "creationIndex": 3,
+          "zOrder": 244,
+          "creationIndex": 10,
           "animationState": "idle",
           "dockLayout": {
             "type": "tabs",
-            "id": "29ea7274-3c29-4497-9cfd-469d8ad12d77",
+            "id": "09133c0f-fe75-4c90-a1fb-a90585df5f2b",
             "panelIds": [
-              "aae57643-1846-4f36-96e8-22857f20a507"
+              "220e853c-bd35-4db2-bce2-5994978d91a0"
             ],
             "activeIndex": 0
-          }
+          },
+          "isPinned": false
         },
-        "878752f3-5d64-4b22-ab5c-f040d820b2fd": {
-          "id": "878752f3-5d64-4b22-ab5c-f040d820b2fd",
+        "6457f9ab-f75b-4dd9-8850-3f730c85d7cc": {
+          "id": "6457f9ab-f75b-4dd9-8850-3f730c85d7cc",
           "origin": {
-            "x": 1540,
-            "y": 960
+            "x": 601.9937294608017,
+            "y": 436.7954852117772
           },
           "size": {
-            "width": 1280,
-            "height": 720
+            "width": 589.9937294608017,
+            "height": 424.7954852117772
           },
-          "zOrder": 129,
-          "creationIndex": 5,
+          "zOrder": 242,
+          "creationIndex": 11,
           "animationState": "idle",
           "dockLayout": {
             "type": "tabs",
-            "id": "e2fc36f6-7509-4438-9f30-07cd04d0e475",
+            "id": "649405b2-65e2-4e40-9ce9-820a702a0f93",
             "panelIds": [
-              "15413b54-131e-44d0-b16c-2fee06246882"
+              "39874920-b020-4e28-8016-7e4acbed3785"
             ],
             "activeIndex": 0
           }
         }
       },
-      "zoomLevel": 0.3,
+      "zoomLevel": 0.9,
       "viewportOffset": {
-        "x": 695.9227858239124,
-        "y": 177.17642550219017
+        "x": 129.40583224911472,
+        "y": 51.2626372682829
       }
     }
   }
