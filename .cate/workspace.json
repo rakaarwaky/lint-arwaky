@@ -40,7 +40,7 @@
   "panels": {
     "e5bc824f-70b2-46f8-95dd-e7e7edb348e7": {
       "type": "terminal",
-      "title": "raka@fedora:~/mcp-arwaky/lint-arwaky 4"
+      "title": "✓ mimo-v2.5 · ~/mcp-arwaky/lint-arwaky"
     },
     "955c1849-3dd5-4bae-82c0-2307478dc0ea": {
       "type": "terminal",
@@ -73,7 +73,7 @@
             "width": 1540,
             "height": 960
           },
-          "zOrder": 82,
+          "zOrder": 99,
           "creationIndex": 0,
           "animationState": "idle",
           "dockLayout": {
@@ -95,7 +95,7 @@
             "width": 1300,
             "height": 1020
           },
-          "zOrder": 97,
+          "zOrder": 100,
           "creationIndex": 1,
           "animationState": "idle",
           "dockLayout": {
@@ -117,7 +117,7 @@
             "width": 1180,
             "height": 1020
           },
-          "zOrder": 96,
+          "zOrder": 101,
           "creationIndex": 3,
           "animationState": "idle",
           "dockLayout": {
@@ -136,10 +136,10 @@
             "y": 1340
           },
           "size": {
-            "width": 640,
-            "height": 400
+            "width": 1280,
+            "height": 860
           },
-          "zOrder": 88,
+          "zOrder": 98,
           "creationIndex": 5,
           "animationState": "idle",
           "dockLayout": {
@@ -152,10 +152,10 @@
           }
         }
       },
-      "zoomLevel": 0.6383028235569257,
+      "zoomLevel": 0.5943705409692376,
       "viewportOffset": {
-        "x": 659.7344334038421,
-        "y": -593.5845169897993
+        "x": 221.35779741189776,
+        "y": -628.6977074142067
       }
     }
   }

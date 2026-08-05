@@ -17,3 +17,6 @@ pub use report_formatter;
 pub use role_rules;
 pub use shared;
 pub use tui;
+
+// ── Root entry wiring ──────────────────────────────────────
+pub mod root_entry_wiring;

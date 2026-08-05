@@ -3,7 +3,7 @@
 use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
-use config_system_lint_arwaky::taxonomy_config_parser::parse_config_yaml;
+use shared::config_system::utility_config_parser::parse_config_yaml;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;

@@ -10,7 +10,7 @@ use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_parser::parse_config_yaml;
+use shared::config_system::utility_config_parser::parse_config_yaml;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;

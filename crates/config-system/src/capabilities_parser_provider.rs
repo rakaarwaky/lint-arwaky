@@ -105,7 +105,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
         shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         Vec<String>,
     ) {
-        shared::config_system::taxonomy_config_parser::parse_config_yaml_with_warnings(yaml_str)
+        shared::config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
     }
 
     fn parse_adapter_entries_from_yaml(
