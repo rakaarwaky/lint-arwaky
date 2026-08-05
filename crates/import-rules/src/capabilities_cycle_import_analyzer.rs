@@ -99,6 +99,12 @@ impl DependencyCycleAnalyzer {
             return vec![];
         }
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
+        // Skip if AES205 rule is explicitly disabled
+        if let Some(rule) = aes205_rule {
+            if !rule.enabled.value {
+                return vec![];
+            }
+        }
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let layer_prefixes: Vec<String> = layer_keys.iter().map(|k| format!("{}_", k)).collect();
 
@@ -213,12 +219,6 @@ impl DependencyCycleAnalyzer {
             }
         }
 
-        for e in &edges {
-            eprintln!("DEBUG_EDGE {} -> {}", e.source, e.target);
-        }
-        for (fl, f) in &file_by_layer {
-            eprintln!("DEBUG_FILELAYER {} -> {}", fl, f);
-        }
         let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
         cycle_edge_results.into_iter().map(|sn| {
             let edge_key = sn.value;

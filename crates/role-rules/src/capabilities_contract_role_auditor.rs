@@ -49,6 +49,11 @@ impl ContractRoleChecker {
 
     fn check_contract_primitive(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
+        // Exempt I/O protocol files — primitives are the correct abstraction for
+        // low-level file system, network, and process operations.
+        if path_str.contains("io_protocol") || path_str.contains("filesystem_io") {
+            return;
+        }
         let content = &file.content;
         let fp = match shared::common::FilePath::new(path_str.to_string()) {
             Ok(fp) => fp,

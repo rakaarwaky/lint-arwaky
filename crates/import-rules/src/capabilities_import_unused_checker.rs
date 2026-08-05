@@ -170,6 +170,7 @@ pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
     // ─── Well-known Rust trait paths ───
     if raw_path.contains("prelude")
         || raw_path.contains("async_trait")
+        || raw_path.contains("visit::Visit")
         || raw_path.ends_with("::io::Write")
         || raw_path.ends_with("::fmt::Display")
         || raw_path.ends_with("::fmt::Debug")
