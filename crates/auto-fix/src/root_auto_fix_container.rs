@@ -4,6 +4,9 @@
 // - BF-1: `dry_run` is no longer baked into the container — passed per-request via `execute(path, dry_run)`
 // - `with_dry_run` is deprecated in favor of `new()` + per-request dry_run
 
+use crate::agent_fix_orchestrator::FixOrchestrator;
+use crate::capabilities_file_adapter::FileAdapter;
+use crate::capabilities_fix_processor::LintFixProcessor;
 use shared::auto_fix::LintFixOrchestratorAggregate;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::Arc;
@@ -26,11 +29,11 @@ impl AutoFixContainer {
         &self,
         file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol>,
     ) -> Arc<dyn LintFixOrchestratorAggregate> {
-        let fix_protocol = crate::capabilities_fix_processor::LintFixProcessor::new(
+        let fix_protocol = LintFixProcessor::new(
             self.code_analysis_linter.clone(),
             file_adapter.clone(),
         );
-        Arc::new(crate::agent_fix_orchestrator::FixOrchestrator::new(
+        Arc::new(FixOrchestrator::new(
             Arc::new(fix_protocol),
             file_adapter,
         ))
@@ -44,7 +47,7 @@ impl AutoFixContainer {
         >,
     ) -> Arc<dyn LintFixOrchestratorAggregate> {
         let file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol> = Arc::new(
-            crate::capabilities_file_adapter::FileAdapter::new(filesystem),
+            FileAdapter::new(filesystem),
         );
         self.orchestrator(file_adapter)
     }
