@@ -29,6 +29,7 @@ pub mod utility_workspace_detection; // FR-005
 
 // ── Agent (orchestration) ──
 pub mod agent_filesystem_orchestrator;
+pub(crate) mod agent_filesystem_orchestrator_helpers;
 
 // ── Root (composition, wiring) ──
 pub mod root_filesystem_container;

@@ -12,28 +12,30 @@ use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
-#[allow(clippy::too_many_arguments)]
-pub fn handle_ci(
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    import_orchestrator: Arc<dyn IImportRunnerAggregate>,
-    naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
-    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    path: Option<FilePath>,
-    threshold: Threshold,
-) -> ExitCode {
+/// Parameters for the CI command — groups all linter aggregates + CLI args.
+pub struct CiCommandParams {
+    pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
+    pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
+    pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub path: Option<FilePath>,
+    pub threshold: Threshold,
+}
+
+pub fn handle_ci(params: CiCommandParams) -> ExitCode {
     match dispatcher::surface_ci_action::collect_ci(
         dispatcher::surface_ci_action::CiScanDeps {
-            code_analysis_linter,
-            import_orchestrator,
-            naming_orchestrator,
-            config_orchestrator,
-            orphan_orchestrator,
-            filesystem,
+            code_analysis_linter: params.code_analysis_linter,
+            import_orchestrator: params.import_orchestrator,
+            naming_orchestrator: params.naming_orchestrator,
+            config_orchestrator: params.config_orchestrator,
+            orphan_orchestrator: params.orphan_orchestrator,
+            filesystem: params.filesystem,
         },
-        path,
-        threshold,
+        params.path,
+        params.threshold,
     ) {
         Ok(report) => {
             println!(
