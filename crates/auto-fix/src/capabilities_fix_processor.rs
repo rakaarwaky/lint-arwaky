@@ -20,8 +20,9 @@
 // - TR-3: Removed `emit_fix_event`/`is_fixable`/`fixable_codes` from protocol
 // - RC-1: Fixed FRD ambiguity — "remove comment from line" = strip, not delete
 
+use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::{
-    FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol, SkipReason,
+    FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, SkipReason,
 };
 use shared::cli_commands::LintResult;
 use shared::common::{

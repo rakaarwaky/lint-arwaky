@@ -9,8 +9,8 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_job_vo::SuccessStatus;
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::GitHookError;
-use shared::git_hooks::IHookManagerProtocol;
+use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
