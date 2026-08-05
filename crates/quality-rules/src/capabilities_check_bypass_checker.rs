@@ -8,7 +8,8 @@
 use std::borrow::Cow;
 
 use shared::cli_commands::LintResult;
-use shared::quality_rules::{CodeAnalysisRuleVO, IBypassCheckerProtocol};
+use shared::quality_rules::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::quality_rules::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 
 use crate::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,

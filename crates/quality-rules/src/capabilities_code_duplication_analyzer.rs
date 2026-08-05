@@ -1,4 +1,5 @@
-use shared::quality_rules::{AesCodeAnalysisViolation, ICodeMetricAnalyzerProtocol};
+use shared::quality_rules::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use shared::quality_rules::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 
 use shared::common::LintMessage;
 use shared::config_system::ArchitectureConfig;

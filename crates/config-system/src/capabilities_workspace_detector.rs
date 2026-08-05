@@ -92,14 +92,6 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl Default for WorkspaceDetector {
-    fn default() -> Self {
-        panic!(
-            "WorkspaceDetector::default() requires filesystem — use WorkspaceDetector::new(fs) instead"
-        );
-    }
-}
-
 impl WorkspaceDetector {
     pub fn new(filesystem: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { filesystem }

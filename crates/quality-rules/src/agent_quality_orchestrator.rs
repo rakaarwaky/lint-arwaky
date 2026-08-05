@@ -20,14 +20,16 @@
 use rayon::prelude::*;
 use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::quality_rules::{
-    IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
-    IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
-};
+use shared::quality_rules::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared::quality_rules::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use shared::quality_rules::contract_line_protocol::ILineCheckerProtocol;
+use shared::quality_rules::contract_class_protocol::IMandatoryClassProtocol;
 
-use shared::common::DisplayContent;
-use shared::common::FilePath;
-use shared::common::Severity;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_compliance_score::compute_score;
 use shared::common::utility_layer_detector::{
     collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,

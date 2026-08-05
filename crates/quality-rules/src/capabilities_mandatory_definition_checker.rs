@@ -1,9 +1,11 @@
 use shared::cli_commands::LintResult;
-use shared::quality_rules::{IDeadInheritanceProtocol, IMandatoryClassProtocol};
+use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
+use shared::quality_rules::contract_class_protocol::IMandatoryClassProtocol;
 
 use crate::utility_bypass_detector::skip_cfg_test_block;
 use crate::utility_mandatory_checker::rust_declares_type;
-use shared::common::{LayerDefinition, Severity};
+use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_severity_vo::Severity;
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/enum/trait/type (Rust) or class/interface/type (JS/TS)/class (Python) (IMandatoryClassProtocol).
