@@ -1,4 +1,4 @@
-# FRD — git-hooks (v1.1.0)
+# FRD — git-hooks (v1.11.0)
 
 ---
 

@@ -1,4 +1,4 @@
-# FRD — file-watch
+# FRD — file-watch (v1.11.0)
 
 ## System Overview
 
@@ -103,7 +103,7 @@ flowchart TD
 ### FR-006: Graceful Shutdown
 
 - **Description**: Stop the watcher and event loop on Ctrl+C signal.
-- **Input**: Atomic running flag + tokio ctrl_c signal.
+- **Input**: Atomic running flag (set to false by `ctrlc` handler in the CLI surface).
 - **Output**: Watcher stopped, success exit code returned.
 - **Business Rules**:
   - Ctrl+C sets running flag to false via atomic boolean.

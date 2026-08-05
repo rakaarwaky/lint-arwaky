@@ -333,32 +333,35 @@ impl ArchImportForbiddenChecker {
                 }
 
                 if is_forbidden {
-                    let message = if source_layer == forbidden {
-                        match source_layer {
-                            "utility" => "AES201 FORBIDDEN_IMPORT: Layer 'utility' is importing from itself.\n\
-                                    WHY? Utility files must be stateless and independent. Utility→utility imports create hidden dependencies.\n\
-                                    FIX: Extract the dependent function to a taxonomy VO if it's data, or consolidate both utilities into a single file if they are tightly coupled.".to_string(),
-                            "capabilities" => "AES201 FORBIDDEN_IMPORT: Layer 'capabilities' is importing from itself.\n\
-                                    WHY? Capabilities must communicate through contract protocols to maintain loose coupling.\n\
-                                    FIX: Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation.".to_string(),
-                            "agent" => "AES201 FORBIDDEN_IMPORT: Layer 'agent' is importing from itself.\n\
-                                    WHY? Agent orchestrators must coordinate through contract aggregates, not directly reference each other.\n\
-                                    FIX: Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation.".to_string(),
-                            _ => format!(
-                                "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
-                                    WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
-                                    FIX: Remove the import or refactor to use one of the allowed layers.",
-                                source_layer, forbidden, source_layer, forbidden
-                            ),
-                        }
+                    let why = if source_layer == forbidden {
+                        format!(
+                            "Layer '{}' is importing from itself. \
+                             {} layer files must be stateless and independent. \
+                             Self-imports create hidden dependencies.",
+                            source_layer, source_layer
+                        )
                     } else {
                         format!(
-                            "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
-                                WHY? Layer '{}' must not depend on '{}' to maintain architectural boundaries.\n\
-                                FIX: Remove the import or refactor to use one of the allowed layers.",
-                            source_layer, forbidden, source_layer, forbidden
+                            "Layer '{}' must not depend on '{}' to maintain architectural boundaries.",
+                            source_layer, forbidden
                         )
                     };
+                    let fix = match (source_layer, forbidden) {
+                        ("utility", "utility") => "Inline small functions, consolidate tightly coupled utilities, extract shared data to taxonomy VO, or move the function into this file.",
+                        ("capabilities", "capabilities") => "Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation.",
+                        ("agent", "agent") => "Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation.",
+                        ("utility", "contract") => "Utility layer cannot use contract traits. If this function needs DI (trait param), move it to capabilities layer. If it only uses data from the contract, extract the data to a taxonomy VO instead.",
+                        ("agent", "capabilities") => "Agent orchestrator must not import capabilities directly. Define a contract protocol and use dependency injection.",
+                        ("surface", "capabilities") => "Surface must delegate through aggregates, not import capabilities directly. Route: surface → contract(aggregate) → capabilities.",
+                        ("surface", "agent") => "Surface must not import agent orchestrators. Route: surface → contract(aggregate) → agent.",
+                        _ => "Remove the import or refactor to use one of the allowed layers.",
+                    };
+                    let message = format!(
+                        "AES201 FORBIDDEN_IMPORT: Layer '{}' is importing from forbidden layer '{}'.\n\
+                            WHY? {}\n\
+                            FIX: {}",
+                        source_layer, forbidden, why, fix
+                    );
                     violations.push(LintResult::new_arch(
                         file,
                         idx + 1,

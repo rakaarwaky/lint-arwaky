@@ -182,7 +182,7 @@ flowchart TD
 - **Global actions** (doctor, init, install, mcp-config, config-show, install-hook, uninstall-hook, adapters, version): use `run_action_no_path`.
 - **Scan**: runs in background thread, sends `ScanUpdate::Progress`/`Complete` via `mpsc::sync_channel(16)`.
 - **Other actions**: run synchronously, block event loop briefly.
-- **Duplicates** (`D` key): delegates to `SurfaceLintExecutor::duplicates()`, which uses `ICodeAnalysisAggregate::scan_duplicate_blocks()` to detect code duplication.
+- **Duplicates** (`D` key): `ActionDuplicates` event is mapped but not yet delegated to `SurfaceLintExecutor` — currently logged only.
 - Watch mode: explicitly unsupported in TUI — pressing `w` shows "Watch mode is not supported in TUI" message.
 
 **Edge Cases**:
@@ -540,9 +540,10 @@ container.run(lint_executor, filesystem)?;
 | 2 | scan() delegates to run_comprehensive_scan | LintExecutionResult with full scan output |
 | 3 | fix() without fix_orchestrator             | CLI fallback message in output            |
 | 4 | fix() with fix_orchestrator                | Fix result with mode prefix               |
-| 5 | duplicates() with code_analysis            | Duplication violation list in output      |
-| 6 | doctor() without maintenance               | CLI fallback message                      |
-| 7 | version() always returns success           | Version string in output                  |
+| 5 | security() with maintenance aggregate     | Security scan result in output            |
+| 6 | dependencies() with maintenance aggregate | Dependency report in output               |
+| 7 | doctor() without maintenance               | CLI fallback message                      |
+| 8 | version() always returns success           | Version string in output                  |
 
 ---
 

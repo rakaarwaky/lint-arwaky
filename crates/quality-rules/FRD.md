@@ -1,4 +1,4 @@
-# FRD — quality-rules (v1.1.0)
+# FRD — quality-rules (v1.11.0)
 
 ---
 

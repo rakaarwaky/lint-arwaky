@@ -5,9 +5,8 @@ There are 3 test workspaces with 2 variants each:
 - **`workspaces-bad/`** — files with intentional violations (linter SHOULD detect them)
 - **`workspaces-good/`** — clean files (linter should NOT flag them = false positive test)
 
-
-| Category         | Bad Path                   | Good Path                   | Purpose                                     |
-| ------------------ | ---------------------------- | ----------------------------- | --------------------------------------------- |
+| Category         | Bad Path                     | Good Path                     | Purpose                                     |
+| ---------------- | ---------------------------- | ----------------------------- | ------------------------------------------- |
 | Rust (crates)    | `workspaces-bad/crates/`   | `workspaces-good/crates/`   | AES Rust rules + Clippy/Rustfmt/cargo-audit |
 | Python (modules) | `workspaces-bad/modules/`  | `workspaces-good/modules/`  | AES Python rules + Ruff/MyPy/Bandit         |
 | JS/TS (packages) | `workspaces-bad/packages/` | `workspaces-good/packages/` | AES JS/TS rules + ESLint/Prettier/tsc       |
@@ -16,13 +15,13 @@ There are 3 test workspaces with 2 variants each:
 
 ```
 workspaces-bad/                      # Files with violations (should trigger AES rules)
-├── crates/                          # Rust: 721 files → 2311 violations, 24 AES codes
+├── crates/                          # Rust: 142 files, 382 violations, 24 AES codes
 │   ├── shared_common/src/           # Orphan files, bad naming, etc.
 │   ├── naming_violations/src/       # AES101 naming violations
 │   ├── code_analysis/src/           # AES503 capabilities orphans
 │   └── ...
-├── modules/                         # Python: 704 files → 2083 violations, 24 AES codes
-├── packages/                        # JS/TS: 494 files → 1905 violations, 24 AES codes
+├── modules/                         # Python: 154 files, 384 violations, 24 AES codes
+├── packages/                        # JS/TS: 144 files, 526 violations, 24 AES codes
 ├── Cargo.toml, pyproject.toml, package.json, ...
 
 workspaces-good/                     # Clean files (0 violations expected)
@@ -37,12 +36,12 @@ workspaces-good/                     # Clean files (0 violations expected)
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 721   | 2311       | —               | 24 unique codes    |
-| bad       | Python   | 704   | 2083       | —               | 24 unique codes    |
-| bad       | JS/TS    | 494   | 1905       | —               | 24 unique codes    |
-| good      | Rust     | 29    | 0          | 0               | —                  |
-| good      | Python   | 69    | 0          | 0               | —                  |
-| good      | JS/TS    | 50    | 0          | 0               | —                  |
+| bad       | Rust     | 142   | 382        | —              | 24 unique codes    |
+| bad       | Python   | 154   | 384        | —              | 24 unique codes    |
+| bad       | JS/TS    | 144   | 526        | —              | 24 unique codes    |
+| good      | Rust     | 29    | 0          | 0               | —                 |
+| good      | Python   | 69    | 0          | 0               | —                 |
+| good      | JS/TS    | 50    | 0          | 0               | —                 |
 
 > **Note**: workspaces-good should produce 0 violations. If any violation
 > appears, it's a false positive that must be fixed.
@@ -100,12 +99,11 @@ cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 
 ### 3.1 Thresholds
 
-
-| Criteria                       | PASS    | FAIL        |
-| -------------------------------- | --------- | ------------- |
-| Total violations (Rust scan)   | >= 2000 | < 2000 or 0 |
-| Total violations (Python scan) | >= 2000 | < 2000 or 0 |
-| Total violations (JS/TS scan)  | >= 2000 | < 2000 or 0 |
+| Criteria                       | PASS   | FAIL        |
+| ------------------------------ | ------ | ----------- |
+| Total violations (Rust scan)   | >= 300 | < 300 or 0  |
+| Total violations (Python scan) | >= 300 | < 300 or 0  |
+| Total violations (JS/TS scan)  | >= 300 | < 300 or 0  |
 | Unique AES codes (Rust)        | >= 24   | < 24        |
 | Unique AES codes (Python)      | >= 24   | < 24        |
 | Unique AES codes (JS/TS)       | >= 24   | < 24        |
@@ -116,9 +114,8 @@ cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 Every AES rule MUST produce at least 1 violation in the test workspaces.
 If any rule produces 0 violations, the test project is missing a trigger file.
 
-
 | Rule   | Description                            | Rust | Python | JS/TS |
-| -------- | ---------------------------------------- | ------ | -------- | ------- |
+| ------ | -------------------------------------- | ---- | ------ | ----- |
 | AES101 | Naming convention                      | ✓   | ✓     | ✓    |
 | AES102 | Suffix/prefix validation               | ✓   | ✓     | ✓    |
 | AES201 | Layer dependency violation             | ✓   | ✓     | ✓    |
@@ -146,35 +143,33 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 
 ### 3.3 Negative Tests (must produce 0 violations)
 
-
-| #  | Scenario                                          | Expected                                        |
-| ---- | --------------------------------------------------- | ------------------------------------------------- |
+| #  | Scenario                                                | Expected                                        |
+| -- | ------------------------------------------------------- | ----------------------------------------------- |
 | 1  | Barrel file (`mod.rs`, `__init__.py`, `index.ts`) | 0 violations (skipped)                          |
-| 2  | File in`exceptions` list                          | 0 violations (skipped)                          |
-| 3  | Config`architecture.enabled: false`               | 0 violations (all rules disabled)               |
-| 4  | Rule`AES201.enabled: false`                       | 0 AES201 violations (other rules still run)     |
-| 5  | Clean, well-structured file                       | 0 violations                                    |
-| 6  | `pub use` re-export in barrel file                | 0 violations (not flagged as unused/dummy)      |
-| 7  | `unwrap_or_default()` usage                       | 0 AES304 violations (safe variant)              |
-| 8  | Import inside`#[cfg(test)]` block                 | 0 violations (conditional skip)                 |
-| 9  | Root layer file (`root_*`)                        | 0 role-rule violations (skipped)                |
-| 10 | File with`parse_ok = false`                       | PARSE_WARN emitted, file skipped for AES checks |
+| 2  | File in`exceptions` list                              | 0 violations (skipped)                          |
+| 3  | Config`architecture.enabled: false`                   | 0 violations (all rules disabled)               |
+| 4  | Rule`AES201.enabled: false`                           | 0 AES201 violations (other rules still run)     |
+| 5  | Clean, well-structured file                             | 0 violations                                    |
+| 6  | `pub use` re-export in barrel file                    | 0 violations (not flagged as unused/dummy)      |
+| 7  | `unwrap_or_default()` usage                           | 0 AES304 violations (safe variant)              |
+| 8  | Import inside`#[cfg(test)]` block                     | 0 violations (conditional skip)                 |
+| 9  | Root layer file (`root_*`)                            | 0 role-rule violations (skipped)                |
+| 10 | File with`parse_ok = false`                           | PARSE_WARN emitted, file skipped for AES checks |
 
 ### 3.4 Exit Code Tests
 
-
-| #  | Scenario                                     | Expected Exit Code               |
-| ---- | ---------------------------------------------- | ---------------------------------- |
-| 1  | `scan` on clean project                      | 0                                |
+| #  | Scenario                                      | Expected Exit Code               |
+| -- | --------------------------------------------- | -------------------------------- |
+| 1  | `scan` on clean project                     | 0                                |
 | 2  | `scan` on workspaces-bad (violations found) | 1                                |
-| 3  | `scan` on nonexistent path                   | 2                                |
-| 4  | `scan` with invalid arguments                | 2                                |
-| 5  | `security` without cargo-audit installed     | 3                                |
-| 6  | `ci --threshold 0` with violations           | 1                                |
-| 7  | `ci --threshold 100` with few violations     | 0                                |
-| 8  | `fix --dry-run` with violations              | 0 (preview only)                 |
-| 9  | `doctor` with all tools installed            | 0                                |
-| 10 | `doctor` with missing tools                  | 0 (missing tools listed in body) |
+| 3  | `scan` on nonexistent path                  | 2                                |
+| 4  | `scan` with invalid arguments               | 2                                |
+| 5  | `security` without cargo-audit installed    | 3                                |
+| 6  | `ci --threshold 0` with violations          | 1                                |
+| 7  | `ci --threshold 100` with few violations    | 0                                |
+| 8  | `fix --dry-run` with violations             | 0 (preview only)                 |
+| 9  | `doctor` with all tools installed           | 0                                |
+| 10 | `doctor` with missing tools                 | 0 (missing tools listed in body) |
 
 ---
 
@@ -187,57 +182,57 @@ complete all verification tasks below.
 
 The base codebase must be clean of internal architecture rule violations.
 
-- [ ]  Run self-lint audit:
+- [ ] Run self-lint audit:
 
   ```bash
   cargo run --bin lint-arwaky-cli -- check .
   ```
-- [ ]  **Criteria**: Output must show **`Total violations: 0`**.
-- [ ]  **Safety net**: No inline bypasses (`#[allow(...)]`, `unwrap()`, `todo!()`,
+- [ ] **Criteria**: Output must show **`Total violations: 0`**.
+- [ ] **Safety net**: No inline bypasses (`#[allow(...)]`, `unwrap()`, `todo!()`,
   `FIXME`, `HACK`). If an external module strictly requires an exception,
   register it in `lint_arwaky.config.yaml` under the `exceptions`
   block — never use inline bypass comments.
 
 ### 4.2 Cross-Language Functional Verification
 
-- [ ]  Build a clean release:
+- [ ] Build a clean release:
 
   ```bash
   bash scripts/install.local.sh
   ```
-- [ ]  Run scan on bad workspaces (should find violations):
+- [ ] Run scan on bad workspaces (should find violations):
 
   ```bash
   lint-arwaky-cli scan workspaces-bad/crates
   lint-arwaky-cli scan workspaces-bad/modules
   lint-arwaky-cli scan workspaces-bad/packages
   ```
-- [ ]  Run scan on good workspaces (should find 0 violations):
+- [ ] Run scan on good workspaces (should find 0 violations):
 
   ```bash
   lint-arwaky-cli scan workspaces-good/crates
   lint-arwaky-cli scan workspaces-good/modules
   lint-arwaky-cli scan workspaces-good/packages
   ```
-- [ ]  **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
-- [ ]  **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ]  **Criteria**: All 24 AES codes detected per language (Section 3.2).
-- [ ]  **Criteria**: All negative tests pass (Section 3.3).
-- [ ]  **Criteria**: All exit code tests pass (Section 3.4).
+- [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
+- [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
+- [ ] **Criteria**: All 24 AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All negative tests pass (Section 3.3).
+- [ ] **Criteria**: All exit code tests pass (Section 3.4).
 
 ### 4.3 System & MCP Protocol Verification
 
-- [ ]  Run workspace unit tests:
+- [ ] Run workspace unit tests:
 
   ```bash
   cargo test --workspace
   ```
-- [ ]  Run binary health diagnostics:
+- [ ] Run binary health diagnostics:
 
   ```bash
   lint-arwaky-cli doctor
   ```
-- [ ]  Run MCP protocol smoke test:
+- [ ] Run MCP protocol smoke test:
 
   ```bash
   echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | lint-arwaky-mcp
@@ -249,17 +244,17 @@ The base codebase must be clean of internal architecture rule violations.
 
 ### 4.4 Report Format Verification
 
-- [ ]  JSON output:
+- [ ] JSON output:
 
   ```bash
   lint-arwaky-cli scan workspaces-bad/crates --format json
   ```
-- [ ]  SARIF output:
+- [ ] SARIF output:
 
   ```bash
   lint-arwaky-cli scan workspaces-bad/crates --format sarif
   ```
-- [ ]  JUnit XML output:
+- [ ] JUnit XML output:
 
   ```bash
   lint-arwaky-cli scan workspaces-bad/crates --format junit

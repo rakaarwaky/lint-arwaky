@@ -39,7 +39,7 @@ flowchart TD
 
 ### Dependency Rule
 
-- Dispatcher imports: Taxonomy, Contract, shared aggregates (filesystem, naming, import, quality, orphan, role, external, config, maintenance, setup, file-watch, auto-fix, code-analysis)
+- Dispatcher imports: shared (taxonomies, contracts, aggregates for filesystem, naming, import, quality, orphan, role, external, config, maintenance, setup, file-watch, auto-fix), filesystem, orphan-rules
 - Dispatcher must NOT import: any Smart surface crate (CLI, MCP, TUI, API)
 
 ---
@@ -371,6 +371,30 @@ flowchart TD
 - Unknown severity string: defaults to `INFO`.
 
 **Error Handling**: `Option<ViolationItem>` for JSON parsing; infallible for `from_lint_result`.
+
+---
+
+### FR-012: Version Info
+
+**File**: `surface_version_action.rs`
+
+**What it produces**: `VersionReport` with compile-time version and edition info.
+
+|| Output       | Description                              ||
+|| ------------ | ------------------------------------------ ||
+|| version      | Crate version from `CARGO_PKG_VERSION`   ||
+|| edition      | Rust edition from `CARGO_PKG_RUST_VERSION` ||
+
+**Input**: None (reads compile-time environment variables).
+
+**Business Rules**:
+
+- Returns `VersionReport` with `version` and `edition` fields populated from `env!()` macros.
+- Used by MCP server and CLI to report the tool version.
+
+**Edge Cases**: None (infallible).
+
+**Error Handling**: None (infallible).
 
 ---
 

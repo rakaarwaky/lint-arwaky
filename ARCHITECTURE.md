@@ -306,16 +306,17 @@ Surface roles include:
 
 ### Surface Groups
 
-| Group            | Roles                             | Dependencies                          | Rule                                                      |
-| ---------------- | --------------------------------- | ------------------------------------- | --------------------------------------------------------- |
-| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | May initiate feature behavior through aggregate           |
-| Utility surfaces | hook, store, action, screen       | Taxonomy, Contract Aggregate, Utility | Support smart surfaces but must not import smart surfaces |
-| Passive surfaces | component, view, layout           | Taxonomy only                         | Presentation-only, no logic or orchestration              |
+| Group            | Roles                             | Allowed Dependencies                | Forbidden Dependencies                                     | Rule                                           |
+| ---------------- | --------------------------------- | ----------------------------------- | ---------------------------------------------------------- | ---------------------------------------------- |
+| Smart surfaces   | command, controller, page, router | Taxonomy, Contract Aggregate, Utility | Agent, Capabilities, Contract Protocol, Root              | May initiate feature behavior through aggregate |
+| Utility surfaces | hook, store, action, screen       | Taxonomy                            | Agent, Capabilities, Contract, Utility, Other surfaces, Root | Support smart surfaces, data/state only         |
+| Passive surfaces | component, view, layout           | Taxonomy                            | Agent, Contract, Capabilities, Other surfaces, Root        | Presentation-only, no logic or orchestration    |
 
 ### Special Rules
 
-- Smart surfaces must consume Contract Aggregates.
-- Surfaces must not import Capabilities, Utility, or Agent directly.
+- Smart surfaces must consume Contract Aggregates to reach capabilities/agent.
+- Only smart surfaces may import Utility layer files.
+- Utility and passive surfaces must not import Capabilities, Contract, or Agent directly.
 - Surfaces must not contain business calculation or orchestration.
 
 ---

@@ -1,5 +1,5 @@
 
-# FRD — auto-fix (v1.1.0)
+# FRD — auto-fix (v1.11.0)
 
 ---
 
@@ -248,9 +248,8 @@ flowchart TD
     utilities (file handler, symbol renaming).
 - **External**:
 
-  - Filesystem: reads and writes source files via the file handler utility.
-    Note: the filesystem crate is read-only; auto-fix performs its own file
-    writes.
+  - Filesystem: reads and writes source files via the `FileAdapter`,
+    which delegates to `IFilesystemAggregate::write_string()`.
   - No async runtime dependency.
 
 ---
@@ -352,7 +351,8 @@ flowchart TD
   would break syntax.
 - Symbol renaming is mechanical (`renamed_` prefix) — it does not produce
   semantically correct names. Correct renaming requires developer judgment.
-- The filesystem crate is read-only; auto-fix performs its own file writes.
+- The filesystem crate provides read/write I/O via `IFileSystemIOProtocol`;
+  auto-fix delegates writes through `FileAdapter` → `IFilesystemAggregate::write_string()`.
 - No async runtime dependency.
 
 ---
@@ -378,5 +378,5 @@ flowchart TD
 
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- Code Analysis FRD: `crates/quality-rules/FRD.md` (AES304 bypass patterns)
+- Quality Rules FRD: `crates/quality-rules/FRD.md` (AES304 bypass patterns)
 - CLI Commands FRD: `crates/cli-commands/FRD.md` (FR-003 fix command)

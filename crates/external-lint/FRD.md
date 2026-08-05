@@ -1,4 +1,4 @@
-# FRD — external-lint (v1.1.0)
+# FRD — external-lint (v1.11.0)
 
 ---
 

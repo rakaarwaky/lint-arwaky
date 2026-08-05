@@ -1,4 +1,4 @@
-# FRD — config-system (v1.1.0)
+# FRD — config-system (v1.11.0)
 
 ---
 

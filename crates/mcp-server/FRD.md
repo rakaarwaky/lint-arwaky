@@ -1,4 +1,4 @@
- FRD — mcp-server (v1.1.0)
+ FRD — mcp-server (v1.11.0)
 
 ---
 

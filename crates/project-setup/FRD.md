@@ -1,5 +1,5 @@
 
-# FRD — project-setup (v1.1.0)
+# FRD — project-setup (v1.11.0)
 
 ---
 

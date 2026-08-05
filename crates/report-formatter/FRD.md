@@ -1,5 +1,5 @@
 
-# FRD — report-formatter (v1.1.0)
+# FRD — report-formatter (v1.11.0)
 
 ---
 
