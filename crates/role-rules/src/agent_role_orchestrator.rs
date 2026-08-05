@@ -92,6 +92,11 @@ impl RoleOrchestrator {
                 continue;
             }
 
+            // Skip files in rule-specific exceptions from config
+            if self.is_exception(filename) {
+                continue;
+            }
+
             if self.is_ignored(&path_str) {
                 continue;
             }
@@ -158,5 +163,15 @@ impl RoleOrchestrator {
                 .iter()
                 .all(|igs| segments.iter().any(|s| s == igs))
         })
+    }
+
+    fn is_exception(&self, filename: &str) -> bool {
+        // Check if filename is in any rule's exceptions list
+        for rule in &self.config.rules {
+            if rule.exceptions.values.iter().any(|e| e == filename) {
+                return true;
+            }
+        }
+        false
     }
 }
