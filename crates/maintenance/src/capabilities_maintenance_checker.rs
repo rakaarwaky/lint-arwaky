@@ -1,10 +1,12 @@
-use shared::common::{
-    AdapterName, ComplianceStatus, Count, DescriptionVO, FilePath, FilePathList, Score,
-};
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_common_vo::{Count, Score};
+use shared::common::taxonomy_message_vo::ComplianceStatus;
+use shared::common::taxonomy_path_vo::{FilePath, FilePathList};
+use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::maintenance::IMaintenanceCheckerProtocol;
-use shared::maintenance::MaintenanceStatsVO;
-use shared::maintenance::{
+use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::maintenance::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, DoctorResultVO, HealthCheckAdapterVO, HealthCheckResult,
     SecurityFinding, SecurityScanReport, ToolStatus, ToolchainDiagnostics,
 };

@@ -1,9 +1,11 @@
 // PURPOSE: ConfigParserProvider — IConfigParserProtocol implementation for YAML and TOML config parsing
-use shared::common::FilePath;
-use shared::config_system::{ConfigError, ConfigKey, IConfigParserProtocol, ProjectConfig};
+use shared::common::taxonomy_common_vo::ErrorMessage;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
+use shared::config_system::taxonomy_config_error::ConfigError;
+use shared::config_system::taxonomy_identifier_vo::ConfigKey;
+use shared::config_system::taxonomy_setting_vo::ProjectConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-
-use shared::common::ErrorMessage;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -103,7 +105,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
         shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         Vec<String>,
     ) {
-        crate::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
+        shared::config_system::taxonomy_config_parser::parse_config_yaml_with_warnings(yaml_str)
     }
 
     fn parse_adapter_entries_from_yaml(

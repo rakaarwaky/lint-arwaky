@@ -1,9 +1,11 @@
-use shared::common::{FilePath, JobId};
+use shared::common::taxonomy_action_vo::JobId;
+use shared::common::taxonomy_path_vo::FilePath;
 
-use shared::maintenance::{IMaintenanceCheckerProtocol, MaintenanceCommandsAggregate};
+use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 
-use shared::maintenance::MaintenanceStatsVO;
-use shared::maintenance::{
+use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
+use shared::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
 };
 use std::sync::Arc;

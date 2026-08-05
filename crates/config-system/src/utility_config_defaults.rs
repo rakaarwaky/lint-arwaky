@@ -1,4 +1,4 @@
-use crate::utility_config_parser::parse_config_yaml;
+use shared::config_system::taxonomy_config_parser::parse_config_yaml;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use std::sync::OnceLock;
 

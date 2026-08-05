@@ -467,10 +467,14 @@ impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         filesystem: Arc<dyn IFilesystemAggregate>,
+        fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+        orphan_factory: Arc<dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync>,
     ) -> Self {
         Self {
             code_analysis,
             filesystem,
+            fs_factory,
+            orphan_factory,
             fix_orchestrator: None,
             setup_aggregate: None,
             maintenance: None,
