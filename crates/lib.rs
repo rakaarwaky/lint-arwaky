@@ -19,4 +19,4 @@ pub use shared;
 pub use tui;
 
 // ── Root entry wiring ──────────────────────────────────────
-pub mod root_entry_wiring;
+pub mod root_entry_container;

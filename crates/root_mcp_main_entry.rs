@@ -1,13 +1,10 @@
 // PURPOSE: MCP binary entry point — wiring MCP-specific deps + rmcp stdio serve.
-use lint_arwaky::root_entry_wiring::CommonDeps;
+use lint_arwaky::root_entry_container::CommonDeps;
 use mcp_server::surface_mcp_action_command::{McpActionSurface, McpServerDependencies};
 use mcp_server::surface_mcp_tool_command::LintArwakyMcpServer;
 use rmcp::ServiceExt;
 use rmcp::transport::stdio;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::utility_config_parser::parse_config_yaml;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::orphan_rules::IOrphanAggregate;
 use std::sync::Arc;
 use tracing_subscriber::prelude::*;
 
@@ -26,14 +23,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_tracing();
     let deps = CommonDeps::build();
 
-    // DI: inject config_system parsing functions (MCP-specific)
-    let fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync> = Arc::new(|| {
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-    });
-    let orphan_factory: Arc<dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync> = Arc::new(|config, fs| {
-        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs).analyzer()
-    });
-
     let mcp_deps = McpServerDependencies {
         code_analysis_linter: deps.code_analysis_linter,
         fix_orchestrator_factory: deps.fix_orchestrator_factory,
@@ -47,8 +36,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         naming_orchestrator: deps.naming_orchestrator,
         role_orchestrator: deps.role_orchestrator,
         filesystem: deps.filesystem,
-        fs_factory,
-        orphan_factory,
+        fs_factory: deps.fs_factory,
+        orphan_factory: deps.orphan_factory,
         parse_config_yaml,
         parse_adapter_names: config_system::utility_config_parser::parse_adapter_names_from_yaml,
         parse_score_threshold: config_system::utility_config_parser::parse_score_threshold,

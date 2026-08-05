@@ -41,7 +41,7 @@ enum Command {
         #[arg(long)]
         member: Option<String>,
     },
-    /// Quality rules scan (AES quality violations)
+    /// Run all 6 linters (alias of scan)
     Check {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
@@ -49,8 +49,10 @@ enum Command {
         format: String,
         #[arg(long)]
         filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
     },
-    /// Quality rules scan (alias of check)
+    /// Quality rules scan (single linter)
     Quality {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
@@ -289,13 +291,16 @@ fn main() {
             path,
             format,
             filter,
-        } => cli_commands::surface_scan_command::handle_check(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            code_analysis_linter.clone(),
-            filesystem.clone(),
-            Some(config_orchestrator.clone()),
-            filter,
+            member,
+        } => cli_commands::surface_scan_command::handle_scan(
+            cli_commands::surface_scan_command::ScanCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                filesystem: filesystem.clone(),
+                config_orchestrator: Some(config_orchestrator.clone()),
+                filter,
+                member,
+            },
         ),
         Command::Quality {
             path,

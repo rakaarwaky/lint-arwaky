@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
@@ -30,6 +31,9 @@ pub struct CommonDeps {
     pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
     pub fix_orchestrator_factory:
         Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
+    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    pub orphan_factory:
+        Arc<dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync>,
 }
 
 impl CommonDeps {
@@ -105,6 +109,17 @@ impl CommonDeps {
             Arc::new(move |_dry| container.orchestrator_with_filesystem(fs_for_factory.clone()))
         };
 
+        let fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync> =
+            Arc::new(|| filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator());
+        let orphan_factory: Arc<
+            dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate>
+                + Send
+                + Sync,
+        > = Arc::new(|config, fs| {
+            orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs)
+                .analyzer()
+        });
+
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
             shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
             filesystem.clone(),
@@ -132,6 +147,8 @@ impl CommonDeps {
             setup_orchestrator,
             git_hooks_aggregate,
             fix_orchestrator_factory,
+            fs_factory,
+            orphan_factory,
         }
     }
 }
