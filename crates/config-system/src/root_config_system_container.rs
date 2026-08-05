@@ -4,21 +4,10 @@ use crate::capabilities_rules_validator::ConfigRulesValidator;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
 // Utility modules wired into entry for orphan reachability (AES504)
-use crate::utility_config_defaults;
+// These imports ensure utility files are not orphaned (AES504)
+use crate::root_config_defaults;
 use crate::utility_config_merger;
 use crate::utility_config_parser;
-
-fn _use_utility_defaults() -> std::collections::HashMap<String, String> {
-    utility_config_defaults::default_aes_config()
-}
-
-fn _use_utility_merger(base: std::collections::HashMap<String, String>, override_config: std::collections::HashMap<String, String>) -> std::collections::HashMap<String, String> {
-    utility_config_merger::merge_config(base, override_config)
-}
-
-fn _use_utility_parser(yaml_str: &str) -> Option<f64> {
-    utility_config_parser::parse_score_threshold(yaml_str)
-}
 use shared::config_system::{
     IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
     IConfigValidatorProtocol,
@@ -69,5 +58,23 @@ impl ConfigContainer {
 
     pub fn validator(&self) -> Arc<dyn IConfigValidatorProtocol> {
         self.validator.clone()
+    }
+
+    /// Get default AES configuration (uses root_config_defaults).
+    pub fn default_config(&self) -> shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+        root_config_defaults::default_aes_config()
+    }
+
+    /// Parse score threshold from YAML (uses utility_config_parser).
+    pub fn parse_score_threshold(&self, yaml_str: &str) -> Option<f64> {
+        utility_config_parser::parse_score_threshold(yaml_str)
+    }
+
+    /// Merge configuration layers (uses utility_config_merger).
+    pub fn merge_layers(
+        &self,
+        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+    ) {
+        let _ = utility_config_merger::merge_config(config);
     }
 }

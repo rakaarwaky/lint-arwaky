@@ -1,4 +1,4 @@
-use crate::utility_config_defaults::default_config_for_language;
+use crate::root_config_defaults::default_config_for_language;
 use dashmap::DashMap;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_vo::PatternList;
