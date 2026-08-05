@@ -49,7 +49,7 @@ flowchart TD
 
 ### Dependency Rule
 
-- MCP server imports: shared (taxonomies, aggregates), dispatcher (surface_*_action), config_system (for get_config)
+- MCP server imports: shared (taxonomies, aggregates including `IConfigOrchestratorAggregate`), dispatcher (surface_*_action)
 - MCP server must NOT import: rule crates, filesystem aggregate (except read_skill)
 - JSON responses include `exit_code` aligned with the workspace Exit Code
   Contract (`0` / `1` / `2` / `3`) from the root PRD.

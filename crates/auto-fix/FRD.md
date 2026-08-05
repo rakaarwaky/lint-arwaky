@@ -237,8 +237,7 @@ flowchart TD
 
 - **Internal**:
 
-  - Analysis pipeline — consumed via the analysis aggregate to run linting
-    and obtain violations.
+  - `ICodeAnalysisAggregate` — injected via DI at runtime (not a compile-time dependency) for running analysis and obtaining violations.
   - The shared crate: value objects, contracts (fix protocol, file adapter
     protocol, fix orchestrator aggregate), events (fix applied), and
     utilities (file handler, symbol renaming).

@@ -84,7 +84,7 @@ flowchart TD
 
 ### FR-005: Run Lint on Changed Files
 
-- **Description**: On each detected file change, run the full code analysis pipeline on the changed file and report violations and score.
+- **Description**: On each detected file change, delegate to the injected `ICodeAnalysisAggregate` and report violations and score.
 - **Input**: File change event with file path.
 - **Output**: Printed output: `[change] <path> | <count> violations, score <score>`.
 - **Business Rules**:
@@ -128,7 +128,7 @@ flowchart TD
 ## Integration Points
 
 - **Internal**:
-  - Code analysis aggregate — lint pipeline for running analysis on changed files.
+  - `ICodeAnalysisAggregate` — injected via DI at runtime (not a compile-time dependency) for running analysis on changed files.
   - Watch provider protocol — protocol interface for the notify provider.
   - Change analyzer protocol — protocol interface for change analysis.
   - Watch aggregate — aggregate trait for the orchestrator.
