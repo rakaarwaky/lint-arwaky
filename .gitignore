@@ -41,3 +41,4 @@ serviceAccountKey
 .agents/finding
 .agents/plans
 .kilo/
+.agents/reports
