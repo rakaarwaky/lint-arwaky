@@ -18,7 +18,7 @@ workspaces-bad/
 ├── crates/                       
 │   ├── shared_common/src/        
 │   ├── naming_violations/src/     
-│   ├── code_analysis/src/        
+│   ├── quality-rules/src/       
 │   └── ...
 ├── modules/                      
 ├── packages/                      
