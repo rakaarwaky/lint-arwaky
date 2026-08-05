@@ -11,9 +11,7 @@ static DEFAULT_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
 /// Returns the full default AES config parsed from `lint_arwaky.config.yaml`.
 pub fn default_aes_config() -> ArchitectureConfig {
     DEFAULT_CONFIG
-        .get_or_init(|| {
-            parse_config_yaml(include_str!("../../config/lint_arwaky.config.yaml"))
-        })
+        .get_or_init(|| parse_config_yaml(include_str!("../../config/lint_arwaky.config.yaml")))
         .clone()
 }
 

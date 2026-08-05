@@ -1,6 +1,9 @@
 import { CalculatorProtocol } from "calculator-shared/src/contract_calculator_protocol";
 import { ExpressionVO } from "calculator-shared/src/taxonomy_expression_vo";
-import { ResultVO, createResult } from "calculator-shared/src/taxonomy_result_vo";
+import {
+  ResultVO,
+  createResult,
+} from "calculator-shared/src/taxonomy_result_vo";
 
 export class SubtractionAnalyzer implements CalculatorProtocol {
   evaluate(expr: ExpressionVO): ResultVO {

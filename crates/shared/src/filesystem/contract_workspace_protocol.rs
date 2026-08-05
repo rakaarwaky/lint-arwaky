@@ -1,3 +1,4 @@
+use crate::common::taxonomy_common_vo::PatternList;
 // Contract layer — workspace protocol trait
 // FR-005: Workspace Structure Detection
 // Responsibilities: root detection, member detection, source dir, language
@@ -28,7 +29,7 @@ pub trait IWorkspaceProtocol: Send + Sync {
     fn detect_language_from_path(&self, path: &str) -> ConfigLanguage;
 
     /// FR-005: Check if any container/entry file under workspace root references identifiers.
-    fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &[String]) -> bool;
+    fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &PatternList) -> bool;
 
     /// Resolve a module path relative to base_dir, confined under root.
     fn resolve_orphan_module_path(

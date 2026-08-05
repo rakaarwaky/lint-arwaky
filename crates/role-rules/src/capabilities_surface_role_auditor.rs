@@ -88,7 +88,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? File {} has too many function declarations (exceeds 15): found {}\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count)
 ,
             ));
@@ -118,7 +118,7 @@ impl SurfaceRoleChecker {
                         0,
                         "AES406",
                         Severity::HIGH,
-                        
+
                         format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? File {} has too many function declarations (exceeds 15): found {}\nFIX: Ensure surface only performs its designated responsibilities.", path_str, count)
 ,
                     ));
@@ -164,7 +164,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} public methods (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, pub_fn_count, MAX_PUBLIC_METHODS)
 ,
             ));
@@ -184,7 +184,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
 ,
             ));
@@ -204,7 +204,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
 ,
             ));
@@ -237,7 +237,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\nWHY? Passive surface {} has {} control flow statements (max {})\nFIX: Move the complex domain/control logic into capabilities or orchestrator components.", path_str, control_flow_count, MAX_CONTROL_FLOW)
 ,
             ));

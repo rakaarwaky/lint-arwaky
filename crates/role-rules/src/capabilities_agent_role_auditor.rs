@@ -72,7 +72,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types (struct/enum) in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
 ,
                     ));
@@ -87,7 +87,7 @@ impl AgentRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -112,7 +112,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} classes in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
 ,
                     ));
@@ -121,7 +121,7 @@ impl AgentRoleChecker {
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -150,7 +150,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
 ,
                     ));
@@ -159,7 +159,7 @@ impl AgentRoleChecker {
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with 'implements' keyword found in {}. At least one class must implement an aggregate interface.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -222,7 +222,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
                                 names_str)
@@ -239,7 +239,7 @@ impl AgentRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -274,7 +274,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} classes in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
                                 names_str)
@@ -288,7 +288,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with parent/inheritance found in {}.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -333,7 +333,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
                                 names_str)
@@ -347,7 +347,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::MEDIUM,
-                    
+
                     format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with 'implements' found in {}.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));

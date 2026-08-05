@@ -347,13 +347,27 @@ impl ArchImportForbiddenChecker {
                         )
                     };
                     let fix = match (source_layer, forbidden) {
-                        ("utility", "utility") => "Inline small functions, consolidate tightly coupled utilities, extract shared data to taxonomy VO, or move the function into this file.",
-                        ("capabilities", "capabilities") => "Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation.",
-                        ("agent", "agent") => "Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation.",
-                        ("utility", "contract") => "Utility layer cannot use contract traits. If this function needs DI (trait param), move it to capabilities layer. If it only uses data from the contract, extract the data to a taxonomy VO instead.",
-                        ("agent", "capabilities") => "Agent orchestrator must not import capabilities directly. Define a contract protocol and use dependency injection.",
-                        ("surface", "capabilities") => "Surface must delegate through aggregates, not import capabilities directly. Route: surface → contract(aggregate) → capabilities.",
-                        ("surface", "agent") => "Surface must not import agent orchestrators. Route: surface → contract(aggregate) → agent.",
+                        ("utility", "utility") => {
+                            "Inline small functions, consolidate tightly coupled utilities, extract shared data to taxonomy VO, or move the function into this file."
+                        }
+                        ("capabilities", "capabilities") => {
+                            "Define a contract protocol (contract_*_protocol.rs) and use dependency injection to wire the capability implementation."
+                        }
+                        ("agent", "agent") => {
+                            "Define a contract aggregate (contract_*_aggregate.rs) and use dependency injection to wire the agent implementation."
+                        }
+                        ("utility", "contract") => {
+                            "Utility layer cannot use contract traits. If this function needs DI (trait param), move it to capabilities layer. If it only uses data from the contract, extract the data to a taxonomy VO instead."
+                        }
+                        ("agent", "capabilities") => {
+                            "Agent orchestrator must not import capabilities directly. Define a contract protocol and use dependency injection."
+                        }
+                        ("surface", "capabilities") => {
+                            "Surface must delegate through aggregates, not import capabilities directly. Route: surface → contract(aggregate) → capabilities."
+                        }
+                        ("surface", "agent") => {
+                            "Surface must not import agent orchestrators. Route: surface → contract(aggregate) → agent."
+                        }
                         _ => "Remove the import or refactor to use one of the allowed layers.",
                     };
                     let message = format!(

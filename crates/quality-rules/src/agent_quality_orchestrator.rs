@@ -21,11 +21,11 @@ use rayon::prelude::*;
 use shared::cli_commands::{LintResult, LintResultList};
 
 use shared::quality_rules::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use shared::quality_rules::contract_class_protocol::IMandatoryClassProtocol;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::quality_rules::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
 use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::quality_rules::contract_line_protocol::ILineCheckerProtocol;
-use shared::quality_rules::contract_class_protocol::IMandatoryClassProtocol;
 
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;

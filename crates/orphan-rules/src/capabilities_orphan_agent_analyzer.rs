@@ -81,6 +81,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
                         || cb.ends_with("_container.py")
                         || cb.ends_with("_container.ts")
                         || cb.ends_with("_container.js")
+                        || cb == "lib.rs"
                 })
                 .collect();
 

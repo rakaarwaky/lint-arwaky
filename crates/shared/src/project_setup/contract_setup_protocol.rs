@@ -1,3 +1,4 @@
+use crate::common::taxonomy_common_vo::PatternList;
 // PURPOSE: ISetupProtocol — protocol trait for project setup step definitions
 // AES402: All primitive `String` / `Result<(), String>` / `Result<PathBuf, String>`
 // return types in ISetupManagementProtocol are replaced with strongly-typed VOs.
@@ -62,6 +63,6 @@ pub trait ISetupManagementProtocol: Send + Sync {
 pub type InstallPackagesResult = Result<(), SetupError>;
 
 pub trait ISetupInstallerProtocol: Send + Sync {
-    fn install_python_packages(&self, packages: &[String]) -> InstallPackagesResult;
-    fn install_npm_packages(&self, packages: &[String], sudo: bool) -> InstallPackagesResult;
+    fn install_python_packages(&self, packages: &PatternList) -> InstallPackagesResult;
+    fn install_npm_packages(&self, packages: &PatternList, sudo: bool) -> InstallPackagesResult;
 }

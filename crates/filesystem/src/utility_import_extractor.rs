@@ -436,9 +436,7 @@ fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<V
     let brace_start = text.find('{')?;
     let brace_end = text.find('}')?;
     // Module path: everything before '{', trimmed of trailing whitespace/colons.
-    let module_path = text[..brace_start]
-        .trim_end_matches("::")
-        .trim();
+    let module_path = text[..brace_start].trim_end_matches("::").trim();
     let inner = &text[brace_start + 1..brace_end];
     let names: Vec<String> = inner
         .split(',')

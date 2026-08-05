@@ -1,3 +1,5 @@
+use crate::filesystem::taxonomy_filesystem_vo::FileContentPair;
+use crate::common::taxonomy_common_vo::PatternList;
 // PURPOSE: ICodeAnalysisAggregate — aggregate trait for quality-rules checks (AES301–AES305) and formatting reports
 use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::cli_commands::taxonomy_result_vo::LintResultList;
@@ -21,7 +23,7 @@ pub trait ICodeAnalysisAggregate: Send + Sync {
     // ── Code Duplication Detection ───────────────────────────
 
     /// Collect file entries (path, content) for duplication analysis.
-    fn collect_file_entries(&self, files: &[String]) -> Vec<(std::path::PathBuf, String)>;
+    fn collect_file_entries(&self, files: &PatternList) -> Vec<FileContentPair>;
 
     /// Scan for duplicate code blocks across files.
     fn scan_duplicate_blocks(

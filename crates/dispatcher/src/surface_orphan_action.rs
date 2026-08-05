@@ -228,9 +228,9 @@ fn scan_single_root(
     // Detect workspace root — when scanning a subdirectory inside a workspace,
     // build file index from workspace root so orphan detection has full visibility.
     let root_path = std::path::Path::new(root);
-    let scan_root =
-        fs_agg.find_workspace_root(root_path)
-            .unwrap_or_else(|| root_path.to_path_buf());
+    let scan_root = fs_agg
+        .find_workspace_root(root_path)
+        .unwrap_or_else(|| root_path.to_path_buf());
     let scan_root_str = scan_root.to_string_lossy().to_string();
     let scan_root_fp = FilePath::new(scan_root_str.clone()).unwrap_or_else(|_| root_fp.clone());
 

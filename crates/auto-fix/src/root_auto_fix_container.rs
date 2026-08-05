@@ -29,14 +29,9 @@ impl AutoFixContainer {
         &self,
         file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol>,
     ) -> Arc<dyn LintFixOrchestratorAggregate> {
-        let fix_protocol = LintFixProcessor::new(
-            self.code_analysis_linter.clone(),
-            file_adapter.clone(),
-        );
-        Arc::new(FixOrchestrator::new(
-            Arc::new(fix_protocol),
-            file_adapter,
-        ))
+        let fix_protocol =
+            LintFixProcessor::new(self.code_analysis_linter.clone(), file_adapter.clone());
+        Arc::new(FixOrchestrator::new(Arc::new(fix_protocol), file_adapter))
     }
 
     /// Construct orchestrator with filesystem aggregate — handles FileAdapter internally.
@@ -46,9 +41,8 @@ impl AutoFixContainer {
             dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
         >,
     ) -> Arc<dyn LintFixOrchestratorAggregate> {
-        let file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol> = Arc::new(
-            FileAdapter::new(filesystem),
-        );
+        let file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol> =
+            Arc::new(FileAdapter::new(filesystem));
         self.orchestrator(file_adapter)
     }
 }

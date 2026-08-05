@@ -1,5 +1,8 @@
 import { CalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
-import { CalculatorOrchestrator, CalculatorOrchestratorDeps } from "./agent_calculator_orchestrator";
+import {
+  CalculatorOrchestrator,
+  CalculatorOrchestratorDeps,
+} from "./agent_calculator_orchestrator";
 import { AdditionAnalyzer } from "calculator-addition/src/capabilities_addition_analyzer";
 import { SubtractionAnalyzer } from "calculator-subtraction/src/capabilities_subtraction_analyzer";
 import { MultiplicationAnalyzer } from "calculator-multiplication/src/capabilities_multiplication_analyzer";

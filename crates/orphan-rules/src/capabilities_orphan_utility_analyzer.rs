@@ -123,6 +123,38 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
             }
         }
 
+        // Fallback: barrel re-exports — if a sibling mod.rs or __init__.py re-exports this file
+        // and the barrel has consumer-layer importers, consider this file as imported.
+        if consumer_importers.is_empty() {
+            let file_path = std::path::Path::new(fp);
+            if let Some(parent) = file_path.parent() {
+                // Try mod.rs (Rust) and __init__.py (Python)
+                let barrel_names = ["mod.rs", "__init__.py"];
+                for barrel in &barrel_names {
+                    let barrel_path = parent.join(barrel);
+                    if let Some(mod_importers) =
+                        inbound_links.get_importers(barrel_path.to_str().unwrap_or(""))
+                    {
+                        for importer in mod_importers.iter().filter(|i| *i != fp) {
+                            let imp_filename = utility_layer_detector::extract_filename(importer);
+                            let is_consumer =
+                                utility_layer_detector::detect_layer_from_prefix(imp_filename)
+                                    .map(|layer| CONSUMER_LAYERS.contains(&layer.as_str()))
+                                    .unwrap_or(false);
+                            if is_consumer {
+                                let stem = std::path::Path::new(importer)
+                                    .file_stem()
+                                    .and_then(|s| s.to_str())
+                                    .unwrap_or("unknown")
+                                    .to_string();
+                                consumer_importers.push(stem);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         let has_consumer_importers = !consumer_importers.is_empty();
 
         // Both conditions must be satisfied for non-orphan

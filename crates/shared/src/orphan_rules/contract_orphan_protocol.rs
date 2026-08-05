@@ -14,6 +14,8 @@ pub trait ITaxonomyOrphanProtocol: Send + Sync {
         root_dir: &FilePath,
         definition: Option<&LayerDefinition>,
         inbound_links: &InboundLinkMap,
+        all_files: &[String],
+        content_map: &HashMap<String, String>,
         alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult;
 }

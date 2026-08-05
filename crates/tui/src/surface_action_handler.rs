@@ -344,12 +344,20 @@ impl SurfaceActionHandler {
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         let dir_path = std::path::Path::new(fp.value());
-        let paths = self.filesystem.read_dir_entries_as_pathbuf(dir_path).unwrap_or_default();
-        state.entries = paths.into_iter().filter_map(|entry_path| {
-            let name = entry_path.file_name()?.to_str()?;
-            if name.starts_with('.') { return None; }
-            shared::tui::FileEntry::from_path(&entry_path)
-        }).collect();
+        let paths = self
+            .filesystem
+            .read_dir_entries_as_pathbuf(dir_path)
+            .unwrap_or_default();
+        state.entries = paths
+            .into_iter()
+            .filter_map(|entry_path| {
+                let name = entry_path.file_name()?.to_str()?;
+                if name.starts_with('.') {
+                    return None;
+                }
+                shared::tui::FileEntry::from_path(&entry_path)
+            })
+            .collect();
         if state.entries.is_empty() {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }

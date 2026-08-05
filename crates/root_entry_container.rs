@@ -83,18 +83,16 @@ impl CommonDeps {
             );
         let orphan_orchestrator = orphan_container.analyzer();
 
-        let ext_container =
-            external_lint::root_external_lint_container::ExternalLintContainer::new(
-                filesystem.clone(),
-            );
+        let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
+            filesystem.clone(),
+        );
         let external_lint = ext_container.aggregate();
 
-        let role_container =
-            role_rules::root_role_rules_container::RoleContainer::new_with_config(
-                config_orchestrator.load_config_sync(
-                    &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-                ),
-            );
+        let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
+            config_orchestrator.load_config_sync(
+                &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+            ),
+        );
         let role_orchestrator = role_container.orchestrator();
 
         let auto_fix_container =
@@ -109,10 +107,14 @@ impl CommonDeps {
         };
 
         let fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync> =
-            Arc::new(|| filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator());
+            Arc::new(|| {
+                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+            });
         let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs| {
-            orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs)
-                .analyzer()
+            orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                config, fs,
+            )
+            .analyzer()
         });
 
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new(

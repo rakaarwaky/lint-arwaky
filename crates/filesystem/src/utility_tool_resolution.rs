@@ -206,14 +206,10 @@ pub fn has_config_file(dir_path: &Path) -> bool {
         "setup.cfg",
         ".flake8",
     ];
-    scan_directory(dir_path)
-        .iter()
-        .any(|path| {
-            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            CONFIG_NAMES.contains(&name)
-                || name.ends_with(".config.js")
-                || name.ends_with(".config.ts")
-        })
+    scan_directory(dir_path).iter().any(|path| {
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        CONFIG_NAMES.contains(&name) || name.ends_with(".config.js") || name.ends_with(".config.ts")
+    })
 }
 
 /// Check if a Cargo.toml exists and return its directory.

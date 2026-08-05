@@ -3,17 +3,19 @@
 // Delegates low-level hook file operations to the adapter and implements
 // config initialization, ignore rule management, and diff data comparison.
 
+use shared::common::taxonomy_job_vo::SuccessStatus;
+use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::common::taxonomy_layer_vo::Identity;
-use shared::common::taxonomy_job_vo::SuccessStatus;
 
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::git_hooks::taxonomy_git_diff_data_vo::{
+    GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
+};
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
-use shared::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO};
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

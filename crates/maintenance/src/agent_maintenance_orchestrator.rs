@@ -4,10 +4,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
 use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 
-use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use shared::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
 };
+use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

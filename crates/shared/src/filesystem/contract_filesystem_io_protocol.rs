@@ -1,3 +1,7 @@
+use crate::common::taxonomy_common_vo::PatternList;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_source_vo::ContentString;
+use crate::filesystem::taxonomy_filesystem_vo::{FileExtension, GitCommandResult, ParsedLines, ScanTiming};
 // Contract layer — filesystem IO protocol trait
 // File I/O, path operations, directory operations, process execution, scan timing
 // Responsibilities: low-level filesystem access, path metadata, process spawning
@@ -33,7 +37,7 @@ pub trait IFileSystemIOProtocol: Send + Sync {
     fn canonicalize(&self, path: &Path) -> Result<PathBuf, std::io::Error>;
 
     /// Canonicalize path to absolute string.
-    fn canonicalize_path_str(&self, path: &FilePath) -> String;
+    fn canonicalize_path_str(&self, path: &FilePath) -> FilePath;
 
     /// Check if path is a symlink.
     fn is_symlink(&self, path: &Path) -> bool;
@@ -67,10 +71,10 @@ pub trait IFileSystemIOProtocol: Send + Sync {
     // ═══════════════════════════════════════════════════════════
 
     /// List directory entries with ignore filter.
-    fn scan_directory_with_ignored(&self, dir: &Path, ignored: &[String]) -> Vec<PathBuf>;
+    fn scan_directory_with_ignored(&self, dir: &Path, ignored: &PatternList) -> Vec<PathBuf>;
 
     /// Check if directory should be ignored.
-    fn is_ignored_dir(&self, dir: &Path, ignored: &[String]) -> bool;
+    fn is_ignored_dir(&self, dir: &Path, ignored: &PatternList) -> bool;
 
     /// Read directory entries as Vec<PathBuf>.
     fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error>;
@@ -80,13 +84,13 @@ pub trait IFileSystemIOProtocol: Send + Sync {
     // ═══════════════════════════════════════════════════════════
 
     /// Read file content to string.
-    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error>;
+    fn read_to_string(&self, path: &Path) -> Result<ContentString, std::io::Error>;
 
     /// Write string to file.
     fn write_string(&self, path: &Path, content: &str) -> Result<(), std::io::Error>;
 
     /// Copy file from src to dst.
-    fn copy_file(&self, src: &Path, dst: &Path) -> Result<u64, std::io::Error>;
+    fn copy_file(&self, src: &Path, dst: &Path) -> Result<ByteCount, std::io::Error>;
 
     /// Create directory and all parents.
     fn create_dir_all(&self, path: &Path) -> Result<(), std::io::Error>;
@@ -95,7 +99,7 @@ pub trait IFileSystemIOProtocol: Send + Sync {
     fn remove_dir_all(&self, path: &Path) -> Result<(), std::io::Error>;
 
     /// Set file permissions (Unix mode bits).
-    fn set_permissions(&self, path: &Path, mode: u32) -> std::io::Result<()>;
+    fn set_permissions(&self, path: &Path, mode: FileMode) -> std::io::Result<()>;
 
     /// Remove a file.
     fn remove_file(&self, path: &Path) -> std::io::Result<()>;
@@ -105,10 +109,10 @@ pub trait IFileSystemIOProtocol: Send + Sync {
     // ═══════════════════════════════════════════════════════════
 
     /// Execute a git command and return stdout/stderr/success.
-    fn run_git_command(&self, args: &[&str], dir: &str) -> (String, String, bool);
+    fn run_git_command(&self, args: &[&str], dir: &str) -> GitCommandResult;
 
     /// Parse command output into trimmed non-empty lines.
-    fn parse_output_lines(&self, output: &str) -> Vec<String>;
+    fn parse_output_lines(&self, output: &str) -> ParsedLines;
 
     /// Execute an external command with working directory.
     fn run_external_command_in(

@@ -46,8 +46,7 @@ impl LintFixOrchestratorAggregate for FixOrchestrator {
 
     /// FR-005: Report violations that require manual intervention (BF-2).
     fn manual_report(&self, violations: &[LintResult]) -> Vec<LintMessage> {
-        self.fix_protocol
-            .report_non_fixable(violations)
+        self.fix_protocol.report_non_fixable(violations)
     }
 
     fn file_adapter(&self) -> Arc<dyn IFileAdapterProtocol> {

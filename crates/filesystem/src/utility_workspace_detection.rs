@@ -382,7 +382,8 @@ pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
             return true;
         } else if (name.ends_with("_container.rs")
             || name.ends_with("_container.py")
-            || name.ends_with("_container.ts"))
+            || name.ends_with("_container.ts")
+            || name == "lib.rs")
             && let Ok(content) = read_to_string(&path)
         {
             for id in identifiers {
@@ -430,7 +431,10 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .unwrap_or(false)
         })
         .filter(|e| {
-            let abs_path = e.path().canonicalize().unwrap_or_else(|_| e.path().to_path_buf());
+            let abs_path = e
+                .path()
+                .canonicalize()
+                .unwrap_or_else(|_| e.path().to_path_buf());
             let rel_path = abs_path.strip_prefix(&abs_root).unwrap_or(e.path());
             let rel_str = rel_path.to_string_lossy();
             !is_path_ignored(&rel_str, &merged_ignored)

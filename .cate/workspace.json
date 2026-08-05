@@ -31,10 +31,7 @@
           "id": "5a0924ad-a48d-4f33-a0e3-d5f1aac99a50",
           "panelIds": [
             "272c4838-a4f0-4b30-af14-18bdd788cb5b",
-            "bfbdf8ab-a139-421f-bb35-84d4657c6e8f",
-            "d710edeb-3554-408a-96cf-2bcc0b868a56",
-            "3a64371e-fc04-4f32-a52a-ce48c0eaf73d",
-            "f6bffc62-0de8-4304-a457-f62e6563bcad"
+            "76265a7f-60a9-4fd8-84dc-67911425594c"
           ],
           "activeIndex": 0
         }
@@ -46,45 +43,57 @@
       "type": "terminal",
       "title": "Qwen - lint-arwaky"
     },
+    "78c1c7de-aefe-46b6-9bbe-99edc5405520": {
+      "type": "terminal",
+      "title": "Qwen - lint-arwaky 2"
+    },
     "955c1849-3dd5-4bae-82c0-2307478dc0ea": {
       "type": "terminal",
       "title": "raka@fedora:~/mcp-arwaky/lint-arwaky 2"
-    },
-    "220e853c-bd35-4db2-bce2-5994978d91a0": {
-      "type": "agent",
-      "title": "Agent 1"
     },
     "efe0a38d-9ced-4fc1-9f37-32b54d795128": {
       "type": "terminal",
       "title": "OC | Fixing remaining violations"
     },
-    "480623bc-d84f-4e8a-8a82-098c4b014ba5": {
+    "168a5096-a012-475a-a61d-7485223ba3b4": {
       "type": "terminal",
       "title": "raka@fedora:~/mcp-arwaky/lint-arwaky"
+    },
+    "374c14f3-efdf-4aa2-8b70-fafb7fabe14d": {
+      "type": "browser",
+      "title": "Browser",
+      "tabs": [
+        {
+          "id": "6acca6a2-54b2-4bd9-87d1-f4d41f88c33a",
+          "url": "https://chat.qwen.ai/",
+          "title": ""
+        }
+      ],
+      "activeTabId": "6acca6a2-54b2-4bd9-87d1-f4d41f88c33a"
+    },
+    "8de9eb8e-1196-406c-8e3a-714a9ebd9835": {
+      "type": "browser",
+      "title": "Browser",
+      "tabs": [
+        {
+          "id": "6259985c-fe53-4e08-b474-61f8ecfa7670",
+          "url": "https://chat.qwen.ai/",
+          "title": ""
+        }
+      ],
+      "activeTabId": "6259985c-fe53-4e08-b474-61f8ecfa7670"
+    },
+    "c718d66c-af56-40d8-aafb-53ed03d35fd5": {
+      "type": "terminal",
+      "title": "raka@fedora:~/mcp-arwaky/lint-arwaky 3"
     },
     "272c4838-a4f0-4b30-af14-18bdd788cb5b": {
       "type": "canvas",
       "title": "Canvas"
     },
-    "bfbdf8ab-a139-421f-bb35-84d4657c6e8f": {
-      "type": "editor",
-      "title": "utility_config_parser.rs",
-      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
-    },
-    "d710edeb-3554-408a-96cf-2bcc0b868a56": {
-      "type": "editor",
-      "title": "utility_config_parser.rs",
-      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
-    },
-    "3a64371e-fc04-4f32-a52a-ce48c0eaf73d": {
-      "type": "editor",
-      "title": "utility_config_parser.rs",
-      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
-    },
-    "f6bffc62-0de8-4304-a457-f62e6563bcad": {
-      "type": "editor",
-      "title": "utility_config_parser.rs",
-      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
+    "76265a7f-60a9-4fd8-84dc-67911425594c": {
+      "type": "canvas",
+      "title": "Canvas"
     }
   },
   "canvases": {
@@ -94,21 +103,22 @@
         "446a0188-f6c9-434f-80d6-5b184f3b05b0": {
           "id": "446a0188-f6c9-434f-80d6-5b184f3b05b0",
           "origin": {
-            "x": -40,
-            "y": -20
+            "x": 6,
+            "y": 6
           },
           "size": {
-            "width": 577.4264633009037,
-            "height": 415.74705357665067
+            "width": 820.4092774231067,
+            "height": 590.6946797446368
           },
-          "zOrder": 493,
+          "zOrder": 633,
           "creationIndex": 0,
           "animationState": "idle",
           "dockLayout": {
             "type": "tabs",
             "id": "bc42fe60-3c9f-424c-a2f9-630c873b57e7",
             "panelIds": [
-              "e5bc824f-70b2-46f8-95dd-e7e7edb348e7"
+              "e5bc824f-70b2-46f8-95dd-e7e7edb348e7",
+              "78c1c7de-aefe-46b6-9bbe-99edc5405520"
             ],
             "activeIndex": 0
           }
@@ -116,14 +126,14 @@
         "0538b272-9f0c-45ae-9d82-123344c80890": {
           "id": "0538b272-9f0c-45ae-9d82-123344c80890",
           "origin": {
-            "x": 589.4264633009037,
+            "x": 832.4092774231067,
             "y": 6
           },
           "size": {
-            "width": 577.4264633009037,
-            "height": 415.74705357665067
+            "width": 820.4092774231067,
+            "height": 590.6946797446368
           },
-          "zOrder": 466,
+          "zOrder": 634,
           "creationIndex": 1,
           "animationState": "idle",
           "dockLayout": {
@@ -135,40 +145,17 @@
             "activeIndex": 0
           }
         },
-        "bd19ce1d-7a21-46eb-9017-0214531d38db": {
-          "id": "bd19ce1d-7a21-46eb-9017-0214531d38db",
-          "origin": {
-            "x": -40,
-            "y": 460
-          },
-          "size": {
-            "width": 577.4264633009037,
-            "height": 415.74705357665067
-          },
-          "zOrder": 488,
-          "creationIndex": 10,
-          "animationState": "idle",
-          "dockLayout": {
-            "type": "tabs",
-            "id": "09133c0f-fe75-4c90-a1fb-a90585df5f2b",
-            "panelIds": [
-              "220e853c-bd35-4db2-bce2-5994978d91a0"
-            ],
-            "activeIndex": 0
-          },
-          "isPinned": false
-        },
         "6457f9ab-f75b-4dd9-8850-3f730c85d7cc": {
           "id": "6457f9ab-f75b-4dd9-8850-3f730c85d7cc",
           "origin": {
-            "x": 600,
-            "y": 440
+            "x": 1658.8185548462134,
+            "y": 6
           },
           "size": {
-            "width": 577.4264633009037,
-            "height": 415.74705357665067
+            "width": 820.4092774231067,
+            "height": 590.6946797446368
           },
-          "zOrder": 494,
+          "zOrder": 615,
           "creationIndex": 11,
           "animationState": "idle",
           "dockLayout": {
@@ -183,30 +170,106 @@
         "c719801f-aea9-4f8d-9805-973c2c9fc646": {
           "id": "c719801f-aea9-4f8d-9805-973c2c9fc646",
           "origin": {
-            "x": 40,
-            "y": 980
+            "x": 6,
+            "y": 602.6946797446368
           },
           "size": {
-            "width": 640,
-            "height": 400
+            "width": 820.4092774231067,
+            "height": 590.6946797446368
           },
-          "zOrder": 492,
+          "zOrder": 631,
           "creationIndex": 37,
           "animationState": "idle",
           "dockLayout": {
             "type": "tabs",
             "id": "252907ad-5910-4a70-8c1d-098ead92614e",
             "panelIds": [
-              "480623bc-d84f-4e8a-8a82-098c4b014ba5"
+              "168a5096-a012-475a-a61d-7485223ba3b4"
+            ],
+            "activeIndex": 0
+          }
+        },
+        "6cacc0cf-b904-4d7a-818b-158e7314a1fc": {
+          "id": "6cacc0cf-b904-4d7a-818b-158e7314a1fc",
+          "origin": {
+            "x": 832.4092774231067,
+            "y": 602.6946797446368
+          },
+          "size": {
+            "width": 820.4092774231067,
+            "height": 590.6946797446368
+          },
+          "zOrder": 635,
+          "creationIndex": 40,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "1f45c432-11c9-4c43-970f-ab1709937d3b",
+            "panelIds": [
+              "374c14f3-efdf-4aa2-8b70-fafb7fabe14d"
+            ],
+            "activeIndex": 0
+          }
+        },
+        "d5f00e8b-f797-41c0-ace9-5fb11ba86754": {
+          "id": "d5f00e8b-f797-41c0-ace9-5fb11ba86754",
+          "origin": {
+            "x": 1658.8185548462134,
+            "y": 602.6946797446368
+          },
+          "size": {
+            "width": 820.4092774231067,
+            "height": 590.6946797446368
+          },
+          "zOrder": 626,
+          "creationIndex": 41,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "c905dc8d-dd4d-4127-b962-ded05bd3ed71",
+            "panelIds": [
+              "8de9eb8e-1196-406c-8e3a-714a9ebd9835"
             ],
             "activeIndex": 0
           }
         }
       },
-      "zoomLevel": 1.018221177746098,
+      "zoomLevel": 0.43404841256619975,
       "viewportOffset": {
-        "x": -25.886422079684507,
-        "y": -13.813670679112306
+        "x": -172.47753136575324,
+        "y": 247.69201343524594
+      }
+    },
+    "76265a7f-60a9-4fd8-84dc-67911425594c": {
+      "id": "76265a7f-60a9-4fd8-84dc-67911425594c",
+      "canvasNodes": {
+        "ca516695-d72e-4406-8203-9e961916d42d": {
+          "id": "ca516695-d72e-4406-8203-9e961916d42d",
+          "origin": {
+            "x": 280,
+            "y": 380
+          },
+          "size": {
+            "width": 640,
+            "height": 400
+          },
+          "zOrder": 6,
+          "creationIndex": 0,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "29f59bfb-c481-4e19-a42c-5a998fd80d4a",
+            "panelIds": [
+              "c718d66c-af56-40d8-aafb-53ed03d35fd5"
+            ],
+            "activeIndex": 0
+          }
+        }
+      },
+      "zoomLevel": 0.43068879785156233,
+      "viewportOffset": {
+        "x": 118.91949043294613,
+        "y": 285.1038660459871
       }
     }
   }

@@ -1,6 +1,6 @@
 use shared::cli_commands::LintResult;
-use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::quality_rules::contract_class_protocol::IMandatoryClassProtocol;
+use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 
 use crate::utility_bypass_detector::skip_cfg_test_block;
 use crate::utility_mandatory_checker::rust_declares_type;

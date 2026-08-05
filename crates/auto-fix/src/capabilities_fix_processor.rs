@@ -25,10 +25,10 @@ use shared::auto_fix::{
     FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, SkipReason,
 };
 use shared::common::taxonomy_lint_result_vo::LintResult;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::{
     AdapterName, ContentString, Count, DescriptionVO, ErrorCode, LineNumber, LintMessage,
 };
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::{Arc, LazyLock};
 

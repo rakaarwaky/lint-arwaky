@@ -19,8 +19,8 @@ use tracing::{error, warn};
 
 use shared::common::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::IChangeAnalyzerProtocol;
+use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::{IWatchProviderProtocol, WatchConfig};
 use shared::quality_rules::ICodeAnalysisAggregate;
 
