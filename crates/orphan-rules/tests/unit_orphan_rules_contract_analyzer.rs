@@ -403,6 +403,9 @@ impl IFilesystemAggregate for MockFilesystem {
             vec![],
         )
     }
+    fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
+        None
+    }
 }
 
 fn reachable_for(fp: &FilePath) -> ReachabilityResult {

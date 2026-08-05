@@ -66,6 +66,9 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
             vec![],
         )
     }
+    fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
+        None
+    }
 }
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_language_vo::Language;

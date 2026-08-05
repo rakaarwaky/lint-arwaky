@@ -316,6 +316,9 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
             vec![],
         )
     }
+    fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
+        None
+    }
 }
 
 fn mock_fs() -> Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> {

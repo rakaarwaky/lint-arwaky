@@ -336,6 +336,9 @@ impl IFilesystemAggregate for MockFilesystem {
             vec![],
         )
     }
+    fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
+        None
+    }
 }
 
 pub fn mock_filesystem() -> Arc<dyn IFilesystemAggregate> {
