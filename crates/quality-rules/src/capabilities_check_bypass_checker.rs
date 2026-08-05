@@ -8,7 +8,7 @@
 use std::borrow::Cow;
 
 use shared::cli_commands::LintResult;
-use shared::quality_rules::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO;
+use shared::quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 use shared::quality_rules::contract_bypass_checker_protocol::IBypassCheckerProtocol;
 
 use crate::utility_bypass_detector::{
