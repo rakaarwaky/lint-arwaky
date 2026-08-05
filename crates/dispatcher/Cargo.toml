@@ -20,6 +20,7 @@ workspace = true
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
+filesystem.workspace = true
 
 [[bench]]
 name = "bench_dispatcher"
