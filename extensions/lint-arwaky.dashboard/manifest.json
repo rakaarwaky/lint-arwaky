@@ -1,0 +1,17 @@
+{
+  "id": "lint-arwaky.dashboard",
+  "name": "Lint Arwaky Dashboard",
+  "version": "1.0.0",
+  "category": "development",
+  "description": "Real-time lint scan results visualization for AES architecture compliance",
+  "frontend": "src/index.html",
+  "panels": [
+    {
+      "id": "main",
+      "label": "Lint Dashboard",
+      "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M3 3v18h18\"/><path d=\"M7 16l4-4 4 4 4-8\"/></svg>",
+      "defaultSize": { "width": 800, "height": 600 }
+    }
+  ],
+  "cateApi": ["storage", "theme", "workspace.read"]
+}

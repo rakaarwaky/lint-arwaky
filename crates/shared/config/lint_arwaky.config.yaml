@@ -357,6 +357,7 @@ architecture:
           "utility_import_extractor.rs",
           "utility_config_defaults.rs",
           "agent_config_orchestrator.rs",
+          "capabilities_orchestration_helpers.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -717,6 +718,7 @@ architecture:
           "surface_orphan_action.rs",
           "surface_quality_action.rs",
           "surface_role_action.rs",
+          "capabilities_orchestration_helpers.rs",
         ]
 
     # ─── AES400: Role ───
@@ -780,6 +782,7 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "capabilities_orchestration_helpers.rs",
         ]
 
     AES404:

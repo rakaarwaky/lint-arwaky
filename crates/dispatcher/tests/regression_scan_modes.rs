@@ -30,12 +30,12 @@ fn scan(path: &str) -> Vec<dispatcher_lint_arwaky::surface_output_component::Vio
 fn cli_scan(path: &str) -> String {
     let exe = std::env::current_exe()
         .ok()
-        .and_then(|p| p.parent().and_then(|p| p.parent()).map(|p| p.join("release/lint-arwaky-cli")))
+        .and_then(|p| p.parent().and_then(|p| p.parent()).and_then(|p| p.parent()).map(|p| p.join("release/lint-arwaky-cli")))
         .unwrap_or_else(|| std::path::PathBuf::from("target/release/lint-arwaky-cli"));
     let output = Command::new(&exe)
         .args(["scan", path, "--format", "json"])
         .output()
-        .unwrap_or_else(|e| panic!("failed to run CLI at {}: {}", exe.display(), e));
+        .unwrap_or_else(|e| panic!("failed to run CLI at {}: {}. Build with: cargo build --release", exe.display(), e));
     String::from_utf8_lossy(&output.stdout).to_string()
 }
 

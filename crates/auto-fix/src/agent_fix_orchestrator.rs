@@ -23,7 +23,7 @@ use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
 use shared::auto_fix::{
     FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol,
 };
-use shared::cli_commands::LintResult;
+use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 

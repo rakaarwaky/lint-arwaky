@@ -24,7 +24,7 @@ use shared::auto_fix::contract_fix_protocol::IFixProtocol;
 use shared::auto_fix::{
     FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, SkipReason,
 };
-use shared::cli_commands::LintResult;
+use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::{
     AdapterName, ContentString, Count, DescriptionVO, ErrorCode, LineNumber, LintMessage,
 };

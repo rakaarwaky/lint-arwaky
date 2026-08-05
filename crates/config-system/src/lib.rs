@@ -9,7 +9,7 @@ pub mod capabilities_parser_provider;
 pub use capabilities_parser_provider::ConfigParserProvider;
 pub mod capabilities_yaml_reader;
 pub use capabilities_yaml_reader::ConfigYamlReader;
-pub mod root_config_defaults_container;
+pub mod utility_config_defaults;
 pub mod root_config_system_container;
 pub mod utility_config_merger;
 pub mod utility_config_parser;

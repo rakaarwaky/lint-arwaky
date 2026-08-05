@@ -21,7 +21,7 @@ use shared::project_setup::SetupManagementAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
-use dispatcher::surface_output_component::ViolationItem;
+use shared::common::taxonomy_violation_item_vo::ViolationItem;
 
 #[derive(Clone)]
 pub struct McpServerDependencies {

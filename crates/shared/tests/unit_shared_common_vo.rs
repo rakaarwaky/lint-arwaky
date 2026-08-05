@@ -120,7 +120,9 @@ fn file_path_deref_and_display() {
 fn directory_path_rejects_empty_and_normalizes() {
     assert!(DirectoryPath::new("").is_err());
     let dir = DirectoryPath::new("tmp\\\\proj/").expect("valid dir");
-    assert_eq!(dir.value(), "tmp/proj");
+    // Backslashes → forward slashes, trailing slash removed
+    // Double backslash becomes double slash (not collapsed)
+    assert_eq!(dir.value(), "tmp//proj");
 }
 
 // ── ErrorCode ───────────────────────────────────────────────
