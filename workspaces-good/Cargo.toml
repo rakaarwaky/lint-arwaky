@@ -9,6 +9,7 @@ path = "crates/root_calculator_entry.rs"
 
 [dependencies]
 calculator = { path = "crates/calculator" }
+calculator-cli = { path = "crates/cli" }
 calculator-shared = { path = "crates/shared" }
 clap = { version = "4", features = ["derive"] }
 

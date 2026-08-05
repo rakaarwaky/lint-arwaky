@@ -1,6 +1,7 @@
 use calculator_shared::contract_calculator_aggregate::CalculatorAggregate;
 use calculator_shared::taxonomy_expression_vo::ExpressionVO;
 use calculator_shared::taxonomy_operation_vo::OperationVO;
+use calculator_shared::utility_expression_parser;
 
 pub fn run(calc: &mut dyn CalculatorAggregate) {
     eprintln!("=== Calculator ===");
@@ -29,36 +30,21 @@ pub fn run(calc: &mut dyn CalculatorAggregate) {
             }
             continue;
         }
-        let parts: Vec<&str> = input.split_whitespace().collect();
-        if parts.len() != 3 {
+        if let Some((left, op_str, right)) = utility_expression_parser::parse_expression(input) {
+            let op = match OperationVO::from_symbol(&op_str) {
+                Some(v) => v,
+                None => {
+                    eprintln!("  '{}' bukan operator valid", op_str);
+                    continue;
+                }
+            };
+            let expr = ExpressionVO::new(left, op, right);
+            match calc.delegate(&expr) {
+                Some(r) => eprintln!("  = {}", r.value),
+                None => eprintln!("  Error: tidak bisa hitung"),
+            }
+        } else {
             eprintln!("  Format: <angka> <operator> <angka>");
-            continue;
-        }
-        let left: f64 = match parts[0].parse() {
-            Ok(v) => v,
-            Err(_) => {
-                eprintln!("  '{}' bukan angka", parts[0]);
-                continue;
-            }
-        };
-        let op = match OperationVO::from_symbol(parts[1]) {
-            Some(v) => v,
-            None => {
-                eprintln!("  '{}' bukan operator valid", parts[1]);
-                continue;
-            }
-        };
-        let right: f64 = match parts[2].parse() {
-            Ok(v) => v,
-            Err(_) => {
-                eprintln!("  '{}' bukan angka", parts[2]);
-                continue;
-            }
-        };
-        let expr = ExpressionVO::new(left, op, right);
-        match calc.delegate(&expr) {
-            Some(r) => eprintln!("  = {}", r.value),
-            None => eprintln!("  Error: tidak bisa hitung"),
         }
     }
     eprintln!("Sampai jumpa!");
