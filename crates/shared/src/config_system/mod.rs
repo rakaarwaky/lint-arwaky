@@ -6,6 +6,7 @@ pub mod contract_validator_protocol;
 pub mod contract_workspace_detector_protocol;
 pub mod taxonomy_config_error;
 pub mod taxonomy_config_language_vo;
+pub mod taxonomy_config_parser;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;
 pub mod taxonomy_multi_project_workspace_info_vo;

@@ -48,6 +48,8 @@ pub struct SurfaceLintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     filesystem: Arc<dyn IFilesystemAggregate>,
+    fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    orphan_factory: Arc<dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync>,
 }
 
 // ─── Block 2: Lint Action Methods ─────────────────────────
@@ -560,15 +562,8 @@ impl SurfaceLintExecutor {
             self.orphan_aggregate.clone()?,
             self.config_orchestrator.clone()?,
             self.filesystem.clone(),
-            Arc::new(|| {
-                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-            }),
-            Arc::new(|config, fs| {
-                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                    config, fs,
-                )
-                .analyzer()
-            }),
+            self.fs_factory.clone(),
+            self.orphan_factory.clone(),
         ))
     }
 }

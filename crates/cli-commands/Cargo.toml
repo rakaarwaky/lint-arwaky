@@ -9,9 +9,7 @@ repository.workspace = true
 
 [dependencies]
 shared = { workspace = true }
-filesystem = { workspace = true }
 dispatcher = { workspace = true }
-orphan-rules = { workspace = true }
 rayon = { workspace = true }
 serde_json = { workspace = true }
 regex = { workspace = true }

@@ -38,6 +38,8 @@ pub struct McpServerDependencies {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    pub orphan_factory: Arc<dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync>,
     // DI: config parsing functions
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
     pub parse_adapter_names: fn(&str) -> Vec<String>,
@@ -242,15 +244,8 @@ impl McpActionSurface {
                 self.deps.orphan_orchestrator.clone(),
                 self.deps.config_orchestrator.clone(),
                 self.deps.filesystem.clone(),
-                Arc::new(|| {
-                    filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-                }),
-                Arc::new(|config, fs| {
-                    orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                        config, fs,
-                    )
-                    .analyzer()
-                }),
+                self.deps.fs_factory.clone(),
+                self.deps.orphan_factory.clone(),
             ),
             None,
         ) {

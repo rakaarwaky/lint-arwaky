@@ -8,8 +8,6 @@ license = "MIT"
 [dependencies]
 shared = { workspace = true }
 dispatcher = { workspace = true }
-filesystem = { workspace = true }
-orphan-rules = { workspace = true }
 serde_json = { workspace = true }
 rmcp = { workspace = true }
 dirs = { workspace = true }

@@ -103,6 +103,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let setup_orchestrator = setup_container.aggregate();
 
     // DI: inject config_system parsing functions
+    let fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync> = Arc::new(|| {
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+    });
+    let orphan_factory: Arc<dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync> = Arc::new(|config, fs| {
+        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs).analyzer()
+    });
+
     let deps = McpServerDependencies {
         code_analysis_linter,
         fix_orchestrator_factory,
@@ -116,6 +123,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         naming_orchestrator,
         role_orchestrator,
         filesystem,
+        fs_factory,
+        orphan_factory,
         parse_config_yaml: config_system::utility_config_parser::parse_config_yaml,
         parse_adapter_names: config_system::utility_config_parser::parse_adapter_names_from_yaml,
         parse_score_threshold: config_system::utility_config_parser::parse_score_threshold,

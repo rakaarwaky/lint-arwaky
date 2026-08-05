@@ -1,13 +1,24 @@
 use crate::utility_config_defaults::default_config_for_language;
-use crate::utility_config_parser::parse_config_yaml;
 use dashmap::DashMap;
-use shared::common::{AdapterName, FilePath, PatternList};
-use shared::config_system::{
-    AdapterEntry, ArchitectureConfig, ConfigError, ConfigLanguage, ConfigResult, ConfigSource,
-    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
-    IConfigValidatorProtocol, IWorkspaceDetectorProtocol, ProjectConfig, ValidationResult,
-    WorkspaceInfo, WorkspaceType,
-};
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
+use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
+use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
+use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::taxonomy_config_error::ConfigError;
+use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared::config_system::taxonomy_config_parser::parse_config_yaml;
+use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
+use shared::config_system::taxonomy_setting_vo::AdapterEntry;
+use shared::config_system::taxonomy_setting_vo::ProjectConfig;
+use shared::config_system::taxonomy_source_vo::ConfigResult;
+use shared::config_system::taxonomy_source_vo::ConfigSource;
+use shared::config_system::taxonomy_validation_vo::ValidationResult;
+use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
