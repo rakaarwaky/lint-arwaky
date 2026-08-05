@@ -30,7 +30,8 @@
           "type": "tabs",
           "id": "5a0924ad-a48d-4f33-a0e3-d5f1aac99a50",
           "panelIds": [
-            "272c4838-a4f0-4b30-af14-18bdd788cb5b"
+            "272c4838-a4f0-4b30-af14-18bdd788cb5b",
+            "1ad99471-ff77-44fc-bee8-2384566ef6b5"
           ],
           "activeIndex": 0
         }
@@ -57,6 +58,11 @@
     "272c4838-a4f0-4b30-af14-18bdd788cb5b": {
       "type": "canvas",
       "title": "Canvas"
+    },
+    "1ad99471-ff77-44fc-bee8-2384566ef6b5": {
+      "type": "editor",
+      "title": "workspace.json",
+      "filePath": ".cate/workspace.json"
     }
   },
   "canvases": {
@@ -95,7 +101,7 @@
             "width": 1300,
             "height": 1020
           },
-          "zOrder": 115,
+          "zOrder": 131,
           "creationIndex": 1,
           "animationState": "idle",
           "dockLayout": {
@@ -117,7 +123,7 @@
             "width": 1180,
             "height": 1020
           },
-          "zOrder": 116,
+          "zOrder": 133,
           "creationIndex": 3,
           "animationState": "idle",
           "dockLayout": {
@@ -132,14 +138,14 @@
         "878752f3-5d64-4b22-ab5c-f040d820b2fd": {
           "id": "878752f3-5d64-4b22-ab5c-f040d820b2fd",
           "origin": {
-            "x": 20,
-            "y": 1480
+            "x": 1540,
+            "y": 960
           },
           "size": {
             "width": 1280,
             "height": 720
           },
-          "zOrder": 126,
+          "zOrder": 129,
           "creationIndex": 5,
           "animationState": "idle",
           "dockLayout": {
@@ -152,10 +158,10 @@
           }
         }
       },
-      "zoomLevel": 1.0258057922521397,
+      "zoomLevel": 0.3,
       "viewportOffset": {
-        "x": 217.0536941466562,
-        "y": -1679.9163325251811
+        "x": 695.9227858239124,
+        "y": 177.17642550219017
       }
     }
   }

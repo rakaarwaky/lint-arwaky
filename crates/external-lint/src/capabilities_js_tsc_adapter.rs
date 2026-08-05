@@ -65,7 +65,10 @@ impl ILinterAdapterProtocol for TSCAdapter {
             args.push(abs_path);
         }
 
-        let tsc_name = ToolName::new("tsc").unwrap();
+        let tsc_name = match ToolName::new("tsc") {
+            Ok(n) => n,
+            Err(_) => return Ok(LintResultList::default()),
+        };
         let cmd = match self.filesystem.resolve_js_cmd(&tsc_name, args, &wd) {
             Some(c) => c,
             None => return Ok(LintResultList::default()),

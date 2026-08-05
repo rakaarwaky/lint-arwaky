@@ -292,11 +292,10 @@ impl ArchOrphanAnalyzer {
                 "processing surface file"
             );
         }
-        if base_layer.is_none() {
+        let Some(base_layer) = base_layer else {
             trace!(file = f, filename = filename, "SKIP no layer prefix");
             return None;
-        }
-        let base_layer = base_layer.unwrap();
+        };
         let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
             &base_layer,
             file_fp.value(),

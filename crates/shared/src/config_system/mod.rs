@@ -5,7 +5,7 @@ pub mod contract_reader_protocol;
 pub mod contract_validator_protocol;
 pub mod contract_workspace_detector_protocol;
 pub mod taxonomy_config_error;
-pub mod taxonomy_config_language_vo;
+pub use crate::common::taxonomy_config_language_vo;
 pub mod utility_config_parser;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;

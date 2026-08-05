@@ -7,64 +7,7 @@ use shared::filesystem::taxonomy_filesystem_vo::{
     RustFnItem, RustImplItem, RustMetadata, RustModItem, RustUseItem,
 };
 
-// ─── Inlined from utility_tree_sitter_helpers (AES201: utility cannot import utility) ───
-
-fn text_of(node: tree_sitter::Node, content: &str) -> String {
-    content[node.byte_range()].to_string()
-}
-
-fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option<String> {
-    let child = node.child_by_field_name(field)?;
-    Some(text_of(child, content))
-}
-
-fn extract_scoped_path(node: tree_sitter::Node, content: &str) -> Option<String> {
-    let kind = node.kind();
-    if kind == "use_as_clause" {
-        let mut cursor = node.walk();
-        for child in node.named_children(&mut cursor) {
-            if child.kind() == "scoped_identifier" || child.kind() == "identifier" {
-                return extract_scoped_path(child, content);
-            }
-        }
-        return None;
-    }
-    let mut parts = Vec::new();
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "identifier" | "crate" | "super" | "self" => {
-                parts.push(text_of(child, content));
-            }
-            "scoped_identifier" => {
-                if let Some(inner) = extract_scoped_path(child, content) {
-                    parts.push(inner);
-                }
-            }
-            _ => {}
-        }
-    }
-    Some(parts.join("::"))
-}
-
-fn extract_use_path(node: tree_sitter::Node, content: &str) -> Option<String> {
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "scoped_identifier" | "use_as_clause" => {
-                return extract_scoped_path(child, content);
-            }
-            "use_wildcard" => {
-                return extract_scoped_path(child, content);
-            }
-            "identifier" | "crate" | "super" | "self" => {
-                return Some(text_of(child, content));
-            }
-            _ => {}
-        }
-    }
-    None
-}
+use crate::utility_tree_sitter_helpers::{child_by_field, extract_use_path, text_of};
 
 /// Extract Rust-specific metadata from a parsed AST.
 pub fn extract_rust_metadata(tree: &tree_sitter::Tree, content: &str) -> RustMetadata {

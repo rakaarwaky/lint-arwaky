@@ -57,7 +57,10 @@ impl ILinterAdapterProtocol for ESLintAdapter {
         let wd = self.filesystem.resolve_js_working_dir(path);
         let abs_path = self.filesystem.canonicalize_path_str(path);
 
-        let eslint_name = ToolName::new("eslint").unwrap();
+        let eslint_name = match ToolName::new("eslint") {
+            Ok(n) => n,
+            Err(_) => return Ok(LintResultList::default()),
+        };
         let cmd = match self.filesystem.resolve_js_cmd(
             &eslint_name,
             vec![abs_path, "--format".to_string(), "json".to_string()],
