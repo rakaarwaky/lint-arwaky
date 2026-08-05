@@ -2,6 +2,7 @@
 // Only orchestration: delegates to capabilities & utility
 
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
+use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -709,6 +710,14 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             InheritanceMap::new(inheritance),
             all_files,
         )
+    }
+
+    fn list_directory_filtered(&self, path: &FilePath) -> Vec<FileEntry> {
+        self.deps.io.list_directory_filtered(path)
+    }
+
+    fn read_file_preview(&self, path: &FilePath, max_lines: usize) -> DisplayContent {
+        self.deps.io.read_file_preview(path, max_lines)
     }
 }
 

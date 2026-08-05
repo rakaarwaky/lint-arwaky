@@ -3,6 +3,7 @@ use shared::common::FilePath;
 use shared::tui::{LintExecutionResult, ScanUpdate};
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::tui::TuiEvent;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
@@ -343,7 +344,7 @@ impl SurfaceActionHandler {
     /// Resets selection and scroll position after loading.
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
-        state.entries = utility_file_system::list_directory(&fp, &*self.filesystem);
+        state.entries = self.filesystem.list_directory_filtered(&fp);
         if state.entries.is_empty() {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }

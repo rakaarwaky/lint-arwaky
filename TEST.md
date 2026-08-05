@@ -14,21 +14,21 @@ There are 3 test workspaces with 2 variants each:
 ### Workspace Structure
 
 ```
-workspaces-bad/                      # Files with violations (should trigger AES rules)
-├── crates/                          # Rust: 142 files, 382 violations, 24 AES codes
-│   ├── shared_common/src/           # Orphan files, bad naming, etc.
-│   ├── naming_violations/src/       # AES101 naming violations
-│   ├── code_analysis/src/           # AES503 capabilities orphans
+workspaces-bad/                   
+├── crates/                       
+│   ├── shared_common/src/        
+│   ├── naming_violations/src/     
+│   ├── code_analysis/src/        
 │   └── ...
-├── modules/                         # Python: 154 files, 384 violations, 24 AES codes
-├── packages/                        # JS/TS: 144 files, 526 violations, 24 AES codes
+├── modules/                      
+├── packages/                      
 ├── Cargo.toml, pyproject.toml, package.json, ...
 
-workspaces-good/                     # Clean files (0 violations expected)
-├── crates/                          # Rust: 29 clean files
+workspaces-good/                   
+├── crates/                        
 │   └── ...
-├── modules/                         # Python: 69 clean files
-├── packages/                        # JS/TS: 50 clean files
+├── modules/                       
+├── packages/                     
 ├── Cargo.toml, pyproject.toml, package.json, ...
 ```
 
