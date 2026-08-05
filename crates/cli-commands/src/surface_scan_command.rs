@@ -12,6 +12,82 @@ use shared::quality_rules::ICodeAnalysisAggregate;
 
 use crate::surface_output_text_formatter::output_violations;
 
+/// Parameters for the `scan` command.
+pub struct ScanCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
+    pub filter: Option<String>,
+    pub member: Option<String>,
+}
+
+/// Parameters for the `import` command.
+pub struct ImportCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub import_orchestrator: Arc<dyn shared::import_rules::IImportRunnerAggregate>,
+    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
+}
+
+/// Parameters for the `naming` command.
+pub struct NamingCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub naming_orchestrator: Arc<dyn shared::naming_rules::INamingRunnerAggregate>,
+    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
+}
+
+/// Parameters for the `role` command.
+pub struct RoleCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub role_orchestrator: Arc<dyn shared::role_rules::IRoleRunnerAggregate>,
+    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
+}
+
+/// Parameters for the `orphan` command.
+pub struct OrphanCommandParams {
+    pub path: Option<FilePath>,
+    pub member: Option<String>,
+    pub format: Format,
+    pub orphan_orchestrator: Arc<dyn shared::orphan_rules::IOrphanAggregate>,
+    pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filter: Option<String>,
+    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    pub orphan_factory: Arc<
+        dyn Fn(
+                shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+                Arc<dyn IFilesystemAggregate>,
+            ) -> Arc<dyn shared::orphan_rules::IOrphanAggregate>
+            + Send
+            + Sync,
+    >,
+}
+
+/// Parameters for the `external` command.
+pub struct ExternalCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub external_lint: Arc<dyn shared::external_lint::IExternalLintAggregate>,
+    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub config_parser: Arc<dyn shared::config_system::IConfigParserProtocol>,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
+}
+
 fn resolve_root(path: &Option<FilePath>) -> String {
     match path {
         Some(p) => p.value().to_string(),
@@ -35,27 +111,19 @@ fn exit_for(violations: usize) -> ExitCode {
 }
 
 /// `scan` — run all 6 linters via subprocesses (dispatcher self-invocation).
-#[allow(clippy::too_many_arguments)]
-pub fn handle_scan(
-    path: Option<FilePath>,
-    format: Format,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
-    filter: Option<String>,
-    member: Option<String>,
-) -> ExitCode {
-    let member_flag = is_member(&path, filesystem.as_ref());
+pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
+    let member_flag = is_member(&params.path, params.filesystem.as_ref());
     let opts = dispatcher::surface_check_action::ScanOptions {
-        path,
-        multi_project_orchestrator: config_orchestrator,
-        filter,
-        member,
-        filesystem: filesystem.clone(),
+        path: params.path,
+        multi_project_orchestrator: params.config_orchestrator,
+        filter: params.filter,
+        member: params.member,
+        filesystem: params.filesystem.clone(),
     };
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, member_flag);
+            output_violations(&violations, &root, params.format, member_flag);
             exit_for(violations.len())
         }
         Err(e) => {
@@ -118,30 +186,21 @@ pub fn handle_quality(
 }
 
 /// `import` — import rules scan.
-#[allow(clippy::too_many_arguments)]
-pub fn handle_import(
-    path: Option<FilePath>,
-    format: Format,
-    import_orchestrator: Arc<dyn shared::import_rules::IImportRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    filter: Option<String>,
-    ignored_paths: Vec<String>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_import(params: ImportCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_import_action::collect_import(
-        path.clone(),
-        import_orchestrator,
-        filter,
-        filesystem.clone(),
-        &ignored_paths,
+        params.path.clone(),
+        params.import_orchestrator,
+        params.filter,
+        params.filesystem.clone(),
+        &params.ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
                 &violations,
                 &root,
-                format,
-                is_member(&path, filesystem.as_ref()),
+                params.format,
+                is_member(&params.path, params.filesystem.as_ref()),
             );
             exit_for(violations.len())
         }
@@ -153,30 +212,21 @@ pub fn handle_import(
 }
 
 /// `naming` — naming rules scan.
-#[allow(clippy::too_many_arguments)]
-pub fn handle_naming(
-    path: Option<FilePath>,
-    format: Format,
-    naming_orchestrator: Arc<dyn shared::naming_rules::INamingRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    filter: Option<String>,
-    ignored_paths: Vec<String>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_naming_action::collect_naming(
-        path.clone(),
-        naming_orchestrator,
-        filter,
-        filesystem.clone(),
-        &ignored_paths,
+        params.path.clone(),
+        params.naming_orchestrator,
+        params.filter,
+        params.filesystem.clone(),
+        &params.ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
                 &violations,
                 &root,
-                format,
-                is_member(&path, filesystem.as_ref()),
+                params.format,
+                is_member(&params.path, params.filesystem.as_ref()),
             );
             exit_for(violations.len())
         }
@@ -188,30 +238,21 @@ pub fn handle_naming(
 }
 
 /// `role` — role rules scan (direct aggregate; subprocess variant used by `scan`).
-#[allow(clippy::too_many_arguments)]
-pub fn handle_role(
-    path: Option<FilePath>,
-    format: Format,
-    role_orchestrator: Arc<dyn shared::role_rules::IRoleRunnerAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    filter: Option<String>,
-    ignored_paths: Vec<String>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_role(params: RoleCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_role_action::collect_role_direct(
-        role_orchestrator,
-        filter,
-        filesystem.clone(),
+        params.role_orchestrator,
+        params.filter,
+        params.filesystem.clone(),
         &root,
-        &ignored_paths,
+        &params.ignored_paths,
     ) {
         Ok(violations) => {
             output_violations(
                 &violations,
                 &root,
-                format,
-                is_member(&path, filesystem.as_ref()),
+                params.format,
+                is_member(&params.path, params.filesystem.as_ref()),
             );
             exit_for(violations.len())
         }
@@ -223,38 +264,26 @@ pub fn handle_role(
 }
 
 /// `orphan` — orphan scan.
-#[allow(clippy::too_many_arguments)]
-pub fn handle_orphan(
-    path: Option<FilePath>,
-    member: Option<String>,
-    format: Format,
-    orphan_orchestrator: Arc<dyn shared::orphan_rules::IOrphanAggregate>,
-    config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    filter: Option<String>,
-    fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
-    orphan_factory: Arc<dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn shared::orphan_rules::IOrphanAggregate> + Send + Sync>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_orphan_action::collect_orphan(
-        path.clone(),
-        member,
+        params.path.clone(),
+        params.member,
         dispatcher::surface_orphan_action::OrphanScanDeps::new(
-            orphan_orchestrator,
-            config_orchestrator,
-            filesystem.clone(),
-            fs_factory,
-            orphan_factory,
+            params.orphan_orchestrator,
+            params.config_orchestrator,
+            params.filesystem.clone(),
+            params.fs_factory,
+            params.orphan_factory,
         ),
-        filter,
+        params.filter,
     ) {
         Ok(violations) => {
             output_violations(
                 &violations,
                 &root,
-                format,
-                is_member(&path, filesystem.as_ref()),
+                params.format,
+                is_member(&params.path, params.filesystem.as_ref()),
             );
             exit_for(violations.len())
         }
@@ -266,28 +295,18 @@ pub fn handle_orphan(
 }
 
 /// `external` — external lint scan (direct aggregate; subprocess variant used by `scan`).
-#[allow(clippy::too_many_arguments)]
-pub fn handle_external(
-    path: Option<FilePath>,
-    format: Format,
-    external_lint: Arc<dyn shared::external_lint::IExternalLintAggregate>,
-    _report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
-    _filesystem: Arc<dyn IFilesystemAggregate>,
-    config_parser: Arc<dyn shared::config_system::IConfigParserProtocol>,
-    filter: Option<String>,
-    ignored_paths: Vec<String>,
-) -> ExitCode {
-    let root = resolve_root(&path);
+pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
     match dispatcher::surface_external_action::collect_external_direct(
-        path.clone(),
-        external_lint,
-        _filesystem,
-        config_parser,
-        filter,
-        &ignored_paths,
+        params.path.clone(),
+        params.external_lint,
+        params.filesystem,
+        params.config_parser,
+        params.filter,
+        &params.ignored_paths,
     ) {
         Ok(violations) => {
-            output_violations(&violations, &root, format, false);
+            output_violations(&violations, &root, params.format, false);
             exit_for(violations.len())
         }
         Err(e) => {

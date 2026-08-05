@@ -276,12 +276,14 @@ fn main() {
             filter,
             member,
         } => cli_commands::surface_scan_command::handle_scan(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            filesystem.clone(),
-            Some(config_orchestrator.clone()),
-            filter,
-            member,
+            cli_commands::surface_scan_command::ScanCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                filesystem: filesystem.clone(),
+                config_orchestrator: Some(config_orchestrator.clone()),
+                filter,
+                member,
+            },
         ),
         Command::Check {
             path,
