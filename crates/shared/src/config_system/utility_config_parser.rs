@@ -4,6 +4,32 @@ use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use std::sync::OnceLock;
+
+static DEFAULT_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
+
+/// Returns the full default AES config parsed from `lint_arwaky.config.yaml`.
+pub fn default_aes_config() -> ArchitectureConfig {
+    DEFAULT_CONFIG
+        .get_or_init(|| {
+            parse_config_yaml(include_str!("../../config/lint_arwaky.config.yaml"))
+        })
+        .clone()
+}
+
+/// Returns default config for a given language, or empty config for unknown languages.
+pub fn default_config_for_language(language: &str) -> ArchitectureConfig {
+    match language {
+        "rust" | "python" | "javascript" | "typescript" => default_aes_config(),
+        _ => {
+            tracing::warn!(
+                language = language,
+                "unknown language, using empty default config"
+            );
+            ArchitectureConfig::default()
+        }
+    }
+}
 
 pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     parse_config_yaml_with_warnings(yaml_str).0

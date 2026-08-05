@@ -4,8 +4,6 @@ use crate::capabilities_rules_validator::ConfigRulesValidator;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
 // Utility modules wired into entry for orphan reachability (AES504)
-// These imports ensure utility files are not orphaned (AES504)
-use crate::utility_config_defaults;
 use crate::utility_config_merger;
 use crate::utility_config_parser;
 use shared::config_system::{
@@ -60,9 +58,9 @@ impl ConfigContainer {
         self.validator.clone()
     }
 
-    /// Get default AES configuration (uses utility_config_defaults).
+    /// Get default AES configuration (from shared parser).
     pub fn default_config(&self) -> shared::config_system::taxonomy_config_vo::ArchitectureConfig {
-        utility_config_defaults::default_aes_config()
+        shared::config_system::utility_config_parser::default_aes_config()
     }
 
     /// Parse score threshold from YAML (uses utility_config_parser).

@@ -31,11 +31,10 @@
           "id": "5a0924ad-a48d-4f33-a0e3-d5f1aac99a50",
           "panelIds": [
             "272c4838-a4f0-4b30-af14-18bdd788cb5b",
-            "859015fa-1756-44ab-b387-15500c701dd3",
-            "ee89ae28-9394-4789-95a9-19c8c216ebf3",
-            "437080fa-483d-4d35-b684-28da70874bd6",
-            "0dc61f3c-018a-4531-80be-e25ee266b6c8",
-            "5bd227cd-ae17-4dc0-9f34-6da7bc4e562a"
+            "bfbdf8ab-a139-421f-bb35-84d4657c6e8f",
+            "d710edeb-3554-408a-96cf-2bcc0b868a56",
+            "3a64371e-fc04-4f32-a52a-ce48c0eaf73d",
+            "f6bffc62-0de8-4304-a457-f62e6563bcad"
           ],
           "activeIndex": 0
         }
@@ -59,34 +58,33 @@
       "type": "terminal",
       "title": "OC | Fixing remaining violations"
     },
+    "480623bc-d84f-4e8a-8a82-098c4b014ba5": {
+      "type": "terminal",
+      "title": "raka@fedora:~/mcp-arwaky/lint-arwaky"
+    },
     "272c4838-a4f0-4b30-af14-18bdd788cb5b": {
       "type": "canvas",
       "title": "Canvas"
     },
-    "859015fa-1756-44ab-b387-15500c701dd3": {
+    "bfbdf8ab-a139-421f-bb35-84d4657c6e8f": {
       "type": "editor",
-      "title": "capabilities_parser_provider.rs",
-      "filePath": "crates/config-system/src/capabilities_parser_provider.rs"
+      "title": "utility_config_parser.rs",
+      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
     },
-    "ee89ae28-9394-4789-95a9-19c8c216ebf3": {
+    "d710edeb-3554-408a-96cf-2bcc0b868a56": {
       "type": "editor",
-      "title": "capabilities_config_defaults.rs",
-      "filePath": "crates/config-system/src/capabilities_config_defaults.rs"
+      "title": "utility_config_parser.rs",
+      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
     },
-    "437080fa-483d-4d35-b684-28da70874bd6": {
+    "3a64371e-fc04-4f32-a52a-ce48c0eaf73d": {
       "type": "editor",
-      "title": "capabilities_config_defaults.rs",
-      "filePath": "crates/config-system/src/capabilities_config_defaults.rs"
+      "title": "utility_config_parser.rs",
+      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
     },
-    "0dc61f3c-018a-4531-80be-e25ee266b6c8": {
+    "f6bffc62-0de8-4304-a457-f62e6563bcad": {
       "type": "editor",
-      "title": "utility_config_defaults.rs",
-      "filePath": "crates/config-system/src/utility_config_defaults.rs"
-    },
-    "5bd227cd-ae17-4dc0-9f34-6da7bc4e562a": {
-      "type": "editor",
-      "title": "utility_config_defaults.rs",
-      "filePath": "crates/config-system/src/utility_config_defaults.rs"
+      "title": "utility_config_parser.rs",
+      "filePath": "crates/shared/src/config_system/utility_config_parser.rs"
     }
   },
   "canvases": {
@@ -103,7 +101,7 @@
             "width": 577.4264633009037,
             "height": 415.74705357665067
           },
-          "zOrder": 460,
+          "zOrder": 493,
           "creationIndex": 0,
           "animationState": "idle",
           "dockLayout": {
@@ -125,7 +123,7 @@
             "width": 577.4264633009037,
             "height": 415.74705357665067
           },
-          "zOrder": 464,
+          "zOrder": 466,
           "creationIndex": 1,
           "animationState": "idle",
           "dockLayout": {
@@ -140,14 +138,14 @@
         "bd19ce1d-7a21-46eb-9017-0214531d38db": {
           "id": "bd19ce1d-7a21-46eb-9017-0214531d38db",
           "origin": {
-            "x": 0,
-            "y": 440
+            "x": -40,
+            "y": 460
           },
           "size": {
             "width": 577.4264633009037,
             "height": 415.74705357665067
           },
-          "zOrder": 463,
+          "zOrder": 488,
           "creationIndex": 10,
           "animationState": "idle",
           "dockLayout": {
@@ -170,7 +168,7 @@
             "width": 577.4264633009037,
             "height": 415.74705357665067
           },
-          "zOrder": 462,
+          "zOrder": 494,
           "creationIndex": 11,
           "animationState": "idle",
           "dockLayout": {
@@ -181,12 +179,34 @@
             ],
             "activeIndex": 0
           }
+        },
+        "c719801f-aea9-4f8d-9805-973c2c9fc646": {
+          "id": "c719801f-aea9-4f8d-9805-973c2c9fc646",
+          "origin": {
+            "x": 40,
+            "y": 980
+          },
+          "size": {
+            "width": 640,
+            "height": 400
+          },
+          "zOrder": 492,
+          "creationIndex": 37,
+          "animationState": "idle",
+          "dockLayout": {
+            "type": "tabs",
+            "id": "252907ad-5910-4a70-8c1d-098ead92614e",
+            "panelIds": [
+              "480623bc-d84f-4e8a-8a82-098c4b014ba5"
+            ],
+            "activeIndex": 0
+          }
         }
       },
-      "zoomLevel": 0.8984615835457863,
+      "zoomLevel": 1.018221177746098,
       "viewportOffset": {
-        "x": 195.0988714194558,
-        "y": 163.62643730176262
+        "x": -25.886422079684507,
+        "y": -13.813670679112306
       }
     }
   }

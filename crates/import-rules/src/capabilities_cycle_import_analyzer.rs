@@ -213,6 +213,12 @@ impl DependencyCycleAnalyzer {
             }
         }
 
+        for e in &edges {
+            eprintln!("DEBUG_EDGE {} -> {}", e.source, e.target);
+        }
+        for (fl, f) in &file_by_layer {
+            eprintln!("DEBUG_FILELAYER {} -> {}", fl, f);
+        }
         let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
         cycle_edge_results.into_iter().map(|sn| {
             let edge_key = sn.value;
