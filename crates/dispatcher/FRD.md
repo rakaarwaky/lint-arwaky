@@ -4,7 +4,7 @@
 
 ## System Overview
 
-The dispatcher crate is a **Utility Surface** that centralizes all business logic for Smart surfaces (CLI, MCP, TUI, API). Smart surfaces are thin wrappers that parse input, call dispatcher functions, and format output. Dispatcher owns the business logic; surfaces own the rendering.
+The dispatcher crate is centralizes all business logic for Smart surfaces (CLI, MCP, TUI, API). Smart surfaces are thin wrappers that parse input, call dispatcher functions, and format output. Dispatcher owns the business logic; surfaces own the rendering.
 
 ### Architecture & Data Flow
 
@@ -27,13 +27,7 @@ flowchart TD
     B6 -->|"FixReport"| OUT
 
     OUT -->|"Vec<ViolationItem>\nor Report"| A
-
 ```
-
-### Dependency Rule
-
-- Dispatcher imports: shared (taxonomies, contracts, aggregates for filesystem, naming, import, quality, orphan, role, external, config, maintenance, setup, file-watch, auto-fix), filesystem, orphan-rules
-- Dispatcher must NOT import: any Smart surface crate (CLI, MCP, TUI, API)
 
 ---
 
@@ -388,7 +382,6 @@ edition       Rust edition from `CARGO_PKG_RUST_VERSION`
 **Error Handling**: None (infallible).
 
 ---
-
 
 ## Non-functional Requirements
 

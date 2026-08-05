@@ -1,4 +1,4 @@
-# PRD — Lint Arwaky (v1.1.0)
+# PRD — Lint Arwaky (v1.11.0)
 
 ---
 
@@ -37,7 +37,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
   - External linter adapters (Clippy, Rustfmt, cargo-audit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)
   - SARIF 2.1.0, JUnit XML, JSON reports
   - Git hooks integration
-  - Auto-fix: remove + replace + rename
+  - Auto-fix: remove + # PRD — Lint Arwaky (v1.1.0) + rename
 - **Out of scope**:
 
   - IDE plugins (VS Code, IntelliJ)
@@ -53,13 +53,13 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 | Topic                 | Decision                                                                                                |
 | ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| Auto-fix safety       | **Remove + replace + rename**                                                                          |
+| Auto-fix safety       | **Remove + # PRD — Lint Arwaky (v1.1.0) + rename**                                                                          |
 | MCP vs CLIv s TUI     | **Full parity**                                                                                        |
 | MCP tools             | **5 tools**: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`             |
 | Acceptance tests      | Filename standard:`acceptance_FR_00N.rs`                                                                |
 | Doctor command        | Exit**0** when diagnostic completes (missing tools listed in body); exit **2** only on internal failure |
 | Auto-fix outcomes     | **Reason-coded** results (`Applied` / `Skipped(reason)` / `Failed(reason)`), not bare bool              |
-| Concurrency model     | **std::thread / rayon** — no async runtime (tokio removed) across all crates                           |
+| Concurrency model     | **std::thread / rayon** — async only where required (file-watch, mcp-server via rmcp)                   |
 | AST parsing           | **Full AST via tree-sitter** — all languages, no regex fallback                                        |
 | Filesystem operations | **Centralized in filesystem crate** —other crates do not perform file I/O or parsing                  |
 
@@ -86,9 +86,9 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------- |
 | **Naming**  | AES101 (naming convention), AES102 (suffix/prefix validation)                                                                                                                  | 2      | naming-rules    |
 | **Import**  | AES201 (layer dependency), AES202 (mandatory imports), AES203 (unused imports), AES204 (dummy imports), AES205 (circular dependencies)                                         | 5      | import-rules    |
-| **Quality** | AES301 (max lines), AES302 (min lines), AES303 (mandatory definitions + dead inheritance), AES304 (bypass detection), AES305 (duplicate code)                                  | 5      | code-analysis   |
+| **Quality** | AES301 (max lines), AES302 (min lines), AES303 (mandatory definitions + dead inheritance), AES304 (bypass detection), AES305 (duplicate code)                                  | 5      | quality-rules   |
 | **Role**    | AES401 (taxonomy purity), AES402 (contract primitives), AES403 (capability implementation), AES404 (utility purity), AES405 (agent composition), AES406 (surface passive role) | 6      | role-rules      |
-| **Orphan**  | AES501 (taxonomy orphan), AES502 (contract orphan), AES503 (capabilities orphan), AES504 (utility orphan), AES505 (agent orphan), AES506 (surface orphan)                      | 6      | orphan-detector |
+| **Orphan**  | AES501 (taxonomy orphan), AES502 (contract orphan), AES503 (capabilities orphan), AES504 (utility orphan), AES505 (agent orphan), AES506 (surface orphan)                      | 6      | orphan-rules    |
 | **Total**   |                                                                                                                                                                                | **24** |                 |
 
 ---
@@ -97,7 +97,7 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 
 ### P0 — Must Have
 
-- [ ]  Multi-language scanning (Rust, Python, JS/TS) — `filesystem`, `code-analysis`, `import-rules`, `naming-rules`, `role-rules`, `orphan-detector`, `external-lint`
+- [ ]  Multi-language scanning (Rust, Python, JS/TS) — `filesystem`, `quality-rules`, `import-rules`, `naming-rules`, `role-rules`, `orphan-rules`, `external-lint`
 - [ ]  24 AES rules enforcement — RULES_AES groups 1–5
 - [ ]  CLI with `check`, `scan`, `fix`, `ci` commands — `cli-commands`
 - [ ]  MCP server with 5 tools + **full execute parity** (no stubs) — `mcp-server`
@@ -108,7 +108,7 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 - [ ]  External linter adapters (Clippy, Rustfmt, cargo-audit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC) — `external-lint`
 - [ ]  SARIF 2.1.0, JUnit XML, JSON reports — `report-formatter`
 - [ ]  Git hooks integration — `git-hooks`
-- [ ]  Auto-fix capabilities (remove + replace + rename) — `auto-fix` 
+- [ ]  Auto-fix capabilities (remove + # PRD — Lint Arwaky (v1.1.0) + rename) — `auto-fix` 
 - [ ]  Watch mode for continuous linting — `file-watch`
 - [ ]  TUI file browser (critical-path acceptance) — `tui`
 - [ ]  Workspace exit-code contract enforced everywhere — `cli-commands`, `maintenance`
@@ -131,10 +131,11 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 | `filesystem`       | File walking, AST parsing, graph construction       |
 | `naming-rules`     | AES101–102 naming conventions                      |
 | `import-rules`     | AES201–205 import boundaries (+ purpose sub-check) |
-| `code-analysis`    | AES301–305 quality rules                           |
+| `quality-rules`    | AES301–305 quality rules                           |
 | `role-rules`       | AES401–406 layer roles                             |
-| `orphan-detector`  | AES501–506 orphan detection                        |
+| `orphan-rules`     | AES501–506 orphan detection                        |
 | `external-lint`    | Clippy/Ruff/ESLint adapters (tool-native codes)     |
+| `dispatcher`       | Utility Surface — centralizes business logic        |
 | `auto-fix`         | Mechanical fixes (remove + replace + rename)        |
 | `report-formatter` | text/json/sarif/junit output                        |
 | `cli-commands`     | Human CLI surface                                   |
@@ -155,7 +156,7 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 - **Platform**: Linux (primary), macOS (secondary).
 - **Binary**: Static release via `cargo build --release`.
 - **Traceability**: Acceptance tests named `acceptance_FR_00N.rs` per FR where practical.
-- **Concurrency**: std::thread / rayon across all crates. No async runtime dependency.
+- **Concurrency**: std::thread / rayon across all crates. Async (tokio) used only by file-watch and mcp-server (via rmcp).
 - **Parsing**: Full AST via tree-sitter for all languages. No regex or line-based parsing in final implementation.
 - **Diagnostics**: `PARSE_WARN` (non-AES warning) for files that fail to parse. Emitted by filesystem crate.
 

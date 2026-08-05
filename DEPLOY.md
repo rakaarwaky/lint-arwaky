@@ -1,4 +1,4 @@
-# Deployment Guide — Lint Arwaky v1.10.14
+# Deployment Guide — Lint Arwaky v1.11.0
 
 **Status**: PRODUCTION-READY —
 
@@ -8,7 +8,7 @@
 
 | Requirement    | Minimum                  | Recommended                 |
 | -------------- | ------------------------ | --------------------------- |
-| Rust toolchain | 1.70 (edition 2021)      | 1.78+ (stable)              |
+| Rust toolchain | 1.85 (edition 2024)      | 1.85+ (stable)              |
 | RAM            | 256 MB                   | 1 GB+ (for large codebases) |
 | Disk           | 50 MB (release binaries) | -                           |
 | OS             | Linux                    | Linux x86_64                |
@@ -23,10 +23,10 @@ No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/std
 
 ```bash
 # Linux
-curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/install.remote.sh | bash
+bash scripts/install.local.sh
 ```
 
-The installer places `lint-arwaky-cli` and `lint-arwaky-mcp` in `~/.local/bin/` (or `/usr/local/bin/` when run as root).
+The installer builds from source and places binaries in `target/release/`.
 
 ### Option 2: From source (recommended for contributors)
 
@@ -38,6 +38,7 @@ cargo build --release
 # Binaries produced at:
 #   target/release/lint-arwaky-cli
 #   target/release/lint-arwaky-mcp
+#   target/release/lint-arwaky-tui
 
 # Optionally symlink into PATH
 ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/
@@ -61,7 +62,7 @@ cargo build --release --target x86_64-pc-windows-msvc
 
 ```bash
 lint-arwaky-cli version
-# Expected: Lint Arwaky v1.10.14 (AES Semantic Builder)
+# Expected: Lint Arwaky v1.11.0
 
 lint-arwaky-cli maintenance doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)
@@ -173,7 +174,7 @@ lint-arwaky-cli init
 - [ ] `cargo test --workspace` passes
 - [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
-- [ ] `lint-arwaky-cli version` returns `1.10.14`
+- [ ] `lint-arwaky-cli version` returns `1.11.0`
 - [ ] `lint-arwaky-cli doctor` reports no issues
 - [ ] `lint-arwaky-mcp` responds to `tools/list` with the expected tools
 - [ ] `health_check` MCP tool returns all adapters healthy
@@ -183,8 +184,8 @@ lint-arwaky-cli init
 - [ ] Bump version in `Cargo.toml`
 - [ ] Update `CHANGELOG.md`
 - [ ] Build release: `cargo build --release`
-- [ ] Tag the release: `git tag v1.10.14`
-- [ ] Push tag: `git push origin v1.10.14`
+- [ ] Tag the release: `git tag v1.11.0`
+- [ ] Push tag: `git push origin v1.11.0`
 - [ ] Run installer smoke-test on a clean machine
 
 ### Post-Deploy
@@ -200,13 +201,13 @@ lint-arwaky-cli init
 Reinstall the previous release:
 
 ```bash
-cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v1.10.14
+cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v1.11.0
 ```
 
 Or rebuild from a specific tag:
 
 ```bash
-git checkout v1.10.14
+git checkout v1.11.0
 cargo build --release
 ```
 
