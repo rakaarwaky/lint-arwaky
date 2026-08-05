@@ -2,9 +2,8 @@
 // File I/O, path operations, directory operations, process execution, scan timing
 // Responsibilities: low-level filesystem access, path metadata, process spawning
 
-use crate::common::taxonomy_display_content_vo::DisplayContent;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::filesystem::taxonomy_filesystem_vo::{FileEntry, FileExtension, ScanTiming};
+use crate::filesystem::taxonomy_filesystem_vo::{FileExtension, ScanTiming};
 use std::path::{Path, PathBuf};
 
 /// Filesystem IO protocol — low-level file I/O, path operations, directory ops, process execution.
@@ -75,12 +74,6 @@ pub trait IFileSystemIOProtocol: Send + Sync {
 
     /// Read directory entries as Vec<PathBuf>.
     fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error>;
-
-    /// List directory entries, skipping hidden files (starting with '.').
-    fn list_directory_filtered(&self, path: &FilePath) -> Vec<FileEntry>;
-
-    /// Read up to `max_lines` lines of a file with line-numbered formatting.
-    fn read_file_preview(&self, path: &FilePath, max_lines: usize) -> DisplayContent;
 
     // ═══════════════════════════════════════════════════════════
     // File Read/Write

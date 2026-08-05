@@ -3,7 +3,6 @@
 // Cache accessors live here because they use DashMap (pipeline state),
 // which cannot be delegated to the child protocol traits.
 
-use crate::common::taxonomy_display_content_vo::DisplayContent;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 use crate::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
