@@ -584,8 +584,7 @@ architecture:
       exceptions: ["main.rs", "lib.rs", "mod.rs"]
 
     AES205:
-      enabled: false  # TEMPORARILY DISABLED: cycle detector produces false positives
-      # for shared::* imports — needs fix in detect_module_layer resolution
+      enabled: true
       exceptions:
         [
           "main.rs",

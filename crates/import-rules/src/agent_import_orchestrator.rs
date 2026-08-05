@@ -9,16 +9,16 @@ use std::sync::Arc;
 
 use shared::cli_commands::{LintResult, LintResultList};
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
+use shared::config_system::ArchitectureConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ParseMetadata};
-use shared::config_system::ArchitectureConfig;
+use shared::import_rules::DEFAULT_SKIP_DIRS;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::DEFAULT_SKIP_DIRS;
 
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use tracing::warn;
@@ -182,13 +182,29 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         results.values.extend(forbidden_results.values);
         results.values.extend(file_violations);
 
+        // Use resolved imports for cycle detection — resolved_path maps module paths to files.
+        let resolved_imports_list = self.deps.filesystem.resolved_import_list();
+        let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
+            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+            for entry in resolved_imports_list {
+                let key = entry.source_file.to_string_lossy().to_string();
+                map.entry(key).or_default().push(entry);
+            }
+            map
+        };
+        let cycle_map = if resolved_imports_map.is_empty() {
+            imports_map
+        } else {
+            resolved_imports_map
+        };
+
         if let Ok(cycle_violations) = self.deps.cycle.check_cycles(
             &self.config,
             &self.layer_map,
             &files,
             &root_dir,
             &content_map,
-            &imports_map,
+            &cycle_map,
         ) {
             results.values.extend(cycle_violations);
         }
@@ -299,13 +315,29 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             results.extend(v.values);
         }
 
+        // Use resolved imports for cycle detection — resolved_path maps module paths to files.
+        let resolved_imports_list = self.deps.filesystem.resolved_import_list();
+        let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
+            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+            for entry in resolved_imports_list {
+                let key = entry.source_file.to_string_lossy().to_string();
+                map.entry(key).or_default().push(entry);
+            }
+            map
+        };
+        let cycle_map = if resolved_imports_map.is_empty() {
+            imports_map.clone()
+        } else {
+            resolved_imports_map
+        };
+
         let cycle_result = self.deps.cycle.check_cycles(
             &self.config,
             &self.layer_map,
             &file_list,
             &root_dir,
             &content_map,
-            &imports_map,
+            &cycle_map,
         );
         if let Ok(v) = cycle_result {
             results.extend(v);

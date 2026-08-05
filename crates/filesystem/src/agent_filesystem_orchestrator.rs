@@ -35,6 +35,7 @@ pub struct FilesystemOrchestrator {
     pub(crate) files: OnceLock<Vec<FileEntry>>,
     pub(crate) file_index: OnceLock<HashMap<PathBuf, usize>>,
     pub(crate) imports: OnceLock<Vec<ImportEntry>>,
+    pub(crate) resolved_imports: OnceLock<Vec<ImportEntry>>,
     pub(crate) warnings: OnceLock<Vec<ParseWarning>>,
     pub(crate) cached_reverse_links: OnceLock<HashMap<PathBuf, Vec<PathBuf>>>,
     pub(crate) cached_definitions: OnceLock<HashMap<String, Vec<PathBuf>>>,
@@ -642,47 +643,67 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                     } else {
                         None
                     }
-                } else if imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::Python {
-                    // Python absolute import: `from shared.src.foo import Bar`
-                    // raw_path = "shared.src.foo" → try modules/shared/src/foo.py, etc.
-                    let module_path = raw.replace('.', "/");
-                    let member_dirs = ["modules", "packages", "crates"];
-                    member_dirs.iter().find_map(|md| {
-                        let py = format!("{}/{}.py", md, module_path);
-                        if all_files_set.contains(py.as_str()) {
-                            return Some(py);
-                        }
-                        let init = format!("{}/{}/__init__.py", md, module_path);
-                        if all_files_set.contains(init.as_str()) {
-                            return Some(init);
-                        }
-                        None
-                    })
-                } else if imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
-                    || imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript
+                } else if imp.language
+                    == shared::filesystem::taxonomy_filesystem_vo::Language::Python
+                {
+                    // Python import: `from .foo import Bar` (relative) or `from shared.src.foo import Bar` (absolute)
+                    if raw.starts_with('.') {
+                        // Relative import: resolve relative to source file's directory
+                        let src_dir = std::path::Path::new(&src_rel)
+                            .parent()
+                            .map(|p| p.to_string_lossy().to_string())
+                            .unwrap_or_default();
+                        let rel_path = raw.trim_start_matches('.');
+                        let module_path = rel_path.replace('.', "/");
+                        // Try as module.py and module/__init__.py
+                        let candidates = vec![
+                            format!("{}/{}.py", src_dir, module_path),
+                            format!("{}/{}/__init__.py", src_dir, module_path),
+                        ];
+                        candidates
+                            .into_iter()
+                            .find(|c| all_files_set.contains(c.as_str()))
+                    } else {
+                        // Absolute import: `from shared.src.foo import Bar`
+                        let module_path = raw.replace('.', "/");
+                        let member_dirs = ["modules", "packages", "crates"];
+                        member_dirs.iter().find_map(|md| {
+                            let py = format!("{}/{}.py", md, module_path);
+                            if all_files_set.contains(py.as_str()) {
+                                return Some(py);
+                            }
+                            let init = format!("{}/{}/__init__.py", md, module_path);
+                            if all_files_set.contains(init.as_str()) {
+                                return Some(init);
+                            }
+                            None
+                        })
+                    }
+                } else if imp.language
+                    == shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+                    || imp.language
+                        == shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript
                 {
                     // TS/JS bare specifier: `calculator-shared/src/foo`
-                    // Replace hyphens with slashes to match directory structure
-                    let member_dirs = ["packages", "crates", "modules"];
-                    // Try replacing hyphens with path separator
-                    let slash_path = raw.replace('-', "/");
-                    member_dirs.iter().find_map(|md| {
-                        // Try as .ts/.js file
-                        for ext in &[".ts", ".js", ".tsx", ".jsx"] {
-                            let candidate = format!("{}/{}{}", md, slash_path, ext);
-                            if all_files_set.contains(candidate.as_str()) {
-                                return Some(candidate);
-                            }
-                        }
-                        // Try as index file in directory
-                        for ext in &[".ts", ".js", ".tsx", ".jsx"] {
-                            let candidate = format!("{}/{}/index{}", md, slash_path, ext);
-                            if all_files_set.contains(candidate.as_str()) {
-                                return Some(candidate);
-                            }
-                        }
+                    // Split into package name + sub_path, resolve via package.json
+                    let parts: Vec<&str> = raw.split('/').collect();
+                    if parts.len() >= 2 {
+                        let pkg_name = parts[0];
+                        // Strip leading "src/" from sub_path since src_dir already includes it
+                        let sub = if parts.len() > 2 && parts[1] == "src" {
+                            parts[2..].join("/")
+                        } else {
+                            parts[1..].join("/")
+                        };
+                        crate::utility_import_resolution::resolve_external_crate_import(
+                            pkg_name,
+                            &sub,
+                            &top_root,
+                            &all_files_set,
+                        )
+                    } else {
                         None
-                    })
+                    }
                 } else {
                     // Rust `use crate::foo::Bar` — strip prefix, take root segment
                     let module = raw
@@ -703,7 +724,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                             // e.g. `use calculator_addition::foo::Bar` → look up
                             // `addition/src/foo.rs` by scanning member Cargo.toml files.
                             let sub_path = module.split("::").skip(1).collect::<Vec<_>>().join("/");
-                            Self::resolve_external_crate_import(
+                            crate::utility_import_resolution::resolve_external_crate_import(
                                 root_seg,
                                 &sub_path,
                                 &top_root,
@@ -717,14 +738,19 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             };
             if let Some(tgt_rel) = target {
                 if src_rel != tgt_rel {
-                    forward.entry(src_rel.clone()).or_default().push(tgt_rel.clone());
+                    forward
+                        .entry(src_rel.clone())
+                        .or_default()
+                        .push(tgt_rel.clone());
                     // For Rust external crate imports, also add an edge to the crate's lib.rs.
                     // In Rust, `use pkg::foo::Bar` goes through the crate root, and lib.rs's
                     // pub mod declarations provide reachability to all sub-modules. Without
                     // this extra edge, modules only referenced via lib.rs (e.g. agent_* files)
                     // would appear unreachable from the entry point.
-                    if tgt_rel.ends_with(".rs") && !tgt_rel.ends_with("lib.rs") {
-                        if let Some(lib_path) = Self::derive_crate_lib_rs(&tgt_rel) {
+                    if tgt_rel.ends_with(".rs") {
+                        if let Some(lib_path) =
+                            crate::utility_import_resolution::derive_crate_lib_rs(&tgt_rel)
+                        {
                             if all_files_set.contains(lib_path.as_str()) && lib_path != src_rel {
                                 forward.entry(src_rel).or_default().push(lib_path);
                             }
@@ -733,6 +759,21 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
                 }
             }
         }
+
+        // Populate resolved_imports: ImportEntry objects with resolved_path set.
+        // The cycle analyzer needs resolved_path to map module paths to file paths.
+        let mut resolved_import_entries: Vec<ImportEntry> = Vec::new();
+        for imp in &imports {
+            let src_rel = path_to_relative(&imp.source_file, &top_root);
+            // Re-derive the target file path using the same logic as the forward graph.
+            let target_file = self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set);
+            let mut entry = imp.clone();
+            if let Some(tgt) = target_file {
+                entry.resolved_path = Some(std::path::PathBuf::from(&tgt));
+            }
+            resolved_import_entries.push(entry);
+        }
+        let _ = self.resolved_imports.set(resolved_import_entries);
 
         // Build reverse links from the forward graph so that Use imports
         // (e.g. `use crate::foo::Bar`) are also visible as inbound links.
@@ -757,6 +798,25 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             })
             .collect();
 
+        // Add edges between all crate lib.rs files to simulate Cargo workspace
+        // dependencies. In Rust, all workspace crates are compiled together and
+        // can reference each other. Without these edges, crates not directly
+        // imported by entry points appear unreachable.
+        let lib_rs_files: Vec<String> = all_files
+            .iter()
+            .filter(|f| f.ends_with("/lib.rs"))
+            .cloned()
+            .collect();
+        for lib in &lib_rs_files {
+            for other_lib in &lib_rs_files {
+                if lib != other_lib {
+                    forward
+                        .entry(lib.clone())
+                        .or_default()
+                        .push(other_lib.clone());
+                }
+            }
+        }
         GraphAnalysisContext::new(
             ImportGraph::new(forward),
             InboundLinkMap::new(reverse),
@@ -768,106 +828,174 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn find_workspace_root(&self, start: &Path) -> Option<PathBuf> {
         crate::utility_workspace_detection::find_workspace_root_from_path(start).ok()
     }
+
+    fn resolved_import_list(&self) -> Vec<ImportEntry> {
+        self.resolved_imports.get().cloned().unwrap_or_default()
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
 
 impl FilesystemOrchestrator {
-    /// Resolve an external crate import (e.g. `use calculator_addition::foo::Bar`)
-    /// by scanning workspace member Cargo.toml files for a matching package name.
-    /// Returns the relative path to the target file if found.
-    fn resolve_external_crate_import(
-        crate_name: &str,
-        sub_path: &str,
-        top_root: &std::path::Path,
-        all_files_set: &std::collections::HashSet<&str>,
-    ) -> Option<String> {
-        // Scan member directories for Cargo.toml files to build package→dir mapping
-        let member_dirs = ["crates", "packages", "modules"];
-        for member_dir in &member_dirs {
-            let base = top_root.join(member_dir);
-            if !base.is_dir() {
-                continue;
-            }
-            if let Ok(entries) = std::fs::read_dir(&base) {
-                for entry in entries.flatten() {
-                    if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
-                        continue;
-                    }
-                    let cargo_toml = entry.path().join("Cargo.toml");
-                    if !cargo_toml.exists() {
-                        continue;
-                    }
-                    // Parse package name from Cargo.toml (simple string scan)
-                    if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
-                        for line in content.lines() {
-                            let trimmed = line.trim();
-                            if trimmed.starts_with("name") && trimmed.contains('=') {
-                                if let Some((_, val)) = trimmed.split_once('=') {
-                                    let pkg_name = val.trim().trim_matches('"');
-                                    // Match: package name with hyphens → underscores
-                                    let normalized = pkg_name.replace('-', "_");
-                                    if normalized == crate_name {
-                                        // Found the member — resolve sub_path to actual target file.
-                                        let member_name =
-                                            entry.file_name().to_string_lossy().to_string();
-                                        let member_base = format!("{}/{}", member_dir, member_name);
-                                        let src_dir = format!("{}/src", member_base);
-                                        // Try progressively shorter sub-paths.
-                                        // e.g. `use pkg::foo::bar::Baz` → sub_path = "foo/bar/Baz"
-                                        // Try "foo/bar/Baz.rs", "foo/bar.rs", "foo.rs", "lib.rs"
-                                        let parts: Vec<&str> = sub_path.split('/').collect();
-                                        for i in (0..=parts.len()).rev() {
-                                            let candidate_base = if i == 0 {
-                                                format!("{}/lib", src_dir)
-                                            } else {
-                                                format!("{}/{}", src_dir, parts[..i].join("/"))
-                                            };
-                                            let candidates = vec![
-                                                format!("{}.rs", candidate_base),
-                                                format!("{}/mod.rs", candidate_base),
-                                            ];
-                                            for candidate in &candidates {
-                                                if all_files_set.contains(candidate.as_str()) {
-                                                    return Some(candidate.clone());
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        None
-    }
-
-    /// Given a resolved external crate file path (e.g. "crates/shared/src/taxonomy_result_vo.rs"),
-    /// derive the crate root lib.rs (e.g. "crates/shared/src/lib.rs").
-    /// Returns Some(lib.rs path) if found within a src/ directory of a workspace member.
-    fn derive_crate_lib_rs(resolved_path: &str) -> Option<String> {
-        // Find the "src/" segment and derive lib.rs from it
-        let parts: Vec<&str> = resolved_path.split('/').collect();
-        if let Some(src_idx) = parts.iter().position(|&p| p == "src") {
-            let lib_rs = format!("{}/lib.rs", parts[..=src_idx].join("/"));
-            Some(lib_rs)
-        } else {
-            None
-        }
-    }
-
     pub fn new(deps: FilesystemOrchestratorDeps) -> Self {
         Self {
             deps,
             files: OnceLock::new(),
             file_index: OnceLock::new(),
             imports: OnceLock::new(),
+            resolved_imports: OnceLock::new(),
             warnings: OnceLock::new(),
             cached_reverse_links: OnceLock::new(),
             cached_definitions: OnceLock::new(),
             cached_implementations: OnceLock::new(),
+        }
+    }
+
+    pub fn resolved_import_list(&self) -> Vec<ImportEntry> {
+        self.resolved_imports.get().cloned().unwrap_or_default()
+    }
+
+    /// Resolve an ImportEntry to a file path, matching the forward graph logic.
+    fn resolve_import_target(
+        &self,
+        imp: &ImportEntry,
+        src_rel: &str,
+        top_root: &Path,
+        all_files_set: &std::collections::HashSet<&str>,
+    ) -> Option<String> {
+        use shared::filesystem::taxonomy_filesystem_vo::ImportType;
+
+        if imp.import_type == ImportType::Mod && imp.resolved_path.is_none() {
+            let src_dir = std::path::Path::new(src_rel)
+                .parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+            let mod_name = &imp.raw_path;
+            let candidate_rs = if src_dir.is_empty() {
+                format!("{}.rs", mod_name)
+            } else {
+                format!("{}/{}.rs", src_dir, mod_name)
+            };
+            let candidate_mod = if src_dir.is_empty() {
+                format!("{}/mod.rs", mod_name)
+            } else {
+                format!("{}/{}/mod.rs", src_dir, mod_name)
+            };
+            if all_files_set.contains(candidate_rs.as_str()) {
+                Some(candidate_rs)
+            } else if all_files_set.contains(candidate_mod.as_str()) {
+                Some(candidate_mod)
+            } else {
+                None
+            }
+        } else if imp.resolved_path.is_some() {
+            imp.resolved_path
+                .as_ref()
+                .map(|p| path_to_relative(p, top_root))
+        } else {
+            let raw = &imp.raw_path;
+            let src_dir = std::path::Path::new(src_rel)
+                .parent()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_default();
+
+            if raw.starts_with("./") || raw.starts_with("../") {
+                let base = std::path::Path::new(&src_dir);
+                let rel = raw.strip_prefix("./").unwrap_or(raw);
+                let candidate = base.join(rel).to_string_lossy().to_string();
+                if all_files_set.contains(candidate.as_str()) {
+                    Some(candidate)
+                } else if !candidate.contains('.') {
+                    let exts = [".ts", ".js", ".tsx", ".jsx", ".rs", ".py"];
+                    exts.iter().find_map(|ext| {
+                        let c = format!("{}{}", candidate, ext);
+                        if all_files_set.contains(c.as_str()) {
+                            Some(c)
+                        } else {
+                            None
+                        }
+                    })
+                } else {
+                    None
+                }
+            } else if imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::Python {
+                if raw.starts_with('.') {
+                    let src_dir = std::path::Path::new(src_rel)
+                        .parent()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_default();
+                    let rel_path = raw.trim_start_matches('.');
+                    let module_path = rel_path.replace('.', "/");
+                    let candidates = vec![
+                        format!("{}/{}.py", src_dir, module_path),
+                        format!("{}/{}/__init__.py", src_dir, module_path),
+                    ];
+                    candidates
+                        .into_iter()
+                        .find(|c| all_files_set.contains(c.as_str()))
+                } else {
+                    let module_path = raw.replace('.', "/");
+                    let member_dirs = ["modules", "packages", "crates"];
+                    member_dirs.iter().find_map(|md| {
+                        let py = format!("{}/{}.py", md, module_path);
+                        if all_files_set.contains(py.as_str()) {
+                            return Some(py);
+                        }
+                        let init = format!("{}/{}/__init__.py", md, module_path);
+                        if all_files_set.contains(init.as_str()) {
+                            return Some(init);
+                        }
+                        None
+                    })
+                }
+            } else if imp.language
+                == shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+                || imp.language == shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript
+            {
+                let parts: Vec<&str> = raw.split('/').collect();
+                if parts.len() >= 2 {
+                    let pkg_name = parts[0];
+                    let sub = if parts.len() > 2 && parts[1] == "src" {
+                        parts[2..].join("/")
+                    } else {
+                        parts[1..].join("/")
+                    };
+                    crate::utility_import_resolution::resolve_external_crate_import(
+                        pkg_name,
+                        &sub,
+                        top_root,
+                        all_files_set,
+                    )
+                } else {
+                    None
+                }
+            } else {
+                let module = raw
+                    .strip_prefix("crate::")
+                    .or_else(|| raw.strip_prefix("super::"))
+                    .unwrap_or(raw);
+                let root_seg = module.split("::").next().unwrap_or("");
+                if !root_seg.is_empty() {
+                    let candidate = if src_dir.is_empty() {
+                        format!("{}.rs", root_seg)
+                    } else {
+                        format!("{}/{}.rs", src_dir, root_seg)
+                    };
+                    if all_files_set.contains(candidate.as_str()) {
+                        Some(candidate)
+                    } else {
+                        let sub_path = module.split("::").skip(1).collect::<Vec<_>>().join("/");
+                        crate::utility_import_resolution::resolve_external_crate_import(
+                            root_seg,
+                            &sub_path,
+                            top_root,
+                            all_files_set,
+                        )
+                    }
+                } else {
+                    None
+                }
+            }
         }
     }
 }
@@ -876,38 +1004,88 @@ impl FilesystemOrchestrator {
 
 impl FilesystemOrchestrator {
     pub fn build_file_index_impl(&self, root: &Path, extra_ignored: &[String]) {
-        if self.files.get().is_some() { return; }
+        // Always discover from workspace root so the import graph includes ALL
+        // workspace files — critical for cross-crate orphan detection.
+        // The OnceLock prevents duplicate work when called multiple times.
+        let ws_root = self
+            .deps
+            .workspace
+            .workspace_root(
+                &shared::common::taxonomy_path_vo::FilePath::new(
+                    root.to_string_lossy().to_string(),
+                )
+                .unwrap_or_default(),
+            )
+            .unwrap_or_else(|| root.to_path_buf());
         let mut ignored: Vec<String> = shared::common::DEFAULT_IGNORED_PATHS
-            .iter().map(|s| format!("{}/", s)).collect();
+            .iter()
+            .map(|s| format!("{}/", s))
+            .collect();
         ignored.extend_from_slice(extra_ignored);
-        let abs_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+        let abs_root = std::fs::canonicalize(&ws_root).unwrap_or(ws_root);
         let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
-            .iter().filter(|d| abs_root.join(d).is_dir()).copied().collect();
-        let scanned: Vec<PathBuf> = crate::utility_workspace_detection::discover_source_files(&abs_root, &ignored)
-            .into_iter().map(PathBuf::from)
-            .filter(|p| {
-                if member_dirs.is_empty() { return true; }
-                if let Ok(rel) = p.strip_prefix(&abs_root) {
-                    let rel_str = rel.to_string_lossy();
-                    member_dirs.iter().any(|d| rel_str.starts_with(&format!("{}/", d))) || !rel_str.contains('/')
-                } else { true }
-            }).collect();
+            .iter()
+            .filter(|d| abs_root.join(d).is_dir())
+            .copied()
+            .collect();
+        let scanned: Vec<PathBuf> =
+            crate::utility_workspace_detection::discover_source_files(&abs_root, &ignored)
+                .into_iter()
+                .map(PathBuf::from)
+                .filter(|p| {
+                    if member_dirs.is_empty() {
+                        return true;
+                    }
+                    if let Ok(rel) = p.strip_prefix(&abs_root) {
+                        let rel_str = rel.to_string_lossy();
+                        member_dirs
+                            .iter()
+                            .any(|d| rel_str.starts_with(&format!("{}/", d)))
+                            || !rel_str.contains('/')
+                    } else {
+                        true
+                    }
+                })
+                .collect();
         let mut entries = Vec::new();
         let mut all_imports = Vec::new();
         let all_warnings = Vec::new();
         for path in &scanned {
-            let language = self.deps.workspace.detect_language_from_path(&path.to_string_lossy());
-            let content = match self.deps.io.read_to_string(path) { Ok(c) => c, Err(_) => continue };
+            let language = self
+                .deps
+                .workspace
+                .detect_language_from_path(&path.to_string_lossy());
+            let content = match self.deps.io.read_to_string(path) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
             let lang_enum = match language {
-                shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => shared::filesystem::taxonomy_filesystem_vo::Language::Rust,
-                shared::common::taxonomy_config_language_vo::ConfigLanguage::Python => shared::filesystem::taxonomy_filesystem_vo::Language::Python,
-                shared::common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript,
+                shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+                    shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+                }
+                shared::common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+                    shared::filesystem::taxonomy_filesystem_vo::Language::Python
+                }
+                shared::common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+                    shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+                }
             };
             all_imports.extend(self.deps.parser.extract(path, &content, lang_enum));
-            let parse_ok = !content.is_empty() && lang_enum != shared::filesystem::taxonomy_filesystem_vo::Language::Unknown;
-            let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_string();
+            let parse_ok = !content.is_empty()
+                && lang_enum != shared::filesystem::taxonomy_filesystem_vo::Language::Unknown;
+            let extension = path
+                .extension()
+                .and_then(|e| e.to_str())
+                .unwrap_or("")
+                .to_string();
             entries.push(shared::filesystem::taxonomy_filesystem_vo::FileEntry {
-                path: path.clone(), extension, language: lang_enum, size: content.len() as u64, content, parse_ok, parse_metadata: None,
+                path: path.clone(),
+                extension,
+                language: lang_enum,
+                size: content.len() as u64,
+                content,
+                parse_ok,
+                parse_metadata: None,
             });
         }
         self.parse_all(&mut entries);
@@ -915,51 +1093,95 @@ impl FilesystemOrchestrator {
         let _ = self.files.set(entries.clone());
         let _ = self.imports.set(self.deps.parser.import_list().to_vec());
         let _ = self.warnings.set(all_warnings);
-        let _ = self.file_index.set(entries.iter().enumerate().map(|(i, e)| (e.path.clone(), i)).collect());
+        let _ = self.file_index.set(
+            entries
+                .iter()
+                .enumerate()
+                .map(|(i, e)| (e.path.clone(), i))
+                .collect(),
+        );
     }
 
     pub(crate) fn ensure_graph_built(&self) {
-        if self.cached_reverse_links.get().is_some() { return; }
+        if self.cached_reverse_links.get().is_some() {
+            return;
+        }
         let files = self.files.get().cloned().unwrap_or_default();
         let imports = self.imports.get().cloned().unwrap_or_default();
         let mut definitions: Vec<DefinitionEntry> = Vec::new();
         let mut implementations: Vec<ImplEntry> = Vec::new();
         for entry in &files {
-            if !entry.parse_ok { continue; }
+            if !entry.parse_ok {
+                continue;
+            }
             if let Some(ref meta) = entry.parse_metadata {
                 match meta {
                     shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(m) => {
                         let lang = entry.language;
-                        for name in m.struct_definitions.iter().chain(m.enum_definitions.iter()).chain(m.trait_definitions.iter()).chain(m.type_definitions.iter()) {
-                            definitions.push(DefinitionEntry { name: name.clone(), file_path: entry.path.clone(), language: lang });
+                        for name in m
+                            .struct_definitions
+                            .iter()
+                            .chain(m.enum_definitions.iter())
+                            .chain(m.trait_definitions.iter())
+                            .chain(m.type_definitions.iter())
+                        {
+                            definitions.push(DefinitionEntry {
+                                name: name.clone(),
+                                file_path: entry.path.clone(),
+                                language: lang,
+                            });
                         }
                         for item in &m.impl_blocks {
                             if let Some(ref trait_name) = item.trait_name {
-                                implementations.push(ImplEntry { trait_name: trait_name.clone(), file_path: entry.path.clone(), language: lang });
+                                implementations.push(ImplEntry {
+                                    trait_name: trait_name.clone(),
+                                    file_path: entry.path.clone(),
+                                    language: lang,
+                                });
                             }
                         }
                     }
                     shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Python(m) => {
                         for class in &m.class_declarations {
-                            definitions.push(DefinitionEntry { name: class.name.clone(), file_path: entry.path.clone(), language: entry.language });
+                            definitions.push(DefinitionEntry {
+                                name: class.name.clone(),
+                                file_path: entry.path.clone(),
+                                language: entry.language,
+                            });
                         }
                     }
                     shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(m) => {
                         for class in &m.class_declarations {
-                            definitions.push(DefinitionEntry { name: class.name.clone(), file_path: entry.path.clone(), language: entry.language });
+                            definitions.push(DefinitionEntry {
+                                name: class.name.clone(),
+                                file_path: entry.path.clone(),
+                                language: entry.language,
+                            });
                         }
                         for iface in &m.interface_declarations {
-                            definitions.push(DefinitionEntry { name: iface.clone(), file_path: entry.path.clone(), language: entry.language });
+                            definitions.push(DefinitionEntry {
+                                name: iface.clone(),
+                                file_path: entry.path.clone(),
+                                language: entry.language,
+                            });
                         }
                     }
                     _ => {}
                 }
             }
         }
-        self.deps.graph.build_graph(&imports, &files, &definitions, &implementations);
-        if let Some(rl) = self.deps.graph.reverse_links().clone().into() { let _ = self.cached_reverse_links.set(rl); }
-        if let Some(sd) = self.deps.graph.symbol_definitions().clone().into() { let _ = self.cached_definitions.set(sd); }
-        if let Some(imp) = self.deps.graph.implementations().clone().into() { let _ = self.cached_implementations.set(imp); }
+        self.deps
+            .graph
+            .build_graph(&imports, &files, &definitions, &implementations);
+        if let Some(rl) = self.deps.graph.reverse_links().clone().into() {
+            let _ = self.cached_reverse_links.set(rl);
+        }
+        if let Some(sd) = self.deps.graph.symbol_definitions().clone().into() {
+            let _ = self.cached_definitions.set(sd);
+        }
+        if let Some(imp) = self.deps.graph.implementations().clone().into() {
+            let _ = self.cached_implementations.set(imp);
+        }
     }
 }
 
@@ -967,5 +1189,7 @@ impl FilesystemOrchestrator {
 
 /// Convert absolute path to relative path string (relative to workspace root).
 fn path_to_relative(path: &Path, root: &Path) -> String {
-    path.strip_prefix(root).map(|p| p.to_string_lossy().to_string()).unwrap_or_else(|_| path.to_string_lossy().to_string())
+    path.strip_prefix(root)
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| path.to_string_lossy().to_string())
 }

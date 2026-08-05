@@ -12,6 +12,7 @@ use crate::filesystem::contract_tool_resolution_protocol::IToolResolutionProtoco
 use crate::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -90,4 +91,8 @@ pub trait IFilesystemAggregate:
     /// Find workspace root by walking up from `start` looking for
     /// marker files (Cargo.toml, package.json, pyproject.toml) + member dirs.
     fn find_workspace_root(&self, start: &Path) -> Option<PathBuf>;
+
+    /// Return import entries with resolved_path populated (via barrel/external resolution).
+    /// Only available after `build_orphan_graph_context` has been called.
+    fn resolved_import_list(&self) -> Vec<ImportEntry>;
 }

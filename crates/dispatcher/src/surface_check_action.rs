@@ -190,9 +190,25 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
     }
 
     // Filter: only keep violations whose file path is within the target directory.
+    // Exception: AES205 cycle violations are global — keep them if the file is
+    // within the same parent workspace (e.g., workspaces-bad/).
     if let Some(canonical_target) = &target_canonical {
+        let parent_workspace = canonical_target
+            .parent()
+            .and_then(|p| p.parent())
+            .map(|p| p.to_path_buf());
         all.retain(|v| {
             let file_path = std::path::Path::new(&v.file.value);
+            // Always retain AES205 cycle violations if within the same parent workspace
+            if v.code.code() == "AES205" {
+                if let Some(ref pw) = parent_workspace {
+                    if let Ok(canonical) = fs_agg.canonicalize(file_path) {
+                        if canonical.starts_with(pw) {
+                            return true;
+                        }
+                    }
+                }
+            }
             if let Ok(canonical) = fs_agg.canonicalize(file_path) {
                 return canonical.starts_with(canonical_target);
             }

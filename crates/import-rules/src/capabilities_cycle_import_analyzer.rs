@@ -105,7 +105,21 @@ impl DependencyCycleAnalyzer {
                 return vec![];
             }
         }
-        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        let mut layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        // Fallback: if config.layers is empty, use canonical AES layer names.
+        // config.layers is only populated when the YAML defines explicit layer overrides;
+        // file-prefix detection always works regardless.
+        if layer_keys.is_empty() {
+            layer_keys = vec![
+                "taxonomy".into(),
+                "contract".into(),
+                "utility".into(),
+                "capabilities".into(),
+                "agent".into(),
+                "surface".into(),
+                "root".into(),
+            ];
+        }
         let layer_prefixes: Vec<String> = layer_keys.iter().map(|k| format!("{}_", k)).collect();
 
         let file_results: Vec<ScannedFileEdges> =
@@ -211,11 +225,11 @@ impl DependencyCycleAnalyzer {
             .collect();
 
         let mut edges = Vec::new();
-        let mut file_by_layer: HashMap<String, String> = HashMap::new();
+        let mut files_by_layer: HashMap<String, Vec<String>> = HashMap::new();
         for (local_edges, layer_mapping) in file_results {
             edges.extend(local_edges);
             if let Some((fl, f)) = layer_mapping {
-                file_by_layer.entry(fl).or_insert(f);
+                files_by_layer.entry(fl).or_default().push(f);
             }
         }
 
@@ -225,7 +239,14 @@ impl DependencyCycleAnalyzer {
             let parts: Vec<&str> = edge_key.split("->").collect();
             let source = parts[0];
             let target = parts[1];
-            let file = file_by_layer.get(source).cloned().unwrap_or_else(|| source.to_string());
+            // Prefer a file within the current scan target (root_dir) for attribution.
+            let file = files_by_layer.get(source)
+                .and_then(|files| {
+                    files.iter().find(|f| f.contains(root_dir))
+                        .or_else(|| files.first())
+                        .cloned()
+                })
+                .unwrap_or_else(|| source.to_string());
             LintResult::new_arch(&file, 1, "AES205", Severity::CRITICAL,
                 format!(
                     "AES205 CIRCULAR_IMPORT: Circular dependency.\n\

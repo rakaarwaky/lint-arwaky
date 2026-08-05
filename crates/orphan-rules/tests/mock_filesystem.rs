@@ -2,8 +2,8 @@
 // Each test file includes this via: #[path = "mock_filesystem.rs"] mod mock_filesystem;
 
 use once_cell::sync::Lazy;
-use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -339,6 +339,9 @@ impl IFilesystemAggregate for MockFilesystem {
     }
     fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
         None
+    }
+    fn resolved_import_list(&self) -> Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        Vec::new()
     }
 }
 

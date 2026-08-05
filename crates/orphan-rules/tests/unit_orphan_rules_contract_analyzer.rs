@@ -406,6 +406,9 @@ impl IFilesystemAggregate for MockFilesystem {
     fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
         None
     }
+    fn resolved_import_list(&self) -> Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        Vec::new()
+    }
 }
 
 fn reachable_for(fp: &FilePath) -> ReachabilityResult {
