@@ -75,6 +75,7 @@ name = "calculator-workspace"
 version = "0.1.0"
 dependencies = [
  "calculator",
+ "calculator-cli",
  "calculator-shared",
  "clap",
 ]
