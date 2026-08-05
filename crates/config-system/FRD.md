@@ -6,7 +6,7 @@
 
 The config-system crate manages lint-arwaky configuration: loading, parsing, validation, and workspace detection. It reads config files from multiple priority sources, merges them with embedded defaults, and provides a unified configuration facade for all other lint crates via the config orchestrator aggregate.
 
-The config-system crate is an **infrastructure crate** — it provides configuration data to all rule crates (naming-rules, quality-rules, role-rules, import-rules, orphan-rules, external-lint) and the filesystem crate. It performs its own file I/O for config file reading (distinct from source code file walking, which is handled by the filesystem crate).
+The config-system crate is an **infrastructure crate** — it manages configuration loading, parsing, validation, and workspace detection. At compile time, it depends only on `shared` and `filesystem` (for config file I/O via `IFileSystemIOProtocol`). Other crates receive config at runtime via DI (aggregate trait injection through `shared` re-exports).
 
 ### Architecture & Data Flow
 
@@ -314,15 +314,8 @@ Loaded config is merged with embedded defaults (FR-005).
   - YAML 1.2 deserialization library (`serde_yaml`).
   - TOML parsing library (`toml`) for `[tool.lint-arwaky]` sections.
   - `dashmap` — concurrent HashMap for config cache.
-- **Consumers** (dependency direction: consumer → config-system):
-
-  - `naming-rules` crate — reads AES101/AES102 config.
-  - `quality-rules` crate — reads AES301–AES305 config.
-  - `role-rules` crate — reads AES401–AES406 config.
-  - `import-rules` crate — reads AES201–AES206 config.
-  - `orphan-rules` crate — reads AES501–AES506 config + layer orphan toggles.
-  - `external-lint` crate — reads adapter config (enabled, weight, timeout).
-  - `filesystem` crate — reads ignored paths, extensions, workspace dirs.
+- **Consumers** (received via DI at runtime through `shared` re-exports, not direct compile-time dependency):
+  - `naming-rules`, `quality-rules`, `role-rules`, `import-rules`, `orphan-rules`, `external-lint` — receive `IConfigOrchestratorAggregate` via DI.
 
 ---
 

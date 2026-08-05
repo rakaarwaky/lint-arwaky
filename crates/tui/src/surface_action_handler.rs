@@ -3,7 +3,6 @@ use shared::common::FilePath;
 use shared::tui::{LintExecutionResult, ScanUpdate};
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::tui::TuiEvent;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;

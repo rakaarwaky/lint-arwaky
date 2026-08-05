@@ -36,7 +36,7 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
         f: &FilePath,
         _root_dir: &FilePath,
         alive_files: &ReachabilityResult,
-        inbound_links: &InboundLinkMap,
+        _inbound_links: &InboundLinkMap,
         _definition: Option<&LayerDefinition>,
     ) -> OrphanIndicatorResult {
         let fp_val = f.value();

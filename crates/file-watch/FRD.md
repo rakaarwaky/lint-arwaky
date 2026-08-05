@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The file-watch crate provides a filesystem monitoring system that detects file changes in real time and automatically re-triggers the linting pipeline. It uses the `notify` crate (inotify on Linux) with `notify-debouncer-mini` to debounce rapid changes and avoid redundant processing.
+The file-watch crate provides a filesystem monitoring system that detects file changes in real time and re-triggers analysis via an injected `ICodeAnalysisAggregate`. It uses the `notify` crate (inotify on Linux) with `notify-debouncer-mini` to debounce rapid changes and avoid redundant processing.
 
 ### Architecture & Data Flow
 

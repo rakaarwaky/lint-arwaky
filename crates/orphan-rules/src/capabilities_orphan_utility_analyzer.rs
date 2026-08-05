@@ -124,7 +124,6 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         }
 
         let has_consumer_importers = !consumer_importers.is_empty();
-        let has_any_importers = has_consumer_importers || !utility_importers.is_empty();
 
         // Both conditions must be satisfied for non-orphan
         if is_reachable && has_consumer_importers {

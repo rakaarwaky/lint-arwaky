@@ -23,5 +23,4 @@ pub const SOURCE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
 
 /// Directories to skip during file collection.
 /// Delegates to the single source of truth in `taxonomy_default_constant`.
-pub const DEFAULT_SKIP_DIRS: &[&str] =
-    crate::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
+pub const DEFAULT_SKIP_DIRS: &[&str] = crate::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;

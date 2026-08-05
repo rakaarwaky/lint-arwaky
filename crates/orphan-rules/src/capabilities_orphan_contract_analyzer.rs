@@ -4,9 +4,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::IContractOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
-use shared::quality_rules::taxonomy_analysis_vo::{
-    InheritanceMap, OrphanIndicatorResult, ReachabilityResult,
-};
+use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -42,7 +40,9 @@ impl ContractOrphanAnalyzer {
     }
 
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
-        match shared::common::parse_file_content(file_path, content) {
+        match shared::common::parse_file_content(
+            file_path, content,
+        ) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
             FileParseResultVO::TypeScript(result) => result.trait_names(),
@@ -50,26 +50,19 @@ impl ContractOrphanAnalyzer {
         }
     }
 
-    fn has_layer_prefixed_implementation(
+    fn has_trait_implementation(
         &self,
         search_files: &[String],
         trait_name: &str,
-        expected_prefix: &str,
         content_map: &HashMap<String, String>,
     ) -> bool {
         for cf in search_files {
-            let basename = match cf.split('/').next_back() {
-                Some(b) => b,
-                None => continue,
-            };
-            if !basename.starts_with(expected_prefix) {
-                continue;
-            }
             let content = content_map.get(cf).cloned().unwrap_or_default();
             if content.is_empty() {
                 continue;
             }
-            match shared::common::parse_file_content(cf, &content) {
+            match shared::common::parse_file_content(cf, &content)
+            {
                 FileParseResultVO::Rust(result) => {
                     if result.has_trait_impl(trait_name) {
                         return true;
@@ -193,132 +186,69 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
 
         // Condition 1: not reachable from any _entry file
         let is_reachable = alive_files.paths.contains(f);
-
-        let search_files = self.cached_search_files(root_dir, all_files);
-
-        // Condition 2: not implemented by expected layer OR not re-exported in barrel
-        let is_barrel_reexported =
-            Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map);
-
-        let is_implemented = match suffix.as_str() {
-            "protocol" => trait_names.iter().all(|tn| {
-                self.has_layer_prefixed_implementation(
-                    &search_files,
-                    tn,
-                    "capabilities_",
-                    content_map,
-                )
-            }),
-            "aggregate" => trait_names.iter().all(|tn| {
-                self.has_layer_prefixed_implementation(&search_files, tn, "agent_", content_map)
-            }),
-            _ => true,
-        };
-
-        // Both conditions must be satisfied for non-orphan
-        let has_valid_contracts = is_barrel_reexported || is_implemented;
-        if is_reachable && has_valid_contracts {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
-        // Build diagnostic message
-        let reason = if !is_reachable && !has_valid_contracts {
-            let unimplemented: Vec<String> = trait_names
-                .iter()
-                .filter(|tn| {
-                    if suffix == "protocol" {
-                        !self.has_layer_prefixed_implementation(
-                            &search_files,
-                            tn,
-                            "capabilities_",
-                            content_map,
-                        )
-                    } else {
-                        !self.has_layer_prefixed_implementation(
-                            &search_files,
-                            tn,
-                            "agent_",
-                            content_map,
-                        )
-                    }
-                })
-                .cloned()
-                .collect();
-            let impl_layer = if suffix == "protocol" {
-                "capabilities_*"
-            } else {
-                "agent_*"
-            };
-            if unimplemented.is_empty() {
+        if !is_reachable {
+            return OrphanIndicatorResult::new(
+                true,
                 format!(
-                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable and not re-exported in barrel.\nWHY? Contract {} '{}' is not reachable from any _entry file AND not re-exported in any barrel file (mod.rs / __init__.py / index.ts).\nFIX: Import '{}' from a _entry file AND re-export it in a barrel file.",
+                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY? Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
                     suffix,
                     trait_names.join(", "),
                     suffix,
                     trait_names.join(", "),
                     trait_names.join(", ")
-                )
-            } else {
-                format!(
-                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable and not implemented.\nWHY? Contract {} '{}' is not reachable from any _entry file AND not implemented by any {} file.\nFIX: Import '{}' from a _entry file AND implement it in a {} file.",
-                    suffix,
-                    unimplemented.join(", "),
-                    suffix,
-                    unimplemented.join(", "),
-                    impl_layer,
-                    unimplemented.join(", "),
-                    impl_layer
-                )
-            }
-        } else if !is_reachable {
-            format!(
-                "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY? Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                suffix,
-                trait_names.join(", "),
-                suffix,
-                trait_names.join(", "),
-                trait_names.join(", ")
-            )
-        } else if suffix == "protocol" {
-            let unimplemented: Vec<String> = trait_names
-                .iter()
-                .filter(|tn| {
-                    !self.has_layer_prefixed_implementation(
-                        &search_files,
-                        tn,
-                        "capabilities_",
-                        content_map,
-                    )
-                })
-                .cloned()
-                .collect();
-            format!(
-                "AES502 CONTRACT_ORPHAN: Contract protocol '{}' is not implemented.\nWHY? Contract protocol '{}' is not implemented by any capabilities_* file.\nFIX: Implement '{}' in a capabilities_* file.",
-                unimplemented.join(", "),
-                unimplemented.join(", "),
-                unimplemented.join(", ")
-            )
-        } else {
-            let unimplemented: Vec<String> = trait_names
-                .iter()
-                .filter(|tn| {
-                    !self.has_layer_prefixed_implementation(
-                        &search_files,
-                        tn,
-                        "agent_",
-                        content_map,
-                    )
-                })
-                .cloned()
-                .collect();
-            format!(
-                "AES502 CONTRACT_ORPHAN: Contract aggregate '{}' is not implemented.\nWHY? Contract aggregate '{}' is not implemented by any agent_* file.\nFIX: Implement '{}' in an agent_* file.",
-                unimplemented.join(", "),
-                unimplemented.join(", "),
-                unimplemented.join(", ")
-            )
-        };
+                ),
+                Severity::MEDIUM,
+            );
+        }
 
-        OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)
+        let search_files = self.cached_search_files(root_dir, all_files);
+
+        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        // Condition 2: protocol not implemented by capabilities
+        if suffix == "protocol" {
+            let unimplemented: Vec<String> = trait_names
+                .iter()
+                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .cloned()
+                .collect();
+            if !unimplemented.is_empty() {
+                return OrphanIndicatorResult::new(
+                    true,
+                    format!(
+                        "AES502 CONTRACT_ORPHAN: Contract protocol '{}' is not implemented.\nWHY? Contract protocol '{}' is not implemented by any capabilities_* file.\nFIX: Implement '{}' in a capabilities_* file.",
+                        unimplemented.join(", "),
+                        unimplemented.join(", "),
+                        unimplemented.join(", ")
+                    ),
+                    Severity::MEDIUM,
+                );
+            }
+        }
+
+        // Condition 3: aggregate not implemented by agent
+        if suffix == "aggregate" {
+            let unimplemented: Vec<String> = trait_names
+                .iter()
+                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .cloned()
+                .collect();
+            if !unimplemented.is_empty() {
+                return OrphanIndicatorResult::new(
+                    true,
+                    format!(
+                        "AES502 CONTRACT_ORPHAN: Contract aggregate '{}' is not implemented.\nWHY? Contract aggregate '{}' is not implemented by any agent_* file.\nFIX: Implement '{}' in an agent_* file.",
+                        unimplemented.join(", "),
+                        unimplemented.join(", "),
+                        unimplemented.join(", ")
+                    ),
+                    Severity::MEDIUM,
+                );
+            }
+        }
+
+        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
     }
 }
