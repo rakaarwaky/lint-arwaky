@@ -463,8 +463,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
-            let target_file =
-                self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set);
+            let target_file = self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set);
             let mut entry = imp.clone();
             if let Some(tgt_rel) = &target_file {
                 entry.resolved_path = Some(PathBuf::from(tgt_rel));
@@ -529,7 +528,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     }
     // #15: route through injected protocol instead of static utility call
     fn find_workspace_root(&self, start: &Path) -> Option<PathBuf> {
-        self.deps.workspace.find_workspace_root_from_path(start).ok()
+        self.deps
+            .workspace
+            .find_workspace_root_from_path(start)
+            .ok()
     }
     fn resolved_import_list(&self) -> Vec<ImportEntry> {
         self.resolved_imports.get().cloned().unwrap_or_default()
@@ -764,7 +766,9 @@ impl FilesystemOrchestrator {
         // #10: import_list() already returns Vec — no .to_vec() needed
         let _ = self.imports.set(self.deps.parser.import_list());
         // #11: propagate real warnings from the parser, not an empty vec
-        let _ = self.warnings.set(self.deps.parser.parse_warnings().to_vec());
+        let _ = self
+            .warnings
+            .set(self.deps.parser.parse_warnings().to_vec());
         let _ = self.file_index.set(
             entries
                 .iter()
