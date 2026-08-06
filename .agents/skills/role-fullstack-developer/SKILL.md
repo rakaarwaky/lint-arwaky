@@ -26,12 +26,6 @@ Fullstack Developer running to execute plans and generate reports.
 **You do NOT plan, analyze requirements, or design architecture.**
 If no plan files exist in `.agents/plans/`, **stop immediately**. Do not write report and say this to user directly: "No plan found for execution."
 
-## Preparatory Reading
-
-Before starting, read:
-
-
-
 ## Workflow
 
 ### 1. Select & Lock Plan
@@ -41,16 +35,20 @@ Before starting, read:
 - Work on only **1 plan per session**
 - If no `todo-*.md` plan files exist → **STOP**. Do not create any file.
 - **Lock the plan** — rename before starting work so no other agent picks it:
+
   ```bash
   mv .agents/plans/todo-<feature>-<role>-<ts>.md .agents/plans/onprogress-<feature>-<role>-<ts>.md
   ```
+
   Other agents only look for `todo-*.md`, so an `onprogress-` file is skipped.
 
 ### 2. Prepare
+
 Before starting, read:
+
 - **`ARCHITECTURE.md`** — 7-layer spec (to avoid breaking architecture during implementation)
 - **`.agents/rules/RULES_AES.md`** — All AES rules (to avoid introducing violations during implementation)
-- **`.agents/skills/README — Use skill driven 
+- **`.agents/skills/README — Use skill driven
 - Validate plan paths against the actual codebase (do the files exist?)
 - Understand which files will be modified and which layers are affected
 - **Create worktree** with timestamp to guarantee uniqueness:
@@ -63,7 +61,7 @@ Before starting, read:
 
 Execute plans exactly as designed inside the worktree created in step 2.
 
-- All file edits happen in `.worktree/`<feature>`+`<timestamp>`/`
+- All file edits happen in `.worktree/`<feature></feature>`+`<timestamp></timestamp>`/`
 - Follow the relevant skill workflow if applicable
 - Write tests for any new or changed functionality
 - Do NOT deviate from the plans' design
@@ -76,7 +74,17 @@ Execute plans exactly as designed inside the worktree created in step 2.
 - Confirm the original issue is resolved with no regressions
 - If verification fails, fix and re-verify
 
-### 5. Report & Commit
+### 5. Quality Gates
+
+Run the full quality gates before committing. This is a **mandatory** step — do not skip.
+
+```bash
+bash scripts/gates.sh
+```
+
+This runs `cargo fmt`, `cargo clippy`, self-lint, and all tests. If any gate fails, fix and re-run until all gates pass.
+
+### 6. Report & Commit
 
 **Delete only the onprogress plan file you worked** (from main repo, not worktree):
 
@@ -118,24 +126,23 @@ git push origin worktree-<feature>
 gh pr create --base develop --head worktree-<feature> --title "feat({scope}): {title}" --body "{summary of report}"
 ```
 
-**After PR merged, cleanup worktree:**
+## PR Label
+
+When creating a PR (or when the fullstack developer creates one based on your plan), always add the **"need review"** label so the quality-analysis role can pick it up:
 
 ```bash
-# Back in main repo
-git worktree remove .worktree/<feature>
-git branch -d worktree-<feature>
+gh pr edit {pr-number} --add-label "pending review"
 ```
 
 ## Branch Strategy
 
-
-| Step | Action                                                |
-| ------ | ------------------------------------------------------- |
-| 1    | Create worktree `.worktree/<feature>` from `develop`  |
-| 2    | Commit changes in worktree branch                     |
-| 3    | Push worktree branch to remote                        |
-| 4    | Create PR from worktree → `develop`                   |
-| 5    | After merge, cleanup worktree and branch              |
+| Step | Action                                                  |
+| ---- | ------------------------------------------------------- |
+| 1    | Create worktree`.worktree/<feature>` from `develop` |
+| 2    | Commit changes in worktree branch                       |
+| 3    | Push worktree branch to remote                          |
+| 4    | Create PR from worktree →`develop`                   |
+| 5    | add the**"need review"** label                          |
 
 **Rules:**
 
@@ -147,15 +154,16 @@ git branch -d worktree-<feature>
 
 ## Checklist
 
-- [ ]  Plan file exists in `.agents/plans/` (as `todo-*.md`)
-- [ ]  Plan renamed to `onprogress-*.md` before starting work
-- [ ]  Plan paths validated against codebase
-- [ ]  Relevant skill workflows identified
-- [ ]  Worktree created at `.worktree/<feature>-<timestamp>`
-- [ ]  Implementation matches plan exactly (no deviations)
-- [ ]  `cargo clippy --all-targets -- -D warnings` passes
-- [ ]  `cargo test --workspace` passes
-- [ ]  `lint-arwaky-cli scan <path>` passes
-- [ ]  `onprogress-*.md` deleted, report written
-- [ ]  Committed in worktree, PR created to `develop`
-- [ ]  Worktree cleaned up after merge
+- [ ] Plan file exists in `.agents/plans/` (as `todo-*.md`)
+- [ ] Plan renamed to `onprogress-*.md` before starting work
+- [ ] Plan paths validated against codebase
+- [ ] Relevant skill workflows identified
+- [ ] Worktree created at `.worktree/<feature>-<timestamp>`
+- [ ] Implementation matches plan exactly (no deviations)
+- [ ] `cargo clippy --all-targets -- -D warnings` passes
+- [ ] `cargo test --workspace` passes
+- [ ] `lint-arwaky-cli scan <path>` passes
+- [ ] `bash scripts/gates.sh` passes (fmt + clippy + self-lint + tests)
+- [ ] `onprogress-*.md` deleted, report written
+- [ ] Committed in worktree, PR created to `develop`
+- [ ] add the **"pending review"** label

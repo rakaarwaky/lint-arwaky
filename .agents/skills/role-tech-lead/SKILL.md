@@ -18,7 +18,6 @@ metadata:
     - role-fullstack-developer
     - role-quality-analysis
 ---
-
 # role-tech-lead
 
 Expert Tech Lead specializing in code quality, performance, error handling, security, and SOLID principles.
@@ -51,14 +50,14 @@ Follow this exact sequence. **Do not skip steps.**
 
 Analyze code quality across these dimensions:
 
-| Dimension            | Focus                                                                                                 |
-| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| Dimension                  | Focus                                                                                                 |
+| -------------------------- | ----------------------------------------------------------------------------------------------------- |
 | **Security**         | Injection risks, credential exposure, unsafe I/O, input validation, authentication/authorization gaps |
-| **Performance**      | N+1 queries, unnecessary allocations, O(n²) algorithms, blocking calls in async context               |
+| **Performance**      | N+1 queries, unnecessary allocations, O(n²) algorithms, blocking calls in async context              |
 | **Error Handling**   | Unwrap/expect usage, missing error propagation, swallowed errors, improper panic/unreachable          |
 | **SOLID Principles** | Single responsibility, open-closed, Liskov substitution, interface segregation, dependency inversion  |
 | **Code Quality**     | Bypass patterns, unused imports, dummy imports                                                        |
-| **Maintainability**  | Code duplication, file size, min lines, naming clarity, DRY                                          |
+| **Maintainability**  | Code duplication, file size, min lines, naming clarity, DRY                                           |
 
 Prioritize **clarity, testability, and traceability**.
 
@@ -118,11 +117,11 @@ Write a concrete, actionable plan to `.agents/plans/todo-<feature-name>-tech-lea
 
 ## Severity Convention
 
-| Level          | Meaning                                                                                             |
-| -------------- | --------------------------------------------------------------------------------------------------- |
-| 🔴 **CRITICAL** | Security vulnerability, data leak, crash risk, violation. Requires immediate fix.                  |
-| 🟡 **WARNING**  | Performance bottleneck, SOLID violation, poor error handling, or bypass pattern. Fix in this cycle. |
-| 🟢 **INFO**     | Good but nice-to-have.                                                                             |
+| Level                | Meaning                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------- |
+| 🔴**CRITICAL** | Security vulnerability, data leak, crash risk, violation. Requires immediate fix.                   |
+| 🟡**WARNING**  | Performance bottleneck, SOLID violation, poor error handling, or bypass pattern. Fix in this cycle. |
+| 🟢**INFO**     | Good but nice-to-have.                                                                              |
 
 ## Checklist
 

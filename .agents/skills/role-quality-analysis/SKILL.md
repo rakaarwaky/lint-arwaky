@@ -28,21 +28,10 @@ Expert Quality Analyst serving as the **final merge gatekeeper**. Reviews every 
 
 - If it does not compile, **REJECT**.
 - If CI fails, **REJECT**.
-- If self-lint has violations, **REJECT**.
+- If self-lint has **PR-introduced** violations (after triage), **REJECT**.
 - If the report is inaccurate, **REJECT**.
 - If tests regress, **REJECT**.
 - **No exceptions. No shortcuts. No "close enough."**
-
-## Preparatory Reading
-
-Before starting any review, read these files:
-
-1. **`.agents/rules/RULES_AES.md`** — All 24 AES rules: the ground truth for violations
-2. **`ARCHITECTURE.md`** — 7-layer spec: layer boundaries, naming, dependency direction
-3. **`TEST.md`** — Test workspaces, pass/fail criteria, expected violation counts
-4. **`scripts/gates.sh`** — Quality gates pipeline (fmt, clippy, self-lint, tests, AES codes)
-5. **`CONTRIBUTING.md`** — Code style, PR process, branch strategy
-6. **`.agents/skills/role-fullstack-developer/SKILL.md`** — Know what the developer was supposed to do
 
 ## Workflow
 
@@ -50,19 +39,21 @@ Follow this exact sequence. **Do not skip steps.**
 
 ### 1. Identify PR
 
-**One PR per session.** Do not review multiple PRs in a single run.
+**STOP IMMEDIATELY if no PRs found. Do not write any plan, report, or file.**
 
 ```bash
-# List open PRs with "need review" label — only these are eligible
-gh pr list --label "need review" --state open
-
-# If no PRs with "need review" label → STOP. Say: "No PRs with 'need review' label."
+# List open PRs with "pending review" label — only these are eligible
+gh pr list --label "pending review" --state open
 ```
 
+**If no PRs with "pending review" label → STOP. Do NOT create any file. Say: "No PRs with 'need review' label. Nothing to review."**
+
+**One PR per session.** Do not review multiple PRs in a single run.
+
 **Rules:**
+
 - Only review PRs that have the **"need review"** label
 - If multiple PRs have "need review", pick the **oldest** one (earliest `created_at`)
-- Check if PR is stale (open > 7 days) — warn user but still review
 - Read the PR description, title, and changed files
 - Identify which plan was executed (check `.agents/reports/` for `done-*.md`)
 - Identify which feature/crate is affected
@@ -75,6 +66,14 @@ gh pr edit {pr-number} --add-label "in progress"
 ```
 
 ### 2. Validate Execution Report
+
+Before starting any review, read these files:
+
+1. **`.agents/rules/RULES_AES.md`** — All 24 AES rules: the ground truth for violations
+2. **`ARCHITECTURE.md`** — 7-layer spec: layer boundaries, naming, dependency direction
+3. **`TEST.md`** — Test workspaces, pass/fail criteria,
+4. **`scripts/gates.sh`** — Quality gates pipeline (fmt, clippy, self-lint, tests, AES codes)
+5. **`CONTRIBUTING.md`** — Code style, PR process, branch strategy
 
 Read the developer's report at `.agents/reports/done-<feature>-<role>-<timestamp>.md` and verify:
 
@@ -106,7 +105,50 @@ Optionally, run local gates for deeper analysis when CI passes but code review f
 bash scripts/gates.sh
 ```
 
-### 4. Analyze Code Changes
+### 4. Pre-Existing Violations Triage
+
+Before blaming the PR for any violation, determine whether it **pre-existed** on the base branch (`develop`). Only violations **introduced by the PR** count against it.
+
+**Step 1 — Scan the base branch (develop):**
+
+```bash
+# Fetch latest develop
+git fetch origin develop
+
+# Checkout develop temporarily (detached HEAD, no branch switch)
+git checkout origin/develop
+
+# Scan base branch
+lint-arwaky-cli scan . --json > /tmp/violations-base.json
+
+# Return to PR branch
+git checkout -
+```
+
+**Step 2 — Scan the PR branch:**
+
+```bash
+lint-arwaky-cli scan . --json > /tmp/violations-pr.json
+```
+
+**Step 3 — Diff the violations:**
+
+- Compare violation lists by `(rule, file, line)` tuple
+- **Pre-existing** = violation exists in BOTH base and PR (same rule, same location)
+- **New (PR-introduced)** = violation exists ONLY in PR
+- **Resolved** = violation exists in base but NOT in PR (PR fixed it)
+
+**Step 4 — Triage results:**
+
+| Category                | Action                                                                                         |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| **Pre-existing**  | **Ignore.** Do NOT flag in findings. Do NOT block merge. Note in report as context only. |
+| **PR-introduced** | **Flag.** Include in findings. CRITICAL or WARNING depending on severity.                |
+| **Resolved**      | **Note positively.** PR improved the codebase.                                           |
+
+**Critical rule:** Never reject a PR for pre-existing violations. If the base branch already has violations, the PR author is not responsible for fixing them unless the plan explicitly includes it.
+
+### 5. Analyze Code Changes
 
 Review the actual code diff with these dimensions:
 
@@ -122,7 +164,7 @@ Review the actual code diff with these dimensions:
 | **Security**             | No credential exposure, no unsafe unwrap, no injection risks                                     |
 | **Convention Adherence** | Follows project coding style, naming patterns, and structural conventions                        |
 
-### 5. Cross-Check Memory
+### 6. Cross-Check Memory
 
 Before accepting any recommendation, cross-check against known project feedback:
 
@@ -133,7 +175,7 @@ Before accepting any recommendation, cross-check against known project feedback:
 - **Surface layer uses free functions** — no structs in surface layer
 - **Agent layer must be pure delegation** — orchestrator methods only delegate to capability structs
 
-### 6. Verdict & Action
+### 7. Verdict & Action
 
 Two possible outcomes:
 
@@ -147,19 +189,27 @@ Two possible outcomes:
    ```bash
    gh pr comment {pr-number} --body "QA APPROVED — All CI gates pass, zero CRITICAL/WARNING findings. Merged to develop."
    ```
-3. **Cleanup** — delete the developer's execution report:
+3. **Cleanup labels:**
+   ```bash
+   gh pr edit {pr-number} --remove-label "in progress" --remove-label "need review"
+   ```
+4. **Delete the developer's execution report:**
    ```bash
    rm .agents/reports/done-<feature>-<role>-<timestamp>.md
    ```
-4. **No QA report needed** — approved PRs are clean, nothing to track.
+5. **No QA report needed** — approved PRs are clean, nothing to track.
 
 #### REJECTED — CI fails or CRITICAL/WARNING findings
 
-1. **Post comment on PR:**
+1. **Swap labels:**
+   ```bash
+   gh pr edit {pr-number} --remove-label "in progress" --add-label "changes requested"
+   ```
+2. **Post comment on PR:**
    ```bash
    gh pr comment {pr-number} --body "QA REJECTED — {reason summary}. See new plan in .agents/plans/"
    ```
-2. **Write a new plan** for the fullstack developer to pick up:
+3. **Write a new plan** for the fullstack developer to pick up:
    - File: `.agents/plans/todo-<feature>-quality-analysis-<timestamp>.md`
    - This plan contains all findings that must be fixed
 
@@ -235,10 +285,14 @@ Two possible outcomes:
 
 ## Checklist
 
+- [ ] PR list filtered by "need review" label
+- [ ] Only 1 PR selected (oldest if multiple)
+- [ ] "in progress" label added before starting
 - [ ] PR identified and report located
 - [ ] Execution report validated (plan fidelity, accuracy, role label)
-- [ ] All CI gates run and results recorded
+- [ ] CI checked via `gh pr checks`
+- [ ] Pre-existing violations triaged (base vs PR branch scan)
 - [ ] Code reviewed across 6 dimensions (AES, boundaries, quality, tests, report, conventions)
 - [ ] Known project feedback cross-checked (memory items)
-- [ ] If APPROVED: PR merged, report deleted, no plan written
-- [ ] If REJECTED: PR comment posted, new plan written to `.agents/plans/`
+- [ ] If APPROVED: PR merged, labels removed, report deleted
+- [ ] If REJECTED: "changes requested" label, comment posted, new plan written
