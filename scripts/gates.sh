@@ -101,10 +101,10 @@ CLIPPY_PID=$!
 wait_and_report $CLIPPY_PID
 echo "Phase 2 duration: $((SECONDS - ph2_start))s"
 
-# ─── Phase 3: Self-lint + Tests + AES Codes (parallel) ────
+# ─── Phase 3: Self-lint + Tests + False Negatives (parallel) ────
 # All reuse the debug artifacts from Phase 2
 ph3_start=$SECONDS
-echo -e "\n${CYAN}━━━ Phase 3: Self-Lint + Tests + AES Codes (PARALLEL) ━━━${NC}"
+echo -e "\n${CYAN}━━━ Phase 3: Self-Lint + Tests + False Negatives (PARALLEL) ━━━${NC}"
 
 export CLI="./target/debug/lint-arwaky-cli"
 
@@ -115,14 +115,14 @@ run_gate "Self-Lint (check .)" bash -c '
 ' &
 SELF_LINT_PID=$!
 
-run_gate "AES Codes (workspaces-bad >= 24)" bash -c '
+run_gate "False Negatives (workspaces-bad >= 24)" bash -c '
     codes_rust=$($CLI scan workspaces-bad/crates 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     codes_python=$($CLI scan workspaces-bad/modules 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     codes_ts=$($CLI scan workspaces-bad/packages 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     echo "  Rust: ${codes_rust:-0} codes, Python: ${codes_python:-0} codes, TS: ${codes_ts:-0} codes"
     [ "${codes_rust:-0}" -ge 24 ] && [ "${codes_python:-0}" -ge 24 ] && [ "${codes_ts:-0}" -ge 24 ]
 ' &
-AES_CODES_PID=$!
+FN_PID=$!
 
 run_gate "False Positives (workspaces-good == 0)" bash -c '
     fp_rust=$($CLI scan workspaces-good/crates --format json 2>/dev/null | python3 -c "import sys,json; print(len(json.load(sys.stdin).get(\"results\",[])))" 2>/dev/null || echo "0")
@@ -140,7 +140,7 @@ run_gate "Tests (workspace)" bash -c '
 ' &
 TEST_PID=$!
 
-wait_and_report $SELF_LINT_PID $AES_CODES_PID $FP_PID $TEST_PID
+wait_and_report $SELF_LINT_PID $FN_PID $FP_PID $TEST_PID
 echo "Phase 3 duration: $((SECONDS - ph3_start))s"
 
 TOTAL_TIME=$((SECONDS - START_TIME))

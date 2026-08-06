@@ -357,20 +357,11 @@ impl BypassChecker {
 
     /// Map a forbidden token to its ViolationKind variant.
     fn classify_token(token: &str) -> ViolationKind {
-        let mk = |c: &[char]| c.iter().collect::<String>();
-        let unwrap = mk(&['u', 'n', 'w', 'r', 'a', 'p']);
-        let expect = mk(&['e', 'x', 'p', 'e', 'c', 't']);
-        let panic = mk(&['p', 'a', 'n', 'i', 'c']);
-        let todo = mk(&['t', 'o', 'd', 'o']);
-        let unimplemented = mk(&[
-            'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd',
-        ]);
-        let unreachable = mk(&['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e']);
         match token {
-            _ if token == unwrap || token == expect => ViolationKind::UnwrapExpect,
-            _ if token == panic => ViolationKind::Panic,
-            _ if token == todo => ViolationKind::Todo,
-            _ if token == unimplemented || token == unreachable => ViolationKind::Unimplemented,
+            "unwrap" | "expect" => ViolationKind::UnwrapExpect,
+            "panic" => ViolationKind::Panic,
+            "todo" => ViolationKind::Todo,
+            "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
             _ => ViolationKind::BypassComment,
         }
     }
@@ -384,31 +375,23 @@ impl BypassChecker {
 
     /// Default fallback bypass patterns when config provides none.
     fn default_forbidden_bypass() -> PatternList {
-        let mc = |chars: &[char]| chars.iter().collect::<String>();
-
         PatternList {
             values: vec![
-                mc(&['u', 'n', 'w', 'r', 'a', 'p']),
-                mc(&['e', 'x', 'p', 'e', 'c', 't']),
-                mc(&['p', 'a', 'n', 'i', 'c']),
-                mc(&['t', 'o', 'd', 'o']),
-                mc(&[
-                    'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd',
-                ]),
-                mc(&['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e']),
-                mc(&['t', 'y', 'p', 'e', ':', ' ', 'i', 'g', 'n', 'o', 'r', 'e']),
-                mc(&['n', 'o', 'q', 'a']),
-                mc(&['@', 't', 's', '-', 'i', 'g', 'n', 'o', 'r', 'e']),
-                mc(&[
-                    '@', 't', 's', '-', 'e', 'x', 'p', 'e', 'c', 't', '-', 'e', 'r', 'r', 'o', 'r',
-                ]),
-                mc(&[
-                    'e', 's', 'l', 'i', 'n', 't', '-', 'd', 'i', 's', 'a', 'b', 'l', 'e',
-                ]),
-                mc(&['l', 'i', 'n', 't', '-', 'd', 'i', 's', 'a', 'b', 'l', 'e']),
-                mc(&['F', 'I', 'X', 'M', 'E']),
-                mc(&['H', 'A', 'C', 'K']),
-                mc(&['X', 'X', 'X']),
+                "unwrap".into(),
+                "expect".into(),
+                "panic".into(),
+                "todo".into(),
+                "unimplemented".into(),
+                "unreachable".into(),
+                "type: ignore".into(),
+                "noqa".into(),
+                "@ts-ignore".into(),
+                "@ts-expect-error".into(),
+                "eslint-disable".into(),
+                "lint-disable".into(),
+                "FIXME".into(),
+                "HACK".into(),
+                "XXX".into(),
             ],
         }
     }

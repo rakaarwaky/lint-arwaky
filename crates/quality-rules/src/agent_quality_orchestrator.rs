@@ -40,6 +40,7 @@ use shared::common::{LayerMapVO, LayerNameVO};
 use shared::config_system::ArchitectureConfig;
 use shared::quality_rules::CodeAnalysisRuleVO;
 
+use crate::utility_violation_formatter::format_code_analysis_violation;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -195,15 +196,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                 {
                     continue;
                 }
-                let msg = match &aes_violation {
-                    shared::quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => {
-                        format!(
-                            "AES305 CODE_DUPLICATION: Duplicate code block detected.\nWHY? {}\nFIX: Extract the duplicated logic into a shared function.",
-                            reason.as_ref().map(|r| r.to_string()).unwrap_or_default()
-                        )
-                    }
-                    other => format!("{:?}", other),
-                };
+                let msg = format_code_analysis_violation(&aes_violation);
                 violations.push(LintResult::new_arch(
                     &file_path,
                     1,
