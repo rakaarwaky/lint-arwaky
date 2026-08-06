@@ -1,7 +1,6 @@
 use shared::common::taxonomy_common_vo::LineNumber;
 use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
-use std::path::Path;
 
 // ═══════════════════════════════════════════════════════════════
 // ImportEntry-based functions (direct field access)
@@ -111,13 +110,6 @@ pub fn entry_matches_scope(
     })
 }
 
-/// Extract layer name from an ImportEntry's raw_path.
-pub fn entry_layer(entry: &ImportEntry) -> Option<LayerNameVO> {
-    let module = entry_module_path(entry);
-    let first_segment = module.split("::").next()?;
-    extract_layer_from_import(&Identity::new(first_segment.to_string()))
-}
-
 // ═══════════════════════════════════════════════════════════════
 // Shared helper functions
 // ═══════════════════════════════════════════════════════════════
@@ -149,33 +141,10 @@ pub fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
     }
 }
 
-/// Detect architectural layer from filename prefix (inlined from shared utility).
-fn detect_layer_from_prefix(filename: &str) -> Option<String> {
-    let stem = Path::new(filename)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or_default();
-    const PREFIX_MAP: &[(&str, &str)] = &[
-        ("taxonomy_", "taxonomy"),
-        ("contract_", "contract"),
-        ("capabilities_", "capabilities"),
-        ("utility_", "utility"),
-        ("agent_", "agent"),
-        ("surface_", "surfaces"),
-        ("root_", "root"),
-    ];
-    for &(prefix, layer) in PREFIX_MAP {
-        if stem.starts_with(prefix) {
-            return Some(layer.to_string());
-        }
-    }
-    None
-}
-
 /// Extract layer name from an import segment.
 pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
     let segment_str = segment.value();
-    if let Some(layer) = detect_layer_from_prefix(segment_str) {
+    if let Some(layer) = shared::common::utility_layer_detector::detect_layer_from_prefix(segment_str) {
         return Some(LayerNameVO::new(layer));
     }
     match segment_str {

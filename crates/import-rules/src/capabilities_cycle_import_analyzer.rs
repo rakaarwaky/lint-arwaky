@@ -75,7 +75,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
     }
 
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
-        LayerNameVO::new(name.split('_').next().unwrap_or(name))
+        LayerNameVO::new(utility_cycle_detector::normalize_to_layer(name))
     }
 }
 
@@ -244,23 +244,30 @@ impl DependencyCycleAnalyzer {
         }
 
         let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
-        cycle_edge_results.into_iter().map(|sn| {
-            let edge_key = sn.value;
-            let parts: Vec<&str> = edge_key.split("->").collect();
-            let source = parts[0];
-            let target = parts[1];
-            let file = edge_to_file
-                .get(&(source.to_string(), target.to_string()))
-                .cloned()
-                .unwrap_or_else(|| source.to_string());
-            LintResult::new_arch(&file, 1, "AES205", Severity::CRITICAL,
-                format!(
-                    "AES205 CIRCULAR_IMPORT: Circular dependency.\n\
-                     WHY? Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
-                     FIX: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction.",
-                    source, target
-                ),
-            )
-        }).collect()
+        cycle_edge_results
+            .into_iter()
+            .filter_map(|sn| {
+                let (source, target) = match sn.value.split_once("->") {
+                    Some((s, t)) => (s, t),
+                    None => return None,
+                };
+                let file = edge_to_file
+                    .get(&(source.to_string(), target.to_string()))
+                    .cloned()
+                    .unwrap_or_else(|| source.to_string());
+                Some(LintResult::new_arch(
+                    &file,
+                    1,
+                    "AES205",
+                    Severity::CRITICAL,
+                    format!(
+                        "AES205 CIRCULAR_IMPORT: Circular dependency.\n\
+                         WHY? Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
+                         FIX: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction.",
+                        source, target
+                    ),
+                ))
+            })
+            .collect()
     }
 }
