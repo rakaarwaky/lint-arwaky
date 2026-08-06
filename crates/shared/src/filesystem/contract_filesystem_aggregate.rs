@@ -3,6 +3,7 @@
 // Cache accessors live here because they use DashMap (pipeline state),
 // which cannot be delegated to the child protocol traits.
 
+use crate::common::taxonomy_common_vo::{FileContentPair, PatternList};
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 use crate::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
@@ -40,7 +41,7 @@ pub trait IFilesystemAggregate:
     fn has_file(&self, path: &Path) -> bool;
 
     /// Collect file entries (path, content) for each lintable file.
-    fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)>;
+    fn collect_file_entries(&self, files: &PatternList) -> Vec<FileContentPair>;
 
     /// Discover source files under root, filtering by ignored patterns.
     fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<String>;

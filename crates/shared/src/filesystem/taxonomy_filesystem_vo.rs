@@ -616,3 +616,57 @@ impl InheritanceMap {
         Self { mapping: value }
     }
 }
+
+/// Byte count for file operations (replaces raw `u64` in contract signatures).
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ByteCount {
+    pub bytes: u64,
+}
+
+impl ByteCount {
+    pub fn new(bytes: u64) -> Self {
+        Self { bytes }
+    }
+}
+
+/// Unix file mode bits (replaces raw `u32` in contract signatures).
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FileMode {
+    pub bits: u32,
+}
+
+impl FileMode {
+    pub fn new(bits: u32) -> Self {
+        Self { bits }
+    }
+}
+
+/// Git command result (replaces raw `(String, String, bool)` in contract signatures).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct GitCommandResult {
+    pub stdout: String,
+    pub stderr: String,
+    pub success: bool,
+}
+
+impl GitCommandResult {
+    pub fn new(stdout: String, stderr: String, success: bool) -> Self {
+        Self {
+            stdout,
+            stderr,
+            success,
+        }
+    }
+}
+
+/// Parsed command output lines (replaces raw `Vec<String>` in contract signatures).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ParsedLines {
+    pub lines: Vec<String>,
+}
+
+impl ParsedLines {
+    pub fn new(lines: Vec<String>) -> Self {
+        Self { lines }
+    }
+}
