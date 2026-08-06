@@ -50,77 +50,77 @@ Follow this exact sequence. **Do not skip steps.**
 
 ### 1. Identify PR
 
+**One PR per session.** Do not review multiple PRs in a single run.
+
+```bash
+# List open PRs with "need review" label — only these are eligible
+gh pr list --label "need review" --state open
+
+# If no PRs with "need review" label → STOP. Say: "No PRs with 'need review' label."
+```
+
+**Rules:**
+- Only review PRs that have the **"need review"** label
+- If multiple PRs have "need review", pick the **oldest** one (earliest `created_at`)
+- Check if PR is stale (open > 7 days) — warn user but still review
 - Read the PR description, title, and changed files
 - Identify which plan was executed (check `.agents/reports/` for `done-*.md`)
 - Identify which feature/crate is affected
 - Confirm the PR targets `develop` branch
 
+**Before starting review, label the PR as "in progress":**
+
+```bash
+gh pr edit {pr-number} --add-label "in progress"
+```
+
 ### 2. Validate Execution Report
 
 Read the developer's report at `.agents/reports/done-<feature>-<role>-<timestamp>.md` and verify:
 
-| Check | What to Verify |
-| --- | --- |
-| **Plan exists** | The original `todo-*.md` plan existed and was deleted after execution |
-| **Plan fidelity** | Implementation matches the plan exactly — no deviations without documented reasons |
+| Check                     | What to Verify                                                         |
+| ------------------------- | ---------------------------------------------------------------------- |
 | **Report accuracy** | Claims about test results, linter results, and CI status match reality |
-| **Timestamp** | Report timestamp is recent and consistent with commit timestamps |
-| **Role label** | Report says the correct role (tech-lead, architect, or business-analyst) — NOT fullstack-developer |
-| **Worktree cleanup** | Worktree was properly created and cleaned up |
+| **Timestamp**       | Report timestamp is recent and consistent with commit timestamps       |
 
 ### 3. Verify CI Pipeline
 
-Run the full quality gates locally. **All gates must pass.**
+Check CI status from GitHub Actions. **All checks must pass.**
 
 ```bash
-# Phase 1: Format check
-cargo fmt --all -- --check
+# Check CI status for the PR (shows all workflow jobs + pass/fail)
+gh pr checks {pr-number}
 
-# Phase 2: Clippy (no warnings allowed)
-cargo clippy --all-targets -- -D warnings
+# Or watch live (auto-refreshes until all jobs complete)
+gh pr checks {pr-number} --watch
 
-# Phase 3: Build
-cargo build --release
-
-# Phase 4: Tests
-cargo nextest run --workspace --lib --tests
-
-# Phase 5: Self-lint (zero violations on own codebase)
-./target/debug/lint-arwaky-cli check .
-
-# Phase 6: AES code detection (>= 24 unique codes per language)
-./target/debug/lint-arwaky-cli scan workspaces-bad/crates
-./target/debug/lint-arwaky-cli scan workspaces-bad/modules
-./target/debug/lint-arwaky-cli scan workspaces-bad/packages
-
-# Phase 7: False positive check (zero violations on clean workspace)
-./target/debug/lint-arwaky-cli scan workspaces-good/crates
-./target/debug/lint-arwaky-cli scan workspaces-good/modules
-./target/debug/lint-arwaky-cli scan workspaces-good/packages
+# JSON output for programmatic access
+gh pr checks {pr-number} --json name,state,conclusion
 ```
 
-**Or run the consolidated gate script:**
+**If any CI check fails = REJECT immediately. No local re-run needed.**
+
+Optionally, run local gates for deeper analysis when CI passes but code review finds issues:
+
 ```bash
 bash scripts/gates.sh
 ```
-
-**Every phase must produce the expected result. Any failure = REJECT.**
 
 ### 4. Analyze Code Changes
 
 Review the actual code diff with these dimensions:
 
-| Dimension | Focus |
-| --- | --- |
-| **AES Compliance** | Do changed files follow naming conventions (AES101-102)? No import violations (AES201-205)? |
-| **Layer Boundaries** | No forbidden cross-layer imports? Dependency direction correct (bottom-up)? |
-| **Quality Rules** | No bypass patterns (AES304)? No duplicate code (AES305)? Line counts within limits (AES301-302)? |
-| **Role Integrity** | Each file fulfills its layer role correctly (AES401-406)? No logic leaks between layers? |
-| **Orphan Detection** | No dead code introduced (AES501-506)? All new code is consumed somewhere? |
-| **Contract Stability** | Contract/trait changes include matching implementation updates? |
-| **Test Coverage** | New/changed code has tests? Tests are meaningful (not just smoke)? |
-| **Security** | No credential exposure, no unsafe unwrap, no injection risks |
-| **Convention Adherence** | Follows project coding style, naming patterns, and structural conventions |
+| Dimension                      | Focus                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| **AES Compliance**       | Do changed files follow naming conventions (AES101-102)? No import violations (AES201-205)?      |
+| **Layer Boundaries**     | No forbidden cross-layer imports? Dependency direction correct (bottom-up)?                      |
+| **Quality Rules**        | No bypass patterns (AES304)? No duplicate code (AES305)? Line counts within limits (AES301-302)? |
+| **Role Integrity**       | Each file fulfills its layer role correctly (AES401-406)? No logic leaks between layers?         |
+| **Orphan Detection**     | No dead code introduced (AES501-506)? All new code is consumed somewhere?                        |
+| **Contract Stability**   | Contract/trait changes include matching implementation updates?                                  |
+| **Test Coverage**        | New/changed code has tests? Tests are meaningful (not just smoke)?                               |
+| **Security**             | No credential exposure, no unsafe unwrap, no injection risks                                     |
+| **Convention Adherence** | Follows project coding style, naming patterns, and structural conventions                        |
 
 ### 5. Cross-Check Memory
 
@@ -220,18 +220,18 @@ Two possible outcomes:
 
 ## Severity Convention
 
-| Level | Meaning |
-| --- | --- |
+| Level    | Meaning                                                                                 |
+| -------- | --------------------------------------------------------------------------------------- |
 | CRITICAL | CI failure, AES violation, layer breach, security risk, or test regression. Rejects PR. |
-| WARNING | Convention deviation, missing test, inaccurate report claim. Must fix before merge. |
-| INFO | Style suggestion, optimization opportunity. Can be addressed in follow-up. |
+| WARNING  | Convention deviation, missing test, inaccurate report claim. Must fix before merge.     |
+| INFO     | Style suggestion, optimization opportunity. Can be addressed in follow-up.              |
 
 ## Verdict Rules
 
-| Verdict | When | Action |
-| --- | --- | --- |
-| **APPROVED** | All CI gates pass, zero CRITICAL/WARNING findings | Merge PR, delete report, no plan needed |
-| **REJECTED** | CI fails OR CRITICAL/WARNING findings exist | Post comment, write new plan in `.agents/plans/` |
+| Verdict            | When                                              | Action                                            |
+| ------------------ | ------------------------------------------------- | ------------------------------------------------- |
+| **APPROVED** | All CI gates pass, zero CRITICAL/WARNING findings | Merge PR, delete report, no plan needed           |
+| **REJECTED** | CI fails OR CRITICAL/WARNING findings exist       | Post comment, write new plan in`.agents/plans/` |
 
 ## Checklist
 
