@@ -103,8 +103,12 @@ pub fn extract_imports(
         return Vec::new();
     }
 
-    let tree = match pre_parsed {
-        Some(t) => t.clone(),
+    let mut imports = Vec::new();
+    match pre_parsed {
+        // Borrow cached tree — no clone (P2.2 reuse is now actually realized)
+        Some(tree) => {
+            extract_from_node(tree.root_node(), content, path, language, &mut imports);
+        }
         None => {
             let grammar = match language {
                 Language::Rust => tree_sitter_rust::LANGUAGE,
@@ -119,15 +123,11 @@ pub fn extract_imports(
                 return Vec::new();
             }
 
-            match parser.parse(content, None) {
-                Some(t) => t,
-                None => return Vec::new(),
+            if let Some(tree) = parser.parse(content, None) {
+                extract_from_node(tree.root_node(), content, path, language, &mut imports);
             }
         }
-    };
-
-    let mut imports = Vec::new();
-    extract_from_node(tree.root_node(), content, path, language, &mut imports);
+    }
     imports
 }
 

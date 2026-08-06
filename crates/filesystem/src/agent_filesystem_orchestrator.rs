@@ -461,10 +461,10 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         let imports = self.imports.get().cloned().unwrap_or_default();
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
-        // Replaced ~150 lines of duplicated string/path parsing logic by reusing `resolve_import_target`
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
-            let target_file = self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set);
+            let target_file =
+                self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set);
             let mut entry = imp.clone();
             if let Some(tgt_rel) = &target_file {
                 entry.resolved_path = Some(PathBuf::from(tgt_rel));
@@ -527,8 +527,9 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             all_files,
         )
     }
+    // #15: route through injected protocol instead of static utility call
     fn find_workspace_root(&self, start: &Path) -> Option<PathBuf> {
-        crate::utility_workspace_detection::find_workspace_root_from_path(start).ok()
+        self.deps.workspace.find_workspace_root_from_path(start).ok()
     }
     fn resolved_import_list(&self) -> Vec<ImportEntry> {
         self.resolved_imports.get().cloned().unwrap_or_default()
@@ -549,9 +550,6 @@ impl FilesystemOrchestrator {
             cached_definitions: OnceLock::new(),
             cached_implementations: OnceLock::new(),
         }
-    }
-    pub fn resolved_import_list(&self) -> Vec<ImportEntry> {
-        self.resolved_imports.get().cloned().unwrap_or_default()
     }
     fn resolve_import_target(
         &self,
@@ -729,7 +727,6 @@ impl FilesystemOrchestrator {
                 .collect();
         let mut entries = Vec::new();
         let mut all_imports = Vec::new();
-        let all_warnings = Vec::new();
         for path in &scanned {
             let language = self
                 .deps
@@ -764,8 +761,10 @@ impl FilesystemOrchestrator {
         self.parse_all(&mut entries);
         self.resolve_barrel_imports(&abs_root);
         let _ = self.files.set(entries.clone());
-        let _ = self.imports.set(self.deps.parser.import_list().to_vec());
-        let _ = self.warnings.set(all_warnings);
+        // #10: import_list() already returns Vec — no .to_vec() needed
+        let _ = self.imports.set(self.deps.parser.import_list());
+        // #11: propagate real warnings from the parser, not an empty vec
+        let _ = self.warnings.set(self.deps.parser.parse_warnings().to_vec());
         let _ = self.file_index.set(
             entries
                 .iter()
@@ -845,15 +844,13 @@ impl FilesystemOrchestrator {
         self.deps
             .graph
             .build_graph(&imports, &files, &definitions, &implementations);
-        if let Some(rl) = self.deps.graph.reverse_links().clone().into() {
-            let _ = self.cached_reverse_links.set(rl);
-        }
-        if let Some(sd) = self.deps.graph.symbol_definitions().clone().into() {
-            let _ = self.cached_definitions.set(sd);
-        }
-        if let Some(imp) = self.deps.graph.implementations().clone().into() {
-            let _ = self.cached_implementations.set(imp);
-        }
+        // #20: .clone() already returns owned HashMap — no .into() round-trip needed
+        let rl = self.deps.graph.reverse_links().clone();
+        let _ = self.cached_reverse_links.set(rl);
+        let sd = self.deps.graph.symbol_definitions().clone();
+        let _ = self.cached_definitions.set(sd);
+        let imp = self.deps.graph.implementations().clone();
+        let _ = self.cached_implementations.set(imp);
     }
 }
 

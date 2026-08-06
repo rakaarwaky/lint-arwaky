@@ -15,8 +15,7 @@ pub fn resolve_external_crate_import(
     all_files_set: &HashSet<&str>,
 ) -> Option<String> {
     let member_dirs = ["crates", "packages", "modules"];
-    // Collect all candidate directories: member_dirs/* and direct subdirs of top_root
-    let mut candidate_dirs: Vec<(String, String)> = Vec::new(); // (member_base, src_dir)
+    let mut candidate_dirs: Vec<(String, String)> = Vec::new();
     for member_dir in &member_dirs {
         let base = top_root.join(member_dir);
         if base.is_dir() {
@@ -32,18 +31,15 @@ pub fn resolve_external_crate_import(
             }
         }
     }
-    // Also scan direct subdirectories of top_root (for TS/JS projects)
     if let Ok(entries) = std::fs::read_dir(top_root) {
         for entry in entries.flatten() {
             if entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
                 let dir_name = entry.file_name().to_string_lossy().to_string();
-                // Skip already-scanned member_dirs
                 if member_dirs.contains(&dir_name.as_str()) {
                     continue;
                 }
                 let member_base = dir_name.clone();
                 let src_dir = format!("{}/src", member_base);
-                // Only add if not already in candidate_dirs
                 if !candidate_dirs.iter().any(|(mb, _)| mb == &member_base) {
                     candidate_dirs.push((member_base, src_dir));
                 }
@@ -53,8 +49,6 @@ pub fn resolve_external_crate_import(
 
     for (member_base, src_dir) in &candidate_dirs {
         let member_path = top_root.join(member_base);
-
-        // Try Cargo.toml (Rust)
         let cargo_toml = member_path.join("Cargo.toml");
         if cargo_toml.exists() {
             if let Some(name) = read_cargo_package_name(&cargo_toml) {
@@ -68,8 +62,6 @@ pub fn resolve_external_crate_import(
                 }
             }
         }
-
-        // Try package.json (TypeScript/JavaScript)
         let package_json = member_path.join("package.json");
         if package_json.exists() {
             if let Some(name) = read_npm_package_name(&package_json) {

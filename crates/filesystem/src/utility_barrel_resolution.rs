@@ -331,6 +331,7 @@ fn resolve_barrel_import(module_path: &str, symbol_name: &str, root_dir: &Path) 
         }
     }
 
-    // Fallback: return as-is (barrel-relative)
-    Some(rel.to_string())
+    // No fallback: unresolved re-export stays unresolved rather than
+    // fabricating a path that becomes a phantom graph node.
+    None
 }
