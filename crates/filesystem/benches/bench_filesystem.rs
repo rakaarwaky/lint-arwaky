@@ -6,8 +6,8 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_graph_protocol::IGraphProtocol;
@@ -158,7 +158,9 @@ fn bench_file_io(c: &mut Criterion) {
             std::fs::write(scan_dir.join(format!("file_{}.rs", i)), "fn f() {}").unwrap();
         }
         b.iter(|| {
-            std::hint::black_box(io.scan_directory_with_ignored(&scan_dir, &PatternList::default()));
+            std::hint::black_box(
+                io.scan_directory_with_ignored(&scan_dir, &PatternList::default()),
+            );
         });
     });
 
