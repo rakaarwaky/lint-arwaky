@@ -63,7 +63,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
         };
         let cmd = match self.filesystem.resolve_js_cmd(
             &eslint_name,
-            vec![abs_path, "--format".to_string(), "json".to_string()],
+            vec![abs_path.value, "--format".to_string(), "json".to_string()],
             &wd,
         ) {
             Some(c) => c,

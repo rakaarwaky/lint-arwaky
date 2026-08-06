@@ -27,6 +27,7 @@ use shared::quality_rules::contract_code_metric_analyzer_protocol::ICodeMetricAn
 use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::quality_rules::contract_line_protocol::ILineCheckerProtocol;
 
+use shared::common::taxonomy_common_vo::{FileContentPair, PatternList};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -94,7 +95,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
             .collect()
     }
 
-    fn collect_file_entries(&self, files: &[String]) -> Vec<(std::path::PathBuf, String)> {
+    fn collect_file_entries(&self, files: &PatternList) -> Vec<FileContentPair> {
         // Entries must be provided by the caller via run_analysis_with_entries.
         // This legacy method returns empty — callers should use FileEntry-based flow.
         let _ = files;

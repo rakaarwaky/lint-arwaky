@@ -89,7 +89,7 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
         });
         let cmd = match self.filesystem.resolve_js_cmd(
             &tool_name,
-            vec![abs_path_str, fix_arg.to_string()],
+            vec![abs_path_str.value, fix_arg.to_string()],
             &wd,
         ) {
             Some(c) => c,

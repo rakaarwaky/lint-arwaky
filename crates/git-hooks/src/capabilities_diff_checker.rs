@@ -113,12 +113,12 @@ impl DiffChecker {
     }
 
     fn get_default_branch_sync(&self, project_path: &FilePath) -> String {
-        let (stdout, _, success) = self.filesystem.run_git_command(
+        let result = self.filesystem.run_git_command(
             &["symbolic-ref", "refs/remotes/origin/HEAD"],
             &project_path.value,
         );
-        if success {
-            let ref_str = stdout.trim().to_string();
+        if result.success {
+            let ref_str = result.stdout.trim().to_string();
             if let Some(branch) = ref_str.rsplit('/').next()
                 && !branch.is_empty()
             {
@@ -200,11 +200,12 @@ impl DiffChecker {
         ];
         for variant in &variants {
             let args = ["diff", "--name-only", "--diff-filter=R", variant];
-            let (stdout, _, success) = self.filesystem.run_git_command(&args, &project_path.value);
-            if success && !stdout.trim().is_empty() {
+            let result = self.filesystem.run_git_command(&args, &project_path.value);
+            if result.success && !result.stdout.trim().is_empty() {
                 let pairs: Vec<RenamedFile> = self
                     .filesystem
-                    .parse_output_lines(&stdout)
+                    .parse_output_lines(&result.stdout)
+                    .lines
                     .iter()
                     .filter_map(|line| {
                         let parts: Vec<&str> = line.splitn(2, " => ").collect();
@@ -231,12 +232,12 @@ impl DiffChecker {
         variant: &str,
         project_path: &FilePath,
     ) -> bool {
-        let (stdout, _, success) = self
+        let result = self
             .filesystem
             .run_git_command(&["diff", "--name-only", variant], &project_path.value);
-        if success {
-            for line in self.filesystem.parse_output_lines(&stdout) {
-                if let Ok(fp) = FilePath::new(&line) {
+        if result.success {
+            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+                if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
             }
@@ -250,10 +251,10 @@ impl DiffChecker {
         args: &[&str],
         project_path: &FilePath,
     ) -> bool {
-        let (stdout, _, success) = self.filesystem.run_git_command(args, &project_path.value);
-        if success {
-            for line in self.filesystem.parse_output_lines(&stdout) {
-                if let Ok(fp) = FilePath::new(&line) {
+        let result = self.filesystem.run_git_command(args, &project_path.value);
+        if result.success {
+            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+                if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
             }
@@ -262,12 +263,12 @@ impl DiffChecker {
     }
 
     fn try_fallback_head_sync(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
-        let (stdout, _, success) = self
+        let result = self
             .filesystem
             .run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value);
-        if success {
-            for line in self.filesystem.parse_output_lines(&stdout) {
-                if let Ok(fp) = FilePath::new(&line) {
+        if result.success {
+            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+                if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
             }
@@ -275,13 +276,13 @@ impl DiffChecker {
     }
 
     fn try_ls_files_sync(&self, changed_set: &mut HashSet<FilePath>, project_path: &FilePath) {
-        let (stdout, _, success) = self.filesystem.run_git_command(
+        let result = self.filesystem.run_git_command(
             &["ls-files", "--modified", "--others", "--exclude-standard"],
             &project_path.value,
         );
-        if success {
-            for line in self.filesystem.parse_output_lines(&stdout) {
-                if let Ok(fp) = FilePath::new(&line) {
+        if result.success {
+            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+                if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
             }
