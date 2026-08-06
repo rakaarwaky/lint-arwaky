@@ -273,20 +273,6 @@ impl LintFixProcessor {
         }
     }
 
-    // BF-1: No more `with_dry_run` — dry_run is per-request via `execute(path, dry_run)`
-    // Kept for backwards compatibility during migration.
-    #[deprecated(note = "Use new() + execute(path, dry_run) instead — dry_run is now per-request")]
-    pub fn with_dry_run(
-        _dry_run: bool,
-        linter: Arc<dyn ICodeAnalysisAggregate>,
-        file_adapter: Arc<dyn IFileAdapterProtocol>,
-    ) -> Self {
-        Self {
-            linter,
-            file_adapter,
-        }
-    }
-
     /// FR-002: Fix bypass comments — returns FixOutcome per FRD.
     ///
     /// RC-1 fix: "Remove comment from line" means strip the comment token,
