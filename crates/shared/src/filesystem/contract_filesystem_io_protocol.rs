@@ -1,7 +1,9 @@
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::filesystem::taxonomy_filesystem_vo::{ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming};
+use crate::filesystem::taxonomy_filesystem_vo::{
+    ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
+};
 // Contract layer — filesystem IO protocol trait
 // File I/O, path operations, directory operations, process execution, scan timing
 // Responsibilities: low-level filesystem access, path metadata, process spawning

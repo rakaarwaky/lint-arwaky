@@ -18,7 +18,9 @@ use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{ByteCount, FileMode, GitCommandResult, ParsedLines};
+use shared::filesystem::taxonomy_filesystem_vo::{
+    ByteCount, FileMode, GitCommandResult, ParsedLines,
+};
 
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
     ExternalLintDeps, ExternalLintOrchestrator,
@@ -292,13 +294,20 @@ impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol 
     ) -> Result<Vec<std::path::PathBuf>, std::io::Error> {
         Ok(vec![])
     }
-    fn read_to_string(&self, _: &std::path::Path) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
+    fn read_to_string(
+        &self,
+        _: &std::path::Path,
+    ) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
         Ok(shared::common::taxonomy_source_vo::ContentString::new(""))
     }
     fn write_string(&self, _: &std::path::Path, _: &str) -> Result<(), std::io::Error> {
         Ok(())
     }
-    fn copy_file(&self, _: &std::path::Path, _: &std::path::Path) -> Result<ByteCount, std::io::Error> {
+    fn copy_file(
+        &self,
+        _: &std::path::Path,
+        _: &std::path::Path,
+    ) -> Result<ByteCount, std::io::Error> {
         Ok(ByteCount::new(0))
     }
     fn create_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> {

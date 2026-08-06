@@ -49,7 +49,8 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
     fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &PatternList) -> bool {
         for dir_name in &["crates", "packages", "modules"] {
             let dir = workspace_root.join(dir_name);
-            if dir.is_dir() && utility_workspace_detection::check_dir_containers(&dir, identifiers.values())
+            if dir.is_dir()
+                && utility_workspace_detection::check_dir_containers(&dir, identifiers.values())
             {
                 return true;
             }

@@ -236,7 +236,12 @@ impl DiffChecker {
             .filesystem
             .run_git_command(&["diff", "--name-only", variant], &project_path.value);
         if result.success {
-            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+            for line in self
+                .filesystem
+                .parse_output_lines(&result.stdout)
+                .lines
+                .iter()
+            {
                 if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
@@ -253,7 +258,12 @@ impl DiffChecker {
     ) -> bool {
         let result = self.filesystem.run_git_command(args, &project_path.value);
         if result.success {
-            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+            for line in self
+                .filesystem
+                .parse_output_lines(&result.stdout)
+                .lines
+                .iter()
+            {
                 if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
@@ -267,7 +277,12 @@ impl DiffChecker {
             .filesystem
             .run_git_command(&["diff", "--name-only", "HEAD"], &project_path.value);
         if result.success {
-            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+            for line in self
+                .filesystem
+                .parse_output_lines(&result.stdout)
+                .lines
+                .iter()
+            {
                 if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
@@ -281,7 +296,12 @@ impl DiffChecker {
             &project_path.value,
         );
         if result.success {
-            for line in self.filesystem.parse_output_lines(&result.stdout).lines.iter() {
+            for line in self
+                .filesystem
+                .parse_output_lines(&result.stdout)
+                .lines
+                .iter()
+            {
                 if let Ok(fp) = FilePath::new(line.as_str()) {
                     changed_set.insert(fp);
                 }
