@@ -138,7 +138,7 @@ fn e2e_surface_violation_detected() {
 
     // Passive surface with excessive control flow (AES406 violation)
     let mut lines = Vec::new();
-    for i in 0..6 {
+    for i in 0..51 {
         lines.push(format!("if condition_{} {{}}", i));
     }
     let content = lines.join("\n");

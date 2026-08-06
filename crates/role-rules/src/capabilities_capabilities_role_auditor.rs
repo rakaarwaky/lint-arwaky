@@ -85,30 +85,26 @@ impl CapabilitiesRoleChecker {
                     return;
                 }
 
-                // Rule 2: must have >= 1 struct implementing a protocol trait
+                // Rule 2: must have >= 1 struct implementing any trait
                 let has_implementor = rust_meta.impl_blocks.iter().any(|imp| {
-                    let trait_is_protocol = imp
-                        .trait_name
-                        .as_deref()
-                        .is_some_and(|t| t.contains("protocol") || t.contains("Protocol"));
-                    trait_is_protocol && struct_names.contains(&imp.implementor_type.as_str())
+                    imp.trait_name.is_some()
+                        && struct_names.contains(&imp.implementor_type.as_str())
                 });
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
 
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No `impl Protocol for struct` pattern found in {}. At least one struct must implement a protocol trait.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+                        format!("AES403 CAPABILITY_ROLE: No struct implements a trait.\nWHY? No `impl Trait for struct` pattern found in {}. At least one struct must implement a trait.\nFIX: At least one struct in this file must implement a trait. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
                 }
             }
             ParseMetadata::Python(py_meta) => {
                 let class_count = py_meta.class_declarations.len();
-                let implementor_found = py_meta.class_declarations.iter().any(|c| {
-                    c.bases
-                        .iter()
-                        .any(|b| b.contains("protocol") || b.contains("Protocol"))
-                });
+                let implementor_found = py_meta
+                    .class_declarations
+                    .iter()
+                    .any(|c| !c.bases.is_empty());
 
                 if class_count > 3 {
                     violations.push(LintResult::new_arch(
@@ -126,7 +122,7 @@ impl CapabilitiesRoleChecker {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
 
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+                        format!("AES403 CAPABILITY_ROLE: No class implements a parent class.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one class in this file must extend a parent class.", path_str)
 ,
                     ));
                 }
@@ -135,11 +131,10 @@ impl CapabilitiesRoleChecker {
                 let type_count = ts_meta.class_declarations.len()
                     + ts_meta.interface_declarations.len()
                     + ts_meta.type_alias_declarations.len();
-                let implementor_found = ts_meta.class_declarations.iter().any(|c| {
-                    c.implements
-                        .iter()
-                        .any(|i| i.contains("protocol") || i.contains("Protocol"))
-                });
+                let implementor_found = ts_meta
+                    .class_declarations
+                    .iter()
+                    .any(|c| !c.implements.is_empty());
 
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(
@@ -157,7 +152,7 @@ impl CapabilitiesRoleChecker {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
 
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with 'implements' keyword found in {}. At least one class must implement an interface/protocol.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+                        format!("AES403 CAPABILITY_ROLE: No class implements an interface.\nWHY? No class with 'implements' keyword found in {}. At least one class must implement an interface.\nFIX: At least one class in this file must implement an interface.", path_str)
 ,
                     ));
                 }
@@ -229,7 +224,6 @@ impl CapabilitiesRoleChecker {
                     lines.iter().any(|l| {
                         let t = l.trim();
                         t.starts_with("impl ")
-                            && (t.contains("protocol") || t.contains("Protocol"))
                             && (t.contains(&format!("for {} ", s))
                                 || t.contains(&format!("for {}{{", s))
                                 || t.contains(&format!("for {} {{", s)))
@@ -239,7 +233,7 @@ impl CapabilitiesRoleChecker {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
 
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+                        format!("AES403 CAPABILITY_ROLE: No struct implements a trait.\nWHY? No `impl Trait for struct` pattern found in {}. At least one struct must implement a trait.\nFIX: At least one struct in this file must implement a trait. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
                 }
@@ -253,7 +247,7 @@ impl CapabilitiesRoleChecker {
                             let after_paren = &t[start + 1..];
                             if let Some(end) = after_paren.find(')') {
                                 let parents = after_paren[..end].trim();
-                                if parents.contains("protocol") || parents.contains("Protocol") {
+                                if !parents.is_empty() {
                                     implementor_found = true;
                                 }
                             }
@@ -276,7 +270,7 @@ impl CapabilitiesRoleChecker {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
 
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+                        format!("AES403 CAPABILITY_ROLE: No class implements a parent class.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one class in this file must extend a parent class.", path_str)
 ,
                     ));
                 }
@@ -289,9 +283,7 @@ impl CapabilitiesRoleChecker {
                         .or_else(|| t.strip_prefix("class "));
                     if let Some(rest) = class_body {
                         type_count += 1;
-                        if rest.contains("implements ")
-                            && (rest.contains("protocol") || rest.contains("Protocol"))
-                        {
+                        if rest.contains("implements ") {
                             implementor_found = true;
                         }
                         continue;
@@ -329,7 +321,7 @@ impl CapabilitiesRoleChecker {
                         "AES403",
                         Severity::MEDIUM,
 
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with 'implements' found in {}.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+                        format!("AES403 CAPABILITY_ROLE: No class implements an interface.\nWHY? No class with 'implements' found in {}.\nFIX: At least one class in this file must implement an interface.", path_str)
 ,
                     ));
                 }

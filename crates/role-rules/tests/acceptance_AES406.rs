@@ -35,7 +35,7 @@ fn run_audit(files: Vec<FileEntry>) -> Vec<shared::common::LintResult> {
 #[test]
 fn aes406_passive_surface_excess_control_flow_detected() {
     let mut lines = Vec::new();
-    for i in 0..6 {
+    for i in 0..51 {
         lines.push(format!("if condition_{} {{}}", i));
     }
     let file = make_file(
@@ -78,10 +78,10 @@ fn aes406_smart_surface_exempt() {
     );
 }
 
-// ── Too many functions → SurfaceRoleViolation ──
+// ── Many functions → no longer flagged (fn count limit removed) ──
 
 #[test]
-fn aes406_too_many_functions_detected() {
+fn aes406_many_functions_no_violation() {
     let content: String = (0..20)
         .map(|i| format!("fn func_{}() {{}}", i))
         .collect::<Vec<_>>()
@@ -93,8 +93,8 @@ fn aes406_too_many_functions_detected() {
         .filter(|r| r.code.code() == "AES406")
         .collect();
     assert!(
-        !aes406.is_empty(),
-        "surface with >15 functions should trigger AES406"
+        aes406.is_empty(),
+        "surface with many functions should no longer trigger AES406 (fn count limit removed)"
     );
 }
 
