@@ -27,7 +27,6 @@ use shared::quality_rules::contract_code_metric_analyzer_protocol::ICodeMetricAn
 use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 use shared::quality_rules::contract_line_protocol::ILineCheckerProtocol;
 
-use shared::common::taxonomy_common_vo::{FileContentPair, PatternList};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -62,15 +61,15 @@ pub struct CodeAnalysisOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_self_lint(project_root.value()))
+        LintResultList::new(self.legacy_entry_disabled("run_code_analysis", project_root.value()))
     }
 
     fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
-        LintResultList::new(self.run_scan(src_dir.value()))
+        LintResultList::new(self.legacy_entry_disabled("run_code_analysis_dir", src_dir.value()))
     }
 
     fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
-        self.run_self_lint(path.value())
+        self.legacy_entry_disabled("run_code_analysis_path", path.value())
     }
 
     fn calc_score(&self, results: &[LintResult]) -> Score {
@@ -84,7 +83,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
     }
 
     fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> DisplayContent {
-        DisplayContent::new(self.format_report(&results.values, project_root.value()))
+        DisplayContent::new(self.render_report(&results.values, project_root.value()))
     }
 
     fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
@@ -93,31 +92,6 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
             .iter()
             .map(|r| r.code_analysis.clone())
             .collect()
-    }
-
-    fn collect_file_entries(&self, files: &PatternList) -> Vec<FileContentPair> {
-        // Entries must be provided by the caller via run_analysis_with_entries.
-        // This legacy method returns empty — callers should use FileEntry-based flow.
-        let _ = files;
-        Vec::new()
-    }
-
-    fn scan_duplicate_blocks(
-        &self,
-        entries: Vec<(std::path::PathBuf, String)>,
-        min_lines: usize,
-    ) -> Vec<Vec<(std::path::PathBuf, usize)>> {
-        crate::utility_code_duplication_detector::scan_duplicate_blocks(entries, min_lines)
-    }
-
-    fn build_violations(
-        &self,
-        blocks: &[Vec<(std::path::PathBuf, usize)>],
-        total_loc: usize,
-        min_dup_lines: usize,
-    ) -> Vec<shared::quality_rules::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation>
-    {
-        crate::utility_code_duplication_detector::build_violations(blocks, total_loc, min_dup_lines)
     }
 
     /// Run analysis on pre-parsed file entries from the filesystem crate.
@@ -204,6 +178,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
             .map(|f| (f.path.clone(), f.content.clone()))
             .collect();
         if !entries.is_empty() {
+            // Hoist AES305 rule lookup outside per-violation loop (was O(violations) per scan)
             let aes305_rule = self.config.rules.iter().find(|r| r.name.value == "AES305");
             for (file_path, aes_violation) in self
                 .deps
@@ -233,7 +208,7 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
                     &file_path,
                     1,
                     "AES305",
-                    Severity::LOW,
+                    Severity::MEDIUM,
                     msg,
                 ));
             }
@@ -261,18 +236,23 @@ impl CodeAnalysisOrchestrator {
         }
     }
 
-    /// Legacy self-lint path — deprecated, use run_analysis_with_entries instead.
-    pub fn run_self_lint(&self, _project_root: &str) -> Vec<LintResult> {
-        Vec::new()
+    /// Legacy entry points cannot run without pre-fetched FileEntry data (crate is zero-I/O).
+    /// Fail loudly so callers cannot silently skip AES301–AES305.
+    fn legacy_entry_disabled(&self, method: &str, target: &str) -> Vec<LintResult> {
+        vec![LintResult::new_arch(
+            target,
+            0,
+            "AES301",
+            Severity::CRITICAL,
+            format!(
+                "AES301 API_MISUSE: quality-rules entry point `{}` requires pre-fetched file entries.\nWHY? This method returns no results by design (zero-I/O aggregate).\nFIX: Call filesystem.build_file_index() then run_analysis_with_entries(file_list()).",
+                method
+            ),
+        )]
     }
 
-    /// Legacy scan path — deprecated, use run_analysis_with_entries instead.
-    pub fn run_scan(&self, _target_dir: &str) -> Vec<LintResult> {
-        Vec::new()
-    }
-
-    /// Format a compliance report from results.
-    pub fn format_report(&self, results: &[LintResult], project_root: &str) -> String {
+    /// Render a compliance report from results.
+    pub fn render_report(&self, results: &[LintResult], project_root: &str) -> String {
         // Pre-allocated header (static string, no repeat allocation)
         let header = "============================================================";
         let mut output = String::with_capacity(results.len() * 80 + 120);

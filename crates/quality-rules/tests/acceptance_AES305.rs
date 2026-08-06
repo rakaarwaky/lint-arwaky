@@ -47,7 +47,7 @@ fn two_identical_files_produces_violation() {
     let has_aes305 = match &violations[0].1 {
         shared::quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => reason
             .as_ref()
-            .map_or(false, |r| r.to_string().contains("AES305")),
+            .is_some_and(|r| r.to_string().contains("AES305")),
         _ => false,
     };
     assert!(violations[0].0.contains("AES305") || has_aes305);
