@@ -14,10 +14,6 @@ fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
     CapabilitiesOrphanAnalyzer::new(mock_filesystem())
 }
 
-fn empty_reachability() -> ReachabilityResult {
-    ReachabilityResult::new(HashSet::new())
-}
-
 fn reachable_for(fp: &FilePath) -> ReachabilityResult {
     ReachabilityResult::new(HashSet::from([fp.clone()]))
 }
