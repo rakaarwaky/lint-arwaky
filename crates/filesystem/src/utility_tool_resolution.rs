@@ -61,14 +61,21 @@ pub fn is_binary_available(bin_name: &str) -> bool {
     {
         return false;
     }
-
-    std::env::current_exe()
+    // Exe-dir known: check there OR in PATH. Unknown: PATH only.
+    let exe_dir = std::env::current_exe()
         .ok()
-        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()))
-        .is_none_or(|dir| {
-            let path = dir.join(bin_name);
-            path_exists(path) || find_in_path(bin_name)
-        })
+        .and_then(|exe| exe.parent().map(|p| p.to_path_buf()));
+    match exe_dir {
+        Some(dir) => {
+            let local = dir.join(bin_name);
+            is_executable_file(&local) || find_in_path(bin_name)
+        }
+        None => find_in_path(bin_name),
+    }
+}
+
+fn is_executable_file(path: &Path) -> bool {
+    path.metadata().is_ok_and(|m| m.is_file())
 }
 
 fn find_in_path(bin_name: &str) -> bool {

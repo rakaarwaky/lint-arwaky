@@ -70,19 +70,11 @@ impl IParserProtocol for ASTParser {
             Ok(v) => v.clone(),
             Err(_) => return,
         };
-        let count = imports.len();
         let resolved: Vec<ImportEntry> = imports
             .iter()
             .cloned()
             .map(|entry| crate::utility_barrel_resolution::resolve_single_import(entry, root_dir))
             .collect();
-        let resolved_count = resolved.iter().filter(|e| e.is_resolved).count();
-        eprintln!(
-            "[debug resolve_barrel] input={}, resolved={}, root={}",
-            count,
-            resolved_count,
-            root_dir.display()
-        );
         if let Ok(mut w) = self.imports.write() {
             *w = resolved;
         }

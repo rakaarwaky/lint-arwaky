@@ -7,7 +7,7 @@
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
-// ─── Inlined from utility_filesystem_io (AES201: utility cannot import utility) ───
+// ─── IO primitives delegated to shared (AES201: utility cannot import utility) ───
 
 fn read_to_string(path: &Path) -> Result<String, std::io::Error> {
     std::fs::read_to_string(path)
@@ -25,97 +25,6 @@ fn list_dir_entries(dir: &Path) -> Vec<PathBuf> {
 
 fn canonicalize(path: &Path) -> Result<PathBuf, std::io::Error> {
     std::fs::canonicalize(path)
-}
-
-fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
-    if rel_path.is_empty() {
-        return false;
-    }
-    let segments: Vec<&str> = rel_path
-        .split(['/', '\\'])
-        .filter(|s| !s.is_empty())
-        .collect();
-    for pat in ignored {
-        if pat.is_empty() {
-            continue;
-        }
-        if let Some(stripped) = pat.strip_prefix('/') {
-            if stripped.is_empty() {
-                continue;
-            }
-            let pat_segments: Vec<&str> = stripped
-                .split(['/', '\\'])
-                .filter(|s| !s.is_empty())
-                .collect();
-            if pat_segments.is_empty() {
-                continue;
-            }
-            let n_pat = pat_segments.len();
-            let n_seg = segments.len();
-            if n_seg < n_pat {
-                continue;
-            }
-            for start in 0..=(n_seg - n_pat) {
-                if segments[start..start + n_pat] == pat_segments[..] {
-                    return true;
-                }
-            }
-            continue;
-        }
-        if pat.starts_with("**/") {
-            let suffix = pat.strip_prefix("**/").unwrap_or(pat);
-            if let Some(ext_pattern) = suffix.strip_prefix("*.") {
-                let ext = ext_pattern.trim_start_matches('.');
-                if !ext.is_empty() {
-                    let basename = segments.last().copied().unwrap_or_default();
-                    if basename.ends_with(&format!(".{ext}")) {
-                        return true;
-                    }
-                }
-            }
-            continue;
-        }
-        if let Some(prefix) = pat.strip_suffix("/*") {
-            if !prefix.is_empty() && segments.first() == Some(&prefix) {
-                return true;
-            }
-            continue;
-        }
-        if let Some(suffix) = pat.strip_prefix("*.") {
-            let suffix = suffix.trim_start_matches('.');
-            if suffix.is_empty() {
-                continue;
-            }
-            let basename = segments.last().copied().unwrap_or_default();
-            if basename.ends_with(&format!(".{suffix}")) {
-                return true;
-            }
-            continue;
-        }
-        if pat.starts_with('.') {
-            if segments.iter().any(|seg| *seg == pat) {
-                return true;
-            }
-            continue;
-        }
-        let pat_segments: Vec<&str> = pat.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
-        if pat_segments.len() == 1 {
-            if segments.contains(&pat_segments[0]) {
-                return true;
-            }
-        } else if pat_segments.len() > 1 {
-            let n_pat = pat_segments.len();
-            let n_seg = segments.len();
-            if n_seg >= n_pat {
-                for start in 0..=(n_seg - n_pat) {
-                    if segments[start..start + n_pat] == pat_segments[..] {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-    false
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -437,7 +346,7 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .unwrap_or_else(|_| e.path().to_path_buf());
             let rel_path = abs_path.strip_prefix(&abs_root).unwrap_or(e.path());
             let rel_str = rel_path.to_string_lossy();
-            !is_path_ignored(&rel_str, &merged_ignored)
+            !shared::common::utility_path_filter::is_path_ignored(&rel_str, &merged_ignored)
         })
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()
