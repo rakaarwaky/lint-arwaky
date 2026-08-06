@@ -57,7 +57,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                         return Ok(Some(ConfigSource::new(
                             language.as_str(),
                             candidate.to_string_lossy().to_string(),
-                            content,
+                            content.value,
                         )));
                     }
                     Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
@@ -172,7 +172,7 @@ impl ConfigYamlReader {
                     return Ok(Some(ConfigSource::new(
                         language.as_str(),
                         path.to_string_lossy().to_string(),
-                        content,
+                        content.value,
                     )));
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,

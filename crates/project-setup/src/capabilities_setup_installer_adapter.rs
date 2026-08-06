@@ -8,6 +8,7 @@
 // The npm installer supports `sudo` prefix for global installations that need
 // elevated permissions.
 
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
 use shared::project_setup::contract_setup_protocol::InstallPackagesResult;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
@@ -19,14 +20,14 @@ pub struct SetupInstallerAdapter;
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ISetupInstallerProtocol for SetupInstallerAdapter {
-    fn install_python_packages(&self, packages: &[String]) -> InstallPackagesResult {
+    fn install_python_packages(&self, packages: &PatternList) -> InstallPackagesResult {
         if packages.is_empty() {
             return Ok(());
         }
 
         let status = std::process::Command::new("pip")
             .args(["install", "--user"])
-            .args(packages)
+            .args(packages.values())
             .status()
             .map_err(|e| SetupError::io(e.to_string()))?;
         if status.success() {
@@ -36,7 +37,7 @@ impl ISetupInstallerProtocol for SetupInstallerAdapter {
         // Retry with --break-system-packages if initial attempt fails (typically PEP 668 on modern Linux)
         let status2 = std::process::Command::new("pip")
             .args(["install", "--user", "--break-system-packages"])
-            .args(packages)
+            .args(packages.values())
             .status();
 
         match status2 {
@@ -48,7 +49,7 @@ impl ISetupInstallerProtocol for SetupInstallerAdapter {
         }
     }
 
-    fn install_npm_packages(&self, packages: &[String], sudo: bool) -> InstallPackagesResult {
+    fn install_npm_packages(&self, packages: &PatternList, sudo: bool) -> InstallPackagesResult {
         if packages.is_empty() {
             return Ok(());
         }
@@ -61,7 +62,7 @@ impl ISetupInstallerProtocol for SetupInstallerAdapter {
 
         let status = std::process::Command::new(cmd)
             .args(args)
-            .args(packages)
+            .args(packages.values())
             .status()
             .map_err(|e| SetupError::io(e.to_string()))?;
         if status.success() {

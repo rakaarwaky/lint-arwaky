@@ -1,6 +1,7 @@
 // Smoke test — verify the filesystem crate boots and core operations respond within 5s.
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
 use shared::common::taxonomy_language_vo::Language;
+use shared::common::PatternList;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -28,7 +29,7 @@ fn filesystem_io_operations_respond() {
     let file = tmp.path().join("smoke.txt");
     orch.write_string(&file, "smoke test").unwrap();
     let content = orch.read_to_string(&file).unwrap();
-    assert_eq!(content, "smoke test");
+    assert_eq!(content.value, "smoke test");
     orch.remove_file(&file).unwrap();
     let elapsed = start.elapsed();
     assert!(
@@ -103,7 +104,7 @@ fn filesystem_scan_directory_responds() {
     std::fs::write(tmp.path().join("b.py"), "").unwrap();
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
-    let files = orch.scan_directory_with_ignored(tmp.path(), &[]);
+    let files = orch.scan_directory_with_ignored(tmp.path(), &PatternList::default());
     assert!(!files.is_empty());
     let elapsed = start.elapsed();
     assert!(

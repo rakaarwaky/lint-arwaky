@@ -1,5 +1,6 @@
 // Unit tests for CapabilitiesFileSystemIO — FR-003: File I/O & Directory Operations.
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
+use shared::common::PatternList;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::FileExtension;
 use std::path::Path;
@@ -47,7 +48,7 @@ fn read_and_write_roundtrip() {
     let io = make_io();
     io.write_string(&file, "hello world").unwrap();
     let content = io.read_to_string(&file).unwrap();
-    assert_eq!(content, "hello world");
+    assert_eq!(content.value, "hello world");
 }
 
 #[test]
@@ -68,8 +69,8 @@ fn copy_file_works() {
     let io = make_io();
     io.write_string(&src, "copy me").unwrap();
     let bytes = io.copy_file(&src, &dst).unwrap();
-    assert!(bytes > 0);
-    assert_eq!(io.read_to_string(&dst).unwrap(), "copy me");
+    assert!(bytes.bytes > 0);
+    assert_eq!(io.read_to_string(&dst).unwrap().value, "copy me");
 }
 
 #[test]
@@ -151,7 +152,7 @@ fn scan_directory_finds_files() {
     std::fs::write(tmp.path().join("b.py"), "# b").unwrap();
     std::fs::write(tmp.path().join("c.txt"), "not source").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &[]);
+    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::default());
     let names: Vec<String> = files
         .iter()
         .filter_map(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
@@ -168,7 +169,7 @@ fn scan_directory_with_ignored_excludes() {
     std::fs::write(sub.join("build.rs"), "fn main() {}").unwrap();
     std::fs::write(tmp.path().join("src.rs"), "fn src() {}").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &["target".to_string()]);
+    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::new(vec!["target".to_string()]));
     let has_target = files.iter().any(|p| p.to_string_lossy().contains("target"));
     assert!(!has_target, "target/ should be excluded");
 }
@@ -206,8 +207,8 @@ fn metadata_returns_info() {
 #[test]
 fn parse_output_lines_filters() {
     let io = make_io();
-    let lines = io.parse_output_lines("line1\n\nline2\n  \nline3\n");
-    assert_eq!(lines, vec!["line1", "line2", "line3"]);
+    let result = io.parse_output_lines("line1\n\nline2\n  \nline3\n");
+    assert_eq!(result.lines, vec!["line1", "line2", "line3"]);
 }
 
 #[test]
@@ -223,7 +224,7 @@ fn set_permissions_works() {
     let file = tmp.path().join("perm.txt");
     std::fs::write(&file, "x").unwrap();
     let io = make_io();
-    io.set_permissions(&file, 0o644).unwrap();
+    io.set_permissions(&file, shared::filesystem::taxonomy_filesystem_vo::FileMode::new(0o644)).unwrap();
     let meta = io.metadata(&file).unwrap();
     #[cfg(unix)]
     {

@@ -72,7 +72,7 @@ impl IHookProtocol for HookManager {
             }
         };
 
-        let mut doc: serde_yaml_ng::Value = match serde_yaml_ng::from_str(&content) {
+        let mut doc: serde_yaml_ng::Value = match serde_yaml_ng::from_str(&content.value) {
             Ok(v) => v,
             Err(e) => {
                 return DescriptionVO::new(format!("Failed to parse config YAML: {}", e));
@@ -198,12 +198,12 @@ impl HookManager {
         let bytes1 = self
             .filesystem
             .read_to_string(std::path::Path::new(path1))
-            .map(|s| s.into_bytes())
+            .map(|s| s.value.into_bytes())
             .unwrap_or_else(|_| self.read_raw_bytes(path1));
         let bytes2 = self
             .filesystem
             .read_to_string(std::path::Path::new(path2))
-            .map(|s| s.into_bytes())
+            .map(|s| s.value.into_bytes())
             .unwrap_or_else(|_| self.read_raw_bytes(path2));
         let max_size = bytes1.len().max(bytes2.len());
         if max_size == 0 {
