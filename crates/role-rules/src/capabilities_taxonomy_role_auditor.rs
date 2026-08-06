@@ -158,14 +158,6 @@ impl TaxonomyRoleChecker {
             }
             _ => return,
         };
-        let _is_rs = matches!(
-            file.language,
-            shared::filesystem::taxonomy_filesystem_vo::Language::Rust
-        );
-        let _is_py = matches!(
-            file.language,
-            shared::filesystem::taxonomy_filesystem_vo::Language::Python
-        );
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();

@@ -5,7 +5,6 @@
 //   method signatures. Uses content line scanning for signature detection since
 //   ParseMetadata does not yet expose method parameter/return types.
 
-use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_language_detector::detect_language_info;
@@ -66,14 +65,6 @@ impl ContractRoleChecker {
         if !is_rs && !is_py && !is_js {
             return;
         }
-
-        let _lang = if is_rs {
-            Language::Rust
-        } else if is_py {
-            Language::Python
-        } else {
-            Language::JavaScript
-        };
 
         if is_py {
             for (line_no, sig) in extract_python_method_signatures(content) {
