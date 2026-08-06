@@ -163,8 +163,12 @@ pub fn is_trait_used_for_method_dispatch(
 /// and AES contract protocol naming conventions.
 #[doc(hidden)]
 pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
-    // ─── AES naming convention: contract_*_protocol or *_protocol ───
-    if raw_path.contains("protocol") || raw_path.contains("contract") {
+    // ─── AES naming convention: suffix-based only (not substring) ───
+    if raw_path.ends_with("::protocol")
+        || raw_path.ends_with("::aggregate")
+        || alias_str.ends_with("Protocol")
+        || alias_str.ends_with("Aggregate")
+    {
         return true;
     }
     // ─── Well-known Rust trait paths ───

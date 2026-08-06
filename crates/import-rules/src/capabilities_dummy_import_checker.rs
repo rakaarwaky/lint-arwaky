@@ -129,19 +129,6 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         Ok(violations)
     }
 
-    // TODO(P0): Implement layer-contract-intent check per FRD specification.
-    // This method is called by check_all_dummy (shared contract).
-    // Current state: no-op — contract-intent violations are silently dropped.
-    fn check_layer_contract_intent(
-        &self,
-        _file: &FilePath,
-        _content: &ContentString,
-        _root_dir: &FilePath,
-        _layer_map: &LayerMapVO,
-    ) -> Result<Vec<LintResult>, ImportError> {
-        Ok(Vec::new())
-    }
-
     fn check_surface_logic(
         &self,
         file: &FilePath,

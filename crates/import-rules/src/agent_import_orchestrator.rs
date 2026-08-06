@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::cli_commands::{LintResult, LintResultList};
+use shared::cli_commands::LintResult;
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 use shared::config_system::ArchitectureConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -112,103 +112,14 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         // Maps trait_name → [type_names that implement it] across all Rust files.
         let implemented_traits = self.deps.filesystem.implemented_traits_map();
 
-        let mandatory_result = self.deps.mandatory.run_mandatory_imports(
-            &self.config,
-            &self.layer_map,
+        Ok(self.run_checks(
             &files,
-            &root_dir,
             &content_map,
             &imports_map,
-        );
-        let forbidden_result = self.deps.forbidden.check_forbidden_imports(
-            &self.config,
-            &self.layer_map,
-            &files,
+            &used_identifiers_map,
+            &implemented_traits,
             &root_dir,
-            &content_map,
-            &imports_map,
-        );
-        let mandatory_results = mandatory_result.unwrap_or_default();
-        let forbidden_results = forbidden_result.unwrap_or_default();
-
-        let root_dir_clone = root_dir.clone();
-        let deps = &self.deps;
-        let layer_map = &self.layer_map;
-        let implemented_traits_arc = &implemented_traits;
-
-        let file_violations: Vec<LintResult> =
-            ParallelIterator::flat_map(IntoParallelRefIterator::par_iter(&files.values), |file| {
-                let mut local_results = Vec::new();
-                let content = match content_map.get(file.value()) {
-                    Some(c) => c.clone(),
-                    None => {
-                        return local_results;
-                    }
-                };
-                let file_imports = imports_map
-                    .get(file.value())
-                    .map(|v| v.as_slice())
-                    .unwrap_or(&[]);
-                let file_ids = used_identifiers_map
-                    .get(file.value())
-                    .map(|v| v.as_slice())
-                    .unwrap_or(&[]);
-                if let Ok(unused) = deps.unused.check_unused_imports(
-                    file.value(),
-                    &content,
-                    file_imports,
-                    file_ids,
-                    implemented_traits_arc,
-                ) {
-                    local_results.extend(unused);
-                }
-
-                let content_str = ContentString::new(content);
-                if let Ok(dummy) = deps.dummy.check_all_dummy(
-                    file,
-                    &content_str,
-                    &root_dir_clone,
-                    layer_map,
-                    &imports_map,
-                ) {
-                    local_results.extend(dummy);
-                }
-                local_results
-            })
-            .collect();
-
-        let mut results = LintResultList::new(Vec::new());
-        results.values.extend(mandatory_results.values);
-        results.values.extend(forbidden_results.values);
-        results.values.extend(file_violations);
-
-        // Use resolved imports for cycle detection — resolved_path maps module paths to files.
-        let resolved_imports_list = self.deps.filesystem.resolved_import_list();
-        let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
-            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
-            for entry in resolved_imports_list {
-                let key = entry.source_file.to_string_lossy().to_string();
-                map.entry(key).or_default().push(entry);
-            }
-            map
-        };
-        let cycle_map = if resolved_imports_map.is_empty() {
-            imports_map
-        } else {
-            resolved_imports_map
-        };
-
-        if let Ok(cycle_violations) = self.deps.cycle.check_cycles(
-            &self.config,
-            &self.layer_map,
-            &files,
-            &root_dir,
-            &content_map,
-            &cycle_map,
-        ) {
-            results.values.extend(cycle_violations);
-        }
-        Ok(results.values)
+        ))
     }
 
     fn name(&self) -> &str {
@@ -289,104 +200,15 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         };
 
         let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
-        let mut results = Vec::new();
 
-        // Sync checks
-        let mandatory_result = self.deps.mandatory.run_mandatory_imports(
-            &self.config,
-            &self.layer_map,
+        self.run_checks(
             &file_list,
-            &root_dir,
             &content_map,
             &imports_map,
-        );
-        let forbidden_result = self.deps.forbidden.check_forbidden_imports(
-            &self.config,
-            &self.layer_map,
-            &file_list,
+            &used_identifiers_map,
+            &implemented_traits,
             &root_dir,
-            &content_map,
-            &imports_map,
-        );
-        if let Ok(v) = mandatory_result {
-            results.extend(v.values);
-        }
-        if let Ok(v) = forbidden_result {
-            results.extend(v.values);
-        }
-
-        // Use resolved imports for cycle detection — resolved_path maps module paths to files.
-        let resolved_imports_list = self.deps.filesystem.resolved_import_list();
-        let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
-            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
-            for entry in resolved_imports_list {
-                let key = entry.source_file.to_string_lossy().to_string();
-                map.entry(key).or_default().push(entry);
-            }
-            map
-        };
-        let cycle_map = if resolved_imports_map.is_empty() {
-            imports_map.clone()
-        } else {
-            resolved_imports_map
-        };
-
-        let cycle_result = self.deps.cycle.check_cycles(
-            &self.config,
-            &self.layer_map,
-            &file_list,
-            &root_dir,
-            &content_map,
-            &cycle_map,
-        );
-        if let Ok(v) = cycle_result {
-            results.extend(v);
-        }
-
-        // Sync checks via rayon
-        use rayon::prelude::*;
-        let sync_violations: Vec<LintResult> = file_list
-            .values
-            .par_iter()
-            .flat_map(|file| {
-                let mut local = Vec::new();
-                let content_str = match content_map.get(file.value()) {
-                    Some(c) => c.as_str(),
-                    None => return local,
-                };
-                let file_imports = imports_map
-                    .get(file.value())
-                    .map(|v| v.as_slice())
-                    .unwrap_or(&[]);
-                let file_ids = used_identifiers_map
-                    .get(file.value())
-                    .map(|v| v.as_slice())
-                    .unwrap_or(&[]);
-                if let Ok(v) = self.deps.unused.check_unused_imports(
-                    file.value(),
-                    content_str,
-                    file_imports,
-                    file_ids,
-                    &implemented_traits,
-                ) {
-                    local.extend(v);
-                }
-                let cs = ContentString::new(content_str.to_string());
-                if let Ok(v) = self.deps.dummy.check_all_dummy(
-                    file,
-                    &cs,
-                    &root_dir,
-                    &self.layer_map,
-                    &imports_map,
-                ) {
-                    local.extend(v);
-                }
-                local
-            })
-            .collect();
-        results.extend(sync_violations);
-
-        results
+        )
     }
 }
 
@@ -406,6 +228,111 @@ impl ImportOrchestrator {
             layer_map,
             ignored_paths,
         }
+    }
+
+    /// Shared audit pipeline — the single place where all import checks are composed.
+    /// Both trait methods (`run_audit`, `run_audit_with_entries`) are thin adapters over this.
+    fn run_checks(
+        &self,
+        files: &FilePathList,
+        content_map: &HashMap<String, String>,
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
+        used_identifiers_map: &HashMap<String, Vec<String>>,
+        implemented_traits: &HashMap<String, Vec<String>>,
+        root_dir: &FilePath,
+    ) -> Vec<LintResult> {
+        let mut results = Vec::new();
+
+        // Sync checks: mandatory + forbidden
+        if let Ok(mandatory) = self.deps.mandatory.run_mandatory_imports(
+            &self.config,
+            &self.layer_map,
+            files,
+            root_dir,
+            content_map,
+            imports_map,
+        ) {
+            results.extend(mandatory.values);
+        }
+        if let Ok(forbidden) = self.deps.forbidden.check_forbidden_imports(
+            &self.config,
+            &self.layer_map,
+            files,
+            root_dir,
+            content_map,
+            imports_map,
+        ) {
+            results.extend(forbidden.values);
+        }
+
+        // Cycle detection — prefer resolved imports when available
+        let resolved_imports_list = self.deps.filesystem.resolved_import_list();
+        let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
+            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+            for entry in resolved_imports_list {
+                let key = entry.source_file.to_string_lossy().to_string();
+                map.entry(key).or_default().push(entry);
+            }
+            map
+        };
+        let cycle_map = if resolved_imports_map.is_empty() {
+            imports_map
+        } else {
+            &resolved_imports_map
+        };
+        if let Ok(cycle) = self.deps.cycle.check_cycles(
+            &self.config,
+            &self.layer_map,
+            files,
+            root_dir,
+            content_map,
+            cycle_map,
+        ) {
+            results.extend(cycle);
+        }
+
+        // Per-file checks: unused + dummy (parallelized via rayon)
+        let file_violations: Vec<LintResult> = files
+            .values
+            .par_iter()
+            .flat_map(|file| {
+                let mut local = Vec::new();
+                let Some(content) = content_map.get(file.value()) else {
+                    return local;
+                };
+                let file_imports = imports_map
+                    .get(file.value())
+                    .map(|v| v.as_slice())
+                    .unwrap_or(&[]);
+                let file_ids = used_identifiers_map
+                    .get(file.value())
+                    .map(|v| v.as_slice())
+                    .unwrap_or(&[]);
+                if let Ok(unused) = self.deps.unused.check_unused_imports(
+                    file.value(),
+                    content,
+                    file_imports,
+                    file_ids,
+                    implemented_traits,
+                ) {
+                    local.extend(unused);
+                }
+                let content_str = ContentString::new(content.clone());
+                if let Ok(dummy) = self.deps.dummy.check_all_dummy(
+                    file,
+                    &content_str,
+                    root_dir,
+                    &self.layer_map,
+                    imports_map,
+                ) {
+                    local.extend(dummy);
+                }
+                local
+            })
+            .collect();
+        results.extend(file_violations);
+
+        results
     }
 
     fn collect_files(&self, target: &FilePath) -> FilePathList {

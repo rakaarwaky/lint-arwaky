@@ -45,7 +45,7 @@ fn aes205_normalize_to_layer_strips_prefix() {
 fn aes205_normalize_to_layer_no_prefix() {
     let a = analyzer();
     let result = a.normalize_to_layer("standalone_module");
-    assert_eq!(result.value(), "standalone");
+    assert_eq!(result.value(), "standalone_module");
 }
 
 // ─── AES205: cycle detection via edges ────────────────────

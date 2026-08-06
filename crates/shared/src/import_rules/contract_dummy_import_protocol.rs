@@ -45,14 +45,6 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
         import_entries: &[ImportEntry],
     ) -> Result<Vec<LintResult>, ImportError>;
 
-    fn check_layer_contract_intent(
-        &self,
-        file: &FilePath,
-        content: &ContentString,
-        root_dir: &FilePath,
-        layer_map: &LayerMapVO,
-    ) -> Result<Vec<LintResult>, ImportError>;
-
     fn check_surface_logic(
         &self,
         file: &FilePath,
@@ -85,7 +77,6 @@ pub trait IDummyImportCheckerProtocol: Send + Sync {
             layer_map,
             import_entries,
         )?);
-        all.extend(self.check_layer_contract_intent(file, content, root_dir, layer_map)?);
         all.extend(self.check_surface_logic(file, content, root_dir, layer_map)?);
         Ok(all)
     }
