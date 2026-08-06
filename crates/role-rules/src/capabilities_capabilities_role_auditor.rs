@@ -104,10 +104,11 @@ impl CapabilitiesRoleChecker {
             }
             ParseMetadata::Python(py_meta) => {
                 let class_count = py_meta.class_declarations.len();
-                let implementor_found = py_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| c.bases.iter().any(|b| b.contains("protocol") || b.contains("Protocol")));
+                let implementor_found = py_meta.class_declarations.iter().any(|c| {
+                    c.bases
+                        .iter()
+                        .any(|b| b.contains("protocol") || b.contains("Protocol"))
+                });
 
                 if class_count > 3 {
                     violations.push(LintResult::new_arch(
@@ -134,10 +135,11 @@ impl CapabilitiesRoleChecker {
                 let type_count = ts_meta.class_declarations.len()
                     + ts_meta.interface_declarations.len()
                     + ts_meta.type_alias_declarations.len();
-                let implementor_found = ts_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| c.implements.iter().any(|i| i.contains("protocol") || i.contains("Protocol")));
+                let implementor_found = ts_meta.class_declarations.iter().any(|c| {
+                    c.implements
+                        .iter()
+                        .any(|i| i.contains("protocol") || i.contains("Protocol"))
+                });
 
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(

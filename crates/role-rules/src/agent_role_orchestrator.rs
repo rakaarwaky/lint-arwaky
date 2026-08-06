@@ -99,8 +99,7 @@ impl RoleOrchestrator {
 
             match prefix {
                 "agent"
-                    if self.is_rule_enabled("AES405")
-                        && !self.is_exception("AES405", filename) =>
+                    if self.is_rule_enabled("AES405") && !self.is_exception("AES405", filename) =>
                 {
                     self.deps
                         .agent
@@ -108,8 +107,7 @@ impl RoleOrchestrator {
                 }
                 "root" => {}
                 "surfaces" | "surface"
-                    if self.is_rule_enabled("AES406")
-                        && !self.is_exception("AES406", filename) =>
+                    if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
                 {
                     self.deps.surface.check_fn_count_limit(file, violations);
                     let is_smart = basename.ends_with("_command")
@@ -130,8 +128,7 @@ impl RoleOrchestrator {
                     }
                 }
                 "contract"
-                    if self.is_rule_enabled("AES402")
-                        && !self.is_exception("AES402", filename) =>
+                    if self.is_rule_enabled("AES402") && !self.is_exception("AES402", filename) =>
                 {
                     if filename.contains("_protocol") {
                         violations.extend(self.deps.contract.check_protocol(file));
@@ -140,8 +137,7 @@ impl RoleOrchestrator {
                     }
                 }
                 "capabilities" | "capability"
-                    if self.is_rule_enabled("AES403")
-                        && !self.is_exception("AES403", filename) =>
+                    if self.is_rule_enabled("AES403") && !self.is_exception("AES403", filename) =>
                 {
                     self.deps.capabilities.check_capability_routing(
                         file,
@@ -150,14 +146,12 @@ impl RoleOrchestrator {
                     );
                 }
                 "utility"
-                    if self.is_rule_enabled("AES404")
-                        && !self.is_exception("AES404", filename) =>
+                    if self.is_rule_enabled("AES404") && !self.is_exception("AES404", filename) =>
                 {
                     self.deps.utility.check_utility_convention(file, violations);
                 }
                 "taxonomy"
-                    if self.is_rule_enabled("AES401")
-                        && !self.is_exception("AES401", filename) =>
+                    if self.is_rule_enabled("AES401") && !self.is_exception("AES401", filename) =>
                 {
                     self.deps.taxonomy.check_entity(file, violations);
                     self.deps.taxonomy.check_error(file, violations);

@@ -101,10 +101,11 @@ impl AgentRoleChecker {
             }
             ParseMetadata::Python(py_meta) => {
                 let type_count = py_meta.class_declarations.len();
-                let implementor_found = py_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| c.bases.iter().any(|b| b.contains("aggregate") || b.contains("Aggregate")));
+                let implementor_found = py_meta.class_declarations.iter().any(|c| {
+                    c.bases
+                        .iter()
+                        .any(|b| b.contains("aggregate") || b.contains("Aggregate"))
+                });
 
                 if type_count > 3 {
                     let names: Vec<String> = py_meta
@@ -137,10 +138,11 @@ impl AgentRoleChecker {
                 let type_count = ts_meta.class_declarations.len()
                     + ts_meta.interface_declarations.len()
                     + ts_meta.type_alias_declarations.len();
-                let implementor_found = ts_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| c.implements.iter().any(|i| i.contains("aggregate") || i.contains("Aggregate")));
+                let implementor_found = ts_meta.class_declarations.iter().any(|c| {
+                    c.implements
+                        .iter()
+                        .any(|i| i.contains("aggregate") || i.contains("Aggregate"))
+                });
 
                 if type_count > 3 {
                     let mut all_names: Vec<String> = ts_meta
@@ -268,7 +270,9 @@ impl AgentRoleChecker {
                             let after_paren = &t[start + 1..];
                             if let Some(end) = after_paren.find(')') {
                                 let parents = after_paren[..end].trim();
-                                if (parents.contains("aggregate") || parents.contains("Aggregate")) && !parents.is_empty() {
+                                if (parents.contains("aggregate") || parents.contains("Aggregate"))
+                                    && !parents.is_empty()
+                                {
                                     implementor_found = true;
                                 }
                             }
@@ -373,7 +377,11 @@ impl AgentRoleChecker {
             if t.starts_with("//") || t.starts_with('#') || t.starts_with("/*") {
                 continue;
             }
-            if t.contains(": Any") || t.contains("Any<") || t.contains("Any[") || t.contains("-> Any") {
+            if t.contains(": Any")
+                || t.contains("Any<")
+                || t.contains("Any[")
+                || t.contains("-> Any")
+            {
                 violations.push(LintResult::new_arch(
                     &path_str,
                     i + 1,
