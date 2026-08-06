@@ -141,14 +141,44 @@ class Engine:
             return
 
         results = self.config.results_dir
+        # Dead-process detection: if a node is "running" but its PID is dead and
+        # no report exists, re-dispatch the agent
+        for node in ("business-analyst", "tech-lead"):
+            node_status = self.state.node_status(node)
+            if node_status != "running":
+                continue
+            pid_file = results / f"{feature}-{node}.pid"
+            report_file = results / f"{feature}-{node}.result"
+            detail_file = results / f"{node}-{feature}.md"
+            has_report = (report_file.exists() and report_file.stat().st_size > 0) or detail_file.exists()
+            pid_alive = False
+            if pid_file.exists():
+                try:
+                    pid = int(pid_file.read_text().strip())
+                    os.kill(pid, 0)
+                    pid_alive = True
+                except (ValueError, ProcessLookupError, PermissionError, OSError):
+                    pass
+            if not has_report and not pid_alive:
+                self.log.write("engine", "state",
+                               f"Node {node} is running but agent is dead and no report — re-dispatching")
+                feature_path = self.features.path(feature)
+                frd_path = f"{feature_path}/FRD.md"
+                self.parallel.spawn(node, feature, feature_path, frd_path)
+
         ba_report = next(iter(sorted(results.glob(f"{feature}-business-analyst.result"))), None)
         tl_report = next(iter(sorted(results.glob(f"{feature}-tech-lead.result"))), None)
-        if ba_report and ba == "running":
-            self.log.write("engine", "state", f"Business-Analyst report found: {ba_report}")
-            self.state.complete_node("business-analyst", str(ba_report))
-        if tl_report and tl == "running":
-            self.log.write("engine", "state", f"Tech-Lead report found: {tl_report}")
-            self.state.complete_node("tech-lead", str(tl_report))
+        # Also check for detailed report files as fallback (agents may write .md instead of .result)
+        ba_detail = next(iter(sorted(results.glob(f"business-analyst-{feature}.md"))), None)
+        tl_detail = next(iter(sorted(results.glob(f"tech-lead-{feature}.md"))), None)
+        if ba == "running" and ((ba_report and ba_report.stat().st_size > 0) or ba_detail):
+            ref = str(ba_report) if ba_report and ba_report.stat().st_size > 0 else str(ba_detail)
+            self.log.write("engine", "state", f"Business-Analyst report found: {ref}")
+            self.state.complete_node("business-analyst", ref)
+        if tl == "running" and ((tl_report and tl_report.stat().st_size > 0) or tl_detail):
+            ref = str(tl_report) if tl_report and tl_report.stat().st_size > 0 else str(tl_detail)
+            self.log.write("engine", "state", f"Tech-Lead report found: {ref}")
+            self.state.complete_node("tech-lead", ref)
 
     def handle_architect(self) -> None:
         feature = self.state.feature
@@ -415,12 +445,17 @@ class Engine:
                     os.kill(pid, 0)
                 except (ValueError, ProcessLookupError, PermissionError, OSError):
                     pid_file.unlink(missing_ok=True)
-        for pattern in ("business-analyst-*.md", "tech-lead-*.md", "architect-*.md"):
-            for f in results.glob(pattern):
-                f.unlink(missing_ok=True)
         data = self.features.load()
         for name, feat in data.get("features", {}).items():
-            if feat.get("status") == "DONE":
+            status = feat.get("status", "PENDING")
+            # Only remove report files for features past the stage that needs them
+            if status in ("DONE", "FAILED", "MERGED"):
+                for f in results.glob(f"business-analyst-{name}.md"):
+                    f.unlink(missing_ok=True)
+                for f in results.glob(f"tech-lead-{name}.md"):
+                    f.unlink(missing_ok=True)
+                for f in results.glob(f"architect-{name}.md"):
+                    f.unlink(missing_ok=True)
                 for pattern in (f"{name}-*.result", f"*-{name}.result"):
                     for f in results.glob(pattern):
                         f.unlink(missing_ok=True)

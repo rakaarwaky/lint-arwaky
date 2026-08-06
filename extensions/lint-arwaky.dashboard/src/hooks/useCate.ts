@@ -2,37 +2,51 @@ import { useState, useEffect, useCallback } from 'react';
 import type { ScanResults } from '../types';
 
 const STORAGE_KEY = 'scan-results';
+const THEME_KEY = 'theme';
+
+type Theme = 'dark' | 'light';
 
 export function useCate() {
   const [isReady, setIsReady] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    return (localStorage.getItem(THEME_KEY) as Theme) || 'dark';
+  });
   const [workspace, setWorkspace] = useState<{ branch: string | null } | null>(null);
+
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t);
+    localStorage.setItem(THEME_KEY, t);
+    window.cate?.storage.set(THEME_KEY, t).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const cate = window.cate;
-    if (!cate) {
-      setIsReady(true);
-      return;
+
+    if (cate) {
+      // Cate extension mode — read theme and workspace from extension
+      Promise.all([
+        cate.theme.get().then((t) => setThemeState(t.type)).catch(() => {}),
+        cate.workspace.get().then(setWorkspace).catch(() => {}),
+      ]).then(() => setIsReady(true));
+
+      const unsubscribe = cate.storage.onChange?.((key) => {
+        if (key === 'theme') {
+          cate.theme.get().then((t) => setThemeState(t.type)).catch(() => {});
+        }
+      });
+
+      return () => { unsubscribe?.(); };
     }
 
-    Promise.all([
-      cate.theme.get().then(setTheme).catch(() => {}),
-      cate.workspace.get().then(setWorkspace).catch(() => {}),
-    ]).then(() => setIsReady(true));
-
-    // Listen for theme changes
-    const unsubscribe = cate.storage.onChange?.((key) => {
-      if (key === 'theme') {
-        cate.theme.get().then(setTheme).catch(() => {});
-      }
-    });
-
-    return () => {
-      unsubscribe?.();
-    };
+    // Standalone mode — fetch workspace from server
+    fetch('/api/workspace')
+      .then((r) => r.json())
+      .then(setWorkspace)
+      .catch(() => {})
+      .finally(() => setIsReady(true));
   }, []);
 
-  return { isReady, theme, workspace };
+  return { isReady, theme, setTheme, workspace };
 }
 
 export function useScanResults() {

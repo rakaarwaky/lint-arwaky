@@ -21,7 +21,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export default function App() {
-  const { theme, workspace } = useCate();
+  const { theme, setTheme, workspace } = useCate();
   const { results, saveResults } = useScanResults();
   const [isScanning, setIsScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
@@ -44,17 +44,14 @@ export default function App() {
 
       if (data.error) {
         setScanError(data.message || data.error);
-        await window.cate?.ui.notify(data.message || data.error, 'error');
         return;
       }
 
       data.timestamp = new Date().toISOString();
       await saveResults(data);
-      await window.cate?.ui.notify(`Scan complete: ${data.summary.total} violations`, 'info');
     } catch (error: any) {
       console.error('Scan failed:', error);
       setScanError(error.message);
-      await window.cate?.ui.notify(`Scan failed: ${error.message}`, 'error');
     } finally {
       setIsScanning(false);
     }
@@ -62,14 +59,15 @@ export default function App() {
 
   const handleImport = useCallback(async (data: ScanResults) => {
     await saveResults(data);
-    await window.cate?.ui.notify('Scan results imported successfully', 'info');
   }, [saveResults]);
 
   return (
     <div className="app" data-theme={theme}>
-      <Header 
+      <Header
         branch={workspace?.branch ?? null}
         lastScan={results ? formatTime(results.timestamp) : null}
+        theme={theme}
+        onToggleTheme={() => setTheme(isDark ? 'light' : 'dark')}
       />
       
       <main className="main">

@@ -301,3 +301,134 @@ Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All t
 [2026-08-07T06:06:27+07:00] [engine:state] Dispatching Architect to merge reports
 [2026-08-07T06:06:27+07:00] [engine:state] Running Architect agent...
 Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T06:26:45+07:00] [engine:state] Quality-Analysis APPROVED — pipeline complete
+[2026-08-07T06:26:45+07:00] [state:qa_approved] Quality-Analysis approved — pipeline complete
+[2026-08-07T06:26:45+07:00] [feature:lock_released] Lock released for feature auto-fix
+[2026-08-07T06:26:45+07:00] [feature:completed] Feature auto-fix completed (pipeline pipeline-20260807-180)
+[2026-08-07T06:26:45+07:00] [engine:engine] Engine stopping (PID: 3111796)
+[2026-08-07T06:27:01+07:00] [engine:engine] Graph Loop Engine started (PID: 3178816)
+[2026-08-07T06:27:01+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:27:01+07:00] [engine:recovery] State=MERGED, elapsed=22m
+[2026-08-07T06:27:01+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from MERGED
+[2026-08-07T06:27:01+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:27:01+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:27:01+07:00] [engine:state] State: MERGED — pipeline complete for: auto-fix
+[2026-08-07T06:27:01+07:00] [feature:completed] Feature auto-fix completed (pipeline pipeline-20260807-180)
+[2026-08-07T06:27:01+07:00] [engine:engine] Engine stopping (PID: 3178816)
+[2026-08-07T06:27:31+07:00] [engine:engine] Graph Loop Engine started (PID: 3179368)
+[2026-08-07T06:27:31+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:27:31+07:00] [engine:recovery] State=MERGED, elapsed=22m
+[2026-08-07T06:27:31+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from MERGED
+[2026-08-07T06:27:31+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:27:31+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:27:31+07:00] [engine:state] State: MERGED — pipeline complete for: auto-fix
+[2026-08-07T06:27:31+07:00] [feature:completed] Feature auto-fix completed (pipeline pipeline-20260807-180)
+[2026-08-07T06:27:31+07:00] [engine:engine] Engine stopping (PID: 3179368)
+[2026-08-07T06:27:43+07:00] [engine:engine] Graph Loop Engine started (PID: 3179430)
+[2026-08-07T06:27:43+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:27:43+07:00] [engine:recovery] State=MERGED, elapsed=22m
+[2026-08-07T06:27:43+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from MERGED
+[2026-08-07T06:27:43+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:27:43+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:27:43+07:00] [engine:state] State: MERGED — pipeline complete for: auto-fix
+[2026-08-07T06:27:43+07:00] [feature:completed] Feature auto-fix completed (pipeline pipeline-20260807-180)
+[2026-08-07T06:27:43+07:00] [engine:engine] Engine stopping (PID: 3179430)
+[2026-08-07T06:28:14+07:00] [engine:engine] Graph Loop Engine started (PID: 3179635)
+[2026-08-07T06:28:14+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:28:14+07:00] [engine:recovery] State=MERGED, elapsed=23m
+[2026-08-07T06:28:14+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from MERGED
+[2026-08-07T06:28:14+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:28:14+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:28:14+07:00] [engine:state] State: MERGED — pipeline complete for: auto-fix
+[2026-08-07T06:28:14+07:00] [feature:completed] Feature auto-fix completed (pipeline pipeline-20260807-180)
+[2026-08-07T06:28:14+07:00] [engine:engine] Engine stopping (PID: 3179635)
+[2026-08-07T06:28:44+07:00] [engine:engine] Graph Loop Engine started (PID: 3179841)
+[2026-08-07T06:28:44+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:28:44+07:00] [engine:recovery] State=MERGED, elapsed=23m
+[2026-08-07T06:28:44+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from MERGED
+[2026-08-07T06:28:44+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:28:44+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:28:44+07:00] [engine:state] State: MERGED — pipeline complete for: auto-fix
+[2026-08-07T06:28:44+07:00] [feature:completed] Feature auto-fix completed (pipeline pipeline-20260807-180)
+[2026-08-07T06:28:44+07:00] [pipeline_completed:pipeline_completed] Pipeline pipeline-20260807-180 completed for feature: auto-fix
+[2026-08-07T06:28:44+07:00] [engine:cleanup] Cleaning up results for feature: auto-fix
+[2026-08-07T06:28:44+07:00] [engine:cleanup] Results cleaned for feature: auto-fix
+[2026-08-07T06:28:44+07:00] [state:reset] Pipeline reset to IDLE
+[2026-08-07T06:28:55+07:00] [engine:engine] Engine stopping (PID: 3179841)
+[2026-08-07T06:28:55+07:00] [engine:engine] Graph Loop Engine started (PID: 3179908)
+[2026-08-07T06:28:55+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:28:55+07:00] [engine:recovery] State is IDLE — no recovery needed
+[2026-08-07T06:28:55+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:28:55+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:28:55+07:00] [engine:state] State: IDLE — scanning for triggers...
+[2026-08-07T06:28:55+07:00] [scanner:scan] Scanning GitHub for PRs with 'need review' label...
+[2026-08-07T06:28:56+07:00] [scanner:scan] No PRs found with 'need review' label
+[2026-08-07T06:28:56+07:00] [feature:locked] Feature shared is locked by graph-engine since 2026-08-07T03:56:32+07:00
+[2026-08-07T06:28:56+07:00] [feature:locked] Feature filesystem is locked by graph-engine since 2026-08-07T03:57:39+07:00
+[2026-08-07T06:28:56+07:00] [engine:state] Found pending feature: cli-commands
+[2026-08-07T06:28:56+07:00] [state:start] Pipeline started for feature: cli-commands (ID: pipeline-20260807-195, correlation: corr-20260807-cli-commands-414)
+[2026-08-07T06:28:56+07:00] [feature:claimed] Feature cli-commands claimed for pipeline pipeline-20260807-195
+[2026-08-07T06:29:26+07:00] [engine:state] State: DISPATCHING — dispatching agents for: cli-commands
+[2026-08-07T06:29:26+07:00] [parallel:start] Starting parallel analysis for: cli-commands
+[2026-08-07T06:29:26+07:00] [parallel:spawn] Agent business-analyst spawned (PID: 3180088) for feature: cli-commands
+[2026-08-07T06:29:26+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/cli-commands-business-analyst.prompt
+[2026-08-07T06:29:26+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/cli-commands-business-analyst.result
+[2026-08-07T06:29:26+07:00] [parallel:spawn] Agent tech-lead spawned (PID: 3180090) for feature: cli-commands
+[2026-08-07T06:29:26+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/cli-commands-tech-lead.prompt
+[2026-08-07T06:29:26+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/cli-commands-tech-lead.result
+[2026-08-07T06:29:26+07:00] [state:analyzing] Parallel analysis started
+[2026-08-07T06:29:26+07:00] [parallel:start] Both Business-Analyst and Tech-Lead spawned
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T06:29:56+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:30:26+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:30:56+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:30:56+07:00] [engine:state] Business-Analyst report found: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/cli-commands-business-analyst.result
+[2026-08-07T06:30:56+07:00] [state:node_complete] Node business-analyst completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/cli-commands-business-analyst.result
+[2026-08-07T06:31:26+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:31:56+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+Operation cancelled.
+[2026-08-07T06:32:05+07:00] [engine:engine] Engine stopping (PID: 3179908)
+[2026-08-07T06:32:05+07:00] [engine:engine] Graph Loop Engine started (PID: 3181748)
+[2026-08-07T06:32:05+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:32:05+07:00] [engine:recovery] State=ANALYZING, elapsed=3m
+[2026-08-07T06:32:05+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from ANALYZING
+[2026-08-07T06:32:05+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:32:05+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:32:05+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:32:35+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:33:05+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:33:35+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:34:05+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:34:35+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:35:05+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:35:29+07:00] [engine:engine] Engine stopping (PID: 3181748)
+[2026-08-07T06:35:29+07:00] [engine:engine] Graph Loop Engine started (PID: 3183126)
+[2026-08-07T06:35:29+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:35:29+07:00] [engine:recovery] State=ANALYZING, elapsed=6m
+[2026-08-07T06:35:29+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from ANALYZING
+[2026-08-07T06:35:29+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:35:29+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:35:29+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:35:29+07:00] [engine:state] Node tech-lead is running but agent is dead and no report — re-dispatching
+[2026-08-07T06:35:29+07:00] [parallel:spawn] Agent tech-lead spawned (PID: 3183129) for feature: cli-commands
+[2026-08-07T06:35:29+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/cli-commands-tech-lead.prompt
+[2026-08-07T06:35:29+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/cli-commands-tech-lead.result
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T06:35:59+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:36:29+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:36:59+07:00] [engine:state] State: ANALYZING — feature: cli-commands
+[2026-08-07T06:36:59+07:00] [engine:state] Tech-Lead report found: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/tech-lead-cli-commands.md
+[2026-08-07T06:36:59+07:00] [state:node_complete] Node tech-lead completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/tech-lead-cli-commands.md
+[2026-08-07T06:36:59+07:00] [state:transition] State changed to: ARCHITECT
+[2026-08-07T06:36:59+07:00] [state:parallel_complete] Both Business-Analyst and Tech-Lead completed — transitioning to ARCHITECT
+[2026-08-07T06:37:29+07:00] [engine:state] State: ARCHITECT — merging reports for: cli-commands
+[2026-08-07T06:37:29+07:00] [engine:state] Dispatching Architect to merge reports
+[2026-08-07T06:37:29+07:00] [engine:state] Running Architect agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T06:39:59+07:00] [engine:state] Architect completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-cli-commands-corr-20260807-cli-commands-414.md
+[2026-08-07T06:39:59+07:00] [state:merge_complete] Architect merge complete: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-cli-commands-corr-20260807-cli-commands-414.md
+[2026-08-07T06:40:29+07:00] [engine:state] State: DEVELOPER — implementing: cli-commands
+[2026-08-07T06:40:29+07:00] [engine:state] Dispatching Developer
+[2026-08-07T06:40:29+07:00] [engine:state] Running Developer agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.

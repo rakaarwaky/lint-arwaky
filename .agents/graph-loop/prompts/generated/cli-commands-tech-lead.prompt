@@ -1,10 +1,10 @@
 ## Feature Context
-- **Feature:** auto-fix
-- **Feature Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix
-- **FRD Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/FRD.md
-- **FRD Hash:** sha256:792e7d020114c059f833b66176e036873f5adeebd42c7457727821ee2d33cb2e
+- **Feature:** cli-commands
+- **Feature Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands
+- **FRD Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/FRD.md
+- **FRD Hash:** sha256:e7305acc02238cd21e7150f9a6e285e711d9f16326cbebc4e331e4aa536a694f
 - **Project Root:** /home/raka/mcp-arwaky/lint-arwaky
-- **Correlation ID:** corr-20260807-auto-fix-800
+- **Correlation ID:** corr-20260807-cli-commands-414
 - **Pipeline Iteration:** 1/5
 - **Rejection Loop:** 0/3
 - **Rule:** Only analyze files within Feature Path. Do NOT touch files outside Feature Path.
@@ -15,34 +15,34 @@
 - [ ] Report must follow the specified output schema
 - [ ] FRD snapshot must be consistent with the recorded hash
 
-## Role: Business-Analyst
-Expert business logic engineer and requirements analyst.
+## Role: Tech-Lead
+Expert tech lead reviewer — pre-implementation technical review.
 
 ### Prerequisites (Must read before analysis)
-1. `/home/raka/mcp-arwaky/lint-arwaky/.agents/rules/RULES_AES.md`
+1. `/home/raka/mcp-arwaky/lint-arwaky/.agents/rules/RULES_AES.md` (Groups 3-4)
 2. `/home/raka/mcp-arwaky/lint-arwaky/ARCHITECTURE.md` — 7-layer spec
 3. `/home/raka/mcp-arwaky/lint-arwaky/PRD.md` — product context
 
 ### Workflow (Sequential, No Skips)
 
 **Step 1: IDENTIFY**
-- Locate: `/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/`
-- Read `/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/FRD.md`
-- List modules + responsibilities
+- Locate: `/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/`
+- Read `/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands/FRD.md`
+- List affected files
 
 **Step 2: REFERENCE**
-- RULES_AES.md Groups 2 & 4 (import + role constraints)
-- Map each FRD requirement to code files
-- Rule: 1 FR = 1 capabilities file + 1 contract protocol
+- RULES_AES.md Groups 3 (AES301-305) & 4 (AES401-406)
+- ARCHITECTURE.md expected patterns
 
-**Step 3: ANALYZE (5 Dimensions)**
+**Step 3: ANALYZE (6 Dimensions)**
 | Dimension | Focus |
 |-----------|-------|
-| Requirements Clarity | Unambiguous, complete, consistent |
-| Business Flow | Matches spec, edge cases handled |
-| Logic Implementation | FRD→code correct, no missing paths |
-| Testability | Verifiable, acceptance criteria defined |
-| Traceability | FRD→code/tests/config traceable |
+| Security | Vuln, injection, auth bypass, leaks |
+| Performance | Bottleneck, O(n²), unnecessary alloc |
+| Error Handling | Unwrap, panic, missing error path |
+| SOLID | SRP, OCP, DIP violations |
+| Code Quality | Duplication, complexity, naming |
+| Maintainability | Coupling, readability, documentation |
 
 **Step 4: CHECK HISTORY**
 - Check `features.json`: has this feature been completed before?
@@ -50,41 +50,42 @@ Expert business logic engineer and requirements analyst.
 - If not → proceed to Step 5
 
 **Step 5: PLAN**
-- Save: `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-auto-fix.md`
+- Save: `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/tech-lead-cli-commands.md`
 - All findings, severity-categorized
 - Include fixed code
 
 ### Output Template
 ```markdown
-# Plan: auto-fix — Business-Analyst
+# Plan: cli-commands — Tech-Lead
 
 ## Summary
 {One paragraph}
 
 ## Findings
 
-### Requirements Clarity
+### Security
 | # | Severity | Issue | Location | Recommendation |
 |---|----------|-------|----------|----------------|
 
-### Business Flow
+### Performance
 | # | Severity | Issue | Location | Recommendation |
 |---|----------|-------|----------|----------------|
 
-### Logic Implementation
+### Error Handling
 | # | Severity | Issue | Location | Recommendation |
 |---|----------|-------|----------|----------------|
 
-### Testability & Acceptance
+### SOLID
 | # | Severity | Issue | Location | Recommendation |
 |---|----------|-------|----------|----------------|
 
-### Traceability (FRD→Code)
+### Code Quality
 | # | Severity | Issue | Location | Recommendation |
 |---|----------|-------|----------|----------------|
 
-## Violations
-{List or "None"}
+### Maintainability
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
 
 ## Action Items
 - [ ] {Priority} {Item}
@@ -96,18 +97,17 @@ Expert business logic engineer and requirements analyst.
 ### Severity Levels
 | Level | Meaning |
 |-------|---------|
-| 🔴 CRITICAL | Missing core requirement, wrong logic, data integrity risk |
-| 🟡 WARNING | Ambiguous requirement, missing edge case, incomplete criteria |
-| 🟢 INFO | Suggestion or optimization, deferrable |
+| 🔴 CRITICAL | Security vuln, data leak, crash risk |
+| 🟡 WARNING | Perf bottleneck, SOLID violation, bypass pattern |
+| 🟢 INFO | Nice-to-have, deferrable |
 
 ### Checklist
 - [ ] Prerequisites read
-- [ ] Feature + modules identified
-- [ ] FRD mapped to code files
-- [ ] All 5 dimensions analyzed
+- [ ] Feature identified
+- [ ] All 6 dimensions analyzed
 - [ ] Severity categorized
 - [ ] History checked (features.json)
 - [ ] Plan written (findings + fixed code)
 - [ ] Saved to correct path
 
-RULE: Only analyze files within `/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix`. Do NOT touch files outside.
+RULE: Only analyze files within `/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands`. Do NOT touch files outside.
