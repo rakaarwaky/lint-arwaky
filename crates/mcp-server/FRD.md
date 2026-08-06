@@ -1,4 +1,4 @@
- FRD — mcp-server (v1.11.0)
+FRD — mcp-server
 
 ---
 
@@ -72,11 +72,13 @@ flowchart TD
 
   - Supported actions MUST match CLI capability:
     `check`, `scan`, `fix`, `ci`, `doctor`, `version`, `adapters`,
-    `install-hook`, `uninstall-hook`, `init`, `install`, `mcp-config`,
-    `config-show`, `orphan`, `security`, `dependencies`,
-    `quality`, `import`, `naming`, `role`, `external`.
+    `install-hook`, `uninstall-hook`, `init`, `install`, `config-show`,
+    `orphan`, `security`, `dependencies`,
+    `quality`, `import`, `naming`, `role`, `external`, `watch`.
   - `watch` returns explicit `unsupported` with `exit_code: 2` until
     long-lived MCP watch design exists.
+  - `adapters` delegates to `health_check` handler for adapter availability.
+  - `version` returns current lint-arwaky version info.
   - Each action **delegates to the same aggregates** used by the CLI
     (analysis, auto-fix, maintenance, git-hooks, project-setup, etc.).
   - **Forbidden**: placeholder success, empty success without side effects,
@@ -96,10 +98,13 @@ flowchart TD
     2 runtime error, **3** tool missing.
   - `install-hook` / `uninstall-hook`: perform real hook install/uninstall
     via git-hooks aggregate.
-  - `init` / `install` / `mcp-config` / `config-show`: perform real
-    setup/config operations via project-setup / config aggregates.
+  - `init` / `install`: perform real setup operations via project-setup
+    aggregate.
+  - `config-show`: return effective configuration via config orchestrator.
   - `orphan` / `dependencies` / individual linter actions: run real analysis
     or reports.
+  - `mcp-config`: returns error indicating transport configuration required;
+    full setup must be done via CLI.
   - Unknown action: `{"error": "Unknown action: <action>", "exit_code": 2}`.
 - **Edge Cases**:
 
@@ -161,20 +166,8 @@ flowchart TD
   completes.
 - **Business Rules**:
 
-  - All 9 adapters checked:
-
-
-    | Adapter     | Language |
-    | ------------- | ---------- |
-    | clippy      | Rust     |
-    | rustfmt     | Rust     |
-    | cargo-audit | Rust     |
-    | ruff        | Python   |
-    | mypy        | Python   |
-    | bandit      | Python   |
-    | eslint      | JS/TS    |
-    | prettier    | JS/TS    |
-    | tsc         | JS/TS    |
+  - All supported adapters checked (Rust, Python, JS/TS, and VCS tools
+    discovered by the maintenance aggregate).
   - Status is `available` or `not_installed`.
   - Completing the check always yields `exit_code: 0` (missing adapters are
     data, not process failure).
@@ -238,7 +231,7 @@ flowchart TD
 | Execute command | action + args          | JSON + exit_code                 | CLI-parity action execution  |
 | List commands   | optional domain        | JSON command catalog             | Discover actions             |
 | Read skill      | optional section       | JSON content/error               | Documentation access         |
-| Health check    | none                   | JSON adapter status (9 adapters) | Environment health           |
+| Health check    | none                   | JSON adapter status              | Environment health           |
 | Get config      | optional path/language | JSON effective config            | Agent-readable configuration |
 | Server info     | none                   | Server metadata                  | MCP handshake                |
 
@@ -250,7 +243,7 @@ flowchart TD
 
   - CLI command aggregates / analysis pipeline (same aggregates as CLI).
   - `auto-fix`, `maintenance`, `git-hooks`, `project-setup`, `config-system`,
-    `external-lint` — operation aggregates.
+    `external-lint` — operation aggregates via dispatcher.
   - `shared` — taxonomy VOs and contracts.
   - All linter aggregates receive data from the `filesystem` crate via
     `IFilesystemAggregate` trait (same data flow as CLI).
@@ -272,8 +265,7 @@ flowchart TD
 - **Concurrency**: MCP server runs on the Tokio async runtime (rmcp). Tool
   handlers are `async fn`; concurrent requests are handled by the runtime.
   File mutations (`fix`)
-  are serialized per path to prevent race conditions. No async runtime
-  dependency.
+  are serialized per path to prevent race conditions.
 - **Security**: Unknown actions never invoke arbitrary shell; only
   allowlisted actions. Config secrets redacted in `get_config` response.
 
@@ -294,6 +286,8 @@ flowchart TD
 | 6 | `watch` action                                | Explicit`unsupported` + exit_code 2 | FR-001 |
 | 7 | Files with parse failures             | Silently skipped, not counted as violations | FR-001 |
 | 8 | Missing path argument                         | Defaults to "."                     | FR-001 |
+| 9 | `version` action                              | Version info + exit_code 0          | FR-001 |
+| 10 | `adapters` action                             | Delegates to health check           | FR-001 |
 
 ### FR-002 — List Commands
 
@@ -319,9 +313,9 @@ flowchart TD
 
 | # | Scenario                 | Expected                                | Rule   |
 | --- | -------------------------- | ----------------------------------------- | -------- |
-| 1 | All 9 adapters installed | adapters_available 9, exit_code 0       | FR-004 |
-| 2 | Some adapters missing    | Correct status per adapter, exit_code 0 | FR-004 |
-| 3 | All adapters missing     | adapters_available 0, exit_code 0       | FR-004 |
+| 1 | All adapters installed    | All adapters available, exit_code 0     | FR-004 |
+| 2 | Some adapters missing     | Correct status per adapter, exit_code 0 | FR-004 |
+| 3 | All adapters missing      | adapters_available 0, exit_code 0       | FR-004 |
 
 ### FR-005 — Get Config
 
@@ -351,7 +345,7 @@ flowchart TD
 - MCP server uses stdio transport on the Tokio async runtime (rmcp).
 - Files that fail to parse are skipped by the underlying analyzers; no
   separate parse-warning diagnostic is emitted.
-- All 9 external lint adapters are checked in health_check.
+- All supported external lint adapters are checked in health_check.
 
 ---
 
@@ -364,7 +358,6 @@ flowchart TD
 | **MCP**                | Model Context Protocol — JSON-RPC standard for AI agent tools                                |
 | **Parity**             | Same business outcome for an action via CLI or MCP                                            |
 | **Exit Code Contract** | 0 ok, 1 policy fail, 2 runtime error, 3 prerequisite missing                                  |
-| **get_config**         | Fifth MCP tool for effective configuration inspection                                         |
 | **Parse skip**         | Files that fail to parse are skipped by the underlying analyzers; no separate warning diagnostic is emitted. |
 | **stdio**              | Standard input/output transport for MCP JSON-RPC communication                                |
 

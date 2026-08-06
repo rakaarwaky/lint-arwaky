@@ -1,0 +1,20 @@
+Analysis confirmed — the FR-005 caller check gap is real. The contract analyzer only validates trait **implementation** but never checks if the trait is **called/referenced** by any higher-layer file, which FR-005 explicitly requires ("Implementation without callers → orphan").
+
+**BA analysis saved to:** `.agents/graph-loop/results/business-analyst-orphan-rules.md`
+
+### Key Findings Summary
+
+**2 Critical:**
+- **RC-1 / LI-1**: `eprintln!` debug output in `utility_orphan_graph.rs` — violates project-wide tracing migration convention
+- **RC-1**: FR-005 contract orphan check missing **caller detection** — only validates trait implementation, never checks if the trait is referenced by higher-layer files
+
+**4 Warning:**
+- TA-1: Missing `acceptance_AES504.rs` (utility orphan)
+- TA-2: Missing `acceptance_AES506.rs` (surface orphan)
+- BF-1: Contract analyzer `cached_search_files()` does its own file discovery, contradicting FR-001 "zero I/O" contract
+- LI-2: Agent analyzer fuzzy path matching (`ends_with`) could cause false negatives
+
+**3 Info:**
+- LI-3: Orchestrator parameter list growing (7 params per method)
+- TR-1: FRD API Contract table missing `inheritance_map` input for contract orphan check
+- TA-3: E2E test only covers entry point detection, not full orphan scan pipeline

@@ -1,10 +1,10 @@
-# FRD — config-system (v1.11.0)
+# FRD — config-system
 
 ---
 
 ## System Overview
 
-The config-system crate manages lint-arwaky configuration: loading, parsing, validation, and workspace detection. It reads config files from multiple priority sources, merges them with embedded defaults, and provides a unified configuration facade for all other lint crates via the config orchestrator aggregate.
+The config-system crate manages lint-arwaky configuration: loading, parsing, validation, and workspace detection. It reads config files from multiple priority sources, merges them with embedded defaults via rule-based layer merging (including scoped sub-layer creation), and provides a unified configuration facade for all other lint crates via the config orchestrator aggregate.
 
 The config-system crate is an **infrastructure crate** — it manages configuration loading, parsing, validation, and workspace detection. At compile time, it depends only on `shared` and `filesystem` (for config file I/O via `IFileSystemIOProtocol`). Other crates receive config at runtime via DI (aggregate trait injection through `shared` re-exports).
 
@@ -24,7 +24,7 @@ flowchart TD
         G --> I["ConfigSource"]
         H --> I
         I --> C
-        C -->|"merge with\nembedded defaults"| J["ArchitectureConfig"]
+        C -->|"rule-based merge\nwith scoped sub-layers"| J["ArchitectureConfig"]
         J --> D
         D --> K["ValidationResult"]
     end
@@ -45,8 +45,8 @@ Priority 1: Project root
   lint_arwaky.config.yaml at project root
       │ (not found)
       ▼
-Priority 2: Parent directories (up to depth 3)
-  Walk up 3 levels looking for config file
+Priority 2: Parent directories (up to depth 5)
+  Walk up 5 levels looking for config file
       │ (not found)
       ▼
 Priority 3: XDG user config
@@ -61,7 +61,7 @@ Priority 5: Embedded defaults
   Compiled into binary, always available
 
 First match wins — no merge across priority levels.
-Loaded config is merged with embedded defaults (FR-005).
+Loaded config is merged with embedded defaults via rule-based layer merging (FR-005).
 ```
 
 ---
@@ -75,7 +75,7 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Output**: The loaded config source with raw content, path, and language, or none if no config found.
 - **Business Rules**:
 
-  - Priority order: (1) project-root YAML, (2) parent directory YAML (up to depth 3), (3) XDG user config `~/.config/lint-arwaky/`, (4) XDG system dirs `/etc/xdg/lint-arwaky/` (limited to 8 dirs, absolute paths only), (5) embedded defaults.
+  - Priority order: (1) project-root YAML, (2) parent directory YAML (up to depth 5), (3) XDG user config `~/.config/lint-arwaky/`, (4) XDG system dirs `/etc/xdg/lint-arwaky/` (limited to 8 dirs, absolute paths only), (5) embedded defaults.
   - First match wins — deeper/more specific configs take priority over shallower ones.
   - No config file size limit — config files of any size are accepted.
   - Symlinks pointing outside the project root are rejected via canonical path resolution.
@@ -116,13 +116,12 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Output**: Workspace type (Rust, Python, TypeScript, Unknown).
 - **Business Rules**:
 
-  - Single-pass directory scan for marker files (single syscall instead of up to 10).
+  - Single-pass directory scan for marker files (single syscall).
   - Marker files:
     - Rust: `Cargo.toml`
-    - Python: `pyproject.toml`, `setup.py`, `requirements.txt`
+    - Python: `pyproject.toml`, `setup.py`, `requirements.txt`, `__init__.py`
     - TypeScript: `package.json`, `tsconfig.json`
-  - Parent directory name matching: `crates/` → Rust, `packages/` → TypeScript, `modules/` → Python.
-  - Walks up to 2 parent directories if no marker found at target path.
+  - Walks up to 10 parent directories if no marker found at target path, stopping at workspace directory names (`crates/`, `packages/`, `modules/`).
   - Multiple marker files present → first match in scan order wins.
 - **Edge Cases**:
 
@@ -154,13 +153,14 @@ Loaded config is merged with embedded defaults (FR-005).
 
 ### FR-005: Config Merging and Default Injection
 
-- **Description**: Merge loaded config with embedded defaults using field-level merge rules.
+- **Description**: Merge loaded config with embedded defaults using rule-based layer merging with scoped sub-layer creation.
 - **Input**: Parsed architecture config, language type.
-- **Output**: Merged config + source info + warnings.
+- **Output**: Merged layer definitions + rules indexed by scope.
 - **Business Rules**:
 
-  - **Layers** — concatenated; later definitions override earlier ones for the same layer name.
-  - **Rules** — concatenated; rules are deduplicated by name field.
+  - **Layer merging** — rules are merged INTO layer definitions by scope (base or specialized), not simple concatenation.
+  - **Scoped sub-layers** — rules with scoped names (e.g., `agent(container|registry)`) create specialized sub-layer entries derived from the parent layer definition, with inner names split by `|` or `,`.
+  - **Rule deduplication** — rules are deduplicated by value containment (checked via `contains()` before appending), not by name.
   - **Naming** — merged recursively; non-empty values override defaults.
   - **Ignored paths** — concatenated and deduplicated.
   - Empty arrays/objects in a child config do NOT override parent values.
@@ -169,7 +169,7 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Edge Cases**:
 
   - Config with empty `layers` array → defaults injected, warning emitted.
-  - Duplicate rule names across configs → first occurrence wins.
+  - Duplicate rule values across configs → deduplicated, not added twice.
   - Config error during load → falls back to embedded defaults with error warning.
 - **Error Handling**: ConfigError logged as warning string, defaults used as fallback.
 
@@ -202,7 +202,7 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Output**: Cached or freshly parsed configuration.
 - **Business Rules**:
 
-  - Cache is a `DashMap<String, ArchitectureConfig>` with pre-allocated capacity of 32.
+  - Cache is a `DashMap<String, Arc<ArchitectureConfig>>` with pre-allocated capacity of 32.
   - Parses only on cache miss.
   - Thread-safe via DashMap (no Mutex, no poisoned lock).
   - Concurrent requests for the same key: DashMap handles contention internally.
@@ -268,7 +268,7 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Business Rules**:
 
   - Iterates all three languages (Rust, Python, TypeScript).
-  - For each language, checks all config filenames at project root.
+  - For each language, checks config filenames at project root only (does not walk up parent directories).
   - Deduplicates by path (same file not listed twice).
   - Breaks after first config found per language.
 - **Edge Cases**:
@@ -282,23 +282,25 @@ Loaded config is merged with embedded defaults (FR-005).
 
 ## API Contract
 
-
-| Operation                         | Input                       | Output                                                 | Purpose                                              |
-| ---------------------------------- | ----------------------------- | -------------------------------------------------------- | ------------------------------------------------------ |
-| Load project config               | Project root path             | Merged config with source info and warnings              | Auto-detect language and load config                  |
-| Load config for language          | Project root path, language   | Merged config with source info and warnings              | Load config for specific language                     |
-| Discover workspaces               | Root path                     | Workspace info list                                      | Discover and load configs for all workspace members   |
-| Load config sync                  | Project root path             | Architecture configuration                               | Synchronous config load                               |
-| Ignored paths                     | Project root path             | Ignored path list                                        | Get merged ignored paths list                         |
-| Read config                       | Project root path, language   | Raw config source or error                               | Read raw config from filesystem                       |
-| List config files                 | Project root path             | Config file paths per language or error                  | List all config files at project root                 |
-| Detect workspace type             | Path                          | Workspace type                                           | Detect workspace type from marker files               |
-| Is workspace                      | Path                          | Boolean                                                  | Check if path is a workspace root                     |
-| Discover workspace members        | Root path                     | Workspace member paths                                   | Find workspace member directories                     |
-| Is adapter enabled                | Config, adapter name          | Boolean                                                  | Check if adapter is enabled in config                 |
-| Validate thresholds               | Config                        | Validation result                                        | Validate config thresholds                            |
-| Parse YAML config                 | File path                     | Configuration or error                                   | Parse YAML config file                                |
-| Parse TOML config                 | File path                     | Project config if found, or error                        | Parse TOML config section                             |
+| Operation | Input | Output | Purpose |
+| --- | --- | --- | --- |
+| Load project config | Project root path | Merged config with source info and warnings | Auto-detect language and load config |
+| Load config for language | Project root path, language | Merged config with source info and warnings | Load config for specific language |
+| Discover workspaces | Root path | Workspace info list | Discover and load configs for all workspace members |
+| Load config sync | Project root path | Architecture configuration | Synchronous config load |
+| Ignored paths | Project root path | Ignored path list | Get merged ignored paths list |
+| Ignored paths for language | Project root path, language | Ignored path list | Get merged ignored paths for a specific language |
+| Read config | Project root path, language | Raw config source or error | Read raw config from filesystem |
+| List config files | Project root path | Config file paths per language or error | List all config files at project root |
+| Detect workspace type | Path | Workspace type | Detect workspace type from marker files |
+| Is workspace | Path | Boolean | Check if path is a workspace root |
+| Discover workspace members | Root path | Workspace member paths | Find workspace member directories |
+| Is adapter enabled | Config, adapter name | Boolean | Check if adapter is enabled in config |
+| Validate thresholds | Config | Validation result | Validate config thresholds |
+| Parse YAML config | File path | Configuration or error | Parse YAML config file |
+| Parse TOML config | File path | Project config if found, or error | Parse TOML config section |
+| Get default config | — | Architecture configuration | Get embedded default configuration |
+| Parse score threshold | YAML string | Score value or None | Parse score threshold from raw YAML |
 
 ---
 
@@ -307,11 +309,12 @@ Loaded config is merged with embedded defaults (FR-005).
 - **Internal**:
 
   - `shared` crate — value objects, contract traits, and utility functions.
+  - `filesystem` crate — config file I/O via `IFilesystemAggregate` and `IFileSystemIOProtocol`.
   - Config system root container — wires orchestrator, reader, validator, and parser via dependency injection.
 - **External**:
 
   - XDG config directory resolution library.
-  - YAML 1.2 deserialization library (`serde_yaml`).
+  - YAML 1.2 deserialization library (`serde_yaml_ng`).
   - TOML parsing library (`toml`) for `[tool.lint-arwaky]` sections.
   - `dashmap` — concurrent HashMap for config cache.
 - **Consumers** (received via DI at runtime through `shared` re-exports, not direct compile-time dependency):
@@ -333,98 +336,91 @@ Loaded config is merged with embedded defaults (FR-005).
 
 ### FR-001 — Config Discovery and Loading
 
-
-| # | Scenario                                       | Expected                            | Rule   |
-| --- | ------------------------------------------------ | ------------------------------------- | -------- |
-| 1 | Config exists at project root                  | Loaded from project root            | FR-001 |
-| 2 | Config not at root, exists at parent (depth 1) | Loaded from parent                  | FR-001 |
-| 3 | Config not at root/parent, exists at XDG user  | Loaded from XDG user                | FR-001 |
-| 4 | Config only at XDG system dir                  | Loaded from XDG system              | FR-001 |
-| 5 | No config anywhere                             | Embedded defaults used              | FR-001 |
-| 6 | Symlink pointing outside project root          | Rejected                            | FR-001 |
-| 7 | YAML parse failure at priority 1               | Warning logged, priority 2 searched | FR-001 |
-| 8 | Permission denied at priority 1                | Warning logged, priority 2 searched | FR-001 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Config exists at project root | Loaded from project root | FR-001 |
+| 2 | Config not at root, exists at parent (depth 1) | Loaded from parent | FR-001 |
+| 3 | Config not at root/parent, exists at XDG user | Loaded from XDG user | FR-001 |
+| 4 | Config only at XDG system dir | Loaded from XDG system | FR-001 |
+| 5 | No config anywhere | Embedded defaults used | FR-001 |
+| 6 | Symlink pointing outside project root | Rejected | FR-001 |
+| 7 | YAML parse failure at priority 1 | Warning logged, priority 2 searched | FR-001 |
+| 8 | Permission denied at priority 1 | Warning logged, priority 2 searched | FR-001 |
 
 ### FR-002 — Language Resolution
 
-
-| # | Scenario                                 | Expected                       | Rule   |
-| --- | ------------------------------------------ | -------------------------------- | -------- |
-| 1 | Any language (Rust/Python/TypeScript)     | `lint_arwaky.config.yaml`     | FR-002 |
-| 2 | Unknown language                         | Empty list, embedded defaults  | FR-002 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Any language (Rust/Python/TypeScript) | `lint_arwaky.config.yaml` | FR-002 |
+| 2 | Unknown language | Empty list, embedded defaults | FR-002 |
 
 ### FR-003 — Workspace Detection
 
-
-| # | Scenario                         | Expected         | Rule   |
-| --- | ---------------------------------- | ------------------ | -------- |
-| 1 | Directory with Cargo.toml        | Rust             | FR-003 |
-| 2 | Directory with pyproject.toml    | Python           | FR-003 |
-| 3 | Directory with package.json      | TypeScript       | FR-003 |
-| 4 | Parent dir is`crates/`           | Rust             | FR-003 |
-| 5 | Parent dir is`packages/`         | TypeScript       | FR-003 |
-| 6 | Parent dir is`modules/`          | Python           | FR-003 |
-| 7 | No markers anywhere              | Unknown          | FR-003 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Directory with Cargo.toml | Rust | FR-003 |
+| 2 | Directory with pyproject.toml | Python | FR-003 |
+| 3 | Directory with package.json | TypeScript | FR-003 |
+| 4 | Parent dir is `crates/` | Rust | FR-003 |
+| 5 | Parent dir is `packages/` | TypeScript | FR-003 |
+| 6 | Parent dir is `modules/` | Python | FR-003 |
+| 7 | No markers anywhere | Unknown | FR-003 |
 | 8 | Both Cargo.toml and package.json | First match wins | FR-003 |
+| 9 | Directory with `__init__.py` only | Python | FR-003 |
 
 ### FR-004 — Workspace Members
 
-
-| # | Scenario                         | Expected                               | Rule   |
-| --- | ---------------------------------- | ---------------------------------------- | -------- |
-| 1 | Root with crates/foo, crates/bar | [crates/foo, crates/bar]               | FR-004 |
-| 2 | Root with no workspace dirs      | Empty vec + warning                    | FR-004 |
-| 3 | Root is`crates/` itself          | Direct subdirectories returned         | FR-004 |
-| 4 | I/O error on one member dir      | Warning logged, other members returned | FR-004 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Root with crates/foo, crates/bar | [crates/foo, crates/bar] | FR-004 |
+| 2 | Root with no workspace dirs | Empty vec + warning | FR-004 |
+| 3 | Root is `crates/` itself | Direct subdirectories returned | FR-004 |
+| 4 | I/O error on one member dir | Warning logged, other members returned | FR-004 |
 
 ### FR-005 — Config Merging
 
-
-| # | Scenario                       | Expected                            | Rule   |
-| --- | -------------------------------- | ------------------------------------- | -------- |
-| 1 | Config with empty layers array | Defaults injected + warning         | FR-005 |
-| 2 | Duplicate rule names           | First occurrence wins               | FR-005 |
-| 3 | Config error during load       | Defaults used + warning             | FR-005 |
-| 4 | Empty ignored_paths in config  | Defaults preserved (not overridden) | FR-005 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Config with empty layers array | Defaults injected + warning | FR-005 |
+| 2 | Duplicate rule values | Deduplicated by value containment | FR-005 |
+| 3 | Config error during load | Defaults used + warning | FR-005 |
+| 4 | Empty ignored_paths in config | Defaults preserved (not overridden) | FR-005 |
+| 5 | Scoped rule `agent(container\|registry)` | Sub-layers `agent(container)` and `agent(registry)` created | FR-005 |
 
 ### FR-006 — Validation
 
-
-| # | Scenario              | Expected               | Rule   |
-| --- | ----------------------- | ------------------------ | -------- |
-| 1 | Score threshold 50.0  | Valid                  | FR-006 |
-| 2 | Score threshold 0.0   | Valid                  | FR-006 |
-| 3 | Score threshold 100.0 | Valid                  | FR-006 |
-| 4 | Score threshold -1.0  | Invalid                | FR-006 |
-| 5 | Score threshold 101.0 | Invalid                | FR-006 |
-| 6 | Unknown adapter name  | Enabled (default true) | FR-006 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Score threshold 50.0 | Valid | FR-006 |
+| 2 | Score threshold 0.0 | Valid | FR-006 |
+| 3 | Score threshold 100.0 | Valid | FR-006 |
+| 4 | Score threshold -1.0 | Invalid | FR-006 |
+| 5 | Score threshold 101.0 | Invalid | FR-006 |
+| 6 | Unknown adapter name | Enabled (default true) | FR-006 |
 
 ### FR-007 — Caching
 
-
-| # | Scenario                         | Expected               | Rule   |
-| --- | ---------------------------------- | ------------------------ | -------- |
-| 1 | Same config file requested twice | Parsed once, cached    | FR-007 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Same config file requested twice | Parsed once, cached | FR-007 |
 | 2 | Concurrent requests for same key | Single parse (DashMap) | FR-007 |
 
 ### FR-008 — Ignored Paths
 
-
-| # | Scenario                             | Expected                      | Rule   |
-| --- | -------------------------------------- | ------------------------------- | -------- |
-| 1 | No config ignored paths              | 8 universal defaults returned | FR-008 |
-| 2 | Config adds "tests"                  | Defaults + "tests"            | FR-008 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | No config ignored paths | 8 universal defaults returned | FR-008 |
+| 2 | Config adds "tests" | Defaults + "tests" | FR-008 |
 | 3 | Config adds ".git" (already default) | Deduplicated, not added twice | FR-008 |
-| 4 | Config adds empty string             | Filtered out                  | FR-008 |
+| 4 | Config adds empty string | Filtered out | FR-008 |
 
 ### FR-009 — TOML Parsing
 
-
-| # | Scenario                            | Expected             | Rule   |
-| --- | ------------------------------------- | ---------------------- | -------- |
-| 1 | Cargo.toml with`[tool.lint-arwaky]` | Parsed correctly     | FR-009 |
-| 2 | Cargo.toml without`[tool]`          | Returns None         | FR-009 |
-| 3 | Invalid TOML syntax                 | ConfigError returned | FR-009 |
+| # | Scenario | Expected | Rule |
+| --- | --- | --- | --- |
+| 1 | Cargo.toml with `[tool.lint-arwaky]` | Parsed correctly | FR-009 |
+| 2 | Cargo.toml without `[tool]` | Returns None | FR-009 |
+| 3 | Invalid TOML syntax | ConfigError returned | FR-009 |
 
 ---
 
@@ -436,7 +432,7 @@ Loaded config is merged with embedded defaults (FR-005).
 - Maximum 8 XDG_CONFIG_DIRS entries; only absolute paths accepted.
 - No config file size limit.
 - Workspace discovery runs sequentially.
-- YAML parsing uses a YAML 1.2 parser (`serde_yaml`).
+- YAML parsing uses `serde_yaml_ng`.
 - TOML parsing reads only the `[tool]` section, not full TOML config.
 - Config cache uses DashMap (no Mutex, no lock poisoning).
 - Default ignored paths are universal only — no project-specific paths hardcoded.
@@ -445,18 +441,18 @@ Loaded config is merged with embedded defaults (FR-005).
 
 ## Glossary
 
-
-| Term                   | Definition                                                                    |
-| ------------------------ | ------------------------------------------------------------------------------- |
-| **AES**                | Agentic Engineering System — the 7-layer coding convention                   |
-| **ConfigLanguage**     | Typed enum restricting language input to Rust, Python, TypeScript             |
-| **WorkspaceType**      | Enum identifying project language from marker files                           |
-| **ArchitectureConfig** | Parsed configuration containing layers, rules, naming, and thresholds         |
-| **ConfigSource**       | Metadata about a loaded config file (language, path, raw content)             |
-| **ConfigResult**       | Merged config + source info + warnings from the loading process               |
-| **XDG**                | XDG Base Directory Specification — standard for user/system config paths     |
-| **DashMap**            | Concurrent HashMap used for thread-safe config caching without lock poisoning |
-| **Embedded defaults**  | Configuration compiled into the binary, used when no config file is found     |
+| Term | Definition |
+| --- | --- |
+| **AES** | Agentic Engineering System — the 7-layer coding convention |
+| **ConfigLanguage** | Typed enum restricting language input to Rust, Python, TypeScript |
+| **WorkspaceType** | Enum identifying project language from marker files |
+| **ArchitectureConfig** | Parsed configuration containing layers, rules, naming, and thresholds |
+| **ConfigSource** | Metadata about a loaded config file (language, path, raw content) |
+| **ConfigResult** | Merged config + source info + warnings from the loading process |
+| **XDG** | XDG Base Directory Specification — standard for user/system config paths |
+| **DashMap** | Concurrent HashMap used for thread-safe config caching without lock poisoning |
+| **Embedded defaults** | Configuration compiled into the binary, used when no config file is found |
+| **Scoped rule** | A rule with a parenthesized scope (e.g., `agent(container\|registry)`) that creates specialized sub-layers |
 
 ---
 
@@ -467,8 +463,6 @@ Loaded config is merged with embedded defaults (FR-005).
 ```
 lint_arwaky.config.yaml  — unified config for all languages (Rust, Python, TypeScript)
 ```
-
-### Top-Level Structure
 
 ### Default Ignored Paths (Hardcoded, Universal)
 

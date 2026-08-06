@@ -1,0 +1,163 @@
+{
+  "version": "2.0",
+  "features": {
+    "shared": {
+      "status": "PENDING",
+      "priority": 1,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/shared",
+      "description": "Taxonomy VOs, contracts, utilities — foundation layer",
+      "pipeline_id": null,
+      "claimed_at": null,
+      "locked_by": null,
+      "iteration": 0,
+      "history": []
+    },
+    "filesystem": {
+      "status": "PENDING",
+      "priority": 2,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/filesystem",
+      "description": "File walking, AST parsing, graph construction",
+      "pipeline_id": "pipeline-20260807-221",
+      "claimed_at": "2026-08-07T03:57:39+07:00",
+      "locked_by": "graph-engine",
+      "iteration": 0,
+      "history": [],
+      "lock": null
+    },
+    "config-system": {
+      "status": "LOCKED",
+      "priority": 3,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/config-system",
+      "description": "Config load, merge, workspace detect",
+      "pipeline_id": "pipeline-20260807-517",
+      "claimed_at": "2026-08-07T04:04:02+07:00",
+      "locked_by": "graph-engine",
+      "iteration": 0,
+      "history": []
+    },
+    "naming-rules": {
+      "status": "LOCKED",
+      "priority": 4,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/naming-rules",
+      "description": "AES101–102 naming conventions",
+      "pipeline_id": "pipeline-20260807-104",
+      "claimed_at": "2026-08-07T04:09:29+07:00",
+      "locked_by": "graph-engine",
+      "iteration": 0,
+      "history": []
+    },
+    "import-rules": {
+      "status": "LOCKED",
+      "priority": 5,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/import-rules",
+      "description": "AES201–205 import boundaries",
+      "pipeline_id": "pipeline-20260807-141",
+      "claimed_at": "2026-08-07T04:13:39+07:00",
+      "locked_by": "graph-engine",
+      "iteration": 0,
+      "history": []
+    },
+    "quality-rules": {
+      "status": "DONE",
+      "priority": 6,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/quality-rules",
+      "description": "AES301–305 quality rules",
+      "pipeline_id": "pipeline-20260807-175",
+      "claimed_at": "2026-08-07T04:20:34+07:00",
+      "locked_by": "graph-engine",
+      "iteration": 0,
+      "history": [
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-175",
+          "completed_at": "2026-08-07T04:54:49+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-175",
+          "completed_at": "2026-08-07T04:55:20+07:00"
+        }
+      ]
+    },
+    "role-rules": {
+      "status": "DONE",
+      "priority": 7,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/role-rules",
+      "description": "AES401–406 layer roles",
+      "pipeline_id": "pipeline-20260807-747",
+      "claimed_at": "2026-08-07T04:55:51+07:00",
+      "locked_by": "graph-engine",
+      "iteration": 0,
+      "history": [
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-747",
+          "completed_at": "2026-08-07T05:15:38+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-747",
+          "completed_at": "2026-08-07T05:16:09+07:00"
+        }
+      ]
+    },
+    "orphan-rules": {
+      "status": "LOCKED",
+      "priority": 8,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/orphan-rules",
+      "description": "AES501–506 orphan detection",
+      "pipeline_id": "pipeline-20260807-570",
+      "claimed_at": "2026-08-07T05:16:40+07:00",
+      "locked_by": "graph-engine",
+      "iteration": 0,
+      "history": []
+    },
+    "auto-fix": {
+      "status": "PENDING",
+      "priority": 9,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix",
+      "description": "Mechanical fixes: remove + replace + rename",
+      "pipeline_id": null,
+      "claimed_at": null,
+      "locked_by": null,
+      "iteration": 0,
+      "history": []
+    },
+    "cli-commands": {
+      "status": "PENDING",
+      "priority": 10,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands",
+      "description": "Human CLI surface (check, scan, fix, ci)",
+      "pipeline_id": null,
+      "claimed_at": null,
+      "locked_by": null,
+      "iteration": 0,
+      "history": []
+    },
+    "mcp-server": {
+      "status": "PENDING",
+      "priority": 11,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server",
+      "description": "AI MCP surface (5 tools, full CLI parity)",
+      "pipeline_id": null,
+      "claimed_at": null,
+      "locked_by": null,
+      "iteration": 0,
+      "history": []
+    },
+    "tui": {
+      "status": "PENDING",
+      "priority": 12,
+      "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/tui",
+      "description": "Interactive terminal UI",
+      "pipeline_id": null,
+      "claimed_at": null,
+      "locked_by": null,
+      "iteration": 0,
+      "history": []
+    }
+  },
+  "dedup_rules": {
+    "cooldown_minutes": 60
+  }
+}

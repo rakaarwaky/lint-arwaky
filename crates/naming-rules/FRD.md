@@ -143,7 +143,7 @@ flowchart TD
 
   - The configuration system in the shared crate — reads architecture configuration YAML for layer definitions, naming rules, exceptions, ignored paths.
   - The taxonomy definitions in the shared crate — layer map and layer name value objects.
-  - The layer detection utility in the shared crate — filename prefix detection.
+  - Layer detection is performed inline in this crate — hardcoded PREFIX_MAP maps filename prefixes to layer names, avoiding cross-layer imports.
   - The path value objects in the shared crate — barrel and entry-point detection.
 - **External**:
 

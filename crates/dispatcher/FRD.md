@@ -4,7 +4,7 @@
 
 ## System Overview
 
-The dispatcher crate is centralizes all business logic for Smart surfaces (CLI, MCP, TUI, API). Smart surfaces are thin wrappers that parse input, call dispatcher functions, and format output. Dispatcher owns the business logic; surfaces own the rendering.
+The dispatcher crate centralizes all business logic for Smart surfaces (CLI, MCP, TUI, API). Smart surfaces are thin wrappers that parse input, call dispatcher functions, and format output. Dispatcher owns the business logic; surfaces own the rendering.
 
 ### Architecture & Data Flow
 
@@ -14,16 +14,16 @@ flowchart TD
 
     D -->|"scan / lint"| SCAN["scan actions\n(check, naming, import,\nquality, orphan, role,\nexternal, ci)"]
     D -->|"fix / watch"| FIX["fix & watch actions\n(fix, watch)"]
-    D -->|"config / setup"| CFG["config & setup actions\n(config, setup, maintenance,\nplugin, git)"]
+    D -->|"config / setup / git"| CFG["config & setup actions\n(config, setup, maintenance,\nplugin, git)"]
 
     SCAN -->|"role / external\nvia subprocess"| S["lint-arwaky-cli\n(--format json)"]
     SCAN -->|"naming / import / quality\norphan via direct call"| B1["naming / import /\nquality / orphan\naggregates"]
-    CFG -->|"read_config / adapter_names\ninit / security"| B2["config / maintenance /\nexternal / setup\naggregates"]
+    CFG -->|"read_config / adapter_names\ninit / security / hooks"| B2["config / maintenance /\nexternal / setup / git\naggregates"]
     FIX -->|"lint → fix → re-lint"| B6["auto_fix_aggregate"]
 
-    S -->|"ViolationItem[]"| OUT["surface_output_component\n(ViolationItem)"]
+    S -->|"ViolationItem[]"| OUT["ViolationItem\n(shared taxonomy)"]
     B1 -->|"LintResult"| OUT
-    B2 -->|"ConfigResult\n/ SetupReport"| OUT
+    B2 -->|"ConfigResult\n/ SetupReport / HookReport"| OUT
     B6 -->|"FixReport"| OUT
 
     OUT -->|"Vec<ViolationItem>\nor Report"| A
@@ -34,8 +34,6 @@ flowchart TD
 ## Functional Requirements
 
 ### FR-001: Unified Scan
-
-**File**: `surface_check_action.rs`
 
 **What it produces**: Aggregated `Vec<ViolationItem>` from all 6 linters executed as subprocesses.
 
@@ -54,6 +52,7 @@ flowchart TD
 - Normalizes relative paths to absolute via filesystem aggregate `canonicalize`.
 - Filters violations by target directory (only files within scanned root).
 - Optional `filter` parameter: retains only violations whose code contains the filter string.
+- AES205 cycle violations are always retained if the file is within the same parent workspace.
 
 **Edge Cases**:
 
@@ -67,8 +66,6 @@ flowchart TD
 ---
 
 ### FR-002: CI Threshold Validation
-
-**File**: `surface_ci_action.rs`
 
 **What it produces**: `CiReport` with pass/fail decision based on score and critical violations.
 
@@ -84,7 +81,7 @@ flowchart TD
 
 **Business Rules**:
 
-- Builds file index once via `filesystem.build_file_index()`.
+- Builds file index once via `filesystem.build_file_index_with_ignored()`.
 - Runs 4 rule categories sequentially: quality → import → naming → orphan.
 - Passes pre-fetched `file_list()` to each rule checker (zero-I/O pattern).
 - Computes score via `ICodeAnalysisAggregate::calc_score()`.
@@ -103,8 +100,6 @@ flowchart TD
 
 ### FR-003: Individual Linter Scanning
 
-**Files**: `surface_naming_action.rs`, `surface_import_action.rs`, `surface_quality_action.rs`, `surface_orphan_action.rs`, `surface_role_action.rs`, `surface_external_action.rs`
-
 **What it produces**: `Vec<ViolationItem>` from a single linter category.
 
 | Output          | Description                         |
@@ -117,17 +112,17 @@ flowchart TD
 **Business Rules**:
 
 - Each function follows the same pattern: resolve path → validate → build file index → run audit → convert to ViolationItem → apply filter.
-- `collect_naming`: `naming_orchestrator.run_audit_with_entries(file_list())`
-- `collect_import`: `import_orchestrator.run_audit_with_entries(file_list())`
-- `collect_quality`: `code_analysis_linter.run_analysis_with_entries(file_list())`
-- `collect_orphan`: `orphan_orchestrator.check_orphans_with_entries(file_list(), context)` — supports workspace discovery and member filtering.
-- `collect_role` / `collect_external`: Uses subprocess self-invocation (known gap — async aggregate, no tokio runtime available).
-- `collect_external_direct`: Direct call without subprocess, used by CLI `external` subcommand to avoid recursive spawning.
+- **Naming**: `naming_orchestrator.run_audit_with_entries(file_list())`
+- **Import**: `import_orchestrator.run_audit_with_entries(file_list())`
+- **Quality**: `code_analysis_linter.run_analysis_with_entries(file_list())`
+- **Orphan**: `orphan_orchestrator.check_orphans_with_entries(file_list(), context)` — supports workspace discovery, member filtering, and unified cross-member orphan graph building.
+- **Role** / **External**: Uses subprocess self-invocation (known gap — no direct aggregate variant for single-path scan).
+- **External Direct**: Direct call without subprocess, used by CLI `external` subcommand to avoid recursive spawning. Detects languages from file extensions, loads config adapter entries, and passes an `ExternalLintContext` to the orchestrator.
 
 **Edge Cases**:
 
 - Path does not exist: returns `Err`.
-- Orphan with multi-workspace: iterates each workspace, filters results by workspace prefix.
+- Orphan with multi-workspace: builds unified filesystem across all members, runs unified orphan graph, then filters results per workspace member.
 - Role/external subprocess fails: returns empty violations from failed parse.
 
 **Error Handling**: `Result<Vec<ViolationItem>, String>`.
@@ -135,8 +130,6 @@ flowchart TD
 ---
 
 ### FR-004: Auto-Fix
-
-**File**: `surface_fix_action.rs`
 
 **What it produces**: `FixReport` with before/after violation counts and fix details.
 
@@ -148,15 +141,15 @@ flowchart TD
 | Fixable list | Violations matching fixable rules (AES101/203/304) |
 | Success flag | Whether all violations resolved                    |
 
-**Input**: Optional path, dry_run flag, code analysis aggregate, fix orchestrator factory closure.
+**Input**: Optional path, dry_run flag, code analysis aggregate, fix orchestrator factory closure or direct orchestrator instance.
 
 **Business Rules**:
 
 - Runs initial lint to get baseline violation count.
 - Filters fixable violations (AES101, AES203, AES304 only).
-- Creates fix orchestrator via factory closure with `dry_run` flag.
 - In dry-run mode: preview only, no modifications, after_count = before_count.
 - In execute mode: runs fix, re-lints, computes delta.
+- Two entry points: `collect_fix` (factory closure) and `collect_fix_direct` (pre-built orchestrator for TUI).
 
 **Edge Cases**:
 
@@ -167,19 +160,18 @@ flowchart TD
 
 ---
 
-### FR-005: Git Diff Integration
+### FR-005: Git Diff Integration and Hook Management
 
-**File**: `surface_git_action.rs`
-
-**What it produces**: `GitDiffReport` with changed files and their violations.
+**What it produces**: `GitDiffReport` with changed files and their violations, or `HookReport` for hook install/uninstall.
 
 | Output           | Description                                 |
 | ---------------- | ------------------------------------------- |
 | Changed files    | `Vec<FilePath>` of lintable changed files |
 | Results          | `Vec<LintResult>` per changed file        |
 | Total violations | Count of all violations in changed files    |
+| Hook action      | Hook install/uninstall success + message    |
 
-**Input**: Code analysis aggregate, git base branch name, optional project path, optional filter.
+**Input**: For git diff: code analysis aggregate, git base branch name, optional project path, optional filter. For hooks: git hooks aggregate, optional executable path.
 
 **Business Rules**:
 
@@ -187,20 +179,20 @@ flowchart TD
 - Filters to lintable files via `is_lintable()`.
 - Runs code analysis on each changed file individually.
 - Optional filter restricts to files containing the filter string.
+- Hook management: `collect_install_hook` installs a pre-commit hook via `GitHooksAggregate`. `collect_uninstall_hook` removes it.
 
 **Edge Cases**:
 
 - Git diff fails: returns `Err("[error] git diff failed: ...")`.
 - No changed files: empty report.
 - Non-lintable files changed: excluded from results.
+- Hook install fails: returns `HookReport` with success=false and error message.
 
-**Error Handling**: `Result<GitDiffReport, String>`.
+**Error Handling**: `Result<GitDiffReport, String>` for git diff; `Result<HookReport, String>` for hooks.
 
 ---
 
 ### FR-006: Configuration Display
-
-**File**: `surface_config_action.rs`
 
 **What it produces**: `ConfigShowReport` with redacted config content per language.
 
@@ -229,8 +221,6 @@ flowchart TD
 
 ### FR-007: Project Setup
 
-**File**: `surface_setup_action.rs`
-
 **What it produces**: Setup items, install report, MCP config snippet.
 
 | Output         | Description                                  |
@@ -239,13 +229,13 @@ flowchart TD
 | Install report | Python and JS adapter installation status    |
 | MCP config     | JSON config snippet for specified MCP client |
 
-**Input**: Setup management aggregate, optional sudo flag, client name.
+**Input**: Setup management aggregate, filesystem IO protocol, optional sudo flag, client name.
 
 **Business Rules**:
 
-- `collect_init`: Detects languages, writes config templates, copies docs and `.agents/` from XDG config dir.
+- `collect_init`: Detects languages, writes config template, distributes docs from XDG config dir to project, copies `.agents/` directory from XDG config.
 - `collect_install`: Installs Python and JS adapters via aggregate.
-- `collect_mcp_config`: Generates JSON config for claude-code, cursor, windsurf, copilot, hermes/vscode.
+- `collect_mcp_config`: Generates JSON config for the specified MCP client.
 - MCP binary resolution: env var `LINT_ARWAKY_MCP_BIN` → sibling of current exe → error (no PATH fallback).
 
 **Edge Cases**:
@@ -260,53 +250,50 @@ flowchart TD
 
 ### FR-008: Maintenance Operations
 
-**File**: `surface_maintenance_action.rs`
-
-**What it produces**: Toolchain diagnostics, security scan report, dependency report.
+**What it produces**: Toolchain diagnostics, security scan report, dependency report, adapter health check.
 
 | Output                | Description                        |
 | --------------------- | ---------------------------------- |
 | Toolchain diagnostics | Tool availability and version info |
 | Security scan         | Vulnerability scan results         |
-| Dependency report     | Dependency health and metadata     |
+| Dependency report     | Dependency list                    |
+| Adapter health check  | 9-adapter availability status      |
 
 **Input**: Maintenance commands aggregate, optional path.
 
 **Business Rules**:
 
 - All operations delegate to `MaintenanceCommandsAggregate` — no direct subprocess calls.
-- `collect_doctor`: Toolchain diagnostics.
-- `collect_security`: Security scan at given path.
-- `collect_dependencies`: Dependency report at given path.
+- `collect_doctor`: Toolchain diagnostics via `diagnose_toolchain()`.
+- `collect_health_check`: 9-adapter availability via `health_check()`.
+- `collect_security`: Security scan at given path via `run_security_scan()`.
+- `collect_dependencies`: Dependency report at given path via `run_dependency_report()`.
 
-**Error Handling**: `Result<T, String>` for security and dependencies; direct return for doctor.
+**Error Handling**: `Result<T, String>` for security and dependencies; direct return for doctor and health check.
 
 ---
 
 ### FR-009: Plugin Management
 
-**File**: `surface_plugin_action.rs`
-
-**What it produces**: `AdapterNameList` of available external lint adapters.
+**What it produces**: `AdapterNameList` of available external lint adapters, or detailed adapter list with binary availability.
 
 | Output        | Description                      |
 | ------------- | -------------------------------- |
 | Adapter names | List of registered adapter names |
+| Adapter detail | Name, label, and installed flag |
 
-**Input**: External lint aggregate.
+**Input**: External lint aggregate, filesystem aggregate.
 
 **Business Rules**:
 
-- Delegates to `external_lint.adapter_names()`.
-- Single function, single delegation.
+- `collect_adapters`: Delegates to `external_lint.adapter_names()`.
+- `collect_adapters_detailed`: Scans filesystem for known adapter binaries, returns `Vec<AdapterDetail>` with name, label, and installed status. Includes built-in AST scanners (always available) and external adapters (checked via filesystem).
 
 **Error Handling**: Direct return (infallible).
 
 ---
 
 ### FR-010: File Watching
-
-**File**: `surface_watch_action.rs`
 
 **What it produces**: Blocking watch session with Ctrl+C signal handling.
 
@@ -335,40 +322,30 @@ flowchart TD
 
 ### FR-011: Violation Output Component
 
-**File**: `surface_output_component.rs`
-
 **What it produces**: `ViolationItem` — the shared violation data type used by all surface actions.
 
 | Output        | Description                                                           |
 | ------------- | --------------------------------------------------------------------- |
 | ViolationItem | Normalized violation with code, file, line, column, message, severity |
 
-**Input**: `LintResult` (from rule orchestrators) or `serde_json::Value` (from subprocess JSON).
+**Input**: Re-exported from `shared::common::ViolationItem`.
 
 **Business Rules**:
 
-- `from_lint_result`: Converts `LintResult` → `ViolationItem` using existing VOs.
-- `from_json_obj`: Parses JSON object into `ViolationItem`.
-- `severity_level`: Maps severity enum to numeric level (0–4) for sorting.
-- No duplicate String wrappers — uses shared VOs (`ErrorCode`, `FilePath`, `LineNumber`, etc.).
-
-**Edge Cases**:
-
-- Missing JSON fields: returns `None` from `from_json_obj`.
-- Unknown severity string: defaults to `INFO`.
-
-**Error Handling**: `Option<ViolationItem>` for JSON parsing; infallible for `from_lint_result`.
+- This module re-exports the shared `ViolationItem` type for use by all dispatcher actions.
+- The actual implementation (`from_lint_result`, `from_json_obj`, `severity_level`) lives in the shared taxonomy layer.
+- All dispatcher actions convert their results to `ViolationItem` before returning to surfaces.
 
 ---
 
 ### FR-012: Version Info
 
-**File**: `surface_version_action.rs`
-
 **What it produces**: `VersionReport` with compile-time version and edition info.
 
-version      Crate version from `CARGO_PKG_VERSION`
-edition       Rust edition from `CARGO_PKG_RUST_VERSION`
+| Output  | Description                                |
+| ------- | ------------------------------------------ |
+| version | Crate version from `CARGO_PKG_VERSION`    |
+| edition | Rust edition from `CARGO_PKG_RUST_VERSION` |
 
 **Input**: None (reads compile-time environment variables).
 
@@ -420,7 +397,7 @@ edition       Rust edition from `CARGO_PKG_RUST_VERSION`
 | - | ------------------------------ | ------------------------------------- |
 | 1 | Naming scan on valid project   | Returns naming violations             |
 | 2 | Import scan with filter        | Only matching violations returned     |
-| 3 | Orphan scan on multi-workspace | Iterates each workspace member        |
+| 3 | Orphan scan on multi-workspace | Builds unified graph, filters per member |
 | 4 | Role scan via subprocess       | Returns violations (or empty on fail) |
 
 ### FR-004: Auto-Fix
@@ -439,6 +416,14 @@ edition       Rust edition from `CARGO_PKG_RUST_VERSION`
 | 2 | Diff with non-existent base        | Returns git diff error                 |
 | 3 | Diff with filter                   | Only matching files included           |
 
+### FR-005: Hook Management
+
+| # | Scenario                    | Expected                            |
+| - | --------------------------- | ----------------------------------- |
+| 1 | Install hook                | HookReport with success=true       |
+| 2 | Uninstall hook              | HookReport with success=true       |
+| 3 | Install hook (no .git dir) | HookReport with success=false      |
+
 ---
 
 ## Glossary
@@ -452,6 +437,7 @@ edition       Rust edition from `CARGO_PKG_RUST_VERSION`
 | **CiReport**                | CI evaluation result with score, threshold, pass/fail        |
 | **FixReport**               | Auto-fix outcome with before/after counts                    |
 | **GitDiffReport**           | Git-diff lint result with changed files and violations       |
+| **HookReport**              | Git hook install/uninstall result with success flag          |
 | **Self-invocation pattern** | Subprocess spawning the same binary for linter execution     |
 
 ---

@@ -1,4 +1,4 @@
-# FRD — tui (v1.12.0)
+# FRD — tui (v1.11.0)
 
 ---
 
@@ -30,10 +30,7 @@ flowchart TD
 
 ### FR-001: Terminal Setup & Event Loop
 
-**File**: `surface_tui_command.rs`
-
 **What it produces**: Initialized terminal with raw mode, alternate screen, mouse capture, and blocking event loop.
-
 
 | Output         | Description                                       |
 | ---------------- | --------------------------------------------------- |
@@ -63,10 +60,7 @@ flowchart TD
 
 ### FR-002: Input Translation
 
-**File**: `surface_tui_command.rs` (functions `from_key_event`, `from_mouse_event`, `from_crossterm_event`)
-
 **What it produces**: `TuiEvent` variants from crossterm events.
-
 
 | Output   | Description                             |
 | ---------- | ----------------------------------------- |
@@ -127,10 +121,7 @@ flowchart TD
 
 ### FR-003: File Navigation
 
-**File**: `surface_action_handler.rs` (methods `navigate_back`, `navigate_forward`, `load_directory`, `load_file_preview`, `load_preview`)
-
 **What it produces**: Updated `AppState` with directory listings and file previews.
-
 
 | Output                | Description                             |
 | ----------------------- | ----------------------------------------- |
@@ -142,10 +133,10 @@ flowchart TD
 
 **Business Rules**:
 
-- `load_directory`: lists directory, sorts dirs-first then alphabetically, resets selection.
+- `load_directory`: lists directory via filesystem aggregate, sorts dirs-first then alphabetically, filters hidden entries (starting with `.`), resets selection.
 - `navigate_forward`: if entry is dir → enter it; if file → load preview.
 - `navigate_back`: go to parent, clamped at project root.
-- `load_file_preview`: reads up to 100 lines via `utility_file_system::read_file_preview`.
+- `load_file_preview`: reads up to 100 lines via filesystem aggregate, formats with line numbers.
 - Preview panel shows file content in `PreviewMode::FileContent`.
 
 **Edge Cases**:
@@ -160,10 +151,7 @@ flowchart TD
 
 ### FR-004: Lint Action Execution
 
-**File**: `surface_action_handler.rs` (methods `run_action`, `run_action_no_path`, `start_scan`, `poll_scan`)
-
 **What it produces**: `LintExecutionResult` with output text and violation count.
-
 
 | Output          | Description                                     |
 | ----------------- | ------------------------------------------------- |
@@ -179,14 +167,14 @@ flowchart TD
 - **Global actions** (doctor, init, install, mcp-config, config-show, install-hook, uninstall-hook, adapters, version): use `run_action_no_path`.
 - **Scan**: runs in background thread, sends `ScanUpdate::Progress`/`Complete` via `mpsc::sync_channel(16)`.
 - **Other actions**: run synchronously, block event loop briefly.
-- **Duplicates** (`D` key): `ActionDuplicates` event is mapped but not yet delegated to `SurfaceLintExecutor` — currently logged only.
+- **Duplicates** (`D` key): `ActionDuplicates` event is mapped but not yet delegated to `SurfaceLintExecutor` — currently a no-op.
 - Watch mode: explicitly unsupported in TUI — pressing `w` shows "Watch mode is not supported in TUI" message.
 
 **Edge Cases**:
 
 - Scan already in progress: new scan request silently dropped.
 - Action while scanning: blocked (except quit/resize).
-- Fix without `FixOrchestratorAggregate`: falls back to scan-only mode.
+- Fix without `FixOrchestratorAggregate`: falls back to CLI fallback message.
 
 **Error Handling**: Embedded in `LintExecutionResult` — never returns `Err`.
 
@@ -194,36 +182,32 @@ flowchart TD
 
 ### FR-005: Domain Aggregate Facade
 
-**File**: `surface_lint_executor.rs`
-
-**What it produces**: `LintExecutionResult` for each lint action, delegating to domain aggregates.
-
+**What it produces**: `LintExecutionResult` for each lint action, delegating to domain aggregates via dispatcher functions.
 
 | Output                 | Description                                            |
 | ------------------------ | -------------------------------------------------------- |
-| check                  | Code analysis via`ICodeAnalysisAggregate`              |
-| scan                   | Comprehensive 6-linter scan                            |
-| fix                    | Auto-fix via`LintFixOrchestratorAggregate`             |
-| ci                     | CI threshold validation (quality+import+naming+orphan) |
-| orphan                 | Orphan file detection                                  |
-| security               | External lint adapter scan                             |
-| duplicates             | Code duplication detection                             |
-| dependencies           | Dependency report                                      |
-| doctor                 | Toolchain diagnostics                                  |
-| init/install           | Project setup                                          |
-| mcp-config             | MCP client config generation                           |
-| config-show            | Active configuration display                           |
-| install/uninstall-hook | Git hook management                                    |
-| adapters               | External adapter listing                               |
-| version                | Version display                                        |
+| check                  | Code analysis via `collect_scan`                       |
+| scan                   | Comprehensive 6-linter scan via `collect_scan`         |
+| fix                    | Auto-fix via `collect_fix_direct`                      |
+| ci                     | CI threshold validation via `collect_ci`               |
+| orphan                 | Orphan file detection via `collect_orphan`             |
+| security               | Security scan via `collect_security`                   |
+| dependencies           | Dependency report via `collect_dependencies`           |
+| doctor                 | Toolchain diagnostics via `collect_doctor`             |
+| init/install           | Project setup via `collect_init` / `collect_install`  |
+| mcp-config             | MCP client config via `collect_mcp_config`            |
+| config-show            | Active configuration via `collect_config_show`         |
+| install/uninstall-hook | Git hook management via `collect_install_hook` / `collect_uninstall_hook` |
+| adapters               | Adapter listing via `collect_adapters_detailed`        |
+| version                | Version display via `collect_version`                  |
 
 **Input**: Action method + path + action flags.
 
 **Business Rules**:
 
 - Builder pattern: `SurfaceLintExecutor::new(...).with_fix(...).with_setup(...).with_maintenance(...)`.
-- Optional aggregates: if not injected, methods return CLI fallback messages.
-- All methods synchronous — async aggregates suggest CLI alternative.
+- Optional aggregates: if not injected, methods return CLI fallback messages suggesting the equivalent CLI command.
+- All methods synchronous — consistent with dispatcher sync API.
 - `discover_adapters`: scans filesystem for known adapter binaries.
 
 **Edge Cases**:
@@ -237,10 +221,7 @@ flowchart TD
 
 ### FR-006: Search Mode
 
-**File**: `surface_action_handler.rs` (events `ToggleSearch`, `SearchInput`, `SearchBackspace`, `SearchConfirm`, `SearchCancel`)
-
 **What it produces**: Filtered file list based on incremental search query.
-
 
 | Output             | Description                                |
 | -------------------- | -------------------------------------------- |
@@ -269,10 +250,7 @@ flowchart TD
 
 ### FR-007: Path Dialog
 
-**File**: `surface_action_handler.rs` (events `PathInput`, `PathBackspace`, `PathConfirm`, `PathUseCurrent`)
-
 **What it produces**: Updated project root and current directory from user input.
-
 
 | Output           | Description                          |
 | ------------------ | -------------------------------------- |
@@ -300,10 +278,7 @@ flowchart TD
 
 ### FR-008: Mouse Interaction
 
-**File**: `surface_action_handler.rs` (methods `handle_mouse_click`, `handle_mouse_drag`, `jump_to_scroll_position`)
-
 **What it produces**: Updated panel focus and scroll positions from mouse input.
-
 
 | Output          | Description                               |
 | ----------------- | ------------------------------------------- |
@@ -332,12 +307,7 @@ flowchart TD
 
 ### FR-009: UI Rendering
 
-**Files**: `surface_file_list_view.rs`, `surface_preview_view.rs`, `surface_tree_view.rs`, `surface_shortcut_component.rs`, `surface_status_component.rs`, `surface_path_screen.rs`
-
-**Note**: Help overlay rendering is handled by `PreviewView` in `HelpOverlay` mode. The `surface_help_screen.rs` module exists but is unused dead code (AES506).
-
 **What it produces**: Ratatui widgets for each panel.
-
 
 | Output           | Description                    |
 | ------------------ | -------------------------------- |
@@ -359,6 +329,9 @@ flowchart TD
 - Path dialog replaces all panels when `show_path_dialog = true`.
 - Help overlay replaces preview when `show_help = true`.
 - Preview modes: `ActionOutput`, `LintResults`, `FileContent`, `HelpOverlay`.
+- File list shows AES layer badge coloring (taxonomy=cyan, contract=blue, capabilities=magenta, agent=green, surfaces=red, root=white).
+- Preview view includes vertical scrollbar with thumb position.
+- Help content is embedded as a static string in the preview view.
 
 **Edge Cases**:
 
@@ -370,10 +343,7 @@ flowchart TD
 
 ### FR-010: Clipboard & File Export
 
-**File**: `surface_action_handler.rs` (methods `copy_to_clipboard`, `copy_to_file`)
-
 **What it produces**: Copied content to clipboard or `lint-results.txt`.
-
 
 | Output         | Description                                     |
 | ---------------- | ------------------------------------------------- |
@@ -384,7 +354,7 @@ flowchart TD
 
 **Business Rules**:
 
-- `CopyToClipboard`: delegates to `utility_file_system::copy_text_to_clipboard()` (arboard/xclip/wl-copy).
+- `CopyToClipboard`: tries arboard first, falls back to `xclip`/`wl-copy` shell commands.
 - `CopyToFile`: writes `state.preview_text` to `lint-results.txt` via filesystem aggregate.
 - Empty preview: shows "Nothing to copy" status.
 
@@ -399,24 +369,20 @@ flowchart TD
 
 ### FR-011: Logging
 
-**File**: `surface_logging_controller.rs`
-
 **What it produces**: Structured tracing logs for TUI events.
-
 
 | Output             | Description                                  |
 | -------------------- | ---------------------------------------------- |
-| Event logging      | Each`TuiEvent` variant logged at debug level |
+| Event logging      | Each `TuiEvent` variant logged at debug level |
 | Log initialization | File-based tracing with rotation             |
 
 **Input**: `TuiEvent` variants.
 
 **Business Rules**:
 
-- `init()`: sets up tracing subscriber with file appender.
-- `record()`: logs event variant name at `tracing::debug!(target = "tui")`.
-- **Integration point**: `record(&tui_event)` is called in the event loop (`surface_tui_command.rs`) immediately after `from_crossterm_event()` translates a crossterm event, and before the event is dispatched to the action handler or intercepted for scan management.
-- Events logged: MoveDown, MoveUp, MoveTop, MoveBottom, FocusNext/Prev, NavigateBack/Forward, all Action* events, Quit, Resize, mouse events, search/path input events.
+- `init()`: sets up tracing subscriber with hourly-rotating file appender (`log/tui.log`) and optional console output.
+- `record()`: logs event variant name at `tracing::debug!(target = "tui")` for navigation events, `tracing::info!(target = "tui")` for action events.
+- **Integration point**: `record(&tui_event)` is called in the event loop immediately after `from_crossterm_event()` translates a crossterm event, and before the event is dispatched to the action handler or intercepted for scan management.
 
 **Edge Cases**:
 
@@ -428,10 +394,7 @@ flowchart TD
 
 ### FR-012: Utility Functions
 
-**Files**: `utility_file_system.rs`, `utility_report_formatter.rs`
-
 **What it produces**: Stateless helper functions for file operations and result formatting.
-
 
 | Output             | Description                                                                |
 | -------------------- | ---------------------------------------------------------------------------- |
@@ -444,7 +407,7 @@ flowchart TD
 | Human file size    | `file_size_human` → `DisplayContent` (unused in production)               |
 | Path decomposition | `path_components` → `Vec<FilePath>` (unused in production)                |
 | Doctor report      | `format_doctor_report` → `LintExecutionResult` (unused in production)     |
-| Dependency report  | `format_dependency_report` → `LintExecutionResult` (unused in production) |
+| Dependency report  | `format_dependency_report` → `LintExecutionResult` (unused in production)  |
 
 **Input**: File paths, lint results.
 
@@ -454,6 +417,8 @@ flowchart TD
 - `list_directory`: reads dir entries, returns `DirectoryEntry` with name, path, is_dir.
 - `read_file_preview`: reads up to N lines, returns string.
 - `format_results`: converts `LintResultList` to display string.
+- `format_doctor_report`: formats `ToolchainDiagnostics` into a human-readable `LintExecutionResult`.
+- `format_dependency_report`: formats `DependencyReport` into a human-readable `LintExecutionResult`.
 - **Unused functions note**: `file_size_human`, `path_components`, `format_doctor_report`, and `format_dependency_report` are defined but never called from production source code — only exercised by tests. Consider removing or consolidating per AES504.
 
 **Error Handling**: Returns empty/default on failure.
@@ -521,7 +486,7 @@ container.run(lint_executor, filesystem)?;
 | 2  | Press 's' (scan) on directory       | Background scan with progress updates     |
 | 3  | Press 'f' (fix) with dry-run        | Dry-run preview output                    |
 | 4  | Press 'w' (watch)                   | "Watch mode not supported in TUI" message |
-| 5  | Press 'D' (duplicates) on directory | Duplication detection results in preview  |
+| 5  | Press 'D' (duplicates) on directory | No-op (not yet delegated)                 |
 | 6  | Press 'o' (orphan) on directory     | Orphan file detection results in preview  |
 | 7  | Press 't' (ci) on directory         | CI threshold validation results           |
 | 8  | Press 'd' (doctor) globally         | Toolchain diagnostics output              |
@@ -534,7 +499,7 @@ container.run(lint_executor, filesystem)?;
 | # | Scenario                                   | Expected                                  |
 | --- | -------------------------------------------- | ------------------------------------------- |
 | 1 | check() with code_analysis aggregate       | LintExecutionResult with violation count  |
-| 2 | scan() delegates to run_comprehensive_scan | LintExecutionResult with full scan output |
+| 2 | scan() delegates to collect_scan            | LintExecutionResult with full scan output |
 | 3 | fix() without fix_orchestrator             | CLI fallback message in output            |
 | 4 | fix() with fix_orchestrator                | Fix result with mode prefix               |
 | 5 | security() with maintenance aggregate     | Security scan result in output            |
@@ -550,7 +515,7 @@ container.run(lint_executor, filesystem)?;
 | Term                     | Definition                                                        |
 | -------------------------- | ------------------------------------------------------------------- |
 | **Smart Surface**        | Thin UI wrapper — parses input, calls aggregates, renders output |
-| **SurfaceLintExecutor**  | Facade over domain aggregates for TUI lint actions                |
+| **SurfaceLintExecutor**  | Facade over dispatcher functions for TUI lint actions             |
 | **SurfaceActionHandler** | Event → action state machine                                     |
 | **TuiCommandSurface**    | crossterm event loop + ratatui rendering                          |
 | **AppState**             | Mutable TUI state (selection, scroll, focus, preview)             |

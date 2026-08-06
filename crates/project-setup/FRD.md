@@ -1,4 +1,3 @@
-
 # FRD — project-setup (v1.11.0)
 
 ---
@@ -25,7 +24,7 @@ container (root) wires dependencies.
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["setup orchestrator"]
+    A["Surface"] -->|input| B["setup aggregate"]
     B --> C{"action"}
 
     C -->|"init"| D["config generator"]
@@ -144,8 +143,8 @@ flowchart TD
   - Phase 2 (file-extension scan): recursively scans directory tree
     (depth ≤ 4) for `.rs`, `.py`, `.ts`, `.tsx`, `.mts`, `.cts`, `.js`,
     `.jsx`, `.mjs`, `.cjs` extensions.
-  - Skips hidden dirs, `target/`, `node_modules/`, `vendor/`, `dist/`,
-    `build/`, `__pycache__/`.
+  - Skips hidden dirs and default ignored paths (`target/`, `node_modules/`,
+    `vendor/`, `dist/`, `build/`, `__pycache__/`).
   - **No default language** — if no languages detected, returns empty list.
     Caller decides how to handle (prompt user, skip config generation, or
     use explicit `--language` flag).
@@ -258,6 +257,18 @@ flowchart TD
 
   - `which` not available on system → falls back to direct spawn attempt.
 - **Error Handling**: Process spawn failure → treated as `not_found`.
+
+---
+
+### FR-008: File Existence Check
+
+- **Description**: Check whether a file exists at the given path.
+- **Input**: Path string.
+- **Output**: Boolean indicating file existence.
+- **Business Rules**:
+
+  - Delegates to `std::path::Path::new(path).exists()`.
+- **Error Handling**: Non-existent path returns `false`.
 
 ---
 
