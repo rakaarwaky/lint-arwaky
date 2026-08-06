@@ -144,7 +144,9 @@ pub fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
 /// Extract layer name from an import segment.
 pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
     let segment_str = segment.value();
-    if let Some(layer) = shared::common::utility_layer_detector::detect_layer_from_prefix(segment_str) {
+    if let Some(layer) =
+        shared::common::utility_layer_detector::detect_layer_from_prefix(segment_str)
+    {
         return Some(LayerNameVO::new(layer));
     }
     match segment_str {
