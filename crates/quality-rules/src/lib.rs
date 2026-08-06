@@ -15,4 +15,6 @@ pub mod utility_bypass_detector;
 pub mod utility_code_duplication_detector;
 pub mod utility_language_mapper;
 pub mod utility_mandatory_checker;
+pub mod utility_violation_formatter;
 pub use root_quality_rules_container::CodeAnalysisContainer;
+pub use utility_violation_formatter::format_code_analysis_violation;
