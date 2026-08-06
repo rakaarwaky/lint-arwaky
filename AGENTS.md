@@ -50,16 +50,16 @@ CARGO_INCREMENTAL=0 cargo clippy -p import_rules -- -D warnings  # per crate
 
 ```bash
 bash scripts/gates.sh                       # fmt + clippy + self-lint + tests
-just gates                                  # same via justfile
 cargo nextest run --workspace --lib --tests # all tests, 3× faster
-just test-fast                              # same via justfile
 ```
 
-## Self-lint (must be clean — 0 violations)
+## Self-lint 
+
+Binary Path
+/home/user/.cargo/bin/lint-arwaky-cli
 
 ```bash
-cargo run --bin lint-arwaky-cli -- scan .   # runs ALL 6 linters on own codebase
-just self-lint                              # same via justfile
+lint-arwaky-cli scan .   # runs ALL 6 linters on own codebase
 ```
 
 ## Scan test projects
@@ -68,26 +68,22 @@ Test workspaces contain intentional violations (`workspaces-bad/`) and clean fil
 
 ```bash
 # Bad workspaces (should find violations)
-cargo run --bin lint-arwaky-cli -- scan workspaces-bad/crates   # Rust
-cargo run --bin lint-arwaky-cli -- scan workspaces-bad/modules  # Python
-cargo run --bin lint-arwaky-cli -- scan workspaces-bad/packages # JS/TS
+lint-arwaky-cli scan workspaces-bad/crates   
+lint-arwaky-cli scan workspaces-bad/modules  
+lint-arwaky-cli scan workspaces-bad/packages 
 
-# Good workspaces (should find 0 violations — false positive test)
-cargo run --bin lint-arwaky-cli -- scan workspaces-good/crates
-cargo run --bin lint-arwaky-cli -- scan workspaces-good/modules
-cargo run --bin lint-arwaky-cli -- scan workspaces-good/packages
+# Good workspaces (should find 0 violations)
+lint-arwaky-cli scan workspaces-good/crates
+lint-arwaky-cli scan workspaces-good/modules
+lint-arwaky-cli scan workspaces-good/packages
 
-# Individual rule surfaces
-cargo run --bin lint-arwaky-cli -- naming  workspaces-bad/crates
-cargo run --bin lint-arwaky-cli -- import  workspaces-bad/crates
-cargo run --bin lint-arwaky-cli -- orphan  workspaces-bad/crates
 ```
 
 ## MCP server & TUI
 
 ```bash
-cargo run --bin lint-arwaky-mcp   # MCP server (stdin/stdout JSON-RPC 2.0)
-cargo run --bin lint-arwaky-tui   # TUI file browser
+lint-arwaky-mcp   # MCP server (stdin/stdout JSON-RPC 2.0)
+lint-arwaky-tui   # TUI file browser
 ```
 
 ---
@@ -96,18 +92,7 @@ cargo run --bin lint-arwaky-tui   # TUI file browser
 
 Every file in the codebase belongs to one of 7 layers. The layer is identified by the filename prefix and must follow strict naming, dependency, and role rules.
 
-| Layer | Prefix | Purpose | Dependencies |
-| --- | --- | --- | --- |
-| **Taxonomy** | `taxonomy_` | Domain foundation: VOs, entities, errors, events, constants | Nothing |
-| **Contract** | `contract_` | Public interfaces (protocols) and facades (aggregates) | Taxonomy only |
-| **Utility** | `utility_` | Stateless technical functions (parsers, resolvers, builders) | Taxonomy only |
-| **Capabilities** | `capabilities_` | Business logic + external adaptation (implements protocols) | Taxonomy, Contract, Utility |
-| **Agent** | `agent_` | Orchestration: sequences capabilities into flows | Taxonomy, Contract, Utility |
-| **Surface** | `surface_` | Entry points: commands, controllers, pages, views | Contract only |
-| **Root** | `root_` | Composition: wires capabilities to contracts, starts app | All layers |
-
-**Dependency rule:** Unidirectional bottom-up. Higher layers import lower; never the reverse.
-
+See [ARCHITECTURE.md](ARCHITECTURE.md) for full details.
 ---
 
 ## Naming Convention
@@ -122,11 +107,11 @@ Full suffix rules per layer are in [RULES_AES.md](.agents/rules/RULES_AES.md) (A
 
 ## Workspace Packages Structure
 
-| Directory | Language | Count |
+| Directory | Language |
 | --- | --- | --- |
-| `crates/` | Rust | 18 workspace members |
-| `packages/` | TypeScript/JS | (see `packages/src/`) |
-| `modules/` | Python | (see `workspaces-*/modules/` for tests) |
+| `crates/` | Rust | 
+| `packages/` | TypeScript/JS | 
+| `modules/` | Python | 
 
 Key crates:
 
@@ -158,28 +143,28 @@ Key crates:
 The `.agents/skills/` directory contains skill definitions for AI-assisted development. Use them via trigger keywords:
 
 **Layer creation skills** (one per language: `rust`, `python`, `typescript`):
-- `create-taxonomy-*` — Create taxonomy layer files
-- `create-contract-*` — Create contract layer files
-- `create-utility-*` — Create utility layer files
-- `create-capabilities-*` — Create capabilities layer files
-- `create-agent-*` — Create agent layer files
-- `create-surface-*` — Create surface layer files
-- `create-root-*` — Create root layer files
+- `.agents/skills/create-taxonomy-*` — Create taxonomy layer files
+- `.agents/skills/create-contract-*` — Create contract layer files
+- `.agents/skills/create-utility-*` — Create utility layer files
+- `.agents/skills/create-capabilities-*` — Create capabilities layer files
+- `.agents/skills/create-agent-*` — Create agent layer files
+- `.agents/skills/create-surface-*` — Create surface layer files
+- `.agents/skills/create-root-*` — Create root layer files
 
 **Maintenance skills:**
-- `fix-bypass-*` — Fix bypass comments (`unwrap`, `#[allow]`, `noqa`, etc.)
-- `cleanup-consolidate-*` — Remove dead code, merge duplicates
-- `add-docs-*` — Add docstrings, type hints, crate-level docs
-- `create-test-*` — Generate test suites
-- `lint-arwaky-*` — Run scan and fix violations
+- `.agents/skills/fix-bypass-*` — Fix bypass comments (`unwrap`, `#[allow]`, `noqa`, etc.)
+- `.agents/skills/cleanup-consolidate-*` — Remove dead code, merge duplicates
+- `.agents/skills/add-docs-*` — Add docstrings, type hints, crate-level docs
+- `.agents/skills/create-test-*` — Generate test suites
+- `.agents/skills/lint-arwaky-*` — Run scan and fix violations
 
 **Role workflow pipeline:**
 `Architect` → `Business Analyst` → `Tech Lead` → `Fullstack Developer`
 
-1. `role-architect` — Reviews layer boundaries, naming, orphans, scalability
-2. `role-business-analyst` — Reviews requirements, business flow, testability
-3. `role-tech-lead` — Reviews security, performance, error handling, SOLID
-4. `role-fullstack-developer` — Executes plans, implements fixes, verifies
+1. `.agents/skills/role-architect` — Reviews layer boundaries, naming, orphans, scalability
+2. `.agents/skills/role-business-analyst` — Reviews requirements, business flow, testability
+3. `.agents/skills/role-tech-lead` — Reviews security, performance, error handling, SOLID
+4. `.agents/skills/role-fullstack-developer` — Executes plans, implements fixes, verifies
 
 Plan files are saved to `.agents/plans/`.
 
@@ -215,4 +200,3 @@ See [PRD.md](PRD.md#exit-code-contract) for full details.
 - **`workspaces-good/` must produce 0 violations** — any violation is a false positive that must be fixed.
 - **tree-sitter** is the only AST parser — no regex fallback. All language parsing goes through `filesystem` crate.
 - **No async runtime** — the project uses `std::thread` / `rayon`, not tokio. Do not introduce async.
-- **Capabilities never import other Capabilities** — compose via Agent orchestration only.

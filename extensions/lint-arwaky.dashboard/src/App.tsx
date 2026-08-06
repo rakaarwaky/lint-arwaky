@@ -11,48 +11,49 @@ import { EmptyState } from './components/EmptyState';
 import { groupByRule, groupByFile, formatTime } from './utils';
 import type { ScanResults } from './types';
 
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(path, init);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.message || `Server error ${res.status}`);
+  }
+  return res.json();
+}
+
 export default function App() {
   const { theme, workspace } = useCate();
   const { results, saveResults } = useScanResults();
   const [isScanning, setIsScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   const isDark = theme === 'dark';
 
   const handleScan = useCallback(async (path: string) => {
     setIsScanning(true);
-    
+    setScanError(null);
+
     try {
-      // Try to run scan via Cate agent
-      if (window.cate?.agent) {
-        const session = await window.cate.agent.open();
-        if (session.sessionId) {
-          const result = await window.cate.agent.send(
-            session.sessionId,
-            `Run lint scan and return JSON: cargo run --bin lint-arwaky-cli -- scan ${path} --json`
-          );
-          
-          if (result.text) {
-            // Try to parse JSON from agent response
-            const jsonMatch = result.text.match(/\{[\s\S]*"summary"[\s\S]*"violations"[\s\S]*\}/);
-            if (jsonMatch) {
-              const scanResults: ScanResults = JSON.parse(jsonMatch[0]);
-              scanResults.timestamp = new Date().toISOString();
-              await saveResults(scanResults);
-              await window.cate.ui.notify(`Scan complete: ${scanResults.summary.total} violations`, 'info');
-            }
-          }
-          
-          await window.cate.agent.dispose(session.sessionId);
+      const data = await apiFetch<ScanResults & { error?: string; message?: string; raw?: string; note?: string }>(
+        '/api/scan',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path }),
         }
-      } else {
-        // Fallback: show instructions
-        await window.cate?.ui.notify(
-          `Run in terminal: cargo run --bin lint-arwaky-cli -- scan ${path} --json`,
-          'info'
-        );
+      );
+
+      if (data.error) {
+        setScanError(data.message || data.error);
+        await window.cate?.ui.notify(data.message || data.error, 'error');
+        return;
       }
+
+      data.timestamp = new Date().toISOString();
+      await saveResults(data);
+      await window.cate?.ui.notify(`Scan complete: ${data.summary.total} violations`, 'info');
     } catch (error: any) {
       console.error('Scan failed:', error);
+      setScanError(error.message);
       await window.cate?.ui.notify(`Scan failed: ${error.message}`, 'error');
     } finally {
       setIsScanning(false);
@@ -73,6 +74,15 @@ export default function App() {
       
       <main className="main">
         <ScanControls onScan={handleScan} isScanning={isScanning} />
+
+        {scanError && (
+          <div className="scan-error-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
+              <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+            </svg>
+            <span>{scanError}</span>
+          </div>
+        )}
 
         {!results ? (
           <EmptyState />
