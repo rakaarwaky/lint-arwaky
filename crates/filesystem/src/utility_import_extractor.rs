@@ -434,24 +434,110 @@ fn extract_js_named_imports(text: &str) -> Vec<String> {
 fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<Vec<String>> {
     let text = text_of(node, content);
     let brace_start = text.find('{')?;
-    let brace_end = text.find('}')?;
+    // Find matching closing brace (respects nesting)
+    let mut depth = 0usize;
+    let mut brace_end = None;
+    for (i, ch) in text[brace_start..].char_indices() {
+        match ch {
+            '{' => depth += 1,
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    brace_end = Some(brace_start + i);
+                    break;
+                }
+            }
+            _ => {}
+        }
+    }
+    let brace_end = brace_end?;
     // Module path: everything before '{', trimmed of trailing whitespace/colons.
     let module_path = text[..brace_start].trim_end_matches("::").trim();
     let inner = &text[brace_start + 1..brace_end];
-    let names: Vec<String> = inner
-        .split(',')
-        .filter_map(|part| {
-            let name = part.split_whitespace().next()?;
-            if name.is_empty() || name == "*" {
-                None
-            } else if module_path.is_empty() {
-                Some(name.to_string())
-            } else {
-                Some(format!("{}::{}", module_path, name))
-            }
-        })
-        .collect();
+    // Recursively extract all leaf paths from nested braces
+    let names = expand_grouped_names(module_path, inner);
     if names.is_empty() { None } else { Some(names) }
+}
+
+/// Recursively expand grouped import names.
+/// Handles nested braces like `{foo::{Bar, Baz}, qux}` by recursing into
+/// each part that contains braces, collecting only leaf (brace-free) paths.
+fn expand_grouped_names(prefix: &str, inner: &str) -> Vec<String> {
+    let parts = split_top_level_commas(inner);
+    let mut result = Vec::new();
+    for part in &parts {
+        let trimmed = part.trim();
+        if trimmed.is_empty() || trimmed == "*" {
+            continue;
+        }
+        if let Some(brace_pos) = trimmed.find('{') {
+            // Nested braces: recurse with sub-prefix
+            let sub_prefix = trimmed[..brace_pos].trim_end_matches("::").trim();
+            let full_prefix = if prefix.is_empty() {
+                sub_prefix.to_string()
+            } else if sub_prefix.is_empty() {
+                prefix.to_string()
+            } else {
+                format!("{}::{}", prefix, sub_prefix)
+            };
+            // Find matching closing brace
+            let mut depth = 0usize;
+            let mut end = None;
+            for (i, ch) in trimmed[brace_pos..].char_indices() {
+                match ch {
+                    '{' => depth += 1,
+                    '}' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            end = Some(brace_pos + i);
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            if let Some(end_pos) = end {
+                let sub_inner = &trimmed[brace_pos + 1..end_pos];
+                result.extend(expand_grouped_names(&full_prefix, sub_inner));
+            }
+        } else {
+            // Leaf symbol: combine with prefix
+            let full = if prefix.is_empty() {
+                trimmed.to_string()
+            } else {
+                format!("{}::{}", prefix, trimmed)
+            };
+            result.push(full);
+        }
+    }
+    result
+}
+
+/// Split a string by commas, but only at brace depth 0.
+/// Skips commas inside `{...}` groups.
+fn split_top_level_commas(s: &str) -> Vec<String> {
+    let mut parts = Vec::new();
+    let mut current = String::new();
+    let mut depth = 0usize;
+    for ch in s.chars() {
+        match ch {
+            '{' => { depth += 1; current.push(ch); }
+            '}' => { depth = depth.saturating_sub(1); current.push(ch); }
+            ',' if depth == 0 => {
+                let trimmed = current.trim().to_string();
+                if !trimmed.is_empty() {
+                    parts.push(trimmed);
+                }
+                current.clear();
+            }
+            _ => current.push(ch),
+        }
+    }
+    let trimmed = current.trim().to_string();
+    if !trimmed.is_empty() {
+        parts.push(trimmed);
+    }
+    parts
 }
 
 fn extract_require_source(node: tree_sitter::Node, content: &str) -> Option<String> {

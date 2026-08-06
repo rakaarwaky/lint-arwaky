@@ -8,6 +8,7 @@ use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolu
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::PatternList;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_parser_protocol::IParserProtocol;
@@ -45,14 +46,14 @@ fn e2e_scan_parse_and_query_imports() {
     let orch = make_orchestrator();
 
     // Step 1: Scan directory via IO protocol
-    let paths = orch.scan_directory_with_ignored(&src, &[]);
+    let paths = orch.scan_directory_with_ignored(&src, &PatternList::default());
     assert!(!paths.is_empty(), "Should discover source files");
 
     // Step 2: Build file entries and parse via parser protocol
     let mut files: Vec<FileEntry> = paths
         .iter()
         .map(|p| {
-            let content = orch.read_to_string(p).unwrap_or_default();
+            let content = orch.read_to_string(p).unwrap_or_default().value;
             let ext = p
                 .extension()
                 .and_then(|e| e.to_str())
@@ -112,13 +113,13 @@ fn e2e_full_pipeline_with_graph_query() {
     let orch = make_orchestrator();
 
     // Scan
-    let paths = orch.scan_directory_with_ignored(&src, &[]);
+    let paths = orch.scan_directory_with_ignored(&src, &PatternList::default());
 
     // Parse
     let mut files: Vec<FileEntry> = paths
         .iter()
         .map(|p| {
-            let content = orch.read_to_string(p).unwrap_or_default();
+            let content = orch.read_to_string(p).unwrap_or_default().value;
             let ext = p
                 .extension()
                 .and_then(|e| e.to_str())
@@ -195,13 +196,13 @@ fn e2e_orchestrator_collect_file_entries() {
     let orch = make_orchestrator();
 
     // Scan
-    let paths = orch.scan_directory_with_ignored(tmp.path(), &[]);
+    let paths = orch.scan_directory_with_ignored(tmp.path(), &PatternList::default());
 
     // Build file entries
     let files: Vec<FileEntry> = paths
         .iter()
         .map(|p| {
-            let content = orch.read_to_string(p).unwrap_or_default();
+            let content = orch.read_to_string(p).unwrap_or_default().value;
             FileEntry {
                 path: p.clone(),
                 extension: p
@@ -220,10 +221,12 @@ fn e2e_orchestrator_collect_file_entries() {
 
     // collect_file_entries falls through to disk reads when cache is empty
     let entries = orch.collect_file_entries(
-        &files
-            .iter()
-            .map(|f| f.path.to_string_lossy().to_string())
-            .collect::<Vec<_>>(),
+        &PatternList::new(
+            files
+                .iter()
+                .map(|f| f.path.to_string_lossy().to_string())
+                .collect::<Vec<_>>(),
+        ),
     );
     assert_eq!(entries.len(), files.len());
 }
