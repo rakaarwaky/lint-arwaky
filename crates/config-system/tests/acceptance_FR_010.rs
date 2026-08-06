@@ -20,7 +20,7 @@ fn us10_lists_config_files_for_all_languages() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = make_reader().list_config_files(&fp).unwrap();
     assert!(
-        files.len() >= 1,
+        !files.is_empty(),
         "Expected at least 1 config file, got {}",
         files.len()
     );

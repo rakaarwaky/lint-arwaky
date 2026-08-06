@@ -3,8 +3,7 @@ use crate::capabilities_parser_provider::ConfigParserProvider;
 use crate::capabilities_rules_validator::ConfigRulesValidator;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
-// Utility modules wired into entry for orphan reachability (AES504)
-use crate::utility_config_merger;
+// Utility module wired into entry for orphan reachability (AES504)
 use crate::utility_config_parser;
 use shared::config_system::{
     IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
@@ -66,13 +65,5 @@ impl ConfigContainer {
     /// Parse score threshold from YAML (uses utility_config_parser).
     pub fn parse_score_threshold(&self, yaml_str: &str) -> Option<f64> {
         utility_config_parser::parse_score_threshold(yaml_str)
-    }
-
-    /// Merge configuration layers (uses utility_config_merger).
-    pub fn merge_layers(
-        &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
-    ) {
-        let _ = utility_config_merger::merge_config(config);
     }
 }
