@@ -251,7 +251,6 @@ impl DependencyCycleAnalyzer {
             let target = parts[1];
             let file = edge_to_file
                 .get(&(source.to_string(), target.to_string()))
-                .or_else(|| edge_to_file.get(&(target.to_string(), source.to_string())))
                 .cloned()
                 .unwrap_or_else(|| source.to_string());
             LintResult::new_arch(&file, 1, "AES205", Severity::CRITICAL,
