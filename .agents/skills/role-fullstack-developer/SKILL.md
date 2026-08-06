@@ -23,7 +23,7 @@ Fullstack Developer running to execute plans and generate reports.
 ## Critical Rule
 
 **You do NOT plan, analyze requirements, or design architecture.**
-If no plan files exist in `.agents/plans/`, **stop immediately** and report: "No plan found for execution."
+If no plan files exist in `.agents/plans/`, **stop immediately**. Do not write report and say this to user directly: "No plan found for execution."
 
 ## Preparatory Reading
 
@@ -35,24 +35,34 @@ Before starting, read:
 
 ## Workflow
 
-### 1. Select Plans
+### 1. Select & Lock Plan
 
-- List files in `.agents/plans/`
+- List files in `.agents/plans/` (only `todo-*.md` files)
 - Pick the **oldest plan by timestamp**
 - Work on only **1 plan per session**
-- If no plan files exist → **STOP**. Do not create any file.
+- If no `todo-*.md` plan files exist → **STOP**. Do not create any file.
+- **Lock the plan** — rename before starting work so no other agent picks it:
+  ```bash
+  mv .agents/plans/todo-<feature>-<role>-<ts>.md .agents/plans/onprogress-<feature>-<role>-<ts>.md
+  ```
+  Other agents only look for `todo-*.md`, so an `onprogress-` file is skipped.
 
 ### 2. Prepare
 
 - Validate plan paths against the actual codebase (do the files exist?)
 - Read `.agents/skills/README.md` to find relevant skills for implementation
 - Understand which files will be modified and which layers are affected
-- Do NOT modify any files during this step
+- **Create worktree** with timestamp to guarantee uniqueness:
+  - Extract feature slug + timestamp from plan filename: `onprogress-<feature>-<role>-<timestamp>.md` → `<feature>`+`<timestamp>`
+  - Create worktree: `git worktree add .worktree/<feature>-<timestamp> develop -b worktree-<feature>-<timestamp>`
+  - All implementation happens inside this worktree
+- Do NOT modify any files in the main repo during this step
 
 ### 3. Implement
 
-Execute plans exactly as designed. Apply the fixes to actual source files.
+Execute plans exactly as designed inside the worktree created in step 2.
 
+- All file edits happen in `.worktree/`<feature>`+`<timestamp>`/`
 - Follow the relevant skill workflow if applicable
 - Write tests for any new or changed functionality
 - Do NOT deviate from the plans' design
@@ -67,12 +77,10 @@ Execute plans exactly as designed. Apply the fixes to actual source files.
 
 ### 5. Report & Commit
 
-**Delete only plan files you worked:**
+**Delete only the onprogress plan file you worked** (from main repo, not worktree):
 
 ```bash
-rm .agents/plans/todo-<feature-name>-architect-<timestamp>.md
-rm .agents/plans/todo-<feature-name>-business-analyst-<timestamp>.md
-rm .agents/plans/todo-<feature-name>-tech-lead-<timestamp>.md
+rm .agents/plans/onprogress-<feature-name>-<role>-<timestamp>.md
 ```
 
 **Write a report:**
@@ -99,13 +107,22 @@ Do NOT write Fullstack Developer as role.
 {List any deviations from the plans or additional context. Write "None" if exact match.}
 ```
 
-**Commit to develop and create PR to main:**
+**Commit in worktree, push, and create PR to develop:**
 
 ```bash
+# Inside .worktree/<feature>/
 git add .
 git commit -m "feat({scope}): {description of changes}"
-git push origin develop
-gh pr create --base main --head develop --title "feat({scope}): {title}" --body "{summary of report}"
+git push origin worktree-<feature>
+gh pr create --base develop --head worktree-<feature> --title "feat({scope}): {title}" --body "{summary of report}"
+```
+
+**After PR merged, cleanup worktree:**
+
+```bash
+# Back in main repo
+git worktree remove .worktree/<feature>
+git branch -d worktree-<feature>
 ```
 
 ## Branch Strategy
@@ -113,25 +130,31 @@ gh pr create --base main --head develop --title "feat({scope}): {title}" --body 
 
 | Step | Action                                                |
 | ------ | ------------------------------------------------------- |
-| 1    | Commit changes to`develop` branch                     |
-| 2    | Push`develop` to remote: `git push origin develop`    |
-| 3    | Create PR from`develop` → `main`: `gh pr create ...` |
+| 1    | Create worktree `.worktree/<feature>` from `develop`  |
+| 2    | Commit changes in worktree branch                     |
+| 3    | Push worktree branch to remote                        |
+| 4    | Create PR from worktree → `develop`                   |
+| 5    | After merge, cleanup worktree and branch              |
 
 **Rules:**
 
 - Never commit directly to `main`
-- Never create new branch, always use `develop` branch
-- Always create PR from `develop` to `main`
+- Never commit directly to `develop` — always use worktrees
+- Worktree name = plan feature slug from `.agents/plans/`
+- Always create PR from worktree branch → `develop`
 - Do NOT delete `develop` branch after merge to `main`
 
 ## Checklist
 
-- [ ]  Plan file exists in `.agents/plans/`
+- [ ]  Plan file exists in `.agents/plans/` (as `todo-*.md`)
+- [ ]  Plan renamed to `onprogress-*.md` before starting work
 - [ ]  Plan paths validated against codebase
 - [ ]  Relevant skill workflows identified
+- [ ]  Worktree created at `.worktree/<feature>-<timestamp>`
 - [ ]  Implementation matches plan exactly (no deviations)
 - [ ]  `cargo clippy --all-targets -- -D warnings` passes
 - [ ]  `cargo test --workspace` passes
 - [ ]  `lint-arwaky-cli scan <path>` passes
-- [ ]  Plan files deleted, report written
-- [ ]  Committed to `develop`, PR created to `main`
+- [ ]  `onprogress-*.md` deleted, report written
+- [ ]  Committed in worktree, PR created to `develop`
+- [ ]  Worktree cleaned up after merge

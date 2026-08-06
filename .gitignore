@@ -39,6 +39,5 @@ serviceAccountKey
 .zed/settings.json
 .archive/
 .agents/finding
-.agents/plans
 .kilo/
-.agents/reports
+
