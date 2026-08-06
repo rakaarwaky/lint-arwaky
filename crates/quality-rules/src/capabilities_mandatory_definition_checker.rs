@@ -72,7 +72,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         "AES303",
                         Severity::MEDIUM,
                         format!(
-                            "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Unit struct declared on line {} in {} without impl or derive\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Unit struct declared on line {} in {} without impl or derive\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                             i + 1,
                             file
                         ),
@@ -99,7 +99,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         "AES303",
                         Severity::MEDIUM,
                         format!(
-                            "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (': pass')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (': pass')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                             i + 1,
                             file
                         ),
@@ -113,7 +113,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                             "AES303",
                             Severity::MEDIUM,
                             format!(
-                                "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (body is '{}')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                                "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (body is '{}')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                                 i + 1,
                                 file,
                                 next
@@ -130,7 +130,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     "AES303",
                     Severity::MEDIUM,
                     format!(
-                        "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty JS/TS class/interface on line {} in {}\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                        "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty JS/TS class/interface on line {} in {}\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                         i + 1,
                         file
                     ),

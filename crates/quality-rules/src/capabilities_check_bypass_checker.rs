@@ -39,7 +39,7 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
 
             // Strip trailing TOML comments outside strings before comparing values.
-            let t = Self::strip_toml_comment(t).trim();
+            let t = Self::strip_hash_comment(t).trim();
             if t.is_empty() {
                 continue;
             }
@@ -200,9 +200,9 @@ impl IBypassCheckerProtocol for BypassChecker {
                         None => continue,
                     };
 
-                    let uw = ['u', 'n', 'w', 'r', 'a', 'p'].iter().collect::<String>();
                     if matches_word_token(code_lower.as_str(), token, false)
-                        && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
+                        && !(token == "unwrap"
+                            && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
                         let reason = format!("Found forbidden bypass token: '{}'", token);
@@ -478,7 +478,7 @@ impl BypassChecker {
     /// Returns the code portion of a line for language-sensitive early-scan checks.
     fn code_portion_for_language(line: &str, language: Language) -> &str {
         match language {
-            Language::Python => Self::strip_python_comment(line),
+            Language::Python => Self::strip_hash_comment(line),
             _ => strip_trailing_comment(line),
         }
     }
@@ -490,7 +490,7 @@ impl BypassChecker {
         in_block_comment: &mut bool,
     ) -> Cow<'a, str> {
         match language {
-            Language::Python => Cow::Borrowed(Self::strip_python_comment(line)),
+            Language::Python => Cow::Borrowed(Self::strip_hash_comment(line)),
             _ => {
                 // Fast path: no comment markers and not currently inside a block comment.
                 if !*in_block_comment
@@ -604,36 +604,9 @@ impl BypassChecker {
         result
     }
 
-    /// Strip trailing Python `# ...` comments outside simple string literals.
-    fn strip_python_comment(line: &str) -> &str {
-        let bytes = line.as_bytes();
-        let len = bytes.len();
-        let mut i = 0;
-        let mut in_string = false;
-        let mut quote: u8 = b'"';
-
-        while i < len {
-            let b = bytes[i];
-
-            if in_string {
-                if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
-                    in_string = false;
-                }
-            } else if b == b'"' || b == b'\'' {
-                in_string = true;
-                quote = b;
-            } else if b == b'#' {
-                return &line[..i];
-            }
-
-            i += 1;
-        }
-
-        line
-    }
-
-    /// Strip trailing TOML `# ...` comments outside simple string literals.
-    fn strip_toml_comment(line: &str) -> &str {
+    /// Strip trailing `# ...` comments outside simple string literals.
+    /// Single implementation shared by Python and TOML handling.
+    fn strip_hash_comment(line: &str) -> &str {
         let bytes = line.as_bytes();
         let len = bytes.len();
         let mut i = 0;
