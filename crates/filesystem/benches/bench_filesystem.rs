@@ -157,7 +157,7 @@ fn bench_file_io(c: &mut Criterion) {
             std::fs::write(scan_dir.join(format!("file_{}.rs", i)), "fn f() {}").unwrap();
         }
         b.iter(|| {
-            std::hint::black_box(io.scan_directory_with_ignored(&scan_dir, &[]));
+            std::hint::black_box(io.scan_directory_with_ignored(&scan_dir, &PatternList::default()));
         });
     });
 
