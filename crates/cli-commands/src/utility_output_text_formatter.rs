@@ -5,7 +5,7 @@
 
 use std::collections::BTreeMap;
 
-use dispatcher::surface_output_component::ViolationItem;
+use shared::common::ViolationItem;
 use shared::cli_commands::Format;
 
 /// Group violations by workspace member name extracted from file paths.

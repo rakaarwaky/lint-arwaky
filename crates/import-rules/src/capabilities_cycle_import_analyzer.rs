@@ -168,6 +168,12 @@ impl DependencyCycleAnalyzer {
                 let mut has_cross_layer = false;
                 for module in modules {
                     let module_value = module.value();
+                    // Skip empty module paths (e.g. re-export entries parsed with no raw path) —
+                    // they cannot represent a real dependency and would falsely resolve to a layer
+                    // via the filesystem fallback (resolve_module_path_to_layer).
+                    if module_value.is_empty() {
+                        continue;
+                    }
                     let is_crate_import = module_value.starts_with("crate::")
                         || module_value.starts_with("lint_arwaky::");
                     let is_cross_layer_crate = if is_crate_import {
@@ -225,12 +231,16 @@ impl DependencyCycleAnalyzer {
             .collect();
 
         let mut edges = Vec::new();
-        let mut files_by_layer: HashMap<String, Vec<String>> = HashMap::new();
+        let mut edge_to_file: HashMap<(String, String), String> = HashMap::new();
         for (local_edges, layer_mapping) in file_results {
-            edges.extend(local_edges);
-            if let Some((fl, f)) = layer_mapping {
-                files_by_layer.entry(fl).or_default().push(f);
+            if let Some((_, ref f)) = layer_mapping {
+                for e in &local_edges {
+                    edge_to_file
+                        .entry((e.source.clone(), e.target.clone()))
+                        .or_insert_with(|| f.clone());
+                }
             }
+            edges.extend(local_edges);
         }
 
         let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
@@ -239,13 +249,10 @@ impl DependencyCycleAnalyzer {
             let parts: Vec<&str> = edge_key.split("->").collect();
             let source = parts[0];
             let target = parts[1];
-            // Prefer a file within the current scan target (root_dir) for attribution.
-            let file = files_by_layer.get(source)
-                .and_then(|files| {
-                    files.iter().find(|f| f.contains(root_dir))
-                        .or_else(|| files.first())
-                        .cloned()
-                })
+            let file = edge_to_file
+                .get(&(source.to_string(), target.to_string()))
+                .or_else(|| edge_to_file.get(&(target.to_string(), source.to_string())))
+                .cloned()
                 .unwrap_or_else(|| source.to_string());
             LintResult::new_arch(&file, 1, "AES205", Severity::CRITICAL,
                 format!(
