@@ -28,6 +28,19 @@ pub fn get_suffix(stem: &str) -> Option<&str> {
     stem.rfind('_').map(|pos| &stem[pos + 1..])
 }
 
+/// Basename of a path — always yields at least one element.
+pub fn basename_of(path: &str) -> &str {
+    match path.rsplit('/').next() {
+        Some(name) => name,
+        None => path,
+    }
+}
+
+/// Parse a FilePath; skip files that fail validation (empty path).
+pub fn parse_path(filename: &str) -> Option<FilePath> {
+    FilePath::new(filename.to_string()).ok()
+}
+
 /// Construct a file-level LintResult from a string filename.
 pub fn string_filename_result(
     file: &str,

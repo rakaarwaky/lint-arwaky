@@ -1,7 +1,7 @@
 // PURPOSE: NamingConventionChecker — Handles AES101 naming convention checks (lowercase, underscore, min N words)
-use crate::utility_naming_checker::detect_layer;
-use crate::utility_naming_checker::get_stem;
-use crate::utility_naming_checker::{rule_exception_set, string_filename_result};
+use crate::utility_naming_checker::{
+    basename_of, detect_layer, get_stem, parse_path, rule_exception_set, string_filename_result,
+};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
@@ -15,6 +15,8 @@ use shared::naming_rules::contract_naming_checker_protocol::INamingConventionChe
 use shared::naming_rules::taxonomy_naming_constant::RULE_CODE_NAMING_CONVENTION;
 
 use std::sync::OnceLock;
+
+const MIN_WORDS_DEFAULT: usize = 3;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -44,12 +46,9 @@ impl INamingConventionChecker for NamingConventionChecker {
             .par_iter()
             .filter_map(|f| {
                 let f_str = f.to_string();
-                let filename = match f.rsplit('/').next() {
-                    Some(name) => name,
-                    None => &f_str,
-                };
+                let filename = basename_of(&f_str);
                 // Rule-level exceptions evaluated before layer detection (FRD FR-001).
-                if exceptions.contains(filename) {
+                if exceptions.iter().any(|v| v == filename) {
                     return None;
                 }
                 let layer = detect_layer(&f_str, &layer_keys);
@@ -79,19 +78,14 @@ impl NamingConventionChecker {
     fn min_words_from_config(config: &ArchitectureConfig) -> usize {
         let value = config.naming.word_count.value;
         if value <= 0 {
-            return 3;
+            return MIN_WORDS_DEFAULT;
         }
-        usize::try_from(value).unwrap_or(3)
+        usize::try_from(value).unwrap_or(MIN_WORDS_DEFAULT)
     }
 
-    /// Build naming regex dynamically based on min_words.
-    /// Slots map 1:1 to word counts 1..=10 (FRD: "one slot per word count 1–10").
-    /// Counts > 10 are clamped to the 10-word slot.
-    ///
-    /// Returns `&Regex` directly — a bad pattern is a programmer error,
-    /// not a runtime condition, so panicking on compile failure is correct.
-    fn naming_regex(min_words: usize) -> &'static Regex {
-        static REGEX_TABLE: [OnceLock<Regex>; 10] = [
+    /// Slots map 1:1 to word counts 1..=10; counts > 10 clamp to the 10-word slot.
+    fn naming_regex(min_words: usize) -> Option<&'static Regex> {
+        static REGEX_TABLE: [OnceLock<Option<Regex>>; 10] = [
             OnceLock::new(),
             OnceLock::new(),
             OnceLock::new(),
@@ -107,8 +101,9 @@ impl NamingConventionChecker {
         REGEX_TABLE[clamped - 1]
             .get_or_init(|| {
                 let pattern = format!(r"^[a-z0-9]+(_[a-z0-9]+){{{},}}$", clamped.saturating_sub(1));
-                Regex::new(&pattern).expect("naming regex pattern is always valid for clamped 1..=10")
+                Regex::new(&pattern).ok()
             })
+            .as_ref()
     }
 
     /// Check file naming conventions (AES101: pattern validation — lowercase, underscore, min N words).
@@ -120,20 +115,20 @@ impl NamingConventionChecker {
         definition: Option<&shared::common::taxonomy_definition_vo::LayerDefinition>,
         min_words: usize,
     ) -> Option<LintResult> {
-        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
+        let fp = parse_path(filename)?;
         if fp.is_barrel_file() || fp.is_entry_point() {
             return None;
         }
 
-        let stem = get_stem(filename).unwrap_or_default();
+        let stem = get_stem(filename)?;
 
         if let Some(def) = definition
-            && def.exceptions.values.contains(&filename.to_string())
+            && def.exceptions.values.iter().any(|v| v == filename)
         {
             return None;
         }
 
-        if !Self::naming_regex(min_words).is_match(stem) {
+        if !Self::naming_regex(min_words).map_or(false, |re| re.is_match(stem)) {
             let layer_hint = layer_name
                 .as_ref()
                 .map(|l| format!(" (detected layer: '{}')", l.value()))
