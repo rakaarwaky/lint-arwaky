@@ -7,6 +7,7 @@ use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::common::taxonomy_language_vo::Language;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_graph_protocol::IGraphProtocol;
