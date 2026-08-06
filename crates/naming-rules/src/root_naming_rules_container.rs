@@ -11,8 +11,7 @@ use std::sync::Arc;
 pub struct NamingContainer {
     naming_convention_checker: Arc<dyn INamingConventionChecker>,
     suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
-    config: Arc<ArchitectureConfig>,
-    layer_map: Arc<LayerMapVO>,
+    orchestrator: Arc<dyn INamingRunnerAggregate>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -23,11 +22,18 @@ impl NamingContainer {
             Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
         let suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker> =
             Arc::new(crate::capabilities_suffix_prefix_checker::SuffixPrefixChecker::new());
+
+        let orchestrator = Arc::new(NamingOrchestrator::new(NamingOrchestratorDeps {
+            naming_convention_checker: naming_convention_checker.clone(),
+            suffix_prefix_checker: suffix_prefix_checker.clone(),
+            config,
+            layer_map,
+        }));
+
         Self {
             naming_convention_checker,
             suffix_prefix_checker,
-            config,
-            layer_map,
+            orchestrator,
         }
     }
 
@@ -40,11 +46,6 @@ impl NamingContainer {
     }
 
     pub fn orchestrator(&self) -> Arc<dyn INamingRunnerAggregate> {
-        Arc::new(NamingOrchestrator::new(NamingOrchestratorDeps {
-            naming_convention_checker: self.naming_convention_checker.clone(),
-            suffix_prefix_checker: self.suffix_prefix_checker.clone(),
-            config: self.config.clone(),
-            layer_map: self.layer_map.clone(),
-        }))
+        self.orchestrator.clone()
     }
 }

@@ -13,9 +13,7 @@ workspace = true
 [dependencies]
 shared.workspace = true
 regex.workspace = true
-once_cell.workspace = true
 rayon.workspace = true
-tracing.workspace = true
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }

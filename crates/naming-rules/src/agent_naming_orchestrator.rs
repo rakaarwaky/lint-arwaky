@@ -29,7 +29,9 @@ pub struct NamingOrchestrator {
 impl INamingRunnerAggregate for NamingOrchestrator {
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         // Naming checks are path-only — do NOT skip parse failures.
-        // Per FRD glossary, skip only UNREADABLE files (empty content).
+        // `content.is_empty()` is used as a proxy for "unreadable" per the FRD glossary.
+        // If the filesystem crate adds a separate error field in the future,
+        // this filter should also check `parse_ok == false`.
         let file_paths: Vec<FilePath> = files
             .iter()
             .filter(|f| !f.content.is_empty())

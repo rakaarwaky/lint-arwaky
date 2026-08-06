@@ -28,3 +28,6 @@ pub const SUFFIX_POLICY_STRICT: &str = "strict";
 
 /// Source file extensions recognized by naming checks
 pub const SOURCE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
+
+/// Marker in specialized layer names (e.g., "agent(orchestrator)")
+pub const SPECIALIZED_LAYER_MARKER: &str = "(";

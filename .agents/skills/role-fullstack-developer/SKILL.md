@@ -15,6 +15,7 @@ metadata:
     - role-architect
     - role-business-analyst
     - role-tech-lead
+    - role-quality-analysis
 ---
 # role-fullstack-developer
 
@@ -29,9 +30,7 @@ If no plan files exist in `.agents/plans/`, **stop immediately**. Do not write r
 
 Before starting, read:
 
-1. **`ARCHITECTURE.md`** — 7-layer spec (to avoid breaking architecture during implementation)
-2. **`.agents/rules/RULES_AES.md`** — All AES rules (to avoid introducing violations during implementation)
-3. **`.agents/skills/`** — Use skill driven development
+
 
 ## Workflow
 
@@ -48,14 +47,16 @@ Before starting, read:
   Other agents only look for `todo-*.md`, so an `onprogress-` file is skipped.
 
 ### 2. Prepare
-
+Before starting, read:
+- **`ARCHITECTURE.md`** — 7-layer spec (to avoid breaking architecture during implementation)
+- **`.agents/rules/RULES_AES.md`** — All AES rules (to avoid introducing violations during implementation)
+- **`.agents/skills/README — Use skill driven 
 - Validate plan paths against the actual codebase (do the files exist?)
-- Read `.agents/skills/README.md` to find relevant skills for implementation
 - Understand which files will be modified and which layers are affected
 - **Create worktree** with timestamp to guarantee uniqueness:
-  - Extract feature slug + timestamp from plan filename: `onprogress-<feature>-<role>-<timestamp>.md` → `<feature>`+`<timestamp>`
-  - Create worktree: `git worktree add .worktree/<feature>-<timestamp> develop -b worktree-<feature>-<timestamp>`
-  - All implementation happens inside this worktree
+- Extract feature slug + timestamp from plan filename: `onprogress-<feature>-<role>-<timestamp>.md` → `<feature>`+`<timestamp>`
+- Create worktree: `git worktree add .worktree/<feature>-<timestamp> develop -b worktree-<feature>-<timestamp>`
+- All implementation happens inside this worktree
 - Do NOT modify any files in the main repo during this step
 
 ### 3. Implement

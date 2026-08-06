@@ -16,6 +16,7 @@ metadata:
     - role-architect
     - role-business-analyst
     - role-fullstack-developer
+    - role-quality-analysis
 ---
 
 # role-tech-lead

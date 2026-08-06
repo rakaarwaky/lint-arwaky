@@ -40,4 +40,6 @@ serviceAccountKey
 .archive/
 .agents/finding
 .kilo/
+.agents/reports
+.agents/plans
 

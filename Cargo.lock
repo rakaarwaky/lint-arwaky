@@ -3174,12 +3174,10 @@ version = "1.11.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
- "once_cell",
  "rayon",
  "regex",
  "shared-lint-arwaky",
  "tempfile",
- "tracing",
 ]
 
 [[package]]

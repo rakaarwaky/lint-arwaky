@@ -141,7 +141,7 @@ fn has_rust_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> b
             }
         }
         levels += 1;
-        if levels > 3 {
+        if levels > 10 {
             break;
         }
         current = p.parent();
@@ -175,7 +175,7 @@ fn has_python_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) ->
             }
         }
         levels += 1;
-        if levels > 3 {
+        if levels > 10 {
             break;
         }
         current = p.parent();
@@ -204,7 +204,7 @@ fn has_typescript_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol
             }
         }
         levels += 1;
-        if levels > 3 {
+        if levels > 10 {
             break;
         }
         current = p.parent();
