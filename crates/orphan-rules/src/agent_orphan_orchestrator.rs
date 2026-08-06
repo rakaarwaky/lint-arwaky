@@ -450,6 +450,8 @@ impl ArchOrphanAnalyzer {
                 &fp,
                 &root,
                 alive_result,
+                content_map,
+                std::path::Path::new(top_root),
             );
         }
 

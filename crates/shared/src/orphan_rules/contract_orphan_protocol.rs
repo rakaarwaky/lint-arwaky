@@ -38,6 +38,8 @@ pub trait ICapabilitiesOrphanProtocol: Send + Sync {
         f: &FilePath,
         root_dir: &FilePath,
         alive_files: &ReachabilityResult,
+        content_map: &HashMap<String, String>,
+        workspace_root: &std::path::Path,
     ) -> OrphanIndicatorResult;
 }
 
