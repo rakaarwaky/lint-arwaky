@@ -131,7 +131,7 @@ fn passive_surface_control_flow_flagged_fallback() {
     }
     let f = make_file("src/surface_my_view.rs", Language::Rust, &content);
     let mut v = Vec::new();
-    checker().check_fn_count_limit(&f, &mut v);
+    checker().check_passive_surface(&f, &mut v);
     assert!(
         !v.is_empty(),
         "excess control flow in passive surface should be flagged"

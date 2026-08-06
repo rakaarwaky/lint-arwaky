@@ -85,26 +85,30 @@ impl CapabilitiesRoleChecker {
                     return;
                 }
 
-                // Rule 2: must have >= 1 struct implementor
+                // Rule 2: must have >= 1 struct implementing a protocol trait
                 let has_implementor = rust_meta.impl_blocks.iter().any(|imp| {
-                    imp.trait_name.is_some()
-                        && struct_names.contains(&imp.implementor_type.as_str())
+                    let trait_is_protocol = imp
+                        .trait_name
+                        .as_deref()
+                        .is_some_and(|t| t.contains("protocol") || t.contains("Protocol"));
+                    trait_is_protocol && struct_names.contains(&imp.implementor_type.as_str())
                 });
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
 
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No `impl Protocol for struct` pattern found in {}. At least one struct must implement a protocol trait.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
                 }
             }
             ParseMetadata::Python(py_meta) => {
                 let class_count = py_meta.class_declarations.len();
-                let implementor_found = py_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| !c.bases.is_empty());
+                let implementor_found = py_meta.class_declarations.iter().any(|c| {
+                    c.bases
+                        .iter()
+                        .any(|b| b.contains("protocol") || b.contains("Protocol"))
+                });
 
                 if class_count > 3 {
                     violations.push(LintResult::new_arch(
@@ -131,10 +135,11 @@ impl CapabilitiesRoleChecker {
                 let type_count = ts_meta.class_declarations.len()
                     + ts_meta.interface_declarations.len()
                     + ts_meta.type_alias_declarations.len();
-                let implementor_found = ts_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| !c.implements.is_empty());
+                let implementor_found = ts_meta.class_declarations.iter().any(|c| {
+                    c.implements
+                        .iter()
+                        .any(|i| i.contains("protocol") || i.contains("Protocol"))
+                });
 
                 if type_count > 3 {
                     violations.push(LintResult::new_arch(
@@ -224,6 +229,7 @@ impl CapabilitiesRoleChecker {
                     lines.iter().any(|l| {
                         let t = l.trim();
                         t.starts_with("impl ")
+                            && (t.contains("protocol") || t.contains("Protocol"))
                             && (t.contains(&format!("for {} ", s))
                                 || t.contains(&format!("for {}{{", s))
                                 || t.contains(&format!("for {} {{", s)))
@@ -247,7 +253,7 @@ impl CapabilitiesRoleChecker {
                             let after_paren = &t[start + 1..];
                             if let Some(end) = after_paren.find(')') {
                                 let parents = after_paren[..end].trim();
-                                if !parents.is_empty() {
+                                if parents.contains("protocol") || parents.contains("Protocol") {
                                     implementor_found = true;
                                 }
                             }
@@ -283,7 +289,9 @@ impl CapabilitiesRoleChecker {
                         .or_else(|| t.strip_prefix("class "));
                     if let Some(rest) = class_body {
                         type_count += 1;
-                        if rest.contains("implements ") {
+                        if rest.contains("implements ")
+                            && (rest.contains("protocol") || rest.contains("Protocol"))
+                        {
                             implementor_found = true;
                         }
                         continue;

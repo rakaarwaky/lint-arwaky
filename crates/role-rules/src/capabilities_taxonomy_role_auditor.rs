@@ -426,6 +426,11 @@ impl TaxonomyRoleChecker {
                 || t.starts_with("class ")
                 || t.starts_with("pub type ")
                 || t.starts_with("type ")
+                || t.starts_with("export class ")
+                || t.starts_with("export interface ")
+                || t.starts_with("export enum ")
+                || t.starts_with("export type ")
+                || t.starts_with("export function ")
             {
                 violations.push(LintResult::new_arch(
                     &path_str,

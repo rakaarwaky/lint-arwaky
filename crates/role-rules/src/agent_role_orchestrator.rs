@@ -84,16 +84,12 @@ impl RoleOrchestrator {
                 .file_stem()
                 .and_then(|s| s.to_str())
                 .unwrap_or_default();
-            let prefix = stem.split('_').next().unwrap_or_default();
+            let basename = stem;
+            let prefix = basename.split('_').next().unwrap_or_default();
 
             // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
             if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) || filename == "main.rs"
             {
-                continue;
-            }
-
-            // Skip files in rule-specific exceptions from config
-            if self.is_exception(filename) {
                 continue;
             }
 
@@ -102,23 +98,27 @@ impl RoleOrchestrator {
             }
 
             match prefix {
-                "agent" => {
+                "agent"
+                    if self.is_rule_enabled("AES405") && !self.is_exception("AES405", filename) =>
+                {
                     self.deps
                         .agent
                         .check_agent_routing(file, "agent", violations);
                 }
                 "root" => {}
-                "surfaces" | "surface" => {
+                "surfaces" | "surface"
+                    if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
+                {
                     self.deps.surface.check_fn_count_limit(file, violations);
-                    let is_smart = filename.contains("_command")
-                        || filename.contains("_controller")
-                        || filename.contains("_page")
-                        || filename.contains("_entry")
-                        || filename.contains("_router");
-                    let is_utility = filename.contains("_hook")
-                        || filename.contains("_store")
-                        || filename.contains("_action")
-                        || filename.contains("_screen");
+                    let is_smart = basename.ends_with("_command")
+                        || basename.ends_with("_controller")
+                        || basename.ends_with("_page")
+                        || basename.ends_with("_entry")
+                        || basename.ends_with("_router");
+                    let is_utility = basename.ends_with("_hook")
+                        || basename.ends_with("_store")
+                        || basename.ends_with("_action")
+                        || basename.ends_with("_screen");
                     if is_smart {
                         self.deps.surface.check_smart_surface(file, violations);
                     } else if is_utility {
@@ -127,24 +127,32 @@ impl RoleOrchestrator {
                         self.deps.surface.check_passive_surface(file, violations);
                     }
                 }
-                "contract" => {
+                "contract"
+                    if self.is_rule_enabled("AES402") && !self.is_exception("AES402", filename) =>
+                {
                     if filename.contains("_protocol") {
                         violations.extend(self.deps.contract.check_protocol(file));
                     } else if filename.contains("_aggregate") {
                         violations.extend(self.deps.contract.check_aggregate(file));
                     }
                 }
-                "capabilities" | "capability" => {
+                "capabilities" | "capability"
+                    if self.is_rule_enabled("AES403") && !self.is_exception("AES403", filename) =>
+                {
                     self.deps.capabilities.check_capability_routing(
                         file,
                         "capabilities",
                         violations,
                     );
                 }
-                "utility" => {
+                "utility"
+                    if self.is_rule_enabled("AES404") && !self.is_exception("AES404", filename) =>
+                {
                     self.deps.utility.check_utility_convention(file, violations);
                 }
-                "taxonomy" => {
+                "taxonomy"
+                    if self.is_rule_enabled("AES401") && !self.is_exception("AES401", filename) =>
+                {
                     self.deps.taxonomy.check_entity(file, violations);
                     self.deps.taxonomy.check_error(file, violations);
                     self.deps.taxonomy.check_event(file, violations);
@@ -165,17 +173,25 @@ impl RoleOrchestrator {
         })
     }
 
-    fn is_exception(&self, filename: &str) -> bool {
-        // Check if filename (without extension) is in any rule's exceptions list
+    fn is_exception(&self, code: &str, filename: &str) -> bool {
         let stem = std::path::Path::new(filename)
             .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or(filename);
-        for rule in &self.config.rules {
-            if rule.exceptions.values.iter().any(|e| e == stem) {
-                return true;
-            }
-        }
-        false
+            .and_then(|s| s.to_str());
+        self.config.rules.iter().any(|r| {
+            r.rule_type.code() == code
+                && r.exceptions
+                    .values
+                    .iter()
+                    .any(|e| e == filename || stem.is_some_and(|s| e == s))
+        })
+    }
+
+    fn is_rule_enabled(&self, code: &str) -> bool {
+        self.config
+            .rules
+            .iter()
+            .find(|r| r.rule_type.code() == code)
+            .map(|r| r.enabled.value)
+            .unwrap_or(true)
     }
 }

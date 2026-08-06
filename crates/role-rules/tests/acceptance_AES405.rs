@@ -78,7 +78,7 @@ fn aes405_valid_agent_no_violation() {
     let file = make_file(
         "src/agent_dispatcher.rs",
         Language::Rust,
-        "pub struct Dispatcher {}\nimpl IDispatcher for Dispatcher {}\n",
+        "pub struct Dispatcher {}\nimpl IDispatcherAggregate for Dispatcher {}\n",
     );
     let results = run_audit(vec![file]);
     let aes405: Vec<_> = results
@@ -118,7 +118,7 @@ fn aes405_python_with_parent_no_violation() {
     let file = make_file(
         "src/agent_dispatcher.py",
         Language::Python,
-        "class Dispatcher(IDispatcher):\n    pass\n",
+        "class Dispatcher(IDispatcherAggregate):\n    pass\n",
     );
     let results = run_audit(vec![file]);
     let aes405: Vec<_> = results
