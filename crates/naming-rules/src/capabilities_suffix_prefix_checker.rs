@@ -1,7 +1,8 @@
 // PURPOSE: SuffixPrefixChecker — Handles AES102 suffix/prefix rules (allowed, forbidden, mandatory strict, cross-layer)
-use crate::utility_naming_checker::detect_layer;
-use crate::utility_naming_checker::string_filename_result;
-use crate::utility_naming_checker::{get_stem, get_suffix, rule_exception_set};
+use crate::utility_naming_checker::{
+    basename_of, detect_layer, get_stem, get_suffix, parse_path, rule_exception_set,
+    string_filename_result,
+};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
@@ -43,9 +44,9 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
             .par_iter()
             .filter_map(|f| {
                 let f_str = f.to_string();
-                let filename = f.rsplit('/').next().unwrap_or(&f_str);
+                let filename = basename_of(&f_str);
                 // Rule-level exceptions evaluated before layer detection (FRD FR-002).
-                if exceptions.contains(filename) {
+                if exceptions.iter().any(|v| v == filename) {
                     return None;
                 }
                 let layer = detect_layer(&f_str, &layer_keys);
@@ -114,13 +115,13 @@ impl SuffixPrefixChecker {
         layer_name: &Option<LayerNameVO>,
         suffix_to_layer: &std::collections::HashMap<String, String>,
     ) -> Option<LintResult> {
-        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
+        let fp = parse_path(filename)?;
         if fp.is_barrel_file() || fp.is_entry_point() {
             return None;
         }
 
         let def = definition?;
-        if def.exceptions.values.contains(&filename.to_string()) {
+        if def.exceptions.values.iter().any(|v| v == filename) {
             return None;
         }
 
@@ -152,7 +153,7 @@ impl SuffixPrefixChecker {
         if let Some(suf) = &suffix
             && let Some(suffix_belonging_layer) = suffix_to_layer.get(*suf)
         {
-            let current_base = layer_display.split('(').next().unwrap_or(&layer_display);
+            let current_base = base_layer_of(&layer_display);
             if suffix_belonging_layer != current_base {
                 return Some(string_filename_result(
                     file,
@@ -200,4 +201,12 @@ impl SuffixPrefixChecker {
 
         None
     }
+}
+
+/// Extract the base layer name from a potentially specialized layer display string.
+/// e.g. `"surfaces(command)"` → `"surfaces"`, `"utility"` → `"utility"`.
+/// `split('(')` always yields at least one element, so `unwrap_or` is unreachable
+/// but satisfies the linter's no-unwrap policy.
+fn base_layer_of(layer_display: &str) -> &str {
+    layer_display.split('(').next().unwrap_or(layer_display)
 }
