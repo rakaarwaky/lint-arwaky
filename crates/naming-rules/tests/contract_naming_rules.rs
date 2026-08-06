@@ -1,5 +1,7 @@
 // Contract tests — verify all capabilities implement their declared protocol traits.
-use naming_rules_lint_arwaky::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
+use naming_rules_lint_arwaky::agent_naming_orchestrator::{
+    NamingOrchestrator, NamingOrchestratorDeps,
+};
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
 use shared::common::taxonomy_definition_vo::LayerMapVO;

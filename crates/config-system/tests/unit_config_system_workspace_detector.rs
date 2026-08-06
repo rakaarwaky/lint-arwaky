@@ -3,14 +3,14 @@ mod common;
 
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use shared::common::FilePath;
-use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath as SharedFilePath;
 use shared::common::taxonomy_source_vo::ContentString;
+use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::*;
-use std::sync::Arc;
 use std::fs;
+use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_detector() -> WorkspaceDetector {
@@ -20,36 +20,110 @@ fn make_detector() -> WorkspaceDetector {
 /// Mock filesystem returning empty directory listings — isolates detect tests from environment.
 struct CleanMockFs;
 impl IFileSystemIOProtocol for CleanMockFs {
-    fn path_exists(&self, _: &std::path::Path) -> bool { false }
-    fn is_dir(&self, _: &std::path::Path) -> bool { false }
-    fn is_file(&self, _: &std::path::Path) -> bool { false }
-    fn should_ignore(&self, _: &SharedFilePath, _: &[String]) -> bool { false }
-    fn canonicalize(&self, p: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> { Ok(p.to_path_buf()) }
-    fn canonicalize_path_str(&self, p: &SharedFilePath) -> SharedFilePath { p.clone() }
-    fn is_symlink(&self, _: &std::path::Path) -> bool { false }
-    fn metadata(&self, _: &std::path::Path) -> Result<std::fs::Metadata, std::io::Error> { Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock")) }
-    fn symlink_metadata(&self, _: &std::path::Path) -> Result<std::fs::Metadata, std::io::Error> { Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock")) }
-    fn get_file_stem<'a>(&self, path: &'a str) -> &'a str { path.rsplit('/').next().unwrap_or(path) }
-    fn is_source_file(&self, _: &std::path::Path) -> bool { false }
-    fn is_source_ext(&self, _: &FileExtension) -> bool { false }
-    fn get_basename<'a>(&self, path: &'a str) -> &'a str { path.rsplit('/').next().unwrap_or(path) }
-    fn get_parent<'a>(&self, path: &'a str) -> &'a str { path.rsplit('/').nth(1).unwrap_or(path) }
-    fn is_python_file(&self, _: &std::path::Path) -> bool { false }
-    fn scan_directory_with_ignored(&self, _: &std::path::Path, _: &PatternList) -> Vec<std::path::PathBuf> { vec![] }
-    fn is_ignored_dir(&self, _: &std::path::Path, _: &PatternList) -> bool { false }
-    fn read_dir_entries_as_pathbuf(&self, _: &std::path::Path) -> Result<Vec<std::path::PathBuf>, std::io::Error> { Ok(vec![]) }
-    fn read_to_string(&self, _: &std::path::Path) -> Result<ContentString, std::io::Error> { Ok(ContentString::new("")) }
-    fn write_string(&self, _: &std::path::Path, _: &str) -> Result<(), std::io::Error> { Ok(()) }
-    fn copy_file(&self, _: &std::path::Path, _: &std::path::Path) -> Result<ByteCount, std::io::Error> { Ok(ByteCount::new(0)) }
-    fn create_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> { Ok(()) }
-    fn remove_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> { Ok(()) }
-    fn set_permissions(&self, _: &std::path::Path, _: FileMode) -> std::io::Result<()> { Ok(()) }
-    fn remove_file(&self, _: &std::path::Path) -> std::io::Result<()> { Ok(()) }
-    fn run_git_command(&self, _: &[&str], _: &str) -> GitCommandResult { GitCommandResult::new(String::new(), String::new(), false) }
-    fn parse_output_lines(&self, output: &str) -> ParsedLines { ParsedLines::new(output.lines().map(String::from).collect()) }
-    fn run_external_command_in(&self, _: &str, _: &[&str], _: &str) -> (String, String, bool) { (String::new(), String::new(), false) }
+    fn path_exists(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn is_dir(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn is_file(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn should_ignore(&self, _: &SharedFilePath, _: &[String]) -> bool {
+        false
+    }
+    fn canonicalize(&self, p: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> {
+        Ok(p.to_path_buf())
+    }
+    fn canonicalize_path_str(&self, p: &SharedFilePath) -> SharedFilePath {
+        p.clone()
+    }
+    fn is_symlink(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn metadata(&self, _: &std::path::Path) -> Result<std::fs::Metadata, std::io::Error> {
+        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock"))
+    }
+    fn symlink_metadata(&self, _: &std::path::Path) -> Result<std::fs::Metadata, std::io::Error> {
+        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock"))
+    }
+    fn get_file_stem<'a>(&self, path: &'a str) -> &'a str {
+        path.rsplit('/').next().unwrap_or(path)
+    }
+    fn is_source_file(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn is_source_ext(&self, _: &FileExtension) -> bool {
+        false
+    }
+    fn get_basename<'a>(&self, path: &'a str) -> &'a str {
+        path.rsplit('/').next().unwrap_or(path)
+    }
+    fn get_parent<'a>(&self, path: &'a str) -> &'a str {
+        path.rsplit('/').nth(1).unwrap_or(path)
+    }
+    fn is_python_file(&self, _: &std::path::Path) -> bool {
+        false
+    }
+    fn scan_directory_with_ignored(
+        &self,
+        _: &std::path::Path,
+        _: &PatternList,
+    ) -> Vec<std::path::PathBuf> {
+        vec![]
+    }
+    fn is_ignored_dir(&self, _: &std::path::Path, _: &PatternList) -> bool {
+        false
+    }
+    fn read_dir_entries_as_pathbuf(
+        &self,
+        _: &std::path::Path,
+    ) -> Result<Vec<std::path::PathBuf>, std::io::Error> {
+        Ok(vec![])
+    }
+    fn read_to_string(&self, _: &std::path::Path) -> Result<ContentString, std::io::Error> {
+        Ok(ContentString::new(""))
+    }
+    fn write_string(&self, _: &std::path::Path, _: &str) -> Result<(), std::io::Error> {
+        Ok(())
+    }
+    fn copy_file(
+        &self,
+        _: &std::path::Path,
+        _: &std::path::Path,
+    ) -> Result<ByteCount, std::io::Error> {
+        Ok(ByteCount::new(0))
+    }
+    fn create_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> {
+        Ok(())
+    }
+    fn remove_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> {
+        Ok(())
+    }
+    fn set_permissions(&self, _: &std::path::Path, _: FileMode) -> std::io::Result<()> {
+        Ok(())
+    }
+    fn remove_file(&self, _: &std::path::Path) -> std::io::Result<()> {
+        Ok(())
+    }
+    fn run_git_command(&self, _: &[&str], _: &str) -> GitCommandResult {
+        GitCommandResult::new(String::new(), String::new(), false)
+    }
+    fn parse_output_lines(&self, output: &str) -> ParsedLines {
+        ParsedLines::new(output.lines().map(String::from).collect())
+    }
+    fn run_external_command_in(&self, _: &str, _: &[&str], _: &str) -> (String, String, bool) {
+        (String::new(), String::new(), false)
+    }
     fn timing(&self) -> &ScanTiming {
-        static T: ScanTiming = ScanTiming { walk_ms: 0, cache_ms: 0, parse_ms: 0, extract_ms: 0, graph_ms: 0, total_ms: 0 };
+        static T: ScanTiming = ScanTiming {
+            walk_ms: 0,
+            cache_ms: 0,
+            parse_ms: 0,
+            extract_ms: 0,
+            graph_ms: 0,
+            total_ms: 0,
+        };
         &T
     }
 }
