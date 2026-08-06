@@ -109,9 +109,9 @@ echo -e "\n${CYAN}━━━ Phase 3: Self-Lint + Tests + AES Codes (PARALLEL) �
 export CLI="./target/debug/lint-arwaky-cli"
 
 run_gate "Self-Lint (check .)" bash -c '
-    output=$($CLI check . 2>&1)
+    output=$($CLI check . 2>&1) || exit_code=$?
     echo "$output" | tail -3
-    echo "  check . completed"
+    exit ${exit_code:-0}
 ' &
 SELF_LINT_PID=$!
 
