@@ -246,3 +246,13 @@ Operation cancelled.
 Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
 [2026-08-07T05:32:26+07:00] [engine:engine] Engine stopping (PID: 3042699)
 Operation cancelled.
+[2026-08-07T05:59:26+07:00] [engine:engine] Graph Loop Engine started (PID: 3106808)
+[2026-08-07T05:59:26+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T05:59:26+07:00] [engine:recovery] State=DEVELOPER, elapsed=42m
+[2026-08-07T05:59:26+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from DEVELOPER
+[2026-08-07T05:59:26+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T05:59:26+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T05:59:26+07:00] [engine:state] State: DEVELOPER — implementing: orphan-rules
+[2026-08-07T05:59:26+07:00] [engine:state] Dispatching Developer
+[2026-08-07T05:59:26+07:00] [engine:state] Running Developer agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.

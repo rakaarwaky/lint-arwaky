@@ -62,9 +62,7 @@ install_if_missing bandit "bandit" "pip_install bandit"
 echo "==> External dependency check done."
 
 # 3. Build (increase stack size to prevent LLVM SIGSEGV during LTO)
-# Use nightly toolchain to avoid rustc stable ICE in release MIR optimization.
-# Mold linker disabled in .cargo/config.toml — causes ICE in rustc 1.97.1 stable.
-CARGO_INCREMENTAL=0 RUST_MIN_STACK=33554432 cargo +nightly build --release 2>&1
+RUST_MIN_STACK=33554432 cargo build --release
 
 # 4. Checksums + install
 pushd "$RELEASE_DIR" >/dev/null
