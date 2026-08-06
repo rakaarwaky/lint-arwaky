@@ -10,7 +10,6 @@ fn empty_reachability() -> ReachabilityResult {
 
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::*;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::*;
 use std::collections::HashMap;
 use std::sync::Arc;

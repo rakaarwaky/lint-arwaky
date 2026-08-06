@@ -17,8 +17,14 @@ Execute the merged plan from Architect.
 
 **Step 2: IMPLEMENT**
 - Execute action items by priority
-- Create branch on .worktree/ : `worktree-{{FEATURE}}`
-- Follow recommended fixed code
+- Create worktree (MANDATORY — do NOT work on main tree):
+  ```bash
+  cd /home/raka/mcp-arwaky/lint-arwaky
+  git worktree add .worktree/worktree-{{FEATURE}} -b worktree-{{FEATURE}}
+  cd .worktree/worktree-{{FEATURE}}
+  ```
+- Work ONLY inside the worktree directory
+- Follow recommended fixed code from merged plan
 - Commit with conventional commits
 - Push to remote
 
