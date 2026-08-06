@@ -1,8 +1,6 @@
 // PURPOSE: AutoFixContainer — wiring for auto-fix feature (root layer, wiring only)
 //
-// Changes from previous version:
-// - BF-1: `dry_run` is no longer baked into the container — passed per-request via `execute(path, dry_run)`
-// - `with_dry_run` is deprecated in favor of `new()` + per-request dry_run
+// BF-1: `dry_run` is passed per-request via `execute(path, dry_run)`
 
 use crate::agent_fix_orchestrator::FixOrchestrator;
 use crate::capabilities_file_adapter::FileAdapter;
