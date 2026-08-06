@@ -56,8 +56,7 @@ fn smoke_individual_analyzers_construct() {
 
 #[test]
 fn smoke_contract_analyzer_construct() {
-    let fs = mock_filesystem();
-    let _analyzer = ContractOrphanAnalyzer::new(fs);
+    let _analyzer = ContractOrphanAnalyzer::new();
 }
 
 #[test]
@@ -71,7 +70,7 @@ fn smoke_arch_analyzer_construct() {
     let fs = mock_filesystem();
     let deps = ArchOrphanDeps {
         taxonomy_analyzer: Arc::new(TaxonomyOrphanAnalyzer::new()),
-        contract_analyzer: Arc::new(ContractOrphanAnalyzer::new(fs.clone())),
+        contract_analyzer: Arc::new(ContractOrphanAnalyzer::new()),
         capabilities_analyzer: Arc::new(CapabilitiesOrphanAnalyzer::new(fs.clone())),
         utility_analyzer: Arc::new(UtilityOrphanAnalyzer::new()),
         agent_analyzer: Arc::new(AgentOrphanAnalyzer::new()),

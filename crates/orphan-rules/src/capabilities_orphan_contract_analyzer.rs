@@ -1,44 +1,24 @@
 use crate::utility_orphan_filename::{content_contains_whole_word, file_basename, file_suffix};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::contract_orphan_protocol::IContractOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::{
     InheritanceMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::Mutex;
 
-#[derive(Clone)]
-struct SearchFilesCache {
-    root: std::path::PathBuf,
-    file_count: usize,
-    files: Arc<Vec<String>>,
-}
+pub struct ContractOrphanAnalyzer;
 
-impl Default for SearchFilesCache {
+impl Default for ContractOrphanAnalyzer {
     fn default() -> Self {
-        Self {
-            root: std::path::PathBuf::new(),
-            file_count: 0,
-            files: Arc::new(Vec::new()),
-        }
+        Self::new()
     }
 }
 
-pub struct ContractOrphanAnalyzer {
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
-    search_cache: Mutex<Option<SearchFilesCache>>,
-}
-
 impl ContractOrphanAnalyzer {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self {
-            search_cache: Mutex::new(None),
-            filesystem,
-        }
+    pub fn new() -> Self {
+        Self
     }
 
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
@@ -111,61 +91,13 @@ impl ContractOrphanAnalyzer {
         }
         false
     }
-
-    fn cached_search_files(&self, root_dir: &FilePath, all_files: &[String]) -> Arc<Vec<String>> {
-        let root = std::path::Path::new(root_dir.value()).to_path_buf();
-        let top_root = self
-            .filesystem
-            .find_workspace_root_from_path(&root)
-            .unwrap_or_else(|_| root.clone());
-        if let Ok(mut guard) = self.search_cache.lock() {
-            if let Some(cache) = guard.as_ref()
-                && cache.root == top_root
-                && cache.file_count == all_files.len()
-            {
-                return cache.files.clone();
-            }
-            let mut search_files: Vec<String> = all_files.to_vec();
-            // Collect additional source files from workspace dirs via filesystem
-            let ignored: Vec<String> = shared::common::DEFAULT_IGNORED_PATHS
-                .iter()
-                .map(|s| s.to_string())
-                .collect();
-            for ws_dir in &["crates", "packages", "modules"] {
-                let ws_path = top_root.join(ws_dir);
-                if self.filesystem.is_dir(&ws_path) {
-                    let discovered = self.filesystem.discover_source_files(&ws_path, &ignored);
-                    for f in discovered {
-                        // Normalize relative paths to absolute so content_map lookups work.
-                        let abs = if std::path::Path::new(&f).is_relative() {
-                            top_root.join(&f).to_string_lossy().to_string()
-                        } else {
-                            f.clone()
-                        };
-                        if search_files.iter().all(|existing| existing != &abs) {
-                            search_files.push(abs);
-                        }
-                    }
-                }
-            }
-            let files = Arc::new(search_files);
-            *guard = Some(SearchFilesCache {
-                root: top_root,
-                file_count: all_files.len(),
-                files: files.clone(),
-            });
-            files
-        } else {
-            Arc::new(all_files.to_vec())
-        }
-    }
 }
 
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
     fn is_contract_orphan(
         &self,
         f: &FilePath,
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         _inheritance_map: &InheritanceMap,
         all_files: &[String],
         content_map: &HashMap<String, String>,
@@ -200,7 +132,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             );
         }
 
-        let search_files = self.cached_search_files(root_dir, all_files);
+        // Use all_files directly — orchestrator already provides full workspace file list
+        let search_files: Vec<String> = all_files.to_vec();
 
         if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);

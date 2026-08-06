@@ -42,9 +42,7 @@ impl OrphanContainer {
                     crate::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer::new(),
                 ),
                 contract_analyzer: Arc::new(
-                    crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(
-                        filesystem.clone(),
-                    ),
+                    crate::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer::new(),
                 ),
                 capabilities_analyzer: Arc::new(
                     crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(
