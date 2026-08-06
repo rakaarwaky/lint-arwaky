@@ -127,23 +127,9 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
     }
 }
 
-/// `check` — quality scan (single linter).
-pub fn handle_check(
-    path: Option<FilePath>,
-    format: Format,
-    code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
-    _config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
-    filter: Option<String>,
-) -> ExitCode {
-    handle_quality(
-        path,
-        format,
-        code_analysis_linter,
-        filesystem,
-        filter,
-        Vec::new(),
-    )
+/// `check` — 1:1 alias of `scan` per FR-001.
+pub fn handle_check(params: ScanCommandParams) -> ExitCode {
+    handle_scan(params)
 }
 
 /// `quality` — quality rules scan.

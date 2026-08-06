@@ -1,9 +1,11 @@
 // PURPOSE: Git diff — CLI thin wrapper
 // Calls dispatcher for git-diff business logic, only adds CLI output.
-use shared::common::{ExitCode, GitBranchName, Severity};
+use shared::common::{ExitCode, GitBranchName};
 use shared::quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tracing::error;
+
+use crate::utility_output_text_formatter::format_location;
 
 pub fn handle_git_diff(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
@@ -35,20 +37,8 @@ pub fn handle_git_diff(
                 if results > 0 {
                     println!("  {}  -> {} violation(s)", f.value, results);
                     for r in per_file.get(&f.value).into_iter().flatten() {
-                        let loc = match (r.line.value(), r.column.value()) {
-                            (l, c) if l > 0 && c > 0 => {
-                                format!("{}:{}:{}", r.file.value(), l, c)
-                            }
-                            (l, _) if l > 0 => format!("{}:{}", r.file.value(), l),
-                            _ => r.file.value().to_string(),
-                        };
-                        let sev = match r.severity {
-                            Severity::CRITICAL => "CRITICAL",
-                            Severity::HIGH => "HIGH",
-                            Severity::MEDIUM => "MEDIUM",
-                            Severity::LOW => "LOW",
-                            _ => "INFO",
-                        };
+                        let loc = format_location(r.file.value(), r.line.value(), r.column.value());
+                        let sev = format!("{}", r.severity).to_uppercase();
                         println!("    {} [{}] {}", loc, sev, r.message.value());
                     }
                 } else {
