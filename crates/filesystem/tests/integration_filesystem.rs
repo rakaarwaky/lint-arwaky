@@ -1,6 +1,7 @@
 // Integration tests — full DI wiring via FilesystemContainer.
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::PatternList;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -117,9 +118,9 @@ fn orchestrator_collect_file_entries_reads_from_disk() {
     std::fs::write(&file, "fn main() {}").unwrap();
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
-    let entries = orch.collect_file_entries(&[file.to_string_lossy().to_string()]);
+    let entries = orch.collect_file_entries(&PatternList::new(vec![file.to_string_lossy().to_string()]));
     assert_eq!(entries.len(), 1);
-    assert_eq!(entries[0].1, "fn main() {}");
+    assert_eq!(entries[0].content, "fn main() {}");
 }
 
 #[test]
@@ -146,15 +147,15 @@ fn orchestrator_extract_imports_from_snippet() {
 fn orchestrator_run_git_version() {
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
-    let (stdout, _stderr, success) = orch.run_git_command(&["version"], ".");
-    assert!(success);
-    assert!(stdout.contains("git version"));
+    let result = orch.run_git_command(&["version"], ".");
+    assert!(result.success);
+    assert!(result.stdout.contains("git version"));
 }
 
 #[test]
 fn orchestrator_parse_output_lines_filters_empty() {
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
-    let lines = orch.parse_output_lines("a\n\nb\n  \nc\n");
-    assert_eq!(lines, vec!["a", "b", "c"]);
+    let result = orch.parse_output_lines("a\n\nb\n  \nc\n");
+    assert_eq!(result.lines, vec!["a", "b", "c"]);
 }

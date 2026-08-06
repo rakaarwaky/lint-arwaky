@@ -214,7 +214,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
                     }
                 }
                 if let Ok(content) = self.deps.filesystem.read_to_string(&candidate) {
-                    source_content = Some((candidate.to_string_lossy().to_string(), content));
+                    source_content = Some((candidate.to_string_lossy().to_string(), content.value));
                     break;
                 }
             }

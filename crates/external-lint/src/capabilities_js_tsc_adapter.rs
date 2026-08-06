@@ -61,8 +61,8 @@ impl ILinterAdapterProtocol for TSCAdapter {
             "--pretty".to_string(),
             "false".to_string(),
         ];
-        if abs_path != "." && abs_path != "./" {
-            args.push(abs_path);
+        if abs_path.value != "." && abs_path.value != "./" {
+            args.push(abs_path.value);
         }
 
         let tsc_name = match ToolName::new("tsc") {

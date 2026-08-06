@@ -173,7 +173,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             let mut in_package = false;
             let mut pkg_name = String::new();
             let mut pkg_version = String::new();
-            for line in content.lines() {
+            for line in content.value.lines() {
                 let trimmed = line.trim();
                 if trimmed == "[[package]]" {
                     if !pkg_name.is_empty() && !pkg_version.is_empty() {

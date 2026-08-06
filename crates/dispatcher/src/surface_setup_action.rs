@@ -87,7 +87,7 @@ pub fn collect_init(
                 continue;
             }
             match filesystem.read_to_string(&xdg_src) {
-                Ok(content) => match setup_orchestrator.write_config_file(doc, &content) {
+                Ok(content) => match setup_orchestrator.write_config_file(doc, &content.value) {
                     Ok(_) => items.push(SetupInitItem {
                         message: format!("  {doc} — copied/overwritten from XDG config"),
                         ok: true,

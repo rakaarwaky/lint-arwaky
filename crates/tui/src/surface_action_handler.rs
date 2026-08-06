@@ -381,12 +381,12 @@ impl SurfaceActionHandler {
         let max_lines = 100;
         let display = match self.filesystem.read_to_string(file_path) {
             Ok(content) => {
-                let lines: Vec<&str> = content.lines().take(max_lines).collect();
+                let lines: Vec<&str> = content.value.lines().take(max_lines).collect();
                 let mut output = String::new();
                 for (i, line) in lines.iter().enumerate() {
                     output.push_str(&format!("{:>4} │ {}\n", i + 1, line));
                 }
-                let total = content.lines().count();
+                let total = content.value.lines().count();
                 if total > max_lines {
                     output.push_str(&format!("\n... ({} more lines)", total - max_lines));
                 }

@@ -29,6 +29,9 @@ fn make_orchestrator() -> ConfigOrchestrator {
 #[test]
 fn load_project_config_uses_defaults_when_no_file() {
     let tmp = TempDir::new().unwrap();
+    // Create a Cargo.toml so the workspace detector identifies this as a Rust project
+    // (without it, walking up finds parent `packages/` dir → TypeScript detection)
+    std::fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = make_orchestrator().load_project_config(&fp);
     assert!(!result.warnings.is_empty());

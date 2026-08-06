@@ -61,7 +61,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         };
         let cmd = match self.filesystem.resolve_js_cmd(
             &prettier_name,
-            vec!["--check".to_string(), abs_path],
+            vec!["--check".to_string(), abs_path.value],
             &wd,
         ) {
             Some(c) => c,

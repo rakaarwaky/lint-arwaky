@@ -1,4 +1,5 @@
 use crate::utility_orphan_filename::file_stem;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -74,7 +75,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
                 if let Ok(workspace_root) = self.filesystem.find_workspace_root_from_path(root) {
                     is_wired = self
                         .filesystem
-                        .check_wired_in_container(&workspace_root, &identifiers);
+                        .check_wired_in_container(&workspace_root, &PatternList::new(identifiers));
                 }
             }
         }
