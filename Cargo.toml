@@ -169,13 +169,11 @@ ctrlc.workspace = true
 futures.workspace = true
 
 # Production release profile: small binary, fast startup, predictable runtime.
-# `codegen-units=16` avoids intermittent SIGSEGV triggered by `codegen-units=1`
-# combined with `opt-level=z` + `panic=abort` on large dep trees.
 [profile.release]
 opt-level = "z"
 lto = false
-codegen-units = 16
-strip = "none"
+codegen-units = 1
+strip = "debuginfo"
 panic = "abort"
 debug = false
 incremental = false
