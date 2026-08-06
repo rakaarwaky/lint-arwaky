@@ -180,21 +180,15 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     fn install_python_adapters(&self) -> SuccessStatus {
-        let res = self.installer.install_python_packages(&PatternList::new(vec![
-            "ruff",
-            "mypy",
-            "bandit",
-        ]));
+        let res = self
+            .installer
+            .install_python_packages(&PatternList::new(vec!["ruff", "mypy", "bandit"]));
         SuccessStatus::new(res.is_ok())
     }
 
     fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus {
         let res = self.installer.install_npm_packages(
-            &PatternList::new(vec![
-                "eslint",
-                "prettier",
-                "typescript",
-            ]),
+            &PatternList::new(vec!["eslint", "prettier", "typescript"]),
             sudo,
         );
         SuccessStatus::new(res.is_ok())

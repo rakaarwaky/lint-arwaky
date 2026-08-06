@@ -1,7 +1,7 @@
 // Smoke test — verify the filesystem crate boots and core operations respond within 5s.
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
-use shared::common::taxonomy_language_vo::Language;
 use shared::common::PatternList;
+use shared::common::taxonomy_language_vo::Language;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 use tempfile::TempDir;

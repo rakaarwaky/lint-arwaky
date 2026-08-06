@@ -44,7 +44,10 @@ fn us2_gitignore_excludes_files() {
     std::fs::write(ignored_dir.join("secret.rs"), "").unwrap();
     std::fs::write(tmp.path().join("visible.rs"), "").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::new(vec!["ignored_dir".to_string()]));
+    let files = io.scan_directory_with_ignored(
+        tmp.path(),
+        &PatternList::new(vec!["ignored_dir".to_string()]),
+    );
     let has_ignored = files
         .iter()
         .any(|p| p.to_string_lossy().contains("ignored_dir"));
@@ -87,7 +90,8 @@ fn us6_scan_with_ignored_patterns() {
     std::fs::write(tmp.path().join("target").join("build.rs"), "").unwrap();
     std::fs::write(tmp.path().join("src.rs"), "").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::new(vec!["target".to_string()]));
+    let files =
+        io.scan_directory_with_ignored(tmp.path(), &PatternList::new(vec!["target".to_string()]));
     assert!(
         files.iter().any(|p| p.to_string_lossy().contains("src.rs")),
         "src.rs should be found"

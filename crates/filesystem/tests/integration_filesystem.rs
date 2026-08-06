@@ -1,7 +1,7 @@
 // Integration tests — full DI wiring via FilesystemContainer.
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::PatternList;
+use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -118,7 +118,8 @@ fn orchestrator_collect_file_entries_reads_from_disk() {
     std::fs::write(&file, "fn main() {}").unwrap();
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
-    let entries = orch.collect_file_entries(&PatternList::new(vec![file.to_string_lossy().to_string()]));
+    let entries =
+        orch.collect_file_entries(&PatternList::new(vec![file.to_string_lossy().to_string()]));
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0].content, "fn main() {}");
 }

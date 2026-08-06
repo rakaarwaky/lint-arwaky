@@ -6,9 +6,9 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
+use shared::common::PatternList;
 use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::PatternList;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_parser_protocol::IParserProtocol;
@@ -220,14 +220,12 @@ fn e2e_orchestrator_collect_file_entries() {
         .collect();
 
     // collect_file_entries falls through to disk reads when cache is empty
-    let entries = orch.collect_file_entries(
-        &PatternList::new(
-            files
-                .iter()
-                .map(|f| f.path.to_string_lossy().to_string())
-                .collect::<Vec<_>>(),
-        ),
-    );
+    let entries = orch.collect_file_entries(&PatternList::new(
+        files
+            .iter()
+            .map(|f| f.path.to_string_lossy().to_string())
+            .collect::<Vec<_>>(),
+    ));
     assert_eq!(entries.len(), files.len());
 }
 

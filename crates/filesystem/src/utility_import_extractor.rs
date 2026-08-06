@@ -521,8 +521,14 @@ fn split_top_level_commas(s: &str) -> Vec<String> {
     let mut depth = 0usize;
     for ch in s.chars() {
         match ch {
-            '{' => { depth += 1; current.push(ch); }
-            '}' => { depth = depth.saturating_sub(1); current.push(ch); }
+            '{' => {
+                depth += 1;
+                current.push(ch);
+            }
+            '}' => {
+                depth = depth.saturating_sub(1);
+                current.push(ch);
+            }
             ',' if depth == 0 => {
                 let trimmed = current.trim().to_string();
                 if !trimmed.is_empty() {

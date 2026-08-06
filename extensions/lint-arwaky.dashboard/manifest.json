@@ -1,10 +1,9 @@
 {
   "id": "lint-arwaky.dashboard",
   "name": "Lint Arwaky Dashboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "category": "development",
   "description": "Real-time lint scan results visualization for AES architecture compliance",
-  "frontend": "dist/index.html",
   "panels": [
     {
       "id": "main",
@@ -13,5 +12,10 @@
       "defaultSize": { "width": 800, "height": 600 }
     }
   ],
-  "cateApi": ["storage", "theme", "workspace.read"]
+  "server": {
+    "command": "node server/index.mjs",
+    "readyPath": "/api/status",
+    "portEnv": "PORT"
+  },
+  "cateApi": ["storage", "theme", "workspace.read", "ui"]
 }

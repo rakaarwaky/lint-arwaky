@@ -169,7 +169,8 @@ fn scan_directory_with_ignored_excludes() {
     std::fs::write(sub.join("build.rs"), "fn main() {}").unwrap();
     std::fs::write(tmp.path().join("src.rs"), "fn src() {}").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::new(vec!["target".to_string()]));
+    let files =
+        io.scan_directory_with_ignored(tmp.path(), &PatternList::new(vec!["target".to_string()]));
     let has_target = files.iter().any(|p| p.to_string_lossy().contains("target"));
     assert!(!has_target, "target/ should be excluded");
 }
@@ -224,7 +225,11 @@ fn set_permissions_works() {
     let file = tmp.path().join("perm.txt");
     std::fs::write(&file, "x").unwrap();
     let io = make_io();
-    io.set_permissions(&file, shared::filesystem::taxonomy_filesystem_vo::FileMode::new(0o644)).unwrap();
+    io.set_permissions(
+        &file,
+        shared::filesystem::taxonomy_filesystem_vo::FileMode::new(0o644),
+    )
+    .unwrap();
     let meta = io.metadata(&file).unwrap();
     #[cfg(unix)]
     {

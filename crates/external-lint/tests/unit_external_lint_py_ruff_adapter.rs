@@ -4,7 +4,9 @@ use external_lint_lint_arwaky::capabilities_py_ruff_adapter::RuffAdapter;
 use shared::common::taxonomy_common_vo::{FileContentPair, PatternList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{ByteCount, FileMode, GitCommandResult, ParsedLines};
+use shared::filesystem::taxonomy_filesystem_vo::{
+    ByteCount, FileMode, GitCommandResult, ParsedLines,
+};
 use std::sync::Arc;
 
 struct MockFilesystem;
@@ -256,13 +258,20 @@ impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol 
     ) -> Result<Vec<std::path::PathBuf>, std::io::Error> {
         Ok(vec![])
     }
-    fn read_to_string(&self, _: &std::path::Path) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
+    fn read_to_string(
+        &self,
+        _: &std::path::Path,
+    ) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
         Ok(shared::common::taxonomy_source_vo::ContentString::new(""))
     }
     fn write_string(&self, _: &std::path::Path, _: &str) -> Result<(), std::io::Error> {
         Ok(())
     }
-    fn copy_file(&self, _: &std::path::Path, _: &std::path::Path) -> Result<ByteCount, std::io::Error> {
+    fn copy_file(
+        &self,
+        _: &std::path::Path,
+        _: &std::path::Path,
+    ) -> Result<ByteCount, std::io::Error> {
         Ok(ByteCount::new(0))
     }
     fn create_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> {

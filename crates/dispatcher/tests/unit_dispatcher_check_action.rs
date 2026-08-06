@@ -1,7 +1,7 @@
 // Unit tests — collect_scan with nonexistent path returns error.
 use dispatcher_lint_arwaky::surface_check_action::{ScanOptions, collect_scan};
-use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::FilePath;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::filesystem::taxonomy_filesystem_vo::{
     ByteCount, FileMode, GitCommandResult, ImportEntry, ParsedLines, ToolName,
 };
@@ -220,13 +220,20 @@ impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol
     ) -> Result<Vec<std::path::PathBuf>, std::io::Error> {
         Ok(vec![])
     }
-    fn read_to_string(&self, _: &std::path::Path) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
+    fn read_to_string(
+        &self,
+        _: &std::path::Path,
+    ) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
         Ok(shared::common::taxonomy_source_vo::ContentString::new(""))
     }
     fn write_string(&self, _: &std::path::Path, _: &str) -> Result<(), std::io::Error> {
         Ok(())
     }
-    fn copy_file(&self, _: &std::path::Path, _: &std::path::Path) -> Result<ByteCount, std::io::Error> {
+    fn copy_file(
+        &self,
+        _: &std::path::Path,
+        _: &std::path::Path,
+    ) -> Result<ByteCount, std::io::Error> {
         Ok(ByteCount::new(0))
     }
     fn create_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> {
@@ -277,7 +284,10 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
     fn has_file(&self, _: &std::path::Path) -> bool {
         false
     }
-    fn collect_file_entries(&self, _: &PatternList) -> Vec<shared::common::taxonomy_common_vo::FileContentPair> {
+    fn collect_file_entries(
+        &self,
+        _: &PatternList,
+    ) -> Vec<shared::common::taxonomy_common_vo::FileContentPair> {
         vec![]
     }
     fn discover_source_files(&self, _: &std::path::Path, _: &[String]) -> Vec<String> {

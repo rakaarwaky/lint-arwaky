@@ -357,7 +357,10 @@ impl IFilesystemAggregate for MockFilesystem {
     fn has_file(&self, _path: &std::path::Path) -> bool {
         false
     }
-    fn collect_file_entries(&self, _files: &PatternList) -> Vec<shared::common::taxonomy_common_vo::FileContentPair> {
+    fn collect_file_entries(
+        &self,
+        _files: &PatternList,
+    ) -> Vec<shared::common::taxonomy_common_vo::FileContentPair> {
         vec![]
     }
     fn discover_source_files(&self, _root: &std::path::Path, _ignored: &[String]) -> Vec<String> {
