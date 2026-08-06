@@ -128,7 +128,7 @@ impl NamingConventionChecker {
             return None;
         }
 
-        if !Self::naming_regex(min_words).map_or(false, |re| re.is_match(stem)) {
+        if !Self::naming_regex(min_words).is_some_and(|re| re.is_match(stem)) {
             let layer_hint = layer_name
                 .as_ref()
                 .map(|l| format!(" (detected layer: '{}')", l.value()))
