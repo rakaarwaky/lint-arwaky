@@ -1,28 +1,28 @@
 {
   "version": "2.0",
   "pipeline": {
-    "id": "pipeline-20260807-570",
-    "feature": "orphan-rules",
-    "current_state": "DEVELOPER",
-    "started_at": "2026-08-07T05:16:40+07:00",
+    "id": "pipeline-20260807-180",
+    "feature": "auto-fix",
+    "current_state": "ARCHITECT",
+    "started_at": "2026-08-07T06:04:57+07:00",
     "iteration": 1,
-    "correlation_id": "corr-20260807-orphan-rules-103",
+    "correlation_id": "corr-20260807-auto-fix-800",
     "pipeline_iteration_counter": 1,
     "rejection_loop_counter": 0,
     "parallel_nodes": {
       "business-analyst": {
         "status": "completed",
         "task_id": null,
-        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/orphan-rules-business-analyst.result",
-        "started_at": "2026-08-07T05:17:10+07:00",
-        "completed_at": "2026-08-07T05:17:40+07:00"
+        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-business-analyst.result",
+        "started_at": "2026-08-07T06:05:27+07:00",
+        "completed_at": "2026-08-07T06:05:57+07:00"
       },
       "tech-lead": {
         "status": "completed",
         "task_id": null,
-        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/orphan-rules-tech-lead.result",
-        "started_at": "2026-08-07T05:17:10+07:00",
-        "completed_at": "2026-08-07T05:17:40+07:00"
+        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-tech-lead.result",
+        "started_at": "2026-08-07T06:05:27+07:00",
+        "completed_at": "2026-08-07T06:05:57+07:00"
       }
     },
     "pending_merge": [],

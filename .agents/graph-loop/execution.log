@@ -256,3 +256,48 @@ Operation cancelled.
 [2026-08-07T05:59:26+07:00] [engine:state] Dispatching Developer
 [2026-08-07T05:59:26+07:00] [engine:state] Running Developer agent...
 Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T06:04:28+07:00] [state:failed] Pipeline marked FAILED: Developer agent exited without output
+[2026-08-07T06:04:28+07:00] [state:reset] Pipeline reset to IDLE
+Operation cancelled.
+[2026-08-07T06:04:56+07:00] [engine:state] Developer timed out — marking FAILED
+[2026-08-07T06:04:56+07:00] [state:failed] Pipeline marked FAILED: Developer timeout
+[2026-08-07T06:04:56+07:00] [feature:lock_released] Lock released for feature orphan-rules
+[2026-08-07T06:04:56+07:00] [feature:failed] Feature orphan-rules failed: Developer timeout
+[2026-08-07T06:04:56+07:00] [state:reset] Pipeline reset to IDLE
+[2026-08-07T06:04:56+07:00] [engine:engine] Engine stopping (PID: 3106808)
+[2026-08-07T06:04:56+07:00] [engine:engine] Graph Loop Engine started (PID: 3111796)
+[2026-08-07T06:04:56+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T06:04:56+07:00] [engine:recovery] State is IDLE — no recovery needed
+[2026-08-07T06:04:56+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T06:04:56+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T06:04:56+07:00] [engine:state] State: IDLE — scanning for triggers...
+[2026-08-07T06:04:56+07:00] [scanner:scan] Scanning GitHub for PRs with 'need review' label...
+[2026-08-07T06:04:57+07:00] [scanner:scan] No PRs found with 'need review' label
+[2026-08-07T06:04:57+07:00] [feature:locked] Feature shared is locked by graph-engine since 2026-08-07T03:56:32+07:00
+[2026-08-07T06:04:57+07:00] [feature:locked] Feature filesystem is locked by graph-engine since 2026-08-07T03:57:39+07:00
+[2026-08-07T06:04:57+07:00] [engine:state] Found pending feature: auto-fix
+[2026-08-07T06:04:57+07:00] [state:start] Pipeline started for feature: auto-fix (ID: pipeline-20260807-180, correlation: corr-20260807-auto-fix-800)
+[2026-08-07T06:04:57+07:00] [feature:claimed] Feature auto-fix claimed for pipeline pipeline-20260807-180
+[2026-08-07T06:05:27+07:00] [engine:state] State: DISPATCHING — dispatching agents for: auto-fix
+[2026-08-07T06:05:27+07:00] [parallel:start] Starting parallel analysis for: auto-fix
+[2026-08-07T06:05:27+07:00] [parallel:spawn] Agent business-analyst spawned (PID: 3112154) for feature: auto-fix
+[2026-08-07T06:05:27+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/auto-fix-business-analyst.prompt
+[2026-08-07T06:05:27+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-business-analyst.result
+[2026-08-07T06:05:27+07:00] [parallel:spawn] Agent tech-lead spawned (PID: 3112155) for feature: auto-fix
+[2026-08-07T06:05:27+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/auto-fix-tech-lead.prompt
+[2026-08-07T06:05:27+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-tech-lead.result
+[2026-08-07T06:05:27+07:00] [state:analyzing] Parallel analysis started
+[2026-08-07T06:05:27+07:00] [parallel:start] Both Business-Analyst and Tech-Lead spawned
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T06:05:57+07:00] [engine:state] State: ANALYZING — feature: auto-fix
+[2026-08-07T06:05:57+07:00] [engine:state] Business-Analyst report found: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-business-analyst.result
+[2026-08-07T06:05:57+07:00] [state:node_complete] Node business-analyst completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-business-analyst.result
+[2026-08-07T06:05:57+07:00] [engine:state] Tech-Lead report found: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-tech-lead.result
+[2026-08-07T06:05:57+07:00] [state:node_complete] Node tech-lead completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/auto-fix-tech-lead.result
+[2026-08-07T06:05:57+07:00] [state:transition] State changed to: ARCHITECT
+[2026-08-07T06:05:57+07:00] [state:parallel_complete] Both Business-Analyst and Tech-Lead completed — transitioning to ARCHITECT
+[2026-08-07T06:06:27+07:00] [engine:state] State: ARCHITECT — merging reports for: auto-fix
+[2026-08-07T06:06:27+07:00] [engine:state] Dispatching Architect to merge reports
+[2026-08-07T06:06:27+07:00] [engine:state] Running Architect agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
