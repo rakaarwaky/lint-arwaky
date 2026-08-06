@@ -200,7 +200,9 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
     fn ignored_paths(&self, project_root: &FilePath) -> PatternList {
         let config = self.load_config_sync(project_root);
-        PatternList::new(merge_default_ignored_paths(ignored_paths_from_config(&config)))
+        PatternList::new(merge_default_ignored_paths(ignored_paths_from_config(
+            &config,
+        )))
     }
 
     fn ignored_paths_for_language(
