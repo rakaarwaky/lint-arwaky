@@ -23,32 +23,32 @@ pub struct SurfaceRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl ISurfaceRoleChecker for SurfaceRoleChecker {
-    fn check_smart_surface(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {}
-    fn check_utility_surface(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {}
-    fn check_passive_surface(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {}
+    fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        // Smart surfaces are exempt from passive/utility checks — function count runs in check_fn_count_limit.
+        let _ = (file, violations);
+    }
+
+    fn check_utility_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        if let Some(meta) = &file.parse_metadata {
+            self._check_passive_with_metadata(file, meta, violations);
+        } else {
+            self._check_domain_logic(file, violations);
+        }
+    }
+
+    fn check_passive_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        if let Some(meta) = &file.parse_metadata {
+            self._check_passive_with_metadata(file, meta, violations);
+        } else {
+            self._check_domain_logic(file, violations);
+        }
+    }
 
     fn check_fn_count_limit(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         if let Some(meta) = &file.parse_metadata {
             self._check_fn_count_metadata(file, meta, violations);
         } else {
             self._check_fn_count_fallback(file, violations);
-        }
-
-        // Classify surface and run role-specific checks (exempt Smart surfaces)
-        let basename = file.path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-        let is_smart = basename.ends_with("_command")
-            || basename.ends_with("_controller")
-            || basename.ends_with("_page")
-            || basename.ends_with("_entry")
-            || basename.ends_with("_router");
-        if is_smart {
-            return; // Smart surfaces exempt from Passive + Utility checks
-        }
-
-        if let Some(meta) = &file.parse_metadata {
-            self._check_passive_with_metadata(file, meta, violations);
-        } else {
-            self._check_passive_fallback(file, violations);
         }
     }
 }
@@ -149,6 +149,9 @@ impl SurfaceRoleChecker {
             }
             _ => {} // ParseMetadata::Unknown — skip
         }
+
+        // Domain logic check runs on all files regardless of ParseMetadata
+        self._check_domain_logic(file, violations);
     }
 
     fn _check_rust_passive_metadata(
@@ -211,9 +214,9 @@ impl SurfaceRoleChecker {
         }
     }
 
-    // ── Passive surface fallback (line-based) ──
+    // ── Domain logic check (control flow count) ──
 
-    fn _check_passive_fallback(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+    fn _check_domain_logic(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
         let content = &file.content;
         let control_flow_count = content
@@ -238,7 +241,7 @@ impl SurfaceRoleChecker {
                 "AES406",
                 Severity::HIGH,
 
-                format!("AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\nWHY? Passive surface {} has {} control flow statements (max {})\nFIX: Move the complex domain/control logic into capabilities or orchestrator components.", path_str, control_flow_count, MAX_CONTROL_FLOW)
+                format!("AES406 SURFACE_ROLE: Complex domain logic detected in a passive/utility surface.\nWHY? Surface {} has {} control flow statements (max {})\nFIX: Move the complex domain/control logic into capabilities or orchestrator components.", path_str, control_flow_count, MAX_CONTROL_FLOW)
 ,
             ));
         }

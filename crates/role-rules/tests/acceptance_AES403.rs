@@ -78,7 +78,7 @@ fn aes403_valid_capability_no_violation() {
     let file = make_file(
         "src/capabilities_user_service.rs",
         Language::Rust,
-        "pub struct UserService {}\nimpl IUserService for UserService {}\n",
+        "pub struct UserService {}\nimpl IUserServiceProtocol for UserService {}\n",
     );
     let results = run_audit(vec![file]);
     let aes403: Vec<_> = results
@@ -118,7 +118,7 @@ fn aes403_python_with_parent_no_violation() {
     let file = make_file(
         "src/capabilities_user_service.py",
         Language::Python,
-        "class UserService(IUserService):\n    pass\n",
+        "class UserService(IUserServiceProtocol):\n    pass\n",
     );
     let results = run_audit(vec![file]);
     let aes403: Vec<_> = results

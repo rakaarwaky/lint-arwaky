@@ -92,7 +92,7 @@ fn fallback_rust_too_many_types_flagged() {
 
 #[test]
 fn fallback_rust_valid_composition_no_violation() {
-    let content = "pub struct Foo {}\nimpl IFoo for Foo {}\n";
+    let content = "pub struct Foo {}\nimpl IFooProtocol for Foo {}\n";
     let f = make_file("src/capabilities_something.rs", Language::Rust, content);
     let mut v = Vec::new();
     checker().check_capability_routing(&f, "capabilities", &mut v);
@@ -142,7 +142,7 @@ fn metadata_rust_valid_composition_no_violation() {
     let meta = RustMetadata {
         struct_definitions: vec!["Foo".into()],
         impl_blocks: vec![shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
-            trait_name: Some("IFoo".into()),
+            trait_name: Some("IFooProtocol".into()),
             trait_path: None,
             implementor_type: "Foo".into(),
             has_generics: false,

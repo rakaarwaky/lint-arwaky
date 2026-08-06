@@ -26,6 +26,9 @@ impl IAgentRoleChecker for AgentRoleChecker {
         } else {
             self._check_fallback(file, violations);
         }
+
+        // Any-type annotation check (runs on all agent files)
+        self._check_any_annotation(file, violations);
     }
 }
 
@@ -81,8 +84,11 @@ impl AgentRoleChecker {
 
                 // Rule 1: at least 1 aggregate implementor
                 let has_implementor = rust_meta.impl_blocks.iter().any(|imp| {
-                    imp.trait_name.is_some()
-                        && struct_names.contains(&imp.implementor_type.as_str())
+                    let trait_is_aggregate = imp
+                        .trait_name
+                        .as_deref()
+                        .is_some_and(|t| t.contains("aggregate") || t.contains("Aggregate"));
+                    trait_is_aggregate && struct_names.contains(&imp.implementor_type.as_str())
                 });
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
@@ -98,7 +104,7 @@ impl AgentRoleChecker {
                 let implementor_found = py_meta
                     .class_declarations
                     .iter()
-                    .any(|c| !c.bases.is_empty());
+                    .any(|c| c.bases.iter().any(|b| b.contains("aggregate") || b.contains("Aggregate")));
 
                 if type_count > 3 {
                     let names: Vec<String> = py_meta
@@ -134,7 +140,7 @@ impl AgentRoleChecker {
                 let implementor_found = ts_meta
                     .class_declarations
                     .iter()
-                    .any(|c| !c.implements.is_empty());
+                    .any(|c| c.implements.iter().any(|i| i.contains("aggregate") || i.contains("Aggregate")));
 
                 if type_count > 3 {
                     let mut all_names: Vec<String> = ts_meta
@@ -232,6 +238,7 @@ impl AgentRoleChecker {
                 }
                 let has_implementor = struct_names.iter().any(|s| {
                     content.contains("impl ")
+                        && (content.contains("aggregate") || content.contains("Aggregate"))
                         && (content.contains(&format!("for {} ", s))
                             || content.contains(&format!("for {}{{", s))
                             || content.contains(&format!("for {} {{", s)))
@@ -259,10 +266,11 @@ impl AgentRoleChecker {
                         }
                         if let Some(start) = t.find('(') {
                             let after_paren = &t[start + 1..];
-                            if let Some(end) = after_paren.find(')')
-                                && !after_paren[..end].trim().is_empty()
-                            {
-                                implementor_found = true;
+                            if let Some(end) = after_paren.find(')') {
+                                let parents = after_paren[..end].trim();
+                                if (parents.contains("aggregate") || parents.contains("Aggregate")) && !parents.is_empty() {
+                                    implementor_found = true;
+                                }
                             }
                         }
                     }
@@ -305,7 +313,9 @@ impl AgentRoleChecker {
                         if !name.is_empty() && !name.starts_with('_') {
                             type_names.push(name);
                         }
-                        if rest.contains("implements ") {
+                        if rest.contains("implements ")
+                            && (rest.contains("aggregate") || rest.contains("Aggregate"))
+                        {
                             implementor_found = true;
                         }
                     } else if let Some(rest) = t
@@ -352,6 +362,28 @@ impl AgentRoleChecker {
 ,
                     ));
                 }
+            }
+        }
+    }
+
+    fn _check_any_annotation(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let path_str = file.path.to_string_lossy();
+        for (i, line) in file.content.lines().enumerate() {
+            let t = line.trim();
+            if t.starts_with("//") || t.starts_with('#') || t.starts_with("/*") {
+                continue;
+            }
+            if t.contains(": Any") || t.contains("Any<") || t.contains("Any[") || t.contains("-> Any") {
+                violations.push(LintResult::new_arch(
+                    &path_str,
+                    i + 1,
+                    "AES405",
+                    Severity::MEDIUM,
+                    format!(
+                        "AES405 AGENT_ROLE: Any-type annotation detected.\nWHY? '{}' uses Any on line {} of {}\nFIX: Use a concrete domain type instead of Any.",
+                        t, i + 1, path_str
+                    ),
+                ));
             }
         }
     }
