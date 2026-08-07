@@ -39,8 +39,7 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         ["crates", "packages", "modules"].iter().any(|dir| {
             self.filesystem
                 .read_dir_entries_as_pathbuf(&root.join(dir))
-                .map(|entries| !entries.is_empty())
-                .unwrap_or(false)
+                .is_ok()
         })
     }
 
