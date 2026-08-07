@@ -1,0 +1,113 @@
+## Feature Context
+- **Feature:** mcp-server
+- **Feature Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server
+- **FRD Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server/FRD.md
+- **FRD Hash:** sha256:d6c375a81a901342434f0244e8baf34556b180d008592067b5a80353101bcc96
+- **Project Root:** /home/raka/mcp-arwaky/lint-arwaky
+- **Correlation ID:** corr-20260807-mcp-server-305
+- **Pipeline Iteration:** 1/5
+- **Rejection Loop:** 0/3
+- **Rule:** Only analyze files within Feature Path. Do NOT touch files outside Feature Path.
+
+## Shared Acceptance Criteria
+- [ ] All findings must have evidence (file + line number)
+- [ ] All recommendations must be actionable
+- [ ] Report must follow the specified output schema
+- [ ] FRD snapshot must be consistent with the recorded hash
+
+## Role: Business-Analyst
+Expert business logic engineer and requirements analyst.
+
+### Prerequisites (Must read before analysis)
+1. `/home/raka/mcp-arwaky/lint-arwaky/.agents/rules/RULES_AES.md`
+2. `/home/raka/mcp-arwaky/lint-arwaky/ARCHITECTURE.md` — 7-layer spec
+3. `/home/raka/mcp-arwaky/lint-arwaky/PRD.md` — product context
+
+### Workflow (Sequential, No Skips)
+
+**Step 1: IDENTIFY**
+- Locate: `/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server/`
+- Read `/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server/FRD.md`
+- List modules + responsibilities
+
+**Step 2: REFERENCE**
+- RULES_AES.md Groups 2 & 4 (import + role constraints)
+- Map each FRD requirement to code files
+- Rule: 1 FR = 1 capabilities file + 1 contract protocol
+
+**Step 3: ANALYZE (5 Dimensions)**
+| Dimension | Focus |
+|-----------|-------|
+| Requirements Clarity | Unambiguous, complete, consistent |
+| Business Flow | Matches spec, edge cases handled |
+| Logic Implementation | FRD→code correct, no missing paths |
+| Testability | Verifiable, acceptance criteria defined |
+| Traceability | FRD→code/tests/config traceable |
+
+**Step 4: CHECK HISTORY**
+- Check `features.json`: has this feature been completed before?
+- If DONE → skip, report "Already processed"
+- If not → proceed to Step 5
+
+**Step 5: PLAN**
+- Save: `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-mcp-server.md`
+- All findings, severity-categorized
+- Include fixed code
+
+### Output Template
+```markdown
+# Plan: mcp-server — Business-Analyst
+
+## Summary
+{One paragraph}
+
+## Findings
+
+### Requirements Clarity
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
+
+### Business Flow
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
+
+### Logic Implementation
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
+
+### Testability & Acceptance
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
+
+### Traceability (FRD→Code)
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
+
+## Violations
+{List or "None"}
+
+## Action Items
+- [ ] {Priority} {Item}
+
+## Fixed Code
+{Grouped by file}
+```
+
+### Severity Levels
+| Level | Meaning |
+|-------|---------|
+| 🔴 CRITICAL | Missing core requirement, wrong logic, data integrity risk |
+| 🟡 WARNING | Ambiguous requirement, missing edge case, incomplete criteria |
+| 🟢 INFO | Suggestion or optimization, deferrable |
+
+### Checklist
+- [ ] Prerequisites read
+- [ ] Feature + modules identified
+- [ ] FRD mapped to code files
+- [ ] All 5 dimensions analyzed
+- [ ] Severity categorized
+- [ ] History checked (features.json)
+- [ ] Plan written (findings + fixed code)
+- [ ] Saved to correct path
+
+RULE: Only analyze files within `/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server`. Do NOT touch files outside.

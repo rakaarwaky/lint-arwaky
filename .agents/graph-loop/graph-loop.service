@@ -18,6 +18,7 @@ SyslogIdentifier=graph-loop
 # Environment
 Environment=HOME=/home/raka
 Environment=PATH=/home/raka/.cargo/bin:/home/raka/.local/bin:/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=-/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/.env
 
 # Resource limits
 MemoryMax=2G
