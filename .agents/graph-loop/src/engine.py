@@ -272,29 +272,73 @@ class Engine:
             self.log.write("engine", "state", "Merged plan not found")
             return
 
-        self.log.write("engine", "state", "Dispatching Developer")
-        prompt = self.dispatcher.developer(feature, feature_path, frd_path, str(merged_plan))
+        max_retries = self.config.node("developer", "max_retries", 3)
+        retry_count = 0
+
+        def _is_agent_dead(result_file: Path) -> bool:
+            """Check if agent PID is dead and no report produced."""
+            pid_file = result_file.with_suffix(".pid")
+            if not pid_file.exists():
+                return False
+            try:
+                pid = int(pid_file.read_text().strip())
+                os.kill(pid, 0)
+                return False  # still alive
+            except (ValueError, ProcessLookupError, PermissionError, OSError):
+                pass
+            # PID dead — check if report exists
+            report_exists = (result_file.exists() and result_file.stat().st_size > 0)
+            done_exists = next(iter(sorted(reports.glob(f"done-{feature}-*.md"))), None)
+            return not report_exists and done_exists is None
+
+        def _dispatch() -> subprocess.Popen:
+            prompt = self.dispatcher.developer(feature, feature_path, frd_path, str(merged_plan))
+            self.log.write("engine", "state", "Dispatching Developer agent...")
+            return self.dispatcher.spawn_agent(prompt, result_file)
+
         result_file = self.config.results_dir / f"developer-{feature}.result"
-        self.log.write("engine", "state", "Running Developer agent...")
-        proc = self.dispatcher.spawn_agent(prompt, result_file)
+        proc = _dispatch()
 
-        reports = self.config.reports_dir
-        dev_report = self._wait_for(lambda: next(
-            iter(sorted(reports.glob(f"done-{feature}-*.md"))), None),
-            max_wait=120, label="Developer")
+        # Polling loop with dead-process detection + auto-respawn
+        for i in range(120):  # max 120 iterations × 30s = 60 min
+            time.sleep(30)
+            if self._stop:
+                return
 
-        if dev_report is None:
-            proc.kill()
-            self.log.write("engine", "state", "Developer timed out — marking FAILED")
-            self.state.failed("Developer timeout")
-            self.features.fail(feature, "Developer timeout")
-            self.state.reset()
-            return
+            # Check for done report
+            dev_report = next(iter(sorted(reports.glob(f"done-{feature}-*.md"))), None)
+            if dev_report:
+                self.log.write("engine", "state", f"Developer completed: {dev_report}")
+                self._cleanup_stage(feature, ("developer_result",))
+                self.state.developer_complete("PR")
+                return
 
-        self.log.write("engine", "state", f"Developer completed: {dev_report}")
-        # Cleanup: developer result no longer needed (report written)
-        self._cleanup_stage(feature, ("developer_result",))
-        self.state.developer_complete("PR")
+            # Dead-process detection + auto-respawn
+            if _is_agent_dead(result_file):
+                retry_count += 1
+                if retry_count > max_retries:
+                    self.log.write("engine", "state",
+                                   f"Developer agent died {max_retries} times — marking FAILED")
+                    self.state.failed(f"Developer agent died {max_retries} times")
+                    self.features.fail(feature, f"Developer agent died {max_retries} times")
+                    self.state.reset()
+                    return
+                self.log.write("engine", "state",
+                               f"Developer agent died (retry {retry_count}/{max_retries}) — respawning")
+                # Clean up stale files
+                result_file.unlink(missing_ok=True)
+                result_file.with_suffix(".pid").unlink(missing_ok=True)
+                proc = _dispatch()
+                continue
+
+            print(f"[engine] {now_iso()} Waiting for Developer... ({i + 1}/120)")
+
+        # Timeout
+        proc.kill()
+        self.log.write("engine", "state", "Developer timed out — marking FAILED")
+        self.state.failed("Developer timeout")
+        self.features.fail(feature, "Developer timeout")
+        self.state.reset()
 
     def handle_quality_analysis(self) -> None:
         feature = self.state.feature
@@ -326,14 +370,36 @@ class Engine:
             feature, pr_number, str(merged_plan or ""), frd_path,
             str(ba_report or ""), str(tl_report or ""), str(dev_report), qa_mode)
         result_file = results / f"quality-analysis-{feature}.result"
-        self.log.write("engine", "state", "Running Quality-Analysis agent...")
-        proc = self.dispatcher.spawn_agent(prompt, result_file)
+
+        max_retries = self.config.node("quality-analysis", "max_retries", 0)
+        retry_count = 0
+
+        def _is_qa_dead() -> bool:
+            pid_file = result_file.with_suffix(".pid")
+            if not pid_file.exists():
+                return False
+            try:
+                pid = int(pid_file.read_text().strip())
+                os.kill(pid, 0)
+                return False
+            except (ValueError, ProcessLookupError, PermissionError, OSError):
+                pass
+            report_exists = (result_file.exists() and result_file.stat().st_size > 0)
+            rejection_exists = next(iter(sorted(plans.glob(f"*quality-analysis-{feature}*.md"))), None)
+            return not report_exists and rejection_exists is None
+
+        def _dispatch_qa() -> subprocess.Popen:
+            self.log.write("engine", "state", "Dispatching Quality-Analysis agent...")
+            return self.dispatcher.spawn_agent(prompt, result_file)
+
+        proc = _dispatch_qa()
 
         verdict = None
-        for _ in range(60):
+        for i in range(60):
             time.sleep(30)
             if self._stop:
                 break
+
             rejection_plan = next(iter(sorted(plans.glob(f"*quality-analysis-{feature}*.md"))), None)
             if rejection_plan:
                 verdict = "REJECTED"
@@ -342,6 +408,23 @@ class Engine:
             if r.stdout.strip() == "MERGED":
                 verdict = "APPROVED"
                 break
+
+            # Dead-process detection + auto-respawn (only if retries allowed)
+            if max_retries > 0 and _is_qa_dead():
+                retry_count += 1
+                if retry_count > max_retries:
+                    self.log.write("engine", "state",
+                                   f"QA agent died {max_retries} times — marking FAILED")
+                    verdict = None
+                    break
+                self.log.write("engine", "state",
+                               f"QA agent died (retry {retry_count}/{max_retries}) — respawning")
+                result_file.unlink(missing_ok=True)
+                result_file.with_suffix(".pid").unlink(missing_ok=True)
+                proc = _dispatch_qa()
+                continue
+
+            print(f"[engine] {now_iso()} Waiting for Quality-Analysis... ({i + 1}/60)")
 
         if verdict == "APPROVED":
             self.log.write("engine", "state", "Quality-Analysis APPROVED — pipeline complete")

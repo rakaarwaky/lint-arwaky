@@ -2,7 +2,7 @@
   "version": "2.0",
   "features": {
     "shared": {
-      "status": "FAILED",
+      "status": "DONE",
       "priority": 1,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/shared",
       "description": "Taxonomy VOs, contracts, utilities \u2014 foundation layer",
@@ -15,16 +15,21 @@
           "status": "FAILED",
           "reason": "Developer timeout",
           "failed_at": "2026-08-07T07:42:31+07:00"
+        },
+        {
+          "status": "FAILED",
+          "reason": "Quality-Analysis timeout",
+          "failed_at": "2026-08-07T07:48:48+07:00"
         }
       ]
     },
     "filesystem": {
-      "status": "PENDING",
+      "status": "LOCKED",
       "priority": 2,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/filesystem",
       "description": "File walking, AST parsing, graph construction",
-      "pipeline_id": "pipeline-20260807-221",
-      "claimed_at": "2026-08-07T03:57:39+07:00",
+      "pipeline_id": "pipeline-20260807-268",
+      "claimed_at": "2026-08-07T07:43:21+07:00",
       "locked_by": "graph-engine",
       "iteration": 0,
       "history": [],
@@ -184,13 +189,13 @@
       ]
     },
     "mcp-server": {
-      "status": "PENDING",
+      "status": "LOCKED",
       "priority": 11,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server",
       "description": "AI MCP surface (5 tools, full CLI parity)",
-      "pipeline_id": null,
-      "claimed_at": null,
-      "locked_by": null,
+      "pipeline_id": "pipeline-20260807-284",
+      "claimed_at": "2026-08-07T07:58:53+07:00",
+      "locked_by": "graph-engine",
       "iteration": 0,
       "history": []
     },
