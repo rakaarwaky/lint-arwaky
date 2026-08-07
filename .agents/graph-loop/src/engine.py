@@ -101,6 +101,15 @@ class Engine:
             self.features.claim(feature, feature_path, pipeline_id)
             return
 
+        # All features processed — no more PENDING, no PRs to scan
+        data = self.features.load()
+        statuses = [f.get("status") for f in data.get("features", {}).values()]
+        if all(s in ("DONE", "FAILED", "MERGED") for s in statuses):
+            self.log.write("engine", "state",
+                           "All features processed — stopping engine")
+            self._stop = True
+            return
+
         self.log.write("engine", "state", "No triggers found — staying IDLE")
 
     def handle_dispatching(self) -> None:
@@ -137,18 +146,50 @@ class Engine:
         if ba == "completed" and tl == "completed":
             self.log.write("engine", "state",
                            "Both Business-Analyst and Tech-Lead completed — transitioning to ARCHITECT")
+            # Cleanup: BA/TL prompts and PID files no longer needed
+            self._cleanup_stage(feature, ("prompts", "pids"))
             self.state.transition("ARCHITECT")
             return
 
         results = self.config.results_dir
+        # Dead-process detection: if a node is "running" but its PID is dead and
+        # no report exists, re-dispatch the agent
+        for node in ("business-analyst", "tech-lead"):
+            node_status = self.state.node_status(node)
+            if node_status != "running":
+                continue
+            pid_file = results / f"{feature}-{node}.pid"
+            report_file = results / f"{feature}-{node}.result"
+            detail_file = results / f"{node}-{feature}.md"
+            has_report = (report_file.exists() and report_file.stat().st_size > 0) or detail_file.exists()
+            pid_alive = False
+            if pid_file.exists():
+                try:
+                    pid = int(pid_file.read_text().strip())
+                    os.kill(pid, 0)
+                    pid_alive = True
+                except (ValueError, ProcessLookupError, PermissionError, OSError):
+                    pass
+            if not has_report and not pid_alive:
+                self.log.write("engine", "state",
+                               f"Node {node} is running but agent is dead and no report — re-dispatching")
+                feature_path = self.features.path(feature)
+                frd_path = f"{feature_path}/FRD.md"
+                self.parallel.spawn(node, feature, feature_path, frd_path)
+
         ba_report = next(iter(sorted(results.glob(f"{feature}-business-analyst.result"))), None)
         tl_report = next(iter(sorted(results.glob(f"{feature}-tech-lead.result"))), None)
-        if ba_report and ba == "running":
-            self.log.write("engine", "state", f"Business-Analyst report found: {ba_report}")
-            self.state.complete_node("business-analyst", str(ba_report))
-        if tl_report and tl == "running":
-            self.log.write("engine", "state", f"Tech-Lead report found: {tl_report}")
-            self.state.complete_node("tech-lead", str(tl_report))
+        # Also check for detailed report files as fallback (agents may write .md instead of .result)
+        ba_detail = next(iter(sorted(results.glob(f"business-analyst-{feature}.md"))), None)
+        tl_detail = next(iter(sorted(results.glob(f"tech-lead-{feature}.md"))), None)
+        if ba == "running" and ((ba_report and ba_report.stat().st_size > 0) or ba_detail):
+            ref = str(ba_report) if ba_report and ba_report.stat().st_size > 0 else str(ba_detail)
+            self.log.write("engine", "state", f"Business-Analyst report found: {ref}")
+            self.state.complete_node("business-analyst", ref)
+        if tl == "running" and ((tl_report and tl_report.stat().st_size > 0) or tl_detail):
+            ref = str(tl_report) if tl_report and tl_report.stat().st_size > 0 else str(tl_detail)
+            self.log.write("engine", "state", f"Tech-Lead report found: {ref}")
+            self.state.complete_node("tech-lead", ref)
 
     def handle_architect(self) -> None:
         feature = self.state.feature
@@ -159,6 +200,14 @@ class Engine:
         results = self.config.results_dir
         plans = self.config.plans_dir
         plans.mkdir(parents=True, exist_ok=True)
+
+        # Recovery: if merged plan already exists, skip dispatch and go to DEVELOPER
+        existing_plan = next(iter(sorted(plans.glob(f"merged-{feature}-*.md"))), None)
+        if existing_plan:
+            self.log.write("engine", "state",
+                           f"Merged plan already exists: {existing_plan} — skipping dispatch")
+            self.state.merge_complete(str(existing_plan))
+            return
 
         ba_report = next(iter(sorted(results.glob(f"{feature}-business-analyst.result"))), None)
         tl_report = next(iter(sorted(results.glob(f"{feature}-tech-lead.result"))), None)
@@ -198,6 +247,8 @@ class Engine:
             return
 
         self.log.write("engine", "state", f"Architect completed: {merged_plan}")
+        # Cleanup: BA/TL results and architect result no longer needed (plan consumed)
+        self._cleanup_stage(feature, ("ba_tl_results", "architect_result"))
         self.state.merge_complete(str(merged_plan))
 
     def handle_developer(self) -> None:
@@ -206,6 +257,15 @@ class Engine:
         feature_path = self.features.path(feature)
         frd_path = f"{feature_path}/FRD.md"
         plans = self.config.plans_dir
+        reports = self.config.reports_dir
+
+        # Recovery: if done report already exists, skip dispatch and go to QA
+        existing_report = next(iter(sorted(reports.glob(f"done-{feature}-*.md"))), None)
+        if existing_report:
+            self.log.write("engine", "state",
+                           f"Developer report already exists: {existing_report} — skipping dispatch")
+            self.state.developer_complete("PR")
+            return
 
         merged_plan = next(iter(sorted(plans.glob(f"merged-{feature}-*.md"))), None)
         if merged_plan is None:
@@ -232,6 +292,8 @@ class Engine:
             return
 
         self.log.write("engine", "state", f"Developer completed: {dev_report}")
+        # Cleanup: developer result no longer needed (report written)
+        self._cleanup_stage(feature, ("developer_result",))
         self.state.developer_complete("PR")
 
     def handle_quality_analysis(self) -> None:
@@ -283,11 +345,19 @@ class Engine:
 
         if verdict == "APPROVED":
             self.log.write("engine", "state", "Quality-Analysis APPROVED — pipeline complete")
+            # Cleanup: merged plan and QA result no longer needed
+            for f in plans.glob(f"merged-{feature}-*.md"):
+                f.unlink(missing_ok=True)
+            for f in results.glob(f"quality-analysis-{feature}.result"):
+                f.unlink(missing_ok=True)
             self.state.qa_approved()
             self.features.complete(feature, self.state.pipeline_id or "")
             self.notify.qa_approved(feature, pr_number)
         elif verdict == "REJECTED":
             self.log.write("engine", "state", "Quality-Analysis REJECTED — checking rejection counter")
+            # Cleanup: old merged plan will be re-generated by architect
+            for f in plans.glob(f"merged-{feature}-*.md"):
+                f.unlink(missing_ok=True)
             counter = self.state.rejection_counter + 1
             if counter >= self.config.max_rejection_loops:
                 self.log.write("engine", "state",
@@ -379,6 +449,34 @@ class Engine:
             print(f"[engine] {now_iso()} Waiting for {label}... ({i + 1}/{max_wait})")
         return None
 
+    def _cleanup_stage(self, feature: str, stages: tuple) -> None:
+        """Clean up artifacts from completed pipeline stages."""
+        results = self.config.results_dir
+        generated = self.config.prompts_dir / "generated"
+        for stage in stages:
+            if stage == "prompts":
+                for f in generated.glob(f"{feature}-*.prompt"):
+                    f.unlink(missing_ok=True)
+            elif stage == "pids":
+                for f in results.glob(f"{feature}-*.pid"):
+                    f.unlink(missing_ok=True)
+            elif stage == "ba_tl_results":
+                for pattern in (f"{feature}-business-analyst.result",
+                                f"{feature}-tech-lead.result",
+                                f"business-analyst-{feature}.md",
+                                f"tech-lead-{feature}.md"):
+                    for f in results.glob(pattern):
+                        f.unlink(missing_ok=True)
+            elif stage == "architect_result":
+                for pattern in (f"architect-{feature}.result",
+                                f"architect-{feature}.md"):
+                    for f in results.glob(pattern):
+                        f.unlink(missing_ok=True)
+            elif stage == "developer_result":
+                for f in results.glob(f"developer-{feature}.result"):
+                    f.unlink(missing_ok=True)
+        self.log.write("engine", "cleanup", f"Stage cleanup done for {feature}: {', '.join(stages)}")
+
     def cleanup_results(self, feature: str) -> None:
         results = self.config.results_dir
         generated = self.config.prompts_dir / "generated"
@@ -415,12 +513,17 @@ class Engine:
                     os.kill(pid, 0)
                 except (ValueError, ProcessLookupError, PermissionError, OSError):
                     pid_file.unlink(missing_ok=True)
-        for pattern in ("business-analyst-*.md", "tech-lead-*.md", "architect-*.md"):
-            for f in results.glob(pattern):
-                f.unlink(missing_ok=True)
         data = self.features.load()
         for name, feat in data.get("features", {}).items():
-            if feat.get("status") == "DONE":
+            status = feat.get("status", "PENDING")
+            # Only remove report files for features past the stage that needs them
+            if status in ("DONE", "FAILED", "MERGED"):
+                for f in results.glob(f"business-analyst-{name}.md"):
+                    f.unlink(missing_ok=True)
+                for f in results.glob(f"tech-lead-{name}.md"):
+                    f.unlink(missing_ok=True)
+                for f in results.glob(f"architect-{name}.md"):
+                    f.unlink(missing_ok=True)
                 for pattern in (f"{name}-*.result", f"*-{name}.result"):
                     for f in results.glob(pattern):
                         f.unlink(missing_ok=True)

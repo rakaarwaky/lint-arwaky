@@ -1,6 +1,6 @@
 // PURPOSE: ScanReport VO — output of the analysis pipeline
-use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_common_vo::Score;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 
 /// Severity level for pipeline diagnostics.
 #[derive(Debug, Clone)]

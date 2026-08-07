@@ -1,5 +1,5 @@
 // PURPOSE: IOrphanAggregate — aggregate trait for orphan detection (AES308)
-use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use crate::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO;

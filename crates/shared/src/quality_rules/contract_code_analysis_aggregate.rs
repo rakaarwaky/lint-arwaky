@@ -1,7 +1,7 @@
-use crate::cli_commands::taxonomy_result_vo::LintResult;
-use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_common_vo::{BooleanVO, Score};
 use crate::common::taxonomy_display_content_vo::DisplayContent;
+use crate::common::taxonomy_lint_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use crate::quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;

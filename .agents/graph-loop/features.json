@@ -2,13 +2,13 @@
   "version": "2.0",
   "features": {
     "shared": {
-      "status": "PENDING",
+      "status": "LOCKED",
       "priority": 1,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/shared",
       "description": "Taxonomy VOs, contracts, utilities \u2014 foundation layer",
-      "pipeline_id": null,
-      "claimed_at": null,
-      "locked_by": null,
+      "pipeline_id": "pipeline-20260807-663",
+      "claimed_at": "2026-08-07T07:13:58+07:00",
+      "locked_by": "graph-engine",
       "iteration": 0,
       "history": []
     },
@@ -119,7 +119,7 @@
       ]
     },
     "auto-fix": {
-      "status": "LOCKED",
+      "status": "DONE",
       "priority": 9,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix",
       "description": "Mechanical fixes: remove + replace + rename",
@@ -127,18 +127,55 @@
       "claimed_at": "2026-08-07T06:04:57+07:00",
       "locked_by": "graph-engine",
       "iteration": 0,
-      "history": []
+      "history": [
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-180",
+          "completed_at": "2026-08-07T06:26:45+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-180",
+          "completed_at": "2026-08-07T06:27:01+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-180",
+          "completed_at": "2026-08-07T06:27:31+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-180",
+          "completed_at": "2026-08-07T06:27:43+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-180",
+          "completed_at": "2026-08-07T06:28:14+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-180",
+          "completed_at": "2026-08-07T06:28:44+07:00"
+        }
+      ]
     },
     "cli-commands": {
-      "status": "PENDING",
+      "status": "DONE",
       "priority": 10,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands",
       "description": "Human CLI surface (check, scan, fix, ci)",
-      "pipeline_id": null,
-      "claimed_at": null,
-      "locked_by": null,
+      "pipeline_id": "pipeline-20260807-195",
+      "claimed_at": "2026-08-07T06:28:56+07:00",
+      "locked_by": "graph-engine",
       "iteration": 0,
-      "history": []
+      "history": [
+        {
+          "status": "DONE",
+          "reason": "Quality-Analysis timeout",
+          "failed_at": "2026-08-07T07:11:06+07:00"
+        }
+      ]
     },
     "mcp-server": {
       "status": "PENDING",

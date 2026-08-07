@@ -23,7 +23,7 @@ pub use contract_parser_protocol::IConfigParserProtocol;
 pub use contract_reader_protocol::IConfigReaderProtocol;
 pub use contract_validator_protocol::IConfigValidatorProtocol;
 pub use contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
-pub use contract_workspace_detector_protocol::WorkspaceType;
+pub use taxonomy_config_vo::WorkspaceType;
 
 // ── Taxonomy types ──
 pub use crate::common::taxonomy_definition_vo::OrphanRuleVO;

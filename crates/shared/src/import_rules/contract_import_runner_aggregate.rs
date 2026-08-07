@@ -1,6 +1,6 @@
 // PURPOSE: IImportRunnerAggregate — contract for import-rules feature orchestrator
-use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_adapter_error::ScanError;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 

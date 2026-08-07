@@ -14,15 +14,7 @@ use crate::project_setup::taxonomy_setup_contract_vo::{
     WriteConfigResult,
 };
 
-/// Result of a package-manager pre-flight check (FR-007).
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
-pub struct PackageManagerStatus {
-    pub tool: String,
-    pub status: String,
-}
-
-/// Type alias for the pre-flight check result.
-pub type PreFlightResult = Vec<PackageManagerStatus>;
+pub use crate::project_setup::taxonomy_setup_contract_vo::{PackageManagerStatus, PreFlightResult};
 
 pub trait ISetupManagementProtocol: Send + Sync {
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO;

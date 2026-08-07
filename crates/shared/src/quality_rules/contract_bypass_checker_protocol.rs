@@ -1,5 +1,5 @@
 // PURPOSE: IBypassCheckerProtocol — protocol trait for AES304: detect bypass comments, unwrap/expect, panic
-use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 
 /// Protocol for detecting AES304 violations: bypass comments, unwrap/expect, panic.
 ///

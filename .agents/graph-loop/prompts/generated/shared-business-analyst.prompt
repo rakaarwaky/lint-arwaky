@@ -1,10 +1,10 @@
 ## Feature Context
-- **Feature:** auto-fix
-- **Feature Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix
-- **FRD Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/FRD.md
-- **FRD Hash:** sha256:792e7d020114c059f833b66176e036873f5adeebd42c7457727821ee2d33cb2e
+- **Feature:** shared
+- **Feature Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/shared
+- **FRD Path:** /home/raka/mcp-arwaky/lint-arwaky/crates/shared/FRD.md
+- **FRD Hash:** sha256:c55e17890788ef4560b6dd03f12c1b9d9b4a7b65c73bffb5f46ccf52500ffb7c
 - **Project Root:** /home/raka/mcp-arwaky/lint-arwaky
-- **Correlation ID:** corr-20260807-auto-fix-800
+- **Correlation ID:** corr-20260807-shared-553
 - **Pipeline Iteration:** 1/5
 - **Rejection Loop:** 0/3
 - **Rule:** Only analyze files within Feature Path. Do NOT touch files outside Feature Path.
@@ -26,8 +26,8 @@ Expert business logic engineer and requirements analyst.
 ### Workflow (Sequential, No Skips)
 
 **Step 1: IDENTIFY**
-- Locate: `/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/`
-- Read `/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix/FRD.md`
+- Locate: `/home/raka/mcp-arwaky/lint-arwaky/crates/shared/`
+- Read `/home/raka/mcp-arwaky/lint-arwaky/crates/shared/FRD.md`
 - List modules + responsibilities
 
 **Step 2: REFERENCE**
@@ -50,13 +50,13 @@ Expert business logic engineer and requirements analyst.
 - If not → proceed to Step 5
 
 **Step 5: PLAN**
-- Save: `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-auto-fix.md`
+- Save: `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-shared.md`
 - All findings, severity-categorized
 - Include fixed code
 
 ### Output Template
 ```markdown
-# Plan: auto-fix — Business-Analyst
+# Plan: shared — Business-Analyst
 
 ## Summary
 {One paragraph}
@@ -110,4 +110,4 @@ Expert business logic engineer and requirements analyst.
 - [ ] Plan written (findings + fixed code)
 - [ ] Saved to correct path
 
-RULE: Only analyze files within `/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix`. Do NOT touch files outside.
+RULE: Only analyze files within `/home/raka/mcp-arwaky/lint-arwaky/crates/shared`. Do NOT touch files outside.

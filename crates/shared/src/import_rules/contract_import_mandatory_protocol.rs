@@ -1,8 +1,8 @@
 // PURPOSE: IImportMandatoryProtocol — exclusive contract for mandatory import checks (AES202)
 // Verifies that every file imports from the layers it MUST depend on per its layer scope.
-use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_definition_vo::LayerMapVO;
 use crate::common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;

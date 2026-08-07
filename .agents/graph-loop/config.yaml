@@ -1,169 +1,62 @@
 # ═══════════════════════════════════════════════════════════════════
-# GRAPH LOOP ENGINE — UNIFIED CONFIGURATION (Revision 2.0)
+# GRAPH LOOP ENGINE — Project Configuration
 # ═══════════════════════════════════════════════════════════════════
-# Single Source of Truth. Edit here only.
-# NOTE: pipeline.yaml is DEPRECATED and no longer used.
+# Only project-specific values. Everything else is hardcoded.
 
-version: "2.0"
-
-# ── Project Root (top-level, absolute) ──────────────────────────────
+# ── Project Root ────────────────────────────────────────────────────
 project_root: "/home/raka/mcp-arwaky/lint-arwaky"
 
-# ── Pipeline ────────────────────────────────────────────────────────
-pipeline:
-  name: "review-pipeline"
-  description: "Full 5-role review pipeline for feature branches"
-
-# ── Feature Priority Queue ──────────────────────────────────────────
-# Engine processes top to bottom (priority 1 = highest)
+# ── Features (priority queue) ───────────────────────────────────────
 features:
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/shared"
-    name: "shared"
+  - name: "shared"
     priority: 1
-    description: "Taxonomy VOs, contracts, utilities — foundation layer"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/filesystem"
-    name: "filesystem"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/shared"
+  - name: "filesystem"
     priority: 2
-    description: "File walking, AST parsing, graph construction"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/config-system"
-    name: "config-system"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/filesystem"
+  - name: "config-system"
     priority: 3
-    description: "Config load, merge, workspace detect"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/naming-rules"
-    name: "naming-rules"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/config-system"
+  - name: "naming-rules"
     priority: 4
-    description: "AES101–102 naming conventions"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/import-rules"
-    name: "import-rules"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/naming-rules"
+  - name: "import-rules"
     priority: 5
-    description: "AES201–205 import boundaries"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/quality-rules"
-    name: "quality-rules"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/import-rules"
+  - name: "quality-rules"
     priority: 6
-    description: "AES301–305 quality rules"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/role-rules"
-    name: "role-rules"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/quality-rules"
+  - name: "role-rules"
     priority: 7
-    description: "AES401–406 layer roles"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/orphan-rules"
-    name: "orphan-rules"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/role-rules"
+  - name: "orphan-rules"
     priority: 8
-    description: "AES501–506 orphan detection"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix"
-    name: "auto-fix"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/orphan-rules"
+  - name: "auto-fix"
     priority: 9
-    description: "Mechanical fixes: remove + replace + rename"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands"
-    name: "cli-commands"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/auto-fix"
+  - name: "cli-commands"
     priority: 10
-    description: "Human CLI surface (check, scan, fix, ci)"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server"
-    name: "mcp-server"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands"
+  - name: "mcp-server"
     priority: 11
-    description: "AI MCP surface (5 tools, full CLI parity)"
-  - path: "/home/raka/mcp-arwaky/lint-arwaky/crates/tui"
-    name: "tui"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server"
+  - name: "tui"
     priority: 12
-    description: "Interactive terminal UI"
+    path: "/home/raka/mcp-arwaky/lint-arwaky/crates/tui"
 
-# ── Node Settings ───────────────────────────────────────────────────
-nodes:
-  business-analyst:
-    skill: "role-business-analyst"
-    timeout_minutes: 20
-    retry_on_error: true
-    max_retries: 2
-  tech-lead:
-    skill: "role-tech-lead"
-    timeout_minutes: 30
-    retry_on_error: true
-    max_retries: 2
-  architect:
-    skill: "role-architect"
-    timeout_minutes: 30
-    retry_on_error: true
-    max_retries: 2
-    role: "merge_gatekeeper"
-    inputs: [business-analyst, tech-lead]
-  developer:
-    skill: "role-fullstack-developer"
-    timeout_minutes: 60
-    retry_on_error: true
-    max_retries: 3
-  quality-analysis:
-    skill: "role-quality-analysis"
-    timeout_minutes: 30
-    retry_on_error: false
-    max_retries: 0
+# ── Paths (relative to project_root) ────────────────────────────────
+paths:
+  state_file: ".agents/graph-loop/state.json"
+  features_file: ".agents/graph-loop/features.json"
+  log_file: ".agents/graph-loop/execution.log"
+  results_dir: ".agents/graph-loop/results"
+  plans_dir: ".agents/graph-loop/plans"
+  reports_dir: ".agents/graph-loop/reports"
+  prompts_dir: ".agents/graph-loop/prompts"
+  locks_dir: ".agents/graph-loop/locks"
 
-# ── Pipeline Flow (Edges) ───────────────────────────────────────────
-edges:
-  - from: trigger
-    to: [business-analyst, tech-lead]
-    trigger: pr_created
-    condition: "pr_has_need_review_label"
-    parallel: true
-  - from: [business-analyst, tech-lead]
-    to: architect
-    trigger: all_complete
-    condition: "both_reports_exist"
-  - from: architect
-    to: developer
-    trigger: merge_complete
-    condition: "merged_plan_written AND aes_validated"
-  - from: developer
-    to: quality-analysis
-    trigger: completion
-    condition: "pr_created AND ci_green"
-  - from: quality-analysis
-    to: architect
-    trigger: rejection
-    condition: "verdict == REJECTED"
-    max_loops: 3
-  - from: architect
-    to: developer
-    trigger: re_merge_complete
-    condition: "updated_plan_written"
-    is_loop: true
-  - from: developer
-    to: architect
-    trigger: blocker
-    condition: "unresolved_architecture_question"
-  - from: quality-analysis
-    to: architect
-    trigger: escalation
-    condition: "critical_architecture_violation"
-
-# ── Trigger Settings ────────────────────────────────────────────────
-triggers:
-  pr_created:
-    type: event
-    source: github
-    event: pull_request.opened
-    filter:
-      labels: ["need review"]
-      base_branch: develop
-    action: start_parallel_analysis
-    nodes: [business-analyst, tech-lead]
-  pr_updated:
-    type: event
-    source: github
-    event: pull_request.synchronize
-    filter:
-      labels: ["changes requested"]
-    action: resume_pipeline
-    nodes: [developer]
-  cron_quality_scan:
-    type: schedule
-    cron: "*/15 * * * *"
-    action: scan_pending_prs
-    nodes: [quality-analysis]
-
-# ── Feature Queue Settings ──────────────────────────────────────────
-feature_queue:
-  cooldown_minutes: 60
-
-# ── Conditional Skip Rules ──────────────────────────────────────────
+# ── Skip Rules (project-specific conventions) ───────────────────────
 skip_rules:
   business-analyst:
     skip_when:
@@ -175,84 +68,3 @@ skip_rules:
       - code_files_count: 0
     never_skip_when:
       - pr_title_matches: "(security|auth|token|password|encrypt)"
-  architect:
-    skip_when: []
-  developer:
-    skip_when: []
-  quality-analysis:
-    skip_when: []  # NEVER SKIP — auto-approve with MINOR for doc-only
-
-# ── Notification Settings ───────────────────────────────────────────
-notifications:
-  enabled: true
-  on_pipeline_started: true
-  on_node_completed: true
-  on_pipeline_completed: true
-  on_qa_approved: true
-  on_qa_rejected: true
-  on_timeout: true
-  on_error: true
-  channels:
-    - type: log
-    - type: pr_comment
-      enabled: true
-    - type: webhook
-      url: ""  # Set Slack/Discord webhook URL for human alerts
-      enabled: false
-    - type: desktop
-      enabled: true
-
-# ── Health Check Settings ───────────────────────────────────────────
-health_check:
-  enabled: true
-  check_interval_hours: 6
-  thresholds:
-    disk_usage_warn: 80
-    disk_usage_error: 90
-    log_size_warn_mb: 10
-    state_stuck_warn_hours: 2
-    active_features_warn: 1
-
-# ── File Paths ──────────────────────────────────────────────────────
-paths:
-  state_file: ".agents/graph-loop/state.json"
-  features_file: ".agents/graph-loop/features.json"
-  log_file: ".agents/graph-loop/execution.log"
-  health_log: ".agents/graph-loop/health.log"
-  notifications_log: ".agents/graph-loop/notifications.log"
-  prompts_dir: ".agents/graph-loop/prompts"
-  results_dir: ".agents/graph-loop/results"
-  plans_dir: ".agents/graph-loop/plans"
-  reports_dir: ".agents/graph-loop/reports"
-  locks_dir: ".agents/graph-loop/locks"
-
-# ── Counter Limits ──────────────────────────────────────────────────
-counters:
-  max_rejection_loops: 3
-  max_pipeline_iterations: 5
-
-# ── Recovery Policy ─────────────────────────────────────────────────
-recovery:
-  resume_if_stale_minutes: 60
-  max_stale_minutes: 180
-  exponential_backoff:
-    initial_minutes: 2
-    max_minutes: 30
-
-# ── Trigger Guards ──────────────────────────────────────────────────
-trigger_guards:
-  debounce_seconds: 30
-  ignore_bot_events: true
-  correlation_id_required: true
-
-# ── Lock Settings ───────────────────────────────────────────────────
-locks:
-  queue_claim_lock: true
-  file_system_lock: true
-  lock_timeout_minutes: 180
-
-# ── Global Settings ─────────────────────────────────────────────────
-settings:
-  global_timeout_minutes: 180
-  poll_interval_seconds: 30
-  persist_state: true

@@ -1,8 +1,8 @@
 // PURPOSE: IImportForbiddenProtocol — exclusive contract for forbidden import checks (AES201)
 // Checks that files do NOT import from layers they are forbidden to depend on.
-use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_definition_vo::LayerMapVO;
 use crate::common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;

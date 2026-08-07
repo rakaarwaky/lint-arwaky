@@ -134,20 +134,6 @@ pub fn detect_module_layer(module: &str, layer_names: &[String]) -> Option<Strin
                 return Some(layer);
             }
         }
-
-        // Strategy 5: Check if any segment ends with a layer name + underscore
-        // (e.g., "contract_protocol" → contract, "capabilities_adapter" → capabilities)
-        for part in &meaningful_parts {
-            let parts: Vec<&str> = part.split('_').collect();
-            for (_i, _seg) in parts.iter().enumerate() {
-                let _combined: Vec<&str> = parts[_i..].join("_").split('_').collect();
-                // Try combining remaining segments
-                let combined_str = parts[_i..].join("_");
-                if detect_layer_from_prefix(&combined_str).is_some() {
-                    continue;
-                }
-            }
-        }
     }
 
     None

@@ -3,6 +3,9 @@ pub mod taxonomy_cli_vo;
 pub mod taxonomy_command_catalog_vo;
 pub use crate::common::taxonomy_format_vo;
 pub mod taxonomy_protocol_vo;
+// Backward-compat alias: downstream crates (external-lint, etc.) import via
+// `shared::cli_commands::taxonomy_result_vo::LintResult`. The alias points
+// to the canonical module so both paths resolve to the same type.
 pub use crate::common::taxonomy_lint_result_vo as taxonomy_result_vo;
 pub mod taxonomy_scan_report_vo;
 pub mod taxonomy_scan_request_vo;
@@ -11,6 +14,8 @@ pub mod taxonomy_scan_request_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Taxonomy types ──
+pub use crate::common::taxonomy_lint_result_vo::LintResult;
+pub use crate::common::taxonomy_lint_result_vo::LintResultList;
 pub use taxonomy_cli_vo::Cli;
 pub use taxonomy_cli_vo::Commands;
 pub use taxonomy_command_catalog_vo::CommandCatalogVO;
@@ -19,8 +24,6 @@ pub use taxonomy_format_vo::Format;
 pub use taxonomy_protocol_vo::TransportEndpoint;
 pub use taxonomy_protocol_vo::TransportProtocol;
 pub use taxonomy_protocol_vo::TransportUrlVO;
-pub use taxonomy_result_vo::LintResult;
-pub use taxonomy_result_vo::LintResultList;
 pub use taxonomy_scan_report_vo::DiagnosticSeverity;
 pub use taxonomy_scan_report_vo::PipelineDiagnostic;
 pub use taxonomy_scan_report_vo::PipelineError;

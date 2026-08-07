@@ -25,46 +25,77 @@ class Config:
             node = node[part]
         return default if node is None else node
 
-    # ── top-level ──────────────────────────────────────────────
+    # ── top-level (from config.yaml) ──────────────────────────
     @property
     def project_root(self) -> Path:
         return Path(self.get("project_root", "/home/raka/mcp-arwaky/lint-arwaky"))
 
+    # ── hardcoded constants ───────────────────────────────────
+    POLL_INTERVAL = 30               # seconds between polls
+    GLOBAL_TIMEOUT = 180             # minutes before pipeline blocked
+    MAX_REJECTION_LOOPS = 3          # QA rejects before escalation
+    MAX_PIPELINE_ITERATIONS = 5      # retries before blocked
+    RESUME_STALE_MINUTES = 60        # auto-resume if stale < 60m
+    BACKOFF_INITIAL = 2              # minutes
+    BACKOFF_MAX = 30                 # minutes
+    DEBOUNCE_SECONDS = 30
+    IGNORE_BOT_EVENTS = True
+
+    # ── node timeouts (minutes) ───────────────────────────────
+    NODE_TIMEOUTS = {
+        "business-analyst": 20,
+        "tech-lead": 30,
+        "architect": 30,
+        "developer": 60,
+        "quality-analysis": 30,
+    }
+
+    # ── node retry config ─────────────────────────────────────
+    NODE_RETRY = {
+        "business-analyst": {"retry_on_error": True, "max_retries": 2},
+        "tech-lead": {"retry_on_error": True, "max_retries": 2},
+        "architect": {"retry_on_error": True, "max_retries": 2},
+        "developer": {"retry_on_error": True, "max_retries": 3},
+        "quality-analysis": {"retry_on_error": False, "max_retries": 0},
+    }
+
+    # ── properties (use hardcoded, fallback to config) ────────
     @property
     def poll_interval(self) -> int:
-        return int(self.get("settings.poll_interval_seconds", 30))
+        return int(self.get("settings.poll_interval_seconds", self.POLL_INTERVAL))
 
     @property
     def global_timeout_minutes(self) -> int:
-        return int(self.get("settings.global_timeout_minutes", 180))
+        return int(self.get("settings.global_timeout_minutes", self.GLOBAL_TIMEOUT))
 
     @property
     def max_rejection_loops(self) -> int:
-        return int(self.get("counters.max_rejection_loops", 3))
+        return int(self.get("counters.max_rejection_loops", self.MAX_REJECTION_LOOPS))
 
     @property
     def max_pipeline_iterations(self) -> int:
-        return int(self.get("counters.max_pipeline_iterations", 5))
+        return int(self.get("counters.max_pipeline_iterations", self.MAX_PIPELINE_ITERATIONS))
 
     @property
     def resume_stale_minutes(self) -> int:
-        return int(self.get("recovery.resume_if_stale_minutes", 60))
+        return int(self.get("recovery.resume_if_stale_minutes", self.RESUME_STALE_MINUTES))
 
     @property
     def backoff_initial_minutes(self) -> int:
-        return int(self.get("recovery.exponential_backoff.initial_minutes", 2))
+        return int(self.get("recovery.exponential_backoff.initial_minutes", self.BACKOFF_INITIAL))
 
     @property
     def backoff_max_minutes(self) -> int:
-        return int(self.get("recovery.exponential_backoff.max_minutes", 30))
+        return int(self.get("recovery.exponential_backoff.max_minutes", self.BACKOFF_MAX))
 
     @property
     def debounce_seconds(self) -> int:
-        return int(self.get("trigger_guards.debounce_seconds", 30))
+        return int(self.get("trigger_guards.debounce_seconds", self.DEBOUNCE_SECONDS))
 
     @property
     def ignore_bot_events(self) -> bool:
-        return str(self.get("trigger_guards.ignore_bot_events", True)).lower() == "true"
+        val = self.get("trigger_guards.ignore_bot_events", self.IGNORE_BOT_EVENTS)
+        return str(val).lower() == "true"
 
     # ── paths (relative → absolute vs project root) ────────────
     def resolve(self, rel: str | Path) -> Path:
@@ -107,12 +138,20 @@ class Config:
     def prompts_dir(self) -> Path:
         return self.resolve(self.get("paths.prompts_dir", ".agents/graph-loop/prompts"))
 
-    # ── nodes ──────────────────────────────────────────────────
+    # ── nodes (hardcoded) ─────────────────────────────────────
     def node(self, name: str, field: str, default: Any = None) -> Any:
-        return self.get(f"nodes.{name}.{field}", default)
+        cfg = self.get(f"nodes.{name}.{field}")
+        if cfg is not None:
+            return cfg
+        node_cfg = self.NODE_RETRY.get(name, {})
+        if field == "retry_on_error":
+            return node_cfg.get("retry_on_error", False)
+        if field == "max_retries":
+            return node_cfg.get("max_retries", 0)
+        return default
 
     def node_timeout(self, name: str) -> int:
-        return int(self.node(name, "timeout_minutes", 30))
+        return self.NODE_TIMEOUTS.get(name, 30)
 
     # ── feature queue ──────────────────────────────────────────
     def features(self) -> list[dict]:
