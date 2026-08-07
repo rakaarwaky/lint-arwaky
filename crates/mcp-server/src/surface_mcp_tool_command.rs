@@ -71,7 +71,11 @@ impl LintArwakyMcpServer {
     }
 
     pub fn handle_health_check(&self) -> String {
-        self.action.handle_health_check()
+        let result = self.action.handle_health_check();
+        serde_json::to_string(&result).unwrap_or_else(|e| {
+            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
+                .to_string()
+        })
     }
 
     pub fn handle_list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
@@ -94,9 +98,11 @@ impl ServerHandler for LintArwakyMcpServer {
         let mut builder = ServerCapabilities::builder();
         builder.tools = Some(ToolsCapability::default());
         let capabilities = builder.build();
-        let version_report = dispatcher::surface_version_action::collect_version();
         ServerInfo::new(capabilities)
-            .with_server_info(Implementation::new("lint-arwaky", &version_report.version))
+            .with_server_info(Implementation::new(
+                "lint-arwaky",
+                &self.action.deps.server_version,
+            ))
             .with_protocol_version(ProtocolVersion::default())
     }
 }
