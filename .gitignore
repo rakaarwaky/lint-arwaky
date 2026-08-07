@@ -42,4 +42,5 @@ serviceAccountKey
 .kilo/
 .agents/reports
 .agents/plans
+.agents/graph-loop/
 
