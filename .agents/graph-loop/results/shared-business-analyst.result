@@ -1,0 +1,15 @@
+**Business Analyst analysis complete.** Final report: 185 lines, 15 findings.
+
+### Final Count by Severity
+
+| Severity | Count | Key Findings |
+|----------|-------|-------------|
+| 🔴 CRITICAL | 2 | AES201: 5 utility cross-layer imports + taxonomy→quality_rules circular risk |
+| 🟡 WARNING | 9 | AES402 (40+ contract primitives), 6 contracts with impl code, AES404 stateful utility, 5 naming inconsistencies, dead deps, `tokio` policy violation, missing FRD coverage |
+| 🟢 INFO | 4 | Test gaps, surface deps in foundation, FRD description vagueness, utility count clarification |
+
+### Top 3 Priorities
+
+1. **Move cross-dep VOs to common** — fixes 6 AES201 violations (orphan parse VOs, LintResult, CodeAnalysisRuleVO)
+2. **Clean contract files** — move `WorkspaceType`, `ToolOutput`, `PackageManagerStatus` to taxonomy; extract default method delegation
+3. **Remove dead dependencies** + `tokio` from shared; replace `&str`/`bool` with VOs in 24 contract files

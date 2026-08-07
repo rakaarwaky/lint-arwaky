@@ -32,3 +32,16 @@ Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All t
 [2026-08-07T07:17:58+07:00] [engine:state] Business-Analyst report found: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-shared.md
 [2026-08-07T07:17:58+07:00] [state:node_complete] Node business-analyst completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-shared.md
 [2026-08-07T07:18:28+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:18:58+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:19:28+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:19:58+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:20:28+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:20:58+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:20:58+07:00] [engine:state] Tech-Lead report found: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/shared-tech-lead.result
+[2026-08-07T07:20:58+07:00] [state:node_complete] Node tech-lead completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/shared-tech-lead.result
+[2026-08-07T07:20:58+07:00] [state:transition] State changed to: ARCHITECT
+[2026-08-07T07:20:58+07:00] [state:parallel_complete] Both Business-Analyst and Tech-Lead completed — transitioning to ARCHITECT
+[2026-08-07T07:21:28+07:00] [engine:state] State: ARCHITECT — merging reports for: shared
+[2026-08-07T07:21:28+07:00] [engine:state] Dispatching Architect to merge reports
+[2026-08-07T07:21:28+07:00] [engine:state] Running Architect agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
