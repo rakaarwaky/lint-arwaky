@@ -5,8 +5,10 @@ from pathlib import Path
 
 from src.config import Config
 
-RED, GREEN, YELLOW, BLUE, CYAN, NC = (
-    "\033[0;31m", "\033[0;32m", "\033[1;33m", "\033[0;34m", "\033[0;36m", "\033[0m")
+RED, GREEN, YELLOW, BLUE, CYAN, MAGENTA, NC = (
+    "\033[0;31m", "\033[0;32m", "\033[1;33m", "\033[0;34m", "\033[0;36m",
+    "\033[0;35m", "\033[0m")
+BOX_WIDTH = 60
 
 
 class Dashboard:
@@ -27,10 +29,16 @@ class Dashboard:
         except (FileNotFoundError, json.JSONDecodeError):
             return None
 
+    @staticmethod
+    def _title(title: str) -> str:
+        fill = max(BOX_WIDTH - len(title) - 3, 1)
+        return f" {title} {'═' * fill}"
+
     def header(self) -> None:
-        print(f"\n{CYAN}╔══════════════════════════════════════════════════════════════╗{NC}")
-        print(f"{CYAN}║         GRAPH LOOP PIPELINE DASHBOARD (v2.0 / Python)        ║{NC}")
-        print(f"{CYAN}╚══════════════════════════════════════════════════════════════╝{NC}\n")
+        print(f"\n{CYAN}┌{'─' * (BOX_WIDTH - 2)}┐{NC}")
+        print(f"{CYAN}│{NC} {self._title('GRAPH LOOP PIPELINE DASHBOARD')}")
+        print(f"{CYAN}│{NC} {self._title(f'v2.0 / Python')}")
+        print(f"{CYAN}└{'─' * (BOX_WIDTH - 2)}┘{NC}\n")
 
     def pipeline_status(self) -> None:
         print(f"{BLUE}━━━ Pipeline Status ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{NC}")

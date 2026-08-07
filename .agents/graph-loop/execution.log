@@ -45,3 +45,168 @@ Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All t
 [2026-08-07T07:21:28+07:00] [engine:state] Dispatching Architect to merge reports
 [2026-08-07T07:21:28+07:00] [engine:state] Running Architect agent...
 Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:24:58+07:00] [engine:state] Architect completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-shared-corr-20260807-shared-553.md
+[2026-08-07T07:24:58+07:00] [engine:cleanup] Stage cleanup done for shared: ba_tl_results, architect_result
+[2026-08-07T07:24:58+07:00] [state:merge_complete] Architect merge complete: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-shared-corr-20260807-shared-553.md
+[2026-08-07T07:25:28+07:00] [engine:state] State: DEVELOPER — implementing: shared
+[2026-08-07T07:25:28+07:00] [engine:state] Dispatching Developer
+[2026-08-07T07:25:28+07:00] [engine:state] Running Developer agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:42:19+07:00] [engine:engine] Graph Loop Engine started (PID: 3260976)
+[2026-08-07T07:42:19+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T07:42:19+07:00] [engine:recovery] State=DEVELOPER, elapsed=0m
+[2026-08-07T07:42:19+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from DEVELOPER
+[2026-08-07T07:42:19+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T07:42:19+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T07:42:19+07:00] [engine:state] State: DEVELOPER — implementing: shared
+[2026-08-07T07:42:19+07:00] [engine:state] Dispatching Developer
+[2026-08-07T07:42:19+07:00] [engine:state] Running Developer agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:42:29+07:00] [engine:state] Developer timed out — marking FAILED
+[2026-08-07T07:42:31+07:00] [state:failed] Pipeline marked FAILED: Developer timeout
+[2026-08-07T07:42:31+07:00] [feature:lock_released] Lock released for feature shared
+[2026-08-07T07:42:31+07:00] [feature:failed] Feature shared failed: Developer timeout
+[2026-08-07T07:42:31+07:00] [state:reset] Pipeline reset to IDLE
+[2026-08-07T07:42:31+07:00] [engine:engine] Engine stopping (PID: 3221603)
+Operation cancelled.
+[2026-08-07T07:43:20+07:00] [engine:engine] Graph Loop Engine started (PID: 3262478)
+[2026-08-07T07:43:20+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T07:43:20+07:00] [engine:recovery] State is IDLE — no recovery needed
+[2026-08-07T07:43:20+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T07:43:20+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T07:43:20+07:00] [engine:state] State: IDLE — scanning for triggers...
+[2026-08-07T07:43:20+07:00] [scanner:scan] Scanning GitHub for PRs with 'need review' label...
+[2026-08-07T07:43:21+07:00] [scanner:scan] No PRs found with 'need review' label
+[2026-08-07T07:43:21+07:00] [feature:lock_released] Feature filesystem lock released — not in active pipeline
+[2026-08-07T07:43:21+07:00] [engine:state] Found pending feature: filesystem
+[2026-08-07T07:43:21+07:00] [state:start] Pipeline started for feature: filesystem (ID: pipeline-20260807-268, correlation: corr-20260807-filesystem-785)
+[2026-08-07T07:43:21+07:00] [feature:claimed] Feature filesystem claimed for pipeline pipeline-20260807-268
+[2026-08-07T07:43:51+07:00] [engine:state] State: DISPATCHING — dispatching agents for: filesystem
+[2026-08-07T07:43:51+07:00] [parallel:start] Starting parallel analysis for: filesystem
+[2026-08-07T07:43:51+07:00] [parallel:spawn] Agent business-analyst spawned (PID: 3266186) for feature: filesystem
+[2026-08-07T07:43:51+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/filesystem-business-analyst.prompt
+[2026-08-07T07:43:51+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/filesystem-business-analyst.result
+[2026-08-07T07:43:51+07:00] [parallel:spawn] Agent tech-lead spawned (PID: 3266188) for feature: filesystem
+[2026-08-07T07:43:51+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/filesystem-tech-lead.prompt
+[2026-08-07T07:43:51+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/filesystem-tech-lead.result
+[2026-08-07T07:43:51+07:00] [state:analyzing] Parallel analysis started
+[2026-08-07T07:43:51+07:00] [parallel:start] Both Business-Analyst and Tech-Lead spawned
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:44:21+07:00] [engine:state] State: ANALYZING — feature: filesystem
+[2026-08-07T07:44:51+07:00] [engine:state] State: ANALYZING — feature: filesystem
+[2026-08-07T07:45:21+07:00] [engine:state] State: ANALYZING — feature: filesystem
+[2026-08-07T07:45:49+07:00] [engine:state] Developer completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/reports/done-shared-20260807.md
+[2026-08-07T07:45:49+07:00] [engine:cleanup] Stage cleanup done for shared: developer_result
+[2026-08-07T07:45:49+07:00] [state:developer_complete] Developer completed — PR #PR created — transitioning to QUALITY-ANALYSIS
+[2026-08-07T07:45:51+07:00] [engine:state] State: QUALITY-ANALYSIS — reviewing: filesystem
+[2026-08-07T07:45:51+07:00] [engine:state] Developer report not found
+[2026-08-07T07:46:04+07:00] [engine:engine] Graph Loop Engine started (PID: 3271258)
+[2026-08-07T07:46:04+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T07:46:04+07:00] [engine:recovery] State=DEVELOPER, elapsed=0m
+[2026-08-07T07:46:04+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from DEVELOPER
+[2026-08-07T07:46:04+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T07:46:04+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T07:46:04+07:00] [engine:state] State: DEVELOPER — implementing: filesystem
+[2026-08-07T07:46:04+07:00] [engine:state] Merged plan not found
+[2026-08-07T07:46:19+07:00] [engine:state] State: DEVELOPER — implementing: filesystem
+[2026-08-07T07:46:19+07:00] [engine:state] Merged plan not found
+[2026-08-07T07:46:21+07:00] [engine:state] State: DEVELOPER — implementing: filesystem
+[2026-08-07T07:46:21+07:00] [engine:state] Merged plan not found
+[2026-08-07T07:46:34+07:00] [engine:state] State: DEVELOPER — implementing: filesystem
+[2026-08-07T07:46:34+07:00] [engine:state] Merged plan not found
+[2026-08-07T07:46:49+07:00] [engine:state] State: DEVELOPER — implementing: filesystem
+[2026-08-07T07:46:49+07:00] [engine:state] Merged plan not found
+[2026-08-07T07:46:51+07:00] [engine:state] State: DEVELOPER — implementing: filesystem
+[2026-08-07T07:46:51+07:00] [engine:state] Merged plan not found
+[2026-08-07T07:46:53+07:00] [engine:engine] Engine stopping (PID: 3271258)
+[2026-08-07T07:47:16+07:00] [engine:engine] Graph Loop Engine started (PID: 3271729)
+[2026-08-07T07:47:16+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T07:47:16+07:00] [engine:recovery] State=QUALITY-ANALYSIS, elapsed=0m
+[2026-08-07T07:47:16+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from QUALITY-ANALYSIS
+[2026-08-07T07:47:16+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T07:47:16+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T07:47:16+07:00] [engine:state] State: QUALITY-ANALYSIS — reviewing: shared
+[2026-08-07T07:47:16+07:00] [engine:state] Dispatching Quality-Analysis for PR #183 (mode: full-review)
+[2026-08-07T07:47:16+07:00] [engine:state] Dispatching Quality-Analysis agent...
+[2026-08-07T07:47:16+07:00] [dispatch:spawn] Agent spawned (PID: 3271737) → /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/quality-analysis-shared.result
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:47:19+07:00] [engine:state] State: QUALITY-ANALYSIS — reviewing: shared
+[2026-08-07T07:47:19+07:00] [engine:state] Dispatching Quality-Analysis for PR #183 (mode: full-review)
+[2026-08-07T07:47:19+07:00] [engine:state] Running Quality-Analysis agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:47:21+07:00] [engine:state] State: QUALITY-ANALYSIS — reviewing: shared
+[2026-08-07T07:47:21+07:00] [engine:state] Dispatching Quality-Analysis for PR #183 (mode: full-review)
+[2026-08-07T07:47:21+07:00] [engine:state] Running Quality-Analysis agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:48:48+07:00] [engine:state] Quality-Analysis timed out — marking FAILED
+[2026-08-07T07:48:48+07:00] [state:failed] Pipeline marked FAILED: Quality-Analysis timeout
+[2026-08-07T07:48:48+07:00] [feature:failed] Feature shared failed: Quality-Analysis timeout
+[2026-08-07T07:48:48+07:00] [state:reset] Pipeline reset to IDLE
+[2026-08-07T07:48:48+07:00] [engine:engine] Engine stopping (PID: 3271729)
+[2026-08-07T07:51:33+07:00] [dispatch:spawn] Agent spawned (PID: 3279941) via Mimo API → .agents/graph-loop/results/test-api.result
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json, urllib.request, sys;prompt=open(sys.argv[1]).read();body=json.dumps({'model':'mm/mimo-v2.5','messages':[{'role':'user','content':prompt}],'max_output_tokens':131072}).encode();req=urllib.request.Request('https://highkey.my.id/v1/chat/completions',data=body,headers={'Content-Type':'application/json','Authorization':'Bearer sk-spx-X311Gvb0PTzoLoiRB9ilbWBe6sD1oy-8'});resp=urllib.request.urlopen(req,timeout=1800);data=json.loads(resp.read());open(sys.argv[2],'w').write(data['choices'][0]['message']['content'])
+                                                                                                                                                                                                                                                                                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 493, in open
+    response = meth(req, response)
+  File "/usr/lib64/python3.14/urllib/request.py", line 602, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "/usr/lib64/python3.14/urllib/request.py", line 531, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 464, in _call_chain
+    result = func(*args)
+  File "/usr/lib64/python3.14/urllib/request.py", line 611, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 403: Forbidden
+[2026-08-07T07:52:30+07:00] [dispatch:spawn] Agent spawned (PID: 3289704) via Mimo API → .agents/graph-loop/results/test-api.result
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json, urllib.request, sys;prompt=open(sys.argv[1]).read();body=json.dumps({'model':'mm/mimo-v2.5','messages':[{'role':'user','content':prompt}],'max_output_tokens':131072,'stream':False}).encode();req=urllib.request.Request('https://highkey.my.id/v1/chat/completions',data=body,headers={'Content-Type':'application/json','Authorization':'Bearer sk-spx-X311Gvb0PTzoLoiRB9ilbWBe6sD1oy-8'});resp=urllib.request.urlopen(req,timeout=1800);data=json.loads(resp.read());open(sys.argv[2],'w').write(data['choices'][0]['message']['content'])
+                                                                                                                                                                                                                                                                                                                                                                                                                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 187, in urlopen
+    return opener.open(url, data, timeout)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 493, in open
+    response = meth(req, response)
+  File "/usr/lib64/python3.14/urllib/request.py", line 602, in http_response
+    response = self.parent.error(
+        'http', request, response, code, msg, hdrs)
+  File "/usr/lib64/python3.14/urllib/request.py", line 531, in error
+    return self._call_chain(*args)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "/usr/lib64/python3.14/urllib/request.py", line 464, in _call_chain
+    result = func(*args)
+  File "/usr/lib64/python3.14/urllib/request.py", line 611, in http_error_default
+    raise HTTPError(req.full_url, code, msg, hdrs, fp)
+urllib.error.HTTPError: HTTP Error 403: Forbidden
+[2026-08-07T07:54:16+07:00] [dispatch:spawn] Agent spawned (PID: 3291697) via Mimo API → .agents/graph-loop/results/test-api.result
+[2026-08-07T07:58:52+07:00] [engine:engine] Graph Loop Engine started (PID: 3295392)
+[2026-08-07T07:58:52+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T07:58:52+07:00] [engine:recovery] State is IDLE — no recovery needed
+[2026-08-07T07:58:52+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T07:58:52+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T07:58:52+07:00] [engine:state] State: IDLE — scanning for triggers...
+[2026-08-07T07:58:52+07:00] [scanner:scan] Scanning GitHub for PRs with 'need review' label...
+[2026-08-07T07:58:53+07:00] [scanner:scan] No PRs found with 'need review' label
+[2026-08-07T07:58:53+07:00] [engine:state] Found pending feature: mcp-server
+[2026-08-07T07:58:53+07:00] [state:start] Pipeline started for feature: mcp-server (ID: pipeline-20260807-284, correlation: corr-20260807-mcp-server-305)
+[2026-08-07T07:58:53+07:00] [feature:claimed] Feature mcp-server claimed for pipeline pipeline-20260807-284
+[2026-08-07T07:59:23+07:00] [engine:state] State: DISPATCHING — dispatching agents for: mcp-server
+[2026-08-07T07:59:23+07:00] [parallel:start] Starting parallel analysis for: mcp-server
+[2026-08-07T07:59:23+07:00] [parallel:spawn] Agent business-analyst spawned (PID: 3295818) for feature: mcp-server
+[2026-08-07T07:59:23+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/mcp-server-business-analyst.prompt
+[2026-08-07T07:59:23+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/mcp-server-business-analyst.result
+[2026-08-07T07:59:23+07:00] [parallel:spawn] Agent tech-lead spawned (PID: 3295820) for feature: mcp-server
+[2026-08-07T07:59:23+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/mcp-server-tech-lead.prompt
+[2026-08-07T07:59:23+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/mcp-server-tech-lead.result
+[2026-08-07T07:59:23+07:00] [state:analyzing] Parallel analysis started
+[2026-08-07T07:59:23+07:00] [parallel:start] Both Business-Analyst and Tech-Lead spawned
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.

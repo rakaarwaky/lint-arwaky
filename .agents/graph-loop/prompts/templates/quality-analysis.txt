@@ -74,9 +74,24 @@ Review diff for:
    git checkout develop
    git pull origin develop
    ```
-3. Comment: "Quality-Analysis APPROVED..."
-4. Remove labels: `gh pr edit {{PR_NUMBER}} --remove-label "status: in-progress" --remove-label "status: pending-review"`
-5. Delete developer report
+3. Sync local worktree branch with develop and resolve conflicts:
+   ```bash
+   cd /home/raka/mcp-arwaky/lint-arwaky/.qwen/worktrees/worktree-{{FEATURE}}
+   git fetch origin
+   git rebase origin/develop
+   # If conflicts occur:
+   #   git status              # identify conflicted files
+   #   # resolve each conflict manually
+   #   git add <resolved-file>
+   #   git rebase --continue
+   # If rebase fails badly:
+   #   git rebase --abort
+   git push origin worktree-{{FEATURE}} --force-with-lease
+   ```
+   **Rule:** QA is responsible for ensuring the worktree branch is fully synced with develop and conflict-free after merge. If conflicts exist, resolve them before pushing. If resolution is ambiguous (e.g., conflicting business logic), escalate to human with a comment explaining the conflict.
+4. Comment: "Quality-Analysis APPROVED..."
+5. Remove labels: `gh pr edit {{PR_NUMBER}} --remove-label "status: in-progress" --remove-label "status: pending-review"`
+6. Delete developer report
 
 #### REJECTED
 1. Keep "status: in-progress" label, remove "status: pending-review"

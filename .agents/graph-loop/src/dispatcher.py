@@ -104,9 +104,12 @@ class Dispatcher:
     def spawn_agent(self, prompt: str, output_file: Path) -> subprocess.Popen:
         output_file = Path(output_file)
         output_file.parent.mkdir(parents=True, exist_ok=True)
+        pid_file = output_file.with_suffix(".pid")
         out = output_file.open("w")
         err = self.log.log_file.open("a")
         proc = subprocess.Popen(
             ["qwen", "-p", prompt, "-o", "text"],
             stdout=out, stderr=err, cwd=self.config.project_root)
+        pid_file.write_text(str(proc.pid))
+        self.log.write("dispatch", "spawn", f"Agent spawned (PID: {proc.pid}) → {output_file}")
         return proc
