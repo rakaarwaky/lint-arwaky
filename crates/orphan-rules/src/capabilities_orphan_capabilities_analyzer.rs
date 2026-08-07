@@ -1,14 +1,16 @@
 use crate::utility_orphan_filename::file_stem;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct CapabilitiesOrphanAnalyzer {
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
 impl CapabilitiesOrphanAnalyzer {
@@ -54,8 +56,10 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
     fn is_capabilities_orphan(
         &self,
         f: &FilePath,
-        root_dir: &FilePath,
+        _root_dir: &FilePath,
         alive_files: &ReachabilityResult,
+        content_map: &HashMap<String, String>,
+        workspace_root: &std::path::Path,
     ) -> OrphanIndicatorResult {
         let fp = f.value();
         let stem = file_stem(fp);
@@ -66,17 +70,12 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         // Condition 2: not wired in any root_*_container
         let mut is_wired = false;
         if !fp.is_empty() {
-            if let Ok(path) = FilePath::new(fp) {
-                let content = self.filesystem.read_cached(&path);
-                let content_ref = content.value();
-                let identifiers = self.extract_identifiers(fp, content_ref, &stem);
-                let root = std::path::Path::new(root_dir.value());
-                if let Ok(workspace_root) = self.filesystem.find_workspace_root_from_path(root) {
-                    is_wired = self
-                        .filesystem
-                        .check_wired_in_container(&workspace_root, &identifiers);
-                }
-            }
+            // Read file content from the pre-computed content_map (no I/O)
+            let content_ref = content_map.get(fp).map(|s| s.as_str()).unwrap_or("");
+            let identifiers = self.extract_identifiers(fp, content_ref, &stem);
+            is_wired = self
+                .filesystem
+                .check_wired_in_container(workspace_root, &PatternList::new(identifiers));
         }
 
         // Both conditions must be satisfied for non-orphan

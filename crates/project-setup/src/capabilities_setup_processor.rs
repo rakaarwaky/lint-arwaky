@@ -10,6 +10,7 @@
 //   - XDG config directory creation
 //   - Pre-flight checks for pip/npm availability
 
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -179,21 +180,15 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     }
 
     fn install_python_adapters(&self) -> SuccessStatus {
-        let res = self.installer.install_python_packages(&[
-            "ruff".to_string(),
-            "mypy".to_string(),
-            "bandit".to_string(),
-        ]);
+        let res = self
+            .installer
+            .install_python_packages(&PatternList::new(vec!["ruff", "mypy", "bandit"]));
         SuccessStatus::new(res.is_ok())
     }
 
     fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus {
         let res = self.installer.install_npm_packages(
-            &[
-                "eslint".to_string(),
-                "prettier".to_string(),
-                "typescript".to_string(),
-            ],
+            &PatternList::new(vec!["eslint", "prettier", "typescript"]),
             sudo,
         );
         SuccessStatus::new(res.is_ok())
@@ -261,9 +256,9 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
     /// Returns `Err(SetupError::UnknownLanguage)` for unsupported languages.
     fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError> {
         match language {
-            "rust" | "python" | "javascript" | "typescript" => Ok(include_str!(
-                "../../shared/config/lint_arwaky.config.yaml"
-            )),
+            "rust" | "python" | "javascript" | "typescript" => {
+                Ok(include_str!("../../shared/config/lint_arwaky.config.yaml"))
+            }
             _ => Err(SetupError::unknown_language(
                 "rust, python, javascript, typescript",
             )),

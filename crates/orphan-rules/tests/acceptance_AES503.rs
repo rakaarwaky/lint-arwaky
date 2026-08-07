@@ -8,14 +8,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::ICapabilitiesOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
     CapabilitiesOrphanAnalyzer::new(mock_filesystem())
-}
-
-fn empty_reachability() -> ReachabilityResult {
-    ReachabilityResult::new(HashSet::new())
 }
 
 fn reachable_for(fp: &FilePath) -> ReachabilityResult {
@@ -27,10 +23,12 @@ fn aes503_reachable_file_is_not_orphan() {
     let analyzer = capabilities_analyzer();
     let fp = FilePath::new("crates/orphan-rules/src/capabilities_foo.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
 
     let alive = reachable_for(&fp);
 
-    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive);
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
     // Reachable but not wired → orphan (mock filesystem doesn't support wiring)
     // This test verifies the reachability check passes (no "not reachable" message)
     assert!(
@@ -49,10 +47,12 @@ fn aes503_unreachable_file_is_orphan() {
     let analyzer = capabilities_analyzer();
     let fp = FilePath::new("crates/orphan-rules/src/capabilities_foo.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
 
     let alive = ReachabilityResult::new(HashSet::new());
 
-    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive);
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
     // With mock filesystem that doesn't read files or check wiring, this should be orphan
     assert!(
         result.is_orphan,
@@ -67,10 +67,12 @@ fn aes503_unreachable_file_reason_mentions_not_wired() {
     let analyzer = capabilities_analyzer();
     let fp = FilePath::new("crates/orphan-rules/src/capabilities_bar.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
 
     let alive = ReachabilityResult::new(HashSet::new());
 
-    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive);
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
     assert!(result.is_orphan);
     // The reason should mention that the struct/trait is not wired
     assert!(
@@ -84,6 +86,8 @@ fn aes503_unreachable_file_reason_mentions_not_wired() {
 fn aes503_multiple_files_one_reachable() {
     let analyzer = capabilities_analyzer();
     let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
 
     let fp_reachable =
         FilePath::new("crates/orphan-rules/src/capabilities_handler.rs".to_string()).unwrap();
@@ -92,8 +96,15 @@ fn aes503_multiple_files_one_reachable() {
 
     let alive = reachable_for(&fp_reachable);
 
-    let result_reachable = analyzer.is_capabilities_orphan(&fp_reachable, &root, &alive);
-    let result_orphan = analyzer.is_capabilities_orphan(&fp_orphan, &root, &alive);
+    let result_reachable = analyzer.is_capabilities_orphan(
+        &fp_reachable,
+        &root,
+        &alive,
+        &content_map,
+        &workspace_root,
+    );
+    let result_orphan =
+        analyzer.is_capabilities_orphan(&fp_orphan, &root, &alive, &content_map, &workspace_root);
 
     // Reachable file passes reachability check but fails wiring (mock) → "not wired"
     assert!(

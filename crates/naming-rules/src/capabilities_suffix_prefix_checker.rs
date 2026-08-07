@@ -1,6 +1,8 @@
 // PURPOSE: SuffixPrefixChecker — Handles AES102 suffix/prefix rules (allowed, forbidden, mandatory strict, cross-layer)
-use crate::utility_naming_checker::string_filename_result;
-use crate::utility_naming_checker::{get_stem, get_suffix, rule_exception_set};
+use crate::utility_naming_checker::{
+    basename_of, detect_layer, get_stem, get_suffix, parse_path, rule_exception_set,
+    string_filename_result,
+};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
@@ -8,14 +10,18 @@ use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_layer_detector;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::ISuffixPrefixChecker;
-use shared::naming_rules::taxonomy_naming_constant::{RULE_CODE_SUFFIX_PREFIX, SUFFIX_POLICY_STRICT};
+use shared::naming_rules::taxonomy_naming_constant::{
+    RULE_CODE_SUFFIX_PREFIX, SPECIALIZED_LAYER_MARKER, SUFFIX_POLICY_STRICT,
+};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-#[derive(Clone)]
+/// Stateless AES102 suffix/prefix checker.
+///
+/// Validates that file suffixes match their layer's policy (strict/flexible)
+/// and that prefix-suffix combinations are cross-layer consistent. No internal state.
 pub struct SuffixPrefixChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -23,7 +29,7 @@ pub struct SuffixPrefixChecker {}
 impl ISuffixPrefixChecker for SuffixPrefixChecker {
     fn check_domain_suffixes(
         &self,
-        _config: &ArchitectureConfig,
+        config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
         files: &FilePathList,
         _root_dir: &FilePath,
@@ -31,19 +37,19 @@ impl ISuffixPrefixChecker for SuffixPrefixChecker {
     ) {
         let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
         let suffix_to_layer = Self::build_suffix_to_layer_map(layer_map);
-        let exceptions = rule_exception_set(_config, RULE_CODE_SUFFIX_PREFIX);
+        let exceptions = rule_exception_set(config, RULE_CODE_SUFFIX_PREFIX);
 
         let violations: Vec<LintResult> = files
             .values
             .par_iter()
             .filter_map(|f| {
                 let f_str = f.to_string();
-                let filename = f.rsplit('/').next().unwrap_or(&f_str);
+                let filename = basename_of(&f_str);
                 // Rule-level exceptions evaluated before layer detection (FRD FR-002).
-                if exceptions.contains(filename) {
+                if exceptions.iter().any(|v| v == filename) {
                     return None;
                 }
-                let layer = self._detect_layer(&f_str, &layer_keys);
+                let layer = detect_layer(&f_str, &layer_keys);
                 let layer_name = layer.as_ref().map(|l| LayerNameVO::new(l.clone()));
 
                 // No recognised layer prefix → no suffix policy applies → skip.
@@ -84,7 +90,9 @@ impl SuffixPrefixChecker {
     ) -> std::collections::HashMap<String, String> {
         let mut suffix_to_layer = std::collections::HashMap::new();
         for (layer_name, def) in &layer_map.values {
-            if layer_name.value().contains('(') {
+            // Sub-layers (e.g. "capabilities(command)") share their base layer's
+            // suffix set, so skipping them here avoids redundant cross-layer entries.
+            if layer_name.value().contains(SPECIALIZED_LAYER_MARKER) {
                 continue;
             }
             if def.naming.suffix_policy.value == SUFFIX_POLICY_STRICT {
@@ -98,12 +106,6 @@ impl SuffixPrefixChecker {
         suffix_to_layer
     }
 
-    fn _detect_layer(&self, file: &str, layer_keys: &[String]) -> Option<String> {
-        let filename = utility_layer_detector::extract_filename(file);
-        utility_layer_detector::detect_layer_from_prefix(filename)
-            .map(|base| utility_layer_detector::resolve_specialized_layer(&base, file, layer_keys))
-    }
-
     /// Check domain suffix rules per layer (AES102: suffix/prefix rules + cross-layer validation).
     pub fn check_domain_suffixes_internal(
         &self,
@@ -113,13 +115,13 @@ impl SuffixPrefixChecker {
         layer_name: &Option<LayerNameVO>,
         suffix_to_layer: &std::collections::HashMap<String, String>,
     ) -> Option<LintResult> {
-        let fp = FilePath::new(filename.to_string()).unwrap_or_default();
+        let fp = parse_path(filename)?;
         if fp.is_barrel_file() || fp.is_entry_point() {
             return None;
         }
 
         let def = definition?;
-        if def.exceptions.values.contains(&filename.to_string()) {
+        if def.exceptions.values.iter().any(|v| v == filename) {
             return None;
         }
 
@@ -151,7 +153,7 @@ impl SuffixPrefixChecker {
         if let Some(suf) = &suffix
             && let Some(suffix_belonging_layer) = suffix_to_layer.get(*suf)
         {
-            let current_base = layer_display.split('(').next().unwrap_or(&layer_display);
+            let current_base = base_layer_of(&layer_display);
             if suffix_belonging_layer != current_base {
                 return Some(string_filename_result(
                     file,
@@ -199,4 +201,12 @@ impl SuffixPrefixChecker {
 
         None
     }
+}
+
+/// Extract the base layer name from a potentially specialized layer display string.
+/// e.g. `"surfaces(command)"` → `"surfaces"`, `"utility"` → `"utility"`.
+/// `split('(')` always yields at least one element, so `unwrap_or` is unreachable
+/// but satisfies the linter's no-unwrap policy.
+fn base_layer_of(layer_display: &str) -> &str {
+    layer_display.split('(').next().unwrap_or(layer_display)
 }

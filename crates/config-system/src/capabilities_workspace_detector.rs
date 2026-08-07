@@ -92,14 +92,6 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl Default for WorkspaceDetector {
-    fn default() -> Self {
-        panic!(
-            "WorkspaceDetector::default() requires filesystem — use WorkspaceDetector::new(fs) instead"
-        );
-    }
-}
-
 impl WorkspaceDetector {
     pub fn new(filesystem: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { filesystem }
@@ -149,7 +141,7 @@ fn has_rust_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> b
             }
         }
         levels += 1;
-        if levels > 5 {
+        if levels > 10 {
             break;
         }
         current = p.parent();
@@ -183,7 +175,7 @@ fn has_python_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) ->
             }
         }
         levels += 1;
-        if levels > 5 {
+        if levels > 10 {
             break;
         }
         current = p.parent();
@@ -212,7 +204,7 @@ fn has_typescript_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol
             }
         }
         levels += 1;
-        if levels > 5 {
+        if levels > 10 {
             break;
         }
         current = p.parent();

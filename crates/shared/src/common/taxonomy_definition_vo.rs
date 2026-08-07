@@ -68,7 +68,7 @@ pub struct LayerDefinition {
     #[serde(default)]
     pub orphan: OrphanRuleVO,
     #[serde(flatten, default)]
-    pub code_analysis: crate::quality_rules::taxonomy_code_analysis_rule_vo::CodeAnalysisRuleVO,
+    pub code_analysis: crate::quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO,
 }
 
 single_field_vo!(LayerMapVO, values: std::collections::HashMap<LayerNameVO, LayerDefinition>);

@@ -55,7 +55,10 @@ flowchart TD
   - Must be snake_case: lowercase ASCII letters (`a-z`), digits (`0-9`), and underscores only. No uppercase, no hyphens, no dots.
   - Must follow `prefix_concept_suffix` pattern with minimum N words (configurable via `config.naming.word_count.value`, default 3.
   - Validation regex: `^[a-z0-9]+(_[a-z0-9]+){N-1,}$` — compiled once per word count and cached in a static `OnceLock` table (one slot per word count 1–10).
-  - Exceptions: barrel files (`mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js`) and any file listed in the rule's `exceptions` list are skipped.
+  - Exceptions — three sources, evaluated in order; any match skips the file:
+    1. **Barrel files and entry points** (`mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, `index.js`).
+    2. **Rule-level exceptions** (`config.rules[].exceptions.values`) — global exceptions that apply to all layers for a given rule code.
+    3. **Definition-level exceptions** (`layers[].exceptions.values`) — per-layer exceptions that apply only when the file's layer is recognized.
 - **Edge Cases**:
 
   - Files with uppercase letters → AES101 (invalid snake_case).
@@ -67,7 +70,7 @@ flowchart TD
 - **Error Handling**:
 
   - Emit AES101 with the invalid stem, expected pattern, and minimum word count.
-  - Unreadable file paths (returned by filesystem crate with error flag) are skipped.
+  - Files with empty content (parse failures from filesystem crate) are skipped.
 
 ---
 
@@ -95,7 +98,8 @@ flowchart TD
 
     - If a suffix appears in the layer's `forbidden` list, it is immediately rejected (AES102 with `SuffixForbidden`), regardless of flexible/strict policy.
   - **Barrel files and entry points** (`mod.rs`, `lib.rs`, `main.rs`, `__init__.py`, `index.ts`, `index.js`, `build.rs`) are skipped.
-  - **Files in the rule's `exceptions` list** are skipped.
+  - **Rule-level exceptions** (`config.rules[].exceptions.values`) — global exceptions that apply to all layers for a given rule code.
+  - **Definition-level exceptions** (`layers[].exceptions.values`) — per-layer exceptions that apply only when the file's layer is recognized.
   - **Layer detection** via the layer detection utility using filename prefix.
 - **Per-Layer Suffix Policies** (source of truth: YAML config):
 
@@ -123,11 +127,13 @@ flowchart TD
 ## API Contract
 
 
-| Operation                        | Input                                    | Output             | Purpose                                                              |
-| ---------------------------------- | ------------------------------------------ | -------------------- | ---------------------------------------------------------------------- |
-| Full naming audit                | `&[FileEntry]` from filesystem aggregate | Lint results       | Run both naming convention and suffix/prefix checks (AES101–AES102) |
-| Naming convention check (AES101) | `&[FileEntry]`, configuration            | AES101 violations | Validate snake_case structure and minimum word count                 |
-| Suffix/prefix check (AES102)     | `&[FileEntry]`, configuration, layer map | AES102 violations  | Validate suffix matches layer policy and prefix-suffix consistency   |
+| Operation                        | Input                                            | Output             | Purpose                                                              |
+| ---------------------------------- | ---------------------------------------------------- | -------------------- | ---------------------------------------------------------------------- |
+| Full naming audit                | `&[FileEntry]` from filesystem aggregate         | Lint results       | Run both naming convention and suffix/prefix checks (AES101–AES102) |
+| Naming convention check (AES101) | `FilePathList`, configuration, layer map            | AES101 violations | Validate snake_case structure and minimum word count                 |
+| Suffix/prefix check (AES102)     | `FilePathList`, configuration, layer map             | AES102 violations  | Validate suffix matches layer policy and prefix-suffix consistency   |
+
+> **Note:** Only `INamingRunnerAggregate::run_audit_with_entries` accepts `&[FileEntry]` and performs the FileEntry → FilePathList conversion (filtering empty-content entries). The individual checker protocol traits (`INamingConventionChecker`, `ISuffixPrefixChecker`) accept `FilePathList` directly.
 
 ---
 
@@ -137,7 +143,7 @@ flowchart TD
 
   - The configuration system in the shared crate — reads architecture configuration YAML for layer definitions, naming rules, exceptions, ignored paths.
   - The taxonomy definitions in the shared crate — layer map and layer name value objects.
-  - The layer detection utility in the shared crate — filename prefix detection.
+  - Layer detection is performed inline in this crate — hardcoded PREFIX_MAP maps filename prefixes to layer names, avoiding cross-layer imports.
   - The path value objects in the shared crate — barrel and entry-point detection.
 - **External**:
 
@@ -208,6 +214,8 @@ flowchart TD
 | 2 | Rule AES102 disabled in config | No AES102 violations        | config |
 | 3 | File in exceptions list        | No violation for that file  | config |
 
+> **Per-rule toggling:** Each rule can be enabled/disabled via `config.rules[].enabled` (boolean, default `true`). The orchestrator checks this field via `is_rule_enabled()` before invoking the corresponding checker. When `enabled: false`, the checker is not called and zero violations are emitted for that rule.
+
 ---
 
 ## Assumptions & Constraints
@@ -237,7 +245,7 @@ flowchart TD
 | **Forbidden suffix**       | Suffix explicitly banned for a layer (belongs to another layer's domain)                                                                                                                  |
 | **Prefix-suffix mismatch** | File prefix indicates one layer but suffix belongs to a different layer's suffix set                                                                                                      |
 | **Filesystem crate**       | External crate that handles file walking, directory traversal, and file filtering. Caches`FileEntry[]` in `OnceLock`. Surface layer fetches via `file_list()` and passes to naming-rules. |
-| **Unreadable skip**        | File paths returned by the filesystem crate with an error flag are skipped silently; no separate warning diagnostic is emitted.                                                           |
+| **Unreadable skip**        | Files with empty content (parse failures from the filesystem crate) are skipped silently; no separate warning diagnostic is emitted.                                                           |
 
 ---
 

@@ -706,3 +706,16 @@ impl SuffixPolicyVO {
 pub struct SuffixVO {
     pub values: PatternList,
 }
+
+/// File content pair: path + content string (replaces raw `(PathBuf, String)` in contract signatures).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct FileContentPair {
+    pub path: std::path::PathBuf,
+    pub content: String,
+}
+
+impl FileContentPair {
+    pub fn new(path: std::path::PathBuf, content: String) -> Self {
+        Self { path, content }
+    }
+}

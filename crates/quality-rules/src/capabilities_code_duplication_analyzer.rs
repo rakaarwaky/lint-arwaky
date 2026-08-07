@@ -1,8 +1,10 @@
-use shared::quality_rules::{AesCodeAnalysisViolation, ICodeMetricAnalyzerProtocol};
+use shared::quality_rules::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
+use shared::quality_rules::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
 
 use shared::common::LintMessage;
 use shared::config_system::ArchitectureConfig;
 use std::collections::hash_map::DefaultHasher;
+use std::sync::Arc;
 
 // PURPOSE: CodeDuplicationAnalyzer — AES305: detect files with excessive duplication across the codebase
 // ALGORITHM (file-level similarity, not per-block):
@@ -26,14 +28,6 @@ pub struct CodeDuplicationAnalyzer {
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
 impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
-    fn handle_duplicates(
-        &self,
-        _path: Option<shared::common::taxonomy_path_vo::DirectoryPath>,
-    ) -> Vec<(String, AesCodeAnalysisViolation)> {
-        // Legacy path: caller must pre-fetch entries and pass them via handle_duplicates_entries.
-        Vec::new()
-    }
-
     fn handle_duplicates_entries(
         &self,
         entries: &[(std::path::PathBuf, String)],
@@ -53,11 +47,12 @@ impl ICodeMetricAnalyzerProtocol for CodeDuplicationAnalyzer {
             .and_then(|r| r.code_analysis.duplication_threshold)
             .unwrap_or(50.0);
 
-        let str_entries: Vec<(String, String)> = entries
+        // Borrow path/content as &str instead of cloning into (String, String)
+        let borrowed: Vec<(&str, &str)> = entries
             .iter()
-            .map(|(p, c)| (p.display().to_string(), c.clone()))
+            .map(|(p, c)| (p.to_str().unwrap_or_default(), c.as_str()))
             .collect();
-        self.check_file_similarity_entries(&str_entries, min_lines, threshold_pct)
+        self.check_file_similarity_entries(&borrowed, min_lines, threshold_pct)
     }
 }
 
@@ -77,7 +72,7 @@ impl CodeDuplicationAnalyzer {
     /// Returns (file_path, violation) tuples so the caller can attach the file path.
     pub fn check_file_similarity_entries(
         &self,
-        entries: &[(String, String)],
+        entries: &[(&str, &str)],
         min_dup_lines: usize,
         threshold_pct: f64,
     ) -> Vec<(String, AesCodeAnalysisViolation)> {
@@ -171,7 +166,7 @@ impl CodeDuplicationAnalyzer {
                 let other_indices = &file_to_others[fi];
                 let mut other_files: Vec<String> = other_indices
                     .iter()
-                    .map(|&ofi| entries[ofi].0.clone())
+                    .map(|&ofi| entries[ofi].0.to_string())
                     .collect();
                 other_files.sort();
 
@@ -193,7 +188,7 @@ impl CodeDuplicationAnalyzer {
                 }
 
                 violations.push((
-                    file_path.clone(),
+                    file_path.to_string(),
                     AesCodeAnalysisViolation::CodeDuplication {
                         reason: Some(LintMessage::new(msg)),
                     },
@@ -204,5 +199,3 @@ impl CodeDuplicationAnalyzer {
         violations
     }
 }
-
-use std::sync::Arc;

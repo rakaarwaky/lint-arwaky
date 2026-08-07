@@ -1,109 +1,47 @@
 // PURPOSE: TUI binary entry point — composition root wiring domain aggregates
 // directly into TUI surfaces (surface-only: no contract/aggregate/capabilities).
+use dispatcher::surface_orphan_action::OrphanFactory;
+use lint_arwaky::root_entry_container::CommonDeps;
 use std::sync::Arc;
 
 fn main() -> anyhow::Result<()> {
-    let filesystem: Arc<
-        dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
-    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let deps = CommonDeps::build();
 
-    let config_container =
-        config_system::root_config_system_container::ConfigContainer::new(filesystem.clone());
-    let config_orchestrator = config_container.orchestrator();
+    // TUI needs a direct fix orchestrator (not a factory).
+    let fix_orchestrator = (deps.fix_orchestrator_factory)(false);
 
-    let code_analysis_linter =
-        quality_rules::root_quality_rules_container::CodeAnalysisContainer::from_orchestrator(
-            &config_orchestrator,
-            ".",
-        )
-        .code_analysis_linter();
-
-    let import_container =
-        import_rules::root_import_rules_container::ImportContainer::from_orchestrator(
-            &config_orchestrator,
-            ".",
-            filesystem.clone(),
-        );
-    let import_orchestrator = import_container.orchestrator();
-
-    let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-        Arc::new(config_orchestrator.load_config_sync(
-            &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-        )),
-        Arc::new(shared::common::LayerMapVO::new(
-            config_orchestrator
-                .load_config_sync(
-                    &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-                )
-                .layers
-                .clone(),
-        )),
-    );
-    let naming_orchestrator = naming_container.orchestrator();
-
-    let orphan_container =
-        orphan_rules::root_orphan_detector_container::OrphanContainer::from_orchestrator(
-            &config_orchestrator,
-            ".",
-            filesystem.clone(),
-        );
-    let orphan_orchestrator = orphan_container.analyzer();
-
-    let ext_container =
-        external_lint::root_external_lint_container::ExternalLintContainer::new(filesystem.clone());
-    let external_lint = ext_container.aggregate();
-
-    let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
-        config_orchestrator.load_config_sync(
-            &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-        ),
-    );
-    let role_orchestrator = role_container.orchestrator();
-
-    let auto_fix_container =
-        auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
-    let fix_orchestrator = auto_fix_container.orchestrator_with_filesystem(filesystem.clone());
-
-    let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
-        shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-        filesystem.clone(),
-    );
-    let git_hooks_aggregate = git_container.aggregate();
-
-    let maintenance_container =
-        maintenance::root_maintenance_container::MaintenanceContainer::new(filesystem.clone());
-    let maintenance_orchestrator = maintenance_container.orchestrator();
-
-    let setup_container =
-        project_setup::root_project_setup_container::SetupContainer::new(filesystem.clone());
-    let setup_orchestrator = setup_container.aggregate();
+    // DI: inject filesystem and orphan factories for SurfaceLintExecutor
+    let fs_factory: Arc<
+        dyn Fn() -> Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>
+            + Send
+            + Sync,
+    > = Arc::new(|| {
+        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+    });
+    let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs| {
+        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs)
+            .analyzer()
+    });
 
     // Build TUI surfaces via dispatcher — SurfaceLintExecutor delegates to dispatcher functions.
-    let lint_executor = std::sync::Arc::new(
+    let lint_executor = Arc::new(
         tui::surface_lint_executor::SurfaceLintExecutor::new(
-            code_analysis_linter,
-            filesystem.clone(),
-            Arc::new(|| {
-                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-            }),
-            Arc::new(|config, fs| {
-                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                    config, fs,
-                )
-                .analyzer()
-            }),
+            deps.code_analysis_linter,
+            deps.filesystem.clone(),
+            fs_factory,
+            orphan_factory,
         )
         .with_fix(fix_orchestrator)
-        .with_setup(setup_orchestrator)
-        .with_maintenance(maintenance_orchestrator)
-        .with_hook_port(git_hooks_aggregate)
-        .with_config(config_orchestrator.clone())
-        .with_external_lint(external_lint)
-        .with_orphan(orphan_orchestrator)
-        .with_import_orchestrator(import_orchestrator)
-        .with_naming_orchestrator(naming_orchestrator)
-        .with_role_orchestrator(role_orchestrator),
+        .with_setup(deps.setup_orchestrator)
+        .with_maintenance(deps.maintenance_orchestrator)
+        .with_hook_port(deps.git_hooks_aggregate)
+        .with_config(deps.config_orchestrator)
+        .with_external_lint(deps.external_lint)
+        .with_orphan(deps.orphan_orchestrator)
+        .with_import_orchestrator(deps.import_orchestrator)
+        .with_naming_orchestrator(deps.naming_orchestrator)
+        .with_role_orchestrator(deps.role_orchestrator),
     );
 
-    tui::root_tui_container::TuiContainer::run(lint_executor, filesystem)
+    tui::root_tui_container::TuiContainer::run(lint_executor, deps.filesystem)
 }

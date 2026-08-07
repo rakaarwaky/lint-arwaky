@@ -261,3 +261,42 @@ fn check_domain_suffixes_via_trait_api() {
     );
     assert_eq!(results.values[0].code.code(), RULE_CODE_SUFFIX_PREFIX);
 }
+
+// ── FR-AES102-15: Unknown-prefix files skipped by AES102 ──
+// Files with unrecognized prefixes have no layer → no suffix policy applies → skipped.
+
+#[test]
+fn unknown_prefix_file_skipped_by_aes102() {
+    let map = strict_capabilities_layer_map();
+    let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
+
+    let result = checker().check_domain_suffixes_internal(
+        "src/foobar_user_vo.rs",
+        "foobar_user_vo.rs",
+        None,
+        &None,
+        &suffix_map,
+    );
+    assert!(
+        result.is_none(),
+        "unknown-prefix file with no layer definition must be skipped"
+    );
+}
+
+#[test]
+fn unknown_prefix_file_with_allowed_suffix_still_skipped() {
+    let map = strict_capabilities_layer_map();
+    let suffix_map = SuffixPrefixChecker::build_suffix_to_layer_map(&map);
+
+    let result = checker().check_domain_suffixes_internal(
+        "src/myapp_helper.rs",
+        "myapp_helper.rs",
+        None,
+        &None,
+        &suffix_map,
+    );
+    assert!(
+        result.is_none(),
+        "unknown-prefix file has no suffix policy → must be skipped"
+    );
+}

@@ -8,7 +8,8 @@
 use std::borrow::Cow;
 
 use shared::cli_commands::LintResult;
-use shared::quality_rules::{CodeAnalysisRuleVO, IBypassCheckerProtocol};
+use shared::quality_rules::contract_bypass_checker_protocol::IBypassCheckerProtocol;
+use shared::quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 
 use crate::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
@@ -38,7 +39,7 @@ impl IBypassCheckerProtocol for BypassChecker {
             }
 
             // Strip trailing TOML comments outside strings before comparing values.
-            let t = Self::strip_toml_comment(t).trim();
+            let t = Self::strip_hash_comment(t).trim();
             if t.is_empty() {
                 continue;
             }
@@ -199,9 +200,9 @@ impl IBypassCheckerProtocol for BypassChecker {
                         None => continue,
                     };
 
-                    let uw = ['u', 'n', 'w', 'r', 'a', 'p'].iter().collect::<String>();
                     if matches_word_token(code_lower.as_str(), token, false)
-                        && !(token == uw && Self::has_safe_unwrap_variant(code_lower.as_str()))
+                        && !(token == "unwrap"
+                            && Self::has_safe_unwrap_variant(code_lower.as_str()))
                         && !is_inside_string_or_char(code_trim, pattern_pos)
                     {
                         let reason = format!("Found forbidden bypass token: '{}'", token);
@@ -356,20 +357,11 @@ impl BypassChecker {
 
     /// Map a forbidden token to its ViolationKind variant.
     fn classify_token(token: &str) -> ViolationKind {
-        let mk = |c: &[char]| c.iter().collect::<String>();
-        let unwrap = mk(&['u', 'n', 'w', 'r', 'a', 'p']);
-        let expect = mk(&['e', 'x', 'p', 'e', 'c', 't']);
-        let panic = mk(&['p', 'a', 'n', 'i', 'c']);
-        let todo = mk(&['t', 'o', 'd', 'o']);
-        let unimplemented = mk(&[
-            'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd',
-        ]);
-        let unreachable = mk(&['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e']);
         match token {
-            _ if token == unwrap || token == expect => ViolationKind::UnwrapExpect,
-            _ if token == panic => ViolationKind::Panic,
-            _ if token == todo => ViolationKind::Todo,
-            _ if token == unimplemented || token == unreachable => ViolationKind::Unimplemented,
+            "unwrap" | "expect" => ViolationKind::UnwrapExpect,
+            "panic" => ViolationKind::Panic,
+            "todo" => ViolationKind::Todo,
+            "unimplemented" | "unreachable" => ViolationKind::Unimplemented,
             _ => ViolationKind::BypassComment,
         }
     }
@@ -383,31 +375,23 @@ impl BypassChecker {
 
     /// Default fallback bypass patterns when config provides none.
     fn default_forbidden_bypass() -> PatternList {
-        let mc = |chars: &[char]| chars.iter().collect::<String>();
-
         PatternList {
             values: vec![
-                mc(&['u', 'n', 'w', 'r', 'a', 'p']),
-                mc(&['e', 'x', 'p', 'e', 'c', 't']),
-                mc(&['p', 'a', 'n', 'i', 'c']),
-                mc(&['t', 'o', 'd', 'o']),
-                mc(&[
-                    'u', 'n', 'i', 'm', 'p', 'l', 'e', 'm', 'e', 'n', 't', 'e', 'd',
-                ]),
-                mc(&['u', 'n', 'r', 'e', 'a', 'c', 'h', 'a', 'b', 'l', 'e']),
-                mc(&['t', 'y', 'p', 'e', ':', ' ', 'i', 'g', 'n', 'o', 'r', 'e']),
-                mc(&['n', 'o', 'q', 'a']),
-                mc(&['@', 't', 's', '-', 'i', 'g', 'n', 'o', 'r', 'e']),
-                mc(&[
-                    '@', 't', 's', '-', 'e', 'x', 'p', 'e', 'c', 't', '-', 'e', 'r', 'r', 'o', 'r',
-                ]),
-                mc(&[
-                    'e', 's', 'l', 'i', 'n', 't', '-', 'd', 'i', 's', 'a', 'b', 'l', 'e',
-                ]),
-                mc(&['l', 'i', 'n', 't', '-', 'd', 'i', 's', 'a', 'b', 'l', 'e']),
-                mc(&['F', 'I', 'X', 'M', 'E']),
-                mc(&['H', 'A', 'C', 'K']),
-                mc(&['X', 'X', 'X']),
+                "unwrap".into(),
+                "expect".into(),
+                "panic".into(),
+                "todo".into(),
+                "unimplemented".into(),
+                "unreachable".into(),
+                "type: ignore".into(),
+                "noqa".into(),
+                "@ts-ignore".into(),
+                "@ts-expect-error".into(),
+                "eslint-disable".into(),
+                "lint-disable".into(),
+                "FIXME".into(),
+                "HACK".into(),
+                "XXX".into(),
             ],
         }
     }
@@ -477,7 +461,7 @@ impl BypassChecker {
     /// Returns the code portion of a line for language-sensitive early-scan checks.
     fn code_portion_for_language(line: &str, language: Language) -> &str {
         match language {
-            Language::Python => Self::strip_python_comment(line),
+            Language::Python => Self::strip_hash_comment(line),
             _ => strip_trailing_comment(line),
         }
     }
@@ -489,7 +473,7 @@ impl BypassChecker {
         in_block_comment: &mut bool,
     ) -> Cow<'a, str> {
         match language {
-            Language::Python => Cow::Borrowed(Self::strip_python_comment(line)),
+            Language::Python => Cow::Borrowed(Self::strip_hash_comment(line)),
             _ => {
                 // Fast path: no comment markers and not currently inside a block comment.
                 if !*in_block_comment
@@ -603,36 +587,9 @@ impl BypassChecker {
         result
     }
 
-    /// Strip trailing Python `# ...` comments outside simple string literals.
-    fn strip_python_comment(line: &str) -> &str {
-        let bytes = line.as_bytes();
-        let len = bytes.len();
-        let mut i = 0;
-        let mut in_string = false;
-        let mut quote: u8 = b'"';
-
-        while i < len {
-            let b = bytes[i];
-
-            if in_string {
-                if b == quote && (i == 0 || bytes[i - 1] != b'\\') {
-                    in_string = false;
-                }
-            } else if b == b'"' || b == b'\'' {
-                in_string = true;
-                quote = b;
-            } else if b == b'#' {
-                return &line[..i];
-            }
-
-            i += 1;
-        }
-
-        line
-    }
-
-    /// Strip trailing TOML `# ...` comments outside simple string literals.
-    fn strip_toml_comment(line: &str) -> &str {
+    /// Strip trailing `# ...` comments outside simple string literals.
+    /// Single implementation shared by Python and TOML handling.
+    fn strip_hash_comment(line: &str) -> &str {
         let bytes = line.as_bytes();
         let len = bytes.len();
         let mut i = 0;

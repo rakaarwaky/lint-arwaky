@@ -3,6 +3,7 @@
 // Cache accessors live here because they use DashMap (pipeline state),
 // which cannot be delegated to the child protocol traits.
 
+use crate::common::taxonomy_common_vo::{FileContentPair, PatternList};
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 use crate::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
@@ -12,6 +13,7 @@ use crate::filesystem::contract_tool_resolution_protocol::IToolResolutionProtoco
 use crate::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -39,7 +41,7 @@ pub trait IFilesystemAggregate:
     fn has_file(&self, path: &Path) -> bool;
 
     /// Collect file entries (path, content) for each lintable file.
-    fn collect_file_entries(&self, files: &[String]) -> Vec<(PathBuf, String)>;
+    fn collect_file_entries(&self, files: &PatternList) -> Vec<FileContentPair>;
 
     /// Discover source files under root, filtering by ignored patterns.
     fn discover_source_files(&self, root: &Path, ignored: &[String]) -> Vec<String>;
@@ -90,4 +92,8 @@ pub trait IFilesystemAggregate:
     /// Find workspace root by walking up from `start` looking for
     /// marker files (Cargo.toml, package.json, pyproject.toml) + member dirs.
     fn find_workspace_root(&self, start: &Path) -> Option<PathBuf>;
+
+    /// Return import entries with resolved_path populated (via barrel/external resolution).
+    /// Only available after `build_orphan_graph_context` has been called.
+    fn resolved_import_list(&self) -> Vec<ImportEntry>;
 }

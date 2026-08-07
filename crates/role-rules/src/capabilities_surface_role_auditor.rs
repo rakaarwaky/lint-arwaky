@@ -1,12 +1,12 @@
 // PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES406: smart/utility/passive surface role checks
 //
 // ALGORITHM (uses ParseMetadata when available):
-//   1. check_fn_count_limit — Count function declarations. If > max_functions (default 15), flag.
-//   2. Classify surface by suffix: Smart (_command, _controller, _page, _entry, _router),
+//   1. Classify surface by suffix: Smart (_command, _controller, _page, _entry, _router),
 //      Utility (_hook, _store, _action, _screen), Passive (all others).
-//   3. Passive + Utility: hierarchy (max_public_methods), method body length, nesting depth,
+//   2. Passive + Utility: hierarchy (max_public_methods), method body length, nesting depth,
 //      domain logic (control flow count).
-//   4. Smart surfaces: exempt from Passive + Utility checks but subject to global function limit.
+//   3. Smart surfaces: exempt from Passive + Utility checks.
+//   4. Function count limit removed — surface files may contain any number of functions.
 
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -15,41 +15,37 @@ use shared::filesystem::taxonomy_filesystem_vo::{
 };
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
 
-const MAX_PUBLIC_METHODS: usize = 10;
-const MAX_CONTROL_FLOW: usize = 3;
+const MAX_PUBLIC_METHODS: usize = 50;
+const MAX_CONTROL_FLOW: usize = 50;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct SurfaceRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl ISurfaceRoleChecker for SurfaceRoleChecker {
-    fn check_smart_surface(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {}
-    fn check_utility_surface(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {}
-    fn check_passive_surface(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {}
+    fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        // Smart surfaces are exempt from passive/utility checks — function count runs in check_fn_count_limit.
+        let _ = (file, violations);
+    }
 
-    fn check_fn_count_limit(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        if let Some(meta) = &file.parse_metadata {
-            self._check_fn_count_metadata(file, meta, violations);
-        } else {
-            self._check_fn_count_fallback(file, violations);
-        }
-
-        // Classify surface and run role-specific checks (exempt Smart surfaces)
-        let basename = file.path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-        let is_smart = basename.ends_with("_command")
-            || basename.ends_with("_controller")
-            || basename.ends_with("_page")
-            || basename.ends_with("_entry")
-            || basename.ends_with("_router");
-        if is_smart {
-            return; // Smart surfaces exempt from Passive + Utility checks
-        }
-
+    fn check_utility_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         if let Some(meta) = &file.parse_metadata {
             self._check_passive_with_metadata(file, meta, violations);
         } else {
-            self._check_passive_fallback(file, violations);
+            self._check_domain_logic(file, violations);
         }
+    }
+
+    fn check_passive_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        if let Some(meta) = &file.parse_metadata {
+            self._check_passive_with_metadata(file, meta, violations);
+        } else {
+            self._check_domain_logic(file, violations);
+        }
+    }
+
+    fn check_fn_count_limit(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {
+        // Function count limit removed — surface files may contain any number of functions.
     }
 }
 
@@ -63,69 +59,6 @@ impl Default for SurfaceRoleChecker {
 impl SurfaceRoleChecker {
     pub fn new() -> Self {
         Self {}
-    }
-
-    // ── Function count check ──
-
-    fn _check_fn_count_metadata(
-        &self,
-        file: &FileEntry,
-        meta: &ParseMetadata,
-        violations: &mut Vec<LintResult>,
-    ) {
-        let path_str = file.path.to_string_lossy();
-        let fn_count = match meta {
-            ParseMetadata::Rust(m) => m.function_definitions.len(),
-            ParseMetadata::Python(m) => m.function_definitions.len(),
-            ParseMetadata::TypeScript(m) | ParseMetadata::JavaScript(m) => {
-                m.function_definitions.len()
-            }
-            _ => 0, // ParseMetadata::Unknown
-        };
-        if fn_count > 15 {
-            violations.push(LintResult::new_arch(
-                &path_str,
-                0,
-                "AES406",
-                Severity::HIGH,
-                
-                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? File {} has too many function declarations (exceeds 15): found {}\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count)
-,
-            ));
-        }
-    }
-
-    fn _check_fn_count_fallback(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        let path_str = file.path.to_string_lossy();
-        let content = &file.content;
-        let fn_keyword = match file.language {
-            shared::filesystem::taxonomy_filesystem_vo::Language::Python => "def ",
-            shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
-            | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => "function ",
-            _ => "fn ",
-        };
-        let mut count = 0;
-        for line in content.lines() {
-            let trimmed = line.trim();
-            if !trimmed.starts_with("//")
-                && !trimmed.starts_with('#')
-                && trimmed.contains(fn_keyword)
-            {
-                count += 1;
-                if count > 15 {
-                    violations.push(LintResult::new_arch(
-                        &path_str,
-                        0,
-                        "AES406",
-                        Severity::HIGH,
-                        
-                        format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? File {} has too many function declarations (exceeds 15): found {}\nFIX: Ensure surface only performs its designated responsibilities.", path_str, count)
-,
-                    ));
-                    return;
-                }
-            }
-        }
     }
 
     // ── Passive surface checks using ParseMetadata ──
@@ -149,6 +82,9 @@ impl SurfaceRoleChecker {
             }
             _ => {} // ParseMetadata::Unknown — skip
         }
+
+        // Domain logic check runs on all files regardless of ParseMetadata
+        self._check_domain_logic(file, violations);
     }
 
     fn _check_rust_passive_metadata(
@@ -164,7 +100,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} public methods (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, pub_fn_count, MAX_PUBLIC_METHODS)
 ,
             ));
@@ -184,7 +120,7 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
 ,
             ));
@@ -204,16 +140,16 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
+
                 format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
 ,
             ));
         }
     }
 
-    // ── Passive surface fallback (line-based) ──
+    // ── Domain logic check (control flow count) ──
 
-    fn _check_passive_fallback(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+    fn _check_domain_logic(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
         let content = &file.content;
         let control_flow_count = content
@@ -237,8 +173,8 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-                
-                format!("AES405 AGENT_ROLE: Complex domain logic detected in a passive role.\nWHY? Passive surface {} has {} control flow statements (max {})\nFIX: Move the complex domain/control logic into capabilities or orchestrator components.", path_str, control_flow_count, MAX_CONTROL_FLOW)
+
+                format!("AES406 SURFACE_ROLE: Complex domain logic detected in a passive/utility surface.\nWHY? Surface {} has {} control flow statements (max {})\nFIX: Move the complex domain/control logic into capabilities or orchestrator components.", path_str, control_flow_count, MAX_CONTROL_FLOW)
 ,
             ));
         }

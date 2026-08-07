@@ -25,7 +25,15 @@ fn test_constructor() {
     let fp = FilePath::new(".".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
-    let _result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
+    let _result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &empty_map,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
 }
 
 #[test]
@@ -35,7 +43,15 @@ fn test_file_with_no_importers_is_orphan() {
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &empty_map,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     assert!(result.is_orphan);
     assert!(!result.reason.is_empty());
 }
@@ -55,7 +71,15 @@ fn test_file_imported_by_other_layer_is_not_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &reachable_for(&fp));
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &reachable_for(&fp),
+    );
     assert!(!result.is_orphan);
 }
 
@@ -74,7 +98,15 @@ fn test_file_only_imported_by_taxonomy_layer_is_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     assert!(result.is_orphan);
     assert!(result.reason.contains("taxonomy_color"));
 }
@@ -86,7 +118,15 @@ fn test_utility_suffix_categorization() {
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &empty_map,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     // "taxonomy_helper" has suffix "helper" → category is "utility"
     assert!(result.is_orphan);
     assert!(!result.reason.is_empty());

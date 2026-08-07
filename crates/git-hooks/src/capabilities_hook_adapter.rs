@@ -4,13 +4,14 @@
 // setting, and hook removal. This is the lowest-level hook component that
 // interacts directly with the filesystem.
 
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_job_vo::SuccessStatus;
+use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use shared::filesystem::taxonomy_filesystem_vo::FileMode;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -65,7 +66,7 @@ exit 0
         #[cfg(unix)]
         {
             self.filesystem
-                .set_permissions(&hook_path, 0o755)
+                .set_permissions(&hook_path, FileMode::new(0o755))
                 .map_err(|e| {
                     GitHookError::new(LintMessage::new(format!(
                         "Failed to set permissions: {}",

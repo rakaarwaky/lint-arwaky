@@ -170,33 +170,44 @@ impl ArchOrphanAnalyzer {
         // (not just the scanned module). This ensures cross-module imports are resolved correctly.
         // When scanning modules/cli/, root_cli_main_entry.py in modules/ is still used as an
         // entry point, so surface files imported by it are not falsely flagged as orphans.
-        let all_files = &context.all_workspace_files;
-
-        let entry_points_vo = OrphanFileListVO::new(all_files.clone());
-        let entry_points = crate::utility_orphan_filename::identify_entry_points(
-            std::slice::from_ref(&entry_points_vo),
-            &[configured_vo],
-        );
-
-        // Compute top_root early so alive_result can use absolute paths (matching
-        // the format used by _process_file for file_fp — fixes path format mismatch
-        // that caused false-positive AES506/AES503 orphan violations)
+        //
+        // IMPORTANT: all_workspace_files are ABSOLUTE paths but graph keys are RELATIVE.
+        // Convert to relative so entry points match graph keys for BFS traversal.
         let root_path = std::path::Path::new(root_dir.value());
         let top_root = self
             .deps
             .filesystem
             .workspace_root(root_dir)
             .unwrap_or_else(|| root_path.to_path_buf());
+        let all_files_rel: Vec<String> = context
+            .all_workspace_files
+            .iter()
+            .map(|s| {
+                std::path::Path::new(s)
+                    .strip_prefix(&top_root)
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| s.clone())
+            })
+            .collect();
+
+        let entry_points_vo = OrphanFileListVO::new(all_files_rel);
+        let entry_points = crate::utility_orphan_filename::identify_entry_points(
+            std::slice::from_ref(&entry_points_vo),
+            &[configured_vo],
+        );
         let alive_set = crate::utility_orphan_graph::trace_reachability(
             &entry_points.values,
             &context.import_graph,
         );
+        // alive_set contains relative paths from the import graph (e.g., "crates/auto-fix/src/...")
+        // Convert to absolute paths matching _process_file's format for the contains() check.
+        // Also keep relative paths for the BFS lookup against graph keys.
         let alive_result = ReachabilityResult::new(
             alive_set
                 .iter()
-                .filter_map(|s| {
+                .map(|s| {
                     let abs = top_root.join(s);
-                    FilePath::new(abs.to_string_lossy().to_string()).ok()
+                    FilePath::new(abs.to_string_lossy().to_string()).unwrap_or_default()
                 })
                 .collect(),
         );
@@ -292,11 +303,10 @@ impl ArchOrphanAnalyzer {
                 "processing surface file"
             );
         }
-        if base_layer.is_none() {
+        let Some(base_layer) = base_layer else {
             trace!(file = f, filename = filename, "SKIP no layer prefix");
             return None;
-        }
-        let base_layer = base_layer.unwrap();
+        };
         let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
             &base_layer,
             file_fp.value(),
@@ -418,6 +428,8 @@ impl ArchOrphanAnalyzer {
                 &root,
                 None,
                 &context.inbound_links,
+                all_files,
+                content_map,
                 alive_result,
             );
         }
@@ -438,6 +450,8 @@ impl ArchOrphanAnalyzer {
                 &fp,
                 &root,
                 alive_result,
+                content_map,
+                std::path::Path::new(top_root),
             );
         }
 

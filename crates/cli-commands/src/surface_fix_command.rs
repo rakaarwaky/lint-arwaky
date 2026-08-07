@@ -6,6 +6,8 @@ use shared::quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tracing::{error, info};
 
+use crate::utility_output_text_formatter::format_location;
+
 pub fn handle_fix(
     path: Option<FilePath>,
     dry_run: bool,
@@ -24,13 +26,7 @@ pub fn handle_fix(
             if report.dry_run {
                 println!("[DRY-RUN] Previewing fixes for {}...", report.project_path);
                 for r in &report.fixable {
-                    let loc = match (r.line.value(), r.column.value()) {
-                        (l, c) if l > 0 && c > 0 => {
-                            format!("{}:{}:{}", r.file.value(), l, c)
-                        }
-                        (l, _) if l > 0 => format!("{}:{}", r.file.value(), l),
-                        _ => r.file.value().to_string(),
-                    };
+                    let loc = format_location(r.file.value(), r.line.value(), r.column.value());
                     println!(
                         "  [fixable] {} [{}] {}",
                         loc,

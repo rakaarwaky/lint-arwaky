@@ -3,17 +3,19 @@
 // Delegates low-level hook file operations to the adapter and implements
 // config initialization, ignore rule management, and diff data comparison.
 
+use shared::common::taxonomy_job_vo::SuccessStatus;
+use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::common::taxonomy_layer_vo::Identity;
-use shared::common::taxonomy_job_vo::SuccessStatus;
 
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::git_hooks::taxonomy_git_diff_data_vo::{
+    GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
+};
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
-use shared::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO};
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -70,7 +72,7 @@ impl IHookProtocol for HookManager {
             }
         };
 
-        let mut doc: serde_yaml_ng::Value = match serde_yaml_ng::from_str(&content) {
+        let mut doc: serde_yaml_ng::Value = match serde_yaml_ng::from_str(&content.value) {
             Ok(v) => v,
             Err(e) => {
                 return DescriptionVO::new(format!("Failed to parse config YAML: {}", e));
@@ -196,12 +198,12 @@ impl HookManager {
         let bytes1 = self
             .filesystem
             .read_to_string(std::path::Path::new(path1))
-            .map(|s| s.into_bytes())
+            .map(|s| s.value.into_bytes())
             .unwrap_or_else(|_| self.read_raw_bytes(path1));
         let bytes2 = self
             .filesystem
             .read_to_string(std::path::Path::new(path2))
-            .map(|s| s.into_bytes())
+            .map(|s| s.value.into_bytes())
             .unwrap_or_else(|_| self.read_raw_bytes(path2));
         let max_size = bytes1.len().max(bytes2.len());
         if max_size == 0 {

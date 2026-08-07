@@ -158,14 +158,6 @@ impl TaxonomyRoleChecker {
             }
             _ => return,
         };
-        let _is_rs = matches!(
-            file.language,
-            shared::filesystem::taxonomy_filesystem_vo::Language::Rust
-        );
-        let _is_py = matches!(
-            file.language,
-            shared::filesystem::taxonomy_filesystem_vo::Language::Python
-        );
 
         for (i, line) in content.lines().enumerate() {
             let t = line.trim();
@@ -270,7 +262,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Struct '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
 ,
                     ));
@@ -281,7 +273,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Enum '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
 ,
                     ));
@@ -292,7 +284,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Trait '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
 ,
                     ));
@@ -303,7 +295,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Function '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name, path_str)
 ,
                     ));
@@ -314,7 +306,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Impl block found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", path_str)
 ,
                     ));
@@ -327,7 +319,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Class '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", class.name, path_str)
 ,
                     ));
@@ -338,7 +330,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Function '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name, path_str)
 ,
                     ));
@@ -351,7 +343,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Class '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", class.name, path_str)
 ,
                     ));
@@ -362,7 +354,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Interface '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
 ,
                     ));
@@ -373,7 +365,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Type alias '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", name, path_str)
 ,
                     ));
@@ -384,7 +376,7 @@ impl TaxonomyRoleChecker {
                         0,
                         "AES401",
                         Severity::HIGH,
-                        
+
                         format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Function '{}' found in constant file {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", fn_item.name, path_str)
 ,
                     ));
@@ -426,13 +418,18 @@ impl TaxonomyRoleChecker {
                 || t.starts_with("class ")
                 || t.starts_with("pub type ")
                 || t.starts_with("type ")
+                || t.starts_with("export class ")
+                || t.starts_with("export interface ")
+                || t.starts_with("export enum ")
+                || t.starts_with("export type ")
+                || t.starts_with("export function ")
             {
                 violations.push(LintResult::new_arch(
                     &path_str,
                     i + 1,
                     "AES401",
                     Severity::HIGH,
-                    
+
                     format!("AES401 TAXONOMY_ROLE: Constant file contains non-constant declaration.\nWHY? Non-constant declaration '{}' found in constant file on line {} of {}\nFIX: Move the non-constant code to the appropriate layer, or convert it to a constant/static declaration.", t,
                             i + 1,
                             path_str)

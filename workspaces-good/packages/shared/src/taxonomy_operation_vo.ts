@@ -7,12 +7,17 @@ export enum OperationVO {
 
 export function operationFromSymbol(s: string): OperationVO | null {
   switch (s) {
-    case "+": return OperationVO.Add;
-    case "-": return OperationVO.Subtract;
+    case "+":
+      return OperationVO.Add;
+    case "-":
+      return OperationVO.Subtract;
     case "*":
-    case "x": return OperationVO.Multiply;
-    case "/": return OperationVO.Divide;
-    default: return null;
+    case "x":
+      return OperationVO.Multiply;
+    case "/":
+      return OperationVO.Divide;
+    default:
+      return null;
   }
 }
 

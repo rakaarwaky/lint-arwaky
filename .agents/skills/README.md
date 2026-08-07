@@ -21,6 +21,7 @@ Each skill is a self-contained directory with a `SKILL.md` file defining rules, 
 ├── role-architect                   # USE for architecture review & layer validation
 ├── role-business-analyst            # USE for requirements & business flow review
 ├── role-fullstack-developer         # USE to execute plans & implement fixes
+├── role-quality-analysis            # USE for PR review, CI gates, merge readiness
 └── role-tech-lead                   # USE for code quality, security & performance review
 
 ## Naming Convention
@@ -41,12 +42,13 @@ Follow the pattern `role-<role-name>`:
 
 ## Role Workflow
 
-Roles follow a pipeline: **Architect** → **Business Analyst** → **Tech Lead** → **Fullstack Developer**
+Roles follow a pipeline: **Architect** → **Business Analyst** → **Tech Lead** → **Fullstack Developer** → **Quality Analyst**
 
 1. **Architect** reviews layer boundaries, naming, orphans, scalability, and data flow
 2. **Business Analyst** reviews requirements clarity, business flow, logic implementation, and traceability
 3. **Tech Lead** reviews security, performance, error handling, SOLID principles, and code quality
 4. **Fullstack Developer** executes all plans and generates execution reports
+5. **Quality Analyst** reviews PR from fullstack developer — CI gates, AES compliance, test results, report accuracy, merge readiness
 
 ## Usage
 

@@ -6,11 +6,11 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
-use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use shared::maintenance::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, DoctorResultVO, HealthCheckAdapterVO, HealthCheckResult,
     SecurityFinding, SecurityScanReport, ToolStatus, ToolchainDiagnostics,
 };
+use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -173,7 +173,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             let mut in_package = false;
             let mut pkg_name = String::new();
             let mut pkg_version = String::new();
-            for line in content.lines() {
+            for line in content.value.lines() {
                 let trimmed = line.trim();
                 if trimmed == "[[package]]" {
                     if !pkg_name.is_empty() && !pkg_version.is_empty() {

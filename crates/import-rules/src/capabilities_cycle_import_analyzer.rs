@@ -75,7 +75,7 @@ impl ICycleImportProtocol for DependencyCycleAnalyzer {
     }
 
     fn normalize_to_layer(&self, name: &str) -> LayerNameVO {
-        LayerNameVO::new(name.split('_').next().unwrap_or(name))
+        LayerNameVO::new(utility_cycle_detector::normalize_to_layer(name))
     }
 }
 
@@ -99,7 +99,27 @@ impl DependencyCycleAnalyzer {
             return vec![];
         }
         let aes205_rule = config.rules.iter().find(|r| r.name.value == "AES205");
-        let layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        // Skip if AES205 rule is explicitly disabled
+        if let Some(rule) = aes205_rule {
+            if !rule.enabled.value {
+                return vec![];
+            }
+        }
+        let mut layer_keys: Vec<String> = layer_map.values.keys().map(|k| k.to_string()).collect();
+        // Fallback: if config.layers is empty, use canonical AES layer names.
+        // config.layers is only populated when the YAML defines explicit layer overrides;
+        // file-prefix detection always works regardless.
+        if layer_keys.is_empty() {
+            layer_keys = vec![
+                "taxonomy".into(),
+                "contract".into(),
+                "utility".into(),
+                "capabilities".into(),
+                "agent".into(),
+                "surface".into(),
+                "root".into(),
+            ];
+        }
         let layer_prefixes: Vec<String> = layer_keys.iter().map(|k| format!("{}_", k)).collect();
 
         let file_results: Vec<ScannedFileEdges> =
@@ -148,6 +168,12 @@ impl DependencyCycleAnalyzer {
                 let mut has_cross_layer = false;
                 for module in modules {
                     let module_value = module.value();
+                    // Skip empty module paths (e.g. re-export entries parsed with no raw path) —
+                    // they cannot represent a real dependency and would falsely resolve to a layer
+                    // via the filesystem fallback (resolve_module_path_to_layer).
+                    if module_value.is_empty() {
+                        continue;
+                    }
                     let is_crate_import = module_value.starts_with("crate::")
                         || module_value.starts_with("lint_arwaky::");
                     let is_cross_layer_crate = if is_crate_import {
@@ -205,29 +231,43 @@ impl DependencyCycleAnalyzer {
             .collect();
 
         let mut edges = Vec::new();
-        let mut file_by_layer: HashMap<String, String> = HashMap::new();
+        let mut edge_to_file: HashMap<(String, String), String> = HashMap::new();
         for (local_edges, layer_mapping) in file_results {
-            edges.extend(local_edges);
-            if let Some((fl, f)) = layer_mapping {
-                file_by_layer.entry(fl).or_insert(f);
+            if let Some((_, ref f)) = layer_mapping {
+                for e in &local_edges {
+                    edge_to_file
+                        .entry((e.source.clone(), e.target.clone()))
+                        .or_insert_with(|| f.clone());
+                }
             }
+            edges.extend(local_edges);
         }
 
         let cycle_edge_results = utility_cycle_detector::detect_cycle_edges(&edges);
-        cycle_edge_results.into_iter().map(|sn| {
-            let edge_key = sn.value;
-            let parts: Vec<&str> = edge_key.split("->").collect();
-            let source = parts[0];
-            let target = parts[1];
-            let file = file_by_layer.get(source).cloned().unwrap_or_else(|| source.to_string());
-            LintResult::new_arch(&file, 1, "AES205", Severity::CRITICAL,
-                format!(
-                    "AES205 CIRCULAR_IMPORT: Circular dependency.\n\
-                     WHY? Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
-                     FIX: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction.",
-                    source, target
-                ),
-            )
-        }).collect()
+        cycle_edge_results
+            .into_iter()
+            .filter_map(|sn| {
+                let (source, target) = match sn.value.split_once("->") {
+                    Some((s, t)) => (s, t),
+                    None => return None,
+                };
+                let file = edge_to_file
+                    .get(&(source.to_string(), target.to_string()))
+                    .cloned()
+                    .unwrap_or_else(|| source.to_string());
+                Some(LintResult::new_arch(
+                    &file,
+                    1,
+                    "AES205",
+                    Severity::CRITICAL,
+                    format!(
+                        "AES205 CIRCULAR_IMPORT: Circular dependency.\n\
+                         WHY? Circular dependency between layers '{}' and '{}' creates implicit bidirectional coupling.\n\
+                         FIX: Extract shared types to taxonomy, define a contract protocol, or restructure the dependency direction.",
+                        source, target
+                    ),
+                ))
+            })
+            .collect()
     }
 }

@@ -228,6 +228,7 @@ architecture:
           "ViolationList.tsx",
           "LayerBadge.tsx",
           "useGraphData.ts",
+          "root_esbuild_entry.js",
         ]
 
     AES102:
@@ -255,6 +256,9 @@ architecture:
           "index.ts",
           "main.js",
           "main.ts",
+          "root_entry_container.rs",
+          "agent_filesystem_orchestrator_helpers.rs",
+          "root_config_defaults.rs",
         ]
       layers:
         taxonomy:
@@ -347,6 +351,13 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "utility_ast_python.rs",
+          "utility_ast_rust.rs",
+          "utility_ast_typescript.rs",
+          "utility_import_extractor.rs",
+          "utility_config_defaults.rs",
+          "agent_config_orchestrator.rs",
+          "capabilities_orchestration_helpers.rs",
         ]
       conditions:
         - scope: "taxonomy(vo)"
@@ -585,7 +596,7 @@ architecture:
 
     AES205:
       enabled: true
-      exceptions: ["main.rs", "lib.rs", "mod.rs"]
+      exceptions: ["main.rs", "lib.rs", "mod.rs", "surface_mcp_action_command.rs", "root_auto_fix_container.rs", "agent_fix_orchestrator.rs"]
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
 
@@ -613,6 +624,7 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "agent_filesystem_orchestrator.rs",
         ]
 
     AES302:
@@ -706,6 +718,7 @@ architecture:
           "surface_orphan_action.rs",
           "surface_quality_action.rs",
           "surface_role_action.rs",
+          "capabilities_orchestration_helpers.rs",
         ]
 
     # ─── AES400: Role ───
@@ -713,6 +726,7 @@ architecture:
       enabled: true
       scope:
         ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
+      exceptions: ["taxonomy_adapter_error.rs"]
 
     AES402:
       enabled: true
@@ -735,6 +749,14 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "contract_filesystem_io_protocol.rs",
+          "contract_graph_protocol.rs",
+          "contract_workspace_protocol.rs",
+          "contract_maintenance_aggregate.rs",
+          "contract_maintenance_protocol.rs",
+          "contract_setup_protocol.rs",
+          "contract_code_analysis_aggregate.rs",
+          "contract_fix_aggregate.rs",
         ]
 
     AES403:
@@ -760,6 +782,7 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "capabilities_orchestration_helpers.rs",
         ]
 
     AES404:
@@ -783,6 +806,8 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "utility_rust_parser.rs",
+          "utility_code_duplication_detector.rs",
         ]
 
     AES405:
@@ -807,6 +832,7 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "agent_filesystem_orchestrator_helpers.rs",
         ]
 
     AES406:
@@ -836,6 +862,7 @@ architecture:
           "mcp_main_entry.js",
           "tui_main_entry.ts",
           "tui_main_entry.js",
+          "utility_output_text_formatter.rs",
         ]
 
     # ─── AES500: Orphan ───

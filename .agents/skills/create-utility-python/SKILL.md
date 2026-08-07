@@ -26,7 +26,7 @@ Utility = stateless standalone functions. No class, no `self`, no domain rules. 
 
 ## Role Naming
 
-parser, splitter, trimmer, slugifier, sanitizer, normalizer, extractor, replacer, converter, counter, resolver, detector, builder, joiner, serializer, deserializer, encoder, decoder, hasher, generator, formatter, comparator, differ, matcher, checker, calculator, mapper, merger, grouper, sorter, deduplicator, printer
+Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.
 
 ## Templates
 

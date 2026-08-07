@@ -41,6 +41,7 @@ pub mod utility_compliance_score;
 pub mod utility_language_detector;
 pub mod utility_layer_detector;
 pub mod utility_parser_dispatcher;
+pub mod utility_path_filter;
 pub mod utility_path_normalization;
 pub mod utility_python_parser;
 pub mod utility_rust_parser;

@@ -14,6 +14,8 @@ pub trait ITaxonomyOrphanProtocol: Send + Sync {
         root_dir: &FilePath,
         definition: Option<&LayerDefinition>,
         inbound_links: &InboundLinkMap,
+        all_files: &[String],
+        content_map: &HashMap<String, String>,
         alive_files: &ReachabilityResult,
     ) -> OrphanIndicatorResult;
 }
@@ -36,6 +38,8 @@ pub trait ICapabilitiesOrphanProtocol: Send + Sync {
         f: &FilePath,
         root_dir: &FilePath,
         alive_files: &ReachabilityResult,
+        content_map: &HashMap<String, String>,
+        workspace_root: &std::path::Path,
     ) -> OrphanIndicatorResult;
 }
 

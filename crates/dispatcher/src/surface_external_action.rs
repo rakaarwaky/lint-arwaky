@@ -96,7 +96,7 @@ fn load_config_entries(
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists() {
                 if let Ok(content) = fs.read_to_string(&cfg_path) {
-                    let entries = config_parser.parse_adapter_entries_from_yaml(&content);
+                    let entries = config_parser.parse_adapter_entries_from_yaml(&content.value);
                     if !entries.is_empty() {
                         return entries;
                     }

@@ -1,16 +1,16 @@
-use crate::utility_config_defaults::default_config_for_language;
 use dashmap::DashMap;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
 use shared::config_system::contract_reader_protocol::IConfigReaderProtocol;
 use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
 use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_parser::parse_config_yaml;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
@@ -18,7 +18,8 @@ use shared::config_system::taxonomy_setting_vo::ProjectConfig;
 use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
 use shared::config_system::taxonomy_validation_vo::ValidationResult;
-use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
+use shared::config_system::utility_config_parser::default_config_for_language;
+use shared::config_system::utility_config_parser::parse_config_yaml;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
@@ -118,20 +119,19 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     ) -> ConfigResult {
         match self.deps.config_reader.read_config(project_root, language) {
             Ok(Some(source)) => {
-                let cache_key = source.path.to_string();
-                // FR-007: DashMap — single parse per key, no lock poisoning
-                let parsed = self
-                    .config_cache
-                    .entry(cache_key)
-                    .or_insert_with(|| Arc::new(parse_config_yaml(&source.raw_content)))
-                    .value()
-                    .as_ref()
-                    .clone();
+                let had_layers = {
+                    let cache_key = source.path.to_string();
+                    !self
+                        .config_cache
+                        .entry(cache_key)
+                        .or_insert_with(|| Arc::new(parse_config_yaml(&source.raw_content)))
+                        .value()
+                        .layers
+                        .is_empty()
+                };
+                let config = self.merge_and_fill_defaults_cached(&source, language);
                 let mut warnings = Vec::new();
-                let mut config = parsed;
-                if config.layers.is_empty() {
-                    let defaults = default_config_for_language(language.as_str());
-                    config.layers = defaults.layers;
+                if !had_layers {
                     warnings.push(
                         "Config file had no architecture layers, using built-in defaults for layers only."
                             .to_string(),
@@ -141,15 +141,19 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             }
             Ok(None) => {
                 let warnings = vec!["No config file found, using built-in defaults".to_string()];
-                let config = default_config_for_language(language.as_str());
-                let source = ConfigSource::new(language.as_str(), "embedded", "");
-                ConfigResult::new(config, source, warnings)
+                ConfigResult::new(
+                    default_config_for_language(language.as_str()),
+                    ConfigSource::new(language.as_str(), "embedded", ""),
+                    warnings,
+                )
             }
             Err(e) => {
                 let warnings = vec![format!("Config error: {}; using defaults", e)];
-                let config = default_config_for_language(language.as_str());
-                let source = ConfigSource::new(language.as_str(), "embedded", "");
-                ConfigResult::new(config, source, warnings)
+                ConfigResult::new(
+                    default_config_for_language(language.as_str()),
+                    ConfigSource::new(language.as_str(), "embedded", ""),
+                    warnings,
+                )
             }
         }
     }
@@ -171,13 +175,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
                 let ws_type = self.deps.workspace_detector.detect(&ws);
                 let language = ConfigLanguage::from(ws_type);
                 let config = match self.deps.config_reader.read_config(&ws, language) {
-                    Ok(Some(source)) => {
-                        let mut parsed = parse_config_yaml(&source.raw_content);
-                        if parsed.layers.is_empty() {
-                            parsed.layers = default_config_for_language(language.as_str()).layers;
-                        }
-                        parsed
-                    }
+                    Ok(Some(source)) => self.merge_and_fill_defaults_cached(&source, language),
                     _ => default_config_for_language(language.as_str()),
                 };
                 WorkspaceInfo::new(ws, language.to_string(), config)
@@ -186,77 +184,25 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     }
 
     fn load_config_sync(&self, project_root: &FilePath) -> ArchitectureConfig {
-        let root = std::path::Path::new(project_root.value());
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
 
-        // FR-001: Search upward for config file (up to depth 5 for deeply nested files)
-        let mut current = root.to_path_buf();
-        let mut depth = 0;
-        let mut source_content: Option<(String, String)> = None; // (path_str, raw_content)
-        while !current.as_os_str().is_empty() && depth < 5 {
-            for filename in language.config_file_names() {
-                let candidate = current.join(filename);
-                // FR-001: Reject symlinks pointing outside project root
-                if let Ok(meta) = self.deps.filesystem.symlink_metadata(&candidate)
-                    && meta.file_type().is_symlink()
-                    && let Ok(canonical) = self.deps.filesystem.canonicalize(&candidate)
-                {
-                    let root_canonical = self
-                        .deps
-                        .filesystem
-                        .canonicalize(root)
-                        .unwrap_or_else(|_| root.to_path_buf());
-                    if !canonical.starts_with(&root_canonical) {
-                        warn!(path = %candidate.display(), "symlink points outside project root, rejected");
-                        continue;
-                    }
-                }
-                if let Ok(content) = self.deps.filesystem.read_to_string(&candidate) {
-                    source_content = Some((candidate.to_string_lossy().to_string(), content));
-                    break;
-                }
-            }
-            if source_content.is_some() {
-                break;
-            }
-            if let Some(parent) = current.parent() {
-                current = parent.to_path_buf();
-                depth += 1;
-            } else {
-                break;
-            }
-        }
-
-        let (path_str, raw_content) = match source_content {
-            Some(sc) => sc,
-            None => {
+        match self.deps.config_reader.read_config(project_root, language) {
+            Ok(Some(source)) => self.merge_and_fill_defaults_cached(&source, language),
+            _ => {
                 let mut config = default_config_for_language(language.as_str());
                 let (merged_layers, _) = crate::utility_config_merger::merge_config(&config);
                 config.layers = merged_layers;
-                return config;
+                config
             }
-        };
-
-        // FR-007: Use DashMap cache — parse only once per file path
-        let parsed = self
-            .config_cache
-            .entry(path_str)
-            .or_insert_with(|| Arc::new(parse_config_yaml(&raw_content)))
-            .value()
-            .as_ref()
-            .clone();
-
-        // FR-005: Apply full merge protocol (layers merged, rules deduped)
-        let (merged_layers, _) = crate::utility_config_merger::merge_config(&parsed);
-        let mut config = parsed;
-        config.layers = merged_layers;
-        config
+        }
     }
 
     fn ignored_paths(&self, project_root: &FilePath) -> PatternList {
         let config = self.load_config_sync(project_root);
-        PatternList::new(ignored_paths_from_config(&config))
+        PatternList::new(merge_default_ignored_paths(ignored_paths_from_config(
+            &config,
+        )))
     }
 
     fn ignored_paths_for_language(
@@ -265,7 +211,9 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         language: ConfigLanguage,
     ) -> PatternList {
         let result = self.load_config_for_language(project_root, language);
-        PatternList::new(ignored_paths_from_config(&result.config))
+        PatternList::new(merge_default_ignored_paths(ignored_paths_from_config(
+            &result.config,
+        )))
     }
 }
 
@@ -283,6 +231,48 @@ impl ConfigOrchestrator {
     pub fn validator(&self) -> &Arc<dyn IConfigValidatorProtocol> {
         &self.deps.validator
     }
+
+    /// FR-005/FR-007: Load from cache (single parse per key), apply merge, layer defaults.
+    fn merge_and_fill_defaults_cached(
+        &self,
+        source: &ConfigSource,
+        language: ConfigLanguage,
+    ) -> ArchitectureConfig {
+        let cache_key = source.path.to_string();
+        let parsed = self
+            .config_cache
+            .entry(cache_key)
+            .or_insert_with(|| Arc::new(parse_config_yaml(&source.raw_content)))
+            .value()
+            .as_ref()
+            .clone();
+        let (merged_layers, _) = crate::utility_config_merger::merge_config(&parsed);
+        let mut config = parsed;
+        config.layers = merged_layers;
+        if config.layers.is_empty() {
+            config.layers = default_config_for_language(language.as_str()).layers;
+        }
+        config
+    }
+}
+
+/// FR-008: Merge universal defaults + config paths, deduplicated.
+/// Path separators normalized to platform separator.
+fn merge_default_ignored_paths(config_paths: Vec<String>) -> Vec<String> {
+    let capacity = DEFAULT_IGNORED_PATHS.len() + config_paths.len();
+    let mut seen: std::collections::HashSet<String> =
+        std::collections::HashSet::with_capacity(capacity);
+    let mut merged: Vec<String> = Vec::with_capacity(capacity);
+    for p in DEFAULT_IGNORED_PATHS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(config_paths)
+    {
+        if seen.insert(p.clone()) {
+            merged.push(p);
+        }
+    }
+    merged
 }
 
 /// FR-008: Build ignored paths from config only.

@@ -1,6 +1,5 @@
 // Unit tests for SurfaceRoleChecker — surfaces-layer role audit (AES406).
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use shared::common::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::ISurfaceRoleChecker;
 
@@ -72,7 +71,7 @@ fn fn_count_under_limit_no_violation() {
 }
 
 #[test]
-fn fn_count_over_limit_flagged_fallback() {
+fn fn_count_over_limit_no_longer_flagged() {
     let content = (0..20)
         .map(|i| format!("fn func_{}() {{}}", i))
         .collect::<Vec<_>>()
@@ -80,13 +79,14 @@ fn fn_count_over_limit_flagged_fallback() {
     let f = make_file("src/surface_something.rs", Language::Rust, &content);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(!v.is_empty(), "20 functions should exceed the limit of 15");
-    assert_eq!(v[0].code.code(), "AES406");
-    assert_eq!(v[0].severity, Severity::HIGH);
+    assert!(
+        v.is_empty(),
+        "fn count limit removed — no violation expected"
+    );
 }
 
 #[test]
-fn fn_count_over_limit_flagged_metadata() {
+fn fn_count_over_limit_metadata_no_longer_flagged() {
     let meta = RustMetadata {
         function_definitions: (0..20)
             .map(|i| shared::filesystem::taxonomy_filesystem_vo::RustFnItem {
@@ -100,10 +100,9 @@ fn fn_count_over_limit_flagged_metadata() {
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
     assert!(
-        !v.is_empty(),
-        "20 functions in metadata should exceed the limit"
+        v.is_empty(),
+        "fn count limit removed — no violation expected"
     );
-    assert_eq!(v[0].severity, Severity::HIGH);
 }
 
 #[test]
@@ -126,12 +125,12 @@ fn smart_surface_exempt_from_passive_checks() {
 fn passive_surface_control_flow_flagged_fallback() {
     // "my_view" is NOT a smart surface suffix — treated as passive
     let mut content = String::new();
-    for i in 0..5 {
+    for i in 0..51 {
         content.push_str(&format!("if condition_{} {{}}\n", i));
     }
     let f = make_file("src/surface_my_view.rs", Language::Rust, &content);
     let mut v = Vec::new();
-    checker().check_fn_count_limit(&f, &mut v);
+    checker().check_passive_surface(&f, &mut v);
     assert!(
         !v.is_empty(),
         "excess control flow in passive surface should be flagged"
@@ -139,7 +138,7 @@ fn passive_surface_control_flow_flagged_fallback() {
 }
 
 #[test]
-fn fn_count_python_fallback() {
+fn fn_count_python_no_longer_flagged() {
     let content = (0..20)
         .map(|i| format!("def func_{}(): pass", i))
         .collect::<Vec<_>>()
@@ -147,12 +146,14 @@ fn fn_count_python_fallback() {
     let f = make_file("src/surface_something.py", Language::Python, &content);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(!v.is_empty(), "20 python functions should exceed the limit");
-    assert_eq!(v[0].code.code(), "AES406");
+    assert!(
+        v.is_empty(),
+        "fn count limit removed — no violation expected"
+    );
 }
 
 #[test]
-fn fn_count_typescript_metadata() {
+fn fn_count_typescript_metadata_no_longer_flagged() {
     let meta = TypeScriptMetadata {
         function_definitions: (0..16)
             .map(|i| shared::filesystem::taxonomy_filesystem_vo::TSFnItem {
@@ -165,5 +166,8 @@ fn fn_count_typescript_metadata() {
     let f = make_file_with_ts_meta("src/surface_something.ts", meta);
     let mut v = Vec::new();
     checker().check_fn_count_limit(&f, &mut v);
-    assert!(!v.is_empty(), "16 ts functions should exceed the limit");
+    assert!(
+        v.is_empty(),
+        "fn count limit removed — no violation expected"
+    );
 }

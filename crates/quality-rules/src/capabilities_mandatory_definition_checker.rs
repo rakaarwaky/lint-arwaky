@@ -1,9 +1,11 @@
 use shared::cli_commands::LintResult;
-use shared::quality_rules::{IDeadInheritanceProtocol, IMandatoryClassProtocol};
+use shared::quality_rules::contract_class_protocol::IMandatoryClassProtocol;
+use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
 
 use crate::utility_bypass_detector::skip_cfg_test_block;
 use crate::utility_mandatory_checker::rust_declares_type;
-use shared::common::{LayerDefinition, Severity};
+use shared::common::taxonomy_definition_vo::LayerDefinition;
+use shared::common::taxonomy_severity_vo::Severity;
 
 // PURPOSE: MandatoryDefinitionChecker — AES303: enforce struct/enum/trait/class/interface/type definitions exist AND are non-empty.
 // Sub-check 1: file must define at least one struct/enum/trait/type (Rust) or class/interface/type (JS/TS)/class (Python) (IMandatoryClassProtocol).
@@ -70,7 +72,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         "AES303",
                         Severity::MEDIUM,
                         format!(
-                            "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Unit struct declared on line {} in {} without impl or derive\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Unit struct declared on line {} in {} without impl or derive\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                             i + 1,
                             file
                         ),
@@ -97,7 +99,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                         "AES303",
                         Severity::MEDIUM,
                         format!(
-                            "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (': pass')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                            "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (': pass')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                             i + 1,
                             file
                         ),
@@ -111,7 +113,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                             "AES303",
                             Severity::MEDIUM,
                             format!(
-                                "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (body is '{}')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                                "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty Python class on line {} in {} (body is '{}')\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                                 i + 1,
                                 file,
                                 next
@@ -128,7 +130,7 @@ impl IDeadInheritanceProtocol for MandatoryDefinitionChecker {
                     "AES303",
                     Severity::MEDIUM,
                     format!(
-                        "AES305 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty JS/TS class/interface on line {} in {}\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
+                        "AES303 DEAD_INHERITANCE: Empty struct, class, or interface implementation block detected.\nWHY? Empty JS/TS class/interface on line {} in {}\nFIX: Implement the necessary methods/fields or remove the empty definition block.",
                         i + 1,
                         file
                     ),

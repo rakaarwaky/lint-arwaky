@@ -3,6 +3,7 @@
 // 3-block structure per AES skill.
 
 use crate::utility_workspace_detection;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
@@ -45,10 +46,11 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
         utility_workspace_detection::detect_language_from_path(path)
     }
 
-    fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &[String]) -> bool {
+    fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &PatternList) -> bool {
         for dir_name in &["crates", "packages", "modules"] {
             let dir = workspace_root.join(dir_name);
-            if dir.is_dir() && utility_workspace_detection::check_dir_containers(&dir, identifiers)
+            if dir.is_dir()
+                && utility_workspace_detection::check_dir_containers(&dir, identifiers.values())
             {
                 return true;
             }

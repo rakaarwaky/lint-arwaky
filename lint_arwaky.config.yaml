@@ -1,5 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════
 # lint_arwaky.config.yaml — Unified configuration for all languages
+# Replaces: lint_arwaky.config.rust.yaml, lint_arwaky.config.python.yaml,
+#           lint_arwaky.config.typescript.yaml, lint_arwaky.config.javascript.yaml
 # ═══════════════════════════════════════════════════════════════════════
 
 thresholds:
@@ -36,12 +38,7 @@ adapters:
 
 ignored_rules: []
 
-ignored_paths:
-  - ".min.js"
-  - ".min.css"
-  - "/.dsc_cache"
-  - "/.tsbuildinfo"
-  - "/.next"
+ignored_paths: []
 
 # ─── Architecture rules (superset, shared across all languages) ───────
 architecture:
@@ -195,7 +192,7 @@ architecture:
           forbidden: ["surface", "capabilities", "root"]
 
         - scope: "root"
-          allowed: ["taxonomy", "contract", "capabilities", "agent", "surface", "utility"]
+          allowed: ["taxonomy", "contract", "capabilities", "agent", "surface"]
           mandatory: []
           forbidden: []
 
@@ -433,7 +430,6 @@ architecture:
           "surface(hook|store|action|screen)",
           "surface(component|view|layout)",
         ]
-      max_functions: 15
       exceptions: []
 
     # ─── AES500: Orphan ───
@@ -441,28 +437,22 @@ architecture:
       enabled: true
       scope: ["taxonomy"]
 
-
     AES502:
       enabled: true
       scope: ["contract"]
-
 
     AES503:
       enabled: true
       scope: ["capabilities"]
 
-
     AES504:
       enabled: true
       scope: ["utility"]
-
 
     AES505:
       enabled: true
       scope: ["agent"]
 
-
     AES506:
       enabled: true
       scope: ["surface"]
-

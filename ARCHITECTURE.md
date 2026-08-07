@@ -174,7 +174,7 @@ Contract may depend on Taxonomy only.
 
 ### Purpose
 
-Utility contains low-level technical mechanics. It exists so that Capabilities can remain clean and expressive.
+Utility contains reusable low-level mechanics that can be shared cross capabilities. It exists so that Capabilities can remain clean.
 
 ### Role Naming
 
@@ -214,7 +214,7 @@ Capabilities contain the concrete implementation of the system's behavior. This 
 
 ### Role Naming
 
-Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.
+Capabilities role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.
 
 ### Dependencies
 
@@ -243,9 +243,7 @@ Capabilities generally handle two types of concerns:
 - **Shared Logic Extraction (DRY):** If multiple Capabilities require the same technical mechanics or functions, that logic must be extracted into a reusable standalone function in the **Utility Layer**. Capabilities must not duplicate technical code (Don't Repeat Yourself).
 - **Contract Implementation:** Capabilities must implement the `protocol_` defined in the Contract Layer.
 - **State Ownership:** Capabilities are the owners of business and technical state within their execution scope.
-- **Utility Delegation:** Capabilities must call Utility standalone functions when low-level technical operations are required, passing their state/data as arguments.
-- **No Orchestration:** Capabilities must not contain flow control (looping across capabilities, branching between capabilities, or error escalation policy). They execute their single responsibility and return a result.
-- **No Domain Definition:** Capabilities must not define domain models (Entities, Value Objects); they only consume and produce Taxonomy.
+- **No Domain Definition:** Capabilities must not define domain models (Entities, Value Objects); they only consume Taxonomy.
 
 ---
 

@@ -5,6 +5,7 @@
 // JSON responses. No formatting/println — JSON is returned as serde_json::Value.
 use std::sync::Arc;
 
+use dispatcher::surface_orphan_action::OrphanFactory;
 use shared::auto_fix::LintFixOrchestratorAggregate;
 use shared::common::Threshold;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -21,7 +22,7 @@ use shared::project_setup::SetupManagementAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
-use dispatcher::surface_output_component::ViolationItem;
+use shared::common::taxonomy_violation_item_vo::ViolationItem;
 
 #[derive(Clone)]
 pub struct McpServerDependencies {
@@ -39,7 +40,7 @@ pub struct McpServerDependencies {
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
-    pub orphan_factory: Arc<dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync>,
+    pub orphan_factory: Arc<OrphanFactory>,
     // DI: config parsing functions
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
     pub parse_adapter_names: fn(&str) -> Vec<String>,

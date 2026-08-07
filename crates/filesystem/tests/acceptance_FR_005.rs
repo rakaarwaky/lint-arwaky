@@ -154,7 +154,8 @@ fn us6_check_wired_in_container_true() {
     )
     .unwrap();
     let ws = make_workspace();
-    assert!(ws.check_wired_in_container(tmp.path(), &["MyCrate".to_string()]));
+    let pl = shared::common::taxonomy_common_vo::PatternList::new(vec!["MyCrate".to_string()]);
+    assert!(ws.check_wired_in_container(tmp.path(), &pl));
 }
 
 #[test]
@@ -163,7 +164,8 @@ fn us6_check_wired_in_container_false() {
     let crates_dir = tmp.path().join("crates");
     std::fs::create_dir_all(&crates_dir).unwrap();
     let ws = make_workspace();
-    assert!(!ws.check_wired_in_container(tmp.path(), &["ghost-crate".to_string()]));
+    let pl = shared::common::taxonomy_common_vo::PatternList::new(vec!["ghost-crate".to_string()]);
+    assert!(!ws.check_wired_in_container(tmp.path(), &pl));
 }
 
 #[test]

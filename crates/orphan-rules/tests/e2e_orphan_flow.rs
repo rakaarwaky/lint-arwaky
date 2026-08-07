@@ -14,26 +14,27 @@ fn e2e_entry_point_detection_default_patterns() {
         "crates/shared/src/taxonomy_color.rs".to_string(),
         "crates/orphan-rules/src/root_orphan_detector_container.rs".to_string(),
         "crates/orphan-rules/src/capabilities_orphan_taxonomy_analyzer.rs".to_string(),
-        "crates/cli/src/main.rs".to_string(),
-        "crates/mcp/src/root_mcp_entry.rs".to_string(),
+        "crates/cli/src/root_cli_main_entry.rs".to_string(),
+        "crates/mcp/src/root_mcp_main_entry.rs".to_string(),
     ]);
     let entry_points = identify_entry_points(&[files], &[]);
+    // Only _entry suffix files are entry points
     assert!(
         entry_points
+            .values
+            .contains(&"crates/cli/src/root_cli_main_entry.rs".to_string())
+    );
+    assert!(
+        entry_points
+            .values
+            .contains(&"crates/mcp/src/root_mcp_main_entry.rs".to_string())
+    );
+    // _container, main.rs, and regular source files are NOT entry points
+    assert!(
+        !entry_points
             .values
             .contains(&"crates/orphan-rules/src/root_orphan_detector_container.rs".to_string())
     );
-    assert!(
-        entry_points
-            .values
-            .contains(&"crates/cli/src/main.rs".to_string())
-    );
-    assert!(
-        entry_points
-            .values
-            .contains(&"crates/mcp/src/root_mcp_entry.rs".to_string())
-    );
-    // taxonomy_color and capabilities_ are not entry points
     assert!(
         !entry_points
             .values
@@ -115,19 +116,19 @@ fn e2e_empty_file_list_yields_no_entry_points() {
 
 #[test]
 fn e2e_multiple_file_lists_merged() {
-    let files1 = OrphanFileListVO::new(vec!["crates/cli/src/main.rs".to_string()]);
-    let files2 = OrphanFileListVO::new(vec!["crates/mcp/src/root_mcp_entry.rs".to_string()]);
+    let files1 = OrphanFileListVO::new(vec!["crates/cli/src/root_cli_main_entry.rs".to_string()]);
+    let files2 = OrphanFileListVO::new(vec!["crates/mcp/src/root_mcp_main_entry.rs".to_string()]);
     let entry_points = identify_entry_points(&[files1, files2], &[]);
     assert_eq!(entry_points.len(), 2);
     assert!(
         entry_points
             .values
-            .contains(&"crates/cli/src/main.rs".to_string())
+            .contains(&"crates/cli/src/root_cli_main_entry.rs".to_string())
     );
     assert!(
         entry_points
             .values
-            .contains(&"crates/mcp/src/root_mcp_entry.rs".to_string())
+            .contains(&"crates/mcp/src/root_mcp_main_entry.rs".to_string())
     );
 }
 
@@ -136,16 +137,24 @@ fn e2e_python_entry_points() {
     let files = OrphanFileListVO::new(vec![
         "modules/cli/main.py".to_string(),
         "modules/cli/__main__.py".to_string(),
+        "modules/cli/root_cli_main_entry.py".to_string(),
         "modules/shared/taxonomy_helper.py".to_string(),
     ]);
     let entry_points = identify_entry_points(&[files], &[]);
+    // Only _entry suffix is an entry point
     assert!(
         entry_points
+            .values
+            .contains(&"modules/cli/root_cli_main_entry.py".to_string())
+    );
+    // main.py and __main__.py are NOT entry points
+    assert!(
+        !entry_points
             .values
             .contains(&"modules/cli/main.py".to_string())
     );
     assert!(
-        entry_points
+        !entry_points
             .values
             .contains(&"modules/cli/__main__.py".to_string())
     );
@@ -161,16 +170,24 @@ fn e2e_typescript_entry_points() {
     let files = OrphanFileListVO::new(vec![
         "packages/cli/src/main.ts".to_string(),
         "packages/cli/src/index.ts".to_string(),
+        "packages/cli/src/root_cli_main_entry.ts".to_string(),
         "packages/shared/src/utility_parser.ts".to_string(),
     ]);
     let entry_points = identify_entry_points(&[files], &[]);
+    // Only _entry suffix is an entry point
     assert!(
         entry_points
+            .values
+            .contains(&"packages/cli/src/root_cli_main_entry.ts".to_string())
+    );
+    // main.ts and index.ts are NOT entry points
+    assert!(
+        !entry_points
             .values
             .contains(&"packages/cli/src/main.ts".to_string())
     );
     assert!(
-        entry_points
+        !entry_points
             .values
             .contains(&"packages/cli/src/index.ts".to_string())
     );
@@ -183,13 +200,14 @@ fn e2e_typescript_entry_points() {
 
 #[test]
 fn e2e_container_entry_points() {
+    // _container files are NOT entry points — only _entry suffix is
     let files = OrphanFileListVO::new(vec![
         "crates/orphan-rules/src/root_orphan_detector_container.rs".to_string(),
         "crates/filesystem/src/root_filesystem_container.rs".to_string(),
         "crates/config-system/src/root_config_container.rs".to_string(),
     ]);
     let entry_points = identify_entry_points(&[files], &[]);
-    assert_eq!(entry_points.len(), 3);
+    assert_eq!(entry_points.len(), 0);
 }
 
 // ── Full pipeline: scan a synthetic workspace ──────────────
@@ -222,7 +240,7 @@ fn e2e_synthetic_workspace_orphan_scan() {
 
     // Create an entry point file
     std::fs::write(
-        root.join("src/root_container.rs"),
+        root.join("src/root_main_entry.rs"),
         "use crate::capabilities_handler;\npub fn main() { capabilities_handler::handle(); }\n",
     )
     .unwrap();
@@ -231,20 +249,20 @@ fn e2e_synthetic_workspace_orphan_scan() {
     assert!(root.join("src/taxonomy_orphan.rs").exists());
     assert!(root.join("src/taxonomy_used.rs").exists());
     assert!(root.join("src/capabilities_handler.rs").exists());
-    assert!(root.join("src/root_container.rs").exists());
+    assert!(root.join("src/root_main_entry.rs").exists());
 
     // Test entry point detection
     let files = OrphanFileListVO::new(vec![
         "src/taxonomy_orphan.rs".to_string(),
         "src/taxonomy_used.rs".to_string(),
         "src/capabilities_handler.rs".to_string(),
-        "src/root_container.rs".to_string(),
+        "src/root_main_entry.rs".to_string(),
     ]);
     let entry_points = identify_entry_points(&[files], &[]);
     assert!(
         entry_points
             .values
-            .contains(&"src/root_container.rs".to_string())
+            .contains(&"src/root_main_entry.rs".to_string())
     );
     assert_eq!(entry_points.len(), 1);
 }

@@ -1,137 +1,150 @@
 ---
-name: role-fullstack-developer
-description: "Fullstack developer executor: reads plans from architect/business-analyst/tech-lead, implements fixes, verifies with linter/tests, generates reports, and commits."
+name: role-quality-analysis
+description: "QA reviewer: validates CI gates, AES compliance, tests, report accuracy before merge. Final gatekeeper."
 metadata:
-  tags: [fullstack, executor, implementation, verification, commit, report, plan-execution]
-  triggers:
-    - "execute as fullstack developer"
-    - "implement plan"
-    - "run fullstack"
-    - "execute plan"
-    - "fullstack developer"
-    - "implement fixes"
+  tags: [quality-analysis, qa, review, ci, gates, pr-review, merge-gate, compliance, standards]
+  triggers: [review as quality analyst, quality analysis, qa review, pr review, review pr, quality gate check, merge readiness]
   dependencies: []
-  related:
-    - role-architect
-    - role-business-analyst
-    - role-tech-lead
+  related: [role-fullstack-developer, role-architect, role-tech-lead, role-business-analyst]
 ---
-# role-fullstack-developer
 
-Fullstack Developer running to execute plans and generate reports.
+# role-quality-analysis
 
-## Critical Rule
+Final merge gatekeeper.
 
-**You do NOT plan, analyze requirements, or design architecture.**
-If no plan files exist in `.agents/plans/`, **stop immediately** and report: "No plan found for execution."
+## Core Principle
 
-## Preparatory Reading
-
-Before starting, read:
-
-1. **`ARCHITECTURE.md`** — 7-layer spec (to avoid breaking architecture during implementation)
-2. **`.agents/rules/RULES_AES.md`** — All AES rules (to avoid introducing violations during implementation)
-3. **`.agents/skills/`** — Use skill driven development
+**Last line of defense before `develop`.**
+**REJECT** if: compile fails, CI fails, new lint violations, inaccurate report, or test regressions. **No exceptions.**
 
 ## Workflow
 
-### 1. Select Plans
+### 1. Identify PR
 
-- List files in `.agents/plans/`
-- Pick the **oldest plan by timestamp**
-- Work on only **1 plan per session**
-- If no plan files exist → **STOP**. Do not create any file.
+**STOP** if no `"need review"` PRs found.
 
-### 2. Prepare
+- Pick **oldest** PR with `"need review"` label targeting `develop`
+- Add `"in progress"` label:
 
-- Validate plan paths against the actual codebase (do the files exist?)
-- Read `.agents/skills/README.md` to find relevant skills for implementation
-- Understand which files will be modified and which layers are affected
-- Do NOT modify any files during this step
-
-### 3. Implement
-
-Execute plans exactly as designed. Apply the fixes to actual source files.
-
-- Follow the relevant skill workflow if applicable
-- Write tests for any new or changed functionality
-- Do NOT deviate from the plans' design
-
-### 4. Verify
-
-- Run the project linter: `cargo clippy --all-targets -- -D warnings`
-- Run all tests: `cargo test --workspace` or equivalent
-- Run the linter on the affected project: `lint-arwaky-cli scan <path>`
-- Confirm the original issue is resolved with no regressions
-- If verification fails, fix and re-verify
-
-### 5. Report & Commit
-
-**Delete only plan files you worked:**
-
-```bash
-rm .agents/plans/todo-<feature-name>-architect-<timestamp>.md
-rm .agents/plans/todo-<feature-name>-business-analyst-<timestamp>.md
-rm .agents/plans/todo-<feature-name>-tech-lead-<timestamp>.md
+  ```bash
+  gh pr edit <pr-number> --add-label "in progress"
 ```
 
-**Write a report:**
-`.agents/reports/done-<feature-name>-<role>-YYYY-MM-DD-HHmmss.md`
-Where `<role>` = `tech-lead`, `business-analyst`, or `architect`.
+### 2. Validate Report
 
-Do NOT write Fullstack Developer as role.
+Read: `RULES_AES.md`, `ARCHITECTURE.md`, `TEST.md`, `scripts/gates.sh`, `CONTRIBUTING.md`.
+Verify `.agents/reports/done-*.md` for **accuracy** and **timestamp consistency**.
 
-**Timestamp format:** Use current date and time in `YYYY-MM-DD-HHmmss` format (e.g., `2026-07-29-143022`).
+### 3. Verify CI
+
+```bash
+gh pr checks <pr-number>
+```
+
+**All checks must pass.** Any fail = **REJECT immediately**.
+
+### 4. Pre-Existing Violations Triage
+
+Compare `develop` vs PR branch using `lint-arwaky-cli`.
+
+- **Pre-existing:** Ignore
+- **PR-introduced:** Flag (CRITICAL/WARNING)
+- **Resolved:** Note positively
+
+*Never reject for pre-existing violations.*
+
+### 5. Analyze Code
+
+Review diff for: AES Compliance, Layer Boundaries, Quality Rules, Role Integrity, Orphan Detection, Contract Stability, Test Coverage, Security, Convention Adherence.
+
+### 6. Verdict & Action
+
+#### APPROVED
+
+1. Merge: `gh pr merge <pr-number> --merge --delete-branch`
+2. Comment: "QA APPROVED..."
+3. Remove labels: `"in progress"`, `"need review"`
+4. Delete developer report: `.agents/reports/done-*.md`
+
+#### REJECTED
+
+1. **Keep `"in progress"` label** (fullstack developer will swap to `"need review"` after fix)
+2. Comment: "QA REJECTED..."
+3. Write new plan: `.agents/plans/todo-<feature>-quality-analysis-<timestamp>.md`
+4. **Do NOT merge. Do NOT delete report.**
+
+## Rejection Plan Template
+
+**Path:** `.agents/plans/todo-<feature>-quality-analysis-<timestamp>.md`
 
 ```markdown
-# Execution Report: {feature-name} — {role}
+# Review Plan: {feature} — Quality Analysis (Rejection)
 
-## Plans Executed
-`{todo-<feature>-<role>-*.md}`
+## PR Info
+- **PR:** #{number} — {title}
+- **Branch:** {source} → develop
+- **Reason:** {one-line summary}
 
-## Execution Summary
-{Brief overview of what was implemented. Mention which skills were used.}
+## CI Gate Results
+| Gate | Result | Details |
+|------|--------|---------|
 
-## Verification Results
-{Did tests pass? Did the linter pass? Confirm the original issue is resolved.}
+## Findings to Fix
 
-## Deviations & Notes
-{List any deviations from the plans or additional context. Write "None" if exact match.}
+### AES Violations
+| # | Severity | Issue/Rule | Location | Fix Required |
+|---|----------|------------|----------|--------------|
+
+### Test Issues
+| # | Severity | Issue/Rule | Location | Fix Required |
+|---|----------|------------|----------|--------------|
+
+### Code Quality
+| # | Severity | Issue/Rule | Location | Fix Required |
+|---|----------|------------|----------|--------------|
+
+### Report Inaccuracies
+| # | Severity | Issue/Rule | Location | Fix Required |
+|---|----------|------------|----------|--------------|
+
+## Action Items & Fixed Code
+- [ ] {Priority} {Specific fix}
+{Corrected code blocks}
 ```
 
-**Commit to develop and create PR to main:**
+## Severity
 
-```bash
-git add .
-git commit -m "feat({scope}): {description of changes}"
-git push origin develop
-gh pr create --base main --head develop --title "feat({scope}): {title}" --body "{summary of report}"
-```
+| Level       | Meaning                                                                            |
+| ----------- | ---------------------------------------------------------------------------------- |
+| 🔴 CRITICAL | CI fail, AES violation, layer breach, security risk, test regression. (Rejects PR) |
+| 🟡 WARNING  | Convention deviation, missing test, inaccurate report. (Must fix)                  |
+| 🟢 INFO     | Style/optimization. (Follow-up)                                                    |
 
-## Branch Strategy
+## Verdict Rules
 
-
-| Step | Action                                                |
-| ------ | ------------------------------------------------------- |
-| 1    | Commit changes to`develop` branch                     |
-| 2    | Push`develop` to remote: `git push origin develop`    |
-| 3    | Create PR from`develop` → `main`: `gh pr create ...` |
-
-**Rules:**
-
-- Never commit directly to `main`
-- Never create new branch, always use `develop` branch
-- Always create PR from `develop` to `main`
-- Do NOT delete `develop` branch after merge to `main`
+| Verdict  | When                                             | Action                  |
+| -------- | ------------------------------------------------ | ----------------------- |
+| APPROVED | All CI pass, 0 PR-introduced CRITICAL/WARNING    | Merge, delete report    |
+| REJECTED | CI fails OR PR-introduced CRITICAL/WARNING exist | Comment, write new plan |
 
 ## Checklist
 
-- [ ]  Plan file exists in `.agents/plans/`
-- [ ]  Plan paths validated against codebase
-- [ ]  Relevant skill workflows identified
-- [ ]  Implementation matches plan exactly (no deviations)
-- [ ]  `cargo clippy --all-targets -- -D warnings` passes
-- [ ]  `cargo test --workspace` passes
-- [ ]  `lint-arwaky-cli scan <path>` passes
-- [ ]  Plan files deleted, report written
-- [ ]  Committed to `develop`, PR created to `main`
+- [ ] Filter PRs by `"need review"`
+- [ ] Select oldest PR & add `"in progress"` label
+- [ ] Validate execution report accuracy
+- [ ] Check CI (`gh pr checks`)
+- [ ] Triage pre-existing vs new violations
+- [ ] Review code (AES, boundaries, quality, tests)
+- [ ] APPROVED: Merge, clean labels, delete report
+- [ ] REJECTED: Keep `"in progress"`, comment, write new plan
+
+```
+
+**Poin sinkronisasi dengan fullstack-developer:**
+
+| Tahap | QA Action | Fullstack Action |
+|-------|-----------|------------------|
+| Reject | Keep `"in progress"`, tulis plan | Pick plan dari QA |
+| Fix | — | Update PR existing, push fixes |
+| Re-review | Pick PR `"need review"` | Swap label ke `"need review"` |
+```

@@ -1,133 +1,137 @@
 ---
 name: role-tech-lead
-description: "Expert tech lead: reviews security, performance, error handling, SOLID principles, code quality, and maintainability across the codebase."
+description: "Tech lead reviewer: security, performance, error handling, SOLID, code quality, maintainability."
 metadata:
   tags: [tech-lead, review, security, performance, error-handling, solid, quality, maintainability]
-  triggers:
-    - "review as tech lead"
-    - "tech lead review"
-    - "code quality review"
-    - "security review"
-    - "performance review"
-    - "solid review"
-    - "tech lead audit"
+  triggers: [review as tech lead, tech lead review, code quality review, security review, performance review, solid review, tech lead audit]
   dependencies: []
-  related:
-    - role-architect
-    - role-business-analyst
-    - role-fullstack-developer
+  related: [role-architect, role-business-analyst, role-fullstack-developer, role-quality-analysis]
 ---
-
 # role-tech-lead
 
-Expert Tech Lead specializing in code quality, performance, error handling, security, and SOLID principles.
+Expert tech lead reviewer.
 
-## Preparatory Reading
+## Prerequisites
 
-Before starting any analysis, read these files:
+Read first:
 
-1. **`.agents/rules/RULES_AES.md`** — All AES rules for quality (Group 3) and role (Group 4)
-2. **`ARCHITECTURE.md`** — 7-layer specification for architectural alignment
-3. **`PRD.md`** — Product Requirements Document
-4. **`.agents/skills/`** — Use skill driven development
+1. `.agents/rules/RULES_AES.md` (Groups 3-4)
+2. `ARCHITECTURE.md` (7-layer spec)
+3. `PRD.md` (product context)
+4. `.agents/skills/` (skill-driven dev)
 
 ## Workflow
 
-Follow this exact sequence. **Do not skip steps.**
+Execute sequentially, no skips.
 
 ### 1. Identify
 
-- Identify the feature folder: `modules/<feature>/`, `crates/<feature>/`, or `packages/<feature>/`
-- Read the Feature Requirement Document (FRD) at `<feature-folder>/FRD.md`
-- Identify which files are affected by the scope of work
+- Locate: `modules|crates|packages/<feature>/`
+- Read `<feature>/FRD.md`
+- List affected files
 
 ### 2. Reference
 
-- Read `RULES_AES.md` Group 3 (Quality: AES301-305) and Group 4 (Role: AES401-406)
-- Check `ARCHITECTURE.md` for expected patterns
+- `RULES_AES.md` Groups 3 (AES301-305) & 4 (AES401-406)
+- `ARCHITECTURE.md` expected patterns
 
 ### 3. Analyze
 
-Analyze code quality across these dimensions:
+| Dimension       |
+| --------------- |
+| Security        |
+| Performance     |
+| Error Handling  |
+| SOLID           |
+| Code Quality    |
+| Maintainability |
 
-| Dimension            | Focus                                                                                                 |
-| -------------------- | ----------------------------------------------------------------------------------------------------- |
-| **Security**         | Injection risks, credential exposure, unsafe I/O, input validation, authentication/authorization gaps |
-| **Performance**      | N+1 queries, unnecessary allocations, O(n²) algorithms, blocking calls in async context               |
-| **Error Handling**   | Unwrap/expect usage, missing error propagation, swallowed errors, improper panic/unreachable          |
-| **SOLID Principles** | Single responsibility, open-closed, Liskov substitution, interface segregation, dependency inversion  |
-| **Code Quality**     | Bypass patterns, unused imports, dummy imports                                                        |
-| **Maintainability**  | Code duplication, file size, min lines, naming clarity, DRY                                          |
+Prioritize: clarity, testability, traceability.
 
-Prioritize **clarity, testability, and traceability**.
+### 4. Dedup
 
-### 4. Create Plan
+1. `ls .agents/plans/todo-<feature>-*.md`
+2. `gh pr list --label "need review" --label "<feature>"`
+3. Extract issues from existing plans + active PRs
+4. Keep only NEW issues
+5. Record: "{N} covered, {M} new"
 
-Write a concrete, actionable plan to `.agents/plans/todo-<feature-name>-tech-lead-<timestamp>.md`
+**M=0:** Stop. Report "No new issues."
 
-- Categorize findings by severity
-- Write proposed **Fixed Code** inside the plan document
-- Write modular file per feature-member if you work on multiple features
+### 5. Plan
 
-## Plan Output
+Save: `.agents/plans/todo-<feature>-tech-lead-<timestamp>.md`
 
-**File path:** `.agents/plans/todo-<feature-name>-tech-lead-<timestamp>.md`
+- NEW issues only
+- Severity-categorized
+- Include fixed code
 
-```markdown
-# Review Plan: {feature-name} — Tech Lead
+## Template
+
+# Plan: — Tech Lead
 
 ## Summary
 
-{One-paragraph overview of code quality health and key findings.}
+{One paragraph}
 
-## Findings by Category
+## Findings
 
 ### Security
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+
+| # | Severity | Issue | Location | Recommendation |
+| - | -------- | ----- | -------- | -------------- |
 
 ### Performance
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+
+| # | Severity | Issue | Location | Recommendation |
+| - | -------- | ----- | -------- | -------------- |
 
 ### Error Handling
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
 
-### SOLID Principles
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+| # | Severity | Issue | Location | Recommendation |
+| - | -------- | ----- | -------- | -------------- |
+
+### SOLID
+
+| # | Severity | Issue | Location | Recommendation |
+| - | -------- | ----- | -------- | -------------- |
 
 ### Code Quality
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+
+| # | Severity | Issue | Location | Recommendation |
+| - | -------- | ----- | -------- | -------------- |
 
 ### Maintainability
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+
+| # | Severity | Issue | Location | Recommendation |
+| - | -------- | ----- | -------- | -------------- |
 
 ## Action Items
 
-- [ ] {Priority} {Action item}
+- [ ] {Priority} {Item}
 
 ## Fixed Code
 
-{Show corrected code blocks for each fix. Group by file.}
-```
+{Grouped by file}
 
-## Severity Convention
+## Severity
 
-| Level          | Meaning                                                                                             |
-| -------------- | --------------------------------------------------------------------------------------------------- |
-| 🔴 **CRITICAL** | Security vulnerability, data leak, crash risk, violation. Requires immediate fix.                  |
-| 🟡 **WARNING**  | Performance bottleneck, SOLID violation, poor error handling, or bypass pattern. Fix in this cycle. |
-| 🟢 **INFO**     | Good but nice-to-have.                                                                             |
+| Level       | Meaning                                                           |
+| ----------- | ----------------------------------------------------------------- |
+| 🔴 CRITICAL | Security vuln, data leak, crash risk. Immediate fix.              |
+| 🟡 WARNING  | Perf bottleneck, SOLID violation, bypass pattern. Fix this cycle. |
+| 🟢 INFO     | Nice-to-have. Deferrable.                                         |
 
 ## Checklist
 
-- [ ] Preparatory reading completed (RULES_AES, ARCHITECTURE, PRD, FRD)
-- [ ] Feature folder and affected files identified
-- [ ] All 6 dimensions analyzed (security, performance, error handling, SOLID, quality, maintainability)
-- [ ] Findings categorized by severity (CRITICAL / WARNING / INFO)
-- [ ] Plan written with concrete Fixed Code blocks
-- [ ] Plan saved to `.agents/plans/todo-<feature>-tech-lead-<timestamp>.md`
+- [ ] Prerequisites read
+- [ ] Feature identified
+- [ ] All 6 dimensions analyzed
+- [ ] Severity categorized
+- [ ] Deduped vs existing plans + active PRs
+- [ ] Plan written (NEW issues + fixed code)
+- [ ] Saved to correct path
+- [ ] M=0: stopped with report
+
+```
+```

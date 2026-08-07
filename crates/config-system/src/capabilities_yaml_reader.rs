@@ -30,7 +30,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
             let mut current = std::path::PathBuf::from(&project_root.value);
             let mut depth = 0;
 
-            while !current.as_os_str().is_empty() && depth < 3 {
+            while !current.as_os_str().is_empty() && depth < 5 {
                 let candidate = current.join(filename);
                 // FR-001: Reject symlinks pointing outside project root
                 if let Ok(meta) = self.filesystem.symlink_metadata(&candidate)
@@ -57,7 +57,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                         return Ok(Some(ConfigSource::new(
                             language.as_str(),
                             candidate.to_string_lossy().to_string(),
-                            content,
+                            content.value,
                         )));
                     }
                     Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
@@ -172,7 +172,7 @@ impl ConfigYamlReader {
                     return Ok(Some(ConfigSource::new(
                         language.as_str(),
                         path.to_string_lossy().to_string(),
-                        content,
+                        content.value,
                     )));
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,

@@ -229,3 +229,37 @@ fn check_file_naming_via_trait_api() {
     );
     assert_eq!(results.values[0].code.code(), RULE_CODE_NAMING_CONVENTION);
 }
+
+// ── FR-AES101-09: Unknown-prefix files pass AES101 ────────
+// Files with unrecognized prefixes (e.g. `foobar_user_vo.rs`) should pass
+// AES101 — no layer means no naming convention applies.
+
+#[test]
+fn unknown_prefix_file_with_valid_snake_case_passes() {
+    let result = checker().check_file_naming_internal(
+        "src/foobar_user_vo.rs",
+        "foobar_user_vo.rs",
+        &None,
+        None,
+        3,
+    );
+    assert!(
+        result.is_none(),
+        "unknown-prefix file with valid snake_case should pass AES101"
+    );
+}
+
+#[test]
+fn unknown_prefix_file_with_bad_name_still_checked() {
+    let result = checker().check_file_naming_internal(
+        "src/MyApp_BadFile.rs",
+        "MyApp_BadFile.rs",
+        &None,
+        None,
+        3,
+    );
+    assert!(
+        result.is_some(),
+        "unknown-prefix file with uppercase should still fail AES101"
+    );
+}

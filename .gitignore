@@ -32,11 +32,14 @@ log/
 .mimocode
 mimocode.jsonc
 .qwen
+.cate
 .worktree/
 credentials.json
 serviceAccountKey
 .zed/settings.json
 .archive/
 .agents/finding
-.agents/plans
 .kilo/
+.agents/reports
+.agents/plans
+

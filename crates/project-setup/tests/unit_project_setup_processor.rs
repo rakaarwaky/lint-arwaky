@@ -1,4 +1,5 @@
 // Unit tests — SetupManagementProcessor protocol methods.
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::{ISetupInstallerProtocol, ISetupManagementProtocol, SetupError};
 use std::sync::Arc;
@@ -6,10 +7,10 @@ use std::sync::Arc;
 struct StubInstaller;
 
 impl ISetupInstallerProtocol for StubInstaller {
-    fn install_python_packages(&self, _packages: &[String]) -> Result<(), SetupError> {
+    fn install_python_packages(&self, _packages: &PatternList) -> Result<(), SetupError> {
         Ok(())
     }
-    fn install_npm_packages(&self, _packages: &[String], _sudo: bool) -> Result<(), SetupError> {
+    fn install_npm_packages(&self, _packages: &PatternList, _sudo: bool) -> Result<(), SetupError> {
         Ok(())
     }
 }

@@ -21,9 +21,9 @@ Utility = stateless standalone functions. No struct, no `impl`, no domain rules.
 **Allowed imports:** Taxonomy only (`shared::taxonomy_*`).
 **Forbidden:** `use` from Capabilities, Agent, Surface, Contract, or other Utility modules.
 
-## Examples role Naming
+## Role Naming
 
-parser, splitter, trimmer, slugifier, sanitizer, normalizer, extractor, replacer, converter, counter, resolver, detector, builder, joiner, serializer, deserializer, encoder, decoder, hasher, generator, formatter, comparator, differ, matcher, checker, calculator, mapper, merger, grouper, sorter, deduplicator, printer
+Utility role suffixes are unlimited. The role name is chosen based on demand and must describe the technical responsibility and concern of the file.
 
 ## Templates
 
@@ -49,16 +49,15 @@ pub fn <function_name>(<param_name>: &<Type>) -> <ReturnType> {
 ## Rules
 
 1. **Structure:** Only `pub fn` free functions — absolutely no `struct`, no `impl` blocks, no traits.
-2. **State & Side Effects:** Stateless & deterministic. Side-effects are strictly limited to domain-agnostic operations (e.g., generic serialization, hashing, format conversion). No business logic, no `rand`, no `SystemTime::now()`, no global mutable state.
+2. **State & Side Effects:** Stateless & deterministic. Side-effects are strictly limited to domain-agnostic operations 
 3. **Domain Awareness:** Domain-agnostic — no business rules, no layer-name knowledge.
 4. **Reusability:** Must be used by ≥2 modules. If it has a single consumer, keep it as a private helper in the consuming module.
-5. **I/O Constraint:** I/O is allowed ONLY if it strictly adheres to Rules 1, 2, and 3 (e.g., a generic JSON serializer, not a "save user to database" function).
+5. **I/O Constraint:** I/O is allowed 
 
 ## Helper vs Utility Decision Matrix
 
 **Keep as private helper** (in Capabilities/Agent) if ANY of these apply:
 
-- Uses `&self` or instance state.
 - Domain-specific (contains business rules).
 - Single consumer.
 

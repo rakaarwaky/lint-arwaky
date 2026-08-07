@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_common_vo::{FileContentPair, PatternList};
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
@@ -16,6 +17,9 @@ use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
 use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::{
+    ByteCount, FileMode, GitCommandResult, ParsedLines,
+};
 
 // ─── Mocks ────────────────────────────────────────────────
 
@@ -33,7 +37,7 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
     fn has_file(&self, _: &std::path::Path) -> bool {
         false
     }
-    fn collect_file_entries(&self, _: &[String]) -> Vec<(std::path::PathBuf, String)> {
+    fn collect_file_entries(&self, _: &PatternList) -> Vec<FileContentPair> {
         vec![]
     }
     fn discover_source_files(&self, _: &std::path::Path, _: &[String]) -> Vec<String> {
@@ -79,6 +83,12 @@ impl shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate for
             ),
             vec![],
         )
+    }
+    fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
+        None
+    }
+    fn resolved_import_list(&self) -> Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        vec![]
     }
 }
 
@@ -149,7 +159,7 @@ impl shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol for Moc
     fn detect_language_from_path(&self, _: &str) -> ConfigLanguage {
         todo!()
     }
-    fn check_wired_in_container(&self, _: &std::path::Path, _: &[String]) -> bool {
+    fn check_wired_in_container(&self, _: &std::path::Path, _: &PatternList) -> bool {
         false
     }
     fn resolve_orphan_module_path(
@@ -217,8 +227,8 @@ impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol 
     fn canonicalize(&self, _: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> {
         Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock"))
     }
-    fn canonicalize_path_str(&self, _: &FilePath) -> String {
-        String::new()
+    fn canonicalize_path_str(&self, path: &FilePath) -> FilePath {
+        path.clone()
     }
     fn is_symlink(&self, _: &std::path::Path) -> bool {
         false
@@ -250,11 +260,11 @@ impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol 
     fn scan_directory_with_ignored(
         &self,
         _: &std::path::Path,
-        _: &[String],
+        _: &PatternList,
     ) -> Vec<std::path::PathBuf> {
         vec![]
     }
-    fn is_ignored_dir(&self, _: &std::path::Path, _: &[String]) -> bool {
+    fn is_ignored_dir(&self, _: &std::path::Path, _: &PatternList) -> bool {
         false
     }
     fn read_dir_entries_as_pathbuf(
@@ -263,14 +273,21 @@ impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol 
     ) -> Result<Vec<std::path::PathBuf>, std::io::Error> {
         Ok(vec![])
     }
-    fn read_to_string(&self, _: &std::path::Path) -> Result<String, std::io::Error> {
-        Ok(String::new())
+    fn read_to_string(
+        &self,
+        _: &std::path::Path,
+    ) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
+        Ok(shared::common::taxonomy_source_vo::ContentString::new(""))
     }
     fn write_string(&self, _: &std::path::Path, _: &str) -> Result<(), std::io::Error> {
         Ok(())
     }
-    fn copy_file(&self, _: &std::path::Path, _: &std::path::Path) -> Result<u64, std::io::Error> {
-        Ok(0)
+    fn copy_file(
+        &self,
+        _: &std::path::Path,
+        _: &std::path::Path,
+    ) -> Result<ByteCount, std::io::Error> {
+        Ok(ByteCount::new(0))
     }
     fn create_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> {
         Ok(())
@@ -278,17 +295,17 @@ impl shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol 
     fn remove_dir_all(&self, _: &std::path::Path) -> Result<(), std::io::Error> {
         Ok(())
     }
-    fn set_permissions(&self, _: &std::path::Path, _: u32) -> std::io::Result<()> {
+    fn set_permissions(&self, _: &std::path::Path, _: FileMode) -> std::io::Result<()> {
         Ok(())
     }
     fn remove_file(&self, _: &std::path::Path) -> std::io::Result<()> {
         Ok(())
     }
-    fn run_git_command(&self, _: &[&str], _: &str) -> (String, String, bool) {
-        (String::new(), String::new(), false)
+    fn run_git_command(&self, _: &[&str], _: &str) -> GitCommandResult {
+        GitCommandResult::new(String::new(), String::new(), false)
     }
-    fn parse_output_lines(&self, _: &str) -> Vec<String> {
-        vec![]
+    fn parse_output_lines(&self, _: &str) -> ParsedLines {
+        ParsedLines::new(vec![])
     }
     fn run_external_command_in(&self, _: &str, _: &[&str], _: &str) -> (String, String, bool) {
         (String::new(), String::new(), false)

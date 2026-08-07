@@ -1,5 +1,8 @@
 import { CalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
-import { ExpressionVO, createExpression } from "calculator-shared/src/taxonomy_expression_vo";
+import {
+  ExpressionVO,
+  createExpression,
+} from "calculator-shared/src/taxonomy_expression_vo";
 import { operationFromSymbol } from "calculator-shared/src/taxonomy_operation_vo";
 import * as readline from "readline";
 

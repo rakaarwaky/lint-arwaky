@@ -20,10 +20,9 @@
 // - TR-2: Aggregate trait includes `manual_report` for FR-005
 
 use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
-use shared::auto_fix::{
-    FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol,
-};
-use shared::cli_commands::LintResult;
+use shared::auto_fix::{FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol};
+use shared::common::taxonomy_lint_result_vo::LintResult;
+use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
@@ -46,12 +45,8 @@ impl LintFixOrchestratorAggregate for FixOrchestrator {
     }
 
     /// FR-005: Report violations that require manual intervention (BF-2).
-    fn manual_report(&self, violations: &[LintResult]) -> Vec<String> {
-        self.fix_protocol
-            .report_non_fixable(violations)
-            .iter()
-            .map(|m| m.to_string())
-            .collect()
+    fn manual_report(&self, violations: &[LintResult]) -> Vec<LintMessage> {
+        self.fix_protocol.report_non_fixable(violations)
     }
 
     fn file_adapter(&self) -> Arc<dyn IFileAdapterProtocol> {

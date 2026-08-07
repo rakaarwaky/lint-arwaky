@@ -49,7 +49,11 @@ fn us8_no_config_returns_8_default_ignored_paths() {
     assert!(paths.values.contains(&"coverage".to_string()));
     assert!(paths.values.contains(&".venv".to_string()));
     assert!(paths.values.contains(&"__pycache__".to_string()));
-    assert_eq!(paths.values.len(), 8);
+    assert!(paths.values.contains(&".mypy_cache".to_string()));
+    assert!(paths.values.contains(&".ruff_cache".to_string()));
+    assert!(paths.values.contains(&"tests".to_string()));
+    assert!(paths.values.contains(&"benches".to_string()));
+    assert_eq!(paths.values.len(), 12);
 }
 
 // FR-008 Scenario 2: Config adds "tests" → defaults + "tests"
@@ -66,8 +70,9 @@ fn us8_config_adds_new_path() {
     let paths = make_orchestrator().ignored_paths(&fp);
 
     assert!(paths.values.contains(&"tests".to_string()));
-    // Should have 8 defaults + 1 config = 9
-    assert!(paths.values.len() >= 9);
+    // Should have 12 defaults + 1 config = 13 (but "tests" is already a default, so deduped to 12)
+    // Config adds "tests" which is already in defaults, so still 12
+    assert!(paths.values.len() >= 12);
 }
 
 // FR-008 Scenario 3: Config adds ".git" (already default) → deduplicated
@@ -86,8 +91,8 @@ fn us8_config_duplicate_path_is_deduplicated() {
     // Count occurrences of ".git" — should be exactly 1
     let git_count = paths.values.iter().filter(|v| *v == ".git").count();
     assert_eq!(git_count, 1);
-    // Still 8 total (deduped)
-    assert_eq!(paths.values.len(), 8);
+    // Still 12 total (deduped)
+    assert_eq!(paths.values.len(), 12);
 }
 
 // FR-008 Scenario 4: Config adds empty string → filtered out
@@ -105,6 +110,6 @@ fn us8_config_empty_string_is_filtered() {
 
     // Empty string should not appear
     assert!(!paths.values.contains(&"".to_string()));
-    // Should still have exactly 8 defaults
-    assert_eq!(paths.values.len(), 8);
+    // Should still have exactly 12 defaults
+    assert_eq!(paths.values.len(), 12);
 }

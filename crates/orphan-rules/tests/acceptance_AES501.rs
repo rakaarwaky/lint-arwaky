@@ -25,7 +25,15 @@ fn aes501_taxonomy_file_not_imported_is_orphan() {
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &empty_map,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     assert!(
         result.is_orphan,
         "taxonomy_color.rs with no importers should be orphan"
@@ -51,7 +59,15 @@ fn aes501_taxonomy_file_imported_by_capabilities_is_not_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &reachable_for(&fp));
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &reachable_for(&fp),
+    );
     assert!(
         !result.is_orphan,
         "taxonomy_color.rs imported by capabilities should NOT be orphan, reason: {}",
@@ -73,7 +89,15 @@ fn aes501_taxonomy_file_imported_by_agent_is_not_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &reachable_for(&fp));
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &reachable_for(&fp),
+    );
     assert!(!result.is_orphan, "reason: {}", result.reason);
 }
 
@@ -91,7 +115,15 @@ fn aes501_taxonomy_file_only_imported_by_other_taxonomy_is_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     assert!(
         result.is_orphan,
         "taxonomy file only imported by taxonomy should be orphan"
@@ -106,7 +138,15 @@ fn aes501_taxonomy_helper_suffix_categorized_as_utility() {
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &empty_map,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     assert!(result.is_orphan);
     // The reason should still mention the stem
     assert!(result.reason.contains("taxonomy_helper"));
@@ -119,7 +159,15 @@ fn aes501_taxonomy_utility_suffix_also_flagged() {
     let root = FilePath::new(".".to_string()).unwrap();
     let empty_map = InboundLinkMap::new(HashMap::new());
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &empty_map, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &empty_map,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     assert!(result.is_orphan);
 }
 
@@ -137,7 +185,15 @@ fn aes501_taxonomy_file_imported_by_surface_is_not_orphan() {
     );
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &reachable_for(&fp));
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &reachable_for(&fp),
+    );
     assert!(
         !result.is_orphan,
         "taxonomy file imported by surface layer should NOT be orphan"
@@ -156,6 +212,14 @@ fn aes501_taxonomy_file_with_self_import_only_is_orphan() {
     mapping.insert(target.to_string(), vec![target.to_string()]);
     let inbound = InboundLinkMap::new(mapping);
 
-    let result = analyzer.is_taxonomy_orphan(&fp, &root, None, &inbound, &empty_reachability());
+    let result = analyzer.is_taxonomy_orphan(
+        &fp,
+        &root,
+        None,
+        &inbound,
+        &[],
+        &HashMap::new(),
+        &empty_reachability(),
+    );
     assert!(result.is_orphan, "Self-import should still be orphan");
 }

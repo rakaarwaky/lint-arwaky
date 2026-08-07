@@ -1,4 +1,4 @@
-# FRD — git-hooks (v1.11.0)
+# FRD — git-hooks
 
 ---
 
@@ -25,16 +25,16 @@ flowchart TD
     C -->|"check / git-diff"| D["diff checker"]
     C -->|"install-hook"| E["hook manager"]
     C -->|"uninstall-hook"| E
-    C -->|"ignore-rule"| F["ignore rule manager"]
+    C -->|"ignore-rule"| E
 
-    D --> G["git diff\n(multiple strategies)"]
+    D --> G["filesystem\n(run git commands)"]
     G --> H["changed files\n(lintable filter)"]
     H --> I["lint pipeline\n(via linter aggregates)"]
     I --> J["Lint Results"]
 
     E --> K[".git/hooks/pre-commit"]
     K --> L["Success / Error"]
-    F --> M["Config Update"]
+    E --> M["Config Update"]
 
     J --> B
     L --> B
@@ -65,6 +65,8 @@ flowchart TD
     4. `master...HEAD`
   - Falls back to `git diff --name-only HEAD` if all variants return empty.
   - Final fallback: `git ls-files --modified --others --exclude-standard`.
+  - Classification via `--diff-filter`: added (A), modified (M), deleted (D),
+    renamed (R with `old => new` parsing).
   - Lintable file filter (source code only):
     `.rs`, `.py`, `.ts`, `.js`, `.jsx`, `.tsx`.
   - Non-source files (`.md`, `.toml`, `.json`, `.yaml`, `.yml`, `.lock`,
@@ -180,9 +182,10 @@ flowchart TD
 - **Business Rules**:
 
   - Status is determined by file existence:
+    - Both paths missing → `BothMissing`.
     - First missing → `MissingFirst`.
     - Second missing → `MissingSecond`.
-    - Both exist but not files → `NotAFile`.
+    - Either path not a file (directory) → `NotAFile`.
     - Both exist and are files → content comparison performed.
   - Difference score calculation:
     - Read both files as bytes.
@@ -196,7 +199,8 @@ flowchart TD
 - **Edge Cases**:
 
   - Both paths are the same file → status `Unchanged`, score `0.0`.
-  - Paths are directories → `NotAFile`.
+  - Both paths are directories → `NotAFile`.
+  - Both paths missing → `BothMissing`.
   - File read failure → score `1.0`, status `Modified` (assume changed).
 - **Error Handling**: File read errors result in score `1.0` (assume
   modified). No crash.
@@ -216,8 +220,7 @@ flowchart TD
   - Adds or removes a path from the `ignored_paths` list in the config file.
   - If config file not found → returns error message suggesting
     `lint-arwaky-cli init`.
-  - Config initialization is handled by the **project-setup** crate, not
-    git-hooks.
+  - Config initialization is handled by FR-007, not here.
 - **Edge Cases**:
 
   - Config file not found → returns descriptive error.
@@ -225,6 +228,27 @@ flowchart TD
   - Rule not found (remove) → no-op, returns "not found".
 - **Error Handling**: Config file not found → returns error description.
   Config parse failure → returns error description.
+
+---
+
+### FR-007: Config Initialization
+
+- **Description**: Create a default lint-arwaky config file if one does not
+  already exist.
+- **Input**: Path string (project root directory).
+- **Output**: `DescriptionVO` with status message indicating whether the
+  config was created or already existed.
+- **Business Rules**:
+
+  - Target file: `lint_arwaky.config.yaml` in the given path.
+  - Default content includes `ignored_paths: []` structure.
+  - If config file already exists → returns "ALREADY_EXISTS" status
+    (no-op, idempotent).
+- **Edge Cases**:
+
+  - Config file already present → no-op, descriptive status message.
+  - File write failure → error description returned.
+- **Error Handling**: Write failures return descriptive error messages.
 
 ---
 
@@ -241,6 +265,8 @@ flowchart TD
 | Uninstall pre-commit hook | —                        | Success or error                 | Remove hook script                         |
 | Update ignore rule        | Ignore update info        | Description                      | Add/remove ignore rule in config           |
 | Get diff data             | Two file paths            | Diff data with score             | Compare two file paths                     |
+| Initialize config         | Project root path         | Description                      | Create default config if absent            |
+| Get hook manager identity | —                        | Identity                         | Return manager identity VO                 |
 
 ---
 
@@ -249,14 +275,14 @@ flowchart TD
 - **Internal**:
 
   - The shared crate: value objects, contracts (diff protocol, hook
-    protocol, hook manager protocol, git hooks aggregate), and utilities
-    (git I/O, file handler).
+    protocol, hook manager protocol, git hooks aggregate), and utilities.
+  - `IFilesystemAggregate`: runs git commands (diff, symbolic-ref, ls-files),
+    file operations (hooks directory, hook script), and config file I/O.
   - Linter aggregates: for running AES analysis on changed files.
-  - Config-system: for config file resolution and ignore rule management.
 - **External**:
 
-  - `git` CLI: `diff --name-only`, `symbolic-ref`, `ls-files` for change
-    detection.
+  - `git` CLI (invoked via `IFilesystemAggregate::run_git_command`):
+    `diff --name-only`, `symbolic-ref`, `ls-files` for change detection.
   - Filesystem: `.git/hooks/` directory operations, config file read/write.
   - Standard library: file permissions, file removal.
   - No async runtime dependency.
@@ -267,7 +293,7 @@ flowchart TD
 
 - **Performance**: Diff detection uses multiple fallback strategies; early
   termination when changes are found. Git command execution is the
-  bottleneck (subprocess spawn).
+  bottleneck (subprocess spawn via filesystem aggregate).
 - **Memory**: Changed files are collected into a deduplicated set to avoid
   duplicates across diff variants. Memory scales with number of changed
   files.
@@ -298,6 +324,7 @@ flowchart TD
 | 7 | Non-lintable: .md, .toml, .json, .png, .lock    | Excluded                   | FR-001 |
 | 8 | Empty diff                                      | total_changed: 0           | FR-001 |
 | 9 | Detached HEAD                                   | Fallback strategies handle | FR-001 |
+| 10 | Renamed files classified via `--diff-filter=R`   | Old/new paths parsed       | FR-001 |
 
 ### FR-002 — Hook Installation
 
@@ -341,7 +368,8 @@ flowchart TD
 | 3 | First file missing         | MissingFirst                        | FR-005 |
 | 4 | Second file missing        | MissingSecond                       | FR-005 |
 | 5 | Both paths are directories | NotAFile                            | FR-005 |
-| 6 | Same file path twice       | Score 0.0, Unchanged                | FR-005 |
+| 6 | Both paths missing         | BothMissing                         | FR-005 |
+| 7 | Same file path twice       | Score 0.0, Unchanged                | FR-005 |
 
 ### FR-006 — Ignore Rule Management
 
@@ -353,6 +381,15 @@ flowchart TD
 | 3 | Config file not found     | Error suggesting`lint-arwaky-cli init` | FR-006 |
 | 4 | Rule already exists (add) | No-op, "already present"               | FR-006 |
 
+### FR-007 — Config Initialization
+
+
+| # | Scenario              | Expected                             | Rule   |
+| --- | ----------------------- | -------------------------------------- | -------- |
+| 1 | Config not present    | Default config created, success      | FR-007 |
+| 2 | Config already exists | Idempotent, "ALREADY_EXISTS" status  | FR-007 |
+| 3 | Write failure         | Error description returned           | FR-007 |
+
 ---
 
 ## Assumptions & Constraints
@@ -360,13 +397,12 @@ flowchart TD
 - `git` CLI is installed and available in PATH.
 - The project is a git repository (has `.git/` directory) for hook
   operations.
-- Git commands execute within a reasonable timeout (subprocess-based).
+- Git commands execute within a reasonable timeout (subprocess-based,
+  invoked via `IFilesystemAggregate::run_git_command`).
 - The pre-commit hook runs `lint-arwaky-cli check .` which must be in PATH
   or specified via executable path.
 - Config file format (`lint_arwaky.config.yaml`) is stable and
   parseable.
-- Config initialization is handled by the project-setup crate, not
-  git-hooks.
 - Lintable files are source code only (.rs, .py, .ts, .js, .jsx, .tsx).
   Non-source files are excluded from linting.
 - No async runtime dependency.

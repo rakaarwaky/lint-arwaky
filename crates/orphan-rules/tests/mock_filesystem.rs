@@ -2,6 +2,7 @@
 // Each test file includes this via: #[path = "mock_filesystem.rs"] mod mock_filesystem;
 
 use once_cell::sync::Lazy;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
@@ -107,7 +108,7 @@ impl IWorkspaceProtocol for MockFilesystem {
     fn check_wired_in_container(
         &self,
         _workspace_root: &std::path::Path,
-        _identifiers: &[String],
+        _identifiers: &PatternList,
     ) -> bool {
         false
     }
@@ -181,8 +182,8 @@ impl IFileSystemIOProtocol for MockFilesystem {
     fn canonicalize(&self, path: &std::path::Path) -> Result<std::path::PathBuf, std::io::Error> {
         Ok(path.to_path_buf())
     }
-    fn canonicalize_path_str(&self, path: &FilePath) -> String {
-        path.value.clone()
+    fn canonicalize_path_str(&self, path: &FilePath) -> FilePath {
+        path.clone()
     }
     fn is_symlink(&self, _path: &std::path::Path) -> bool {
         false
@@ -217,11 +218,11 @@ impl IFileSystemIOProtocol for MockFilesystem {
     fn scan_directory_with_ignored(
         &self,
         _dir: &std::path::Path,
-        _ignored: &[String],
+        _ignored: &PatternList,
     ) -> Vec<std::path::PathBuf> {
         vec![]
     }
-    fn is_ignored_dir(&self, _dir: &std::path::Path, _ignored: &[String]) -> bool {
+    fn is_ignored_dir(&self, _dir: &std::path::Path, _ignored: &PatternList) -> bool {
         false
     }
     fn read_dir_entries_as_pathbuf(
@@ -230,8 +231,8 @@ impl IFileSystemIOProtocol for MockFilesystem {
     ) -> Result<Vec<std::path::PathBuf>, std::io::Error> {
         Ok(vec![])
     }
-    fn read_to_string(&self, _path: &std::path::Path) -> Result<String, std::io::Error> {
-        Ok(String::new())
+    fn read_to_string(&self, _path: &std::path::Path) -> Result<ContentString, std::io::Error> {
+        Ok(ContentString::new(""))
     }
     fn write_string(&self, _path: &std::path::Path, _content: &str) -> Result<(), std::io::Error> {
         Ok(())
@@ -240,8 +241,8 @@ impl IFileSystemIOProtocol for MockFilesystem {
         &self,
         _src: &std::path::Path,
         _dst: &std::path::Path,
-    ) -> Result<u64, std::io::Error> {
-        Ok(0)
+    ) -> Result<ByteCount, std::io::Error> {
+        Ok(ByteCount::new(0))
     }
     fn create_dir_all(&self, _path: &std::path::Path) -> Result<(), std::io::Error> {
         Ok(())
@@ -249,17 +250,17 @@ impl IFileSystemIOProtocol for MockFilesystem {
     fn remove_dir_all(&self, _path: &std::path::Path) -> Result<(), std::io::Error> {
         Ok(())
     }
-    fn set_permissions(&self, _path: &std::path::Path, _mode: u32) -> std::io::Result<()> {
+    fn set_permissions(&self, _path: &std::path::Path, _mode: FileMode) -> std::io::Result<()> {
         Ok(())
     }
     fn remove_file(&self, _path: &std::path::Path) -> std::io::Result<()> {
         Ok(())
     }
-    fn run_git_command(&self, _args: &[&str], _dir: &str) -> (String, String, bool) {
-        (String::new(), String::new(), false)
+    fn run_git_command(&self, _args: &[&str], _dir: &str) -> GitCommandResult {
+        GitCommandResult::new(String::new(), String::new(), false)
     }
-    fn parse_output_lines(&self, output: &str) -> Vec<String> {
-        output.lines().map(String::from).collect()
+    fn parse_output_lines(&self, output: &str) -> ParsedLines {
+        ParsedLines::new(output.lines().map(String::from).collect())
     }
     fn run_external_command_in(
         &self,
@@ -295,7 +296,10 @@ impl IFilesystemAggregate for MockFilesystem {
     fn has_file(&self, _path: &std::path::Path) -> bool {
         false
     }
-    fn collect_file_entries(&self, _files: &[String]) -> Vec<(std::path::PathBuf, String)> {
+    fn collect_file_entries(
+        &self,
+        _files: &PatternList,
+    ) -> Vec<shared::common::taxonomy_common_vo::FileContentPair> {
         vec![]
     }
     fn discover_source_files(&self, _root: &std::path::Path, _ignored: &[String]) -> Vec<String> {
@@ -335,6 +339,12 @@ impl IFilesystemAggregate for MockFilesystem {
             shared::filesystem::taxonomy_filesystem_vo::InheritanceMap::new(HashMap::new()),
             vec![],
         )
+    }
+    fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
+        None
+    }
+    fn resolved_import_list(&self) -> Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry> {
+        Vec::new()
     }
 }
 

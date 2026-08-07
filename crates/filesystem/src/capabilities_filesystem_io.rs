@@ -3,9 +3,13 @@
 // 3-block structure per AES skill.
 
 use crate::utility_filesystem_io;
+use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{FileExtension, ScanTiming};
+use shared::filesystem::taxonomy_filesystem_vo::{
+    ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
+};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -46,8 +50,9 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
         utility_filesystem_io::canonicalize(path)
     }
 
-    fn canonicalize_path_str(&self, path: &FilePath) -> String {
-        utility_filesystem_io::canonicalize_path_str(&path.value)
+    fn canonicalize_path_str(&self, path: &FilePath) -> FilePath {
+        let s = utility_filesystem_io::canonicalize_path_str(&path.value);
+        FilePath::new(s).unwrap_or_else(|_| path.clone())
     }
 
     fn is_symlink(&self, path: &Path) -> bool {
@@ -88,13 +93,13 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
 
     // ── Directory Operations (3) ─────────────────────────────
 
-    fn scan_directory_with_ignored(&self, dir: &Path, ignored: &[String]) -> Vec<PathBuf> {
-        utility_filesystem_io::scan_directory_with_ignored(dir, ignored)
+    fn scan_directory_with_ignored(&self, dir: &Path, ignored: &PatternList) -> Vec<PathBuf> {
+        utility_filesystem_io::scan_directory_with_ignored(dir, ignored.values())
     }
 
-    fn is_ignored_dir(&self, dir: &Path, ignored: &[String]) -> bool {
+    fn is_ignored_dir(&self, dir: &Path, ignored: &PatternList) -> bool {
         let name = dir.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        utility_filesystem_io::is_path_ignored(name, ignored)
+        utility_filesystem_io::is_path_ignored(name, ignored.values())
     }
 
     fn read_dir_entries_as_pathbuf(&self, dir: &Path) -> Result<Vec<PathBuf>, std::io::Error> {
@@ -103,16 +108,16 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
 
     // ── File Read/Write (7) ──────────────────────────────────
 
-    fn read_to_string(&self, path: &Path) -> Result<String, std::io::Error> {
-        utility_filesystem_io::read_to_string(path)
+    fn read_to_string(&self, path: &Path) -> Result<ContentString, std::io::Error> {
+        utility_filesystem_io::read_to_string(path).map(|s| ContentString { value: s })
     }
 
     fn write_string(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
         utility_filesystem_io::write_string(path, content)
     }
 
-    fn copy_file(&self, src: &Path, dst: &Path) -> Result<u64, std::io::Error> {
-        utility_filesystem_io::copy_file(src, dst)
+    fn copy_file(&self, src: &Path, dst: &Path) -> Result<ByteCount, std::io::Error> {
+        utility_filesystem_io::copy_file(src, dst).map(ByteCount::new)
     }
 
     fn create_dir_all(&self, path: &Path) -> Result<(), std::io::Error> {
@@ -123,8 +128,8 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
         utility_filesystem_io::remove_dir_all(path)
     }
 
-    fn set_permissions(&self, path: &Path, mode: u32) -> std::io::Result<()> {
-        utility_filesystem_io::set_permissions(path, mode)
+    fn set_permissions(&self, path: &Path, mode: FileMode) -> std::io::Result<()> {
+        utility_filesystem_io::set_permissions(path, mode.bits)
     }
 
     fn remove_file(&self, path: &Path) -> std::io::Result<()> {
@@ -133,12 +138,13 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
 
     // ── Process Execution (3) ────────────────────────────────
 
-    fn run_git_command(&self, args: &[&str], dir: &str) -> (String, String, bool) {
-        utility_filesystem_io::run_git_command(args, dir)
+    fn run_git_command(&self, args: &[&str], dir: &str) -> GitCommandResult {
+        let (stdout, stderr, success) = utility_filesystem_io::run_git_command(args, dir);
+        GitCommandResult::new(stdout, stderr, success)
     }
 
-    fn parse_output_lines(&self, output: &str) -> Vec<String> {
-        utility_filesystem_io::parse_output_lines(output)
+    fn parse_output_lines(&self, output: &str) -> ParsedLines {
+        ParsedLines::new(utility_filesystem_io::parse_output_lines(output))
     }
 
     fn run_external_command_in(

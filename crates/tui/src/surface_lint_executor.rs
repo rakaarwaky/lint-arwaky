@@ -11,7 +11,7 @@ use dispatcher::surface_git_action::{collect_install_hook, collect_uninstall_hoo
 use dispatcher::surface_maintenance_action::{
     collect_dependencies, collect_doctor, collect_security,
 };
-use dispatcher::surface_orphan_action::{OrphanScanDeps, collect_orphan};
+use dispatcher::surface_orphan_action::{OrphanFactory, OrphanScanDeps, collect_orphan};
 use dispatcher::surface_plugin_action::collect_adapters_detailed;
 use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
 use dispatcher::surface_version_action::collect_version;
@@ -49,7 +49,7 @@ pub struct SurfaceLintExecutor {
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
-    orphan_factory: Arc<dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync>,
+    orphan_factory: Arc<OrphanFactory>,
 }
 
 // ─── Block 2: Lint Action Methods ─────────────────────────
@@ -468,7 +468,7 @@ impl SurfaceLintExecutor {
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         filesystem: Arc<dyn IFilesystemAggregate>,
         fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
-        orphan_factory: Arc<dyn Fn(shared::config_system::taxonomy_config_vo::ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate> + Send + Sync>,
+        orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
         Self {
             code_analysis,

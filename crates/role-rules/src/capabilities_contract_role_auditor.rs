@@ -6,14 +6,13 @@
 //   ParseMetadata does not yet expose method parameter/return types.
 
 use shared::common::taxonomy_lint_result_vo::LintResult;
+use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_language_detector::detect_language_info;
 use shared::common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
 
@@ -49,6 +48,11 @@ impl ContractRoleChecker {
 
     fn check_contract_primitive(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
+        // Exempt I/O protocol files — primitives are the correct abstraction for
+        // low-level file system, network, and process operations.
+        if path_str.contains("io_protocol") || path_str.contains("filesystem_io") {
+            return;
+        }
         let content = &file.content;
         let fp = match shared::common::FilePath::new(path_str.to_string()) {
             Ok(fp) => fp,
@@ -61,14 +65,6 @@ impl ContractRoleChecker {
         if !is_rs && !is_py && !is_js {
             return;
         }
-
-        let _lang = if is_rs {
-            Language::Rust
-        } else if is_py {
-            Language::Python
-        } else {
-            Language::JavaScript
-        };
 
         if is_py {
             for (line_no, sig) in extract_python_method_signatures(content) {

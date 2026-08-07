@@ -41,7 +41,7 @@ enum Command {
         #[arg(long)]
         member: Option<String>,
     },
-    /// Quality rules scan (AES quality violations)
+    /// Run all 6 linters (alias of scan)
     Check {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
@@ -49,8 +49,10 @@ enum Command {
         format: String,
         #[arg(long)]
         filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
     },
-    /// Quality rules scan (alias of check)
+    /// Quality rules scan (single linter)
     Quality {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
@@ -276,24 +278,29 @@ fn main() {
             filter,
             member,
         } => cli_commands::surface_scan_command::handle_scan(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            filesystem.clone(),
-            Some(config_orchestrator.clone()),
-            filter,
-            member,
+            cli_commands::surface_scan_command::ScanCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                filesystem: filesystem.clone(),
+                config_orchestrator: Some(config_orchestrator.clone()),
+                filter,
+                member,
+            },
         ),
         Command::Check {
             path,
             format,
             filter,
-        } => cli_commands::surface_scan_command::handle_check(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            code_analysis_linter.clone(),
-            filesystem.clone(),
-            Some(config_orchestrator.clone()),
-            filter,
+            member,
+        } => cli_commands::surface_scan_command::handle_scan(
+            cli_commands::surface_scan_command::ScanCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                filesystem: filesystem.clone(),
+                config_orchestrator: Some(config_orchestrator.clone()),
+                filter,
+                member,
+            },
         ),
         Command::Quality {
             path,
@@ -312,39 +319,45 @@ fn main() {
             format,
             filter,
         } => cli_commands::surface_scan_command::handle_role(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            role_orchestrator.clone(),
-            report_formatter.clone(),
-            filesystem.clone(),
-            filter,
-            ignored_paths.clone(),
+            cli_commands::surface_scan_command::RoleCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                role_orchestrator: role_orchestrator.clone(),
+                report_formatter: report_formatter.clone(),
+                filesystem: filesystem.clone(),
+                filter,
+                ignored_paths: ignored_paths.clone(),
+            },
         ),
         Command::Import {
             path,
             format,
             filter,
         } => cli_commands::surface_scan_command::handle_import(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            import_orchestrator.clone(),
-            report_formatter.clone(),
-            filesystem.clone(),
-            filter,
-            ignored_paths.clone(),
+            cli_commands::surface_scan_command::ImportCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                import_orchestrator: import_orchestrator.clone(),
+                report_formatter: report_formatter.clone(),
+                filesystem: filesystem.clone(),
+                filter,
+                ignored_paths: ignored_paths.clone(),
+            },
         ),
         Command::Naming {
             path,
             format,
             filter,
         } => cli_commands::surface_scan_command::handle_naming(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            naming_orchestrator.clone(),
-            report_formatter.clone(),
-            filesystem.clone(),
-            filter,
-            ignored_paths.clone(),
+            cli_commands::surface_scan_command::NamingCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                naming_orchestrator: naming_orchestrator.clone(),
+                report_formatter: report_formatter.clone(),
+                filesystem: filesystem.clone(),
+                filter,
+                ignored_paths: ignored_paths.clone(),
+            },
         ),
         Command::Orphan {
             path,
@@ -352,47 +365,53 @@ fn main() {
             filter,
             member,
         } => cli_commands::surface_scan_command::handle_orphan(
-            Some(FilePath::new(path).unwrap_or_default()),
-            member,
-            parse_format(&format),
-            orphan_orchestrator.clone(),
-            config_orchestrator.clone(),
-            report_formatter.clone(),
-            filesystem.clone(),
-            filter,
-            Arc::new(|| {
-                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-            }),
-            Arc::new(|config, fs| {
-                orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                    config, fs,
-                )
-                .analyzer()
-            }),
+            cli_commands::surface_scan_command::OrphanCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                member,
+                format: parse_format(&format),
+                orphan_orchestrator: orphan_orchestrator.clone(),
+                config_orchestrator: config_orchestrator.clone(),
+                report_formatter: report_formatter.clone(),
+                filesystem: filesystem.clone(),
+                filter,
+                fs_factory: Arc::new(|| {
+                    filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+                }),
+                orphan_factory: Arc::new(|config, fs| {
+                    orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+                        config, fs,
+                    )
+                    .analyzer()
+                }),
+            },
         ),
         Command::External {
             path,
             format,
             filter,
         } => cli_commands::surface_scan_command::handle_external(
-            Some(FilePath::new(path).unwrap_or_default()),
-            parse_format(&format),
-            external_lint.clone(),
-            report_formatter.clone(),
-            filesystem.clone(),
-            config_orchestrator.clone(),
-            filter,
-            ignored_paths.clone(),
+            cli_commands::surface_scan_command::ExternalCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                external_lint: external_lint.clone(),
+                report_formatter: report_formatter.clone(),
+                filesystem: filesystem.clone(),
+                config_parser: config_orchestrator.clone(),
+                filter,
+                ignored_paths: ignored_paths.clone(),
+            },
         ),
         Command::Ci { path, threshold } => cli_commands::surface_ci_command::handle_ci(
-            code_analysis_linter.clone(),
-            import_orchestrator.clone(),
-            naming_orchestrator.clone(),
-            config_orchestrator.clone(),
-            orphan_orchestrator.clone(),
-            filesystem.clone(),
-            Some(FilePath::new(path).unwrap_or_default()),
-            Threshold::new(threshold),
+            cli_commands::surface_ci_command::CiCommandParams {
+                code_analysis_linter: code_analysis_linter.clone(),
+                import_orchestrator: import_orchestrator.clone(),
+                naming_orchestrator: naming_orchestrator.clone(),
+                config_orchestrator: config_orchestrator.clone(),
+                orphan_orchestrator: orphan_orchestrator.clone(),
+                filesystem: filesystem.clone(),
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                threshold: Threshold::new(threshold),
+            },
         ),
         Command::Config => {
             cli_commands::surface_config_command::handle_config_show(config_orchestrator.clone())

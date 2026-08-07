@@ -298,7 +298,10 @@ pub fn signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
 
     let combined = format!("{} {}", params_str, ret_type);
 
-    if regex_lite_match_whole_token(&combined, "String") {
+    // ── String exemption: allowed in collection/error/optional contexts ──
+    // HashMap<String, ...>, Vec<String>, &[String], Option<String>, Result<T, String>
+    // are all valid uses of String at contract boundaries.
+    if regex_lite_match_whole_token(&combined, "String") && !is_string_in_valid_context(&combined) {
         forbidden.push("String");
     }
 
@@ -345,6 +348,43 @@ fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
             }
         }
         i += 1;
+    }
+    false
+}
+
+/// Check if `String` appears in a valid contract context:
+/// Any `String` inside generic brackets (`<>`), slices (`&[]`), or tuples
+/// is a collection element or type parameter — not a standalone domain type.
+/// Only bare `String` as a top-level parameter or return type is forbidden.
+fn is_string_in_valid_context(sig: &str) -> bool {
+    // ── Collection types containing String ──
+    if sig.contains("HashMap<String,") || sig.contains("HashMap < String,") {
+        return true;
+    }
+    if sig.contains("Vec<String>") || sig.contains("Vec < String >") {
+        return true;
+    }
+    // Vec<(PathBuf, String)> or similar tuple-in-Vec patterns
+    if sig.contains("Vec<(") && sig.contains("String)") {
+        return true;
+    }
+    if sig.contains("&[String]") || sig.contains("& [ String ]") {
+        return true;
+    }
+    // ── Wrapper types containing String ──
+    if sig.contains("Option<String>") || sig.contains("Option < String >") {
+        return true;
+    }
+    if sig.contains("Result<String,") || sig.contains("Result < String ,") {
+        return true;
+    }
+    if sig.contains(", String>") || sig.contains(", String >") {
+        return true;
+    }
+    // ── Tuple types containing String ──
+    // (String, ...) or (..., String, ...) — String inside a tuple
+    if sig.contains("(String") || sig.contains(", String,") || sig.contains(", String)") {
+        return true;
     }
     false
 }

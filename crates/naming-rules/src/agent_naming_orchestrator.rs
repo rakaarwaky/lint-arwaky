@@ -5,7 +5,9 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::naming_rules::contract_naming_checker_protocol::{INamingConventionChecker, ISuffixPrefixChecker};
+use shared::naming_rules::contract_naming_checker_protocol::{
+    INamingConventionChecker, ISuffixPrefixChecker,
+};
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use std::sync::Arc;
 
@@ -27,7 +29,9 @@ pub struct NamingOrchestrator {
 impl INamingRunnerAggregate for NamingOrchestrator {
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         // Naming checks are path-only — do NOT skip parse failures.
-        // Per FRD glossary, skip only UNREADABLE files (empty content).
+        // `content.is_empty()` is used as a proxy for "unreadable" per the FRD glossary.
+        // If the filesystem crate adds a separate error field in the future,
+        // this filter should also check `parse_ok == false`.
         let file_paths: Vec<FilePath> = files
             .iter()
             .filter(|f| !f.content.is_empty())

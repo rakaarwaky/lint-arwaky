@@ -78,14 +78,14 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        
+
                         format!("AES403 CAPABILITY_ROLE: Too many types in capabilities file.\nWHY? Found {} types (struct + enum), max 3 allowed\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count)
 ,
                     ));
                     return;
                 }
 
-                // Rule 2: must have >= 1 struct implementor
+                // Rule 2: must have >= 1 struct implementing any trait
                 let has_implementor = rust_meta.impl_blocks.iter().any(|imp| {
                     imp.trait_name.is_some()
                         && struct_names.contains(&imp.implementor_type.as_str())
@@ -93,8 +93,8 @@ impl CapabilitiesRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+
+                        format!("AES403 CAPABILITY_ROLE: No struct implements a trait.\nWHY? No `impl Trait for struct` pattern found in {}. At least one struct must implement a trait.\nFIX: At least one struct in this file must implement a trait. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
                 }
@@ -112,7 +112,7 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        
+
                         format!("AES403 CAPABILITY_ROLE: Too many types in capabilities file.\nWHY? Found {} classes, max 3 allowed\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", class_count)
 ,
                     ));
@@ -121,8 +121,8 @@ impl CapabilitiesRoleChecker {
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+
+                        format!("AES403 CAPABILITY_ROLE: No class implements a parent class.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one class in this file must extend a parent class.", path_str)
 ,
                     ));
                 }
@@ -142,7 +142,7 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        
+
                         format!("AES403 CAPABILITY_ROLE: Too many types in capabilities file.\nWHY? Found {} types (class/interface/enum), max 3 allowed\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count)
 ,
                     ));
@@ -151,8 +151,8 @@ impl CapabilitiesRoleChecker {
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with 'implements' keyword found in {}. At least one class must implement an interface/protocol.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+
+                        format!("AES403 CAPABILITY_ROLE: No class implements an interface.\nWHY? No class with 'implements' keyword found in {}. At least one class must implement an interface.\nFIX: At least one class in this file must implement an interface.", path_str)
 ,
                     ));
                 }
@@ -214,7 +214,7 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        
+
                         format!("AES403 CAPABILITY_ROLE: Too many types in capabilities file.\nWHY? Found {} types (struct + enum), max 3 allowed\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count)
 ,
                     ));
@@ -232,8 +232,8 @@ impl CapabilitiesRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement a _protocol trait.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+
+                        format!("AES403 CAPABILITY_ROLE: No struct implements a trait.\nWHY? No `impl Trait for struct` pattern found in {}. At least one struct must implement a trait.\nFIX: At least one struct in this file must implement a trait. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
                 }
@@ -260,7 +260,7 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        
+
                         format!("AES403 CAPABILITY_ROLE: Too many types in capabilities file.\nWHY? Found {} classes, max 3 allowed\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count)
 ,
                     ));
@@ -269,8 +269,8 @@ impl CapabilitiesRoleChecker {
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES403", Severity::MEDIUM,
-                        
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+
+                        format!("AES403 CAPABILITY_ROLE: No class implements a parent class.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one class in this file must extend a parent class.", path_str)
 ,
                     ));
                 }
@@ -308,7 +308,7 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::HIGH,
-                        
+
                         format!("AES403 CAPABILITY_ROLE: Too many types in capabilities file.\nWHY? Found {} types, max 3 allowed\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count)
 ,
                     ));
@@ -320,8 +320,8 @@ impl CapabilitiesRoleChecker {
                         0,
                         "AES403",
                         Severity::MEDIUM,
-                        
-                        format!("AES403 CAPABILITY_ROLE: No struct implements a _protocol trait.\nWHY? No class with 'implements' found in {}.\nFIX: At least one struct in this file must implement the capability _protocol. Convert an existing struct or keep only internal helpers.", path_str)
+
+                        format!("AES403 CAPABILITY_ROLE: No class implements an interface.\nWHY? No class with 'implements' found in {}.\nFIX: At least one class in this file must implement an interface.", path_str)
 ,
                     ));
                 }

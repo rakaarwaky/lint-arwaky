@@ -1,135 +1,123 @@
 ---
 name: role-architect
-description: "Expert architecture reviewer: validates AES layer boundaries, naming conventions, dependency direction, orphan detection, and scalability across 7-layer spec."
+description: "AES architecture reviewer: validates layer boundaries, naming, dependencies, orphans, scalability (7-layer spec)."
 metadata:
   tags: [architect, aes, architecture, review, layer-boundaries, naming, orphan, scalability, data-flow]
-  triggers:
-    - "review as architect"
-    - "architecture review"
-    - "check architecture"
-    - "validate architecture"
-    - "architect review"
-    - "layer boundary check"
-    - "architecture audit"
+  triggers: [review as architect, architecture review, check architecture, validate architecture, architect review, layer boundary check, architecture audit]
   dependencies: []
-  related:
-    - role-tech-lead
-    - role-business-analyst
-    - role-fullstack-developer
+  related: [role-tech-lead, role-business-analyst, role-fullstack-developer, role-quality-analysis]
 ---
+
 # role-architect
 
-Expert Architecture Reviewer specializing in architectural patterns, AES layering, and system design.
+Expert AES architecture reviewer.
 
-## Preparatory Reading
+## Prerequisites
 
-Before starting any analysis, read these files:
-
-1. **`.agents/rules/RULES_AES.md`** — All AES rules (101-506): naming, imports, quality, role, orphan checks
-2. **`ARCHITECTURE.md`** — Full 7-layer specification, naming conventions, architecture patterns
-3. **`PRD.md`** — Product Requirements Document for overall context
-4. **`.agents/skills/`** — Use skill driven development
+Read first:
+1. `.agents/rules/RULES_AES.md` (rules 101-506)
+2. `ARCHITECTURE.md` (7-layer spec)
+3. `PRD.md` (product context)
+4. `.agents/skills/` (skill-driven dev)
 
 ## Workflow
 
-Follow this exact sequence. **Do not skip steps.**
+Execute sequentially, no skips.
 
 ### 1. Identify
-
-- Identify the feature folder: `modules/<feature>/`, `crates/<feature>/`, or `packages/<feature>/`
-- Read the Feature Requirement Document (FRD) at `<feature-folder>/FRD.md`
-- List all member modules inside the feature (e.g. `modules/<feature>/src/*.py`)
+- Locate: `modules|crates|packages/<feature>/`
+- Read `<feature>/FRD.md`
+- List modules
 
 ### 2. Reference
-
-- Read `RULES_AES.md` Group 1-5 to understand which rules apply
-- Read `ARCHITECTURE.md` 7-layer spec to validate layer boundaries
-- Identify which layer(s) each member file belongs to (taxonomy, contract, utility, capabilities, agent, surface, root)
+- `RULES_AES.md` Groups 1-5
+- `ARCHITECTURE.md` 7-layer spec
+- Classify files: taxonomy|contract|utility|capabilities|agent|surface|root
 
 ### 3. Analyze
 
-Analyze architectural anti-patterns across these dimensions:
+| Dimension | Focus |
+|-----------|-------|
+| Naming | Convention compliance |
+| Boundaries | Import rules, dependency direction |
+| Capabilities | Protocol impl |
+| Agent | Aggregate impl |
+| Orphan | Dead code |
+| Scalability | SRP, coupling |
+| Data Flow | Unidirectional, no cycles |
 
-| Dimension                  | Focus                                                          |
-| -------------------------- | -------------------------------------------------------------- |
-| **Naming**           | Prefix/convention/suffix compliance per layer                  |
-| **Layer Boundaries** | Forbidden cross-layer imports, dependency direction violations |
-| **Capabilities**     | Protocol implementation                                        |
-| **Agent**            | Aggregate implementation                                       |
-| **Orphan**           | Dead code detection per layer                                  |
-| **Scalability**      | Single-responsibility, modular boundaries, coupling            |
-| **Data Flow**        | Unidirectional bottom-up, no cycles                            |
+Prioritize: clarity, testability, traceability.
 
-Prioritize **clarity, testability, and traceability**.
+### 4. Dedup
 
-### 4. Create Plan
+1. `ls .agents/plans/todo-<feature>-*.md`
+2. `gh pr list --label "need review" --label "<feature>"`
+3. Extract issues from existing plans + active PRs
+4. Keep only NEW issues
+5. Record: "{N} covered, {M} new"
 
-Write a concrete, actionable plan to `.agents/plans/todo-<feature-name>-architect-<timestamp>.md`
+**M=0:** Stop. Report "No new issues."
 
-- Use the Plan Structure below
-- Categorize findings by severity
-- Write proposed **Fixed Code** inside the plan document
-- One plan per feature, even if the feature has multiple member modules
+### 5. Plan
 
-## Plan Output
+Save: `.agents/plans/todo-<feature>-architect-<timestamp>.md`
+- NEW issues only
+- Severity-categorized
+- Include fixed code
 
-**File path:** `.agents/plans/todo-<feature-name>-architect-<timestamp>.md`
+## Template
 
-```markdown
-# Review Plan: {feature-name} — Architect
+# Plan: {feature} — Architect
 
 ## Summary
+{One paragraph}
 
-{One-paragraph overview and key findings.}
-
-## Findings by Category
+## Findings
 
 ### Layer Boundaries
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
 
-### Naming Convention
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+### Naming
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
 
-### Dead Code / Orphan
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+### Orphan
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
 
-### Scalability & Coupling
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+### Scalability
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
 
 ### Data Flow
-| # | Severity | Issue | Location (File:Line) | Recommendation |
-|---|----------|-------|----------------------|----------------|
+| # | Severity | Issue | Location | Recommendation |
+|---|----------|-------|----------|----------------|
 
 ## Violations
-
-{List specific AES violations or write "None".}
+{List or "None"}
 
 ## Action Items
-
-- [ ] {Priority} {Action item}
+- [ ] {Priority} {Item}
 
 ## Fixed Code
+{Grouped by file}
 
-{Show corrected code blocks for each fix. Group by file.}
-```
+## Severity
 
-## Severity Convention
-
-| Level                | Meaning                                                                                      |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| 🔴**CRITICAL** | Breach of AES layering, security risk, or data leak. Requires immediate fix.                 |
-| 🟡**WARNING**  | Convention deviation, performance bottleneck, or maintainability concern. Fix in this cycle. |
-| 🟢**INFO**     | Suggestion, refactoring idea, or nice-to-have. Can be deferred.                              |
+| Level | Meaning |
+|-------|---------|
+| 🔴 CRITICAL | Layering breach, security, data leak. Immediate fix. |
+| 🟡 WARNING | Convention/perf/maintainability. Fix this cycle. |
+| 🟢 INFO | Suggestion. Deferrable. |
 
 ## Checklist
 
-- [ ] Preparatory reading completed (RULES_AES, ARCHITECTURE, PRD, FRD)
-- [ ] Feature folder and layer membership identified
-- [ ] All 7 dimensions analyzed (naming, boundaries, capabilities, agent, orphan, scalability, data flow)
-- [ ] Findings categorized by severity (CRITICAL / WARNING / INFO)
-- [ ] Plan written with concrete Fixed Code blocks
-- [ ] Plan saved to `.agents/plans/todo-<feature>-architect-<timestamp>.md`
+- [ ] Prerequisites read
+- [ ] Feature identified
+- [ ] All 7 dimensions analyzed
+- [ ] Severity categorized
+- [ ] Deduped vs existing plans + active PRs
+- [ ] Plan written (NEW issues + fixed code)
+- [ ] Saved to correct path
+- [ ] M=0: stopped with report

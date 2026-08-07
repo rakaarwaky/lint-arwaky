@@ -184,3 +184,57 @@ fn e2e_container_wiring_produces_same_results() {
         "container-wired orchestrator should find violations"
     );
 }
+
+// ── FR-Config: Rule disabled in config → no violations for that rule ──
+
+fn make_config_with_disabled_aes101() -> ArchitectureConfig {
+    use shared::common::taxonomy_common_vo::BooleanVO;
+    use shared::common::taxonomy_error_vo::ErrorCode;
+    use shared::config_system::taxonomy_config_vo::ArchitectureRule;
+
+    ArchitectureConfig {
+        rules: vec![ArchitectureRule {
+            name: shared::common::taxonomy_suggestion_vo::DescriptionVO::new(
+                "disable AES101".to_string(),
+            ),
+            description: shared::common::taxonomy_suggestion_vo::DescriptionVO::new("".to_string()),
+            rule_type: ErrorCode::raw("AES101"),
+            enabled: BooleanVO::new(false),
+            ..Default::default()
+        }],
+        ..ArchitectureConfig::default()
+    }
+}
+
+#[test]
+fn e2e_aes101_disabled_skips_convention_check() {
+    let tmp = TempDir::new().unwrap();
+    let entries = make_file_entries(
+        tmp.path(),
+        &[
+            "capabilities_BadFile.rs",      // would fail AES101 if enabled
+            "capabilities_user_checker.rs", // clean
+        ],
+    );
+
+    let config = Arc::new(make_config_with_disabled_aes101());
+    let layer_map = Arc::new(make_layer_map());
+    let deps = NamingOrchestratorDeps {
+        naming_convention_checker: Arc::new(NamingConventionChecker::new()),
+        suffix_prefix_checker: Arc::new(SuffixPrefixChecker::new()),
+        config,
+        layer_map,
+    };
+    let orch = NamingOrchestrator::new(deps);
+    let results = orch.run_audit_with_entries(&entries);
+
+    let aes101_count = results
+        .iter()
+        .filter(|r| r.code.code().contains("AES101"))
+        .count();
+    assert_eq!(
+        aes101_count, 0,
+        "AES101 disabled in config must produce zero AES101 violations, got {}",
+        aes101_count
+    );
+}

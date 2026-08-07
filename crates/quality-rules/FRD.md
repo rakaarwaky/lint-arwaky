@@ -25,8 +25,8 @@ flowchart TD
     G1 -->|"return"| D
     D -->|"FileEntry[]\n(pre-fetched)"| A
 
-    A -->|"run_audit_with_entries(&[FileEntry])"| B["code_analysis_aggregate"]
-    B --> C["code_analysis_orchestrator\n(zero I/O)"]
+    A -->|"run_audit_with_entries(&[FileEntry])"| B["quality_aggregate"]
+    B --> C["quality_orchestrator\n(zero I/O)"]
 
     C --> H1["line_count_check"]
     C --> H2["definition_check"]
@@ -214,7 +214,6 @@ flowchart TD
   - The bypass detection utility in this crate (`utility_bypass_detector`) — substring matching, string/char position checks, `cfg(test)` skip logic.
   - The language mapping utility in this crate (`utility_language_mapper`) — detects source language from file extension.
   - The code duplication detection utility in this crate (`utility_code_duplication_detector`) — line normalization, window hashing, hash-based dedup.
-  - The column index utility in this crate (`utility_column_index`) — column position computation.
   - The mandatory checker utility in this crate (`utility_mandatory_checker`) — symbol detection helpers.
   - The compliance score utility in the shared crate — compliance score calculation.
 - **External**:

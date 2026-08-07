@@ -61,11 +61,14 @@ impl ILinterAdapterProtocol for TSCAdapter {
             "--pretty".to_string(),
             "false".to_string(),
         ];
-        if abs_path != "." && abs_path != "./" {
-            args.push(abs_path);
+        if abs_path.value != "." && abs_path.value != "./" {
+            args.push(abs_path.value);
         }
 
-        let tsc_name = ToolName::new("tsc").unwrap();
+        let tsc_name = match ToolName::new("tsc") {
+            Ok(n) => n,
+            Err(_) => return Ok(LintResultList::default()),
+        };
         let cmd = match self.filesystem.resolve_js_cmd(&tsc_name, args, &wd) {
             Some(c) => c,
             None => return Ok(LintResultList::default()),

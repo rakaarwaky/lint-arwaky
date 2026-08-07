@@ -8,6 +8,7 @@
 // US7: Non-UTF-8 files are handled gracefully.
 
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
+use shared::common::PatternList;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use tempfile::TempDir;
 
@@ -23,7 +24,7 @@ fn us1_walk_discovers_all_source_files() {
     std::fs::write(tmp.path().join("app.py"), "# python").unwrap();
     std::fs::write(tmp.path().join("data.json"), "{}").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &[]);
+    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::default());
     let source_files: Vec<_> = files
         .iter()
         .filter(|p| p.to_string_lossy().contains(".rs") || p.to_string_lossy().contains(".py"))
@@ -43,7 +44,10 @@ fn us2_gitignore_excludes_files() {
     std::fs::write(ignored_dir.join("secret.rs"), "").unwrap();
     std::fs::write(tmp.path().join("visible.rs"), "").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &["ignored_dir".to_string()]);
+    let files = io.scan_directory_with_ignored(
+        tmp.path(),
+        &PatternList::new(vec!["ignored_dir".to_string()]),
+    );
     let has_ignored = files
         .iter()
         .any(|p| p.to_string_lossy().contains("ignored_dir"));
@@ -54,7 +58,7 @@ fn us2_gitignore_excludes_files() {
 fn us3_empty_directory_returns_empty() {
     let tmp = TempDir::new().unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &[]);
+    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::default());
     assert!(files.is_empty());
 }
 
@@ -65,7 +69,7 @@ fn us4_read_existing_file() {
     std::fs::write(&file, "content here").unwrap();
     let io = make_io();
     let content = io.read_to_string(&file).unwrap();
-    assert_eq!(content, "content here");
+    assert_eq!(content.value, "content here");
 }
 
 #[test]
@@ -76,7 +80,7 @@ fn us5_write_read_roundtrip() {
     let original = "The quick brown fox jumps over the lazy dog";
     io.write_string(&file, original).unwrap();
     let read_back = io.read_to_string(&file).unwrap();
-    assert_eq!(read_back, original);
+    assert_eq!(read_back.value, original);
 }
 
 #[test]
@@ -86,7 +90,8 @@ fn us6_scan_with_ignored_patterns() {
     std::fs::write(tmp.path().join("target").join("build.rs"), "").unwrap();
     std::fs::write(tmp.path().join("src.rs"), "").unwrap();
     let io = make_io();
-    let files = io.scan_directory_with_ignored(tmp.path(), &["target".to_string()]);
+    let files =
+        io.scan_directory_with_ignored(tmp.path(), &PatternList::new(vec!["target".to_string()]));
     assert!(
         files.iter().any(|p| p.to_string_lossy().contains("src.rs")),
         "src.rs should be found"
@@ -164,7 +169,7 @@ fn us3_symlink_outside_workspace_skipped() {
 
     let io = make_io();
     // scan_directory_with_ignored walks the directory, but symlinks to outside are not followed
-    let files = io.scan_directory_with_ignored(tmp.path(), &[]);
+    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::default());
     // The symlink may appear in the listing (depending on OS behavior) but
     // when we check if it's a source file, the metadata check should handle it
     let has_inside = files
@@ -182,7 +187,7 @@ fn us3_symlink_outside_workspace_skipped() {
         // Either it fails (target not accessible via canonicalize) or succeeds but
         // the key point is the symlink doesn't bypass workspace confinement
         assert!(
-            result.is_err() || !result.unwrap().contains("inside"),
+            result.is_err() || !result.unwrap().value.contains("inside"),
             "Symlink to outside should not leak workspace content"
         );
     }

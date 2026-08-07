@@ -7,8 +7,6 @@ use shared::filesystem::taxonomy_filesystem_vo::{
     RustFnItem, RustImplItem, RustMetadata, RustModItem, RustUseItem,
 };
 
-// ─── Inlined from utility_tree_sitter_helpers (AES201: utility cannot import utility) ───
-
 fn text_of(node: tree_sitter::Node, content: &str) -> String {
     content[node.byte_range()].to_string()
 }
@@ -16,6 +14,25 @@ fn text_of(node: tree_sitter::Node, content: &str) -> String {
 fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option<String> {
     let child = node.child_by_field_name(field)?;
     Some(text_of(child, content))
+}
+
+fn extract_use_path(node: tree_sitter::Node, content: &str) -> Option<String> {
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        match child.kind() {
+            "scoped_identifier" | "use_as_clause" => {
+                return extract_scoped_path(child, content);
+            }
+            "use_wildcard" => {
+                return extract_scoped_path(child, content);
+            }
+            "identifier" | "crate" | "super" | "self" => {
+                return Some(text_of(child, content));
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 fn extract_scoped_path(node: tree_sitter::Node, content: &str) -> Option<String> {
@@ -45,25 +62,6 @@ fn extract_scoped_path(node: tree_sitter::Node, content: &str) -> Option<String>
         }
     }
     Some(parts.join("::"))
-}
-
-fn extract_use_path(node: tree_sitter::Node, content: &str) -> Option<String> {
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        match child.kind() {
-            "scoped_identifier" | "use_as_clause" => {
-                return extract_scoped_path(child, content);
-            }
-            "use_wildcard" => {
-                return extract_scoped_path(child, content);
-            }
-            "identifier" | "crate" | "super" | "self" => {
-                return Some(text_of(child, content));
-            }
-            _ => {}
-        }
-    }
-    None
 }
 
 /// Extract Rust-specific metadata from a parsed AST.

@@ -1,7 +1,6 @@
 pub mod contract_naming_checker_protocol;
 pub mod contract_naming_runner_aggregate;
 pub mod taxonomy_naming_constant;
-pub mod taxonomy_naming_violation_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -18,5 +17,5 @@ pub use taxonomy_naming_constant::RULE_CODE_NAMING_CONVENTION;
 pub use taxonomy_naming_constant::RULE_CODE_SUFFIX_PREFIX;
 pub use taxonomy_naming_constant::SNAKE_CASE_SEPARATOR;
 pub use taxonomy_naming_constant::SOURCE_EXTENSIONS;
+pub use taxonomy_naming_constant::SPECIALIZED_LAYER_MARKER;
 pub use taxonomy_naming_constant::SUFFIX_POLICY_STRICT;
-pub use taxonomy_naming_violation_vo::NamingViolation;

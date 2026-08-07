@@ -447,6 +447,17 @@ fn function_body_is_dummy(lines: &[&str]) -> bool {
         .collect();
 
     if body_lines.is_empty() {
+        // Single-line delegation: fn foo(&self) -> T { self.deps.bar() }
+        // The body lives on the same line as the signature, so check there.
+        if let Some(first) = lines.first() {
+            if let Some(pos) = first.find('{') {
+                let after = &first[pos + 1..];
+                if let Some(end) = after.rfind('}') {
+                    let inner = after[..end].trim();
+                    return inner.is_empty() || is_short_marker(inner);
+                }
+            }
+        }
         return true;
     }
 

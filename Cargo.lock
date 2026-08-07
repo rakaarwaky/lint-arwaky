@@ -499,8 +499,6 @@ dependencies = [
  "ctrlc",
  "dirs",
  "dispatcher-lint-arwaky",
- "rayon",
- "regex",
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",
@@ -588,7 +586,7 @@ dependencies = [
  "criterion",
  "dashmap",
  "dirs",
- "rayon",
+ "filesystem-lint-arwaky",
  "serde",
  "serde_json",
  "serde_yaml_ng",
@@ -998,6 +996,7 @@ dependencies = [
  "criterion",
  "ctrlc",
  "dirs",
+ "filesystem-lint-arwaky",
  "regex",
  "serde",
  "serde_json",
@@ -3172,12 +3171,10 @@ version = "1.11.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
- "once_cell",
  "rayon",
  "regex",
  "shared-lint-arwaky",
  "tempfile",
- "tracing",
 ]
 
 [[package]]
@@ -3742,13 +3739,9 @@ version = "1.11.0"
 dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
- "once_cell",
  "rayon",
- "serde",
- "serde_json",
  "shared-lint-arwaky",
  "tempfile",
- "tracing",
 ]
 
 [[package]]

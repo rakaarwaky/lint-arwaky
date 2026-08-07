@@ -1,4 +1,4 @@
-# FRD — file-watch (v1.11.0)
+# FRD — file-watch
 
 ## System Overview
 
@@ -13,10 +13,10 @@ flowchart TD
     C -->|file events| D["change analyzer"]
     D -->|deduped events| E{"lintable?"}
 
-    E -->|"yes"| F["lint pipeline"]
+    E -->|"yes"| F["ICodeAnalysisAggregate\n(lint pipeline)"]
     E -->|"no"| G["skip"]
 
-    F --> H["Lint Results"]
+    F --> H["Lint Results\n(printed to stdout)"]
     H --> B
     B -->|output| A
 
@@ -61,11 +61,13 @@ flowchart TD
 - **Output**: Boolean — true if the file has a lintable extension.
 - **Business Rules**:
   - Supported extensions: `.rs`, `.py`, `.js`, `.ts`, `.tsx`, `.jsx`, `.mjs`, `.cjs`, `.json`, `.css`, `.md`, `.toml`, `.yaml`, `.yml`.
+  - All listed extensions are treated as lintable.
   - Extension matching is suffix-based (no case normalization).
 - **Edge Cases**:
   - File with no extension — not lintable.
   - File with multiple dots (e.g., `file.test.ts`) — matches on the final extension.
   - Hidden files (e.g., `.gitignore`) — not lintable (no matching extension).
+  - Files with extensions not in the list (e.g., `.txt`, `.png`, `.lock`) — not lintable.
 - **Error Handling**: Returns false for non-lintable paths; no error thrown.
 
 ### FR-004: Deduplicate Watch Events
@@ -137,7 +139,7 @@ flowchart TD
   - `notify-debouncer-mini` — debouncing layer for rapid filesystem events.
   - `tokio` — async runtime for event loop and broadcast channels.
 
-## Non-functional Requirements (Detailed)
+## Non-functional Requirements
 
 - **Performance**: File changes detected within debounce interval (default 200ms). Event loop polls at 100ms intervals when idle.
 - **Memory**: Broadcast channel capacity fixed at 256 events. Debouncer memory footprint is negligible for typical project sizes.

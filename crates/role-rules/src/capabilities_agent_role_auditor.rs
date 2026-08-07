@@ -26,6 +26,9 @@ impl IAgentRoleChecker for AgentRoleChecker {
         } else {
             self._check_fallback(file, violations);
         }
+
+        // Any-type annotation check (runs on all agent files)
+        self._check_any_annotation(file, violations);
     }
 }
 
@@ -72,7 +75,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types (struct/enum) in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
 ,
                     ));
@@ -81,13 +84,16 @@ impl AgentRoleChecker {
 
                 // Rule 1: at least 1 aggregate implementor
                 let has_implementor = rust_meta.impl_blocks.iter().any(|imp| {
-                    imp.trait_name.is_some()
-                        && struct_names.contains(&imp.implementor_type.as_str())
+                    let trait_is_aggregate = imp
+                        .trait_name
+                        .as_deref()
+                        .is_some_and(|t| t.contains("aggregate") || t.contains("Aggregate"));
+                    trait_is_aggregate && struct_names.contains(&imp.implementor_type.as_str())
                 });
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -95,10 +101,11 @@ impl AgentRoleChecker {
             }
             ParseMetadata::Python(py_meta) => {
                 let type_count = py_meta.class_declarations.len();
-                let implementor_found = py_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| !c.bases.is_empty());
+                let implementor_found = py_meta.class_declarations.iter().any(|c| {
+                    c.bases
+                        .iter()
+                        .any(|b| b.contains("aggregate") || b.contains("Aggregate"))
+                });
 
                 if type_count > 3 {
                     let names: Vec<String> = py_meta
@@ -112,7 +119,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} classes in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
 ,
                     ));
@@ -121,7 +128,7 @@ impl AgentRoleChecker {
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with parent/inheritance found in {}. At least one class must inherit from a parent class.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -131,10 +138,11 @@ impl AgentRoleChecker {
                 let type_count = ts_meta.class_declarations.len()
                     + ts_meta.interface_declarations.len()
                     + ts_meta.type_alias_declarations.len();
-                let implementor_found = ts_meta
-                    .class_declarations
-                    .iter()
-                    .any(|c| !c.implements.is_empty());
+                let implementor_found = ts_meta.class_declarations.iter().any(|c| {
+                    c.implements
+                        .iter()
+                        .any(|i| i.contains("aggregate") || i.contains("Aggregate"))
+                });
 
                 if type_count > 3 {
                     let mut all_names: Vec<String> = ts_meta
@@ -150,7 +158,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types (class/interface/enum) in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_count, path_str, names_str)
 ,
                     ));
@@ -159,7 +167,7 @@ impl AgentRoleChecker {
                 if !implementor_found {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with 'implements' keyword found in {}. At least one class must implement an aggregate interface.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -222,7 +230,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
                                 names_str)
@@ -232,6 +240,7 @@ impl AgentRoleChecker {
                 }
                 let has_implementor = struct_names.iter().any(|s| {
                     content.contains("impl ")
+                        && (content.contains("aggregate") || content.contains("Aggregate"))
                         && (content.contains(&format!("for {} ", s))
                             || content.contains(&format!("for {}{{", s))
                             || content.contains(&format!("for {} {{", s)))
@@ -239,7 +248,7 @@ impl AgentRoleChecker {
                 if !has_implementor {
                     violations.push(LintResult::new_arch(
                         &path_str, 0, "AES405", Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No impl Trait for struct pattern found in {}. At least one struct must implement an aggregate trait.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -259,10 +268,13 @@ impl AgentRoleChecker {
                         }
                         if let Some(start) = t.find('(') {
                             let after_paren = &t[start + 1..];
-                            if let Some(end) = after_paren.find(')')
-                                && !after_paren[..end].trim().is_empty()
-                            {
-                                implementor_found = true;
+                            if let Some(end) = after_paren.find(')') {
+                                let parents = after_paren[..end].trim();
+                                if (parents.contains("aggregate") || parents.contains("Aggregate"))
+                                    && !parents.is_empty()
+                                {
+                                    implementor_found = true;
+                                }
                             }
                         }
                     }
@@ -274,7 +286,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} classes in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
                                 names_str)
@@ -288,7 +300,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::MEDIUM,
-                        
+
                         format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with parent/inheritance found in {}.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
@@ -305,7 +317,9 @@ impl AgentRoleChecker {
                         if !name.is_empty() && !name.starts_with('_') {
                             type_names.push(name);
                         }
-                        if rest.contains("implements ") {
+                        if rest.contains("implements ")
+                            && (rest.contains("aggregate") || rest.contains("Aggregate"))
+                        {
                             implementor_found = true;
                         }
                     } else if let Some(rest) = t
@@ -333,7 +347,7 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::HIGH,
-                        
+
                         format!("AES405 AGENT_ROLE: Too many types in agent file.\nWHY? Found {} types in {}, max 3 allowed: [{}]\nFIX: Keep at most 3 types. Move excess structs/enums to the taxonomy layer.", type_names.len(),
                                 path_str,
                                 names_str)
@@ -347,11 +361,37 @@ impl AgentRoleChecker {
                         0,
                         "AES405",
                         Severity::MEDIUM,
-                    
+
                     format!("AES405 AGENT_ROLE: No struct implements an _aggregate trait.\nWHY? No class with 'implements' found in {}.\nFIX: At least one struct in this file must implement the agent _aggregate. Convert an existing struct or keep only internal helpers.", path_str)
 ,
                     ));
                 }
+            }
+        }
+    }
+
+    fn _check_any_annotation(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let path_str = file.path.to_string_lossy();
+        for (i, line) in file.content.lines().enumerate() {
+            let t = line.trim();
+            if t.starts_with("//") || t.starts_with('#') || t.starts_with("/*") {
+                continue;
+            }
+            if t.contains(": Any")
+                || t.contains("Any<")
+                || t.contains("Any[")
+                || t.contains("-> Any")
+            {
+                violations.push(LintResult::new_arch(
+                    &path_str,
+                    i + 1,
+                    "AES405",
+                    Severity::MEDIUM,
+                    format!(
+                        "AES405 AGENT_ROLE: Any-type annotation detected.\nWHY? '{}' uses Any on line {} of {}\nFIX: Use a concrete domain type instead of Any.",
+                        t, i + 1, path_str
+                    ),
+                ));
             }
         }
     }

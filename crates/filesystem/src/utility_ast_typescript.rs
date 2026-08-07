@@ -5,8 +5,6 @@
 
 use shared::filesystem::taxonomy_filesystem_vo::{TSClassItem, TSFnItem, TypeScriptMetadata};
 
-// ─── Inlined from utility_tree_sitter_helpers (AES201: utility cannot import utility) ───
-
 fn text_of(node: tree_sitter::Node, content: &str) -> String {
     content[node.byte_range()].to_string()
 }

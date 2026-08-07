@@ -344,12 +344,20 @@ impl SurfaceActionHandler {
     pub fn load_directory(&self, state: &mut AppState, path: &str) {
         let fp = FilePath::new(path).unwrap_or_default();
         let dir_path = std::path::Path::new(fp.value());
-        let paths = self.filesystem.read_dir_entries_as_pathbuf(dir_path).unwrap_or_default();
-        state.entries = paths.into_iter().filter_map(|entry_path| {
-            let name = entry_path.file_name()?.to_str()?;
-            if name.starts_with('.') { return None; }
-            shared::tui::FileEntry::from_path(&entry_path)
-        }).collect();
+        let paths = self
+            .filesystem
+            .read_dir_entries_as_pathbuf(dir_path)
+            .unwrap_or_default();
+        state.entries = paths
+            .into_iter()
+            .filter_map(|entry_path| {
+                let name = entry_path.file_name()?.to_str()?;
+                if name.starts_with('.') {
+                    return None;
+                }
+                shared::tui::FileEntry::from_path(&entry_path)
+            })
+            .collect();
         if state.entries.is_empty() {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }
@@ -373,12 +381,12 @@ impl SurfaceActionHandler {
         let max_lines = 100;
         let display = match self.filesystem.read_to_string(file_path) {
             Ok(content) => {
-                let lines: Vec<&str> = content.lines().take(max_lines).collect();
+                let lines: Vec<&str> = content.value.lines().take(max_lines).collect();
                 let mut output = String::new();
                 for (i, line) in lines.iter().enumerate() {
                     output.push_str(&format!("{:>4} │ {}\n", i + 1, line));
                 }
-                let total = content.lines().count();
+                let total = content.value.lines().count();
                 if total > max_lines {
                     output.push_str(&format!("\n... ({} more lines)", total - max_lines));
                 }

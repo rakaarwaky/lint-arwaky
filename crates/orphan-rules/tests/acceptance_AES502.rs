@@ -1,8 +1,4 @@
 // Acceptance tests — AES502: Contract orphan detection.
-#[path = "mock_filesystem.rs"]
-mod mock_filesystem;
-
-use mock_filesystem::mock_filesystem;
 use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
@@ -19,7 +15,7 @@ fn reachable_for(fp: &FilePath) -> ReachabilityResult {
 }
 
 fn contract_analyzer() -> ContractOrphanAnalyzer {
-    ContractOrphanAnalyzer::new(mock_filesystem())
+    ContractOrphanAnalyzer::new()
 }
 
 #[test]

@@ -2,6 +2,8 @@
 // Messages are written inline in each checker, not here.
 pub use crate::common::taxonomy_language_vo::Language;
 
+use std::path::PathBuf;
+
 use crate::common::taxonomy_message_vo::LintMessage;
 
 pub const WORD_PATTERN_TOKENS: &[&str] = &[
@@ -34,4 +36,12 @@ pub enum AesCodeAnalysisViolation {
     Unimplemented { reason: Option<LintMessage> },
     DeadInheritance { reason: Option<LintMessage> },
     CodeDuplication { reason: Option<LintMessage> },
+}
+
+/// Intermediate bookkeeping structure for duplicate block detection.
+/// Tracks how many times a normalized code block was seen and where.
+#[derive(Debug, Default)]
+pub struct BlockHits {
+    pub count: usize,
+    pub locations: Vec<(PathBuf, usize)>,
 }

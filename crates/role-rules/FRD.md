@@ -1,4 +1,4 @@
-# FRD — role-rules (v1.1.0)
+# FRD — role-rules (v1.11.0)
 
 ---
 
@@ -6,7 +6,7 @@
 
 The role-rules crate enforces architectural boundaries and responsibility rules for each layer (Taxonomy, Contract, Capabilities, Agent, Surface, Utility) as defined by the 7-layer AES architecture. It receives pre-parsed file data from the external filesystem crate, classifies files by their filename prefix, and dispatches to 6 layer-specific role checkers (AES401–AES406). Root layer files are skipped (pure DI wiring only).
 
-File discovery, raw content reads, and AST parsing are handled by the external `filesystem` aggregate (`IFilesystemAggregate`). The Surface calls `filesystem.build_file_index(root)` to populate caches, then passes pre-fetched `&[FileEntry]` (with parse_metadata) to the role-rules orchestrator via `run_audit_with_entries`. The role-rules crate does zero I/O — it only performs business logic analysis on pre-fetched data.
+File discovery, raw content reads, and AST parsing are handled by the external `filesystem` crate. The Surface calls `filesystem.build_file_index(root)` to populate caches, then passes pre-fetched `&[FileEntry]` (with parse_metadata) to the role-rules orchestrator via `run_audit_with_entries`. The role-rules crate does zero I/O — it only performs business logic analysis on pre-fetched data.
 
 Import checking is NOT performed by role-rules. All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES206). Role-rules only validates structural and responsibility constraints within each file.
 
@@ -62,9 +62,8 @@ flowchart TD
   - Extract filename prefix as the first `_`-separated segment of the stem.
   - Match prefix to layer:
 
-
     | Prefix                       | Layer        | Checker                                   |
-    | ------------------------------ | -------------- | ------------------------------------------- |
+    | ---------------------------- | ------------ | ----------------------------------------- |
     | `taxonomy`                   | taxonomy     | taxonomy_checker (AES401)                 |
     | `contract`                   | contract     | contract_checker (AES402)                 |
     | `capabilities`, `capability` | capabilities | capabilities_checker (AES403)             |
@@ -77,6 +76,7 @@ flowchart TD
   - Files with unrecognized prefix → silently skipped.
   - Barrel files (`mod.rs`, `lib.rs`, `main.rs`, `__init__.py`, `index.ts`) are skipped.
   - Files in the rule's `exceptions` list are skipped.
+  - `main.rs` is always skipped.
 - **Edge Cases**:
 
   - Files matching multiple ignore patterns → excluded (any segment match suffices).
@@ -88,7 +88,7 @@ flowchart TD
 
 ### FR-002: Taxonomy Purity and Primitive Restriction (AES401)
 
-- **Description**: Audit taxonomy layer files (`taxonomy_*`) for raw primitive types in type annotations and ensure constant files contain only pure constant declarations. Uses AST parse metadata from the filesystem crate.
+- **Description**: Audit taxonomy layer files (`taxonomy_*`) for raw primitive types in type annotations and ensure constant files contain only pure constant declarations.
 - **Input**: `FileEntry` (path + content + language + parse metadata).
 - **Output**: AES401 violations.
 - **Business Rules**:
@@ -98,19 +98,18 @@ flowchart TD
     - Scan type annotations in struct fields, function parameters, and return types for raw primitives.
     - Forbidden primitives per language:
 
-
-      | Language              | Forbidden Primitives                                                                                                           |
-      | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-      | Rust                  | `String`, `str`, `i8`–`i128`, `u8`–`u128`, `f32`, `f64`, `bool`, `usize`, `isize`, `Vec<T>`, `HashMap<K,V>`, `BTreeMap<K,V>` |
-      | Python                | `str`, `int`, `float`, `bool`, `list`, `dict`, `tuple`, `set`                                                                  |
-      | TypeScript/JavaScript | `string`, `number`, `boolean`, `any`, `Array<T>`, `Record<K,V>`                                                                |
+      | Language              | Forbidden Primitives                                                                                                                                    |
+      | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+      | Rust                  | `String`, `i8`–`i128`, `u8`–`u128`, `f32`, `f64`, `bool`, `char`, `Vec<`, `HashMap<`, `BTreeMap<`, `Option<`, `Result<`, `Box<`, `Cell<`, `RefCell<`, `Arc<`, `Mutex<`, `Rc<` |
+      | Python                | `str`, `int`, `float`, `bool`, `list`, `dict`, `tuple`, `set`                                                                                           |
+      | TypeScript/JavaScript | `string`, `number`, `boolean`, `any`, `Array<`, `Record<`                                                                                               |
     - Type annotations using custom VO wrappers (e.g., `FilePath`, `LineNumber`, `SymbolName`) are NOT flagged.
-    - Detection via AST parse metadata: extract struct field types, function parameter types, return types.
+    - Detection uses line-based scanning: extract type annotations after `:` in each line and match against the forbidden primitive list.
   - **Constant purity check** (`_constant` files):
 
     - Only constant declarations are allowed: `pub const` / `pub static` (Rust), module-level assignments (Python), `export const` (TS).
     - Forbidden: `struct`, `enum`, `fn`, `impl`, `mod`, `trait` (Rust); `class`, `def` (Python); `class`, `interface`, `function`, `type` (TS).
-    - Detection via AST parse metadata: extract top-level item kinds.
+    - Uses AST parse metadata when available; falls back to line-based scanning when parse metadata is absent.
   - **Skip rules**: Type definition lines (`struct Foo { ... }`, `class Foo`) are excluded from primitive scanning (the definition itself is not a violation; only field/parameter types are checked).
 - **Edge Cases**:
 
@@ -124,15 +123,16 @@ flowchart TD
 
 ### FR-003: Contract Primitive Restriction (AES402)
 
-- **Description**: Audit contract layer files (`contract_*`) for raw primitive types in method signatures. Uses AST parse metadata from the filesystem crate.
-- **Input**: `File` (path + content + language + parse metadata).
+- **Description**: Audit contract layer files (`contract_*`) for raw primitive types in method signatures. Uses the shared signature parser utility, not parse metadata.
+- **Input**: `FileEntry` (path + content + language + parse metadata).
 - **Output**: AES402 violations.
 - **Business Rules**:
 
   - **Protocol check** (`_protocol` files): Detect raw primitives in method signatures (parameters and return types) of trait/interface definitions.
   - **Aggregate check** (`_aggregate` files): Same check on aggregate trait/interface definitions.
+  - I/O protocol files (`io_protocol`, `filesystem_io`) are exempted from checking.
   - Forbidden primitives: same list as FR-002 per language.
-  - Detection via AST parse metadata: extract trait/interface method signatures, scan parameter types and return types.
+  - Detection uses the shared `utility_signature_parser` functions which extract method signatures and scan parameter/return types for forbidden primitives.
   - Each violating signature is reported individually with line number.
 - **Edge Cases**:
 
@@ -150,19 +150,19 @@ flowchart TD
 - **Output**: AES403 violations.
 - **Business Rules**:
 
-  - **Rule 1 — Max type declarations**: Maximum `max_types` (configurable, default 3) type declarations (struct/enum/class/interface) per file. Violation: "too many types". Checked first — if exceeded, skip Rule 2.
+  - **Rule 1 — Max type declarations**: Maximum 3 type declarations (struct/enum/class/interface) per file. Violation: "too many types". Checked first — if exceeded, skip Rule 2.
   - **Rule 2 — Protocol implementor**: At least 1 struct/class must implement a protocol trait/interface.
     - Rust: `impl Trait for Struct` where Trait is a protocol (detected via AST `ItemImpl` with `trait_` path).
     - Python: `class Name(Parent)` where Parent is a protocol class.
     - TypeScript: `class Name implements IProtocol`.
     - Violation: "missing protocol implementor".
   - Internal helper types (structs/classes without protocol impl) are allowed and not flagged individually.
-  - Detection via AST parse metadata: extract type declarations and impl/inherits blocks.
+  - Detection uses AST parse metadata when available; falls back to line-based scanning when absent.
 - **Edge Cases**:
 
   - Capability file with no implementor → AES403 violation (Rule 2).
-  - File with exactly `max_types` types → passes Rule 1.
-  - File with > `max_types` types → AES403 violation (Rule 1 only, Rule 2 skipped).
+  - File with exactly 3 types → passes Rule 1.
+  - File with > 3 types → AES403 violation (Rule 1 only, Rule 2 skipped).
   - File with helper struct + implementor struct = 2 types → passes Rule 1, passes Rule 2.
 - **Error Handling**: Emit AES403 with the violation kind (`TooManyTypes` or `MissingProtocolImplementor`), file path, and relevant counts.
 
@@ -170,20 +170,19 @@ flowchart TD
 
 ### FR-005: Utility Purity (AES404)
 
-- **Description**: Audit utility files (`utility_*`) to ensure they contain only stateless standalone functions with no type definitions. Uses AST parse metadata from the filesystem crate.
+- **Description**: Audit utility files (`utility_*`) to ensure they contain only stateless standalone functions with no type definitions.
 - **Input**: `FileEntry` (path + content + language + parse metadata).
 - **Output**: AES404 violations.
 - **Business Rules**:
 
-  - **Rust**: Forbid `struct`, `enum`, `trait`, `type` definitions. Only `fn` (functions) and `const`/`static` (constants) are allowed.
+  - **Rust**: Forbid `struct`, `enum`, `trait` definitions. Only `fn` (functions) and `const`/`static` (constants) are allowed.
   - **Python**: Forbid `class` definitions. Allow `def` (stateless functions) and module-level assignments (constants).
-  - **TypeScript/JavaScript**: Forbid `export class`, `export interface`, `export enum`, `export type`. Allow `export function`, `export const`.
-  - Detection via AST parse metadata: extract top-level item kinds and flag forbidden categories.
+  - **TypeScript/JavaScript**: Forbid `class`, `interface`, `type alias` definitions. Allow `export function`, `export const`.
+  - Detection uses AST parse metadata when available; falls back to line-based scanning (with comment stripping) when absent.
 - **Edge Cases**:
 
   - Utility file with a `struct` inside a comment → not flagged (AST does not parse comments as code).
-  - Utility file with only helper functions (Rust/TS) → no violation.
-  - Utility file with only helper functions (Python `def`) → no violation.
+  - Utility file with only helper functions → no violation.
   - Utility file with `class` (Python) → AES404 violation.
   - Utility file with `struct` (Rust) → AES404 violation.
   - Empty files → no violations.
@@ -198,73 +197,69 @@ flowchart TD
 - **Output**: AES405 violations.
 - **Business Rules**:
 
-  - **Rule 1 — Aggregate implementor**: At least 1 struct/class must implement an aggregate trait/interface.
-    - Rust: `impl Trait for Struct` where Trait is an aggregate (detected via AST `ItemImpl` with `trait_` path containing `aggregate` or matching config-defined aggregate patterns).
-    - Python: `class Name(Parent)` where Parent is an aggregate class.
-    - TypeScript: `class Name implements IAggregate`.
+  - **Rule 1 — Max type declarations**: Maximum 3 type declarations (struct/enum/class/interface) per file. Violation: "too many types". Checked first — if exceeded, skip Rule 2.
+  - **Rule 2 — Aggregate implementor**: At least 1 struct/class must implement an aggregate trait/interface (trait name must contain "aggregate" or "Aggregate").
+    - Rust: `impl Trait for Struct` where Trait name contains "aggregate".
+    - Python: `class Name(Parent)` where Parent name contains "aggregate".
+    - TypeScript: `class Name implements IAggregate` where interface name contains "aggregate".
     - Violation: "missing aggregate implementor".
-  - **Rule 2 — Max type declarations**: Maximum `max_types` (configurable, default 3) type declarations (struct/enum/class/interface) per file. Violation: "too many types".
-  - Internal helper types (structs without aggregate impl) are allowed and not flagged individually.
-  - Detection via AST parse metadata: extract type declarations and impl/inherits blocks.
+  - **Any-type annotation check**: Scans all non-comment lines for `: Any`, `Any<`, `Any[`, `-> Any` patterns. Any use of the `Any` type is flagged.
+  - Internal helper types (structs/classes without aggregate impl) are allowed and not flagged individually.
+  - Detection uses AST parse metadata when available; falls back to line-based scanning when absent.
 - **Edge Cases**:
 
-  - Agent file with no implementor → AES405 violation (Rule 1).
-  - File with helper struct + orchestrator struct = 2 types → passes Rule 2.
-  - File with > `max_types` types → AES405 violation (Rule 2).
-- **Error Handling**: Emit AES405 with the violation kind (`MissingAggregateImplementor` or `TooManyTypes`), file path, and relevant counts.
+  - Agent file with no implementor → AES405 violation (Rule 2).
+  - File with helper struct + orchestrator struct = 2 types → passes Rule 1.
+  - File with > 3 types → AES405 violation (Rule 1, Rule 2 skipped).
+  - Agent file with `Any` type annotations → AES405 violation (Any check runs independently).
+- **Error Handling**: Emit AES405 with the violation kind (`TooManyTypes`, `MissingAggregateImplementor`, or `AnyTypeAnnotation`), file path, and relevant counts.
 
 ---
 
 ### FR-007: Surface Passive Role (AES406)
 
-- **Description**: Audit surface files (`surface_*` / `surfaces_*`) for role-appropriate constraints based on Smart/Utility/Passive classification. All thresholds are configurable via YAML.
-- **Input**: `FileEntry` (path + content + language + parse metadata), architecture configuration.
+- **Description**: Audit surface files (`surface_*` / `surfaces_*`) for role-appropriate constraints based on Smart/Utility/Passive classification.
+- **Input**: `FileEntry` (path + content + language + parse metadata).
 - **Output**: AES406 violations.
 - **Business Rules**:
 
-  - **Surface classification by filename suffix** (configurable):
+  - **Surface classification by filename suffix**:
 
     - **Smart**: `_command`, `_controller`, `_page`, `_entry`, `_router` — may contain orchestration logic.
     - **Utility**: `_hook`, `_store`, `_action`, `_screen` — support smart surfaces.
     - **Passive**: All other surface suffixes — presentation-only.
-  - **Global check (all surfaces)**:
+  - **Function count limit**: Removed — no limit on function count per file. Smart surfaces are subject to no checks. Utility and Passive surfaces are subject to hierarchy and domain logic checks.
+  - **Utility + Passive checks — hierarchy**:
 
-    - Function count limit: max `max_functions` (configurable, default 15) `fn`/`def`/`function` declarations per file.
-    - Applies to Smart, Utility, and Passive surfaces.
-  - **Passive + Utility checks**:
+    - Max 50 function definitions per file (counts all functions across all classes/impl blocks).
+    - Uses AST parse metadata when available; falls back to line-based scanning when absent.
+  - **Utility + Passive checks — domain logic**:
 
-    - Hierarchy check: Max `max_public_methods` (configurable, default 10) public methods per class/implementation block.
-    - Method body length: Max `max_method_lines` (configurable, default 80) lines per method body.
-    - If-nesting depth: Max `max_nesting_depth` (configurable, default 3) levels of nested conditional blocks.
-  - **Domain logic check (Passive + Utility)**:
-
-    - Max `max_control_flow` (configurable, default 3) control-flow statements (`if`, `else`, `for`, `while`, `match`, `switch`, `try`, `except`, `catch`) per file.
+    - Max 50 control-flow statements (`if`, `else`, `for`, `while`, `match`, `switch`, `try:`, `except`, `catch`) per file.
     - Exceeding flagged as domain logic violation — surface files should delegate logic to lower layers.
-  - **Smart surface exemption**: Smart surfaces (`_command`, `_controller`, `_page`, `_entry`, `_router`) are exempted from Passive + Utility checks (hierarchy, method length, nesting, domain logic) but still subject to the global function count limit.
-  - Detection via AST parse metadata: extract function declarations, method declarations, method body line spans, nesting depth, control-flow statement counts.
+  - **Smart surface exemption**: Smart surfaces are exempted from all checks (hierarchy, domain logic) — no violations produced for Smart surfaces.
+  - Detection uses AST parse metadata for function definition counts; control-flow check uses line-based scanning on all files.
 - **Edge Cases**:
 
-  - Surface file with 16 functions → AES406 violation (global limit) even if Smart surface.
-  - Passive surface with 10 public methods in one class and 5 in another → both pass (limit is per class/impl, not per file).
+  - Passive surface with > 50 functions → AES406 violation.
+  - Utility surface with 40 control-flow statements → no violation (below threshold).
   - Surface file with unclassifiable suffix → defaults to Passive group.
-  - Smart surface with control-flow statements → no domain logic violation (exempt).
-- **Error Handling**: Emit AES406 with the violation kind (`TooManyFunctions`, `TooManyMethods`, `MethodTooLong`, `NestingTooDeep`, `DomainLogic`), file path, line number, and actual vs configured threshold.
+  - Smart surface with control-flow statements → no violation (exempt).
+- **Error Handling**: Emit AES406 with the violation kind (`TooManyMethods` or `DomainLogic`), file path, and actual vs configured threshold.
 
 ---
 
-
 ## API Contract
 
-
-| Operation                         | Input                                    | Output                         | Purpose                                                                  |
-| ---------------------------------- | ------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------ |
-| Full role audit                   | File data from filesystem crate            | Lint results                    | Classify files by layer prefix, run all role checks (AES401–AES406)      |
-| Taxonomy purity check             | Parsed file data                           | AES401 violations               | Detect raw primitives in taxonomy entity/error/event/constant files       |
-| Contract primitive check          | Parsed file data                           | AES402 violations               | Detect raw primitives in contract protocol/aggregate method signatures   |
-| Capability composition check      | Parsed file data                           | AES403 violations               | Verify protocol implementation and max type declarations                 |
-| Utility purity check              | Parsed file data                           | AES404 violations               | Verify utility files contain only stateless functions                    |
-| Agent composition check           | Parsed file data                           | AES405 violations               | Verify aggregate implementation and max type declarations                |
-| Surface role check                | Parsed file data, configuration            | AES406 violations               | Enforce Smart/Utility/Passive constraints per surface classification    |
+| Operation                | Input                             | Output                  | Purpose                                                              |
+| ------------------------ | --------------------------------- | ----------------------- | -------------------------------------------------------------------- |
+| Full role audit          | File data from filesystem crate   | Lint results            | Classify files by layer prefix, run all role checks (AES401–AES406)  |
+| Taxonomy purity check    | Parsed file data                  | AES401 violations       | Detect raw primitives in taxonomy entity/error/event/constant files   |
+| Contract primitive check | Parsed file data                  | AES402 violations       | Detect raw primitives in contract protocol/aggregate method signatures |
+| Capability check         | Parsed file data                  | AES403 violations       | Verify protocol implementation and max type declarations             |
+| Utility purity check     | Parsed file data                  | AES404 violations       | Verify utility files contain only stateless functions                |
+| Agent composition check  | Parsed file data                  | AES405 violations       | Verify aggregate implementation, max types, and no Any annotations   |
+| Surface role check       | Parsed file data                  | AES406 violations       | Enforce Smart/Utility/Passive constraints per surface classification |
 
 ---
 
@@ -272,21 +267,20 @@ flowchart TD
 
 - **Internal** (role-rules crate):
 
-  - The role rules aggregate contract — role enforcement aggregate trait (aggregate contract).
-  - The role rules protocol contracts — 6 layer-specific role checker protocols.
-  - The shared source content value object — file path + content + language + parse metadata.
-  - The common language detection utility — language detection from file extension.
-  - The config system configuration value objects — architecture config for ignore paths, toggles, and thresholds.
-  - The CLI result value objects — lint result output type.
-  - The config system orchestrator aggregate — config loading from orchestrator.
+  - The role rules aggregate contract — `IRoleRunnerAggregate` trait (aggregate contract).
+  - The role rules protocol contracts — 6 layer-specific role checker protocols (`ITaxonomyRoleChecker`, `IContractRoleChecker`, `ICapabilitiesRoleChecker`, `IUtilityRoleChecker`, `IAgentRoleChecker`, `ISurfaceRoleChecker`).
+  - The `LayerNames` taxonomy VO — layer name constants.
+  - The `RoleCheckerDeps` struct — DI bundle for all 6 checkers.
+  - The `RoleContainer` root — DI composition wiring all checkers.
 - **External**:
 
-  - **`filesystem` crate** — provides `filesystem_aggregate` which handles:
-    - File walking and directory traversal (`file_walker`).
+  - **`filesystem` crate** — provides `IFilesystemAggregate` which handles:
+    - File walking and directory traversal.
     - File reading with content loading.
-    - Full AST parsing for all languages (`ast_parser`).
+    - Full AST parsing for all languages.
     - Returns file data (path + content + language + parse metadata) to the caller.
     - Files that cannot be read or parsed are excluded from the returned list.
+  - **`shared` crate** — provides contracts, VOs, and the `DEFAULT_RULE_EXCEPTIONS` barrel file list.
   - No network calls. No filesystem writes. Pure static analysis.
 
 ---
@@ -294,10 +288,10 @@ flowchart TD
 ## Non-functional Requirements
 
 - **Performance**: Role checks operate on in-memory parse metadata. No I/O or parsing during check execution. File collection and parsing performed once by filesystem crate. Classification is O(1) per file (prefix match).
-- **Memory**: File data held in memory for duration of scan. Parse metadata is structured (typed structs), not raw strings. For 10,000 files, peak memory depends on filesystem crate's return strategy.
-- **Accuracy**: Zero false positives on correctly structured code. All detection uses AST parse metadata from the filesystem crate — no line-based or regex-based detection. Each AES rule has precisely defined skip rules and configurable thresholds.
-- **Language coverage**: Rust, Python, TypeScript, JavaScript all produce accurate violations via AST parse metadata provided by the filesystem crate.
-- **Configurability**: All thresholds, ignore paths, enable/disable toggles, surface classification suffixes, and layer-specific exceptions are config-driven via YAML. No hardcoded thresholds.
+- **Memory**: File data held in memory for duration of scan. Parse metadata is structured (typed structs), not raw strings.
+- **Accuracy**: Detection uses a combination of AST parse metadata (when available from filesystem crate) and line-based scanning (fallback). Each AES rule has precisely defined skip rules and hardcoded thresholds.
+- **Language coverage**: Rust, Python, TypeScript, JavaScript all produce accurate violations via AST parse metadata provided by the filesystem crate, with line-based fallback when parse metadata is unavailable.
+- **Configurability**: Rule enable/disable toggles, ignore paths, and per-rule exceptions are config-driven via YAML. All numeric thresholds (max_types, max_methods, max_control_flow) are hardcoded constants, not read from config.
 
 ---
 
@@ -305,101 +299,93 @@ flowchart TD
 
 ### AES401 — Taxonomy Purity
 
-
-| #  | Scenario                                                   | Expected                                     | Rule   |
-| ---- | ------------------------------------------------------------ | ---------------------------------------------- | -------- |
-| 1  | Taxonomy entity file with`String` field type               | AES401 violation at exact line               | AES401 |
-| 2  | Taxonomy entity file with custom VO field (`FilePath`)     | No violation                                 | pass   |
-| 3  | Taxonomy entity file with`i32` field type                  | AES401 violation                             | AES401 |
-| 4  | Taxonomy error file with`bool` parameter                   | AES401 violation                             | AES401 |
-| 5  | Taxonomy event file with`Vec<String>` field                | AES401 violation                             | AES401 |
-| 6  | Taxonomy constant file with`pub const MAX: u32 = 100` only | No violation                                 | pass   |
-| 7  | Taxonomy constant file with`fn helper()`                   | AES401 violation (function in constant file) | AES401 |
-| 8  | Taxonomy constant file with`struct Foo`                    | AES401 violation (struct in constant file)   | AES401 |
-| 9  | Taxonomy VO file with custom types only                    | No violation                                 | pass   |
-| 10 | Empty taxonomy file                                        | No violation                                 | pass   |
+| #  | Scenario                                          | Expected                                     | Rule   |
+| -- | ------------------------------------------------- | -------------------------------------------- | ------ |
+| 1  | Taxonomy entity file with `String` field type     | AES401 violation at exact line               | AES401 |
+| 2  | Taxonomy entity file with custom VO field         | No violation                                 | pass   |
+| 3  | Taxonomy entity file with `i32` field type        | AES401 violation                             | AES401 |
+| 4  | Taxonomy error file with `bool` parameter         | AES401 violation                             | AES401 |
+| 5  | Taxonomy event file with `Vec<String>` field      | AES401 violation                             | AES401 |
+| 6  | Taxonomy constant file with `pub const` only      | No violation                                 | pass   |
+| 7  | Taxonomy constant file with `fn helper()`         | AES401 violation (function in constant file) | AES401 |
+| 8  | Taxonomy constant file with `struct Foo`          | AES401 violation (struct in constant file)   | AES401 |
+| 9  | Taxonomy VO file with custom types only           | No violation                                 | pass   |
+| 10 | Empty taxonomy file                               | No violation                                 | pass   |
 
 ### AES402 — Contract Primitive Restriction
 
-
-| # | Scenario                                             | Expected         | Rule   |
-| --- | ------------------------------------------------------ | ------------------ | -------- |
-| 1 | Contract protocol with`String` in method parameter   | AES402 violation | AES402 |
-| 2 | Contract protocol with custom VO in method parameter | No violation     | pass   |
-| 3 | Contract protocol with`bool` return type             | AES402 violation | AES402 |
-| 4 | Contract aggregate with zero methods                 | No violation     | pass   |
-| 5 | Contract aggregate with`i64` in method signature     | AES402 violation | AES402 |
-| 6 | Contract protocol with all VO-typed signatures       | No violation     | pass   |
+| #  | Scenario                                             | Expected         | Rule   |
+| -- | ---------------------------------------------------- | ---------------- | ------ |
+| 1  | Contract protocol with `String` in method parameter  | AES402 violation | AES402 |
+| 2  | Contract protocol with custom VO in method parameter | No violation     | pass   |
+| 3  | Contract protocol with `bool` return type             | AES402 violation | AES402 |
+| 4  | Contract aggregate with zero methods                  | No violation     | pass   |
+| 5  | Contract aggregate with `i64` in method signature     | AES402 violation | AES402 |
+| 6  | Contract protocol with all VO-typed signatures        | No violation     | pass   |
 
 ### AES403 — Capability Protocol Implementation
 
-
-| # | Scenario                                                  | Expected                                     | Rule   |
-| --- | ----------------------------------------------------------- | ---------------------------------------------- | -------- |
-| 1 | Capability file with`impl IFooProtocol for FooCapability` | No violation                                 | pass   |
-| 2 | Capability file with no protocol implementor              | AES403 — MissingProtocolImplementor         | AES403 |
-| 3 | Capability file with 4 type declarations (max_types=3)    | AES403 — TooManyTypes                       | AES403 |
-| 4 | Capability file with 3 types including helper struct      | No violation (helper allowed, count = 3)     | pass   |
-| 5 | Capability file with exactly 3 types, 1 implementor       | No violation                                 | pass   |
-| 6 | Capability file with >3 types, no implementor             | AES403 — TooManyTypes only (Rule 2 skipped) | AES403 |
+| #  | Scenario                                                  | Expected                                     | Rule   |
+| -- | --------------------------------------------------------- | -------------------------------------------- | ------ |
+| 1  | Capability file with protocol implementor                 | No violation                                 | pass   |
+| 2  | Capability file with no protocol implementor              | AES403 — MissingProtocolImplementor         | AES403 |
+| 3  | Capability file with 4 type declarations (max=3)          | AES403 — TooManyTypes                       | AES403 |
+| 4  | Capability file with 3 types including helper struct      | No violation (helper allowed, count = 3)    | pass   |
+| 5  | Capability file with exactly 3 types, 1 implementor       | No violation                                 | pass   |
+| 6  | Capability file with >3 types, no implementor             | AES403 — TooManyTypes only (Rule 2 skipped) | AES403 |
 
 ### AES404 — Utility Purity
 
-
 | #  | Scenario                                       | Expected                            | Rule   |
-| ---- | ------------------------------------------------ | ------------------------------------- | -------- |
-| 1  | Rust utility file with`struct Foo`             | AES404 violation                    | AES404 |
-| 2  | Rust utility file with only`fn helper()`       | No violation                        | pass   |
-| 3  | Rust utility file with`enum Bar`               | AES404 violation                    | AES404 |
-| 4  | Python utility file with`def helper()`         | No violation (functions allowed)    | pass   |
-| 5  | Python utility file with`class Foo`            | AES404 violation                    | AES404 |
-| 6  | TS utility file with`export function helper()` | No violation                        | pass   |
-| 7  | TS utility file with`export class Foo`         | AES404 violation                    | AES404 |
-| 8  | TS utility file with`export interface IFoo`    | AES404 violation                    | AES404 |
-| 9  | Utility file with`struct` inside comment       | No violation (AST ignores comments) | pass   |
+| -- | ---------------------------------------------- | ----------------------------------- | ------ |
+| 1  | Rust utility file with `struct Foo`            | AES404 violation                    | AES404 |
+| 2  | Rust utility file with only `fn helper()`      | No violation                        | pass   |
+| 3  | Rust utility file with `enum Bar`              | AES404 violation                    | AES404 |
+| 4  | Python utility file with `def helper()`        | No violation (functions allowed)    | pass   |
+| 5  | Python utility file with `class Foo`           | AES404 violation                    | AES404 |
+| 6  | TS utility file with `export function helper()`| No violation                        | pass   |
+| 7  | TS utility file with `export class Foo`        | AES404 violation                    | AES404 |
+| 8  | TS utility file with `export interface IFoo`   | AES404 violation                    | AES404 |
+| 9  | Utility file with `struct` inside comment      | No violation (AST ignores comments) | pass   |
 | 10 | Empty utility file                             | No violation                        | pass   |
 
 ### AES405 — Agent Orchestrator Composition
 
-
-| # | Scenario                                                      | Expected                              | Rule   |
-| --- | --------------------------------------------------------------- | --------------------------------------- | -------- |
-| 1 | Agent file with`impl IAgentAggregate for FooOrchestrator`     | No violation                          | pass   |
-| 2 | Agent file with no aggregate implementor                      | AES405 — MissingAggregateImplementor | AES405 |
-| 3 | Agent file with 4 type declarations (max_types=3)             | AES405 — TooManyTypes                | AES405 |
-| 4 | Agent file with helper struct + orchestrator struct (2 types) | No violation                          | pass   |
-| 5 | Agent file with implementor + 2 helpers (3 types)             | No violation                          | pass   |
+| #  | Scenario                                                      | Expected                              | Rule   |
+| -- | ------------------------------------------------------------- | ------------------------------------- | ------ |
+| 1  | Agent file with aggregate trait implementor                    | No violation                          | pass   |
+| 2  | Agent file with no aggregate implementor                       | AES405 — MissingAggregateImplementor | AES405 |
+| 3  | Agent file with 4 type declarations (max=3)                    | AES405 — TooManyTypes                | AES405 |
+| 4  | Agent file with helper struct + orchestrator struct (2 types)  | No violation                          | pass   |
+| 5  | Agent file with implementor + 2 helpers (3 types)              | No violation                          | pass   |
+| 6  | Agent file with `Any` type annotation                          | AES405 — AnyTypeAnnotation           | AES405 |
+| 7  | Agent file with `: Any` in comment                             | No violation (comment skipped)        | pass   |
 
 ### AES406 — Surface Passive Role
 
-
-| #  | Scenario                                                     | Expected                                      | Rule   |
-| ---- | -------------------------------------------------------------- | ----------------------------------------------- | -------- |
-| 1  | Smart surface (`_command`) with 16 functions (max=15)        | AES406 — TooManyFunctions                    | AES406 |
-| 2  | Smart surface with 10 functions                              | No violation                                  | pass   |
-| 3  | Smart surface with control-flow statements                   | No violation (exempt from domain logic check) | pass   |
-| 4  | Passive surface with 11 public methods in one class (max=10) | AES406 — TooManyMethods                      | AES406 |
-| 5  | Passive surface with 10 methods in class A, 5 in class B     | No violation (per-class limit)                | pass   |
-| 6  | Utility surface with method body > 80 lines                  | AES406 — MethodTooLong                       | AES406 |
-| 7  | Passive surface with if-nesting depth 4 (max=3)              | AES406 — NestingTooDeep                      | AES406 |
-| 8  | Utility surface with 4 control-flow statements (max=3)       | AES406 — DomainLogic                         | AES406 |
-| 9  | Passive surface with 3 control-flow statements               | No violation                                  | pass   |
-| 10 | Surface file with unclassifiable suffix                      | Treated as Passive                            | pass   |
+| #  | Scenario                                                        | Expected                                      | Rule   |
+| -- | --------------------------------------------------------------- | --------------------------------------------- | ------ |
+| 1  | Passive surface with 51 functions (max=50)                      | AES406 — TooManyMethods                      | AES406 |
+| 2  | Passive surface with 50 functions                                | No violation                                  | pass   |
+| 3  | Smart surface with 100 functions                                 | No violation (exempt)                         | pass   |
+| 4  | Smart surface with control-flow statements                       | No violation (exempt from domain logic check) | pass   |
+| 5  | Passive surface with 51 control-flow statements (max=50)         | AES406 — DomainLogic                         | AES406 |
+| 6  | Utility surface with 40 control-flow statements                  | No violation (below threshold)                | pass   |
+| 7  | Surface file with unclassifiable suffix                          | Treated as Passive                            | pass   |
 
 ### Classification & Configuration
 
-
-| # | Scenario                                                    | Expected                                       | Rule   |
-| --- | ------------------------------------------------------------- | ------------------------------------------------ | -------- |
-| 1 | Root layer file (`root_app_entry`)                          | Completely skipped, zero violations            | skip   |
-| 2 | Config`architecture.enabled: false`                         | Zero violations for entire scan                | config |
-| 3 | Config AES401`enabled: false`                               | No AES401 violations, other rules still run    | config |
-| 4 | Config`ignored_paths: ["tests"]`                            | `tests/` directory files produce no violations | config |
-| 5 | File with no underscore (`main`)                            | Silently skipped                               | skip   |
-| 6 | File with unrecognized prefix (`foobar_x_y`)                | Silently skipped                               | skip   |
-| 7 | Barrel file (`mod.rs`)                                      | Skipped                                        | skip   |
-| 8 | File in exceptions list                                     | Skipped for that rule                          | config |
-| 9 | Multi-language workspace: same rule across Rust, Python, TS | Correct violations per language                | pass   |
+| #  | Scenario                                                    | Expected                                       | Rule   |
+| -- | ----------------------------------------------------------- | ---------------------------------------------- | ------ |
+| 1  | Root layer file (`root_app_entry`)                          | Completely skipped, zero violations            | skip   |
+| 2  | Config `architecture.enabled: false`                        | Zero violations for entire scan                | config |
+| 3  | Config AES401 `enabled: false`                              | No AES401 violations, other rules still run    | config |
+| 4  | Config `ignored_paths: ["tests"]`                           | `tests/` directory files produce no violations | config |
+| 5  | File with no underscore (`main`)                             | Silently skipped                               | skip   |
+| 6  | File with unrecognized prefix (`foobar_x_y`)                 | Silently skipped                               | skip   |
+| 7  | Barrel file (`mod.rs`)                                       | Skipped                                        | skip   |
+| 8  | File in exceptions list                                      | Skipped for that rule                          | config |
+| 9  | Multi-language workspace: same rule across Rust, Python, TS | Correct violations per language                | pass   |
 
 ---
 
@@ -409,65 +395,30 @@ flowchart TD
 - Naming convention is assumed correct (enforced by the naming-rules crate).
 - Root layer files are pure DI wiring and never checked.
 - Language detection is based on file extension, performed by the filesystem crate.
-- All detection uses AST parse metadata from the filesystem crate. No line-based or regex-based detection in the final implementation.
+- Detection uses a combination of AST parse metadata (when available) and line-based scanning (fallback). Entity/error/event checks and surface domain logic checks are line-based. Contract checks use the shared signature parser.
 - Import checking is NOT performed by role-rules. All import validation is handled by the import-rules crate (AES201–AES206).
 - The crate receives file data (path + content + language + parse metadata) from the external filesystem crate. No file I/O or AST parsing is performed internally.
 - Files that cannot be read or parsed by the filesystem crate are excluded from the returned list and never reach role-rules.
-- All thresholds are configurable via YAML. Default values apply when config values are absent.
+- All numeric thresholds are hardcoded constants (max_types = 3, max_public_methods = 50, max_control_flow = 50). Rule enable/disable, ignore paths, and exceptions are configurable via YAML.
 
 ---
 
 ## Glossary
 
-
-| Term                 | Definition                                                                                                                             |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **AES**              | Agentic Engineering System — the 7-layer coding convention                                                                            |
-| **Layer**            | Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)                                               |
-| **Smart surface**    | Surface with`_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration logic                                     |
-| **Utility surface**  | Surface with`_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces                                       |
-| **Passive surface**  | Any surface file not classified as Smart or Utility — presentation-only                                                               |
-| **Primitive type**   | Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures                                                    |
-| **VO**               | Value Object — a typed wrapper around a primitive that replaces raw types in signatures                                               |
+| Term                 | Definition                                                                                                         |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **AES**              | Agentic Engineering System — the 7-layer coding convention                                                        |
+| **Layer**            | Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)                           |
+| **Smart surface**    | Surface with `_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration logic     |
+| **Utility surface**  | Surface with `_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces                              |
+| **Passive surface**  | Any surface file not classified as Smart or Utility — presentation-only                                            |
+| **Primitive type**   | Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures                                |
+| **VO**               | Value Object — a typed wrapper around a primitive that replaces raw types in signatures                            |
 | **Parse metadata**   | Structured AST-derived data (type declarations, impl blocks, method signatures, function definitions) provided by the filesystem crate |
-| **Filesystem crate** | External crate that handles file walking, reading, AST parsing. Returns file data to role-rules.                                 |
-| **Segment matching** | Path matching by splitting on`/` and comparing individual segments (not substring containment)                                         |
+| **Filesystem crate** | External crate that handles file walking, reading, AST parsing. Returns file data to role-rules.                   |
+| **Segment matching** | Path matching by splitting on `/` and comparing individual segments (not substring containment)                     |
 
 ---
-
-## Appendix A: YAML Configuration Schema
-
-### Top-Level Structure
-
-```yaml
-architecture:
-  enabled: true
-  rules:
-    AES401: { ... }
-    AES402: { ... }
-    AES403: { ... }
-    AES404: { ... }
-    AES405: { ... }
-    AES406: { ... }
-```
-
-### Rule Configuration Schema 
-
-```yaml
-AES4XX:
-  enabled: true | false              # Enable/disable this rule
-  exceptions: ["<filename>", ...]    # Filenames to skip (basename match)
-  # Rule-specific fields:
-  max_types: <integer>               # AES403, AES405 (default 3)
-  max_functions: <integer>           # AES406 (default 15)
-  max_public_methods: <integer>      # AES406 (default 10)
-  max_method_lines: <integer>        # AES406 (default 80)
-  max_nesting_depth: <integer>       # AES406 (default 3)
-  max_control_flow: <integer>        # AES406 (default 3)
-  surface_classification:            # AES406 only
-    smart: ["<suffix>", ...]
-    utility: ["<suffix>", ...]
-```
 
 ## Reference
 

@@ -312,7 +312,8 @@ fn resolve_barrel_import(module_path: &str, symbol_name: &str, root_dir: &Path) 
     for ext in &exts {
         let candidate = barrel_dir.join(format!("{}{}", rel, ext));
         if candidate.exists() {
-            return candidate.strip_prefix(root_dir)
+            return candidate
+                .strip_prefix(root_dir)
                 .map(|p| p.to_string_lossy().to_string())
                 .ok();
         }
@@ -323,12 +324,14 @@ fn resolve_barrel_import(module_path: &str, symbol_name: &str, root_dir: &Path) 
     for init in &init_candidates {
         let candidate = barrel_dir.join(rel).join(init);
         if candidate.exists() {
-            return candidate.strip_prefix(root_dir)
+            return candidate
+                .strip_prefix(root_dir)
                 .map(|p| p.to_string_lossy().to_string())
                 .ok();
         }
     }
 
-    // Fallback: return as-is (barrel-relative)
-    Some(rel.to_string())
+    // No fallback: unresolved re-export stays unresolved rather than
+    // fabricating a path that becomes a phantom graph node.
+    None
 }

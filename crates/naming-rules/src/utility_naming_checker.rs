@@ -28,6 +28,19 @@ pub fn get_suffix(stem: &str) -> Option<&str> {
     stem.rfind('_').map(|pos| &stem[pos + 1..])
 }
 
+/// Basename of a path — always yields at least one element.
+pub fn basename_of(path: &str) -> &str {
+    match path.rsplit('/').next() {
+        Some(name) => name,
+        None => path,
+    }
+}
+
+/// Parse a FilePath; skip files that fail validation (empty path).
+pub fn parse_path(filename: &str) -> Option<FilePath> {
+    FilePath::new(filename.to_string()).ok()
+}
+
 /// Construct a file-level LintResult from a string filename.
 pub fn string_filename_result(
     file: &str,
@@ -64,4 +77,55 @@ pub fn rule_exception_set(
         .find(|r| r.rule_type.code() == rule_code)
         .map(|r| r.exceptions.values.iter().cloned().collect())
         .unwrap_or_default()
+}
+
+/// Detect the architectural layer from a file path using the layer prefix.
+///
+/// Inlines `extract_filename`, `detect_layer_from_prefix`, and
+/// `resolve_specialized_layer` to avoid utility→utility imports (AES201).
+pub fn detect_layer(file: &str, layer_keys: &[String]) -> Option<String> {
+    // extract_filename — get last path component
+    let filename = std::path::Path::new(file)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+
+    // detect_layer_from_prefix — match stem against known prefixes
+    let stem = std::path::Path::new(filename)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+
+    const PREFIX_MAP: &[(&str, &str)] = &[
+        ("taxonomy_", "taxonomy"),
+        ("contract_", "contract"),
+        ("capabilities_", "capabilities"),
+        ("utility_", "utility"),
+        ("agent_", "agent"),
+        ("surface_", "surfaces"),
+        ("root_", "root"),
+    ];
+
+    let base_layer = PREFIX_MAP
+        .iter()
+        .find(|(prefix, _)| stem.starts_with(*prefix))
+        .map(|(_, layer)| *layer)?;
+
+    // resolve_specialized_layer — check for sub-layer like "capabilities(command)"
+    let basename = std::path::Path::new(file)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+
+    if let Some(underscore_pos) = basename.rfind('_') {
+        let suffix = &basename[underscore_pos + 1..];
+        if !suffix.is_empty() {
+            let specialized = format!("{}({})", base_layer, suffix);
+            if layer_keys.contains(&specialized) {
+                return Some(specialized);
+            }
+        }
+    }
+
+    Some(base_layer.to_string())
 }

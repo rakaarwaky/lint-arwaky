@@ -36,12 +36,13 @@ impl IConfigParserProtocol for ConfigParserProvider {
                 });
             }
         };
-        let config: ProjectConfig = serde_yaml_ng::from_str(&content).map_err(|e| ConfigError {
-            key: ConfigKey::new("yaml.parse"),
-            message: ErrorMessage::new(format!("Failed to deserialize YAML config: {}", e)),
-            config_file: err_path,
-            ..Default::default()
-        })?;
+        let config: ProjectConfig =
+            serde_yaml_ng::from_str(content.value()).map_err(|e| ConfigError {
+                key: ConfigKey::new("yaml.parse"),
+                message: ErrorMessage::new(format!("Failed to deserialize YAML config: {}", e)),
+                config_file: err_path,
+                ..Default::default()
+            })?;
         Ok(config)
     }
 
@@ -64,7 +65,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
                 });
             }
         };
-        let toml_value: toml::Value = match toml::from_str(&content) {
+        let toml_value: toml::Value = match toml::from_str(content.value()) {
             Ok(v) => v,
             Err(e) => {
                 return Err(ConfigError {
@@ -105,7 +106,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
         shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         Vec<String>,
     ) {
-        shared::config_system::taxonomy_config_parser::parse_config_yaml_with_warnings(yaml_str)
+        shared::config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
     }
 
     fn parse_adapter_entries_from_yaml(
