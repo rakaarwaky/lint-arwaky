@@ -29,16 +29,21 @@ Tech-Lead ─────────┘
 ## Design Philosophy
 
 ### 1. Single Source of Truth
+
 One configuration file (`config.yaml`) for all settings. No scattered configs.
 
 ### 2. Full Names, No Abbreviations
+
 All nodes use full names: **Business-Analyst**, **Tech-Lead**, **Quality-Analysis** — not BA, TL, QA. Consistent across all documents, logs, state, prompts, and config.
 
 ### 3. Feature Priority Queue
+
 User defines the feature priority order. Core packages are processed first, surface packages last.
 
 ### 4. Parallel with Coordination
+
 Business-Analyst and Tech-Lead run concurrently with **tight coordination** to prevent drift:
+
 - **Shared contract:** Both receive identical input/output schema
 - **Shared acceptance criteria:** The same checklist is injected into both prompts
 - **Shared output schema:** Same report format (Markdown with mandatory sections)
@@ -46,10 +51,13 @@ Business-Analyst and Tech-Lead run concurrently with **tight coordination** to p
 - **FRD snapshot:** Both receive the same FRD version at the same timestamp
 
 ### 5. Fail Graceful
+
 Pipeline can handle partial completion, timeout, rejection, and escalation without crashing. Every failure has a clear state and recovery path.
 
 ### 6. Separation of Concerns — Two Separate Counters
+
 Pipeline has two different counters:
+
 - **Rejection loop counter:** Counts how many times Quality-Analysis rejected (max 3)
 - **Pipeline iteration counter:** Counts how many times the pipeline ran fully from trigger to verdict (max 5)
 
@@ -103,25 +111,13 @@ Both are separate and reset independently.
 
 ## Node Roles
 
-| Node | Role | Input (Absolute Paths) | Output (Absolute Paths) | Skippable? |
-|------|------|------------------------|-------------------------|-----------|
-| **Business-Analyst** | Validate business logic & requirements | Feature context + FRD snapshot (via prompt) | `/home/.../results/business-analyst-<feature>.md` | Yes (simple fix, hotfix, typo) |
-| **Tech-Lead** | Pre-implementation technical review: architecture, dependencies, security, performance | Feature context + FRD snapshot (via prompt) | `/home/.../results/tech-lead-<feature>.md` | Yes (doc-only update) |
-| **Architect** | Merge both reports, validate AES compliance, final certification | BA report + TL report (or Skip Report) + Feature context | `/home/.../plans/merged-<feature>-<correlation_id>.md` | **No** — always required |
-| **Developer** | Execute merged plan | Merged plan (via prompt) | PR + `/home/.../reports/done-<feature>.md` | **No** — always required |
-| **Quality-Analysis** | Final gatekeeper: validate PR against merged plan + acceptance criteria | PR + merged plan + FRD + CI/test result + BA report + TL report | Verdict (APPROVE / REJECT / ESCALATE) | **No** — always required |
-
-### Important Notes
-
-- **Tech-Lead** performs a technical review **before** implementation, not after. Its input is Feature + FRD (not code). This ensures architecture/security issues are identified before Developer writes code.
-- **Quality-Analysis** receives comprehensive input: PR, merged plan, FRD, CI/test result, and reports from Business-Analyst + Tech-Lead. As the final gate, it must have full context.
-- **Skip Report:** If Business-Analyst or Tech-Lead is skipped, Architect receives a **Skip Report** as a replacement. The Skip Report contains:
-  - Node that was skipped and the reason for skipping
-  - Assumptions made due to no analysis
-  - Flag `unvalidated: true` on relevant sections
-  - Architect must explicitly validate those assumptions
-
----
+| Node                       | Role                                                                                   | Input (Absolute Paths)                                          | Output (Absolute Paths)                                  | Skippable?                         |
+| -------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------- |
+| **Business-Analyst** | Validate business logic & requirements                                                 | Feature context + FRD snapshot (via prompt)                     | `/home/.../results/business-analyst-<feature>.md`      | Yes (simple fix, hotfix, typo)     |
+| **Tech-Lead**        | Pre-implementation technical review: architecture, dependencies, security, performance | Feature context + FRD snapshot (via prompt)                     | `/home/.../results/tech-lead-<feature>.md`             | Yes (doc-only update)              |
+| **Architect**        | Merge both reports, validate AES compliance, final certification                       | BA report + TL report (or Skip Report) + Feature context        | `/home/.../plans/merged-<feature>-<correlation_id>.md` | **No** — always required    |
+| **Developer**        | Execute merged plan                                                                    | Merged plan (via prompt)                                        | PR +`/home/.../reports/done-<feature>.md`              | **No** — always required    |
+| **Quality-Analysis** | Final gatekeeper: validate PR against merged plan + acceptance criteria                | PR + merged plan + FRD + CI/test result + BA report + TL report | Verdict (APPROVE / REJECT / ESCALATE)                    | **No** — always required--- |
 
 ## Pipeline Flow
 
@@ -292,22 +288,22 @@ trigger ──[doc-only]──▶ ┌──[SKIP]──▶ Skip Report ──┐
 
 ### State Definitions
 
-| State | Meaning | Transitions |
-|-------|---------|-------------|
-| IDLE | No active pipeline, scanning trigger queue | → DISPATCHING (trigger received) |
-| DISPATCHING | Claim feature from queue, acquire lock | → ANALYZING (lock acquired) |
-| ANALYZING | Business-Analyst + Tech-Lead parallel | → ARCHITECT (both done) |
-| ARCHITECT | Merge both reports, produce merged plan | → DEVELOPER (plan written) |
-| DEVELOPER | Execute merged plan, create PR | → QUALITY-ANALYSIS (PR ready) |
-| QUALITY-ANALYSIS | Review PR against merged plan + acceptance criteria | → MERGED / ARCHITECT / ESCALATED |
-| MERGED | Pipeline complete, feature reviewed | → IDLE (next feature) |
-| FAILED | Node execution error | → retrying / BLOCKED |
-| BLOCKED | Max retries exceeded, feature cannot continue | → IDLE (skip to next feature) |
-| TIMEOUT | Global timeout reached | → BLOCKED / IDLE |
-| WAITING_HUMAN | Requires human intervention | → RESUMED (after human fix) |
-| ESCALATED | Quality-Analysis found a critical issue, escalated | → WAITING_HUMAN |
-| SKIPPED | Feature skipped (cooldown, priority) | → IDLE (next feature) |
-| RESUMED | After human intervention, pipeline restarts from Architect | → ARCHITECT |
+| State            | Meaning                                                    | Transitions                       |
+| ---------------- | ---------------------------------------------------------- | --------------------------------- |
+| IDLE             | No active pipeline, scanning trigger queue                 | → DISPATCHING (trigger received) |
+| DISPATCHING      | Claim feature from queue, acquire lock                     | → ANALYZING (lock acquired)      |
+| ANALYZING        | Business-Analyst + Tech-Lead parallel                      | → ARCHITECT (both done)          |
+| ARCHITECT        | Merge both reports, produce merged plan                    | → DEVELOPER (plan written)       |
+| DEVELOPER        | Execute merged plan, create PR                             | → QUALITY-ANALYSIS (PR ready)    |
+| QUALITY-ANALYSIS | Review PR against merged plan + acceptance criteria        | → MERGED / ARCHITECT / ESCALATED |
+| MERGED           | Pipeline complete, feature reviewed                        | → IDLE (next feature)            |
+| FAILED           | Node execution error                                       | → retrying / BLOCKED             |
+| BLOCKED          | Max retries exceeded, feature cannot continue              | → IDLE (skip to next feature)    |
+| TIMEOUT          | Global timeout reached                                     | → BLOCKED / IDLE                 |
+| WAITING_HUMAN    | Requires human intervention                                | → RESUMED (after human fix)      |
+| ESCALATED        | Quality-Analysis found a critical issue, escalated         | → WAITING_HUMAN                  |
+| SKIPPED          | Feature skipped (cooldown, priority)                       | → IDLE (next feature)            |
+| RESUMED          | After human intervention, pipeline restarts from Architect | → ARCHITECT                      |
 
 ### Recovery Policy (State Persist Across Restarts)
 
@@ -338,9 +334,11 @@ restart detected
 ## Feature Coordination
 
 ### Problem
+
 Business-Analyst and Tech-Lead must analyze the same folder without conflicts.
 
 ### Solution
+
 - Both agents receive **identical feature context** (shared contract)
 - Feature is locked when entering the pipeline (queue claim lock)
 - Folder boundary enforced via skill instructions
@@ -397,21 +395,24 @@ Engine processes from priority 1 to N sequentially.
 
 ### Feature Failure Behavior
 
-| Status | Behavior | Next |
-|--------|----------|------|
-| DONE | Feature complete, release lock | → PENDING (next feature) |
-| FAILED (retryable) | Transient error, retry with cooldown | → ACTIVE (retry) |
-| FAILED (non-retryable) | Permanent error, requires human fix | → WAITING_HUMAN |
-| BLOCKED | Max retries exceeded | → PENDING (skip to next feature) |
-| SKIPPED | Cooldown or lower priority | → PENDING (next feature) |
+| Status                 | Behavior                             | Next                              |
+| ---------------------- | ------------------------------------ | --------------------------------- |
+| DONE                   | Feature complete, release lock       | → PENDING (next feature)         |
+| FAILED (retryable)     | Transient error, retry with cooldown | → ACTIVE (retry)                 |
+| FAILED (non-retryable) | Permanent error, requires human fix  | → WAITING_HUMAN                  |
+| BLOCKED                | Max retries exceeded                 | → PENDING (skip to next feature) |
+| SKIPPED                | Cooldown or lower priority           | → PENDING (next feature)         |
 
 ### Priority Override
+
 If a high-priority feature is BLOCKED:
+
 1. That feature enters WAITING_HUMAN status
 2. Engine **proceeds to the next feature** (no stall)
 3. When human fix is complete, the BLOCKED feature can be requeued with its original priority
 
 ### Dedup
+
 - **Cooldown:** Do not process the same feature within 1 hour
 - **Pipeline iteration counter:** Max 5 full pipeline runs per feature (reset for each new feature)
 - **Rejection loop counter:** Max 3 rejections per pipeline (reset for each new pipeline)
@@ -421,12 +422,14 @@ If a high-priority feature is BLOCKED:
 ## Two Counter System
 
 ### Rejection Loop Counter
+
 - **Counts:** How many times Quality-Analysis sent REJECT to Architect
 - **Reset:** Each new pipeline (after dispatch)
 - **Max:** 3
 - **If max reached:** Pipeline → ESCALATED → WAITING_HUMAN
 
 ### Pipeline Iteration Counter
+
 - **Counts:** How many times the pipeline ran fully from IDLE to verdict
 - **Reset:** Each new feature
 - **Max:** 5
@@ -452,13 +455,14 @@ Pipeline Run 3: ARCHITECT → DEVELOPER → QUALITY-ANALYSIS → REJECT
 
 Quality-Analysis classifies findings into 3 severity levels:
 
-| Severity | Action | Example |
-|----------|--------|---------|
-| **Minor** | Comment only, does not block | Style inconsistency, naming suggestion |
-| **Major** | REJECT, send to Architect for re-merge | Missing test, logic error, AES violation |
+| Severity           | Action                                   | Example                                                         |
+| ------------------ | ---------------------------------------- | --------------------------------------------------------------- |
+| **Minor**    | Comment only, does not block             | Style inconsistency, naming suggestion                          |
+| **Major**    | REJECT, send to Architect for re-merge   | Missing test, logic error, AES violation                        |
 | **Critical** | ESCALATE to Architect, Architect decides | Security vulnerability, data loss risk, architectural violation |
 
 ### Critical Path
+
 ```
 Quality-Analysis ──[CRITICAL]──▶ Architect
         │
@@ -468,6 +472,7 @@ Quality-Analysis ──[CRITICAL]──▶ Architect
 ```
 
 ### Major Path
+
 ```
 Quality-Analysis ──[MAJOR/REJECT]──▶ Architect
         │
@@ -475,6 +480,7 @@ Quality-Analysis ──[MAJOR/REJECT]──▶ Architect
 ```
 
 ### Minor Path
+
 ```
 Quality-Analysis ──[MINOR/APPROVE]──▶ MERGED
         │
@@ -485,26 +491,26 @@ Quality-Analysis ──[MINOR/APPROVE]──▶ MERGED
 
 ## Trigger Types
 
-| Type | Source | When |
-|------|--------|------|
-| Event | GitHub | Label changed (e.g., "need review") |
-| Schedule | Cron | Quality-Analysis scan every 15 minutes |
-| State-Change | Filesystem | Report written, CI status |
-| Parallel Complete | Engine | Both Business-Analyst + Tech-Lead done |
-| Rejection | Quality-Analysis | Verdict = REJECT |
-| Escalation | Agent | CRITICAL issue or unresolved blocker |
+| Type              | Source           | When                                   |
+| ----------------- | ---------------- | -------------------------------------- |
+| Event             | GitHub           | Label changed (e.g., "need review")    |
+| Schedule          | Cron             | Quality-Analysis scan every 15 minutes |
+| State-Change      | Filesystem       | Report written, CI status              |
+| Parallel Complete | Engine           | Both Business-Analyst + Tech-Lead done |
+| Rejection         | Quality-Analysis | Verdict = REJECT                       |
+| Escalation        | Agent            | CRITICAL issue or unresolved blocker   |
 
 ### Trigger Guard (Loop Prevention)
 
 To prevent trigger loops (engine writes report → trigger fires → engine runs again):
 
-| Guard | Description |
-|-------|-------------|
-| **Correlation ID** | Each pipeline run has a unique ID. Trigger with the same ID is ignored |
-| **Bot Event Filter** | GitHub events from bots (GitHub Actions, dependabot) are ignored |
+| Guard                       | Description                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| **Correlation ID**    | Each pipeline run has a unique ID. Trigger with the same ID is ignored         |
+| **Bot Event Filter**  | GitHub events from bots (GitHub Actions, dependabot) are ignored               |
 | **Idempotency Check** | Before processing trigger, check if feature is already active/not yet complete |
-| **Trigger Debounce** | Same trigger within 30 seconds is debounced |
-| **State Guard** | Triggers are only processed when state = IDLE |
+| **Trigger Debounce**  | Same trigger within 30 seconds is debounced                                    |
+| **State Guard**       | Triggers are only processed when state = IDLE                                  |
 
 ```
 trigger received
@@ -575,15 +581,16 @@ The Dispatcher is responsible for combining **Feature Context** + **Role Prompt*
 
 All paths in the prompt must use **absolute paths** from the project root:
 
-| Field | Format | Example |
-|-------|--------|---------|
-| `Project Root` | `/home/<user>/<workspace>` | `/home/raka/mcp-arwaky/lint-arwaky` |
-| `Feature Path` | `<Project Root>/<category>/<feature>` | `/home/raka/mcp-arwaky/lint-arwaky/crates/shared` |
-| `FRD Path` | `<Feature Path>/FRD.md` | `/home/raka/mcp-arwaky/lint-arwaky/crates/shared/FRD.md` |
-| `Report Output` | `<Project Root>/.agents/graph-loop/results/<role>-<feature>.md` | `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-shared.md` |
-| `Merged Plan` | `<Project Root>/.agents/graph-loop/plans/merged-<feature>-<correlation_id>.md` | `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-shared-pipeline-20260807-451.md` |
+| Field             | Format                                                                           | Example                                                                                               |
+| ----------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `Project Root`  | `/home/<user>/<workspace>`                                                     | `/home/raka/mcp-arwaky/lint-arwaky`                                                                 |
+| `Feature Path`  | `<Project Root>/<category>/<feature>`                                          | `/home/raka/mcp-arwaky/lint-arwaky/crates/shared`                                                   |
+| `FRD Path`      | `<Feature Path>/FRD.md`                                                        | `/home/raka/mcp-arwaky/lint-arwaky/crates/shared/FRD.md`                                            |
+| `Report Output` | `<Project Root>/.agents/graph-loop/results/<role>-<feature>.md`                | `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-shared.md`           |
+| `Merged Plan`   | `<Project Root>/.agents/graph-loop/plans/merged-<feature>-<correlation_id>.md` | `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-shared-pipeline-20260807-451.md` |
 
 **Why absolute paths:**
+
 - Agents run in different working directories (project root)
 - No ambiguity about file locations
 - Facilitates debugging and logging
@@ -591,18 +598,18 @@ All paths in the prompt must use **absolute paths** from the project root:
 
 ### Template Placeholders
 
-| Placeholder | Value | Source |
-|-------------|-------|--------|
-| `{{FEATURE}}` | Feature name | config.yaml → features queue |
-| `{{FEATURE_PATH}}` | Absolute path to feature folder | `<Project Root>/<category>/<feature>` |
-| `{{FRD_PATH}}` | Absolute path to FRD | `<Feature Path>/FRD.md` |
-| `{{FRD_HASH}}` | SHA256 hash of FRD content | Computed at dispatch |
-| `{{PROJECT_ROOT}}` | Absolute path to project root | config.yaml → project_root |
-| `{{CORRELATION_ID}}` | Unique pipeline run ID | Created at dispatch |
-| `{{PIPELINE_ITERATION}}` | Pipeline iteration counter | state.json → pipeline_iteration_counter |
-| `{{REJECTION_LOOP}}` | Rejection loop counter | state.json → rejection_loop_counter |
-| `{{DATE}}` | Dispatch timestamp | `date -Iseconds` |
-| `{{ROLE_TEMPLATE}}` | Prompt template file content | `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/<role>.txt` |
+| Placeholder                | Value                           | Source                                                                      |
+| -------------------------- | ------------------------------- | --------------------------------------------------------------------------- |
+| `{{FEATURE}}`            | Feature name                    | config.yaml → features queue                                               |
+| `{{FEATURE_PATH}}`       | Absolute path to feature folder | `<Project Root>/<category>/<feature>`                                     |
+| `{{FRD_PATH}}`           | Absolute path to FRD            | `<Feature Path>/FRD.md`                                                   |
+| `{{FRD_HASH}}`           | SHA256 hash of FRD content      | Computed at dispatch                                                        |
+| `{{PROJECT_ROOT}}`       | Absolute path to project root   | config.yaml → project_root                                                 |
+| `{{CORRELATION_ID}}`     | Unique pipeline run ID          | Created at dispatch                                                         |
+| `{{PIPELINE_ITERATION}}` | Pipeline iteration counter      | state.json → pipeline_iteration_counter                                    |
+| `{{REJECTION_LOOP}}`     | Rejection loop counter          | state.json → rejection_loop_counter                                        |
+| `{{DATE}}`               | Dispatch timestamp              | `date -Iseconds`                                                          |
+| `{{ROLE_TEMPLATE}}`      | Prompt template file content    | `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/<role>.txt` |
 
 ### Skip Report Template
 
@@ -635,6 +642,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 **Skill:** `.agents/skills/role-business-analyst/SKILL.md`
 
 **Prerequisites (must read before analysis):**
+
 1. `.agents/rules/RULES_AES.md` — architectural constraints
 2. `ARCHITECTURE.md` — 7-layer context
 3. `PRD.md` — product context
@@ -675,6 +683,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Output Template:**
+
 ```markdown
 # Plan: {feature} — Business Analyst
 
@@ -714,11 +723,12 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Severity Levels:**
-| Level | Meaning |
-|-------|---------|
-| 🔴 CRITICAL | Missing core requirement, wrong logic, data integrity risk |
-| 🟡 WARNING | Ambiguous requirement, missing edge case, incomplete criteria |
-| 🟢 INFO | Suggestion or optimization, deferrable |
+
+| Level       | Meaning                                                       |
+| ----------- | ------------------------------------------------------------- |
+| 🔴 CRITICAL | Missing core requirement, wrong logic, data integrity risk    |
+| 🟡 WARNING  | Ambiguous requirement, missing edge case, incomplete criteria |
+| 🟢 INFO     | Suggestion or optimization, deferrable                        |
 
 ---
 
@@ -727,6 +737,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 **Skill:** `.agents/skills/role-tech-lead/SKILL.md`
 
 **Prerequisites:**
+
 1. `.agents/rules/RULES_AES.md` (Groups 3-4)
 2. `ARCHITECTURE.md` — 7-layer spec
 3. `PRD.md` — product context
@@ -765,6 +776,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Output Template:**
+
 ```markdown
 # Plan: {feature} — Tech Lead
 
@@ -805,11 +817,12 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Severity Levels:**
-| Level | Meaning |
-|-------|---------|
-| 🔴 CRITICAL | Security vuln, data leak, crash risk |
-| 🟡 WARNING | Perf bottleneck, SOLID violation, bypass pattern |
-| 🟢 INFO | Nice-to-have, deferrable |
+
+| Level       | Meaning                                          |
+| ----------- | ------------------------------------------------ |
+| 🔴 CRITICAL | Security vuln, data leak, crash risk             |
+| 🟡 WARNING  | Perf bottleneck, SOLID violation, bypass pattern |
+| 🟢 INFO     | Nice-to-have, deferrable                         |
 
 ---
 
@@ -818,6 +831,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 **Skill:** `.agents/skills/role-architect/SKILL.md`
 
 **Prerequisites:**
+
 1. `.agents/rules/RULES_AES.md` (rules 101-506)
 2. `ARCHITECTURE.md` — 7-layer spec
 3. `PRD.md` — product context
@@ -864,6 +878,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Architect Certification (additional steps):**
+
 1. Validate merged plan against FRD
 2. Validate AES compliance
 3. Validate Skip Report (if any nodes were skipped)
@@ -871,6 +886,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 5. Sign merged plan with timestamp + correlation ID
 
 **Output Template:**
+
 ```markdown
 # Plan: {feature} — Architect (Merged Plan)
 
@@ -914,11 +930,12 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Severity Levels:**
-| Level | Meaning |
-|-------|---------|
+
+| Level       | Meaning                              |
+| ----------- | ------------------------------------ |
 | 🔴 CRITICAL | Layering breach, security, data leak |
-| 🟡 WARNING | Convention/perf/maintainability |
-| 🟢 INFO | Suggestion, deferrable |
+| 🟡 WARNING  | Convention/perf/maintainability      |
+| 🟢 INFO     | Suggestion, deferrable               |
 
 ---
 
@@ -927,6 +944,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 **Skill:** `.agents/skills/role-fullstack-developer/SKILL.md`
 
 **Prerequisites:**
+
 1. Merged plan from Architect
 2. `.agents/rules/RULES_AES.md`
 3. `ARCHITECTURE.md`
@@ -962,6 +980,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Output Template:**
+
 ```markdown
 # Execution Report: {feature} — Developer
 
@@ -993,6 +1012,7 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 **Skill:** `.agents/skills/role-quality-analysis/SKILL.md`
 
 **Prerequisites:**
+
 1. `.agents/rules/RULES_AES.md`
 2. `ARCHITECTURE.md`
 3. `TEST.md`
@@ -1040,19 +1060,22 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 ```
 
 **Severity Levels:**
-| Level | Meaning |
-|-------|---------|
+
+| Level       | Meaning                                                              |
+| ----------- | -------------------------------------------------------------------- |
 | 🔴 CRITICAL | CI fail, AES violation, layer breach, security risk, test regression |
-| 🟡 WARNING | Convention deviation, missing test, inaccurate report |
-| 🟢 INFO | Style/optimization, follow-up |
+| 🟡 WARNING  | Convention deviation, missing test, inaccurate report                |
+| 🟢 INFO     | Style/optimization, follow-up                                        |
 
 **Verdict Rules:**
-| Verdict | When | Action |
-|---------|------|--------|
-| APPROVED | All CI pass, 0 PR-introduced CRITICAL/WARNING | Merge, delete report |
+
+| Verdict  | When                                             | Action                  |
+| -------- | ------------------------------------------------ | ----------------------- |
+| APPROVED | All CI pass, 0 PR-introduced CRITICAL/WARNING    | Merge, delete report    |
 | REJECTED | CI fails OR PR-introduced CRITICAL/WARNING exist | Comment, write new plan |
 
 **Rejection Plan Template:**
+
 ```markdown
 # Review Plan: {feature} — Quality Analysis (Rejection)
 
@@ -1092,17 +1115,18 @@ Each node has a workflow defined in its skill file. Below are the workflow detai
 
 ## Conditional Skip
 
-| Node | Skip When | Never Skip When | Replacement |
-|------|-----------|-----------------|-------------|
-| **Business-Analyst** | Simple fix (hotfix, typo, docs) | feature affects business logic | Skip Report (assumptions flagged) |
-| **Tech-Lead** | Doc-only update | Security/auth/token/encryption related | Skip Report (assumptions flagged) |
-| **Architect** | **Never skipped** | — | — |
-| **Developer** | **Never skipped** | — | — |
-| **Quality-Analysis** | **Never skipped** | — | — (auto-approve if doc-only) |
+| Node                       | Skip When                       | Never Skip When                        | Replacement                       |
+| -------------------------- | ------------------------------- | -------------------------------------- | --------------------------------- |
+| **Business-Analyst** | Simple fix (hotfix, typo, docs) | feature affects business logic         | Skip Report (assumptions flagged) |
+| **Tech-Lead**        | Doc-only update                 | Security/auth/token/encryption related | Skip Report (assumptions flagged) |
+| **Architect**        | **Never skipped**         | —                                     | —                                |
+| **Developer**        | **Never skipped**         | —                                     | —                                |
+| **Quality-Analysis** | **Never skipped**         | —                                     | — (auto-approve if doc-only)     |
 
 ### Important Note: Quality-Analysis Never Skipped
 
 Quality-Analysis is the final gatekeeper that is never skipped. For doc-only changes:
+
 - Quality-Analysis still runs
 - Verdict is automatically: **APPROVE with severity MINOR** (comment only, does not block)
 - This ensures every pipeline always has a final gate
@@ -1110,6 +1134,7 @@ Quality-Analysis is the final gatekeeper that is never skipped. For doc-only cha
 ### Architect Certification
 
 Architect does not just merge — it performs **final certification**:
+
 1. Validate merged plan against FRD
 2. Validate AES compliance
 3. **Validate Skip Report** (if any nodes were skipped)
@@ -1133,6 +1158,7 @@ Engine runs as a background service (`graph-loop.service`), polling every 30 sec
 ### Feature Queue Continuity
 
 If a high-priority feature fails (BLOCKED/ESCALATED):
+
 1. That feature enters WAITING_HUMAN
 2. Engine immediately proceeds to the next feature
 3. No stall — pipeline keeps running
@@ -1153,19 +1179,23 @@ shared → BLOCKED (max retries)
 ## Locking Strategy
 
 ### Queue Claim Lock
+
 - **Purpose:** Prevent two pipelines from claiming the same feature
 - **Implementation:** State file (`state.json`) — feature ID + timestamp
 - **Scope:** Feature-level (one feature at a time)
 - **Release:** When feature DONE / BLOCKED / SKIPPED
 
 ### File System Lock
+
 - **Purpose:** Prevent concurrent writes to the feature folder
 - **Implementation:** Lock file in `locks_dir`
 - **Scope:** Folder-level (feature folder is locked)
 - **Release:** When pipeline completes
 
 ### Parallel Safe
+
 Business-Analyst and Tech-Lead can run in parallel because:
+
 - Both only **read** from the feature folder
 - Both **write** reports to different folders (`/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/`)
 - Feature folder is not modified during analysis
@@ -1174,18 +1204,18 @@ Business-Analyst and Tech-Lead can run in parallel because:
 
 ## Notification
 
-| Event | Action | Severity |
-|-------|--------|----------|
-| Pipeline started | Log | INFO |
-| Node completed | Log | INFO |
-| Node skipped | Log + reason | WARN |
-| Pipeline completed | Log + PR comment | INFO |
-| Quality-Analysis approved | Log + PR comment | INFO |
-| Quality-Analysis rejected | Log + PR comment | WARN |
-| Quality-Analysis escalated | Log + PR comment + human alert | ERROR |
-| Timeout | Log + human alert | ERROR |
-| Error (non-retryable) | Log + human alert | ERROR |
-| Waiting human | Log + human alert | CRITICAL |
+| Event                      | Action                         | Severity |
+| -------------------------- | ------------------------------ | -------- |
+| Pipeline started           | Log                            | INFO     |
+| Node completed             | Log                            | INFO     |
+| Node skipped               | Log + reason                   | WARN     |
+| Pipeline completed         | Log + PR comment               | INFO     |
+| Quality-Analysis approved  | Log + PR comment               | INFO     |
+| Quality-Analysis rejected  | Log + PR comment               | WARN     |
+| Quality-Analysis escalated | Log + PR comment + human alert | ERROR    |
+| Timeout                    | Log + human alert              | ERROR    |
+| Error (non-retryable)      | Log + human alert              | ERROR    |
+| Waiting human              | Log + human alert              | CRITICAL |
 
 ---
 
@@ -1201,60 +1231,60 @@ Business-Analyst and Tech-Lead can run in parallel because:
 
 ## Changelog (Revision 2.0)
 
-| # | Issue | Change |
-|---|-------|--------|
-| 1 | MERGED → ARCHITECT transition wrong | MERGED now transitions to IDLE (next feature), not ARCHITECT |
-| 2 | Quality-Analysis skippable = contradiction | Quality-Analysis is **never skipped**. For doc-only, auto-approve with MINOR |
-| 3 | Business-Analyst/Tech-Lead skip → Architect without input | Skip Report added: placeholder with assumptions that Architect must validate |
-| 4 | Tech-Lead validates code quality without code | Tech-Lead changed to **pre-implementation technical review** (input: Feature + FRD) |
-| 5 | Use of BA, TL, QA abbreviations | All changed to full names: Business-Analyst, Tech-Lead, Quality-Analysis |
-| 6 | Quality-Analysis input only PR | Input expanded: PR + merged plan + FRD + CI/test result + BA report + TL report |
-| 7 | "Identical context" oversimplified | Added: shared contract, shared acceptance criteria, shared output schema, folder boundary, FRD snapshot |
-| 8 | Ambiguity between rejection loop vs pipeline iteration | Two counters explicitly defined with names, functions, and reset behavior |
-| 9 | Fail graceful without supporting states | 6 failure states added: FAILED, TIMEOUT, ESCALATED, BLOCKED, SKIPPED, WAITING_HUMAN |
-| 10 | Escalation only to Architect | Human escalation path added: ESCALATED → WAITING_HUMAN → RESUMED |
-| 11 | Quality-Analysis critical = guidance only | Severity handling added: minor=comment, major=reject, critical=escalate |
-| 12 | Feature queue sequential without failure behavior | Failure behavior added: BLOCKED → skip to next, priority override, requeue |
-| 13 | Trigger loop without guard | Trigger guard added: correlation ID, bot filter, idempotency, debounce, state guard |
-| 14 | Feature lock unclear | Two locks defined: queue claim lock + file system lock. Parallel safe explained |
-| 15 | State persist without recovery policy | Recovery policy added: resume (auto), mark failed (stale), wait (human), skip (skipped) |
+| #  | Issue                                                      | Change                                                                                                  |
+| -- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| 1  | MERGED → ARCHITECT transition wrong                       | MERGED now transitions to IDLE (next feature), not ARCHITECT                                            |
+| 2  | Quality-Analysis skippable = contradiction                 | Quality-Analysis is**never skipped**. For doc-only, auto-approve with MINOR                       |
+| 3  | Business-Analyst/Tech-Lead skip → Architect without input | Skip Report added: placeholder with assumptions that Architect must validate                            |
+| 4  | Tech-Lead validates code quality without code              | Tech-Lead changed to**pre-implementation technical review** (input: Feature + FRD)                |
+| 5  | Use of BA, TL, QA abbreviations                            | All changed to full names: Business-Analyst, Tech-Lead, Quality-Analysis                                |
+| 6  | Quality-Analysis input only PR                             | Input expanded: PR + merged plan + FRD + CI/test result + BA report + TL report                         |
+| 7  | "Identical context" oversimplified                         | Added: shared contract, shared acceptance criteria, shared output schema, folder boundary, FRD snapshot |
+| 8  | Ambiguity between rejection loop vs pipeline iteration     | Two counters explicitly defined with names, functions, and reset behavior                               |
+| 9  | Fail graceful without supporting states                    | 6 failure states added: FAILED, TIMEOUT, ESCALATED, BLOCKED, SKIPPED, WAITING_HUMAN                     |
+| 10 | Escalation only to Architect                               | Human escalation path added: ESCALATED → WAITING_HUMAN → RESUMED                                      |
+| 11 | Quality-Analysis critical = guidance only                  | Severity handling added: minor=comment, major=reject, critical=escalate                                 |
+| 12 | Feature queue sequential without failure behavior          | Failure behavior added: BLOCKED → skip to next, priority override, requeue                             |
+| 13 | Trigger loop without guard                                 | Trigger guard added: correlation ID, bot filter, idempotency, debounce, state guard                     |
+| 14 | Feature lock unclear                                       | Two locks defined: queue claim lock + file system lock. Parallel safe explained                         |
+| 15 | State persist without recovery policy                      | Recovery policy added: resume (auto), mark failed (stale), wait (human), skip (skipped)                 |
 
 ---
 
 ## Design Decisions
 
-| # | Problem | Decision | Rationale | Rejected Alternatives |
-|---|---------|----------|-----------|----------------------|
-| 1 | MERGED → ARCHITECT wrong transition | MERGED → IDLE (next feature) | New features must start from DISPATCHING, not ARCHITECT. ARCHITECT is only for re-merge | MERGED → IDLE directly (no intermediate state) — rejected because cleanup logic is needed |
-| 2 | Quality-Analysis skippable | Quality-Analysis is **never skipped** | As the final gate, consistency matters more than optimization. Auto-approve for doc-only | Quality-Analysis skippable with Architect certification — rejected because it creates a gap in the pipeline |
-| 3 | Architect without BA/TL input | Skip Report as replacement | Architect still needs input. Skip Report flags assumptions that have not been validated | Architect guesses on its own — rejected because it violates single source of truth |
-| 4 | Tech-Lead validates code without code | Pre-implementation technical review | Architecture/security/performance review is more useful before implementation than after | Tech-Lead reviews after PR — rejected because Developer has already wasted time |
-| 5 | Node names inconsistent | Full names everywhere | Consistency prevents ambiguity. Matches skill file names | Abbreviations with deprecation notice — rejected because it creates dual naming |
-| 6 | Quality-Analysis insufficient input | 6 inputs: PR + plan + FRD + CI + BA report + TL report | Final gate needs full context for comprehensive validation | Only PR + plan — rejected because it cannot validate business logic |
-| 7 | "Identical context" oversimplified | 5 coordination mechanisms | Shared contract + acceptance criteria + output schema + folder boundary + FRD snapshot comprehensively prevent drift | Only shared context — rejected because it is insufficient to prevent semantic drift |
-| 8 | Two counters ambiguous | Two separate counters with clear names | Rejection loop (QA → Architect) and pipeline iteration (trigger → verdict) are different concerns | Single counter — rejected because it conflates two independent failure modes |
-| 9 | Fail graceful without states | 6 failure states | Each type of failure needs a different recovery path | Only FAILED — rejected because it cannot handle timeout/escalation/human wait |
-| 10 | Limited escalation | Human escalation path | Architect cannot always resolve. Human intervention must exist as a last resort | Escalation only loops to Architect — rejected because of infinite loop risk |
-| 11 | No severity | 3-level severity handling | Minor/major/critical have different actions. Not all findings need rejection | All findings = reject — rejected because it is too aggressive for minor issues |
-| 12 | Queue stall on failure | Skip to next feature | Pipeline must keep running. A blocked feature must not block everything | Wait until fix — rejected because it can block the entire pipeline |
-| 13 | Trigger loop | 5 guard mechanisms | Correlation ID + bot filter + idempotency + debounce + state guard prevent all types of loops | Single guard — rejected because it is insufficient for all edge cases |
-| 14 | Unclear locks | Two separate locks | Queue claim lock (feature-level) and file system lock (folder-level) are different concerns | Single lock — rejected because it is either too broad or too narrow |
-| 15 | State lost on restart | Resume + stale detection + wait | 4 different policies for 4 restart situations | Always resume — rejected because state can be stale. Always reset — rejected because progress is lost |
+| #  | Problem                               | Decision                                               | Rationale                                                                                                            | Rejected Alternatives                                                                                        |
+| -- | ------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 1  | MERGED → ARCHITECT wrong transition  | MERGED → IDLE (next feature)                          | New features must start from DISPATCHING, not ARCHITECT. ARCHITECT is only for re-merge                              | MERGED → IDLE directly (no intermediate state) — rejected because cleanup logic is needed                  |
+| 2  | Quality-Analysis skippable            | Quality-Analysis is**never skipped**             | As the final gate, consistency matters more than optimization. Auto-approve for doc-only                             | Quality-Analysis skippable with Architect certification — rejected because it creates a gap in the pipeline |
+| 3  | Architect without BA/TL input         | Skip Report as replacement                             | Architect still needs input. Skip Report flags assumptions that have not been validated                              | Architect guesses on its own — rejected because it violates single source of truth                          |
+| 4  | Tech-Lead validates code without code | Pre-implementation technical review                    | Architecture/security/performance review is more useful before implementation than after                             | Tech-Lead reviews after PR — rejected because Developer has already wasted time                             |
+| 5  | Node names inconsistent               | Full names everywhere                                  | Consistency prevents ambiguity. Matches skill file names                                                             | Abbreviations with deprecation notice — rejected because it creates dual naming                             |
+| 6  | Quality-Analysis insufficient input   | 6 inputs: PR + plan + FRD + CI + BA report + TL report | Final gate needs full context for comprehensive validation                                                           | Only PR + plan — rejected because it cannot validate business logic                                         |
+| 7  | "Identical context" oversimplified    | 5 coordination mechanisms                              | Shared contract + acceptance criteria + output schema + folder boundary + FRD snapshot comprehensively prevent drift | Only shared context — rejected because it is insufficient to prevent semantic drift                         |
+| 8  | Two counters ambiguous                | Two separate counters with clear names                 | Rejection loop (QA → Architect) and pipeline iteration (trigger → verdict) are different concerns                  | Single counter — rejected because it conflates two independent failure modes                                |
+| 9  | Fail graceful without states          | 6 failure states                                       | Each type of failure needs a different recovery path                                                                 | Only FAILED — rejected because it cannot handle timeout/escalation/human wait                               |
+| 10 | Limited escalation                    | Human escalation path                                  | Architect cannot always resolve. Human intervention must exist as a last resort                                      | Escalation only loops to Architect — rejected because of infinite loop risk                                 |
+| 11 | No severity                           | 3-level severity handling                              | Minor/major/critical have different actions. Not all findings need rejection                                         | All findings = reject — rejected because it is too aggressive for minor issues                              |
+| 12 | Queue stall on failure                | Skip to next feature                                   | Pipeline must keep running. A blocked feature must not block everything                                              | Wait until fix — rejected because it can block the entire pipeline                                          |
+| 13 | Trigger loop                          | 5 guard mechanisms                                     | Correlation ID + bot filter + idempotency + debounce + state guard prevent all types of loops                        | Single guard — rejected because it is insufficient for all edge cases                                       |
+| 14 | Unclear locks                         | Two separate locks                                     | Queue claim lock (feature-level) and file system lock (folder-level) are different concerns                          | Single lock — rejected because it is either too broad or too narrow                                         |
+| 15 | State lost on restart                 | Resume + stale detection + wait                        | 4 different policies for 4 restart situations                                                                        | Always resume — rejected because state can be stale. Always reset — rejected because progress is lost      |
 
 ---
 
 ## Open Questions
 
-| # | Question | Options | Recommendation |
-|---|----------|---------|----------------|
-| 1 | How does a human provide a fix for WAITING_HUMAN? | (a) PR comment, (b) file edit, (c) manual state update | (a) + (c): PR comment for context, manual state update for resume |
-| 2 | What is the cooldown between retries for FAILED state? | (a) Fixed 5 minutes, (b) Exponential backoff | (b) Exponential: 2^n minutes (max 30 minutes) |
-| 3 | Should the pipeline iteration counter be a hard limit or configurable? | (a) Hardcoded 5, (b) In config.yaml | (b) In config.yaml for per-project flexibility |
-| 4 | How to track correlation ID on GitHub PR? | (a) PR comment, (b) PR label, (c) Both | (c) Both: label for filtering, comment for audit trail |
-| 5 | Should Quality-Analysis auto-approve for doc-only log differently? | (a) Normal log, (b) Special "auto-approved" log | (b) Special log for clear audit trail |
-| 6 | How to handle concurrent PRs for the same feature? | (a) Queue PRs, (b) Reject duplicates, (c) Merge queue | (b) Reject duplicates with correlation ID check |
-| 7 | Should Tech-Lead skip report have minimum validation? | (a) No validation, (b) Architect must validate, (c) Auto-validate | (b) Architect must validate — consistent with skip report philosophy |
-| 8 | What is the maximum feature queue limit? | (a) Unlimited, (b) Max 20, (c) Max 50 | (b) Max 20 — sufficient for this project, prevents memory bloat |
+| # | Question                                                               | Options                                                           | Recommendation                                                        |
+| - | ---------------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1 | How does a human provide a fix for WAITING_HUMAN?                      | (a) PR comment, (b) file edit, (c) manual state update            | (a) + (c): PR comment for context, manual state update for resume     |
+| 2 | What is the cooldown between retries for FAILED state?                 | (a) Fixed 5 minutes, (b) Exponential backoff                      | (b) Exponential: 2^n minutes (max 30 minutes)                         |
+| 3 | Should the pipeline iteration counter be a hard limit or configurable? | (a) Hardcoded 5, (b) In config.yaml                               | (b) In config.yaml for per-project flexibility                        |
+| 4 | How to track correlation ID on GitHub PR?                              | (a) PR comment, (b) PR label, (c) Both                            | (c) Both: label for filtering, comment for audit trail                |
+| 5 | Should Quality-Analysis auto-approve for doc-only log differently?     | (a) Normal log, (b) Special "auto-approved" log                   | (b) Special log for clear audit trail                                 |
+| 6 | How to handle concurrent PRs for the same feature?                     | (a) Queue PRs, (b) Reject duplicates, (c) Merge queue             | (b) Reject duplicates with correlation ID check                       |
+| 7 | Should Tech-Lead skip report have minimum validation?                  | (a) No validation, (b) Architect must validate, (c) Auto-validate | (b) Architect must validate — consistent with skip report philosophy |
+| 8 | What is the maximum feature queue limit?                               | (a) Unlimited, (b) Max 20, (c) Max 50                             | (b) Max 20 — sufficient for this project, prevents memory bloat      |
 
 ---
 

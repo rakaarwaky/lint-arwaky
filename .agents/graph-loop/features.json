@@ -161,7 +161,7 @@
       ]
     },
     "cli-commands": {
-      "status": "LOCKED",
+      "status": "FAILED",
       "priority": 10,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands",
       "description": "Human CLI surface (check, scan, fix, ci)",
@@ -169,7 +169,13 @@
       "claimed_at": "2026-08-07T06:28:56+07:00",
       "locked_by": "graph-engine",
       "iteration": 0,
-      "history": []
+      "history": [
+        {
+          "status": "FAILED",
+          "reason": "Quality-Analysis timeout",
+          "failed_at": "2026-08-07T07:11:06+07:00"
+        }
+      ]
     },
     "mcp-server": {
       "status": "PENDING",

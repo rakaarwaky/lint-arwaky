@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from src.common import Logger, now_iso, parse_iso
+from src.common import Logger, elapsed_minutes, now_iso, parse_iso
 from src.config import Config
 
 _DEFAULT = {"version": "2.0", "features": {}, "dedup_rules": {"cooldown_minutes": 60}}
@@ -71,7 +71,8 @@ class FeatureManager:
     # ── guards ─────────────────────────────────────────────────
     def check_cooldown(self, name: str) -> bool:
         data = self.load()
-        cooldown = int(data.get("dedup_rules", {}).get("cooldown_minutes", 60))
+        cooldown = int(self.config.get("feature_queue.cooldown_minutes",
+                                       data.get("dedup_rules", {}).get("cooldown_minutes", 60)))
         feat = data.get("features", {}).get(name)
         if not feat:
             return True
@@ -90,14 +91,24 @@ class FeatureManager:
     def check_lock(self, name: str) -> bool:
         lock_file = self.locks_dir / f"{name}.lock"
         if lock_file.exists():
+            # Condition 1: Is this feature the current pipeline feature?
+            state_file = self.config.state_file
             try:
-                info = json.loads(lock_file.read_text())
-            except json.JSONDecodeError:
-                info = {}
-            self.log.write("feature", "locked",
-                           f"Feature {name} is locked by {info.get('locked_by', 'unknown')} "
-                           f"since {info.get('locked_at', 'unknown')}")
-            return False
+                state = json.loads(state_file.read_text())
+                current_feature = state.get("pipeline", {}).get("feature", "")
+                current_state = state.get("pipeline", {}).get("current_state", "")
+                if current_feature == name and current_state not in ("IDLE", "MERGED"):
+                    # This feature is actively being processed → keep locked
+                    self.log.write("feature", "locked",
+                                   f"Feature {name} locked — pipeline active ({current_state})")
+                    return False
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
+                pass
+            # Condition 2: Feature not in active pipeline → lock is stale → release
+            self.log.write("feature", "lock_released",
+                           f"Feature {name} lock released — not in active pipeline")
+            lock_file.unlink(missing_ok=True)
+            return True
         return True
 
     # ── lifecycle ──────────────────────────────────────────────

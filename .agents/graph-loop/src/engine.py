@@ -201,6 +201,14 @@ class Engine:
         plans = self.config.plans_dir
         plans.mkdir(parents=True, exist_ok=True)
 
+        # Recovery: if merged plan already exists, skip dispatch and go to DEVELOPER
+        existing_plan = next(iter(sorted(plans.glob(f"merged-{feature}-*.md"))), None)
+        if existing_plan:
+            self.log.write("engine", "state",
+                           f"Merged plan already exists: {existing_plan} — skipping dispatch")
+            self.state.merge_complete(str(existing_plan))
+            return
+
         ba_report = next(iter(sorted(results.glob(f"{feature}-business-analyst.result"))), None)
         tl_report = next(iter(sorted(results.glob(f"{feature}-tech-lead.result"))), None)
 
@@ -249,6 +257,15 @@ class Engine:
         feature_path = self.features.path(feature)
         frd_path = f"{feature_path}/FRD.md"
         plans = self.config.plans_dir
+        reports = self.config.reports_dir
+
+        # Recovery: if done report already exists, skip dispatch and go to QA
+        existing_report = next(iter(sorted(reports.glob(f"done-{feature}-*.md"))), None)
+        if existing_report:
+            self.log.write("engine", "state",
+                           f"Developer report already exists: {existing_report} — skipping dispatch")
+            self.state.developer_complete("PR")
+            return
 
         merged_plan = next(iter(sorted(plans.glob(f"merged-{feature}-*.md"))), None)
         if merged_plan is None:

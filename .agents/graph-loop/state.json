@@ -1,28 +1,28 @@
 {
   "version": "2.0",
   "pipeline": {
-    "id": "pipeline-20260807-195",
-    "feature": "cli-commands",
-    "current_state": "DEVELOPER",
-    "started_at": "2026-08-07T06:28:56+07:00",
-    "iteration": 1,
-    "correlation_id": "corr-20260807-cli-commands-414",
-    "pipeline_iteration_counter": 1,
+    "id": null,
+    "feature": null,
+    "current_state": "IDLE",
+    "started_at": null,
+    "iteration": 0,
+    "correlation_id": null,
+    "pipeline_iteration_counter": 0,
     "rejection_loop_counter": 0,
     "parallel_nodes": {
       "business-analyst": {
-        "status": "completed",
+        "status": "idle",
         "task_id": null,
-        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/cli-commands-business-analyst.result",
-        "started_at": "2026-08-07T06:29:26+07:00",
-        "completed_at": "2026-08-07T06:30:56+07:00"
+        "report_file": null,
+        "started_at": null,
+        "completed_at": null
       },
       "tech-lead": {
-        "status": "completed",
+        "status": "idle",
         "task_id": null,
-        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/tech-lead-cli-commands.md",
-        "started_at": "2026-08-07T06:29:26+07:00",
-        "completed_at": "2026-08-07T06:36:59+07:00"
+        "report_file": null,
+        "started_at": null,
+        "completed_at": null
       }
     },
     "pending_merge": [],

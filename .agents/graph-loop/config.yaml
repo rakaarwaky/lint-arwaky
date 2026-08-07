@@ -97,67 +97,14 @@ nodes:
     max_retries: 0
 
 # ── Pipeline Flow (Edges) ───────────────────────────────────────────
+# NOTE: State machine is hardcoded in engine.py handler methods.
+# This section documents the intended flow — NOT read by code.
 edges:
-  - from: trigger
-    to: [business-analyst, tech-lead]
-    trigger: pr_created
-    condition: "pr_has_need_review_label"
-    parallel: true
-  - from: [business-analyst, tech-lead]
-    to: architect
-    trigger: all_complete
-    condition: "both_reports_exist"
-  - from: architect
-    to: developer
-    trigger: merge_complete
-    condition: "merged_plan_written AND aes_validated"
-  - from: developer
-    to: quality-analysis
-    trigger: completion
-    condition: "pr_created AND ci_green"
-  - from: quality-analysis
-    to: architect
-    trigger: rejection
-    condition: "verdict == REJECTED"
-    max_loops: 3
-  - from: architect
-    to: developer
-    trigger: re_merge_complete
-    condition: "updated_plan_written"
-    is_loop: true
-  - from: developer
-    to: architect
-    trigger: blocker
-    condition: "unresolved_architecture_question"
-  - from: quality-analysis
-    to: architect
-    trigger: escalation
-    condition: "critical_architecture_violation"
-
-# ── Trigger Settings ────────────────────────────────────────────────
-triggers:
-  pr_created:
-    type: event
-    source: github
-    event: pull_request.opened
-    filter:
-      labels: ["need review"]
-      base_branch: develop
-    action: start_parallel_analysis
-    nodes: [business-analyst, tech-lead]
-  pr_updated:
-    type: event
-    source: github
-    event: pull_request.synchronize
-    filter:
-      labels: ["changes requested"]
-    action: resume_pipeline
-    nodes: [developer]
-  cron_quality_scan:
-    type: schedule
-    cron: "*/15 * * * *"
-    action: scan_pending_prs
-    nodes: [quality-analysis]
+  - from: trigger → [business-analyst, tech-lead] (parallel)
+  - from: [business-analyst, tech-lead] → architect
+  - from: architect → developer
+  - from: developer → quality-analysis
+  - from: quality-analysis → architect (rejection loop, max 3)
 
 # ── Feature Queue Settings ──────────────────────────────────────────
 feature_queue:
@@ -184,34 +131,20 @@ skip_rules:
 
 # ── Notification Settings ───────────────────────────────────────────
 notifications:
-  enabled: true
-  on_pipeline_started: true
-  on_node_completed: true
-  on_pipeline_completed: true
-  on_qa_approved: true
-  on_qa_rejected: true
-  on_timeout: true
-  on_error: true
   channels:
     - type: log
     - type: pr_comment
       enabled: true
-    - type: webhook
-      url: ""  # Set Slack/Discord webhook URL for human alerts
-      enabled: false
     - type: desktop
       enabled: true
 
-# ── Health Check Settings ───────────────────────────────────────────
+# ── Health Check Thresholds ─────────────────────────────────────────
 health_check:
-  enabled: true
-  check_interval_hours: 6
   thresholds:
     disk_usage_warn: 80
     disk_usage_error: 90
     log_size_warn_mb: 10
     state_stuck_warn_hours: 2
-    active_features_warn: 1
 
 # ── File Paths ──────────────────────────────────────────────────────
 paths:
@@ -244,12 +177,6 @@ trigger_guards:
   debounce_seconds: 30
   ignore_bot_events: true
   correlation_id_required: true
-
-# ── Lock Settings ───────────────────────────────────────────────────
-locks:
-  queue_claim_lock: true
-  file_system_lock: true
-  lock_timeout_minutes: 180
 
 # ── Global Settings ─────────────────────────────────────────────────
 settings:
