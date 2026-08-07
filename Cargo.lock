@@ -499,8 +499,6 @@ dependencies = [
  "ctrlc",
  "dirs",
  "dispatcher-lint-arwaky",
- "rayon",
- "regex",
  "serde_json",
  "shared-lint-arwaky",
  "tempfile",

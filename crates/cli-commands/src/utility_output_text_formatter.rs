@@ -8,6 +8,15 @@ use std::collections::BTreeMap;
 use shared::cli_commands::Format;
 use shared::common::ViolationItem;
 
+/// Format a violation location as "file:line:column".
+pub fn format_location(file: &str, line: i64, column: i64) -> String {
+    match (line, column) {
+        (l, c) if l > 0 && c > 0 => format!("{}:{}:{}", file, l, c),
+        (l, _) if l > 0 => format!("{}:{}", file, l),
+        _ => file.to_string(),
+    }
+}
+
 /// Group violations by workspace member name extracted from file paths.
 pub fn group_by_member<'a>(
     violations: &'a [ViolationItem],
@@ -135,11 +144,7 @@ fn render_text(
             println!("[{member_name}] — {} violations", results.len());
             println!();
             for r in results {
-                let loc = match (r.line.value(), r.column.value()) {
-                    (l, c) if l > 0 && c > 0 => format!("{}:{}:{}", r.file.value, l, c),
-                    (l, _) if l > 0 => format!("{}:{}", r.file.value, l),
-                    _ => r.file.value.clone(),
-                };
+                let loc = format_location(&r.file.value, r.line.value(), r.column.value());
                 println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
             }
             println!();
@@ -155,11 +160,7 @@ fn render_text(
             for (file_path, file_results) in &file_violations {
                 println!("  {file_path}");
                 for r in file_results {
-                    let loc = match (r.line.value(), r.column.value()) {
-                        (l, c) if l > 0 && c > 0 => format!("{}:{}:{}", r.file.value, l, c),
-                        (l, _) if l > 0 => format!("{}:{}", r.file.value, l),
-                        _ => r.file.value.clone(),
-                    };
+                    let loc = format_location(&r.file.value, r.line.value(), r.column.value());
                     println!("    {} [{}] {}", loc, r.code.code(), r.message.value);
                 }
             }
