@@ -1,7 +1,7 @@
 // PURPOSE: ICycleImportProtocol — unified contract for cycle import detection (AES205)
-use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_definition_vo::LayerMapVO;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;

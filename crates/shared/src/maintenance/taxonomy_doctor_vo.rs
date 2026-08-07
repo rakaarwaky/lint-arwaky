@@ -1,4 +1,4 @@
-// PURPOSE: DoctorResultVO, DoctorCheck — VOs for project health diagnostics results
+// PURPOSE: DoctorResultVO, DoctorCheck, ToolOutput — VOs for project health diagnostics and tool execution results
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -7,6 +7,13 @@ use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+
+/// Output from executing an external tool (clippy, ruff, eslint, ...).
+pub struct ToolOutput {
+    pub stdout: String,
+    pub stderr: String,
+    pub success: bool,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DoctorResultVO {

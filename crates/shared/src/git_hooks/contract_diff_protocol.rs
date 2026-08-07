@@ -1,6 +1,6 @@
 // PURPOSE: IDiffProtocol — protocol for git diff analysis operations (business logic)
-use crate::cli_commands::taxonomy_result_vo::LintResultList;
 use crate::common::taxonomy_git_vo::GitBranchName;
+use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;

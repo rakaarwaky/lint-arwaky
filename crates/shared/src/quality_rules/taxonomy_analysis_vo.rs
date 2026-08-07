@@ -1,6 +1,6 @@
 // PURPOSE: Orphan-specific analysis VOs + re-exports of graph types from filesystem.
 // Re-export LintResultList so code_analysis contracts stay within their own domain.
-pub use crate::cli_commands::taxonomy_result_vo::LintResultList;
+pub use crate::common::taxonomy_lint_result_vo::LintResultList;
 
 // ── Re-export graph types from filesystem (canonical home) ──
 pub use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;

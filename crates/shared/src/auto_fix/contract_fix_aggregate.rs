@@ -5,7 +5,7 @@
 //   - `manual_report(violations)` — FR-005: non-fixable violation reporting
 use crate::auto_fix::contract_file_adapter_protocol::IFileAdapterProtocol;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
-use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;

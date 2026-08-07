@@ -1,6 +1,6 @@
 // PURPOSE: IMandatoryClassProtocol — protocol trait for AES303: check that each file has a struct/enum/trait definition
-use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 
 pub trait IMandatoryClassProtocol: Send + Sync {
     fn check_mandatory_class_definition(

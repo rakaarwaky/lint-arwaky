@@ -1,4 +1,10 @@
 // PURPOSE: IWatchProviderProtocol — protocol trait for filesystem watch provider
+//
+// EXCEPTION (AES304): This trait uses `async_trait` and `tokio::sync::broadcast`
+// because file-watch I/O is inherently asynchronous (inotify/FSNotify event
+// loops). The async runtime is confined to the `file-watch` feature crate's
+// implementation; `shared` only defines the protocol signature. See
+// ARCHITECTURE.md §7 "Async Exception" for the approved exception list.
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::file_watch::taxonomy_service_error::WatchServiceError;
 use crate::file_watch::taxonomy_watch_config_vo::WatchConfig;

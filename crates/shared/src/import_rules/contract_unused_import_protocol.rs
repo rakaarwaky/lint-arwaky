@@ -2,7 +2,7 @@
 // Updated: check_unused_imports now takes file_path for AST dispatch.
 // V2: Added `implemented_traits` for cross-file trait usage analysis.
 
-use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
