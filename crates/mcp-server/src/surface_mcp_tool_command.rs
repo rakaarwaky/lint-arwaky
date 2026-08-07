@@ -72,7 +72,10 @@ impl LintArwakyMcpServer {
 
     pub fn handle_health_check(&self) -> String {
         let result = self.action.handle_health_check();
-        serde_json::to_string(&result).unwrap_or_default()
+        serde_json::to_string(&result).unwrap_or_else(|e| {
+            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
+                .to_string()
+        })
     }
 
     pub fn handle_list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {

@@ -1,6 +1,0 @@
-[2026-08-07T05:58:56+07:00] [WARN] No engine PID file or active service found
-[2026-08-07T05:58:56+07:00] [INFO] No active agent processes
-[2026-08-07T05:58:56+07:00] [OK] State: DEVELOPER (active)
-[2026-08-07T05:58:56+07:00] [ERROR] Disk usage critical: 93%
-[2026-08-07T05:58:56+07:00] [OK] Log file size: 27KB
-[2026-08-07T05:58:56+07:00] [WARN] Multiple lock files: 6 (expected: 0-1)

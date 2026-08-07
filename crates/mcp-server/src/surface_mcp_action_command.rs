@@ -45,6 +45,7 @@ pub struct McpServerDependencies {
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
     pub parse_adapter_names: fn(&str) -> Vec<String>,
     pub parse_score_threshold: fn(&str) -> Option<f64>,
+    pub server_version: String,
 }
 
 pub struct McpActionSurface {
@@ -146,7 +147,7 @@ impl McpActionSurface {
                 } else if report.fixed_count > 0 {
                     1 // partial fix — violations remain
                 } else {
-                    0 // nothing fixable = clean scan, not runtime error
+                    0
                 };
                 serde_json::json!({
                     "status": if report.success { "success" } else { "partial" },
@@ -373,8 +374,7 @@ impl McpActionSurface {
 
     /// Version info.
     pub fn execute_version(&self) -> serde_json::Value {
-        let report = dispatcher::surface_version_action::collect_version();
-        serde_json::json!({"version": report.version, "name": "lint-arwaky", "exit_code": 0})
+        serde_json::json!({"version": self.deps.server_version, "name": "lint-arwaky", "exit_code": 0})
     }
 
     /// Watch is not supported via MCP.
@@ -436,9 +436,10 @@ impl McpActionSurface {
                     self.deps.setup_orchestrator.clone(),
                     self.deps.filesystem.clone(),
                 );
-                let all_ok = items.iter().all(|i| i.ok);
+                let any_failure = items.iter().any(|i| !i.ok);
+                let exit_code = if any_failure { 2 } else { 0 };
                 let messages: Vec<String> = items.iter().map(|i| i.message.clone()).collect();
-                serde_json::json!({"status": if all_ok { "success" } else { "partial" }, "action": action, "exit_code": if all_ok { 0 } else { 2 }, "items": messages})
+                serde_json::json!({"status": if any_failure { "partial" } else { "success" }, "action": action, "exit_code": exit_code, "items": messages})
             }
             "mcp-config" => {
                 serde_json::json!({"error": "mcp-config requires transport configuration — use CLI for full setup", "exit_code": 2})
