@@ -552,6 +552,27 @@ class Engine:
             return
         getattr(self, handler)()
 
+    def _guard(self, fn) -> bool:
+        """Run a handler; on unexpected exception record a full traceback,
+        mark the feature failed and return False (do not crash the loop)."""
+        try:
+            fn()
+            return True
+        except Exception as exc:  # noqa: BLE001 — top-level safety net
+            import traceback
+            feature = self.state.feature or "unknown"
+            detail = f"{type(exc).__name__}: {exc}"
+            for line in traceback.format_exc().splitlines():
+                self.log.write("engine", "error", f"{feature} — {line}")
+            try:
+                if self.state.feature:
+                    self.features.fail(self.state.feature, f"engine error: {detail}")
+            except Exception:
+                pass
+            self.state.failed(detail)
+            self.notify.error("engine", detail, feature)
+            return False
+
     def _signal(self, *_args) -> None:
         self._stop = True
 
@@ -567,7 +588,7 @@ class Engine:
             while not self._stop:
                 current = self.state.current_state
                 print(f"[engine] {now_iso()} State: {current}")
-                self._handle_current()
+                self._guard(self._handle_current)
                 for _ in range(self.config.poll_interval):
                     if self._stop:
                         break
@@ -579,7 +600,7 @@ class Engine:
     def once(self) -> None:
         self.handle_recovery()
         self.log.write("engine", "engine", f"Single cycle — state: {self.state.current_state}")
-        self._handle_current()
+        self._guard(self._handle_current)
 
     def status(self) -> str:
         return (f"State: {self.state.current_state}\n"

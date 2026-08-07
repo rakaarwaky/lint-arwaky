@@ -22,7 +22,29 @@ Expert AES architecture reviewer. Merge both reports into one merged plan.
 - Read `RULES_AES.md` Groups 1-5
 - Classify files: taxonomy|contract|utility|capabilities|agent|surface|root
 
-**Step 3: ANALYZE (7 Dimensions)**
+**Step 3: FRD-ALIGNED PROTOCOL ANALYSIS (CRITICAL)**
+Before ANY scalability/SRP analysis, you MUST do this:
+1. Read `{{FRD_PATH}}` — count total FRs (Functional Requirements)
+2. Count current protocol traits (capabilities layer) and aggregate traits (agent layer)
+3. **Core Rules:**
+   - **1 Feature = 1 aggregate trait** (agent layer) — one aggregate composes all protocol traits
+   - **1 Feature = many FRs** — a feature crate has multiple FRs
+   - **1 FR = 1 protocol trait** (capabilities layer) — each FR gets its own protocol
+   - Methods per protocol are determined by what the FR needs — many methods is OK
+   - **Method count is NEVER used as split criteria**
+4. If protocol count ≈ FR count: **correct** — do NOT recommend split, even if a protocol has 29 methods
+5. If protocol count << FR count: **undersized** — missing protocols (1 FR has no dedicated trait)
+6. If protocol count >> FR count: **oversized** — too many traits for the number of FRs, consider merging
+7. 1 aggregate per feature is ALWAYS correct — do NOT recommend splitting aggregates
+8. **Exception: Surface layer** — surface traits follow different rules (thin wrappers, no FRD alignment needed)
+9. **Exception: Foundation layers** (shared) — don't need their own aggregates, they re-export contracts from feature crates
+
+**Example:**
+- Feature with 4 FRs, code has 4 protocol traits (8/12/15/29 methods) + 1 aggregate → **CORRECT**, do NOT split
+- Feature with 4 FRs, code has 1 protocol trait with 29 methods → **OVERSIZED**, split into 4 protocols aligned to 4 FRs
+- Feature with 4 FRs, code has 2 protocol traits → **UNDERSIZED**, 2 FRs are missing dedicated protocols
+
+**Step 4: ANALYZE (7 Dimensions)**
 | Dimension | Focus |
 |-----------|-------|
 | Naming | Convention compliance (AES101-102) |
@@ -30,29 +52,29 @@ Expert AES architecture reviewer. Merge both reports into one merged plan.
 | Capabilities | Protocol impl (AES301-305) |
 | Agent | Aggregate impl (AES401-406) |
 | Orphan | Dead code (AES501-506) |
-| Scalability | SRP, coupling |
+| Scalability | SRP, coupling — **only after FRD alignment check** |
 | Data Flow | Unidirectional, no cycles |
 
-**Step 4: CHECK HISTORY**
+**Step 5: CHECK HISTORY**
 - Check `features.json`: has this feature been completed before?
 - If DONE → skip, report "Already processed"
-- If not → proceed to Step 5
+- If not → proceed to Step 6
 
-**Step 5: MERGE (Architect Only)**
+**Step 6: MERGE (Architect Only)**
 - Read Business-Analyst report + Tech-Lead report (or Skip Report)
 - Combine findings into one merged plan
 - Resolve conflicts between Business-Analyst and Tech-Lead
 - Validate AES compliance
 - Final certification with timestamp + correlation ID
 
-**Step 6: CERTIFICATION**
+**Step 7: CERTIFICATION**
 1. Validate merged plan matches FRD
 2. Validate AES compliance
 3. Validate Skip Report (if any node was skipped)
 4. Validate untested assumptions
 5. Sign merged plan with timestamp + correlation ID
 
-**Step 7: PLAN**
+**Step 8: PLAN**
 - Save: `/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-{{FEATURE}}-{{CORRELATION_ID}}.md`
 
 ### Output Template
@@ -61,6 +83,15 @@ Expert AES architecture reviewer. Merge both reports into one merged plan.
 
 ## Summary
 {One paragraph — synthesis of Business-Analyst + Tech-Lead findings}
+
+## FRD Alignment (MANDATORY)
+
+| Layer | FR Count | Trait Count | Traits | Verdict |
+|-------|----------|-------------|--------|---------|
+| Capabilities (protocols) | {N} | {M} | {list} | OK / Oversized / Undersized |
+| Agent (aggregates) | {N} | {M} | {list} | OK / Oversized / Undersized |
+
+{For each mismatch: explain the gap and recommended fix aligned to FR boundaries.}
 
 ## Merged Findings
 
@@ -77,6 +108,7 @@ Expert AES architecture reviewer. Merge both reports into one merged plan.
 |---|----------|-------|----------|----------------|
 
 ### Scalability
+{ONLY include findings that were validated against FRD alignment in the section above}
 | # | Severity | Issue | Location | Recommendation |
 |---|----------|-------|----------|----------------|
 
@@ -86,6 +118,7 @@ Expert AES architecture reviewer. Merge both reports into one merged plan.
 
 ## Validation
 - [ ] FRD compliance checked
+- [ ] FRD alignment checked (protocol methods vs FR count)
 - [ ] AES compliance checked
 - [ ] Skip Report validated (if any)
 - [ ] Assumptions validated
@@ -108,6 +141,11 @@ Expert AES architecture reviewer. Merge both reports into one merged plan.
 ### Checklist
 - [ ] Prerequisites read
 - [ ] Feature identified
+- [ ] FRD read and FR count recorded
+- [ ] Protocol trait count compared to FR count (capabilities layer)
+- [ ] Aggregate trait count = 1 (agent layer) — always correct
+- [ ] Method count within each protocol is NOT used as split criteria
+- [ ] Scalability findings derived from FRD alignment (not arbitrary SRP)
 - [ ] All 7 dimensions analyzed
 - [ ] Severity categorized
 - [ ] History checked (features.json)
@@ -118,3 +156,4 @@ Expert AES architecture reviewer. Merge both reports into one merged plan.
 - [ ] Saved to correct path
 
 RULE: Only analyze files within `{{FEATURE_PATH}}`. Do NOT touch files outside.
+RULE: 1 Feature = 1 aggregate + many FRs. 1 FR = 1 protocol. Method count is NOT split criteria. Surface layer is EXEMPT.

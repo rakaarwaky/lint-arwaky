@@ -105,18 +105,29 @@ class HealthCheck:
         self._hlog("OK", f"Lock files: {count}"); return True
 
     def report(self) -> None:
+        GREEN, YELLOW, RED, NC = "\033[0;32m", "\033[1;33m", "\033[0;31m", "\033[0m"
         print("=== Graph Loop Health Report (v2.0 / Python) ===")
         print(f"Timestamp: {now_iso()}\n")
-        checks = (self.check_engine_process, self.check_agent_processes, self.check_state_file,
-                  self.check_disk_space, self.check_log_size, self.check_lock_files)
-        issues = sum(0 if c() else 1 for c in checks)
+        checks = (("Engine process", self.check_engine_process),
+                  ("Agent processes", self.check_agent_processes),
+                  ("State file", self.check_state_file),
+                  ("Disk space", self.check_disk_space),
+                  ("Log size", self.check_log_size),
+                  ("Lock files", self.check_lock_files))
+        issues = 0
+        for name, check in checks:
+            ok = check()
+            label = f"{GREEN}HEALTHY{NC}" if ok else f"{RED}ISSUE{NC}"
+            mark = "✓" if ok else "✗"
+            print(f"  {mark} {name:<18} {label}")
+            issues += 0 if ok else 1
         print()
         if issues == 0:
-            print("Status: HEALTHY")
+            print(f"Status: {GREEN}HEALTHY{NC}")
         elif issues <= 2:
-            print(f"Status: WARNING ({issues} issues)")
+            print(f"Status: {YELLOW}WARNING ({issues} issues){NC}")
         else:
-            print(f"Status: CRITICAL ({issues} issues)")
+            print(f"Status: {RED}CRITICAL ({issues} issues){NC}")
 
 
 def cli(argv: list[str]) -> int:

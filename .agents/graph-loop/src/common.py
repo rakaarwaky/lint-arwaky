@@ -28,10 +28,18 @@ def elapsed_minutes(ts: Optional[str]) -> int:
 
 
 def run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
-    """Run a command, never raise on non-zero exit."""
+    """Run a command, never raise on non-zero exit or missing binary.
+
+    Returns a CompletedProcess; on missing executable it simulates an
+    exit code of 127 so callers can log a traceable failure instead of
+    crashing the pipeline."""
     kwargs.setdefault("capture_output", True)
     kwargs.setdefault("text", True)
-    return subprocess.run(cmd, **kwargs)
+    try:
+        return subprocess.run(cmd, **kwargs)
+    except FileNotFoundError:
+        trace = f"{cmd[0]}: command not found"
+        return subprocess.CompletedProcess(cmd, 127, stdout="", stderr=trace)
 
 
 class Logger:
@@ -43,5 +51,8 @@ class Logger:
 
     def write(self, component: str, event: str, message: str) -> None:
         line = f"[{now_iso()}] [{component}:{event}] {message}\n"
-        with self.log_file.open("a", encoding="utf-8") as f:
-            f.write(line)
+        try:
+            with self.log_file.open("a", encoding="utf-8") as f:
+                f.write(line)
+        except OSError:
+            pass
