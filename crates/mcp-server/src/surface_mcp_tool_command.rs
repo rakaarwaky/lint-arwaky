@@ -44,34 +44,15 @@ impl LintArwakyMcpServer {
         Parameters(args): Parameters<ExecuteCommandArgs>,
     ) -> String {
         let action = args.action.clone();
-        let path = args
-            .args
-            .as_ref()
-            .and_then(|a| a.get("path"))
-            .and_then(|v| v.as_str())
-            .map(String::from)
-            .unwrap_or_else(|| ".".to_string());
-        let threshold = args
-            .args
-            .as_ref()
-            .and_then(|a| a.get("threshold"))
-            .and_then(|v| v.as_u64())
-            .unwrap_or(80);
-        let dry_run = args
-            .args
-            .as_ref()
-            .and_then(|a| a.get("dry_run"))
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+        let cmd_args = args.args.unwrap_or(serde_json::json!({}));
 
-        let result = self
-            .action
-            .execute_command(&action, &path, threshold, dry_run);
+        let result = self.action.execute_command(&action, &cmd_args);
         serde_json::to_string(&result).unwrap_or_default()
     }
 
     pub fn handle_health_check(&self) -> String {
-        self.action.handle_health_check()
+        let result = self.action.handle_health_check();
+        serde_json::to_string(&result).unwrap_or_default()
     }
 
     pub fn handle_list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
@@ -94,9 +75,11 @@ impl ServerHandler for LintArwakyMcpServer {
         let mut builder = ServerCapabilities::builder();
         builder.tools = Some(ToolsCapability::default());
         let capabilities = builder.build();
-        let version_report = dispatcher::surface_version_action::collect_version();
         ServerInfo::new(capabilities)
-            .with_server_info(Implementation::new("lint-arwaky", &version_report.version))
+            .with_server_info(Implementation::new(
+                "lint-arwaky",
+                &self.action.deps.server_version,
+            ))
             .with_protocol_version(ProtocolVersion::default())
     }
 }
