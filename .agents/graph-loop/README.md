@@ -161,6 +161,27 @@ The dashboard displays pipeline information in a color-coded terminal output:
   PENDING: 8
 ```
 
+### TUI (Interactive Monitor)
+
+The TUI provides a live-updating terminal dashboard that auto-refreshes every N seconds:
+
+```bash
+# Start TUI (default: 5s refresh)
+python3 .agents/graph-loop/src/main.py tui
+
+# Custom refresh interval
+python3 .agents/graph-loop/src/main.py tui --refresh 3
+```
+
+Press `Ctrl+C` to quit.
+
+The TUI displays 5 panels:
+- **Pipeline Status** — current state, feature, elapsed time, rejection/iteration counters
+- **Node Status** — BA, TL, Architect, Developer, QA status and duration
+- **Feature Queue** — status counts, progress bar, active features
+- **Recent Activity** — last 10 log events (color-coded)
+- **Health** — engine process, agent count, disk usage, log size
+
 ## Configuration
 
 File: `.agents/graph-loop/config.yaml`
@@ -236,7 +257,8 @@ skip_rules:
 │   ├── skip.py              # Conditional skip logic
 │   ├── notify.py            # Notifications (log, PR comment, desktop, webhook)
 │   ├── health.py            # Health checks (engine, agent, disk, log)
-│   ├── dashboard.py         # Terminal dashboard
+│   ├── dashboard.py         # Terminal dashboard (static)
+│   ├── tui.py               # Interactive TUI monitor (rich-based)
 │   └── common.py            # Shared helpers (time, subprocess, logging)
 ├── prompts/
 │   └── templates/           # Prompt templates for each role

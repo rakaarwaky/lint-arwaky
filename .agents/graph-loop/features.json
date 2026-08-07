@@ -2,7 +2,7 @@
   "version": "2.0",
   "features": {
     "shared": {
-      "status": "LOCKED",
+      "status": "FAILED",
       "priority": 1,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/shared",
       "description": "Taxonomy VOs, contracts, utilities \u2014 foundation layer",
@@ -10,7 +10,13 @@
       "claimed_at": "2026-08-07T07:13:58+07:00",
       "locked_by": "graph-engine",
       "iteration": 0,
-      "history": []
+      "history": [
+        {
+          "status": "FAILED",
+          "reason": "Developer timeout",
+          "failed_at": "2026-08-07T07:42:31+07:00"
+        }
+      ]
     },
     "filesystem": {
       "status": "PENDING",

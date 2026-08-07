@@ -1,28 +1,28 @@
 {
   "version": "2.0",
   "pipeline": {
-    "id": "pipeline-20260807-663",
-    "feature": "shared",
-    "current_state": "ARCHITECT",
-    "started_at": "2026-08-07T07:13:58+07:00",
-    "iteration": 1,
-    "correlation_id": "corr-20260807-shared-553",
-    "pipeline_iteration_counter": 1,
+    "id": null,
+    "feature": null,
+    "current_state": "IDLE",
+    "started_at": null,
+    "iteration": 0,
+    "correlation_id": null,
+    "pipeline_iteration_counter": 0,
     "rejection_loop_counter": 0,
     "parallel_nodes": {
       "business-analyst": {
-        "status": "completed",
+        "status": "idle",
         "task_id": null,
-        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-shared.md",
-        "started_at": "2026-08-07T07:14:28+07:00",
-        "completed_at": "2026-08-07T07:17:58+07:00"
+        "report_file": null,
+        "started_at": null,
+        "completed_at": null
       },
       "tech-lead": {
-        "status": "completed",
+        "status": "idle",
         "task_id": null,
-        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/shared-tech-lead.result",
-        "started_at": "2026-08-07T07:14:28+07:00",
-        "completed_at": "2026-08-07T07:20:58+07:00"
+        "report_file": null,
+        "started_at": null,
+        "completed_at": null
       }
     },
     "pending_merge": [],

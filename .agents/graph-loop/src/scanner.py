@@ -52,6 +52,9 @@ class TriggerScanner:
         if not self.config.ignore_bot_events:
             return False
         r = run(["gh", "pr", "view", pr_number, "--json", "author", "--jq", ".author.login"])
+        if r.returncode != 0:
+            self.log.write("scanner", "guard", f"gh pr view failed for #{pr_number} — not treating as bot")
+            return False
         author = r.stdout.strip()
         if not author:
             return False
@@ -79,12 +82,18 @@ class TriggerScanner:
         self.log.write("scanner", "scan", "Scanning GitHub for PRs with 'need review' label...")
         r = run(["gh", "pr", "list", "--label", "need review",
                  "--json", "number,title,headRefName"])
-        if r.returncode != 0 or not r.stdout.strip():
+        if r.returncode != 0:
+            self.log.write("scanner", "error",
+                           f"gh pr list failed (exit {r.returncode}): {r.stderr.strip() or 'no stderr'}")
+            return []
+        if not r.stdout.strip():
             self.log.write("scanner", "scan", "No PRs found with 'need review' label")
             return []
         try:
             items = json.loads(r.stdout)
         except json.JSONDecodeError:
+            self.log.write("scanner", "error",
+                           f"Invalid JSON from gh pr list: {r.stdout[:200] or 'empty'}")
             return []
         if not items:
             self.log.write("scanner", "scan", "No PRs found with 'need review' label")
@@ -148,9 +157,15 @@ class TriggerScanner:
         self.features.claim(feature, str(folder), pipeline_id)
 
         # track correlation ID on the PR (label + comment)
-        run(["gh", "pr", "edit", pr_number, "--add-label", f"corr:{correlation_id}"])
-        run(["gh", "pr", "comment", pr_number, "--body",
-             f"🔗 Correlation ID: `{correlation_id}` | Pipeline: `{pipeline_id}`"])
+        r = run(["gh", "pr", "edit", pr_number, "--add-label", f"corr:{correlation_id}"])
+        if r.returncode != 0:
+            self.log.write("scanner", "error",
+                           f"Could not label PR #{pr_number} (exit {r.returncode}): {r.stderr.strip() or 'no stderr'}")
+        r = run(["gh", "pr", "comment", pr_number, "--body",
+                 f"🔗 Correlation ID: `{correlation_id}` | Pipeline: `{pipeline_id}`"])
+        if r.returncode != 0:
+            self.log.write("scanner", "error",
+                           f"Could not comment on PR #{pr_number} (exit {r.returncode}): {r.stderr.strip() or 'no stderr'}")
 
         self.log.write("scanner", "trigger",
                        f"Dispatching Business-Analyst and Tech-Lead for feature: {feature}")

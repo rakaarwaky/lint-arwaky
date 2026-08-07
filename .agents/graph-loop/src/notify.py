@@ -29,13 +29,19 @@ class Notify:
         if not pr_number:
             self._nlog("error", "No PR number provided")
             return
-        run(["gh", "pr", "comment", pr_number, "--body", message])
-        self._nlog("pr_comment", f"PR #{pr_number}: {message}")
+        r = run(["gh", "pr", "comment", pr_number, "--body", message])
+        if r.returncode == 0:
+            self._nlog("pr_comment", f"PR #{pr_number}: {message}")
+        else:
+            self._nlog("error", f"PR comment failed (exit {r.returncode}): {r.stderr.strip() or 'no stderr'}")
 
     def desktop(self, title: str, message: str) -> None:
         if shutil.which("notify-send"):
-            run(["notify-send", title, message])
-            self._nlog("desktop", f"{title}: {message}")
+            r = run(["notify-send", title, message])
+            if r.returncode == 0:
+                self._nlog("desktop", f"{title}: {message}")
+            else:
+                self._nlog("error", f"notify-send failed (exit {r.returncode})")
 
     def webhook(self, message: str) -> None:
         channels = self.config.get("notifications.channels", []) or []
@@ -46,10 +52,17 @@ class Notify:
                         ch["url"],
                         data=json.dumps({"text": message}).encode(),
                         headers={"Content-Type": "application/json"})
-                    urllib.request.urlopen(req, timeout=10)
-                    self._nlog("webhook", message)
-                except Exception:
-                    pass
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        if 200 <= resp.status < 300:
+                            self._nlog("webhook", message)
+                        else:
+                            self._nlog("error",
+                                       f"Webhook returned HTTP {resp.status} for: {message}")
+                except urllib.error.HTTPError as e:
+                    self._nlog("error", f"Webhook HTTP error {e.code}: {message}")
+                except Exception as e:
+                    self._nlog("error",
+                               f"Webhook delivery failed ({type(e).__name__}): {message}")
 
     def human_alert(self, severity: str, message: str) -> None:
         self.log_event(severity.lower(), message)

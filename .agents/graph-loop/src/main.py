@@ -28,6 +28,7 @@ Modules:
   dashboard   full | status | nodes | features | activity | metrics
   health      report | check-engine | check-agents | check-state |
               check-disk | check-logs | check-locks
+  tui         [--refresh <seconds>]
 """)
     return 1
 
@@ -42,6 +43,8 @@ def main() -> int:
         from src.dashboard import cli
     elif module == "health":
         from src.health import cli
+    elif module == "tui":
+        from src.tui import cli
     else:
         return usage()
     return cli(rest)

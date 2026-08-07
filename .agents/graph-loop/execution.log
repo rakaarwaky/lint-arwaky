@@ -45,3 +45,27 @@ Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All t
 [2026-08-07T07:21:28+07:00] [engine:state] Dispatching Architect to merge reports
 [2026-08-07T07:21:28+07:00] [engine:state] Running Architect agent...
 Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:24:58+07:00] [engine:state] Architect completed: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-shared-corr-20260807-shared-553.md
+[2026-08-07T07:24:58+07:00] [engine:cleanup] Stage cleanup done for shared: ba_tl_results, architect_result
+[2026-08-07T07:24:58+07:00] [state:merge_complete] Architect merge complete: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/plans/merged-shared-corr-20260807-shared-553.md
+[2026-08-07T07:25:28+07:00] [engine:state] State: DEVELOPER — implementing: shared
+[2026-08-07T07:25:28+07:00] [engine:state] Dispatching Developer
+[2026-08-07T07:25:28+07:00] [engine:state] Running Developer agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:42:19+07:00] [engine:engine] Graph Loop Engine started (PID: 3260976)
+[2026-08-07T07:42:19+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T07:42:19+07:00] [engine:recovery] State=DEVELOPER, elapsed=0m
+[2026-08-07T07:42:19+07:00] [engine:recovery] Elapsed < 60m — auto-resuming from DEVELOPER
+[2026-08-07T07:42:19+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T07:42:19+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T07:42:19+07:00] [engine:state] State: DEVELOPER — implementing: shared
+[2026-08-07T07:42:19+07:00] [engine:state] Dispatching Developer
+[2026-08-07T07:42:19+07:00] [engine:state] Running Developer agent...
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:42:29+07:00] [engine:state] Developer timed out — marking FAILED
+[2026-08-07T07:42:31+07:00] [state:failed] Pipeline marked FAILED: Developer timeout
+[2026-08-07T07:42:31+07:00] [feature:lock_released] Lock released for feature shared
+[2026-08-07T07:42:31+07:00] [feature:failed] Feature shared failed: Developer timeout
+[2026-08-07T07:42:31+07:00] [state:reset] Pipeline reset to IDLE
+[2026-08-07T07:42:31+07:00] [engine:engine] Engine stopping (PID: 3221603)
+Operation cancelled.
