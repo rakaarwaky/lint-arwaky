@@ -161,7 +161,7 @@
       ]
     },
     "cli-commands": {
-      "status": "FAILED",
+      "status": "DONE",
       "priority": 10,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/cli-commands",
       "description": "Human CLI surface (check, scan, fix, ci)",
@@ -171,7 +171,7 @@
       "iteration": 0,
       "history": [
         {
-          "status": "FAILED",
+          "status": "DONE",
           "reason": "Quality-Analysis timeout",
           "failed_at": "2026-08-07T07:11:06+07:00"
         }

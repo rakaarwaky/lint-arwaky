@@ -69,10 +69,11 @@ class FeatureManager:
         self._save(data)
 
     # ── guards ─────────────────────────────────────────────────
+    COOLDOWN_MINUTES = 60
+
     def check_cooldown(self, name: str) -> bool:
         data = self.load()
-        cooldown = int(self.config.get("feature_queue.cooldown_minutes",
-                                       data.get("dedup_rules", {}).get("cooldown_minutes", 60)))
+        cooldown = self.COOLDOWN_MINUTES
         feat = data.get("features", {}).get(name)
         if not feat:
             return True
