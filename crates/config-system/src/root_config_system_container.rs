@@ -21,6 +21,7 @@ pub struct ConfigContainer {
 }
 
 impl ConfigContainer {
+    /// Create a new config container, wiring all capabilities to the filesystem aggregate.
     pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         let workspace_detector = Arc::new(WorkspaceDetector::new(filesystem.clone()));
         let yaml_reader = Arc::new(ConfigYamlReader::new(filesystem.clone()));

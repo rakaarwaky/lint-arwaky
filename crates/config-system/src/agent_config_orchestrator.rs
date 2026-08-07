@@ -189,19 +189,16 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 
         match self.deps.config_reader.read_config(project_root, language) {
             Ok(Some(source)) => self.merge_and_fill_defaults_cached(&source, language),
-            _ => {
-                let mut config = default_config_for_language(language.as_str());
-                let (merged_layers, _) = crate::utility_config_merger::merge_config(&config);
-                config.layers = merged_layers;
-                config
-            }
+            _ => default_config_for_language(language.as_str()),
         }
     }
 
     fn ignored_paths(&self, project_root: &FilePath) -> PatternList {
-        let config = self.load_config_sync(project_root);
+        let ws_type = self.deps.workspace_detector.detect(project_root);
+        let language = ConfigLanguage::from(ws_type);
+        let result = self.load_config_for_language(project_root, language);
         PatternList::new(merge_default_ignored_paths(ignored_paths_from_config(
-            &config,
+            &result.config,
         )))
     }
 
@@ -220,6 +217,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
 // ─── Block 4: Constructors, Helpers, Private Methods ──────
 
 impl ConfigOrchestrator {
+    /// Create a new config orchestrator with all required protocol dependencies.
     pub fn new(deps: ConfigOrchestratorDeps) -> Self {
         Self {
             deps,
