@@ -2,13 +2,13 @@
   "version": "2.0",
   "features": {
     "shared": {
-      "status": "PENDING",
+      "status": "LOCKED",
       "priority": 1,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/shared",
       "description": "Taxonomy VOs, contracts, utilities \u2014 foundation layer",
-      "pipeline_id": null,
-      "claimed_at": null,
-      "locked_by": null,
+      "pipeline_id": "pipeline-20260807-663",
+      "claimed_at": "2026-08-07T07:13:58+07:00",
+      "locked_by": "graph-engine",
       "iteration": 0,
       "history": []
     },

@@ -1,0 +1,27 @@
+[2026-08-07T07:13:52+07:00] [engine:engine] Graph Loop Engine started (PID: 3221603)
+[2026-08-07T07:13:52+07:00] [engine:engine] Poll interval: 30s
+[2026-08-07T07:13:52+07:00] [engine:recovery] State is IDLE — no recovery needed
+[2026-08-07T07:13:52+07:00] [engine:cleanup] Startup cleanup — removing stale files
+[2026-08-07T07:13:52+07:00] [engine:cleanup] Startup cleanup complete
+[2026-08-07T07:13:52+07:00] [engine:state] State: IDLE — scanning for triggers...
+[2026-08-07T07:13:52+07:00] [scanner:scan] Scanning GitHub for PRs with 'need review' label...
+[2026-08-07T07:13:58+07:00] [scanner:scan] No PRs found with 'need review' label
+[2026-08-07T07:13:58+07:00] [feature:lock_released] Feature shared lock released — not in active pipeline
+[2026-08-07T07:13:58+07:00] [engine:state] Found pending feature: shared
+[2026-08-07T07:13:58+07:00] [state:start] Pipeline started for feature: shared (ID: pipeline-20260807-663, correlation: corr-20260807-shared-553)
+[2026-08-07T07:13:58+07:00] [feature:claimed] Feature shared claimed for pipeline pipeline-20260807-663
+[2026-08-07T07:14:28+07:00] [engine:state] State: DISPATCHING — dispatching agents for: shared
+[2026-08-07T07:14:28+07:00] [parallel:start] Starting parallel analysis for: shared
+[2026-08-07T07:14:28+07:00] [parallel:spawn] Agent business-analyst spawned (PID: 3222111) for feature: shared
+[2026-08-07T07:14:28+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/shared-business-analyst.prompt
+[2026-08-07T07:14:28+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/shared-business-analyst.result
+[2026-08-07T07:14:28+07:00] [parallel:spawn] Agent tech-lead spawned (PID: 3222113) for feature: shared
+[2026-08-07T07:14:28+07:00] [parallel:spawn] Prompt: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/prompts/generated/shared-tech-lead.prompt
+[2026-08-07T07:14:28+07:00] [parallel:spawn] Result: /home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/shared-tech-lead.result
+[2026-08-07T07:14:28+07:00] [state:analyzing] Parallel analysis started
+[2026-08-07T07:14:28+07:00] [parallel:start] Both Business-Analyst and Tech-Lead spawned
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+Warning: running headless with --yolo / approval-mode=yolo and no sandbox. All tool calls (shell, write, edit) auto-execute at this process's privilege level. Enable a sandbox via --sandbox / QWEN_SANDBOX, or set QWEN_CODE_SUPPRESS_YOLO_WARNING=1 to silence this notice.
+[2026-08-07T07:14:58+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:15:28+07:00] [engine:state] State: ANALYZING — feature: shared
+[2026-08-07T07:15:58+07:00] [engine:state] State: ANALYZING — feature: shared
