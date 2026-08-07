@@ -1,32 +1,35 @@
 {
   "version": "2.0",
   "pipeline": {
-    "id": "pipeline-20260807-284",
-    "feature": "mcp-server",
-    "current_state": "ANALYZING",
-    "started_at": "2026-08-07T07:58:53+07:00",
+    "current_state": "WAITING_HUMAN",
+    "feature": "config-system",
     "iteration": 1,
-    "correlation_id": "corr-20260807-mcp-server-305",
-    "pipeline_iteration_counter": 1,
-    "rejection_loop_counter": 0,
+    "started_at": "2026-08-07T15:30:56+07:00",
+    "pipeline_iteration_counter": 3,
+    "rejection_loop_counter": 3,
     "parallel_nodes": {
       "business-analyst": {
-        "status": "running",
+        "status": "completed",
         "task_id": null,
-        "report_file": null,
-        "started_at": "2026-08-07T07:59:23+07:00",
-        "completed_at": null
+        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/business-analyst-config-system.md",
+        "started_at": "2026-08-07T15:31:26+07:00",
+        "completed_at": "2026-08-07T15:33:56+07:00"
       },
       "tech-lead": {
-        "status": "running",
+        "status": "completed",
         "task_id": null,
-        "report_file": null,
-        "started_at": "2026-08-07T07:59:23+07:00",
-        "completed_at": null
+        "report_file": "/home/raka/mcp-arwaky/lint-arwaky/.agents/graph-loop/results/config-system-tech-lead.result",
+        "started_at": "2026-08-07T15:31:26+07:00",
+        "completed_at": "2026-08-07T15:33:56+07:00"
       }
     },
     "pending_merge": [],
     "failure": null,
-    "escalation": null
+    "escalation": {
+      "reason": "Max rejection loops reached \u2014 human intervention required",
+      "at": "2026-08-07T15:54:36+07:00"
+    },
+    "id": "pipeline-20260807-152",
+    "correlation_id": "corr-20260807-config-system-952"
   }
 }

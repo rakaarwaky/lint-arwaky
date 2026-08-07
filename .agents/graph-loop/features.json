@@ -28,43 +28,55 @@
       "priority": 2,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/filesystem",
       "description": "File walking, AST parsing, graph construction",
-      "pipeline_id": "pipeline-20260807-268",
-      "claimed_at": "2026-08-07T07:43:21+07:00",
-      "locked_by": "graph-engine",
       "iteration": 0,
       "history": [],
-      "lock": null
+      "pipeline_id": "pipeline-20260807-745",
+      "claimed_at": "2026-08-07T13:32:31+07:00",
+      "locked_by": "graph-engine"
     },
     "config-system": {
       "status": "LOCKED",
       "priority": 3,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/config-system",
       "description": "Config load, merge, workspace detect",
-      "pipeline_id": "pipeline-20260807-517",
-      "claimed_at": "2026-08-07T04:04:02+07:00",
-      "locked_by": "graph-engine",
-      "iteration": 0,
-      "history": []
+      "iteration": 3,
+      "rejection_loop": 3,
+      "max_rejection_loops": 3,
+      "history": [
+        {
+          "status": "FAILED",
+          "reason": "QA rejection loop 1/3 \u2014 is_workspace() test regression",
+          "failed_at": "2026-08-07T14:00:00+07:00"
+        },
+        {
+          "status": "FAILED",
+          "reason": "QA rejection loop 2/3 \u2014 is_workspace() test regression unchanged",
+          "failed_at": "2026-08-07T15:30:00+07:00"
+        },
+        {
+          "status": "ESCALATED",
+          "reason": "QA rejection loop 3/3 \u2014 limit reached, human intervention required",
+          "escalated_at": "2026-08-07T16:00:00+07:00"
+        }
+      ],
+      "pr": 188,
+      "pipeline_id": "pipeline-20260807-152",
+      "claimed_at": "2026-08-07T15:30:56+07:00",
+      "locked_by": "graph-engine"
     },
     "naming-rules": {
-      "status": "LOCKED",
+      "status": "PENDING",
       "priority": 4,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/naming-rules",
       "description": "AES101\u2013102 naming conventions",
-      "pipeline_id": "pipeline-20260807-104",
-      "claimed_at": "2026-08-07T04:09:29+07:00",
-      "locked_by": "graph-engine",
       "iteration": 0,
       "history": []
     },
     "import-rules": {
-      "status": "LOCKED",
+      "status": "PENDING",
       "priority": 5,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/import-rules",
       "description": "AES201\u2013205 import boundaries",
-      "pipeline_id": "pipeline-20260807-141",
-      "claimed_at": "2026-08-07T04:13:39+07:00",
-      "locked_by": "graph-engine",
       "iteration": 0,
       "history": []
     },
@@ -189,7 +201,7 @@
       ]
     },
     "mcp-server": {
-      "status": "LOCKED",
+      "status": "FAILED",
       "priority": 11,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/mcp-server",
       "description": "AI MCP surface (5 tools, full CLI parity)",
@@ -197,18 +209,45 @@
       "claimed_at": "2026-08-07T07:58:53+07:00",
       "locked_by": "graph-engine",
       "iteration": 0,
-      "history": []
+      "history": [
+        {
+          "status": "FAILED",
+          "reason": "business-analyst timeout",
+          "failed_at": "2026-08-07T08:39:11+07:00"
+        }
+      ]
     },
     "tui": {
-      "status": "PENDING",
+      "status": "DONE",
       "priority": 12,
       "path": "/home/raka/mcp-arwaky/lint-arwaky/crates/tui",
       "description": "Interactive terminal UI",
-      "pipeline_id": null,
-      "claimed_at": null,
-      "locked_by": null,
+      "pipeline_id": "pipeline-20260807-214",
+      "claimed_at": "2026-08-07T08:39:12+07:00",
+      "locked_by": "graph-engine",
       "iteration": 0,
-      "history": []
+      "history": [
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-214",
+          "completed_at": "2026-08-07T09:10:34+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-214",
+          "completed_at": "2026-08-07T09:10:40+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-214",
+          "completed_at": "2026-08-07T09:10:41+07:00"
+        },
+        {
+          "status": "DONE",
+          "pipeline_id": "pipeline-20260807-214",
+          "completed_at": "2026-08-07T09:11:05+07:00"
+        }
+      ]
     }
   },
   "dedup_rules": {
