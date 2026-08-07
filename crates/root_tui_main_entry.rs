@@ -25,7 +25,7 @@ fn main() -> anyhow::Result<()> {
 
     // Build TUI surfaces via dispatcher — SurfaceLintExecutor delegates to dispatcher functions.
     let lint_executor = Arc::new(
-        tui::surface_lint_executor::SurfaceLintExecutor::new(
+        tui::surface_lint_action::SurfaceLintExecutor::new(
             deps.code_analysis_linter,
             deps.filesystem.clone(),
             fs_factory,

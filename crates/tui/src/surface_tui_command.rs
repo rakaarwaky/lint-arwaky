@@ -1,4 +1,4 @@
-use crate::surface_action_handler::SurfaceActionHandler;
+use crate::surface_event_action::SurfaceActionHandler;
 use crate::surface_file_list_view::FileListView;
 use crate::surface_path_screen::PathScreen;
 use crate::surface_preview_view::PreviewView;

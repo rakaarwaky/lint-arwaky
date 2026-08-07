@@ -84,22 +84,7 @@ impl SurfaceLintExecutor {
         match collect_scan(opts) {
             Ok(violations) => {
                 let total = violations.len();
-                let mut output = format!(
-                    "Comprehensive scan for {}\nViolations found: {}\n\n",
-                    path, total
-                );
-                for (i, v) in violations.iter().enumerate() {
-                    output.push_str(&format!(
-                        "{}. [{}] {}:{} — {}\n   Code: {} | Severity: {}\n\n",
-                        i + 1,
-                        v.severity,
-                        v.file,
-                        v.line.value,
-                        v.message,
-                        v.code,
-                        v.severity
-                    ));
-                }
+                let output = format_violations(path, &violations);
                 LintExecutionResult::success(output, total)
             }
             Err(e) => LintExecutionResult::failure(format!("Error: {e}")),
