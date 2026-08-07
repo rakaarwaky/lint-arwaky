@@ -79,11 +79,13 @@ impl LintArwakyMcpServer {
     }
 
     pub fn handle_list_commands(&self, Parameters(args): Parameters<ListCommandsArgs>) -> String {
-        self.action.handle_list_commands(args.domain)
+        let result = self.action.handle_list_commands(args.domain);
+        serde_json::to_string(&result).unwrap_or_default()
     }
 
     pub fn handle_read_skill(&self, Parameters(args): Parameters<ReadSkillArgs>) -> String {
-        self.action.handle_read_skill(args.section)
+        let result = self.action.handle_read_skill(args.section);
+        serde_json::to_string(&result).unwrap_or_default()
     }
 
     pub fn handle_get_config(&self, Parameters(args): Parameters<GetConfigArgs>) -> String {
@@ -101,7 +103,7 @@ impl ServerHandler for LintArwakyMcpServer {
         ServerInfo::new(capabilities)
             .with_server_info(Implementation::new(
                 "lint-arwaky",
-                &self.action.deps.server_version,
+                env!("CARGO_PKG_VERSION"),
             ))
             .with_protocol_version(ProtocolVersion::default())
     }

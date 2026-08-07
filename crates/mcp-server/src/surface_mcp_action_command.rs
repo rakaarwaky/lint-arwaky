@@ -145,7 +145,7 @@ impl McpActionSurface {
                 let exit_code = if report.success {
                     0
                 } else if report.fixed_count > 0 {
-                    1
+                    1 // partial fix — violations remain
                 } else {
                     0
                 };
@@ -474,8 +474,9 @@ impl McpActionSurface {
             .iter()
             .filter(|a| a["status"] == "available")
             .count();
+        let version_report = dispatcher::surface_version_action::collect_version();
         serde_json::json!({
-            "version": self.deps.server_version,
+            "version": version_report.version,
             "adapters_available": available,
             "adapters_total": adapters.len(),
             "adapters": adapters,
@@ -484,7 +485,7 @@ impl McpActionSurface {
     }
 
     /// List CLI commands filtered by domain.
-    pub fn handle_list_commands(&self, domain: Option<String>) -> String {
+    pub fn handle_list_commands(&self, domain: Option<String>) -> serde_json::Value {
         let catalog = shared::cli_commands::taxonomy_command_catalog_vo::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
@@ -496,16 +497,11 @@ impl McpActionSurface {
                 serde_json::json!({"name": name, "description": desc, "example": example})
             })
             .collect();
-        let result =
-            serde_json::json!({ "commands": commands, "total": commands.len(), "exit_code": 0 });
-        serde_json::to_string(&result).unwrap_or_else(|e| {
-            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
-                .to_string()
-        })
+        serde_json::json!({ "commands": commands, "total": commands.len(), "exit_code": 0 })
     }
 
     /// Read skill documentation by section.
-    pub fn handle_read_skill(&self, section: Option<String>) -> String {
+    pub fn handle_read_skill(&self, section: Option<String>) -> serde_json::Value {
         let skills = [
             "lint-arwaky-rust",
             "lint-arwaky-python",
@@ -532,8 +528,7 @@ impl McpActionSurface {
         let content = match content {
             Some(c) => c,
             None => {
-                return serde_json::json!({"error": "Skill documentation not found", "searched": candidates, "exit_code": 2})
-                    .to_string()
+                return serde_json::json!({"error": "Skill documentation not found", "searched": candidates, "exit_code": 2});
             }
         };
         match section.as_deref() {
@@ -546,12 +541,11 @@ impl McpActionSurface {
                         None => remaining.len(),
                     };
                     serde_json::json!({"section": s, "content": &remaining[..end], "exit_code": 0})
-                        .to_string()
                 } else {
-                    serde_json::json!({"error": format!("Section '{}' not found", s), "exit_code": 2}).to_string()
+                    serde_json::json!({"error": format!("Section '{}' not found", s), "exit_code": 2})
                 }
             }
-            _ => serde_json::json!({"content": content, "exit_code": 0}).to_string(),
+            _ => serde_json::json!({"content": content, "exit_code": 0}),
         }
     }
 
