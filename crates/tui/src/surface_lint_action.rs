@@ -557,10 +557,7 @@ impl SurfaceLintExecutor {
     }
 }
 
-fn format_violations(
-    path: &str,
-    violations: &[dispatcher::surface_output_component::ViolationItem],
-) -> String {
+fn format_violations(path: &str, violations: &[shared::common::ViolationItem]) -> String {
     if violations.is_empty() {
         return format!("No violations found for {}.", path);
     }

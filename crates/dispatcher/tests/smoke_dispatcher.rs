@@ -1,6 +1,6 @@
 // Smoke tests — module imports work, key types accessible, complete within 5s.
 use dispatcher_lint_arwaky::surface_check_action::ScanOptions;
-use dispatcher_lint_arwaky::surface_output_component::ViolationItem;
+use shared::common::ViolationItem;
 
 #[test]
 fn smoke_module_imports_work() {

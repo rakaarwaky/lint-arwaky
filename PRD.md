@@ -1,4 +1,4 @@
-# PRD — Lint Arwaky (v1.11.0)
+# PRD — Lint Arwaky (v2.0.0)
 
 ---
 
@@ -37,7 +37,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
   - External linter adapters (Clippy, Rustfmt, cargo-audit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)
   - SARIF 2.1.0, JUnit XML, JSON reports
   - Git hooks integration
-  - Auto-fix: remove + # PRD — Lint Arwaky (v1.1.0) + rename
+  - Auto-fix: remove + replace + rename
 - **Out of scope**:
 
   - IDE plugins (VS Code, IntelliJ)
@@ -53,7 +53,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 | Topic                 | Decision                                                                                                |
 | ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| Auto-fix safety       | **Remove + # PRD — Lint Arwaky (v1.1.0) + rename**                                                                          |
+| Auto-fix safety       | **Remove + replace + rename**                                                                          |
 | MCP vs CLIv s TUI     | **Full parity**                                                                                        |
 | MCP tools             | **5 tools**: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`             |
 | Acceptance tests      | Filename standard:`acceptance_FR_00N.rs`                                                                |
@@ -108,7 +108,7 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 - [ ]  External linter adapters (Clippy, Rustfmt, cargo-audit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC) — `external-lint`
 - [ ]  SARIF 2.1.0, JUnit XML, JSON reports — `report-formatter`
 - [ ]  Git hooks integration — `git-hooks`
-- [ ]  Auto-fix capabilities (remove + # PRD — Lint Arwaky (v1.1.0) + rename) — `auto-fix` 
+- [ ]  Auto-fix capabilities (remove + replace + rename) — `auto-fix` 
 - [ ]  Watch mode for continuous linting — `file-watch`
 - [ ]  TUI file browser (critical-path acceptance) — `tui`
 - [ ]  Workspace exit-code contract enforced everywhere — `cli-commands`, `maintenance`

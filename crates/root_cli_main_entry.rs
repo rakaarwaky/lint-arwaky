@@ -164,6 +164,10 @@ enum Command {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
     },
+    /// Install git pre-commit hook
+    InstallHook,
+    /// Uninstall git pre-commit hook
+    UninstallHook,
     /// Print version
     Version,
 }
@@ -255,6 +259,17 @@ fn main() {
 
     let watch_aggregate = file_watch::root_file_watch_container::FileWatchContainer::new()
         .aggregate(code_analysis_linter.clone());
+
+    let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
+        FilePath::new(
+            std::env::current_dir()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|_| ".".to_string()),
+        )
+        .unwrap_or_default(),
+        filesystem.clone(),
+    );
+    let git_orchestrator = git_container.aggregate();
 
     let report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate> = Arc::new(
         report_formatter::ReportFormatterOrchestrator::new(report_formatter::ReportFormatterDeps {
@@ -458,6 +473,44 @@ fn main() {
             watch_aggregate.clone(),
             Some(FilePath::new(path).unwrap_or_default()),
         ),
+        Command::InstallHook => {
+            let exe = std::env::current_exe()
+                .map(|p| FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default())
+                .unwrap_or_default();
+            match dispatcher::surface_git_action::collect_install_hook(
+                git_orchestrator.clone(),
+                &exe,
+            ) {
+                Ok(report) => {
+                    println!("{}", report.message);
+                    if report.success {
+                        shared::common::ExitCode::OK
+                    } else {
+                        shared::common::ExitCode::RUNTIME_ERROR
+                    }
+                }
+                Err(e) => {
+                    eprintln!("{e}");
+                    shared::common::ExitCode::RUNTIME_ERROR
+                }
+            }
+        }
+        Command::UninstallHook => {
+            match dispatcher::surface_git_action::collect_uninstall_hook(git_orchestrator.clone()) {
+                Ok(report) => {
+                    println!("{}", report.message);
+                    if report.success {
+                        shared::common::ExitCode::OK
+                    } else {
+                        shared::common::ExitCode::RUNTIME_ERROR
+                    }
+                }
+                Err(e) => {
+                    eprintln!("{e}");
+                    shared::common::ExitCode::RUNTIME_ERROR
+                }
+            }
+        }
         Command::Version => {
             let report = dispatcher::surface_version_action::collect_version();
             println!("lint-arwaky {}", report.version);

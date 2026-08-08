@@ -1,6 +1,6 @@
 [package]
 name = "file-watch-lint-arwaky"
-version = "1.11.0"
+version = "2.0.0"
 edition = "2024"
 description = "File-watch feature crate — real-time file change detection and incremental lint pipeline."
 license = "MIT"

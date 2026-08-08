@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 // ─── COMMAND_CATALOG constant (from taxonomy_catalog_constant) ───
+// Mirrors the CLI binary subcommands in crates/root_cli_main_entry.rs (Command enum).
 
 pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
     (
@@ -26,9 +27,64 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "lint-arwaky-cli ci /path --threshold 80",
     ),
     (
+        "quality",
+        "Quality rules scan (single linter)",
+        "lint-arwaky-cli quality ./src/",
+    ),
+    (
+        "role",
+        "Role rules scan (single linter)",
+        "lint-arwaky-cli role ./src/",
+    ),
+    (
+        "import",
+        "Import rules scan (single linter)",
+        "lint-arwaky-cli import ./src/",
+    ),
+    (
+        "naming",
+        "Naming rules scan (single linter)",
+        "lint-arwaky-cli naming ./src/",
+    ),
+    (
+        "orphan",
+        "Orphan detection scan (single linter)",
+        "lint-arwaky-cli orphan ./src/",
+    ),
+    (
+        "external",
+        "External lint scan (ruff, eslint, ...)",
+        "lint-arwaky-cli external ./src/",
+    ),
+    (
         "doctor",
         "System health diagnostics",
         "lint-arwaky-cli doctor",
+    ),
+    (
+        "config",
+        "Show effective architecture config",
+        "lint-arwaky-cli config",
+    ),
+    (
+        "git",
+        "Scan files changed since git base",
+        "lint-arwaky-cli git --base develop",
+    ),
+    (
+        "security",
+        "Security vulnerability scan",
+        "lint-arwaky-cli security ./src/",
+    ),
+    (
+        "dependencies",
+        "Dependency report",
+        "lint-arwaky-cli dependencies ./src/",
+    ),
+    (
+        "adapters",
+        "List external lint adapters",
+        "lint-arwaky-cli adapters",
     ),
     (
         "version",
@@ -41,16 +97,15 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "lint-arwaky-cli init",
     ),
     (
-        "watch",
-        "Watch for file changes and lint",
-        "lint-arwaky-cli watch ./src/",
+        "install",
+        "Install adapter dependencies",
+        "lint-arwaky-cli install",
     ),
     (
-        "mcp",
-        "Start MCP server for IDE integration",
-        "lint-arwaky-cli mcp",
+        "mcp-config",
+        "Print MCP client configuration snippet",
+        "lint-arwaky-cli mcp-config claude",
     ),
-    ("tui", "Launch terminal UI", "lint-arwaky-cli tui"),
     (
         "install-hook",
         "Install git pre-commit hook",
@@ -62,9 +117,9 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "lint-arwaky-cli uninstall-hook",
     ),
     (
-        "setup",
-        "Generate MCP configuration for IDEs",
-        "lint-arwaky-cli setup",
+        "watch",
+        "Watch for file changes and lint",
+        "lint-arwaky-cli watch ./src/",
     ),
 ];
 

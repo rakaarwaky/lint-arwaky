@@ -33,7 +33,7 @@ fn install_npm_packages_empty_with_sudo() {
 
 #[test]
 fn adapter_is_default_constructible() {
-    let adapter = SetupInstallerAdapter::default();
+    let adapter = SetupInstallerAdapter;
     let result = adapter.install_python_packages(&PatternList::default());
     assert!(result.is_ok());
 }

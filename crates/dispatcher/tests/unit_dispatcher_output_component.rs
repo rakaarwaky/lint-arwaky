@@ -1,6 +1,6 @@
 // Unit tests — ViolationItem construction and fields from various sources.
-use dispatcher_lint_arwaky::surface_output_component::ViolationItem;
 use shared::cli_commands::LintResult;
+use shared::common::ViolationItem;
 use shared::common::{
     ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, LocationList, Severity,
 };

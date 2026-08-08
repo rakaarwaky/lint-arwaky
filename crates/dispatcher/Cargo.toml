@@ -1,6 +1,6 @@
 [package]
 name = "dispatcher-lint-arwaky"
-version = "1.11.0"
+version = "2.0.0"
 edition = "2024"
 description = "Utility Surface — centralizes business logic for Smart surfaces (CLI, MCP, TUI, API)."
 license = "MIT"

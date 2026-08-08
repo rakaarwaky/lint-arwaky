@@ -12,7 +12,7 @@ use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 
-use crate::surface_output_component::ViolationItem;
+use shared::common::ViolationItem;
 
 pub fn collect_naming(
     path: Option<FilePath>,

@@ -68,8 +68,8 @@ fn orchestrator_dependency_report() {
     let orch = container.orchestrator();
     let path = FilePath::new(".").unwrap();
     let result = orch.run_dependency_report(&path);
-    if result.is_ok() {
-        assert_eq!(result.unwrap().language, "Rust");
+    if let Ok(report) = result {
+        assert_eq!(report.language, "Rust");
     }
 }
 

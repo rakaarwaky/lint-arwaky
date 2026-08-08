@@ -6,7 +6,7 @@ use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::import_rules::IImportRunnerAggregate;
 
-use crate::surface_output_component::ViolationItem;
+use shared::common::ViolationItem;
 
 pub fn collect_import(
     path: Option<FilePath>,

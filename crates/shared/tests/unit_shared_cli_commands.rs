@@ -93,7 +93,7 @@ fn cli_global_flags_propagate() {
 #[test]
 fn command_catalog_contains_core_commands() {
     let catalog = CommandCatalogVO::command_catalog();
-    assert!(catalog.len() >= 13);
+    assert!(catalog.len() >= 22);
     for (name, _, _) in COMMAND_CATALOG {
         assert!(catalog.contains_key(&shared_lint_arwaky::common::ActionName::from(*name)));
     }

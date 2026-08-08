@@ -6,6 +6,5 @@ fn check_action_module_exists() {
 
 #[test]
 fn output_component_module_exists() {
-    let _ =
-        std::any::type_name::<dispatcher_lint_arwaky::surface_output_component::ViolationItem>();
+    let _ = std::any::type_name::<shared::common::ViolationItem>();
 }
