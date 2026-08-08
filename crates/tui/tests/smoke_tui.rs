@@ -3,21 +3,6 @@ use shared::common::{DisplayContent, FilePath};
 use tui_lint_arwaky::utility_file_system;
 
 #[test]
-fn smoke_file_size_human_completes_quickly() {
-    let start = std::time::Instant::now();
-    let _ = utility_file_system::file_size_human(0);
-    let _ = utility_file_system::file_size_human(1024);
-    let _ = utility_file_system::file_size_human(1024 * 1024);
-    let _ = utility_file_system::file_size_human(1024 * 1024 * 1024);
-    let elapsed = start.elapsed();
-    assert!(
-        elapsed.as_secs() < 5,
-        "Smoke test exceeded 5s: {:?}",
-        elapsed
-    );
-}
-
-#[test]
 fn smoke_is_valid_directory_completes_quickly() {
     let start = std::time::Instant::now();
     let tmp = FilePath::new("/tmp".to_string()).unwrap();

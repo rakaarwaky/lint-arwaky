@@ -179,6 +179,21 @@ async function handleScan(req, res) {
   });
 }
 
+async function handleWorkspace(req, res) {
+  if (!requireAuth(req, res)) return;
+
+  let branch = null;
+  try {
+    branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+      cwd: WORKSPACE_ROOT,
+      encoding: 'utf-8',
+      timeout: 5_000,
+    }).trim();
+  } catch {}
+
+  json(res, 200, { rootPath: WORKSPACE_ROOT, branch, worktree: null });
+}
+
 async function handleStatus(req, res) {
   if (!requireAuth(req, res)) return;
 
@@ -215,6 +230,9 @@ const server = createServer(async (req, res) => {
 
   if (url.pathname === '/api/scan' && req.method === 'POST') {
     return handleScan(req, res);
+  }
+  if (url.pathname === '/api/workspace' && req.method === 'GET') {
+    return handleWorkspace(req, res);
   }
   if (url.pathname === '/api/status' && req.method === 'GET') {
     return handleStatus(req, res);

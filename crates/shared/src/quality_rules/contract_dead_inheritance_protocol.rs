@@ -1,5 +1,5 @@
 // PURPOSE: IDeadInheritanceProtocol — protocol trait for AES303 sub-check 2: detect empty struct/impl blocks
-use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 
 /// Protocol for detecting dead (empty) struct and impl blocks.
 ///

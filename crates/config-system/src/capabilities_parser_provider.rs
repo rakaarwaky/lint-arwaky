@@ -120,6 +120,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ConfigParserProvider {
+    /// Create a new config parser with filesystem IO dependency.
     pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         Self { filesystem }
     }

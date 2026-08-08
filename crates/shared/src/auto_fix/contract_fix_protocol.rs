@@ -16,8 +16,8 @@
 //     (internal implementation details, not part of the public FRD API Contract)
 use crate::auto_fix::taxonomy_fix_outcome_vo::FixOutcome;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
-use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_path_vo::FilePath;
 

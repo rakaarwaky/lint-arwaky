@@ -118,6 +118,16 @@ impl std::fmt::Display for SetupError {
 
 impl std::error::Error for SetupError {}
 
+/// Result of a package-manager pre-flight check (FR-007).
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct PackageManagerStatus {
+    pub tool: String,
+    pub status: String,
+}
+
+/// Type alias for the pre-flight check result.
+pub type PreFlightResult = Vec<PackageManagerStatus>;
+
 /// Result of writing a configuration file. The previous return type was
 /// `Result<(), String>` — we now return `Result<DescriptionVO, SetupError>`
 /// where the description carries a success message (e.g. "wrote

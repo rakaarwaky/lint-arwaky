@@ -1,6 +1,6 @@
 // PURPOSE: utility_file_system — stateless filesystem utilities for TUI surfaces
 // Pure functions only — no DI, no trait params, no contract imports.
-use shared::common::{DisplayContent, FilePath};
+use shared::common::FilePath;
 use std::io::Write;
 use std::path::Path;
 
@@ -14,35 +14,6 @@ pub fn parent_directory(path: &FilePath) -> Option<FilePath> {
     Path::new(path.value())
         .parent()
         .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
-}
-
-/// Format byte count as human-readable string (B, K, M, G).
-pub fn file_size_human(bytes: u64) -> DisplayContent {
-    const KB: u64 = 1024;
-    const MB: u64 = KB * 1024;
-    const GB: u64 = MB * 1024;
-
-    DisplayContent::new(if bytes >= GB {
-        format!("{:.1}G", bytes as f64 / GB as f64)
-    } else if bytes >= MB {
-        format!("{:.1}M", bytes as f64 / MB as f64)
-    } else if bytes >= KB {
-        format!("{:.1}K", bytes as f64 / KB as f64)
-    } else {
-        format!("{}B", bytes)
-    })
-}
-
-/// Split a file path into its individual components (file name, parent dir segments).
-pub fn path_components(path: &FilePath) -> Vec<FilePath> {
-    Path::new(path.value())
-        .components()
-        .filter_map(|c| {
-            c.as_os_str()
-                .to_str()
-                .and_then(|s| FilePath::new(s.to_string()).ok())
-        })
-        .collect()
 }
 
 /// Copy text to the system clipboard.

@@ -1,7 +1,7 @@
 // PURPOSE: IDummyImportCheckerProtocol — unified contract for AES204 dummy import checking
-use crate::cli_commands::taxonomy_result_vo::LintResult;
 use crate::common::taxonomy_definition_vo::LayerMapVO;
 use crate::common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;

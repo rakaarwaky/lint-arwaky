@@ -45,6 +45,7 @@ pub struct McpServerDependencies {
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
     pub parse_adapter_names: fn(&str) -> Vec<String>,
     pub parse_score_threshold: fn(&str) -> Option<f64>,
+    pub server_version: String,
 }
 
 pub struct McpActionSurface {
@@ -144,9 +145,9 @@ impl McpActionSurface {
                 let exit_code = if report.success {
                     0
                 } else if report.fixed_count > 0 {
-                    1
+                    1 // partial fix — violations remain
                 } else {
-                    2
+                    0
                 };
                 serde_json::json!({
                     "status": if report.success { "success" } else { "partial" },
@@ -175,7 +176,7 @@ impl McpActionSurface {
             self.deps.code_analysis_linter.clone(),
             None,
             self.deps.filesystem.clone(),
-            &Vec::new(),
+            &[],
         ) {
             Ok(violations) => violations_response("quality", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -193,7 +194,7 @@ impl McpActionSurface {
             self.deps.import_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
-            &Vec::new(),
+            &[],
         ) {
             Ok(violations) => violations_response("import", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -211,7 +212,7 @@ impl McpActionSurface {
             self.deps.naming_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
-            &Vec::new(),
+            &[],
         ) {
             Ok(violations) => violations_response("naming", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -225,7 +226,7 @@ impl McpActionSurface {
             None,
             self.deps.filesystem.clone(),
             path,
-            &Vec::new(),
+            &[],
         ) {
             Ok(violations) => violations_response("role", path, &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -373,8 +374,7 @@ impl McpActionSurface {
 
     /// Version info.
     pub fn execute_version(&self) -> serde_json::Value {
-        let report = dispatcher::surface_version_action::collect_version();
-        serde_json::json!({"version": report.version, "name": "lint-arwaky", "exit_code": 0})
+        serde_json::json!({"version": self.deps.server_version, "name": "lint-arwaky", "exit_code": 0})
     }
 
     /// Watch is not supported via MCP.
@@ -405,12 +405,7 @@ impl McpActionSurface {
             "dependencies" => self.execute_dependencies(path),
             "version" => self.execute_version(),
             "watch" => self.execute_watch(),
-            "adapters" => {
-                let result = self.handle_health_check();
-                serde_json::from_str(&result).unwrap_or_else(|_| {
-                    serde_json::json!({"error": "Failed to serialize health check", "exit_code": 2})
-                })
-            }
+            "adapters" => self.handle_health_check(),
             "install-hook" => {
                 let fp = match Self::to_fp(path) {
                     Ok(f) => f,
@@ -441,11 +436,13 @@ impl McpActionSurface {
                     self.deps.setup_orchestrator.clone(),
                     self.deps.filesystem.clone(),
                 );
+                let any_failure = items.iter().any(|i| !i.ok);
+                let exit_code = if any_failure { 2 } else { 0 };
                 let messages: Vec<String> = items.iter().map(|i| i.message.clone()).collect();
-                serde_json::json!({"status": "success", "action": action, "exit_code": 0, "items": messages})
+                serde_json::json!({"status": if any_failure { "partial" } else { "success" }, "action": action, "exit_code": exit_code, "items": messages})
             }
             "mcp-config" => {
-                serde_json::json!({"error": "mcp-config requires transport configuration — use CLI for full setup", "exit_code": 1})
+                serde_json::json!({"error": "mcp-config requires transport configuration — use CLI for full setup", "exit_code": 2})
             }
             "config-show" => {
                 let result = self.handle_get_config(path, None);
@@ -462,7 +459,7 @@ impl McpActionSurface {
     // ─── Non-dispatcher MCP business logic ────────────────────
 
     /// Health check: adapter availability from maintenance aggregate.
-    pub fn handle_health_check(&self) -> String {
+    pub fn handle_health_check(&self) -> serde_json::Value {
         let health = dispatcher::surface_maintenance_action::collect_health_check(
             self.deps.maintenance_orchestrator.clone(),
         );
@@ -478,21 +475,17 @@ impl McpActionSurface {
             .filter(|a| a["status"] == "available")
             .count();
         let version_report = dispatcher::surface_version_action::collect_version();
-        let result = serde_json::json!({
+        serde_json::json!({
             "version": version_report.version,
             "adapters_available": available,
             "adapters_total": adapters.len(),
             "adapters": adapters,
             "exit_code": 0,
-        });
-        serde_json::to_string_pretty(&result).unwrap_or_else(|e| {
-            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
-                .to_string()
         })
     }
 
     /// List CLI commands filtered by domain.
-    pub fn handle_list_commands(&self, domain: Option<String>) -> String {
+    pub fn handle_list_commands(&self, domain: Option<String>) -> serde_json::Value {
         let catalog = shared::cli_commands::taxonomy_command_catalog_vo::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
@@ -504,30 +497,19 @@ impl McpActionSurface {
                 serde_json::json!({"name": name, "description": desc, "example": example})
             })
             .collect();
-        let result =
-            serde_json::json!({ "commands": commands, "total": commands.len(), "exit_code": 0 });
-        serde_json::to_string(&result).unwrap_or_else(|e| {
-            serde_json::json!({"error": format!("Serialization failed: {e}"), "exit_code": 2})
-                .to_string()
-        })
+        serde_json::json!({ "commands": commands, "total": commands.len(), "exit_code": 0 })
     }
 
     /// Read skill documentation by section.
-    pub fn handle_read_skill(&self, section: Option<String>) -> String {
+    pub fn handle_read_skill(&self, section: Option<String>) -> serde_json::Value {
         let skills = [
             "lint-arwaky-rust",
             "lint-arwaky-python",
             "lint-arwaky-typescript",
         ];
-        let base = env!("CARGO_MANIFEST_DIR");
         let mut candidates: Vec<String> = skills
             .iter()
-            .flat_map(|s| {
-                vec![
-                    format!("{}/../.agents/skills/{}/SKILL.md", base, s),
-                    format!(".agents/skills/{}/SKILL.md", s),
-                ]
-            })
+            .flat_map(|s| vec![format!(".agents/skills/{}/SKILL.md", s)])
             .collect();
         if let Some(config_dir) = dirs::config_dir() {
             let xdg = config_dir
@@ -546,8 +528,7 @@ impl McpActionSurface {
         let content = match content {
             Some(c) => c,
             None => {
-                return serde_json::json!({"error": "Skill documentation not found", "searched": candidates, "exit_code": 2})
-                    .to_string()
+                return serde_json::json!({"error": "Skill documentation not found", "searched": candidates, "exit_code": 2});
             }
         };
         match section.as_deref() {
@@ -560,12 +541,11 @@ impl McpActionSurface {
                         None => remaining.len(),
                     };
                     serde_json::json!({"section": s, "content": &remaining[..end], "exit_code": 0})
-                        .to_string()
                 } else {
-                    serde_json::json!({"error": format!("Section '{}' not found", s), "exit_code": 2}).to_string()
+                    serde_json::json!({"error": format!("Section '{}' not found", s), "exit_code": 2})
                 }
             }
-            _ => serde_json::json!({"content": content, "exit_code": 0}).to_string(),
+            _ => serde_json::json!({"content": content, "exit_code": 0}),
         }
     }
 

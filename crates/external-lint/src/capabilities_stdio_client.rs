@@ -45,44 +45,30 @@ impl ICommandExecutorProtocol for StdioClient {
             .spawn()
             .map_err(|e| anyhow::anyhow!("Failed to spawn command: {}", e))?;
 
+        let stdout = child.stdout.take();
+        let stderr = child.stderr.take();
+
+        // Drain stdout/stderr in threads so the child never blocks on a full
+        // pipe buffer, regardless of output size.
+        let stdout_handle = stdout.map(|mut h| {
+            std::thread::spawn(move || {
+                let mut buf = String::new();
+                std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
+                buf
+            })
+        });
+        let stderr_handle = stderr.map(|mut h| {
+            std::thread::spawn(move || {
+                let mut buf = String::new();
+                std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
+                buf
+            })
+        });
+
         let start = std::time::Instant::now();
-        loop {
+        let status = loop {
             match child.try_wait() {
-                Ok(Some(status)) => {
-                    let stdout = child
-                        .stdout
-                        .take()
-                        .map(|mut h| {
-                            let mut buf = String::new();
-                            std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
-                            buf
-                        })
-                        .unwrap_or_default();
-                    let stderr = child
-                        .stderr
-                        .take()
-                        .map(|mut h| {
-                            let mut buf = String::new();
-                            std::io::Read::read_to_string(&mut h, &mut buf).unwrap_or_default();
-                            buf
-                        })
-                        .unwrap_or_default();
-                    let mut meta_map = HashMap::new();
-                    meta_map.insert(
-                        "protocol".to_string(),
-                        serde_json::Value::String("Stdio".to_string()),
-                    );
-                    return Ok(ResponseData {
-                        value: Some(serde_json::Value::Null),
-                        stdout,
-                        stderr,
-                        returncode: match status.code() {
-                            Some(c) => c as i64,
-                            None => -1,
-                        },
-                        metadata: meta_map,
-                    });
-                }
+                Ok(Some(status)) => break status,
                 Ok(None) => {
                     if start.elapsed() >= timeout_val {
                         let _ = child.kill();
@@ -100,7 +86,35 @@ impl ICommandExecutorProtocol for StdioClient {
                     return Err(anyhow::anyhow!("Failed to check command status: {}", e));
                 }
             }
-        }
+        };
+
+        let stdout = match stdout_handle {
+            Some(h) => h
+                .join()
+                .map_err(|_| anyhow::anyhow!("stdout reader thread failed"))?,
+            None => String::new(),
+        };
+        let stderr = match stderr_handle {
+            Some(h) => h
+                .join()
+                .map_err(|_| anyhow::anyhow!("stderr reader thread failed"))?,
+            None => String::new(),
+        };
+        let mut meta_map = HashMap::new();
+        meta_map.insert(
+            "protocol".to_string(),
+            serde_json::Value::String("Stdio".to_string()),
+        );
+        Ok(ResponseData {
+            value: Some(serde_json::Value::Null),
+            stdout,
+            stderr,
+            returncode: match status.code() {
+                Some(c) => c as i64,
+                None => -1,
+            },
+            metadata: meta_map,
+        })
     }
 
     fn health_check(&self) -> anyhow::Result<ResponseData> {

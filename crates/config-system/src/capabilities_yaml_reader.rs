@@ -127,6 +127,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl ConfigYamlReader {
+    /// Create a new YAML config reader with filesystem IO dependency.
     pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
         Self { filesystem }
     }

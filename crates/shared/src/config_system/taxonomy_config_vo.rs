@@ -10,8 +10,46 @@ use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+/// Workspace type detected from directory structure (e.g. crates/, packages/, modules/).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WorkspaceType {
+    Rust,
+    TypeScript,
+    Python,
+    Unknown,
+}
+
+impl WorkspaceType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            WorkspaceType::Rust => "rust",
+            WorkspaceType::TypeScript => "typescript",
+            WorkspaceType::Python => "python",
+            WorkspaceType::Unknown => "unknown",
+        }
+    }
+}
+
+impl std::fmt::Display for WorkspaceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl From<WorkspaceType> for ConfigLanguage {
+    fn from(ws: WorkspaceType) -> Self {
+        match ws {
+            WorkspaceType::Rust => ConfigLanguage::Rust,
+            WorkspaceType::Python => ConfigLanguage::Python,
+            WorkspaceType::TypeScript => ConfigLanguage::TypeScript,
+            WorkspaceType::Unknown => ConfigLanguage::Rust,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct NamingRuleVO {

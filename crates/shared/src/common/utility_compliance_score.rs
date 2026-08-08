@@ -1,5 +1,5 @@
 // PURPOSE: Stateless utility functions for compliance score calculation
-use crate::cli_commands::taxonomy_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResult;
 
 /// Calculate compliance score from lint results.
 ///

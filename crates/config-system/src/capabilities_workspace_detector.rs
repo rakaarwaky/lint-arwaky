@@ -3,6 +3,7 @@ use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetec
 use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
+use tracing::warn;
 
 // PURPOSE: WorkspaceDetector — detects workspace type from marker files
 // Maps ConfigLanguage ↔ WorkspaceType and adds discover_workspace_members
@@ -35,9 +36,11 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 
     fn is_workspace(&self, path: &FilePath) -> bool {
         let root = std::path::PathBuf::from(&path.value);
-        ["crates", "packages", "modules"]
-            .iter()
-            .any(|dir| root.join(dir).is_dir())
+        ["crates", "packages", "modules"].iter().any(|dir| {
+            self.filesystem
+                .read_dir_entries_as_pathbuf(&root.join(dir))
+                .is_ok()
+        })
     }
 
     fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {
@@ -48,13 +51,18 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
         if let Some(name) = root_path.file_name().and_then(|n| n.to_str())
             && matches!(name, "crates" | "packages" | "modules")
         {
-            if let Ok(entries) = self.filesystem.read_dir_entries_as_pathbuf(root_path) {
-                for entry_path in entries {
-                    if entry_path.is_dir()
-                        && let Ok(fp) = FilePath::new(entry_path.to_string_lossy().to_string())
-                    {
-                        members.push(fp);
+            match self.filesystem.read_dir_entries_as_pathbuf(root_path) {
+                Ok(entries) => {
+                    for entry_path in entries {
+                        if entry_path.is_dir()
+                            && let Ok(fp) = FilePath::new(entry_path.to_string_lossy().to_string())
+                        {
+                            members.push(fp);
+                        }
                     }
+                }
+                Err(e) => {
+                    warn!(path = %root_path.display(), error = %e, "failed to read workspace directory");
                 }
             }
             return members;
@@ -75,13 +83,18 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
             if !dir.is_dir() {
                 continue;
             }
-            if let Ok(entries) = self.filesystem.read_dir_entries_as_pathbuf(&dir) {
-                for entry_path in entries {
-                    if entry_path.is_dir()
-                        && let Ok(fp) = FilePath::new(entry_path.to_string_lossy().to_string())
-                    {
-                        members.push(fp);
+            match self.filesystem.read_dir_entries_as_pathbuf(&dir) {
+                Ok(entries) => {
+                    for entry_path in entries {
+                        if entry_path.is_dir()
+                            && let Ok(fp) = FilePath::new(entry_path.to_string_lossy().to_string())
+                        {
+                            members.push(fp);
+                        }
                     }
+                }
+                Err(e) => {
+                    warn!(path = %dir.display(), error = %e, "failed to read workspace member directory");
                 }
             }
         }
@@ -93,6 +106,7 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl WorkspaceDetector {
+    /// Create a new WorkspaceDetector with filesystem IO dependency.
     pub fn new(filesystem: Arc<dyn IFileSystemIOProtocol>) -> Self {
         Self { filesystem }
     }
@@ -118,96 +132,63 @@ fn dir_has_any_file(
     false
 }
 
-/// FR-003: Walks up parent directories looking for marker files and workspace dir names.
-/// BF-4: Stops walking when any workspace dir name (crates/packages/modules) is encountered.
+/// Generic marker detection: walks up to 10 parent directories looking for
+/// target filenames. Stops at workspace boundary names (crates/packages/modules).
+/// Returns true when the boundary itself matches `workspace_match` or any marker is found.
+fn has_markers(
+    path: &std::path::Path,
+    marker_files: &[&str],
+    workspace_match: &str,
+    fs: &dyn IFileSystemIOProtocol,
+) -> bool {
+    let workspace_names = ["crates", "packages", "modules"];
+    let mut current = Some(path);
+    let mut levels = 0;
+
+    while let Some(p) = current {
+        if levels == 0 && dir_has_any_file(p, marker_files, fs) {
+            return true;
+        }
+        if levels > 0 {
+            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
+                if workspace_names.contains(&name) {
+                    return name == workspace_match;
+                }
+            }
+            if dir_has_any_file(p, marker_files, fs) {
+                return true;
+            }
+        }
+        levels += 1;
+        if levels > 10 {
+            break;
+        }
+        current = p.parent();
+    }
+    false
+}
+
+/// FR-003: Detect Rust workspace by marker files (Cargo.toml).
 fn has_rust_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> bool {
-    let marker_files = ["Cargo.toml"];
-    let workspace_names = ["crates", "packages", "modules"];
-    let mut current = Some(path);
-    let mut levels = 0;
-
-    while let Some(p) = current {
-        if levels == 0 && dir_has_any_file(p, &marker_files, fs) {
-            return true;
-        }
-        if levels > 0 {
-            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-                if workspace_names.contains(&name) {
-                    return name == "crates";
-                }
-            }
-            if dir_has_any_file(p, &marker_files, fs) {
-                return true;
-            }
-        }
-        levels += 1;
-        if levels > 10 {
-            break;
-        }
-        current = p.parent();
-    }
-    false
+    has_markers(path, &["Cargo.toml"], "crates", fs)
 }
 
+/// FR-003: Detect Python workspace by marker files.
 fn has_python_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> bool {
-    let marker_files = [
-        "pyproject.toml",
-        "setup.py",
-        "requirements.txt",
-        "__init__.py",
-    ];
-    let workspace_names = ["crates", "packages", "modules"];
-    let mut current = Some(path);
-    let mut levels = 0;
-
-    while let Some(p) = current {
-        if levels == 0 && dir_has_any_file(p, &marker_files, fs) {
-            return true;
-        }
-        if levels > 0 {
-            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-                if workspace_names.contains(&name) {
-                    return name == "modules";
-                }
-            }
-            if dir_has_any_file(p, &marker_files, fs) {
-                return true;
-            }
-        }
-        levels += 1;
-        if levels > 10 {
-            break;
-        }
-        current = p.parent();
-    }
-    false
+    has_markers(
+        path,
+        &[
+            "pyproject.toml",
+            "setup.py",
+            "requirements.txt",
+            "__init__.py",
+        ],
+        "modules",
+        fs,
+    )
 }
 
+/// FR-003: Detect TypeScript workspace by marker files.
 fn has_typescript_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> bool {
-    let marker_files = ["package.json", "tsconfig.json"];
-    let workspace_names = ["crates", "packages", "modules"];
-    let mut current = Some(path);
-    let mut levels = 0;
-
-    while let Some(p) = current {
-        if levels == 0 && dir_has_any_file(p, &marker_files, fs) {
-            return true;
-        }
-        if levels > 0 {
-            if let Some(name) = p.file_name().and_then(|n| n.to_str()) {
-                if workspace_names.contains(&name) {
-                    return name == "packages";
-                }
-            }
-            if dir_has_any_file(p, &marker_files, fs) {
-                return true;
-            }
-        }
-        levels += 1;
-        if levels > 10 {
-            break;
-        }
-        current = p.parent();
-    }
-    false
+    has_markers(path, &["package.json", "tsconfig.json"], "packages", fs)
 }

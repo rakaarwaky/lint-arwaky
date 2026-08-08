@@ -41,6 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         parse_config_yaml,
         parse_adapter_names: config_system::utility_config_parser::parse_adapter_names_from_yaml,
         parse_score_threshold: config_system::utility_config_parser::parse_score_threshold,
+        server_version: dispatcher::surface_version_action::collect_version().version,
     };
 
     let action_surface = Arc::new(McpActionSurface::new(mcp_deps));

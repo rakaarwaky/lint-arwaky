@@ -51,6 +51,7 @@ impl Default for ConfigRulesValidator {
 }
 
 impl ConfigRulesValidator {
+    /// Create a new rules validator (stateless, no dependencies).
     pub fn new() -> Self {
         Self
     }

@@ -9,5 +9,5 @@ fn tui_container_type_exists() {
 #[test]
 fn tui_surface_lint_executor_type_exists() {
     fn assert_type<T>() {}
-    assert_type::<tui_lint_arwaky::surface_lint_executor::SurfaceLintExecutor>();
+    assert_type::<tui_lint_arwaky::surface_lint_action::SurfaceLintExecutor>();
 }

@@ -1,4 +1,6 @@
 // Unit tests for utility_layer_detector — layer detection from module paths.
+use std::fs;
+
 use shared_lint_arwaky::common::utility_layer_detector::{
     detect_module_layer, resolve_module_path_to_layer,
 };
@@ -23,12 +25,19 @@ fn test_detect_module_layer_with_prefix() {
 
 #[test]
 fn test_resolve_module_path_to_layer() {
-    // Test with blender-arwaky structure
-    // modules/shared/src/common/ has contract_* and taxonomy_* files
-    let result = resolve_module_path_to_layer(
-        "modules.shared.src.common",
-        "/home/raka/mcp-arwaky/blender-arwaky",
-    );
+    let tmp = tempfile::TempDir::new().unwrap();
+    let module_dir = tmp
+        .path()
+        .join("modules")
+        .join("shared")
+        .join("src")
+        .join("common");
+    fs::create_dir_all(&module_dir).unwrap();
+    fs::write(module_dir.join("contract_protocol.py"), "# contract").unwrap();
+    fs::write(module_dir.join("taxonomy_status_vo.py"), "# taxonomy").unwrap();
+
+    let result =
+        resolve_module_path_to_layer("modules.shared.src.common", &tmp.path().to_string_lossy());
     assert!(
         result.is_some(),
         "Should detect layer from common directory (has contract_* and taxonomy_* files)"
