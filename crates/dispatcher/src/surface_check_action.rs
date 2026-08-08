@@ -12,7 +12,7 @@ use std::sync::Arc;
 use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 
-use crate::surface_output_component::ViolationItem;
+use shared::common::ViolationItem;
 
 pub struct ScanOptions {
     pub path: Option<FilePath>,

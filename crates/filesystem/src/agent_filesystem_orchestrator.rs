@@ -721,7 +721,6 @@ impl FilesystemOrchestrator {
                         member_dirs
                             .iter()
                             .any(|d| rel_str.starts_with(&format!("{}/", d)))
-                            || !rel_str.contains('/')
                     } else {
                         true
                     }

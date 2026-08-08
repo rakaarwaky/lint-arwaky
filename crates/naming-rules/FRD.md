@@ -1,4 +1,4 @@
-# FRD — naming-rules (v1.11.0)
+# FRD — naming-rules (v2.0.0)
 
 > **Scope:** this crate enforces AES101 and AES102 only. Unknown-layer-prefix
 > files are skipped by AES102 (no layer → no suffix policy) and validated

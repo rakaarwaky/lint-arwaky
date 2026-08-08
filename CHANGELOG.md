@@ -2,6 +2,27 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 2.0.0 (2026-08-08)
+
+### Added
+
+- **`install-hook` / `uninstall-hook` CLI subcommands**: Pre-commit hook install/remove now available in `lint-arwaky-cli` (previously MCP-only), wired through `git-hooks` `GitContainer`.
+- **Command catalog completeness**: `COMMAND_CATALOG` now mirrors the 22 real CLI subcommands — removed phantom `mcp`, `tui`, `setup` entries; added `quality`, `role`, `import`, `naming`, `orphan`, `external`, `config`, `git`, `security`, `dependencies`, `adapters`, `install`, `mcp-config`.
+- **Stdio drain threads**: external-lint `StdioClient` reads stdout/stderr concurrently — fixes 120s bandit timeout deadlock when output exceeds 64KB pipe buffer (scan time 123s → 2.6s, 48×).
+
+### Changed
+
+- **Version alignment**: `cli-commands` 0.1.0 → 2.0.0 and `import-rules` 1.12.0 → workspace version (2.0.0), eliminating report-version mismatch.
+- **Re-export removal**: deleted `dispatcher::surface_output_component` re-export — consumers now import `shared::common::ViolationItem` directly from the original taxonomy definition.
+- **Bumped version**: workspace root + all 19 crates to 2.0.0.
+
+### Fixed
+
+- **Clippy 1.97.0 lints**: 6 new lint violations resolved (`default-constructed-unit-structs`, `unnecessary-unwrap`, `needless-borrows-for-generic-args`, `field-reassign-with-default`).
+- **PRD.md corruption**: removed sed artifact `+ # PRD — Lint Arwaky (v1.1.0) +` from 3 auto-fix lines.
+
+---
+
 ## 1.11.0 (2026-07-30)
 
 ### Changed
@@ -12,7 +33,7 @@ See [README.md](README.md) for the current project overview and [TEST.md](TEST.m
 - **Dead Dependency Removal**: Removed unused `code_analysis` dependency from `git-hooks` crate; moved to `[dev-dependencies]` in `report-formatter`.
 - **Gates Optimization**: Switched `cargo test` → `cargo nextest` in `gates.sh` (~35% faster test execution).
 - **Added missing fields**: Added `repository`, `publish = true`, `[lints] workspace = true` to `tui` crate Cargo.toml.
-- **Bumped version**: 1.10.116 → 1.11.0 across all 17 workspace crates.
+- **Bumped version**: 1.10.116 → 2.0.0 across all 17 workspace crates.
 
 ---
 

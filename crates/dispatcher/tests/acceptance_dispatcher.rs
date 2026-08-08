@@ -1,6 +1,6 @@
 // Acceptance tests — dispatcher surface actions produce valid output.
-use dispatcher_lint_arwaky::surface_output_component::ViolationItem;
 use shared::cli_commands::LintResult;
+use shared::common::ViolationItem;
 use shared::common::taxonomy_path_vo::FilePath;
 
 #[test]

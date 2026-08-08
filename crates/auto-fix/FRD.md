@@ -1,4 +1,4 @@
-# FRD — auto-fix (v1.11.0)
+# FRD — auto-fix (v2.0.0)
 
 ---
 

@@ -1,4 +1,4 @@
-# FRD — role-rules (v1.11.0)
+# FRD — role-rules (v2.0.0)
 
 ---
 
