@@ -95,6 +95,6 @@ jobs:
 
       - name: AES Codes Check
         run: |
-          codes=$(./target/debug/lint-arwaky-cli scan test-workspaces 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
+          codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
           echo "Unique codes: ${codes:-0}"
           [ "${codes:-0}" -ge 24 ]
