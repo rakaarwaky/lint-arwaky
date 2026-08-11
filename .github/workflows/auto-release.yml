@@ -30,11 +30,15 @@ jobs:
   release:
     name: Tag and release
     runs-on: ubuntu-latest
-    # Only run when CI succeeded; skip the version-bump commit itself
-    # (prevents an infinite release loop).
+    # Only run when CI succeeded on a push to main; skip the version-bump
+    # commit itself (prevents an infinite release loop). Manual dispatch must
+    # target refs/heads/main — never run the privileged release path otherwise.
     if: >
-      (github.event_name == 'workflow_dispatch') ||
-      (github.event.workflow_run.conclusion == 'success' &&
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.head_commit.message != 'Initial commit' &&
        !startsWith(github.event.workflow_run.head_commit.message, 'chore(release):'))
     steps:

@@ -48,8 +48,14 @@ jobs:
 
           # Delete the branch. Treat a 404 as "already deleted" (idempotent);
           # any other failure fails the job so it is not silently swallowed.
-          STATUS=$(gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/${BRANCH}" \
-            --silent -o /dev/null -w '%{http_code}' 2>/dev/null || true)
+          # Use --include to capture response headers and parse the HTTP status.
+          RESPONSE=$(gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/${BRANCH}" \
+            --include --silent 2>&1 || true)
+          STATUS=$(printf '%s' "$RESPONSE" | head -1 | grep -oE '[0-9]{3}' | head -1)
+          if [ -z "$STATUS" ]; then
+            echo "Failed to delete branch ${BRANCH}: no HTTP status returned."
+            exit 1
+          fi
           if [ "$STATUS" = "404" ]; then
             echo "Branch ${BRANCH} already deleted."
           elif [ "$STATUS" = "204" ]; then
