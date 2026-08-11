@@ -50,8 +50,8 @@ serviceAccountKey
 .codegraph
 .github/instructions/codacy.instructions.md
 
-# repowise local cache and generated artifacts (config is committed)
+# repowise local cache and generated artifacts (.repowise is a local cache,
+# not a source of truth; only the PR-bot config is committed)
 .repowise/*
 !.repowise/bot.yaml
-!.repowise/config.yaml
 .mcp.json
