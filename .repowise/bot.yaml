@@ -1,0 +1,25 @@
+# Repowise PR bot configuration.
+# Ignore fixture/test workspaces and non-production folders so code-health
+# scores reflect production code only. Mirrors .codacy.yaml exclusions.
+bot:
+  enabled: true
+  comment_mode: on_signal
+  verbosity: standard
+  show_dead_code: true
+  show_change_risk: true
+  apply_labels: false
+  ignore_paths:
+    - "workspaces-bad/**"
+    - "workspaces-good/**"
+    - "crates/*/tests/**"
+    - "scripts/**"
+    - "tools/**"
+    - "log/**"
+    - "target/**"
+    - "*.md"
+  health_gate:
+    mode: advisory
+    repo_drop_block: 0.3
+    min_new_file_score: 7.0
+    block_on_introduced: false
+    block_ai_regression: false
