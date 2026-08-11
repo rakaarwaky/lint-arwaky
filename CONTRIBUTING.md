@@ -19,12 +19,9 @@
 - [Prerequisites](#prerequisites)
 - [Setup](#setup)
 - [Architecture](#architecture)
-- [How to Add an Adapter](#how-to-add-an-adapter)
-- [How to Add a CLI Command](#how-to-add-a-cli-command)
-- [How to Add an MCP Tool](#how-to-add-an-mcp-tool)
-- [Testing](#testing)
 - [Code Style](#code-style)
 - [Pull Request Process](#pull-request-process)
+- [Questions?](#questions)
 
 ---
 
