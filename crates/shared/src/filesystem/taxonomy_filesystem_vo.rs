@@ -593,11 +593,12 @@ impl InboundLinkMap {
     /// Priority 6: boundary-aligned suffix matching in both directions.
     /// Requires the boundary to sit on a path separator so that e.g.
     /// `foo_vo.rs` does not match `bar_vo.rs`.
-    /// Picks the longest (most specific) matching key so results are
-    /// deterministic regardless of HashMap iteration order.
+    /// Picks the longest (most specific) matching key; equal-length keys are
+    /// broken lexicographically so results are deterministic regardless of
+    /// HashMap iteration order.
     fn boundary_suffix(&self, path: &str) -> Option<&Vec<String>> {
         let clean = path.strip_prefix("./").unwrap_or(path);
-        let mut best: Option<(&Vec<String>, usize)> = None;
+        let mut best: Option<(&Vec<String>, usize, &str)> = None;
         for (k, v) in &self.mapping {
             let k_clean = k.strip_prefix("./").unwrap_or(k);
             if k_clean.is_empty() || clean.is_empty() {
@@ -606,23 +607,35 @@ impl InboundLinkMap {
             let matched_len = if boundary_ends_with(k_clean, clean) {
                 Some(k_clean.len())
             } else if boundary_ends_with(clean, k_clean) {
-                Some(clean.len())
+                // Reverse direction: the matching key's length is what makes a
+                // candidate specific, so score by k_clean.len() here too.
+                Some(k_clean.len())
             } else {
                 None
             };
-            if let Some(len) = matched_len
-                && best.is_none_or(|(_, best_len)| len > best_len)
-            {
-                best = Some((v, len));
+            let Some(len) = matched_len else { continue };
+            let better = match best {
+                None => true,
+                Some((_, best_len, best_key)) => {
+                    len > best_len || (len == best_len && k_clean < best_key)
+                }
+            };
+            if better {
+                best = Some((v, len, k_clean));
             }
         }
-        best.map(|(v, _)| v)
+        best.map(|(v, _, _)| v)
     }
 }
 
 /// True when `full` ends with `suffix` and the boundary before the suffix is
 /// either the start of the string or a path separator (`/` or `\`).
+/// Leading `./` and `/` are stripped from both sides first so a suffix like
+/// `/b_vo.rs` is treated the same as `b_vo.rs` (the separator check then
+/// applies to the byte just before the matched suffix).
 fn boundary_ends_with(full: &str, suffix: &str) -> bool {
+    let full = full.trim_start_matches("./").trim_start_matches('/');
+    let suffix = suffix.trim_start_matches("./").trim_start_matches('/');
     if !full.ends_with(suffix) {
         return false;
     }
@@ -630,7 +643,7 @@ fn boundary_ends_with(full: &str, suffix: &str) -> bool {
     before == 0
         || full
             .as_bytes()
-            .get(before)
+            .get(before - 1)
             .is_some_and(|b| *b == b'/' || *b == b'\\')
 }
 

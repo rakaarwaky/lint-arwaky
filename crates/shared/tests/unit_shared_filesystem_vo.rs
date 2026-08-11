@@ -200,6 +200,16 @@ fn get_importers_boundary_suffix_does_not_partial_match() {
 }
 
 #[test]
+fn get_importers_boundary_suffix_picks_most_specific_key() {
+    // When multiple keys suffix-match a query, the longest (most specific)
+    // key must win regardless of HashMap iteration order.
+    let map = map_of(&[("src/a.rs", &["specific.rs"]), ("a.rs", &["generic.rs"])]);
+    let result = map.get_importers("root/src/a.rs");
+    assert_eq!(result.map(|v| v.len()), Some(1));
+    assert_eq!(result.unwrap()[0], "specific.rs");
+}
+
+#[test]
 fn get_importers_missing_returns_none() {
     let map = map_of(&[("a.rs", &["b.rs"])]);
     assert!(map.get_importers("nope.rs").is_none());

@@ -618,6 +618,28 @@ fn forbidden_primitive_detection_python() {
 }
 
 #[test]
+fn python_generic_brackets_with_space_not_flagged_as_bare_list_dict() {
+    // `list [ResultVO]` / `dict [KeyVO, ValueVO]` are parameterized and must
+    // not be reported as bare `list` / `dict`.
+    let found = python_signature_uses_forbidden_primitive("def run(self) -> list [ResultVO]:");
+    assert!(
+        !found.contains(&"list"),
+        "list [ResultVO] should not be bare list"
+    );
+
+    let found =
+        python_signature_uses_forbidden_primitive("def run(self) -> dict [KeyVO, ValueVO]:");
+    assert!(
+        !found.contains(&"dict"),
+        "dict [K, V] should not be bare dict"
+    );
+
+    // Bare list/dict without brackets are still flagged.
+    let found = python_signature_uses_forbidden_primitive("def run(self) -> list:");
+    assert!(found.contains(&"list"));
+}
+
+#[test]
 fn forbidden_primitive_detection_typescript() {
     let found = typescript_signature_uses_forbidden_primitive("getName(x: string): any");
     assert!(found.contains(&"string"));

@@ -184,22 +184,36 @@ pub fn python_signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str>
 
 /// Collect forbidden primitive type tokens from the parameter section.
 fn collect_python_param_primitives(lower: &str, forbidden: &mut Vec<&'static str>) {
-    if lower.contains(": str") {
+    // Whole-token matching: `: int` fires, `: internal_id` does not.
+    if contains_token_prefix(lower, ": str") {
         forbidden.push("str");
     }
-    if lower.contains(": int") {
+    if contains_token_prefix(lower, ": int") {
         forbidden.push("int");
     }
-    if lower.contains(": float") {
+    if contains_token_prefix(lower, ": float") {
         forbidden.push("float");
     }
     // Only flag bare `list`/`dict` without type parameters (e.g., `List[ResultVO]` is OK)
-    if lower.contains(": list") && !lower.contains(": list[") {
+    if contains_token_prefix(lower, ": list") && !lower.contains(": list[") {
         forbidden.push("list");
     }
-    if lower.contains(": dict") && !lower.contains(": dict[") {
+    if contains_token_prefix(lower, ": dict") && !lower.contains(": dict[") {
         forbidden.push("dict");
     }
+}
+
+/// True when `haystack` contains `prefix` followed by a non-identifier
+/// character (whole-token match). Unicode-aware: the character after the
+/// prefix is checked with `is_alphanumeric`.
+fn contains_token_prefix(haystack: &str, prefix: &str) -> bool {
+    let prefix_len = prefix.len();
+    haystack.match_indices(prefix).any(|(i, _)| {
+        haystack
+            .get(i + prefix_len..)
+            .and_then(|rest| rest.chars().next())
+            .is_none_or(|c| !c.is_alphanumeric() && c != '_')
+    })
 }
 
 /// Collect forbidden primitive type tokens from the return section (after `->`).
@@ -218,21 +232,22 @@ fn collect_python_return_primitives(lower: &str, forbidden: &mut Vec<&'static st
     if ret.starts_with("float") && is_token_end(ret, 5) {
         forbidden.push("float");
     }
-    // Only flag bare `list`/`dict` without type parameters
-    if ret.starts_with("list") && is_token_end(ret, 4) && !ret.starts_with("list[") {
+    // Only flag bare `list`/`dict` without type parameters. Allow
+    // whitespace before the generic bracket (`list [ResultVO]`, `dict [K, V]`).
+    if ret.starts_with("list") && is_token_end(ret, 4) && !ret[4..].trim_start().starts_with('[') {
         forbidden.push("list");
     }
-    if ret.starts_with("dict") && is_token_end(ret, 4) && !ret.starts_with("dict[") {
+    if ret.starts_with("dict") && is_token_end(ret, 4) && !ret[4..].trim_start().starts_with('[') {
         forbidden.push("dict");
     }
 }
 
-/// True when the byte after `prefix_len` is not an identifier character,
-/// so `prefix` stands alone as a whole token.
+/// True when the text after `prefix_len` is not an identifier character,
+/// so `prefix` stands alone as a whole token. Unicode-aware.
 fn is_token_end(s: &str, prefix_len: usize) -> bool {
-    s.as_bytes()
-        .get(prefix_len)
-        .is_none_or(|b| !b.is_ascii_alphanumeric() && *b != b'_')
+    s.get(prefix_len..)
+        .and_then(|rest| rest.chars().next())
+        .is_none_or(|c| !c.is_alphanumeric() && c != '_')
 }
 
 /// Extract `(line_no, raw_signature_line)` for every method declaration inside a TypeScript
