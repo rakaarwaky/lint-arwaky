@@ -40,7 +40,12 @@ jobs:
           LAST_TAG=$(git tag --sort=-v:refname | head -1)
           if [ -z "$LAST_TAG" ]; then
             # No tags yet — derive base version from Cargo.toml and inspect all commits.
-            CURRENT=$(grep -m1 '^version' Cargo.toml | sed 's/.*= *"\(.*\)"/\1/' || echo "0.1.0")
+            # grep must fail through to the default when there is no root version.
+            CURRENT_LINE=$(grep -m1 '^version' Cargo.toml || true)
+            CURRENT=$(echo "$CURRENT_LINE" | sed 's/.*= *"\(.*\)"/\1/')
+            if [ -z "$CURRENT" ]; then
+              CURRENT="0.1.0"
+            fi
             LAST_TAG="v${CURRENT}"
             RANGE="HEAD"
             echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
@@ -51,15 +56,18 @@ jobs:
           echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
 
           # Conventional commit detection.
-          # Breaking change: `feat!:`, `feat(scope)!:`, `fix!:` etc.
-          MAJOR=$(git log "$RANGE" --oneline --grep='^[a-zA-Z]*(.*)!:' -E | head -1)
-          FEAT=$(git log "$RANGE" --oneline --grep='^feat' -E | head -1)
+          # Breaking change via subject: `feat!:`, `feat(scope)!:`, `fix!:` etc.
+          MAJOR_SUBJECT=$(git log "$RANGE" --oneline --grep='^[a-zA-Z]*(.*)!:' -E | head -1)
+          # Breaking change via footer: `BREAKING CHANGE: ...` in the body.
+          MAJOR_FOOTER=$(git log "$RANGE" --format=%B | grep -m1 '^BREAKING CHANGE:' || true)
+          # Minor: only `feat:` or `feat(scope):` — not e.g. `feature:`.
+          FEAT=$(git log "$RANGE" --oneline --grep='^feat(.*):\|^feat:' -E | head -1)
 
           BASE="${LAST_TAG#v}"
           IFS='.' read -r MAJ_V MIN_V PAT_V <<< "$BASE"
           MAJ_V=${MAJ_V:-0}; MIN_V=${MIN_V:-0}; PAT_V=${PAT_V:-0}
 
-          if [ -n "$MAJOR" ]; then
+          if [ -n "$MAJOR_SUBJECT" ] || [ -n "$MAJOR_FOOTER" ]; then
             NEW="$((MAJ_V + 1)).0.0"
           elif [ -n "$FEAT" ]; then
             NEW="${MAJ_V}.$((MIN_V + 1)).0"

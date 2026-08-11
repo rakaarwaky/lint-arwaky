@@ -29,10 +29,15 @@ jobs:
             exit 0
           fi
 
-          # Reject anything that is not a safe git ref name to prevent
-          # shell injection through a crafted branch name.
-          if ! [[ "$BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+          # Reject anything that is not a valid git ref name to prevent shell
+          # injection through a crafted branch name. Git forbids spaces and
+          # ~ ^ : ? * [ \ and a few edge cases, but allows + and -.
+          if ! [[ "$BRANCH" =~ ^[A-Za-z0-9._/+-]+$ ]]; then
             echo "Skipping branch with unsafe characters: ${BRANCH}"
+            exit 0
+          fi
+          if [[ "$BRANCH" == .* ]] || [[ "$BRANCH" == *..* ]] || [[ "$BRANCH" == *.lock ]] || [[ "$BRANCH" == *@* ]]; then
+            echo "Skipping invalid git ref name: ${BRANCH}"
             exit 0
           fi
 
