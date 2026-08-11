@@ -292,12 +292,6 @@ macro_rules! primitive_value_object {
                     {
                         Ok($name { value: v as $inner })
                     }
-                    fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        Ok($name { value: v as $inner })
-                    }
                     fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
                     where
                         A: serde::de::MapAccess<'de>,

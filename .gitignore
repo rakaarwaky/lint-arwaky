@@ -54,3 +54,5 @@ serviceAccountKey
 # not a source of truth; only the PR-bot config is committed)
 .repowise/*
 !.repowise/bot.yaml
+# repowise cache can appear in any scanned subdirectory (CLI generates per-dir)
+**/.repowise/

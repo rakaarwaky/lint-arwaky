@@ -225,8 +225,6 @@ fn check_entry_for_layer(entry: &std::fs::DirEntry) -> Option<String> {
     if !entry_path.is_file() {
         return None;
     }
-    let Some(filename) = entry_path.file_name().and_then(|n| n.to_str()) else {
-        return None;
-    };
+    let filename = entry_path.file_name().and_then(|n| n.to_str())?;
     detect_layer_from_prefix(filename)
 }
