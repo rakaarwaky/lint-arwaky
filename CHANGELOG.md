@@ -1,4 +1,43 @@
 # Changelog
+## 3.0.0 (2026-08-11)
+
+### Features
+
+- feat(ci): add solo-developer automation workflows (#198)
+- feat(orphan-rules): add DI-aware acceptance tests for AES503 false positive fix
+- feat(orphan-rules): DI-aware traceability for container wiring and impl bridge
+- feat(filesystem): add three-strategy Python import resolution for chained imports
+- feat(gitignore): add .worktrees and .commandcode to .gitignore
+- feat(gitignore): add .gitignore for CodeGraph data files to prevent committing local transient files
+
+### Bug Fixes
+
+- Merge pull request #197 from rakaarwaky/fix-codacy-issues
+- fix(ci): pin actions to verified release-tag SHAs
+- fix(ci): pin rust-toolchain to the v1 tag commit SHA
+- fix(ci): pin third-party actions to commit SHA and exclude fixtures from Codacy
+- Merge pull request #196 from rakaarwaky/orphan-rules-191-192-193
+- fix(orphan-rules): normalize direct contract reachability check
+- fix(orphan-rules): address review feedback on DI-aware traceability
+- fix(orphan-rules): improve AES503 message when capabilities reachable via DI impl bridge
+- fix(orphan-rules): complete DI-aware traceability (issues #191-193)
+- Merge PR #194: fix(filesystem): make Strategy C deterministic and O(1) via stem index
+- fix: apply CodeRabbit auto-fixes
+- fix(filesystem): make Strategy C deterministic and O(1) via stem index
+
+### Maintenance
+
+- chore(skills): remove consolidated Codacy skill folders
+- refactor(orphan-rules): extract path-matching helpers and lib.rs wiring
+- chore: remove Codacy review skill documentation
+- chore: exclude test fixtures from Codacy analysis and add review skills
+- chore: fix formatting in DI acceptance test
+- refactor: extract container wiring to utility module (fixes #191-193)
+- refactor: clean up unused import in unit test file
+- refactor: remove unused components and hooks from lint-arwaky dashboard
+- docs(skill): enhance role-fullstack-developer skill with detailed execution and verification steps
+- refactor(skill): rename and update role-fullstack-developer skill with new description and workflow
+
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
