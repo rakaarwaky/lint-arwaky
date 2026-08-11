@@ -615,12 +615,6 @@ impl InheritanceMap {
     pub fn new(value: HashMap<String, Vec<String>>) -> Self {
         Self { mapping: value }
     }
-
-    /// Get all files implementing a given trait name.
-    /// Returns None if the trait has no known implementors.
-    pub fn get_trait_implementors(&self, trait_name: &str) -> Option<&Vec<String>> {
-        self.mapping.get(trait_name)
-    }
 }
 
 /// Byte count for file operations (replaces raw `u64` in contract signatures).

@@ -36,11 +36,18 @@ pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> Pytho
                     meta.import_from_statements.push(module);
                 }
             }
+            // Decorated classes (e.g. `@register("engine")`) are wrapped in a
+            // `decorated_definition` node — unwrap to the inner class definition
+            // so class names and bases are still extracted.
+            "decorated_definition" => {
+                if let Some(inner) = node.child_by_field_name("definition") {
+                    if inner.kind() == "class_definition" {
+                        collect_python_class(inner, content, &mut meta);
+                    }
+                }
+            }
             "class_definition" => {
-                let name = child_by_field(node, content, "name").unwrap_or_default();
-                let bases = extract_python_class_bases(node, content);
-                meta.class_declarations
-                    .push(PythonClassItem { name, bases });
+                collect_python_class(node, content, &mut meta);
             }
             "function_definition" => {
                 let name = child_by_field(node, content, "name").unwrap_or_default();
@@ -52,6 +59,13 @@ pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> Pytho
         }
     }
     meta
+}
+
+fn collect_python_class(node: tree_sitter::Node, content: &str, meta: &mut PythonMetadata) {
+    let name = child_by_field(node, content, "name").unwrap_or_default();
+    let bases = extract_python_class_bases(node, content);
+    meta.class_declarations
+        .push(PythonClassItem { name, bases });
 }
 
 fn extract_python_class_bases(node: tree_sitter::Node, content: &str) -> Vec<String> {

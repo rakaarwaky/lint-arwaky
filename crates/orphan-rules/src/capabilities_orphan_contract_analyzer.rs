@@ -91,6 +91,46 @@ impl ContractOrphanAnalyzer {
         }
         false
     }
+
+    /// P3 (symmetric contract wiring): a contract is considered reachable when at
+    /// least one of its trait/interface names has an implementor that is alive
+    /// (reachable from an entry point). This closes the DI gap where a contract is
+    /// consumed only via its implementors and never statically imported.
+    fn has_alive_implementor(
+        &self,
+        inheritance_map: &InheritanceMap,
+        trait_names: &[String],
+        alive_files: &ReachabilityResult,
+    ) -> bool {
+        trait_names.iter().any(|tn| {
+            inheritance_map
+                .mapping
+                .get(tn)
+                .map(|impl_files| {
+                    impl_files
+                        .iter()
+                        .any(|impl_rel| is_path_alive(impl_rel, alive_files))
+                })
+                .unwrap_or(false)
+        })
+    }
+}
+
+/// Robust path equality between a workspace-relative path (as stored in graph
+/// maps) and the alive-set entries (absolute or relative, possibly with a `./`
+/// prefix). Matches on suffix so both representations agree.
+fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
+    alive_files.paths.iter().any(|af| {
+        let af_val = af.value();
+        af_val == rel
+            || af_val.ends_with(rel)
+            || rel.ends_with(af_val.trim_start_matches("./"))
+            || std::path::Path::new(af_val)
+                .file_name()
+                .zip(std::path::Path::new(rel).file_name())
+                .map(|(a, b)| a == b)
+                .unwrap_or(false)
+    })
 }
 
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
@@ -98,7 +138,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         &self,
         f: &FilePath,
         _root_dir: &FilePath,
-        _inheritance_map: &InheritanceMap,
+        inheritance_map: &InheritanceMap,
         all_files: &[String],
         content_map: &HashMap<String, String>,
         alive_files: &ReachabilityResult,
@@ -115,8 +155,12 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        // Condition 1: not reachable from any _entry file
-        let is_reachable = alive_files.paths.contains(f);
+        // Condition 1: not reachable from any _entry file.
+        // P3 (symmetric contract wiring): a contract is also considered reachable
+        // when it has an alive implementor — the contract is consumed purely via DI
+        // (its capabilities/agents are wired, not statically imported by entry).
+        let is_reachable = alive_files.paths.contains(f)
+            || self.has_alive_implementor(inheritance_map, &trait_names, alive_files);
         if !is_reachable {
             return OrphanIndicatorResult::new(
                 true,

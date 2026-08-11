@@ -199,7 +199,7 @@ fn aes503_chained_python_import_reachable() {
     let agent = "modules/image/src/agent_image_orchestrator.py".to_string();
     let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
 
-    let alive_set = trace_reachability(&[entry.clone()], &context.import_graph);
+    let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
 
     assert!(alive_set.contains(&entry));
     assert!(alive_set.contains(&surface));
@@ -259,7 +259,7 @@ fn aes503_broken_chain_detects_unreachable() {
     let surface = "modules/image/src/surfaces_image_cli.py".to_string();
     let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
 
-    let alive_set = trace_reachability(&[entry.clone()], &context.import_graph);
+    let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
 
     assert!(
         alive_set.contains(&entry),
@@ -272,5 +272,90 @@ fn aes503_broken_chain_detects_unreachable() {
     assert!(
         !alive_set.contains(&capabilities),
         "Capabilities should NOT be reachable when chain is broken"
+    );
+}
+
+#[test]
+fn aes503_di_impl_bridge_reaches_capabilities() {
+    // Acceptance test (issues #191/192/193): DI-aware reachability.
+    // The agent imports only the contract (per AES), and the capability
+    // implements the contract without being statically imported by the agent.
+    // The impl bridge (contract→capabilities) must make the capability reachable.
+    use filesystem::agent_filesystem_orchestrator::{
+        FilesystemOrchestrator, FilesystemOrchestratorDeps,
+    };
+    use filesystem::capabilities_ast_parser::ASTParser;
+    use filesystem::capabilities_dependency_graph::DependencyGraph;
+    use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
+    use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
+    use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
+    use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
+    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+    use std::sync::Arc;
+
+    let tmp = tempfile::TempDir::new().unwrap();
+    let root = tmp.path();
+    // Workspace layout mirroring workspaces-good: pyproject at root + modules/ member.
+    std::fs::write(root.join("pyproject.toml"), "[build-system]\n").unwrap();
+    let src = root.join("modules").join("app").join("src");
+    std::fs::create_dir_all(&src).unwrap();
+
+    // Entry → surface → agent (imports contract only, per AES rules).
+    std::fs::write(
+        src.join("root_cli_main_entry.py"),
+        "from modules.app.src.surface_app_cli import run_cli\n",
+    )
+    .unwrap();
+    std::fs::write(
+        src.join("surface_app_cli.py"),
+        "from modules.app.src.agent_app_orchestrator import AppOrchestrator\n",
+    )
+    .unwrap();
+    // Agent imports ONLY the contract — never the capability (AES rule).
+    std::fs::write(
+        src.join("agent_app_orchestrator.py"),
+        "from modules.app.src.contract_app_protocol import AppProtocol\n",
+    )
+    .unwrap();
+    // Contract protocol.
+    std::fs::write(
+        src.join("contract_app_protocol.py"),
+        "from abc import ABC, abstractmethod\n\nclass AppProtocol(ABC):\n    @abstractmethod\n    def run(self) -> str:\n        pass\n",
+    )
+    .unwrap();
+    // Capability implements the contract via inheritance (DI invisible to imports).
+    std::fs::write(
+        src.join("capabilities_app_engine.py"),
+        "from modules.app.src.contract_app_protocol import AppProtocol\n\nclass AppEngine(AppProtocol):\n    def run(self) -> str:\n        return \"ok\"\n",
+    )
+    .unwrap();
+
+    let orch = FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
+        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
+        workspace: Arc::new(CapabilitiesWorkspace::new()),
+        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
+        parser: Arc::new(ASTParser::new()),
+        graph: Arc::new(DependencyGraph::new()),
+    });
+    let context = orch.build_orphan_graph_context(root, &[]);
+
+    let entry = "modules/app/src/root_cli_main_entry.py".to_string();
+    let surface = "modules/app/src/surface_app_cli.py".to_string();
+    let agent = "modules/app/src/agent_app_orchestrator.py".to_string();
+    let contract = "modules/app/src/contract_app_protocol.py".to_string();
+    let capabilities = "modules/app/src/capabilities_app_engine.py".to_string();
+
+    let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
+
+    assert!(alive_set.contains(&entry), "entry must be reachable");
+    assert!(alive_set.contains(&surface), "surface must be reachable");
+    assert!(alive_set.contains(&agent), "agent must be reachable");
+    assert!(
+        alive_set.contains(&contract),
+        "contract must be reachable (agent imports it)"
+    );
+    assert!(
+        alive_set.contains(&capabilities),
+        "capability implementing a reachable contract must be reachable via impl bridge"
     );
 }

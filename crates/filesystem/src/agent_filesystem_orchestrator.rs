@@ -510,13 +510,24 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             })
             .collect();
 
-        // P1: Container-aware wiring propagation — scan *_container.* files for
-        // whole-word identifier references, match against capability/agent stems,
-        // and add synthetic edges so BFS can follow DI wiring paths.
+        // P2: contract → capabilities bridge (reverse index, issue #193).
+        // For every trait/interface/base, wire its defining (contract) file to each
+        // implementor so BFS that reaches a contract also reaches its capabilities.
+        crate::utility_container_wiring::add_impl_bridge_edges(
+            &top_root,
+            self.deps.graph.symbol_definitions(),
+            self.deps.graph.implementations(),
+            &mut forward,
+        );
+
+        // P1: Container-aware wiring — resolve each *_container.* file's used identifiers
+        // against the workspace symbol table and add synthetic edges container →
+        // referenced file, so BFS that reaches the container reaches its DI services.
         crate::utility_container_wiring::add_container_wiring_edges(
             &all_files,
             &top_root,
-            &stem_index,
+            self.deps.graph.symbol_definitions(),
+            |p: &Path| self.used_identifiers_for(p),
             &mut forward,
         );
 
@@ -888,6 +899,17 @@ impl FilesystemOrchestrator {
                                 file_path: entry.path.clone(),
                                 language: entry.language,
                             });
+                            // P4: class inheritance is a contract→capabilities bridge
+                            // (e.g. `class AdditionAnalyzer(CalculatorProtocol)`).
+                            for base in &class.bases {
+                                if !base.is_empty() {
+                                    implementations.push(ImplEntry {
+                                        trait_name: base.clone(),
+                                        file_path: entry.path.clone(),
+                                        language: entry.language,
+                                    });
+                                }
+                            }
                         }
                     }
                     ParseMetadata::TypeScript(m) => {
@@ -897,6 +919,17 @@ impl FilesystemOrchestrator {
                                 file_path: entry.path.clone(),
                                 language: entry.language,
                             });
+                            // P4: `implements` clauses are a contract→capabilities bridge
+                            // (e.g. `class AdditionAnalyzer implements CalculatorProtocol`).
+                            for iface in &class.implements {
+                                if !iface.is_empty() {
+                                    implementations.push(ImplEntry {
+                                        trait_name: iface.clone(),
+                                        file_path: entry.path.clone(),
+                                        language: entry.language,
+                                    });
+                                }
+                            }
                         }
                         for iface in &m.interface_declarations {
                             definitions.push(DefinitionEntry {

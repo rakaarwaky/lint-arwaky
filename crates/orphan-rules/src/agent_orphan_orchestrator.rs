@@ -195,11 +195,12 @@ impl ArchOrphanAnalyzer {
             std::slice::from_ref(&entry_points_vo),
             &[configured_vo],
         );
-        // P2: Use impl bridge to follow contract→capabilities edges
-        let alive_set = crate::utility_orphan_graph::trace_reachability_with_impl_bridge(
+        // BFS reachability through the import graph. The graph already carries
+        // synthetic DI edges (contract→capabilities bridge and container→wired
+        // services), so a single linear BFS follows both import and DI paths.
+        let alive_set = crate::utility_orphan_graph::trace_reachability(
             &entry_points.values,
             &context.import_graph,
-            &context.inheritance_map,
         );
         // alive_set contains relative paths from the import graph (e.g., "crates/auto-fix/src/...")
         // Convert to absolute paths matching _process_file's format for the contains() check.

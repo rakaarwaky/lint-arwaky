@@ -244,16 +244,12 @@ fn aes502_non_protocol_suffix_not_checked_for_orchestration() {
         "crates/shared/src/other.rs".to_string(),
         "fn noop() {}".to_string(),
     );
-    let all_files = vec![
-        fp.value().to_string(),
-        "crates/shared/src/other.rs".to_string(),
-    ];
 
     let result = analyzer.is_contract_orphan(
         &fp,
         &root,
         &InheritanceMap::new(HashMap::new()),
-        &all_files,
+        &[],
         &content_map,
         &empty_reachability(),
     );
@@ -261,5 +257,43 @@ fn aes502_non_protocol_suffix_not_checked_for_orchestration() {
     assert!(
         result.is_orphan,
         "Unimplemented trait in entity file should be orphan"
+    );
+}
+
+#[test]
+fn aes502_contract_with_alive_implementor_is_not_orphan() {
+    // P3 (issues #191/192): symmetric contract wiring — a contract consumed only
+    // via DI (its implementor is reachable, the contract itself is never statically
+    // imported by the entry chain) must not be flagged AES502.
+    let analyzer = contract_analyzer();
+    let fp = FilePath::new("crates/shared/src/contract_foo_protocol.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let mut content_map = HashMap::new();
+    content_map.insert(
+        fp.value().to_string(),
+        "pub trait IFooProtocol: Send + Sync {\n    fn do_thing(&self);\n}".to_string(),
+    );
+    let capability_fp =
+        FilePath::new("crates/orphan-rules/src/capabilities_foo.rs".to_string()).unwrap();
+    // The capability implementing the contract IS in the alive set, but the
+    // contract file itself is not — pure DI consumption.
+    let alive = reachable_for(&capability_fp);
+    let inheritance = InheritanceMap::new(HashMap::from([(
+        "IFooProtocol".to_string(),
+        vec![capability_fp.value().to_string()],
+    )]));
+    // The capability file implements the protocol (needed by condition 2).
+    content_map.insert(
+        capability_fp.value().to_string(),
+        "struct Foo;\nimpl IFooProtocol for Foo {\n    fn do_thing(&self) {}\n}\n".to_string(),
+    );
+    let all_files = vec![fp.value().to_string(), capability_fp.value().to_string()];
+
+    let result =
+        analyzer.is_contract_orphan(&fp, &root, &inheritance, &all_files, &content_map, &alive);
+    assert!(
+        !result.is_orphan,
+        "Contract with an alive implementor should NOT be orphan: {}",
+        result.reason
     );
 }
