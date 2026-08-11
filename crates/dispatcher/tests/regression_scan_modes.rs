@@ -25,7 +25,7 @@ fn workspace_root() -> std::path::PathBuf {
 }
 
 /// In-process scan via collect_scan (works for workspaces-good where 0 violations expected).
-fn scan(path: &str) -> Vec<dispatcher_lint_arwaky::surface_output_component::ViolationItem> {
+fn scan(path: &str) -> Vec<shared::common::ViolationItem> {
     let full_path = workspace_root().join(path);
     let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         path: Some(FilePath::new(full_path.to_string_lossy().to_string()).unwrap()),

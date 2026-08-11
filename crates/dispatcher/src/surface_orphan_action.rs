@@ -10,7 +10,7 @@ use shared::config_system::{ArchitectureConfig, ConfigLanguage, IConfigOrchestra
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 
-use crate::surface_output_component::ViolationItem;
+use shared::common::ViolationItem;
 
 /// Factory function type: creates a fresh filesystem aggregate (uncached pipeline).
 pub type FilesystemFactory = dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync;

@@ -140,6 +140,25 @@ impl ArchOrphanAnalyzer {
         Self { deps, config }
     }
 
+    /// Scans workspace files for orphaned architecture-layer files.
+    ///
+    /// Entry points are identified across the workspace, and reachability follows
+    /// import and dependency-injection relationships before each file is evaluated.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let violations = analyzer._check_orphans_inner(
+    ///     &files,
+    ///     &root_dir,
+    ///     &context,
+    ///     &file_vo,
+    /// );
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// The orphan violations found during the scan.
     #[instrument(skip(self))]
     fn _check_orphans_inner(
         &self,
@@ -195,6 +214,9 @@ impl ArchOrphanAnalyzer {
             std::slice::from_ref(&entry_points_vo),
             &[configured_vo],
         );
+        // BFS reachability through the import graph. The graph already carries
+        // synthetic DI edges (contract→capabilities bridge and container→wired
+        // services), so a single linear BFS follows both import and DI paths.
         let alive_set = crate::utility_orphan_graph::trace_reachability(
             &entry_points.values,
             &context.import_graph,

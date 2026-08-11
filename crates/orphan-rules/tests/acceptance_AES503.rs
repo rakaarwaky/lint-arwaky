@@ -2,13 +2,24 @@
 #[path = "mock_filesystem.rs"]
 mod mock_filesystem;
 
+use filesystem::agent_filesystem_orchestrator::{
+    FilesystemOrchestrator, FilesystemOrchestratorDeps,
+};
+use filesystem::capabilities_ast_parser::ASTParser;
+use filesystem::capabilities_dependency_graph::DependencyGraph;
+use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
+use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
+use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use mock_filesystem::mock_filesystem;
 use orphan_rules_lint_arwaky::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
+use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::ICapabilitiesOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
     CapabilitiesOrphanAnalyzer::new(mock_filesystem())
@@ -16,6 +27,17 @@ fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
 
 fn reachable_for(fp: &FilePath) -> ReachabilityResult {
     ReachabilityResult::new(HashSet::from([fp.clone()]))
+}
+
+/// Builds a filesystem orchestrator with default dependencies.
+fn build_orchestrator() -> FilesystemOrchestrator {
+    FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
+        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
+        workspace: Arc::new(CapabilitiesWorkspace::new()),
+        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
+        parser: Arc::new(ASTParser::new()),
+        graph: Arc::new(DependencyGraph::new()),
+    })
 }
 
 #[test]
@@ -141,4 +163,197 @@ fn aes503_capabilities_violation_display_message() {
     assert!(msg.contains("AES503"));
     assert!(msg.contains("capabilities_handler"));
     assert!(msg.contains("not wired"));
+}
+
+#[test]
+fn aes503_chained_python_import_reachable() {
+    // Acceptance test: BFS reachability traces through chained Python imports.
+    // Entry → Surface → Agent → Capabilities should all be reachable.
+    // Builds the graph through the REAL filesystem pipeline (import extraction +
+    // resolve_import_target), not a hand-built graph.
+    let tmp = tempfile::TempDir::new().unwrap();
+    let member_src = tmp.path().join("modules").join("image").join("src");
+    std::fs::create_dir_all(&member_src).unwrap();
+    std::fs::write(
+        member_src.join("root_image_entry.py"),
+        "from modules.image.src.surfaces_image_cli import CliCommand\n",
+    )
+    .unwrap();
+    std::fs::write(
+        member_src.join("surfaces_image_cli.py"),
+        "from modules.image.src.agent_image_orchestrator import ImageOrchestrator\n",
+    )
+    .unwrap();
+    std::fs::write(
+        member_src.join("agent_image_orchestrator.py"),
+        "from capabilities_image_processing_processor import ImageProcessor\n",
+    )
+    .unwrap();
+    std::fs::write(
+        member_src.join("capabilities_image_processing_processor.py"),
+        "class ImageProcessor:\n    pass\n",
+    )
+    .unwrap();
+
+    let orch = build_orchestrator();
+    let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+
+    let entry = "modules/image/src/root_image_entry.py".to_string();
+    let surface = "modules/image/src/surfaces_image_cli.py".to_string();
+    let agent = "modules/image/src/agent_image_orchestrator.py".to_string();
+    let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
+
+    let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
+
+    assert!(alive_set.contains(&entry));
+    assert!(alive_set.contains(&surface));
+    assert!(alive_set.contains(&agent));
+    assert!(alive_set.contains(&capabilities));
+}
+
+#[test]
+fn aes503_broken_chain_detects_unreachable() {
+    // Acceptance test: When a link is missing in the chain, downstream files are unreachable.
+    // Real pipeline: surface imports the agent module, but the agent file does not
+    // exist — so no edge can be created and capabilities stay unreachable.
+    let tmp = tempfile::TempDir::new().unwrap();
+    let member_src = tmp.path().join("modules").join("image").join("src");
+    std::fs::create_dir_all(&member_src).unwrap();
+    std::fs::write(
+        member_src.join("root_image_entry.py"),
+        "from modules.image.src.surfaces_image_cli import CliCommand\n",
+    )
+    .unwrap();
+    // Surface imports the agent module, but the agent file is NOT created —
+    // the chain is broken between surface and agent.
+    std::fs::write(
+        member_src.join("surfaces_image_cli.py"),
+        "from modules.image.src.agent_image_orchestrator import ImageOrchestrator\n",
+    )
+    .unwrap();
+    // Capabilities file exists but nothing imports it (agent is missing).
+    std::fs::write(
+        member_src.join("capabilities_image_processing_processor.py"),
+        "class ImageProcessor:\n    pass\n",
+    )
+    .unwrap();
+
+    let orch = build_orchestrator();
+    let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+
+    let entry = "modules/image/src/root_image_entry.py".to_string();
+    let surface = "modules/image/src/surfaces_image_cli.py".to_string();
+    let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
+
+    let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
+
+    assert!(
+        alive_set.contains(&entry),
+        "Entry point should be reachable"
+    );
+    assert!(
+        alive_set.contains(&surface),
+        "Surface should be reachable from entry"
+    );
+    assert!(
+        !alive_set.contains(&capabilities),
+        "Capabilities should NOT be reachable when chain is broken"
+    );
+}
+
+#[test]
+fn aes503_reachable_unwired_message_mentions_di_bridge_gap() {
+    // P5 (visibility, issues #191-193): when a capabilities file IS reachable
+    // (e.g. via the DI impl bridge or container wiring) but still not wired in
+    // a root_*_container, the diagnostic must say so explicitly rather than
+    // implying the file was never reachable at all.
+    let analyzer = capabilities_analyzer();
+    let fp = FilePath::new("crates/orphan-rules/src/capabilities_foo.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
+
+    let alive = reachable_for(&fp);
+
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
+    assert!(result.is_orphan, "mock filesystem never reports wired");
+    assert!(
+        result.reason.contains(
+            "reachable (via import chain, container wiring, or contract implementation bridge)"
+        ),
+        "P5 message should explain the file is reachable but the wiring gap remains: {}",
+        result.reason
+    );
+    assert!(
+        !result.reason.contains("is not reachable"),
+        "Reachable file must not be reported as unreachable: {}",
+        result.reason
+    );
+}
+
+#[test]
+fn aes503_di_impl_bridge_reaches_capabilities() {
+    // Acceptance test (issues #191/192/193): DI-aware reachability.
+    // The agent imports only the contract (per AES), and the capability
+    // implements the contract without being statically imported by the agent.
+    // The impl bridge (contract→capabilities) must make the capability reachable.
+    let tmp = tempfile::TempDir::new().unwrap();
+    let root = tmp.path();
+    // Workspace layout mirroring workspaces-good: pyproject at root + modules/ member.
+    std::fs::write(root.join("pyproject.toml"), "[build-system]\n").unwrap();
+    let src = root.join("modules").join("app").join("src");
+    std::fs::create_dir_all(&src).unwrap();
+
+    // Entry → surface → agent (imports contract only, per AES rules).
+    std::fs::write(
+        src.join("root_cli_main_entry.py"),
+        "from modules.app.src.surface_app_cli import run_cli\n",
+    )
+    .unwrap();
+    std::fs::write(
+        src.join("surface_app_cli.py"),
+        "from modules.app.src.agent_app_orchestrator import AppOrchestrator\n",
+    )
+    .unwrap();
+    // Agent imports ONLY the contract — never the capability (AES rule).
+    std::fs::write(
+        src.join("agent_app_orchestrator.py"),
+        "from modules.app.src.contract_app_protocol import AppProtocol\n",
+    )
+    .unwrap();
+    // Contract protocol.
+    std::fs::write(
+        src.join("contract_app_protocol.py"),
+        "from abc import ABC, abstractmethod\n\nclass AppProtocol(ABC):\n    @abstractmethod\n    def run(self) -> str:\n        pass\n",
+    )
+    .unwrap();
+    // Capability implements the contract via inheritance (DI invisible to imports).
+    std::fs::write(
+        src.join("capabilities_app_engine.py"),
+        "from modules.app.src.contract_app_protocol import AppProtocol\n\nclass AppEngine(AppProtocol):\n    def run(self) -> str:\n        return \"ok\"\n",
+    )
+    .unwrap();
+
+    let orch = build_orchestrator();
+    let context = orch.build_orphan_graph_context(root, &[]);
+
+    let entry = "modules/app/src/root_cli_main_entry.py".to_string();
+    let surface = "modules/app/src/surface_app_cli.py".to_string();
+    let agent = "modules/app/src/agent_app_orchestrator.py".to_string();
+    let contract = "modules/app/src/contract_app_protocol.py".to_string();
+    let capabilities = "modules/app/src/capabilities_app_engine.py".to_string();
+
+    let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
+
+    assert!(alive_set.contains(&entry), "entry must be reachable");
+    assert!(alive_set.contains(&surface), "surface must be reachable");
+    assert!(alive_set.contains(&agent), "agent must be reachable");
+    assert!(
+        alive_set.contains(&contract),
+        "contract must be reachable (agent imports it)"
+    );
+    assert!(
+        alive_set.contains(&capabilities),
+        "capability implementing a reachable contract must be reachable via impl bridge"
+    );
 }

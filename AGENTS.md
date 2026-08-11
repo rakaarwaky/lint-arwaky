@@ -178,6 +178,9 @@ When merging a PR to develop:
 - **use `--delete-branch`** — for feature/fix branches after merge
 - **do NOT delete `develop`** branch after merge to `main`
 
+**Worktree policy (important):**
+- When working on a feature/fix branch, **use a git worktree** under `.worktree/` (e.g. `<repo-root>/.worktree/feature-name`) instead of switching branches in the current checkout with `git checkout`.
+
 ---
 
 ## Exit Code Contract

@@ -1,4 +1,4 @@
-# FRD — dispatcher (v1.11.0)
+# FRD — dispatcher (v2.0.0)
 
 ---
 

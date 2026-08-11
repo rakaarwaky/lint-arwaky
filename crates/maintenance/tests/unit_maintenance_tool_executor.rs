@@ -56,8 +56,7 @@ fn get_binary_path_non_empty() {
 
 #[test]
 fn executor_is_default_constructible() {
-    let executor =
-        maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter::default();
+    let executor = maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
     let output = executor.run_tool("echo", &["test"]);
     assert!(output.success);
 }

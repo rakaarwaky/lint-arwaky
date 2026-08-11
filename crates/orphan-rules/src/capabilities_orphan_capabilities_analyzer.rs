@@ -53,6 +53,22 @@ impl CapabilitiesOrphanAnalyzer {
 }
 
 impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
+    /// Determines whether a capabilities file is unreachable, unwired, or both.
+    ///
+    /// A file is considered non-orphan only when it is reachable from an entry file
+    /// and wired in a root container. Empty file paths skip the wiring check.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let result = analyzer.is_capabilities_orphan(
+    ///     &file_path,
+    ///     &root_dir,
+    ///     &alive_files,
+    ///     &content_map,
+    ///     workspace_root,
+    /// );
+    /// ```
     fn is_capabilities_orphan(
         &self,
         f: &FilePath,
@@ -86,7 +102,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         // Build diagnostic message
         let reason = if !is_reachable && !is_wired {
             format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable and not wired.\nWHY? Capabilities file '{}' is not reachable from any _entry file AND not wired in any root_*_container.\nFIX: Import '{}' from a _entry file AND register it in a root_*_container.rs.",
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not reachable and not wired.\nWHY? Capabilities file '{}' is not reachable from any _entry file AND not wired in any root_*_container.\nFIX: Import '{}' from a _entry file AND register it in a root_*_container file.",
                 stem, stem, stem
             )
         } else if !is_reachable {
@@ -95,8 +111,11 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
                 stem, stem, stem
             )
         } else {
+            // P5 (visibility): the file IS reachable — typically via the DI impl
+            // bridge (a contract it implements is reachable) or container wiring —
+            // so the report says so and pinpoints the remaining gap: container wiring.
             format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container.rs.",
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is reachable (via import chain, container wiring, or contract implementation bridge) but not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container file.",
                 stem, stem, stem
             )
         };

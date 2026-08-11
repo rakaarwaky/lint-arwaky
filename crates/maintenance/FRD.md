@@ -1,4 +1,4 @@
-# FRD — maintenance (v1.11.0)
+# FRD — maintenance (v2.0.0)
 
 ---
 

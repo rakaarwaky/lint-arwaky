@@ -1,6 +1,6 @@
 [package]
 name = "shared-lint-arwaky"
-version = "1.11.0"
+version = "2.0.0"
 edition = "2024"
 description = "Foundation crate: cross-cutting taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`) and contract (`_port`, `_protocol`, `_aggregate`) types shared by every feature crate."
 license = "MIT"
@@ -26,7 +26,7 @@ rmcp.workspace = true
 rayon.workspace = true
 dashmap = "6"
 schemars.workspace = true
-syn = { version = "2", features = ["full", "visit", "parsing"] }
+syn = { version = "3", features = ["full", "visit", "parsing"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 tracing.workspace = true
 

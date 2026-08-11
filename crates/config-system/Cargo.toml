@@ -1,6 +1,6 @@
 [package]
 name = "config-system-lint-arwaky"
-version = "1.11.0"
+version = "2.0.0"
 edition = "2024"
 description = "Configuration loading, parsing, validation, and workspace detection. Resolves `lint_arwaky.config.*.yaml` and merges it with project-level overrides."
 license = "MIT"

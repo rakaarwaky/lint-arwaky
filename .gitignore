@@ -43,4 +43,14 @@ serviceAccountKey
 .agents/reports
 .agents/plans
 .agents/graph-loop/
+.worktrees
+.qwen-web/
+.commandcode
+.codacy
+.codegraph
+.github/instructions/codacy.instructions.md
 
+# repowise local cache and generated artifacts (.repowise is a local cache,
+# not a source of truth; only the PR-bot config is committed)
+.repowise/*
+!.repowise/bot.yaml

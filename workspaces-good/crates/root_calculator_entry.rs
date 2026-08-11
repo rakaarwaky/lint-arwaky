@@ -1,6 +1,6 @@
-use clap::{Parser, Subcommand};
 use calculator::root_calculator_container::CalculatorContainer;
 use calculator_cli::surface_calculator_command;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(name = "calculator", version, about = "Interactive calculator")]
@@ -27,4 +27,3 @@ fn main() {
         }
     }
 }
-

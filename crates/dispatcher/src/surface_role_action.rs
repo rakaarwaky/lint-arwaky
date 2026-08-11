@@ -10,7 +10,7 @@ use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
-use crate::surface_output_component::ViolationItem;
+use shared::common::ViolationItem;
 
 /// Direct role scan — no subprocess. Used by the CLI `role` subcommand so that
 /// subprocess self-invocation from `scan` terminates (child never re-spawns).

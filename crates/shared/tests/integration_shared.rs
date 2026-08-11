@@ -204,7 +204,7 @@ fn lintresultlist_mutation_and_iteration() {
             (i + 1) as usize,
             "AES101",
             Severity::MEDIUM,
-            &format!("violation {}", i),
+            format!("violation {}", i),
         ));
     }
 
@@ -219,11 +219,14 @@ fn lintresultlist_mutation_and_iteration() {
 /// Verify LayerDefinition default and custom fields.
 #[test]
 fn layer_definition_customization() {
-    let mut ld = LayerDefinition::default();
-    ld.allowed = shared_lint_arwaky::common::taxonomy_common_vo::PatternList::new(vec!["*_vo.rs"]);
-    ld.forbidden =
-        shared_lint_arwaky::common::taxonomy_common_vo::PatternList::new(vec!["*_test.rs"]);
-    ld.word_count = Count::new(2);
+    let ld = LayerDefinition {
+        allowed: shared_lint_arwaky::common::taxonomy_common_vo::PatternList::new(vec!["*_vo.rs"]),
+        forbidden: shared_lint_arwaky::common::taxonomy_common_vo::PatternList::new(vec![
+            "*_test.rs",
+        ]),
+        word_count: Count::new(2),
+        ..Default::default()
+    };
 
     assert_eq!(ld.allowed.len(), 1);
     assert_eq!(ld.forbidden.len(), 1);

@@ -71,6 +71,26 @@ impl ContractOrphanAnalyzer {
         false
     }
 
+    /// Determines whether any contract name is re-exported by a configured barrel file.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    ///
+    /// let content_map = HashMap::new();
+    /// assert!(!is_trait_re_exported_in_barrel(&[], &[], &content_map));
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `trait_names` - Contract names to search for.
+    /// * `search_files` - Files to inspect for configured barrel filenames.
+    /// * `content_map` - File contents keyed by path.
+    ///
+    /// # Returns
+    ///
+    /// `true` if a configured barrel file contains one of the contract names as a whole word, `false` otherwise.
     fn is_trait_re_exported_in_barrel(
         trait_names: &[String],
         search_files: &[String],
@@ -91,14 +111,142 @@ impl ContractOrphanAnalyzer {
         }
         false
     }
+
+    /// Determines whether any trait or interface has an implementation reachable from an entry point.
+    ///
+    /// # Parameters
+    ///
+    /// * `inheritance_map` - Maps each trait or interface name to its implementation files.
+    /// * `trait_names` - Trait or interface names associated with the contract.
+    /// * `alive_files` - Files determined to be reachable from an entry point.
+    ///
+    /// # Returns
+    ///
+    /// `true` if at least one implementation of any supplied trait or interface is reachable,
+    /// `false` otherwise.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let has_implementor = analyzer.has_alive_implementor(
+    ///     &inheritance_map,
+    ///     &trait_names,
+    ///     &alive_files,
+    /// );
+    /// ```
+    fn has_alive_implementor(
+        &self,
+        inheritance_map: &InheritanceMap,
+        trait_names: &[String],
+        alive_files: &ReachabilityResult,
+    ) -> bool {
+        trait_names.iter().any(|tn| {
+            inheritance_map
+                .mapping
+                .get(tn)
+                .map(|impl_files| {
+                    impl_files
+                        .iter()
+                        .any(|impl_rel| is_path_alive(impl_rel, alive_files))
+                })
+                .unwrap_or(false)
+        })
+    }
+}
+
+/// Normalizes a workspace-relative path for comparison.
+///
+/// Strips a leading `./` prefix and converts backslashes to forward slashes so
+/// that paths originating from different sources compare consistently.
+fn normalize_rel_path(p: &str) -> String {
+    p.trim_start_matches("./").replace('\\', "/")
+}
+
+/// Determines whether two workspace-relative paths refer to the same file.
+///
+/// Both inputs use the same `path_to_relative` format (workspace-relative,
+/// forward slashes). Matching is strict: exact equality after normalization, or a
+/// suffix match that begins at a path-separator boundary. Bare-basename matching
+/// is intentionally avoided so that common names such as `mod.rs`, `index.ts`, or
+/// `lib.rs` in one module cannot validate an unrelated file in another module.
+fn paths_equivalent(rel: &str, alive: &str) -> bool {
+    let a = normalize_rel_path(rel);
+    let b = normalize_rel_path(alive);
+    if a == b {
+        return true;
+    }
+    // Suffix match only at a separator boundary. A path without any directory
+    // component (bare basename) is only ever equal — never a suffix match — so
+    // a bare `lib.rs` cannot validate an unrelated deeper `lib.rs`.
+    if a.contains('/') {
+        if let Some(rest) = b.strip_suffix(&a) {
+            if rest.is_empty() || rest.ends_with('/') {
+                return true;
+            }
+        }
+    }
+    if b.contains('/') {
+        if let Some(rest) = a.strip_suffix(&b) {
+            if rest.is_empty() || rest.ends_with('/') {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Determines whether a workspace-relative path corresponds to any reachable file path.
+///
+/// Paths may be relative or absolute and may include a `./` prefix. Matching uses
+/// [`paths_equivalent`], so common file names in different modules never collide.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// assert!(is_path_alive("src/lib.rs", &alive_files));
+/// ```
+///
+/// # Arguments
+///
+/// * `rel` - Workspace-relative path to compare.
+/// * `alive_files` - Reachability results containing paths known to be reachable.
+///
+/// # Returns
+///
+/// `true` if a reachable path matches the supplied path, `false` otherwise.
+fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
+    alive_files
+        .paths
+        .iter()
+        .any(|af| paths_equivalent(rel, af.value()))
 }
 
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
+    /// Determines whether a contract is orphaned based on reachability and implementation status.
+    ///
+    /// A contract is considered reachable when it is directly reachable from an entry file or
+    /// when at least one of its implementors is reachable. Protocol and aggregate contracts
+    /// are orphaned when no implementation is found, unless they are re-exported from a
+    /// configured barrel file.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let result = analyzer.is_contract_orphan(
+    ///     &file_path,
+    ///     &root_dir,
+    ///     &inheritance_map,
+    ///     &all_files,
+    ///     &content_map,
+    ///     &alive_files,
+    /// );
+    /// assert!(!result.is_orphan);
+    /// ```
     fn is_contract_orphan(
         &self,
         f: &FilePath,
         _root_dir: &FilePath,
-        _inheritance_map: &InheritanceMap,
+        inheritance_map: &InheritanceMap,
         all_files: &[String],
         content_map: &HashMap<String, String>,
         alive_files: &ReachabilityResult,
@@ -115,8 +263,12 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
-        // Condition 1: not reachable from any _entry file
-        let is_reachable = alive_files.paths.contains(f);
+        // Condition 1: not reachable from any _entry file.
+        // P3 (symmetric contract wiring): a contract is also considered reachable
+        // when it has an alive implementor — the contract is consumed purely via DI
+        // (its capabilities/agents are wired, not statically imported by entry).
+        let is_reachable = is_path_alive(fp, alive_files)
+            || self.has_alive_implementor(inheritance_map, &trait_names, alive_files);
         if !is_reachable {
             return OrphanIndicatorResult::new(
                 true,
@@ -182,5 +334,59 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+    }
+}
+
+#[cfg(test)]
+mod path_alive_tests {
+    use super::is_path_alive;
+    use shared::common::taxonomy_path_vo::FilePath;
+    use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
+    use std::collections::HashSet;
+
+    fn alive(paths: &[&str]) -> ReachabilityResult {
+        ReachabilityResult::new(
+            paths
+                .iter()
+                .filter_map(|p| FilePath::new(p.to_string()).ok())
+                .collect::<HashSet<_>>(),
+        )
+    }
+
+    #[test]
+    fn exact_workspace_relative_match_is_alive() {
+        let set = alive(&["crates/a/src/capabilities_foo.rs"]);
+        assert!(is_path_alive("crates/a/src/capabilities_foo.rs", &set));
+    }
+
+    #[test]
+    fn suffix_match_at_separator_boundary_is_alive() {
+        // Deeper absolute path still resolves to the same relative file.
+        let set = alive(&["crates/a/src/capabilities_foo.rs"]);
+        assert!(is_path_alive("a/src/capabilities_foo.rs", &set));
+    }
+
+    #[test]
+    fn partial_stem_does_not_false_match() {
+        // `xcontract_foo.rs` must NOT match `contract_foo.rs`.
+        let set = alive(&["crates/a/src/contract_foo.rs"]);
+        assert!(!is_path_alive("crates/a/src/xcontract_foo.rs", &set));
+        assert!(!is_path_alive("contract_foo.rs", &set));
+    }
+
+    #[test]
+    fn same_basename_in_other_module_does_not_false_match() {
+        // A `lib.rs`/`mod.rs` in a different module must not validate an
+        // unrelated file with the same basename.
+        let set = alive(&["crates/a/src/lib.rs"]);
+        assert!(!is_path_alive("crates/b/src/lib.rs", &set));
+        assert!(!is_path_alive("lib.rs", &set));
+    }
+
+    #[test]
+    fn leading_dot_slash_and_backslashes_are_normalized() {
+        let set = alive(&["crates/a/src/contract_foo.rs"]);
+        assert!(is_path_alive("./crates/a/src/contract_foo.rs", &set));
+        assert!(is_path_alive("crates\\a\\src\\contract_foo.rs", &set));
     }
 }

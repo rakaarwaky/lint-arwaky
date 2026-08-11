@@ -1,4 +1,4 @@
-# FRD — orphan-rules (v1.11.0)
+# FRD — orphan-rules (v2.0.0)
 
 ---
 

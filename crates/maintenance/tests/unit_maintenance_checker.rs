@@ -108,8 +108,7 @@ fn run_dependency_report_with_cargo_lock() {
     let checker = make_checker();
     let path = FilePath::new(".").unwrap();
     let result = checker.run_dependency_report(&path);
-    if result.is_ok() {
-        let report = result.unwrap();
+    if let Ok(report) = result {
         assert_eq!(report.language, "Rust");
     }
     // Cargo.lock may or may not exist in test env
