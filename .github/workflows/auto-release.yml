@@ -175,15 +175,41 @@ jobs:
               f.write(content[:first_nl] + entry + content[first_nl:])
           PYEOF
 
-      - name: Commit version bump
+      - name: Open release PR
         if: steps.staleness.outputs.stale != 'true'
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          BRANCH="release/v${VERSION}"
+
+          # Skip if this version was already released or a release PR/branch
+          # already exists (prevents duplicate release PRs after a merge).
+          if git ls-remote --heads origin "$BRANCH" | grep -q "$BRANCH"; then
+            echo "Release branch ${BRANCH} already exists — skipping."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Cargo.toml Cargo.lock CHANGELOG.md
-          git commit -m "chore(release): v${{ steps.version.outputs.version }}"
-          git tag "v${{ steps.version.outputs.version }}"
-          # Pushing the tag triggers release.yml (on: push: tags) automatically.
-          git push origin main --tags
+          git commit -m "chore(release): v${VERSION}"
+
+          # Create the release branch and push it.
+          git switch -c "$BRANCH"
+          git push -u origin "$BRANCH"
+
+          # Open a PR to main; the auto-merge workflow merges it once the
+          # required checks pass.
+          PR_BODY=$(cat <<BODY
+          Automated release PR for v${VERSION}.
+
+          ## Changelog
+
+          See the version entry in [CHANGELOG.md](CHANGELOG.md).
+          BODY
+          )
+          gh pr create --base main --head "$BRANCH" \
+            --title "chore(release): v${VERSION}" \
+            --body "$PR_BODY" || \
+            echo "PR already exists for ${VERSION}."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

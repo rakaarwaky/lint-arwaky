@@ -1,0 +1,47 @@
+name: Tag release PRs
+
+# Creates the v* tag for a merged release PR. The auto-release workflow
+# cannot push tags to main (ruleset requires status checks on direct
+# pushes), so it opens a release PR instead. Once that PR is merged, this
+# workflow creates the tag from the merge commit, which triggers the
+# release build (release.yml: on: push: tags).
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Create release tag
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.title, 'chore(release):')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push tag
+        run: |
+          VERSION=$(git log -1 --format=%s "${{ github.event.pull_request.merge_commit_sha }}" \
+            | sed -E 's/^chore\(release\): v//')
+          if [ -z "$VERSION" ]; then
+            # Fall back to parsing the PR title.
+            VERSION="${{ github.event.pull_request.title }}"
+            VERSION="${VERSION#chore(release): v}"
+          fi
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists."
+            exit 0
+          fi
+          git tag "$TAG" "${{ github.event.pull_request.merge_commit_sha }}"
+          git push origin "$TAG"
+          echo "Pushed tag ${TAG}."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
