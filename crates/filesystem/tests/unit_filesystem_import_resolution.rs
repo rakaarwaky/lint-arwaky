@@ -39,19 +39,8 @@ fn build_file_set<'a>(paths: &'a [&'a str]) -> HashSet<&'a str> {
 }
 
 fn build_stem_index(paths: &[&str]) -> HashMap<String, Vec<String>> {
-    let mut index: HashMap<String, Vec<String>> = HashMap::new();
-    for &f in paths {
-        if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
-            index
-                .entry(stem.to_string())
-                .or_default()
-                .push(f.to_string());
-        }
-    }
-    for v in index.values_mut() {
-        v.sort();
-    }
-    index
+    let files: Vec<String> = paths.iter().map(|s| s.to_string()).collect();
+    FilesystemOrchestrator::build_stem_index(&files)
 }
 
 fn make_orchestrator() -> FilesystemOrchestrator {
@@ -332,14 +321,12 @@ fn e2e_chained_python_import_graph_reaches_capabilities() {
     );
 
     // BFS reachability from the entry must mark the capabilities file alive.
-    let alive: FileSet<String> = context
-        .import_graph
-        .mapping
-        .iter()
-        .flat_map(|(src, targets)| std::iter::once(src.clone()).chain(targets.iter().cloned()))
-        .collect();
+    // Use actual graph reachability traversal from the entry point.
+    use shared::filesystem::contract_graph_protocol::IGraphProtocol;
+    let entry_path = Path::new(&root).join("modules/image/src/root_image_entry.py");
+    let capabilities_path = Path::new(&root).join("modules/image/src/capabilities_image_processing_processor.py");
     assert!(
-        alive.contains("modules/image/src/capabilities_image_processing_processor.py"),
-        "capabilities file must be reachable through the chain"
+        orch.reachable(&entry_path, &capabilities_path),
+        "capabilities file must be reachable through the chain from entry"
     );
 }

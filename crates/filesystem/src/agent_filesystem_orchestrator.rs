@@ -458,18 +458,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             })
             .unwrap_or_default();
         let all_files_set: HashSet<&str> = all_files.iter().map(|s| s.as_str()).collect();
-        let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
-        for f in &all_files {
-            if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
-                stem_index
-                    .entry(stem.to_string())
-                    .or_default()
-                    .push(f.clone());
-            }
-        }
-        for v in stem_index.values_mut() {
-            v.sort();
-        }
+        let stem_index = Self::build_stem_index(&all_files);
         let imports = self.imports.get().cloned().unwrap_or_default();
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
@@ -658,8 +647,16 @@ impl FilesystemOrchestrator {
                                 all_files_set.contains(init.as_str()).then_some(init)
                             })
                         })
-                        // C: suffix/stem match (bare module name in nested dir)
+                        // C: suffix/stem match (bare module name or full dotted path)
                         .or_else(|| {
+                            // For dotted imports, try matching full path suffix first
+                            if raw.contains('.') {
+                                let full_path_suffix = format!("{}.py", raw.replace('.', "/"));
+                                if all_files_set.contains(full_path_suffix.as_str()) {
+                                    return Some(full_path_suffix);
+                                }
+                            }
+                            // For bare module names, use stem-based lookup
                             let stem = raw.rsplit('.').next().unwrap_or(raw);
                             let root_py = format!("{}.py", stem);
                             let suffix = format!("/{}", root_py);
@@ -725,6 +722,24 @@ impl FilesystemOrchestrator {
                 }
             }
         }
+    }
+
+    /// Build a stem-to-files index for import resolution.
+    /// Maps file stems to sorted lists of matching file paths.
+    pub fn build_stem_index(files: &[String]) -> HashMap<String, Vec<String>> {
+        let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
+        for f in files {
+            if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
+                stem_index
+                    .entry(stem.to_string())
+                    .or_default()
+                    .push(f.clone());
+            }
+        }
+        for v in stem_index.values_mut() {
+            v.sort();
+        }
+        stem_index
     }
 }
 
