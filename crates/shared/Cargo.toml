@@ -26,7 +26,7 @@ rmcp.workspace = true
 rayon.workspace = true
 dashmap = "6"
 schemars.workspace = true
-syn = { version = "2", features = ["full", "visit", "parsing"] }
+syn = { version = "3", features = ["full", "visit", "parsing"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 tracing.workspace = true
 

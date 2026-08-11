@@ -148,7 +148,7 @@ fn walk_use_tree(
 }
 
 fn extract_trait_impl(item_impl: &syn::ItemImpl, result: &mut RustParseResultVO) {
-    let Some((_, trait_path, _)) = &item_impl.trait_ else {
+    let Some((trait_path, _)) = &item_impl.trait_ else {
         return;
     };
     let trait_name = path_to_string(trait_path);
