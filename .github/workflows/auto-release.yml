@@ -47,7 +47,7 @@ jobs:
       # integrity by verifying the tip of main matches the exact SHA that
       # CI tested — see the next step.
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
