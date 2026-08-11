@@ -46,3 +46,6 @@ serviceAccountKey
 .worktrees
 .qwen-web/
 .commandcode
+.codacy
+.codegraph
+.github/instructions/codacy.instructions.md

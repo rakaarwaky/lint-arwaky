@@ -1,0 +1,9 @@
+---
+# workspaces-bad contains intentional violations used as test fixtures
+# for the linter itself - it must be excluded from Codacy analysis.
+# Rust integration test crates add no signal to the analysis.
+exclude_paths:
+- "workspaces-bad/**"
+- "crates/*/tests/**"
+- "scripts/**"
+- "tools/**"
