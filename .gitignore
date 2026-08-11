@@ -58,6 +58,8 @@ serviceAccountKey
 .repowise/*
 !.repowise/bot.yaml
 !.repowise/health-rules.json
+# repowise API keys (local)
+.repowise/.env
 # repowise cache can appear in any scanned subdirectory (CLI generates per-dir)
 **/.repowise/*
 !**/.repowise/bot.yaml
