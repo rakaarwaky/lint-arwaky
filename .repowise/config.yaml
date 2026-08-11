@@ -1,0 +1,9 @@
+exclude_patterns:
+- workspaces-bad/**
+- workspaces-good/**
+- crates/*/tests/**
+- scripts/**
+- tools/**
+- log/**
+- target/**
+- '*.md'
