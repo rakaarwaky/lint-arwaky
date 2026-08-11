@@ -16,7 +16,7 @@ use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 
 use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 
 fn make_python_import(raw: &str, resolved: Option<&str>) -> ImportEntry {
