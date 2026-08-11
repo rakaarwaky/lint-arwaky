@@ -4572,7 +4572,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml_ng",
- "syn 2.0.119",
+ "syn 3.0.3",
  "tempfile",
  "thiserror 2.0.20",
  "tokio",
