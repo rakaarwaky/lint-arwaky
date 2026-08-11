@@ -50,6 +50,9 @@ serviceAccountKey
 .codegraph
 .github/instructions/codacy.instructions.md
 
+# local editor config
+.vscode/
+
 # repowise local cache and generated artifacts (.repowise is a local cache,
 # not a source of truth; only the PR-bot config and health rules are committed)
 .repowise/*
