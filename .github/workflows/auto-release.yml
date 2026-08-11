@@ -181,10 +181,12 @@ jobs:
           VERSION="${{ steps.version.outputs.version }}"
           BRANCH="release/v${VERSION}"
 
-          # Skip if this version was already released or a release PR/branch
-          # already exists (prevents duplicate release PRs after a merge).
-          if git ls-remote --heads origin "$BRANCH" | grep -q "$BRANCH"; then
-            echo "Release branch ${BRANCH} already exists — skipping."
+          # Skip only when an open release PR for this version already
+          # exists (prevents duplicate release PRs after a merge). The
+          # branch itself may exist from a previous attempt.
+          if gh pr list --head "$BRANCH" --state open --json number \
+            --jq 'length' 2>/dev/null | grep -q '[1-9]'; then
+            echo "Release PR for ${VERSION} already open — skipping."
             exit 0
           fi
 
@@ -198,7 +200,7 @@ jobs:
           git push -u origin "$BRANCH"
 
           # Open a PR to main; the auto-merge workflow merges it once the
-          # required checks pass.
+          # required checks pass. A failure here must fail the job.
           PR_BODY=$(cat <<BODY
           Automated release PR for v${VERSION}.
 
@@ -209,7 +211,6 @@ jobs:
           )
           gh pr create --base main --head "$BRANCH" \
             --title "chore(release): v${VERSION}" \
-            --body "$PR_BODY" || \
-            echo "PR already exists for ${VERSION}."
+            --body "$PR_BODY"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

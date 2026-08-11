@@ -3,8 +3,9 @@ name: Tag release PRs
 # Creates the v* tag for a merged release PR. The auto-release workflow
 # cannot push tags to main (ruleset requires status checks on direct
 # pushes), so it opens a release PR instead. Once that PR is merged, this
-# workflow creates the tag from the merge commit, which triggers the
-# release build (release.yml: on: push: tags).
+# workflow creates the tag from the merge commit, then explicitly dispatches
+# the release build (a tag pushed with GITHUB_TOKEN does not trigger other
+# workflows).
 
 on:
   pull_request:
@@ -18,8 +19,13 @@ jobs:
   tag:
     name: Create release tag
     runs-on: ubuntu-latest
+    # Only for release PRs: merged into main, authored by the release bot,
+    # from a release/v* branch, with the chore(release): title prefix.
     if: >
       github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      startsWith(github.event.pull_request.head.ref, 'release/v') &&
       startsWith(github.event.pull_request.title, 'chore(release):')
     steps:
       - uses: actions/checkout@v4
@@ -27,21 +33,36 @@ jobs:
           fetch-depth: 0
 
       - name: Create and push tag
+        id: tag
         run: |
           VERSION=$(git log -1 --format=%s "${{ github.event.pull_request.merge_commit_sha }}" \
-            | sed -E 's/^chore\(release\): v//')
+            | sed -E 's/^chore\(release\): v//' | xargs)
           if [ -z "$VERSION" ]; then
-            # Fall back to parsing the PR title.
-            VERSION="${{ github.event.pull_request.title }}"
-            VERSION="${VERSION#chore(release): v}"
+            echo "Could not resolve version from merge commit."
+            exit 1
+          fi
+          # Accept only a strict X.Y.Z version.
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version from commit message: ${VERSION}"
+            exit 1
           fi
           TAG="v${VERSION}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag ${TAG} already exists."
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git tag "$TAG" "${{ github.event.pull_request.merge_commit_sha }}"
           git push origin "$TAG"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Pushed tag ${TAG}."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dispatch release build
+        # GITHUB_TOKEN cannot trigger workflows via tag push, so dispatch
+        # release.yml explicitly. release.yml must declare on: workflow_dispatch.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run release.yml --ref "v${{ steps.tag.outputs.version }}"
