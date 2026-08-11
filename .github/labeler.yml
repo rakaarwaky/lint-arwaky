@@ -1,56 +1,64 @@
-# GitHub Labeler configuration.
+# GitHub Labeler configuration (v7 format).
 # Labels are applied to PRs based on which files they change.
-# See https://github.com/actions/labeler
 
 # Rust
 rust:
-  - crates/**/*.rs
-  - crates/**/Cargo.toml
-  - crates/**/Cargo.lock
+  - changed-files:
+      - any-glob-to-any-file: crates/**/*.rs
+      - any-glob-to-any-file: crates/**/Cargo.toml
+      - any-glob-to-any-file: crates/**/Cargo.lock
 
 # Python
 python:
-  - modules/**/*.py
-  - modules/**/pyproject.toml
-  - modules/**/requirements.txt
+  - changed-files:
+      - any-glob-to-any-file: modules/**/*.py
+      - any-glob-to-any-file: modules/**/pyproject.toml
+      - any-glob-to-any-file: modules/**/requirements.txt
 
 # TypeScript / JavaScript
 typescript:
-  - packages/**/*.ts
-  - packages/**/*.tsx
-  - packages/**/package.json
+  - changed-files:
+      - any-glob-to-any-file: packages/**/*.ts
+      - any-glob-to-any-file: packages/**/*.tsx
+      - any-glob-to-any-file: packages/**/package.json
 
 # CI / Workflows
 ci:
-  - .github/workflows/**
-  - .github/dependabot.yml
+  - changed-files:
+      - any-glob-to-any-file: .github/workflows/**
+      - any-glob-to-any-file: .github/dependabot.yml
 
 # Documentation
 documentation:
-  - '**/*.md'
+  - changed-files:
+      - any-glob-to-any-file: "**/*.md"
 
-# Config
+# Configuration
 configuration:
-  - '*.yaml'
-  - '*.yml'
-  - .codacy.yaml
-  - .repowise/**
-  - lint_arwaky.config.yaml
+  - changed-files:
+      - any-glob-to-any-file: "*.yaml"
+      - any-glob-to-any-file: "*.yml"
+      - any-glob-to-any-file: .codacy.yaml
+      - any-glob-to-any-file: .repowise/**
+      - any-glob-to-any-file: lint_arwaky.config.yaml
 
 # Dependencies
 dependencies:
-  - '**/Cargo.toml'
-  - '**/Cargo.lock'
-  - '**/package.json'
-  - '**/requirements.txt'
+  - changed-files:
+      - any-glob-to-any-file: "**/Cargo.toml"
+      - any-glob-to-any-file: "**/Cargo.lock"
+      - any-glob-to-any-file: "**/package.json"
+      - any-glob-to-any-file: "**/requirements.txt"
 
 # Tests
 tests:
-  - crates/**/tests/**
-  - modules/**/tests/**
-  - packages/**/tests/**
+  - changed-files:
+      - any-glob-to-any-file: crates/**/tests/**
+      - any-glob-to-any-file: modules/**/tests/**
+      - any-glob-to-any-file: packages/**/tests/**
 
 # Fixtures (test workspaces)
 fixtures:
-  - workspaces-bad/**
-  - workspaces-good/**
+  - changed-files:
+      - any-glob-to-any-file: workspaces-bad/**
+      - any-glob-to-any-file: workspaces-good/**
