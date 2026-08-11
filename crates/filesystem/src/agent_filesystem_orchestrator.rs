@@ -458,18 +458,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             })
             .unwrap_or_default();
         let all_files_set: HashSet<&str> = all_files.iter().map(|s| s.as_str()).collect();
-        let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
-        for f in &all_files {
-            if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
-                stem_index
-                    .entry(stem.to_string())
-                    .or_default()
-                    .push(f.clone());
-            }
-        }
-        for v in stem_index.values_mut() {
-            v.sort();
-        }
+        let stem_index = Self::build_stem_index(&all_files);
         let imports = self.imports.get().cloned().unwrap_or_default();
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
@@ -661,8 +650,13 @@ impl FilesystemOrchestrator {
                         // C: suffix/stem match (bare module name in nested dir)
                         .or_else(|| {
                             let stem = raw.rsplit('.').next().unwrap_or(raw);
-                            let root_py = format!("{}.py", stem);
-                            let suffix = format!("/{}", root_py);
+                            let is_dotted = raw.contains('.');
+                            let candidate_suffix = if is_dotted {
+                                format!("/{}.py", raw.replace('.', "/"))
+                            } else {
+                                format!("/{}.py", stem)
+                            };
+                            let root_candidate = format!("{}.py", if is_dotted { raw.replace('.', "/") } else { stem.to_string() });
                             let member_dir = src_dir.split('/').take(2).collect::<Vec<_>>().join("/");
                             let domain_prefix = format!("{}/", member_dir);
                             stem_index.get(stem).and_then(|candidates| {
@@ -670,7 +664,7 @@ impl FilesystemOrchestrator {
                                     .iter()
                                     .filter(|f| {
                                         f.as_str() != src_rel
-                                            && (**f == root_py || f.ends_with(&suffix))
+                                            && (**f == root_candidate || f.ends_with(&candidate_suffix))
                                     })
                                     .min_by_key(|f| {
                                         (!f.starts_with(&domain_prefix), f.as_str())
@@ -730,6 +724,25 @@ impl FilesystemOrchestrator {
 
 // ─── Pipeline Helpers ───
 impl FilesystemOrchestrator {
+    /// Build a stem index from a list of file paths.
+    /// Each stem (file name without extension) maps to all files with that stem,
+    /// sorted lexicographically.
+    pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {
+        let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
+        for f in file_paths {
+            if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
+                stem_index
+                    .entry(stem.to_string())
+                    .or_default()
+                    .push(f.clone());
+            }
+        }
+        for v in stem_index.values_mut() {
+            v.sort();
+        }
+        stem_index
+    }
+
     pub fn build_file_index_impl(&self, root: &Path, extra_ignored: &[String]) {
         let ws_root = self
             .deps
