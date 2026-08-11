@@ -1,9 +1,11 @@
 ---
-# workspaces-bad contains intentional violations used as test fixtures
-# for the linter itself - it must be excluded from Codacy analysis.
+# workspaces-bad / workspaces-good contain intentional fixture code used by
+# the linter's own tests — they must be excluded from Codacy analysis.
 # Rust integration test crates add no signal to the analysis.
 exclude_paths:
 - "workspaces-bad/**"
+- "workspaces-good/**"
 - "crates/*/tests/**"
 - "scripts/**"
 - "tools/**"
+- "CONTRIBUTING.md"
