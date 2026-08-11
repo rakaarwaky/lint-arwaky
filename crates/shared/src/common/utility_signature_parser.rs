@@ -93,18 +93,14 @@ fn leaves_class_body(raw: &str, class_indent: usize, trimmed: &str) -> bool {
 /// True when a Python `def` line annotates a parameter or return with a primitive type.
 fn python_line_has_primitive(line: &str) -> bool {
     let lower = line.to_lowercase();
-    lower.contains(": str")
-        || lower.contains(": int")
-        || lower.contains(": bool")
-        || lower.contains(": float")
-        || lower.contains(": list")
-        || lower.contains(": dict")
-        || lower.contains("-> str")
-        || lower.contains("-> int")
-        || lower.contains("-> bool")
-        || lower.contains("-> float")
-        || lower.contains("-> list")
-        || lower.contains("-> dict")
+    const PARAM_PATTERNS: &[&str] = &[
+        ": str", ": int", ": bool", ": float", ": list", ": dict",
+    ];
+    const RETURN_PATTERNS: &[&str] = &[
+        "-> str", "-> int", "-> bool", "-> float", "-> list", "-> dict",
+    ];
+    PARAM_PATTERNS.iter().any(|p| lower.contains(p))
+        || RETURN_PATTERNS.iter().any(|p| lower.contains(p))
 }
 
 /// Check if a Python method signature uses forbidden primitive types.
@@ -233,16 +229,17 @@ fn ts_inline_has_primitive(inner: &str) -> bool {
 /// True when a TypeScript signature line uses primitive parameter/return annotations.
 fn ts_line_has_primitive(line: &str) -> bool {
     let lower = line.to_lowercase();
-    lower.contains(": string")
-        || lower.contains(": number")
-        || lower.contains(": any")
-        || lower.contains(": string[]")
-        || lower.contains(": number[]")
-        || lower.contains("): string")
-        || lower.contains("): number")
-        || lower.contains("): any")
-        || lower.contains("): string[]")
-        || lower.contains("): number[]")
+    const PRIMITIVES: &[&str] = &["string", "number", "any"];
+    PRIMITIVES.iter().any(|p| {
+        let with_colon = format!(": {p}");
+        let with_paren = format!("): {p}");
+        let arr_param = format!(": {p}[]");
+        let arr_return = format!("): {p}[]");
+        lower.contains(&with_colon)
+            || lower.contains(&with_paren)
+            || lower.contains(&arr_param)
+            || lower.contains(&arr_return)
+    })
 }
 
 /// Check if a TypeScript method signature uses forbidden primitive types.
