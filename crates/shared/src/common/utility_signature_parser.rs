@@ -12,30 +12,70 @@
 /// because the AES402 rule applies to the contract layer (protocol
 /// traits) — implementation details are an adapter concern.
 pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
-    let mut results = Vec::new();
-    let mut in_trait_depth: i32 = 0;
-    let mut brace_depth: i32 = 0;
+    let trait_starts = find_trait_brace_opening_lines(content);
+    let brace_matches = find_matching_brace_pairs(content);
+    extract_signatures_from_traces(trait_starts, brace_matches, content)
+}
 
-    for (idx, raw) in content.lines().enumerate() {
-        let line_no = idx + 1;
-        let line = raw.trim();
-
-        if in_trait_depth == 0 {
+/// Line numbers (1-based) where a Rust trait block opens on that line.
+fn find_trait_brace_opening_lines(content: &str) -> Vec<usize> {
+    content
+        .lines()
+        .enumerate()
+        .filter_map(|(idx, raw)| {
+            let line = raw.trim();
             if is_trait_header(line) {
-                in_trait_depth = 1;
-                brace_depth = line.matches('{').count() as i32 - line.matches('}').count() as i32;
+                Some(idx + 1)
+            } else {
+                None
             }
+        })
+        .collect()
+}
+
+/// For every line containing `{`, the index of the matching `}` (brace
+/// counting across lines). Returns `(open_line, close_line)` pairs.
+fn find_matching_brace_pairs(content: &str) -> Vec<(usize, usize)> {
+    let lines: Vec<&str> = content.lines().collect();
+    let mut pairs = Vec::new();
+    let mut stack: Vec<usize> = Vec::new();
+
+    for (idx, line) in lines.iter().enumerate() {
+        for ch in line.chars() {
+            match ch {
+                '{' => stack.push(idx + 1),
+                '}' => {
+                    if let Some(open) = stack.pop() {
+                        pairs.push((open, idx + 1));
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    pairs
+}
+
+/// Extract `fn name(...);` signatures that live inside a trait block opened at
+/// one of `trait_starts` (spanning `brace_matches` for boundary detection).
+fn extract_signatures_from_traces(
+    trait_starts: Vec<usize>,
+    brace_matches: Vec<(usize, usize)>,
+    content: &str,
+) -> Vec<(usize, String)> {
+    let lines: Vec<&str> = content.lines().collect();
+    let mut results = Vec::new();
+
+    for open_line in trait_starts {
+        // Find the matching close for this trait's opening brace.
+        let Some(&(_, close_line)) = brace_matches.iter().find(|&&(o, _)| o == open_line) else {
             continue;
-        }
-
-        if line.starts_with("fn ") && line.contains(';') {
-            results.push((line_no, raw.to_string()));
-        }
-
-        brace_depth += line.matches('{').count() as i32 - line.matches('}').count() as i32;
-        if brace_depth <= 0 {
-            in_trait_depth = 0;
-            brace_depth = 0;
+        };
+        for (idx, raw) in lines.iter().enumerate().take(close_line).skip(open_line) {
+            let line = raw.trim();
+            if line.starts_with("fn ") && line.contains(';') {
+                results.push((idx + 1, raw.to_string()));
+            }
         }
     }
 
@@ -75,7 +115,9 @@ pub fn extract_python_method_signatures(content: &str) -> Vec<(usize, String)> {
             continue;
         }
 
-        if trimmed.starts_with("def ") && trimmed.contains("->") && python_line_has_primitive(trimmed)
+        if trimmed.starts_with("def ")
+            && trimmed.contains("->")
+            && python_line_has_primitive(trimmed)
         {
             results.push((line_no, raw.to_string()));
         }
@@ -93,9 +135,7 @@ fn leaves_class_body(raw: &str, class_indent: usize, trimmed: &str) -> bool {
 /// True when a Python `def` line annotates a parameter or return with a primitive type.
 fn python_line_has_primitive(line: &str) -> bool {
     let lower = line.to_lowercase();
-    const PARAM_PATTERNS: &[&str] = &[
-        ": str", ": int", ": bool", ": float", ": list", ": dict",
-    ];
+    const PARAM_PATTERNS: &[&str] = &[": str", ": int", ": bool", ": float", ": list", ": dict"];
     const RETURN_PATTERNS: &[&str] = &[
         "-> str", "-> int", "-> bool", "-> float", "-> list", "-> dict",
     ];
@@ -294,8 +334,7 @@ pub fn signature_uses_forbidden_primitive(sig: &str) -> Vec<&'static str> {
     // ── String exemption: allowed in collection/error/optional contexts ──
     // HashMap<String, ...>, Vec<String>, &[String], Option<String>, Result<T, String>
     // are all valid uses of String at contract boundaries.
-    if regex_lite_match_whole_token(&combined, "String") && !is_string_in_valid_context(&combined)
-    {
+    if regex_lite_match_whole_token(&combined, "String") && !is_string_in_valid_context(&combined) {
         forbidden.push("String");
     }
 
@@ -399,9 +438,7 @@ fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
 /// is a collection element or type parameter — not a standalone domain type.
 /// Only bare `String` as a top-level parameter or return type is forbidden.
 fn is_string_in_valid_context(sig: &str) -> bool {
-    string_in_collection(sig)
-        || string_in_wrapper(sig)
-        || string_in_tuple(sig)
+    string_in_collection(sig) || string_in_wrapper(sig) || string_in_tuple(sig)
 }
 
 /// True when `String` appears inside a collection type (HashMap, Vec, slice).

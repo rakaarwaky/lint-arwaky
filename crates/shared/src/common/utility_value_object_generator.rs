@@ -146,9 +146,7 @@ macro_rules! domain_error_vo {
         }
 
         impl $name {
-            pub fn new(
-                message: $crate::common::taxonomy_message_vo::LintMessage,
-            ) -> Self {
+            pub fn new(message: $crate::common::taxonomy_message_vo::LintMessage) -> Self {
                 Self {
                     path: $crate::common::taxonomy_path_vo::FilePath::default(),
                     message,

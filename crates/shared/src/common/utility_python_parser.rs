@@ -148,13 +148,16 @@ fn parse_python_class(rest: &str, result: &mut PythonParseResultVO, _line: usize
 }
 
 fn strip_python_comments(content: &str) -> Vec<String> {
-    content.lines().map(|line| {
-        let trimmed = line.trim();
-        if trimmed.starts_with('#') {
-            return String::new();
-        }
-        strip_python_inline_comment(line)
-    }).collect()
+    content
+        .lines()
+        .map(|line| {
+            let trimmed = line.trim();
+            if trimmed.starts_with('#') {
+                return String::new();
+            }
+            strip_python_inline_comment(line)
+        })
+        .collect()
 }
 
 /// Strip inline `#` comment from a single Python line, respecting string literals.

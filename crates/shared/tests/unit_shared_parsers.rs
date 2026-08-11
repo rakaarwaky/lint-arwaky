@@ -18,8 +18,16 @@ fn python_parses_from_and_plain_imports() {
     assert!(r.parse_ok);
 
     let raw_paths: Vec<&str> = r.imports.iter().map(|i| i.raw_path.as_str()).collect();
-    assert!(raw_paths.contains(&"os"), "from-import base module missing: {:?}", raw_paths);
-    assert!(raw_paths.contains(&"sys"), "plain import missing: {:?}", raw_paths);
+    assert!(
+        raw_paths.contains(&"os"),
+        "from-import base module missing: {:?}",
+        raw_paths
+    );
+    assert!(
+        raw_paths.contains(&"sys"),
+        "plain import missing: {:?}",
+        raw_paths
+    );
     // `from os import path, getcwd` expands to dotted name imports.
     assert!(
         raw_paths.contains(&"os.path"),
@@ -37,7 +45,10 @@ fn python_parses_class_bases_and_functions() {
     let src = "class Animal(Mammal):\n    pass\n\ndef foo(): ...\n\nasync def bar():\n    pass\n";
     let r = parse_python(src);
 
-    assert_eq!(r.class_bases, vec![("Animal".to_string(), vec!["Mammal".to_string()])]);
+    assert_eq!(
+        r.class_bases,
+        vec![("Animal".to_string(), vec!["Mammal".to_string()])]
+    );
 
     let names: Vec<&str> = r.functions.iter().map(|f| f.name.as_str()).collect();
     assert_eq!(names, vec!["foo", "bar"]);
@@ -62,7 +73,8 @@ fn python_strips_comments_before_parsing() {
 // ── TypeScript / JavaScript ─────────────────────────────────
 #[test]
 fn ts_parses_named_and_glob_imports() {
-    let src = "import { foo } from './bar';\nimport * as baz from './qux';\nexport { x } from './y';\n";
+    let src =
+        "import { foo } from './bar';\nimport * as baz from './qux';\nexport { x } from './y';\n";
     let r = parse_ts(src);
     assert!(r.parse_ok);
 
@@ -81,7 +93,10 @@ fn ts_parses_class_implements_and_interfaces() {
     let src = "export interface IFoo {}\nclass C implements IFoo {}\nfunction f() {}\n";
     let r = parse_ts(src);
     assert_eq!(r.interface_names, vec!["IFoo".to_string()]);
-    assert_eq!(r.class_implements, vec![("C".to_string(), vec!["IFoo".to_string()])]);
+    assert_eq!(
+        r.class_implements,
+        vec![("C".to_string(), vec!["IFoo".to_string()])]
+    );
     assert_eq!(r.functions.len(), 1);
     assert_eq!(r.functions[0].name, "f");
 }

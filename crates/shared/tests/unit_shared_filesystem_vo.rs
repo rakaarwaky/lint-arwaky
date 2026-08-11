@@ -1,12 +1,12 @@
 // Unit tests — shared/filesystem taxonomy VOs.
-use shared_lint_arwaky::filesystem::taxonomy_filesystem_vo::{
-    ByteCount, CacheStatsVO, FileEntry, FileMode, GitCommandResult, GraphAnalysisContext,
-    GraphData, GraphStatsVO, ImportEntry, ImportGraph, ImportType, InboundLinkMap, InheritanceMap,
-    MemoryBudgetVO, ParseMetadata, ParsedLines, RustMetadata, RustUseItem, ScanConfigVO,
-    ScanStage, ScanTiming, ToolName, FileExtension, ParseWarning, FileNodeVO, ImportEdgeVO,
-    DefinitionEntry, ImplEntry,
-};
 use shared_lint_arwaky::common::taxonomy_language_vo::Language;
+use shared_lint_arwaky::filesystem::taxonomy_filesystem_vo::{
+    ByteCount, CacheStatsVO, DefinitionEntry, FileEntry, FileExtension, FileMode, FileNodeVO,
+    GitCommandResult, GraphAnalysisContext, GraphData, GraphStatsVO, ImplEntry, ImportEdgeVO,
+    ImportEntry, ImportGraph, ImportType, InboundLinkMap, InheritanceMap, MemoryBudgetVO,
+    ParseMetadata, ParseWarning, ParsedLines, RustMetadata, RustUseItem, ScanConfigVO, ScanStage,
+    ScanTiming, ToolName,
+};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -130,10 +130,7 @@ fn get_importers_exact_match() {
 
 #[test]
 fn get_importers_prefixed_match_prefers_longer() {
-    let map = map_of(&[
-        ("a.rs", &["b.rs"]),
-        ("./a.rs", &["b.rs", "c.rs", "d.rs"]),
-    ]);
+    let map = map_of(&[("a.rs", &["b.rs"]), ("./a.rs", &["b.rs", "c.rs", "d.rs"])]);
     // `./`-prefixed key competes and wins because it is longer.
     assert_eq!(map.get_importers("a.rs").map(|v| v.len()), Some(3));
 }
@@ -167,10 +164,7 @@ fn get_importers_middle_dot_competes() {
         (path, &["x.rs"]),
         (middle_dot_key.as_str(), &["y.rs", "z.rs"]),
     ]);
-    assert_eq!(
-        map_with_dot.get_importers(path).map(|v| v.len()),
-        Some(2)
-    );
+    assert_eq!(map_with_dot.get_importers(path).map(|v| v.len()), Some(2));
     // Without the dot variant, exact match still resolves.
     assert_eq!(map.get_importers(path).map(|v| v.len()), Some(1));
 }
@@ -229,7 +223,10 @@ fn scan_config_default() {
 #[test]
 fn cache_and_graph_stats_defaults() {
     let cache = CacheStatsVO::default();
-    assert_eq!((cache.cached_count, cache.failed_count, cache.total_bytes), (0, 0, 0));
+    assert_eq!(
+        (cache.cached_count, cache.failed_count, cache.total_bytes),
+        (0, 0, 0)
+    );
     let graph = GraphStatsVO::default();
     assert_eq!(
         (

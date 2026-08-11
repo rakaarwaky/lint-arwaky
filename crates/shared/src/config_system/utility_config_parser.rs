@@ -190,7 +190,9 @@ fn extract_suffix_entry(
     allowed: &mut serde_json::Value,
     forbidden: &mut serde_json::Value,
 ) {
-    let Some(entry_obj) = entry.as_object() else { return };
+    let Some(entry_obj) = entry.as_object() else {
+        return;
+    };
     for (pkey, plist) in entry_obj {
         match pkey.as_str() {
             "strict" | "flexible" => {
@@ -218,15 +220,21 @@ fn apply_suffix_update(
     allowed: serde_json::Value,
     forbidden: serde_json::Value,
 ) {
-    let Some(layer) = obj.get_mut(name) else { return };
-    let Some(layer_obj) = layer.as_object_mut() else { return };
+    let Some(layer) = obj.get_mut(name) else {
+        return;
+    };
+    let Some(layer_obj) = layer.as_object_mut() else {
+        return;
+    };
 
     let mut naming_obj = serde_json::Map::new();
     if let Some(ref p) = policy {
         naming_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
     }
     naming_obj.insert("allowed_suffix".to_string(), allowed);
-    if let Some(arr) = forbidden.as_array() && !arr.is_empty() {
+    if let Some(arr) = forbidden.as_array()
+        && !arr.is_empty()
+    {
         naming_obj.insert("forbidden_suffix".to_string(), forbidden);
     }
     layer_obj.insert("naming".to_string(), serde_json::Value::Object(naming_obj));
@@ -316,7 +324,9 @@ fn has_conditions(base: &serde_json::Value) -> bool {
 
 /// Collapse scope to its first value.
 fn collapse_to_first_scope(base: &mut serde_json::Value) {
-    let Some(scopes) = get_scope_strings(base) else { return };
+    let Some(scopes) = get_scope_strings(base) else {
+        return;
+    };
     let Some(first) = scopes.first() else { return };
     if let Some(obj) = base.as_object_mut() {
         obj.insert("scope".to_string(), serde_json::json!(first));
@@ -340,7 +350,9 @@ fn expand_conditions(flat: &mut serde_json::Value, mut base: serde_json::Value) 
 }
 
 /// Remove and extract owned condition objects from base.
-fn extract_owned_conditions(base: &mut serde_json::Value) -> Option<Vec<serde_json::Map<String, serde_json::Value>>> {
+fn extract_owned_conditions(
+    base: &mut serde_json::Value,
+) -> Option<Vec<serde_json::Map<String, serde_json::Value>>> {
     base.as_object_mut()?.remove("conditions").and_then(|v| {
         v.as_array().map(|arr| {
             arr.iter()

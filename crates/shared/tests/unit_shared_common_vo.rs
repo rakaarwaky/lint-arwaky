@@ -8,12 +8,17 @@ use shared_lint_arwaky::common::taxonomy_common_vo::{
     Timestamp,
 };
 use shared_lint_arwaky::common::taxonomy_config_language_vo::ConfigLanguage;
-use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
+use shared_lint_arwaky::common::taxonomy_error_vo::{
+    ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
+    error_code_is_style,
+};
 use shared_lint_arwaky::common::taxonomy_format_vo::Format;
 use shared_lint_arwaky::common::taxonomy_job_id_vo::JobId;
 use shared_lint_arwaky::common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus};
 use shared_lint_arwaky::common::taxonomy_language_vo::Language;
-use shared_lint_arwaky::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared_lint_arwaky::common::taxonomy_layer_vo::{
+    FileContentVO, Identity, LayerNameVO, LineContentVO,
+};
 use shared_lint_arwaky::common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
 use shared_lint_arwaky::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared_lint_arwaky::common::taxonomy_path_vo::{DirectoryPath, FilePath};
@@ -144,13 +149,13 @@ fn error_code_raw_skips_validation() {
 
 #[test]
 fn error_code_category_flags() {
-    assert!(ErrorCode::raw("AES101").is_architecture());
-    assert!(ErrorCode::raw("E401").is_style());
-    assert!(ErrorCode::raw("W501").is_style());
-    assert!(ErrorCode::raw("D100").is_style());
-    assert!(ErrorCode::raw("F401").is_logic());
-    assert!(ErrorCode::raw("I001").is_logic());
-    assert!(ErrorCode::raw("B101").is_security());
+    assert!(error_code_is_architecture("AES101"));
+    assert!(error_code_is_style("E401"));
+    assert!(error_code_is_style("W501"));
+    assert!(error_code_is_style("D100"));
+    assert!(error_code_is_logic("F401"));
+    assert!(error_code_is_logic("I001"));
+    assert!(error_code_is_security("B101"));
 }
 
 // ── ExitCode ────────────────────────────────────────────────

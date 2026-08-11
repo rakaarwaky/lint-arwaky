@@ -22,8 +22,14 @@ use shared_lint_arwaky::common::taxonomy_suggestion_vo::{
 fn lint_result_new_arch_populates_identity_fields() {
     let r = LintResult::new_arch("src/foo.rs", 12, "AES101", Severity::default(), "bad name");
     assert_eq!(r.file.value(), "src/foo.rs");
-    assert_eq!(r.line, shared_lint_arwaky::common::taxonomy_common_vo::LineNumber::new(12));
-    assert_eq!(r.code, shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode::raw("AES101"));
+    assert_eq!(
+        r.line,
+        shared_lint_arwaky::common::taxonomy_common_vo::LineNumber::new(12)
+    );
+    assert_eq!(
+        r.code,
+        shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode::raw("AES101")
+    );
     assert_eq!(r.message.value(), "bad name");
     assert_eq!(r.source.as_deref(), Some("architecture"));
     assert!(r.enclosing_scope.is_some());
@@ -31,7 +37,12 @@ fn lint_result_new_arch_populates_identity_fields() {
 
 #[test]
 fn lint_result_new_orphan_has_no_enclosing_scope() {
-    let r = LintResult::new_orphan("src/orphan.rs", "no importers", Severity::default(), "AES501");
+    let r = LintResult::new_orphan(
+        "src/orphan.rs",
+        "no importers",
+        Severity::default(),
+        "AES501",
+    );
     assert!(r.enclosing_scope.is_none());
     assert_eq!(r.file.value(), "src/orphan.rs");
     assert_eq!(r.message.value(), "no importers");
@@ -53,8 +64,20 @@ fn lint_result_list_wrapper_behaves() {
     let mut list = LintResultList::new(Vec::new());
     assert!(list.is_empty());
 
-    list.push(LintResult::new_arch("a.rs", 1, "AES1", Severity::default(), "x"));
-    list.append(LintResult::new_arch("b.rs", 2, "AES2", Severity::default(), "y"));
+    list.push(LintResult::new_arch(
+        "a.rs",
+        1,
+        "AES1",
+        Severity::default(),
+        "x",
+    ));
+    list.append(LintResult::new_arch(
+        "b.rs",
+        2,
+        "AES2",
+        Severity::default(),
+        "y",
+    ));
     assert_eq!(list.len(), 2);
     assert!(!list.is_empty());
     assert_eq!(list.iter().count(), 2);

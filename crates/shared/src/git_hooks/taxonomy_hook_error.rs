@@ -3,7 +3,6 @@ use crate::domain_error_vo;
 
 /// Domain error types for the git hooks subsystem.
 /// Uses the `domain_error_vo!` macro from `utility_value_object_generator`.
-#[allow(clippy::needless_pass_by_value, dead_code)]
 pub fn _hook_error_anchor() {}
 
 domain_error_vo!(GitHookError, "Git Hook Error");
@@ -16,6 +15,9 @@ mod tests {
     #[test]
     fn git_hook_error_has_expected_shape() {
         let err = GitHookError::new(LintMessage::new("test"));
-        let _ = format!("{} on {}: {}", "Git Hook Error", err.path.value, err.message);
+        let _ = format!(
+            "{} on {}: {}",
+            "Git Hook Error", err.path.value, err.message
+        );
     }
 }

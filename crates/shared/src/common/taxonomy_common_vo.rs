@@ -5,9 +5,7 @@ use crate::common::taxonomy_response_data_vo::ResponseData;
 use crate::common::taxonomy_severity_vo::Severity;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    list_wrapper_vo, primitive_value_object, string_value_object,
-};
+use crate::{list_wrapper_vo, primitive_value_object, string_value_object};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LanguageVO {

@@ -129,23 +129,30 @@ fn walk_use_name(
     }
     full_path.push_str(&use_name.ident.to_string());
     let segments: Vec<String> = full_path.split("::").map(String::from).collect();
-    result.imports.push(AstImportVO::new(full_path, segments, is_reexport, false, line));
+    result.imports.push(AstImportVO::new(
+        full_path,
+        segments,
+        is_reexport,
+        false,
+        line,
+    ));
 }
 
 /// Walk a use tree glob and push the import.
-fn walk_use_glob(
-    prefix: &str,
-    result: &mut RustParseResultVO,
-    is_reexport: bool,
-    line: usize,
-) {
+fn walk_use_glob(prefix: &str, result: &mut RustParseResultVO, is_reexport: bool, line: usize) {
     let full_path = if prefix.is_empty() {
         "*".to_string()
     } else {
         format!("{}::*", prefix)
     };
     let segments: Vec<String> = prefix.split("::").map(String::from).collect();
-    result.imports.push(AstImportVO::new(full_path, segments, is_reexport, true, line));
+    result.imports.push(AstImportVO::new(
+        full_path,
+        segments,
+        is_reexport,
+        true,
+        line,
+    ));
 }
 
 /// Walk a use tree rename and push the import with rename field.
