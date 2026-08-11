@@ -50,7 +50,7 @@ jobs:
           cp target/release/lint-arwaky-cli lint-arwaky-cli
           cp target/release/lint-arwaky-mcp lint-arwaky-mcp
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: binaries
           path: |
