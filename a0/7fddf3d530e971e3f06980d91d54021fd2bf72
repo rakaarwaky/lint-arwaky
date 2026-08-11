@@ -1,0 +1,19 @@
+crates/shared/src/common/utility_signature_parser.rs
+  s_716694b456649d::t_305182932ab800 71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "a07fddf3d530e971e3f06980d91d54021fd2bf72",
+  "prompts": {},
+  "sessions": {
+    "s_716694b456649d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00ecddc32ffeNp2q3V0VevBZvr",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "rakaarwaky <arwaky90@gmail.com>"
+    }
+  }
+}
