@@ -1,0 +1,72 @@
+name: Tag release PRs
+
+# Creates the v* tag for a merged release PR. The auto-release workflow
+# cannot push tags to main (ruleset requires status checks on direct
+# pushes), so it opens a release PR instead. Once that PR is merged, this
+# workflow creates the tag from the merge commit, then explicitly dispatches
+# the release build (a tag pushed with GITHUB_TOKEN does not trigger other
+# workflows).
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Create release tag
+    runs-on: ubuntu-latest
+    # Only for release PRs: merged into main, authored by the release bot,
+    # from a release/v* branch, with the chore(release): title prefix.
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.user.login == 'github-actions[bot]' &&
+      startsWith(github.event.pull_request.head.ref, 'release/v') &&
+      startsWith(github.event.pull_request.title, 'chore(release):')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Create and push tag
+        id: tag
+        env:
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          VERSION=$(git log -1 --format=%s "$MERGE_SHA" \
+            | sed -E 's/^chore\(release\): v//' | xargs)
+          if [ -z "$VERSION" ]; then
+            echo "Could not resolve version from merge commit."
+            exit 1
+          fi
+          # Accept only a strict X.Y.Z version.
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version from commit message: ${VERSION}"
+            exit 1
+          fi
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists."
+            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git tag "$TAG" "$MERGE_SHA"
+          git push origin "$TAG"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Pushed tag ${TAG}."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dispatch release build
+        # GITHUB_TOKEN cannot trigger workflows via tag push, so dispatch
+        # release.yml explicitly. release.yml must declare on: workflow_dispatch.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          gh workflow run release.yml --ref "v${RELEASE_VERSION}"

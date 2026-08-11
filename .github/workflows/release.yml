@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - "v*.*.*"
+  # Allows the release-tag workflow to dispatch the release build after
+  # creating the tag (GITHUB_TOKEN tag pushes do not trigger workflows).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build (e.g. v1.2.3)"
+        required: true
+        type: string
 
 permissions:
   contents: write

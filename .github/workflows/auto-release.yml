@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 env:
   CARGO_TERM_COLOR: always
@@ -118,8 +119,9 @@ jobs:
 
       - name: Update Cargo.toml version
         if: steps.staleness.outputs.stale != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           sed -i "s/^version = .*/version = \"${VERSION}\"/" Cargo.toml
           # Update ONLY the root package's version in Cargo.lock so the locked
           # dependency graph (which CI already tested) is untouched. A full
@@ -146,10 +148,11 @@ jobs:
 
       - name: Update CHANGELOG.md
         if: steps.staleness.outputs.stale != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          RANGE: ${{ steps.version.outputs.range }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           DATE=$(date +%Y-%m-%d)
-          RANGE="${{ steps.version.outputs.range }}"
           # Group conventional commit messages since the previous release.
           FEATS=$(git log "$RANGE" --pretty=format:'- %s' --grep='^feat(\([^)]+\))?:' -E | head -20)
           FIXES=$(git log "$RANGE" --pretty=format:'- %s' --grep='^fix(\([^)]+\))?:' -E | head -20)
@@ -175,15 +178,43 @@ jobs:
               f.write(content[:first_nl] + entry + content[first_nl:])
           PYEOF
 
-      - name: Commit version bump
+      - name: Open release PR
         if: steps.staleness.outputs.stale != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
+          BRANCH="release/v${VERSION}"
+
+          # Skip only when an open release PR for this version already
+          # exists (prevents duplicate release PRs after a merge). The
+          # branch itself may exist from a previous attempt.
+          if gh pr list --head "$BRANCH" --state open --json number \
+            --jq 'length' 2>/dev/null | grep -q '[1-9]'; then
+            echo "Release PR for ${VERSION} already open — skipping."
+            exit 0
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Cargo.toml Cargo.lock CHANGELOG.md
-          git commit -m "chore(release): v${{ steps.version.outputs.version }}"
-          git tag "v${{ steps.version.outputs.version }}"
-          # Pushing the tag triggers release.yml (on: push: tags) automatically.
-          git push origin main --tags
+          git commit -m "chore(release): v${VERSION}"
+
+          # Create the release branch and push it.
+          git switch -c "$BRANCH"
+          git push -u origin "$BRANCH"
+
+          # Open a PR to main; the auto-merge workflow merges it once the
+          # required checks pass. A failure here must fail the job.
+          PR_BODY=$(cat <<BODY
+          Automated release PR for v${VERSION}.
+
+          ## Changelog
+
+          See the version entry in [CHANGELOG.md](CHANGELOG.md).
+          BODY
+          )
+          gh pr create --base main --head "$BRANCH" \
+            --title "chore(release): v${VERSION}" \
+            --body "$PR_BODY"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
