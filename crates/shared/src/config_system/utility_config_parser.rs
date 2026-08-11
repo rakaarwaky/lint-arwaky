@@ -36,21 +36,33 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
 /// Parse YAML into an `ArchitectureConfig`, collecting non-fatal warnings.
 pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, Vec<String>) {
     let mut warnings = Vec::new();
-
-    let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
+    let raw = match parse_yaml(yaml_str, &mut warnings) {
         Ok(v) => v,
-        Err(e) => {
-            warnings.push(format!("Failed to parse YAML: {}; using defaults", e));
-            return (ArchitectureConfig::default(), warnings);
-        }
+        Err(_) => return (ArchitectureConfig::default(), warnings),
     };
 
-    // Fallback path: no "architecture" key — just extract ignored_paths if present.
+    let (config, new_warnings) = process_config(&raw);
+    warnings.extend(new_warnings);
+    (config, warnings)
+}
+
+fn parse_yaml(yaml_str: &str, warnings: &mut Vec<String>) -> Result<serde_yaml_ng::Value, ()> {
+    match serde_yaml_ng::from_str(yaml_str) {
+        Ok(v) => Ok(v),
+        Err(e) => {
+            warnings.push(format!("Failed to parse YAML: {}; using defaults", e));
+            Err(())
+        }
+    }
+}
+
+fn process_config(raw: &serde_yaml_ng::Value) -> (ArchitectureConfig, Vec<String>) {
+    let mut warnings = Vec::new();
+
     if raw.get("architecture").is_none() {
-        return (config_with_ignored_paths(&raw), warnings);
+        return (config_with_ignored_paths(raw), warnings);
     }
 
-    // Main path: extract architecture section and build JSON.
     let arch_json = match raw.get("architecture") {
         Some(val) => serde_json::to_value(val).unwrap_or_default(),
         None => return (ArchitectureConfig::default(), warnings),
@@ -58,7 +70,7 @@ pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, V
 
     let mut config = deserialize_config(preprocess_json(arch_json), &mut warnings);
     config = enable_default_orphan_detection(config);
-    config = apply_fallback_ignored_paths(config, &raw);
+    config = apply_fallback_ignored_paths(config, raw);
     (config, warnings)
 }
 

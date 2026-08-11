@@ -1,0 +1,16 @@
+{
+  "profile": "small-team",
+  "rules": [
+    {
+      "path": "**/*",
+      "severity_overrides": {
+        "churn_risk": "low",
+        "prior_defect": "low",
+        "function_hotspot": "low",
+        "hidden_coupling": "low",
+        "co_change_scatter": "low",
+        "change_entropy": "low"
+      }
+    }
+  ]
+}

@@ -13,8 +13,8 @@
 /// traits) — implementation details are an adapter concern.
 pub fn extract_trait_method_signatures(content: &str) -> Vec<(usize, String)> {
     let trait_starts = find_trait_brace_opening_lines(content);
-    let brace_matches = find_matching_brace_pairs(content);
-    extract_signatures_from_traces(trait_starts, brace_matches, content)
+    let brace_bounds = get_brace_bounds(&trait_starts, content);
+    extract_signatures_from_bounds(brace_bounds, content)
 }
 
 /// Line numbers (1-based) where a Rust trait block opens on that line.
@@ -33,45 +33,63 @@ fn find_trait_brace_opening_lines(content: &str) -> Vec<usize> {
         .collect()
 }
 
-/// For every line containing `{`, the index of the matching `}` (brace
-/// counting across lines). Returns `(open_line, close_line)` pairs.
-fn find_matching_brace_pairs(content: &str) -> Vec<(usize, usize)> {
+/// Get the brace boundaries for each trait start line.
+fn get_brace_bounds(trait_starts: &[usize], content: &str) -> Vec<(usize, usize)> {
     let lines: Vec<&str> = content.lines().collect();
-    let mut pairs = Vec::new();
-    let mut stack: Vec<usize> = Vec::new();
+    let mut bounds = Vec::new();
 
-    for (idx, line) in lines.iter().enumerate() {
-        for ch in line.chars() {
-            match ch {
-                '{' => stack.push(idx + 1),
-                '}' => {
-                    if let Some(open) = stack.pop() {
-                        pairs.push((open, idx + 1));
-                    }
-                }
-                _ => {}
-            }
+    for &start_line in trait_starts {
+        if let Some((_, close)) = find_matching_brace_for_start(&lines, start_line) {
+            bounds.push((start_line, close));
         }
     }
-    pairs
+
+    bounds
 }
 
-/// Extract `fn name(...);` signatures that live inside a trait block opened at
-/// one of `trait_starts` (spanning `brace_matches` for boundary detection).
-fn extract_signatures_from_traces(
-    trait_starts: Vec<usize>,
-    brace_matches: Vec<(usize, usize)>,
+/// Find the matching closing brace for a given opening brace line.
+fn find_matching_brace_for_start(lines: &[&str], open_line_idx: usize) -> Option<(usize, usize)> {
+    let mut depth = 0i32;
+    for (idx, line) in lines.iter().enumerate().skip(open_line_idx - 1) {
+        depth = advance_brace_depth(depth, line)?;
+        if depth == 0 {
+            return Some((open_line_idx, idx + 1));
+        }
+    }
+    None
+}
+
+/// Apply one line's `{`/`}` delta to *depth*, returning the new depth, or
+/// `None` if the line closes the current block (depth would go below zero).
+fn advance_brace_depth(depth: i32, line: &str) -> Option<i32> {
+    let mut next = depth;
+    for ch in line.chars() {
+        next = apply_brace_char(next, ch)?;
+    }
+    Some(next)
+}
+
+/// Apply a single `{`/`}` to *depth*. Returns `None` when a `}` would
+/// close a block that is not open.
+fn apply_brace_char(depth: i32, ch: char) -> Option<i32> {
+    match ch {
+        '{' => Some(depth + 1),
+        '}' if depth > 0 => Some(depth - 1),
+        '}' => None,
+        _ => Some(depth),
+    }
+}
+
+/// Extract `fn name(...);` signatures that live within brace boundaries.
+fn extract_signatures_from_bounds(
+    bounds: Vec<(usize, usize)>,
     content: &str,
 ) -> Vec<(usize, String)> {
     let lines: Vec<&str> = content.lines().collect();
     let mut results = Vec::new();
 
-    for open_line in trait_starts {
-        // Find the matching close for this trait's opening brace.
-        let Some(&(_, close_line)) = brace_matches.iter().find(|&&(o, _)| o == open_line) else {
-            continue;
-        };
-        for (idx, raw) in lines.iter().enumerate().take(close_line).skip(open_line) {
+    for (start_line, end_line) in bounds {
+        for (idx, raw) in lines.iter().enumerate().take(end_line).skip(start_line) {
             let line = raw.trim();
             if line.starts_with("fn ") && line.contains(';') {
                 results.push((idx + 1, raw.to_string()));
@@ -100,7 +118,7 @@ pub fn extract_python_method_signatures(content: &str) -> Vec<(usize, String)> {
         let line_no = idx + 1;
         let trimmed = raw.trim();
 
-        if trimmed.starts_with("class ") && trimmed.contains(':') {
+        if is_class_header(trimmed) {
             in_class = true;
             class_indent = raw.len() - raw.trim_start().len();
             continue;
@@ -115,15 +133,25 @@ pub fn extract_python_method_signatures(content: &str) -> Vec<(usize, String)> {
             continue;
         }
 
-        if trimmed.starts_with("def ")
-            && trimmed.contains("->")
-            && python_line_has_primitive(trimmed)
-        {
+        if is_python_signature_line(trimmed) {
             results.push((line_no, raw.to_string()));
         }
     }
 
     results
+}
+
+/// True when `line` opens a Python class definition.
+fn is_class_header(line: &str) -> bool {
+    line.starts_with("class ") && line.contains(':')
+}
+
+/// True when a line inside a Python class is a `def` with a primitive
+/// annotation in its signature.
+fn is_python_signature_line(trimmed: &str) -> bool {
+    trimmed.starts_with("def ")
+        && trimmed.contains("->")
+        && python_line_has_primitive(trimmed)
 }
 
 /// True when an indented line exits the class body (dedent below the class header).
@@ -215,11 +243,7 @@ pub fn extract_typescript_method_signatures(content: &str) -> Vec<(usize, String
             let opened = trimmed.matches('{').count() as i32 - trimmed.matches('}').count() as i32;
             if opened == 0 {
                 // Single-line header with an inline body — evaluate and move on.
-                if let Some((open, close)) = brace_pair(trimmed)
-                    && ts_inline_has_primitive(&trimmed[open + 1..close])
-                {
-                    results.push((line_no, raw.to_string()));
-                }
+                push_inline_ts_signature(&mut results, line_no, raw, trimmed);
             } else {
                 in_block = true;
                 brace_depth = opened;
@@ -236,7 +260,7 @@ pub fn extract_typescript_method_signatures(content: &str) -> Vec<(usize, String
                 continue;
             }
 
-            if trimmed.contains('(') && trimmed.contains(':') && ts_line_has_primitive(trimmed) {
+            if is_ts_signature_line(trimmed) {
                 results.push((line_no, raw.to_string()));
             }
         }
@@ -252,6 +276,26 @@ fn is_ts_block_header(line: &str) -> bool {
         || line.starts_with("export class ")
         || line.starts_with("class "))
         && line.contains('{')
+}
+
+/// True when a line inside a TypeScript block looks like a method signature
+/// with primitive annotations.
+fn is_ts_signature_line(trimmed: &str) -> bool {
+    trimmed.contains('(') && trimmed.contains(':') && ts_line_has_primitive(trimmed)
+}
+
+/// Push a one-line TypeScript block whose inline body uses primitives.
+fn push_inline_ts_signature(
+    results: &mut Vec<(usize, String)>,
+    line_no: usize,
+    raw: &str,
+    trimmed: &str,
+) {
+    if let Some((open, close)) = brace_pair(trimmed)
+        && ts_inline_has_primitive(&trimmed[open + 1..close])
+    {
+        results.push((line_no, raw.to_string()));
+    }
 }
 
 /// Locate the matching `{ ... }` pair on a single line, if present.
@@ -369,25 +413,33 @@ fn rust_param_list(line: &str) -> String {
     let Some(open) = line.find('(') else {
         return String::new();
     };
-    let bytes = line.as_bytes();
+    match find_matching_paren(line, open) {
+        Some(close) => line[open + 1..close].to_string(),
+        None => String::new(),
+    }
+}
+
+/// Index of the `)` that balances the `(` at *open*.
+fn find_matching_paren(line: &str, open: usize) -> Option<usize> {
     let mut depth = 0i32;
-    let mut close_idx = None;
-    for (i, &b) in bytes.iter().enumerate().skip(open) {
-        match b {
-            b'(' => depth += 1,
-            b')' => {
-                depth -= 1;
-                if depth == 0 {
-                    close_idx = Some(i);
-                    break;
-                }
-            }
-            _ => {}
+    for (i, b) in line.as_bytes().iter().enumerate().skip(open) {
+        depth = apply_paren_char(depth, *b)?;
+        if depth == 0 {
+            return Some(i);
         }
     }
-    close_idx
-        .map(|close| line[open + 1..close].to_string())
-        .unwrap_or_default()
+    None
+}
+
+/// Apply a single `(`/`)` to *depth*. Returns `None` when a `)` closes a
+/// paren that is not open.
+fn apply_paren_char(depth: i32, b: u8) -> Option<i32> {
+    match b {
+        b'(' => Some(depth + 1),
+        b')' if depth > 0 => Some(depth - 1),
+        b')' => None,
+        _ => Some(depth),
+    }
 }
 
 /// Collect forbidden numeric primitive tokens from a Rust signature.
@@ -419,18 +471,17 @@ fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
         return false;
     }
     let is_ident_cont = |b: u8| b.is_ascii_alphanumeric() || b == b'_';
-    let mut i = 0;
-    while i + nlen <= h.len() {
-        if &h[i..i + nlen] == n {
-            let before_ok = i == 0 || !is_ident_cont(h[i - 1]);
-            let after_ok = i + nlen == h.len() || !is_ident_cont(h[i + nlen]);
-            if before_ok && after_ok {
-                return true;
-            }
-        }
-        i += 1;
-    }
-    false
+    (0..=h.len() - nlen).any(|i| {
+        &h[i..i + nlen] == n && is_token_boundary(h, i, nlen, is_ident_cont)
+    })
+}
+
+/// True when the byte range `[i, i+nlen)` is a standalone token — the
+/// characters just before and after it are not identifier characters.
+fn is_token_boundary(h: &[u8], i: usize, nlen: usize, is_ident_cont: impl Fn(u8) -> bool) -> bool {
+    let before_ok = i == 0 || !is_ident_cont(h[i - 1]);
+    let after_ok = i + nlen == h.len() || !is_ident_cont(h[i + nlen]);
+    before_ok && after_ok
 }
 
 /// Check if `String` appears in a valid contract context:
