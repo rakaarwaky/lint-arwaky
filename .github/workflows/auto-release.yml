@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 env:
   CARGO_TERM_COLOR: always
@@ -118,8 +119,9 @@ jobs:
 
       - name: Update Cargo.toml version
         if: steps.staleness.outputs.stale != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           sed -i "s/^version = .*/version = \"${VERSION}\"/" Cargo.toml
           # Update ONLY the root package's version in Cargo.lock so the locked
           # dependency graph (which CI already tested) is untouched. A full
@@ -146,10 +148,11 @@ jobs:
 
       - name: Update CHANGELOG.md
         if: steps.staleness.outputs.stale != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          RANGE: ${{ steps.version.outputs.range }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           DATE=$(date +%Y-%m-%d)
-          RANGE="${{ steps.version.outputs.range }}"
           # Group conventional commit messages since the previous release.
           FEATS=$(git log "$RANGE" --pretty=format:'- %s' --grep='^feat(\([^)]+\))?:' -E | head -20)
           FIXES=$(git log "$RANGE" --pretty=format:'- %s' --grep='^fix(\([^)]+\))?:' -E | head -20)
@@ -177,8 +180,9 @@ jobs:
 
       - name: Open release PR
         if: steps.staleness.outputs.stale != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
           BRANCH="release/v${VERSION}"
 
           # Skip only when an open release PR for this version already
