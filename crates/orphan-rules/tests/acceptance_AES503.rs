@@ -276,6 +276,36 @@ fn aes503_broken_chain_detects_unreachable() {
 }
 
 #[test]
+fn aes503_reachable_unwired_message_mentions_di_bridge_gap() {
+    // P5 (visibility, issues #191-193): when a capabilities file IS reachable
+    // (e.g. via the DI impl bridge or container wiring) but still not wired in
+    // a root_*_container, the diagnostic must say so explicitly rather than
+    // implying the file was never reachable at all.
+    let analyzer = capabilities_analyzer();
+    let fp = FilePath::new("crates/orphan-rules/src/capabilities_foo.rs".to_string()).unwrap();
+    let root = FilePath::new(".".to_string()).unwrap();
+    let workspace_root = std::path::Path::new(".").to_path_buf();
+    let content_map = HashMap::new();
+
+    let alive = reachable_for(&fp);
+
+    let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
+    assert!(result.is_orphan, "mock filesystem never reports wired");
+    assert!(
+        result
+            .reason
+            .contains("reachable (via import chain, container wiring, or contract implementation bridge)"),
+        "P5 message should explain the file is reachable but the wiring gap remains: {}",
+        result.reason
+    );
+    assert!(
+        !result.reason.contains("is not reachable"),
+        "Reachable file must not be reported as unreachable: {}",
+        result.reason
+    );
+}
+
+#[test]
 fn aes503_di_impl_bridge_reaches_capabilities() {
     // Acceptance test (issues #191/192/193): DI-aware reachability.
     // The agent imports only the contract (per AES), and the capability

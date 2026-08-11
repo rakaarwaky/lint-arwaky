@@ -17,13 +17,6 @@ mod di_aware_orphan_tests {
     use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
     use std::sync::Arc;
 
-    /// Creates an orchestrator configured with the default filesystem and dependency-analysis components.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let _orchestrator = build_orchestrator();
-    /// ```
     fn build_orchestrator() -> FilesystemOrchestrator {
         FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
             io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
@@ -309,6 +302,131 @@ pub fn create_app() -> MyOrchestrator {
                 .iter()
                 .any(|f| f.to_string().contains("capabilities_impl_b")),
             "ImplB should be registered"
+        );
+    }
+
+    /// P4: a Python class with multiple bases (`class Foo(ProtocolA, ProtocolB)`)
+    /// must register an implementation bridge for EACH base, not just the first.
+    #[test]
+    fn aes503_python_class_with_multiple_bases_registers_all_bridges() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let member_src = tmp.path().join("modules").join("calc").join("src");
+        std::fs::create_dir_all(&member_src).unwrap();
+
+        std::fs::write(
+            member_src.join("contract_a_protocol.py"),
+            "class ProtocolA:\n    pass\n",
+        )
+        .unwrap();
+        std::fs::write(
+            member_src.join("contract_b_protocol.py"),
+            "class ProtocolB:\n    pass\n",
+        )
+        .unwrap();
+        std::fs::write(
+            member_src.join("capabilities_multi_base.py"),
+            "from contract_a_protocol import ProtocolA\nfrom contract_b_protocol import ProtocolB\n\n\nclass MultiImpl(ProtocolA, ProtocolB):\n    pass\n",
+        )
+        .unwrap();
+
+        let orch = build_orchestrator();
+        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+
+        let impls_a = context
+            .inheritance_map
+            .mapping
+            .get("ProtocolA")
+            .expect("ProtocolA should have registered implementors");
+        assert!(
+            impls_a.iter().any(|f| f.contains("capabilities_multi_base")),
+            "MultiImpl should bridge from ProtocolA: {:?}",
+            impls_a
+        );
+
+        let impls_b = context
+            .inheritance_map
+            .mapping
+            .get("ProtocolB")
+            .expect("ProtocolB should have registered implementors");
+        assert!(
+            impls_b.iter().any(|f| f.contains("capabilities_multi_base")),
+            "MultiImpl should also bridge from ProtocolB: {:?}",
+            impls_b
+        );
+    }
+
+    /// P4: a Python class with no bases (`class Foo:`) must not register any
+    /// spurious implementation bridge (regression for the empty-base filter).
+    #[test]
+    fn aes503_python_class_without_bases_registers_no_bridge() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let member_src = tmp.path().join("modules").join("calc").join("src");
+        std::fs::create_dir_all(&member_src).unwrap();
+
+        std::fs::write(
+            member_src.join("capabilities_standalone.py"),
+            "class Standalone:\n    pass\n",
+        )
+        .unwrap();
+
+        let orch = build_orchestrator();
+        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+
+        assert!(
+            !context.inheritance_map.mapping.values().any(|impls| impls
+                .iter()
+                .any(|f| f.contains("capabilities_standalone"))),
+            "A class without bases should not register any implementation bridge"
+        );
+    }
+
+    /// P4: a TypeScript class implementing multiple interfaces
+    /// (`class Foo implements IA, IB`) must register a bridge for each.
+    #[test]
+    fn aes503_typescript_class_with_multiple_implements_registers_all_bridges() {
+        let tmp = tempfile::TempDir::new().unwrap();
+        let member_src = tmp.path().join("packages").join("calc");
+        std::fs::create_dir_all(&member_src).unwrap();
+
+        std::fs::write(
+            member_src.join("contract_a.ts"),
+            "export interface IProtoA {}\n",
+        )
+        .unwrap();
+        std::fs::write(
+            member_src.join("contract_b.ts"),
+            "export interface IProtoB {}\n",
+        )
+        .unwrap();
+        std::fs::write(
+            member_src.join("capabilities_multi_impl.ts"),
+            "import { IProtoA } from './contract_a';\nimport { IProtoB } from './contract_b';\n\nexport class MultiImpl implements IProtoA, IProtoB {}\n",
+        )
+        .unwrap();
+
+        let orch = build_orchestrator();
+        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+
+        let impls_a = context
+            .inheritance_map
+            .mapping
+            .get("IProtoA")
+            .expect("IProtoA should have registered implementors");
+        assert!(
+            impls_a.iter().any(|f| f.contains("capabilities_multi_impl")),
+            "MultiImpl should bridge from IProtoA: {:?}",
+            impls_a
+        );
+
+        let impls_b = context
+            .inheritance_map
+            .mapping
+            .get("IProtoB")
+            .expect("IProtoB should have registered implementors");
+        assert!(
+            impls_b.iter().any(|f| f.contains("capabilities_multi_impl")),
+            "MultiImpl should also bridge from IProtoB: {:?}",
+            impls_b
         );
     }
 }
