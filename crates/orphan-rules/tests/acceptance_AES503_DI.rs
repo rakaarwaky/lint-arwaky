@@ -125,7 +125,9 @@ pub fn create_app() -> MyOrchestrator {
         );
         let impl_files = inheritance.mapping.get("IMyProtocol").unwrap();
         assert!(
-            impl_files.iter().any(|f| f.to_string().contains("capabilities_my_processor")),
+            impl_files
+                .iter()
+                .any(|f| f.to_string().contains("capabilities_my_processor")),
             "IMyProtocol should have capabilities_my_processor as implementor"
         );
 
@@ -239,7 +241,10 @@ pub fn create_app() -> MyOrchestrator {
 
         // Verify contract has an implementor in inheritance map
         assert!(
-            context.inheritance_map.mapping.contains_key("IFileSystemIO"),
+            context
+                .inheritance_map
+                .mapping
+                .contains_key("IFileSystemIO"),
             "Contract trait IFileSystemIO should have implementation"
         );
     }
@@ -287,11 +292,15 @@ pub fn create_app() -> MyOrchestrator {
         // Both implementations should be in the inheritance map
         let impls = context.inheritance_map.mapping.get("IProto").unwrap();
         assert!(
-            impls.iter().any(|f| f.to_string().contains("capabilities_impl_a")),
+            impls
+                .iter()
+                .any(|f| f.to_string().contains("capabilities_impl_a")),
             "ImplA should be registered"
         );
         assert!(
-            impls.iter().any(|f| f.to_string().contains("capabilities_impl_b")),
+            impls
+                .iter()
+                .any(|f| f.to_string().contains("capabilities_impl_b")),
             "ImplB should be registered"
         );
     }
