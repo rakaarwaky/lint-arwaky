@@ -1,0 +1,30 @@
+name: Cleanup merged branches
+
+# Automatically deletes branches after their PR is merged, keeping the
+# remote branch list tidy for solo development.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    name: Delete merged branch
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Delete remote branch
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          # Never delete protected branches
+          if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "develop" ]; then
+            echo "Skipping protected branch: ${BRANCH}"
+            exit 0
+          fi
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/${BRANCH}" || \
+            echo "Branch ${BRANCH} already gone or cannot be deleted."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
