@@ -21,6 +21,7 @@ pub mod utility_ast_python; // FR-001
 pub mod utility_ast_rust; // FR-001
 pub mod utility_ast_typescript; // FR-001
 pub mod utility_barrel_resolution; // FR-001
+pub mod utility_container_wiring; // DI-aware wiring (P1 from #191-193)
 pub mod utility_filesystem_io; // FR-003
 pub mod utility_import_extractor; // FR-001
 pub mod utility_import_resolution;
