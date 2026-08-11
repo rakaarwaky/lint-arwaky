@@ -1,0 +1,189 @@
+name: Auto-Release
+
+# Creates a versioned release automatically after CI passes on main.
+# Conventional commit types drive the version bump:
+#   feat! / fix! / BREAKING CHANGE footer -> MAJOR
+#   feat                                -> MINOR
+#   fix / other                         -> PATCH
+# Also appends to CHANGELOG.md and tags the release.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_JOBS: 4
+  RUST_MIN_STACK: 33554432
+
+concurrency:
+  group: auto-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag and release
+    runs-on: ubuntu-latest
+    # Only run when CI succeeded on a push to main; skip the version-bump
+    # commit itself (prevents an infinite release loop). Manual dispatch must
+    # target refs/heads/main — never run the privileged release path otherwise.
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_commit.message != 'Initial commit' &&
+       !startsWith(github.event.workflow_run.head_commit.message, 'chore(release):'))
+    steps:
+      # Checkout the static main ref (not the incoming workflow_run ref),
+      # which Codacy flags as a security risk. We still guarantee release
+      # integrity by verifying the tip of main matches the exact SHA that
+      # CI tested — see the next step.
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Skip if the tested commit is no longer main's tip
+        # A later push may have landed while CI was running; releasing it
+        # would tag commits that were never gated. Only release when the
+        # SHA that passed CI is still the tip of main.
+        id: staleness
+        if: github.event_name == 'workflow_run'
+        run: |
+          TIP=$(git rev-parse refs/remotes/origin/main)
+          TESTED="${{ github.event.workflow_run.head_sha }}"
+          if [ "$TIP" != "$TESTED" ]; then
+            echo "main tip ($TIP) != tested SHA ($TESTED) — skipping release."
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+            echo "Tested commit is still main's tip."
+          fi
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+
+      - name: Determine next version from commit history
+        id: version
+        if: steps.staleness.outputs.stale != 'true'
+        run: |
+          # Newest v* tag reachable from HEAD, preserving descending version sort.
+          LAST_TAG=$(git tag --merged HEAD --sort=-v:refname | grep '^v' | head -1)
+          if [ -z "$LAST_TAG" ]; then
+            # No tags yet — derive base version from Cargo.toml and inspect all commits.
+            # grep must fail through to the default when there is no root version.
+            CURRENT_LINE=$(grep -m1 '^version' Cargo.toml || true)
+            CURRENT=$(echo "$CURRENT_LINE" | sed 's/.*= *"\(.*\)"/\1/')
+            if [ -z "$CURRENT" ]; then
+              CURRENT="0.1.0"
+            fi
+            LAST_TAG="v${CURRENT}"
+            RANGE="HEAD"
+            echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
+          else
+            RANGE="${LAST_TAG}..HEAD"
+            echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
+          fi
+          echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+
+          # Conventional commit detection.
+          # Breaking change via subject: `feat!:`, `feat(scope)!:`, `fix!:` etc.
+          MAJOR_SUBJECT=$(git log "$RANGE" --oneline --grep='^[a-zA-Z]*(.*)!:' -E | head -1)
+          # Breaking change via footer: `BREAKING CHANGE: ...` in the body.
+          MAJOR_FOOTER=$(git log "$RANGE" --format=%B | grep -m1 '^BREAKING CHANGE:' || true)
+          # Minor: only `feat:` or `feat(scope):` — not e.g. `feature:`.
+          FEAT=$(git log "$RANGE" --oneline --grep='^feat(\([^)]+\))?:' -E | head -1)
+
+          BASE="${LAST_TAG#v}"
+          IFS='.' read -r MAJ_V MIN_V PAT_V <<< "$BASE"
+          MAJ_V=${MAJ_V:-0}; MIN_V=${MIN_V:-0}; PAT_V=${PAT_V:-0}
+
+          if [ -n "$MAJOR_SUBJECT" ] || [ -n "$MAJOR_FOOTER" ]; then
+            NEW="$((MAJ_V + 1)).0.0"
+          elif [ -n "$FEAT" ]; then
+            NEW="${MAJ_V}.$((MIN_V + 1)).0"
+          else
+            NEW="${MAJ_V}.${MIN_V}.$((PAT_V + 1))"
+          fi
+          echo "version=${NEW}" >> "$GITHUB_OUTPUT"
+          echo "New version: ${NEW}"
+
+      - name: Update Cargo.toml version
+        if: steps.staleness.outputs.stale != 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s/^version = .*/version = \"${VERSION}\"/" Cargo.toml
+          # Update ONLY the root package's version in Cargo.lock so the locked
+          # dependency graph (which CI already tested) is untouched. A full
+          # re-resolution here could pull untested dependency upgrades.
+          python3 - "$VERSION" <<'PYEOF'
+          import sys
+          version = sys.argv[1]
+          with open('Cargo.lock') as f:
+              lines = f.readlines()
+          out = []
+          in_root = False
+          for line in lines:
+              if line.strip() == 'name = "lint_arwaky-arwaky"':
+                  in_root = True
+              elif in_root and line.strip().startswith('name = '):
+                  in_root = False
+              if in_root and line.strip().startswith('version = '):
+                  out.append(f'version = "{version}"\n')
+                  continue
+              out.append(line)
+          with open('Cargo.lock', 'w') as f:
+              f.writelines(out)
+          PYEOF
+
+      - name: Update CHANGELOG.md
+        if: steps.staleness.outputs.stale != 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATE=$(date +%Y-%m-%d)
+          RANGE="${{ steps.version.outputs.range }}"
+          # Group conventional commit messages since the previous release.
+          FEATS=$(git log "$RANGE" --pretty=format:'- %s' --grep='^feat(\([^)]+\))?:' -E | head -20)
+          FIXES=$(git log "$RANGE" --pretty=format:'- %s' --grep='^fix(\([^)]+\))?:' -E | head -20)
+          CHORES=$(git log "$RANGE" --pretty=format:'- %s' --grep='^(chore|refactor|docs|test|perf)(\([^)]+\))?:' -E | head -20)
+          python3 - "$VERSION" "$DATE" "$FEATS" "$FIXES" "$CHORES" <<'PYEOF'
+          import sys
+          version, date, feats, fixes, chores = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5]
+          sections = []
+          if feats.strip():
+              sections.append("### Features\n\n" + feats.strip())
+          if fixes.strip():
+              sections.append("### Bug Fixes\n\n" + fixes.strip())
+          if chores.strip():
+              sections.append("### Maintenance\n\n" + chores.strip())
+          if not sections:
+              sections.append("- No significant changes")
+          body = "\n\n".join(sections)
+          entry = f"## {version} ({date})\n\n{body}\n\n"
+          with open('CHANGELOG.md') as f:
+              content = f.read()
+          first_nl = content.index('\n') + 1
+          with open('CHANGELOG.md', 'w') as f:
+              f.write(content[:first_nl] + entry + content[first_nl:])
+          PYEOF
+
+      - name: Commit version bump
+        if: steps.staleness.outputs.stale != 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml Cargo.lock CHANGELOG.md
+          git commit -m "chore(release): v${{ steps.version.outputs.version }}"
+          git tag "v${{ steps.version.outputs.version }}"
+          # Pushing the tag triggers release.yml (on: push: tags) automatically.
+          git push origin main --tags
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
