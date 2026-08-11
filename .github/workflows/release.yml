@@ -94,7 +94,7 @@ jobs:
           name: binaries
           path: release-assets
 
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: "release-assets/*"
 
