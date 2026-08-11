@@ -53,6 +53,22 @@ impl CapabilitiesOrphanAnalyzer {
 }
 
 impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
+    /// Determines whether a capabilities file is unreachable, unwired, or both.
+    ///
+    /// A file is considered non-orphan only when it is reachable from an entry file
+    /// and wired in a root container. Empty file paths skip the wiring check.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let result = analyzer.is_capabilities_orphan(
+    ///     &file_path,
+    ///     &root_dir,
+    ///     &alive_files,
+    ///     &content_map,
+    ///     workspace_root,
+    /// );
+    /// ```
     fn is_capabilities_orphan(
         &self,
         f: &FilePath,

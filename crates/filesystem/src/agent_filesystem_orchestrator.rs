@@ -433,6 +433,24 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]) {
         self.build_file_index_impl(root, ignored);
     }
+    /// Builds a graph analysis context for the workspace rooted at the specified directory.
+    ///
+    /// The context includes resolved import links, inbound links, inheritance relationships,
+    /// implementation bridges, container wiring, and the workspace's discovered files.
+    ///
+    /// # Arguments
+    ///
+    /// * `root_dir` - Directory from which to determine the workspace and discover files.
+    ///
+    /// # Returns
+    ///
+    /// A graph analysis context containing workspace files and their dependency relationships.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let context = orchestrator.build_orphan_graph_context(std::path::Path::new("."), &[]);
+    /// ```
     fn build_orphan_graph_context(
         &self,
         root_dir: &Path,
@@ -580,6 +598,33 @@ impl FilesystemOrchestrator {
             cached_implementations: OnceLock::new(),
         }
     }
+    /// Resolves an import to a workspace-relative source file.
+    ///
+    /// Resolution supports Rust modules and external crates, relative imports, Python modules and packages, and TypeScript or JavaScript packages. Existing resolved paths are converted to paths relative to `top_root`.
+    ///
+    /// # Arguments
+    ///
+    /// * `imp` - Import metadata, including its raw path, language, and import type.
+    /// * `src_rel` - Workspace-relative path of the importing source file.
+    /// * `top_root` - Workspace root used to normalize resolved paths.
+    /// * `all_files_set` - Workspace-relative paths of all discovered files.
+    /// * `stem_index` - Index of file stems used for Python module matching.
+    ///
+    /// # Returns
+    ///
+    /// The workspace-relative target path when the import resolves to a discovered file; otherwise, `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let target = orchestrator.resolve_import_target(
+    ///     &import,
+    ///     "src/main.rs",
+    ///     workspace_root,
+    ///     &all_files,
+    ///     &stem_index,
+    /// );
+    /// ```
     pub fn resolve_import_target(
         &self,
         imp: &ImportEntry,
@@ -853,6 +898,16 @@ impl FilesystemOrchestrator {
                 .collect(),
         );
     }
+    /// Builds and caches the dependency graph and its symbol relationships.
+    ///
+    /// Subsequent calls reuse the cached graph data.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// orchestrator.ensure_graph_built();
+    /// ```
+    pub(crate) fn ensure_graph_built...
     pub(crate) fn ensure_graph_built(&self) {
         if self.cached_reverse_links.get().is_some() {
             return;

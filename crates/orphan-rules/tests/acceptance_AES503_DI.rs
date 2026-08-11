@@ -17,6 +17,13 @@ mod di_aware_orphan_tests {
     use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
     use std::sync::Arc;
 
+    /// Creates an orchestrator configured with the default filesystem and dependency-analysis components.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let _orchestrator = build_orchestrator();
+    /// ```
     fn build_orchestrator() -> FilesystemOrchestrator {
         FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
             io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),

@@ -21,12 +21,46 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// Add contract → implementor edges (reverse index, issue #193).
+/// Adds graph edges from contract-defining files to their implementing files.
 ///
-/// For every trait/interface/base name, look up the file(s) that *define* it
-/// (`symbol_definitions`) and wire each defining (contract) file to every
-/// implementing file. Edge direction follows reachability: if the contract is
-/// reachable, its implementors become reachable too.
+/// Each contract is resolved through `symbol_definitions`. Missing definitions and
+/// self-edges are skipped; paths are stored relative to `top_root`.
+///
+/// # Parameters
+///
+/// * `top_root` — Workspace root used to relativize file paths.
+/// * `symbol_definitions` — Maps contract names to the files that define them.
+/// * `implementations` — Maps contract names to their implementing files.
+/// * `forward` — Forward graph to update with the resulting edges.
+///
+/// # Examples
+///
+/// ```
+/// use std::{collections::HashMap, path::PathBuf};
+///
+/// let mut definitions = HashMap::new();
+/// definitions.insert("Service".to_string(), vec![PathBuf::from("/workspace/service.rs")]);
+///
+/// let mut implementations = HashMap::new();
+/// implementations.insert(
+///     "Service".to_string(),
+///     vec![PathBuf::from("/workspace/service_impl.rs")],
+/// );
+///
+/// let mut forward = HashMap::new();
+/// add_impl_bridge_edges(
+///     PathBuf::from("/workspace").as_path(),
+///     &definitions,
+///     &implementations,
+///     &mut forward,
+/// );
+///
+/// assert_eq!(
+///     forward.get("service.rs"),
+///     Some(&vec!["service_impl.rs".to_string()])
+/// );
+/// ```
+pub fn add_impl_bridge_edges
 pub fn add_impl_bridge_edges(
     top_root: &Path,
     symbol_definitions: &HashMap<String, Vec<PathBuf>>,
@@ -49,12 +83,46 @@ pub fn add_impl_bridge_edges(
     }
 }
 
-/// Add container → wired-service edges (P1/P2).
+/// Adds edges from dependency-injection container files to the files defining
+/// the workspace symbols they reference.
 ///
-/// For each `*_container.*` file, collect its AST-derived used identifiers and
-/// resolve every one that names a workspace symbol (struct/class/interface/trait)
-/// to its defining file. An edge container → defining_file is added, so BFS that
-/// reaches the container also reaches everything it wires via DI.
+/// Container files are identified by paths containing `_container`. Unresolved
+/// identifiers, self-edges, and duplicate targets are skipped.
+///
+/// # Examples
+///
+/// ```
+/// use std::collections::HashMap;
+/// use std::path::Path;
+///
+/// let mut symbols = HashMap::new();
+/// symbols.insert(
+///     "Service".to_string(),
+///     vec![Path::new("/workspace/src/service.rs").to_path_buf()],
+/// );
+///
+/// let mut forward = HashMap::new();
+/// add_container_wiring_edges(
+///     &["src/app_container.rs".to_string()],
+///     Path::new("/workspace"),
+///     &symbols,
+///     |_| vec!["Service".to_string()],
+///     &mut forward,
+/// );
+///
+/// assert_eq!(
+///     forward["src/app_container.rs"],
+///     vec!["src/service.rs".to_string()]
+/// );
+/// ```
+///
+/// # Arguments
+///
+/// * `all_files` - Workspace-relative file paths to inspect.
+/// * `top_root` - Workspace root used to resolve and relativize paths.
+/// * `symbol_definitions` - Definitions of workspace symbols keyed by name.
+/// * `used_identifiers_for` - Extracts identifiers referenced by a file.
+/// * `forward` - Forward dependency graph to update.
 pub fn add_container_wiring_edges(
     all_files: &[String],
     top_root: &Path,
@@ -83,7 +151,33 @@ pub fn add_container_wiring_edges(
     }
 }
 
-/// Free utility: convert absolute path to workspace-relative string.
+/// Converts a path under the workspace root into a workspace-relative string.
+
+///
+
+/// Paths outside the workspace root are returned as strings without modification.
+
+///
+
+/// # Examples
+
+///
+
+/// ```
+
+/// use std::path::Path;
+
+///
+
+/// let root = Path::new("workspace");
+
+/// let path = Path::new("workspace/src/lib.rs");
+
+///
+
+/// assert_eq!(path_to_relative(path, root), "src/lib.rs");
+
+/// ```
 pub fn path_to_relative(path: &Path, root: &Path) -> String {
     path.strip_prefix(root)
         .map(|p| p.to_string_lossy().to_string())

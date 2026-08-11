@@ -23,6 +23,18 @@ use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
+/// Creates a filesystem orchestrator with default dependencies and initializes its orphan-graph context for the workspace.
+///
+/// # Examples
+///
+/// ```
+/// let workspace = std::path::Path::new("/path/to/workspace");
+/// let _orchestrator = build_orch(workspace);
+/// ```
+///
+/// # Returns
+///
+/// A filesystem orchestrator initialized for the specified workspace.
 fn build_orch(tmp: &std::path::Path) -> FilesystemOrchestrator {
     FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
         io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
@@ -40,6 +52,14 @@ trait Also {
     fn also<F: FnOnce(&mut Self)>(self, f: F) -> Self;
 }
 impl<T> Also for T {
+    /// Applies a closure to mutate the value and returns the modified value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let value = 1.also(|value| *value += 1);
+    /// assert_eq!(value, 2);
+    /// ```
     fn also<F: FnOnce(&mut Self)>(mut self, f: F) -> Self {
         f(&mut self);
         self

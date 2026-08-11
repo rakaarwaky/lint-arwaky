@@ -140,6 +140,25 @@ impl ArchOrphanAnalyzer {
         Self { deps, config }
     }
 
+    /// Scans workspace files for orphaned architecture-layer files.
+    ///
+    /// Entry points are identified across the workspace, and reachability follows
+    /// import and dependency-injection relationships before each file is evaluated.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let violations = analyzer._check_orphans_inner(
+    ///     &files,
+    ///     &root_dir,
+    ///     &context,
+    ///     &file_vo,
+    /// );
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// The orphan violations found during the scan.
     #[instrument(skip(self))]
     fn _check_orphans_inner(
         &self,

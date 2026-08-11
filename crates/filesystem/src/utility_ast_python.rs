@@ -14,7 +14,21 @@ fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option
     Some(text_of(child, content))
 }
 
-/// Extract Python-specific metadata from a parsed AST.
+/// Extracts Python-specific metadata from the top-level nodes of a parsed AST.
+///
+/// # Examples
+///
+/// ```
+/// let mut parser = tree_sitter::Parser::new();
+/// parser
+///     .set_language(&tree_sitter_python::LANGUAGE.into())
+///     .unwrap();
+/// let content = "import os\n";
+/// let tree = parser.parse(content, None).unwrap();
+///
+/// let metadata = extract_python_metadata(&tree, content);
+/// assert_eq!(metadata.import_statements, vec!["os"]);
+/// ```
 pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> PythonMetadata {
     let mut meta = PythonMetadata::default();
     let root = tree.root_node();
@@ -61,6 +75,31 @@ pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> Pytho
     meta
 }
 
+/// Adds a Python class declaration and its base expressions to the metadata.
+///
+/// # Parameters
+///
+/// * `node` — The class definition node.
+/// * `content` — The source text containing the node.
+/// * `meta` — Metadata to which the class declaration is appended.
+///
+/// # Examples
+///
+/// ```no_run
+/// let mut parser = tree_sitter::Parser::new();
+/// parser
+///     .set_language(&tree_sitter_python::LANGUAGE_PYTHON.into())
+///     .unwrap();
+/// let source = "class Example(Base):\n    pass";
+/// let tree = parser.parse(source, None).unwrap();
+/// let class_node = tree.root_node().child(0).unwrap();
+/// let mut metadata = PythonMetadata::default();
+///
+/// collect_python_class(class_node, source, &mut metadata);
+///
+/// assert_eq!(metadata.class_declarations[0].name, "Example");
+/// assert_eq!(metadata.class_declarations[0].bases, vec!["Base"]);
+/// ```
 fn collect_python_class(node: tree_sitter::Node, content: &str, meta: &mut PythonMetadata) {
     let name = child_by_field(node, content, "name").unwrap_or_default();
     let bases = extract_python_class_bases(node, content);
@@ -68,6 +107,28 @@ fn collect_python_class(node: tree_sitter::Node, content: &str, meta: &mut Pytho
         .push(PythonClassItem { name, bases });
 }
 
+/// Extracts the base expressions from a Python class definition.
+///
+/// Uses each base's `name` field when available and otherwise preserves its
+/// complete source text.
+///
+/// # Examples
+///
+/// ```
+/// let mut parser = tree_sitter::Parser::new();
+/// parser
+///     .set_language(&tree_sitter_python::LANGUAGE_PYTHON.into())
+///     .unwrap();
+///
+/// let source = "class Child(Base, factory()):\n    pass";
+/// let tree = parser.parse(source, None).unwrap();
+/// let class = tree.root_node().child(0).unwrap();
+///
+/// assert_eq!(
+///     extract_python_class_bases(class, source),
+///     vec!["Base", "factory()"]
+/// );
+/// ```
 fn extract_python_class_bases(node: tree_sitter::Node, content: &str) -> Vec<String> {
     let mut bases = Vec::new();
     let mut cursor = node.walk();

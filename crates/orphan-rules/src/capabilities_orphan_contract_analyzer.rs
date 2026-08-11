@@ -71,6 +71,26 @@ impl ContractOrphanAnalyzer {
         false
     }
 
+    /// Determines whether any contract name is re-exported by a configured barrel file.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::collections::HashMap;
+    ///
+    /// let content_map = HashMap::new();
+    /// assert!(!is_trait_re_exported_in_barrel(&[], &[], &content_map));
+    /// ```
+    ///
+    /// # Arguments
+    ///
+    /// * `trait_names` - Contract names to search for.
+    /// * `search_files` - Files to inspect for configured barrel filenames.
+    /// * `content_map` - File contents keyed by path.
+    ///
+    /// # Returns
+    ///
+    /// `true` if a configured barrel file contains one of the contract names as a whole word, `false` otherwise.
     fn is_trait_re_exported_in_barrel(
         trait_names: &[String],
         search_files: &[String],
@@ -92,10 +112,28 @@ impl ContractOrphanAnalyzer {
         false
     }
 
-    /// P3 (symmetric contract wiring): a contract is considered reachable when at
-    /// least one of its trait/interface names has an implementor that is alive
-    /// (reachable from an entry point). This closes the DI gap where a contract is
-    /// consumed only via its implementors and never statically imported.
+    /// Determines whether any trait or interface has an implementation reachable from an entry point.
+    ///
+    /// # Parameters
+    ///
+    /// * `inheritance_map` - Maps each trait or interface name to its implementation files.
+    /// * `trait_names` - Trait or interface names associated with the contract.
+    /// * `alive_files` - Files determined to be reachable from an entry point.
+    ///
+    /// # Returns
+    ///
+    /// `true` if at least one implementation of any supplied trait or interface is reachable,
+    /// `false` otherwise.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let has_implementor = analyzer.has_alive_implementor(
+    ///     &inheritance_map,
+    ///     &trait_names,
+    ///     &alive_files,
+    /// );
+    /// ```
     fn has_alive_implementor(
         &self,
         inheritance_map: &InheritanceMap,
@@ -116,9 +154,24 @@ impl ContractOrphanAnalyzer {
     }
 }
 
-/// Robust path equality between a workspace-relative path (as stored in graph
-/// maps) and the alive-set entries (absolute or relative, possibly with a `./`
-/// prefix). Matches on suffix so both representations agree.
+/// Determines whether a workspace-relative path corresponds to any reachable file path.
+///
+/// Paths may be relative or absolute and may include a `./` prefix.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// assert!(is_path_alive("src/lib.rs", &alive_files));
+/// ```
+///
+/// # Arguments
+///
+/// * `rel` - Workspace-relative path to compare.
+/// * `alive_files` - Reachability results containing paths known to be reachable.
+///
+/// # Returns
+///
+/// `true` if a reachable path matches the supplied path, `false` otherwise.
 fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
     alive_files.paths.iter().any(|af| {
         let af_val = af.value();
@@ -134,6 +187,26 @@ fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
 }
 
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
+    /// Determines whether a contract is orphaned based on reachability and implementation status.
+    ///
+    /// A contract is considered reachable when it is directly reachable from an entry file or
+    /// when at least one of its implementors is reachable. Protocol and aggregate contracts
+    /// are orphaned when no implementation is found, unless they are re-exported from a
+    /// configured barrel file.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let result = analyzer.is_contract_orphan(
+    ///     &file_path,
+    ///     &root_dir,
+    ///     &inheritance_map,
+    ///     &all_files,
+    ///     &content_map,
+    ///     &alive_files,
+    /// );
+    /// assert!(!result.is_orphan);
+    /// ```
     fn is_contract_orphan(
         &self,
         f: &FilePath,
