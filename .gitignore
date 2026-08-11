@@ -44,3 +44,4 @@ serviceAccountKey
 .agents/plans
 .agents/graph-loop/
 
+.qwen-web/
