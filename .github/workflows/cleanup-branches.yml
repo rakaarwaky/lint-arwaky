@@ -14,7 +14,12 @@ jobs:
   cleanup:
     name: Delete merged branch
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    # Only delete branches from this repository — never a fork. A fork PR's
+    # head.ref names a branch in the fork, which must not be deleted here
+    # (and could otherwise collide with a same-named branch in this repo).
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Delete remote branch
         run: |
@@ -41,8 +46,18 @@ jobs:
             exit 0
           fi
 
-          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/${BRANCH}" || \
-            echo "Branch ${BRANCH} already gone or cannot be deleted."
+          # Delete the branch. Treat a 404 as "already deleted" (idempotent);
+          # any other failure fails the job so it is not silently swallowed.
+          STATUS=$(gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/${BRANCH}" \
+            --silent -o /dev/null -w '%{http_code}' 2>/dev/null || true)
+          if [ "$STATUS" = "404" ]; then
+            echo "Branch ${BRANCH} already deleted."
+          elif [ "$STATUS" = "204" ]; then
+            echo "Deleted branch ${BRANCH}."
+          else
+            echo "Failed to delete branch ${BRANCH} (HTTP ${STATUS})."
+            exit 1
+          fi
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

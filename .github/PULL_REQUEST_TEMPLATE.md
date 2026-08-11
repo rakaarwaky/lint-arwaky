@@ -13,7 +13,13 @@
 ## Checklist
 
 - [ ] Conventional commit title (e.g. `feat:`, `fix:`, `refactor:`, `chore:`)
-- [ ] `bash scripts/gates.sh` passes (fmt, clippy, self-lint, tests)
+- [ ] `bash scripts/gates.sh` passes:
+  - [ ] rustfmt
+  - [ ] clippy (`-D warnings`)
+  - [ ] self-lint (`check .` == 0 violations)
+  - [ ] workspace tests
+  - [ ] false negatives (workspaces-bad >= 24)
+  - [ ] false positives (workspaces-good == 0)
 - [ ] PR description describes the change (no bare file paths)
 - [ ] No out-of-scope changes
 
