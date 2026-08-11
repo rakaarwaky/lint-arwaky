@@ -18,13 +18,26 @@ jobs:
     steps:
       - name: Delete remote branch
         run: |
-          BRANCH="${{ github.event.pull_request.head.ref }}"
+          # The branch name arrives via an environment variable (safely
+          # escaped by the runner) instead of inline interpolation, and is
+          # validated against a strict pattern before use.
+          BRANCH="$BRANCH_NAME"
+
           # Never delete protected branches
           if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "develop" ]; then
             echo "Skipping protected branch: ${BRANCH}"
             exit 0
           fi
-          gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/${BRANCH}" || \
+
+          # Reject anything that is not a safe git ref name to prevent
+          # shell injection through a crafted branch name.
+          if ! [[ "$BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+            echo "Skipping branch with unsafe characters: ${BRANCH}"
+            exit 0
+          fi
+
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/${BRANCH}" || \
             echo "Branch ${BRANCH} already gone or cannot be deleted."
         env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

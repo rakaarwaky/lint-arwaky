@@ -36,26 +36,31 @@ jobs:
       - name: Determine next version from commit history
         id: version
         run: |
-          # Tags since last tag; default to current Cargo.toml version
+          # Use the latest tag if any; otherwise analyze all commits.
           LAST_TAG=$(git tag --sort=-v:refname | head -1)
           if [ -z "$LAST_TAG" ]; then
-            CURRENT=$(grep -m1 '^version' Cargo.toml | sed 's/.*= *"\(.*\)"/\1/')
+            # No tags yet — derive base version from Cargo.toml and inspect all commits.
+            CURRENT=$(grep -m1 '^version' Cargo.toml | sed 's/.*= *"\(.*\)"/\1/' || echo "0.1.0")
             LAST_TAG="v${CURRENT}"
+            RANGE="HEAD"
+            echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
+          else
+            RANGE="${LAST_TAG}..HEAD"
+            echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
           fi
           echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
 
-          # Conventional commit detection since last tag (or all if none)
-          RANGE="${LAST_TAG}..HEAD"
-          MAJOR=$(git log "$RANGE" --oneline --grep='^[a-z]*(.*)!' -E | head -1)
-          FEAT=$(git log "$RANGE" --oneline --grep='^feat' | head -1)
-          FIX=$(git log "$RANGE" --oneline --grep='^fix' | head -1)
+          # Conventional commit detection.
+          # Breaking change: `feat!:`, `feat(scope)!:`, `fix!:` etc.
+          MAJOR=$(git log "$RANGE" --oneline --grep='^[a-zA-Z]*(.*)!:' -E | head -1)
+          FEAT=$(git log "$RANGE" --oneline --grep='^feat' -E | head -1)
 
           BASE="${LAST_TAG#v}"
           IFS='.' read -r MAJ_V MIN_V PAT_V <<< "$BASE"
           MAJ_V=${MAJ_V:-0}; MIN_V=${MIN_V:-0}; PAT_V=${PAT_V:-0}
 
           if [ -n "$MAJOR" ]; then
-            NEW="${MAJ_V}.0.0"
+            NEW="$((MAJ_V + 1)).0.0"
           elif [ -n "$FEAT" ]; then
             NEW="${MAJ_V}.$((MIN_V + 1)).0"
           else
@@ -74,7 +79,7 @@ jobs:
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           DATE=$(date +%Y-%m-%d)
-          RANGE="${{ steps.version.outputs.last_tag }}..HEAD"
+          RANGE="${{ steps.version.outputs.range }}"
           # Group conventional commit messages since the previous release.
           FEATS=$(git log "$RANGE" --pretty=format:'- %s' --grep='^feat' -E | head -20)
           FIXES=$(git log "$RANGE" --pretty=format:'- %s' --grep='^fix' -E | head -20)
