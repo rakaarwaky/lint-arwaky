@@ -179,7 +179,7 @@ When merging a PR to develop:
 - **do NOT delete `develop`** branch after merge to `main`
 
 **Worktree policy (important):**
-- When working on a feature/fix branch, **use a git worktree** under `.worktrees/` (e.g. `/home/raka/mcp-arwaky/lint-arwaky/.worktrees/`) instead of switching branches in the current checkout with `git checkout`.
+- When working on a feature/fix branch, **use a git worktree** under `.worktrees/` (e.g. `<repo-root>/.worktrees/`) instead of switching branches in the current checkout with `git checkout`.
 - Do **NOT** `git checkout` between branches in the main working directory — keep `main` checked out there and create worktrees for side branches.
 - See `.gitignore` — `.worktree/` is already ignored.
 
