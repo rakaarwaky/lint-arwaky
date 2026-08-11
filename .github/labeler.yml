@@ -1,0 +1,56 @@
+# GitHub Labeler configuration.
+# Labels are applied to PRs based on which files they change.
+# See https://github.com/actions/labeler
+
+# Rust
+rust:
+  - crates/**/*.rs
+  - crates/**/Cargo.toml
+  - crates/**/Cargo.lock
+
+# Python
+python:
+  - modules/**/*.py
+  - modules/**/pyproject.toml
+  - modules/**/requirements.txt
+
+# TypeScript / JavaScript
+typescript:
+  - packages/**/*.ts
+  - packages/**/*.tsx
+  - packages/**/package.json
+
+# CI / Workflows
+ci:
+  - .github/workflows/**
+  - .github/dependabot.yml
+
+# Documentation
+documentation:
+  - '**/*.md'
+
+# Config
+configuration:
+  - '*.yaml'
+  - '*.yml'
+  - .codacy.yaml
+  - .repowise/**
+  - lint_arwaky.config.yaml
+
+# Dependencies
+dependencies:
+  - '**/Cargo.toml'
+  - '**/Cargo.lock'
+  - '**/package.json'
+  - '**/requirements.txt'
+
+# Tests
+tests:
+  - crates/**/tests/**
+  - modules/**/tests/**
+  - packages/**/tests/**
+
+# Fixtures (test workspaces)
+fixtures:
+  - workspaces-bad/**
+  - workspaces-good/**
