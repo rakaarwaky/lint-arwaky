@@ -458,12 +458,25 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             })
             .unwrap_or_default();
         let all_files_set: HashSet<&str> = all_files.iter().map(|s| s.as_str()).collect();
+        let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
+        for f in &all_files {
+            if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
+                stem_index
+                    .entry(stem.to_string())
+                    .or_default()
+                    .push(f.clone());
+            }
+        }
+        for v in stem_index.values_mut() {
+            v.sort();
+        }
         let imports = self.imports.get().cloned().unwrap_or_default();
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
         for imp in &imports {
             let src_rel = path_to_relative(&imp.source_file, &top_root);
-            let target_file = self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set);
+            let target_file =
+                self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set, &stem_index);
             let mut entry = imp.clone();
             if let Some(tgt_rel) = &target_file {
                 entry.resolved_path = Some(PathBuf::from(tgt_rel));
@@ -559,6 +572,7 @@ impl FilesystemOrchestrator {
         src_rel: &str,
         top_root: &Path,
         all_files_set: &HashSet<&str>,
+        stem_index: &HashMap<String, Vec<String>>,
     ) -> Option<String> {
         if imp.import_type == ImportType::Mod && imp.resolved_path.is_none() {
             let src_dir = Path::new(src_rel)
@@ -647,10 +661,22 @@ impl FilesystemOrchestrator {
                         // C: suffix/stem match (bare module name in nested dir)
                         .or_else(|| {
                             let stem = raw.rsplit('.').next().unwrap_or(raw);
-                            let suffix = format!("/{}.py", stem);
-                            all_files_set.iter().find(|f| {
-                                **f == format!("{}.py", stem) || f.ends_with(&suffix)
-                            }).map(|f| f.to_string())
+                            let root_py = format!("{}.py", stem);
+                            let suffix = format!("/{}", root_py);
+                            let member_dir = src_dir.split('/').take(2).collect::<Vec<_>>().join("/");
+                            let domain_prefix = format!("{}/", member_dir);
+                            stem_index.get(stem).and_then(|candidates| {
+                                candidates
+                                    .iter()
+                                    .filter(|f| {
+                                        f.as_str() != src_rel
+                                            && (**f == root_py || f.ends_with(&suffix))
+                                    })
+                                    .min_by_key(|f| {
+                                        (!f.starts_with(&domain_prefix), f.as_str())
+                                    })
+                                    .map(|f| f.to_string())
+                            })
                         })
                 }
             } else if imp.language == Language::TypeScript || imp.language == Language::JavaScript {

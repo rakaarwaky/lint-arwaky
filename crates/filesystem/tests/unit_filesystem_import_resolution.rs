@@ -15,8 +15,8 @@ use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtoc
 use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 
-use std::collections::HashSet;
-use std::path::PathBuf;
+use std::collections::{HashMap, HashSet};
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 fn make_python_import(raw: &str, resolved: Option<&str>) -> ImportEntry {
@@ -36,6 +36,22 @@ fn make_python_import(raw: &str, resolved: Option<&str>) -> ImportEntry {
 
 fn build_file_set<'a>(paths: &'a [&'a str]) -> HashSet<&'a str> {
     paths.iter().copied().collect()
+}
+
+fn build_stem_index(paths: &[&str]) -> HashMap<String, Vec<String>> {
+    let mut index: HashMap<String, Vec<String>> = HashMap::new();
+    for &f in paths {
+        if let Some(stem) = Path::new(f).file_stem().and_then(|s| s.to_str()) {
+            index
+                .entry(stem.to_string())
+                .or_default()
+                .push(f.to_string());
+        }
+    }
+    for v in index.values_mut() {
+        v.sort();
+    }
+    index
 }
 
 fn make_orchestrator() -> FilesystemOrchestrator {
@@ -68,13 +84,13 @@ fn test_python_direct_path_resolves() {
         "modules/image/src/agent_image_orchestrator.py",
         "modules/image/src/__init__.py",
     ]);
+    let stem_index = build_stem_index(&[
+        "modules/image/src/agent_image_orchestrator.py",
+        "modules/image/src/__init__.py",
+    ]);
     let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(
-        &imp,
-        "modules/test/src/test.py",
-        &root,
-        &files,
-    );
+    let result =
+        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/image/src/agent_image_orchestrator.py".to_string()),
@@ -93,13 +109,13 @@ fn test_python_suffix_match_resolves_nested() {
         "modules/image/src/capabilities_image_processing_processor.py",
         "modules/test/src/test.py",
     ]);
-    let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(
-        &imp,
+    let stem_index = build_stem_index(&[
+        "modules/image/src/capabilities_image_processing_processor.py",
         "modules/test/src/test.py",
-        &root,
-        &files,
-    );
+    ]);
+    let root = PathBuf::from(".");
+    let result =
+        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/image/src/capabilities_image_processing_processor.py".to_string()),
@@ -113,17 +129,12 @@ fn test_python_prefix_based_resolves() {
     // `from some_module import X` where file is at `modules/some_module.py`
     let orch = make_orchestrator();
     let imp = make_python_import("some_module", None);
-    let files: HashSet<&str> = build_file_set(&[
-        "modules/some_module.py",
-        "modules/test/src/test.py",
-    ]);
+    let files: HashSet<&str> =
+        build_file_set(&["modules/some_module.py", "modules/test/src/test.py"]);
+    let stem_index = build_stem_index(&["modules/some_module.py", "modules/test/src/test.py"]);
     let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(
-        &imp,
-        "modules/test/src/test.py",
-        &root,
-        &files,
-    );
+    let result =
+        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/some_module.py".to_string()),
@@ -142,13 +153,14 @@ fn test_python_direct_path_preferred_over_prefix() {
         "modules/modules/image/src/agent_image_orchestrator.py",
         "modules/test/src/test.py",
     ]);
-    let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(
-        &imp,
+    let stem_index = build_stem_index(&[
+        "modules/image/src/agent_image_orchestrator.py",
+        "modules/modules/image/src/agent_image_orchestrator.py",
         "modules/test/src/test.py",
-        &root,
-        &files,
-    );
+    ]);
+    let root = PathBuf::from(".");
+    let result =
+        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     // Should match direct path (Strategy A), NOT the double-prefix (Strategy B)
     assert_eq!(
         result,
@@ -163,13 +175,10 @@ fn test_python_import_with_resolved_path_returns_as_is() {
     let orch = make_orchestrator();
     let imp = make_python_import("some.module", Some("modules/some/module.py"));
     let files: HashSet<&str> = build_file_set(&["modules/some/module.py"]);
+    let stem_index = build_stem_index(&["modules/some/module.py"]);
     let root = PathBuf::from(".");
-    let result = orch.resolve_import_target(
-        &imp,
-        "modules/test/src/test.py",
-        &root,
-        &files,
-    );
+    let result =
+        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
     assert_eq!(
         result,
         Some("modules/some/module.py".to_string()),
@@ -183,12 +192,154 @@ fn test_python_no_match_returns_none() {
     let orch = make_orchestrator();
     let imp = make_python_import("nonexistent_module", None);
     let files: HashSet<&str> = build_file_set(&["modules/test/src/test.py"]);
+    let stem_index = build_stem_index(&["modules/test/src/test.py"]);
+    let root = PathBuf::from(".");
+    let result =
+        orch.resolve_import_target(&imp, "modules/test/src/test.py", &root, &files, &stem_index);
+    assert!(result.is_none(), "Should return None when no match found");
+}
+
+#[test]
+fn test_python_stem_match_skips_self_import() {
+    // A file must not resolve to itself via Strategy C (stem match).
+    // Regression: self-import through stem match creates a self-loop edge.
+    let orch = make_orchestrator();
+    let imp = make_python_import("capabilities_image_processing_processor", None);
+    let files: HashSet<&str> =
+        build_file_set(&["modules/image/src/capabilities_image_processing_processor.py"]);
+    let stem_index =
+        build_stem_index(&["modules/image/src/capabilities_image_processing_processor.py"]);
     let root = PathBuf::from(".");
     let result = orch.resolve_import_target(
         &imp,
-        "modules/test/src/test.py",
+        "modules/image/src/capabilities_image_processing_processor.py",
         &root,
         &files,
+        &stem_index,
     );
-    assert!(result.is_none(), "Should return None when no match found");
+    assert!(
+        result.is_none(),
+        "Should NOT resolve a module to its own file via stem match"
+    );
+}
+
+#[test]
+fn test_python_stem_match_ambiguous_uses_member_dir() {
+    // Two files share a stem in different members; the importing member should win.
+    // Determinism: prefer the importing file's member dir, then lexicographic order.
+    let orch = make_orchestrator();
+    let imp = make_python_import("capabilities_shared_processor", None);
+    let files: HashSet<&str> = build_file_set(&[
+        "modules/image/src/capabilities_shared_processor.py",
+        "modules/audio/src/capabilities_shared_processor.py",
+        "modules/image/src/root_image_entry.py",
+    ]);
+    let stem_index = build_stem_index(&[
+        "modules/image/src/capabilities_shared_processor.py",
+        "modules/audio/src/capabilities_shared_processor.py",
+        "modules/image/src/root_image_entry.py",
+    ]);
+    let root = PathBuf::from(".");
+    // Importing file lives in modules/image/src — should prefer modules/image's copy.
+    let result = orch.resolve_import_target(
+        &imp,
+        "modules/image/src/root_image_entry.py",
+        &root,
+        &files,
+        &stem_index,
+    );
+    assert_eq!(
+        result,
+        Some("modules/image/src/capabilities_shared_processor.py".to_string()),
+        "Member-dir preference should pick the importing member's file"
+    );
+}
+
+#[test]
+fn e2e_chained_python_import_graph_reaches_capabilities() {
+    // End-to-end: a real temp Python project with the chained import chain
+    // root entry → surface → agent → capabilities must produce graph edges
+    // so that BFS reachability marks the capabilities file alive.
+    // This exercises resolve_import_target through the real pipeline,
+    // not a hand-built graph.
+    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+    use std::collections::HashSet as FileSet;
+
+    let tmp = tempfile::TempDir::new().unwrap();
+    let member_src = tmp.path().join("modules").join("image").join("src");
+    std::fs::create_dir_all(&member_src).unwrap();
+
+    // Entry → Surface (dotted import with member prefix)
+    std::fs::write(
+        member_src.join("root_image_entry.py"),
+        "from modules.image.src.surfaces_image_cli import CliCommand\n\n\ndef main():\n    CliCommand().run()\n",
+    )
+    .unwrap();
+    // Surface → Agent (dotted import with member prefix)
+    std::fs::write(
+        member_src.join("surfaces_image_cli.py"),
+        "from modules.image.src.agent_image_orchestrator import ImageOrchestrator\n\n\nclass CliCommand:\n    def run(self):\n        ImageOrchestrator().process()\n",
+    )
+    .unwrap();
+    // Agent → Capabilities (bare module name, Strategy C)
+    std::fs::write(
+        member_src.join("agent_image_orchestrator.py"),
+        "from capabilities_image_processing_processor import ImageProcessor\n\n\nclass ImageOrchestrator:\n    def process(self):\n        ImageProcessor().run()\n",
+    )
+    .unwrap();
+    // Capabilities — no imports needed; should be reachable via the chain
+    std::fs::write(
+        member_src.join("capabilities_image_processing_processor.py"),
+        "class ImageProcessor:\n    def run(self):\n        pass\n",
+    )
+    .unwrap();
+
+    let orch = make_orchestrator();
+    let root = tmp.path().to_path_buf();
+    let context = orch.build_orphan_graph_context(&root, &[]);
+
+    let graph = &context.import_graph.mapping;
+    // The entry file must import the surface (Strategy A on dotted path).
+    assert!(
+        graph
+            .get("modules/image/src/root_image_entry.py")
+            .map(|v| v.contains(&"modules/image/src/surfaces_image_cli.py".to_string()))
+            .unwrap_or(false),
+        "entry → surface edge missing: {:?}",
+        graph
+    );
+    // The surface must import the agent.
+    assert!(
+        graph
+            .get("modules/image/src/surfaces_image_cli.py")
+            .map(|v| v.contains(&"modules/image/src/agent_image_orchestrator.py".to_string()))
+            .unwrap_or(false),
+        "surface → agent edge missing: {:?}",
+        graph
+    );
+    // The agent must import the capabilities (Strategy C stem match).
+    assert!(
+        graph
+            .get("modules/image/src/agent_image_orchestrator.py")
+            .map(|v| {
+                v.contains(
+                    &"modules/image/src/capabilities_image_processing_processor.py".to_string(),
+                )
+            })
+            .unwrap_or(false),
+        "agent → capabilities edge missing: {:?}",
+        graph
+    );
+
+    // BFS reachability from the entry must mark the capabilities file alive.
+    let alive: FileSet<String> = context
+        .import_graph
+        .mapping
+        .iter()
+        .flat_map(|(src, targets)| std::iter::once(src.clone()).chain(targets.iter().cloned()))
+        .collect();
+    assert!(
+        alive.contains("modules/image/src/capabilities_image_processing_processor.py"),
+        "capabilities file must be reachable through the chain"
+    );
 }

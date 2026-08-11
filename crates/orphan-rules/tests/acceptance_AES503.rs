@@ -147,26 +147,59 @@ fn aes503_capabilities_violation_display_message() {
 fn aes503_chained_python_import_reachable() {
     // Acceptance test: BFS reachability traces through chained Python imports.
     // Entry → Surface → Agent → Capabilities should all be reachable.
+    // Builds the graph through the REAL filesystem pipeline (import extraction +
+    // resolve_import_target), not a hand-built graph.
+    use filesystem::agent_filesystem_orchestrator::{
+        FilesystemOrchestrator, FilesystemOrchestratorDeps,
+    };
+    use filesystem::capabilities_ast_parser::ASTParser;
+    use filesystem::capabilities_dependency_graph::DependencyGraph;
+    use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
+    use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
+    use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
     use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
-    use shared::quality_rules::taxonomy_analysis_vo::ImportGraph;
+    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+    use std::sync::Arc;
+
+    let tmp = tempfile::TempDir::new().unwrap();
+    let member_src = tmp.path().join("modules").join("image").join("src");
+    std::fs::create_dir_all(&member_src).unwrap();
+    std::fs::write(
+        member_src.join("root_image_entry.py"),
+        "from modules.image.src.surfaces_image_cli import CliCommand\n",
+    )
+    .unwrap();
+    std::fs::write(
+        member_src.join("surfaces_image_cli.py"),
+        "from modules.image.src.agent_image_orchestrator import ImageOrchestrator\n",
+    )
+    .unwrap();
+    std::fs::write(
+        member_src.join("agent_image_orchestrator.py"),
+        "from capabilities_image_processing_processor import ImageProcessor\n",
+    )
+    .unwrap();
+    std::fs::write(
+        member_src.join("capabilities_image_processing_processor.py"),
+        "class ImageProcessor:\n    pass\n",
+    )
+    .unwrap();
+
+    let orch = FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
+        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
+        workspace: Arc::new(CapabilitiesWorkspace::new()),
+        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
+        parser: Arc::new(ASTParser::new()),
+        graph: Arc::new(DependencyGraph::new()),
+    });
+    let context = orch.build_orphan_graph_context(tmp.path(), &[]);
 
     let entry = "modules/image/src/root_image_entry.py".to_string();
     let surface = "modules/image/src/surfaces_image_cli.py".to_string();
     let agent = "modules/image/src/agent_image_orchestrator.py".to_string();
     let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
 
-    let mut graph_map = std::collections::HashMap::new();
-    // Entry → Surface (dotted import)
-    graph_map.insert(entry.clone(), vec![surface.clone()]);
-    // Surface → Agent (dotted import with member prefix strategy A)
-    graph_map.insert(surface.clone(), vec![agent.clone()]);
-    // Agent → Capabilities (bare module name strategy C)
-    graph_map.insert(agent.clone(), vec![capabilities.clone()]);
-
-    let graph = ImportGraph::new(graph_map);
-    let entry_points = vec![entry.clone()];
-
-    let alive_set = trace_reachability(&entry_points, &graph);
+    let alive_set = trace_reachability(&[entry.clone()], &context.import_graph);
 
     assert!(alive_set.contains(&entry));
     assert!(alive_set.contains(&surface));
@@ -177,26 +210,67 @@ fn aes503_chained_python_import_reachable() {
 #[test]
 fn aes503_broken_chain_detects_unreachable() {
     // Acceptance test: When a link is missing in the chain, downstream files are unreachable.
+    // Real pipeline: surface imports the agent module, but the agent file does not
+    // exist — so no edge can be created and capabilities stay unreachable.
+    use filesystem::agent_filesystem_orchestrator::{
+        FilesystemOrchestrator, FilesystemOrchestratorDeps,
+    };
+    use filesystem::capabilities_ast_parser::ASTParser;
+    use filesystem::capabilities_dependency_graph::DependencyGraph;
+    use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
+    use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
+    use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
     use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
-    use shared::quality_rules::taxonomy_analysis_vo::ImportGraph;
+    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+    use std::sync::Arc;
+
+    let tmp = tempfile::TempDir::new().unwrap();
+    let member_src = tmp.path().join("modules").join("image").join("src");
+    std::fs::create_dir_all(&member_src).unwrap();
+    std::fs::write(
+        member_src.join("root_image_entry.py"),
+        "from modules.image.src.surfaces_image_cli import CliCommand\n",
+    )
+    .unwrap();
+    // Surface imports the agent module, but the agent file is NOT created —
+    // the chain is broken between surface and agent.
+    std::fs::write(
+        member_src.join("surfaces_image_cli.py"),
+        "from modules.image.src.agent_image_orchestrator import ImageOrchestrator\n",
+    )
+    .unwrap();
+    // Capabilities file exists but nothing imports it (agent is missing).
+    std::fs::write(
+        member_src.join("capabilities_image_processing_processor.py"),
+        "class ImageProcessor:\n    pass\n",
+    )
+    .unwrap();
+
+    let orch = FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
+        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
+        workspace: Arc::new(CapabilitiesWorkspace::new()),
+        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
+        parser: Arc::new(ASTParser::new()),
+        graph: Arc::new(DependencyGraph::new()),
+    });
+    let context = orch.build_orphan_graph_context(tmp.path(), &[]);
 
     let entry = "modules/image/src/root_image_entry.py".to_string();
     let surface = "modules/image/src/surfaces_image_cli.py".to_string();
-    // Agent is missing — broken chain between surface and capabilities
     let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
 
-    let mut graph_map: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
-    // Entry → Surface (exists)
-    graph_map.insert(entry.clone(), vec![surface.clone()]);
-    // Surface → Agent (missing — agent file doesn't exist in graph)
-    // Agent → Capabilities (would exist but agent is unreachable)
+    let alive_set = trace_reachability(&[entry.clone()], &context.import_graph);
 
-    let graph = ImportGraph::new(graph_map);
-    let entry_points = vec![entry.clone()];
-
-    let alive_set = trace_reachability(&entry_points, &graph);
-
-    assert!(alive_set.contains(&entry), "Entry point should be reachable");
-    assert!(alive_set.contains(&surface), "Surface should be reachable from entry");
-    assert!(!alive_set.contains(&capabilities), "Capabilities should NOT be reachable when chain is broken");
+    assert!(
+        alive_set.contains(&entry),
+        "Entry point should be reachable"
+    );
+    assert!(
+        alive_set.contains(&surface),
+        "Surface should be reachable from entry"
+    );
+    assert!(
+        !alive_set.contains(&capabilities),
+        "Capabilities should NOT be reachable when chain is broken"
+    );
 }
