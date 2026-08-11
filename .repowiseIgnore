@@ -10,3 +10,11 @@ tools/
 log/
 target/
 *.md
+
+# Rust binary entry points (fn main, declared in Cargo.toml [[bin]]).
+# repowise flags them as unreachable because they are never imported —
+# that is their nature, not dead code (known repowise false positive).
+crates/root_cli_main_entry.rs
+crates/root_mcp_main_entry.rs
+crates/root_tui_main_entry.rs
+
