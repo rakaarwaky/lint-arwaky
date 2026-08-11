@@ -63,7 +63,7 @@ repowise dead-code --kind zombie_package
 ```
 
 **Interpretation:**
-- `unreachable_file` at confidence ≤ 0.40 in `crates/root_*_main_entry.rs` → **false positive** (binary entry points are never imported).
+- `unreachable_file` at confidence ≤ 0.40 for `crates/root_*_main_entry.rs` → **false positive** — these are Rust binary entry points (`fn main()`, declared in `Cargo.toml` `[[bin]]`). Repowise does not mark Cargo `[[bin]]` as `is_entry_point`, so they read as unreachable (known issue: repowise-dev/repowise#666 for the Python analogue; Rust binaries have the same gap). Never delete them.
 - `zombie_package` on a workspace root like `crates/` → **false positive** (it is the workspace itself).
 - Fixture paths (`workspaces-bad/`, `workspaces-good/`) should **never appear** — if they do, the exclude is not applied (see §6).
 
