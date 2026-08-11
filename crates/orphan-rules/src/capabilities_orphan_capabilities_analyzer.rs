@@ -95,8 +95,11 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
                 stem, stem, stem
             )
         } else {
+            // P5 (visibility): the file IS reachable — typically via the DI impl
+            // bridge (a contract it implements is reachable) or container wiring —
+            // so the report says so and pinpoints the remaining gap: container wiring.
             format!(
-                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container.rs.",
+                "AES503 CAPABILITIES_ORPHAN: '{}' is not wired.\nWHY? Capabilities file '{}' is reachable (via import chain, container wiring, or contract implementation bridge) but not wired in any root_*_container file.\nFIX: Register '{}' in a root_*_container.rs.",
                 stem, stem, stem
             )
         };
