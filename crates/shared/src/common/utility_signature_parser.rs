@@ -208,22 +208,31 @@ fn collect_python_return_primitives(lower: &str, forbidden: &mut Vec<&'static st
         return;
     };
     let ret = lower[arrow_idx + 2..].trim();
-    if ret.starts_with("str") {
+    // Match whole tokens only: `-> int` fires, `-> IntervalVO` does not.
+    if ret.starts_with("str") && is_token_end(ret, 3) {
         forbidden.push("str");
     }
-    if ret.starts_with("int") {
+    if ret.starts_with("int") && is_token_end(ret, 3) {
         forbidden.push("int");
     }
-    if ret.starts_with("float") {
+    if ret.starts_with("float") && is_token_end(ret, 5) {
         forbidden.push("float");
     }
     // Only flag bare `list`/`dict` without type parameters
-    if ret.starts_with("list") && !ret.starts_with("list[") {
+    if ret.starts_with("list") && is_token_end(ret, 4) && !ret.starts_with("list[") {
         forbidden.push("list");
     }
-    if ret.starts_with("dict") && !ret.starts_with("dict[") {
+    if ret.starts_with("dict") && is_token_end(ret, 4) && !ret.starts_with("dict[") {
         forbidden.push("dict");
     }
+}
+
+/// True when the byte after `prefix_len` is not an identifier character,
+/// so `prefix` stands alone as a whole token.
+fn is_token_end(s: &str, prefix_len: usize) -> bool {
+    s.as_bytes()
+        .get(prefix_len)
+        .is_none_or(|b| !b.is_ascii_alphanumeric() && *b != b'_')
 }
 
 /// Extract `(line_no, raw_signature_line)` for every method declaration inside a TypeScript
@@ -300,7 +309,9 @@ fn push_inline_ts_signature(
 fn brace_pair(line: &str) -> Option<(usize, usize)> {
     let open = line.find('{')?;
     let close = line.rfind('}')?;
-    Some((open, close))
+    // Guard against a reversed range (e.g. `} ... {` on one line) so the
+    // caller's `&trimmed[open + 1..close]` slice never panics.
+    (close > open).then_some((open, close))
 }
 
 /// True when the inline body of a one-line block uses primitive annotations.

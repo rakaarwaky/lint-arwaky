@@ -593,18 +593,30 @@ impl InboundLinkMap {
     /// Priority 6: boundary-aligned suffix matching in both directions.
     /// Requires the boundary to sit on a path separator so that e.g.
     /// `foo_vo.rs` does not match `bar_vo.rs`.
+    /// Picks the longest (most specific) matching key so results are
+    /// deterministic regardless of HashMap iteration order.
     fn boundary_suffix(&self, path: &str) -> Option<&Vec<String>> {
         let clean = path.strip_prefix("./").unwrap_or(path);
+        let mut best: Option<(&Vec<String>, usize)> = None;
         for (k, v) in &self.mapping {
             let k_clean = k.strip_prefix("./").unwrap_or(k);
             if k_clean.is_empty() || clean.is_empty() {
                 continue;
             }
-            if boundary_ends_with(k_clean, clean) || boundary_ends_with(clean, k_clean) {
-                return Some(v);
+            let matched_len = if boundary_ends_with(k_clean, clean) {
+                Some(k_clean.len())
+            } else if boundary_ends_with(clean, k_clean) {
+                Some(clean.len())
+            } else {
+                None
+            };
+            if let Some(len) = matched_len
+                && best.is_none_or(|(_, best_len)| len > best_len)
+            {
+                best = Some((v, len));
             }
         }
-        None
+        best.map(|(v, _)| v)
     }
 }
 
