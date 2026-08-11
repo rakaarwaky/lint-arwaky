@@ -178,26 +178,35 @@ fn extract_suffix_policy(
     let mut forbidden = serde_json::Value::Array(Vec::new());
 
     for entry in arr {
-        if let Some(entry_obj) = entry.as_object() {
-            for (pkey, plist) in entry_obj {
-                match pkey.as_str() {
-                    "strict" | "flexible" => {
-                        policy = Some(pkey.clone());
-                        if let Some(list) = plist.as_array() {
-                            allowed = serde_json::json!(list);
-                        }
-                    }
-                    "forbidden" => {
-                        if let Some(list) = plist.as_array() {
-                            forbidden = serde_json::json!(list);
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
+        extract_suffix_entry(entry, &mut policy, &mut allowed, &mut forbidden);
     }
     Some((policy, allowed, forbidden))
+}
+
+/// Process a single suffix entry object, updating policy/allowed/forbidden in place.
+fn extract_suffix_entry(
+    entry: &serde_json::Value,
+    policy: &mut Option<String>,
+    allowed: &mut serde_json::Value,
+    forbidden: &mut serde_json::Value,
+) {
+    let Some(entry_obj) = entry.as_object() else { return };
+    for (pkey, plist) in entry_obj {
+        match pkey.as_str() {
+            "strict" | "flexible" => {
+                policy.replace(pkey.clone());
+                if let Some(list) = plist.as_array() {
+                    *allowed = serde_json::json!(list);
+                }
+            }
+            "forbidden" => {
+                if let Some(list) = plist.as_array() {
+                    *forbidden = serde_json::json!(list);
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 /// Replace a layer's `suffix` array with a `naming` object built from the
@@ -257,22 +266,17 @@ fn push_expanded_rule(flat: &mut serde_json::Value, base: serde_json::Value) {
 /// Expand multi-scope rules into one entry per scope. Returns true when the
 /// rule was pushed as scope-specific entries and needs no further handling.
 fn expand_scopes(flat: &mut serde_json::Value, base: &mut serde_json::Value) -> bool {
-    let scope_arr = match base.get("scope") {
-        Some(s) => match s.as_array() {
-            Some(a) => a,
-            None => return false,
-        },
-        None => return false,
+    let Some(scopes) = get_scope_strings(base) else {
+        return false;
     };
-    let scopes: Vec<String> = scope_arr
-        .iter()
-        .filter_map(|v| v.as_str().map(String::from))
-        .collect();
-    let has_conditions = base
-        .as_object()
-        .is_some_and(|o| o.contains_key("conditions"));
 
-    if !has_conditions && scopes.len() > 1 {
+    if has_conditions(base) && scopes.len() <= 1 {
+        // Single scope or no scopes: collapse to first (original behavior).
+        collapse_to_first_scope(base);
+        return false;
+    }
+
+    if !has_conditions(base) && scopes.len() > 1 {
         // No conditions: expand one entry per scope.
         for s in scopes {
             let mut entry = base.clone();
@@ -284,8 +288,7 @@ fn expand_scopes(flat: &mut serde_json::Value, base: &mut serde_json::Value) -> 
         return true;
     }
 
-    // Otherwise (single scope, or scopes combined with conditions): collapse
-    // to the first scope on the base entry (original behavior).
+    // Otherwise (single scope combined with conditions): collapse to first.
     if let Some(first) = scopes.first() {
         if let Some(obj) = base.as_object_mut() {
             obj.insert("scope".to_string(), serde_json::json!(first));
@@ -294,18 +297,36 @@ fn expand_scopes(flat: &mut serde_json::Value, base: &mut serde_json::Value) -> 
     false
 }
 
+/// Extract scope strings from the base entry's "scope" field.
+fn get_scope_strings(base: &serde_json::Value) -> Option<Vec<String>> {
+    let scope_arr = base.get("scope")?;
+    let arr = scope_arr.as_array()?;
+    let scopes: Vec<String> = arr
+        .iter()
+        .filter_map(|v| v.as_str().map(String::from))
+        .collect();
+    Some(scopes)
+}
+
+/// Return true if the base entry has a "conditions" key.
+fn has_conditions(base: &serde_json::Value) -> bool {
+    base.as_object()
+        .is_some_and(|o| o.contains_key("conditions"))
+}
+
+/// Collapse scope to its first value.
+fn collapse_to_first_scope(base: &mut serde_json::Value) {
+    let Some(scopes) = get_scope_strings(base) else { return };
+    let Some(first) = scopes.first() else { return };
+    if let Some(obj) = base.as_object_mut() {
+        obj.insert("scope".to_string(), serde_json::json!(first));
+    }
+}
+
 /// Expand `conditions` into individual entries, or push the base entry itself
 /// when there are no conditions.
 fn expand_conditions(flat: &mut serde_json::Value, mut base: serde_json::Value) {
-    // Remove `conditions` so expanded entries do not carry the key (original behavior).
-    let conditions = base
-        .as_object_mut()
-        .and_then(|obj| obj.remove("conditions"));
-    let Some(conditions) = conditions else {
-        push_entry(flat, base);
-        return;
-    };
-    let Some(conds) = conditions.as_array() else {
+    let Some(conds) = extract_owned_conditions(&mut base) else {
         push_entry(flat, base);
         return;
     };
@@ -313,17 +334,34 @@ fn expand_conditions(flat: &mut serde_json::Value, mut base: serde_json::Value) 
         push_entry(flat, base);
         return;
     }
-    for cond in conds {
-        if let Some(cond_obj) = cond.as_object() {
-            let mut entry = base.clone();
-            if let Some(entry_obj) = entry.as_object_mut() {
-                for (k, v) in cond_obj {
-                    entry_obj.insert(k.clone(), v.clone());
-                }
-            }
-            push_entry(flat, entry);
+    for cond_obj in conds {
+        expand_single_condition(flat, base.clone(), cond_obj);
+    }
+}
+
+/// Remove and extract owned condition objects from base.
+fn extract_owned_conditions(base: &mut serde_json::Value) -> Option<Vec<serde_json::Map<String, serde_json::Value>>> {
+    base.as_object_mut()?.remove("conditions").and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|cv| cv.as_object().cloned())
+                .collect()
+        })
+    })
+}
+
+/// Expand a single condition object into a rule entry and push to flat.
+fn expand_single_condition(
+    flat: &mut serde_json::Value,
+    mut base: serde_json::Value,
+    cond_obj: serde_json::Map<String, serde_json::Value>,
+) {
+    if let Some(entry_obj) = base.as_object_mut() {
+        for (k, v) in cond_obj {
+            entry_obj.insert(k, v);
         }
     }
+    push_entry(flat, base);
 }
 
 /// Push one rule object onto the `flat` array.
