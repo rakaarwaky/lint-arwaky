@@ -18,7 +18,7 @@
   - [ ] clippy (`-D warnings`)
   - [ ] self-lint (`check .` == 0 violations)
   - [ ] workspace tests
-  - [ ] false negatives (workspaces-bad >= 24)
+  - [ ] false negatives (workspaces-bad: >= 24 unique AES codes per language)
   - [ ] false positives (workspaces-good == 0)
 - [ ] PR description describes the change (no bare file paths)
 - [ ] No out-of-scope changes
