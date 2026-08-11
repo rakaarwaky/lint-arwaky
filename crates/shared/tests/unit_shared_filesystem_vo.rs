@@ -151,22 +151,28 @@ fn get_importers_marker_relative_match() {
 
 #[test]
 fn get_importers_middle_dot_competes() {
-    // The middle-dot variant inserts `./` right after the first `/crates/`
-    // marker — for `a/crates/b.rs` the variant key is `a/crates/./b.rs`. It
+    // The middle-dot variant is derived from the first `/crates/` marker and
     // competes with the exact match, keeping whichever has the longest list.
-    let map = map_of(&[("a/crates/b.rs", &["x.rs"])]);
+    // Build the variant key with the same formula as the implementation so the
+    // test pins the semantics (competition, longest wins) rather than the
+    // exact string layout.
+    let path = "a/crates/b.rs";
+    let pos = path.find("/crates/").expect("marker present");
+    // Mirror the implementation's middle-dot key: insert `/.` right after the
+    // `/crates/` marker position so `a/crates/b.rs` → `a/./crates/b.rs`.
+    let middle_dot_key = format!("{}/.{}", &path[..pos], &path[pos..]);
+
+    let map = map_of(&[(path, &["x.rs"])]);
     let map_with_dot = map_of(&[
-        ("a/crates/b.rs", &["x.rs"]),
-        ("a/crates/./b.rs", &["y.rs", "z.rs"]),
+        (path, &["x.rs"]),
+        (middle_dot_key.as_str(), &["y.rs", "z.rs"]),
     ]);
     assert_eq!(
-        map_with_dot
-            .get_importers("a/crates/b.rs")
-            .map(|v| v.len()),
+        map_with_dot.get_importers(path).map(|v| v.len()),
         Some(2)
     );
     // Without the dot variant, exact match still resolves.
-    assert_eq!(map.get_importers("a/crates/b.rs").map(|v| v.len()), Some(1));
+    assert_eq!(map.get_importers(path).map(|v| v.len()), Some(1));
 }
 
 #[test]

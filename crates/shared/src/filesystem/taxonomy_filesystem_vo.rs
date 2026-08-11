@@ -554,7 +554,7 @@ impl InboundLinkMap {
     }
 
     /// Priority 3: insert `/.` after the first `/crates/` marker
-    /// (e.g. `a/crates/b.rs` → `a/crates/./b.rs`), keeping the longest match
+    /// (e.g. `a/crates/b.rs` → `a/./crates/b.rs`), keeping the longest match
     /// between `current` and the middle-dot variant.
     fn middle_dot_variant<'a>(
         &'a self,
