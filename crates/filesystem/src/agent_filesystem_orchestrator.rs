@@ -433,6 +433,24 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn build_file_index_with_ignored(&self, root: &Path, ignored: &[String]) {
         self.build_file_index_impl(root, ignored);
     }
+    /// Builds a graph analysis context for the workspace rooted at the specified directory.
+    ///
+    /// The context includes resolved import links, inbound links, inheritance relationships,
+    /// implementation bridges, container wiring, and the workspace's discovered files.
+    ///
+    /// # Arguments
+    ///
+    /// * `root_dir` - Directory from which to determine the workspace and discover files.
+    ///
+    /// # Returns
+    ///
+    /// A graph analysis context containing workspace files and their dependency relationships.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let context = orchestrator.build_orphan_graph_context(std::path::Path::new("."), &[]);
+    /// ```
     fn build_orphan_graph_context(
         &self,
         root_dir: &Path,
@@ -453,7 +471,7 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             .map(|entries| {
                 entries
                     .iter()
-                    .map(|e| path_to_relative(&e.path, &top_root))
+                    .map(|e| crate::utility_container_wiring::path_to_relative(&e.path, &top_root))
                     .collect()
             })
             .unwrap_or_default();
@@ -463,7 +481,8 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
         for imp in &imports {
-            let src_rel = path_to_relative(&imp.source_file, &top_root);
+            let src_rel =
+                crate::utility_container_wiring::path_to_relative(&imp.source_file, &top_root);
             let target_file =
                 self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set, &stem_index);
             let mut entry = imp.clone();
@@ -488,12 +507,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             resolved_import_entries.push(entry);
         }
         let _ = self.resolved_imports.set(resolved_import_entries);
-        let mut reverse: HashMap<String, Vec<String>> = HashMap::new();
-        for (src, targets) in &forward {
-            for tgt in targets {
-                reverse.entry(tgt.clone()).or_default().push(src.clone());
-            }
-        }
         let inheritance: HashMap<String, Vec<String>> = self
             .deps
             .graph
@@ -502,25 +515,40 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             .map(|(k, v)| {
                 (
                     k.clone(),
-                    v.iter().map(|p| path_to_relative(p, &top_root)).collect(),
+                    v.iter()
+                        .map(|p| crate::utility_container_wiring::path_to_relative(p, &top_root))
+                        .collect(),
                 )
             })
             .collect();
-        let lib_rs_files: Vec<String> = all_files
-            .iter()
-            .filter(|f| f.ends_with("/lib.rs"))
-            .cloned()
-            .collect();
-        for lib in &lib_rs_files {
-            for other_lib in &lib_rs_files {
-                if lib != other_lib {
-                    forward
-                        .entry(lib.clone())
-                        .or_default()
-                        .push(other_lib.clone());
-                }
-            }
-        }
+
+        // P2: contract → capabilities bridge (reverse index, issue #193).
+        // For every trait/interface/base, wire its defining (contract) file to each
+        // implementor so BFS that reaches a contract also reaches its capabilities.
+        crate::utility_container_wiring::add_impl_bridge_edges(
+            &top_root,
+            self.deps.graph.symbol_definitions(),
+            self.deps.graph.implementations(),
+            &mut forward,
+        );
+
+        // P1: Container-aware wiring — resolve each *_container.* file's used identifiers
+        // against the workspace symbol table and add synthetic edges container →
+        // referenced file, so BFS that reaches the container reaches its DI services.
+        crate::utility_container_wiring::add_container_wiring_edges(
+            &all_files,
+            &top_root,
+            self.deps.graph.symbol_definitions(),
+            |p: &Path| self.used_identifiers_for(p),
+            &mut forward,
+        );
+
+        crate::utility_container_wiring::add_lib_rs_edges(&all_files, &mut forward);
+
+        // Build the reverse (inbound) link map only after all synthetic edges
+        // (impl bridges, container wiring, lib.rs) have been added, so taxonomy
+        // and utility analyzers see the same inbound links the surfaces analyzer does.
+        let reverse = crate::utility_container_wiring::build_reverse_index(&forward);
         GraphAnalysisContext::new(
             ImportGraph::new(forward),
             InboundLinkMap::new(reverse),
@@ -528,7 +556,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             all_files,
         )
     }
-    // #15: route through injected protocol instead of static utility call
     fn find_workspace_root(&self, start: &Path) -> Option<PathBuf> {
         self.deps
             .workspace
@@ -555,6 +582,21 @@ impl FilesystemOrchestrator {
             cached_implementations: OnceLock::new(),
         }
     }
+    /// Resolves an import to a workspace-relative source file.
+    ///
+    /// Resolution supports Rust modules and external crates, relative imports, Python modules and packages, and TypeScript or JavaScript packages. Existing resolved paths are converted to paths relative to `top_root`.
+    ///
+    /// # Arguments
+    ///
+    /// * `imp` - Import metadata, including its raw path, language, and import type.
+    /// * `src_rel` - Workspace-relative path of the importing source file.
+    /// * `top_root` - Workspace root used to normalize resolved paths.
+    /// * `all_files_set` - Workspace-relative paths of all discovered files.
+    /// * `stem_index` - Index of file stems used for Python module matching.
+    ///
+    /// # Returns
+    ///
+    /// The workspace-relative target path when the import resolves to a discovered file; otherwise, `None`.
     pub fn resolve_import_target(
         &self,
         imp: &ImportEntry,
@@ -589,7 +631,7 @@ impl FilesystemOrchestrator {
         } else if imp.resolved_path.is_some() {
             imp.resolved_path
                 .as_ref()
-                .map(|p| path_to_relative(p, top_root))
+                .map(|p| crate::utility_container_wiring::path_to_relative(p, top_root))
         } else {
             let raw = &imp.raw_path;
             let src_dir = Path::new(src_rel)
@@ -724,9 +766,7 @@ impl FilesystemOrchestrator {
 
 // ─── Pipeline Helpers ───
 impl FilesystemOrchestrator {
-    /// Build a stem index from a list of file paths.
-    /// Each stem (file name without extension) maps to all files with that stem,
-    /// sorted lexicographically.
+    /// Builds a lexicographically-sorted index of file stems → file paths.
     pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {
         let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
         for f in file_paths {
@@ -814,9 +854,7 @@ impl FilesystemOrchestrator {
         self.parse_all(&mut entries);
         self.resolve_barrel_imports(&abs_root);
         let _ = self.files.set(entries.clone());
-        // #10: import_list() already returns Vec — no .to_vec() needed
         let _ = self.imports.set(self.deps.parser.import_list());
-        // #11: propagate real warnings from the parser, not an empty vec
         let _ = self
             .warnings
             .set(self.deps.parser.parse_warnings().to_vec());
@@ -828,6 +866,9 @@ impl FilesystemOrchestrator {
                 .collect(),
         );
     }
+    /// Builds and caches the dependency graph and its symbol relationships.
+    ///
+    /// Subsequent calls reuse the cached graph data.
     pub(crate) fn ensure_graph_built(&self) {
         if self.cached_reverse_links.get().is_some() {
             return;
@@ -874,6 +915,17 @@ impl FilesystemOrchestrator {
                                 file_path: entry.path.clone(),
                                 language: entry.language,
                             });
+                            // P4: class inheritance is a contract→capabilities bridge
+                            // (e.g. `class AdditionAnalyzer(CalculatorProtocol)`).
+                            for base in &class.bases {
+                                if !base.is_empty() {
+                                    implementations.push(ImplEntry {
+                                        trait_name: base.clone(),
+                                        file_path: entry.path.clone(),
+                                        language: entry.language,
+                                    });
+                                }
+                            }
                         }
                     }
                     ParseMetadata::TypeScript(m) => {
@@ -883,6 +935,17 @@ impl FilesystemOrchestrator {
                                 file_path: entry.path.clone(),
                                 language: entry.language,
                             });
+                            // P4: `implements` clauses are a contract→capabilities bridge
+                            // (e.g. `class AdditionAnalyzer implements CalculatorProtocol`).
+                            for iface in &class.implements {
+                                if !iface.is_empty() {
+                                    implementations.push(ImplEntry {
+                                        trait_name: iface.clone(),
+                                        file_path: entry.path.clone(),
+                                        language: entry.language,
+                                    });
+                                }
+                            }
                         }
                         for iface in &m.interface_declarations {
                             definitions.push(DefinitionEntry {
@@ -899,7 +962,6 @@ impl FilesystemOrchestrator {
         self.deps
             .graph
             .build_graph(&imports, &files, &definitions, &implementations);
-        // #20: .clone() already returns owned HashMap — no .into() round-trip needed
         let rl = self.deps.graph.reverse_links().clone();
         let _ = self.cached_reverse_links.set(rl);
         let sd = self.deps.graph.symbol_definitions().clone();
@@ -907,11 +969,4 @@ impl FilesystemOrchestrator {
         let imp = self.deps.graph.implementations().clone();
         let _ = self.cached_implementations.set(imp);
     }
-}
-
-// ─── Free Functions ───────────────────────────────────────
-fn path_to_relative(path: &Path, root: &Path) -> String {
-    path.strip_prefix(root)
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_else(|_| path.to_string_lossy().to_string())
 }
