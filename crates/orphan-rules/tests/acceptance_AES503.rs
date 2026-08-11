@@ -142,3 +142,61 @@ fn aes503_capabilities_violation_display_message() {
     assert!(msg.contains("capabilities_handler"));
     assert!(msg.contains("not wired"));
 }
+
+#[test]
+fn aes503_chained_python_import_reachable() {
+    // Acceptance test: BFS reachability traces through chained Python imports.
+    // Entry → Surface → Agent → Capabilities should all be reachable.
+    use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
+    use shared::quality_rules::taxonomy_analysis_vo::ImportGraph;
+
+    let entry = "modules/image/src/root_image_entry.py".to_string();
+    let surface = "modules/image/src/surfaces_image_cli.py".to_string();
+    let agent = "modules/image/src/agent_image_orchestrator.py".to_string();
+    let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
+
+    let mut graph_map = std::collections::HashMap::new();
+    // Entry → Surface (dotted import)
+    graph_map.insert(entry.clone(), vec![surface.clone()]);
+    // Surface → Agent (dotted import with member prefix strategy A)
+    graph_map.insert(surface.clone(), vec![agent.clone()]);
+    // Agent → Capabilities (bare module name strategy C)
+    graph_map.insert(agent.clone(), vec![capabilities.clone()]);
+
+    let graph = ImportGraph::new(graph_map);
+    let entry_points = vec![entry.clone()];
+
+    let alive_set = trace_reachability(&entry_points, &graph);
+
+    assert!(alive_set.contains(&entry));
+    assert!(alive_set.contains(&surface));
+    assert!(alive_set.contains(&agent));
+    assert!(alive_set.contains(&capabilities));
+}
+
+#[test]
+fn aes503_broken_chain_detects_unreachable() {
+    // Acceptance test: When a link is missing in the chain, downstream files are unreachable.
+    use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
+    use shared::quality_rules::taxonomy_analysis_vo::ImportGraph;
+
+    let entry = "modules/image/src/root_image_entry.py".to_string();
+    let surface = "modules/image/src/surfaces_image_cli.py".to_string();
+    // Agent is missing — broken chain between surface and capabilities
+    let capabilities = "modules/image/src/capabilities_image_processing_processor.py".to_string();
+
+    let mut graph_map: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+    // Entry → Surface (exists)
+    graph_map.insert(entry.clone(), vec![surface.clone()]);
+    // Surface → Agent (missing — agent file doesn't exist in graph)
+    // Agent → Capabilities (would exist but agent is unreachable)
+
+    let graph = ImportGraph::new(graph_map);
+    let entry_points = vec![entry.clone()];
+
+    let alive_set = trace_reachability(&entry_points, &graph);
+
+    assert!(alive_set.contains(&entry), "Entry point should be reachable");
+    assert!(alive_set.contains(&surface), "Surface should be reachable from entry");
+    assert!(!alive_set.contains(&capabilities), "Capabilities should NOT be reachable when chain is broken");
+}

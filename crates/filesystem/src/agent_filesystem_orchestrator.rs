@@ -553,7 +553,7 @@ impl FilesystemOrchestrator {
             cached_implementations: OnceLock::new(),
         }
     }
-    fn resolve_import_target(
+    pub fn resolve_import_target(
         &self,
         imp: &ImportEntry,
         src_rel: &str,
@@ -628,17 +628,30 @@ impl FilesystemOrchestrator {
                         .find(|c| all_files_set.contains(c.as_str()))
                 } else {
                     let module_path = raw.replace('.', "/");
-                    ["modules", "packages", "crates"].iter().find_map(|md| {
-                        let py = format!("{}/{}.py", md, module_path);
-                        if all_files_set.contains(py.as_str()) {
-                            return Some(py);
-                        }
-                        let init = format!("{}/{}/__init__.py", md, module_path);
-                        if all_files_set.contains(init.as_str()) {
-                            return Some(init);
-                        }
-                        None
-                    })
+                    // A: direct path (import already includes member prefix)
+                    let try_direct = |suffix: &str| {
+                        let p = format!("{}{}", module_path, suffix);
+                        all_files_set.contains(p.as_str()).then_some(p)
+                    };
+                    try_direct(".py")
+                        .or_else(|| try_direct("/__init__.py"))
+                        // B: prepend modules/ | packages/ | crates/
+                        .or_else(|| {
+                            ["modules", "packages", "crates"].iter().find_map(|md| {
+                                let py = format!("{}/{}.py", md, module_path);
+                                if all_files_set.contains(py.as_str()) { return Some(py); }
+                                let init = format!("{}/{}/__init__.py", md, module_path);
+                                all_files_set.contains(init.as_str()).then_some(init)
+                            })
+                        })
+                        // C: suffix/stem match (bare module name in nested dir)
+                        .or_else(|| {
+                            let stem = raw.rsplit('.').next().unwrap_or(raw);
+                            let suffix = format!("/{}.py", stem);
+                            all_files_set.iter().find(|f| {
+                                **f == format!("{}.py", stem) || f.ends_with(&suffix)
+                            }).map(|f| f.to_string())
+                        })
                 }
             } else if imp.language == Language::TypeScript || imp.language == Language::JavaScript {
                 let parts: Vec<&str> = raw.split('/').collect();
