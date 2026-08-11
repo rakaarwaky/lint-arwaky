@@ -43,5 +43,6 @@ serviceAccountKey
 .agents/reports
 .agents/plans
 .agents/graph-loop/
-
+.worktrees
 .qwen-web/
+.commandcode
