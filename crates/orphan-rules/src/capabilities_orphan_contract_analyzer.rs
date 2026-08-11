@@ -267,7 +267,7 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         // P3 (symmetric contract wiring): a contract is also considered reachable
         // when it has an alive implementor — the contract is consumed purely via DI
         // (its capabilities/agents are wired, not statically imported by entry).
-        let is_reachable = alive_files.paths.contains(f)
+        let is_reachable = is_path_alive(fp, alive_files)
             || self.has_alive_implementor(inheritance_map, &trait_names, alive_files);
         if !is_reachable {
             return OrphanIndicatorResult::new(
