@@ -239,11 +239,6 @@ fn aes502_non_protocol_suffix_not_checked_for_orchestration() {
         fp.value().to_string(),
         "pub trait IFooEntity: Send + Sync {\n    fn id(&self);\n}".to_string(),
     );
-    // Even with no implementation, non-protocol/non-aggregate suffixes may be treated differently
-    content_map.insert(
-        "crates/shared/src/other.rs".to_string(),
-        "fn noop() {}".to_string(),
-    );
 
     let result = analyzer.is_contract_orphan(
         &fp,
@@ -253,7 +248,8 @@ fn aes502_non_protocol_suffix_not_checked_for_orchestration() {
         &content_map,
         &empty_reachability(),
     );
-    // "entity" suffix: the analyzer checks trait implementation first
+    // The contract is unreachable (no entry, no alive implementor), so it is
+    // flagged as an orphan regardless of its suffix.
     assert!(
         result.is_orphan,
         "Unimplemented trait in entity file should be orphan"
@@ -350,8 +346,10 @@ fn aes502_contract_alive_implementor_matched_by_absolute_path_suffix() {
         impl_rel.clone(),
         "struct Foo;\nimpl IFooProtocol for Foo {\n    fn do_thing(&self) {}\n}\n".to_string(),
     );
-    let inheritance =
-        InheritanceMap::new(HashMap::from([("IFooProtocol".to_string(), vec![impl_rel.clone()])]));
+    let inheritance = InheritanceMap::new(HashMap::from([(
+        "IFooProtocol".to_string(),
+        vec![impl_rel.clone()],
+    )]));
     let all_files = vec![fp.value().to_string(), impl_rel.clone()];
 
     // Alive set stores an absolute path ending with the relative impl path.
@@ -368,10 +366,11 @@ fn aes502_contract_alive_implementor_matched_by_absolute_path_suffix() {
 }
 
 #[test]
-fn aes502_contract_alive_implementor_matched_by_basename_only() {
-    // P3: as a last resort, `is_path_alive` matches purely on file basename
-    // when neither path is a suffix of the other (e.g. differing directory
-    // layouts between the alive set and the inheritance map).
+fn aes502_contract_implementor_same_basename_different_path_is_orphan() {
+    // P3 negative case: `is_path_alive` must require a real path match — an
+    // alive file that only shares the implementor's basename (different
+    // directory) must NOT count, preventing false "reachable" results in
+    // workspaces with duplicate file names (e.g. multiple capabilities_foo.rs).
     let analyzer = contract_analyzer();
     let fp = FilePath::new("crates/shared/src/contract_foo_protocol.rs".to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
@@ -380,13 +379,15 @@ fn aes502_contract_alive_implementor_matched_by_basename_only() {
         fp.value().to_string(),
         "pub trait IFooProtocol: Send + Sync {\n    fn do_thing(&self);\n}".to_string(),
     );
-    let impl_rel = "totally/different/path/capabilities_foo.rs".to_string();
+    let impl_rel = "crates/orphan-rules/src/capabilities_foo.rs".to_string();
     content_map.insert(
         impl_rel.clone(),
         "struct Foo;\nimpl IFooProtocol for Foo {\n    fn do_thing(&self) {}\n}\n".to_string(),
     );
-    let inheritance =
-        InheritanceMap::new(HashMap::from([("IFooProtocol".to_string(), vec![impl_rel.clone()])]));
+    let inheritance = InheritanceMap::new(HashMap::from([(
+        "IFooProtocol".to_string(),
+        vec![impl_rel.clone()],
+    )]));
     let all_files = vec![fp.value().to_string(), impl_rel.clone()];
 
     // Alive path shares only the basename, not any directory prefix/suffix.
@@ -397,8 +398,8 @@ fn aes502_contract_alive_implementor_matched_by_basename_only() {
     let result =
         analyzer.is_contract_orphan(&fp, &root, &inheritance, &all_files, &content_map, &alive);
     assert!(
-        !result.is_orphan,
-        "Basename-only match should still count as alive: {}",
+        result.is_orphan,
+        "Same-basename implementor at a different path must NOT make the contract alive: {}",
         result.reason
     );
 }

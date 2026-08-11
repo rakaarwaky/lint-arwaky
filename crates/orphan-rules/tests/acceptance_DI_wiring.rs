@@ -23,19 +23,18 @@ use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
-/// Creates a filesystem orchestrator with default dependencies and initializes its orphan-graph context for the workspace.
+/// Creates a filesystem orchestrator with default dependencies.
 ///
 /// # Examples
 ///
 /// ```
-/// let workspace = std::path::Path::new("/path/to/workspace");
-/// let _orchestrator = build_orch(workspace);
+/// let _orchestrator = build_orch();
 /// ```
 ///
 /// # Returns
 ///
-/// A filesystem orchestrator initialized for the specified workspace.
-fn build_orch(tmp: &std::path::Path) -> FilesystemOrchestrator {
+/// A filesystem orchestrator with default dependencies.
+fn build_orch() -> FilesystemOrchestrator {
     FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
         io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
         workspace: Arc::new(CapabilitiesWorkspace::new()),
@@ -43,27 +42,6 @@ fn build_orch(tmp: &std::path::Path) -> FilesystemOrchestrator {
         parser: Arc::new(ASTParser::new()),
         graph: Arc::new(DependencyGraph::new()),
     })
-    .also(|o| {
-        let _ = o.build_orphan_graph_context(tmp, &[]);
-    })
-}
-
-trait Also {
-    fn also<F: FnOnce(&mut Self)>(self, f: F) -> Self;
-}
-impl<T> Also for T {
-    /// Applies a closure to mutate the value and returns the modified value.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// let value = 1.also(|value| *value += 1);
-    /// assert_eq!(value, 2);
-    /// ```
-    fn also<F: FnOnce(&mut Self)>(mut self, f: F) -> Self {
-        f(&mut self);
-        self
-    }
 }
 
 /// Rust DI gap: agent imports only the contract; container references the
@@ -76,28 +54,18 @@ fn aes503_rust_di_wiring_reachable() {
     std::fs::create_dir_all(&src).unwrap();
     std::fs::write(
         crate_dir.join("Cargo.toml"),
-        "[package]\nname = \"calc\"\nversion = \"0.1.0\"\n\n[lib]\npath = \"src/lib.rs\"\n",
-    )
-    .unwrap();
-    std::fs::write(
-        src.join("lib.rs"),
-        "pub mod root_calc_entry;\npub mod surface_calc_cli;\npub mod agent_calc_orchestrator;\npub mod contract_calc_protocol;\npub mod capability_calc_addition;\npub mod root_calc_container;\n",
-    )
-    .unwrap();
-    std::fs::write(
-        tmp.path().join("Cargo.toml"),
-        "[workspace]\nresolver = \"2\"\nmembers = [\"crates/calc\"]\n",
-    )
-    .unwrap();
-    std::fs::write(
-        src.join("../Cargo.toml"),
-        "[package]\nname = \"calc\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+        "[package]\nname = \"calc\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[lib]\npath = \"src/lib.rs\"\n",
     )
     .unwrap();
     // lib.rs declares the modules so `use calc::<mod>::...` resolves to files.
     std::fs::write(
         src.join("lib.rs"),
-        "pub mod root_calc_container;\npub mod surface_calc_cli;\npub mod agent_calc_orchestrator;\npub mod contract_calc_protocol;\npub mod capability_calc_addition;\n",
+        "pub mod root_calc_entry;\npub mod root_calc_container;\npub mod surface_calc_cli;\npub mod agent_calc_orchestrator;\npub mod contract_calc_protocol;\npub mod capability_calc_addition;\n",
+    )
+    .unwrap();
+    std::fs::write(
+        tmp.path().join("Cargo.toml"),
+        "[workspace]\nresolver = \"2\"\nmembers = [\"crates/calc\"]\n",
     )
     .unwrap();
     std::fs::write(
@@ -132,7 +100,7 @@ fn aes503_rust_di_wiring_reachable() {
     )
     .unwrap();
 
-    let orch = build_orch(tmp.path());
+    let orch = build_orch();
     let ctx = orch.build_orphan_graph_context(tmp.path(), &[]);
     let entry = "crates/calc/src/root_calc_entry.rs".to_string();
     let capability = "crates/calc/src/capability_calc_addition.rs".to_string();
@@ -190,7 +158,7 @@ fn aes503_python_di_wiring_reachable() {
     )
     .unwrap();
 
-    let orch = build_orch(tmp.path());
+    let orch = build_orch();
     let ctx = orch.build_orphan_graph_context(tmp.path(), &[]);
     let entry = "modules/calc/src/root_calc_entry.py".to_string();
     let capability = "modules/calc/src/capability_calc_addition.py".to_string();
@@ -248,7 +216,7 @@ fn aes503_typescript_di_wiring_reachable() {
     )
     .unwrap();
 
-    let orch = build_orch(tmp.path());
+    let orch = build_orch();
     let ctx = orch.build_orphan_graph_context(tmp.path(), &[]);
     let entry = "packages/calc/root_calc_entry.ts".to_string();
     let capability = "packages/calc/capability_calc_addition.ts".to_string();

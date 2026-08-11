@@ -13,8 +13,13 @@ mod di_aware_orphan_tests {
     use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
     use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
     use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
+    use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
     use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
+    use shared::common::taxonomy_path_vo::FilePath;
     use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+    use shared::orphan_rules::contract_orphan_protocol::IContractOrphanProtocol;
+    use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
+    use std::collections::HashMap;
     use std::sync::Arc;
 
     fn build_orchestrator() -> FilesystemOrchestrator {
@@ -133,7 +138,7 @@ pub fn create_app() -> MyOrchestrator {
 
         // Verify BFS reachability traces through entry → surface → agent
         let entry = "crates/my-crate/src/root_my_entry.rs".to_string();
-        let alive_set = trace_reachability(&[entry.clone()], &context.import_graph);
+        let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
 
         assert!(alive_set.contains(&entry), "Entry should be reachable");
         assert!(
@@ -144,9 +149,16 @@ pub fn create_app() -> MyOrchestrator {
             alive_set.contains("crates/my-crate/src/agent_my_orchestrator.rs"),
             "Agent should be reachable"
         );
-
-        // Agent imports contract, so contract should be in import graph edges
-        // (but capabilities won't be reachable via BFS alone — needs impl edges)
+        assert!(
+            alive_set.contains("crates/my-crate/src/contract_my_protocol.rs"),
+            "Contract should be reachable (imported by agent)"
+        );
+        // The capability implements the contract (impl bridge), so it must be
+        // reachable even though the agent never statically imports it.
+        assert!(
+            alive_set.contains("crates/my-crate/src/capabilities_my_processor.rs"),
+            "Capability implementing a reachable contract must be alive via impl bridge"
+        );
     }
 
     /// P1+P3: The extend_reachability_through_impls method should add capabilities
@@ -195,6 +207,15 @@ pub fn create_app() -> MyOrchestrator {
         assert!(
             context.inheritance_map.mapping.contains_key("IProto"),
             "InheritanceMap should contain IProto"
+        );
+
+        // The capability implements the reachable contract, so it must be alive
+        // via the impl bridge even though nothing statically imports it.
+        let entry = "crates/my-crate/src/root_entry.rs".to_string();
+        let alive_set = trace_reachability(std::slice::from_ref(&entry), &context.import_graph);
+        assert!(
+            alive_set.contains("crates/my-crate/src/capabilities_impl.rs"),
+            "Capability implementing a reachable contract must be alive via impl bridge"
         );
     }
 
@@ -246,6 +267,46 @@ pub fn create_app() -> MyOrchestrator {
                 .mapping
                 .contains_key("IFileSystemIO"),
             "Contract trait IFileSystemIO should have implementation"
+        );
+
+        // The contract must NOT be flagged as orphan: its implementor is alive.
+        let contract_path = "crates/my-crate/src/contract_io.rs".to_string();
+        let alive_set = trace_reachability(
+            &["crates/my-crate/src/root_entry.rs".to_string()],
+            &context.import_graph,
+        );
+        let alive = ReachabilityResult::new(
+            alive_set
+                .iter()
+                .filter_map(|p| FilePath::new(p.clone()).ok())
+                .collect(),
+        );
+        let mut content_map = HashMap::new();
+        content_map.insert(
+            contract_path.clone(),
+            "pub trait IFileSystemIO { fn read(&self) -> String; }\n".to_string(),
+        );
+        content_map.insert(
+            "crates/my-crate/src/capabilities_io.rs".to_string(),
+            "use contract_io::IFileSystemIO;\npub struct FileSystemIOImpl;\nimpl IFileSystemIO for FileSystemIOImpl { fn read(&self) -> String { String::new() } }\n"
+                .to_string(),
+        );
+        let inheritance = context.inheritance_map.clone();
+        let result = ContractOrphanAnalyzer::new().is_contract_orphan(
+            &FilePath::new(contract_path.clone()).unwrap(),
+            &FilePath::new(".".to_string()).unwrap(),
+            &inheritance,
+            &[
+                contract_path.clone(),
+                "crates/my-crate/src/capabilities_io.rs".to_string(),
+            ],
+            &content_map,
+            &alive,
+        );
+        assert!(
+            !result.is_orphan,
+            "Contract with an alive implementor must not be orphan: {}",
+            result.reason
         );
     }
 
@@ -338,7 +399,9 @@ pub fn create_app() -> MyOrchestrator {
             .get("ProtocolA")
             .expect("ProtocolA should have registered implementors");
         assert!(
-            impls_a.iter().any(|f| f.contains("capabilities_multi_base")),
+            impls_a
+                .iter()
+                .any(|f| f.contains("capabilities_multi_base")),
             "MultiImpl should bridge from ProtocolA: {:?}",
             impls_a
         );
@@ -349,7 +412,9 @@ pub fn create_app() -> MyOrchestrator {
             .get("ProtocolB")
             .expect("ProtocolB should have registered implementors");
         assert!(
-            impls_b.iter().any(|f| f.contains("capabilities_multi_base")),
+            impls_b
+                .iter()
+                .any(|f| f.contains("capabilities_multi_base")),
             "MultiImpl should also bridge from ProtocolB: {:?}",
             impls_b
         );
@@ -373,9 +438,11 @@ pub fn create_app() -> MyOrchestrator {
         let context = orch.build_orphan_graph_context(tmp.path(), &[]);
 
         assert!(
-            !context.inheritance_map.mapping.values().any(|impls| impls
-                .iter()
-                .any(|f| f.contains("capabilities_standalone"))),
+            !context
+                .inheritance_map
+                .mapping
+                .values()
+                .any(|impls| impls.iter().any(|f| f.contains("capabilities_standalone"))),
             "A class without bases should not register any implementation bridge"
         );
     }
@@ -413,7 +480,9 @@ pub fn create_app() -> MyOrchestrator {
             .get("IProtoA")
             .expect("IProtoA should have registered implementors");
         assert!(
-            impls_a.iter().any(|f| f.contains("capabilities_multi_impl")),
+            impls_a
+                .iter()
+                .any(|f| f.contains("capabilities_multi_impl")),
             "MultiImpl should bridge from IProtoA: {:?}",
             impls_a
         );
@@ -424,7 +493,9 @@ pub fn create_app() -> MyOrchestrator {
             .get("IProtoB")
             .expect("IProtoB should have registered implementors");
         assert!(
-            impls_b.iter().any(|f| f.contains("capabilities_multi_impl")),
+            impls_b
+                .iter()
+                .any(|f| f.contains("capabilities_multi_impl")),
             "MultiImpl should also bridge from IProtoB: {:?}",
             impls_b
         );

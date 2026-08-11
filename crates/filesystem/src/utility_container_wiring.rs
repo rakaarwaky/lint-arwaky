@@ -60,7 +60,6 @@ use std::{
 ///     Some(&vec!["service_impl.rs".to_string()])
 /// );
 /// ```
-pub fn add_impl_bridge_edges
 pub fn add_impl_bridge_edges(
     top_root: &Path,
     symbol_definitions: &HashMap<String, Vec<PathBuf>>,
@@ -73,11 +72,22 @@ pub fn add_impl_bridge_edges(
         };
         for def_path in def_paths {
             let def_rel = path_to_relative(def_path, top_root);
+            let mut added = false;
             for impl_path in impl_paths {
                 let impl_rel = path_to_relative(impl_path, top_root);
-                if def_rel != impl_rel {
-                    forward.entry(def_rel.clone()).or_default().push(impl_rel);
+                if def_rel == impl_rel {
+                    continue;
                 }
+                let existing = forward.entry(def_rel.clone()).or_default();
+                if !existing.contains(&impl_rel) {
+                    existing.push(impl_rel);
+                    added = true;
+                }
+            }
+            // Remove the entry if every implementation was a self-edge — an
+            // empty adjacency list is indistinguishable from "no edges".
+            if !added {
+                forward.remove(&def_rel);
             }
         }
     }
@@ -131,7 +141,13 @@ pub fn add_container_wiring_edges(
     forward: &mut HashMap<String, Vec<String>>,
 ) {
     for file_path in all_files {
-        if !file_path.contains("_container") {
+        // A container is identified by its file stem (e.g. `root_app_container.rs`),
+        // not by directories along the path that happen to contain `_container`.
+        let is_container = Path::new(file_path)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .is_some_and(|stem| stem.contains("_container"));
+        if !is_container {
             continue;
         }
         let abs = top_root.join(file_path);
@@ -152,31 +168,18 @@ pub fn add_container_wiring_edges(
 }
 
 /// Converts a path under the workspace root into a workspace-relative string.
-
 ///
-
 /// Paths outside the workspace root are returned as strings without modification.
-
 ///
-
 /// # Examples
-
 ///
-
 /// ```
-
 /// use std::path::Path;
-
 ///
-
 /// let root = Path::new("workspace");
-
 /// let path = Path::new("workspace/src/lib.rs");
-
 ///
-
 /// assert_eq!(path_to_relative(path, root), "src/lib.rs");
-
 /// ```
 pub fn path_to_relative(path: &Path, root: &Path) -> String {
     path.strip_prefix(root)

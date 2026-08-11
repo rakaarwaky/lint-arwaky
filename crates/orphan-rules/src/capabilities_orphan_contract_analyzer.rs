@@ -173,16 +173,14 @@ impl ContractOrphanAnalyzer {
 ///
 /// `true` if a reachable path matches the supplied path, `false` otherwise.
 fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
+    // Normalize separators so Windows-style backslashes compare correctly.
+    let norm = |p: &str| p.replace('\\', "/").trim_start_matches("./").to_string();
+    let rel_norm = norm(rel);
     alive_files.paths.iter().any(|af| {
-        let af_val = af.value();
-        af_val == rel
-            || af_val.ends_with(rel)
-            || rel.ends_with(af_val.trim_start_matches("./"))
-            || std::path::Path::new(af_val)
-                .file_name()
-                .zip(std::path::Path::new(rel).file_name())
-                .map(|(a, b)| a == b)
-                .unwrap_or(false)
+        let af_val = norm(af.value());
+        af_val == rel_norm
+            || af_val.ends_with(&format!("/{rel_norm}"))
+            || rel_norm.ends_with(&format!("/{af_val}"))
     })
 }
 

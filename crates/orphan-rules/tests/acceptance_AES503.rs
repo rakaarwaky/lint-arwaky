@@ -2,13 +2,24 @@
 #[path = "mock_filesystem.rs"]
 mod mock_filesystem;
 
+use filesystem::agent_filesystem_orchestrator::{
+    FilesystemOrchestrator, FilesystemOrchestratorDeps,
+};
+use filesystem::capabilities_ast_parser::ASTParser;
+use filesystem::capabilities_dependency_graph::DependencyGraph;
+use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
+use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
+use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use mock_filesystem::mock_filesystem;
 use orphan_rules_lint_arwaky::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
+use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::ICapabilitiesOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
     CapabilitiesOrphanAnalyzer::new(mock_filesystem())
@@ -16,6 +27,17 @@ fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
 
 fn reachable_for(fp: &FilePath) -> ReachabilityResult {
     ReachabilityResult::new(HashSet::from([fp.clone()]))
+}
+
+/// Builds a filesystem orchestrator with default dependencies.
+fn build_orchestrator() -> FilesystemOrchestrator {
+    FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
+        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
+        workspace: Arc::new(CapabilitiesWorkspace::new()),
+        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
+        parser: Arc::new(ASTParser::new()),
+        graph: Arc::new(DependencyGraph::new()),
+    })
 }
 
 #[test]
@@ -149,18 +171,6 @@ fn aes503_chained_python_import_reachable() {
     // Entry → Surface → Agent → Capabilities should all be reachable.
     // Builds the graph through the REAL filesystem pipeline (import extraction +
     // resolve_import_target), not a hand-built graph.
-    use filesystem::agent_filesystem_orchestrator::{
-        FilesystemOrchestrator, FilesystemOrchestratorDeps,
-    };
-    use filesystem::capabilities_ast_parser::ASTParser;
-    use filesystem::capabilities_dependency_graph::DependencyGraph;
-    use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
-    use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
-    use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-    use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
-    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-    use std::sync::Arc;
-
     let tmp = tempfile::TempDir::new().unwrap();
     let member_src = tmp.path().join("modules").join("image").join("src");
     std::fs::create_dir_all(&member_src).unwrap();
@@ -185,13 +195,7 @@ fn aes503_chained_python_import_reachable() {
     )
     .unwrap();
 
-    let orch = FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
-        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
-        workspace: Arc::new(CapabilitiesWorkspace::new()),
-        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
-        parser: Arc::new(ASTParser::new()),
-        graph: Arc::new(DependencyGraph::new()),
-    });
+    let orch = build_orchestrator();
     let context = orch.build_orphan_graph_context(tmp.path(), &[]);
 
     let entry = "modules/image/src/root_image_entry.py".to_string();
@@ -212,18 +216,6 @@ fn aes503_broken_chain_detects_unreachable() {
     // Acceptance test: When a link is missing in the chain, downstream files are unreachable.
     // Real pipeline: surface imports the agent module, but the agent file does not
     // exist — so no edge can be created and capabilities stay unreachable.
-    use filesystem::agent_filesystem_orchestrator::{
-        FilesystemOrchestrator, FilesystemOrchestratorDeps,
-    };
-    use filesystem::capabilities_ast_parser::ASTParser;
-    use filesystem::capabilities_dependency_graph::DependencyGraph;
-    use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
-    use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
-    use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-    use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
-    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-    use std::sync::Arc;
-
     let tmp = tempfile::TempDir::new().unwrap();
     let member_src = tmp.path().join("modules").join("image").join("src");
     std::fs::create_dir_all(&member_src).unwrap();
@@ -246,13 +238,7 @@ fn aes503_broken_chain_detects_unreachable() {
     )
     .unwrap();
 
-    let orch = FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
-        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
-        workspace: Arc::new(CapabilitiesWorkspace::new()),
-        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
-        parser: Arc::new(ASTParser::new()),
-        graph: Arc::new(DependencyGraph::new()),
-    });
+    let orch = build_orchestrator();
     let context = orch.build_orphan_graph_context(tmp.path(), &[]);
 
     let entry = "modules/image/src/root_image_entry.py".to_string();
@@ -292,9 +278,9 @@ fn aes503_reachable_unwired_message_mentions_di_bridge_gap() {
     let result = analyzer.is_capabilities_orphan(&fp, &root, &alive, &content_map, &workspace_root);
     assert!(result.is_orphan, "mock filesystem never reports wired");
     assert!(
-        result
-            .reason
-            .contains("reachable (via import chain, container wiring, or contract implementation bridge)"),
+        result.reason.contains(
+            "reachable (via import chain, container wiring, or contract implementation bridge)"
+        ),
         "P5 message should explain the file is reachable but the wiring gap remains: {}",
         result.reason
     );
@@ -311,18 +297,6 @@ fn aes503_di_impl_bridge_reaches_capabilities() {
     // The agent imports only the contract (per AES), and the capability
     // implements the contract without being statically imported by the agent.
     // The impl bridge (contract→capabilities) must make the capability reachable.
-    use filesystem::agent_filesystem_orchestrator::{
-        FilesystemOrchestrator, FilesystemOrchestratorDeps,
-    };
-    use filesystem::capabilities_ast_parser::ASTParser;
-    use filesystem::capabilities_dependency_graph::DependencyGraph;
-    use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
-    use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
-    use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-    use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
-    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-    use std::sync::Arc;
-
     let tmp = tempfile::TempDir::new().unwrap();
     let root = tmp.path();
     // Workspace layout mirroring workspaces-good: pyproject at root + modules/ member.
@@ -360,13 +334,7 @@ fn aes503_di_impl_bridge_reaches_capabilities() {
     )
     .unwrap();
 
-    let orch = FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
-        io: Arc::new(CapabilitiesFileSystemIO::with_default_timing()),
-        workspace: Arc::new(CapabilitiesWorkspace::new()),
-        tool_resolution: Arc::new(CapabilitiesToolResolution::new()),
-        parser: Arc::new(ASTParser::new()),
-        graph: Arc::new(DependencyGraph::new()),
-    });
+    let orch = build_orchestrator();
     let context = orch.build_orphan_graph_context(root, &[]);
 
     let entry = "modules/app/src/root_cli_main_entry.py".to_string();

@@ -18,7 +18,8 @@ fn parse(content: &str) -> tree_sitter::Tree {
 
 #[test]
 fn decorated_class_extracts_name_and_bases() {
-    let content = "@register(\"engine\")\nclass AppEngine(AppProtocol):\n    def run(self):\n        pass\n";
+    let content =
+        "@register(\"engine\")\nclass AppEngine(AppProtocol):\n    def run(self):\n        pass\n";
     let tree = parse(content);
     let meta = extract_python_metadata(&tree, content);
 
@@ -41,8 +42,7 @@ fn decorated_class_without_bases_still_extracts_name() {
 
 #[test]
 fn multiple_stacked_decorators_still_extracts_class() {
-    let content =
-        "@register(\"engine\")\n@final\nclass AppEngine(AppProtocol):\n    pass\n";
+    let content = "@register(\"engine\")\n@final\nclass AppEngine(AppProtocol):\n    pass\n";
     let tree = parse(content);
     let meta = extract_python_metadata(&tree, content);
 

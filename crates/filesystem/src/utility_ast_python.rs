@@ -55,8 +55,15 @@ pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> Pytho
             // so class names and bases are still extracted.
             "decorated_definition" => {
                 if let Some(inner) = node.child_by_field_name("definition") {
-                    if inner.kind() == "class_definition" {
-                        collect_python_class(inner, content, &mut meta);
+                    match inner.kind() {
+                        "class_definition" => collect_python_class(inner, content, &mut meta),
+                        "function_definition" => {
+                            let name = child_by_field(inner, content, "name").unwrap_or_default();
+                            let has_body = inner.child_by_field_name("body").is_some();
+                            meta.function_definitions
+                                .push(PythonFnItem { name, has_body });
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -136,6 +143,12 @@ fn extract_python_class_bases(node: tree_sitter::Node, content: &str) -> Vec<Str
         if child.kind() == "argument_list" {
             let mut c2 = child.walk();
             for arg in child.named_children(&mut c2) {
+                // Keyword arguments (e.g. `metaclass=...`) are class
+                // configuration, not inheritance bases — skip them to avoid
+                // false implementation bridges.
+                if arg.kind() == "keyword_argument" {
+                    continue;
+                }
                 if let Some(name) = child_by_field(arg, content, "name") {
                     bases.push(name);
                 } else {

@@ -507,12 +507,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             resolved_import_entries.push(entry);
         }
         let _ = self.resolved_imports.set(resolved_import_entries);
-        let mut reverse: HashMap<String, Vec<String>> = HashMap::new();
-        for (src, targets) in &forward {
-            for tgt in targets {
-                reverse.entry(tgt.clone()).or_default().push(src.clone());
-            }
-        }
         let inheritance: HashMap<String, Vec<String>> = self
             .deps
             .graph
@@ -549,21 +543,12 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             &mut forward,
         );
 
-        let lib_rs_files: Vec<String> = all_files
-            .iter()
-            .filter(|f| f.ends_with("/lib.rs"))
-            .cloned()
-            .collect();
-        for lib in &lib_rs_files {
-            for other_lib in &lib_rs_files {
-                if lib != other_lib {
-                    forward
-                        .entry(lib.clone())
-                        .or_default()
-                        .push(other_lib.clone());
-                }
-            }
-        }
+        crate::utility_container_wiring::add_lib_rs_edges(&all_files, &mut forward);
+
+        // Build the reverse (inbound) link map only after all synthetic edges
+        // (impl bridges, container wiring, lib.rs) have been added, so taxonomy
+        // and utility analyzers see the same inbound links the surfaces analyzer does.
+        let reverse = crate::utility_container_wiring::build_reverse_index(&forward);
         GraphAnalysisContext::new(
             ImportGraph::new(forward),
             InboundLinkMap::new(reverse),
@@ -571,7 +556,6 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             all_files,
         )
     }
-    // #15: route through injected protocol instead of static utility call
     fn find_workspace_root(&self, start: &Path) -> Option<PathBuf> {
         self.deps
             .workspace
@@ -613,18 +597,6 @@ impl FilesystemOrchestrator {
     /// # Returns
     ///
     /// The workspace-relative target path when the import resolves to a discovered file; otherwise, `None`.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// let target = orchestrator.resolve_import_target(
-    ///     &import,
-    ///     "src/main.rs",
-    ///     workspace_root,
-    ///     &all_files,
-    ///     &stem_index,
-    /// );
-    /// ```
     pub fn resolve_import_target(
         &self,
         imp: &ImportEntry,
@@ -794,9 +766,7 @@ impl FilesystemOrchestrator {
 
 // ─── Pipeline Helpers ───
 impl FilesystemOrchestrator {
-    /// Build a stem index from a list of file paths.
-    /// Each stem (file name without extension) maps to all files with that stem,
-    /// sorted lexicographically.
+    /// Builds a lexicographically-sorted index of file stems → file paths.
     pub fn build_stem_index(file_paths: &[String]) -> HashMap<String, Vec<String>> {
         let mut stem_index: HashMap<String, Vec<String>> = HashMap::new();
         for f in file_paths {
@@ -884,9 +854,7 @@ impl FilesystemOrchestrator {
         self.parse_all(&mut entries);
         self.resolve_barrel_imports(&abs_root);
         let _ = self.files.set(entries.clone());
-        // #10: import_list() already returns Vec — no .to_vec() needed
         let _ = self.imports.set(self.deps.parser.import_list());
-        // #11: propagate real warnings from the parser, not an empty vec
         let _ = self
             .warnings
             .set(self.deps.parser.parse_warnings().to_vec());
@@ -901,13 +869,6 @@ impl FilesystemOrchestrator {
     /// Builds and caches the dependency graph and its symbol relationships.
     ///
     /// Subsequent calls reuse the cached graph data.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,ignore
-    /// orchestrator.ensure_graph_built();
-    /// ```
-    pub(crate) fn ensure_graph_built...
     pub(crate) fn ensure_graph_built(&self) {
         if self.cached_reverse_links.get().is_some() {
             return;
@@ -1001,7 +962,6 @@ impl FilesystemOrchestrator {
         self.deps
             .graph
             .build_graph(&imports, &files, &definitions, &implementations);
-        // #20: .clone() already returns owned HashMap — no .into() round-trip needed
         let rl = self.deps.graph.reverse_links().clone();
         let _ = self.cached_reverse_links.set(rl);
         let sd = self.deps.graph.symbol_definitions().clone();
