@@ -56,7 +56,7 @@ See [README.md](README.md) for CLI reference and
 ### 2.1 Self-Lint (must be clean)
 
 ```bash
-cd /home/raka/mcp-arwaky/lint-arwaky
+cd <repo-root>
 cargo run --bin lint-arwaky-cli -- scan .
 ```
 
