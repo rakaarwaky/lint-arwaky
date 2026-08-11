@@ -149,9 +149,7 @@ fn is_class_header(line: &str) -> bool {
 /// True when a line inside a Python class is a `def` with a primitive
 /// annotation in its signature.
 fn is_python_signature_line(trimmed: &str) -> bool {
-    trimmed.starts_with("def ")
-        && trimmed.contains("->")
-        && python_line_has_primitive(trimmed)
+    trimmed.starts_with("def ") && trimmed.contains("->") && python_line_has_primitive(trimmed)
 }
 
 /// True when an indented line exits the class body (dedent below the class header).
@@ -471,9 +469,8 @@ fn regex_lite_match_whole_token(haystack: &str, needle: &str) -> bool {
         return false;
     }
     let is_ident_cont = |b: u8| b.is_ascii_alphanumeric() || b == b'_';
-    (0..=h.len() - nlen).any(|i| {
-        &h[i..i + nlen] == n && is_token_boundary(h, i, nlen, is_ident_cont)
-    })
+    (0..=h.len() - nlen)
+        .any(|i| &h[i..i + nlen] == n && is_token_boundary(h, i, nlen, is_ident_cont))
 }
 
 /// True when the byte range `[i, i+nlen)` is a standalone token — the
