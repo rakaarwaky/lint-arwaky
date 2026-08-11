@@ -64,6 +64,9 @@ jobs:
       - uses: mozilla-actions/sccache-action@v0.0.3
       - uses: Swatinem/rust-cache@v2
 
+      - name: Build release binary (for regression tests)
+        run: cargo build --release
+
       - name: Run tests
         run: cargo nextest run --workspace --lib --tests -j 2
 
