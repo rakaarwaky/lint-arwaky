@@ -8,7 +8,10 @@ use shared_lint_arwaky::common::taxonomy_common_vo::{
     BooleanVO, ColumnNumber, Count, LineNumber, PatternList, Score,
 };
 use shared_lint_arwaky::common::taxonomy_definition_vo::LayerMapVO;
-use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
+use shared_lint_arwaky::common::taxonomy_error_vo::{
+    ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
+    error_code_is_style,
+};
 use shared_lint_arwaky::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
 use shared_lint_arwaky::common::taxonomy_lint_vo::{LocationList, ScopeRef};
 use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
@@ -178,13 +181,13 @@ fn error_code_empty_rejected() {
 
 #[test]
 fn error_code_classification() {
-    assert!(ErrorCode::raw("AES101").is_architecture());
-    assert!(ErrorCode::raw("E001").is_style());
-    assert!(ErrorCode::raw("W001").is_style());
-    assert!(ErrorCode::raw("D001").is_style());
-    assert!(ErrorCode::raw("F001").is_logic());
-    assert!(ErrorCode::raw("I001").is_logic());
-    assert!(ErrorCode::raw("B001").is_security());
+    assert!(error_code_is_architecture("AES101"));
+    assert!(error_code_is_style("E001"));
+    assert!(error_code_is_style("W001"));
+    assert!(error_code_is_style("D001"));
+    assert!(error_code_is_logic("F001"));
+    assert!(error_code_is_logic("I001"));
+    assert!(error_code_is_security("B001"));
 }
 
 #[test]

@@ -125,6 +125,89 @@ macro_rules! string_value_object {
     };
 }
 
+/// Generate a domain error value object carrying `path` + `message`, with
+/// `new`, `Display` (parameterized prefix), and `std::error::Error` impls.
+///
+/// # Usage
+/// ```ignore
+/// use crate::domain_error_vo;
+/// domain_error_vo!(WatchServiceError, "Watch Error");
+/// ```
+///
+/// Emitted surface: `path`/`message` fields, `new(message)`, `Display` in the
+/// form `"{prefix} on {path}: {message}"`, and `std::error::Error`.
+#[macro_export]
+macro_rules! domain_error_vo {
+    ($name:ident, $prefix:expr) => {
+        #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        pub struct $name {
+            pub path: $crate::common::taxonomy_path_vo::FilePath,
+            pub message: $crate::common::taxonomy_message_vo::LintMessage,
+        }
+
+        impl $name {
+            pub fn new(message: $crate::common::taxonomy_message_vo::LintMessage) -> Self {
+                Self {
+                    path: $crate::common::taxonomy_path_vo::FilePath::default(),
+                    message,
+                }
+            }
+        }
+
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(
+                    f,
+                    concat!($prefix, " on {}: {}"),
+                    self.path.value, self.message
+                )
+            }
+        }
+
+        impl std::error::Error for $name {}
+    };
+}
+
+/// Generate a `Vec<T>`-backed list value object with the standard wrapper
+/// surface (`new`, `iter`, `len`, `is_empty`, `push`).
+///
+/// # Usage
+/// ```ignore
+/// use crate::list_wrapper_vo;
+/// list_wrapper_vo!(AdapterNameList, AdapterName);
+/// ```
+///
+/// Emits `Debug`/`Clone`/`Serialize`/`Deserialize`/`PartialEq` and the list
+/// accessors. Callers may add `Default`/`Deref` impls where the original type
+/// exposed them.
+#[macro_export]
+macro_rules! list_wrapper_vo {
+    ($name:ident, $item:ty) => {
+        #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Default)]
+        pub struct $name {
+            pub values: Vec<$item>,
+        }
+
+        impl $name {
+            pub fn new(value: Vec<$item>) -> Self {
+                Self { values: value }
+            }
+            pub fn iter(&self) -> std::slice::Iter<'_, $item> {
+                self.values.iter()
+            }
+            pub fn len(&self) -> usize {
+                self.values.len()
+            }
+            pub fn is_empty(&self) -> bool {
+                self.values.is_empty()
+            }
+            pub fn push(&mut self, item: $item) {
+                self.values.push(item);
+            }
+        }
+    };
+}
+
 /// Generate a primitive-wrapped value object (e.g. `i64`, `f64`, `bool`).
 ///
 /// # Usage
@@ -202,12 +285,6 @@ macro_rules! primitive_value_object {
                         Ok($name { value: v as $inner })
                     }
                     fn visit_f64<E>(self, v: f64) -> Result<Self::Value, E>
-                    where
-                        E: serde::de::Error,
-                    {
-                        Ok($name { value: v as $inner })
-                    }
-                    fn visit_bool<E>(self, v: bool) -> Result<Self::Value, E>
                     where
                         E: serde::de::Error,
                     {

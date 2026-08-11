@@ -18,3 +18,12 @@ crates/root_cli_main_entry.rs
 crates/root_mcp_main_entry.rs
 crates/root_tui_main_entry.rs
 
+# AES module barrels (pure `pub mod` / `pub use` re-exports — no logic).
+# repowise flags the shared re-export pattern as duplication across every
+# module's mod.rs/lib.rs; that is intrinsic to the AES layered architecture,
+# not removable duplication (merging would break the 327 dependents).
+# Known repowise false positive — exclude from health scoring.
+**/mod.rs
+**/lib.rs
+**/build.rs
+

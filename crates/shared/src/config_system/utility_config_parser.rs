@@ -33,211 +33,403 @@ pub fn parse_config_yaml(yaml_str: &str) -> ArchitectureConfig {
     parse_config_yaml_with_warnings(yaml_str).0
 }
 
+/// Parse YAML into an `ArchitectureConfig`, collecting non-fatal warnings.
 pub fn parse_config_yaml_with_warnings(yaml_str: &str) -> (ArchitectureConfig, Vec<String>) {
     let mut warnings = Vec::new();
-
-    let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
+    let raw = match parse_yaml(yaml_str, &mut warnings) {
         Ok(v) => v,
+        Err(_) => return (ArchitectureConfig::default(), warnings),
+    };
+
+    let (config, new_warnings) = process_config(&raw);
+    warnings.extend(new_warnings);
+    (config, warnings)
+}
+
+fn parse_yaml(yaml_str: &str, warnings: &mut Vec<String>) -> Result<serde_yaml_ng::Value, ()> {
+    match serde_yaml_ng::from_str(yaml_str) {
+        Ok(v) => Ok(v),
         Err(e) => {
             warnings.push(format!("Failed to parse YAML: {}; using defaults", e));
-            return (ArchitectureConfig::default(), warnings);
+            Err(())
         }
-    };
-    if let Some(arch_val) = raw.get("architecture") {
-        let mut arch_json: serde_json::Value = serde_json::to_value(arch_val).unwrap_or_default();
-        if arch_json.get("layers").is_none()
-            && let Some(rules_obj) = arch_json.get_mut("rules").and_then(|r| r.as_object_mut())
-        {
-            for (_rule_code, rule_val) in rules_obj.iter_mut() {
-                if let Some(layers) = rule_val.get_mut("layers") {
-                    let layers = std::mem::take(layers);
-                    arch_json["layers"] = layers;
-                    break;
-                }
-            }
-        }
-        let mut json = arch_json;
-        fn remove_nulls(val: &mut serde_json::Value) {
-            match val {
-                serde_json::Value::Object(m) => {
-                    m.retain(|_, v| !v.is_null());
-                    for v in m.values_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                serde_json::Value::Array(arr) => {
-                    for v in arr.iter_mut() {
-                        remove_nulls(v);
-                    }
-                }
-                _ => {}
-            }
-        }
-        remove_nulls(&mut json);
-        if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
-            json["ignored_paths"] = serde_json::json!({"values": arr});
-        }
-        if let Some(layers_obj) = json.get_mut("layers")
-            && let Some(obj) = layers_obj.as_object_mut()
-        {
-            let mut suffix_updates: Vec<(
-                String,
-                Option<String>,
-                serde_json::Value,
-                serde_json::Value,
-            )> = Vec::new();
-            for (layer_name, layer) in obj.iter() {
-                if let Some(suffix_val) = layer.get("suffix")
-                    && let Some(arr) = suffix_val.as_array()
-                {
-                    let mut policy: Option<String> = None;
-                    let mut allowed = serde_json::Value::Array(Vec::new());
-                    let mut forbidden = serde_json::Value::Array(Vec::new());
-                    for entry in arr {
-                        if let Some(entry_obj) = entry.as_object() {
-                            for (pkey, plist) in entry_obj {
-                                match pkey.as_str() {
-                                    "strict" | "flexible" => {
-                                        policy = Some(pkey.clone());
-                                        if let Some(list) = plist.as_array() {
-                                            allowed = serde_json::json!(list);
-                                        }
-                                    }
-                                    "forbidden" => {
-                                        if let Some(list) = plist.as_array() {
-                                            forbidden = serde_json::json!(list);
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                    }
-                    suffix_updates.push((layer_name.clone(), policy, allowed, forbidden));
-                }
-            }
-            for (name, policy, allowed, forbidden) in suffix_updates {
-                if let Some(layer) = obj.get_mut(&name)
-                    && let Some(layer_obj) = layer.as_object_mut()
-                {
-                    // Build the naming sub-object for LayerDefinition.naming: LayerNamingConfig
-                    let mut naming_obj = serde_json::Map::new();
-                    if let Some(ref p) = policy {
-                        naming_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
-                    }
-                    naming_obj.insert("allowed_suffix".to_string(), allowed);
-                    if let Some(arr) = forbidden.as_array()
-                        && !arr.is_empty()
-                    {
-                        naming_obj.insert("forbidden_suffix".to_string(), forbidden);
-                    }
-                    layer_obj.insert("naming".to_string(), serde_json::Value::Object(naming_obj));
-                    layer_obj.remove("suffix");
-                }
-            }
-        }
-        if let Some(rules_obj) = json.get_mut("rules")
-            && let Some(obj) = rules_obj.as_object_mut()
-        {
-            let mut flat = serde_json::Value::Array(Vec::new());
-            for (code, rule_val) in obj.iter() {
-                if let Some(rule_obj) = rule_val.as_object() {
-                    let mut base = rule_obj.clone();
-                    base.insert("name".to_string(), serde_json::json!(code));
-                    if let Some(scope_arr) = base.get("scope").and_then(|s| s.as_array()) {
-                        if !base.contains_key("conditions") && scope_arr.len() > 1 {
-                            for scope_val in scope_arr {
-                                if let Some(s) = scope_val.as_str() {
-                                    let mut entry = base.clone();
-                                    entry.insert("scope".to_string(), serde_json::json!(s));
-                                    if let Some(arr) = flat.as_array_mut() {
-                                        arr.push(serde_json::Value::Object(entry));
-                                    }
-                                }
-                            }
-                            continue;
-                        } else if let Some(first) = scope_arr.first().and_then(|v| v.as_str()) {
-                            base.insert("scope".to_string(), serde_json::json!(first));
-                        }
-                    }
-                    if let Some(conditions) = base.remove("conditions") {
-                        let mut pushed = false;
-                        if let Some(conds) = conditions.as_array() {
-                            if conds.is_empty() {
-                                if let Some(arr) = flat.as_array_mut() {
-                                    arr.push(serde_json::Value::Object(base.clone()));
-                                }
-                                pushed = true;
-                            } else {
-                                for cond in conds {
-                                    if let Some(cond_obj) = cond.as_object() {
-                                        let mut entry = base.clone();
-                                        for (k, v) in cond_obj {
-                                            entry.insert(k.clone(), v.clone());
-                                        }
-                                        if let Some(arr) = flat.as_array_mut() {
-                                            arr.push(serde_json::Value::Object(entry));
-                                        }
-                                        pushed = true;
-                                    }
-                                }
-                            }
-                        }
-                        if !pushed && let Some(arr) = flat.as_array_mut() {
-                            arr.push(serde_json::Value::Object(base));
-                        }
-                    } else {
-                        if let Some(arr) = flat.as_array_mut() {
-                            arr.push(serde_json::Value::Object(base));
-                        }
-                    }
-                }
-            }
-            *rules_obj = flat;
-        }
-        let mut config = match serde_json::from_value::<ArchitectureConfig>(json) {
-            Ok(c) => c,
-            Err(e) => {
-                warnings.push(format!("Failed to deserialize ArchitectureConfig: {:?}", e));
-                warnings.push(
-                    "Falling back to default config. Check your YAML syntax and field types."
-                        .to_string(),
-                );
-                ArchitectureConfig::default()
-            }
-        };
-        // Default orphan.check_orphan to true for all layers when not explicitly set.
-        // BooleanVO defaults to false, but orphan detection should be enabled by default.
-        for def in config.layers.values_mut() {
-            if !def.orphan.check_orphan.value {
-                def.orphan.check_orphan = BooleanVO::new(true);
-            }
-        }
-        if config.ignored_paths.values.is_empty()
-            && let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence())
-        {
-            let paths: Vec<_> = arr
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                .collect();
-            if !paths.is_empty() {
-                config.ignored_paths = FilePathList::new(paths);
-            }
-        }
-        (config, warnings)
-    } else {
-        let mut config = ArchitectureConfig::default();
-        if let Some(arr) = raw.get("ignored_paths").and_then(|v| v.as_sequence()) {
-            let paths: Vec<_> = arr
-                .iter()
-                .filter_map(|v| v.as_str())
-                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
-                .collect();
-            if !paths.is_empty() {
-                config.ignored_paths = FilePathList::new(paths);
-            }
-        }
-        (config, warnings)
     }
+}
+
+fn process_config(raw: &serde_yaml_ng::Value) -> (ArchitectureConfig, Vec<String>) {
+    let mut warnings = Vec::new();
+
+    if raw.get("architecture").is_none() {
+        return (config_with_ignored_paths(raw), warnings);
+    }
+
+    let arch_json = match raw.get("architecture") {
+        Some(val) => serde_json::to_value(val).unwrap_or_default(),
+        None => return (ArchitectureConfig::default(), warnings),
+    };
+
+    let mut config = deserialize_config(preprocess_json(arch_json), &mut warnings);
+    config = enable_default_orphan_detection(config);
+    config = apply_fallback_ignored_paths(config, raw);
+    (config, warnings)
+}
+
+/// Build a default config carrying only the raw `ignored_paths` entries.
+fn config_with_ignored_paths(raw: &serde_yaml_ng::Value) -> ArchitectureConfig {
+    let mut config = ArchitectureConfig::default();
+    let paths = parse_ignored_paths(raw);
+    if !paths.values.is_empty() {
+        config.ignored_paths = paths;
+    }
+    config
+}
+
+/// Extract `ignored_paths` from raw YAML as a `FilePathList` (empty when absent).
+fn parse_ignored_paths(raw: &serde_yaml_ng::Value) -> FilePathList {
+    let paths: Vec<FilePath> = raw
+        .get("ignored_paths")
+        .and_then(|v| v.as_sequence())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str())
+                .map(|s| FilePath::new(s.to_string()).unwrap_or_default())
+                .collect()
+        })
+        .unwrap_or_default();
+    FilePathList::new(paths)
+}
+
+/// Preprocess the architecture JSON: migrate legacy layers field, strip nulls,
+/// convert ignored_paths format, and apply layer suffix → naming migration.
+fn preprocess_json(mut json: serde_json::Value) -> serde_json::Value {
+    // Legacy: move `rules.*.layers` → top-level `layers` when no top-level layers exist.
+    migrate_legacy_layers(&mut json);
+
+    // Strip null values recursively.
+    remove_nulls(&mut json);
+
+    // Convert ignored_paths from array to {"values": [...]} wrapper.
+    if let Some(arr) = json.get("ignored_paths").and_then(|v| v.as_array()) {
+        json["ignored_paths"] = serde_json::json!({"values": arr});
+    }
+
+    // Migrate layer suffix arrays → naming config objects.
+    if let Some(layers_obj) = json.get_mut("layers") {
+        if let Some(obj) = layers_obj.as_object_mut() {
+            migrate_layer_naming(obj);
+        }
+    }
+
+    // Flatten rules with scope/conditions into a flat array.
+    if let Some(rules_val) = json.get_mut("rules") {
+        flatten_rules(rules_val);
+    }
+
+    json
+}
+
+/// Legacy: promote `rules.*.layers` to a top-level `layers` key when missing.
+fn migrate_legacy_layers(json: &mut serde_json::Value) {
+    if json.get("layers").is_some() {
+        return;
+    }
+    let Some(rules_obj) = json.get_mut("rules").and_then(|r| r.as_object_mut()) else {
+        return;
+    };
+    for (_code, rule_val) in rules_obj.iter_mut() {
+        if let Some(layers) = rule_val.get_mut("layers") {
+            let layers = std::mem::take(layers);
+            json["layers"] = layers;
+            break;
+        }
+    }
+}
+
+/// Recursively remove null values from a JSON value.
+fn remove_nulls(val: &mut serde_json::Value) {
+    match val {
+        serde_json::Value::Object(m) => {
+            m.retain(|_, v| !v.is_null());
+            for v in m.values_mut() {
+                remove_nulls(v);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for v in arr.iter_mut() {
+                remove_nulls(v);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Migrate legacy `suffix` arrays into `naming` config objects per layer.
+fn migrate_layer_naming(obj: &mut serde_json::Map<String, serde_json::Value>) {
+    let mut suffix_updates: Vec<(String, Option<String>, serde_json::Value, serde_json::Value)> =
+        Vec::new();
+
+    for (layer_name, layer) in obj.iter() {
+        if let Some(update) = extract_suffix_policy(layer) {
+            suffix_updates.push((layer_name.clone(), update.0, update.1, update.2));
+        }
+    }
+
+    for (name, policy, allowed, forbidden) in suffix_updates {
+        apply_suffix_update(obj, &name, policy, allowed, forbidden);
+    }
+}
+
+/// Extract `(policy, allowed, forbidden)` from a layer's legacy `suffix` array.
+fn extract_suffix_policy(
+    layer: &serde_json::Value,
+) -> Option<(Option<String>, serde_json::Value, serde_json::Value)> {
+    let suffix_val = layer.get("suffix")?;
+    let arr = suffix_val.as_array()?;
+    let mut policy: Option<String> = None;
+    let mut allowed = serde_json::Value::Array(Vec::new());
+    let mut forbidden = serde_json::Value::Array(Vec::new());
+
+    for entry in arr {
+        extract_suffix_entry(entry, &mut policy, &mut allowed, &mut forbidden);
+    }
+    Some((policy, allowed, forbidden))
+}
+
+/// Process a single suffix entry object, updating policy/allowed/forbidden in place.
+fn extract_suffix_entry(
+    entry: &serde_json::Value,
+    policy: &mut Option<String>,
+    allowed: &mut serde_json::Value,
+    forbidden: &mut serde_json::Value,
+) {
+    let Some(entry_obj) = entry.as_object() else {
+        return;
+    };
+    for (pkey, plist) in entry_obj {
+        match pkey.as_str() {
+            "strict" | "flexible" => {
+                policy.replace(pkey.clone());
+                if let Some(list) = plist.as_array() {
+                    *allowed = serde_json::json!(list);
+                }
+            }
+            "forbidden" => {
+                if let Some(list) = plist.as_array() {
+                    *forbidden = serde_json::json!(list);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Replace a layer's `suffix` array with a `naming` object built from the
+/// extracted policy.
+fn apply_suffix_update(
+    obj: &mut serde_json::Map<String, serde_json::Value>,
+    name: &str,
+    policy: Option<String>,
+    allowed: serde_json::Value,
+    forbidden: serde_json::Value,
+) {
+    let Some(layer) = obj.get_mut(name) else {
+        return;
+    };
+    let Some(layer_obj) = layer.as_object_mut() else {
+        return;
+    };
+
+    let mut naming_obj = serde_json::Map::new();
+    if let Some(ref p) = policy {
+        naming_obj.insert("suffix_policy".to_string(), serde_json::json!(p));
+    }
+    naming_obj.insert("allowed_suffix".to_string(), allowed);
+    if let Some(arr) = forbidden.as_array()
+        && !arr.is_empty()
+    {
+        naming_obj.insert("forbidden_suffix".to_string(), forbidden);
+    }
+    layer_obj.insert("naming".to_string(), serde_json::Value::Object(naming_obj));
+    layer_obj.remove("suffix");
+}
+
+/// Flatten rules from `{"code": {...}}` → flat array, expanding scope/conditions.
+/// The `rules` value is replaced in place with the flat array.
+fn flatten_rules(rules_val: &mut serde_json::Value) {
+    let Some(obj) = rules_val.as_object_mut() else {
+        return;
+    };
+    let mut flat = serde_json::Value::Array(Vec::new());
+
+    for (code, rule_val) in obj.iter() {
+        let Some(rule_obj) = rule_val.as_object() else {
+            continue;
+        };
+
+        let mut base = rule_obj.clone();
+        base.insert("name".to_string(), serde_json::json!(code));
+        push_expanded_rule(&mut flat, serde_json::Value::Object(base));
+    }
+
+    *rules_val = flat;
+}
+
+/// Push a single rule into `flat`, expanding multi-scope rules and conditions.
+fn push_expanded_rule(flat: &mut serde_json::Value, base: serde_json::Value) {
+    let mut base = base;
+    if expand_scopes(flat, &mut base) {
+        return;
+    }
+    expand_conditions(flat, base);
+}
+
+/// Expand multi-scope rules into one entry per scope. Returns true when the
+/// rule was pushed as scope-specific entries and needs no further handling.
+fn expand_scopes(flat: &mut serde_json::Value, base: &mut serde_json::Value) -> bool {
+    let Some(scopes) = get_scope_strings(base) else {
+        return false;
+    };
+
+    if has_conditions(base) && scopes.len() <= 1 {
+        // Single scope or no scopes: collapse to first (original behavior).
+        collapse_to_first_scope(base);
+        return false;
+    }
+
+    if !has_conditions(base) && scopes.len() > 1 {
+        // No conditions: expand one entry per scope.
+        for s in scopes {
+            let mut entry = base.clone();
+            if let Some(obj) = entry.as_object_mut() {
+                obj.insert("scope".to_string(), serde_json::json!(s));
+            }
+            push_entry(flat, entry);
+        }
+        return true;
+    }
+
+    // Otherwise (single scope combined with conditions): collapse to first.
+    if let Some(first) = scopes.first() {
+        if let Some(obj) = base.as_object_mut() {
+            obj.insert("scope".to_string(), serde_json::json!(first));
+        }
+    }
+    false
+}
+
+/// Extract scope strings from the base entry's "scope" field.
+fn get_scope_strings(base: &serde_json::Value) -> Option<Vec<String>> {
+    let scope_arr = base.get("scope")?;
+    let arr = scope_arr.as_array()?;
+    let scopes: Vec<String> = arr
+        .iter()
+        .filter_map(|v| v.as_str().map(String::from))
+        .collect();
+    Some(scopes)
+}
+
+/// Return true if the base entry has a "conditions" key.
+fn has_conditions(base: &serde_json::Value) -> bool {
+    base.as_object()
+        .is_some_and(|o| o.contains_key("conditions"))
+}
+
+/// Collapse scope to its first value.
+fn collapse_to_first_scope(base: &mut serde_json::Value) {
+    let Some(scopes) = get_scope_strings(base) else {
+        return;
+    };
+    let Some(first) = scopes.first() else { return };
+    if let Some(obj) = base.as_object_mut() {
+        obj.insert("scope".to_string(), serde_json::json!(first));
+    }
+}
+
+/// Expand `conditions` into individual entries, or push the base entry itself
+/// when there are no conditions.
+fn expand_conditions(flat: &mut serde_json::Value, mut base: serde_json::Value) {
+    let Some(conds) = extract_owned_conditions(&mut base) else {
+        push_entry(flat, base);
+        return;
+    };
+    if conds.is_empty() {
+        push_entry(flat, base);
+        return;
+    }
+    for cond_obj in conds {
+        expand_single_condition(flat, base.clone(), cond_obj);
+    }
+}
+
+/// Remove and extract owned condition objects from base.
+fn extract_owned_conditions(
+    base: &mut serde_json::Value,
+) -> Option<Vec<serde_json::Map<String, serde_json::Value>>> {
+    base.as_object_mut()?.remove("conditions").and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|cv| cv.as_object().cloned())
+                .collect()
+        })
+    })
+}
+
+/// Expand a single condition object into a rule entry and push to flat.
+fn expand_single_condition(
+    flat: &mut serde_json::Value,
+    mut base: serde_json::Value,
+    cond_obj: serde_json::Map<String, serde_json::Value>,
+) {
+    if let Some(entry_obj) = base.as_object_mut() {
+        for (k, v) in cond_obj {
+            entry_obj.insert(k, v);
+        }
+    }
+    push_entry(flat, base);
+}
+
+/// Push one rule object onto the `flat` array.
+fn push_entry(flat: &mut serde_json::Value, entry: serde_json::Value) {
+    if let Some(arr) = flat.as_array_mut() {
+        arr.push(entry);
+    }
+}
+
+/// Deserialize JSON into ArchitectureConfig, collecting warnings on failure.
+fn deserialize_config(json: serde_json::Value, warnings: &mut Vec<String>) -> ArchitectureConfig {
+    match serde_json::from_value::<ArchitectureConfig>(json) {
+        Ok(c) => c,
+        Err(e) => {
+            warnings.push(format!("Failed to deserialize ArchitectureConfig: {:?}", e));
+            warnings.push(
+                "Falling back to default config. Check your YAML syntax and field types."
+                    .to_string(),
+            );
+            ArchitectureConfig::default()
+        }
+    }
+}
+
+/// Enable orphan detection by default for all layers (BooleanVO defaults to false).
+fn enable_default_orphan_detection(mut config: ArchitectureConfig) -> ArchitectureConfig {
+    for def in config.layers.values_mut() {
+        if !def.orphan.check_orphan.value {
+            def.orphan.check_orphan = BooleanVO::new(true);
+        }
+    }
+    config
+}
+
+/// Apply fallback ignored_paths from raw YAML when the deserialized config has none.
+fn apply_fallback_ignored_paths(
+    mut config: ArchitectureConfig,
+    raw: &serde_yaml_ng::Value,
+) -> ArchitectureConfig {
+    if config.ignored_paths.values.is_empty() {
+        let paths = parse_ignored_paths(raw);
+        if !paths.values.is_empty() {
+            config.ignored_paths = paths;
+        }
+    }
+    config
 }

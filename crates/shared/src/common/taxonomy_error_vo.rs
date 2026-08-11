@@ -30,20 +30,26 @@ impl ErrorCode {
     pub fn raw<S: Into<String>>(code: S) -> Self {
         ErrorCode { code: code.into() }
     }
+}
 
-    /// Returns true if the code is a style error (starts with E, W, or D).
-    pub fn is_style(&self) -> bool {
-        self.code.starts_with('E') || self.code.starts_with('W') || self.code.starts_with('D')
-    }
-    pub fn is_logic(&self) -> bool {
-        self.code.starts_with('F') || self.code.starts_with('I')
-    }
-    pub fn is_security(&self) -> bool {
-        self.code.starts_with('B')
-    }
-    pub fn is_architecture(&self) -> bool {
-        self.code.starts_with("AES")
-    }
+/// Classifies an error code string as a style error (starts with E, W, or D).
+pub fn error_code_is_style(code: &str) -> bool {
+    code.starts_with('E') || code.starts_with('W') || code.starts_with('D')
+}
+
+/// Classifies an error code string as a logic error (starts with F or I).
+pub fn error_code_is_logic(code: &str) -> bool {
+    code.starts_with('F') || code.starts_with('I')
+}
+
+/// Classifies an error code string as a security error (starts with B).
+pub fn error_code_is_security(code: &str) -> bool {
+    code.starts_with('B')
+}
+
+/// Classifies an error code string as an architecture error (starts with AES).
+pub fn error_code_is_architecture(code: &str) -> bool {
+    code.starts_with("AES")
 }
 
 impl std::ops::Deref for ErrorCode {

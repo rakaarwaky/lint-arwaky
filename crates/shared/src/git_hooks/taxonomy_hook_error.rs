@@ -1,26 +1,23 @@
 // PURPOSE: GitHookError — structured error type for git hook operation failures
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::domain_error_vo;
 
-#[derive(Debug, Clone)]
-pub struct GitHookError {
-    pub path: FilePath,
-    pub message: LintMessage,
-}
+/// Domain error types for the git hooks subsystem.
+/// Uses the `domain_error_vo!` macro from `utility_value_object_generator`.
+pub fn _hook_error_anchor() {}
 
-impl GitHookError {
-    pub fn new(message: LintMessage) -> Self {
-        Self {
-            path: FilePath::default(),
-            message,
-        }
+domain_error_vo!(GitHookError, "Git Hook Error");
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::common::taxonomy_message_vo::LintMessage;
+
+    #[test]
+    fn git_hook_error_has_expected_shape() {
+        let err = GitHookError::new(LintMessage::new("test"));
+        let _ = format!(
+            "{} on {}: {}",
+            "Git Hook Error", err.path.value, err.message
+        );
     }
 }
-
-impl std::fmt::Display for GitHookError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Git Hook Error on {}: {}", self.path.value, self.message)
-    }
-}
-
-impl std::error::Error for GitHookError {}

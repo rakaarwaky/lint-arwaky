@@ -50,7 +50,15 @@ serviceAccountKey
 .codegraph
 .github/instructions/codacy.instructions.md
 
+# local editor config
+.vscode/
+
 # repowise local cache and generated artifacts (.repowise is a local cache,
-# not a source of truth; only the PR-bot config is committed)
+# not a source of truth; only the PR-bot config and health rules are committed)
 .repowise/*
 !.repowise/bot.yaml
+!.repowise/health-rules.json
+# repowise cache can appear in any scanned subdirectory (CLI generates per-dir)
+**/.repowise/*
+!**/.repowise/bot.yaml
+!**/.repowise/health-rules.json
