@@ -6,7 +6,6 @@ metadata:
   author: Codacy
   version: 1.4.0
 ---
-
 # Codacy Code Review
 
 > **Glossary:** See [glossary.md](../../references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
@@ -24,10 +23,10 @@ Both CLIs share credentials at `~/.codacy/credentials`, so a single login covers
 
 This skill uses two complementary analysis sources:
 
-| Source | What it provides | Speed |
-|--------|-----------------|-------|
-| **Analysis CLI** (local) | Issues and security findings on PR changes | Instant — no push or remote analysis needed |
-| **Cloud CLI** (remote) | Coverage delta, quality gate, duplication, issue management (ignore/unignore) | Requires the PR to be pushed and analyzed by Codacy |
+| Source                         | What it provides                                                              | Speed                                               |
+| ------------------------------ | ----------------------------------------------------------------------------- | --------------------------------------------------- |
+| **Analysis CLI** (local) | Issues and security findings on PR changes                                    | Instant — no push or remote analysis needed        |
+| **Cloud CLI** (remote)   | Coverage delta, quality gate, duplication, issue management (ignore/unignore) | Requires the PR to be pushed and analyzed by Codacy |
 
 **Prefer local analysis** for issue detection — it runs immediately on the current working tree with `--pr` and doesn't require waiting for remote analysis. Use the Cloud CLI to supplement with coverage data and quality gate status, and to manage issues (ignore/unignore).
 
@@ -60,6 +59,7 @@ Code Review Progress:
 ### Step 1: Gather PR context
 
 Fetch the pull request metadata from the source provider (GitHub, GitLab, Bitbucket):
+
 - PR title and description
 - Linked ticket or issue (Jira, GitHub Issues, Linear, local spec, etc.) — look in the description, branch name, and commit messages
 
@@ -99,11 +99,13 @@ codacy pull-request <provider> <org> <repo> <prNumber>
 This returns: up-to-standards status, coverage delta, complexity delta, duplication delta, and changed files.
 
 For the annotated diff with inline coverage annotations:
+
 ```bash
 codacy pull-request <provider> <org> <repo> <prNumber> --diff
 ```
 
 If the remote analysis is stale or missing, trigger a reanalysis and wait for completion:
+
 ```bash
 codacy pull-request <provider> <org> <repo> <prNumber> --reanalyze-and-wait
 ```
@@ -120,6 +122,7 @@ Combine findings from both local analysis (Step 2) and Cloud data (Step 3):
 - Flag Critical and High severity issues as blockers
 
 If issues look like false positives, suggest ignoring them via the Cloud CLI:
+
 ```bash
 # Ignore a specific issue in this PR
 codacy pull-request <provider> <org> <repo> <prNumber> --ignore-issue <issueId> --ignore-reason FalsePositive
@@ -136,6 +139,7 @@ If the same false positive pattern keeps appearing across PRs, suggest disabling
 ### Step 5: Check coverage
 
 Coverage data comes from the Cloud CLI (Step 3). Review:
+
 - Overall coverage delta (did it go up or down?)
 - Files with uncovered lines introduced by the PR
 - Use `--diff` output to see which specific lines lack coverage (✘ markers)
@@ -153,6 +157,7 @@ If the ticket or PR description is missing, incomplete, or inaccurate, note spec
 ### Step 7: Propose test plan
 
 Based on the changed code and coverage data:
+
 1. List the scenarios that should be tested (happy path, edge cases, error cases)
 2. For each scenario, check whether a test already exists in the PR diff
 3. Flag scenarios with no corresponding test and no coverage in Codacy

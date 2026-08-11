@@ -6,7 +6,6 @@ metadata:
   author: Codacy
   version: 4.3.0
 ---
-
 # Configure Codacy
 
 > **Glossary:** See [glossary.md](../../references/glossary.md) for shared definitions of Codacy concepts (issues, findings, severity, coverage, tools, patterns, etc.).
@@ -25,7 +24,6 @@ Both CLIs share credentials at `~/.codacy/credentials`, so a single login covers
 All configuration is done locally via `.codacy/codacy.config.json`. Edit the file, run analysis, see results instantly — no push or cloud reanalysis needed. Once tuned, the configuration can be imported to Codacy Cloud in one step.
 
 The key principle: **start broad, then cut noise using data**. Initialize with maximum pattern coverage via `init --auto`, run analysis to see the full issue landscape, then use the severity/category distribution to decide what to disable or tune.
-
 
 Read [the config format reference](../codacy-analysis-cli/references/config-format.md) for the full schema before editing — field names matter (e.g., the exclusion field is `exclude`, not `excludePaths`). To disable a pattern, remove it from the `patterns` array. To disable a tool, remove the entire tool entry.
 
@@ -47,6 +45,7 @@ Additionally, the **force** flag controls Coding Standard handling during import
 - **Force enabled:** If the user's invocation arguments contain the word "force" (e.g., `/configure-codacy import force`), automatically retry with `--force` when Coding Standard conflicts occur.
 
 Parse the invocation arguments at the very start. Set internal flags that Step 6 will reference:
+
 - If args contain "import" → auto-import mode
 - If args contain "force" → force mode (allows automatic Coding Standard unlinking)
 - Else → interactive mode (may become local-only if Step 0 finds the repo is not on Cloud)
@@ -72,6 +71,7 @@ This step determines the starting point and captures the BEFORE metrics for the 
 #### 0a. Create temp directory and check Codacy Cloud status
 
 Create the temporary directory for intermediate analysis files:
+
 ```bash
 mkdir -p .codacy/tmp
 ```
@@ -85,11 +85,13 @@ codacy repository --output json 2>/dev/null | jq '...'
 ```
 
 Check Cloud status:
+
 ```bash
 codacy repository --output json
 ```
 
 If this succeeds, the repo is on Codacy Cloud. Also list enabled tools to identify cloud-only tools later:
+
 ```bash
 codacy tools --output json 2>/dev/null | jq '[.[] | select(.settings.isEnabled == true) | {name, isClientSide}]'
 ```
@@ -129,12 +131,15 @@ jq '.metadata.durationMs' .codacy/tmp/codacy-remote-results.json
 ```
 
 Fetch the Cloud issue overview — this gives per-pattern issue counts, false positive counts, and suggested actions across the entire repository without downloading every individual issue:
+
 ```bash
 codacy issues -O -o json > .codacy/tmp/codacy-cloud-overview.json
 ```
+
 This overview data is valuable for tuning decisions in Step 4: it shows which patterns produce the most issues on Cloud (the production truth), includes false positive rates per pattern, and generates suggested actions to reduce noise (identifying patterns accounting for 10%+ of all issues or 3x the average). The suggested actions include ready-to-run disable commands, adapted for coding standard or config-file constraints. Save it for later comparison.
 
 Also check for cloud-only tools — tools enabled in Cloud but not available in the local Analysis CLI. Get the local CLI's supported tools via `codacy-analysis info`, then compare against the Cloud-enabled tools list above. Any Cloud-enabled tool not in the `info` output is cloud-only (e.g., SonarSharp, Codacy ScalaMeta Pro). If cloud-only tools exist and have issues, fetch them:
+
 ```bash
 codacy issues --output json > .codacy/tmp/codacy-remote-cloud-results.json
 ```
@@ -182,13 +187,9 @@ jq '[.overview.patterns[] | select(.potentialFalsePositives > 0) | {id, title, t
 **Identify noisy patterns using these criteria:**
 
 1. **Wrong-language patterns** — cross-reference pattern IDs against the discovered stack (Step 1 runs next, but the Cloud tools list from Step 0a gives a rough language picture). Pattern IDs often contain the target language (e.g., `python.`, `java.`, `ruby.`). Mark patterns for languages clearly not in the project.
-
 2. **Convention/style noise** — patterns with very high issue counts (top 5% by count) in categories like CodeStyle, Documentation, or Comprehensibility are likely convention mismatches. Mark these as candidates.
-
 3. **High false-positive ratio patterns** — patterns where a significant proportion of issues are flagged as potential false positives (e.g., `potentialFalsePositives / total > 30%`) are strong candidates for pre-disabling. These patterns are producing results that Codacy's own heuristics consider unreliable. Store the false positive data for use in Step 4b rule 7, where patterns with high false-positive ratios get additional scrutiny during local verification.
-
 4. **Never pre-disable Security patterns** — security patterns are never marked for pre-disabling regardless of count or false-positive ratio. They are handled in Step 4 with full context.
-
 5. **Never pre-disable Critical/High severity patterns** — these require local verification before any action.
 
 **Classify each noisy pattern into two lists:**
@@ -207,6 +208,7 @@ codacy-analysis discover --output-format json --output .codacy/tmp/codacy-discov
 ```
 
 Parse the output to understand:
+
 - Languages present in the project
 - Frameworks and libraries in use (e.g., React, Django, Spring Boot)
 - This informs noise evaluation in Step 4 (e.g., knowing a project uses React means JSX-related patterns are relevant)
@@ -228,6 +230,7 @@ codacy-analysis init --auto "Critical,High,Warning,Minor,AllSecurity,ErrorProne,
 ```
 
 This filter means:
+
 - `Critical` — Codacy-recommended (default) Critical-severity patterns
 - `AllSecurity` — ALL Security-category patterns (including non-defaults)
 - Everything else — Codacy-recommended (default) patterns at High, Warning, and Minor severity across all categories
@@ -237,17 +240,20 @@ The intent is to start broad and cut in Step 4 based on actual analysis data.
 **Apply Cloud noise pre-filter (Track A only):** If `cloudNoiseLocal` patterns were identified in Step 0c, remove them from the newly created config now. For each pattern in `cloudNoiseLocal`, find it in `.codacy/codacy.config.json` under its tool's `patterns` array and remove it. This avoids wasting local analysis time on patterns already known to be noisy from Cloud production data. Track these removals for the summary (they are pre-filter changes, reported in `patternChanges` with reason referencing Cloud data).
 
 **Merge preserved configuration** from the baseline stored in Step 0:
+
 - **Track A** (Cloud): Merge from `.codacy/tmp/codacy-remote-config.json`
 - **Track B** (local config): Merge from `.codacy/tmp/codacy-previous-config.json`
 - **Track C** (no prior config): No merge needed
 
 For the applicable track:
+
 1. Read the newly created `.codacy/codacy.config.json`
 2. Merge the global `exclude` array from the stored config (merge, don't replace — the new config may have its own excludes)
 3. For each tool that exists in both stored and new config, merge its per-tool `exclude` array
 4. For tools where `useLocalConfigurationFile` was `true` in the stored config and the tool still exists, restore that setting along with the `localConfigurationFile` path
 
 **Record broad-config metrics** (internal — not the BEFORE reference for the summary):
+
 ```bash
 # Count enabled patterns across all tools in the broad config
 jq '[.tools[].patterns | length] | add' .codacy/codacy.config.json
@@ -267,6 +273,7 @@ codacy-analysis analyze --install-dependencies --output-format json --output .co
 Always use `--output <file>` to avoid broken JSON from stdout buffering.
 
 **Record broad-config metrics** (used for tuning decisions in Step 4, not for the summary):
+
 ```bash
 # Total issues in broad config
 jq '.issues | length' .codacy/tmp/codacy-baseline.json
@@ -304,12 +311,12 @@ This is the core of the skill. Work through the baseline results using a structu
 
 Calculate the percentage of Critical+High issues (severity `"Error"` or `"High"`) relative to total issues. This determines how aggressively to cut lower-priority categories:
 
-| Critical+High % of total | Action on CodeStyle & Documentation patterns |
-|---|---|
-| **>50%** | Disable ALL CodeStyle and Documentation patterns at Minor and Warning severity. The codebase has serious problems — style issues are just noise obscuring them. |
-| **30–50%** | Disable Minor-severity CodeStyle and Documentation patterns. Keep Warning-level ones. |
-| **10–30%** | Keep all patterns, but focus file exclusions on noisy paths. |
-| **<10%** | Keep everything — the codebase is clean enough to benefit from style enforcement. |
+| Critical+High % of total | Action on CodeStyle & Documentation patterns                                                                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **>50%**           | Disable ALL CodeStyle and Documentation patterns at Minor and Warning severity. The codebase has serious problems — style issues are just noise obscuring them. |
+| **30–50%**        | Disable Minor-severity CodeStyle and Documentation patterns. Keep Warning-level ones.                                                                            |
+| **10–30%**        | Keep all patterns, but focus file exclusions on noisy paths.                                                                                                     |
+| **<10%**           | Keep everything — the codebase is clean enough to benefit from style enforcement.                                                                               |
 
 The same logic applies proportionally to other low-priority categories (Comprehensibility, Compatibility) when critical issues dominate. Use judgment.
 
@@ -318,39 +325,35 @@ The same logic applies proportionally to other low-priority categories (Comprehe
 For each pattern in the baseline results, sorted by issue count (highest first), apply this priority chain:
 
 1. **Security patterns must cover every security concern.** Any pattern with `category == "Security"` stays enabled UNLESS another active pattern from a different tool already covers the same semantic concern (see rule 2). If a security pattern is noisy and no deduplication applies, exclude specific files instead of disabling the pattern.
-
 2. **Cross-tool deduplication of overlapping patterns.** When multiple tools flag the same semantic concern (e.g., "hardcoded secrets", "SQL injection", "XSS", "unused imports"), identify the overlap by comparing issue messages, affected files, and affected lines. For the overlapping pair:
+
    - Keep the pattern from the more specialized or precise tool (e.g., Semgrep security rules over Biome generic checks; a dedicated SAST scanner over a general linter)
    - If precision is comparable, keep the pattern from the tool that is more actively used in the project (more patterns enabled, used in CI, has a local config file)
    - Disable the redundant pattern from the other tool
    - This is NOT removing a concern — it is deduplicating. The concern remains covered by the kept pattern.
    - This applies to ALL categories, not just Security — e.g., two tools both flagging "unused imports"
    - Document in the change log: which pattern was kept, which was disabled, and why the kept pattern is the better source
-
 3. **NEVER disable valid Critical/High issues.** Patterns with `severity == "Error"` or `severity == "High"` that are finding real problems must stay. If they appear to be false positives, exclude the offending files rather than disabling the pattern.
-
 4. **Wrong stack → disable.** Cross-reference with the discover output from Step 1. Patterns for languages or frameworks not present in the project are pure noise. Examples:
+
    - Python security patterns in a JavaScript-only project
    - Apex patterns from PMD7 in a Java-only project
    - Semgrep rules for languages not in the repo
-   
+
    Remove these patterns from the config.
-
 5. **Noise floor → disable.** Apply the decisions from 4a. If the noise floor says CodeStyle/Documentation at Minor severity should go, remove those patterns.
-
 6. **Convention mismatch → disable.** If a pattern flags something that >80% of the codebase does consistently, the pattern contradicts the project's established conventions. Examples:
+
    - Tabs-vs-spaces rules when the entire project uses the "wrong" style consistently
    - Naming convention rules that don't match the project's established naming
-
 7. **False-positive prone → disable.** Use the Cloud overview's false positive data (from Step 0c) as the primary signal: patterns where `potentialFalsePositives / total > 30%` are strong disable candidates — Codacy's own heuristics are flagging a significant share of their results as unreliable. For these patterns, review a sample of actual instances in the code to confirm. If the local instances confirm the pattern is producing low-value results for this codebase, disable it. For patterns without Cloud false-positive data, check if the pattern is known to produce high false-positive rates in general. Only disable after verifying the hits are genuinely not useful for this codebase.
-
 8. **Parameter tuning over disabling.** Before disabling a valuable pattern, check if it has configurable parameters:
+
    - Lizard complexity thresholds — raise to match the codebase's actual complexity profile
    - Line length limits — set to the project's observed maximum
    - Other threshold-based rules — adjust to reduce false hits while keeping the rule active
-   
-   Tuning preserves coverage while reducing noise.
 
+   Tuning preserves coverage while reducing noise.
 9. **File exclusion over disabling.** When a pattern is valid but fires on files where it doesn't apply, exclude the files rather than disabling the pattern. The pattern stays active for real source code.
 
 #### 4c. File-level evaluation
@@ -383,6 +386,7 @@ For each tool in the config:
 #### 4e. Lost patterns recovery
 
 Compare the baseline analysis results (from Step 0) against the current `.codacy/codacy.config.json` after tuning. For each pattern that:
+
 - Found issues in the baseline analysis (`.codacy/tmp/codacy-remote-results.json` for Track A, `.codacy/tmp/codacy-previous-results.json` for Track B)
 - Has `category == "Security"` OR `severity == "Error"` OR `severity == "High"`
 - Is NOT present in the current config (was excluded by `init --auto` or removed during tuning)
@@ -394,6 +398,7 @@ Skip this step for Track C (no prior config — nothing to recover).
 #### Apply all changes
 
 Edit `.codacy/codacy.config.json` with all decisions from 4a–4e. Track every change for the summary in Step 5:
+
 - For each disabled pattern: record the patternId, action `"disabled"`, and reason
 - For each tuned pattern: record the patternId, action `"updated"`, old/new parameters, and reason
 - For each removed tool: record it in `toolChanges`
@@ -412,6 +417,7 @@ codacy-analysis analyze --install-dependencies --output-format json --output .co
 ```
 
 **Record AFTER metrics:**
+
 ```bash
 # Enabled patterns after tuning
 jq '[.tools[].patterns | length] | add' .codacy/codacy.config.json
@@ -427,6 +433,7 @@ jq '.metadata.durationMs' .codacy/tmp/codacy-tuned.json
 ```
 
 **Validate:**
+
 - Issues should have decreased meaningfully vs the broad-config baseline (Step 3).
 - If issues increased or didn't decrease meaningfully (<20% reduction), review the tuning decisions and re-iterate once: go back to "Do AI analysis of the results" (Step 4b) with the updated results, apply further changes, and re-run this validation.
 - The goal is that every remaining issue is worth looking at.
@@ -533,12 +540,14 @@ Write `.codacy/configure-codacy-summary.json` with the before/after metrics, a d
 **`summary`** — before/after metrics (same as before).
 
 **`toolChanges`** — one entry per tool added or removed. Each entry:
+
 - `toolId` — the tool identifier
 - `action` — `"enabled"` (tool was added) or `"disabled"` (tool was removed)
 - `reason` — why the tool was added or removed
 - `patternsAffected` — number of patterns in the tool that was added/removed
 
 **`patternChanges`** — one entry per individual pattern change. Each entry:
+
 - `patternId` — the pattern identifier
 - `toolId` — which tool this pattern belongs to
 - `action` — `"enabled"`, `"disabled"`, or `"updated"`
@@ -551,12 +560,14 @@ Do NOT include individual pattern entries inside `patternChanges` for patterns t
 Do NOT include `"restored"` patterns here. Restoration (Step 4e) is an internal mechanism to ensure patterns from the baseline config that had Critical/High/Security results aren't lost by `init --auto`. It preserves what was already there — it's not a user-facing change.
 
 **`fileExclusions`** — only lists **new** exclusions added during this tuning run. Exclusions already present in the baseline config are preserved automatically but not listed here (they are not changes).
+
 - `global` — new global exclusion globs added during tuning
 - `perTool.<toolId>` — new per-tool exclusion globs added during tuning
 
 Omit `fileExclusions` entirely if no new exclusions were added.
 
 **`securityCoverage`** — documents how security concerns are handled:
+
 - `deduplication` — security patterns that were disabled because another pattern covers the same concern (list the kept pattern and the disabled one)
 - `newCoverage` — new security patterns enabled that were NOT in the baseline config, with issue count
 - `noisyButKept` — security patterns that are noisy but were kept active per the security guardrail
@@ -564,6 +575,7 @@ Omit `fileExclusions` entirely if no new exclusions were added.
 **`keyImprovements`** — array of 3–6 human-readable sentences summarizing the most impactful improvements. Focus on what changed and the quantitative impact. These should be suitable for presenting to the user as a summary.
 
 **`localConfigTools`** — array of tools that have `useLocalConfigurationFile: true`. Each entry includes:
+
 - `toolId` — the tool identifier
 - `configFile` — path to the project's config file used by this tool
 - `issueCount` — number of issues this tool produced in the tuned analysis
@@ -601,6 +613,7 @@ File exclusions in `.codacy/codacy.config.json` only apply to local analysis. Co
 3. Write the updated `.codacy.yaml` to the repo root
 
 The `.codacy.yaml` format uses Java glob syntax:
+
 ```yaml
 ---
 exclude_paths:
@@ -645,6 +658,7 @@ Based on invocation mode (see "Invocation modes" section):
 Only if cloud-only tools had issues fetched in Step 0 (`.codacy/tmp/codacy-remote-cloud-results.json` exists):
 
 Apply the same noise evaluation framework from Step 4 to the cloud-fetched issues. For each noisy pattern from a cloud-only tool:
+
 - Check if its parameters can be tweaked to return fewer results → `codacy pattern <toolName> <patternId> --parameter key=value`
 - If not tweakable → try to disable it: `codacy pattern <toolName> <patternId> --disable`
 - If disable fails (Coding Standard enforcement) → note it for the results
@@ -658,12 +672,14 @@ codacy tools --import .codacy/codacy.config.json -y
 If the import encounters Coding Standard conflicts (409 errors — patterns/tools enforced at org level cannot be overridden):
 
 1. **If force mode is enabled** (user invoked with "force" argument): Automatically retry with `--force`:
+
    ```bash
    codacy tools --import .codacy/codacy.config.json --force -y
    ```
-   Note in the results that `--force` was used and which Coding Standards were unlinked.
 
+   Note in the results that `--force` was used and which Coding Standards were unlinked.
 2. **If force mode is NOT enabled** (default): Do **NOT** automatically retry with `--force`. Instead:
+
    - Report which tools/patterns could not be changed due to Coding Standard enforcement
    - List the specific Coding Standards that are blocking the changes
    - Use `AskUserQuestion` to ask the user: "The import was partially blocked by Coding Standards [list names]. Would you like to unlink these Coding Standards and retry with --force? This will sever the link between this repository and the organization-level standards."
@@ -691,6 +707,7 @@ This replaces manual polling. The CLI captures a baseline before reanalysis, wai
 **2. Fetch fresh Cloud overview and evaluate:**
 
 Once reanalysis is complete (check the delta report), get the updated issue overview:
+
 ```bash
 codacy issues -O -o json > .codacy/tmp/codacy-post-import-overview.json
 ```
@@ -709,6 +726,7 @@ Compare the post-import overview against the pre-import overview (`.codacy/tmp/c
 **4. Record Cloud verification results:**
 
 Track all Cloud-side pattern changes in the summary under a new `cloudVerification` field:
+
 ```json
 {
   "cloudVerification": {
@@ -764,6 +782,7 @@ Update the `importResults` field in `.codacy/configure-codacy-summary.json` with
 ```
 
 **`importResults` field reference:**
+
 - `status` — `"success"` if all tools imported without errors, `"completed_with_errors"` if some tools failed but others succeeded, `"failed"` if the import command itself failed
 - `toolsConfigured` — number of tools successfully configured
 - `toolsEnabled` — tools that were newly enabled in Cloud (were disabled before)
@@ -774,6 +793,7 @@ Update the `importResults` field in `.codacy/configure-codacy-summary.json` with
 - `forceUsed` — whether `--force` was used to unlink a Coding Standard
 
 Present the import results to the user:
+
 - What was updated successfully
 - What couldn't be changed (Coding Standard enforcement) — list each error with its detail
 - Cloud-only tool pattern changes (from 6c)
@@ -798,6 +818,7 @@ Semgrep ships patterns for 30+ languages. After init, many patterns will be for 
 Lizard has rules for cyclomatic complexity (CCN), lines of code (NLOC), and parameter count, each at three severity levels (Critical, Medium, Minor) with configurable `threshold` parameters.
 
 For **established/mature codebases**, the default Medium thresholds produce hundreds of hits on legacy code. Options:
+
 - Disable Medium-level rules and keep only Critical
 - Or raise Medium thresholds to match the project's actual complexity profile (better — preserves visibility)
 
@@ -824,6 +845,7 @@ Review results in context — some CSS rules that look like violations may be in
 The guardrail operates at the **concern level**, not the individual pattern level. If two tools both detect "hardcoded secrets," disabling the less precise one is acceptable because the concern remains covered. However, if a security concern (e.g., SQL injection, XSS, path traversal, hardcoded secrets) would lose ALL active pattern coverage, the disable must be reverted.
 
 When a security pattern is noisy and cannot be deduplicated:
+
 - **Exclude specific files** where it triggers false positives (e.g., test fixtures, mock data)
 - **Leave the false positives** for the user to triage in Codacy Cloud (they can ignore individual instances with a reason)
 - **Never remove the last pattern covering a security concern** — it must stay active to catch real vulnerabilities in future code
