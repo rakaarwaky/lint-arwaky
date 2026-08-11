@@ -14,7 +14,7 @@ fn path_segments(rel_path: &str) -> Vec<&str> {
 
 /// Check if any segment matches a dot-prefixed literal (e.g. `.git`, `.env`).
 fn matches_dot_literal(segments: &[&str], pattern: &str) -> bool {
-    segments.iter().any(|seg| *seg == pattern)
+    segments.contains(&pattern)
 }
 
 /// Check prefix pattern: `/dir/**` matches path starting with those segments.
@@ -23,7 +23,10 @@ fn matches_prefix_pattern(segments: &[&str], pattern: &str) -> bool {
         Some(s) if !s.is_empty() => s,
         _ => return false,
     };
-    let pat_segs: Vec<&str> = stripped.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+    let pat_segs: Vec<&str> = stripped
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty())
+        .collect();
     let n_pat = pat_segs.len();
     let n_seg = segments.len();
     if n_seg < n_pat {
@@ -72,7 +75,10 @@ fn matches_ext_pattern(segments: &[&str], pattern: &str) -> bool {
 
 /// Check literal path match: single segment or multi-segment prefix/substring.
 fn matches_literal(segments: &[&str], pattern: &str) -> bool {
-    let pat_segs: Vec<&str> = pattern.split(['/', '\\']).filter(|s| !s.is_empty()).collect();
+    let pat_segs: Vec<&str> = pattern
+        .split(['/', '\\'])
+        .filter(|s| !s.is_empty())
+        .collect();
     match pat_segs.len() {
         1 => segments.contains(&pat_segs[0]),
         n if n > 1 => {
