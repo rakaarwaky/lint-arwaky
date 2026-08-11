@@ -1,0 +1,12 @@
+# Repowise ignore file — same exclusions as .repowise/config.yaml exclude_patterns.
+# Fixture/test workspaces and non-production folders are excluded so code-health
+# scores, dead-code findings, and MCP results reflect production code only.
+# Mirrors .codacy.yaml exclusions and .repowise/bot.yaml ignore_paths.
+workspaces-bad/
+workspaces-good/
+crates/*/tests/
+scripts/
+tools/
+log/
+target/
+*.md
