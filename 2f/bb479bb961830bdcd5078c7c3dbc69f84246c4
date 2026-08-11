@@ -1,0 +1,19 @@
+.github/workflows/auto-release.yml
+  s_33affc8f5882b7::t_438005fea0a3c7 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2fbb479bb961830bdcd5078c7c3dbc69f84246c4",
+  "prompts": {},
+  "sessions": {
+    "s_33affc8f5882b7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00f9a0f33ffeTrvDRCytnhzrql",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "rakaarwaky <arwaky90@gmail.com>"
+    }
+  }
+}
