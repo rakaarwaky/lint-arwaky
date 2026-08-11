@@ -1,0 +1,19 @@
+crates/shared/src/common/utility_layer_detector.rs
+  s_716694b456649d::t_01527829453cc3 228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "669192d3e7b01febf70a172a0ec60a07d5d327b8",
+  "prompts": {},
+  "sessions": {
+    "s_716694b456649d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_00ecddc32ffeNp2q3V0VevBZvr",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "rakaarwaky <arwaky90@gmail.com>"
+    }
+  }
+}
