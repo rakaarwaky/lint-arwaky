@@ -2,34 +2,12 @@
 use serde::{Deserialize, Serialize};
 
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::list_wrapper_vo;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RenamedFile {
     pub old_path: FilePath,
     pub new_path: FilePath,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct RenamedFileList {
-    pub values: Vec<RenamedFile>,
-}
-
-impl RenamedFileList {
-    pub fn new(value: Vec<RenamedFile>) -> Self {
-        Self { values: value }
-    }
-    pub fn iter(&self) -> std::slice::Iter<'_, RenamedFile> {
-        self.values.iter()
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-    pub fn push(&mut self, item: RenamedFile) {
-        self.values.push(item);
-    }
 }
 
 impl RenamedFile {
@@ -38,31 +16,8 @@ impl RenamedFile {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
-pub struct FilePathList {
-    pub values: Vec<FilePath>,
-}
-
-impl FilePathList {
-    pub fn new(value: Vec<FilePath>) -> Self {
-        Self { values: value }
-    }
-}
-
-impl FilePathList {
-    pub fn iter(&self) -> std::slice::Iter<'_, FilePath> {
-        self.values.iter()
-    }
-    pub fn len(&self) -> usize {
-        self.values.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.values.is_empty()
-    }
-    pub fn push(&mut self, item: FilePath) {
-        self.values.push(item);
-    }
-}
+list_wrapper_vo!(RenamedFileList, RenamedFile);
+list_wrapper_vo!(FilePathList, FilePath);
 
 impl std::ops::Deref for FilePathList {
     type Target = Vec<FilePath>;

@@ -13,12 +13,15 @@ use shared_lint_arwaky::common::taxonomy_format_vo::Format;
 use shared_lint_arwaky::common::taxonomy_job_id_vo::JobId;
 use shared_lint_arwaky::common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus};
 use shared_lint_arwaky::common::taxonomy_language_vo::Language;
-use shared_lint_arwaky::common::taxonomy_layer_vo::Identity;
+use shared_lint_arwaky::common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
 use shared_lint_arwaky::common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
-use shared_lint_arwaky::common::taxonomy_message_vo::ComplianceStatus;
+use shared_lint_arwaky::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared_lint_arwaky::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared_lint_arwaky::common::taxonomy_paths_vo::{FilePathList, RenamedFile};
 use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
+use shared_lint_arwaky::common::taxonomy_suggestion_vo::{
+    ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
+};
 use shared_lint_arwaky::common::taxonomy_threshold_vo::Threshold;
 use shared_lint_arwaky::common::utility_command_runner::{run_command, run_command_in_dir};
 use shared_lint_arwaky::common::utility_compliance_score::compute_score;
@@ -496,6 +499,47 @@ fn file_path_list_and_renamed_file() {
     assert_eq!(list.len(), 2);
     let renamed = RenamedFile::new(common::fp("a.rs"), common::fp("b.rs"));
     assert_eq!(renamed.new_path.basename(), "b.rs");
+}
+
+// ── Layer / message / suggestion VOs ────────────────────────
+#[test]
+fn layer_vo_string_wrappers() {
+    let content = FileContentVO::new("fn main() {}");
+    assert_eq!(content.value(), "fn main() {}");
+    let layer = LayerNameVO::new("capabilities");
+    assert_eq!(layer.to_string(), "capabilities");
+    let line = LineContentVO::from("let x = 1;");
+    assert_eq!(line.value(), "let x = 1;");
+    assert_eq!(LineContentVO::from(String::from("y")).value(), "y");
+}
+
+#[test]
+fn lint_message_vo() {
+    let msg = LintMessage::new("bad name");
+    assert_eq!(msg.value(), "bad name");
+    assert_eq!(msg.to_string(), "bad name");
+    assert_eq!(LintMessage::from("x").value(), "x");
+}
+
+#[test]
+fn suggestion_vo_string_wrappers() {
+    let class = ClassPath::new("com.foo.Bar");
+    assert_eq!(class.value(), "com.foo.Bar");
+    assert_eq!(DescriptionVO::from("desc").value(), "desc");
+    assert_eq!(LogOutput::new("log").value(), "log");
+    assert_eq!(StdError::from("err").value(), "err");
+    assert_eq!(StdOutput::new("out").value(), "out");
+    assert_eq!(Suggestion::from("fix").to_string(), "fix");
+    assert_eq!(ClassPath::default().value(), "");
+}
+
+#[test]
+fn metadata_vo_wraps_map() {
+    let mut values = std::collections::HashMap::new();
+    values.insert("lang".to_string(), serde_json::json!("rust"));
+    let meta = MetadataVO::new(values);
+    assert_eq!(meta.value().len(), 1);
+    assert_eq!(meta.value()["lang"], serde_json::json!("rust"));
 }
 
 // ── Utilities ───────────────────────────────────────────────
