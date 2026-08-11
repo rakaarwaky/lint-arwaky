@@ -32,11 +32,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - name: Install mold linker + sccache
-        run: |
-          sudo apt-get update && sudo apt-get install -y mold
-          cargo install sccache --locked
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@v0.0.3
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets -- -D warnings
@@ -47,11 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install mold linker + sccache
-        run: |
-          sudo apt-get update && sudo apt-get install -y mold
-          cargo install sccache --locked
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@v0.0.3
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release
@@ -63,11 +57,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install mold + sccache + nextest
+      - name: Install mold + nextest
         run: |
           sudo apt-get update && sudo apt-get install -y mold
-          cargo install sccache --locked
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ~/.cargo/bin
       - uses: mozilla-actions/sccache-action@v0.0.3
       - uses: Swatinem/rust-cache@v2
@@ -82,11 +74,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Install mold + sccache
-        run: |
-          sudo apt-get update && sudo apt-get install -y mold
-          cargo install sccache --locked
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install mold
+        run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@v0.0.3
       - uses: Swatinem/rust-cache@v2
       - name: Build CLI
