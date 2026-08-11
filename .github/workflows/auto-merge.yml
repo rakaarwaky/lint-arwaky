@@ -26,10 +26,13 @@ jobs:
       - name: Enable auto-merge (squash)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Values arrive via env vars (escaped by the runner), never inline
+          # interpolation, to prevent command injection through PR metadata.
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PR_NUMBER="${{ github.event.pull_request.number }}"
           # --auto holds the PR until the branch-protection/required checks
           # pass, then merges with squash. Idempotent across re-runs.
           gh pr merge "$PR_NUMBER" --auto --squash \
-            --subject "${{ github.event.pull_request.title }}" || \
+            --subject "$PR_TITLE" || \
             echo "Auto-merge not available yet (e.g. checks still pending) — a later event will retry."
