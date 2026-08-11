@@ -154,9 +154,51 @@ impl ContractOrphanAnalyzer {
     }
 }
 
+/// Normalizes a workspace-relative path for comparison.
+///
+/// Strips a leading `./` prefix and converts backslashes to forward slashes so
+/// that paths originating from different sources compare consistently.
+fn normalize_rel_path(p: &str) -> String {
+    p.trim_start_matches("./").replace('\\', "/")
+}
+
+/// Determines whether two workspace-relative paths refer to the same file.
+///
+/// Both inputs use the same `path_to_relative` format (workspace-relative,
+/// forward slashes). Matching is strict: exact equality after normalization, or a
+/// suffix match that begins at a path-separator boundary. Bare-basename matching
+/// is intentionally avoided so that common names such as `mod.rs`, `index.ts`, or
+/// `lib.rs` in one module cannot validate an unrelated file in another module.
+fn paths_equivalent(rel: &str, alive: &str) -> bool {
+    let a = normalize_rel_path(rel);
+    let b = normalize_rel_path(alive);
+    if a == b {
+        return true;
+    }
+    // Suffix match only at a separator boundary. A path without any directory
+    // component (bare basename) is only ever equal — never a suffix match — so
+    // a bare `lib.rs` cannot validate an unrelated deeper `lib.rs`.
+    if a.contains('/') {
+        if let Some(rest) = b.strip_suffix(&a) {
+            if rest.is_empty() || rest.ends_with('/') {
+                return true;
+            }
+        }
+    }
+    if b.contains('/') {
+        if let Some(rest) = a.strip_suffix(&b) {
+            if rest.is_empty() || rest.ends_with('/') {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 /// Determines whether a workspace-relative path corresponds to any reachable file path.
 ///
-/// Paths may be relative or absolute and may include a `./` prefix.
+/// Paths may be relative or absolute and may include a `./` prefix. Matching uses
+/// [`paths_equivalent`], so common file names in different modules never collide.
 ///
 /// # Examples
 ///
@@ -173,15 +215,10 @@ impl ContractOrphanAnalyzer {
 ///
 /// `true` if a reachable path matches the supplied path, `false` otherwise.
 fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
-    // Normalize separators so Windows-style backslashes compare correctly.
-    let norm = |p: &str| p.replace('\\', "/").trim_start_matches("./").to_string();
-    let rel_norm = norm(rel);
-    alive_files.paths.iter().any(|af| {
-        let af_val = norm(af.value());
-        af_val == rel_norm
-            || af_val.ends_with(&format!("/{rel_norm}"))
-            || rel_norm.ends_with(&format!("/{af_val}"))
-    })
+    alive_files
+        .paths
+        .iter()
+        .any(|af| paths_equivalent(rel, af.value()))
 }
 
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
@@ -297,5 +334,59 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         }
 
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+    }
+}
+
+#[cfg(test)]
+mod path_alive_tests {
+    use super::is_path_alive;
+    use shared::common::taxonomy_path_vo::FilePath;
+    use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
+    use std::collections::HashSet;
+
+    fn alive(paths: &[&str]) -> ReachabilityResult {
+        ReachabilityResult::new(
+            paths
+                .iter()
+                .filter_map(|p| FilePath::new(p.to_string()).ok())
+                .collect::<HashSet<_>>(),
+        )
+    }
+
+    #[test]
+    fn exact_workspace_relative_match_is_alive() {
+        let set = alive(&["crates/a/src/capabilities_foo.rs"]);
+        assert!(is_path_alive("crates/a/src/capabilities_foo.rs", &set));
+    }
+
+    #[test]
+    fn suffix_match_at_separator_boundary_is_alive() {
+        // Deeper absolute path still resolves to the same relative file.
+        let set = alive(&["crates/a/src/capabilities_foo.rs"]);
+        assert!(is_path_alive("a/src/capabilities_foo.rs", &set));
+    }
+
+    #[test]
+    fn partial_stem_does_not_false_match() {
+        // `xcontract_foo.rs` must NOT match `contract_foo.rs`.
+        let set = alive(&["crates/a/src/contract_foo.rs"]);
+        assert!(!is_path_alive("crates/a/src/xcontract_foo.rs", &set));
+        assert!(!is_path_alive("contract_foo.rs", &set));
+    }
+
+    #[test]
+    fn same_basename_in_other_module_does_not_false_match() {
+        // A `lib.rs`/`mod.rs` in a different module must not validate an
+        // unrelated file with the same basename.
+        let set = alive(&["crates/a/src/lib.rs"]);
+        assert!(!is_path_alive("crates/b/src/lib.rs", &set));
+        assert!(!is_path_alive("lib.rs", &set));
+    }
+
+    #[test]
+    fn leading_dot_slash_and_backslashes_are_normalized() {
+        let set = alive(&["crates/a/src/contract_foo.rs"]);
+        assert!(is_path_alive("./crates/a/src/contract_foo.rs", &set));
+        assert!(is_path_alive("crates\\a\\src\\contract_foo.rs", &set));
     }
 }

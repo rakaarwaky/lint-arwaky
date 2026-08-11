@@ -1,10 +1,10 @@
 // PURPOSE: Container-aware wiring propagation for DI traceability (issues #191-193).
 // Stateless, domain-agnostic — reusable across crates.
 //
-// Two synthetic-edge builders complement the import graph so BFS reachability can
+// Synthetic-edge builders complement the import graph so BFS reachability can
 // follow dependency-injection paths that are invisible to static imports:
 //
-//  1. `add_impl_bridge_edges`   — contract → capabilities bridge.
+//  1. `add_impl_bridge_edges`    — contract → capabilities bridge.
 //     A capability implements a contract via `impl Trait for T` (Rust),
 //     `class T(Base)` (Python), or `class T implements I` (TypeScript). The
 //     import graph stops at the contract, so we add an edge contract → capability
@@ -16,6 +16,13 @@
 //     *used identifiers* against the workspace symbol table and add an edge
 //     container → each referenced defining file. Whole-word, AST-derived
 //     identifiers keep this precise (no substring guesses).
+//
+//  3. `add_lib_rs_edges`         — crate entry cross-links for Rust workspaces.
+//     All `lib.rs` roots are mutually linked so BFS escapes any single crate.
+//
+//  4. `build_reverse_index`      — inbound-link map derived from the forward graph
+//     once every synthetic edge has been added, keeping import-only and
+//     DI-derived inbound links consistent for all orphan analyzers.
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
@@ -185,4 +192,52 @@ pub fn path_to_relative(path: &Path, root: &Path) -> String {
     path.strip_prefix(root)
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_else(|_| path.to_string_lossy().to_string())
+}
+
+/// Cross-links every `lib.rs` entry point with every other, so BFS reachability
+/// can escape a single Rust crate through its crate root.
+///
+/// # Arguments
+///
+/// * `all_files` - Workspace-relative file paths to inspect.
+/// * `forward` - Forward dependency graph to update.
+pub fn add_lib_rs_edges(all_files: &[String], forward: &mut HashMap<String, Vec<String>>) {
+    let lib_rs_files: Vec<String> = all_files
+        .iter()
+        .filter(|f| f.ends_with("/lib.rs"))
+        .cloned()
+        .collect();
+    for lib in &lib_rs_files {
+        for other_lib in &lib_rs_files {
+            if lib != other_lib {
+                forward
+                    .entry(lib.clone())
+                    .or_default()
+                    .push(other_lib.clone());
+            }
+        }
+    }
+}
+
+/// Builds the inbound-link map from the forward dependency graph.
+///
+/// Must be called after every synthetic edge (impl bridges, container wiring,
+/// lib.rs cross-links) has been added so all analyzers observe the same
+/// inbound links.
+///
+/// # Arguments
+///
+/// * `forward` - Forward dependency graph containing all edges.
+///
+/// # Returns
+///
+/// A map from each target path to the paths that reference it.
+pub fn build_reverse_index(forward: &HashMap<String, Vec<String>>) -> HashMap<String, Vec<String>> {
+    let mut reverse: HashMap<String, Vec<String>> = HashMap::new();
+    for (src, targets) in forward {
+        for tgt in targets {
+            reverse.entry(tgt.clone()).or_default().push(src.clone());
+        }
+    }
+    reverse
 }
