@@ -4,15 +4,50 @@ See [README.md](README.md) for the current project overview and [TEST.md](TEST.m
 
 ## 3.5.0 (2026-08-12)
 
+### Features
+
+- **DI-aware orphan traceability (issues #191-193)**: Orphan detection now
+  follows dependency-injection wiring — container files (`*_container.*`) add
+  synthetic edges to the import graph, and contract→capabilities trait impl
+  bridges are traced via `InheritanceMap`. Eliminates false-positive
+  AES503/AES505 findings on DI-based projects.
+- **Three-strategy Python import resolution**: `resolve_import_target()` now
+  handles double-prefix paths (`modules.image.src.agent_...`) and bare module
+  names in nested dirs (Strategy C via stem index), fixing chained-import
+  reachability for AES503. Includes 6 unit + 2 acceptance tests.
+- **Deterministic O(1) stem index (Strategy C)**: `resolve_import_target()`
+  now uses a sorted `HashMap<stem, Vec<path>>` instead of `HashSet::iter().find()`,
+  making resolution deterministic when files share a stem and reducing
+  per-import complexity from O(imports × files) to O(1).
+- **CI automation workflows**: PR labeler, solo-developer automation, and
+  release-via-PR flow (protected `main` now releases through release PRs
+  instead of direct tag pushes).
+
 ### Bug Fixes
 
-- fix: filter external lint violations outside workspace member dirs
-- fix: address PR review comments on member-dir filter
+- **External lint scans no longer report root-level files** outside
+  `crates/`/`packages`/`modules` (e.g. `setup.py`) — `lac scan workspaces-good`
+  returns 0 violations.
+- **Orphan-rules reachability normalization**: direct contract reachability
+  check normalized; AES503 message improved when capabilities are reachable
+  via DI impl bridge.
+- **syn 3.0.3 compatibility**: adapted to the `trait_` tuple change.
+- **workspaces-good fixture formatting**: rustfmt applied to clear a
+  false-positive gate.
 
-### Maintenance
+### CI / Maintenance
 
-- ci: install sccache in release workflow (fixes release builds failing with
-  `sccache: No such file or directory` from the tracked `.cargo/config.toml`)
+- **Release workflow sccache fix**: release builds were failing with
+  `sccache: No such file or directory` because the tracked `.cargo/config.toml`
+  sets `rustc-wrapper = "sccache"` but the release job never installed it —
+  now installs `mozilla-actions/sccache-action`.
+- **sccache workflow hardening**: consistent sccache setup across CI jobs,
+  disabled GitHub cache backend, pinned actions to verified SHAs, zizmor
+  template-injection warnings resolved.
+- **Dependency bumps**: syn 3.0.3, rmcp 3.1.2, async-trait 0.1.92, thiserror
+  2.0.20, clap 4.6.6, ignore 0.4.33 + grouped dependabot updates.
+- **Repowise/Codacy config**: fixture workspaces excluded from indexing and
+  static analysis; local cache files and worktrees ignored.
 
 ---
 
