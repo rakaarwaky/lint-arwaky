@@ -91,7 +91,7 @@ jobs:
         run: ./lint-arwaky-mcp --version || true
 
       - name: Smoke scan
-        run: ./lint-arwaky-cli report . --output-format json | grep '"score"'
+        run: ./lint-arwaky-cli scan . --format json | grep '"total_violations"'
 
   provenance:
     name: Generate SLSA provenance
