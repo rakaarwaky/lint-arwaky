@@ -1,8 +1,8 @@
 ---
 name: setup-ci-quality-gates
-description: Set up a complete CI system with quality gates, architecture enforcement, and AI code review for a Rust multi-crate workspace. Covers GitHub Actions workflows, branch protection rulesets, self-linting, and integrating CodeRabbit, Codacy, cubic, and Repowise. Use when asked to create or replicate CI like this project's.
+description: Set up a complete CI system with quality gates, architecture enforcement, and AI code review for a multi-language workspace (Rust, Python, TypeScript). Covers GitHub Actions workflows, branch protection rulesets, self-linting, and integrating CodeRabbit, Codacy, cubic, and Repowise. Use when asked to create or replicate CI like this project's.
 metadata:
-  tags: [ci, github-actions, quality-gates, code-review, coderabbit, codacy, cubic, repowise, rust, self-lint, architecture, aes]
+  tags: [ci, github-actions, quality-gates, code-review, coderabbit, codacy, cubic, repowise, rust, python, typescript, self-lint, architecture, aes]
   triggers:
     - "setup ci"
     - "quality gates"
@@ -15,6 +15,8 @@ metadata:
   dependencies: []
   related:
     - lint-arwaky-rust
+    - lint-arwaky-python
+    - lint-arwaky-typescript
     - repowise-scan
     - role-quality-analysis
     - role-tech-lead
@@ -27,6 +29,22 @@ Actions + a branch-protection ruleset, architecture enforcement via the
 project's own linter (self-lint), and four AI review layers (CodeRabbit,
 Codacy, cubic, Repowise). This is a copy-and-extend blueprint, not a
 one-off checklist — adapt names and paths to the target repo.
+
+**Language-agnostic.** The pattern (quality gates → branch protection →
+AI review) applies to any language. The commands below are this repo's
+Rust flavor; substitute per language:
+
+| Concern | Rust | Python | TypeScript/JS |
+|---|---|---|---|
+| Format | `cargo fmt --check` | `ruff format --check` | `prettier --check` |
+| Lint | `cargo clippy -D warnings` | `ruff check` + `mypy` | `eslint` + `tsc --noEmit` |
+| Tests | `cargo nextest run` | `pytest` | `vitest` / `jest` |
+| Security deps | `cargo audit` | `bandit` + `pip-audit` | `npm audit` / `eslint-plugin-security` |
+| Build | `cargo build --release` | `python -m build` | `tsc` / `vite build` |
+
+The self-lint job is the one part that is inherently project-specific: it
+runs **this** linter (`lint-arwaky-cli`) on the repo's own multi-language
+workspace (`crates/`, `modules/`, `packages/`).
 
 ## Architecture overview
 
@@ -55,7 +73,8 @@ PR opened / pushed
 
 ## 1. GitHub Actions workflow (.github/workflows/ci.yml)
 
-Five jobs on `ubuntu-latest`; cache with sccache + Swatinem/rust-cache.
+Five jobs on `ubuntu-latest` (Rust flavor shown; see the table at the top
+for Python/TypeScript equivalents). Cache with sccache + Swatinem/rust-cache.
 
 | Job | Command | Notes |
 |---|---|---|
@@ -213,7 +232,7 @@ tunes scoring policy (see the `repowise-scan` skill).
 ## 5. Local quality gates (scripts/gates.sh)
 
 Reproduce CI locally before pushing — the pre-push hook runs the same
-gates. Run:
+gates (Rust flavor; swap commands per language from the table at the top):
 
 ```bash
 bash scripts/gates.sh          # fmt + clippy + self-lint + AES codes + tests
