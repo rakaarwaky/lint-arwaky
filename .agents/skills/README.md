@@ -6,6 +6,7 @@ Each skill is a self-contained directory with a `SKILL.md` file defining rules, 
 
 .agents/skills/
 ├── add-docs-<language>              # USE when you work on documentation
+├── ci-quality-gates                # USE to set up CI, quality gates, branch protection, AI review bots
 ├── cleanup-consolidate-<language>   # USE when you work on cleanup & consolidation
 ├── create-agent-<language>          # USE when you work on Agent layer
 ├── create-capabilities-<language>   # USE when you work on Capabilities layer
