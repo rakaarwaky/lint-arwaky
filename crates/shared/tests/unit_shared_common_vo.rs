@@ -634,6 +634,22 @@ fn python_generic_brackets_with_space_not_flagged_as_bare_list_dict() {
         "dict [K, V] should not be bare dict"
     );
 
+    // Parameter-side spaced generic annotations are also not bare.
+    let found =
+        python_signature_uses_forbidden_primitive("def run(self, items: list [ResultVO]) -> bool:");
+    assert!(
+        !found.contains(&"list"),
+        "param list [ResultVO] should not be bare list"
+    );
+
+    let found = python_signature_uses_forbidden_primitive(
+        "def run(self, mapping: dict [KeyVO, ValueVO]) -> bool:",
+    );
+    assert!(
+        !found.contains(&"dict"),
+        "param dict [K, V] should not be bare dict"
+    );
+
     // Bare list/dict without brackets are still flagged.
     let found = python_signature_uses_forbidden_primitive("def run(self) -> list:");
     assert!(found.contains(&"list"));

@@ -205,7 +205,8 @@ fn collect_python_param_primitives(lower: &str, forbidden: &mut Vec<&'static str
 }
 
 /// True when `haystack` contains `prefix` as a whole token that is NOT
-/// followed by a generic bracket (`[`) — i.e. a bare `list`/`dict`.
+/// followed by a generic bracket (`[`, allowing whitespace between) —
+/// i.e. a bare `list`/`dict`.
 fn contains_bare_token(haystack: &str, prefix: &str) -> bool {
     let prefix_len = prefix.len();
     haystack.match_indices(prefix).any(|(i, _)| {
@@ -215,7 +216,9 @@ fn contains_bare_token(haystack: &str, prefix: &str) -> bool {
         let Some(next) = rest.chars().next() else {
             return true; // prefix at end of string — bare
         };
-        !next.is_alphanumeric() && next != '_' && next != '['
+        // Whole-token boundary AND not a parameterized generic type
+        // (`list [ResultVO]` / `list[ResultVO]` are not bare).
+        !next.is_alphanumeric() && next != '_' && !rest.trim_start().starts_with('[')
     })
 }
 
