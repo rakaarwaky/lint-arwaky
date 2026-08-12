@@ -194,13 +194,29 @@ fn collect_python_param_primitives(lower: &str, forbidden: &mut Vec<&'static str
     if contains_token_prefix(lower, ": float") {
         forbidden.push("float");
     }
-    // Only flag bare `list`/`dict` without type parameters (e.g., `List[ResultVO]` is OK)
-    if contains_token_prefix(lower, ": list") && !lower.contains(": list[") {
+    // Only flag bare `list`/`dict` without type parameters. `list [ResultVO]`
+    // (whitespace before the bracket) is parameterized, not bare.
+    if contains_bare_token(lower, ": list") {
         forbidden.push("list");
     }
-    if contains_token_prefix(lower, ": dict") && !lower.contains(": dict[") {
+    if contains_bare_token(lower, ": dict") {
         forbidden.push("dict");
     }
+}
+
+/// True when `haystack` contains `prefix` as a whole token that is NOT
+/// followed by a generic bracket (`[`) — i.e. a bare `list`/`dict`.
+fn contains_bare_token(haystack: &str, prefix: &str) -> bool {
+    let prefix_len = prefix.len();
+    haystack.match_indices(prefix).any(|(i, _)| {
+        let Some(rest) = haystack.get(i + prefix_len..) else {
+            return true; // prefix at end of string — bare
+        };
+        let Some(next) = rest.chars().next() else {
+            return true; // prefix at end of string — bare
+        };
+        !next.is_alphanumeric() && next != '_' && next != '['
+    })
 }
 
 /// True when `haystack` contains `prefix` followed by a non-identifier

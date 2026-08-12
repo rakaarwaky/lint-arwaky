@@ -595,37 +595,43 @@ impl InboundLinkMap {
     /// `foo_vo.rs` does not match `bar_vo.rs`.
     /// Picks the longest (most specific) matching key; equal-length keys are
     /// broken lexicographically so results are deterministic regardless of
-    /// HashMap iteration order.
+    /// HashMap iteration order. Keys are normalized the same way the matcher
+    /// normalizes them, so `/src/a.rs` and `src/a.rs` score identically.
     fn boundary_suffix(&self, path: &str) -> Option<&Vec<String>> {
-        let clean = path.strip_prefix("./").unwrap_or(path);
-        let mut best: Option<(&Vec<String>, usize, &str)> = None;
+        let clean = normalize_path(path.strip_prefix("./").unwrap_or(path));
+        let mut best: Option<(&Vec<String>, usize, String)> = None;
         for (k, v) in &self.mapping {
-            let k_clean = k.strip_prefix("./").unwrap_or(k);
-            if k_clean.is_empty() || clean.is_empty() {
+            let k_norm = normalize_path(k.strip_prefix("./").unwrap_or(k));
+            if k_norm.is_empty() || clean.is_empty() {
                 continue;
             }
-            let matched_len = if boundary_ends_with(k_clean, clean) {
-                Some(k_clean.len())
-            } else if boundary_ends_with(clean, k_clean) {
+            let matched_len = if boundary_ends_with(k_norm, clean) {
+                Some(k_norm.len())
+            } else if boundary_ends_with(clean, k_norm) {
                 // Reverse direction: the matching key's length is what makes a
-                // candidate specific, so score by k_clean.len() here too.
-                Some(k_clean.len())
+                // candidate specific, so score by k_norm.len() here too.
+                Some(k_norm.len())
             } else {
                 None
             };
             let Some(len) = matched_len else { continue };
             let better = match best {
                 None => true,
-                Some((_, best_len, best_key)) => {
-                    len > best_len || (len == best_len && k_clean < best_key)
+                Some((_, best_len, ref best_key)) => {
+                    len > best_len || (len == best_len && k_norm < best_key.as_str())
                 }
             };
             if better {
-                best = Some((v, len, k_clean));
+                best = Some((v, len, k_norm.to_string()));
             }
         }
         best.map(|(v, _, _)| v)
     }
+}
+
+/// Strip leading `./` and `/` so equivalent path forms compare identically.
+fn normalize_path(p: &str) -> &str {
+    p.trim_start_matches("./").trim_start_matches('/')
 }
 
 /// True when `full` ends with `suffix` and the boundary before the suffix is
