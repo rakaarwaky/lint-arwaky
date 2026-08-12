@@ -2,6 +2,20 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 3.5.0 (2026-08-12)
+
+### Bug Fixes
+
+- fix: filter external lint violations outside workspace member dirs
+- fix: address PR review comments on member-dir filter
+
+### Maintenance
+
+- ci: install sccache in release workflow (fixes release builds failing with
+  `sccache: No such file or directory` from the tracked `.cargo/config.toml`)
+
+---
+
 ## 2.0.0 (2026-08-08)
 
 ### Added
