@@ -8,6 +8,7 @@
 // The surface layer performs all pre-computation (language detection, config
 // loading) and passes an `ExternalLintContext` to the orchestrator, which
 // runs adapters with zero filesystem I/O.
+use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
 
@@ -69,12 +70,49 @@ pub fn collect_external_direct(
         .map(ViolationItem::from_lint_result)
         .collect();
 
+    // External tools (bandit, ruff, ...) scan the whole target tree, including
+    // files outside the workspace member dirs (crates/ packages/ modules/).
+    // Internal scanners already filter via build_file_index_impl; mirror that
+    // here so root-level files (e.g. setup.py) are not reported.
+    filter_outside_member_dirs(&mut violations, &root, filesystem.as_ref());
+
     if let Some(ref filter_str) = filter {
         let filter_upper = filter_str.to_uppercase();
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
     Ok(violations)
+}
+
+/// Drop violations whose file is outside any workspace member dir
+/// (crates/, packages/, modules/) when the target is (or is inside) a
+/// workspace root that defines member dirs. Mirrors `build_file_index_impl`.
+pub fn filter_outside_member_dirs(
+    violations: &mut Vec<ViolationItem>,
+    root: &str,
+    fs: &dyn IFilesystemAggregate,
+) {
+    let root_path = Path::new(root);
+    let ws_root = match fs.find_workspace_root(root_path) {
+        Some(r) => r,
+        None => return,
+    };
+    let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
+        .iter()
+        .filter(|d| ws_root.join(d).is_dir())
+        .copied()
+        .collect();
+    if member_dirs.is_empty() {
+        return;
+    }
+    violations.retain(|v| {
+        let file_path = Path::new(&v.file.value);
+        let rel = file_path.strip_prefix(&ws_root).unwrap_or(file_path);
+        let rel_str = rel.to_string_lossy();
+        member_dirs
+            .iter()
+            .any(|d| rel_str.starts_with(&format!("{}/", d)))
+    });
 }
 
 /// Walk up from `root_path` looking for lint_arwaky.config.*.yaml files.

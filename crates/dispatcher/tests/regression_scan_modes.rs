@@ -263,3 +263,72 @@ fn regression_bad_typescript_workspace() {
         count_violations(&json)
     );
 }
+
+// ═══════════════════════════════════════════════════════════════
+// External member-dirs filter (regression: setup.py at workspace root)
+// ═══════════════════════════════════════════════════════════════
+
+fn violation_for(path: &str) -> shared::common::ViolationItem {
+    shared::common::ViolationItem {
+        code: shared::common::taxonomy_error_vo::ErrorCode::raw("B307"),
+        file: FilePath::new(path.to_string()).unwrap(),
+        line: shared::common::taxonomy_common_vo::LineNumber::new(1),
+        column: shared::common::taxonomy_common_vo::ColumnNumber::new(1),
+        message: shared::common::taxonomy_message_vo::LintMessage::new("test"),
+        severity: shared::common::taxonomy_severity_vo::Severity::MEDIUM,
+    }
+}
+
+#[test]
+fn regression_external_filter_keeps_member_files_drops_root_files() {
+    let ws = workspace_root().join("workspaces-good");
+    let ws_str = ws.to_string_lossy().to_string();
+
+    let mut violations = vec![
+        // Root-level file (e.g. setup.py) — must be dropped.
+        violation_for(&format!("{}/setup.py", ws_str)),
+        // Inside a member dir — must be kept.
+        violation_for(&format!(
+            "{}/modules/addition/src/capabilities_addition_analyzer.py",
+            ws_str
+        )),
+        // Inside another member dir — must be kept.
+        violation_for(&format!(
+            "{}/crates/calculator/src/agent_calculator_orchestrator.rs",
+            ws_str
+        )),
+    ];
+
+    dispatcher_lint_arwaky::surface_external_action::filter_outside_member_dirs(
+        &mut violations,
+        &ws_str,
+        fs().as_ref(),
+    );
+
+    assert_eq!(violations.len(), 2, "got: {:?}", violations);
+    assert!(
+        violations
+            .iter()
+            .all(|v| v.file.value.contains("/modules/") || v.file.value.contains("/crates/")),
+        "only member-dir files must remain, got: {:?}",
+        violations
+    );
+}
+
+#[test]
+fn regression_external_filter_noop_outside_workspace() {
+    // A non-workspace path (no crates/packages/modules above it) must be unfiltered.
+    let scratch = std::env::temp_dir();
+    let target = scratch.join("lint-arwaky-non-workspace");
+    let _ = std::fs::create_dir_all(&target);
+    let target_str = target.to_string_lossy().to_string();
+    let file_str = target.join("standalone.py").to_string_lossy().to_string();
+
+    let mut violations = vec![violation_for(&file_str)];
+    dispatcher_lint_arwaky::surface_external_action::filter_outside_member_dirs(
+        &mut violations,
+        &target_str,
+        fs().as_ref(),
+    );
+    assert_eq!(violations.len(), 1);
+}
