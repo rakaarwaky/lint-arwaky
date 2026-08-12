@@ -20,7 +20,9 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  CARGO_INCREMENTAL: 1
+  # sccache does not work with incremental compilation; keep it off so the
+  # sccache action (installed in the build job) provides the caching.
+  CARGO_INCREMENTAL: 0
   RUSTFLAGS: "-C link-arg=-fuse-ld=mold"
 
 jobs:
@@ -36,13 +38,17 @@ jobs:
       - name: Install mold linker
         run: sudo apt-get update && sudo apt-get install -y mold
 
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+
       - name: Cache cargo (release)
         uses: actions/cache@v6
         with:
+          # sccache (above) handles compilation caching; only registry/git
+          # index caches are worthwhile here.
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            target/release
           key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-release-
