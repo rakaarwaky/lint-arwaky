@@ -6,7 +6,6 @@ Each skill is a self-contained directory with a `SKILL.md` file defining rules, 
 
 .agents/skills/
 ├── add-docs-<language>              # USE when you work on documentation
-├── ci-quality-gates                # USE to set up CI, quality gates, branch protection, AI review bots
 ├── cleanup-consolidate-<language>   # USE when you work on cleanup & consolidation
 ├── create-agent-<language>          # USE when you work on Agent layer
 ├── create-capabilities-<language>   # USE when you work on Capabilities layer
@@ -23,7 +22,8 @@ Each skill is a self-contained directory with a `SKILL.md` file defining rules, 
 ├── role-business-analyst            # USE for requirements & business flow review
 ├── role-fullstack-developer         # USE to execute plans & implement fixes
 ├── role-quality-analysis            # USE for PR review, CI gates, merge readiness
-└── role-tech-lead                   # USE for code quality, security & performance review
+├── role-tech-lead                   # USE for code quality, security & performance review
+└── setup-ci-quality-gates           # USE to set up CI, quality gates, branch protection, AI review bots
 
 ## Naming Convention
 
@@ -40,6 +40,13 @@ Follow the pattern `role-<role-name>`:
 
 - **Role**: The review or execution role (architect, business-analyst, tech-lead, fullstack-developer)
 - Role skills produce plan files (architect, business-analyst, tech-lead) or execute them (fullstack-developer)
+
+### Process/Infrastructure Skills
+
+Follow the pattern `setup-<subject>` (gerund/action form):
+
+- **Subject**: What the skill sets up (ci-quality-gates, etc.)
+- These are not tied to one language — they document processes, tooling, or repo infrastructure.
 
 ## Role Workflow
 

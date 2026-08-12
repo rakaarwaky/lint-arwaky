@@ -1,5 +1,5 @@
 ---
-name: ci-quality-gates
+name: setup-ci-quality-gates
 description: Set up a complete CI system with quality gates, architecture enforcement, and AI code review for a Rust multi-crate workspace. Covers GitHub Actions workflows, branch protection rulesets, self-linting, and integrating CodeRabbit, Codacy, cubic, and Repowise. Use when asked to create or replicate CI like this project's.
 metadata:
   tags: [ci, github-actions, quality-gates, code-review, coderabbit, codacy, cubic, repowise, rust, self-lint, architecture, aes]
@@ -30,7 +30,7 @@ one-off checklist — adapt names and paths to the target repo.
 
 ## Architecture overview
 
-```
+```text
 PR opened / pushed
    │
    ├─ CI workflow (.github/workflows/ci.yml)
@@ -65,20 +65,37 @@ Five jobs on `ubuntu-latest`; cache with sccache + Swatinem/rust-cache.
 | `test` | `cargo nextest run --workspace --lib --tests -j 2` | needs: build; install nextest via curl |
 | `self-lint` | `lint-arwaky-cli check .` == 0 violations | needs: build; also assert ≥24 AES codes on `workspaces-bad` |
 
-Key env: `CARGO_INCREMENTAL=0` (sccache), `RUSTC_WRAPPER=sccache`,
-`CARGO_BUILD_JOBS=4`, `RUST_MIN_STACK=33554432`.
+Key env in `.github/workflows/ci.yml`: `RUSTC_WRAPPER=sccache`,
+`CARGO_BUILD_JOBS=4`, `RUST_MIN_STACK=33554432`. (`CARGO_INCREMENTAL=0`
+belongs in `scripts/gates.sh` for local runs, not in the workflow.)
 
 ### Self-lint job (architecture enforcement)
 
 This is the differentiator: the repo lints **itself** with its own
 architecture rules (AES 7-layer system). CI fails if the codebase violates
-its own rules:
+its own rules. The `self-lint` job runs two checks: zero violations on the
+whole repo, and the AES rule engine still fires all 24 codes on the
+intentional-violation fixture workspace (`workspaces-bad`) — the second
+check catches a linter that silently stops detecting anything:
 
 ```bash
-output=$(./target/debug/lint-arwaky-cli check . 2>&1)
+# 1. Whole-repo self-lint must be clean (exit code is authoritative;
+#    the parsed count is only for the log line).
+set -e
+output=$(./target/release/lint-arwaky-cli check . 2>&1) || { echo "$output"; exit 1; }
 violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+' || echo "0")
+echo "Violations: ${violations}"
 [ "${violations}" = "0" ]
+
+# 2. AES codes still fire on the bad workspace (≥24 unique AES codes).
+codes=$(./target/release/lint-arwaky-cli scan workspaces-bad 2>&1 \
+  | grep -oP "AES\d+" | sort -u | wc -l)
+echo "Unique codes: ${codes:-0}"
+[ "${codes:-0}" -ge 24 ]
 ```
+
+Use `cargo build --release` (or `--bin lint-arwaky-cli`) before these
+steps so the binary exists under `./target/release/`.
 
 ## 2. Branch protection: GitHub Ruleset
 
@@ -98,14 +115,35 @@ passes all gates. (This is why all work here uses worktrees + PRs.)
 Squash-merges a PR to `main` once required checks pass:
 
 ```yaml
+name: Auto-merge gated PRs
+
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
+
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   enable-auto-merge:
-    if: base.ref == 'main' && !draft && !merged
+    name: Enable auto-merge
+    runs-on: ubuntu-latest
+    if: >
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.merged == false
     steps:
-      - run: gh pr merge "$PR_NUMBER" --auto --squash --subject "$PR_TITLE"
+      - name: Enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # --auto holds the PR until required checks pass, then squash-merges.
+          gh pr merge "$PR_NUMBER" --auto --squash \
+            --subject "$PR_TITLE" || \
+            echo "Auto-merge not available yet — a later event will retry."
 ```
 
 Use env vars (not inline interpolation) to avoid command injection through
@@ -159,6 +197,8 @@ bot:
     - "crates/*/tests/**"
     - "scripts/**"
     - "tools/**"
+    - "log/**"
+    - "target/**"
     - "*.md"
   health_gate:
     mode: advisory
@@ -179,7 +219,7 @@ gates. Run:
 bash scripts/gates.sh          # fmt + clippy + self-lint + AES codes + tests
 CARGO_INCREMENTAL=0 cargo clippy --workspace --all-targets -- -D warnings
 cargo nextest run --workspace --lib --tests
-lint-arwaky-cli scan .         # whole repo, must be 0 violations
+lint-arwaky-cli check .        # whole repo, must be 0 violations
 ```
 
 ## 6. Supporting workflows
