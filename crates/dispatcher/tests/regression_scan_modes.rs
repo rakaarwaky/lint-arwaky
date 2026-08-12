@@ -297,6 +297,11 @@ fn regression_external_filter_keeps_member_files_drops_root_files() {
             "{}/crates/calculator/src/agent_calculator_orchestrator.rs",
             ws_str
         )),
+        // Inside the third member dir — must be kept.
+        violation_for(&format!(
+            "{}/packages/calculator/src/capabilities_calculator_analyzer.ts",
+            ws_str
+        )),
     ];
 
     dispatcher_lint_arwaky::surface_external_action::filter_outside_member_dirs(
@@ -305,11 +310,14 @@ fn regression_external_filter_keeps_member_files_drops_root_files() {
         fs().as_ref(),
     );
 
-    assert_eq!(violations.len(), 2, "got: {:?}", violations);
+    assert_eq!(violations.len(), 3, "got: {:?}", violations);
     assert!(
-        violations
-            .iter()
-            .all(|v| v.file.value.contains("/modules/") || v.file.value.contains("/crates/")),
+        violations.iter().all(|v| {
+            let p = std::path::Path::new(&v.file.value);
+            ["modules", "crates", "packages"]
+                .iter()
+                .any(|d| p.components().any(|c| c.as_os_str() == *d))
+        }),
         "only member-dir files must remain, got: {:?}",
         violations
     );

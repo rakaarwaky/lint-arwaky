@@ -108,10 +108,7 @@ pub fn filter_outside_member_dirs(
     violations.retain(|v| {
         let file_path = Path::new(&v.file.value);
         let rel = file_path.strip_prefix(&ws_root).unwrap_or(file_path);
-        let rel_str = rel.to_string_lossy();
-        member_dirs
-            .iter()
-            .any(|d| rel_str.starts_with(&format!("{}/", d)))
+        member_dirs.iter().any(|d| rel.starts_with(d))
     });
 }
 
