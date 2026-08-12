@@ -23,7 +23,10 @@ crates/root_tui_main_entry.rs
 # module's mod.rs/lib.rs; that is intrinsic to the AES layered architecture,
 # not removable duplication (merging would break the 327 dependents).
 # Known repowise false positive — exclude from health scoring.
+# Only verified-pure barrels are excluded; lib.rs carrying real logic is
+# re-included below so its health is still scored. build.rs is NOT excluded
+# (build scripts contain real logic).
 **/mod.rs
 **/lib.rs
-**/build.rs
+!crates/external-lint/src/lib.rs
 
