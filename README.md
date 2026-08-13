@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.5.0-blue" alt="version" />
+  <img src="https://img.shields.io/badge/version-3.5.1-blue" alt="version" />
   <img src="https://img.shields.io/badge/rust-1.70%2B-orange" alt="rust" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="license" />
   <img src="https://img.shields.io/badge/platform-linux%20%7C%20macOS-lightgrey" alt="platform" />
@@ -116,7 +116,7 @@ Requires Rust 1.70+ and Cargo.
 
 ```bash
 lint-arwaky-cli version
-# Lint Arwaky v3.5.0
+# Lint Arwaky v3.5.1
 ```
 
 ### First Scan
@@ -160,7 +160,7 @@ your-project/
 curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/install.remote.sh | bash
 
 # Or install from source
-cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v3.5.0
+cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v3.5.1
 ```
 
 ### 3. Initialize config + adapters

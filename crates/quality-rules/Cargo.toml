@@ -1,6 +1,6 @@
 [package]
 name = "quality-rules-lint-arwaky"
-version = "2.0.0"
+version = "3.5.1"
 edition = "2024"
 description = "Code-quality analyzers covering AES301–AES305."
 license = "MIT"
