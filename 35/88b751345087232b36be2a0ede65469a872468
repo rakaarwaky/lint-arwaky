@@ -1,0 +1,29 @@
+crates/filesystem/src/utility_import_extractor.rs
+  s_69b021998f8dc5::t_0529ac574c2507 584
+  s_69b021998f8dc5::t_0e4ce4ad9b2593 364-365
+  s_69b021998f8dc5::t_e4810076bf14ae 404-406
+  s_69b021998f8dc5::t_d6a536981cb714 518-520,522,526-537,544-554
+  s_69b021998f8dc5::t_31cfeac23b8c2e 581,583,585-586
+  s_69b021998f8dc5::t_aab05ef845cec7 317-327,335-336
+  s_69b021998f8dc5::t_51f00ae49ea1fc 74-79
+crates/filesystem/tests/unit_filesystem_import_extractor.rs
+  s_69b021998f8dc5::t_2a61648f2b6029 142-202
+crates/import-rules/tests/acceptance_AES203.rs
+  s_69b021998f8dc5::t_1ed4c5321f9298 389-419
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "3588b751345087232b36be2a0ede65469a872468",
+  "prompts": {},
+  "sessions": {
+    "s_69b021998f8dc5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_006340db0ffe7Mfmlzy0cIr6se",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "rakaarwaky <arwaky90@gmail.com>"
+    }
+  }
+}
