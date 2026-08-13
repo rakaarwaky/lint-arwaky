@@ -1,0 +1,72 @@
+crates/cli-commands/Cargo.toml
+  s_69b021998f8dc5::t_7943575eb6d9a7 3
+CHANGELOG.md
+  s_69b021998f8dc5::t_66af78b369b369 5-19
+crates/dispatcher/Cargo.toml
+  s_69b021998f8dc5::t_7dcadda779cadc 3
+crates/quality-rules/Cargo.toml
+  s_69b021998f8dc5::t_0ecaf57139c049 3
+crates/external-lint/Cargo.toml
+  s_69b021998f8dc5::t_87a72809cb3125 3
+crates/tui/Cargo.toml
+  s_69b021998f8dc5::t_1d249d0e914999 3
+crates/orphan-rules/Cargo.toml
+  s_69b021998f8dc5::t_30a11bd2b0f7dc 3
+crates/file-watch/Cargo.toml
+  s_69b021998f8dc5::t_dc94ea70c79492 3
+crates/git-hooks/Cargo.toml
+  s_69b021998f8dc5::t_910b57784feb6e 3
+crates/mcp-server/Cargo.toml
+  s_69b021998f8dc5::t_1a5c2b47795c08 3
+crates/filesystem/Cargo.toml
+  s_69b021998f8dc5::t_1bf17b32a4b27a 3
+crates/config-system/Cargo.toml
+  s_69b021998f8dc5::t_93beaca13b62d5 3
+crates/role-rules/Cargo.toml
+  s_69b021998f8dc5::t_669968ecd9f0c0 3
+scripts/bump.sh
+  s_69b021998f8dc5::t_f3a820acc6eced 21-22
+  s_69b021998f8dc5::t_6e1729553188f7 179
+  s_69b021998f8dc5::t_ec5b4e79da26cc 108-110
+  s_69b021998f8dc5::t_e7e9232377709e 104-105,107,111-130
+crates/import-rules/Cargo.toml
+  s_69b021998f8dc5::t_f4c915e1caa5e9 3
+scripts/release.sh
+  s_69b021998f8dc5::t_ad8d1ad8eb3f87 141-142,144,148-165
+  s_69b021998f8dc5::t_888d3b0d0151c9 145-147
+Cargo.toml
+  s_69b021998f8dc5::t_c222edb6e29e72 44-62
+  s_69b021998f8dc5::t_64641c95ace38f 100
+crates/report-formatter/Cargo.toml
+  s_69b021998f8dc5::t_8e86a1a1e35b44 3
+crates/auto-fix/Cargo.toml
+  s_69b021998f8dc5::t_0fbcfe824e2a70 3
+crates/naming-rules/Cargo.toml
+  s_69b021998f8dc5::t_c8a980a5e6c1c6 3
+README.md
+  s_69b021998f8dc5::t_163390dc7ed9f4 119
+  s_69b021998f8dc5::t_1eaac6549fa326 9
+  s_69b021998f8dc5::t_7b814b3f262faf 163
+crates/shared/Cargo.toml
+  s_69b021998f8dc5::t_d040a832e93891 3
+crates/maintenance/Cargo.toml
+  s_69b021998f8dc5::t_416598fa898375 3
+crates/project-setup/Cargo.toml
+  s_69b021998f8dc5::t_1c9745c0fb7ab2 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "33d2745bab352df91f69a35c76b19727af966b99",
+  "prompts": {},
+  "sessions": {
+    "s_69b021998f8dc5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_006340db0ffe7Mfmlzy0cIr6se",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "rakaarwaky <arwaky90@gmail.com>"
+    }
+  }
+}
