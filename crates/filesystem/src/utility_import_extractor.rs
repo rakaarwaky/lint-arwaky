@@ -66,6 +66,23 @@ fn extract_scoped_path(node: tree_sitter::Node, content: &str) -> Option<String>
     Some(parts.join("::"))
 }
 
+/// Extract the module-scope binding for a Rust `use ... as ...` clause.
+/// `use foo::bar as baz` binds `baz` (field `alias` on the `use_as_clause` node).
+fn extract_rust_use_alias(node: tree_sitter::Node, content: &str) -> Option<String> {
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        if child.kind() == "use_as_clause"
+            && let Some(alias_node) = child.child_by_field_name("alias")
+        {
+            let alias = text_of(alias_node, content);
+            if !alias.is_empty() {
+                return Some(alias);
+            }
+        }
+    }
+    None
+}
+
 fn extract_js_string_child(node: tree_sitter::Node, content: &str) -> Option<String> {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
@@ -192,7 +209,7 @@ fn extract_rust_imports(
         let is_glob = text.contains("::*");
 
         if let Some(names) = extract_grouped_use_names(node, content) {
-            for name in names {
+            for (name, alias) in names {
                 imports.push(ImportEntry {
                     source_file: source_file.to_path_buf(),
                     raw_path: name,
@@ -205,7 +222,7 @@ fn extract_rust_imports(
                     language: Language::Rust,
                     is_dynamic: false,
                     is_resolved: false,
-                    symbols: Vec::new(),
+                    symbols: alias.map(|a| vec![a]).unwrap_or_default(),
                     is_reexport: is_pub,
                     is_wildcard: false,
                 });
@@ -223,7 +240,9 @@ fn extract_rust_imports(
                 language: Language::Rust,
                 is_dynamic: false,
                 is_resolved: false,
-                symbols: Vec::new(),
+                symbols: extract_rust_use_alias(node, content)
+                    .map(|a| vec![a])
+                    .unwrap_or_default(),
                 is_reexport: is_pub,
                 is_wildcard: is_glob,
             });
@@ -268,7 +287,7 @@ fn extract_python_imports(
                 language: Language::Python,
                 is_dynamic: false,
                 is_resolved: false,
-                symbols: Vec::new(),
+                symbols: extract_python_import_bindings(node, content),
                 is_reexport: false,
                 is_wildcard: false,
             });
@@ -300,18 +319,72 @@ fn extract_python_from_names(node: tree_sitter::Node, content: &str) -> Vec<Stri
     let module_name_node = node.child_by_field_name("module_name");
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        if child.kind() == "dotted_name" || child.kind() == "identifier" {
-            // Skip the module_name field — it's the import path, not an imported symbol
-            if Some(child.id()) == module_name_node.map(|n| n.id()) {
-                continue;
+        match child.kind() {
+            "aliased_import" => {
+                // `from x import y as z` — module-scope binding is `z` (field `alias`),
+                // falling back to the original name `y` (field `name`) when no alias.
+                let binding = child
+                    .child_by_field_name("alias")
+                    .or_else(|| child.child_by_field_name("name"));
+                if let Some(binding) = binding {
+                    let name = text_of(binding, content);
+                    if !name.is_empty() {
+                        names.push(name);
+                    }
+                }
             }
-            let name = text_of(child, content);
-            if name != "*" && !name.is_empty() {
-                names.push(name);
+            "dotted_name" | "identifier" => {
+                // Skip the module_name field — it's the import path, not an imported symbol
+                if Some(child.id()) == module_name_node.map(|n| n.id()) {
+                    continue;
+                }
+                let name = text_of(child, content);
+                if name != "*" && !name.is_empty() {
+                    names.push(name);
+                }
             }
+            _ => {}
         }
     }
     names
+}
+
+/// Extract module-scope bindings introduced by an `import` statement.
+/// `import os` binds `os`; `import os.path` binds `os` (top-level package);
+/// `import os.path as p` binds `p` (the alias).
+fn extract_python_import_bindings(node: tree_sitter::Node, content: &str) -> Vec<String> {
+    let mut bindings = Vec::new();
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        match child.kind() {
+            "aliased_import" => {
+                let binding = child
+                    .child_by_field_name("alias")
+                    .or_else(|| child.child_by_field_name("name"));
+                if let Some(binding) = binding {
+                    let name = text_of(binding, content);
+                    if !name.is_empty() {
+                        bindings.push(name);
+                    }
+                }
+            }
+            "dotted_name" => {
+                let name = text_of(child, content);
+                let binding = name.split('.').next().unwrap_or(&name);
+                if !binding.is_empty() {
+                    bindings.push(binding.to_string());
+                }
+            }
+            "identifier" => {
+                let name = text_of(child, content);
+                if !name.is_empty() {
+                    bindings.push(name);
+                }
+            }
+            _ => {}
+        }
+    }
+    bindings
 }
 
 fn extract_js_imports(
@@ -327,7 +400,10 @@ fn extract_js_imports(
         if let Some(source) = extract_js_string_child(node, content) {
             let text = text_of(node, content);
             let is_type = text.starts_with("import type");
-            let symbols = extract_js_named_imports(&text);
+            let mut symbols = extract_js_named_imports(&text);
+            if let Some(default_binding) = extract_js_default_import_binding(&text) {
+                symbols.push(default_binding);
+            }
             imports.push(ImportEntry {
                 source_file: source_file.to_path_buf(),
                 raw_path: source,
@@ -411,6 +487,7 @@ fn extract_js_imports(
 
 /// Extract named import symbols from JS/TS import statement text.
 /// e.g. `import { CalculatorProtocol, ExpressionVO } from "..."` → ["CalculatorProtocol", "ExpressionVO"]
+/// Aliased bindings use the alias: `import { Foo as Bar } from "..."` → ["Bar"]
 fn extract_js_named_imports(text: &str) -> Vec<String> {
     if let Some(brace_start) = text.find('{') {
         if let Some(brace_end) = text.find('}') {
@@ -418,7 +495,13 @@ fn extract_js_named_imports(text: &str) -> Vec<String> {
             return inner
                 .split(',')
                 .filter_map(|part| {
-                    let name = part.split_whitespace().next()?;
+                    let trimmed = part.trim();
+                    // `X as Y` / `default as Y` — module-scope binding is `Y`
+                    let binding = trimmed
+                        .rsplit_once(" as ")
+                        .map(|(_, als)| als.trim())
+                        .unwrap_or(trimmed);
+                    let name = binding.split_whitespace().next()?;
                     if name.is_empty() || name == "*" || name == "type" {
                         None
                     } else {
@@ -431,7 +514,26 @@ fn extract_js_named_imports(text: &str) -> Vec<String> {
     Vec::new()
 }
 
-fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<Vec<String>> {
+/// Extract the default import binding from a JS/TS import statement.
+/// `import Foo from './mod'` → "Foo". Returns `None` for side-effect
+/// imports (`import './mod'`), wildcard imports, and type-only imports.
+fn extract_js_default_import_binding(text: &str) -> Option<String> {
+    if !text.contains(" from ") || text.contains("import type") {
+        return None;
+    }
+    let after_import = text.strip_prefix("import ")?;
+    let binding = after_import.split_whitespace().next()?;
+    if binding.is_empty() || binding == "*" || binding == "type" || binding.contains('{') {
+        None
+    } else {
+        Some(binding.to_string())
+    }
+}
+
+fn extract_grouped_use_names(
+    node: tree_sitter::Node,
+    content: &str,
+) -> Option<Vec<(String, Option<String>)>> {
     let text = text_of(node, content);
     let brace_start = text.find('{')?;
     // Find matching closing brace (respects nesting)
@@ -451,8 +553,13 @@ fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<V
         }
     }
     let brace_end = brace_end?;
-    // Module path: everything before '{', trimmed of trailing whitespace/colons.
-    let module_path = text[..brace_start].trim_end_matches("::").trim();
+    // Module path: everything before '{', trimmed of trailing whitespace/colons
+    // and the `use ` / `pub use ` declaration keywords.
+    let module_path = text[..brace_start]
+        .trim_start_matches("pub use ")
+        .trim_start_matches("use ")
+        .trim_end_matches("::")
+        .trim();
     let inner = &text[brace_start + 1..brace_end];
     // Recursively extract all leaf paths from nested braces
     let names = expand_grouped_names(module_path, inner);
@@ -462,7 +569,8 @@ fn extract_grouped_use_names(node: tree_sitter::Node, content: &str) -> Option<V
 /// Recursively expand grouped import names.
 /// Handles nested braces like `{foo::{Bar, Baz}, qux}` by recursing into
 /// each part that contains braces, collecting only leaf (brace-free) paths.
-fn expand_grouped_names(prefix: &str, inner: &str) -> Vec<String> {
+/// Returns `(full_path, alias)` — alias is `Some` for `X as Y` leaf symbols.
+fn expand_grouped_names(prefix: &str, inner: &str) -> Vec<(String, Option<String>)> {
     let parts = split_top_level_commas(inner);
     let mut result = Vec::new();
     for part in &parts {
@@ -501,13 +609,17 @@ fn expand_grouped_names(prefix: &str, inner: &str) -> Vec<String> {
                 result.extend(expand_grouped_names(&full_prefix, sub_inner));
             }
         } else {
-            // Leaf symbol: combine with prefix
-            let full = if prefix.is_empty() {
-                trimmed.to_string()
-            } else {
-                format!("{}::{}", prefix, trimmed)
+            // Leaf symbol: combine with prefix; split off ` as <alias>` if present
+            let (symbol, alias) = match trimmed.split_once(" as ") {
+                Some((sym, als)) => (sym.trim(), Some(als.trim().to_string())),
+                None => (trimmed, None),
             };
-            result.push(full);
+            let full = if prefix.is_empty() {
+                symbol.to_string()
+            } else {
+                format!("{}::{}", prefix, symbol)
+            };
+            result.push((full, alias));
         }
     }
     result

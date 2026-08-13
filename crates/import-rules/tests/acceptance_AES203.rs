@@ -221,6 +221,168 @@ fn aes203_future_import_not_flagged() {
     );
 }
 
+// ─── AES203: alias binding regression (import ... as <alias>) ──
+// Regression: aliased imports must resolve usage against the alias
+// binding name, not the original imported name.
+
+#[test]
+fn aes203_python_aliased_import_used_via_alias_not_flagged() {
+    // `from x import y as z` + usage of `z` — zero AES203 findings.
+    let content = "from os import getcwd as _gc\n\n\ndef show() -> str:\n    return _gc()\n";
+    let imports = vec![ImportEntry {
+        source_file: PathBuf::new(),
+        raw_path: "os".to_string(),
+        resolved_path: None,
+        import_type: ImportType::ImportFrom,
+        language: Language::Python,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["_gc".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    }];
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/app.py",
+            content,
+            &imports,
+            &["_gc".to_string()],
+            &no_traits(),
+        )
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Aliased import used via alias must not be flagged, got {}",
+        results.len()
+    );
+}
+
+#[test]
+fn aes203_python_aliased_import_truly_unused_still_flagged() {
+    // Aliased import that is never used must still produce AES203.
+    let content = "from os import getcwd as _gc\n\n\ndef show() -> str:\n    return \"static\"\n";
+    let imports = vec![ImportEntry {
+        source_file: PathBuf::new(),
+        raw_path: "os".to_string(),
+        resolved_path: None,
+        import_type: ImportType::ImportFrom,
+        language: Language::Python,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["_gc".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    }];
+    let results = checker()
+        .check_unused_imports("/tmp/test/src/app.py", content, &imports, &[], &no_traits())
+        .unwrap();
+    assert!(
+        !results.is_empty(),
+        "Truly unused aliased import must still be flagged"
+    );
+    assert!(
+        results[0].message.value.contains("_gc"),
+        "Message should mention the alias binding, got: {}",
+        results[0].message
+    );
+}
+
+#[test]
+fn aes203_python_plain_import_statement_uses_first_segment_binding() {
+    // `import os.path` binds `os` in module scope; usage via `os` is not unused.
+    let content = "import os.path\n\n\ndef show() -> str:\n    return os.path.join(\"a\", \"b\")\n";
+    let imports = vec![ImportEntry {
+        source_file: PathBuf::new(),
+        raw_path: "os.path".to_string(),
+        resolved_path: None,
+        import_type: ImportType::Import,
+        language: Language::Python,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["os".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    }];
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/app.py",
+            content,
+            &imports,
+            &["os".to_string(), "path".to_string()],
+            &no_traits(),
+        )
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Dotted import bound to first segment must not be flagged, got {}",
+        results.len()
+    );
+}
+
+#[test]
+fn aes203_rust_aliased_use_import_used_via_alias_not_flagged() {
+    // `use foo::bar as baz` + usage of `baz` — zero AES203 findings.
+    let content = "use std::collections::HashMap as Map;\n\nfn main() {\n    let _m: Map<u8, u8> = Map::new();\n}\n";
+    let imports = vec![ImportEntry {
+        source_file: PathBuf::new(),
+        raw_path: "std::collections::HashMap".to_string(),
+        resolved_path: None,
+        import_type: ImportType::Use,
+        language: Language::Rust,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["Map".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    }];
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/app.rs",
+            content,
+            &imports,
+            &["Map".to_string()],
+            &no_traits(),
+        )
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Aliased Rust use import must not be flagged, got {}",
+        results.len()
+    );
+}
+
+#[test]
+fn aes203_typescript_aliased_named_import_used_via_alias_not_flagged() {
+    // `import { Foo as Bar } from './mod'` + usage of `Bar` — zero findings.
+    let content = "import { Foo as Bar } from './mod';\n\nconst x: Bar = make();\n";
+    let imports = vec![ImportEntry {
+        source_file: PathBuf::new(),
+        raw_path: "./mod".to_string(),
+        resolved_path: None,
+        import_type: ImportType::ImportFrom,
+        language: Language::TypeScript,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["Bar".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    }];
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/app.ts",
+            content,
+            &imports,
+            &["Bar".to_string()],
+            &no_traits(),
+        )
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Aliased TS import must not be flagged, got {}",
+        results.len()
+    );
+}
+
 // ─── AES203: used identifiers from AST ────────────────────
 
 #[test]
