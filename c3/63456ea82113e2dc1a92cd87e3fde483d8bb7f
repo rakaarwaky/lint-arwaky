@@ -1,0 +1,33 @@
+crates/filesystem/src/utility_import_extractor.rs
+  s_69b021998f8dc5::t_14153bccbe42f7 490,498-499,504,517-530
+  s_69b021998f8dc5::t_4a33182937d7b1 500-503
+  s_69b021998f8dc5::t_b6cb0018dd1cde 533-534,536,572-573,612-616,618,620,622
+  s_69b021998f8dc5::t_32503295f4b5c5 69-85
+  s_69b021998f8dc5::t_cc0cdbd635a050 556-562
+  s_69b021998f8dc5::t_e60ab251a72dee 290
+  s_69b021998f8dc5::t_9a383f367b5872 322-334,336-344,346,352-387
+  s_69b021998f8dc5::t_bf9b0088e03ee2 212,225,243-245
+  s_69b021998f8dc5::t_76f7c0c2976996 403-406
+crates/import-rules/tests/acceptance_AES203.rs
+  s_69b021998f8dc5::t_880f617db2cf8f 224-385
+crates/filesystem/tests/unit_filesystem_import_extractor.rs
+  s_69b021998f8dc5::t_1a862d52df30fa 1-6,8-14,16-96,98-141
+  s_69b021998f8dc5::t_e24be626e4ca13 97
+  s_69b021998f8dc5::t_084f1d0f42af8f 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "c363456ea82113e2dc1a92cd87e3fde483d8bb7f",
+  "prompts": {},
+  "sessions": {
+    "s_69b021998f8dc5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_006340db0ffe7Mfmlzy0cIr6se",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "rakaarwaky <arwaky90@gmail.com>"
+    }
+  }
+}
