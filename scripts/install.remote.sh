@@ -116,7 +116,7 @@ esac
 
 # Try GitHub Release download (pre-built binary, NO cargo needed)
 echo "  Attempting pre-built binary download..."
-DOWNLOAD_URL="https://github.com/rakaarwaky/lint-arwaky/releases/download/v1.10.116/lint-arwaky-v1.10.116-linux-${ARCH}.tar.gz"
+DOWNLOAD_URL="https://github.com/rakaarwaky/lint-arwaky/releases/latest/download/lint-arwaky-latest-linux-${ARCH}.tar.gz"
 if curl -fsSL "$DOWNLOAD_URL" -o /tmp/lint-arwaky.tar.gz 2>/dev/null; then
     tar xzf /tmp/lint-arwaky.tar.gz -C "$INSTALL_BIN" lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui 2>/dev/null && {
         chmod +x "$INSTALL_BIN"/lint-arwaky-*

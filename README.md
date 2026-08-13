@@ -110,7 +110,7 @@ cd lint-arwaky
 bash scripts/install.local.sh
 ```
 
-Requires Rust 1.70+ and Cargo.
+Requires Rust 1.85.0 and Cargo.
 
 ### Verify
 
@@ -157,10 +157,12 @@ your-project/
 
 ```bash
 # Pre-built binary (Linux x86_64)
-curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/install.remote.sh | bash
+curl -fsSL https://github.com/rakaarwaky/lint-arwaky/releases/latest/download/lint-arwaky-latest-linux-x86_64.tar.gz -o /tmp/lint-arwaky.tar.gz
+sudo tar -xzf /tmp/lint-arwaky.tar.gz -C /usr/local/bin lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui
+sudo chmod +x /usr/local/bin/lint-arwaky-*
 
 # Or install from source
-cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v3.5.1
+cargo install --git https://github.com/rakaarwaky/lint-arwaky.git
 ```
 
 ### 3. Initialize config + adapters
@@ -178,20 +180,25 @@ Create `.github/workflows/ci.yml`:
 ```yaml
 name: CI
 on:
-  push: { branches: [main] }
-  pull_request: { branches: [main] }
+  push: { branches: [main, develop] }
+  pull_request: { branches: [main, develop] }
 
 jobs:
   lint-arwaky:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - run: cargo install lint_arwaky --locked  # or download the release binary
+      - name: Install lint-arwaky (latest release)
+        run: |
+          curl -fsSL https://github.com/rakaarwaky/lint-arwaky/releases/latest/download/lint-arwaky-latest-linux-x86_64.tar.gz -o /tmp/lint-arwaky.tar.gz
+          sudo tar -xzf /tmp/lint-arwaky.tar.gz -C /usr/local/bin lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui
+          sudo chmod +x /usr/local/bin/lint-arwaky-*
+          lint-arwaky-cli version
       - name: Architecture scan
         run: lint-arwaky-cli check .          # exit 1 on any violation
       - name: Rule engine still fires
         run: |
-          codes=$(lint-arwaky-cli scan <fixture-workspace> 2>&1 \
+          codes=$(lint-arwaky-cli scan workspaces-bad 2>&1 \
             | grep -oP "AES\d+" | sort -u | wc -l)
           [ "${codes:-0}" -ge 24 ]            # guard against silent no-ops
 ```
