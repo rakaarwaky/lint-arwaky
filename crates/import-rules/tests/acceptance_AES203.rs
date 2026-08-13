@@ -386,6 +386,38 @@ fn aes203_typescript_aliased_named_import_used_via_alias_not_flagged() {
 // ─── AES203: used identifiers from AST ────────────────────
 
 #[test]
+fn aes203_typescript_namespace_import_used_via_alias_not_flagged() {
+    // `import * as utils` + usage of `utils` — zero findings.
+    let content = "import * as utils from './utils';\n\nconst r = utils.helper();\n";
+    let imports = vec![ImportEntry {
+        source_file: PathBuf::new(),
+        raw_path: "./utils".to_string(),
+        resolved_path: None,
+        import_type: ImportType::ImportFrom,
+        language: Language::TypeScript,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["utils".to_string()],
+        is_reexport: false,
+        is_wildcard: true,
+    }];
+    let results = checker()
+        .check_unused_imports(
+            "/tmp/test/src/app.ts",
+            content,
+            &imports,
+            &["utils".to_string()],
+            &no_traits(),
+        )
+        .unwrap();
+    assert!(
+        results.is_empty(),
+        "Namespace TS import must not be flagged, got {}",
+        results.len()
+    );
+}
+
+#[test]
 fn aes203_used_identifiers_prevents_false_positive() {
     let content = "use std::collections::HashMap;\n\nfn main() {\n    let _ = HashMap::new();\n}\n";
     let imports = vec![rust_use("std::collections::HashMap")];

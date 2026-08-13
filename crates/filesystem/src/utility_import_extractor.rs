@@ -71,12 +71,12 @@ fn extract_scoped_path(node: tree_sitter::Node, content: &str) -> Option<String>
 fn extract_rust_use_alias(node: tree_sitter::Node, content: &str) -> Option<String> {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        if child.kind() == "use_as_clause"
-            && let Some(alias_node) = child.child_by_field_name("alias")
-        {
-            let alias = text_of(alias_node, content);
-            if !alias.is_empty() {
-                return Some(alias);
+        if child.kind() == "use_as_clause" {
+            if let Some(alias_node) = child.child_by_field_name("alias") {
+                let alias = text_of(alias_node, content);
+                if !alias.is_empty() {
+                    return Some(alias);
+                }
             }
         }
     }
@@ -314,6 +314,17 @@ fn extract_python_imports(
     }
 }
 
+/// Extract the module-scope binding of an `aliased_import` AST node.
+/// `from x import y as z` binds `z` (field `alias`), falling back to the
+/// original name `y` (field `name`) when no alias is present.
+fn extract_python_alias_binding(child: tree_sitter::Node, content: &str) -> Option<String> {
+    let binding = child
+        .child_by_field_name("alias")
+        .or_else(|| child.child_by_field_name("name"));
+    let name = text_of(binding?, content);
+    if name.is_empty() { None } else { Some(name) }
+}
+
 fn extract_python_from_names(node: tree_sitter::Node, content: &str) -> Vec<String> {
     let mut names = Vec::new();
     let module_name_node = node.child_by_field_name("module_name");
@@ -321,16 +332,8 @@ fn extract_python_from_names(node: tree_sitter::Node, content: &str) -> Vec<Stri
     for child in node.named_children(&mut cursor) {
         match child.kind() {
             "aliased_import" => {
-                // `from x import y as z` — module-scope binding is `z` (field `alias`),
-                // falling back to the original name `y` (field `name`) when no alias.
-                let binding = child
-                    .child_by_field_name("alias")
-                    .or_else(|| child.child_by_field_name("name"));
-                if let Some(binding) = binding {
-                    let name = text_of(binding, content);
-                    if !name.is_empty() {
-                        names.push(name);
-                    }
+                if let Some(name) = extract_python_alias_binding(child, content) {
+                    names.push(name);
                 }
             }
             "dotted_name" | "identifier" => {
@@ -358,14 +361,8 @@ fn extract_python_import_bindings(node: tree_sitter::Node, content: &str) -> Vec
     for child in node.named_children(&mut cursor) {
         match child.kind() {
             "aliased_import" => {
-                let binding = child
-                    .child_by_field_name("alias")
-                    .or_else(|| child.child_by_field_name("name"));
-                if let Some(binding) = binding {
-                    let name = text_of(binding, content);
-                    if !name.is_empty() {
-                        bindings.push(name);
-                    }
+                if let Some(name) = extract_python_alias_binding(child, content) {
+                    bindings.push(name);
                 }
             }
             "dotted_name" => {
@@ -403,6 +400,9 @@ fn extract_js_imports(
             let mut symbols = extract_js_named_imports(&text);
             if let Some(default_binding) = extract_js_default_import_binding(&text) {
                 symbols.push(default_binding);
+            }
+            if let Some(namespace_binding) = extract_js_namespace_binding(&text) {
+                symbols.push(namespace_binding);
             }
             imports.push(ImportEntry {
                 source_file: source_file.to_path_buf(),
@@ -515,19 +515,43 @@ fn extract_js_named_imports(text: &str) -> Vec<String> {
 }
 
 /// Extract the default import binding from a JS/TS import statement.
-/// `import Foo from './mod'` → "Foo". Returns `None` for side-effect
-/// imports (`import './mod'`), wildcard imports, and type-only imports.
+/// `import Foo from './mod'` → "Foo"; `import Foo, { Bar } from './mod'` → "Foo".
+/// Returns `None` for side-effect imports (`import './mod'`), wildcard imports,
+/// named-only imports, and type-only imports. Works across newlines.
 fn extract_js_default_import_binding(text: &str) -> Option<String> {
-    if !text.contains(" from ") || text.contains("import type") {
+    if text.starts_with("import type") {
         return None;
     }
     let after_import = text.strip_prefix("import ")?;
-    let binding = after_import.split_whitespace().next()?;
-    if binding.is_empty() || binding == "*" || binding == "type" || binding.contains('{') {
+    let mut tokens = after_import.split_whitespace();
+    let binding = tokens.next()?;
+    if binding == "*" || binding.contains('{') {
+        return None;
+    }
+    // Side-effect imports (`import './mod'`) have no `from` keyword.
+    if !tokens.any(|t| t == "from") {
+        return None;
+    }
+    // `import Foo, { Bar } from './mod'` — strip the trailing comma.
+    let binding = binding.trim_end_matches(',');
+    if binding.is_empty() {
         None
     } else {
         Some(binding.to_string())
     }
+}
+
+/// Extract the binding of a namespace import (`import * as utils from '...'`).
+fn extract_js_namespace_binding(text: &str) -> Option<String> {
+    let after_import = text.strip_prefix("import ")?;
+    let mut tokens = after_import.split_whitespace();
+    if tokens.next()? == "*" && tokens.next()? == "as" {
+        let binding = tokens.next()?;
+        if binding != "from" && !binding.is_empty() {
+            return Some(binding.to_string());
+        }
+    }
+    None
 }
 
 fn extract_grouped_use_names(
@@ -554,11 +578,12 @@ fn extract_grouped_use_names(
     }
     let brace_end = brace_end?;
     // Module path: everything before '{', trimmed of trailing whitespace/colons
-    // and the `use ` / `pub use ` declaration keywords.
+    // and any visibility/`use` keywords (`use `, `pub use `, `pub(crate) use `).
     let module_path = text[..brace_start]
-        .trim_start_matches("pub use ")
-        .trim_start_matches("use ")
-        .trim_end_matches("::")
+        .split_whitespace()
+        .rfind(|t| t.ends_with("::"))
+        .map(|t| t.trim_end_matches("::"))
+        .unwrap_or("")
         .trim();
     let inner = &text[brace_start + 1..brace_end];
     // Recursively extract all leaf paths from nested braces

@@ -139,3 +139,64 @@ fn typescript_default_import_uses_binding() {
     assert_eq!(imports[0].raw_path, "./mod");
     assert_eq!(imports[0].symbols, vec!["Foo".to_string()]);
 }
+
+#[test]
+fn typescript_default_import_with_named_sibling_binds_default() {
+    // `import Foo, { Bar } from './mod'` binds `Foo` (no trailing comma leaked).
+    let imports = extract_imports(
+        &PathBuf::from("/tmp/test/src/file.ts"),
+        "import Foo, { Bar } from './mod';\n",
+        Language::TypeScript,
+        None,
+    );
+    assert_eq!(imports.len(), 1);
+    assert_eq!(
+        imports[0].symbols,
+        vec!["Bar".to_string(), "Foo".to_string()]
+    );
+}
+
+#[test]
+fn typescript_default_import_multiline_binds_binding() {
+    // `import Foo\nfrom './mod'` binds `Foo` across the newline.
+    let imports = extract_imports(
+        &PathBuf::from("/tmp/test/src/file.ts"),
+        "import Foo\n  from './mod';\n",
+        Language::TypeScript,
+        None,
+    );
+    assert_eq!(imports.len(), 1);
+    assert_eq!(imports[0].symbols, vec!["Foo".to_string()]);
+}
+
+#[test]
+fn typescript_namespace_import_binds_namespace_alias() {
+    // `import * as utils from './utils'` binds `utils`; wildcard flag stays set.
+    let imports = extract_imports(
+        &PathBuf::from("/tmp/test/src/file.ts"),
+        "import * as utils from './utils';\n",
+        Language::TypeScript,
+        None,
+    );
+    assert_eq!(imports.len(), 1);
+    assert_eq!(imports[0].raw_path, "./utils");
+    assert_eq!(imports[0].symbols, vec!["utils".to_string()]);
+    assert!(imports[0].is_wildcard);
+}
+
+#[test]
+fn rust_grouped_use_with_visibility_modifier_extracts_clean_path() {
+    // `pub(crate) use qux::{a as aa, b}` — visibility keywords must not leak
+    // into the module path.
+    let imports = extract_imports(
+        &PathBuf::from("/tmp/test/src/file.rs"),
+        "pub(crate) use qux::{a as aa, b};\n",
+        Language::Rust,
+        None,
+    );
+    assert_eq!(imports.len(), 2);
+    assert_eq!(imports[0].raw_path, "qux::a");
+    assert_eq!(imports[0].symbols, vec!["aa".to_string()]);
+    assert_eq!(imports[1].raw_path, "qux::b");
+    assert!(imports[1].symbols.is_empty());
+}
