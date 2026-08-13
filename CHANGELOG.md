@@ -13,8 +13,8 @@ See [README.md](README.md) for the current project overview and [TEST.md](TEST.m
   `use foo::{bar as baz}`), and `import { X as Y }` / default imports (TS/JS)
   are no longer flagged as unused when the alias is referenced. Also fixes the
   adjacent `import os.path` binding (binds `os`, not `os.path`) and strips the
-  `use `/`pub use ` prefix from grouped Rust raw paths so they resolve.
-  Includes 11 filesystem extractor unit tests and 5 AES203 acceptance
+  `use` and `pub use` prefixes from grouped Rust raw paths so they resolve.
+  Includes 15 filesystem extractor unit tests and 6 AES203 acceptance
   regression tests.
 
 ## 3.5.0 (2026-08-12)

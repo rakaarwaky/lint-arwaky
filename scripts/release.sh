@@ -160,8 +160,10 @@ update_cargo_version() {
     sed -i -E "s/--tag v[0-9]+\.[0-9]+\.[0-9]+/--tag v${new_version}/" "$ROOT_DIR/README.md"
   fi
 
-  # Refresh Cargo.lock root package version
-  cargo metadata --no-deps --format-version 1 >/dev/null 2>&1 || true
+  # Refresh Cargo.lock root package version — fail loudly if it can't be
+  # refreshed, otherwise the lock may be stale and the release lies.
+  cargo metadata --no-deps --format-version 1 >/dev/null 2>&1 \
+    || die "cargo metadata refresh failed — Cargo.lock may be stale"
   echo "Updated workspace: version = \"${new_version}\""
 }
 

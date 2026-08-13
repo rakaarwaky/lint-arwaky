@@ -18,7 +18,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CARGO_TOML="$PROJECT_ROOT/Cargo.toml"
-CRATES_GLOB="$PROJECT_ROOT/crates/*/Cargo.toml"
+CRATE_MANIFESTS=("$PROJECT_ROOT"/crates/*/Cargo.toml)
 README="$PROJECT_ROOT/README.md"
 
 # ── Colors ──────────────────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ update_cargo_version() {
 
   # All member crates — keep crate versions aligned so version-displaying
   # surfaces (scan header, SARIF, MCP info, --version) report the release.
-  for crate_toml in $CRATES_GLOB; do
+  for crate_toml in "${CRATE_MANIFESTS[@]}"; do
     if grep -q '^version = ' "$crate_toml"; then
       sed -i -E "s/^version = \"[^\"]+\"/version = \"${new_version}\"/" "$crate_toml"
       info "Updated $(basename "$(dirname "$crate_toml")"): version = \"${new_version}\""
@@ -124,9 +124,13 @@ update_cargo_version() {
     sed -i -E "s/--tag v[0-9]+\.[0-9]+\.[0-9]+/--tag v${new_version}/" "$README"
   fi
 
-  # Refresh Cargo.lock root package version
+  # Refresh Cargo.lock root package version — fail loudly if it can't be
+  # refreshed, otherwise the lock may be staged stale and the release lies.
   if command -v cargo &>/dev/null; then
-    (cd "$PROJECT_ROOT" && cargo metadata --no-deps --format-version 1 >/dev/null 2>&1) || true
+    (cd "$PROJECT_ROOT" && cargo metadata --no-deps --format-version 1 >/dev/null 2>&1) \
+      || die "cargo metadata refresh failed — Cargo.lock may be stale"
+  else
+    die "cargo not found — cannot refresh Cargo.lock"
   fi
 }
 
@@ -176,7 +180,7 @@ if [ "$NO_COMMIT" = false ]; then
   info "Committing version bump..."
 
   if command -v git &>/dev/null; then
-    git add "$CARGO_TOML" $CRATES_GLOB "$README" "$PROJECT_ROOT/Cargo.lock" 2>/dev/null
+    git add "$CARGO_TOML" "${CRATE_MANIFESTS[@]}" "$README" "$PROJECT_ROOT/Cargo.lock" 2>/dev/null
     git commit -m "chore: bump version to $CALCULATED_VERSION" 2>/dev/null && \
       pass "Committed via git" || warn "git commit failed (no changes?)"
   else
