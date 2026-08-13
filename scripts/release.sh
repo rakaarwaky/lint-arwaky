@@ -138,8 +138,31 @@ bump_version() {
 
 update_cargo_version() {
   local new_version="$1"
+
+  # Root package version (the release version shown by --version / scan header)
   sed -i -E "s/^version = \"[^\"]+\"/version = \"${new_version}\"/" "$CARGO_TOML"
-  echo "Updated $CARGO_TOML: version = \"${new_version}\""
+
+  # Workspace dependency pins for internal crates (lines with `path = "crates/...`)
+  sed -i -E "/path = \"crates\//s/version = \"[^\"]+\"/version = \"${new_version}\"/" "$CARGO_TOML"
+
+  # All member crates — keep crate versions aligned so version-displaying
+  # surfaces (scan header, SARIF, MCP info, --version) report the release.
+  for crate_toml in "$ROOT_DIR"/crates/*/Cargo.toml; do
+    if grep -q '^version = ' "$crate_toml"; then
+      sed -i -E "s/^version = \"[^\"]+\"/version = \"${new_version}\"/" "$crate_toml"
+    fi
+  done
+
+  # README version references (badge, heading, install tag)
+  if [[ -f "$ROOT_DIR/README.md" ]]; then
+    sed -i -E "s/version-[0-9]+\.[0-9]+\.[0-9]+-blue/version-${new_version}-blue/" "$ROOT_DIR/README.md"
+    sed -i -E "s/^# Lint Arwaky v[0-9]+\.[0-9]+\.[0-9]+$/# Lint Arwaky v${new_version}/" "$ROOT_DIR/README.md"
+    sed -i -E "s/--tag v[0-9]+\.[0-9]+\.[0-9]+/--tag v${new_version}/" "$ROOT_DIR/README.md"
+  fi
+
+  # Refresh Cargo.lock root package version
+  cargo metadata --no-deps --format-version 1 >/dev/null 2>&1 || true
+  echo "Updated workspace: version = \"${new_version}\""
 }
 
 check_cargo_publish_token() {

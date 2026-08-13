@@ -2,6 +2,21 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 3.5.1 (2026-08-13)
+
+### Bug Fixes
+
+- **AES203 false positive on `import ... as <alias>` bindings (HIGH)**: unused
+  import detection now tracks the module-scope binding name for aliased
+  imports instead of the original imported name. `from x import y as z`
+  (Python), `use foo::bar as baz` (Rust, including grouped
+  `use foo::{bar as baz}`), and `import { X as Y }` / default imports (TS/JS)
+  are no longer flagged as unused when the alias is referenced. Also fixes the
+  adjacent `import os.path` binding (binds `os`, not `os.path`) and strips the
+  `use `/`pub use ` prefix from grouped Rust raw paths so they resolve.
+  Includes 11 filesystem extractor unit tests and 5 AES203 acceptance
+  regression tests.
+
 ## 3.5.0 (2026-08-12)
 
 ### Features

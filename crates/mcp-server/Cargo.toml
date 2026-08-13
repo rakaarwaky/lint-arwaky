@@ -1,6 +1,6 @@
 [package]
 name = "mcp-server-lint-arwaky"
-version = "2.0.0"
+version = "3.5.1"
 edition = "2024"
 description = "MCP server surface for lint-arwaky."
 license = "MIT"

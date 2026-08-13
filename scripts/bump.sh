@@ -18,6 +18,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CARGO_TOML="$PROJECT_ROOT/Cargo.toml"
+CRATES_GLOB="$PROJECT_ROOT/crates/*/Cargo.toml"
+README="$PROJECT_ROOT/README.md"
 
 # ── Colors ──────────────────────────────────────────────────────────────────────
 GREEN='\033[0;32m'
@@ -99,7 +101,33 @@ bump_version() {
 
 update_cargo_version() {
   local new_version="$1"
+
+  # Root package version (the release version shown by --version / scan header)
   sed -i -E "s/^version = \"[^\"]+\"/version = \"${new_version}\"/" "$CARGO_TOML"
+
+  # Workspace dependency pins for internal crates (lines with `path = "crates/...`)
+  sed -i -E "/path = \"crates\//s/version = \"[^\"]+\"/version = \"${new_version}\"/" "$CARGO_TOML"
+
+  # All member crates — keep crate versions aligned so version-displaying
+  # surfaces (scan header, SARIF, MCP info, --version) report the release.
+  for crate_toml in $CRATES_GLOB; do
+    if grep -q '^version = ' "$crate_toml"; then
+      sed -i -E "s/^version = \"[^\"]+\"/version = \"${new_version}\"/" "$crate_toml"
+      info "Updated $(basename "$(dirname "$crate_toml")"): version = \"${new_version}\""
+    fi
+  done
+
+  # README version references (badge, heading, install tag)
+  if [[ -f "$README" ]]; then
+    sed -i -E "s/version-[0-9]+\.[0-9]+\.[0-9]+-blue/version-${new_version}-blue/" "$README"
+    sed -i -E "s/^# Lint Arwaky v[0-9]+\.[0-9]+\.[0-9]+$/# Lint Arwaky v${new_version}/" "$README"
+    sed -i -E "s/--tag v[0-9]+\.[0-9]+\.[0-9]+/--tag v${new_version}/" "$README"
+  fi
+
+  # Refresh Cargo.lock root package version
+  if command -v cargo &>/dev/null; then
+    (cd "$PROJECT_ROOT" && cargo metadata --no-deps --format-version 1 >/dev/null 2>&1) || true
+  fi
 }
 
 # ── Resolve version ─────────────────────────────────────────────────────────────
@@ -148,7 +176,7 @@ if [ "$NO_COMMIT" = false ]; then
   info "Committing version bump..."
 
   if command -v git &>/dev/null; then
-    git add "$CARGO_TOML" 2>/dev/null
+    git add "$CARGO_TOML" $CRATES_GLOB "$README" "$PROJECT_ROOT/Cargo.lock" 2>/dev/null
     git commit -m "chore: bump version to $CALCULATED_VERSION" 2>/dev/null && \
       pass "Committed via git" || warn "git commit failed (no changes?)"
   else
