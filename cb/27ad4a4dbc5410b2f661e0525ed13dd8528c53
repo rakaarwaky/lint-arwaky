@@ -1,0 +1,19 @@
+crates/shared/config/lint_arwaky.config.yaml
+  s_69b021998f8dc5::t_1036eadeecd015 41,60,74,146,240,325,331,335,345,352,358,388,394,405,412,417,423,433
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "cb27ad4a4dbc5410b2f661e0525ed13dd8528c53",
+  "prompts": {},
+  "sessions": {
+    "s_69b021998f8dc5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_006340db0ffe7Mfmlzy0cIr6se",
+        "model": "deepseek-v4-flash-free"
+      },
+      "human_author": "rakaarwaky <arwaky90@gmail.com>"
+    }
+  }
+}
