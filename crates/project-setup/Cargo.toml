@@ -1,6 +1,6 @@
 [package]
 name = "project-setup-lint-arwaky"
-version = "3.5.1"
+version = "3.6.0"
 edition = "2024"
 description = "Project scaffolding and doctor checks."
 license = "MIT"

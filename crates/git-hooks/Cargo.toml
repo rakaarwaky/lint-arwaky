@@ -1,6 +1,6 @@
 [package]
 name = "git-hooks-lint-arwaky"
-version = "3.5.1"
+version = "3.6.0"
 edition = "2024"
 description = "Git hooks feature crate — pre-commit enforcement and diff analysis."
 license = "MIT"

@@ -97,7 +97,7 @@ arboard = "3"
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "3.5.1"
+version = "3.6.0"
 edition = "2024"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 24 Agentic Engineering System (AES) rules."
 license = "MIT"

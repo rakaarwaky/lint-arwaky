@@ -1,6 +1,6 @@
 [package]
 name = "role-rules-lint-arwaky"
-version = "3.5.1"
+version = "3.6.0"
 edition = "2024"
 description = "Architectural role-layer violation checks covering AES401–AES406."
 license = "MIT"
