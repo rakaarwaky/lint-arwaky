@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-3.6.0-blue" alt="version" />
+  <img src="https://img.shields.io/badge/version-3.6.1-blue" alt="version" />
   <img src="https://img.shields.io/badge/rust-1.70%2B-orange" alt="rust" />
   <img src="https://img.shields.io/badge/license-MIT-green" alt="license" />
   <img src="https://img.shields.io/badge/platform-linux%20%7C%20macOS-lightgrey" alt="platform" />
@@ -116,7 +116,7 @@ Requires Rust 1.85.0 and Cargo.
 
 ```bash
 lint-arwaky-cli version
-# Lint Arwaky v3.6.0
+# Lint Arwaky v3.6.1
 ```
 
 ### First Scan
