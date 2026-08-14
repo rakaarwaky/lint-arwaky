@@ -41,25 +41,25 @@ too_many_arguments = "allow"
 
 [workspace.dependencies]
 # Workspace member crates (version required for crates.io publish)
-shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "3.5.1" }
-filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "3.5.1" }
-config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "3.5.1" }
-naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "3.5.1" }
-import-rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules", version = "3.5.1" }
-quality-rules = { package = "quality-rules-lint-arwaky", path = "crates/quality-rules", version = "3.5.1" }
-orphan-rules = { package = "orphan-rules-lint-arwaky", path = "crates/orphan-rules", version = "3.5.1" }
-role-rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "3.5.1" }
-external-lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "3.5.1" }
-auto-fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "3.5.1" }
-git-hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", version = "3.5.1" }
-file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "3.5.1" }
-project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "3.5.1" }
-maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "3.5.1" }
-dispatcher = { package = "dispatcher-lint-arwaky", path = "crates/dispatcher", version = "3.5.1" }
-report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "3.5.1" }
-cli-commands = { path = "crates/cli-commands", version = "3.5.1" }
-mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "3.5.1" }
-tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "3.5.1" }
+shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "3.6.0" }
+filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "3.6.0" }
+config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "3.6.0" }
+naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "3.6.0" }
+import-rules = { package = "import-rules-lint-arwaky", path = "crates/import-rules", version = "3.6.0" }
+quality-rules = { package = "quality-rules-lint-arwaky", path = "crates/quality-rules", version = "3.6.0" }
+orphan-rules = { package = "orphan-rules-lint-arwaky", path = "crates/orphan-rules", version = "3.6.0" }
+role-rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "3.6.0" }
+external-lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "3.6.0" }
+auto-fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "3.6.0" }
+git-hooks = { package = "git-hooks-lint-arwaky", path = "crates/git-hooks", version = "3.6.0" }
+file-watch = { package = "file-watch-lint-arwaky", path = "crates/file-watch", version = "3.6.0" }
+project-setup = { package = "project-setup-lint-arwaky", path = "crates/project-setup", version = "3.6.0" }
+maintenance = { package = "maintenance-lint-arwaky", path = "crates/maintenance", version = "3.6.0" }
+dispatcher = { package = "dispatcher-lint-arwaky", path = "crates/dispatcher", version = "3.6.0" }
+report-formatter = { package = "report-formatter-lint-arwaky", path = "crates/report-formatter", version = "3.6.0" }
+cli-commands = { path = "crates/cli-commands", version = "3.6.0" }
+mcp-server = { package = "mcp-server-lint-arwaky", path = "crates/mcp-server", version = "3.6.0" }
+tui = { package = "tui-lint-arwaky", path = "crates/tui", version = "3.6.0" }
 
 # External dependencies (pinned versions - all crates inherit from here)
 serde = { version = "1.0.229", features = ["derive"] }
@@ -97,7 +97,7 @@ arboard = "3"
 
 [package]
 name = "lint_arwaky-arwaky"
-version = "3.5.1"
+version = "3.6.0"
 edition = "2024"
 description = "Autonomous code quality and architecture enforcement for AI agents and developers, enforcing 24 Agentic Engineering System (AES) rules."
 license = "MIT"

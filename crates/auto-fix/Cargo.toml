@@ -1,6 +1,6 @@
 [package]
 name = "auto-fix-lint-arwaky"
-version = "3.5.1"
+version = "3.6.0"
 edition = "2024"
 description = "Auto-fix processor that applies mechanical corrections for AES rule violations."
 license = "MIT"

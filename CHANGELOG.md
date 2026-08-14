@@ -2,6 +2,23 @@
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
+## 3.6.0 (2026-08-14)
+
+### Bug Fixes
+
+- **AES202 public Python barrel imports**: grouped multi-line exports from
+  `__init__.py` are now resolved back to their canonical taxonomy, contract,
+  and utility source files. Inline comments in continued imports are handled
+  safely, and multi-level relative exports such as `..shared` preserve their
+  Python package depth. This removes false-positive mandatory-import findings
+  for valid public API imports.
+
+### Release / Maintenance
+
+- Synchronized the workspace root and all crates to version `3.6.0`.
+- Added regression coverage for grouped barrel exports, inline comments, and
+  nested relative imports.
+
 ## 3.5.1 (2026-08-13)
 
 ### Bug Fixes
