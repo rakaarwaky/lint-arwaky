@@ -9,6 +9,9 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
+use filesystem_lint_arwaky::utility_barrel_resolution::{
+    parse_barrel_reexports, resolve_single_import,
+};
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_parser_protocol::IParserProtocol;
 use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
@@ -318,4 +321,137 @@ fn e2e_chained_python_import_graph_reaches_capabilities() {
         "agent → capabilities edge missing: {:?}",
         graph
     );
+}
+
+#[test]
+fn test_python_public_barrel_resolves_grouped_reexports() {
+    let barrel = r#"
+from .contract_core_protocol import (
+    IUploadProtocol,
+    ISendProtocol,
+)
+from .taxonomy_config_vo import (
+    AppConfig,
+)
+from .utility_core_events import (
+    EVENT_WEB_LOADED,
+)
+from .taxonomy_core_error import (
+    QwenCliError,
+)
+"#;
+    let reexports = parse_barrel_reexports(barrel);
+
+    assert_eq!(
+        reexports.get("IUploadProtocol"),
+        Some(&"contract_core_protocol".to_string())
+    );
+    assert_eq!(
+        reexports.get("AppConfig"),
+        Some(&"taxonomy_config_vo".to_string())
+    );
+    assert_eq!(
+        reexports.get("EVENT_WEB_LOADED"),
+        Some(&"utility_core_events".to_string())
+    );
+    assert_eq!(
+        reexports.get("QwenCliError"),
+        Some(&"taxonomy_core_error".to_string())
+    );
+
+    let temp = tempfile::tempdir().unwrap();
+    let shared_src = temp.path().join("modules/shared/src");
+    std::fs::create_dir_all(&shared_src).unwrap();
+    std::fs::write(shared_src.join("__init__.py"), barrel).unwrap();
+    std::fs::write(shared_src.join("contract_core_protocol.py"), "").unwrap();
+    std::fs::write(shared_src.join("taxonomy_config_vo.py"), "").unwrap();
+    std::fs::write(shared_src.join("utility_core_events.py"), "").unwrap();
+    std::fs::write(shared_src.join("taxonomy_core_error.py"), "").unwrap();
+
+    for (symbol, expected) in [
+        (
+            "IUploadProtocol",
+            "modules/shared/src/contract_core_protocol.py",
+        ),
+        ("AppConfig", "modules/shared/src/taxonomy_config_vo.py"),
+        (
+            "EVENT_WEB_LOADED",
+            "modules/shared/src/utility_core_events.py",
+        ),
+        ("QwenCliError", "modules/shared/src/taxonomy_core_error.py"),
+    ] {
+        let entry = ImportEntry {
+            source_file: temp.path().join("modules/consumer/src/consumer.py"),
+            raw_path: "modules.shared.src".to_string(),
+            resolved_path: None,
+            import_type: ImportType::ImportFrom,
+            language: Language::Python,
+            is_dynamic: false,
+            is_resolved: false,
+            symbols: vec![symbol.to_string()],
+            is_reexport: false,
+            is_wildcard: false,
+        };
+        let resolved = resolve_single_import(entry, temp.path());
+        assert_eq!(
+            resolved.resolved_path,
+            Some(PathBuf::from(expected)),
+            "public barrel symbol {symbol} should resolve to its canonical source"
+        );
+        assert!(resolved.is_resolved);
+    }
+}
+
+#[test]
+fn test_python_grouped_reexports_ignore_inline_comments() {
+    let barrel = r#"
+from .taxonomy_config_vo import (  # public config exports
+    AppConfig,  # application configuration
+    BrowserConfig,  # browser configuration
+)
+"#;
+    let reexports = parse_barrel_reexports(barrel);
+
+    assert_eq!(
+        reexports.get("AppConfig"),
+        Some(&"taxonomy_config_vo".to_string())
+    );
+    assert_eq!(
+        reexports.get("BrowserConfig"),
+        Some(&"taxonomy_config_vo".to_string())
+    );
+}
+
+#[test]
+fn test_python_relative_barrel_preserves_parent_depth() {
+    let temp = tempfile::tempdir().unwrap();
+    let barrel_dir = temp.path().join("pkg/sub");
+    std::fs::create_dir_all(&barrel_dir).unwrap();
+    std::fs::write(
+        barrel_dir.join("__init__.py"),
+        "from ..shared import (\n    SharedType,\n)\n",
+    )
+    .unwrap();
+    std::fs::write(temp.path().join("pkg/shared.py"), "").unwrap();
+
+    let entry = ImportEntry {
+        source_file: temp.path().join("consumer.py"),
+        raw_path: "pkg.sub".to_string(),
+        resolved_path: None,
+        import_type: ImportType::ImportFrom,
+        language: Language::Python,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["SharedType".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    };
+
+    let resolved = resolve_single_import(entry, temp.path());
+    assert_eq!(
+        resolved.resolved_path,
+        Some(PathBuf::from("pkg/shared.py")),
+        "a two-dot re-export from pkg/sub must resolve to pkg/shared.py"
+    );
+    assert!(resolved.is_resolved);
 }
