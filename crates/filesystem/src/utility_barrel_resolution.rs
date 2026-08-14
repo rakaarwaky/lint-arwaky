@@ -219,32 +219,47 @@ fn try_barrel_candidates(dir: &Path, candidates: &[&str]) -> Option<String> {
 /// Returns HashMap<symbol_name, source_file_path>.
 pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
     let mut reexports = HashMap::new();
-    for line in barrel_content.lines() {
-        let trimmed = line.trim();
+    let lines: Vec<&str> = barrel_content.lines().collect();
+    let mut index = 0;
+
+    while index < lines.len() {
+        let trimmed = lines[index].trim();
         if trimmed.is_empty() || trimmed.starts_with("//") || trimmed.starts_with('#') {
+            index += 1;
             continue;
         }
 
-        // Python: from .module import Name
+        // Python: from .module import Name, including parenthesized multi-line imports.
         if trimmed.starts_with("from .") || trimmed.starts_with("from ..") {
-            if let Some(imp_part) = trimmed.split_once(" import ") {
+            let mut statement = trimmed.to_string();
+            while statement.contains(" import ")
+                && statement.matches('(').count() > statement.matches(')').count()
+                && index + 1 < lines.len()
+            {
+                index += 1;
+                statement.push(' ');
+                statement.push_str(lines[index].trim());
+            }
+
+            if let Some(imp_part) = statement.split_once(" import ") {
                 let source_module = imp_part.0.strip_prefix("from ").unwrap_or("").trim();
                 let names_part = imp_part.1.trim();
                 let clean = names_part
                     .trim_start_matches('(')
                     .trim_end_matches(')')
                     .trim_end_matches(';');
+                let clean_module = source_module.trim_start_matches('.');
+                let rel_path = clean_module.replace('.', "/");
+
                 for name in clean.split(',') {
-                    let name = name.trim().split(" as ").last().unwrap_or("").trim();
+                    let name = name.split('#').next().unwrap_or("").trim();
+                    let name = name.split(" as ").last().unwrap_or("").trim();
                     if !name.is_empty() && name != "*" {
-                        // Strip leading dots (relative prefix) before replacing dots with /
-                        // e.g. `.contract_calculator_aggregate` → `contract_calculator_aggregate`
-                        let clean_module = source_module.trim_start_matches('.');
-                        let rel_path = clean_module.replace('.', "/");
-                        reexports.insert(name.to_string(), rel_path);
+                        reexports.insert(name.to_string(), rel_path.clone());
                     }
                 }
             }
+            index += 1;
             continue;
         }
 
@@ -259,6 +274,7 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
             if !path.is_empty() && path != "*" && path != "self" {
                 reexports.insert(path.to_string(), use_part.to_string());
             }
+            index += 1;
             continue;
         }
 
@@ -281,14 +297,18 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                     }
                 }
             }
+            index += 1;
             continue;
         }
 
         // TypeScript: export * from './module'
         if trimmed.starts_with("export * from ") {
             // Wildcard re-export — we can't resolve individual symbols
+            index += 1;
             continue;
         }
+
+        index += 1;
     }
 
     reexports
