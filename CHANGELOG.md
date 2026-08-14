@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.6.1 (2026-08-14)
+
+### Bug Fixes
+
+- **AES202 grouped public barrel imports**: grouped Python imports from a
+  public `__init__.py` are now split into one resolved entry per symbol before
+  canonical source resolution. This preserves taxonomy, contract(protocol),
+  contract(aggregate), and utility provenance for all symbols in the group and
+  removes false-positive mandatory-import violations.
+
+### Release / Maintenance
+
+- Bumped the workspace root and all crates to version `3.6.1` using
+  `scripts/bump.sh`.
+- Added an end-to-end regression test for the public barrel import scenario.
+
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
 ## 3.6.0 (2026-08-14)
