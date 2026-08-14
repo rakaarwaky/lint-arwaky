@@ -70,11 +70,35 @@ impl IParserProtocol for ASTParser {
             Ok(v) => v.clone(),
             Err(_) => return,
         };
-        let resolved: Vec<ImportEntry> = imports
-            .iter()
-            .cloned()
-            .map(|entry| crate::utility_barrel_resolution::resolve_single_import(entry, root_dir))
-            .collect();
+        let mut resolved = Vec::with_capacity(imports.len());
+
+        for entry in imports {
+            // A grouped import can re-export symbols from different canonical
+            // source layers. ImportEntry has one resolved_path, so resolve each
+            // symbol independently and retain one entry per resolved symbol.
+            if entry.symbols.len() > 1 && entry.resolved_path.is_none() {
+                let per_symbol: Vec<ImportEntry> = entry
+                    .symbols
+                    .iter()
+                    .map(|symbol| {
+                        let mut single = entry.clone();
+                        single.symbols = vec![symbol.clone()];
+                        crate::utility_barrel_resolution::resolve_single_import(single, root_dir)
+                    })
+                    .collect();
+
+                if per_symbol.iter().any(|item| item.is_resolved) {
+                    resolved.extend(per_symbol);
+                } else {
+                    resolved.push(entry);
+                }
+            } else {
+                resolved.push(crate::utility_barrel_resolution::resolve_single_import(
+                    entry, root_dir,
+                ));
+            }
+        }
+
         if let Ok(mut w) = self.imports.write() {
             *w = resolved;
         }

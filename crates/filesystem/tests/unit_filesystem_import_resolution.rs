@@ -16,11 +16,13 @@ use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_parser_protocol::IParserProtocol;
 use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
 use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ImportType, Language};
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+use tempfile::tempdir;
 
 fn make_python_import(raw: &str, resolved: Option<&str>) -> ImportEntry {
     ImportEntry {
@@ -454,4 +456,75 @@ fn test_python_relative_barrel_preserves_parent_depth() {
         "a two-dot re-export from pkg/sub must resolve to pkg/shared.py"
     );
     assert!(resolved.is_resolved);
+}
+
+#[test]
+fn ast_parser_resolves_each_grouped_barrel_symbol_independently() {
+    let temp = tempdir().unwrap();
+    let shared_src = temp.path().join("modules/shared/src");
+    let consumer = temp.path().join("modules/core/src/consumer.py");
+    std::fs::create_dir_all(&shared_src).unwrap();
+    std::fs::create_dir_all(consumer.parent().unwrap()).unwrap();
+
+    std::fs::write(
+        shared_src.join("__init__.py"),
+        "from .taxonomy_core_vo import AppConfig\nfrom .contract_core_protocol import IUploadProtocol\nfrom .utility_core_events import EVENT_WEB_LOADED\nfrom .taxonomy_core_error import QwenCliError\n",
+    )
+    .unwrap();
+    for source in [
+        "taxonomy_core_vo.py",
+        "contract_core_protocol.py",
+        "utility_core_events.py",
+        "taxonomy_core_error.py",
+    ] {
+        std::fs::write(shared_src.join(source), "").unwrap();
+    }
+    let consumer_content = "from modules.shared.src import (\n    AppConfig,\n    IUploadProtocol,\n    EVENT_WEB_LOADED,\n    QwenCliError,\n)\n";
+    std::fs::write(&consumer, consumer_content).unwrap();
+
+    let parser = ASTParser::new();
+    let mut files = vec![FileEntry {
+        path: consumer.clone(),
+        extension: "py".to_string(),
+        language: Language::Python,
+        size: consumer_content.len() as u64,
+        content: consumer_content.to_string(),
+        parse_ok: false,
+        parse_metadata: None,
+    }];
+    parser.parse_all(&mut files);
+    parser.resolve_barrel_imports(temp.path());
+
+    let imports = parser.imports_for(&consumer);
+    assert_eq!(
+        imports.len(),
+        4,
+        "grouped barrel import must be split per symbol"
+    );
+    let resolved: HashMap<_, _> = imports
+        .into_iter()
+        .map(|entry| {
+            (
+                entry.symbols[0].clone(),
+                entry.resolved_path.unwrap().to_string_lossy().to_string(),
+            )
+        })
+        .collect();
+
+    assert_eq!(
+        resolved.get("AppConfig"),
+        Some(&"modules/shared/src/taxonomy_core_vo.py".to_string())
+    );
+    assert_eq!(
+        resolved.get("IUploadProtocol"),
+        Some(&"modules/shared/src/contract_core_protocol.py".to_string())
+    );
+    assert_eq!(
+        resolved.get("EVENT_WEB_LOADED"),
+        Some(&"modules/shared/src/utility_core_events.py".to_string())
+    );
+    assert_eq!(
+        resolved.get("QwenCliError"),
+        Some(&"modules/shared/src/taxonomy_core_error.py".to_string())
+    );
 }
