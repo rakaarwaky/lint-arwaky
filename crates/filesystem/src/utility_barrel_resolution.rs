@@ -231,14 +231,20 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
 
         // Python: from .module import Name, including parenthesized multi-line imports.
         if trimmed.starts_with("from .") || trimmed.starts_with("from ..") {
-            let mut statement = trimmed.to_string();
+            let mut statement = lines[index]
+                .split('#')
+                .next()
+                .unwrap_or("")
+                .trim()
+                .to_string();
             while statement.contains(" import ")
                 && statement.matches('(').count() > statement.matches(')').count()
                 && index + 1 < lines.len()
             {
                 index += 1;
+                let continuation = lines[index].split('#').next().unwrap_or("").trim();
                 statement.push(' ');
-                statement.push_str(lines[index].trim());
+                statement.push_str(continuation);
             }
 
             if let Some(imp_part) = statement.split_once(" import ") {
@@ -248,8 +254,7 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
                     .trim_start_matches('(')
                     .trim_end_matches(')')
                     .trim_end_matches(';');
-                let clean_module = source_module.trim_start_matches('.');
-                let rel_path = clean_module.replace('.', "/");
+                let rel_path = python_relative_module_path(source_module);
 
                 for name in clean.split(',') {
                     let name = name.split('#').next().unwrap_or("").trim();
@@ -314,6 +319,13 @@ pub fn parse_barrel_reexports(barrel_content: &str) -> HashMap<String, String> {
     reexports
 }
 
+fn python_relative_module_path(source_module: &str) -> String {
+    let dot_count = source_module.chars().take_while(|&c| c == '.').count();
+    let clean_module = source_module.trim_start_matches('.').replace('.', "/");
+    let parent_prefix = "../".repeat(dot_count.saturating_sub(1));
+    format!("{parent_prefix}{clean_module}")
+}
+
 /// Resolve an import through a barrel file to its original source file.
 /// Returns the resolved file path as a workspace-relative string.
 fn resolve_barrel_import(module_path: &str, symbol_name: &str, root_dir: &Path) -> Option<String> {
@@ -327,15 +339,13 @@ fn resolve_barrel_import(module_path: &str, symbol_name: &str, root_dir: &Path) 
         .parent()
         .unwrap_or(root_dir);
 
-    // Try with common extensions
+    // Try with common extensions. Canonicalizing existing paths also collapses
+    // `..` segments produced by Python relative imports.
     let exts = [".py", ".ts", ".js", ".rs", ".tsx", ".jsx"];
     for ext in &exts {
         let candidate = barrel_dir.join(format!("{}{}", rel, ext));
         if candidate.exists() {
-            return candidate
-                .strip_prefix(root_dir)
-                .map(|p| p.to_string_lossy().to_string())
-                .ok();
+            return canonical_workspace_relative_path(&candidate, root_dir);
         }
     }
 
@@ -344,14 +354,23 @@ fn resolve_barrel_import(module_path: &str, symbol_name: &str, root_dir: &Path) 
     for init in &init_candidates {
         let candidate = barrel_dir.join(rel).join(init);
         if candidate.exists() {
-            return candidate
-                .strip_prefix(root_dir)
-                .map(|p| p.to_string_lossy().to_string())
-                .ok();
+            return canonical_workspace_relative_path(&candidate, root_dir);
         }
     }
 
     // No fallback: unresolved re-export stays unresolved rather than
     // fabricating a path that becomes a phantom graph node.
     None
+}
+
+/// Convert an existing path to a normalized workspace-relative path.
+fn canonical_workspace_relative_path(candidate: &Path, root_dir: &Path) -> Option<String> {
+    let candidate = candidate.canonicalize().ok()?;
+    let root = root_dir
+        .canonicalize()
+        .unwrap_or_else(|_| root_dir.to_path_buf());
+    candidate
+        .strip_prefix(root)
+        .map(|p| p.to_string_lossy().to_string())
+        .ok()
 }

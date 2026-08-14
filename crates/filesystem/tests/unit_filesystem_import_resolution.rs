@@ -401,3 +401,57 @@ from .taxonomy_core_error import (
         assert!(resolved.is_resolved);
     }
 }
+
+#[test]
+fn test_python_grouped_reexports_ignore_inline_comments() {
+    let barrel = r#"
+from .taxonomy_config_vo import (  # public config exports
+    AppConfig,  # application configuration
+    BrowserConfig,  # browser configuration
+)
+"#;
+    let reexports = parse_barrel_reexports(barrel);
+
+    assert_eq!(
+        reexports.get("AppConfig"),
+        Some(&"taxonomy_config_vo".to_string())
+    );
+    assert_eq!(
+        reexports.get("BrowserConfig"),
+        Some(&"taxonomy_config_vo".to_string())
+    );
+}
+
+#[test]
+fn test_python_relative_barrel_preserves_parent_depth() {
+    let temp = tempfile::tempdir().unwrap();
+    let barrel_dir = temp.path().join("pkg/sub");
+    std::fs::create_dir_all(&barrel_dir).unwrap();
+    std::fs::write(
+        barrel_dir.join("__init__.py"),
+        "from ..shared import (\n    SharedType,\n)\n",
+    )
+    .unwrap();
+    std::fs::write(temp.path().join("pkg/shared.py"), "").unwrap();
+
+    let entry = ImportEntry {
+        source_file: temp.path().join("consumer.py"),
+        raw_path: "pkg.sub".to_string(),
+        resolved_path: None,
+        import_type: ImportType::ImportFrom,
+        language: Language::Python,
+        is_dynamic: false,
+        is_resolved: false,
+        symbols: vec!["SharedType".to_string()],
+        is_reexport: false,
+        is_wildcard: false,
+    };
+
+    let resolved = resolve_single_import(entry, temp.path());
+    assert_eq!(
+        resolved.resolved_path,
+        Some(PathBuf::from("pkg/shared.py")),
+        "a two-dot re-export from pkg/sub must resolve to pkg/shared.py"
+    );
+    assert!(resolved.is_resolved);
+}
