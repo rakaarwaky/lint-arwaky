@@ -17,6 +17,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 env:
   CARGO_TERM_COLOR: always
@@ -188,7 +189,7 @@ jobs:
           # Skip only when an open release PR for this version already
           # exists (prevents duplicate release PRs after a merge). The
           # branch itself may exist from a previous attempt.
-          if gh pr list --head "$BRANCH" --state open --json number \
+          if gh pr list --repo "$GITHUB_REPOSITORY" --head "$BRANCH" --state open --json number \
             --jq 'length' 2>/dev/null | grep -q '[1-9]'; then
             echo "Release PR for ${VERSION} already open — skipping."
             exit 0
@@ -213,8 +214,17 @@ jobs:
           See the version entry in [CHANGELOG.md](CHANGELOG.md).
           BODY
           )
-          gh pr create --base main --head "$BRANCH" \
+          gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" \
             --title "chore(release): v${VERSION}" \
             --body "$PR_BODY"
+
+          # PRs created with GITHUB_TOKEN do not start pull_request workflows.
+          # Dispatch CI explicitly on the exact release branch, then arm
+          # native auto-merge once the required checks are complete.
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+          gh pr merge --repo "$GITHUB_REPOSITORY" --auto --squash \
+            --subject "chore(release): v${VERSION}" "$BRANCH" || \
+            echo "Auto-merge not available yet; a later PR event can retry."
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
