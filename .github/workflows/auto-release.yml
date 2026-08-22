@@ -182,6 +182,7 @@ jobs:
         if: steps.staleness.outputs.stale != 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH="release/v${VERSION}"
 
@@ -216,5 +217,3 @@ jobs:
           gh pr create --base main --head "$BRANCH" \
             --title "chore(release): v${VERSION}" \
             --body "$PR_BODY"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
