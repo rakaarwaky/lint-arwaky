@@ -1,4 +1,10 @@
 # Changelog
+## 3.6.2 (2026-08-22)
+
+### Bug Fixes
+
+- fix(ci): resolve duplicate env key in auto-release workflow (#247)
+
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
