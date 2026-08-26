@@ -1,4 +1,10 @@
 # Changelog
+## 3.6.3 (2026-08-26)
+
+### Bug Fixes
+
+- fix(scripts): add sccache and mold prerequisite checks to local installer (#250)
+
 ## 3.6.2 (2026-08-22)
 
 ### Bug Fixes
