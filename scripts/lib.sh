@@ -70,6 +70,26 @@ pip_install() {
     fi
 }
 
+sccache_install() {
+    case "${PKG_MGR:-unknown}" in
+        pacman) sudo pacman -S --noconfirm sccache 2>/dev/null || cargo install sccache --locked ;;
+        apt)    sudo apt-get install -y sccache 2>/dev/null || cargo install sccache --locked ;;
+        dnf)    sudo dnf install -y sccache 2>/dev/null || cargo install sccache --locked ;;
+        brew)   brew install sccache 2>/dev/null || cargo install sccache --locked ;;
+        *)      cargo install sccache --locked ;;
+    esac
+}
+
+mold_install() {
+    case "${PKG_MGR:-unknown}" in
+        pacman) sudo pacman -S --noconfirm mold 2>/dev/null || true ;;
+        apt)    sudo apt-get install -y mold 2>/dev/null || true ;;
+        dnf)    sudo dnf install -y mold 2>/dev/null || true ;;
+        brew)   brew install mold 2>/dev/null || true ;;
+        *)      true ;;
+    esac
+}
+
 install_if_missing() {
     local cmd="$1"
     local pkg="$2"
