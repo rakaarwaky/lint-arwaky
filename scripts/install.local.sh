@@ -52,6 +52,8 @@ detect_pkg_mgr
 
 # Node/npm first, then eslint/tsc depend on it
 install_if_missing cargo "Rust/Cargo" "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . \"\$HOME/.cargo/env\""
+install_if_missing sccache "sccache" "sccache_install"
+install_if_missing mold "mold" "mold_install"
 install_if_missing npm "npm" "npm_install"
 install_if_missing eslint "eslint" "npm_install_global eslint"
 install_if_missing tsc "typescript" "npm_install_global typescript"
