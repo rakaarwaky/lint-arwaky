@@ -141,28 +141,28 @@ impl SetupManagementAggregate for MockSetupOrchestrator {
         EnvContentVO::new("")
     }
     fn generate_mcp_config(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn mcp_config_claude(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn mcp_config_cursor(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn mcp_config_windsurf(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn mcp_config_copilot(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn mcp_config_hermes(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn mcp_config_vscode(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn mcp_config_all(&self) -> McpConfigVO {
-        McpConfigVO::new(serde_json::json!({}))
+        McpConfigVO::new(HashMap::new())
     }
     fn install_python_adapters(&self) -> SuccessStatus {
         SuccessStatus::new(true)
@@ -299,6 +299,55 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     }
     fn remove_dir_all(&self, _path: &Path) -> Result<(), std::io::Error> {
         Ok(())
+    }
+    fn set_permissions(
+        &self,
+        _path: &Path,
+        _mode: shared::filesystem::taxonomy_filesystem_vo::FileMode,
+    ) -> std::io::Result<()> {
+        Ok(())
+    }
+    fn remove_file(&self, _path: &Path) -> std::io::Result<()> {
+        Ok(())
+    }
+    fn run_git_command(
+        &self,
+        _args: &[&str],
+        _dir: &str,
+    ) -> shared::filesystem::taxonomy_filesystem_vo::GitCommandResult {
+        shared::filesystem::taxonomy_filesystem_vo::GitCommandResult::new(
+            String::new(),
+            String::new(),
+            false,
+        )
+    }
+    fn parse_output_lines(
+        &self,
+        output: &str,
+    ) -> shared::filesystem::taxonomy_filesystem_vo::ParsedLines {
+        shared::filesystem::taxonomy_filesystem_vo::ParsedLines::new(
+            output.lines().map(String::from).collect(),
+        )
+    }
+    fn run_external_command_in(
+        &self,
+        _name: &str,
+        _args: &[&str],
+        _current_dir: &str,
+    ) -> (String, String, bool) {
+        (String::new(), String::new(), false)
+    }
+    fn timing(&self) -> &shared::filesystem::taxonomy_filesystem_vo::ScanTiming {
+        static T: shared::filesystem::taxonomy_filesystem_vo::ScanTiming =
+            shared::filesystem::taxonomy_filesystem_vo::ScanTiming {
+                walk_ms: 0,
+                cache_ms: 0,
+                parse_ms: 0,
+                extract_ms: 0,
+                graph_ms: 0,
+                total_ms: 0,
+            };
+        &T
     }
 }
 
