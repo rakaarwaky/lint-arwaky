@@ -1,7 +1,5 @@
 // Unit tests — skills language relevance and filtering for init command.
-use dispatcher_lint_arwaky::surface_setup_action::{
-    collect_init, is_skill_relevant_for_languages,
-};
+use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
 use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_path_vo::DirectoryPath;
@@ -9,8 +7,8 @@ use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::project_setup::contract_setup_protocol::PreFlightResult;
 use shared::project_setup::{
-    CreateConfigDirResult, EmbeddedSkillVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
-    SetupManagementAggregate, WriteConfigResult, EMBEDDED_SKILLS,
+    CreateConfigDirResult, EMBEDDED_SKILLS, EmbeddedSkillVO, ProjectLanguageVO, ProjectLanguagesVO,
+    SetupError, SetupManagementAggregate, WriteConfigResult,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -44,13 +42,19 @@ fn test_rust_only_project_skill_filtering() {
 #[test]
 fn test_typescript_only_project_skill_filtering() {
     let langs_js = ProjectLanguagesVO::new(vec![ProjectLanguageVO::new("javascript")]);
-    assert!(is_skill_relevant_for_languages(Some("typescript"), &langs_js));
+    assert!(is_skill_relevant_for_languages(
+        Some("typescript"),
+        &langs_js
+    ));
     assert!(!is_skill_relevant_for_languages(Some("python"), &langs_js));
     assert!(!is_skill_relevant_for_languages(Some("rust"), &langs_js));
     assert!(is_skill_relevant_for_languages(None, &langs_js));
 
     let langs_ts = ProjectLanguagesVO::new(vec![ProjectLanguageVO::new("typescript")]);
-    assert!(is_skill_relevant_for_languages(Some("typescript"), &langs_ts));
+    assert!(is_skill_relevant_for_languages(
+        Some("typescript"),
+        &langs_ts
+    ));
     assert!(!is_skill_relevant_for_languages(Some("python"), &langs_ts));
     assert!(!is_skill_relevant_for_languages(Some("rust"), &langs_ts));
 }
@@ -72,9 +76,15 @@ fn test_multi_language_project_skill_filtering() {
 fn test_empty_detected_languages_installs_all_by_default() {
     let empty_langs = ProjectLanguagesVO::new(vec![]);
 
-    assert!(is_skill_relevant_for_languages(Some("python"), &empty_langs));
+    assert!(is_skill_relevant_for_languages(
+        Some("python"),
+        &empty_langs
+    ));
     assert!(is_skill_relevant_for_languages(Some("rust"), &empty_langs));
-    assert!(is_skill_relevant_for_languages(Some("typescript"), &empty_langs));
+    assert!(is_skill_relevant_for_languages(
+        Some("typescript"),
+        &empty_langs
+    ));
     assert!(is_skill_relevant_for_languages(None, &empty_langs));
 }
 
@@ -232,7 +242,10 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     fn is_source_file(&self, _path: &Path) -> bool {
         false
     }
-    fn is_source_ext(&self, _ext: &shared::filesystem::taxonomy_filesystem_vo::FileExtension) -> bool {
+    fn is_source_ext(
+        &self,
+        _ext: &shared::filesystem::taxonomy_filesystem_vo::FileExtension,
+    ) -> bool {
         false
     }
     fn get_basename<'a>(&self, path: &'a str) -> &'a str {
@@ -277,7 +290,9 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
         _src: &Path,
         _dst: &Path,
     ) -> Result<shared::filesystem::taxonomy_filesystem_vo::ByteCount, std::io::Error> {
-        Ok(shared::filesystem::taxonomy_filesystem_vo::ByteCount::new(0))
+        Ok(shared::filesystem::taxonomy_filesystem_vo::ByteCount::new(
+            0,
+        ))
     }
     fn create_dir_all(&self, _path: &Path) -> Result<(), std::io::Error> {
         Ok(())
@@ -338,7 +353,10 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
     );
 
     // Total skills written: 12 (python) + 3 (generic) = 15
-    let skill_files_count = written.keys().filter(|k| k.contains(".agents/skills/")).count();
+    let skill_files_count = written
+        .keys()
+        .filter(|k| k.contains(".agents/skills/"))
+        .count();
     assert_eq!(skill_files_count, 15);
 }
 
@@ -363,6 +381,9 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
     assert!(!written.keys().any(|k| k.contains("add-docs-typescript")));
 
     // Total skills written: 12 (rust) + 3 (generic) = 15
-    let skill_files_count = written.keys().filter(|k| k.contains(".agents/skills/")).count();
+    let skill_files_count = written
+        .keys()
+        .filter(|k| k.contains(".agents/skills/"))
+        .count();
     assert_eq!(skill_files_count, 15);
 }

@@ -260,4 +260,3 @@ fn get_embedded_skills_returns_all_skills() {
         assert!(!skill.content().is_empty());
     }
 }
-

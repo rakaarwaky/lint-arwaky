@@ -163,10 +163,7 @@ pub fn collect_init(
                 Ok(_) => installed_count += 1,
                 Err(e) => {
                     items.push(SetupInitItem {
-                        message: format!(
-                            "  .agents/skills/ — write error for {}: {e}",
-                            skill.name
-                        ),
+                        message: format!("  .agents/skills/ — write error for {}: {e}", skill.name),
                         ok: false,
                     });
                     install_failed = true;
