@@ -24,8 +24,6 @@ metadata:
     - create-agent-typescript
     - create-surface-typescript
     - create-root-typescript
-    - role-architect
-    - role-tech-lead
 ---
 
 # lint-arwaky-typescript — Complete Command & Argument Reference
@@ -386,11 +384,11 @@ lint-arwaky-cli fix <target-path> --filter AES304
 |---|---|---|
 | AES101 (naming) | Rename file to `layer_concern_role.ts` | `create-{taxonomy,contract,capabilities,...}-typescript` |
 | AES102 (suffix) | Change suffix to match layer rule | `create-{layer}-typescript` |
-| AES201 (forbidden import) | Remove cross-layer import; use DI via contract | `role-architect` |
+| AES201 (forbidden import) | Remove cross-layer import; use DI via contract | `create-contract-typescript` |
 | AES202 (mandatory import) | Add the required import | — |
 | AES203 (unused import) | Remove unused import line | — |
 | AES204 (dummy import) | Remove dummy import + stub usage | `fix-bypass-typescript` |
-| AES205 (circular import) | Break cycle by extracting to lower layer | `role-architect` |
+| AES205 (circular import) | Break cycle by extracting to lower layer | `create-contract-typescript` |
 | AES301 (max lines) | Split file by responsibility | `cleanup-consolidate-typescript` |
 | AES302 (min lines) | Merge thin file into parent or delete | `cleanup-consolidate-typescript` |
 | AES303 (mandatory def) | Add class/interface/function definition | — |

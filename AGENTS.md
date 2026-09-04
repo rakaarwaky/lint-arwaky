@@ -161,10 +161,10 @@ The `.agents/skills/` directory contains skill definitions for AI-assisted devel
 **Role workflow pipeline:**
 `Architect` → `Business Analyst` → `Tech Lead` → `Fullstack Developer`
 
-1. `.agents/skills/role-architect` — Reviews layer boundaries, naming, orphans, scalability
-2. `.agents/skills/role-business-analyst` — Reviews requirements, business flow, testability
-3. `.agents/skills/role-tech-lead` — Reviews security, performance, error handling, SOLID
-4. `.agents/skills/role-fullstack-developer` — Executes plans, implements fixes, verifies
+1. `Architect` — Reviews layer boundaries, naming, orphans, scalability
+2. `Business Analyst` — Reviews requirements, business flow, testability
+3. `Tech Lead` — Reviews security, performance, error handling, SOLID
+4. `Fullstack Developer` — Executes plans, implements fixes, verifies
 
 Plan files are saved to `.agents/plans/`.
 

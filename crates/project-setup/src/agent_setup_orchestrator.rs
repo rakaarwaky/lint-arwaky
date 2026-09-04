@@ -17,7 +17,7 @@ use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
 use shared::project_setup::contract_setup_protocol::PreFlightResult;
 use shared::project_setup::{
-    ISetupManagementProtocol, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
+    EmbeddedSkillVO, ISetupManagementProtocol, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
 };
 
 use std::sync::Arc;
@@ -108,6 +108,11 @@ impl SetupManagementAggregate for SetupManagementOrchestrator {
     /// Delegate to protocol (FR-007).
     fn pre_flight_check(&self) -> PreFlightResult {
         self.protocol.pre_flight_check()
+    }
+
+    /// Delegate to protocol.
+    fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO] {
+        self.protocol.get_embedded_skills()
     }
 
     /// Delegate to protocol.

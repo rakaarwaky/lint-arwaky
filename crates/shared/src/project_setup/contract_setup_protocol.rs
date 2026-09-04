@@ -13,6 +13,7 @@ use crate::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,
 };
+use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
 pub use crate::project_setup::taxonomy_setup_contract_vo::{PackageManagerStatus, PreFlightResult};
 
@@ -41,6 +42,8 @@ pub trait ISetupManagementProtocol: Send + Sync {
     fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError>;
     /// Pre-flight check: verify package managers are available (FR-007).
     fn pre_flight_check(&self) -> PreFlightResult;
+    /// Retrieve all embedded skill files compiled into the binary.
+    fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO];
     /// Write a configuration file to disk. Returns a description of the
     /// operation on success, or a structured `SetupError` on failure.
     fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
