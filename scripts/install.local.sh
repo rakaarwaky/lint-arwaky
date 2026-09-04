@@ -8,9 +8,9 @@ CARGO_TOML="$PROJECT_ROOT/Cargo.toml"
 RELEASE_DIR="$PROJECT_ROOT/target/release"
 DIST_DIR="$PROJECT_ROOT/dist"
 
-INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-$HOME/.cargo/bin}"
-CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-$HOME/.config/lint-arwaky}"
-REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
+INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-${XDG_BIN_HOME:-$HOME/.local/bin}}"
+CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/lint-arwaky}"
+REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/lint-arwaky/reports}"
 
 BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 
@@ -21,9 +21,9 @@ usage() {
     echo "  -h, --help    Show this help"
     echo ""
     echo "Env vars:"
-    echo "  LINT_ARWAKY_INSTALL_BIN   Install binaries to (default: ~/.cargo/bin)"
-    echo "  LINT_ARWAKY_CONFIG_DIR    Config dir (default: ~/.config/lint-arwaky)"
-    echo "  LINT_ARWAKY_REPORT_DIR    Reports dir (default: ~/.local/share/lint-arwaky/reports)"
+    echo "  LINT_ARWAKY_INSTALL_BIN   Install binaries to (default: \$XDG_BIN_HOME or ~/.local/bin)"
+    echo "  LINT_ARWAKY_CONFIG_DIR    Config dir (default: \$XDG_CONFIG_HOME/lint-arwaky or ~/.config/lint-arwaky)"
+    echo "  LINT_ARWAKY_REPORT_DIR    Reports dir (default: \$XDG_DATA_HOME/lint-arwaky/reports or ~/.local/share/lint-arwaky/reports)"
     exit 0
 }
 

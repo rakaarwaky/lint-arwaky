@@ -58,13 +58,16 @@ echo ""
 # ── Local uninstall ────────────────────────────────────────────────────────────
 uninstall_local() {
     echo "=== Local (XDG) Installation ==="
-    local install_bin="${LINT_ARWAKY_INSTALL_BIN:-$HOME/.cargo/bin}"
-    local config_dir="${LINT_ARWAKY_CONFIG_DIR:-$HOME/.config/lint-arwaky}"
-    local report_dir="${LINT_ARWAKY_REPORT_DIR:-$HOME/.local/share/lint-arwaky/reports}"
+    local install_bin="${LINT_ARWAKY_INSTALL_BIN:-${XDG_BIN_HOME:-$HOME/.local/bin}}"
+    local config_dir="${LINT_ARWAKY_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/lint-arwaky}"
+    local report_dir="${LINT_ARWAKY_REPORT_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/lint-arwaky/reports}"
 
     echo "Binaries ($install_bin):"
     for bin in "${BINARIES[@]}"; do
         remove_binary "$bin" "$install_bin"
+        if [ "$install_bin" != "$HOME/.cargo/bin" ] && [ -f "$HOME/.cargo/bin/$bin" ]; then
+            remove_binary "$bin" "$HOME/.cargo/bin"
+        fi
     done
 
     echo ""
