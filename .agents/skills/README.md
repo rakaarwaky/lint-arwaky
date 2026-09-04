@@ -18,11 +18,6 @@ Each skill is a self-contained directory with a `SKILL.md` file defining rules, 
 ├── create-utility-<language>        # USE when you work on Utility layer
 ├── fix-bypass-<language>            # USE when you remove bypass
 ├── lint-arwaky-<language>           # USE when you run scan violation
-├── role-architect                   # USE for architecture review & layer validation
-├── role-business-analyst            # USE for requirements & business flow review
-├── role-fullstack-developer         # USE to execute plans & implement fixes
-├── role-quality-analysis            # USE for PR review, CI gates, merge readiness
-├── role-tech-lead                   # USE for code quality, security & performance review
 └── setup-ci-quality-gates           # USE to set up CI, quality gates, branch protection, AI review bots
 
 ## Naming Convention

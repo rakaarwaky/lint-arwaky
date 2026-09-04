@@ -9,6 +9,7 @@ use crate::project_setup::contract_setup_protocol::PreFlightResult;
 use crate::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, ProjectLanguageVO, ProjectLanguagesVO, SetupError, WriteConfigResult,
 };
+use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
 pub type SetupMgmtProtocol = Box<dyn ISetupManagementProtocol>;
 
@@ -29,6 +30,7 @@ pub trait SetupManagementAggregate: Send + Sync {
     fn detect_languages(&self) -> ProjectLanguagesVO;
     fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError>;
     fn pre_flight_check(&self) -> PreFlightResult;
+    fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO];
     fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
     fn create_global_config_dir(&self) -> CreateConfigDirResult;
     fn file_exists(&self, path: &str) -> bool;

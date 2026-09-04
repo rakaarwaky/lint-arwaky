@@ -248,3 +248,15 @@ fn pre_flight_check_returns_results() {
         "Pre-flight check should return at least one entry"
     );
 }
+
+#[test]
+fn get_embedded_skills_returns_all_skills() {
+    let proc = make_processor();
+    let skills = proc.get_embedded_skills();
+    assert_eq!(skills.len(), 39);
+    for skill in skills {
+        assert!(!skill.name().is_empty());
+        assert!(!skill.relative_path().is_empty());
+        assert!(!skill.content().is_empty());
+    }
+}

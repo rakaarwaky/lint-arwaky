@@ -2,7 +2,7 @@
 // handle_install delegates to SetupManagementAggregate.
 // No direct std::process::Command calls.
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::project_setup::SetupManagementAggregate;
+use shared::project_setup::{ProjectLanguagesVO, SetupManagementAggregate};
 use std::sync::Arc;
 
 /// One setup step outcome — message + success flag for CLI rendering.
@@ -104,7 +104,7 @@ pub fn collect_init(
             }
         }
 
-        // Copy .agents/ from XDG config to current project
+        // Copy .agents/ from XDG config to current project (skips skills - embedded binary constants used)
         let xdg_agents = xdg_base.join(".agents");
         if xdg_agents.exists() && xdg_agents.is_dir() {
             let target_agents = std::path::Path::new(".agents");
@@ -137,7 +137,84 @@ pub fn collect_init(
         });
     }
 
+    // Install embedded skills from binary constants (filtered by detected languages)
+    let embedded_skills = setup_orchestrator.get_embedded_skills();
+    let mut installed_count = 0;
+    let mut install_failed = false;
+    let skills_root = std::path::Path::new(".agents").join("skills");
+
+    for skill in embedded_skills {
+        if is_skill_relevant_for_languages(skill.language, &languages) {
+            let target_file = skills_root.join(skill.relative_path);
+            if let Some(parent) = target_file.parent() {
+                if let Err(e) = filesystem.create_dir_all(parent) {
+                    items.push(SetupInitItem {
+                        message: format!(
+                            "  .agents/skills/ — directory error for {}: {e}",
+                            skill.name
+                        ),
+                        ok: false,
+                    });
+                    install_failed = true;
+                    continue;
+                }
+            }
+            match filesystem.write_string(&target_file, skill.content) {
+                Ok(_) => installed_count += 1,
+                Err(e) => {
+                    items.push(SetupInitItem {
+                        message: format!("  .agents/skills/ — write error for {}: {e}", skill.name),
+                        ok: false,
+                    });
+                    install_failed = true;
+                }
+            }
+        }
+    }
+
+    let detected_names: Vec<&str> = languages.iter().map(|l| l.value()).collect();
+    let lang_summary = if detected_names.is_empty() {
+        "all / default".to_string()
+    } else {
+        detected_names.join(", ")
+    };
+
+    if !install_failed {
+        items.push(SetupInitItem {
+            message: format!(
+                "  .agents/skills/ — installed {installed_count} skill file(s) for detected language(s) [{lang_summary}]"
+            ),
+            ok: true,
+        });
+    }
+
     items
+}
+
+/// Determine whether a skill is relevant given the detected project languages.
+/// If skill_language is None (language-agnostic), always returns true.
+/// If no languages are detected in the project, returns true as default.
+/// Otherwise, checks if the skill language matches any detected language.
+pub fn is_skill_relevant_for_languages(
+    skill_language: Option<&str>,
+    detected_languages: &ProjectLanguagesVO,
+) -> bool {
+    let Some(lang) = skill_language else {
+        return true;
+    };
+
+    if detected_languages.is_empty() {
+        return true;
+    }
+
+    match lang {
+        "python" => detected_languages.iter().any(|l| l.value() == "python"),
+        "rust" => detected_languages.iter().any(|l| l.value() == "rust"),
+        "typescript" | "javascript" => detected_languages
+            .iter()
+            .any(|l| l.value() == "javascript" || l.value() == "typescript"),
+        _ => false,
+    }
 }
 
 fn copy_dir_all(
@@ -149,6 +226,9 @@ fn copy_dir_all(
     let mut count = 0;
     for entry_path in fs.read_dir_entries_as_pathbuf(src)? {
         let file_name = entry_path.file_name().unwrap_or_default();
+        if file_name == "skills" {
+            continue;
+        }
         let dst_path = dst.join(file_name);
         if entry_path.is_dir() {
             count += copy_dir_all(&entry_path, &dst_path, fs)?;

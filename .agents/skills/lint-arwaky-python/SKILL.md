@@ -22,8 +22,6 @@ metadata:
     - create-agent-python
     - create-surface-python
     - create-root-python
-    - role-architect
-    - role-tech-lead
 ---
 # lint-arwaky-python — Complete Command & Argument Reference
 
@@ -392,11 +390,11 @@ lint-arwaky-cli fix <target-path> --filter AES304
 | ------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
 | AES101 (naming)           | Rename file to`layer_concern_role.py`         | `create-{taxonomy,contract,capabilities,...}-python` |
 | AES102 (suffix)           | Change suffix to match layer rule               | `create-{layer}-python`                              |
-| AES201 (forbidden import) | Remove cross-layer import; use DI via contract  | `role-architect`                                     |
+| AES201 (forbidden import) | Remove cross-layer import; use DI via contract  | `create-contract-python`                             |
 | AES202 (mandatory import) | Add the required import                         | —                                                     |
 | AES203 (unused import)    | Remove unused import line                       | —                                                     |
 | AES204 (dummy import)     | Remove dummy import + stub usage                | `fix-bypass-python`                                  |
-| AES205 (circular import)  | Break cycle by extracting to lower layer        | `role-architect`                                     |
+| AES205 (circular import)  | Break cycle by extracting to lower layer        | `create-contract-python`                             |
 | AES301 (max lines)        | Split file by responsibility                    | `cleanup-consolidate-python`                         |
 | AES302 (min lines)        | Merge thin file into parent or delete           | `cleanup-consolidate-python`                         |
 | AES303 (mandatory def)    | Add class/function definition                   | —                                                     |

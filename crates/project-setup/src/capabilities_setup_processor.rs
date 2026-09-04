@@ -20,6 +20,7 @@ use shared::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,
 };
+use shared::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -212,15 +213,15 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         if std::path::Path::new("crates").exists() || std::path::Path::new("Cargo.toml").exists() {
             found_rust = true;
         }
-        if std::path::Path::new("packages").exists()
-            || std::path::Path::new("modules").exists()
+        if std::path::Path::new("modules").exists()
             || std::path::Path::new("pyproject.toml").exists()
             || std::path::Path::new("setup.py").exists()
             || std::path::Path::new("requirements.txt").exists()
         {
             found_python = true;
         }
-        if std::path::Path::new("package.json").exists()
+        if std::path::Path::new("packages").exists()
+            || std::path::Path::new("package.json").exists()
             || std::path::Path::new("tsconfig.json").exists()
         {
             found_javascript = true;
@@ -250,6 +251,11 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
         }
         // FR-003: No default language — return empty list when nothing detected
         ProjectLanguagesVO::new(langs)
+    }
+
+    /// Retrieve all embedded skill files compiled into the binary.
+    fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO] {
+        shared::project_setup::EMBEDDED_SKILLS
     }
 
     /// Get an embedded config template for the given language (FR-005).
