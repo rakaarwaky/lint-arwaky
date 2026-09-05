@@ -104,10 +104,19 @@ license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 homepage = "https://github.com/rakaarwaky/lint-arwaky"
 readme = "README.md"
+default-run = "lint-arwaky"
 
 [lib]
 name = "lint_arwaky"
 path = "crates/lib.rs"
+
+[[bin]]
+name = "lint-arwaky"
+path = "crates/root_cli_main_entry.rs"
+
+[[bin]]
+name = "la"
+path = "crates/root_cli_main_entry.rs"
 
 [[bin]]
 name = "lint-arwaky-cli"
