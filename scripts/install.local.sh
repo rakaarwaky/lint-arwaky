@@ -12,7 +12,7 @@ INSTALL_BIN="${LINT_ARWAKY_INSTALL_BIN:-${XDG_BIN_HOME:-$HOME/.local/bin}}"
 CONFIG_DIR="${LINT_ARWAKY_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/lint-arwaky}"
 REPORT_DIR="${LINT_ARWAKY_REPORT_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/lint-arwaky/reports}"
 
-BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
+BINARIES=(lint-arwaky la lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 
 usage() {
     echo "Usage: bash scripts/install.local.sh [options]"
@@ -82,11 +82,12 @@ copy_docs_to_config "$CONFIG_DIR"
 # 6. Copy .agents/ to XDG config
 copy_agents_to_config "$CONFIG_DIR"
 
-# 7. Setup shell aliases (lac, lat, lam) if missing
+# 7. Setup shell aliases (la, lac, lat, lam) if missing
 for RC_FILE in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    if [ -f "$RC_FILE" ] && ! grep -q "alias lac=" "$RC_FILE"; then
+    if [ -f "$RC_FILE" ] && ! grep -q "alias la=" "$RC_FILE"; then
         echo "" >> "$RC_FILE"
         echo "# Lint Arwaky Aliases" >> "$RC_FILE"
+        echo "alias la=\"lint-arwaky\"" >> "$RC_FILE"
         echo "alias lac=\"lint-arwaky-cli\"" >> "$RC_FILE"
         echo "alias lat=\"lint-arwaky-tui\"" >> "$RC_FILE"
         echo "alias lam=\"lint-arwaky-mcp\"" >> "$RC_FILE"
