@@ -1,4 +1,15 @@
 # Changelog
+## 3.7.0 (2026-09-05)
+
+### Features
+
+- feat(cli): standardize binary names to lint-arwaky and short alias la (#255)
+
+### Bug Fixes
+
+- fix(scripts): enforce XDG Base Directory specification across install and uninstall scripts (#254)
+- fix(scripts): add sccache and mold prerequisite checks to local installer (#250)
+
 ## 3.6.2 (2026-08-22)
 
 ### Bug Fixes
