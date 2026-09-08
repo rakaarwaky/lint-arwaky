@@ -4,7 +4,7 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
-BINARIES=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
+BINARIES=(lint-arwaky la lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui lac)
 
 usage() {
     echo "Usage: bash scripts/uninstall.sh [options]"
