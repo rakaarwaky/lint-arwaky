@@ -71,4 +71,4 @@ warn_no_return = false
 
 [tool.bandit]
 exclude_dirs = ["output", "scratch", "tests"]
-skips = ["B101", B301"]
+skips = ["B101", "B301"]
