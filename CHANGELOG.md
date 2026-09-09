@@ -1,4 +1,10 @@
 # Changelog
+## 3.6.4 (2026-09-09)
+
+### Maintenance
+
+- chore(deps-dev): bump the npm_and_yarn group across 2 directories with 1 update (#264)
+
 ## 3.6.3 (2026-09-09)
 
 ### Bug Fixes
