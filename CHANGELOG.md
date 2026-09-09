@@ -1,4 +1,14 @@
 # Changelog
+## 3.6.3 (2026-09-09)
+
+### Bug Fixes
+
+- **AES203 f-string interpolation false positive**: identifiers referenced
+  inside f-string `{...}` (e.g. `f"{escape(v)}"`) were never collected, so
+  imports used only inside f-strings were flagged UNUSED_IMPORT. Fix skips
+  literal text but recurses into `interpolation` children (#262)
+- fix(scripts): add sccache and mold prerequisite checks to local installer (#250)
+
 ## 3.6.2 (2026-08-22)
 
 ### Bug Fixes
