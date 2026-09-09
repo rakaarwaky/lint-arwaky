@@ -187,8 +187,28 @@ fn extract_identifiers_recursive(
         return;
     }
 
-    // Skip string literals — don't extract identifiers from string content
-    if kind == "string" || kind == "concatenated_string" || kind == "f_string" {
+    // String literals: skip the literal text, but STILL count identifiers
+    // used inside f-string interpolations ({...}). tree-sitter-python models
+    // f-strings as a `string` node whose `interpolation` children hold the
+    // referenced identifiers (e.g. f"{var}" / f"{foo(x)}"). Returning early
+    // here caused AES203 false positives (identifiers inside {} were never
+    // collected). Plain strings only have string_start/content/end children
+    // (no interpolations), so this never leaks string content as identifiers.
+    if kind == "string"
+        || kind == "concatenated_string"
+        || kind == "f_string"
+        || kind == "interpolated_string"
+    {
+        let mut cursor = node.walk();
+        for child in node.named_children(&mut cursor) {
+            if child.kind() == "interpolation" {
+                extract_identifiers_recursive(child, content, ids);
+            } else if kind == "concatenated_string" {
+                // Concatenated strings nest `string` children; recurse so
+                // interpolations inside each part are also covered.
+                extract_identifiers_recursive(child, content, ids);
+            }
+        }
         return;
     }
 
