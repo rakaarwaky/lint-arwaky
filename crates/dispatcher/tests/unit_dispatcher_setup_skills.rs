@@ -90,7 +90,7 @@ fn test_empty_detected_languages_installs_all_by_default() {
 
 #[test]
 fn test_embedded_skills_constants_catalog() {
-    assert_eq!(EMBEDDED_SKILLS.len(), 39);
+    assert_eq!(EMBEDDED_SKILLS.len(), 47);
 
     let mut py_count = 0;
     let mut rs_count = 0;
@@ -105,14 +105,17 @@ fn test_embedded_skills_constants_catalog() {
         match skill.language() {
             Some("python") => {
                 assert!(skill.name().ends_with("-python"));
+                assert!(skill.relative_path().ends_with("references/python.md"));
                 py_count += 1;
             }
             Some("rust") => {
                 assert!(skill.name().ends_with("-rust"));
+                assert!(skill.relative_path().ends_with("references/rust.md"));
                 rs_count += 1;
             }
             Some("typescript") => {
                 assert!(skill.name().ends_with("-typescript"));
+                assert!(skill.relative_path().ends_with("references/typescript.md"));
                 ts_count += 1;
             }
             None => {
@@ -122,10 +125,20 @@ fn test_embedded_skills_constants_catalog() {
         }
     }
 
-    assert_eq!(py_count, 12);
-    assert_eq!(rs_count, 12);
-    assert_eq!(ts_count, 12);
-    assert_eq!(generic_count, 3);
+    // Each consolidated skill ships exactly one language-agnostic SKILL.md;
+    // per-language detail lives in references/<language>.md.
+    assert_eq!(
+        EMBEDDED_SKILLS
+            .iter()
+            .filter(|s| s.relative_path().ends_with("SKILL.md"))
+            .count(),
+        14
+    );
+
+    assert_eq!(py_count, 10);
+    assert_eq!(rs_count, 10);
+    assert_eq!(ts_count, 10);
+    assert_eq!(generic_count, 17);
 }
 
 // ── Mock for collect_init integration test ─────────────────
@@ -363,50 +376,54 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
 
     let written = mock_fs.written_files.lock().unwrap();
 
-    // Verify Python skills ARE installed
+    // Verify the Python half of every polyglot skill IS installed
     assert!(
-        written.keys().any(|k| k.contains("add-docs-python")),
-        "add-docs-python should be installed"
+        written.keys().any(|k| k.contains("add-docs/SKILL.md")),
+        "add-docs is language-agnostic and must be installed"
     );
     assert!(
-        written.keys().any(|k| k.contains("lint-arwaky-python")),
-        "lint-arwaky-python should be installed"
+        written
+            .keys()
+            .any(|k| k.contains("lint-arwaky/references/python.md")),
+        "the python reference of lint-arwaky should be installed"
+    );
+    assert!(
+        written
+            .keys()
+            .any(|k| k.contains("create-taxonomy/references/python.md")),
+        "the python reference of create-taxonomy should be installed"
     );
 
     // Verify common skills ARE installed
     assert!(
-        written.keys().any(|k| k.contains("create-skill-all")),
-        "create-skill-all should be installed"
+        written
+            .keys()
+            .any(|k| k.contains("author-skill-md/SKILL.md")),
+        "author-skill-md should be installed"
     );
     assert!(
         written.keys().any(|k| k.contains("setup-ci-quality-gates")),
         "setup-ci-quality-gates should be installed"
     );
 
-    // Verify Rust and TypeScript skills are NOT installed
+    // Verify Rust and TypeScript references are NOT installed
     assert!(
-        !written.keys().any(|k| k.contains("add-docs-rust")),
-        "add-docs-rust must NOT be installed in a python-only project"
+        !written.keys().any(|k| k.ends_with("references/rust.md")),
+        "rust references must NOT be installed in a python-only project"
     );
     assert!(
-        !written.keys().any(|k| k.contains("lint-arwaky-rust")),
-        "lint-arwaky-rust must NOT be installed in a python-only project"
-    );
-    assert!(
-        !written.keys().any(|k| k.contains("add-docs-typescript")),
-        "add-docs-typescript must NOT be installed in a python-only project"
-    );
-    assert!(
-        !written.keys().any(|k| k.contains("lint-arwaky-typescript")),
-        "lint-arwaky-typescript must NOT be installed in a python-only project"
+        !written
+            .keys()
+            .any(|k| k.ends_with("references/typescript.md")),
+        "typescript references must NOT be installed in a python-only project"
     );
 
-    // Total skills written: 12 (python) + 3 (generic) = 15
+    // Total skill files written: 10 (python) + 17 (generic) = 27
     let skill_files_count = written
         .keys()
         .filter(|k| k.contains(".agents/skills/"))
         .count();
-    assert_eq!(skill_files_count, 15);
+    assert_eq!(skill_files_count, 27);
 }
 
 #[test]
@@ -421,18 +438,30 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
 
     let written = mock_fs.written_files.lock().unwrap();
 
-    // Verify Rust skills ARE installed
-    assert!(written.keys().any(|k| k.contains("add-docs-rust")));
-    assert!(written.keys().any(|k| k.contains("lint-arwaky-rust")));
+    // Verify the Rust half of every polyglot skill IS installed
+    assert!(
+        written
+            .keys()
+            .any(|k| k.contains("lint-arwaky/references/rust.md"))
+    );
+    assert!(
+        written
+            .keys()
+            .any(|k| k.contains("create-capabilities/references/rust.md"))
+    );
 
-    // Verify Python and TypeScript skills are NOT installed
-    assert!(!written.keys().any(|k| k.contains("add-docs-python")));
-    assert!(!written.keys().any(|k| k.contains("add-docs-typescript")));
+    // Verify Python and TypeScript references are NOT installed
+    assert!(!written.keys().any(|k| k.ends_with("references/python.md")));
+    assert!(
+        !written
+            .keys()
+            .any(|k| k.ends_with("references/typescript.md"))
+    );
 
-    // Total skills written: 12 (rust) + 3 (generic) = 15
+    // Total skill files written: 10 (rust) + 17 (generic) = 27
     let skill_files_count = written
         .keys()
         .filter(|k| k.contains(".agents/skills/"))
         .count();
-    assert_eq!(skill_files_count, 15);
+    assert_eq!(skill_files_count, 27);
 }

@@ -1,6 +1,6 @@
 ---
 name: setup-ci-quality-gates
-description: Set up a complete CI system with quality gates, architecture enforcement, and AI code review for a multi-language workspace (Rust, Python, TypeScript). Covers GitHub Actions workflows, branch protection rulesets, self-linting, and integrating CodeRabbit, Codacy, cubic, and Repowise. Use when asked to create or replicate CI like this project's.
+description: Sets up CI quality gates and arch checks. Use when creating workflows, branch protection.
 metadata:
   tags: [ci, github-actions, quality-gates, code-review, coderabbit, codacy, cubic, repowise, rust, python, typescript, self-lint, architecture, aes]
   triggers:
@@ -14,14 +14,10 @@ metadata:
     - "self-lint"
   dependencies: []
   related:
-    - lint-arwaky-rust
-    - lint-arwaky-python
-    - lint-arwaky-typescript
-    - repowise-scan
-    - role-quality-analysis
-    - role-tech-lead
+    - lint-arwaky
+    - add-docs
+    - testing-suite
 ---
-
 # CI Quality Gates System
 
 Replicate the CI setup used by this repo: quality gates enforced by GitHub

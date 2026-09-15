@@ -253,7 +253,7 @@ fn pre_flight_check_returns_results() {
 fn get_embedded_skills_returns_all_skills() {
     let proc = make_processor();
     let skills = proc.get_embedded_skills();
-    assert_eq!(skills.len(), 39);
+    assert_eq!(skills.len(), 47);
     for skill in skills {
         assert!(!skill.name().is_empty());
         assert!(!skill.relative_path().is_empty());
