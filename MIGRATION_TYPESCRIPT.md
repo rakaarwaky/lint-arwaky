@@ -140,7 +140,7 @@ lint-arwaky-cli install
 
 ## Phase 0: Audit & Config Setup
 
-> **Skill:** `lint-arwaky-typescript` — load for audit commands and violation analysis.
+> **Skill:** `lint-arwaky` (`references/typescript.md`) — load for audit commands and violation analysis.
 
 ### Step 1: Initialize Config
 
@@ -176,7 +176,7 @@ find packages -name "*.ts" -not -name "*.d.ts" -not -path "*/node_modules/*" | w
 
 ## Phase 1: Taxonomy Layer
 
-> **Skill:** `create-taxonomy-typescript` — load for VOs, errors, constants, entities, events.
+> **Skill:** `create-taxonomy` (`references/typescript.md`) — load for VOs, errors, constants, entities, events.
 
 Define Value Objects, Errors, Events, and Constants under
 `packages/shared/src/<feature>/`.
@@ -187,7 +187,7 @@ Define Value Objects, Errors, Events, and Constants under
    ```bash
    grep -rn "^export interface\|^export type\|^export enum\|^export class" packages/*/src/
    ```
-2. Load `create-taxonomy-typescript` skill.
+2. Load `create-taxonomy` (`references/typescript.md`) skill.
 3. Create taxonomy files following skill templates.
 4. Register in domain `index.ts`.
 5. Verify: `npx tsc --noEmit`.
@@ -266,14 +266,14 @@ export const DEFAULT_PAGE_SIZE = 50;
 
 ## Phase 2: Contract Layer
 
-> **Skill:** `create-contract-typescript` — load for protocol and aggregate interfaces.
+> **Skill:** `create-contract` (`references/typescript.md`) — load for protocol and aggregate interfaces.
 
 Contracts define public interfaces (Protocols and Aggregates) using
 TypeScript `interface` without exposing implementation.
 
 ### Steps
 
-1. Load `create-contract-typescript` skill.
+1. Load `create-contract` (`references/typescript.md`) skill.
 2. Create protocol interfaces (inbound/outbound) under `packages/shared/src/<feature>/`.
 3. Create aggregate facade interfaces under `packages/shared/src/<feature>/`.
 4. Register in domain `index.ts`.
@@ -323,7 +323,7 @@ export interface IUserAggregate {
 
 ## Phase 3: Utility Layer
 
-> **Skill:** `create-utility-typescript` — load for stateless standalone functions.
+> **Skill:** `create-utility` (`references/typescript.md`) — load for stateless standalone functions.
 
 Utility contains low-level technical mechanics — **stateless standalone
 functions only**. No classes, no interfaces, no enums, no type aliases.
@@ -331,7 +331,7 @@ functions only**. No classes, no interfaces, no enums, no type aliases.
 ### Steps
 
 1. Identify reusable stateless functions across packages.
-2. Load `create-utility-typescript` skill.
+2. Load `create-utility` (`references/typescript.md`) skill.
 3. Create utility files under `packages/shared/src/<feature>/`.
 4. Register in domain `index.ts`.
 5. Verify: `npx tsc --noEmit`.
@@ -371,14 +371,14 @@ export function generateUserId(): string {
 
 ## Phase 4: Capabilities Layer
 
-> **Skill:** `create-capabilities-typescript` — load for business logic and external adaptation.
+> **Skill:** `create-capabilities` (`references/typescript.md`) — load for business logic and external adaptation.
 
 Capabilities contain concrete behavior implementations. They **implement
 protocol interfaces** defined in the contract layer via `implements`.
 
 ### Steps
 
-1. Load `create-capabilities-typescript` skill.
+1. Load `create-capabilities` (`references/typescript.md`) skill.
 2. Create business logic capabilities (implement protocol interfaces).
 3. Create external adaptation capabilities (repositories, clients).
 4. Verify: `npx tsc --noEmit`.
@@ -432,14 +432,14 @@ export class UserRepository implements IUserRepositoryProtocol {
 
 ## Phase 5: Agent Layer
 
-> **Skill:** `create-agent-typescript` — load for orchestration logic.
+> **Skill:** `create-agent` (`references/typescript.md`) — load for orchestration logic.
 
 Orchestrates sequential execution, branching, looping, and error handling.
 **Implements aggregate interfaces** defined in the contract layer.
 
 ### Steps
 
-1. Load `create-agent-typescript` skill.
+1. Load `create-agent` (`references/typescript.md`) skill.
 2. Create orchestrator class implementing aggregate interface.
 3. Inject protocol dependencies via constructor.
 4. Verify: `npx tsc --noEmit`.
@@ -488,7 +488,7 @@ export class UserOrchestrator implements IUserAggregate {
 
 ## Phase 6: Surface Layer
 
-> **Skill:** `create-surface-typescript` — load for user-facing input translation.
+> **Skill:** `create-surface` (`references/typescript.md`) — load for user-facing input translation.
 
 Translates user-facing inputs into actions, delegating to the Agent
 orchestrator via aggregate interface.
@@ -504,7 +504,7 @@ orchestrator via aggregate interface.
 
 ### Steps
 
-1. Load `create-surface-typescript` skill.
+1. Load `create-surface` (`references/typescript.md`) skill.
 2. Create surface classes (commands, handlers, endpoints).
 3. Inject aggregate interface via constructor.
 4. Verify: `npx tsc --noEmit`.
@@ -540,14 +540,14 @@ export class GetUserCommand {
 
 ## Phase 7: Root Layer
 
-> **Skill:** `create-root-typescript` — load for DI container and entry point wiring.
+> **Skill:** `create-root` (`references/typescript.md`) — load for DI container and entry point wiring.
 
 Wires concrete implementations to contracts and bootstraps the system.
 Root is the **only layer** allowed to import all other layers.
 
 ### Steps
 
-1. Load `create-root-typescript` skill.
+1. Load `create-root` (`references/typescript.md`) skill.
 2. Create DI container wiring: capabilities → orchestrator → surface.
 3. Create entry point at `packages/root_<name>_entry.ts`.
 4. Verify: `npx tsc --noEmit`.
@@ -676,10 +676,10 @@ lint-arwaky-cli external .
 
 | Skill                            | When to Use                                                               |
 | ---------------------------------- | --------------------------------------------------------------------------- |
-| `add-docs-typescript`            | Add JSDoc, type annotations after migration                               |
-| `fix-bypass-typescript`          | Remove`@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `FIXME`, `HACK` |
-| `cleanup-consolidate-typescript` | Remove dead code, merge duplicates                                        |
-| `create-test-typescript`         | Generate test suites (vitest)                                             |
+| `add-docs`            | Add JSDoc, type annotations after migration                               |
+| `fix-bypass`          | Remove`@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `FIXME`, `HACK` |
+| `cleanup-consolidate` (`references/typescript.md`) | Remove dead code, merge duplicates                                        |
+| `testing-suite` (`references/typescript.md`)         | Generate test suites (vitest)                                             |
 
 ---
 

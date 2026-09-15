@@ -140,23 +140,32 @@ Key crates:
 
 ## Skills & Roles
 
-The `.agents/skills/` directory contains skill definitions for AI-assisted development. Use them via trigger keywords:
+The `.agents/skills/` directory contains skill definitions for AI-assisted development. Use them via trigger keywords. Each skill is one directory with a language-agnostic `SKILL.md`; per-language detail lives in `references/<language>.md` next to it:
 
-**Layer creation skills** (one per language: `rust`, `python`, `typescript`):
-- `.agents/skills/create-taxonomy-*` — Create taxonomy layer files
-- `.agents/skills/create-contract-*` — Create contract layer files
-- `.agents/skills/create-utility-*` — Create utility layer files
-- `.agents/skills/create-capabilities-*` — Create capabilities layer files
-- `.agents/skills/create-agent-*` — Create agent layer files
-- `.agents/skills/create-surface-*` — Create surface layer files
-- `.agents/skills/create-root-*` — Create root layer files
+**Layer creation skills** (one per AES layer):
+- `.agents/skills/create-taxonomy` — Create taxonomy layer files
+- `.agents/skills/create-contract` — Create contract layer files
+- `.agents/skills/create-utility` — Create utility layer files
+- `.agents/skills/create-capabilities` — Create capabilities layer files
+- `.agents/skills/create-agent` — Create agent layer files
+- `.agents/skills/create-surface` — Create surface layer files
+- `.agents/skills/create-root` — Create root layer files
 
 **Maintenance skills:**
-- `.agents/skills/fix-bypass-*` — Fix bypass comments (`unwrap`, `#[allow]`, `noqa`, etc.)
-- `.agents/skills/cleanup-consolidate-*` — Remove dead code, merge duplicates
-- `.agents/skills/add-docs-*` — Add docstrings, type hints, crate-level docs
-- `.agents/skills/create-test-*` — Generate test suites
-- `.agents/skills/lint-arwaky-*` — Run scan and fix violations
+- `.agents/skills/fix-bypass` — Fix bypass comments (`unwrap`, `#[allow]`, `noqa`, etc.)
+- `.agents/skills/cleanup-consolidate` — Remove dead code, merge duplicates
+- `.agents/skills/add-docs` — Add docstrings, type hints, crate-level docs
+- `.agents/skills/testing-suite` — Generate test suites
+- `.agents/skills/lint-arwaky` — Run scan and fix violations
+
+**Other skills:**
+- `.agents/skills/author-skill-md` — Author a new skill
+- `.agents/skills/setup-ci-quality-gates` — Set up CI, quality gates, branch protection, AI review bots
+
+`lint-arwaky init` installs every `SKILL.md` and only the `references/` files matching the
+project's detected languages. `crates/shared/src/project_setup/taxonomy_skills_constant.rs` is
+generated from this directory — run `python3 tools/regenerate_skills.py` after adding, removing or
+renaming a skill file.
 
 **Role workflow pipeline:**
 `Architect` → `Business Analyst` → `Tech Lead` → `Fullstack Developer`

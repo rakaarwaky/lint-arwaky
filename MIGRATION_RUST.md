@@ -167,7 +167,7 @@ lint-arwaky-cli install
 
 ## Phase 0: Audit & Config Setup
 
-> **Skill:** `lint-arwaky-rust` — load for audit commands and violation analysis.
+> **Skill:** `lint-arwaky` (`references/rust.md`) — load for audit commands and violation analysis.
 
 ### Step 1: Initialize Config
 
@@ -203,7 +203,7 @@ find crates -name "*.rs" | wc -l
 
 ## Phase 1: Taxonomy Layer
 
-> **Skill:** `create-taxonomy-rust` — load for VOs, errors, constants, entities, events.
+> **Skill:** `create-taxonomy` (`references/rust.md`) — load for VOs, errors, constants, entities, events.
 
 Define Value Objects, Errors, Events, and compile-time Constants under
 `crates/shared/<feature>/`.
@@ -214,7 +214,7 @@ Define Value Objects, Errors, Events, and compile-time Constants under
    ```bash
    grep -rn "pub struct\|pub enum" crates/*/src/ | grep -v test | grep -v mod.rs
    ```
-2. Load `create-taxonomy-rust` skill.
+2. Load `create-taxonomy` (`references/rust.md`) skill.
 3. Create taxonomy files following skill templates.
 4. Register in domain `mod.rs`.
 5. Verify: `cargo check -p shared`.
@@ -254,14 +254,14 @@ pub struct Email(String);
 
 ## Phase 2: Contract Layer
 
-> **Skill:** `create-contract-rust` — load for protocol and aggregate traits.
+> **Skill:** `create-contract` (`references/rust.md`) — load for protocol and aggregate traits.
 
 Contracts define public interfaces (Protocols and Aggregates) without
 exposing implementation.
 
 ### Steps
 
-1. Load `create-contract-rust` skill.
+1. Load `create-contract` (`references/rust.md`) skill.
 2. Create protocol traits (inbound/outbound) under `crates/shared/<feature>/`.
 3. Create aggregate facade traits under `crates/shared/<feature>/`.
 4. Register in domain `mod.rs`.
@@ -306,7 +306,7 @@ pub trait IUserAggregate: Send + Sync {
 
 ## Phase 3: Utility Layer
 
-> **Skill:** `create-utility-rust` — load for stateless standalone functions.
+> **Skill:** `create-utility` (`references/rust.md`) — load for stateless standalone functions.
 
 Utility contains low-level technical mechanics — **stateless standalone
 functions only**. No structs, no enums, no traits.
@@ -314,7 +314,7 @@ functions only**. No structs, no enums, no traits.
 ### Steps
 
 1. Identify reusable stateless functions across modules.
-2. Load `create-utility-rust` skill.
+2. Load `create-utility` (`references/rust.md`) skill.
 3. Create utility files under `crates/shared/<feature>/`.
 4. Register in domain `mod.rs`.
 5. Verify: `cargo check -p shared`.
@@ -348,14 +348,14 @@ pub fn normalize_email(email: &Email) -> Email {
 
 ## Phase 4: Capabilities Layer
 
-> **Skill:** `create-capabilities-rust` — load for business logic and external adaptation.
+> **Skill:** `create-capabilities` (`references/rust.md`) — load for business logic and external adaptation.
 
 Capabilities contain concrete behavior implementations. They **implement
 protocol traits** defined in the contract layer.
 
 ### Steps
 
-1. Load `create-capabilities-rust` skill.
+1. Load `create-capabilities` (`references/rust.md`) skill.
 2. Create business logic capabilities (implement protocol traits).
 3. Create external adaptation capabilities (repositories, clients).
 4. Follow **3-Block Structure**: Struct → Trait Impl → Constructors.
@@ -411,14 +411,14 @@ impl UserRepository {
 
 ## Phase 5: Agent Layer
 
-> **Skill:** `create-agent-rust` — load for orchestration logic.
+> **Skill:** `create-agent` (`references/rust.md`) — load for orchestration logic.
 
 Orchestrates sequential execution, branching, looping, and error handling.
 **Implements aggregate traits** defined in the contract layer.
 
 ### Steps
 
-1. Load `create-agent-rust` skill.
+1. Load `create-agent` (`references/rust.md`) skill.
 2. Create orchestrator struct implementing aggregate trait.
 3. Inject protocol dependencies via `Arc<dyn Trait>`.
 4. Verify: `cargo check -p <feature>`.
@@ -468,7 +468,7 @@ impl UserOrchestrator {
 
 ## Phase 6: Surface Layer
 
-> **Skill:** `create-surface-rust` — load for user-facing input translation.
+> **Skill:** `create-surface` (`references/rust.md`) — load for user-facing input translation.
 
 Translates user-facing inputs into actions, delegating to the Agent
 orchestrator via aggregate trait.
@@ -484,7 +484,7 @@ orchestrator via aggregate trait.
 
 ### Steps
 
-1. Load `create-surface-rust` skill.
+1. Load `create-surface` (`references/rust.md`) skill.
 2. Create surface structs (commands, handlers, endpoints).
 3. Inject aggregate trait via `Arc<dyn Trait>`.
 4. Verify: `cargo check -p <feature>`.
@@ -524,14 +524,14 @@ impl GetUserCommand {
 
 ## Phase 7: Root Layer
 
-> **Skill:** `create-root-rust` — load for DI container and entry point wiring.
+> **Skill:** `create-root` (`references/rust.md`) — load for DI container and entry point wiring.
 
 Wires concrete implementations to contracts and bootstraps the system.
 Root is the **only layer** allowed to import all other layers.
 
 ### Steps
 
-1. Load `create-root-rust` skill.
+1. Load `create-root` (`references/rust.md`) skill.
 2. Create DI container wiring: capabilities → orchestrator → surface.
 3. Create entry point file at `crates/root_<name>_entry.rs`.
 4. Verify: `cargo check -p <feature>`.
@@ -649,10 +649,10 @@ lint-arwaky-cli external .
 
 | Skill                      | When to Use                                             |
 | ---------------------------- | --------------------------------------------------------- |
-| `add-docs-rust`            | Add doc comments, type annotations after migration      |
-| `fix-bypass-rust`          | Remove`#[allow]`, `unwrap()`, `panic!`, `FIXME`, `HACK` |
-| `cleanup-consolidate-rust` | Remove dead code, merge duplicates                      |
-| `create-test-rust`         | Generate test suites                                    |
+| `add-docs`            | Add doc comments, type annotations after migration      |
+| `fix-bypass`          | Remove`#[allow]`, `unwrap()`, `panic!`, `FIXME`, `HACK` |
+| `cleanup-consolidate` (`references/rust.md`) | Remove dead code, merge duplicates                      |
+| `testing-suite` (`references/rust.md`)         | Generate test suites                                    |
 
 ---
 
