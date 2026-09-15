@@ -502,11 +502,7 @@ impl McpActionSurface {
 
     /// Read skill documentation by section.
     pub fn handle_read_skill(&self, section: Option<String>) -> serde_json::Value {
-        let skills = [
-            "lint-arwaky-rust",
-            "lint-arwaky-python",
-            "lint-arwaky-typescript",
-        ];
+        let skills = ["lint-arwaky"];
         let mut candidates: Vec<String> = skills
             .iter()
             .flat_map(|s| vec![format!(".agents/skills/{}/SKILL.md", s)])

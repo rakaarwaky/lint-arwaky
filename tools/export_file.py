@@ -321,14 +321,16 @@ def find_relevant_skills(file_path: Path, skills_dir: Path) -> set[Path]:
     """Find all .md files in the matched skill directory based on file prefix/pattern.
 
     When user selects a source file, automatically match the filename prefix
-    to the corresponding skill directory and include ALL .md files from it.
+    to the corresponding skill directory and include its shared `SKILL.md`
+    plus the per-language half that matches the file's extension.
 
     Examples:
-        capabilities_check_bypass_checker.rs → create-capabilities-rust/*.md
-        agent_analysis_pipeline_orchestrator.rs → create-agent-rust/*.md
-        surface_check_command.rs → create-surface-rust/*.md
+        capabilities_check_bypass_checker.rs → create-capabilities/SKILL.md + references/rust.md
+        agent_analysis_pipeline_orchestrator.py → create-agent/SKILL.md + references/python.md
+        surface_check_command.ts → create-surface/SKILL.md + references/typescript.md
 
-    Includes SKILL.md, references/*.md, templates/*.md, evals/*.md, etc.
+    Includes SKILL.md, references/<language>.md, and any language-neutral
+    reference such as references/rule-routing.md.
     """
     skills: set[Path] = set()
     if not skills_dir.exists():
@@ -346,28 +348,34 @@ def find_relevant_skills(file_path: Path, skills_dir: Path) -> set[Path]:
         "root": "create-root",
     }
 
-    # Determine language suffix from file extension
+    # Determine which per-language reference the file extension selects
     ext = file_path.suffix
     if ext == ".rs":
-        lang_suffix = "-rust"
+        language = "rust"
     elif ext == ".py":
-        lang_suffix = "-python"
+        language = "python"
     elif ext in (".js", ".ts", ".jsx", ".tsx"):
-        lang_suffix = "-typescript"
+        language = "typescript"
     else:
         return skills
+
+    other_languages = {"python", "rust", "typescript"} - {language}
 
     # Check if stem starts with any known prefix
     for prefix, skill_base in prefix_to_skill.items():
         if stem.startswith(f"{prefix}_") or stem == prefix:
-            skill_name = f"{skill_base}{lang_suffix}"
-            skill_path = skills_dir / skill_name
+            skill_path = skills_dir / skill_base
+            if not skill_path.is_dir():
+                continue
 
-            # Collect ALL .md files from the matched skill directory (recursively)
-            if skill_path.is_dir():
-                for md_file in skill_path.rglob("*.md"):
-                    if md_file.is_file():
-                        skills.add(md_file)
+            # Shared procedure, this language's half, and neutral references
+            shared = skill_path / "SKILL.md"
+            if shared.is_file():
+                skills.add(shared)
+            for md_file in (skill_path / "references").glob("*.md"):
+                if md_file.stem in other_languages:
+                    continue
+                skills.add(md_file)
 
     return skills
 
