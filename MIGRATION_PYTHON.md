@@ -136,7 +136,7 @@ lint-arwaky-cli install
 
 ## Phase 0: Audit & Config Setup
 
-> **Skill:** `lint-arwaky-python` — load for audit commands and violation analysis.
+> **Skill:** `lint-arwaky` (`references/python.md`) — load for audit commands and violation analysis.
 
 ### Step 1: Initialize Config
 
@@ -172,7 +172,7 @@ find modules -name "*.py" | grep -v __init__ | grep -v __pycache__ | wc -l
 
 ## Phase 1: Taxonomy Layer
 
-> **Skill:** `create-taxonomy-python` — load for VOs, errors, constants, entities, events.
+> **Skill:** `create-taxonomy` (`references/python.md`) — load for VOs, errors, constants, entities, events.
 
 Define Value Objects, Errors, Events, and Constants under
 `modules/shared/src/<feature>/`.
@@ -183,7 +183,7 @@ Define Value Objects, Errors, Events, and Constants under
    ```bash
    grep -rn "^class " modules/*/src/ | grep -v test | grep -v __init__
    ```
-2. Load `create-taxonomy-python` skill.
+2. Load `create-taxonomy` (`references/python.md`) skill.
 3. Create taxonomy files following skill templates.
 4. Register in domain `__init__.py`.
 5. Verify: `python -c "from modules.shared.src.<feature> import *"`.
@@ -253,14 +253,14 @@ DEFAULT_PAGE_SIZE: int = 50
 
 ## Phase 2: Contract Layer
 
-> **Skill:** `create-contract-python` — load for protocol and aggregate ABCs.
+> **Skill:** `create-contract` (`references/python.md`) — load for protocol and aggregate ABCs.
 
 Contracts define public interfaces (Protocols and Aggregates) using
 `abc.ABC` without exposing implementation.
 
 ### Steps
 
-1. Load `create-contract-python` skill.
+1. Load `create-contract` (`references/python.md`) skill.
 2. Create protocol ABCs (inbound/outbound) under `modules/shared/src/<feature>/`.
 3. Create aggregate facade ABCs under `modules/shared/src/<feature>/`.
 4. Register in domain `__init__.py`.
@@ -331,7 +331,7 @@ class IUserAggregate(ABC):
 
 ## Phase 3: Utility Layer
 
-> **Skill:** `create-utility-python` — load for stateless standalone functions.
+> **Skill:** `create-utility` (`references/python.md`) — load for stateless standalone functions.
 
 Utility contains low-level technical mechanics — **stateless standalone
 functions only**. No classes.
@@ -339,7 +339,7 @@ functions only**. No classes.
 ### Steps
 
 1. Identify reusable stateless functions across modules.
-2. Load `create-utility-python` skill.
+2. Load `create-utility` (`references/python.md`) skill.
 3. Create utility files under `modules/shared/src/<feature>/`.
 4. Register in domain `__init__.py`.
 5. Verify: `python -c "from modules.shared.src.<feature> import *"`.
@@ -382,14 +382,14 @@ def generate_user_id() -> str:
 
 ## Phase 4: Capabilities Layer
 
-> **Skill:** `create-capabilities-python` — load for business logic and external adaptation.
+> **Skill:** `create-capabilities` (`references/python.md`) — load for business logic and external adaptation.
 
 Capabilities contain concrete behavior implementations. They **implement
 protocol ABCs** defined in the contract layer via inheritance.
 
 ### Steps
 
-1. Load `create-capabilities-python` skill.
+1. Load `create-capabilities` (`references/python.md`) skill.
 2. Create business logic capabilities (inherit protocol ABCs).
 3. Create external adaptation capabilities (repositories, clients).
 4. Verify: `python -c "from modules.<feature>.src.capabilities_<name> import *"`.
@@ -444,14 +444,14 @@ class UserRepository(IUserRepositoryProtocol):
 
 ## Phase 5: Agent Layer
 
-> **Skill:** `create-agent-python` — load for orchestration logic.
+> **Skill:** `create-agent` (`references/python.md`) — load for orchestration logic.
 
 Orchestrates sequential execution, branching, looping, and error handling.
 **Implements aggregate ABCs** defined in the contract layer.
 
 ### Steps
 
-1. Load `create-agent-python` skill.
+1. Load `create-agent` (`references/python.md`) skill.
 2. Create orchestrator class inheriting aggregate ABC.
 3. Inject protocol dependencies via constructor.
 4. Verify: `python -c "from modules.<feature>.src.agent_<name> import *"`.
@@ -502,7 +502,7 @@ class UserOrchestrator(IUserAggregate):
 
 ## Phase 6: Surface Layer
 
-> **Skill:** `create-surface-python` — load for user-facing input translation.
+> **Skill:** `create-surface` (`references/python.md`) — load for user-facing input translation.
 
 Translates user-facing inputs into actions, delegating to the Agent
 orchestrator via aggregate ABC.
@@ -518,7 +518,7 @@ orchestrator via aggregate ABC.
 
 ### Steps
 
-1. Load `create-surface-python` skill.
+1. Load `create-surface` (`references/python.md`) skill.
 2. Create surface classes (commands, handlers, endpoints).
 3. Inject aggregate ABC via constructor.
 4. Verify: `python -c "from modules.<feature>.src.surface_<name> import *"`.
@@ -554,14 +554,14 @@ class GetUserCommand:
 
 ## Phase 7: Root Layer
 
-> **Skill:** `create-root-python` — load for DI container and entry point wiring.
+> **Skill:** `create-root` (`references/python.md`) — load for DI container and entry point wiring.
 
 Wires concrete implementations to contracts and bootstraps the system.
 Root is the **only layer** allowed to import all other layers.
 
 ### Steps
 
-1. Load `create-root-python` skill.
+1. Load `create-root` (`references/python.md`) skill.
 2. Create DI container wiring: capabilities → orchestrator → surface.
 3. Create entry point at `modules/root_<name>_entry.py`.
 4. Verify: `python -c "from modules.root_<name>_entry import main"`.
@@ -688,10 +688,10 @@ lint-arwaky-cli external .
 
 | Skill                        | When to Use                                                                    |
 | ------------------------------ | -------------------------------------------------------------------------------- |
-| `add-docs-python`            | Add docstrings, type hints after migration                                     |
-| `fix-bypass-python`          | Remove`# type: ignore`, `# noqa`, `raise NotImplementedError`, `FIXME`, `HACK` |
-| `cleanup-consolidate-python` | Remove dead code, merge duplicates                                             |
-| `create-test-python`         | Generate test suites                                                           |
+| `add-docs`            | Add docstrings, type hints after migration                                     |
+| `fix-bypass`          | Remove`# type: ignore`, `# noqa`, `raise NotImplementedError`, `FIXME`, `HACK` |
+| `cleanup-consolidate` (`references/python.md`) | Remove dead code, merge duplicates                                             |
+| `testing-suite` (`references/python.md`)         | Generate test suites                                                           |
 
 ---
 
