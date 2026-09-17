@@ -334,7 +334,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ## Test Scenarios / QA Checklist
 
-### FR-001 — Config Discovery and Loading
+### SCEN-001 — Config Discovery and Loading
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
@@ -347,14 +347,14 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | 7 | YAML parse failure at priority 1 | Warning logged, priority 2 searched | FR-001 |
 | 8 | Permission denied at priority 1 | Warning logged, priority 2 searched | FR-001 |
 
-### FR-002 — Language Resolution
+### SCEN-002 — Language Resolution
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
 | 1 | Any language (Rust/Python/TypeScript) | `lint_arwaky.config.yaml` | FR-002 |
 | 2 | Unknown language | Empty list, embedded defaults | FR-002 |
 
-### FR-003 — Workspace Detection
+### SCEN-003 — Workspace Detection
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
@@ -368,7 +368,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | 8 | Both Cargo.toml and package.json | First match wins | FR-003 |
 | 9 | Directory with `__init__.py` only | Python | FR-003 |
 
-### FR-004 — Workspace Members
+### SCEN-004 — Workspace Members
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
@@ -377,7 +377,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | 3 | Root is `crates/` itself | Direct subdirectories returned | FR-004 |
 | 4 | I/O error on one member dir | Warning logged, other members returned | FR-004 |
 
-### FR-005 — Config Merging
+### SCEN-005 — Config Merging
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
@@ -387,7 +387,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | 4 | Empty ignored_paths in config | Defaults preserved (not overridden) | FR-005 |
 | 5 | Scoped rule `agent(container\|registry)` | Sub-layers `agent(container)` and `agent(registry)` created | FR-005 |
 
-### FR-006 — Validation
+### SCEN-006 — Validation
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
@@ -398,14 +398,14 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | 5 | Score threshold 101.0 | Invalid | FR-006 |
 | 6 | Unknown adapter name | Enabled (default true) | FR-006 |
 
-### FR-007 — Caching
+### SCEN-007 — Caching
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
 | 1 | Same config file requested twice | Parsed once, cached | FR-007 |
 | 2 | Concurrent requests for same key | Single parse (DashMap) | FR-007 |
 
-### FR-008 — Ignored Paths
+### SCEN-008 — Ignored Paths
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
@@ -414,7 +414,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | 3 | Config adds ".git" (already default) | Deduplicated, not added twice | FR-008 |
 | 4 | Config adds empty string | Filtered out | FR-008 |
 
-### FR-009 — TOML Parsing
+### SCEN-009 — TOML Parsing
 
 | # | Scenario | Expected | Rule |
 | --- | --- | --- | --- |
@@ -485,5 +485,6 @@ Config-specified `ignored_paths` are **appended** to these defaults with dedupli
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
