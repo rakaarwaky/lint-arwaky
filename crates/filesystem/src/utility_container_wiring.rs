@@ -44,6 +44,7 @@ use std::{
 ///
 /// ```
 /// use std::{collections::HashMap, path::PathBuf};
+/// use filesystem_lint_arwaky::utility_container_wiring::add_impl_bridge_edges;
 ///
 /// let mut definitions = HashMap::new();
 /// definitions.insert("Service".to_string(), vec![PathBuf::from("/workspace/service.rs")]);
@@ -111,6 +112,7 @@ pub fn add_impl_bridge_edges(
 /// ```
 /// use std::collections::HashMap;
 /// use std::path::Path;
+/// use filesystem_lint_arwaky::utility_container_wiring::add_container_wiring_edges;
 ///
 /// let mut symbols = HashMap::new();
 /// symbols.insert(
@@ -181,6 +183,7 @@ pub fn add_container_wiring_edges(
 /// # Examples
 ///
 /// ```
+/// use filesystem_lint_arwaky::utility_container_wiring::path_to_relative;
 /// use std::path::Path;
 ///
 /// let root = Path::new("workspace");

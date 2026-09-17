@@ -107,16 +107,16 @@ curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/
 ```bash
 git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
-bash scripts/install.local.sh
+bash scripts/install.sh   # builds from source (CARGO_INCREMENTAL=0)
 ```
 
-Requires Rust 1.85.0 and Cargo.
+Requires Rust 1.85.0 and Cargo (pinned via `rust-toolchain.toml`).
 
 ### Verify
 
 ```bash
 lint-arwaky-cli version
-# Lint Arwaky v3.6.1
+# lint-arwaky 3.6.1
 ```
 
 ### First Scan
@@ -162,7 +162,7 @@ sudo tar -xzf /tmp/lint-arwaky.tar.gz -C /usr/local/bin lint-arwaky-cli lint-arw
 sudo chmod +x /usr/local/bin/lint-arwaky-*
 
 # Or install from source
-cargo install --git https://github.com/rakaarwaky/lint-arwaky.git
+bash scripts/install.sh
 ```
 
 ### 3. Initialize config + adapters
@@ -386,9 +386,9 @@ lint-arwaky/
 │   ├── filesystem/         # File walking, AST parsing, graph construction
 │   ├── naming-rules/       # AES101–102 naming conventions
 │   ├── import-rules/       # AES201–205 import boundaries
-│   ├── code-analysis/      # AES301–305 code quality
+│   ├── quality-rules/      # AES301–305 code quality
 │   ├── role-rules/         # AES401–406 layer roles
-│   ├── orphan-detector/    # AES501–506 orphan detection
+│   ├── orphan-rules/       # AES501–506 orphan detection
 │   ├── external-lint/      # External linter adapters (Clippy, Ruff, ESLint, etc.)
 │   ├── auto-fix/           # Mechanical fixes (remove + replace + rename)
 │   ├── report-formatter/   # text / JSON / SARIF / JUnit output
@@ -400,8 +400,8 @@ lint-arwaky/
 │   ├── maintenance/        # doctor / security / deps
 │   └── tui/                # Interactive terminal UI
 ├── scripts/
-│   ├── install.remote.sh   # Pre-built binary installer
-│   └── install.local.sh    # Build-from-source installer
+│   ├── install.sh          # Build-from-source installer
+│   └── install.remote.sh   # Pre-built binary installer
 ├── PRD.md                  # Product requirements
 ├── ARCHITECTURE.md         # AES specification
 ├── DEPLOY.md               # MCP deployment guide
@@ -430,10 +430,10 @@ are parallelized via rayon. No async runtime dependency.
 ## Testing
 
 ```bash
-# Run all tests
-cargo test --workspace
+# Run all tests (nextest is 3× faster than cargo test)
+cargo nextest run --workspace --lib --tests
 
-# Self-lint (the project lints itself)
+# Self-lint (the project lints itself — must report 0 violations)
 cargo run --bin lint-arwaky-cli -- check .
 
 # Run MCP server
