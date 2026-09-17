@@ -145,20 +145,20 @@ flowchart TD
 - **Memory**: Broadcast channel capacity fixed at 256 events. Debouncer memory footprint is negligible for typical project sizes.
 - **Accuracy**: All file modifications within watched directories are detected (subject to OS inotify limits). False positives are possible for editor temp files (mitigated by ignore patterns).
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
-- [ ] Start watcher on existing directory — events received within debounce window.
-- [ ] Start watcher on non-existent path — returns watch error.
-- [ ] Modify a `.rs` file — lint triggered, violations reported.
-- [ ] Modify a `.txt` file — lint not triggered (non-lintable extension).
-- [ ] Rapid modifications to same file — only one lint run after debounce.
-- [ ] File matching ignore pattern — event skipped, no lint run.
-- [ ] Ctrl+C during watch — graceful shutdown, watcher stopped.
-- [ ] Multiple subscribers — all receive the same events.
-- [ ] Broadcast channel lagged — event loop continues without crash.
-- [ ] Initial lint on startup — baseline violations and score printed.
-- [ ] Recursive watch — subdirectory changes detected.
-- [ ] Non-recursive watch — subdirectory changes ignored.
+1.  Start watcher on existing directory — events received within debounce window.
+2.  Start watcher on non-existent path — returns watch error.
+3.  Modify a `.rs` file — lint triggered, violations reported.
+4.  Modify a `.txt` file — lint not triggered (non-lintable extension).
+5.  Rapid modifications to same file — only one lint run after debounce.
+6.  File matching ignore pattern — event skipped, no lint run.
+7.  Ctrl+C during watch — graceful shutdown, watcher stopped.
+8.  Multiple subscribers — all receive the same events.
+9.  Broadcast channel lagged — event loop continues without crash.
+10.  Initial lint on startup — baseline violations and score printed.
+11.  Recursive watch — subdirectory changes detected.
+12.  Non-recursive watch — subdirectory changes ignored.
 
 ## Assumptions & Constraints
 
@@ -179,3 +179,4 @@ flowchart TD
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
