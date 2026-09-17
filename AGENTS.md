@@ -163,7 +163,32 @@ When merging a PR to develop:
 **Worktree policy (important):**
 - When working on a feature/fix branch, **use a git worktree** under `.worktree/` (e.g. `<repo-root>/.worktree/feature-name`) instead of switching branches in the current checkout with `git checkout`.
 
----
+### Git Workflow
+
+`main` is protected by the "Protect main - quality gates" ruleset: 6 required status checks (Format, Clippy, Build, Tests, Self-Lint, Codacy) must pass before any commit lands. **Direct pushes to `main` are rejected** — always go through a PR.
+
+Every change:
+
+```bash
+git worktree add -b <branch-name> .worktree/<branch-name> origin/main
+cd .worktree/<branch-name>
+
+# Run the Commands above, then:
+git add .
+git commit -m "<type>: <short description>"
+git push -u origin <branch-name>
+
+gh pr create --base main --head <branch-name> \
+  --title "<type>: <short description>"
+```
+
+After merge (squash, `--delete-branch`):
+
+```bash
+cd <repo-root>
+git worktree remove .worktree/<branch-name>
+git branch -d <branch-name>
+```
 
 ## Exit Code Contract
 
