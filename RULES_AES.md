@@ -202,8 +202,8 @@ Two sub-checks:
 
 | Checker                  | Method                               | Path                                                     |
 | -------------------------- | -------------------------------------- | ---------------------------------------------------------- |
-| `ArchClassChecker`       | `check_mandatory_class_definition()` | `code-analysis/capabilities_class_checker.rs`            |
-| `DeadInheritanceChecker` | `check_dead_inheritance()`           | `code-analysis/capabilities_dead_inheritance_checker.rs` |
+| `MandatoryDefinitionChecker` | `check_mandatory_class_definition()` | `quality-rules/capabilities_mandatory_definition_checker.rs` |
+| `MandatoryDefinitionChecker` | `check_dead_inheritance()`           | `quality-rules/capabilities_mandatory_definition_checker.rs` |
 
 **Exceptions:** `__init__.py`, `mod.rs`, `lib.rs`, `*_constant.rs`, `*_constant.py`.
 

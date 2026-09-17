@@ -594,7 +594,7 @@ main().catch(console.error);
 
 - **AES102**: Suffix must be `entry` or `container`.
 - **AES201**: Root may import all layers. No forbidden imports.
-- Root layer files are **skipped** by role-rules (AES401–406) and orphan-detector.
+- Root layer files are **skipped** by role-rules (AES401–406) and orphan-rules.
 
 ---
 
