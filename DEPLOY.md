@@ -1,4 +1,4 @@
-# Deployment Guide — Lint Arwaky v2.0.0
+# Deployment Guide — Lint Arwaky
 
 **Status**: PRODUCTION-READY —
 
@@ -23,7 +23,7 @@ No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/std
 
 ```bash
 # Linux
-bash scripts/install.local.sh
+bash scripts/install.sh
 ```
 
 The installer builds from source and places binaries in `target/release/`.
@@ -62,7 +62,7 @@ cargo build --release --target x86_64-pc-windows-msvc
 
 ```bash
 lint-arwaky-cli version
-# Expected: Lint Arwaky v2.0.0
+# Expected: lint-arwaky 3.6.1
 
 lint-arwaky-cli maintenance doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)
@@ -184,8 +184,8 @@ lint-arwaky-cli init
 - [ ] Bump version in `Cargo.toml`
 - [ ] Update `CHANGELOG.md`
 - [ ] Build release: `cargo build --release`
-- [ ] Tag the release: `git tag v2.0.0`
-- [ ] Push tag: `git push origin v2.0.0`
+- [ ] Tag the release: `git tag vX.Y.Z`
+- [ ] Push tag: `git push origin vX.Y.Z`
 - [ ] Run installer smoke-test on a clean machine
 
 ### Post-Deploy
@@ -201,13 +201,13 @@ lint-arwaky-cli init
 Reinstall the previous release:
 
 ```bash
-cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag v2.0.0
+cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag vX.Y.Z
 ```
 
 Or rebuild from a specific tag:
 
 ```bash
-git checkout v2.0.0
+git checkout vX.Y.Z
 cargo build --release
 ```
 

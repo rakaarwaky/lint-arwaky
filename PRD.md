@@ -1,4 +1,4 @@
-# PRD — Lint Arwaky (v2.0.0)
+# PRD — Lint Arwaky
 
 ---
 
@@ -162,4 +162,6 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 
 ## Reference
 
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
+- Testing criteria: [TEST.md](TEST.md)
+- Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)

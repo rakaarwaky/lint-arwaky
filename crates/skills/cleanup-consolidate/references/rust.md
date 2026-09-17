@@ -189,7 +189,7 @@ pub use super::capabilities_real_impl::MyTrait;
 
 ### AES Layer-Specific Orphan Detection (AES501–AES506)
 
-After generic orphan detection, run layer-specific orphan checks using the `orphan-detector` tool:
+After generic orphan detection, run layer-specific orphan checks using the `orphan-rules` crate:
 
 ```bash
 # Run full orphan scan (detects AES501–AES506 layer violations)

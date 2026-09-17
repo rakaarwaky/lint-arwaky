@@ -64,3 +64,6 @@ serviceAccountKey
 **/.repowise/*
 !**/.repowise/bot.yaml
 !**/.repowise/health-rules.json
+
+# AI agent skill packs (embedded at build time; regenerated via tools/regenerate_skills.py)
+.agents/
