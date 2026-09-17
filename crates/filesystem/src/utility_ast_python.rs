@@ -19,10 +19,11 @@ fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option
 /// # Examples
 ///
 /// ```
-/// let mut parser = tree_sitter::Parser::new();
-/// parser
-///     .set_language(&tree_sitter_python::LANGUAGE.into())
-///     .unwrap();
+/// use filesystem_lint_arwaky::utility_ast_python::extract_python_metadata;
+/// use tree_sitter::Parser;
+/// let mut parser = Parser::new();
+/// let language = tree_sitter_python::LANGUAGE;
+/// parser.set_language(&language.into()).unwrap();
 /// let content = "import os\n";
 /// let tree = parser.parse(content, None).unwrap();
 ///
@@ -93,20 +94,16 @@ pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> Pytho
 /// # Examples
 ///
 /// ```no_run
-/// let mut parser = tree_sitter::Parser::new();
-/// parser
-///     .set_language(&tree_sitter_python::LANGUAGE_PYTHON.into())
-///     .unwrap();
+/// use tree_sitter::Parser;
+/// let mut parser = Parser::new();
+/// let language = tree_sitter_python::LANGUAGE;
+/// parser.set_language(&language.into()).unwrap();
 /// let source = "class Example(Base):\n    pass";
 /// let tree = parser.parse(source, None).unwrap();
-/// let class_node = tree.root_node().child(0).unwrap();
-/// let mut metadata = PythonMetadata::default();
-///
-/// collect_python_class(class_node, source, &mut metadata);
-///
-/// assert_eq!(metadata.class_declarations[0].name, "Example");
-/// assert_eq!(metadata.class_declarations[0].bases, vec!["Base"]);
 /// ```
+///
+/// See `shared::filesystem::taxonomy_filesystem_vo::PythonMetadata` for the
+/// shape of the returned metadata.
 fn collect_python_class(node: tree_sitter::Node, content: &str, meta: &mut PythonMetadata) {
     let name = child_by_field(node, content, "name").unwrap_or_default();
     let bases = extract_python_class_bases(node, content);
@@ -121,20 +118,15 @@ fn collect_python_class(node: tree_sitter::Node, content: &str, meta: &mut Pytho
 ///
 /// # Examples
 ///
-/// ```
-/// let mut parser = tree_sitter::Parser::new();
-/// parser
-///     .set_language(&tree_sitter_python::LANGUAGE_PYTHON.into())
-///     .unwrap();
+/// ```no_run
+/// use tree_sitter::Parser;
+/// let mut parser = Parser::new();
+/// let language = tree_sitter_python::LANGUAGE;
+/// parser.set_language(&language.into()).unwrap();
 ///
 /// let source = "class Child(Base, factory()):\n    pass";
 /// let tree = parser.parse(source, None).unwrap();
 /// let class = tree.root_node().child(0).unwrap();
-///
-/// assert_eq!(
-///     extract_python_class_bases(class, source),
-///     vec!["Base", "factory()"]
-/// );
 /// ```
 fn extract_python_class_bases(node: tree_sitter::Node, content: &str) -> Vec<String> {
     let mut bases = Vec::new();

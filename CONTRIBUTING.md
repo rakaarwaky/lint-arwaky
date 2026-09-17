@@ -27,13 +27,13 @@
 
 ## Prerequisites
 
-- **Rust** >= 1.70 (edition 2021)
+- **Rust** >= 1.85.0 (edition 2024, pinned via `rust-toolchain.toml`)
 - **Cargo** (bundled with Rust)
 - **Git**
 - Familiarity with:
-  - Rust async/await and `tokio`
   - `clap` derive macros
-  - `mcp-sdk-rs` (or willingness to read the JSON-RPC 2.0 spec)
+  - JSON-RPC 2.0 (MCP protocol)
+  - `std::thread` / `rayon` concurrency (no async runtime in the core; `rmcp`/tokio only in `file-watch` and `mcp-server`)
 
 > Optional: `rustup` for toolchain management, `cargo-watch` for development.
 
@@ -46,20 +46,20 @@
 git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
 
-# Build everything
-cargo build --release
+# Build everything (CARGO_INCREMENTAL=0 required for reproducible builds)
+CARGO_INCREMENTAL=0 cargo build --release
 
 # Run the CLI
 ./target/release/lint-arwaky-cli version
-# Expected: Lint Arwaky v1.10.14 (AES Semantic Builder)
+# Expected: lint-arwaky 3.6.1
 
 # Run the MCP server in a separate terminal
 ./target/release/lint-arwaky-mcp
 # Expected: "Listening on stdin/stdout (JSON-RPC 2.0)"
 
-# Self-lint the project
-./target/release/lint-arwaky-cli scan .
-# Scans `crates/` under the same AES rules the project enforces.
+# Self-lint the project (must report 0 violations)
+./target/release/lint-arwaky-cli check .
+# Scans `crates/`, `modules/`, `packages/` under the AES rules this project enforces.
 ```
 
 For development without the release profile:
@@ -79,12 +79,25 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification and na
 
 ```bash
 cargo fmt --all
-cargo clippy --all-targets -- -D warnings
+CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
+```
+
+### Quality Gates (run before every commit)
+
+```bash
+bash scripts/gates.sh                        # fmt + clippy + self-lint + tests
+cargo nextest run --workspace --lib --tests   # all tests, 3× faster than cargo test
 ```
 
 ## Pull Request Process
 
 See [TEST.md](TEST.md) for verification criteria.
+
+### Branch Management
+
+- Allowed branch naming: `main`, `develop`. Feature/fix branches are merged into `develop` via PR, then promoted to `main`.
+- **Use a git worktree** under `.worktree/` (e.g. `<repo-root>/.worktree/feature-name`) instead of switching branches in the current checkout.
+- Use `--delete-branch` when merging feature/fix PRs; never delete `develop` when merging to `main`.
 
 ### PR Description Template
 
@@ -107,10 +120,11 @@ How was it tested? What test cases were added?
 
 ## Checklist
 
-- [ ] `cargo test --workspace` passes
-- [ ] `cargo run --bin lint-arwaky-cli -- scan .` reports 0 CRITICAL findings
+- [ ] `bash scripts/gates.sh` passes (fmt + clippy + self-lint + tests)
+- [ ] `cargo nextest run --workspace --lib --tests` passes
+- [ ] `lint-arwaky-cli check .` reports 0 violations
 - [ ] `cargo fmt --all` clean
-- [ ] `cargo clippy --all-targets -- -D warnings` clean
+- [ ] `CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings` clean
 - [ ] Docs updated if needed
 ```
 
