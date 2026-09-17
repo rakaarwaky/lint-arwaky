@@ -30,9 +30,7 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
         "author-skill-md-hermes-upstream-repo",
         "author-skill-md/references/hermes-upstream-repo.md",
-        include_str!(
-            "../../../skills/author-skill-md/references/hermes-upstream-repo.md"
-        ),
+        include_str!("../../../skills/author-skill-md/references/hermes-upstream-repo.md"),
         None,
     ),
     EmbeddedSkillVO::new(
