@@ -295,45 +295,68 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .map(ViolationItem::from_lint_result)
             .collect();
         external.retain(|v| {
-            let file_path = std::path::Path::new(&v.file.value);
-            let resolved = if file_path.is_absolute() {
-                file_path.to_path_buf()
-            } else {
-                target_canon.join(file_path)
-            };
-            let resolved_canon = fs.canonicalize(&resolved).unwrap_or(resolved.clone());
-            resolved_canon.starts_with(&target_canon)
-                || (v.code.code() == "AES205"
-                    && parent_workspace
-                        .as_ref()
-                        .is_some_and(|pw| resolved_canon.starts_with(pw)))
+            external_violation_in_scope(v, &fs, &target_canon, parent_workspace.as_deref())
         });
         all.extend(external);
     }
 
     // Keep only violations that resolve to a real file under the scan scope
     // (or, for AES205 cycles / AES5xx orphans, within the parent workspace).
-    all.retain(|v| {
-        let file_path = std::path::Path::new(&v.file.value);
-        let resolved = if file_path.is_absolute() {
-            file_path.to_path_buf()
-        } else {
-            target_canon.join(file_path)
-        };
-        let resolved_canon = fs.canonicalize(&resolved).unwrap_or(resolved.clone());
-        if !fs.path_exists(&resolved_canon) {
-            return false; // E902 guard: non-existent file — drop, no violation.
-        }
-        let in_target = resolved_canon.starts_with(&target_canon);
-        let in_parent_ws = parent_workspace
-            .as_ref()
-            .is_some_and(|pw| resolved_canon.starts_with(pw));
-        in_target
-            || (v.code.code() == "AES205" && in_parent_ws)
-            || (v.code.code().starts_with("AES5") && in_parent_ws)
-    });
+    all.retain(|v| violation_in_scan_scope(v, &fs, &target_canon, parent_workspace.as_deref()));
 
     all
+}
+
+/// Whether an external-lint violation falls inside the scan scope: its file
+/// resolves under the target, or it is an AES205 cycle resolved under the
+/// parent workspace.
+fn external_violation_in_scope(
+    v: &ViolationItem,
+    fs: &Arc<dyn IFilesystemAggregate>,
+    target_canon: &std::path::Path,
+    parent_workspace: Option<&std::path::Path>,
+) -> bool {
+    let resolved_canon = resolve_violation_path(v, fs, target_canon);
+    resolved_canon.starts_with(target_canon)
+        || (v.code.code() == "AES205"
+            && parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw)))
+}
+
+/// Whether a violation stays in the scan scope: the file exists under the
+/// target, or it is an AES205 cycle / AES5xx orphan under the parent workspace.
+/// Non-existent files are dropped so doubled/stale paths never surface as E902.
+fn violation_in_scan_scope(
+    v: &ViolationItem,
+    fs: &Arc<dyn IFilesystemAggregate>,
+    target_canon: &std::path::Path,
+    parent_workspace: Option<&std::path::Path>,
+) -> bool {
+    let resolved_canon = resolve_violation_path(v, fs, target_canon);
+    if !fs.path_exists(&resolved_canon) {
+        return false; // E902 guard: non-existent file — drop, no violation.
+    }
+    let in_target = resolved_canon.starts_with(target_canon);
+    let in_parent_ws = parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw));
+    in_target
+        || (v.code.code() == "AES205" && in_parent_ws)
+        || (v.code.code().starts_with("AES5") && in_parent_ws)
+}
+
+/// Resolve a violation's file path to a canonical absolute path under the
+/// target (relative paths join the target; absolute paths are canonicalized as
+/// is, falling back to the path itself when canonicalization fails).
+fn resolve_violation_path(
+    v: &ViolationItem,
+    fs: &Arc<dyn IFilesystemAggregate>,
+    target_canon: &std::path::Path,
+) -> std::path::PathBuf {
+    let file_path = std::path::Path::new(&v.file.value);
+    let resolved = if file_path.is_absolute() {
+        file_path.to_path_buf()
+    } else {
+        target_canon.join(file_path)
+    };
+    fs.canonicalize(&resolved).unwrap_or(resolved)
 }
 
 /// Run all 6 linters on a single-file target, returning in-scope violations.
@@ -613,46 +636,7 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
     // Detect workspace root for resolving relative paths from orphan scan
     // (orphan scan returns paths like "crates/calculator/src/foo.rs" relative to workspace root)
     let ws_root = fs_agg.find_workspace_root(std::path::Path::new(path));
-    {
-        let cwd = std::env::current_dir().ok();
-        let target_parent = target_canonical.as_ref().and_then(|t| t.parent());
-        for v in &mut all {
-            if std::path::Path::new(&v.file.value).is_absolute() {
-                continue;
-            }
-            let rel = v.file.value.clone();
-            let file_path = std::path::Path::new(&rel);
-
-            // Try workspace root first (orphan scan paths are relative to workspace root)
-            if let Some(ref ws) = ws_root {
-                if let Ok(canon) = fs_agg.canonicalize(&ws.join(file_path)) {
-                    v.file = FilePath::new(canon.to_string_lossy().to_string())
-                        .unwrap_or_else(|_| v.file.clone());
-                    continue;
-                }
-            }
-            if let Some(ref cwd) = cwd {
-                if let Ok(canon) = fs_agg.canonicalize(&cwd.join(file_path)) {
-                    v.file = FilePath::new(canon.to_string_lossy().to_string())
-                        .unwrap_or_else(|_| v.file.clone());
-                    continue;
-                }
-            }
-            if let Some(ref target) = target_canonical {
-                if let Ok(canon) = fs_agg.canonicalize(&target.join(file_path)) {
-                    v.file = FilePath::new(canon.to_string_lossy().to_string())
-                        .unwrap_or_else(|_| v.file.clone());
-                    continue;
-                }
-            }
-            if let Some(parent) = target_parent {
-                if let Ok(canon) = fs_agg.canonicalize(&parent.join(file_path)) {
-                    v.file = FilePath::new(canon.to_string_lossy().to_string())
-                        .unwrap_or_else(|_| v.file.clone());
-                }
-            }
-        }
-    }
+    normalize_violation_paths(&mut all, fs_agg, &target_canonical, &ws_root);
 
     // Filter: only keep violations whose file path is within the target directory.
     // Exception: AES205 cycle violations are global — keep them if the file is
@@ -663,33 +647,76 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
             .and_then(|p| p.parent())
             .map(|p| p.to_path_buf());
         all.retain(|v| {
-            let file_path = std::path::Path::new(&v.file.value);
-            // Always retain AES205 cycle violations if within the same parent workspace
-            if v.code.code() == "AES205" {
-                if let Some(ref pw) = parent_workspace {
-                    if let Ok(canonical) = fs_agg.canonicalize(file_path) {
-                        if canonical.starts_with(pw) {
-                            return true;
-                        }
-                    }
-                }
-            }
-            if let Ok(canonical) = fs_agg.canonicalize(file_path) {
-                return canonical.starts_with(canonical_target);
-            }
-            if let Ok(cwd) = std::env::current_dir() {
-                let joined = cwd.join(file_path);
-                let cwd_joined = fs_agg.canonicalize(&joined).unwrap_or(joined);
-                if cwd_joined.starts_with(canonical_target) {
-                    return true;
-                }
-            }
-            if let Ok(target_joined) = fs_agg.canonicalize(&canonical_target.join(file_path)) {
-                return target_joined.starts_with(canonical_target);
-            }
-            false
+            json_violation_in_target(v, fs_agg, canonical_target, parent_workspace.as_deref())
         });
     }
 
     all
+}
+
+/// Rewrite each violation's relative file path to an absolute, canonicalized
+/// path, trying (in order) the workspace root, the process CWD, the scan
+/// target, then the target's parent. Absolute paths are left untouched.
+fn normalize_violation_paths(
+    violations: &mut [ViolationItem],
+    fs_agg: &dyn IFilesystemAggregate,
+    target_canonical: &Option<std::path::PathBuf>,
+    ws_root: &Option<std::path::PathBuf>,
+) {
+    let cwd = std::env::current_dir().ok();
+    let target_parent = target_canonical.as_deref().and_then(|t| t.parent());
+    for v in violations.iter_mut() {
+        if std::path::Path::new(&v.file.value).is_absolute() {
+            continue;
+        }
+        let file_path = std::path::Path::new(&v.file.value);
+        let bases: [Option<&std::path::Path>; 4] = [
+            ws_root.as_deref(),
+            cwd.as_deref(),
+            target_canonical.as_deref(),
+            target_parent,
+        ];
+        for base in bases.into_iter().flatten() {
+            if let Ok(canon) = fs_agg.canonicalize(&base.join(file_path)) {
+                v.file = FilePath::new(canon.to_string_lossy().to_string())
+                    .unwrap_or_else(|_| v.file.clone());
+                break;
+            }
+        }
+    }
+}
+
+/// Whether a subprocess-collected violation stays inside the scan target
+/// (or, for AES205 cycles, inside the parent workspace).
+fn json_violation_in_target(
+    v: &ViolationItem,
+    fs_agg: &dyn IFilesystemAggregate,
+    canonical_target: &std::path::Path,
+    parent_workspace: Option<&std::path::Path>,
+) -> bool {
+    let file_path = std::path::Path::new(&v.file.value);
+    // Always retain AES205 cycle violations if within the same parent workspace
+    if v.code.code() == "AES205" {
+        if let Some(pw) = parent_workspace {
+            if let Ok(canonical) = fs_agg.canonicalize(file_path) {
+                if canonical.starts_with(pw) {
+                    return true;
+                }
+            }
+        }
+    }
+    if let Ok(canonical) = fs_agg.canonicalize(file_path) {
+        return canonical.starts_with(canonical_target);
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        let joined = cwd.join(file_path);
+        let cwd_joined = fs_agg.canonicalize(&joined).unwrap_or(joined);
+        if cwd_joined.starts_with(canonical_target) {
+            return true;
+        }
+    }
+    if let Ok(target_joined) = fs_agg.canonicalize(&canonical_target.join(file_path)) {
+        return target_joined.starts_with(canonical_target);
+    }
+    false
 }
