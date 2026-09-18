@@ -13,6 +13,7 @@ fn acceptance_check_action_on_current_project() {
         member: None,
         filesystem: filesystem::root_filesystem_container::FilesystemContainer::new()
             .orchestrator(),
+        scan_aggregates: None,
     };
     let result = dispatcher_lint_arwaky::surface_check_action::collect_scan(opts);
     assert!(result.is_ok());

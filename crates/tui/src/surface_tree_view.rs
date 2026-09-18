@@ -5,9 +5,10 @@
 // by depth, with the current (leaf) component highlighted in cyan.
 //
 // Uses simple string-based rendering (no ratatui Tree widget) for compatibility.
+use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem};
 use shared::tui::{AppState, PanelFocus};
@@ -24,10 +25,10 @@ impl TreeView {
         let is_focused = state.panel_focus == PanelFocus::Tree;
         let border_style = if is_focused {
             Style::default()
-                .fg(Color::Cyan)
+                .fg(theme::ACCENT)
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::DarkGray)
+            Style::default().fg(theme::SEPARATOR)
         };
 
         let block = Block::default()
@@ -39,11 +40,11 @@ impl TreeView {
         let components = build_path_components(&state.current_dir, &state.project_root);
 
         let root_line = Line::from(vec![
-            Span::styled("[*] ", Style::default().fg(Color::Yellow)),
+            Span::styled("[*] ", Style::default().fg(theme::KEY)),
             Span::styled(
                 shorten_path(&state.project_root),
                 Style::default()
-                    .fg(Color::White)
+                    .fg(theme::LABEL)
                     .add_modifier(Modifier::BOLD),
             ),
         ]);
@@ -54,14 +55,14 @@ impl TreeView {
             let is_current = i == components.len().saturating_sub(1);
             let style = if is_current {
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(theme::ACCENT)
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(Color::Blue)
+                Style::default().fg(theme::DIRECTORY)
             };
             let dir_line = Line::from(vec![
                 Span::raw(indent.clone()),
-                Span::styled("[-] ", Style::default().fg(Color::Yellow)),
+                Span::styled("[-] ", Style::default().fg(theme::KEY)),
                 Span::styled(format!("{}/", component), style),
             ]);
             items.push(ListItem::new(dir_line));

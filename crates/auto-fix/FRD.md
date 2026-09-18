@@ -90,7 +90,7 @@ flowchart TD
   | `unwrap();`         | Replace with `expect("safe");`        | `Applied`                        |
   | `panic!(...)`       | **Skip** — requires semantic error handling | `Skipped(unsafe_removal)`   |
   | `todo!(...)`        | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`   |
-  | `unimpl!(...)`     | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`   |
+  | `unimplemented!(...)` | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`   |
   | `unreachable!(...)` | **Skip** — requires semantic analysis      | `Skipped(unsafe_removal)`   |
   | `expect(...)`       | **Skip** — already has context message      | `Skipped(already_has_context)` |
 
@@ -206,7 +206,7 @@ flowchart TD
 
 - **Performance**: Fix pipeline processes one file at a time. Linting is the bottleneck; fix operations are O(n) per file where n is the number of lines. When fixes are applied, a single re-lint pass counts remaining violations.
 - **Memory**: File content is loaded entirely into memory.
-- **Accuracy**: Fixes must remain mechanical and local (remove / replace / rename only). No structural or multi-file edits. Patterns requiring semantic understanding (`panic!`, `todo!`, `unimpl!`) are skipped.
+- **Accuracy**: Fixes must remain mechanical and local (remove / replace / rename only). No structural or multi-file edits. Patterns requiring semantic understanding (`panic!`, `todo!`, `unimplemented!`) are skipped.
 - **Idempotency**: Running auto-fix repeatedly on the same file produces no further changes (`Skipped` after first `Applied`).
 - **Observability**: Callers can distinguish skip reasons from hard failures via reason-coded outcomes.
 - **Concurrency**: Individual fix operations assume single-threaded file access (no concurrent writers).
@@ -236,7 +236,7 @@ flowchart TD
 | 4  | `// FIXME: refactor` comment | Stripped from line, `Applied`            | FR-002 |
 | 5  | `panic!("error")`            | `Skipped(unsafe_removal)`                | FR-002 |
 | 6  | `todo!()`                    | `Skipped(unsafe_removal)`                | FR-002 |
-| 7  | `unimpl!()`               | `Skipped(unsafe_removal)`                | FR-002 || 8  | `unwrap_or_default()`        | Not modified (safe variant)              | FR-002 |
+| 7  | `unimplemented!()`     | `Skipped(unsafe_removal)`                | FR-002 || 8  | `unwrap_or_default()`  | Not modified (safe variant)              | FR-002 |
 | 9  | Missing file                 | `Failed(file_not_found)`                 | FR-002 |
 | 10 | No bypass on target line     | `Skipped(no_bypass_pattern)`             | FR-002 |
 
@@ -276,7 +276,7 @@ flowchart TD
 - Files are not modified concurrently by external processes during fix execution.
 - Dry-run is selectable **per request** (CLI `--dry-run` / MCP args), not only at process construction.
 - Only three fixable error codes (AES101, AES304, AES203) are automated; all others require manual review.
-- AES304 patterns requiring semantic understanding (`panic!`, `todo!`, `unimpl!`, `unreachable!`) are **not auto-fixed** — they are skipped and reported as requiring manual intervention.
+- AES304 patterns requiring semantic understanding (`panic!`, `todo!`, `unimplemented!`, `unreachable!`) are **not auto-fixed** — they are skipped and reported as requiring manual intervention.
 - Multi-line import blocks are **not auto-fixed** — removing a single line would break syntax.
 - Symbol renaming is mechanical (`renamed_` prefix) — it does not produce semantically correct names. Correct renaming requires developer judgment.
 - The filesystem crate provides read/write I/O via `IFilesystemAggregate`; auto-fix delegates all I/O through `FileAdapter`.

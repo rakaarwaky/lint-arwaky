@@ -286,6 +286,20 @@ fn main() {
         .values
         .clone();
 
+    // W10: in-process aggregate bundle for scan/check (subprocess fallback when absent).
+    let scan_aggregates = dispatcher::surface_check_action::ScanAggregates {
+        quality: code_analysis_linter.clone(),
+        role: role_orchestrator.clone(),
+        import: import_orchestrator.clone(),
+        naming: naming_orchestrator.clone(),
+        external: external_lint.clone(),
+        orphan: orphan_orchestrator.clone(),
+        config: config_orchestrator.clone(),
+        fs_factory: Arc::new(move || {
+            filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+        }),
+    };
+
     let exit_code = match cli.command {
         Command::Scan {
             path,
@@ -300,6 +314,7 @@ fn main() {
                 config_orchestrator: Some(config_orchestrator.clone()),
                 filter,
                 member,
+                scan_aggregates: Some(scan_aggregates.clone()),
             },
         ),
         Command::Check {
@@ -315,6 +330,7 @@ fn main() {
                 config_orchestrator: Some(config_orchestrator.clone()),
                 filter,
                 member,
+                scan_aggregates: Some(scan_aggregates.clone()),
             },
         ),
         Command::Quality {

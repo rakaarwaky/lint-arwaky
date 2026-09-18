@@ -28,6 +28,16 @@ bash scripts/install.sh
 
 The installer builds from source and places binaries in `target/release/`.
 
+**Remote mode (download pre-built binary):** `bash scripts/install.sh --remote` downloads a pre-built archive from the GitHub release. The release workflow does not currently publish a checksum file, so the installer prints the archive's SHA-256 after download. Verify it manually:
+
+```bash
+# After the remote install prints "SHA-256: <digest>", compare against the
+# checksum published in the GitHub release notes/assets for the same tag.
+sha256sum /tmp/lint-arwaky.tar.gz
+```
+
+Only proceed to extraction/execution after the digest matches. Until a checksum file is published in the release, this manual verification step is the integrity control for the remote install path.
+
 ### Option 2: From source (recommended for contributors)
 
 ```bash

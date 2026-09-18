@@ -27,7 +27,8 @@ pub fn collect_git_diff(
     project_path: Option<&str>,
     filter: Option<&str>,
 ) -> Result<GitDiffReport, String> {
-    let project_path = FilePath::new(project_path.unwrap_or(".").to_string()).unwrap_or_default();
+    let project_path = FilePath::new(project_path.unwrap_or(".").to_string())
+        .map_err(|_| "[error] invalid project path".to_string())?;
 
     // Get changed files via std::process::Command (sync git diff)
     let changed_files = get_changed_files_sync(&project_path, &base)?;
@@ -111,8 +112,12 @@ fn get_changed_files_sync(
     project_path: &FilePath,
     base: &GitBranchName,
 ) -> Result<Vec<FilePath>, String> {
+    let base = base.value();
+    if !is_valid_ref(base) {
+        return Err(format!("[error] invalid git base ref: {base}"));
+    }
     let output = Command::new("git")
-        .args(["diff", "--name-only", &format!("{}...HEAD", base.value())])
+        .args(["diff", "--name-only", &format!("{base}...HEAD")])
         .current_dir(&project_path.value)
         .output();
 
@@ -127,4 +132,12 @@ fn get_changed_files_sync(
         }
         Err(e) => Err(format!("[error] git diff failed: {e}")),
     }
+}
+
+/// Reject git refs that could inject command-line options (e.g. `--upload-pack`).
+fn is_valid_ref(s: &str) -> bool {
+    !s.is_empty()
+        && !s.starts_with('-')
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '/' | '-'))
 }

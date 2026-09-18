@@ -7,9 +7,10 @@
 //   - HelpOverlay: keyboard shortcut reference
 //
 // Help content is embedded as a static string in help_text().
+use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
@@ -26,10 +27,10 @@ impl PreviewView {
         let is_focused = state.panel_focus == PanelFocus::Preview;
         let border_style = if is_focused {
             Style::default()
-                .fg(Color::Cyan)
+                .fg(theme::ACCENT)
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::DarkGray)
+            Style::default().fg(theme::SEPARATOR)
         };
 
         let (title, content) = match state.preview_mode {
@@ -50,7 +51,7 @@ impl PreviewView {
             .block(block)
             .wrap(Wrap { trim: false })
             .scroll((state.preview_scroll as u16, 0))
-            .style(Style::default().fg(Color::White));
+            .style(Style::default().fg(theme::LABEL));
 
         frame.render_widget(paragraph, area);
 
@@ -71,11 +72,11 @@ impl PreviewView {
                 .begin_symbol(Some("↑"))
                 .end_symbol(Some("↓"))
                 .thumb_style(Style::default().fg(if is_focused {
-                    Color::Cyan
+                    theme::ACCENT
                 } else {
-                    Color::DarkGray
+                    theme::SCROLLBAR
                 }))
-                .track_style(Style::default().fg(Color::DarkGray));
+                .track_style(Style::default().fg(theme::SCROLLBAR));
 
             frame.render_stateful_widget(scrollbar, inner_area, &mut scrollbar_state);
         }

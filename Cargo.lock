@@ -5365,8 +5365,10 @@ version = "3.6.1"
 dependencies = [
  "anyhow",
  "arboard",
+ "config-system-lint-arwaky",
  "criterion",
  "crossterm",
+ "dirs",
  "dispatcher-lint-arwaky",
  "ratatui",
  "rayon",

@@ -45,8 +45,8 @@ Priority 1: Project root
   lint_arwaky.config.yaml at project root
       │ (not found)
       ▼
-Priority 2: Parent directories (up to depth 5)
-  Walk up 5 levels looking for config file
+Priority 2: Parent directories (project root plus up to 4 ancestor levels — 5 levels total)
+  Walk up 5 levels (root, then 4 ancestors) looking for config file
       │ (not found)
       ▼
 Priority 3: XDG user config
@@ -75,7 +75,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 - **Output**: The loaded config source with raw content, path, and language, or none if no config found.
 - **Business Rules**:
 
-  - Priority order: (1) project-root YAML, (2) parent directory YAML (up to depth 5), (3) XDG user config `~/.config/lint-arwaky/`, (4) XDG system dirs `/etc/xdg/lint-arwaky/` (limited to 8 dirs, absolute paths only), (5) embedded defaults.
+  - Priority order: (1) project-root YAML, (2) parent directory YAML (project root plus up to 4 ancestor levels — 5 levels total), (3) XDG user config `~/.config/lint-arwaky/`, (4) XDG system dirs `/etc/xdg/lint-arwaky/` (limited to 8 dirs, absolute paths only), (5) embedded defaults.
   - First match wins — deeper/more specific configs take priority over shallower ones.
   - No config file size limit — config files of any size are accepted.
   - Symlinks pointing outside the project root are rejected via canonical path resolution.

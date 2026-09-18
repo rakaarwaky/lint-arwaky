@@ -4,7 +4,6 @@
 //   taxonomy_lint_result_vo, taxonomy_layer_vo, taxonomy_message_vo,
 //   taxonomy_adapter_name_vo, taxonomy_suggestion_vo, and the filesystem VO
 //   surface exercised by `unit_shared_filesystem_vo.rs`.
-mod common;
 
 use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
 use shared_lint_arwaky::common::taxonomy_layer_vo::{
