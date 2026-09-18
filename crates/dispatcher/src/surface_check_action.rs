@@ -213,23 +213,10 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     // An explicit scan of a fixture dir must not ignore the target itself —
     // `build_file_index_with_ignored` uses ignore::WalkBuilder, so an ignore
     // entry matching the scan root's own name suppresses its entire subtree.
-    let fixture_names: [&str; 2] = ["workspaces-bad", "workspaces-good"];
-    let scan_root_is_fixture = scan_root
-        .file_name()
-        .and_then(|f| f.to_str())
-        .is_some_and(|f| fixture_names.contains(&f));
-    let build_ignored: Vec<String> = ignored
-        .iter()
-        .filter(|p| !p.starts_with('/'))
-        .cloned()
-        .chain(
-            fixture_names
-                .iter()
-                .filter(|_name| !scan_root_is_fixture)
-                .map(|name| name.to_string()),
-        )
-        .collect();
-    fs.build_file_index_with_ignored(std::path::Path::new(&scan_root), &build_ignored);
+    fs.build_file_index_with_ignored(
+        std::path::Path::new(&scan_root),
+        &build_index_ignored(&ignored, &scan_root),
+    );
 
     let discovered = discover_lintable_files(&fs, &scan_root, &ignored);
     let entries = build_entries(&fs, &discovered);
@@ -546,6 +533,32 @@ fn bfs_enter_subdirs(
             queue.push((entry_path.to_path_buf(), next_depth));
         }
     }
+}
+
+/// Build the ignore list for the in-process file index: config ignore entries
+/// that do not suppress the scan target itself (absolute patterns are dropped —
+/// a repo-root scan must always see its own tree), plus the fixture dir names
+/// so the index walk never picks up `workspaces-bad`/`workspaces-good` as
+/// sibling source. An explicit fixture scan keeps its own tree: the fixture
+/// names are omitted then, since an ignore entry matching the scan root's own
+/// name would suppress the entire subtree.
+fn build_index_ignored(ignored: &[String], scan_root: &std::path::Path) -> Vec<String> {
+    let fixture_names: [&str; 2] = ["workspaces-bad", "workspaces-good"];
+    let scan_root_is_fixture = scan_root
+        .file_name()
+        .and_then(|f| f.to_str())
+        .is_some_and(|f| fixture_names.contains(&f));
+    ignored
+        .iter()
+        .filter(|p| !p.starts_with('/'))
+        .cloned()
+        .chain(
+            fixture_names
+                .iter()
+                .filter(|_name| !scan_root_is_fixture)
+                .map(|name| name.to_string()),
+        )
+        .collect()
 }
 
 /// Build parsed `FileEntry`s for the discovered file paths, running the
