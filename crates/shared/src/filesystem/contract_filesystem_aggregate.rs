@@ -96,4 +96,17 @@ pub trait IFilesystemAggregate:
     /// Return import entries with resolved_path populated (via barrel/external resolution).
     /// Only available after `build_orphan_graph_context` has been called.
     fn resolved_import_list(&self) -> Vec<ImportEntry>;
+
+    /// Extend the import cache with entries not tied to `files` (default no-op).
+    /// Used by the dispatcher to merge workspace-wide imports after a scoped
+    /// `parse_all`, so AES201/202/203/205 see out-of-scope imports.
+    fn extend_import_cache(&self, _entries: Vec<ImportEntry>) {}
+
+    /// Snapshot of the import cache taken at the last
+    /// `build_file_index_with_ignored` call (default empty).
+    /// Used by the dispatcher to merge in-scope imports that were
+    /// overwritten by a subsequent scoped `parse_all`.
+    fn import_list_snapshot(&self) -> Vec<ImportEntry> {
+        Vec::new()
+    }
 }

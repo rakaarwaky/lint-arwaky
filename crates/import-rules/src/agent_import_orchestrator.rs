@@ -133,6 +133,27 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         if !self.config.enabled.value {
             return Vec::new();
         }
+        // Use the orchestrator's own filesystem cache for the import map.
+        let import_list = self.deps.filesystem.import_list();
+        let imports_map: HashMap<String, Vec<ImportEntry>> = {
+            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+            for entry in import_list {
+                let key = entry.source_file.to_string_lossy().to_string();
+                map.entry(key).or_default().push(entry);
+            }
+            map
+        };
+        self.run_audit_with_entries_and_imports(files, &imports_map)
+    }
+
+    fn run_audit_with_entries_and_imports(
+        &self,
+        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
+    ) -> Vec<LintResult> {
+        if !self.config.enabled.value {
+            return Vec::new();
+        }
 
         let file_paths: Vec<FilePath> = files
             .iter()
@@ -146,17 +167,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .filter(|f| f.parse_ok)
             .map(|f| (f.path.to_string_lossy().to_string(), f.content.clone()))
             .collect();
-
-        // Build import map from filesystem's AST parser
-        let import_list = self.deps.filesystem.import_list();
-        let imports_map: HashMap<String, Vec<ImportEntry>> = {
-            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
-            for entry in import_list {
-                let key = entry.source_file.to_string_lossy().to_string();
-                map.entry(key).or_default().push(entry.clone());
-            }
-            map
-        };
 
         // Build used_identifiers map from FileEntry.parse_metadata (tree-sitter AST)
         let used_identifiers_map: HashMap<String, Vec<String>> = files
@@ -204,7 +214,7 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         self.run_checks(
             &file_list,
             &content_map,
-            &imports_map,
+            imports_map,
             &used_identifiers_map,
             &implemented_traits,
             &root_dir,

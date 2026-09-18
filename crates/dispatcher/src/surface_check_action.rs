@@ -68,64 +68,53 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
         root
     };
 
-    // Validate member against discovered workspaces
-    if let Some(ref m) = opts.member {
-        if let Some(ref orchestrator) = opts.multi_project_orchestrator {
-            let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
-            let workspaces = orchestrator.discover_workspaces(&root_fp);
-            if !workspaces.is_empty() {
-                let matched = workspaces.iter().any(|ws| {
-                    let ws_file = std::path::Path::new(&ws.path.value)
-                        .file_name()
-                        .map(|n| n.to_string_lossy())
-                        .unwrap_or_default();
-                    ws_file.as_ref() == m.as_str() || ws.path.value == *m
-                });
-                if !matched {
-                    return Err(format!("[error] no workspace member matching '{m}'"));
-                }
+    // Validate member against discovered workspaces, then dispatch.
+    let target_path = match opts.member.as_deref() {
+        Some(m) => validate_member_path(&opts, &root, m)?,
+        None => root.clone(),
+    };
+    let violations = match opts.scan_aggregates.as_ref() {
+        Some(agg) => run_all_linters_in_process(&target_path, agg),
+        None => run_all_linters_json(&target_path, opts.filesystem.as_ref()),
+    };
+    let violations = apply_filter(violations, &opts.filter);
+    Ok(violations)
+}
+
+/// Resolve the member-scoped scan target, validating it against discovered
+/// workspaces when a multi-project orchestrator is available.
+fn validate_member_path(opts: &ScanOptions, root: &str, member: &str) -> Result<String, String> {
+    if let Some(ref orchestrator) = opts.multi_project_orchestrator {
+        let root_fp = FilePath::new(root.to_string()).map_err(|_| "invalid path".to_string())?;
+        let workspaces = orchestrator.discover_workspaces(&root_fp);
+        if !workspaces.is_empty() {
+            let matched = workspaces.iter().any(|ws| {
+                let ws_file = std::path::Path::new(&ws.path.value)
+                    .file_name()
+                    .map(|n| n.to_string_lossy())
+                    .unwrap_or_default();
+                ws_file.as_ref() == member || ws.path.value == *member
+            });
+            if !matched {
+                return Err(format!("[error] no workspace member matching '{member}'"));
             }
-        }
-        let target_path = {
-            let member_path = std::path::Path::new(&root).join(m);
-            if member_path.exists() {
-                member_path.to_string_lossy().to_string()
-            } else {
-                root.clone()
-            }
-        };
-        if let Some(ref agg) = opts.scan_aggregates {
-            let mut all_violations = run_all_linters_in_process(&target_path, agg);
-            if let Some(ref filter_str) = opts.filter {
-                let filter_upper = filter_str.to_uppercase();
-                all_violations.retain(|v| v.code.code().contains(&filter_upper));
-            }
-            Ok(all_violations)
-        } else {
-            let mut all_violations = run_all_linters_json(&target_path, opts.filesystem.as_ref());
-            if let Some(ref filter_str) = opts.filter {
-                let filter_upper = filter_str.to_uppercase();
-                all_violations.retain(|v| v.code.code().contains(&filter_upper));
-            }
-            Ok(all_violations)
-        }
-    } else {
-        if let Some(ref agg) = opts.scan_aggregates {
-            let mut all_violations = run_all_linters_in_process(&root, agg);
-            if let Some(ref filter_str) = opts.filter {
-                let filter_upper = filter_str.to_uppercase();
-                all_violations.retain(|v| v.code.code().contains(&filter_upper));
-            }
-            Ok(all_violations)
-        } else {
-            let mut all_violations = run_all_linters_json(&root, opts.filesystem.as_ref());
-            if let Some(ref filter_str) = opts.filter {
-                let filter_upper = filter_str.to_uppercase();
-                all_violations.retain(|v| v.code.code().contains(&filter_upper));
-            }
-            Ok(all_violations)
         }
     }
+    let member_path = std::path::Path::new(root).join(member);
+    Ok(if member_path.exists() {
+        member_path.to_string_lossy().to_string()
+    } else {
+        root.to_string()
+    })
+}
+
+/// Apply the optional case-insensitive code filter to a violation list.
+fn apply_filter(mut violations: Vec<ViolationItem>, filter: &Option<String>) -> Vec<ViolationItem> {
+    if let Some(filter_str) = filter {
+        let filter_upper = filter_str.to_uppercase();
+        violations.retain(|v| v.code.code().contains(&filter_upper));
+    }
+    violations
 }
 
 pub use collect_scan as collect_check;
@@ -175,18 +164,11 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         .unwrap_or_else(|_| std::path::PathBuf::from(path));
     let target_canon_str = target_canon.to_string_lossy().to_string();
 
-    // E902 fix: when the target sits inside a larger workspace (parent has
-    // crates/packages/modules + a manifest) keep the target as the scan scope
-    // instead of re-discovering and re-joining the workspace root. For
-    // targets outside any workspace, use the target itself.
-    let ws_root = fs.find_workspace_root(target);
-    let target_inside_ws = ws_root
-        .as_ref()
-        .map(|r| {
-            let t = std::path::Path::new(&target_canon_str);
-            t.starts_with(r)
-        })
-        .unwrap_or(false);
+    // W10: build the in-process file index directly from the scan target so
+    // member-scoped scans (e.g. `workspaces-bad/crates`) enumerate exactly the
+    // files the subprocess linters would see, instead of the parent workspace
+    // that `build_file_index_with_ignored` resolves to (which would mix or drop
+    // sibling members and produce doubled paths → E902 / missing codes).
     let scan_root = target_canon.clone();
 
     let root_fp = FilePath::new(scan_root.to_string_lossy().to_string()).unwrap_or_default();
@@ -199,65 +181,88 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         .map(|v| v.to_string())
         .collect::<Vec<String>>();
 
-    fs.build_file_index_with_ignored(std::path::Path::new(&scan_root), &ignored);
-    let files: Vec<shared::filesystem::taxonomy_filesystem_vo::FileEntry> = fs.file_list().to_vec();
+    // Single-file target: build a one-entry index and run the auditors on it.
+    if scan_root.is_file() {
+        return run_single_file_scan(&fs, &scan_root, agg, &root_fp, &ignored);
+    }
 
-    // E902 fix: verify each file actually exists on disk before passing it to
-    // the linters so no file-not-found is emitted for stale/doubled paths.
-    let verified: Vec<&shared::filesystem::taxonomy_filesystem_vo::FileEntry> = files
+    // Discover source files under the target, matching the per-linter commands
+    // that call `discover_source_files(target, &ignored)` internally. Also
+    // cache them in the filesystem's file index + import map so
+    // `import_list()` / `resolved_import_list()` used by the in-process import
+    // auditor are populated for this target.
+    //
+    // Populate the filesystem's import cache + file index. This walks the
+    // discovered workspace root (the parent when the target is a member),
+    // which is what the orphan auditor and the import auditor's
+    // `import_list()` / `resolved_import_list()` expect — but the entries we
+    // pass to quality/role/import/naming below are scoped to the target only,
+    // so per-file rules never see sibling members (no doubled-path E902).
+    // Skip any config-provided ignore pattern that would exclude the scan
+    // target itself (a repo-root scan must always see its own tree), then
+    // add the fixture/test-workspace dir names so the workspace-root index
+    // walk never picks up `workspaces-bad`/`workspaces-good` as parent
+    // source. An explicit scan of a fixture dir is unaffected: the walk
+    // roots at that dir and the name filter only applies to entries of the
+    // scan target's siblings.
+    // An explicit scan of a fixture dir must not ignore the target itself —
+    // `build_file_index_with_ignored` uses ignore::WalkBuilder, so an ignore
+    // entry matching the scan root's own name suppresses its entire subtree.
+    let fixture_names: [&str; 2] = ["workspaces-bad", "workspaces-good"];
+    let scan_root_is_fixture = scan_root
+        .file_name()
+        .and_then(|f| f.to_str())
+        .is_some_and(|f| fixture_names.contains(&f));
+    let build_ignored: Vec<String> = ignored
         .iter()
-        .filter(|f| fs.path_exists(std::path::Path::new(&f.path)))
+        .filter(|p| !p.starts_with('/'))
+        .cloned()
+        .chain(
+            fixture_names
+                .iter()
+                .filter(|_name| !scan_root_is_fixture)
+                .map(|name| name.to_string()),
+        )
         .collect();
-    let entries = if verified.is_empty() && !files.is_empty() {
-        // Mock filesystem reports no paths — keep all entries so behavior
-        // matches the subprocess fallback.
-        Vec::new()
-    } else {
-        verified.iter().map(|&e| e.clone()).collect()
-    };
+    fs.build_file_index_with_ignored(std::path::Path::new(&scan_root), &build_ignored);
 
-    let mut all: Vec<ViolationItem> = Vec::new();
+    let discovered = discover_lintable_files(&fs, &scan_root, &ignored);
+    let entries = build_entries(&fs, &discovered);
+    let import_map = build_import_map(&fs, &entries);
 
-    // Filter: keep only violations whose file path is within the target scope,
-    // and drop any violation that names a non-existent file (E902 guard).
-    // AES205 cycle violations are global — keep if within the same parent
-    // workspace.
     let parent_workspace = target_canon
         .parent()
         .and_then(|p| p.parent())
         .map(|p| p.to_path_buf());
 
-    // Quality
+    let mut all: Vec<ViolationItem> = Vec::new();
+
     all.extend(
         agg.quality
             .run_analysis_with_entries(&entries)
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    // Role
     all.extend(
         agg.role
             .run_audit_with_entries(&entries)
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    // Import
+    // Workspace-wide import map so AES201/202/203/205 see cross-member imports
+    // (the dispatcher's fs instance differs from the import orchestrator's own).
     all.extend(
         agg.import
-            .run_audit_with_entries(&entries)
+            .run_audit_with_entries_and_imports(&entries, &import_map)
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    // Naming
     all.extend(
         agg.naming
             .run_audit_with_entries(&entries)
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    // Orphan — the linter operates on workspace-wide context: its own
-    // `scan_orphans` rebuilds the graph from root + ignored patterns, which is
-    // what the subprocess path passed to it.
     let (_graph_ctx, orphan_violations) = agg.orphan.scan_orphans(&root_fp, &ignored);
     all.extend(
         orphan_violations
@@ -265,11 +270,8 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .map(ViolationItem::from_lint_result),
     );
 
-    // External — match the subprocess path: adapters run on the target *as
-    // given* (relative paths resolve against the process CWD, exactly like the
-    // spawned linters did). Running them on the canonicalized target would
-    // make config/tool discovery differ from the subprocess baseline, so keep
-    // the original target string for the external aggregate.
+    // External — adapters run on the target *as given* (relative paths resolve
+    // against the process CWD, exactly like the spawned linters did).
     let ext_target_fp = FilePath::new(path.to_string()).unwrap_or_default();
     {
         let ext_files = fs.discover_files(std::path::Path::new(&target_canon_str));
@@ -292,8 +294,6 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .iter()
             .map(ViolationItem::from_lint_result)
             .collect();
-        // External tool findings may use paths relative to the tool's working
-        // dir (the target) — keep only those that resolve under the target.
         external.retain(|v| {
             let file_path = std::path::Path::new(&v.file.value);
             let resolved = if file_path.is_absolute() {
@@ -311,49 +311,265 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         all.extend(external);
     }
 
-    // Filter: keep only violations whose file path is within the target scope,
-    // and drop any violation that names a non-existent file (E902 guard).
-    // AES205 cycle violations are global — keep if within the same parent
-    // workspace.
-    let parent_workspace = target_canon
-        .parent()
-        .and_then(|p| p.parent())
-        .map(|p| p.to_path_buf());
+    // Keep only violations that resolve to a real file under the scan scope
+    // (or, for AES205 cycles / AES5xx orphans, within the parent workspace).
     all.retain(|v| {
         let file_path = std::path::Path::new(&v.file.value);
         let resolved = if file_path.is_absolute() {
             file_path.to_path_buf()
-        } else if file_path.starts_with(std::path::Path::new(&target_canon_str)) {
-            // Relative already under target (orphan paths) — verify, no re-join.
-            file_path.to_path_buf()
-        } else if target_inside_ws {
-            // E902 fix: target inside a larger workspace — never re-join the
-            // workspace root (that is what produced the doubled path).
-            return false;
-        } else if let Some(ref ws) = ws_root {
-            ws.join(file_path)
         } else {
             target_canon.join(file_path)
         };
         let resolved_canon = fs.canonicalize(&resolved).unwrap_or(resolved.clone());
         if !fs.path_exists(&resolved_canon) {
-            // E902 guard: non-existent file — drop, no violation emitted.
-            return false;
+            return false; // E902 guard: non-existent file — drop, no violation.
         }
-        if resolved_canon.starts_with(&target_canon) {
-            return true;
-        }
-        if v.code.code() == "AES205" {
-            if let Some(ref pw) = parent_workspace {
-                if resolved_canon.starts_with(pw) {
-                    return true;
-                }
-            }
-        }
-        false
+        let in_target = resolved_canon.starts_with(&target_canon);
+        let in_parent_ws = parent_workspace
+            .as_ref()
+            .is_some_and(|pw| resolved_canon.starts_with(pw));
+        in_target
+            || (v.code.code() == "AES205" && in_parent_ws)
+            || (v.code.code().starts_with("AES5") && in_parent_ws)
     });
 
     all
+}
+
+/// Run all 6 linters on a single-file target, returning in-scope violations.
+fn run_single_file_scan(
+    fs: &Arc<dyn IFilesystemAggregate>,
+    scan_root: &std::path::Path,
+    agg: &ScanAggregates,
+    root_fp: &shared::common::taxonomy_path_vo::FilePath,
+    ignored: &[String],
+) -> Vec<ViolationItem> {
+    let content = fs
+        .read_lintable_file(&scan_root.to_string_lossy())
+        .unwrap_or_default();
+    let extension = scan_root
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_string();
+    let language = match fs.detect_language_from_path(scan_root.to_string_lossy().as_ref()) {
+        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+            shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+        }
+        shared::common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+            shared::filesystem::taxonomy_filesystem_vo::Language::Python
+        }
+        shared::common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+            shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+        }
+    };
+    let mut entries = vec![shared::filesystem::taxonomy_filesystem_vo::FileEntry {
+        path: scan_root.to_path_buf(),
+        extension,
+        language,
+        size: content.len() as u64,
+        content: content.clone(),
+        parse_ok: !content.is_empty(),
+        parse_metadata: None,
+    }];
+    fs.parse_all(&mut entries);
+    let import_map: std::collections::HashMap<
+        String,
+        Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>,
+    > = std::collections::HashMap::new();
+    let mut all: Vec<ViolationItem> = Vec::new();
+    all.extend(
+        agg.quality
+            .run_analysis_with_entries(&entries)
+            .iter()
+            .map(ViolationItem::from_lint_result),
+    );
+    all.extend(
+        agg.role
+            .run_audit_with_entries(&entries)
+            .iter()
+            .map(ViolationItem::from_lint_result),
+    );
+    all.extend(
+        agg.import
+            .run_audit_with_entries_and_imports(&entries, &import_map)
+            .iter()
+            .map(ViolationItem::from_lint_result),
+    );
+    all.extend(
+        agg.naming
+            .run_audit_with_entries(&entries)
+            .iter()
+            .map(ViolationItem::from_lint_result),
+    );
+    let (_graph_ctx, orphan_violations) = agg.orphan.scan_orphans(root_fp, ignored);
+    all.extend(
+        orphan_violations
+            .iter()
+            .map(ViolationItem::from_lint_result),
+    );
+    // Drop violations naming files outside the target.
+    all.retain(|v| {
+        let p = std::path::Path::new(&v.file.value);
+        p.is_absolute() && p.starts_with(scan_root)
+    });
+    all
+}
+
+/// Discover lintable source files under `scan_root` matching the index walk:
+/// under a workspace root only member dirs carry source; elsewhere member-dir
+/// names and fixture dirs are skipped. Returns the discovered file paths.
+fn discover_lintable_files(
+    fs: &Arc<dyn IFilesystemAggregate>,
+    scan_root: &std::path::Path,
+    ignored: &[String],
+) -> Vec<String> {
+    // Discover the target's own files with the config ignore list (a dir
+    // named `workspaces-bad` never matches a file pattern, so fixture
+    // targets are unaffected by the index build's fixture-dir exclusion).
+    let mut discovered = fs.discover_source_files(scan_root, ignored);
+    // Recurse into subdirs so nested source trees (crates/<name>/src/*) are
+    // fully covered, matching what the subprocess linters walk.
+    let is_ws_root = ["crates", "packages", "modules"]
+        .iter()
+        .any(|name| scan_root.join(name).is_dir());
+    let mut skip_dirs: std::collections::HashSet<&str> =
+        shared::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS
+            .iter()
+            .copied()
+            .collect();
+    // A member-scoped scan never leaks into sibling members (E902 /
+    // missing-code bug).
+    if !is_ws_root {
+        skip_dirs.insert("crates");
+        skip_dirs.insert("packages");
+        skip_dirs.insert("modules");
+    }
+    // Fixture dirs are skipped only when they are NOT the scan target itself;
+    // a `check .` of the repo root must never lint `workspaces-bad/good`.
+    let scan_root_is_fixture = scan_root
+        .file_name()
+        .and_then(|f| f.to_str())
+        .is_some_and(|f| f == "workspaces-bad" || f == "workspaces-good");
+    if !scan_root_is_fixture {
+        skip_dirs.insert("workspaces-bad");
+        skip_dirs.insert("workspaces-good");
+    }
+    let member_names: &[&str] = &["crates", "packages", "modules"];
+    let mut queue: Vec<(std::path::PathBuf, usize)> = vec![(scan_root.to_path_buf(), 0)];
+    let mut seen: std::collections::HashSet<std::path::PathBuf> = std::collections::HashSet::new();
+    // `depth` tracks BFS level: 0 = scan root, 1 = inside a top-level member
+    // dir (crates/packages/modules), 2+ = member subdirs (the actual member
+    // names, e.g. code_analysis). At a workspace root the depth-0 level is
+    // gated to member dirs only; deeper levels enter every subdir.
+    while let Some((dir, depth)) = queue.pop() {
+        let gate_members = is_ws_root && depth == 0;
+        for entry in fs.scan_directory(dir.as_path()) {
+            let entry_path = std::path::Path::new(&entry);
+            if !entry_path.is_dir() {
+                continue;
+            }
+            let name = entry_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("");
+            if skip_dirs.contains(name) {
+                continue;
+            }
+            let is_member_dir = member_names.contains(&name);
+            if gate_members && !is_member_dir {
+                continue;
+            }
+            if !seen.insert(entry_path.to_path_buf()) {
+                continue;
+            }
+            discovered.extend(fs.discover_source_files(entry_path, ignored));
+            let next_depth = if is_ws_root && is_member_dir {
+                1
+            } else {
+                depth + 1
+            };
+            queue.push((entry_path.to_path_buf(), next_depth));
+        }
+    }
+    discovered
+}
+
+/// Build parsed `FileEntry`s for the discovered file paths, running the
+/// tree-sitter parse so `parse_metadata` is populated for the auditors.
+fn build_entries(
+    fs: &Arc<dyn IFilesystemAggregate>,
+    discovered: &[String],
+) -> Vec<shared::filesystem::taxonomy_filesystem_vo::FileEntry> {
+    let mut entries: Vec<shared::filesystem::taxonomy_filesystem_vo::FileEntry> = Vec::new();
+    for file_path in discovered {
+        let content = fs.read_lintable_file(file_path).unwrap_or_default();
+        let extension = std::path::Path::new(file_path)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_string();
+        let language = fs.detect_language_from_path(file_path);
+        let language = match language {
+            shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+                shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+            }
+            shared::common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+                shared::filesystem::taxonomy_filesystem_vo::Language::Python
+            }
+            shared::common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+                shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+            }
+        };
+        entries.push(shared::filesystem::taxonomy_filesystem_vo::FileEntry {
+            path: std::path::PathBuf::from(file_path),
+            extension,
+            language,
+            size: content.len() as u64,
+            content: content.clone(),
+            parse_ok: !content.is_empty(),
+            parse_metadata: None,
+        });
+    }
+    // Fills `parse_metadata` (needed for AES203 unused-import detection) and
+    // rewrites the parser's import cache with this target's scoped imports.
+    fs.parse_all(&mut entries);
+    entries
+}
+
+/// Merge the out-of-scope import snapshot with in-scope parser imports into
+/// a workspace-wide import map keyed by absolute source path, so
+/// AES201/202/203/205 see cross-member imports.
+fn build_import_map(
+    fs: &Arc<dyn IFilesystemAggregate>,
+    entries: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+) -> std::collections::HashMap<String, Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>>
+{
+    let ws_snapshot = fs.import_list_snapshot();
+    let scoped_keys: std::collections::HashSet<&std::path::Path> =
+        entries.iter().map(|e| e.path.as_path()).collect();
+    let out_of_scope: Vec<_> = ws_snapshot
+        .into_iter()
+        .filter(|e| !scoped_keys.contains(e.source_file.as_path()))
+        .collect();
+
+    let mut import_map: std::collections::HashMap<
+        String,
+        Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>,
+    > = std::collections::HashMap::new();
+    for entry in entries {
+        for imp in fs.imports_for(&entry.path) {
+            import_map
+                .entry(entry.path.to_string_lossy().to_string())
+                .or_default()
+                .push(imp);
+        }
+    }
+    for entry in out_of_scope {
+        let key = entry.source_file.to_string_lossy().to_string();
+        import_map.entry(key).or_default().push(entry);
+    }
+    import_map
 }
 
 /// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
