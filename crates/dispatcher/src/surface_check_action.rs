@@ -59,11 +59,7 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
     // in-process linters scan the intended scope. Subprocess fallback keeps the
     // raw path (its per-linter normalization differs).
     let root = if opts.scan_aggregates.is_some() {
-        opts.filesystem
-            .canonicalize(std::path::Path::new(&root))
-            .unwrap_or_else(|_| PathBuf::from(root))
-            .to_string_lossy()
-            .to_string()
+        canonicalize_scan_root(&opts.filesystem, &root)
     } else {
         root
     };
@@ -79,6 +75,15 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
     };
     let violations = apply_filter(violations, &opts.filter);
     Ok(violations)
+}
+
+/// Canonicalize a scan root (falling back to the raw path when the filesystem
+/// cannot canonicalize it, e.g. the path does not exist yet).
+fn canonicalize_scan_root(fs: &Arc<dyn IFilesystemAggregate>, root: &str) -> String {
+    fs.canonicalize(std::path::Path::new(root))
+        .unwrap_or_else(|_| PathBuf::from(root))
+        .to_string_lossy()
+        .to_string()
 }
 
 /// Resolve the member-scoped scan target, validating it against discovered
@@ -456,20 +461,36 @@ fn discover_lintable_files(
     let is_ws_root = ["crates", "packages", "modules"]
         .iter()
         .any(|name| scan_root.join(name).is_dir());
+    let skip_dirs = build_skip_dirs(is_ws_root, scan_root);
+    bfs_enter_subdirs(
+        fs,
+        scan_root,
+        &skip_dirs,
+        is_ws_root,
+        ignored,
+        &mut discovered,
+    );
+    discovered
+}
+
+/// Build the set of directory names the BFS skips: always `DEFAULT_IGNORED_PATHS`
+/// plus member dirs when not at a workspace root, plus fixture dirs when they
+/// are not the scan target itself (a `check .` of the repo root must never
+/// lint `workspaces-bad/good`, but a direct fixture scan must lint its files).
+fn build_skip_dirs(
+    is_ws_root: bool,
+    scan_root: &std::path::Path,
+) -> std::collections::HashSet<&'static str> {
     let mut skip_dirs: std::collections::HashSet<&str> =
         shared::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS
             .iter()
             .copied()
             .collect();
-    // A member-scoped scan never leaks into sibling members (E902 /
-    // missing-code bug).
     if !is_ws_root {
         skip_dirs.insert("crates");
         skip_dirs.insert("packages");
         skip_dirs.insert("modules");
     }
-    // Fixture dirs are skipped only when they are NOT the scan target itself;
-    // a `check .` of the repo root must never lint `workspaces-bad/good`.
     let scan_root_is_fixture = scan_root
         .file_name()
         .and_then(|f| f.to_str())
@@ -478,13 +499,23 @@ fn discover_lintable_files(
         skip_dirs.insert("workspaces-bad");
         skip_dirs.insert("workspaces-good");
     }
+    skip_dirs
+}
+
+/// Breadth-first walk into subdirectories of `scan_root`, collecting lintable
+/// source files. At a workspace root the depth-0 level is gated to member dirs
+/// only; deeper levels enter every subdir. `discovered` is extended in place.
+fn bfs_enter_subdirs(
+    fs: &Arc<dyn IFilesystemAggregate>,
+    scan_root: &std::path::Path,
+    skip_dirs: &std::collections::HashSet<&str>,
+    is_ws_root: bool,
+    ignored: &[String],
+    discovered: &mut Vec<String>,
+) {
     let member_names: &[&str] = &["crates", "packages", "modules"];
     let mut queue: Vec<(std::path::PathBuf, usize)> = vec![(scan_root.to_path_buf(), 0)];
     let mut seen: std::collections::HashSet<std::path::PathBuf> = std::collections::HashSet::new();
-    // `depth` tracks BFS level: 0 = scan root, 1 = inside a top-level member
-    // dir (crates/packages/modules), 2+ = member subdirs (the actual member
-    // names, e.g. code_analysis). At a workspace root the depth-0 level is
-    // gated to member dirs only; deeper levels enter every subdir.
     while let Some((dir, depth)) = queue.pop() {
         let gate_members = is_ws_root && depth == 0;
         for entry in fs.scan_directory(dir.as_path()) {
@@ -515,7 +546,6 @@ fn discover_lintable_files(
             queue.push((entry_path.to_path_buf(), next_depth));
         }
     }
-    discovered
 }
 
 /// Build parsed `FileEntry`s for the discovered file paths, running the
