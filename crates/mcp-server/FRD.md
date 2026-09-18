@@ -271,9 +271,10 @@ flowchart TD
 
 ---
 
-## Test Scenarios / QA Checklist
 
-### FR-001 — Execute Command
+## Test Scenarios
+
+### SCEN-001 — Execute Command
 
 
 | # | Scenario                                      | Expected                            | Rule   |
@@ -289,7 +290,7 @@ flowchart TD
 | 9 | `version` action                              | Version info + exit_code 0          | FR-001 |
 | 10 | `adapters` action                             | Delegates to health check           | FR-001 |
 
-### FR-002 — List Commands
+### SCEN-002 — List Commands
 
 
 | # | Scenario                | Expected                | Rule   |
@@ -298,7 +299,7 @@ flowchart TD
 | 2 | List with domain filter | Filtered subset         | FR-002 |
 | 3 | No matches              | Empty commands, total 0 | FR-002 |
 
-### FR-003 — Read Skill
+### SCEN-003 — Read Skill
 
 
 | # | Scenario              | Expected                            | Rule   |
@@ -308,7 +309,7 @@ flowchart TD
 | 3 | Missing skill         | Error + searched paths, exit_code 2 | FR-003 |
 | 4 | Missing section       | Error, exit_code 2                  | FR-003 |
 
-### FR-004 — Health Check
+### SCEN-004 — Health Check
 
 
 | # | Scenario                 | Expected                                | Rule   |
@@ -317,7 +318,7 @@ flowchart TD
 | 2 | Some adapters missing     | Correct status per adapter, exit_code 0 | FR-004 |
 | 3 | All adapters missing      | adapters_available 0, exit_code 0       | FR-004 |
 
-### FR-005 — Get Config
+### SCEN-005 — Get Config
 
 
 | # | Scenario           | Expected                                 | Rule   |
@@ -326,7 +327,7 @@ flowchart TD
 | 2 | No config file     | Embedded defaults + warning, exit_code 0 | FR-005 |
 | 3 | Invalid path       | exit_code 2                              | FR-005 |
 
-### FR-006 — Protocol Registration
+### SCEN-006 — Protocol Registration
 
 
 | # | Scenario       | Expected                        | Rule   |
@@ -366,6 +367,7 @@ flowchart TD
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - CLI Commands FRD: `crates/cli-commands/FRD.md`
 - External Lint FRD: `crates/external-lint/FRD.md`

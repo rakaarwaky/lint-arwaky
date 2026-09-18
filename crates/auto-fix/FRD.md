@@ -89,8 +89,8 @@ flowchart TD
   | `unwrap()`          | Replace with `expect("safe")`         | `Applied`                        |
   | `unwrap();`         | Replace with `expect("safe");`        | `Applied`                        |
   | `panic!(...)`       | **Skip** — requires semantic error handling | `Skipped(unsafe_removal)`   |
-  | `todo!(...)`        | **Skip** — requires implementation          | `Skipped(unsafe_removal)`   |
-  | `unimplemented!(...)` | **Skip** — requires implementation  | `Skipped(unsafe_removal)`   |
+  | `todo!(...)`        | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`   |
+  | `unimplemented!(...)` | **Skip** — future-logic placeholder             | `Skipped(unsafe_removal)`   |
   | `unreachable!(...)` | **Skip** — requires semantic analysis      | `Skipped(unsafe_removal)`   |
   | `expect(...)`       | **Skip** — already has context message      | `Skipped(already_has_context)` |
 
@@ -215,7 +215,7 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-### FR-001 — Unused Import Removal
+### SCEN-001 — Unused Import Removal
 
 | #  | Scenario                    | Expected                      | Rule   |
 | -- | --------------------------- | ----------------------------- | ------ |
@@ -226,7 +226,7 @@ flowchart TD
 | 5  | File does not exist         | `Failed(file_not_found)`      | FR-001 |
 | 6  | JS `= require(` pattern     | Detected and removed          | FR-001 |
 
-### FR-002 — Bypass Fix
+### SCEN-002 — Bypass Fix
 
 | #  | Scenario                     | Expected                                 | Rule   |
 | -- | ---------------------------- | ---------------------------------------- | ------ |
@@ -236,12 +236,11 @@ flowchart TD
 | 4  | `// FIXME: refactor` comment | Stripped from line, `Applied`            | FR-002 |
 | 5  | `panic!("error")`            | `Skipped(unsafe_removal)`                | FR-002 |
 | 6  | `todo!()`                    | `Skipped(unsafe_removal)`                | FR-002 |
-| 7  | `unimplemented!()`           | `Skipped(unsafe_removal)`                | FR-002 |
-| 8  | `unwrap_or_default()`        | Not modified (safe variant)              | FR-002 |
+| 7  | `unimplemented!()`     | `Skipped(unsafe_removal)`                | FR-002 || 8  | `unwrap_or_default()`  | Not modified (safe variant)              | FR-002 |
 | 9  | Missing file                 | `Failed(file_not_found)`                 | FR-002 |
 | 10 | No bypass on target line     | `Skipped(no_bypass_pattern)`             | FR-002 |
 
-### FR-003 — Symbol Renaming
+### SCEN-003 — Symbol Renaming
 
 | #  | Scenario                        | Expected                         | Rule   |
 | -- | ------------------------------- | -------------------------------- | ------ |
@@ -251,7 +250,7 @@ flowchart TD
 | 4  | Missing file                    | `Failed(file_not_found)`         | FR-003 |
 | 5  | New name is a Rust keyword      | `Skipped(keyword_conflict)`      | FR-003 |
 
-### FR-004–FR-005 — Dry-Run & Non-Fixable
+### SCEN-004–FR-005 — Dry-Run & Non-Fixable
 
 | #  | Scenario                        | Expected                             | Rule   |
 | -- | ------------------------------- | ------------------------------------ | ------ |
@@ -303,6 +302,7 @@ flowchart TD
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Quality Rules FRD: `crates/quality-rules/FRD.md` (AES304 bypass patterns)

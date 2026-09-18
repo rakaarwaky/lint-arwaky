@@ -1,4 +1,10 @@
-#![allow(dead_code)]
+//! Shared test helpers for shared-crate integration tests.
+//!
+//! Note: `mock_filesystem.rs` in this directory is the canonical mock linked
+//! into other crates' tests via `#[path]`; it is intentionally NOT declared
+//! here because it imports the shared crate as `shared` (the dependency alias
+//! used by consuming crates), which is not resolvable inside the shared
+//! crate's own test binaries.
 
 use shared_lint_arwaky::common::taxonomy_common_vo::LineNumber;
 use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;

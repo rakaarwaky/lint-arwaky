@@ -8,6 +8,7 @@ license = "MIT"
 [dependencies]
 shared = { workspace = true }
 dispatcher = { workspace = true }
+config-system = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true }
 anyhow = { workspace = true }
@@ -19,6 +20,7 @@ ratatui = { workspace = true }
 crossterm = { workspace = true }
 arboard = { workspace = true }
 rayon = { workspace = true }
+dirs = { workspace = true }
 
 [lints]
 workspace = true

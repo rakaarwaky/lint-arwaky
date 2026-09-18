@@ -93,8 +93,6 @@ flowchart TD
 
   **Rationale**: Agent does not import capabilities because agent receives capabilities via DI (trait objects). Surface does not import agent because surface receives orchestrator via DI from contract aggregate. Utility does not require contract and remains flexible.
 - **Per-Scope Rules**
-
-
   | Scope                                  | Allowed                                                    | Forbidden                                               | Mandatory                     |
   | ---------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | ------------------------------- |
   | `taxonomy(vo)`                         | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                            |
@@ -109,9 +107,6 @@ flowchart TD
   | surface(hook, store, action, screen) | taxonomy,contract(aggregate)                               | capabilities, utility, agent                            | taxonomy                      |
   | surface(component, view, layout)       | taxonomy                                                   | capabilities, utility, agent                            | taxonomy                      |
   | `root`                                 | taxonomy, contract, capabilities, agent, surface, utility  | —                                                      | —                            |
-
-
-
 - **Enforcement model**: Whitelist + Blacklist hybrid.
 
   - Target layer in `allowed` → **pass**.
@@ -133,7 +128,6 @@ flowchart TD
   - Files matching multiple scope conditions are checked against all matched conditions.
 - **Error Handling**: Unreadable files are skipped silently. Files with unparseable content produce no violations (fail-safe). Parse failures produce empty import lists.
 
----
 
 ### FR-002: Mandatory Layer Imports (AES202)
 
@@ -152,7 +146,6 @@ flowchart TD
 - **Edge Cases**: Files with multiple roles use the primary layer prefix. Files without a recognized prefix are skipped.
 - **Error Handling**: Unreadable files are skipped. Missing config defaults to no mandatory requirements.
 
----
 
 ### FR-003: Unused Import Detection (AES203)
 
@@ -185,7 +178,6 @@ flowchart TD
   - Imports used only in doc comments (`/// [`FilePath`]`) are NOT counted as used.
 - **Error Handling**: Files that fail parsing produce no violations. Unreadable files produce no violations.
 
----
 
 ### FR-004: Dummy Import Detection (AES204)
 
@@ -201,7 +193,7 @@ flowchart TD
     - TypeScript: Detect `function _use*`, `function dummy*`, `const _use*`, `const dummy*` via line-based scanning.
   - **Dummy trait implementation detection**:
 
-    - Rust: Line-based body analysis (`utility_dummy_detector::dummy_impl_traits_with_lines` / `trait_impl_is_dummy`). Implementations where ALL method bodies are empty, `todo!()`, `unimplemented!()`, `panic!()`, or `unreachable!()` are flagged.
+    - Rust: Line-based body analysis (`utility_dummy_detector::dummy_impl_traits_with_lines` / `trait_impl_is_dummy`). Trait impls where ALL method bodies are empty, `todo!()`, `unimpl!()`, `panic!()`, or `unreachable!()` are flagged.
     - Detection uses line-by-line body analysis, not `syn` AST.
   - **Dummy import detection**:
 
@@ -230,7 +222,6 @@ flowchart TD
   - Multi-line function bodies are handled by AST.
 - **Error Handling**: Files that fail parsing produce no violations. Unreadable files produce no violations.
 
----
 
 ### FR-005: Circular Dependency Detection (AES205)
 
@@ -255,13 +246,9 @@ flowchart TD
   - Files without a recognized layer prefix are excluded from the layer graph.
 - **Error Handling**: Unreadable files are skipped. Files with unparseable content contribute no edges. The cycle detection algorithm itself is pure graph theory — no parsing errors possible.
 
----
 
----
 
 ## API Contract
-
-
 | Operation                          | Input                                                   | Output               | Purpose                                          |
 | ------------------------------------ | --------------------------------------------------------- | ---------------------- | -------------------------------------------------- |
 | Full import audit                  | File entries, content_map, imports_map, configuration    | Lint results         | Run all import checks (AES201–AES205)           |
@@ -271,7 +258,6 @@ flowchart TD
 | Dummy import check (AES204)        | File entry, content, import_entries, layer_map          | HIGH violations      | Detect stub code circumventing AES203            |
 | Circular dependency check (AES205) | File entries, imports_map, configuration, layer_map     | CRITICAL violations  | Detect layer-level import cycles                 |
 
----
 
 ## Integration Points
 
@@ -298,7 +284,6 @@ flowchart TD
   - `syn` crate (v2, features: `full`, `visit`, `parsing`) — Rust AST parsing (via shared crate).
   - No network calls. No filesystem writes. Pure static analysis.
 
----
 
 ## Non-functional Requirements
 
@@ -323,13 +308,10 @@ flowchart TD
   - Known limitation: macro-generated code (see FR-009). Macro body exemption is the only accepted source of potential false negatives.
 - **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. No async runtime dependency.
 
----
 
 ## Test Scenarios / QA Checklist
 
 ### AES201 — Forbidden Import
-
-
 | #  | Scenario                                            | Expected                            | Rule   |
 | ---- | ----------------------------------------------------- | ------------------------------------- | -------- |
 | 1  | File imports from forbidden layer                   | AES201 CRITICAL                     | AES201 |
@@ -344,8 +326,6 @@ flowchart TD
 | 10 | contract(protocol) imports contract(aggregate)      | AES201 CRITICAL (forbidden)         | AES201 |
 
 ### AES202 — Mandatory Import
-
-
 | # | Scenario                                                   | Expected                  | Rule   |
 | --- | ------------------------------------------------------------ | --------------------------- | -------- |
 | 1 | Capabilities file missing taxonomy import                  | AES202 violation          | AES202 |
@@ -355,8 +335,6 @@ flowchart TD
 | 5 | taxonomy(entity) missing taxonomy(vo) import               | AES202 violation          | AES202 |
 
 ### AES203 — Unused Import
-
-
 | # | Scenario                                        | Expected                | Rule   |
 | --- | ------------------------------------------------- | ------------------------- | -------- |
 | 1 | Import declared but never referenced in code    | AES203 violation        | AES203 |
@@ -366,8 +344,6 @@ flowchart TD
 | 5 | Import used in`#[derive(...)]`                  | No violation (detected) | pass   |
 
 ### AES204 — Dummy Import
-
-
 | #  | Scenario                                                                        | Expected                                | Rule   |
 | ---- | --------------------------------------------------------------------------------- | ----------------------------------------- | -------- |
 | 1  | Function named`_use_serialization()` containing import reference                | AES204 violation (dummy function)       | AES204 |
@@ -382,8 +358,6 @@ flowchart TD
 | 10 | Barrel file (`mod.rs`) with re-exports                                          | No violation (exempt)                   | pass   |
 
 ### AES205 — Circular Dependency
-
-
 | # | Scenario                          | Expected                        | Rule   |
 | --- | ----------------------------------- | --------------------------------- | -------- |
 | 1 | Two layers importing each other   | AES205 violation                | AES205 |
@@ -392,15 +366,12 @@ flowchart TD
 | 4 | Indirect cycle (A → B → C → A) | AES205 violation                | AES205 |
 
 ### Configuration
-
-
 | # | Scenario                         | Expected                               | Rule   |
 | --- | ---------------------------------- | ---------------------------------------- | -------- |
 | 1 | Rule disabled in config          | No violation for that rule             | config |
 | 2 | File in exceptions list          | No violation for that file             | config |
 | 3 | File matches multiple conditions | Checked against all matched conditions | config |
 
----
 
 ## Assumptions & Constraints
 
@@ -415,11 +386,8 @@ flowchart TD
 - AES203 and AES204 are independent and may both flag the same import (no deduplication).
 - File walking, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the external filesystem crate. Import-rules consumes pre-parsed `ImportEntry` and `used_identifiers_for(path)` — no internal parsing for import/usage detection.
 
----
 
 ## Glossary
-
-
 | Term                 | Definition                                                                                                                                                    |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **AES**              | Agentic Engineering System — the 7-layer coding convention                                                                                                   |
@@ -445,7 +413,6 @@ flowchart TD
 | **Grey area**        | Import target that is neither in`allowed` nor `forbidden` list — produces WARNING, not CRITICAL                                                              |
 | **AES-DI**           | AES Dependency Injection model — layers import from contract, receive dependencies via trait objects                                                         |
 
----
 
 ## Appendix A: YAML Configuration Schema
 
@@ -483,8 +450,6 @@ architecture:
 - Target in neither → AES201 WARNING (grey area).
 
 ### Layer Detection (Hardcoded Convention)
-
-
 | Filename Pattern    | Detected Layer |
 | --------------------- | ---------------- |
 | `taxonomy_*.rs`     | taxonomy       |
@@ -497,7 +462,6 @@ architecture:
 
 Files without a recognized prefix are skipped by layer rules
 
----
 
 ## Appendix B: File Discovery Algorithm
 
@@ -515,8 +479,6 @@ Files and directories are skipped if they match any of these criteria:
 6. **Symlink safety**: Symlink targets outside the workspace root are pruned to prevent path traversal.
 
 ### Language Detection
-
-
 | Extension     | Language   |
 | --------------- | ------------ |
 | `.rs`         | Rust       |
@@ -524,10 +486,10 @@ Files and directories are skipped if they match any of these criteria:
 | `.js`, `.jsx` | JavaScript |
 | `.ts`, `.tsx` | TypeScript |
 
----
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Filesystem crate

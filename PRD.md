@@ -1,167 +1,112 @@
 # PRD — Lint Arwaky
 
----
+> Product Requirements. Describes WHAT this project does and WHY. Real condition lives in [BACKLOG.md](BACKLOG.md).
 
 ## Problem Statement
 
-Software projects accumulate quality debt silently. Developers lack a single tool that audits Rust + Python + JavaScript/TypeScript together, enforces architectural rules, and works for both human developers and AI agents
-
----
+Software projects accumulate quality debt silently. Developers lack a single tool that audits Rust, Python, and TypeScript together, enforces architectural rules, and works for both human developers and AI agents.
 
 ## Goals & Success Metrics
 
-- **Goal 1**: Multi-language linting in a single pass (Rust, Python, JS/TS)
-- **Goal 2**: 24 AES rules enforced across 5 groups (Naming, Import, Quality, Role, Orphan)
-- **Goal 3**: MCP server with **5 tools** for autonomous AI-agent integration (full CLI parity on execute)
-- **Goal 4**: Self-auditing — project lints itself under its own rule engine
-
----
+| # | Goal | Measurement | Target |
+|---|------|-------------|--------|
+| 1 | Multi-language linting in a single pass | `scan` on mixed-language workspace | violations from all 3 languages |
+| 2 | 24 AES rules enforced across 5 groups | `workspaces-bad` scan | all 24 rule codes produce violations |
+| 3 | MCP server with 5 tools, full CLI parity | `execute_command` on every CLI command | all commands reachable |
+| 4 | Self-auditing | `lint-arwaky-cli check .` on this repo | 0 violations |
 
 ## User Personas
 
-- **AI Agent**: Autonomous linting, self-healing
-- **Developer**: Lint codebases, enforce architecture during local development
-- **DevOps / CI**: Quality gates, trend reports, dependency scans (stable exit codes)
-
----
+- **AI Agent**: Autonomous linting, self-healing via MCP tools.
+- **Developer**: Lint codebases locally; enforce architecture during development.
+- **DevOps / CI Engineer**: Quality gates, trend reports, dependency scans with stable exit codes.
 
 ## Scope
 
-- **In scope**:
-
-  - CLI binary (`lint-arwaky-cli`)
-  - MCP server (`lint-arwaky-mcp`)
-  - TUI file browser (`lint-arwaky-tui`) *
-  - 24 AES rules across 5 groups
-  - Non-AES diagnostics: `PARSE_WARN` (parse failure warning from filesystem crate)
-  - External linter adapters (Clippy, Rustfmt, cargo-audit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC)
-  - SARIF 2.1.0, JUnit XML, JSON reports
-  - Git hooks integration
-  - Auto-fix: remove + replace + rename
-- **Out of scope**:
-
-  - IDE plugins (VS Code, IntelliJ)
-  - Web dashboard
-  - Cloud-hosted SaaS
-  - Non-Rust implementation
-  - Structural / multi-file semantic refactors in auto-fix
-
----
+- **In scope**: CLI binary, MCP server, TUI, 24 AES rules, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
+- **Out of scope**: IDE plugins, web dashboard, cloud SaaS, non-Rust implementation, structural/multi-file semantic refactors in auto-fix.
 
 ## Product Decisions (locked)
 
-
-| Topic                 | Decision                                                                                                |
-| ----------------------- | --------------------------------------------------------------------------------------------------------- |
-| Auto-fix safety       | **Remove + replace + rename**                                                                          |
-| MCP vs CLIv s TUI     | **Full parity**                                                                                        |
-| MCP tools             | **5 tools**: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`             |
-| Acceptance tests      | Filename standard:`acceptance_FR_00N.rs`                                                                |
-| Doctor command        | Exit**0** when diagnostic completes (missing tools listed in body); exit **2** only on internal failure |
-| Auto-fix outcomes     | **Reason-coded** results (`Applied` / `Skipped(reason)` / `Failed(reason)`), not bare bool              |
-| Concurrency model     | **std::thread / rayon** — async only where required (file-watch, mcp-server via rmcp)                   |
-| AST parsing           | **Full AST via tree-sitter** — all languages, no regex fallback                                        |
-| Filesystem operations | **Centralized in filesystem crate** —other crates do not perform file I/O or parsing                  |
-
----
+| Topic | Decision |
+|-------|----------|
+| Auto-fix safety | Remove + replace + rename only; no structural or multi-file edits |
+| Surface parity | MCP, CLI, and TUI expose the same commands |
+| MCP tools | 5: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config` |
+| Acceptance tests | Named `acceptance_FR_00N.rs` |
+| Doctor exit code | 0 when diagnostic completes; 2 only on internal failure |
+| Auto-fix outcomes | Reason-coded: `Applied` / `Skipped(reason)` / `Failed(reason)` |
+| Concurrency | `std::thread` / `rayon`; async only in file-watch and mcp-server |
+| Parsing | Full AST via tree-sitter; no regex fallback |
+| Filesystem I/O | Centralized in filesystem crate |
 
 ## Exit Code Contract
 
-
-| Code  | Name                 | When                                                                                     |
-| ------- | ---------------------- | ------------------------------------------------------------------------------------------ |
-| **0** | Ok                   | Success; clean scan; doctor finished (even if tools missing); dry-run completed          |
-| **1** | Policy fail          | Violations found; CI threshold failed; vulnerabilities found; remaining issues after fix |
-| **2** | Runtime error        | Path missing; pipeline crash; invalid args; I/O failure of the command itself            |
-| **3** | Prerequisite missing | Required external tool not installed (e.g. cargo-audit for`security`)                    |
+| Code | Name | When |
+|------|------|------|
+| 0 | Ok | Success; clean scan; doctor finished; dry-run completed |
+| 1 | Policy fail | Violations found; CI threshold failed; vulnerabilities found |
+| 2 | Runtime error | Path missing; pipeline crash; invalid args; I/O failure |
+| 3 | Prerequisite missing | Required external tool not installed |
 
 MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 
----
-
 ## AES Rule Summary (24 Rules)
 
-
-| Group       | Rules                                                                                                                                                                          | Count  | FRD             |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------- |
-| **Naming**  | AES101 (naming convention), AES102 (suffix/prefix validation)                                                                                                                  | 2      | naming-rules    |
-| **Import**  | AES201 (layer dependency), AES202 (mandatory imports), AES203 (unused imports), AES204 (dummy imports), AES205 (circular dependencies)                                         | 5      | import-rules    |
-| **Quality** | AES301 (max lines), AES302 (min lines), AES303 (mandatory definitions + dead inheritance), AES304 (bypass detection), AES305 (duplicate code)                                  | 5      | quality-rules   |
-| **Role**    | AES401 (taxonomy purity), AES402 (contract primitives), AES403 (capability implementation), AES404 (utility purity), AES405 (agent composition), AES406 (surface passive role) | 6      | role-rules      |
-| **Orphan**  | AES501 (taxonomy orphan), AES502 (contract orphan), AES503 (capabilities orphan), AES504 (utility orphan), AES505 (agent orphan), AES506 (surface orphan)                      | 6      | orphan-rules    |
-| **Total**   |                                                                                                                                                                                | **24** |                 |
-
----
+Five groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6). Full rule definitions: [RULES_AES.md](RULES_AES.md).
 
 ## Feature Requirements (Prioritized)
 
+> Real condition for each feature lives in [BACKLOG.md](BACKLOG.md). This section is specification only.
+
 ### P0 — Must Have
 
-- [ ]  Multi-language scanning (Rust, Python, JS/TS) — `filesystem`, `quality-rules`, `import-rules`, `naming-rules`, `role-rules`, `orphan-rules`, `external-lint`
-- [ ]  24 AES rules enforcement — RULES_AES groups 1–5
-- [ ]  CLI with `check`, `scan`, `fix`, `ci` commands — `cli-commands`
-- [ ]  MCP server with 5 tools + **full execute parity** (no stubs) — `mcp-server`
-- [ ]  Self-auditing capability — workspace scans itself
+- Multi-language scanning (Rust, Python, JS/TS). Acceptance: `scan` on mixed-language workspace returns violations from all three.
+- 24 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for all 24 rule codes.
+- CLI with `check`, `scan`, `fix`, `ci` commands. Acceptance: each exits with the correct code from the contract above.
+- MCP server with 5 tools, full execute parity. Acceptance: every CLI command is reachable via `execute_command`.
+- Self-auditing capability. Acceptance: `lint-arwaky-cli check .` on this repo reports 0 violations.
 
 ### P1 — Should Have
 
-- [ ]  External linter adapters (Clippy, Rustfmt, cargo-audit, Ruff, MyPy, Bandit, ESLint, Prettier, TSC) — `external-lint`
-- [ ]  SARIF 2.1.0, JUnit XML, JSON reports — `report-formatter`
-- [ ]  Git hooks integration — `git-hooks`
-- [ ]  Auto-fix capabilities (remove + replace + rename) — `auto-fix` 
-- [ ]  Watch mode for continuous linting — `file-watch`
-- [ ]  TUI file browser (critical-path acceptance) — `tui`
-- [ ]  Workspace exit-code contract enforced everywhere — `cli-commands`, `maintenance`
-- [ ]  Acceptance tests standardized to `acceptance_FR_00N.rs`
+- External linter adapters (Clippy, Ruff, ESLint, etc.). Acceptance: `adapters` lists all installed tools.
+- SARIF 2.1.0, JUnit XML, JSON reports. Acceptance: `--format sarif|junit|json` produces valid output.
+- Git hooks integration. Acceptance: `install-hook` creates a working pre-commit hook.
+- Auto-fix capabilities (remove + replace + rename). Acceptance: `fix` applies mechanical fixes; `--dry-run` previews.
+- Watch mode for continuous linting. Acceptance: `watch` re-lints on file save.
+- TUI file browser. Acceptance: TUI renders file tree, runs lint actions, exits cleanly.
+- Workspace exit-code contract enforced everywhere. Acceptance: all commands return codes 0/1/2/3 per contract.
+- Acceptance tests standardized to `acceptance_FR_00N.rs`.
 
 ### P2 — Nice to Have
 
-- [ ]  Windows support
-- [ ]  Deeper monorepo performance optimizations
+- Windows support. Acceptance: build + test suite passes on a Windows CI runner.
+- Deeper monorepo performance optimizations. Acceptance: 10k-file scan completes in < 10s on CI hardware.
 
----
+## Open Questions / Risks
 
-## Feature Map (crate → responsibility)
-
-
-| Crate              | Primary value                                       |
-| -------------------- | ----------------------------------------------------- |
-| `shared`           | Taxonomy VOs, contracts, utilities                  |
-| `config-system`    | Config load, merge, workspace detect                |
-| `filesystem`       | File walking, AST parsing, graph construction       |
-| `naming-rules`     | AES101–102 naming conventions                      |
-| `import-rules`     | AES201–205 import boundaries (+ purpose sub-check) |
-| `quality-rules`    | AES301–305 quality rules                           |
-| `role-rules`       | AES401–406 layer roles                             |
-| `orphan-rules`     | AES501–506 orphan detection                        |
-| `external-lint`    | Clippy/Ruff/ESLint adapters (tool-native codes)     |
-| `dispatcher`       | Utility Surface — centralizes business logic        |
-| `auto-fix`         | Mechanical fixes (remove + replace + rename)        |
-| `report-formatter` | text/json/sarif/junit output                        |
-| `cli-commands`     | Human CLI surface                                   |
-| `mcp-server`       | AI MCP surface (parity + 5 tools)                   |
-| `git-hooks`        | Pre-commit / git-diff                               |
-| `file-watch`       | Continuous lint                                     |
-| `project-setup`    | init / install / mcp-config                         |
-| `maintenance`      | doctor / security / deps                            |
-| `tui`              | Interactive terminal UI                             |
-
----
+| # | Question / Risk | Owner | Deadline | Status |
+|---|-----------------|-------|----------|--------|
+| 1 | Is 10k-file scan < 10s achievable on the CI runner tier? | @raka | v3.7.0 | open |
+| 2 | Auto-fix: semantic rewrites allowed, or mechanical-only? | @raka | v3.7.0 | locked: mechanical-only |
+| 3 | Windows: dedicated CI runner or cross-compile only? | @raka | post-v3.x | open |
 
 ## Non-functional Requirements (High-level)
 
-- **Performance**: Scan 1,000 files in < 5 seconds (full pipeline: walk + parse + all checks).
-- **Security**: No network calls required for core functionality. Symlink safety enforced (skip targets outside workspace).
-- **Scalability**: Handle monorepos with 10,000+ files.
-- **Platform**: Linux (primary), macOS (secondary).
-- **Binary**: Static release via `cargo build --release`.
-- **Traceability**: Acceptance tests named `acceptance_FR_00N.rs` per FR where practical.
-- **Concurrency**: std::thread / rayon across all crates. Async (tokio) used only by file-watch and mcp-server (via rmcp).
-- **Parsing**: Full AST via tree-sitter for all languages. No regex or line-based parsing in final implementation.
-- **Diagnostics**: `PARSE_WARN` (non-AES warning) for files that fail to parse. Emitted by filesystem crate.
+| Category | Commitment | Detail lives in |
+|----------|------------|-----------------|
+| Performance | 1,000 files < 5s; 10,000 files < 10s | `filesystem/FRD.md` |
+| Security | No network calls for core; symlink safety enforced | `filesystem/FRD.md` |
+| Scalability | 10,000+ file monorepos | `filesystem/FRD.md` |
+| Platform | Linux primary, macOS secondary | `README.md` |
+| Concurrency | std::thread / rayon; async only in file-watch, mcp-server | `dispatcher/FRD.md` |
+| Parsing | Full AST via tree-sitter; no regex fallback | `filesystem/FRD.md` |
+| Diagnostics | `PARSE_WARN` for files that fail to parse | `filesystem/FRD.md` |
+
+## Feature Map
+
+Crate responsibilities are listed in [AGENTS.md](AGENTS.md#workspace-packages-structure) and each crate's `FRD.md` under `crates/`.
 
 ## Reference
 
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
-- Testing criteria: [TEST.md](TEST.md)
-- Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Testing: [TEST.md](TEST.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Backlog: [BACKLOG.md](BACKLOG.md)
