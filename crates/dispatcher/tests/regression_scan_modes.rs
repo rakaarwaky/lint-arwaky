@@ -33,6 +33,7 @@ fn scan(path: &str) -> Vec<shared::common::ViolationItem> {
         filter: None,
         member: None,
         filesystem: fs(),
+        scan_aggregates: None,
     };
     dispatcher_lint_arwaky::surface_check_action::collect_scan(opts).unwrap_or_default()
 }

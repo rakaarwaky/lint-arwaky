@@ -1,17 +1,11 @@
 # FRD — cli-commands (v0.2.0)
-
----
-
 ## System Overview
-
 The cli-commands crate is a **Smart Surface** — a thin CLI wrapper that
 parses command-line args, delegates **all business logic** to the
 `dispatcher` crate via `dispatcher::surface_*_action::*` functions, and
 formats the output for terminal display. CLI never calls rule aggregates
 directly; dispatcher owns every scan, fix, config, and setup action.
-
 ### Architecture & Data Flow
-
 ```mermaid
 flowchart TD
     A["Terminal\n(user input)"] -->|"parse args"| B["cli-commands\n(Smart Surface)"]
@@ -23,10 +17,7 @@ flowchart TD
     D -->|"ViolationItem[]\nCiReport / FixReport\nSetupReport / ..."| B
     B -->|"format + exit code"| A
 ```
-
 ### Exit Code Contract
-
-
 | Code  | Meaning                                                             |
 | ------- | --------------------------------------------------------------------- |
 | **0** | Ok / clean / diagnostic completed                                   |
@@ -38,12 +29,8 @@ flowchart TD
 tools are listed in the body); exit **2** only if the doctor command itself
 fails.
 
----
-
 ## Functional Requirements
-
 ### FR-001: Check/Scan Command (Mutual Aliases)
-
 - **Description**: Run full architecture compliance analysis on the target
   project or workspace. `check` and `scan` are 1:1 equivalent command aliases.
 - **Input**: `path`, `format`, `filter`, `member`.
@@ -76,10 +63,7 @@ fails.
   - Empty results across all workspaces → exit code 0.
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
 
----
-
 ### FR-002: CI Command
-
 - **Description**: CI-optimized analysis with configurable threshold and
   auto-fail on CRITICAL violations.
 - **Input**: `path`, `threshold`.
@@ -98,10 +82,7 @@ fails.
   - No violations → score 100, passes.
 - **Error Handling**: None — pure computation on existing results.
 
----
-
 ### FR-003: Fix Command
-
 - **Description**: Apply automatic safe fixes to files that violate rules.
 - **Input**: `path`, `dry_run`.
 - **Output**: `ExitCode` (0 = all fixed, 1 = remaining violations).
@@ -121,10 +102,7 @@ fails.
   - All violations fixed → prints "all violations resolved".
 - **Error Handling**: Exit code 1 if any violations remain after fix.
 
----
-
 ### FR-004: Doctor Command
-
 - **Description**: Toolchain diagnostics — check availability and version of
   required tools.
 - **Input**: Maintenance aggregate.
@@ -145,10 +123,7 @@ fails.
   - Some tools missing → shows MISSING status, still exit 0.
 - **Error Handling**: Internal failure of doctor → exit 2.
 
----
-
 ### FR-005: Security Command
-
 - **Description**: Vulnerability scanning via cargo-audit (Rust) or bandit
   (Python).
 - **Input**: Maintenance aggregate, optional path.
@@ -167,10 +142,7 @@ fails.
   - Vulnerabilities found → exit code 1 with findings listed.
 - **Error Handling**: Tool not found → exit code 3; scan failures → exit code 2.
 
----
-
 ### FR-006: Dependencies Command
-
 - **Description**: Dependency report from Cargo.lock / pyproject.toml /
   package.json.
 - **Input**: Maintenance aggregate, optional path.
@@ -188,10 +160,7 @@ fails.
   - No dependency file found → error message.
 - **Error Handling**: Error from dependency report → error message + exit code 2.
 
----
-
 ### FR-007: Init Command
-
 - **Description**: Create default lint-arwaky configuration files and
   distribute documentation.
 - **Input**: Setup aggregate, filesystem.
@@ -211,10 +180,7 @@ fails.
   - Write failure → error message, overall status set to partial failure.
 - **Error Handling**: Per-file errors logged; overall exit code 1 if any failure.
 
----
-
 ### FR-008: Install Command
-
 - **Description**: Install adapter dependencies for detected languages.
 - **Input**: Setup aggregate, `sudo` flag.
 - **Output**: `ExitCode` (0 = success, 1 = partial failure).
@@ -233,10 +199,7 @@ fails.
 - **Error Handling**: Per-language install status reported; overall exit code 1
   if any failure.
 
----
-
 ### FR-009: MCP Config Command
-
 - **Description**: Print MCP server configuration JSON for a specified client.
 - **Input**: `client` name (claude, cursor, windsurf, copilot, hermes,
   vscode, all).
@@ -258,10 +221,7 @@ fails.
 - **Error Handling**: Canonicalization failure → error message with fallback to
   bare name.
 
----
-
 ### FR-010: Config Show Command
-
 - **Description**: Display active configuration files and their contents with
   secret redaction.
 - **Input**: Config orchestrator aggregate.
@@ -280,10 +240,7 @@ fails.
   - Config read fails → warning logged, continues.
 - **Error Handling**: Config read errors logged as warnings.
 
----
-
 ### FR-011: Adapters Command
-
 - **Description**: List enabled external lint adapters discovered by the
   external-lint layer.
 - **Input**: External lint aggregate.
@@ -299,10 +256,7 @@ fails.
   - No adapters → shows "(none enabled)".
 - **Error Handling**: None.
 
----
-
 ### FR-012: Git Diff Command
-
 - **Description**: Run AES analysis only on files changed since a specified
   git base.
 - **Input**: Code analysis aggregate, `base` branch, optional project path and filter.
@@ -322,10 +276,7 @@ fails.
   - File not lintable → skipped.
 - **Error Handling**: None — analysis runs per-file independently.
 
----
-
 ### FR-013: Watch Command
-
 - **Description**: Monitor file changes and trigger re-scans on modified files.
 - **Input**: Watch aggregate, optional project path.
 - **Output**: `ExitCode` (0 = clean shutdown; 2 = error setting up handler).
@@ -342,10 +293,7 @@ fails.
     exit 0.
 - **Error Handling**: Signal handler registration failure → exit code 2.
 
----
-
 ### FR-014: Individual Linter Commands
-
 - **Description**: Run a single linter independently for targeted analysis.
   Commands: `quality`, `import`, `naming`, `role`, `orphan`, `external`.
 - **Input**: Optional path, format; orphan may take member filter.
@@ -367,11 +315,7 @@ fails.
   - No violations found → exit code 0.
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
 
----
-
 ## API Contract
-
-
 | Operation    | Input                                             | Output    | Description                                   |
 | -------------- | --------------------------------------------------- | ----------- | ----------------------------------------------- |
 | Check        | check options                                     | Exit code | Analysis on project (1:1 alias of Scan)       |
@@ -395,10 +339,7 @@ fails.
 | Git Diff     | code analysis aggregate, branch, path, filter     | Exit code | Analyze git-changed files                     |
 | Watch        | watch aggregate, path                             | Exit code | File watch with auto-lint                     |
 
----
-
 ## Integration Points
-
 - **Internal**:
 
   - `dispatcher` — all business logic delegated via `surface_*_action` modules.
@@ -409,10 +350,7 @@ fails.
   - Signal handling (`ctrlc` crate) for graceful watch shutdown.
   - No async runtime dependency.
 
----
-
 ## Non-functional Requirements
-
 - **Cross-platform**: File walker uses canonical paths (not inodes), works on
   all platforms including Windows.
 - **Performance**: Linter groups run sequentially as subprocesses (no thread pool).
@@ -425,13 +363,8 @@ fails.
   dispatch and terminal formatting. Report formatting always delegated to the
   report formatter aggregate.
 
----
-
 ## Test Scenarios / QA Checklist
-
-### FR-001 — Check/Scan
-
-
+### SCEN-001 — Check/Scan
 | # | Scenario                                     | Expected                                           | Rule   |
 | --- | ---------------------------------------------- | ---------------------------------------------------- | -------- |
 | 1 | `check` / `scan` run full pipeline           | Correct exit 0/1/2                                 | FR-001 |
@@ -439,20 +372,14 @@ fails.
 | 3 | Workspace member discovery + `--member`      | Correct member targeted                            | FR-001 |
 | 4 | No workspace members                         | Falls back to single-scan                          | FR-001 |
 | 5 | Pipeline fails for one workspace             | Warning logged, others continue                    | FR-001 |
-
-### FR-002 — CI
-
-
+### SCEN-002 — CI
 | # | Scenario                             | Expected                        | Rule   |
 | --- | -------------------------------------- | --------------------------------- | -------- |
 | 1 | Score ≥ threshold, no CRITICAL      | Exit 0                          | FR-002 |
 | 2 | Score ≥ threshold, CRITICAL present | Exit 1 (auto-fail)              | FR-002 |
 | 3 | Score < threshold                    | Exit 1                          | FR-002 |
 | 4 | Score exactly at threshold           | Exit 0 (passes)                 | FR-002 |
-
-### FR-003 — Fix
-
-
+### SCEN-003 — Fix
 | # | Scenario                            | Expected                  | Rule   |
 | --- | ------------------------------------- | --------------------------- | -------- |
 | 1 | `fix` applies remove/replace/rename | Reports fixed count       | FR-003 |
@@ -460,37 +387,25 @@ fails.
 | 3 | No violations before fix            | Reports 0 fixed           | FR-003 |
 | 4 | All violations fixed                | "all violations resolved" | FR-003 |
 | 5 | Violations remain after fix         | Exit 1                    | FR-003 |
-
-### FR-004 — Doctor
-
-
+### SCEN-004 — Doctor
 | # | Scenario                | Expected                     | Rule   |
 | --- | ------------------------- | ------------------------------ | -------- |
 | 1 | All tools installed     | All OK, exit 0               | FR-004 |
 | 2 | Some tools missing      | MISSING listed, still exit 0 | FR-004 |
 | 3 | Doctor internal failure | Exit 2                       | FR-004 |
-
-### FR-005 — Security
-
-
+### SCEN-005 — Security
 | # | Scenario              | Expected                | Rule   |
 | --- | ----------------------- | ------------------------- | -------- |
 | 1 | Tool not installed    | Exit 3                  | FR-005 |
 | 2 | No vulnerabilities    | Exit 0                  | FR-005 |
 | 3 | Vulnerabilities found | Exit 1, findings listed | FR-005 |
-
-### FR-006 — Dependencies
-
-
+### SCEN-006 — Dependencies
 | # | Scenario           | Expected                        | Rule   |
 | --- | -------------------- | --------------------------------- | -------- |
 | 1 | Normal project     | Lists up to 30 deps             | FR-006 |
 | 2 | > 30 dependencies  | Truncated with "... and N more" | FR-006 |
 | 3 | No dependency file | Error, exit 2                   | FR-006 |
-
-### FR-007–FR-011 — Setup & Config
-
-
+### SCEN-007–FR-011 — Setup & Config
 | # | Scenario                                     | Expected                        | Rule   |
 | --- | ---------------------------------------------- | --------------------------------- | -------- |
 | 1 | `init` creates config for detected languages | Config files created            | FR-007 |
@@ -499,10 +414,7 @@ fails.
 | 4 | `config-show` redacts secrets                | AWS keys / base64 redacted      | FR-010 |
 | 5 | `config-show` no config found                | "Run lint-arwaky init" message  | FR-010 |
 | 6 | `adapters` lists enabled adapters            | Bullet list or "(none enabled)" | FR-011 |
-
-### FR-012–FR-014 — Git, Watch, Individual
-
-
+### SCEN-012–FR-014 — Git, Watch, Individual
 | # | Scenario                                                        | Expected                        | Rule   |
 | --- | ----------------------------------------------------------------- | --------------------------------- | -------- |
 | 1 | `git-diff` analyzes only changed files                          | Correct subset scanned          | FR-012 |
@@ -510,10 +422,7 @@ fails.
 | 3 | `watch` handler setup fails                                     | Exit 2                          | FR-013 |
 | 4 | Individual linters (quality/import/naming/role/orphan/external) | Correct subset of rules         | FR-014 |
 
----
-
 ## Assumptions & Constraints
-
 - All surface handlers follow AES406: zero business logic, only dispatch.
 - Report formatting never happens in surface layer — always delegated to the
   report formatter aggregate.
@@ -529,11 +438,7 @@ fails.
 - Files that fail to parse are skipped by the per-group analyzers; no separate
   parse-warning diagnostic is emitted.
 
----
-
 ## Glossary
-
-
 | Term             | Definition                                                                                             |
 | ------------------ | -------------------------------------------------------------------------------------------------------- |
 | **AES**          | Agentic Engineering System — the 7-layer coding convention                                            |
@@ -545,10 +450,8 @@ fails.
 | **ScanReport**   | Aggregated results + diagnostics from a full pipeline run                                              |
 | **Parse skip**   | Files that fail to parse are skipped by the per-group analyzers; no separate warning diagnostic is emitted. |
 
----
-
 ## Reference
-
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - MCP Server FRD: `crates/mcp-server/FRD.md`

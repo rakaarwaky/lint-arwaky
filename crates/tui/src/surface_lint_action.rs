@@ -62,6 +62,7 @@ impl SurfaceLintExecutor {
             filter: None,
             member: None,
             filesystem: self.filesystem.clone(),
+            scan_aggregates: self.build_scan_aggregates(),
         };
         match collect_scan(opts) {
             Ok(violations) => {
@@ -80,6 +81,7 @@ impl SurfaceLintExecutor {
             filter: None,
             member: None,
             filesystem: self.filesystem.clone(),
+            scan_aggregates: self.build_scan_aggregates(),
         };
         match collect_scan(opts) {
             Ok(violations) => {
@@ -533,6 +535,19 @@ impl SurfaceLintExecutor {
     ) -> Self {
         self.role_orchestrator = Some(role_orchestrator);
         self
+    }
+
+    fn build_scan_aggregates(&self) -> Option<dispatcher::surface_check_action::ScanAggregates> {
+        Some(dispatcher::surface_check_action::ScanAggregates {
+            quality: self.code_analysis.clone(),
+            role: self.role_orchestrator.clone()?,
+            import: self.import_orchestrator.clone()?,
+            naming: self.naming_orchestrator.clone()?,
+            external: self.external_lint.clone()?,
+            orphan: self.orphan_aggregate.clone()?,
+            config: self.config_orchestrator.clone()?,
+            fs_factory: self.fs_factory.clone(),
+        })
     }
 
     fn build_ci_deps(&self) -> Option<CiScanDeps> {

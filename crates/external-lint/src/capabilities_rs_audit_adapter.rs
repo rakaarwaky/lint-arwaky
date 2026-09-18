@@ -87,7 +87,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         ]);
         let response = self
             .executor
-            .execute_command(cmd, working_dir.clone(), Some(Timeout::new(60.0)))
+            .execute_command(cmd, working_dir.clone(), Some(Timeout::new(120.0)))
             .map_err(|e| {
                 LinterOperationError::Adapter(AdapterError::new(
                     self.name(),

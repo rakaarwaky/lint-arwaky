@@ -185,6 +185,8 @@ pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
         || raw_path.ends_with("::cmp::PartialOrd")
         || raw_path.ends_with("::ops::Add")
         || raw_path.ends_with("::ops::Deref")
+        || raw_path.ends_with("::str::FromStr")
+        || raw_path.ends_with("::str::ToString")
     {
         return true;
     }

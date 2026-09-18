@@ -2,6 +2,68 @@
 
 Each skill is a self-contained directory with a `SKILL.md` file defining rules, patterns, and workflows.
 
+## Prerequisites
+
+- `lint-arwaky` installed or built from source (`cargo build --release`).
+- A project with `crates/`, `modules/`, or `packages/` directories (or a mix).
+
+## Quick Start
+
+```bash
+# List all bundled skills
+ls crates/skills/
+
+# Read a specific skill
+cat crates/skills/lint-arwaky/SKILL.md
+
+# Regenerate the embedded constant after editing any SKILL.md
+python3 tools/regenerate_skills.py
+```
+
+## Project Structure
+
+```
+crates/skills/
+├── add-docs/            # Documentation workflows
+├── author-skill-md/     # Skill authoring guidance
+├── cleanup-consolidate/ # Dead code removal, duplicate merging
+├── create-agent/        # Agent layer scaffolding
+├── create-capabilities/ # Capabilities layer scaffolding
+├── create-contract/     # Contract layer scaffolding
+├── create-root/         # Root/container scaffolding
+├── create-surface/      # Surface layer scaffolding
+├── create-taxonomy/     # Taxonomy layer scaffolding
+├── create-utility/      # Utility layer scaffolding
+├── fix-bypass/          # Bypass suppression cleanup
+├── lint-arwaky/         # AES scan + fix workflow
+├── setup-ci-quality-gates/  # CI, gates, branch protection
+└── testing-suite/       # Test suite generation
+```
+
+## Available Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `python3 tools/regenerate_skills.py` | Rebuild `EMBEDDED_SKILLS` constant in `crates/shared/src/project_setup/taxonomy_skills_constant.rs` |
+
+## Configuration
+
+No external configuration. Skill content is embedded at build time via `include_str!` into the binary.
+
+## Testing
+
+Skills are validated by `lint-arwaky` self-lint (CI "Self-Lint" job) and by the test workspaces in `workspaces-bad/` / `workspaces-good/`. No dedicated test suite for the skill content itself.
+
+## Contributing
+
+- Each skill lives in its own directory with a `SKILL.md` and optional `references/` subdirectory.
+- After adding, removing, or renaming a skill file, run `python3 tools/regenerate_skills.py`.
+- Follow the naming conventions below.
+
+## License
+
+MIT — see [LICENSE](../../LICENSE).
+
 ## Structure
 
 .agents/skills/

@@ -250,7 +250,7 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-### FR-001 — Text Format
+### SCEN-001 — Text Format
 
 | # | Scenario                           | Expected                                   | Rule   |
 | --- | ------------------------------------ | -------------------------------------------- | -------- |
@@ -259,7 +259,7 @@ flowchart TD
 | 3 | Report with PARSE_WARN diagnostics | Warnings section, visually distinct        | FR-001 |
 | 4 | Empty report                       | "0 violations" clean report                | FR-001 |
 
-### FR-002 — JSON Format
+### SCEN-002 — JSON Format
 
 | # | Scenario                     | Expected                                   | Rule   |
 | --- | ------------------------------ | -------------------------------------------- | -------- |
@@ -268,7 +268,7 @@ flowchart TD
 | 3 | Report with external results | `external_results` array populated         | FR-002 |
 | 4 | Report with PARSE_WARN       | `diagnostics` array populated              | FR-002 |
 
-### FR-003 — SARIF Format
+### SCEN-003 — SARIF Format
 
 | # | Scenario               | Expected                             | Rule   |
 | --- | ------------------------ | -------------------------------------- | -------- |
@@ -280,7 +280,7 @@ flowchart TD
 | 6 | Line number 0          | Clamped to 1                         | FR-003 |
 | 7 | Empty results          | Valid SARIF with empty results array | FR-003 |
 
-### FR-004 — JUnit Format
+### SCEN-004 — JUnit Format
 
 | # | Scenario                      | Expected                              | Rule   |
 | --- | ------------------------------- | --------------------------------------- | -------- |
@@ -291,7 +291,7 @@ flowchart TD
 | 5 | Test/failure counts           | Match actual results                  | FR-004 |
 | 6 | Empty results                 | Valid XML with 0 tests, 0 failures    | FR-004 |
 
-### FR-005–FR-007 — Orchestrator, Fallback, XML Escape
+### SCEN-005–FR-007 — Orchestrator, Fallback, XML Escape
 
 | # | Scenario                         | Expected                          | Rule   |
 | --- | ---------------------------------- | ----------------------------------- | -------- |
@@ -338,6 +338,7 @@ flowchart TD
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - CLI Commands FRD: `crates/cli-commands/FRD.md` (consumer of report-formatter)

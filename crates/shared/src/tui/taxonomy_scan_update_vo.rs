@@ -13,4 +13,6 @@ pub enum ScanUpdate {
         violation_count: usize,
         success: bool,
     },
+    /// Scan aborted before completion (user pressed Esc while scanning).
+    Cancelled,
 }

@@ -4,7 +4,6 @@
 // import-rules, role-rules, and orphan-rules. These parsers had no inline
 // coverage; this file pins their current (correct) behavior so subsequent
 // complexity refactors cannot silently change results.
-mod common;
 
 use shared_lint_arwaky::common::utility_python_parser::parse_python;
 use shared_lint_arwaky::common::utility_rust_parser::parse_rust;

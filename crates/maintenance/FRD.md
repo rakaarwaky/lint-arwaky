@@ -293,7 +293,7 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-### FR-001 — Doctor
+### SCEN-001 — Doctor
 
 
 | # | Scenario                    | Expected                                       | Rule   |
@@ -304,7 +304,7 @@ flowchart TD
 | 4 | Language runtimes installed | Versions reported (rustc, python3, node)       | FR-001 |
 | 5 | Language runtime missing    | Version "NOT FOUND"                            | FR-001 |
 
-### FR-002 — Stats
+### SCEN-002 — Stats
 
 
 | # | Scenario                       | Expected                             | Rule   |
@@ -314,7 +314,7 @@ flowchart TD
 | 3 | Directory with no source files | All zeros, ratio 0.0                 | FR-002 |
 | 4 | Empty directory               | All zeros, ratio 0.0                 | FR-002 |
 
-### FR-003 — Clean
+### SCEN-003 — Clean
 
 
 | # | Scenario                               | Expected              | Rule   |
@@ -323,7 +323,7 @@ flowchart TD
 | 2 | Project with target/                    | Directory removed     | FR-003 |
 | 3 | No cache directories                   | No-op                 | FR-003 |
 
-### FR-004 — Update
+### SCEN-004 — Update
 
 
 | # | Scenario             | Expected                       | Rule   |
@@ -331,7 +331,7 @@ flowchart TD
 | 1 | Python tools upgrade | pip install --upgrade per tool | FR-004 |
 | 2 | pip not installed    | Warning, no crash              | FR-004 |
 
-### FR-005 — Diagnose
+### SCEN-005 — Diagnose
 
 
 | # | Scenario                       | Expected            | Rule   |
@@ -341,7 +341,7 @@ flowchart TD
 | 3 | Missing mypy (optional)        | Status "WARN"       | FR-005 |
 | 4 | Missing eslint (optional)      | Status "WARN"       | FR-005 |
 
-### FR-006 — Security
+### SCEN-006 — Security
 
 
 | # | Scenario                        | Expected                              | Rule   |
@@ -351,7 +351,7 @@ flowchart TD
 | 3 | cargo-audit not installed       | tool_installed: false, empty findings | FR-006 |
 | 4 | No vulnerabilities              | Empty findings, success               | FR-006 |
 
-### FR-007 — Dependencies
+### SCEN-007 — Dependencies
 
 
 | # | Scenario                           | Expected                              | Rule   |
@@ -360,7 +360,7 @@ flowchart TD
 | 2 | No Cargo.lock                       | Returns error                         | FR-007 |
 | 3 | Empty Cargo.lock                    | Empty dependency list                 | FR-007 |
 
-### FR-008 — Adapter Health Check
+### SCEN-008 — Adapter Health Check
 
 
 | # | Scenario                        | Expected                              | Rule   |
@@ -385,9 +385,8 @@ flowchart TD
 - The maintenance crate performs its own file walking for ops purposes
   (stats, clean). This is distinct from source code analysis walking
   handled by the filesystem crate.
-- Currently only Rust projects are supported for security scanning and
-  dependency reporting. Python and JS/TS support is planned but not yet
-  implemented.
+- Security scanning and dependency reporting currently cover Rust projects only.
+  Python and JS/TS support is planned; see BACKLOG.md for status.
 
 ---
 
