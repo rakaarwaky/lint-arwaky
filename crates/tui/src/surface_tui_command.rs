@@ -12,8 +12,8 @@ use crossterm::terminal::{
 };
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
-use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::style::{Color, Style};
+use ratatui::layout::{Alignment, Constraint, Direction, Layout};
+use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use shared::tui::{AppState, ScanUpdate, TuiEvent};
@@ -101,9 +101,29 @@ impl TuiCommandSurface {
             {
                 self.action_handler.poll_scan(state, rx);
             }
+            // --- Poll pending background global action (non-blocking) ---
+            if state.action_pending {
+                self.action_handler.poll_pending_background_action(state);
+            }
 
             terminal.draw(|frame| {
                 let area = frame.area();
+
+                // W5: guard — refuse to draw the full layout on a too-small terminal.
+                if area.height < 15 || area.width < 40 {
+                    let message = "Terminal too small — resize to at least 40x15";
+                    let line = Line::from(vec![Span::styled(
+                        message,
+                        Style::default()
+                            .fg(crate::utility_tui_theme::KEY)
+                            .add_modifier(Modifier::BOLD),
+                    )]);
+                    let paragraph = Paragraph::new(line)
+                        .style(Style::default().bg(crate::utility_tui_theme::BACKGROUND))
+                        .alignment(Alignment::Center);
+                    frame.render_widget(paragraph, area);
+                    return;
+                }
 
                 if state.show_path_dialog {
                     views.path_screen.render(state, frame, area);
@@ -157,10 +177,10 @@ impl TuiCommandSurface {
                         tui_event,
                         TuiEvent::ActionCheck
                             | TuiEvent::ActionFix
+                            | TuiEvent::ActionFixLive
                             | TuiEvent::ActionCi
                             | TuiEvent::ActionOrphan
                             | TuiEvent::ActionSecurity
-                            | TuiEvent::ActionDuplicates
                             | TuiEvent::ActionDependencies
                     )
                 {
@@ -238,11 +258,19 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::BackTab => TuiEvent::FocusPrev,
         KeyCode::Char('c') => TuiEvent::ActionCheck,
         KeyCode::Char('s') => TuiEvent::ActionScan,
-        KeyCode::Char('f') => TuiEvent::ActionFix,
+        // Plain `f` = dry-run fix; Shift+`F` = live fix (Shift only affects letters).
+        KeyCode::Char('f') => {
+            if key.modifiers.contains(KeyModifiers::SHIFT) {
+                TuiEvent::ActionFixLive
+            } else {
+                TuiEvent::ActionFix
+            }
+        }
         KeyCode::Char('t') => TuiEvent::ActionCi,
         KeyCode::Char('w') => TuiEvent::ActionWatch,
         KeyCode::Char('o') => TuiEvent::ActionOrphan,
-        KeyCode::Char('D') => TuiEvent::ActionDuplicates,
+        // `r` re-opens the project root dialog (I4).
+        KeyCode::Char('r') => TuiEvent::ChangeProjectRoot,
         KeyCode::Char('d') => TuiEvent::ActionDoctor,
         KeyCode::Char('i') => TuiEvent::ActionInit,
         KeyCode::Char('I') => TuiEvent::ActionInstall,
@@ -255,7 +283,14 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::Char('y') => TuiEvent::CopyToClipboard,
         KeyCode::Char('?') => TuiEvent::ToggleHelp,
         KeyCode::Char('/') => TuiEvent::ToggleSearch,
-        KeyCode::Esc => TuiEvent::Quit,
+        // Esc cancels an in-flight scan before it quits the TUI.
+        KeyCode::Esc => {
+            if state.scanning {
+                TuiEvent::CancelScan
+            } else {
+                TuiEvent::Quit
+            }
+        }
         _ => TuiEvent::None,
     }
 }
@@ -276,12 +311,27 @@ fn from_mouse_event(mouse: MouseEvent) -> TuiEvent {
 
 fn render_header(state: &AppState, frame: &mut ratatui::Frame, area: ratatui::layout::Rect) {
     let line = Line::from(vec![
-        Span::styled(" lint-arwaky TUI ", Style::default().fg(Color::Cyan)),
-        Span::styled("\u{2502} ", Style::default().fg(Color::DarkGray)),
-        Span::styled("Path: ", Style::default().fg(Color::DarkGray)),
-        Span::styled(&state.current_dir, Style::default().fg(Color::White)),
+        Span::styled(
+            " lint-arwaky TUI ",
+            Style::default().fg(crate::utility_tui_theme::HEADER),
+        ),
+        Span::styled(
+            "\u{2502} ",
+            Style::default().fg(crate::utility_tui_theme::SEPARATOR),
+        ),
+        Span::styled(
+            "Path: ",
+            Style::default().fg(crate::utility_tui_theme::SEPARATOR),
+        ),
+        Span::styled(
+            &state.current_dir,
+            Style::default().fg(crate::utility_tui_theme::LABEL),
+        ),
         Span::styled("  ", Style::default()),
-        Span::styled("[q/Esc] Quit", Style::default().fg(Color::DarkGray)),
+        Span::styled(
+            "[q/Esc] Quit",
+            Style::default().fg(crate::utility_tui_theme::SEPARATOR),
+        ),
     ]);
 
     let paragraph = Paragraph::new(line);

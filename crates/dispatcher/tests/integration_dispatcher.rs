@@ -11,6 +11,7 @@ fn dispatcher_check_action_on_clean_project() {
         filter: None,
         member: None,
         filesystem: fs,
+        scan_aggregates: None,
     };
     let result = dispatcher_lint_arwaky::surface_check_action::collect_scan(opts);
     assert!(result.is_ok() || result.is_err());

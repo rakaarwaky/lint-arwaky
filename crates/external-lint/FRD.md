@@ -165,7 +165,7 @@ flowchart TD
   |                 | `Medium`                        | MEDIUM               |
   |                 | `Low` / `Unknown`               | LOW                  |
   | **Ruff**        | `E999` (syntax error)           | CRITICAL             |
-  |                 | `S1xx` (security)               | CRITICAL             |
+  |                 | `S*` (security, all S-codes)    | CRITICAL             |
   |                 | `F8xx` (undefined name)         | HIGH                 |
   |                 | `B0xx` (bugbear)                | HIGH                 |
   |                 | `F401` (unused import)          | MEDIUM               |
@@ -176,6 +176,7 @@ flowchart TD
   | **Mypy**        | `error`                         | HIGH                 |
   |                 | `warning`                       | MEDIUM               |
   |                 | `note`                          | LOW                  |
+  |                 | `syntax`/`parse` error in message (beyond the table) | CRITICAL |
   | **Bandit**      | HIGH confidence + HIGH severity | CRITICAL             |
   |                 | HIGH severity                   | HIGH                 |
   |                 | MEDIUM severity                 | MEDIUM               |
@@ -192,6 +193,7 @@ flowchart TD
   - Tool output contains zero violations → empty result list (not an error).
   - File path in tool output is relative → canonicalized to absolute path.
   - Unknown tool severity/category → defaults to MEDIUM.
+  - Mypy extension: any error message containing `syntax` or `parse` is escalated to CRITICAL (a parse failure blocks all type checking), beyond the severity table above.
 - **Error Handling**: Parse failures return empty results with warning. No crash on malformed output.
 
 ---

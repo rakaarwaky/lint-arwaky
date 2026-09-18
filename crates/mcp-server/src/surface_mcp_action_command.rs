@@ -74,6 +74,16 @@ impl McpActionSurface {
             filter: None,
             member: None,
             filesystem: self.deps.filesystem.clone(),
+            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
+                quality: self.deps.code_analysis_linter.clone(),
+                role: self.deps.role_orchestrator.clone(),
+                import: self.deps.import_orchestrator.clone(),
+                naming: self.deps.naming_orchestrator.clone(),
+                external: self.deps.external_lint.clone(),
+                orphan: self.deps.orphan_orchestrator.clone(),
+                config: self.deps.config_orchestrator.clone(),
+                fs_factory: self.deps.fs_factory.clone(),
+            }),
         };
         match dispatcher::surface_check_action::collect_scan(opts) {
             Ok(violations) => {

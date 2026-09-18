@@ -44,6 +44,10 @@ pub struct FilesystemOrchestrator {
     pub(crate) files: OnceLock<Vec<FileEntry>>,
     pub(crate) file_index: OnceLock<HashMap<PathBuf, usize>>,
     pub(crate) imports: OnceLock<Vec<ImportEntry>>,
+    /// Extra import cache entries not tied to `files` (dispatcher patches).
+    pub(crate) imports_extra: std::sync::Mutex<Vec<ImportEntry>>,
+    /// Snapshot of the import cache at the last `build_file_index_with_ignored`.
+    pub(crate) imports_snapshot: std::sync::Mutex<Vec<ImportEntry>>,
     pub(crate) resolved_imports: OnceLock<Vec<ImportEntry>>,
     pub(crate) warnings: OnceLock<Vec<ParseWarning>>,
     pub(crate) cached_reverse_links: OnceLock<HashMap<PathBuf, Vec<PathBuf>>>,
@@ -58,7 +62,11 @@ impl IParserProtocol for FilesystemOrchestrator {
         self.warnings.get().map(|v| v.as_slice()).unwrap_or(&[])
     }
     fn import_list(&self) -> Vec<ImportEntry> {
-        self.imports.get().cloned().unwrap_or_default()
+        let mut list = self.imports.get().cloned().unwrap_or_default();
+        if let Ok(extra) = self.imports_extra.lock() {
+            list.extend(extra.iter().cloned());
+        }
+        list
     }
     fn parse_all(&self, files: &mut [FileEntry]) {
         self.deps.parser.parse_all(files)
@@ -565,6 +573,17 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
     fn resolved_import_list(&self) -> Vec<ImportEntry> {
         self.resolved_imports.get().cloned().unwrap_or_default()
     }
+    fn extend_import_cache(&self, entries: Vec<ImportEntry>) {
+        if let Ok(mut extra) = self.imports_extra.lock() {
+            extra.extend(entries);
+        }
+    }
+    fn import_list_snapshot(&self) -> Vec<ImportEntry> {
+        self.imports_snapshot
+            .lock()
+            .map(|s| s.clone())
+            .unwrap_or_default()
+    }
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
@@ -575,6 +594,8 @@ impl FilesystemOrchestrator {
             files: OnceLock::new(),
             file_index: OnceLock::new(),
             imports: OnceLock::new(),
+            imports_extra: std::sync::Mutex::new(Vec::new()),
+            imports_snapshot: std::sync::Mutex::new(Vec::new()),
             resolved_imports: OnceLock::new(),
             warnings: OnceLock::new(),
             cached_reverse_links: OnceLock::new(),
@@ -854,7 +875,12 @@ impl FilesystemOrchestrator {
         self.parse_all(&mut entries);
         self.resolve_barrel_imports(&abs_root);
         let _ = self.files.set(entries.clone());
-        let _ = self.imports.set(self.deps.parser.import_list());
+        let parser_imports = self.deps.parser.import_list();
+        // Snapshot before the parser cache gets overwritten by a scoped parse_all
+        if let Ok(mut snap) = self.imports_snapshot.lock() {
+            *snap = parser_imports.clone();
+        }
+        let _ = self.imports.set(parser_imports);
         let _ = self
             .warnings
             .set(self.deps.parser.parse_warnings().to_vec());

@@ -337,7 +337,7 @@ flowchart TD
 
 **Business Rules**:
 
-- `init()`: sets up tracing subscriber with hourly-rotating file appender (`log/tui.log`) and optional console output.
+- `init()`: sets up a tracing subscriber with an hourly-rotating file appender under the XDG state dir (`$XDG_STATE_HOME/lint-arwaky/log/tui.log`, i.e. `~/.local/state/lint-arwaky/log` on Linux) with no console layer (stdout is owned by ratatui). Falls back to `./log` with an eprintln notice if `dirs::state_dir()` is unavailable.
 - `record()`: logs event variant name at `tracing::debug!(target = "tui")` for navigation events, `tracing::info!(target = "tui")` for action events.
 - **Integration point**: `record(&tui_event)` is called in the event loop immediately after `from_crossterm_event()` translates a crossterm event, and before the event is dispatched to the action handler or intercepted for scan management.
 

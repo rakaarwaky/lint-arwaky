@@ -199,6 +199,12 @@ install_prebuilt() {
     fi
 
     if curl -fsSL "$DOWNLOAD_URL" -o /tmp/lint-arwaky.tar.gz 2>/dev/null; then
+        # Print the archive checksum so the user can verify integrity against
+        # the checksum published on the GitHub release before extraction.
+        if command -v sha256sum &>/dev/null; then
+            echo "  SHA-256: $(sha256sum /tmp/lint-arwaky.tar.gz | awk '{print $1}')"
+            info "Compare this SHA-256 against the release's published checksum before trusting the binaries."
+        fi
         tar xzf /tmp/lint-arwaky.tar.gz -C "$install_bin" lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui 2>/dev/null && {
             chmod +x "$install_bin"/lint-arwaky-*
             echo -e "  ${GREEN}✓ Installed pre-built binaries from GitHub Release${NC}"

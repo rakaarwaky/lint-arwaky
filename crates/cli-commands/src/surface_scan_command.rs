@@ -21,6 +21,8 @@ pub struct ScanCommandParams {
     pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub filter: Option<String>,
     pub member: Option<String>,
+    /// In-process aggregate bundle (W10); `None` falls back to subprocess.
+    pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
 }
 
 /// Parameters for the `import` command.
@@ -113,6 +115,7 @@ pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
         filter: params.filter,
         member: params.member,
         filesystem: params.filesystem.clone(),
+        scan_aggregates: params.scan_aggregates.clone(),
     };
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {

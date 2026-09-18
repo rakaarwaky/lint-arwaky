@@ -311,17 +311,15 @@ impl LintFixProcessor {
 
         // ─── Detect fixable bypass patterns (runtime-constructed to avoid AES304 false positives) ───
         let allow_attr = format!("#[{}", "allow(");
-        let unwrap_call = "unwrap()".to_string();
         let suppress_comment = format!("no{}", "qa");
         let type_ignore = "type: ignore";
 
         let is_allow_attr = trimmed.starts_with(&allow_attr);
         let is_comment_line =
             trimmed.starts_with("//") || (trimmed.starts_with('#') && !is_allow_attr);
-        let is_unwrap = trimmed == unwrap_call
-            || trimmed.ends_with("unwrap();")
-            || trimmed.ends_with("unwrap())")
-            || trimmed.ends_with("unwrap()}");
+        let is_unwrap = trimmed.contains("unwrap()");
+
+        let hash_comments = file_path.ends_with(".py");
 
         let has_bypass = is_allow_attr
             || is_unwrap
@@ -358,7 +356,7 @@ impl LintFixProcessor {
                     || trimmed.contains("HACK")
                     || trimmed.contains("XXX")
                 {
-                    let stripped = strip_inline_comment(l);
+                    let stripped = strip_inline_comment(l, hash_comments);
                     if !stripped.trim().is_empty() {
                         result.push_str(&stripped);
                         result.push('\n');
@@ -543,12 +541,20 @@ impl LintFixProcessor {
 
 /// Strip inline comment from a code line, preserving leading whitespace.
 /// For `    let x = foo()  // FIXME: refactor` → `    let x = foo()  `
-fn strip_inline_comment(line: &str) -> String {
+/// When `hash_comments` is true (Python files), `#` is also treated as a
+/// comment start, but Rust-style `#[` attribute lines are left alone.
+fn strip_inline_comment(line: &str, hash_comments: bool) -> String {
     if let Some(pos) = line.find("//") {
-        line[..pos].to_string()
-    } else {
-        line.to_string()
+        return line[..pos].to_string();
     }
+    if hash_comments {
+        if let Some(pos) = line.find('#') {
+            if !line[pos..].starts_with("#[") {
+                return line[..pos].to_string();
+            }
+        }
+    }
+    line.to_string()
 }
 
 /// Count occurrences of `target` that match word boundaries.

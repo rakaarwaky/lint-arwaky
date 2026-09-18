@@ -38,6 +38,12 @@ impl ICommandExecutorProtocol for StdioClient {
         }
         cmd.current_dir(working_dir.value())
             .env("PYTHONUNBUFFERED", "1");
+        eprintln!(
+            "EXTRACTRADE execute_command: bin={} wd={} first_args={:?}",
+            cmd_list[0],
+            working_dir.value(),
+            &cmd_list[1..cmd_list.len().min(4)]
+        );
 
         let mut child = cmd
             .stdout(std::process::Stdio::piped())
