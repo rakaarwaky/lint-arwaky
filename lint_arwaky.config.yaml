@@ -75,7 +75,7 @@ architecture:
       layers:
         taxonomy:
           suffix:
-            - strict: ["vo", "entity", "error", "event", "constant"]
+            - strict: ["vo", "entity", "error", "event", "constant", "request", "response"]
         contract:
           suffix:
             - strict: ["protocol", "aggregate"]
@@ -91,6 +91,8 @@ architecture:
                   "constant",
                   "protocol",
                   "aggregate",
+                  "request",
+                  "response",
                 ]
         capabilities:
           suffix:
@@ -106,6 +108,8 @@ architecture:
                   "protocol",
                   "aggregate",
                   "utility",
+                  "request",
+                  "response",
                 ]
         agent:
           suffix:
@@ -146,6 +150,12 @@ architecture:
       exceptions: []
       conditions:
         - scope: "taxonomy(vo)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            ["agent", "surface", "contract", "utility", "capabilities", "root"]
+
+        - scope: "taxonomy(request,response)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
@@ -240,6 +250,12 @@ architecture:
       exceptions: []
       conditions:
         - scope: "taxonomy(vo)"
+          allowed: ["taxonomy"]
+          mandatory: null
+          forbidden:
+            ["agent", "surface", "contract", "utility", "capabilities", "root"]
+
+        - scope: "taxonomy(request,response)"
           allowed: ["taxonomy"]
           mandatory: null
           forbidden:
@@ -397,7 +413,7 @@ architecture:
     AES401:
       enabled: true
       scope:
-        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)"]
+        ["taxonomy(constant)", "taxonomy(entity,error,event)", "taxonomy(vo)", "taxonomy(request,response)"]
 
     AES402:
       enabled: true

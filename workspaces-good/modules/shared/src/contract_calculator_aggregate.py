@@ -7,7 +7,8 @@ protocol classes in `contract_calculator_protocol.py`.
 
 from abc import ABC, abstractmethod
 
-from .taxonomy_calculator_request_vo import CalculatorRequest, CalculatorResponse
+from .taxonomy_calculator_request import CalculatorRequest
+from .taxonomy_calculator_response import CalculatorResponse
 
 
 class ICalculatorAggregate(ABC):

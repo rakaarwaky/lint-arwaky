@@ -1,12 +1,11 @@
-// PURPOSE: OrphanRequest/OrphanResponse — request/response VOs for the orphan aggregate
+// PURPOSE: OrphanRequest — request payload for the orphan aggregate
+
 use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use crate::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO;
 use crate::quality_rules::taxonomy_analysis_vo::GraphAnalysisContext;
 
-/// Consumer verb carried by the orphan aggregate's single entry point.
 pub enum OrphanRequest {
     /// Build the import/reachability graph for a set of files.
     BuildGraphContext {
@@ -77,62 +76,6 @@ impl OrphanRequest {
         Self::Scan {
             root_dir: root_dir.clone(),
             ignored: ignored.clone(),
-        }
-    }
-}
-
-/// Result of an orphan aggregate request.
-pub enum OrphanResponse {
-    GraphContext {
-        context: GraphAnalysisContext,
-    },
-    EntryPoints {
-        files: OrphanFileListVO,
-    },
-    Violations {
-        violations: Vec<LintResult>,
-    },
-    ScanOutcome {
-        context: GraphAnalysisContext,
-        violations: Vec<LintResult>,
-    },
-}
-
-impl OrphanResponse {
-    /// Take the graph context. Returns an empty context if a different verb was served.
-    pub fn into_graph_context(self) -> GraphAnalysisContext {
-        match self {
-            Self::GraphContext { context } | Self::ScanOutcome { context, .. } => context,
-            _ => GraphAnalysisContext::default(),
-        }
-    }
-
-    pub fn into_entry_points(self) -> OrphanFileListVO {
-        match self {
-            Self::EntryPoints { files } => files,
-            _ => OrphanFileListVO::new(Vec::<String>::new()),
-        }
-    }
-
-    /// Take the violations. Returns an empty list if a different verb was served.
-    pub fn into_violations(self) -> Vec<LintResult> {
-        match self {
-            Self::Violations { violations } | Self::ScanOutcome { violations, .. } => violations,
-            _ => Vec::new(),
-        }
-    }
-
-    /// Take both halves of a scan result. Returns an empty context and list
-    /// if a different verb was served.
-    pub fn into_scan_outcome(self) -> (GraphAnalysisContext, Vec<LintResult>) {
-        match self {
-            Self::ScanOutcome {
-                context,
-                violations,
-            } => (context, violations),
-            Self::Violations { violations } => (GraphAnalysisContext::default(), violations),
-            Self::GraphContext { context } => (context, Vec::new()),
-            Self::EntryPoints { .. } => (GraphAnalysisContext::default(), Vec::new()),
         }
     }
 }

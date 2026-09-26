@@ -11,7 +11,7 @@ use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::role_rules::IRoleRunnerAggregate;
-use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
+use shared::role_rules::taxonomy_role_request::RoleRequest;
 
 use shared::common::ViolationItem;
 

@@ -16,7 +16,8 @@ use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
 use shared::project_setup::contract_setup_protocol::PreFlightResult;
-use shared::project_setup::taxonomy_setup_request_vo::{SetupRequest, SetupResponse};
+use shared::project_setup::taxonomy_setup_request::SetupRequest;
+use shared::project_setup::taxonomy_setup_response::SetupResponse;
 use shared::project_setup::{
     EmbeddedSkillVO, ISetupManagementProtocol, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
 };

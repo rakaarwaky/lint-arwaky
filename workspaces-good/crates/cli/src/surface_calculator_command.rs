@@ -1,5 +1,6 @@
 use calculator_shared::contract_calculator_aggregate::ICalculatorAggregate;
-use calculator_shared::taxonomy_calculator_request_vo::{CalculatorRequest, CalculatorResponse};
+use calculator_shared::taxonomy_calculator_request::CalculatorRequest;
+use calculator_shared::taxonomy_calculator_response::CalculatorResponse;
 use calculator_shared::taxonomy_expression_vo::ExpressionVO;
 use calculator_shared::taxonomy_operation_vo::OperationVO;
 use calculator_shared::utility_expression_parser;

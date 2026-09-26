@@ -1,10 +1,10 @@
 from shared.src.contract_calculator_aggregate import ICalculatorAggregate
 from shared.src.contract_calculator_protocol import ICalculatorProtocol
-from shared.src.taxonomy_calculator_request_vo import (
+from shared.src.taxonomy_calculator_request import (
     CalculatorRequest,
-    CalculatorResponse,
     CalculatorVerb,
 )
+from shared.src.taxonomy_calculator_response import CalculatorResponse
 from shared.src.taxonomy_expression_vo import ExpressionVO
 from shared.src.taxonomy_operation_vo import OperationVO
 from shared.src.taxonomy_result_vo import ResultVO

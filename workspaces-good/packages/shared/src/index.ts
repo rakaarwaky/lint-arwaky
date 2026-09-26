@@ -1,13 +1,11 @@
 export type { ICalculatorAggregate } from "./contract_calculator_aggregate";
 export type { ICalculatorProtocol } from "./contract_calculator_protocol";
-export type {
-  CalculatorRequest,
-  CalculatorResponse,
-} from "./taxonomy_calculator_request_vo";
+export type { CalculatorRequest } from "./taxonomy_calculator_request";
 export {
   requestDelegate,
   requestHistory,
-} from "./taxonomy_calculator_request_vo";
+} from "./taxonomy_calculator_request";
+export type { CalculatorResponse } from "./taxonomy_calculator_response";
 export type { ExpressionVO } from "./taxonomy_expression_vo";
 export { createExpression } from "./taxonomy_expression_vo";
 export {

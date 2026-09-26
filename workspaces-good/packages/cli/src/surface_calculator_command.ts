@@ -2,7 +2,7 @@ import { ICalculatorAggregate } from "calculator-shared/src/contract_calculator_
 import {
   requestDelegate,
   requestHistory,
-} from "calculator-shared/src/taxonomy_calculator_request_vo";
+} from "calculator-shared/src/taxonomy_calculator_request";
 import { parseExpression } from "calculator-shared/src/utility_expression_parser";
 import * as readline from "readline";
 
