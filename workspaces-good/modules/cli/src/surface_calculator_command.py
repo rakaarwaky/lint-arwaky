@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 from shared.src.contract_calculator_aggregate import ICalculatorAggregate
-from shared.src.taxonomy_calculator_request_vo import CalculatorRequest
+from shared.src.taxonomy_calculator_request import CalculatorRequest
 from shared.src.taxonomy_expression_vo import create_expression
 from shared.src.taxonomy_operation_vo import operation_from_symbol
 

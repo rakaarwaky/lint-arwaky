@@ -1,12 +1,8 @@
 from .contract_calculator_aggregate import ICalculatorAggregate as ICalculatorAggregate
 from .contract_calculator_protocol import ICalculatorProtocol as ICalculatorProtocol
-from .taxonomy_calculator_request_vo import (
-    CalculatorRequest as CalculatorRequest,
-)
-from .taxonomy_calculator_request_vo import (
-    CalculatorResponse as CalculatorResponse,
-)
-from .taxonomy_calculator_request_vo import CalculatorVerb as CalculatorVerb
+from .taxonomy_calculator_request import CalculatorRequest as CalculatorRequest
+from .taxonomy_calculator_request import CalculatorVerb as CalculatorVerb
+from .taxonomy_calculator_response import CalculatorResponse as CalculatorResponse
 from .taxonomy_expression_vo import ExpressionVO as ExpressionVO
 from .taxonomy_expression_vo import create_expression as create_expression
 from .taxonomy_operation_vo import OperationVO as OperationVO

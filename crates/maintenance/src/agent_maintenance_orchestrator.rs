@@ -3,9 +3,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
 use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
-use shared::maintenance::taxonomy_maintenance_request_vo::{
-    MaintenanceRequest, MaintenanceResponse,
-};
+use shared::maintenance::taxonomy_maintenance_request::MaintenanceRequest;
+use shared::maintenance::taxonomy_maintenance_response::MaintenanceResponse;
 
 use shared::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,

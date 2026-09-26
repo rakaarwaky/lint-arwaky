@@ -1,0 +1,114 @@
+// PURPOSE: FilesystemResponse — response payload for the filesystem aggregate
+
+use crate::common::taxonomy_common_vo::FileContentPair;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_source_vo::ContentString;
+use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use std::collections::HashMap;
+use std::path::PathBuf;
+
+pub enum FilesystemResponse {
+    Files { entries: Vec<FileEntry> },
+    Content { value: ContentString },
+    ContentOpt { value: Option<String> },
+    Has { exists: bool },
+    Entries { pairs: Vec<FileContentPair> },
+    Paths { paths: Vec<String> },
+    SourcePaths { paths: Vec<FilePath> },
+    Identifiers { ids: Vec<String> },
+    TraitsMap { map: HashMap<String, Vec<String>> },
+    Root { path: Option<PathBuf> },
+    Imports { entries: Vec<ImportEntry> },
+    GraphContext { context: GraphAnalysisContext },
+}
+
+impl FilesystemResponse {
+    pub fn into_file_list(self) -> Vec<FileEntry> {
+        match self {
+            Self::Files { entries } => entries,
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn into_content(self) -> ContentString {
+        match self {
+            Self::Content { value } => value,
+            _ => ContentString::default(),
+        }
+    }
+
+    pub fn into_content_opt(self) -> Option<String> {
+        match self {
+            Self::ContentOpt { value } => value,
+            _ => None,
+        }
+    }
+
+    pub fn into_exists(self) -> bool {
+        match self {
+            Self::Has { exists } => exists,
+            _ => false,
+        }
+    }
+
+    pub fn into_pairs(self) -> Vec<FileContentPair> {
+        match self {
+            Self::Entries { pairs } => pairs,
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn into_paths(self) -> Vec<String> {
+        match self {
+            Self::Paths { paths } => paths,
+            Self::SourcePaths { paths } => {
+                paths.into_iter().map(|p| p.value().to_string()).collect()
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn into_source_paths(self) -> Vec<FilePath> {
+        match self {
+            Self::SourcePaths { paths } => paths,
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn into_identifiers(self) -> Vec<String> {
+        match self {
+            Self::Identifiers { ids } => ids,
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn into_traits_map(self) -> HashMap<String, Vec<String>> {
+        match self {
+            Self::TraitsMap { map } => map,
+            _ => HashMap::new(),
+        }
+    }
+
+    pub fn into_root(self) -> Option<PathBuf> {
+        match self {
+            Self::Root { path } => path,
+            _ => None,
+        }
+    }
+
+    pub fn into_imports(self) -> Vec<ImportEntry> {
+        match self {
+            Self::Imports { entries } => entries,
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn into_graph_context(self) -> GraphAnalysisContext {
+        match self {
+            Self::GraphContext { context } => context,
+            _ => GraphAnalysisContext::default(),
+        }
+    }
+}

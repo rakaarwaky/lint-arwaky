@@ -15,7 +15,8 @@ use shared::{
         contract_filesystem_protocol::IParserProtocol,
         contract_filesystem_protocol::IToolResolutionProtocol,
         contract_filesystem_protocol::IWorkspaceProtocol,
-        taxonomy_filesystem_request_vo::{FilesystemRequest, FilesystemResponse},
+        taxonomy_filesystem_request::FilesystemRequest,
+        taxonomy_filesystem_response::FilesystemResponse,
         taxonomy_filesystem_vo::{
             DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
             ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,

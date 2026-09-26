@@ -11,7 +11,7 @@ use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChec
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use shared::common::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
+use shared::role_rules::taxonomy_role_request::RoleRequest;
 use shared::role_rules::{
     IAgentRoleProtocol, ICapabilitiesRoleProtocol, IContractRoleProtocol, IRoleRunnerAggregate,
     ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,

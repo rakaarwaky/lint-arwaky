@@ -4,7 +4,8 @@
 // CalculatorRequest; the agent behind the aggregate dispatches to the rich
 // protocol trait in `contract_calculator_protocol.rs`.
 
-use crate::taxonomy_calculator_request_vo::{CalculatorRequest, CalculatorResponse};
+use crate::taxonomy_calculator_request::CalculatorRequest;
+use crate::taxonomy_calculator_response::CalculatorResponse;
 
 /// Aggregate trait — the single entry point over the calculator feature.
 pub trait ICalculatorAggregate: Send + Sync {

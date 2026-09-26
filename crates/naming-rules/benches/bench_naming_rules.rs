@@ -16,7 +16,7 @@ use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::naming_rules::INamingCheckerProtocol;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
-use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
+use shared::naming_rules::taxonomy_naming_request::NamingRequest;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;

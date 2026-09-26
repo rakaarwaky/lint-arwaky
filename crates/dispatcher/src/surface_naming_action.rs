@@ -13,7 +13,8 @@ use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::naming_rules::INamingRunnerAggregate;
-use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
+use shared::naming_rules::taxonomy_naming_request::NamingRequest;
+use shared::naming_rules::taxonomy_naming_response::NamingResponse;
 
 use shared::common::ViolationItem;
 
