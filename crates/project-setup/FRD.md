@@ -198,12 +198,14 @@ flowchart TD
 - **Description**: Load language-specific lint-arwaky configuration
   templates.
 - **Input**: Language identifier string (`"rust"`, `"python"`,
-  `"javascript"`, `"typescript"`).
+  `"javascript"`, `"typescript"`, `"all"`).
 - **Output**: `Result<&'static str, SetupError>` — embedded YAML config
   content, or error for unknown language.
 - **Business Rules**:
 
-  - `"rust"`, `"python"`, `"javascript"`, `"typescript"` → `lint_arwaky.config.yaml` (unified)
+  - `"rust"`, `"python"`, `"javascript"`, `"typescript"`, `"all"` → `lint_arwaky.config.yaml` (unified)
+  - `"all"` is the fallback used when the detectable-language list is empty, so
+    `init` still writes a config in a directory with no recognized source files
   - Unknown language → returns `Err(SetupError::UnknownLanguage)` with
     list of supported languages. **No silent default.**
   - Templates are embedded at compile time.

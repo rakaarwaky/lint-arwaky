@@ -260,13 +260,16 @@ impl ISetupManagementProtocol for SetupManagementProcessor {
 
     /// Get an embedded config template for the given language (FR-005).
     /// Returns `Err(SetupError::UnknownLanguage)` for unsupported languages.
+    /// Accepts `"all"` as a synonym for the unified template, used when the
+    /// detectable-language list is empty and the dispatcher falls back to
+    /// `"all"`.
     fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError> {
         match language {
-            "rust" | "python" | "javascript" | "typescript" => {
+            "rust" | "python" | "javascript" | "typescript" | "all" => {
                 Ok(include_str!("../../shared/config/lint_arwaky.config.yaml"))
             }
             _ => Err(SetupError::unknown_language(
-                "rust, python, javascript, typescript",
+                "rust, python, javascript, typescript, all",
             )),
         }
     }
