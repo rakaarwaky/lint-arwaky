@@ -144,7 +144,7 @@ Key crates: `shared` (VOs/contracts/utilities), `config-system` (config load/mer
 
 ## Skills & Roles
 
-`.agents/skills/` holds skill definitions for AI-assisted development; each is one directory with a `SKILL.md` and optional `references/<language>.md`. Layer creation (`create-taxonomy`, `create-contract`, `create-utility`, `create-capabilities`, `create-agent`, `create-surface`, `create-root`), maintenance (`fix-bypass`, `cleanup-consolidate`, `add-docs`, `testing-suite`, `lint-arwaky`), and other (`author-skill-md`, `setup-ci-quality-gates`) skills are triggered by keyword.
+`.agents/skills/` holds skill definitions for AI-assisted development; each is one directory with a `SKILL.md` and optional `references/<language>.md`. Layer creation (`aes-taxonomy`, `aes-contract`, `aes-utility`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-root`), maintenance (`aes-lint-arwaky`, `aes-migration`), and documentation (`aes-docs`, `aes-testing-suite`) skills are triggered by keyword.
 
 `lint-arwaky init` installs every `SKILL.md` plus only the `references/` files matching the target's detected languages. `crates/shared/src/project_setup/taxonomy_skills_constant.rs` is generated — run `python3 tools/regenerate_skills.py` after adding, removing, or renaming a skill file.
 

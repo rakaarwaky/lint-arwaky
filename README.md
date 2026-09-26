@@ -74,7 +74,7 @@ lint-arwaky-cli install   # installs external linter deps
 lint-arwaky-cli doctor    # verify toolchain health
 ```
 
-Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make it a required status check, and add `lint-arwaky-cli ci . --threshold <score>` for score-based release gating. Full blueprint: [DEPLOY.md](DEPLOY.md) and [crates/skills/setup-ci-quality-gates/SKILL.md](crates/skills/setup-ci-quality-gates/SKILL.md).
+Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make it a required status check, and add `lint-arwaky-cli ci . --threshold <score>` for score-based release gating. Full blueprint: [DEPLOY.md](DEPLOY.md) and [crates/skills/aes-testing-suite/SKILL.md](crates/skills/aes-testing-suite/SKILL.md).
 
 ## Architecture
 

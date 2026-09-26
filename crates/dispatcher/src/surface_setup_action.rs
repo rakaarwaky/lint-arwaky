@@ -68,13 +68,7 @@ pub fn collect_init(
     }
 
     // Distribute docs from XDG config to project (always overwrite)
-    let doc_files = [
-        "ARCHITECTURE.md",
-        "MIGRATION_RUST.md",
-        "MIGRATION_PYTHON.md",
-        "MIGRATION_TYPESCRIPT.md",
-        "RULES_AES.md",
-    ];
+    let doc_files = ["ARCHITECTURE.md", "RULES_AES.md"];
     if let Some(config_dir) = dirs::config_dir() {
         let xdg_base = config_dir.join("lint-arwaky");
         for doc in &doc_files {

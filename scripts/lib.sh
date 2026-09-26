@@ -108,9 +108,7 @@ copy_docs_to_config() {
     local project_root="${2:-$PROJECT_ROOT}"
     local Docs=(
         "ARCHITECTURE.md"
-        "MIGRATION_RUST.md"
-        "MIGRATION_PYTHON.md"
-        "MIGRATION_TYPESCRIPT.md"
+        "RULES_AES.md"
     )
     for DOC in "${Docs[@]}"; do
         SRC="$project_root/$DOC"
