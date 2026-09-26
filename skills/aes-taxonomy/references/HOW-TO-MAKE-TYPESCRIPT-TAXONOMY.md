@@ -205,7 +205,11 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```text
    Extend the built-in Error class.
    Set this.name to the class name.
-   Store VO fields only.
+   Store VO fields only — no raw string, number, or Record payloads.
+   Expose an error_code getter (stable identifier) for machine-readable
+     error classification.
+   Provide a message getter that returns a human-readable description
+     derived from the error code and the stored VOs.
    Do not store raw string messages as domain payloads.
    ```
 
@@ -339,9 +343,19 @@ export class <Name>Error extends Error {
     constructor(
         public readonly <field>: <VO>,
     ) {
-        super(`<Name>Error: ${<field>.toString()}`);
+        super();
         this.name = '<Name>Error';
         Object.setPrototypeOf(this, <Name>Error.prototype);
+    }
+
+    /** Stable machine-readable id. Callers branch on this, never on the message. */
+    get error_code(): string {
+        return '<DOMAIN>_<REASON>';
+    }
+
+    /** Typed message derived from the error code and stored VOs — required by AES best practice. */
+    get message(): string {
+        return `${this.error_code}: <Description>: ${this.<field>.toString()}`;
     }
 }
 ```
@@ -355,14 +369,31 @@ export class OrderNotFoundError extends Error {
     constructor(
         public readonly orderId: OrderId,
     ) {
-        super(`Order not found: ${orderId.toString()}`);
+        super();
         this.name = 'OrderNotFoundError';
         Object.setPrototypeOf(this, OrderNotFoundError.prototype);
+    }
+
+    /** Stable machine-readable id. Callers branch on this, never on the message. */
+    get error_code(): string {
+        return 'ORDER_NOT_FOUND';
+    }
+
+    get message(): string {
+        return `ORDER_NOT_FOUND: order not found: ${this.orderId.toString()}`;
     }
 }
 ```
 
-Errors may expose VO fields only.
+Every error must expose all three:
+- **Field VO** — programmatic access to the domain data that caused the error
+- **Error code** — a stable string id such as `ORDER_NOT_FOUND`, so callers
+  can branch without string matching the description
+- **Message** — a human-readable description derived from the error code and
+  the stored VOs
+
+The error code stays stable across releases. Renaming or reformatting the
+message is a compatible change; changing the error code is a breaking one.
 
 Good:
 
@@ -375,7 +406,7 @@ Bad:
 
 ```typescript
 public readonly orderId: string
-public readonly message: string
+public readonly message: string              // raw string payload
 public readonly payload: Record<string, unknown>
 ```
 
@@ -496,6 +527,7 @@ export { OrderCreated } from './taxonomy_order_order_created_event';
 | Events use VO payload fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors extend `Error` and set `this.name`. | Convention for semantic correctness; structural inheritance is checked by compiler. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Errors expose an `error_code` getter (stable identifier) and a `message` getter derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_code` and to read the description without string matching. | Required by AES best practice; missing it is a defect. |
 | Constants are `export const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
 | No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
 | `npx tsc --noEmit` passes. | Manual fallback gate. | Required by the TypeScript compilation check; missing it is a defect. |

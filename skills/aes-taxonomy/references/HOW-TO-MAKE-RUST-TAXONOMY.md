@@ -212,6 +212,10 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```text
    Implement std::error::Error and std::fmt::Display (usually via thiserror).
    Store VO fields only in enum variants.
+   Expose an error_code field (plain string identifier) for machine-readable
+     error classification.
+   Provide a message field derived from the stored VOs and error code
+     so callers can inspect it without parsing the Display output.
    Do not store raw String or std::io::Error as domain payloads.
    ```
 
@@ -361,6 +365,23 @@ pub enum <Name>Error {
     #[error("<Description>: {0}")]
     <Variant>(<VO>),
 }
+
+impl <Name>Error {
+    /// Stable machine-readable id. Callers branch on this, never on the message.
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            Self::<Variant>(..) => "<DOMAIN>_<REASON>",
+        }
+    }
+
+    /// Human-readable description derived from the stored VOs and the error code.
+    pub fn message(&self) -> String {
+        match self {
+            Self::<Variant>(<field>) =>
+                format!("{}: <Description>: {}", self.error_code(), <field>),
+        }
+    }
+}
 ```
 
 Concrete example:
@@ -371,26 +392,63 @@ use crate::order::taxonomy_order_order_id_vo::OrderId;
 
 #[derive(Debug, Error)]
 pub enum OrderError {
-    #[error("Order not found: {0}")]
+    #[error("order not found: {0}")]
     NotFound(OrderId),
+}
+
+impl OrderError {
+    /// Stable machine-readable id. Callers branch on this, never on the message.
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            Self::NotFound(_) => "ORDER_NOT_FOUND",
+        }
+    }
+
+    /// Human-readable description derived from the stored VOs and the error code.
+    pub fn message(&self) -> String {
+        match self {
+            Self::NotFound(order_id) => {
+                format!("{}: order not found: {}", self.error_code(), order_id)
+            }
+        }
+    }
 }
 ```
 
-Errors may expose VO fields only.
+Every error must expose all three:
+- **Field VO** — programmatic access to the domain data that caused the error
+- **Error code** — a stable `&'static str` id such as `ORDER_NOT_FOUND`, so
+  callers can branch without string matching
+- **Message** — a human-readable description derived from the error code and
+  the stored VOs
+
+The error code stays stable across releases. Renaming or reformatting the
+message is a compatible change; changing the error code is a breaking one.
 
 Good:
 
 ```rust
-NotFound(OrderId)
-InsufficientFunds(Money)
+#[derive(Debug, Error)]
+pub enum OrderError {
+    #[error("order not found: {0}")]
+    NotFound(OrderId),
+}
+
+impl OrderError {
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            Self::NotFound(_) => "ORDER_NOT_FOUND",
+        }
+    }
+}
 ```
 
 Bad:
 
 ```rust
-NotFound(String)
-IoError(std::io::Error)
-GenericMessage(String)
+NotFound(String)                    // raw primitive instead of a VO
+IoError(std::io::Error)             // raw std type as a domain payload
+Variant(String)                     // raw message payload — no stable error code
 ```
 
 ---
@@ -526,6 +584,7 @@ pub use taxonomy_order_order_created_event::OrderCreated;
 | Events use VO payload fields only. | Machine-checked — see primitive note above. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors implement `std::error::Error` + `Display`. | Convention for semantic correctness; structural derivation is checked by compiler. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Errors expose an `error_code` field (stable identifier) and a `message` field derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_code` and to read the description without parsing `Display`. | Required by AES best practice; missing it is a defect. |
 | Constants are `pub const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
 | No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
 | `cargo check -p <crate-name>` passes. | Manual fallback gate. | Required by the Rust compilation check; missing it is a defect. |

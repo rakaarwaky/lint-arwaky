@@ -207,9 +207,12 @@ Docstrings and comments count. For constants, each constant should have a descri
 5. For Errors:
    ```text
    Extend Exception.
-   Store VO fields only.
-   Derive human-readable messages from VOs.
-   Do not store raw str as a domain field.
+   Store VO fields only — no raw str, int, float, dict.
+   Provide an error_code property (plain string identifier) for machine-readable
+     error classification.
+   Provide a message property that derives a human-readable description
+     from the stored VOs and error code.
+   Do not store raw str as a domain payload field.
    ```
 
 6. For Events:
@@ -368,8 +371,17 @@ class <Name>Error(Exception):
     def <field_name>(self) -> <FieldVO>:
         return self._<field_name>
 
+    @property
+    def error_code(self) -> str:
+        """Stable machine-readable id. Callers branch on this, never on the message."""
+        return "<DOMAIN>_<REASON>"
+
+    @property
+    def message(self) -> str:
+        return f"{self.error_code}: <Description>: {self._<field_name>}"
+
     def __str__(self) -> str:
-        return f"<Name>Error: {self._<field_name>}"
+        return self.message
 ```
 
 Concrete example:
@@ -387,11 +399,28 @@ class OrderNotFoundError(Exception):
     def order_id(self) -> OrderId:
         return self._order_id
 
+    @property
+    def error_code(self) -> str:
+        """Stable machine-readable id. Callers branch on this, never on the message."""
+        return "ORDER_NOT_FOUND"
+
+    @property
+    def message(self) -> str:
+        return f"{self.error_code}: order not found: {self._order_id}"
+
     def __str__(self) -> str:
-        return f"Order not found: {self._order_id}"
+        return self.message
 ```
 
-Errors may expose VO fields only.
+Every error must expose all three:
+- **Field VO** — programmatic access to the domain data that caused the error
+- **Error code** — a stable string id such as `ORDER_NOT_FOUND`, so callers
+  can branch without string matching the description
+- **Message** — a human-readable description derived from the error code and
+  the stored VOs
+
+The error code stays stable across releases. Renaming or reformatting the
+message is a compatible change; changing the error code is a breaking one.
 
 Good:
 
@@ -567,6 +596,7 @@ __all__ = [
 | Events use VO payload fields only. | Convention — not machine-checked reliably. The reader verifies this. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors extend `Exception`. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Errors expose an `error_code` property (stable identifier) and a `message` property derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_code` and to read the description without parsing `__str__`. | Required by AES best practice; missing it is a defect. |
 | Constants are pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
 | No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
 | `python -c "import ..."` passes. | Manual fallback gate. | Required by the Python packaging check; missing it is a defect. |
