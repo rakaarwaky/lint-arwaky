@@ -247,6 +247,10 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         .parent()
         .and_then(|p| p.parent())
         .map(|p| p.to_path_buf());
+    // AES5xx orphan (and AES205 cycle) violation paths are relative to the
+    // workspace root the orphan scanner resolved — for a member-dir scan target
+    // that is one level up (the target's parent), not two.
+    let workspace_root = target_canon.parent().map(|p| p.to_path_buf());
 
     let mut all: Vec<ViolationItem> = Vec::new();
 
@@ -339,7 +343,15 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
     // Keep only violations that resolve to a real file under the scan scope
     // (or, for AES205 cycles / AES5xx orphans, within the parent workspace).
-    all.retain(|v| violation_in_scan_scope(v, &seam, &target_canon, parent_workspace.as_deref()));
+    all.retain(|v| {
+        violation_in_scan_scope(
+            v,
+            &seam,
+            &target_canon,
+            parent_workspace.as_deref(),
+            workspace_root.as_deref(),
+        )
+    });
 
     all
 }
@@ -353,7 +365,7 @@ fn external_violation_in_scope(
     target_canon: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
 ) -> bool {
-    let resolved_canon = resolve_violation_path(v, seam, target_canon);
+    let resolved_canon = resolve_violation_path(v, seam, target_canon, parent_workspace);
     resolved_canon.starts_with(target_canon)
         || (v.code.code() == "AES205"
             && parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw)))
@@ -367,8 +379,9 @@ fn violation_in_scan_scope(
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
+    workspace_root: Option<&std::path::Path>,
 ) -> bool {
-    let resolved_canon = resolve_violation_path(v, seam, target_canon);
+    let resolved_canon = resolve_violation_path(v, seam, target_canon, workspace_root);
     if !seam.io.path_exists(&resolved_canon) {
         return false; // E902 guard: non-existent file — drop, no violation.
     }
@@ -382,16 +395,27 @@ fn violation_in_scan_scope(
 /// Resolve a violation's file path to a canonical absolute path under the
 /// target (relative paths join the target; absolute paths are canonicalized as
 /// is, falling back to the path itself when canonicalization fails).
+///
+/// Orphan (AES5xx) and cycle (AES205) violations carry paths relative to the
+/// workspace root, which is the target's parent when a member directory is the
+/// scan target. Those do not resolve under the target, so a relative path that
+/// misses there is retried against the parent workspace before being kept.
 fn resolve_violation_path(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
+    workspace_root: Option<&std::path::Path>,
 ) -> std::path::PathBuf {
     let file_path = std::path::Path::new(&v.file.value);
     let resolved = if file_path.is_absolute() {
         file_path.to_path_buf()
     } else {
-        target_canon.join(file_path)
+        let under_target = target_canon.join(file_path);
+        let exists_under_target = seam.io.path_exists(&under_target);
+        match workspace_root {
+            Some(pw) if !exists_under_target => pw.join(file_path),
+            _ => under_target,
+        }
     };
     seam.io.canonicalize(&resolved).unwrap_or(resolved)
 }

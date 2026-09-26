@@ -1,9 +1,19 @@
 import sys
-from typing import List
+from pathlib import Path
 
 from shared.src.contract_calculator_aggregate import CalculatorAggregate
 from shared.src.taxonomy_expression_vo import create_expression
 from shared.src.taxonomy_operation_vo import operation_from_symbol
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
+def _print_hist(hist: list) -> None:
+    if not hist:
+        print("  Belum ada riwayat", file=sys.stderr)
+        return
+    for r in hist:
+        print(f"  {r.expression}", file=sys.stderr)
 
 
 def run(calc: CalculatorAggregate) -> None:
@@ -21,12 +31,8 @@ def run(calc: CalculatorAggregate) -> None:
         if trimmed == "q":
             break
         if trimmed == "h":
-            hist: List = calc.history()
-            if not hist:
-                print("  Belum ada riwayat", file=sys.stderr)
-            else:
-                for r in hist:
-                    print(f"  {r.expression}", file=sys.stderr)
+            hist: list = calc.history()
+            _print_hist(hist)
             continue
         parts = trimmed.split()
         if len(parts) != 3:

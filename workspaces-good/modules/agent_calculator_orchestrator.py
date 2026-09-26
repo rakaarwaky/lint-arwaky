@@ -1,11 +1,8 @@
-from typing import List, Optional
-
 from shared.src.contract_calculator_aggregate import CalculatorAggregate
 from shared.src.contract_calculator_protocol import CalculatorProtocol
 from shared.src.taxonomy_expression_vo import ExpressionVO
 from shared.src.taxonomy_operation_vo import OperationVO
 from shared.src.taxonomy_result_vo import ResultVO
-
 
 # ─── Block 1: Struct Definition ───────────────────────────
 
@@ -28,9 +25,9 @@ class CalculatorOrchestratorDeps:
 class CalculatorOrchestrator(CalculatorAggregate):
     def __init__(self, deps: CalculatorOrchestratorDeps):
         self._deps = deps
-        self._history: List[ResultVO] = []
+        self._history: list[ResultVO] = []
 
-    def delegate(self, expr: ExpressionVO) -> Optional[ResultVO]:
+    def delegate(self, expr: ExpressionVO) -> ResultVO | None:
         analyzer_map = {
             OperationVO.ADD: self._deps.addition,
             OperationVO.SUBTRACT: self._deps.subtraction,
@@ -45,5 +42,5 @@ class CalculatorOrchestrator(CalculatorAggregate):
             self._history.append(result)
         return result
 
-    def history(self) -> List[ResultVO]:
+    def history(self) -> list[ResultVO]:
         return list(self._history)
