@@ -1,6 +1,7 @@
 // E2E tests — full project setup flow: container → generate configs → write → verify.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 use shared::common::taxonomy_path_vo::DirectoryPath;
+use shared::project_setup::SetupRequest;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
@@ -14,7 +15,7 @@ fn e2e_generate_and_write_env() {
     let agg = container.aggregate();
     let tmp = TempDir::new().unwrap();
     let home = DirectoryPath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let env = agg.generate_env(&home);
+    let env = agg.execute(SetupRequest::generate_env(&home)).into_env();
     assert!(env.value().contains("PHANTOM_ROOT="));
 
     let proto = container.protocol();
@@ -29,7 +30,9 @@ fn e2e_generate_mcp_config_claude_and_write() {
     let container = make_container();
     let agg = container.aggregate();
     let tmp = TempDir::new().unwrap();
-    let config = agg.mcp_config_claude();
+    let config = agg
+        .execute(SetupRequest::mcp_config_claude())
+        .into_mcp_config();
     let json_str = serde_json::to_string_pretty(config.value()).unwrap();
     let path = tmp.path().join("mcp_claude.json");
     let proto = container.protocol();
@@ -44,7 +47,9 @@ fn e2e_generate_mcp_config_vscode_and_write() {
     let container = make_container();
     let agg = container.aggregate();
     let tmp = TempDir::new().unwrap();
-    let config = agg.mcp_config_vscode();
+    let config = agg
+        .execute(SetupRequest::mcp_config_vscode())
+        .into_mcp_config();
     let json_str = serde_json::to_string_pretty(config.value()).unwrap();
     let path = tmp.path().join("mcp_vscode.json");
     let proto = container.protocol();
@@ -62,11 +67,17 @@ fn e2e_detect_language_and_write_config() {
     let agg = container.aggregate();
     let tmp = TempDir::new().unwrap();
 
-    let lang = agg.detect_language().unwrap();
-    let template = agg.get_config_template(lang.value()).unwrap();
+    let lang = agg
+        .execute(SetupRequest::detect_language())
+        .into_language()
+        .unwrap();
+    let template = agg
+        .execute(SetupRequest::get_config_template(lang.value()))
+        .into_template()
+        .unwrap();
     let path = tmp.path().join("lint_arwaky.config.yaml");
     let proto = container.protocol();
-    let result = proto.write_config_file(&path.to_string_lossy(), template);
+    let result = proto.write_config_file(&path.to_string_lossy(), &template);
     assert!(result.is_ok());
     let content = std::fs::read_to_string(&path).unwrap();
     assert!(!content.is_empty());

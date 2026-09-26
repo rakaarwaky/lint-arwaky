@@ -2,6 +2,7 @@
 // handle_install delegates to ISetupAggregate.
 // No direct std::process::Command calls.
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::project_setup::SetupRequest;
 use shared::project_setup::{ISetupAggregate, ProjectLanguagesVO};
 use std::sync::Arc;
 
@@ -33,13 +34,18 @@ pub fn collect_init(
 ) -> Vec<SetupInitItem> {
     let mut items: Vec<SetupInitItem> = Vec::new();
 
-    let languages = setup_orchestrator.detect_languages();
+    let languages = setup_orchestrator
+        .execute(SetupRequest::detect_languages())
+        .into_languages();
     let target = "lint_arwaky.config.yaml";
 
     // Write unified config once — all languages share the same template
     let first_lang = languages.iter().next().map(|l| l.value().to_string());
     let lang_str = first_lang.as_deref().unwrap_or("all");
-    let content = match setup_orchestrator.get_config_template(lang_str) {
+    let content = match setup_orchestrator
+        .execute(SetupRequest::get_config_template(lang_str))
+        .into_template()
+    {
         Ok(c) => c,
         Err(e) => {
             items.push(SetupInitItem {
@@ -49,7 +55,10 @@ pub fn collect_init(
             return items;
         }
     };
-    match setup_orchestrator.write_config_file(target, content) {
+    match setup_orchestrator
+        .execute(SetupRequest::write_config_file(target, &content))
+        .into_write_result()
+    {
         Ok(desc) => {
             items.push(SetupInitItem {
                 message: format!(
@@ -81,7 +90,10 @@ pub fn collect_init(
                 continue;
             }
             match filesystem.read_to_string(&xdg_src) {
-                Ok(content) => match setup_orchestrator.write_config_file(doc, &content.value) {
+                Ok(content) => match setup_orchestrator
+                    .execute(SetupRequest::write_config_file(doc, &content.value))
+                    .into_write_result()
+                {
                     Ok(_) => items.push(SetupInitItem {
                         message: format!("  {doc} — copied/overwritten from XDG config"),
                         ok: true,
@@ -132,7 +144,9 @@ pub fn collect_init(
     }
 
     // Install embedded skills from binary constants (filtered by detected languages)
-    let embedded_skills = setup_orchestrator.get_embedded_skills();
+    let embedded_skills = setup_orchestrator
+        .execute(SetupRequest::get_embedded_skills())
+        .into_skills();
     let mut installed_count = 0;
     let mut install_failed = false;
     let skills_root = std::path::Path::new(".agents").join("skills");
@@ -235,8 +249,14 @@ fn copy_dir_all(
 }
 
 pub fn collect_install(setup: Arc<dyn ISetupAggregate>, sudo: bool) -> InstallReport {
-    let py_ok = setup.install_python_adapters().value;
-    let js_ok = setup.install_javascript_adapters(sudo).value;
+    let py_ok = setup
+        .execute(SetupRequest::install_python_adapters())
+        .into_status()
+        .value;
+    let js_ok = setup
+        .execute(SetupRequest::install_javascript_adapters(sudo))
+        .into_status()
+        .value;
     InstallReport { py_ok, js_ok }
 }
 
