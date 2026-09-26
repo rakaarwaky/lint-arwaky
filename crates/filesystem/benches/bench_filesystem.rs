@@ -9,11 +9,11 @@ use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWork
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_graph_protocol::IGraphProtocol;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
-use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImportEntry, ImportType,
 };

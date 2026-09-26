@@ -2,6 +2,7 @@
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
 use shared::common::PatternList;
 use shared::common::taxonomy_language_vo::Language;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -11,7 +12,7 @@ fn filesystem_boots_and_container_creates() {
     let start = std::time::Instant::now();
     let container = FilesystemContainer::new();
     let orch = container.orchestrator();
-    let _ = orch.file_list();
+    let _ = orch.execute(FilesystemRequest::FileList).into_file_list();
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -24,13 +25,13 @@ fn filesystem_boots_and_container_creates() {
 fn filesystem_io_operations_respond() {
     let start = std::time::Instant::now();
     let container = FilesystemContainer::new();
-    let orch = container.orchestrator();
+    let io = container.io();
     let tmp = TempDir::new().unwrap();
     let file = tmp.path().join("smoke.txt");
-    orch.write_string(&file, "smoke test").unwrap();
-    let content = orch.read_to_string(&file).unwrap();
+    io.write_string(&file, "smoke test").unwrap();
+    let content = io.read_to_string(&file).unwrap();
     assert_eq!(content.value, "smoke test");
-    orch.remove_file(&file).unwrap();
+    io.remove_file(&file).unwrap();
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -43,7 +44,7 @@ fn filesystem_io_operations_respond() {
 fn filesystem_parse_operations_respond() {
     let start = std::time::Instant::now();
     let container = FilesystemContainer::new();
-    let orch = container.orchestrator();
+    let parser = container.parser();
     let mut files = vec![FileEntry {
         path: PathBuf::from("/smoke.rs"),
         extension: "rs".to_string(),
@@ -53,7 +54,7 @@ fn filesystem_parse_operations_respond() {
         parse_ok: false,
         parse_metadata: None,
     }];
-    orch.parse_all(&mut files);
+    parser.parse_all(&mut files);
     assert!(files[0].parse_ok);
     let elapsed = start.elapsed();
     assert!(
@@ -67,8 +68,8 @@ fn filesystem_parse_operations_respond() {
 fn filesystem_workspace_detection_responds() {
     let start = std::time::Instant::now();
     let container = FilesystemContainer::new();
-    let orch = container.orchestrator();
-    let lang = orch.detect_language_from_path("src/main.rs");
+    let workspace = container.workspace();
+    let lang = workspace.detect_language_from_path("src/main.rs");
     assert_eq!(
         lang,
         shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
@@ -85,9 +86,9 @@ fn filesystem_workspace_detection_responds() {
 fn filesystem_tool_resolution_responds() {
     let start = std::time::Instant::now();
     let container = FilesystemContainer::new();
-    let orch = container.orchestrator();
+    let tools = container.tool_resolution();
     let name = shared::filesystem::taxonomy_filesystem_vo::ToolName::new("sh").unwrap();
-    assert!(orch.is_binary_available(&name));
+    assert!(tools.is_binary_available(&name));
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -103,8 +104,8 @@ fn filesystem_scan_directory_responds() {
     std::fs::write(tmp.path().join("a.rs"), "").unwrap();
     std::fs::write(tmp.path().join("b.py"), "").unwrap();
     let container = FilesystemContainer::new();
-    let orch = container.orchestrator();
-    let files = orch.scan_directory_with_ignored(tmp.path(), &PatternList::default());
+    let io = container.io();
+    let files = io.scan_directory_with_ignored(tmp.path(), &PatternList::default());
     assert!(!files.is_empty());
     let elapsed = start.elapsed();
     assert!(

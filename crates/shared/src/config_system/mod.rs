@@ -1,10 +1,8 @@
 // config-system — taxonomy and contract types
 pub mod contract_config_orchestrator_aggregate;
-pub mod contract_parser_protocol;
-pub mod contract_reader_protocol;
-pub mod contract_validator_protocol;
-pub mod contract_workspace_detector_protocol;
+pub mod contract_config_protocol;
 pub mod taxonomy_config_error;
+pub mod taxonomy_config_request_vo;
 pub use crate::common::taxonomy_config_language_vo;
 pub mod taxonomy_config_vo;
 pub mod taxonomy_identifier_vo;
@@ -19,16 +17,18 @@ pub mod utility_config_parser;
 
 // ── Contract traits ──
 pub use contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-pub use contract_parser_protocol::IConfigParserProtocol;
-pub use contract_reader_protocol::IConfigReaderProtocol;
-pub use contract_validator_protocol::IConfigValidatorProtocol;
-pub use contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+pub use contract_config_protocol::IConfigParserProtocol;
+pub use contract_config_protocol::IConfigReaderProtocol;
+pub use contract_config_protocol::IConfigValidatorProtocol;
+pub use contract_config_protocol::IWorkspaceDetectorProtocol;
 pub use taxonomy_config_vo::WorkspaceType;
 
 // ── Taxonomy types ──
 pub use crate::common::taxonomy_definition_vo::OrphanRuleVO;
 pub use taxonomy_config_error::ConfigError;
 pub use taxonomy_config_language_vo::ConfigLanguage;
+pub use taxonomy_config_request_vo::ConfigRequest;
+pub use taxonomy_config_request_vo::ConfigResponse;
 pub use taxonomy_config_vo::ArchitectureConfig;
 pub use taxonomy_config_vo::ArchitectureRule;
 pub use taxonomy_config_vo::NamingRuleVO;

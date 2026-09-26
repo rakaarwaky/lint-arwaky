@@ -10,6 +10,7 @@ use shared::config_system::{
     IConfigValidatorProtocol,
 };
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
 use std::sync::Arc;
 
@@ -22,11 +23,14 @@ pub struct ConfigContainer {
 
 impl ConfigContainer {
     /// Create a new config container, wiring all capabilities to the filesystem aggregate.
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        let workspace_detector = Arc::new(WorkspaceDetector::new(filesystem.clone()));
-        let yaml_reader = Arc::new(ConfigYamlReader::new(filesystem.clone()));
+    pub fn new(
+        filesystem: Arc<dyn IFilesystemAggregate>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+    ) -> Self {
+        let workspace_detector = Arc::new(WorkspaceDetector::new(io.clone()));
+        let yaml_reader = Arc::new(ConfigYamlReader::new(io.clone()));
         let validator = Arc::new(ConfigRulesValidator::new());
-        let parser = Arc::new(ConfigParserProvider::new(filesystem.clone()));
+        let parser = Arc::new(ConfigParserProvider::new(io));
 
         Self {
             orchestrator: Arc::new(ConfigOrchestrator::new(ConfigOrchestratorDeps {

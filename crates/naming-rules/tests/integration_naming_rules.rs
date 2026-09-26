@@ -10,6 +10,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -31,7 +32,10 @@ fn container_creates_with_default_config() {
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config, layer_map);
     let orch = container.orchestrator();
-    assert_eq!(orch.name(), "naming-rules");
+    match orch.execute(NamingRequest::Name) {
+        NamingResponse::Name { name } => assert_eq!(name, "naming-rules"),
+        NamingResponse::Audit { .. } => panic!("expected a name response"),
+    }
 }
 
 #[test]
@@ -40,8 +44,8 @@ fn container_provides_both_checkers() {
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config, layer_map);
     // Both checkers should be accessible
-    let _nc = container.naming_convention_checker();
-    let _sp = container.suffix_prefix_checker();
+    let _nc = container.naming_checker();
+    let _sp = container.naming_checker();
 }
 
 #[test]
@@ -58,7 +62,7 @@ fn orchestrator_produces_results_for_invalid_names() {
     let mut results = LintResultList::new(Vec::new());
 
     // Run convention checker
-    container.naming_convention_checker().check_file_naming(
+    container.naming_checker().check_file_naming(
         &ArchitectureConfig::default(),
         &make_layer_map(),
         &files,
@@ -84,7 +88,7 @@ fn orchestrator_clean_file_no_violations() {
     let root = FilePath::new(".".to_string()).unwrap();
     let mut results = LintResultList::new(Vec::new());
 
-    container.naming_convention_checker().check_file_naming(
+    container.naming_checker().check_file_naming(
         &ArchitectureConfig::default(),
         &make_layer_map(),
         &files,

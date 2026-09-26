@@ -50,7 +50,12 @@ fn make_adapter() -> BanditAdapter {
     }
 
     let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
-    BanditAdapter::new(executor, None, Arc::new(MockFilesystem::new()))
+    BanditAdapter::new(
+        executor,
+        None,
+        Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
+    )
 }
 
 #[test]

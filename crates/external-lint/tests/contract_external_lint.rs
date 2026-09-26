@@ -13,11 +13,11 @@ use std::sync::Arc;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::external_lint::contract_external_lint_executor_protocol::IExternalLintExecutorProtocol;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IExternalLintExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
@@ -90,6 +90,7 @@ fn ruff_adapter_implements_protocol() {
         Arc::new(MockLintExecutor),
         None,
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "ruff");
 }
@@ -100,6 +101,7 @@ fn bandit_adapter_implements_protocol() {
         Arc::new(MockLintExecutor),
         None,
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "bandit");
 }
@@ -109,6 +111,7 @@ fn mypy_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
         Arc::new(MockLintExecutor),
         None,
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "mypy");
@@ -148,6 +151,7 @@ fn eslint_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::ESLintAdapter::new(
         Arc::new(MockLintExecutor),
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "eslint");
 }
@@ -157,6 +161,7 @@ fn prettier_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::PrettierAdapter::new(
         Arc::new(MockLintExecutor),
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "prettier");
 }
@@ -165,6 +170,7 @@ fn prettier_adapter_implements_protocol() {
 fn tsc_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
         Arc::new(MockLintExecutor),
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "tsc");
@@ -179,17 +185,20 @@ fn all_adapters_coerce_to_dyn_protocol() {
             Arc::new(MockLintExecutor),
             None,
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_bandit: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::BanditAdapter::new(
             Arc::new(MockLintExecutor),
             None,
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_mypy: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::MyPyAdapter::new(
             Arc::new(MockLintExecutor),
             None,
+            Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
     let _dyn_clippy: Box<dyn ILinterAdapterProtocol> =
@@ -213,15 +222,18 @@ fn all_adapters_coerce_to_dyn_protocol() {
         Box::new(external_lint_lint_arwaky::ESLintAdapter::new(
             Arc::new(MockLintExecutor),
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_prettier: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::PrettierAdapter::new(
             Arc::new(MockLintExecutor),
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_tsc: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::TSCAdapter::new(
             Arc::new(MockLintExecutor),
+            Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
 }
@@ -244,6 +256,7 @@ fn stdio_client_implements_command_executor_protocol() {
 fn external_lint_executor_implements_protocol() {
     let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
         Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let _dyn_exec: &dyn IExternalLintExecutorProtocol = &executor;
@@ -280,6 +293,7 @@ fn orchestrator_implements_aggregate_protocol() {
     let deps = ExternalLintDeps {
         adapters: HashMap::new(),
         filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
         selector: Arc::new(
             external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
         ),
@@ -288,8 +302,12 @@ fn orchestrator_implements_aggregate_protocol() {
     let _dyn_agg: &dyn IExternalLintAggregate = &orchestrator;
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let result = _dyn_agg.scan_all(&path);
+    let result = _dyn_agg
+        .execute(shared::external_lint::ExternalLintRequest::scan_all(&path))
+        .into_violations();
     assert!(result.values.is_empty()); // no adapters registered, so no results
-    let names = _dyn_agg.adapter_names();
+    let names = _dyn_agg
+        .execute(shared::external_lint::ExternalLintRequest::adapter_names())
+        .into_adapter_names();
     assert!(names.is_empty());
 }

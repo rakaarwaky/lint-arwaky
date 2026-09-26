@@ -2,6 +2,7 @@
 mod common;
 
 use shared::common::FilePath;
+use shared::config_system::ConfigRequest;
 use std::fs;
 use tempfile::TempDir;
 
@@ -18,7 +19,8 @@ fn us2_rust_workspace_loads_rust_config() {
     assert_eq!(
         common::make_container()
             .orchestrator()
-            .load_project_config(&fp)
+            .execute(ConfigRequest::load_project_config(&fp))
+            .into_config_result()
             .source
             .language,
         "rust"
@@ -38,7 +40,8 @@ fn us2_python_workspace_loads_python_config() {
     assert_eq!(
         common::make_container()
             .orchestrator()
-            .load_project_config(&fp)
+            .execute(ConfigRequest::load_project_config(&fp))
+            .into_config_result()
             .source
             .language,
         "python"
@@ -58,7 +61,8 @@ fn us2_typescript_workspace_loads_typescript_config() {
     assert_eq!(
         common::make_container()
             .orchestrator()
-            .load_project_config(&fp)
+            .execute(ConfigRequest::load_project_config(&fp))
+            .into_config_result()
             .source
             .language,
         "typescript"

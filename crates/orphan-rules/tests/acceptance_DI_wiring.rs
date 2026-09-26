@@ -20,6 +20,7 @@ use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
@@ -101,7 +102,12 @@ fn aes503_rust_di_wiring_reachable() {
     .unwrap();
 
     let orch = build_orch();
-    let ctx = orch.build_orphan_graph_context(tmp.path(), &[]);
+    let ctx = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(
+            tmp.path(),
+            &[],
+        ))
+        .into_graph_context();
     let entry = "crates/calc/src/root_calc_entry.rs".to_string();
     let capability = "crates/calc/src/capability_calc_addition.rs".to_string();
     let contract = "crates/calc/src/contract_calc_protocol.rs".to_string();
@@ -159,7 +165,12 @@ fn aes503_python_di_wiring_reachable() {
     .unwrap();
 
     let orch = build_orch();
-    let ctx = orch.build_orphan_graph_context(tmp.path(), &[]);
+    let ctx = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(
+            tmp.path(),
+            &[],
+        ))
+        .into_graph_context();
     let entry = "modules/calc/src/root_calc_entry.py".to_string();
     let capability = "modules/calc/src/capability_calc_addition.py".to_string();
     let contract = "modules/calc/src/contract_calc_protocol.py".to_string();
@@ -217,7 +228,12 @@ fn aes503_typescript_di_wiring_reachable() {
     .unwrap();
 
     let orch = build_orch();
-    let ctx = orch.build_orphan_graph_context(tmp.path(), &[]);
+    let ctx = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(
+            tmp.path(),
+            &[],
+        ))
+        .into_graph_context();
     let entry = "packages/calc/root_calc_entry.ts".to_string();
     let capability = "packages/calc/capability_calc_addition.ts".to_string();
     let contract = "packages/calc/contract_calc_protocol.ts".to_string();

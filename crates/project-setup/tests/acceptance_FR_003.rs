@@ -3,7 +3,8 @@
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
 
 fn make_container() -> SetupContainer {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = c.io();
     SetupContainer::new(fs)
 }
 

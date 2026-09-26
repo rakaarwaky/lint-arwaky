@@ -4,7 +4,7 @@
 
 use crate::utility_tool_resolution;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use std::path::Path;
 

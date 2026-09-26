@@ -5,7 +5,7 @@
 // only unused/forbidden imports are deleted, and bypass comments are removed.
 //
 // This orchestrator bridges the IFixProtocol (capabilities layer) to the
-// LintFixOrchestratorAggregate contract (surface layer). It's intentionally
+// IFixAggregate contract (surface layer). It's intentionally
 // thin — all fix logic lives in LintFixProcessor.
 //
 // Safety policy:
@@ -19,7 +19,8 @@
 // - BF-5: Removed duplicate `run_fix` — consolidated with aggregate `execute`
 // - TR-2: Aggregate trait includes `manual_report` for FR-005
 
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
+use shared::auto_fix::taxonomy_fix_request_vo::{FixRequest, FixResponse};
 use shared::auto_fix::{FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol};
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_message_vo::LintMessage;
@@ -38,25 +39,31 @@ pub struct FixOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
-impl LintFixOrchestratorAggregate for FixOrchestrator {
-    /// Per-request dry_run via parameter (BF-1, FR-004 assumption §9).
-    fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult {
-        self.fix_protocol.execute(path, dry_run)
-    }
-
-    /// FR-005: Report violations that require manual intervention (BF-2).
-    fn manual_report(&self, violations: &[LintResult]) -> Vec<LintMessage> {
-        self.fix_protocol.report_non_fixable(violations)
-    }
-
-    fn file_adapter(&self) -> Arc<dyn IFileAdapterProtocol> {
-        self.file_adapter.clone()
+impl IFixAggregate for FixOrchestrator {
+    fn execute(&self, request: FixRequest) -> FixResponse {
+        match request {
+            FixRequest::Execute { path, dry_run } => FixResponse::Execute {
+                result: self.execute_impl(&path, dry_run),
+            },
+            FixRequest::ManualReport { violations } => FixResponse::ManualReport {
+                reports: self.manual_report_impl(&violations),
+            },
+        }
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl FixOrchestrator {
+    pub fn execute_impl(&self, path: &FilePath, dry_run: bool) -> FixResult {
+        self.fix_protocol.execute(path, dry_run)
+    }
+    pub fn manual_report_impl(&self, violations: &[LintResult]) -> Vec<LintMessage> {
+        self.fix_protocol.report_non_fixable(violations)
+    }
+    pub fn file_adapter(&self) -> Arc<dyn IFileAdapterProtocol> {
+        self.file_adapter.clone()
+    }
     pub fn new(
         fix_protocol: Arc<dyn IFixProtocol>,
         file_adapter: Arc<dyn IFileAdapterProtocol>,

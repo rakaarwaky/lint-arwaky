@@ -1,10 +1,9 @@
-// PURPOSE: IRoleRunnerAggregate — contract for role-rules feature orchestrator
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+// PURPOSE: IRoleRunnerAggregate — single entry point over the role-rules domain
+// The agent behind the aggregate dispatches each RoleRequest to the rich
+// role-protocol operations. Consumers never see the protocols.
+use crate::role_rules::taxonomy_role_request_vo::{RoleRequest, RoleResponse};
 
+/// Single entry point over role-rules; the agent dispatches internally.
 pub trait IRoleRunnerAggregate: Send + Sync {
-    /// Run audit on pre-parsed file entries from the filesystem crate.
-    /// This is the FRD-compliant entry point — no file I/O or parsing in role-rules.
-    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult>;
-    fn name(&self) -> &str;
+    fn execute(&self, request: RoleRequest) -> RoleResponse;
 }

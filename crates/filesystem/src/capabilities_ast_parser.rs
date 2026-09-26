@@ -9,7 +9,7 @@
 use dashmap::DashMap;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ImportEntry, ParseMetadata, ParseWarning,
 };

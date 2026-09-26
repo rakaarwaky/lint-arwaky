@@ -2,7 +2,7 @@
 use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use shared::common::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::IAgentRoleChecker;
+use shared::role_rules::IAgentRoleProtocol;
 
 use shared::filesystem::taxonomy_filesystem_vo::{Language, ParseMetadata, RustMetadata};
 use std::path::PathBuf;

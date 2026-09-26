@@ -2,7 +2,7 @@ use crate::surface_lint_action::SurfaceLintExecutor;
 use shared::common::FilePath;
 use shared::tui::{ConfirmState, LintExecutionResult, ScanUpdate};
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::tui::TuiEvent;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
@@ -21,7 +21,7 @@ use crate::utility_file_system;
 /// Filesystem operations use direct utility calls instead of protocol ports.
 pub struct SurfaceActionHandler {
     lint_port: Arc<SurfaceLintExecutor>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 // ─── Block 2: Background Task Methods ─────────────────────
@@ -161,14 +161,8 @@ impl SurfaceActionHandler {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl SurfaceActionHandler {
-    pub fn new(
-        lint_port: Arc<SurfaceLintExecutor>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
-    ) -> Self {
-        Self {
-            lint_port,
-            filesystem,
-        }
+    pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { lint_port, io }
     }
 
     /// Main event dispatch — maps every TuiEvent variant to a concrete action.
@@ -469,7 +463,7 @@ impl SurfaceActionHandler {
         let fp = FilePath::new(path).unwrap_or_default();
         let dir_path = std::path::Path::new(fp.value());
         let paths = self
-            .filesystem
+            .io
             .read_dir_entries_as_pathbuf(dir_path)
             .unwrap_or_default();
         state.entries = paths
@@ -503,7 +497,7 @@ impl SurfaceActionHandler {
         let fp = FilePath::new(path.to_string()).unwrap_or_default();
         let file_path = std::path::Path::new(fp.value());
         let max_lines = 100;
-        let display = match self.filesystem.read_to_string(file_path) {
+        let display = match self.io.read_to_string(file_path) {
             Ok(content) => {
                 let lines: Vec<&str> = content.value.lines().take(max_lines).collect();
                 let mut output = String::new();
@@ -590,7 +584,7 @@ impl SurfaceActionHandler {
     }
 
     /// Copy the current preview content to a file `lint-results.txt` in the current directory.
-    /// Delegates I/O to self.filesystem.write_text_to_file().
+    /// Delegates I/O to the filesystem io seam.
     fn copy_to_file(&self, state: &mut AppState) {
         let text = &state.preview_text;
         if text.is_empty() {
@@ -599,7 +593,7 @@ impl SurfaceActionHandler {
         }
 
         let path = std::path::Path::new("lint-results.txt");
-        match self.filesystem.write_string(path, text) {
+        match self.io.write_string(path, text) {
             Ok(()) => state.set_status("Saved to lint-results.txt"),
             Err(e) => state.set_status(format!("Save failed: {e}")),
         }

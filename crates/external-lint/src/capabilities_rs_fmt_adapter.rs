@@ -22,20 +22,20 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
 use tracing::debug;
 
-use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 /// Adapter that wraps `cargo fmt --check` as an ILinterAdapterProtocol.
 pub struct RustFmtAdapter {
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
     executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
@@ -51,7 +51,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
         let mut results = Vec::new();
 
         // Find the Cargo.toml parent to use as working directory
-        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
+        let working_dir = self.tool_resolution.resolve_cargo_working_dir(path);
         let working_dir_str = working_dir.value();
 
         let cargo_toml = Path::new(working_dir_str).join("Cargo.toml");
@@ -127,7 +127,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
     }
 
     fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
+        let working_dir = self.tool_resolution.resolve_cargo_working_dir(path);
         let cmd = vec!["cargo".to_string(), "fmt".to_string()];
         let _ = self.executor.execute_command(
             PatternList::new(cmd),
@@ -144,12 +144,12 @@ impl RustFmtAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
         bin_path: Option<FilePath>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             executor,
             _bin_path: bin_path,
-            filesystem,
+            tool_resolution,
         }
     }
 }

@@ -6,7 +6,7 @@ use crate::utility_workspace_detection;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use std::path::{Path, PathBuf};
 
 // ─── Block 1: Struct Definition ───────────────────────────

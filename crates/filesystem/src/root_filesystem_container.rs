@@ -11,11 +11,11 @@ use crate::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use crate::capabilities_tool_resolution::CapabilitiesToolResolution;
 use crate::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_graph_protocol::IGraphProtocol;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
-use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -58,6 +58,32 @@ impl FilesystemContainer {
             parser: self.parser.clone(),
             graph: self.graph.clone(),
         }))
+    }
+
+    /// Raw filesystem I/O seam — for consumers that need file reads, writes,
+    /// path checks, or subprocess runs rather than feature-level operations.
+    pub fn io(&self) -> Arc<dyn IFileSystemIOProtocol> {
+        self.io.clone()
+    }
+
+    /// Workspace structure detection seam.
+    pub fn workspace(&self) -> Arc<dyn IWorkspaceProtocol> {
+        self.workspace.clone()
+    }
+
+    /// External tool lookup seam.
+    pub fn tool_resolution(&self) -> Arc<dyn IToolResolutionProtocol> {
+        self.tool_resolution.clone()
+    }
+
+    /// Source parsing seam.
+    pub fn parser(&self) -> Arc<dyn IParserProtocol> {
+        self.parser.clone()
+    }
+
+    /// Dependency graph seam.
+    pub fn graph(&self) -> Arc<dyn IGraphProtocol> {
+        self.graph.clone()
     }
 }
 

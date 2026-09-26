@@ -3,7 +3,7 @@
 mod common;
 
 use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
 
 use std::fs;
 use std::sync::Arc;
@@ -19,13 +19,13 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
     use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
     use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 
-    let fs = common::make_fs();
+    let io = common::make_io();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
-        config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
-        parser: Arc::new(ConfigParserProvider::new(fs.clone())),
+        workspace_detector: Arc::new(WorkspaceDetector::new(io.clone())),
+        config_reader: Arc::new(ConfigYamlReader::new(io.clone())),
+        parser: Arc::new(ConfigParserProvider::new(io.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
-        filesystem: fs,
+        filesystem: common::make_fs(),
     })
 }
 
@@ -43,8 +43,12 @@ fn us7_same_config_file_cached_on_second_load() {
     let sut = make_orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
 
-    let r1 = sut.load_config_for_language(&fp, ConfigLanguage::Rust);
-    let r2 = sut.load_config_for_language(&fp, ConfigLanguage::Rust);
+    let r1 = sut
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
+    let r2 = sut
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
 
     // Both loads should return the same source path (from cache)
     assert_eq!(r1.source.path, r2.source.path);
@@ -71,7 +75,11 @@ fn us7_concurrent_requests_for_same_key_are_safe() {
         .map(|_| {
             let fp = FilePath::new(path_str.clone()).unwrap();
             let sut_clone = sut.clone();
-            thread::spawn(move || sut_clone.load_config_for_language(&fp, ConfigLanguage::Rust))
+            thread::spawn(move || {
+                sut_clone
+                    .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+                    .into_config_result()
+            })
         })
         .collect();
 
@@ -99,9 +107,13 @@ fn us7_load_config_sync_uses_cache_for_same_path() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
 
     // First call populates cache
-    let config1 = sut.load_config_sync(&fp);
+    let config1 = sut
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     // Second call should use cache
-    let config2 = sut.load_config_sync(&fp);
+    let config2 = sut
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
 
     assert_eq!(config1.enabled.value, config2.enabled.value);
 }

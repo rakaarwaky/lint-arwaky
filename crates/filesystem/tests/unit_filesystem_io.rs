@@ -1,7 +1,7 @@
 // Unit tests for CapabilitiesFileSystemIO — FR-003: File I/O & Directory Operations.
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use shared::common::PatternList;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::FileExtension;
 use std::path::Path;
 use tempfile::TempDir;

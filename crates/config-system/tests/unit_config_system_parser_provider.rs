@@ -8,7 +8,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_parser() -> ConfigParserProvider {
-    ConfigParserProvider::new(common::make_fs())
+    ConfigParserProvider::new(common::make_io())
 }
 
 #[test]
@@ -139,5 +139,5 @@ fn parse_toml_config_invalid_toml() {
 
 #[test]
 fn new_creates_instance() {
-    let _a = ConfigParserProvider::new(common::make_fs());
+    let _a = ConfigParserProvider::new(common::make_io());
 }

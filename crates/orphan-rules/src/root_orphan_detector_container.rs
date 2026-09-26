@@ -2,6 +2,7 @@ use crate::agent_orphan_orchestrator::{ArchOrphanAnalyzer, ArchOrphanDeps};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
 use shared::orphan_rules::IOrphanAggregate;
 
@@ -12,13 +13,17 @@ pub struct OrphanContainer {
 }
 
 impl OrphanContainer {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self::new_with_config(ArchitectureConfig::default(), filesystem)
+    pub fn new(
+        filesystem: Arc<dyn IFilesystemAggregate>,
+        workspace: Arc<dyn IWorkspaceProtocol>,
+    ) -> Self {
+        Self::new_with_config(ArchitectureConfig::default(), filesystem, workspace)
     }
 
     pub fn new_with_ignored(
         ignored_paths: Vec<String>,
         filesystem: Arc<dyn IFilesystemAggregate>,
+        workspace: Arc<dyn IWorkspaceProtocol>,
     ) -> Self {
         let config = ArchitectureConfig {
             ignored_paths: shared::common::taxonomy_paths_vo::FilePathList::new(
@@ -29,12 +34,13 @@ impl OrphanContainer {
             ),
             ..Default::default()
         };
-        Self::new_with_config(config, filesystem)
+        Self::new_with_config(config, filesystem, workspace)
     }
 
     pub fn new_with_config(
         config: ArchitectureConfig,
         filesystem: Arc<dyn IFilesystemAggregate>,
+        workspace: Arc<dyn IWorkspaceProtocol>,
     ) -> Self {
         let arch = Arc::new(ArchOrphanAnalyzer::new(
             ArchOrphanDeps {
@@ -46,7 +52,7 @@ impl OrphanContainer {
                 ),
                 capabilities_analyzer: Arc::new(
                     crate::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer::new(
-                        filesystem.clone(),
+                        workspace.clone(),
                     ),
                 ),
                 utility_analyzer: Arc::new(
@@ -59,6 +65,7 @@ impl OrphanContainer {
                     crate::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer::new(),
                 ),
                 filesystem,
+                filesystem_workspace: workspace.clone(),
             },
             config,
         ));
@@ -72,10 +79,13 @@ impl OrphanContainer {
         orchestrator: &Arc<dyn IConfigOrchestratorAggregate>,
         project_root: &str,
         filesystem: Arc<dyn IFilesystemAggregate>,
+        workspace: Arc<dyn IWorkspaceProtocol>,
     ) -> Self {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
-        let config = orchestrator.load_config_sync(&fp);
-        Self::new_with_config(config, filesystem)
+        let config = orchestrator
+            .execute(shared::config_system::ConfigRequest::load_sync(&fp))
+            .into_sync_config();
+        Self::new_with_config(config, filesystem, workspace)
     }
 
     pub fn analyzer(&self) -> Arc<dyn IOrphanAggregate> {

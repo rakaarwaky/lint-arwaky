@@ -1,0 +1,21 @@
+# Development image for running lint-arwaky inside Podman.
+# Mount project root at /app (via VOLUME in podman.sh) so builds are host-visible.
+#
+# The host .cargo/config.toml sets `rustc-wrapper = "sccache"` and
+# `-C link-arg=-fuse-ld=mold`. sccache is cleared at runtime by podman.sh
+# (RUSTC_WRAPPER=""); mold must be installed here so -fuse-ld=mold resolves.
+
+FROM docker.io/library/rust:1-slim
+
+# binutils provides `ld`; mold is required by the host cargo config; the rest
+# are build deps for native crates (tree-sitter, openssl-sys).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    libssl-dev \
+    binutils \
+    mold \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+CMD ["bash"]

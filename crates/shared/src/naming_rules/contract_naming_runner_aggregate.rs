@@ -1,9 +1,9 @@
-// PURPOSE: INamingRunnerAggregate — contract for naming-rules feature orchestrator
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+// PURPOSE: INamingRunnerAggregate — single entry point over the naming-rules domain
+// The agent behind the aggregate dispatches each NamingRequest to the rich
+// INamingCheckerProtocol operation. Consumers never see the protocol.
+use crate::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 
+/// Single entry point over naming-rules; the agent dispatches internally.
 pub trait INamingRunnerAggregate: Send + Sync {
-    /// Run audit on pre-parsed file entries from the filesystem crate.
-    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult>;
-    fn name(&self) -> &str;
+    fn execute(&self, request: NamingRequest) -> NamingResponse;
 }

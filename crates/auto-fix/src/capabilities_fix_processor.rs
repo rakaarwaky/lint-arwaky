@@ -29,6 +29,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::{
     AdapterName, ContentString, Count, DescriptionVO, ErrorCode, LineNumber, LintMessage,
 };
+use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::{Arc, LazyLock};
 
@@ -65,8 +66,11 @@ impl IFixProtocol for LintFixProcessor {
     /// FR-001/002/003/004: Run linter, filter fixable violations, apply fixes.
     /// `dry_run` is selectable per request (BF-1, FR-004 assumption §9).
     fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult {
-        let analysis = self.linter.run_code_analysis(path);
-        let results = &analysis.values;
+        let analysis = self
+            .linter
+            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .into_violations();
+        let results = &analysis;
 
         let naming_violations: Vec<_> = results
             .iter()
@@ -173,7 +177,10 @@ impl IFixProtocol for LintFixProcessor {
         // BF-4: No double linting — use pre-fix results.len() as remaining count
         let remaining = if !dry_run && fixed_count > 0 {
             // Re-lint only when we actually made changes to count remaining violations
-            let after_results = self.linter.run_code_analysis(path).values;
+            let after_results = self
+                .linter
+                .execute(CodeAnalysisRequest::run_analysis(&[]))
+                .into_violations();
             after_results.len()
         } else {
             results.len()

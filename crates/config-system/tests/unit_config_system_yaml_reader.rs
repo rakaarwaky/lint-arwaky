@@ -9,7 +9,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> ConfigYamlReader {
-    ConfigYamlReader::new(common::make_fs())
+    ConfigYamlReader::new(common::make_io())
 }
 
 #[test]
@@ -129,5 +129,5 @@ fn list_config_files_deduplicates_unified_config() {
 
 #[test]
 fn new_creates_instance() {
-    let _a = ConfigYamlReader::new(common::make_fs());
+    let _a = ConfigYamlReader::new(common::make_io());
 }

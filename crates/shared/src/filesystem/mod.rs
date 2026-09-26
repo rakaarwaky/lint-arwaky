@@ -2,12 +2,16 @@
 // Organized by FR per FRD v3.0.0
 
 pub mod contract_filesystem_aggregate;
-pub mod contract_filesystem_io_protocol;
-pub mod contract_graph_protocol;
-pub mod contract_parser_protocol;
-pub mod contract_tool_resolution_protocol;
-pub mod contract_workspace_protocol;
+pub mod contract_filesystem_protocol;
+pub mod taxonomy_filesystem_request_vo;
 pub mod taxonomy_filesystem_vo;
+
+pub use contract_filesystem_protocol::IFileSystemIOProtocol;
+pub use contract_filesystem_protocol::IGraphProtocol;
+pub use contract_filesystem_protocol::IParserProtocol;
+pub use contract_filesystem_protocol::IToolResolutionProtocol;
+pub use contract_filesystem_protocol::IWorkspaceProtocol;
+pub use taxonomy_filesystem_request_vo::{FilesystemRequest, FilesystemResponse};
 
 // ─── Re-exports ────────────────────────────────────────────
 
@@ -43,11 +47,6 @@ pub use taxonomy_filesystem_vo::TSFnItem;
 pub use taxonomy_filesystem_vo::TypeScriptMetadata;
 
 // ── Focused protocol traits ──
-pub use contract_filesystem_io_protocol::IFileSystemIOProtocol;
-pub use contract_graph_protocol::IGraphProtocol;
-pub use contract_parser_protocol::IParserProtocol;
-pub use contract_tool_resolution_protocol::IToolResolutionProtocol;
-pub use contract_workspace_protocol::IWorkspaceProtocol;
 
 // ── Aggregate ──
 pub use contract_filesystem_aggregate::IFilesystemAggregate;

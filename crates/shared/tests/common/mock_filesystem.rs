@@ -14,11 +14,12 @@ use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_graph_protocol::IGraphProtocol;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
-use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared::filesystem::taxonomy_filesystem_request_vo::{FilesystemRequest, FilesystemResponse};
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -26,23 +27,72 @@ use std::sync::Arc;
 /// Mock filesystem — path_exists returns false so collect_scan fails fast.
 pub struct MockFilesystem {
     discover: Vec<String>,
+    is_python: Option<bool>,
+    canonicalize_prefix: Option<String>,
 }
 
 impl MockFilesystem {
     pub fn new() -> Self {
         Self {
             discover: Vec::new(),
+            is_python: None,
+            canonicalize_prefix: None,
         }
     }
 
     /// Mock that reports the given files from `discover_files` / `scan_directory`.
     pub fn with_files(files: Vec<String>) -> Self {
-        Self { discover: files }
+        Self {
+            discover: files,
+            is_python: None,
+            canonicalize_prefix: None,
+        }
+    }
+
+    /// Mock that reports whether the target path contains Python files.
+    /// Useful for adapter tests that need `scan()` to proceed past the
+    /// `is_python_file_recursive` guard.
+    pub fn with_python_flag(is_python: bool) -> Self {
+        Self {
+            discover: Vec::new(),
+            is_python: Some(is_python),
+            canonicalize_prefix: None,
+        }
+    }
+
+    /// Mock that canonicalizes the path argument by prepending `prefix/`.
+    /// Combine with `with_python_flag(true)` for end-to-end adapter command tests.
+    pub fn with_canonicalize_prefix(prefix: &str) -> Self {
+        Self {
+            discover: Vec::new(),
+            is_python: Some(true),
+            canonicalize_prefix: Some(prefix.to_string()),
+        }
     }
 }
 
 /// Convenience constructor returning an `Arc<dyn IFilesystemAggregate>`.
 pub fn mock_filesystem() -> Arc<dyn IFilesystemAggregate> {
+    Arc::new(MockFilesystem::new())
+}
+
+/// Convenience constructor returning the workspace seam of the same mock.
+pub fn mock_workspace() -> Arc<dyn IWorkspaceProtocol> {
+    Arc::new(MockFilesystem::new())
+}
+
+/// Convenience constructor returning the io seam of the same mock.
+pub fn mock_io() -> Arc<dyn shared::filesystem::IFileSystemIOProtocol> {
+    Arc::new(MockFilesystem::new())
+}
+
+/// Convenience constructor returning the parser seam of the same mock.
+pub fn mock_parser() -> Arc<dyn shared::filesystem::IParserProtocol> {
+    Arc::new(MockFilesystem::new())
+}
+
+/// Convenience constructor returning the tool-resolution seam of the same mock.
+pub fn mock_tool_resolution() -> Arc<dyn IToolResolutionProtocol> {
     Arc::new(MockFilesystem::new())
 }
 
@@ -186,7 +236,7 @@ impl IToolResolutionProtocol for MockFilesystem {
         None
     }
     fn is_python_file_recursive(&self, _path: &FilePath) -> bool {
-        false
+        self.is_python.unwrap_or(false)
     }
     fn default_working_dir(&self, path: &FilePath) -> FilePath {
         path.clone()
@@ -210,7 +260,10 @@ impl IFileSystemIOProtocol for MockFilesystem {
         Ok(path.to_path_buf())
     }
     fn canonicalize_path_str(&self, path: &FilePath) -> FilePath {
-        path.clone()
+        match &self.canonicalize_prefix {
+            Some(prefix) => FilePath::new(format!("{prefix}/{}", path.value())).unwrap_or_default(),
+            None => path.clone(),
+        }
     }
     fn is_symlink(&self, _path: &std::path::Path) -> bool {
         false
@@ -311,66 +364,60 @@ impl IFileSystemIOProtocol for MockFilesystem {
 }
 
 impl IFilesystemAggregate for MockFilesystem {
-    fn file_list(&self) -> &[FileEntry] {
-        &[]
-    }
-    fn read_cached(&self, _path: &FilePath) -> ContentString {
-        ContentString::default()
-    }
-    fn get_file_content(&self, _path: &std::path::Path) -> Option<String> {
-        None
-    }
-    fn has_file(&self, _path: &std::path::Path) -> bool {
-        false
-    }
-    fn collect_file_entries(
-        &self,
-        _files: &PatternList,
-    ) -> Vec<shared::common::taxonomy_common_vo::FileContentPair> {
-        vec![]
-    }
-    fn discover_source_files(&self, _root: &std::path::Path, _ignored: &[String]) -> Vec<String> {
-        vec![]
-    }
-    fn read_file(&self, _path: &std::path::Path) -> Option<String> {
-        None
-    }
-    fn scan_directory(&self, _root: &std::path::Path) -> Vec<String> {
-        self.discover.clone()
-    }
-    fn discover_files(&self, _root: &std::path::Path) -> Vec<String> {
-        self.discover.clone()
-    }
-    fn collect_source_files(&self, _dir: &std::path::Path, _ignored: &[String]) -> Vec<FilePath> {
-        vec![]
-    }
-    fn read_lintable_file(&self, _path: &str) -> Option<String> {
-        None
-    }
-    fn used_identifiers_for(&self, _: &std::path::Path) -> Vec<String> {
-        vec![]
-    }
-    fn implemented_traits_map(&self) -> HashMap<String, Vec<String>> {
-        HashMap::new()
-    }
-    fn build_file_index(&self, _: &std::path::Path) {}
-    fn build_file_index_with_ignored(&self, _: &std::path::Path, _: &[String]) {}
-    fn build_orphan_graph_context(
-        &self,
-        _root_dir: &std::path::Path,
-        _ignored: &[String],
-    ) -> shared::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext {
-        shared::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext::new(
-            shared::filesystem::taxonomy_filesystem_vo::ImportGraph::new(HashMap::new()),
-            shared::filesystem::taxonomy_filesystem_vo::InboundLinkMap::new(HashMap::new()),
-            shared::filesystem::taxonomy_filesystem_vo::InheritanceMap::new(HashMap::new()),
-            vec![],
-        )
-    }
-    fn find_workspace_root(&self, _: &std::path::Path) -> Option<std::path::PathBuf> {
-        None
-    }
-    fn resolved_import_list(&self) -> Vec<ImportEntry> {
-        Vec::new()
+    fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
+        match request {
+            FilesystemRequest::FileList | FilesystemRequest::FileListSnapshot => {
+                FilesystemResponse::Files {
+                    entries: Vec::new(),
+                }
+            }
+            FilesystemRequest::ReadCached { .. } => FilesystemResponse::Content {
+                value: ContentString::default(),
+            },
+            FilesystemRequest::GetFileContent { .. }
+            | FilesystemRequest::ReadFile { .. }
+            | FilesystemRequest::ReadLintableFile { .. } => {
+                FilesystemResponse::ContentOpt { value: None }
+            }
+            FilesystemRequest::HasFile { .. } => FilesystemResponse::Has { exists: false },
+            FilesystemRequest::CollectFileEntries { .. } => {
+                FilesystemResponse::Entries { pairs: Vec::new() }
+            }
+            FilesystemRequest::DiscoverSourceFiles { .. } => {
+                FilesystemResponse::Paths { paths: Vec::new() }
+            }
+            FilesystemRequest::ScanDirectory { .. } | FilesystemRequest::DiscoverFiles { .. } => {
+                FilesystemResponse::Paths {
+                    paths: self.discover.clone(),
+                }
+            }
+            FilesystemRequest::CollectSourceFiles { .. } => {
+                FilesystemResponse::SourcePaths { paths: Vec::new() }
+            }
+            FilesystemRequest::UsedIdentifiers { .. } | FilesystemRequest::UsedIdentifiersAll => {
+                FilesystemResponse::Identifiers { ids: Vec::new() }
+            }
+            FilesystemRequest::ImplementedTraitsMap => FilesystemResponse::TraitsMap {
+                map: HashMap::new(),
+            },
+            FilesystemRequest::BuildFileIndex { .. }
+            | FilesystemRequest::BuildFileIndexWithIgnored { .. } => FilesystemResponse::Files {
+                entries: Vec::new(),
+            },
+            FilesystemRequest::BuildOrphanGraphContext { .. } => FilesystemResponse::GraphContext {
+                context: GraphAnalysisContext::new(
+                    ImportGraph::new(HashMap::new()),
+                    InboundLinkMap::new(HashMap::new()),
+                    InheritanceMap::new(HashMap::new()),
+                    Vec::new(),
+                ),
+            },
+            FilesystemRequest::FindWorkspaceRoot { .. } => FilesystemResponse::Root { path: None },
+            FilesystemRequest::ResolvedImportList
+            | FilesystemRequest::ExtendImportCache { .. }
+            | FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
+                entries: Vec::new(),
+            },
+        }
     }
 }

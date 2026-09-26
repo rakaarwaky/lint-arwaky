@@ -11,6 +11,7 @@ use quality_rules_lint_arwaky::capabilities_line_checker::ArchLineChecker;
 use shared::common::{Count, LayerDefinition};
 use shared::config_system::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::IBypassCheckerProtocol;
 use shared::quality_rules::ICodeMetricAnalyzerProtocol;
 use shared::quality_rules::ILineCheckerProtocol;
@@ -129,7 +130,9 @@ fn bench_full_analysis(c: &mut Criterion) {
 
     c.bench_function("full_analysis_5_violating_files", |b| {
         b.iter(|| {
-            linter.run_analysis_with_entries(&entries);
+            linter
+                .execute(CodeAnalysisRequest::run_analysis(&entries))
+                .into_violations();
         })
     });
 
@@ -147,7 +150,9 @@ fn bench_full_analysis(c: &mut Criterion) {
 
     c.bench_function("full_analysis_5_clean_files", |b| {
         b.iter(|| {
-            linter.run_analysis_with_entries(&clean_entries);
+            linter
+                .execute(CodeAnalysisRequest::run_analysis(&clean_entries))
+                .into_violations();
         })
     });
 }

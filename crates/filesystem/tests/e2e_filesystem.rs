@@ -6,13 +6,13 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
+use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
 use shared::common::PatternList;
 use shared::common::taxonomy_language_vo::Language;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::FilesystemRequest;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{DefinitionEntry, FileEntry};
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -43,17 +43,18 @@ fn e2e_scan_parse_and_query_imports() {
     )
     .unwrap();
 
-    let orch = make_orchestrator();
+    let _orch = make_orchestrator();
 
-    // Step 1: Scan directory via IO protocol
-    let paths = orch.scan_directory_with_ignored(&src, &PatternList::default());
+    // Step 1: Scan directory via the IO capability
+    let io = Arc::new(CapabilitiesFileSystemIO::with_default_timing());
+    let paths = io.scan_directory_with_ignored(&src, &PatternList::default());
     assert!(!paths.is_empty(), "Should discover source files");
 
     // Step 2: Build file entries and parse via parser protocol
     let mut files: Vec<FileEntry> = paths
         .iter()
         .map(|p| {
-            let content = orch.read_to_string(p).unwrap_or_default().value;
+            let content = io.read_to_string(p).unwrap_or_default().value;
             let ext = p
                 .extension()
                 .and_then(|e| e.to_str())
@@ -71,7 +72,7 @@ fn e2e_scan_parse_and_query_imports() {
             }
         })
         .collect();
-    orch.parse_all(&mut files);
+    ASTParser::new().parse_all(&mut files);
 
     // Step 3: Verify all files parsed
     for entry in &files {
@@ -110,16 +111,15 @@ fn e2e_full_pipeline_with_graph_query() {
     std::fs::write(src.join("a.rs"), "use crate::b::B;\npub struct A(pub B);\n").unwrap();
     std::fs::write(src.join("b.rs"), "pub struct B;\n").unwrap();
 
-    let orch = make_orchestrator();
-
+    let io = Arc::new(CapabilitiesFileSystemIO::with_default_timing());
     // Scan
-    let paths = orch.scan_directory_with_ignored(&src, &PatternList::default());
+    let paths = io.scan_directory_with_ignored(&src, &PatternList::default());
 
     // Parse
     let mut files: Vec<FileEntry> = paths
         .iter()
         .map(|p| {
-            let content = orch.read_to_string(p).unwrap_or_default().value;
+            let content = io.read_to_string(p).unwrap_or_default().value;
             let ext = p
                 .extension()
                 .and_then(|e| e.to_str())
@@ -137,7 +137,7 @@ fn e2e_full_pipeline_with_graph_query() {
             }
         })
         .collect();
-    orch.parse_all(&mut files);
+    ASTParser::new().parse_all(&mut files);
 
     // Extract imports and build definitions for graph
     let mut imports = Vec::new();
@@ -193,16 +193,17 @@ fn e2e_orchestrator_collect_file_entries() {
     std::fs::write(tmp.path().join("main.rs"), "fn main() {}").unwrap();
     std::fs::write(tmp.path().join("lib.rs"), "pub fn lib_fn() {}").unwrap();
 
-    let orch = make_orchestrator();
-
+    let container = FilesystemContainer::new();
+    let orch = container.orchestrator();
+    let io = container.io();
     // Scan
-    let paths = orch.scan_directory_with_ignored(tmp.path(), &PatternList::default());
+    let paths = io.scan_directory_with_ignored(tmp.path(), &PatternList::default());
 
     // Build file entries
     let files: Vec<FileEntry> = paths
         .iter()
         .map(|p| {
-            let content = orch.read_to_string(p).unwrap_or_default().value;
+            let content = io.read_to_string(p).unwrap_or_default().value;
             FileEntry {
                 path: p.clone(),
                 extension: p
@@ -220,12 +221,14 @@ fn e2e_orchestrator_collect_file_entries() {
         .collect();
 
     // collect_file_entries falls through to disk reads when cache is empty
-    let entries = orch.collect_file_entries(&PatternList::new(
-        files
-            .iter()
-            .map(|f| f.path.to_string_lossy().to_string())
-            .collect::<Vec<_>>(),
-    ));
+    let entries = orch
+        .execute(FilesystemRequest::collect_file_entries(&PatternList::new(
+            files
+                .iter()
+                .map(|f| f.path.to_string_lossy().to_string())
+                .collect::<Vec<_>>(),
+        )))
+        .into_pairs();
     assert_eq!(entries.len(), files.len());
 }
 
@@ -237,22 +240,23 @@ fn e2e_workspace_detection_in_pipeline() {
     std::fs::create_dir_all(&src).unwrap();
     std::fs::write(src.join("main.rs"), "fn main() {}").unwrap();
 
-    let orch = make_orchestrator();
+    let container = FilesystemContainer::new();
+    let workspace = container.workspace();
     let fp = FilePath::new(src.to_string_lossy().to_string()).unwrap();
 
     // Workspace detection
-    let root = orch.workspace_root(&fp);
+    let root = workspace.workspace_root(&fp);
     assert!(root.is_some(), "Should find workspace root");
 
     // Language detection
-    let lang = orch.detect_language_from_path("src/main.rs");
+    let lang = workspace.detect_language_from_path("src/main.rs");
     assert_eq!(
         lang,
         shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
     );
 
     // Source dir detection — look for crates/packages/modules, not src/
-    let source_dir = orch.detect_source_dir(tmp.path());
+    let source_dir = workspace.detect_source_dir(tmp.path());
     // With no crates/packages/modules dir, falls back to root
     assert_eq!(source_dir, tmp.path().to_path_buf());
 }

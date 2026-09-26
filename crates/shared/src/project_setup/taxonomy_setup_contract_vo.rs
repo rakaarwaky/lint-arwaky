@@ -53,7 +53,7 @@ impl ProjectLanguageVO {
 /// List of programming languages detected for a project. Replaces the
 /// previous `Vec<String>` return type of
 /// `ISetupManagementProtocol::detect_languages`.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct ProjectLanguagesVO {
     pub values: Vec<ProjectLanguageVO>,
 }

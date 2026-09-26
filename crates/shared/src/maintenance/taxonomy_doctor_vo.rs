@@ -15,7 +15,7 @@ pub struct ToolOutput {
     pub success: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct DoctorResultVO {
     pub python_version: DescriptionVO,
     pub rust_version: DescriptionVO,
@@ -49,7 +49,7 @@ pub struct ToolStatus {
     pub version: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ToolchainDiagnostics {
     pub rust_tools: Vec<ToolStatus>,
     pub python_tools: Vec<ToolStatus>,
@@ -65,7 +65,7 @@ pub struct HealthCheckAdapterVO {
     pub available: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct HealthCheckResult {
     pub adapters: Vec<HealthCheckAdapterVO>,
 }
@@ -79,7 +79,7 @@ pub struct SecurityFinding {
     pub issue: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct SecurityScanReport {
     pub language: String,
     pub tool_name: String,
@@ -94,7 +94,7 @@ pub struct DependencyInfo {
     pub dep_type: String, // "direct" or "transitive"
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct DependencyReport {
     pub language: String,
     pub dependencies: Vec<DependencyInfo>,

@@ -17,9 +17,13 @@ use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::external_lint::taxonomy_external_lint_request_vo::{
+    ExternalLintRequest, ExternalLintResponse,
+};
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -27,6 +31,7 @@ use tracing::warn;
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     pub selector: Arc<dyn IExternalLintSelectorProtocol>,
 }
 
@@ -37,11 +42,29 @@ pub struct ExternalLintOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl IExternalLintAggregate for ExternalLintOrchestrator {
-    fn scan_all(&self, path: &FilePath) -> LintResultList {
+    fn execute(&self, request: ExternalLintRequest) -> ExternalLintResponse {
+        match request {
+            ExternalLintRequest::ScanAll { path } => {
+                let violations = self.scan_all(&path);
+                ExternalLintResponse::Scan { violations }
+            }
+            ExternalLintRequest::ScanAllWithContext { path, context } => {
+                let violations = self.scan_all_with_context(&path, &context);
+                ExternalLintResponse::Scan { violations }
+            }
+            ExternalLintRequest::AdapterNames => ExternalLintResponse::AdapterNames {
+                names: self.adapter_names(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl ExternalLintOrchestrator {
+    pub fn scan_all(&self, path: &FilePath) -> LintResultList {
         self.scan_all_with_context(path, &ExternalLintContext::default())
     }
-
-    fn scan_all_with_context(
+    pub fn scan_all_with_context(
         &self,
         path: &FilePath,
         context: &ExternalLintContext,
@@ -107,14 +130,13 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
             all.retain(|v| {
                 !self
                     .deps
-                    .filesystem
+                    .filesystem_io
                     .should_ignore(&v.file, &context.ignored_paths)
             });
         }
         LintResultList::new(all)
     }
-
-    fn adapter_names(&self) -> AdapterNameList {
+    pub fn adapter_names(&self) -> AdapterNameList {
         AdapterNameList::new(
             self.deps
                 .adapters
@@ -123,10 +145,6 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
                 .collect(),
         )
     }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl ExternalLintOrchestrator {
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }
     }

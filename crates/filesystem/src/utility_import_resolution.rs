@@ -1,7 +1,8 @@
 // PURPOSE: Resolve external crate/package imports to file paths within a workspace.
 // Pure functions — no state, no I/O side effects beyond filesystem reads.
 
-use std::collections::HashSet;
+use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, Language};
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 /// Resolve an external crate import (e.g. `use calculator_addition::foo::Bar`)
@@ -162,5 +163,125 @@ pub fn derive_crate_lib_rs(resolved_path: &str) -> Option<String> {
         Some(lib_rs)
     } else {
         None
+    }
+}
+
+/// Resolves a raw import path against the workspace file set using
+/// language-specific rules for Rust, Python, TypeScript, and JavaScript.
+///
+/// Pure function: no `self`, no I/O, no side effects.
+///
+/// # Arguments
+///
+/// * `imp` - Import metadata holding the raw path and detected language.
+/// * `src_dir` - Directory of the importing file, workspace-relative.
+/// * `src_rel` - Workspace-relative path of the importing file.
+/// * `top_root` - Workspace root used to normalize resolved paths.
+/// * `all_files_set` - Workspace-relative paths of all discovered files.
+/// * `stem_index` - Index of file stems used for Python module matching.
+///
+/// # Returns
+///
+/// The workspace-relative target path when the import resolves to a discovered file; otherwise, `None`.
+pub fn resolve_by_language(
+    imp: &ImportEntry,
+    src_dir: &str,
+    src_rel: &str,
+    top_root: &Path,
+    all_files_set: &HashSet<&str>,
+    stem_index: &HashMap<String, Vec<String>>,
+) -> Option<String> {
+    let raw = imp.raw_path.as_str();
+    if imp.language == Language::Python {
+        if raw.starts_with('.') {
+            let module_path = raw.trim_start_matches('.').replace('.', "/");
+            let candidates = vec![
+                format!("{}/{}.py", src_dir, module_path),
+                format!("{}/{}/__init__.py", src_dir, module_path),
+            ];
+            candidates
+                .into_iter()
+                .find(|c| all_files_set.contains(c.as_str()))
+        } else {
+            let module_path = raw.replace('.', "/");
+            // A: direct path (import already includes member prefix)
+            let try_direct = |suffix: &str| {
+                let p = format!("{}{}", module_path, suffix);
+                all_files_set.contains(p.as_str()).then_some(p)
+            };
+            try_direct(".py")
+                .or_else(|| try_direct("/__init__.py"))
+                // B: prepend modules/ | packages/ | crates/
+                .or_else(|| {
+                    ["modules", "packages", "crates"].iter().find_map(|md| {
+                        let py = format!("{}/{}.py", md, module_path);
+                        if all_files_set.contains(py.as_str()) {
+                            return Some(py);
+                        }
+                        let init = format!("{}/{}/__init__.py", md, module_path);
+                        all_files_set.contains(init.as_str()).then_some(init)
+                    })
+                })
+                // C: suffix/stem match (bare module name in nested dir)
+                .or_else(|| {
+                    let stem = raw.rsplit('.').next().unwrap_or(raw);
+                    let is_dotted = raw.contains('.');
+                    let candidate_suffix = if is_dotted {
+                        format!("/{}.py", raw.replace('.', "/"))
+                    } else {
+                        format!("/{}.py", stem)
+                    };
+                    let root_candidate = format!(
+                        "{}.py",
+                        if is_dotted { raw.replace('.', "/") } else { stem.to_string() }
+                    );
+                    let member_dir = src_dir.split('/').take(2).collect::<Vec<_>>().join("/");
+                    let domain_prefix = format!("{}/", member_dir);
+                    stem_index.get(stem).and_then(|candidates| {
+                        candidates
+                            .iter()
+                            .filter(|f| {
+                                f.as_str() != src_rel
+                                    && (**f == root_candidate || f.ends_with(&candidate_suffix))
+                            })
+                            .min_by_key(|f| (!f.starts_with(&domain_prefix), f.as_str()))
+                            .map(|f| f.to_string())
+                    })
+                })
+        }
+    } else if imp.language == Language::TypeScript || imp.language == Language::JavaScript {
+        let parts: Vec<&str> = raw.split('/').collect();
+        if parts.len() >= 2 {
+            let pkg_name = parts[0];
+            let sub = if parts.len() > 2 && parts[1] == "src" {
+                parts[2..].join("/")
+            } else {
+                parts[1..].join("/")
+            };
+            resolve_external_crate_import(pkg_name, &sub, top_root, all_files_set)
+        } else {
+            None
+        }
+    } else {
+        let module = raw
+            .strip_prefix("crate::")
+            .or_else(|| raw.strip_prefix("super::"))
+            .unwrap_or(raw);
+        let root_seg = module.split("::").next().unwrap_or("");
+        if !root_seg.is_empty() {
+            let candidate = if src_dir.is_empty() {
+                format!("{}.rs", root_seg)
+            } else {
+                format!("{}/{}.rs", src_dir, root_seg)
+            };
+            if all_files_set.contains(candidate.as_str()) {
+                Some(candidate)
+            } else {
+                let sub_path = module.split("::").skip(1).collect::<Vec<_>>().join("/");
+                resolve_external_crate_import(root_seg, &sub_path, top_root, all_files_set)
+            }
+        } else {
+            None
+        }
     }
 }

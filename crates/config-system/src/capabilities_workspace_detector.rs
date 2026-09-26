@@ -1,7 +1,7 @@
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
-use shared::config_system::contract_workspace_detector_protocol::WorkspaceType;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
+use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::contract_config_protocol::WorkspaceType;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 use tracing::warn;
 

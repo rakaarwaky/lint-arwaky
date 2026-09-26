@@ -6,17 +6,29 @@ use std::sync::Arc;
 use tracing::debug;
 
 use shared::common::FilePath;
-use shared::config_system::{ArchitectureConfig, ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::{
+    ArchitectureConfig, ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate,
+};
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+
+use crate::surface_check_action::FilesystemSeam;
 use shared::orphan_rules::IOrphanAggregate;
+use shared::orphan_rules::OrphanRequest;
 
 use shared::common::ViolationItem;
 
 /// Factory function type: creates a fresh filesystem aggregate (uncached pipeline).
-pub type FilesystemFactory = dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync;
+pub type FilesystemFactory = dyn Fn() -> FilesystemSeam + Send + Sync;
 
-/// Factory function type: creates an orphan aggregate from config and filesystem.
-pub type OrphanFactory = dyn Fn(ArchitectureConfig, Arc<dyn IFilesystemAggregate>) -> Arc<dyn IOrphanAggregate>
+/// Factory function type: creates an orphan aggregate from config, filesystem, and workspace.
+pub type OrphanFactory = dyn Fn(
+        ArchitectureConfig,
+        Arc<dyn IFilesystemAggregate>,
+        Arc<dyn IWorkspaceProtocol>,
+    ) -> Arc<dyn IOrphanAggregate>
     + Send
     + Sync;
 
@@ -25,6 +37,8 @@ pub struct OrphanScanDeps {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub fs_agg: Arc<dyn IFilesystemAggregate>,
+    pub fs_io: Arc<dyn IFileSystemIOProtocol>,
+    pub fs_workspace: Arc<dyn IWorkspaceProtocol>,
     /// Factory for creating fresh filesystem instances (multi-workspace / single-root).
     pub fs_factory: Arc<FilesystemFactory>,
     /// Factory for creating orphan aggregate from config + filesystem.
@@ -36,6 +50,8 @@ impl OrphanScanDeps {
         orphan_orchestrator: Arc<dyn IOrphanAggregate>,
         config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
         fs_agg: Arc<dyn IFilesystemAggregate>,
+        fs_io: Arc<dyn IFileSystemIOProtocol>,
+        fs_workspace: Arc<dyn IWorkspaceProtocol>,
         fs_factory: Arc<FilesystemFactory>,
         orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
@@ -43,6 +59,8 @@ impl OrphanScanDeps {
             orphan_orchestrator,
             config_orchestrator,
             fs_agg,
+            fs_io,
+            fs_workspace,
             fs_factory,
             orphan_factory,
         }
@@ -59,14 +77,17 @@ pub fn collect_orphan(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !deps.fs_agg.path_exists(std::path::Path::new(&root)) {
+    if !deps.fs_io.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
 
     // discover_workspaces is sync in new API
-    let workspaces = deps.config_orchestrator.discover_workspaces(&root_fp);
+    let workspaces = deps
+        .config_orchestrator
+        .execute(ConfigRequest::discover_workspaces(&root_fp))
+        .into_workspaces();
 
     if workspaces.is_empty() {
         return scan_single_root(
@@ -108,7 +129,8 @@ pub fn collect_orphan(
     // Build a single unified filesystem across ALL workspace members so the orphan
     // scanner can see cross-member imports (e.g., addition importing from shared).
     // Build once from the workspace root to discover all source files.
-    let unified_fs: Arc<dyn IFilesystemAggregate> = (deps.fs_factory)();
+    let unified_seam = (deps.fs_factory)();
+    let unified_fs = unified_seam.aggregate.clone();
     let root_path = std::path::Path::new(&root);
     // Collect ignored paths from all members
     let mut all_ignored: Vec<String> = Vec::new();
@@ -119,20 +141,30 @@ pub fn collect_orphan(
             .unwrap_or(ConfigLanguage::Rust);
         let ignored = deps
             .config_orchestrator
-            .ignored_paths_for_language(&ws.path, lang);
+            .execute(ConfigRequest::ignored_paths_for_language(&ws.path, lang))
+            .into_patterns();
         all_ignored.extend(ignored.values.iter().cloned());
     }
-    unified_fs.build_file_index_with_ignored(root_path, &all_ignored);
+    unified_fs.execute(FilesystemRequest::build_file_index_with_ignored(
+        root_path,
+        &all_ignored,
+    ));
 
     // Use the first workspace's config for the orchestrator (configs should be similar)
     let first_ws = &workspaces[0];
-    let unified_orchestrator: Arc<dyn IOrphanAggregate> =
-        (deps.orphan_factory)(first_ws.config.clone(), unified_fs.clone());
+    let unified_orchestrator: Arc<dyn IOrphanAggregate> = (deps.orphan_factory)(
+        first_ws.config.clone(),
+        unified_fs.clone(),
+        unified_seam.workspace.clone(),
+    );
 
     // Build unified file list from all members
-    let all_file_list = unified_fs.file_list();
+    let all_file_list = unified_fs
+        .execute(FilesystemRequest::FileList)
+        .into_file_list();
     let root_abs = std::env::current_dir().unwrap_or_default().join(&root);
-    let ws_top_root = unified_fs
+    let ws_top_root = unified_seam
+        .workspace
         .workspace_root(&FilePath::new(root_abs.to_string_lossy().to_string()).unwrap_or_default());
     let top_root = ws_top_root.unwrap_or_else(|| root_abs.clone());
     let top_root_str = top_root.to_string_lossy().to_string();
@@ -163,16 +195,22 @@ pub fn collect_orphan(
     // file paths. Using a member path (first_ws.path) would cause path mismatch
     // since unified_orphan_files are relative to the workspace root.
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
-    let unified_context =
-        unified_orchestrator.build_orphan_graph_context(&unified_orphan_files, &root_fp);
+    let unified_context = unified_orchestrator
+        .execute(OrphanRequest::build_graph_context(
+            &unified_orphan_files,
+            &root_fp,
+        ))
+        .into_graph_context();
 
     // Now run orphan checks using unified file list so cross-member imports are visible.
     // Violations are filtered to each member afterward.
-    let results = unified_orchestrator.check_orphans_with_context(
-        &unified_orphan_files,
-        &root_fp,
-        &unified_context,
-    );
+    let results = unified_orchestrator
+        .execute(OrphanRequest::check_with_context(
+            &unified_orphan_files,
+            &root_fp,
+            &unified_context,
+        ))
+        .into_violations();
 
     // Filter results per member — violation file paths are relative to workspace root
     // (e.g., "crates/shared/src/taxonomy_operation_vo.rs"), member paths are like "crates/shared"
@@ -223,19 +261,23 @@ fn scan_single_root(
     orphan_factory: &Arc<OrphanFactory>,
 ) -> Result<Vec<ViolationItem>, String> {
     // Create a fresh filesystem instance via factory (no direct root-container)
-    let ws_filesystem: Arc<dyn IFilesystemAggregate> = fs_factory();
+    let ws_seam = fs_factory();
+    let ws_filesystem = ws_seam.aggregate.clone();
 
     // Detect workspace root — when scanning a subdirectory inside a workspace,
     // build file index from workspace root so orphan detection has full visibility.
     let root_path = std::path::Path::new(root);
     let scan_root = fs_agg
-        .find_workspace_root(root_path)
+        .execute(FilesystemRequest::find_workspace_root(root_path))
+        .into_root()
         .unwrap_or_else(|| root_path.to_path_buf());
     let scan_root_str = scan_root.to_string_lossy().to_string();
     let scan_root_fp = FilePath::new(scan_root_str.clone()).unwrap_or_else(|_| root_fp.clone());
 
     // Load config for workspace root to get ignored_paths
-    let ws_config = config_orchestrator.load_config_sync(&scan_root_fp);
+    let ws_config = config_orchestrator
+        .execute(ConfigRequest::load_sync(&scan_root_fp))
+        .into_sync_config();
 
     // Build file index for the entire workspace (respects config ignored_paths)
     let ignored_strs: Vec<String> = ws_config
@@ -244,13 +286,18 @@ fn scan_single_root(
         .iter()
         .map(|fp| fp.value().to_string())
         .collect();
-    ws_filesystem.build_file_index_with_ignored(&scan_root, &ignored_strs);
+    ws_filesystem.execute(FilesystemRequest::build_file_index_with_ignored(
+        &scan_root,
+        &ignored_strs,
+    ));
     let ws_orchestrator: Arc<dyn IOrphanAggregate> =
-        orphan_factory(ws_config, ws_filesystem.clone());
+        orphan_factory(ws_config, ws_filesystem.clone(), ws_seam.workspace.clone());
 
     // Build OrphanFileListVO — paths relative to workspace root (top_root)
-    let file_list = ws_filesystem.file_list();
-    let ws_top_root = ws_filesystem.workspace_root(&scan_root_fp);
+    let file_list = ws_filesystem
+        .execute(FilesystemRequest::FileList)
+        .into_file_list();
+    let ws_top_root = ws_seam.workspace.workspace_root(&scan_root_fp);
     let top_root = ws_top_root.unwrap_or_else(|| scan_root.clone());
     let top_root_str = top_root.to_string_lossy().to_string();
     let file_paths: Vec<String> = file_list
@@ -275,11 +322,21 @@ fn scan_single_root(
         shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
 
     // Build graph context from filesystem's pre-built data
-    let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, &scan_root_fp);
+    let context = ws_orchestrator
+        .execute(OrphanRequest::build_graph_context(
+            &orphan_files,
+            &scan_root_fp,
+        ))
+        .into_graph_context();
 
     // Run orphan checks on pre-fetched data with correct root_dir
-    let results =
-        ws_orchestrator.check_orphans_with_context(&orphan_files, &scan_root_fp, &context);
+    let results = ws_orchestrator
+        .execute(OrphanRequest::check_with_context(
+            &orphan_files,
+            &scan_root_fp,
+            &context,
+        ))
+        .into_violations();
 
     let mut violations: Vec<ViolationItem> = results
         .iter()

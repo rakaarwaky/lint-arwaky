@@ -3,7 +3,7 @@
 #[path = "../../shared/tests/common/mock_filesystem.rs"]
 mod mock_filesystem;
 
-use mock_filesystem::mock_filesystem;
+use mock_filesystem::{mock_filesystem, mock_workspace};
 use orphan_rules_lint_arwaky::agent_orphan_orchestrator::{ArchOrphanAnalyzer, ArchOrphanDeps};
 use orphan_rules_lint_arwaky::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
 use orphan_rules_lint_arwaky::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
@@ -14,13 +14,13 @@ use orphan_rules_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrpha
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::{IOrphanAggregate, OrphanFileListVO};
+use shared::orphan_rules::{IOrphanAggregate, OrphanFileListVO, OrphanRequest};
 use std::sync::Arc;
 
 #[test]
 fn smoke_container_creation() {
     let fs = mock_filesystem();
-    let container = OrphanContainer::new(fs);
+    let container = OrphanContainer::new(fs, mock_workspace());
     let analyzer = container.analyzer();
     assert!(Arc::strong_count(&analyzer) >= 1);
 }
@@ -29,14 +29,16 @@ fn smoke_container_creation() {
 fn smoke_analyzer_returns_quickly() {
     let start = std::time::Instant::now();
     let fs = mock_filesystem();
-    let container = OrphanContainer::new(fs);
+    let container = OrphanContainer::new(fs, mock_workspace());
     let analyzer = container.analyzer();
     let files = OrphanFileListVO::new(vec![
         "src/taxonomy_foo.rs".to_string(),
         "src/contract_bar_protocol.rs".to_string(),
     ]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -62,8 +64,8 @@ fn smoke_contract_analyzer_construct() {
 
 #[test]
 fn smoke_capabilities_analyzer_construct() {
-    let fs = mock_filesystem();
-    let _analyzer = CapabilitiesOrphanAnalyzer::new(fs);
+    let _fs = mock_filesystem();
+    let _analyzer = CapabilitiesOrphanAnalyzer::new(mock_workspace());
 }
 
 #[test]
@@ -72,16 +74,19 @@ fn smoke_arch_analyzer_construct() {
     let deps = ArchOrphanDeps {
         taxonomy_analyzer: Arc::new(TaxonomyOrphanAnalyzer::new()),
         contract_analyzer: Arc::new(ContractOrphanAnalyzer::new()),
-        capabilities_analyzer: Arc::new(CapabilitiesOrphanAnalyzer::new(fs.clone())),
+        capabilities_analyzer: Arc::new(CapabilitiesOrphanAnalyzer::new(mock_workspace())),
         utility_analyzer: Arc::new(UtilityOrphanAnalyzer::new()),
         agent_analyzer: Arc::new(AgentOrphanAnalyzer::new()),
         surfaces_analyzer: Arc::new(SurfacesOrphanAnalyzer::new()),
         filesystem: fs,
+        filesystem_workspace: mock_workspace(),
     };
     let config = ArchitectureConfig::default();
     let analyzer = ArchOrphanAnalyzer::new(deps, config);
     let files = OrphanFileListVO::new(vec![]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
     assert!(results.is_empty());
 }

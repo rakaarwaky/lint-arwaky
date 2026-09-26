@@ -23,9 +23,9 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -35,7 +35,7 @@ use tracing::debug;
 
 pub struct CargoAuditAdapter {
     executor: Arc<dyn ICommandExecutorProtocol>,
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
 /// Parsed output from `cargo-audit --json` (cargo-vulnerability-report format).
@@ -67,7 +67,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 
     fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = self.filesystem.resolve_cargo_lock_working_dir(path);
+        let working_dir = self.tool_resolution.resolve_cargo_lock_working_dir(path);
         let working_dir_str = working_dir.value();
 
         let cargo_lock = Path::new(working_dir_str).join("Cargo.lock");
@@ -156,11 +156,11 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 impl CargoAuditAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             executor,
-            filesystem,
+            tool_resolution,
         }
     }
 }

@@ -3,6 +3,7 @@
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
@@ -27,7 +28,7 @@ fn run_audit(files: Vec<FileEntry>) -> Vec<shared::common::LintResult> {
     let config = ArchitectureConfig::default();
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
-    orch.run_audit_with_entries(&files)
+    orch.execute(RoleRequest::audit(&files)).into_violations()
 }
 
 // ── No implementor → AgentNoImplementor ──

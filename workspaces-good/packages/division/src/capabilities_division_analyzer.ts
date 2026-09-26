@@ -1,11 +1,11 @@
-import { CalculatorProtocol } from "calculator-shared/src/contract_calculator_protocol";
+import { ICalculatorProtocol } from "calculator-shared/src/contract_calculator_protocol";
 import { ExpressionVO } from "calculator-shared/src/taxonomy_expression_vo";
 import {
   ResultVO,
   createResult,
 } from "calculator-shared/src/taxonomy_result_vo";
 
-export class DivisionAnalyzer implements CalculatorProtocol {
+export class DivisionAnalyzer implements ICalculatorProtocol {
   evaluate(expr: ExpressionVO): ResultVO | null {
     if (expr.right === 0) return null;
     const value = expr.left / expr.right;

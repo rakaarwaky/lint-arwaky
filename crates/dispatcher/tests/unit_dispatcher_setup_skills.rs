@@ -1,14 +1,11 @@
 // Unit tests — skills language relevance and filtering for init command.
 use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
-use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
-use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::project_setup::contract_setup_protocol::PreFlightResult;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::project_setup::{
-    CreateConfigDirResult, EMBEDDED_SKILLS, EmbeddedSkillVO, ProjectLanguageVO, ProjectLanguagesVO,
-    SetupError, SetupManagementAggregate, WriteConfigResult,
+    EMBEDDED_SKILLS, ISetupAggregate, ProjectLanguageVO, ProjectLanguagesVO, SetupRequest,
+    SetupResponse,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -142,66 +139,50 @@ struct MockSetupOrchestrator {
     detected: ProjectLanguagesVO,
 }
 
-impl SetupManagementAggregate for MockSetupOrchestrator {
-    fn check_http(&self, _url: &TransportUrlVO) -> SuccessStatus {
-        SuccessStatus::new(true)
-    }
-    fn generate_env(&self, _home: &DirectoryPath) -> EnvContentVO {
-        EnvContentVO::new("")
-    }
-    fn generate_mcp_config(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn mcp_config_claude(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn mcp_config_cursor(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn mcp_config_windsurf(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn mcp_config_copilot(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn mcp_config_hermes(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn mcp_config_vscode(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn mcp_config_all(&self) -> McpConfigVO {
-        McpConfigVO::new(HashMap::new())
-    }
-    fn install_python_adapters(&self) -> SuccessStatus {
-        SuccessStatus::new(true)
-    }
-    fn install_javascript_adapters(&self, _sudo: bool) -> SuccessStatus {
-        SuccessStatus::new(true)
-    }
-    fn detect_language(&self) -> Option<ProjectLanguageVO> {
-        self.detected.values.first().cloned()
-    }
-    fn detect_languages(&self) -> ProjectLanguagesVO {
-        self.detected.clone()
-    }
-    fn get_config_template(&self, _language: &str) -> Result<&'static str, SetupError> {
-        Ok("rules: []")
-    }
-    fn pre_flight_check(&self) -> PreFlightResult {
-        vec![]
-    }
-    fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO] {
-        EMBEDDED_SKILLS
-    }
-    fn write_config_file(&self, filename: &str, _content: &str) -> WriteConfigResult {
-        Ok(DescriptionVO::new(format!("wrote {filename}")))
-    }
-    fn create_global_config_dir(&self) -> CreateConfigDirResult {
-        Ok(PathBuf::from("/tmp/mock-config"))
-    }
-    fn file_exists(&self, _path: &str) -> bool {
-        false
+impl ISetupAggregate for MockSetupOrchestrator {
+    fn execute(&self, request: SetupRequest) -> SetupResponse {
+        match request {
+            SetupRequest::CheckHttp { .. } => SetupResponse::CheckHttp {
+                status: SuccessStatus::new(true),
+            },
+            SetupRequest::GenerateEnv { .. } => SetupResponse::Env {
+                content: EnvContentVO::new(""),
+            },
+            SetupRequest::GenerateMcpConfig
+            | SetupRequest::McpConfigClaude
+            | SetupRequest::McpConfigCursor
+            | SetupRequest::McpConfigWindsurf
+            | SetupRequest::McpConfigCopilot
+            | SetupRequest::McpConfigHermes
+            | SetupRequest::McpConfigVscode
+            | SetupRequest::McpConfigAll => SetupResponse::Mcp {
+                config: McpConfigVO::new(HashMap::new()),
+            },
+            SetupRequest::InstallPythonAdapters
+            | SetupRequest::InstallJavascriptAdapters { .. } => SetupResponse::Installed {
+                status: SuccessStatus::new(true),
+            },
+            SetupRequest::DetectLanguage => SetupResponse::Language {
+                detected: self.detected.values.first().cloned(),
+            },
+            SetupRequest::DetectLanguages => SetupResponse::Languages {
+                detected: self.detected.clone(),
+            },
+            SetupRequest::GetConfigTemplate { .. } => SetupResponse::Template {
+                content: Ok(String::from("rules: []")),
+            },
+            SetupRequest::PreFlightCheck => SetupResponse::PreFlight { result: vec![] },
+            SetupRequest::GetEmbeddedSkills => SetupResponse::Skills {
+                skills: EMBEDDED_SKILLS.to_vec(),
+            },
+            SetupRequest::WriteConfigFile { filename, .. } => SetupResponse::ConfigWritten {
+                result: Ok(DescriptionVO::new(format!("wrote {filename}"))),
+            },
+            SetupRequest::CreateGlobalConfigDir => SetupResponse::ConfigDir {
+                result: Ok(PathBuf::from("/tmp/mock-config")),
+            },
+            SetupRequest::FileExists { .. } => SetupResponse::Exists { exists: false },
+        }
     }
 }
 
