@@ -15,7 +15,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 use shared::common::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -65,10 +65,11 @@ impl WatchOrchestrator {
     }
 
     fn run_watch_loop(&self, config: &WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
-        println!("Lint Arwaky v{} (Watch Mode)", env!("CARGO_PKG_VERSION"));
-        println!("Target: {}", config.path.value());
-        println!("Press Ctrl+C to stop.");
-        println!();
+        info!(
+            version = env!("CARGO_PKG_VERSION"),
+            target = config.path.value(),
+            "Watch mode started, press Ctrl+C to stop"
+        );
 
         // Initial full lint
         let results = self
@@ -79,10 +80,10 @@ impl WatchOrchestrator {
             .linter
             .execute(CodeAnalysisRequest::calc_score(&results))
             .into_score();
-        println!(
-            "[initial] {} violations, score {:.1}",
-            results.len(),
-            score.value()
+        info!(
+            violations = results.len(),
+            score = score.value(),
+            "Initial scan complete"
         );
 
         // Start watcher (block on async call via minimal runtime)
@@ -131,11 +132,11 @@ impl WatchOrchestrator {
                             .linter
                             .execute(CodeAnalysisRequest::calc_score(&lint_results))
                             .into_score();
-                        println!(
-                            "[change] {} | {} violations, score {:.1}",
-                            event.path,
-                            lint_results.len(),
-                            lint_score.value()
+                        info!(
+                            file = %event.path,
+                            violations = lint_results.len(),
+                            score = lint_score.value(),
+                            "File change linted"
                         );
                     }
                 }
@@ -150,7 +151,7 @@ impl WatchOrchestrator {
         if let Err(e) = rt.block_on(self.provider.stop()) {
             warn!(error = %e, "failed to stop watcher cleanly");
         }
-        println!("Watcher stopped.");
+        info!("Watcher stopped");
         ExitCode::OK
     }
 }
