@@ -9,6 +9,7 @@ use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::orphan_rules::IOrphanAggregate;
+use shared::orphan_rules::OrphanRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
 /// CI evaluation result — formatted by CLI/MCP surfaces.
@@ -80,7 +81,8 @@ pub fn collect_ci(
     // Orphan detection (sync) — reuse already-fetched ignored paths
     let (_, orphan_res) = deps
         .orphan_orchestrator
-        .scan_orphans(&root, &ignored.values);
+        .execute(OrphanRequest::scan(&root, &ignored))
+        .into_scan_outcome();
     results.extend(orphan_res);
 
     let score = deps.code_analysis_linter.calc_score(&results);

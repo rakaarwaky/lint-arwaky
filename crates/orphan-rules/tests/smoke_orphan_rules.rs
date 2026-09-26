@@ -14,7 +14,7 @@ use orphan_rules_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrpha
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::{IOrphanAggregate, OrphanFileListVO};
+use shared::orphan_rules::{IOrphanAggregate, OrphanFileListVO, OrphanRequest};
 use std::sync::Arc;
 
 #[test]
@@ -36,7 +36,9 @@ fn smoke_analyzer_returns_quickly() {
         "src/contract_bar_protocol.rs".to_string(),
     ]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -82,6 +84,8 @@ fn smoke_arch_analyzer_construct() {
     let analyzer = ArchOrphanAnalyzer::new(deps, config);
     let files = OrphanFileListVO::new(vec![]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
     assert!(results.is_empty());
 }

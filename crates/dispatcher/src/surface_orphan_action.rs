@@ -11,6 +11,7 @@ use shared::config_system::{
 };
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::IOrphanAggregate;
+use shared::orphan_rules::OrphanRequest;
 
 use shared::common::ViolationItem;
 
@@ -169,16 +170,22 @@ pub fn collect_orphan(
     // file paths. Using a member path (first_ws.path) would cause path mismatch
     // since unified_orphan_files are relative to the workspace root.
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
-    let unified_context =
-        unified_orchestrator.build_orphan_graph_context(&unified_orphan_files, &root_fp);
+    let unified_context = unified_orchestrator
+        .execute(OrphanRequest::build_graph_context(
+            &unified_orphan_files,
+            &root_fp,
+        ))
+        .into_graph_context();
 
     // Now run orphan checks using unified file list so cross-member imports are visible.
     // Violations are filtered to each member afterward.
-    let results = unified_orchestrator.check_orphans_with_context(
-        &unified_orphan_files,
-        &root_fp,
-        &unified_context,
-    );
+    let results = unified_orchestrator
+        .execute(OrphanRequest::check_with_context(
+            &unified_orphan_files,
+            &root_fp,
+            &unified_context,
+        ))
+        .into_violations();
 
     // Filter results per member — violation file paths are relative to workspace root
     // (e.g., "crates/shared/src/taxonomy_operation_vo.rs"), member paths are like "crates/shared"
@@ -283,11 +290,21 @@ fn scan_single_root(
         shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
 
     // Build graph context from filesystem's pre-built data
-    let context = ws_orchestrator.build_orphan_graph_context(&orphan_files, &scan_root_fp);
+    let context = ws_orchestrator
+        .execute(OrphanRequest::build_graph_context(
+            &orphan_files,
+            &scan_root_fp,
+        ))
+        .into_graph_context();
 
     // Run orphan checks on pre-fetched data with correct root_dir
-    let results =
-        ws_orchestrator.check_orphans_with_context(&orphan_files, &scan_root_fp, &context);
+    let results = ws_orchestrator
+        .execute(OrphanRequest::check_with_context(
+            &orphan_files,
+            &scan_root_fp,
+            &context,
+        ))
+        .into_violations();
 
     let mut violations: Vec<ViolationItem> = results
         .iter()

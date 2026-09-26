@@ -451,7 +451,7 @@ pub struct ScanTiming {
 // ═══════════════════════════════════════════════════════════════
 
 /// Analysis context produced by filesystem graph construction.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct GraphAnalysisContext {
     pub import_graph: ImportGraph,
     pub inbound_links: InboundLinkMap,
@@ -477,7 +477,7 @@ impl GraphAnalysisContext {
 }
 
 /// Forward dependency graph: file → files it imports.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ImportGraph {
     pub mapping: HashMap<String, Vec<String>>,
 }
@@ -489,7 +489,7 @@ impl ImportGraph {
 }
 
 /// Reverse dependency map: file → files that import it.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct InboundLinkMap {
     pub mapping: HashMap<String, Vec<String>>,
 }
@@ -654,7 +654,7 @@ fn boundary_ends_with(full: &str, suffix: &str) -> bool {
 }
 
 /// Inheritance relationships: file → inherited trait/interface names.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct InheritanceMap {
     pub mapping: HashMap<String, Vec<String>>,
 }

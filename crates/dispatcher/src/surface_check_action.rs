@@ -13,6 +13,7 @@ use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::orphan_rules::IOrphanAggregate;
+use shared::orphan_rules::OrphanRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
@@ -267,7 +268,13 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    let (_graph_ctx, orphan_violations) = agg.orphan.scan_orphans(&root_fp, &ignored);
+    let (_graph_ctx, orphan_violations) = agg
+        .orphan
+        .execute(OrphanRequest::scan(
+            &root_fp,
+            &shared::common::taxonomy_common_vo::PatternList::new(ignored.clone()),
+        ))
+        .into_scan_outcome();
     all.extend(
         orphan_violations
             .iter()
@@ -441,7 +448,13 @@ fn run_single_file_scan(
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    let (_graph_ctx, orphan_violations) = agg.orphan.scan_orphans(root_fp, ignored);
+    let (_graph_ctx, orphan_violations) = agg
+        .orphan
+        .execute(OrphanRequest::scan(
+            root_fp,
+            &shared::common::taxonomy_common_vo::PatternList::new(ignored.to_vec()),
+        ))
+        .into_scan_outcome();
     all.extend(
         orphan_violations
             .iter()

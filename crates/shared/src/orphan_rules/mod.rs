@@ -10,6 +10,7 @@ pub use contract_orphan_protocol::ITaxonomyOrphanProtocol;
 pub use contract_orphan_protocol::IUtilityOrphanProtocol;
 pub mod taxonomy_orphan_contract_vo;
 pub mod taxonomy_orphan_parse_result_vo;
+pub mod taxonomy_orphan_request_vo;
 pub mod taxonomy_violation_orphan_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -21,4 +22,5 @@ pub use taxonomy_orphan_parse_result_vo::{
     AstImportVO, AstModDeclVO, AstStructDefVO, AstTraitDefVO, AstTraitImplVO, FileParseResultVO,
     PythonParseResultVO, RustParseResultVO, TsParseResultVO,
 };
+pub use taxonomy_orphan_request_vo::{OrphanRequest, OrphanResponse};
 pub use taxonomy_violation_orphan_vo::AesOrphanViolation;

@@ -7,7 +7,7 @@ use mock_filesystem::mock_filesystem;
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::OrphanFileListVO;
+use shared::orphan_rules::{OrphanFileListVO, OrphanRequest};
 
 #[test]
 fn container_creates_with_default_config() {
@@ -17,7 +17,10 @@ fn container_creates_with_default_config() {
     // analyzer() returns Arc<dyn IOrphanAggregate> — verify it's usable
     let files = OrphanFileListVO::new(vec![]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let _results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
+    assert!(results.is_empty());
 }
 
 #[test]
@@ -28,7 +31,9 @@ fn container_creates_with_custom_config() {
     let analyzer = container.analyzer();
     let files = OrphanFileListVO::new(vec![]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
     // With empty file list and default config, no orphans
     assert!(results.is_empty());
 }
@@ -41,7 +46,9 @@ fn container_creates_with_ignored_paths() {
     let analyzer = container.analyzer();
     let files = OrphanFileListVO::new(vec![]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
     assert!(results.is_empty());
 }
 
@@ -51,9 +58,15 @@ fn analyzer_scan_orphans_on_empty_dir() {
     let container = OrphanContainer::new(fs);
     let analyzer = container.analyzer();
     let root = FilePath::new(".".to_string()).unwrap();
-    let (_context, results) = analyzer.scan_orphans(&root, &[]);
+    let (context, results) = analyzer
+        .execute(OrphanRequest::scan(
+            &root,
+            &shared::common::taxonomy_common_vo::PatternList::new(Vec::<String>::new()),
+        ))
+        .into_scan_outcome();
     // Empty filesystem returns empty results
     assert!(results.is_empty());
+    assert!(context.all_workspace_files.is_empty());
 }
 
 #[test]
@@ -69,7 +82,9 @@ fn analyzer_returns_empty_for_disabled_config() {
 
     let files = OrphanFileListVO::new(vec!["src/taxonomy_color.rs".to_string()]);
     let root = FilePath::new(".".to_string()).unwrap();
-    let results = analyzer.check_orphans(&files, &root);
+    let results = analyzer
+        .execute(OrphanRequest::check(&files, &root))
+        .into_violations();
     // Config disabled → no results
     assert!(results.is_empty());
 }
@@ -93,6 +108,8 @@ fn analyzer_check_orphans_with_context_returns_empty_for_no_files() {
         InheritanceMap::new(HashMap::new()),
         vec![],
     );
-    let results = analyzer.check_orphans_with_context(&files, &root, &context);
+    let results = analyzer
+        .execute(OrphanRequest::check_with_context(&files, &root, &context))
+        .into_violations();
     assert!(results.is_empty());
 }
