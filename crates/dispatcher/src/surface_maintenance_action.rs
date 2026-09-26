@@ -2,6 +2,7 @@
 // Delegates all operations through IMaintenanceAggregate.
 // No direct std::process::Command or filesystem I/O — aggregate handles subprocess execution.
 use shared::common::FilePath;
+use shared::maintenance::MaintenanceRequest;
 use shared::maintenance::{
     DependencyReport, HealthCheckResult, IMaintenanceAggregate, SecurityScanReport,
     ToolchainDiagnostics,
@@ -9,7 +10,9 @@ use shared::maintenance::{
 use std::sync::Arc;
 
 pub fn collect_doctor(maintenance: Arc<dyn IMaintenanceAggregate>) -> ToolchainDiagnostics {
-    maintenance.diagnose_toolchain()
+    maintenance
+        .execute(MaintenanceRequest::diagnose_toolchain())
+        .into_toolchain()
 }
 
 pub fn collect_security(
@@ -21,7 +24,9 @@ pub fn collect_security(
         None => ".".to_string(),
     };
     let fp = FilePath::new(target).map_err(|_| "invalid path".to_string())?;
-    Ok(maintenance.run_security_scan(&fp))
+    Ok(maintenance
+        .execute(MaintenanceRequest::security_scan(&fp))
+        .into_security_report())
 }
 
 pub fn collect_dependencies(
@@ -34,10 +39,13 @@ pub fn collect_dependencies(
     };
     let fp = FilePath::new(target).map_err(|_| "invalid path".to_string())?;
     maintenance
-        .run_dependency_report(&fp)
+        .execute(MaintenanceRequest::dependency_report(&fp))
+        .into_dependency_report()
         .map_err(|e| format!("Error: {e}"))
 }
 
 pub fn collect_health_check(maintenance: Arc<dyn IMaintenanceAggregate>) -> HealthCheckResult {
-    maintenance.health_check()
+    maintenance
+        .execute(MaintenanceRequest::health_check())
+        .into_health()
 }

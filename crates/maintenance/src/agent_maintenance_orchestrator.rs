@@ -3,6 +3,9 @@ use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
 use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::taxonomy_maintenance_request_vo::{
+    MaintenanceRequest, MaintenanceResponse,
+};
 
 use shared::maintenance::taxonomy_doctor_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
@@ -22,38 +25,41 @@ pub struct MaintenanceCommandsOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
-    fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
-        self.deps.checker.stats(project_path)
-    }
-
-    fn clean(&self) {
-        self.deps.checker.clean()
-    }
-
-    fn update(&self) {
-        self.deps.checker.update()
-    }
-
-    fn doctor(&self) -> DoctorResultVO {
-        self.deps.checker.doctor()
-    }
-
-    fn cancel(&self, _job_id: JobId) {}
-
-    fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        self.deps.checker.diagnose_toolchain()
-    }
-
-    fn health_check(&self) -> HealthCheckResult {
-        self.deps.checker.health_check()
-    }
-
-    fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        self.deps.checker.run_security_scan(project_path)
-    }
-
-    fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String> {
-        self.deps.checker.run_dependency_report(project_path)
+    fn execute(&self, request: MaintenanceRequest) -> MaintenanceResponse {
+        match request {
+            MaintenanceRequest::Stats { project_path } => MaintenanceResponse::Stats {
+                stats: self.stats(&project_path),
+            },
+            MaintenanceRequest::Clean => {
+                self.clean();
+                MaintenanceResponse::Clean
+            }
+            MaintenanceRequest::Update => {
+                self.update();
+                MaintenanceResponse::Update
+            }
+            MaintenanceRequest::Doctor => MaintenanceResponse::Doctor {
+                result: self.doctor(),
+            },
+            MaintenanceRequest::Cancel { job_id } => {
+                self.cancel(job_id);
+                MaintenanceResponse::Cancelled
+            }
+            MaintenanceRequest::DiagnoseToolchain => MaintenanceResponse::Toolchain {
+                diagnostics: self.diagnose_toolchain(),
+            },
+            MaintenanceRequest::HealthCheck => MaintenanceResponse::Health {
+                health: self.health_check(),
+            },
+            MaintenanceRequest::SecurityScan { project_path } => MaintenanceResponse::Security {
+                report: self.run_security_scan(&project_path),
+            },
+            MaintenanceRequest::DependencyReport { project_path } => {
+                MaintenanceResponse::Dependencies {
+                    report: self.run_dependency_report(&project_path),
+                }
+            }
+        }
     }
 }
 
@@ -62,5 +68,42 @@ impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
 impl MaintenanceCommandsOrchestrator {
     pub fn new(deps: MaintenanceDeps) -> Self {
         Self { deps }
+    }
+
+    pub fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
+        self.deps.checker.stats(project_path)
+    }
+
+    pub fn clean(&self) {
+        self.deps.checker.clean()
+    }
+
+    pub fn update(&self) {
+        self.deps.checker.update()
+    }
+
+    pub fn doctor(&self) -> DoctorResultVO {
+        self.deps.checker.doctor()
+    }
+
+    pub fn cancel(&self, _job_id: JobId) {}
+
+    pub fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
+        self.deps.checker.diagnose_toolchain()
+    }
+
+    pub fn health_check(&self) -> HealthCheckResult {
+        self.deps.checker.health_check()
+    }
+
+    pub fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
+        self.deps.checker.run_security_scan(project_path)
+    }
+
+    pub fn run_dependency_report(
+        &self,
+        project_path: &FilePath,
+    ) -> Result<DependencyReport, String> {
+        self.deps.checker.run_dependency_report(project_path)
     }
 }

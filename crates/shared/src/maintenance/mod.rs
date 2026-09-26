@@ -1,6 +1,7 @@
 pub mod contract_maintenance_aggregate;
 pub mod contract_maintenance_protocol;
 pub mod taxonomy_doctor_vo;
+pub mod taxonomy_maintenance_request_vo;
 pub mod taxonomy_stats_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -10,6 +11,7 @@ pub mod taxonomy_stats_vo;
 pub use contract_maintenance_aggregate::IMaintenanceAggregate;
 pub use contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 pub use contract_maintenance_protocol::IToolExecutorProtocol;
+pub use taxonomy_maintenance_request_vo::{MaintenanceRequest, MaintenanceResponse};
 
 // ── Taxonomy types ──
 pub use taxonomy_doctor_vo::DependencyInfo;

@@ -1,6 +1,7 @@
 // Integration tests — full DI wiring via MaintenanceContainer.
 use shared::common::FilePath;
 use shared::maintenance::IMaintenanceAggregate;
+use shared::maintenance::MaintenanceRequest;
 use std::sync::Arc;
 
 fn make_container() -> maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer {
@@ -25,7 +26,7 @@ fn orchestrator_stats_on_current_dir() {
     let container = make_container();
     let orch = container.orchestrator();
     let path = FilePath::new(".").unwrap();
-    let stats = orch.stats(&path);
+    let stats = orch.execute(MaintenanceRequest::stats(&path)).into_stats();
     assert!(stats.total_files.value >= 0);
 }
 
@@ -33,7 +34,9 @@ fn orchestrator_stats_on_current_dir() {
 fn orchestrator_diagnose_toolchain() {
     let container = make_container();
     let orch = container.orchestrator();
-    let diag = orch.diagnose_toolchain();
+    let diag = orch
+        .execute(MaintenanceRequest::diagnose_toolchain())
+        .into_toolchain();
     assert!(!diag.rust_tools.is_empty());
 }
 
@@ -41,7 +44,9 @@ fn orchestrator_diagnose_toolchain() {
 fn orchestrator_health_check() {
     let container = make_container();
     let orch = container.orchestrator();
-    let result = orch.health_check();
+    let result = orch
+        .execute(MaintenanceRequest::health_check())
+        .into_health();
     assert_eq!(result.adapters.len(), 9);
 }
 
@@ -49,7 +54,7 @@ fn orchestrator_health_check() {
 fn orchestrator_doctor() {
     let container = make_container();
     let orch = container.orchestrator();
-    let result = orch.doctor();
+    let result = orch.execute(MaintenanceRequest::doctor()).into_doctor();
     assert!(!result.rust_version.value.is_empty() || !result.python_version.value.is_empty());
 }
 
@@ -58,7 +63,9 @@ fn orchestrator_security_scan() {
     let container = make_container();
     let orch = container.orchestrator();
     let path = FilePath::new(".").unwrap();
-    let report = orch.run_security_scan(&path);
+    let report = orch
+        .execute(MaintenanceRequest::security_scan(&path))
+        .into_security_report();
     assert!(!report.language.is_empty());
 }
 
@@ -67,7 +74,9 @@ fn orchestrator_dependency_report() {
     let container = make_container();
     let orch = container.orchestrator();
     let path = FilePath::new(".").unwrap();
-    let result = orch.run_dependency_report(&path);
+    let result = orch
+        .execute(MaintenanceRequest::dependency_report(&path))
+        .into_dependency_report();
     if let Ok(report) = result {
         assert_eq!(report.language, "Rust");
     }
@@ -77,12 +86,14 @@ fn orchestrator_dependency_report() {
 fn orchestrator_clean_does_not_panic() {
     let container = make_container();
     let orch = container.orchestrator();
-    orch.clean();
+    orch.execute(MaintenanceRequest::clean());
 }
 
 #[test]
 fn orchestrator_cancel_does_not_panic() {
     let container = make_container();
     let orch = container.orchestrator();
-    orch.cancel(shared::common::taxonomy_action_vo::JobId::default());
+    orch.execute(MaintenanceRequest::cancel(
+        shared::common::taxonomy_action_vo::JobId::default(),
+    ));
 }
