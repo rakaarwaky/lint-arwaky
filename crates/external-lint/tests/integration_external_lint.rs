@@ -16,8 +16,8 @@ use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 
 use mock_filesystem::MockFilesystem;
 
@@ -53,7 +53,7 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
 }
 
 struct MockCmdExecutor;
-impl shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol
+impl shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol
     for MockCmdExecutor
 {
     fn execute_command(

@@ -5,10 +5,10 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
 use crate::config_system::taxonomy_source_vo::ConfigResult;
 
-use crate::config_system::contract_parser_protocol::IConfigParserProtocol;
-use crate::config_system::contract_reader_protocol::IConfigReaderProtocol;
-use crate::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use crate::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+use crate::config_system::contract_config_protocol::IConfigParserProtocol;
+use crate::config_system::contract_config_protocol::IConfigReaderProtocol;
+use crate::config_system::contract_config_protocol::IConfigValidatorProtocol;
+use crate::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
 
 /// Aggregate trait — composes all 4 focused config protocol traits.
 /// Consumer crates depending on config data import this aggregate;

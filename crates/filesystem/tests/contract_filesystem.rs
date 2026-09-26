@@ -6,11 +6,11 @@ use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_graph_protocol::IGraphProtocol;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
-use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
 #[test]
 fn ast_parser_implements_parser_protocol() {

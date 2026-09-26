@@ -459,11 +459,11 @@ fn _assert_object_safe_filesystem_aggregate<
 >() {
 }
 fn _assert_object_safe_parser<
-    T: shared_lint_arwaky::filesystem::contract_parser_protocol::IParserProtocol,
+    T: shared_lint_arwaky::filesystem::contract_filesystem_protocol::IParserProtocol,
 >() {
 }
 fn _assert_object_safe_workspace<
-    T: shared_lint_arwaky::filesystem::contract_workspace_protocol::IWorkspaceProtocol,
+    T: shared_lint_arwaky::filesystem::contract_filesystem_protocol::IWorkspaceProtocol,
 >() {
 }
 fn _assert_object_safe_config_orch<T: shared_lint_arwaky::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate>(){

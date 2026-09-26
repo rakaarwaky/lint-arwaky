@@ -1,5 +1,5 @@
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::maintenance::contract_tool_executor_protocol::{IToolExecutorProtocol, ToolOutput};
+use shared::maintenance::contract_maintenance_protocol::{IToolExecutorProtocol, ToolOutput};
 use std::process::Command;
 
 pub struct ToolExecutorAdapter;

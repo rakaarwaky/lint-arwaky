@@ -1,11 +1,6 @@
 // role-rules — taxonomy and contract types
-pub mod contract_agent_role_protocol;
-pub mod contract_capabilities_role_protocol;
-pub mod contract_role_contract_protocol;
+pub mod contract_role_protocol;
 pub mod contract_role_runner_aggregate;
-pub mod contract_surface_role_protocol;
-pub mod contract_taxonomy_role_protocol;
-pub mod contract_utility_role_protocol;
 pub mod taxonomy_layer_names_constant;
 pub mod taxonomy_layer_names_vo;
 pub mod taxonomy_role_request_vo;
@@ -15,13 +10,13 @@ pub mod taxonomy_violation_role_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_agent_role_protocol::IAgentRoleProtocol;
-pub use contract_capabilities_role_protocol::ICapabilitiesRoleProtocol;
-pub use contract_role_contract_protocol::IContractRoleProtocol;
+pub use contract_role_protocol::IAgentRoleProtocol;
+pub use contract_role_protocol::ICapabilitiesRoleProtocol;
+pub use contract_role_protocol::IContractRoleProtocol;
+pub use contract_role_protocol::ISurfaceRoleProtocol;
+pub use contract_role_protocol::ITaxonomyRoleProtocol;
+pub use contract_role_protocol::IUtilityRoleProtocol;
 pub use contract_role_runner_aggregate::IRoleRunnerAggregate;
-pub use contract_surface_role_protocol::ISurfaceRoleProtocol;
-pub use contract_taxonomy_role_protocol::ITaxonomyRoleProtocol;
-pub use contract_utility_role_protocol::IUtilityRoleProtocol;
 
 // ── Taxonomy types ──
 pub use taxonomy_layer_names_constant::LAYER_AGENT;

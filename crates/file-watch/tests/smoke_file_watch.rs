@@ -2,7 +2,7 @@
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
 use file_watch_lint_arwaky::root_file_watch_container::FileWatchContainer;
-use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
+use shared::file_watch::contract_watch_protocol::IWatchProviderProtocol;
 use std::sync::Arc;
 
 #[test]

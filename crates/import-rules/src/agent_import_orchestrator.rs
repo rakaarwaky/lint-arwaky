@@ -13,13 +13,13 @@ use shared::config_system::ArchitectureConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ParseMetadata};
 use shared::import_rules::DEFAULT_SKIP_DIRS;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
-use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
+use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
 use shared::import_rules::taxonomy_import_request_vo::{ImportRequest, ImportResponse};
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
 
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use tracing::warn;

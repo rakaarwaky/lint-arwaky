@@ -20,9 +20,8 @@ use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
     ExternalLintDeps, ExternalLintOrchestrator,

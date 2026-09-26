@@ -14,7 +14,7 @@ use shared::common::utility_signature_parser::{
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::contract_role_contract_protocol::IContractRoleProtocol;
+use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractRoleChecker {}

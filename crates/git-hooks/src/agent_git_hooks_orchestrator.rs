@@ -15,10 +15,10 @@ use shared::cli_commands::LintResultList;
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
 use shared::git_hooks::taxonomy_git_hooks_request_vo::{GitHooksRequest, GitHooksResponse};
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 

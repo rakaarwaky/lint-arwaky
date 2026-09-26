@@ -1,6 +1,6 @@
 // Unit tests — ChangeAnalyzer edge cases and deduplication logic.
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+use shared::file_watch::contract_watch_protocol::IChangeAnalyzerProtocol;
 use shared::file_watch::taxonomy_watch_event_vo::{WatchEvent, WatchEventKind};
 
 // ─── is_lintable edge cases (FR-003) ──────────────────────

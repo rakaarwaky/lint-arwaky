@@ -9,7 +9,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
 use shared::file_watch::GitDiffResultVO;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
 
 use std::sync::Arc;
 

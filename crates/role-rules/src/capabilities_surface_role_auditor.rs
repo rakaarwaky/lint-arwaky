@@ -13,7 +13,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ParseMetadata, PythonMetadata, RustMetadata, TypeScriptMetadata,
 };
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleProtocol;
+use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
 
 const MAX_PUBLIC_METHODS: usize = 50;
 const MAX_CONTROL_FLOW: usize = 50;

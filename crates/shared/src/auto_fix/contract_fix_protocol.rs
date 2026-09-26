@@ -1,25 +1,23 @@
-// PURPOSE: IFixProtocol — protocol trait for auto-fix operations (capabilities layer)
+// PURPOSE: auto-fix-domain capability contracts (AES102 `_protocol`).
 //
-// AES402: All primitive types in this contract have been replaced with taxonomy VOs.
-//   * `u32 line` → `LineNumber line` (semantic line position)
-//   * `usize changes` → `Count changes` (semantic count of modifications)
-//   * `&[LintResult]` → `&[LintResult]` (LintResult is already a VO aggregate)
-//   * `&str file_path` → kept as `&str` (idiomatic borrow for path strings)
-//   * `bool` → `FixOutcome` (reason-coded outcome per FRD: Applied / Skipped / Failed)
-//   * `Vec<String>` → `Vec<LintMessage>` (lint messages, not raw strings)
-//
-// FRD API Contract alignment:
-//   - `execute(path, dry_run)` — FR-004: per-request dry_run (not construction-time only)
-//   - `rename_symbol(path, old, new)` — FR-003: public symbol rename operation
-//   - `report_non_fixable(violations)` — FR-005: non-fixable violation reporting
-//   - `emit_fix_event` / `is_fixable` / `fixable_codes` removed from protocol
-//     (internal implementation details, not part of the public FRD API Contract)
+// One file for the auto-fix feature. Each trait below is one capability
+// seam: a trait carries every method that capability implements, with one
+// concrete return type each, so a capability implements its trait outright
+// and never carries unimplemented stubs.
+
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_source_vo::ContentString;
 use crate::auto_fix::taxonomy_fix_outcome_vo::FixOutcome;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
+
+pub trait IFileAdapterProtocol: Send + Sync {
+    fn read_file(&self, path: &FilePath) -> Option<ContentString>;
+    fn write_file(&self, path: &FilePath, content: &ContentString) -> bool;
+    fn path_exists(&self, path: &FilePath) -> bool;
+}
 
 /// Protocol trait for auto-fix operations.
 ///

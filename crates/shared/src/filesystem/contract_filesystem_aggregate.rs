@@ -6,11 +6,11 @@
 use crate::common::taxonomy_common_vo::{FileContentPair, PatternList};
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use crate::filesystem::contract_graph_protocol::IGraphProtocol;
-use crate::filesystem::contract_parser_protocol::IParserProtocol;
-use crate::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
-use crate::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use crate::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use crate::filesystem::contract_filesystem_protocol::IGraphProtocol;
+use crate::filesystem::contract_filesystem_protocol::IParserProtocol;
+use crate::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use crate::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
 use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;

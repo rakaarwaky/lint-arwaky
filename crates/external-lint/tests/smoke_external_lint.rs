@@ -17,9 +17,9 @@ use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 
 use mock_filesystem::MockFilesystem;
 
@@ -55,7 +55,7 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
 }
 
 struct MockCmdExecutor;
-impl shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol
+impl shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol
     for MockCmdExecutor
 {
     fn execute_command(
@@ -130,7 +130,7 @@ fn smoke_all_adapters_created_quickly() {
 
     let lint_exec: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(MockLintExecutor);
     let cmd_exec: Arc<
-        dyn shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol,
+        dyn shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol,
     > = Arc::new(MockCmdExecutor);
     let fs: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::new());

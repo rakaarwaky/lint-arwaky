@@ -4,12 +4,12 @@ use import_rules_lint_arwaky::capabilities_dummy_import_checker::DummyImportChec
 use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
 use import_rules_lint_arwaky::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
-use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
+use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
 
 // ── Compile-time trait bound assertions ────────────────────
 

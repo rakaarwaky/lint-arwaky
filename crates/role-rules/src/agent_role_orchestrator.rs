@@ -5,14 +5,14 @@
 
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleProtocol;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleProtocol;
-use shared::role_rules::contract_role_contract_protocol::IContractRoleProtocol;
+use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
+use shared::role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
+use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
 use shared::role_rules::taxonomy_role_request_vo::{RoleRequest, RoleResponse};
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleProtocol;
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleProtocol;
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleProtocol;
+use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
+use shared::role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
+use shared::role_rules::contract_role_protocol::IUtilityRoleProtocol;
 use std::path::Path;
 use std::sync::Arc;
 

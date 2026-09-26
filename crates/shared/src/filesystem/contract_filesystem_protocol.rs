@@ -1,17 +1,23 @@
+// PURPOSE: filesystem-domain capability contracts (AES102 `_protocol`).
+//
+// One file for the filesystem feature. Each trait below is one capability
+// seam: a trait carries every method that capability implements, with one
+// concrete return type each, so a capability implements its trait outright
+// and never carries unimplemented stubs.
+
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::filesystem::taxonomy_filesystem_vo::{
-    ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
-};
-// Contract layer — filesystem IO protocol trait
-// File I/O, path operations, directory operations, process execution, scan timing
-// Responsibilities: low-level filesystem access, path metadata, process spawning
-
+use crate::filesystem::taxonomy_filesystem_vo::{ ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming, };
 use std::path::{Path, PathBuf};
+use std::collections::HashMap;
+use crate::common::taxonomy_language_vo::Language;
+use crate::filesystem::taxonomy_filesystem_vo::{
+    DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning,
+};
+use crate::filesystem::taxonomy_filesystem_vo::ToolName;
+use crate::common::taxonomy_config_language_vo::ConfigLanguage;
 
-/// Filesystem IO protocol — low-level file I/O, path operations, directory ops, process execution.
-/// Consumers import only this trait when they need filesystem access without parse/graph/workspace concerns.
 pub trait IFileSystemIOProtocol: Send + Sync {
     // ═══════════════════════════════════════════════════════════
     // Path Operations
@@ -128,4 +134,114 @@ pub trait IFileSystemIOProtocol: Send + Sync {
 
     /// Get timing breakdown of last scan.
     fn timing(&self) -> &ScanTiming;
+}
+
+pub trait IGraphProtocol: Send + Sync {
+    /// Build graph from imports, file list, definitions, and implementations.
+    fn build_graph(
+        &self,
+        imports: &[ImportEntry],
+        files: &[FileEntry],
+        definitions: &[DefinitionEntry],
+        implementations: &[ImplEntry],
+    );
+    fn symbol_definitions(&self) -> &HashMap<String, Vec<PathBuf>>;
+    fn implementations(&self) -> &HashMap<String, Vec<PathBuf>>;
+    fn dependents(&self, path: &Path) -> Vec<PathBuf>;
+    fn dependencies(&self, path: &Path) -> Vec<PathBuf>;
+    fn reachable(&self, from: &Path, to: &Path) -> bool;
+    fn reverse_links(&self) -> &HashMap<PathBuf, Vec<PathBuf>>;
+}
+
+/// Parser protocol — AST parse results and import extraction queries.
+/// Consumers import only this trait when they need parse warnings or import data.
+pub trait IParserProtocol: Send + Sync {
+    fn parse_warnings(&self) -> &[ParseWarning];
+    fn import_list(&self) -> Vec<ImportEntry>;
+    fn parse_all(&self, files: &mut [FileEntry]);
+    fn imports_for(&self, path: &Path) -> Vec<ImportEntry>;
+    fn extract(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry>;
+
+    /// Resolve all stored imports through barrel files (__init__.py, mod.rs, etc.).
+    /// Populates `resolved_path` and `is_resolved` fields.
+    /// Call after `parse_all` with the project root directory.
+    fn resolve_barrel_imports(&self, root_dir: &Path);
+}
+
+/// Tool resolution protocol — external tool availability and command resolution.
+/// Consumers import only this trait when they need tool detection or command building.
+pub trait IToolResolutionProtocol: Send + Sync {
+    /// Check if an executable exists in PATH.
+    fn is_executable_in_path(&self, executable: &ToolName) -> bool;
+
+    /// Check if a binary is available in system PATH.
+    fn is_binary_available(&self, bin_name: &ToolName) -> bool;
+
+    /// Check if an executable exists in local node_modules/.bin.
+    fn has_local_bin(&self, working_dir: &Path, executable: &ToolName) -> bool;
+
+    /// Resolve JS tool command from local node_modules/.bin.
+    fn resolve_js_cmd(
+        &self,
+        executable: &ToolName,
+        args: Vec<String>,
+        working_dir: &FilePath,
+    ) -> Option<Vec<String>>;
+
+    /// Walk up to find JS project root.
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath;
+
+    /// Find parent dir with Cargo.toml.
+    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath;
+
+    /// Find parent dir with Cargo.lock.
+    fn resolve_cargo_lock_working_dir(&self, path: &FilePath) -> FilePath;
+
+    /// Check if directory contains a config file (.eslintrc, .prettierrc, tsconfig.json, etc).
+    fn has_config_file(&self, dir: &Path) -> bool;
+
+    /// Find Cargo.toml in the given path.
+    fn has_cargo_toml(&self, path: &FilePath) -> Option<FilePath>;
+
+    /// Find Cargo.lock in the given path.
+    fn has_cargo_lock(&self, path: &FilePath) -> Option<FilePath>;
+
+    /// Check if path contains Python files (recursive, handles files too).
+    fn is_python_file_recursive(&self, path: &FilePath) -> bool;
+
+    /// Create default working directory.
+    fn default_working_dir(&self, path: &FilePath) -> FilePath;
+}
+
+/// Workspace protocol — workspace structure detection and navigation.
+/// Consumers import only this trait when they need workspace-level queries.
+pub trait IWorkspaceProtocol: Send + Sync {
+    /// FR-005: Find workspace root by walking up from start path.
+    fn workspace_root(&self, start: &FilePath) -> Option<PathBuf>;
+
+    /// FR-005: Find workspace root (Result variant).
+    fn find_workspace_root_from_path(&self, start: &Path) -> Result<PathBuf, std::io::Error>;
+
+    /// FR-005: Detect if a path is a workspace member.
+    fn is_member_path(&self, path: &FilePath) -> bool;
+
+    /// FR-005: Detect if a path is a leaf member.
+    fn is_leaf_member_path(&self, path: &FilePath) -> bool;
+
+    /// FR-005: Detect source directory from project root.
+    fn detect_source_dir(&self, project_root: &Path) -> PathBuf;
+
+    /// Detect ConfigLanguage from a file system path.
+    fn detect_language_from_path(&self, path: &str) -> ConfigLanguage;
+
+    /// FR-005: Check if any container/entry file under workspace root references identifiers.
+    fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &PatternList) -> bool;
+
+    /// Resolve a module path relative to base_dir, confined under root.
+    fn resolve_orphan_module_path(
+        &self,
+        root: &Path,
+        base_dir: &Path,
+        module_path: &str,
+    ) -> Option<PathBuf>;
 }

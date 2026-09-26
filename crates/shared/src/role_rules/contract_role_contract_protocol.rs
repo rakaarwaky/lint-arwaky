@@ -1,8 +1,0 @@
-// PURPOSE: IContractRoleProtocol — contract trait for AES402: contract primitive type audits
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
-
-pub trait IContractRoleProtocol: Send + Sync {
-    fn check_protocol(&self, file: &FileEntry) -> Vec<LintResult>;
-    fn check_aggregate(&self, file: &FileEntry) -> Vec<LintResult>;
-}

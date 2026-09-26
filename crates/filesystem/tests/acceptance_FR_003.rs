@@ -9,7 +9,7 @@
 
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use shared::common::PatternList;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use tempfile::TempDir;
 
 fn make_io() -> CapabilitiesFileSystemIO {

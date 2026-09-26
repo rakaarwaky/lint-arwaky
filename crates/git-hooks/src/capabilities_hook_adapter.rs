@@ -10,7 +10,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::taxonomy_filesystem_vo::FileMode;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use std::sync::Arc;
 

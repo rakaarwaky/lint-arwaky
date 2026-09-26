@@ -16,7 +16,7 @@ use shared::role_rules::{
     ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 use std::sync::Arc;
-use shared::role_rules::taxonomy_role_request_vo::{RoleRequest, RoleResponse};
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 
 fn dummy_file() -> FileEntry {
     FileEntry {

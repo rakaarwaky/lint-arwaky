@@ -4,8 +4,8 @@ use crate::common::taxonomy_job_vo::EnvContentVO;
 use crate::common::taxonomy_job_vo::McpConfigVO;
 use crate::common::taxonomy_job_vo::SuccessStatus;
 use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::project_setup::contract_setup_management_protocol::ISetupManagementProtocol;
-use crate::project_setup::contract_setup_management_protocol::PreFlightResult;
+use crate::project_setup::contract_setup_protocol::ISetupManagementProtocol;
+use crate::project_setup::contract_setup_protocol::PreFlightResult;
 use crate::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, ProjectLanguageVO, ProjectLanguagesVO, SetupError, WriteConfigResult,
 };

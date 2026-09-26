@@ -37,7 +37,7 @@ fn container_aggregate_is_trait_object() {
 
 #[test]
 fn is_lintable_via_protocol() {
-    use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
+    use shared::file_watch::contract_watch_protocol::IChangeAnalyzerProtocol;
     let analyzer = file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::new();
     assert!(analyzer.is_lintable("main.rs"));
     assert!(analyzer.is_lintable("app.py"));

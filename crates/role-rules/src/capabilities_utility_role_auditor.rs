@@ -7,7 +7,7 @@
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleProtocol;
+use shared::role_rules::contract_role_protocol::IUtilityRoleProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct UtilityRoleChecker {}

@@ -13,7 +13,7 @@ use std::process::Command;
 use std::sync::Arc;
 
 use shared::common::FilePath;
-use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
+use shared::config_system::contract_config_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;

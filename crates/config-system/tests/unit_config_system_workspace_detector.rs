@@ -7,7 +7,7 @@ use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath as SharedFilePath;
 use shared::common::taxonomy_source_vo::ContentString;
 use shared::config_system::{IWorkspaceDetectorProtocol, WorkspaceType};
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::*;
 use std::fs;
 use std::sync::Arc;

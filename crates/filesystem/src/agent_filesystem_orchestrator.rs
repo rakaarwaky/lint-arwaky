@@ -10,11 +10,11 @@ use shared::{
     },
     filesystem::{
         contract_filesystem_aggregate::IFilesystemAggregate,
-        contract_filesystem_io_protocol::IFileSystemIOProtocol,
-        contract_graph_protocol::IGraphProtocol,
-        contract_parser_protocol::IParserProtocol,
-        contract_tool_resolution_protocol::IToolResolutionProtocol,
-        contract_workspace_protocol::IWorkspaceProtocol,
+        contract_filesystem_protocol::IFileSystemIOProtocol,
+        contract_filesystem_protocol::IGraphProtocol,
+        contract_filesystem_protocol::IParserProtocol,
+        contract_filesystem_protocol::IToolResolutionProtocol,
+        contract_filesystem_protocol::IWorkspaceProtocol,
         taxonomy_filesystem_vo::{
             ByteCount, DefinitionEntry, FileEntry, FileExtension, FileMode, GitCommandResult,
             GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph, ImportType, InboundLinkMap,

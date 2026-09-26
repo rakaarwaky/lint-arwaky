@@ -12,10 +12,10 @@ use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWork
 use filesystem_lint_arwaky::utility_barrel_resolution::{
     parse_barrel_reexports, resolve_single_import,
 };
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
-use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ImportType, Language};
 
 use std::collections::{HashMap, HashSet};
@@ -55,7 +55,7 @@ fn make_orchestrator() -> FilesystemOrchestrator {
     let tool_resolution: Arc<dyn IToolResolutionProtocol> =
         Arc::new(CapabilitiesToolResolution::new());
     let parser: Arc<dyn IParserProtocol> = Arc::new(ASTParser::new());
-    let graph: Arc<dyn shared::filesystem::contract_graph_protocol::IGraphProtocol> =
+    let graph: Arc<dyn shared::filesystem::contract_filesystem_protocol::IGraphProtocol> =
         Arc::new(DependencyGraph::new());
 
     FilesystemOrchestrator::new(FilesystemOrchestratorDeps {

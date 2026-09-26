@@ -3,7 +3,7 @@ use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::fs;
-use shared::role_rules::taxonomy_role_request_vo::{RoleRequest, RoleResponse};
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 
 /// Create a FileEntry from a file on disk (simulates filesystem → orchestrator pipeline).
 fn file_entry_from_path(path: &std::path::Path, content: &str, lang: Language) -> FileEntry {

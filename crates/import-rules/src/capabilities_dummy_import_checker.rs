@@ -5,7 +5,7 @@ use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use crate::utility_dummy_detector;
 use crate::utility_import_resolver;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
