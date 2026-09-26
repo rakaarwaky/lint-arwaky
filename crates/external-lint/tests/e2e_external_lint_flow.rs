@@ -147,6 +147,7 @@ fn e2e_full_pipeline_rust_python() {
                     Arc::new(external_lint_lint_arwaky::RuffAdapter::new(
                         lint_exec.clone(),
                         None,
+                        io_arc.clone(),
                         tr_arc.clone(),
                     )),
                 );
@@ -157,6 +158,7 @@ fn e2e_full_pipeline_rust_python() {
                     Arc::new(external_lint_lint_arwaky::MyPyAdapter::new(
                         lint_exec.clone(),
                         None,
+                        io_arc.clone(),
                         tr_arc.clone(),
                     )),
                 );
@@ -167,6 +169,7 @@ fn e2e_full_pipeline_rust_python() {
                     Arc::new(external_lint_lint_arwaky::BanditAdapter::new(
                         lint_exec.clone(),
                         None,
+                        io_arc.clone(),
                         tr_arc.clone(),
                     )),
                 );

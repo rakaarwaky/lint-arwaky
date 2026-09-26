@@ -1,9 +1,10 @@
-use calculator_shared::contract_calculator_aggregate::CalculatorAggregate;
+use calculator_shared::contract_calculator_aggregate::ICalculatorAggregate;
+use calculator_shared::taxonomy_calculator_request_vo::{CalculatorRequest, CalculatorResponse};
 use calculator_shared::taxonomy_expression_vo::ExpressionVO;
 use calculator_shared::taxonomy_operation_vo::OperationVO;
 use calculator_shared::utility_expression_parser;
 
-pub fn run(calc: &mut dyn CalculatorAggregate) {
+pub fn run(calc: &dyn ICalculatorAggregate) {
     eprintln!("=== Calculator ===");
     eprintln!("Ketik operasi: <angka> <operator> <angka>");
     eprintln!("Contoh: 2 + 3");
@@ -20,13 +21,17 @@ pub fn run(calc: &mut dyn CalculatorAggregate) {
             break;
         }
         if input == "h" {
-            let history = calc.history();
-            if history.is_empty() {
-                eprintln!("  Belum ada riwayat");
-            } else {
-                for r in &history {
-                    eprintln!("  {}", r.expression);
+            match calc.execute(CalculatorRequest::history()) {
+                CalculatorResponse::History { results } => {
+                    if results.is_empty() {
+                        eprintln!("  Belum ada riwayat");
+                    } else {
+                        for r in &results {
+                            eprintln!("  {}", r.expression);
+                        }
+                    }
                 }
+                _ => eprintln!("  Belum ada riwayat"),
             }
             continue;
         }
@@ -39,9 +44,9 @@ pub fn run(calc: &mut dyn CalculatorAggregate) {
                 }
             };
             let expr = ExpressionVO::new(left, op, right);
-            match calc.delegate(&expr) {
-                Some(r) => eprintln!("  = {}", r.value),
-                None => eprintln!("  Error: tidak bisa hitung"),
+            match calc.execute(CalculatorRequest::delegate(expr)) {
+                CalculatorResponse::Delegation { result: Some(r) } => eprintln!("  = {}", r.value),
+                _ => eprintln!("  Error: tidak bisa hitung"),
             }
         } else {
             eprintln!("  Format: <angka> <operator> <angka>");

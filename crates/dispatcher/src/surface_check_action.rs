@@ -302,6 +302,22 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
     // External — adapters run on the target *as given* (relative paths resolve
     // against the process CWD, exactly like the spawned linters did).
+    // When the scan target is a workspace root (has crates/packages/modules
+    // siblings), gate external violations to those member dirs only so root-
+    // level packaging files (setup.py at the workspace root) are not picked
+    // up — matching the gating the AES-quality / role / import / naming /
+    // orphan linters apply via `discover_lintable_files`.
+    let member_dirs: Vec<std::path::PathBuf> = ["crates", "packages", "modules"]
+        .into_iter()
+        .map(|n| target_canon.join(n))
+        .filter(|p| p.is_dir())
+        .collect();
+    let member_refs: Vec<&std::path::Path> = member_dirs.iter().map(|p| p.as_path()).collect();
+    let member_scope: Option<&[&std::path::Path]> = if member_refs.is_empty() {
+        None
+    } else {
+        Some(&member_refs)
+    };
     let ext_target_fp = FilePath::new(path.to_string()).unwrap_or_default();
     {
         let ext_files = seam
@@ -336,13 +352,21 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .map(ViolationItem::from_lint_result)
             .collect();
         external.retain(|v| {
-            external_violation_in_scope(v, &seam, &target_canon, parent_workspace.as_deref())
+            external_violation_in_scope(
+                v,
+                &seam,
+                &target_canon,
+                parent_workspace.as_deref(),
+                member_scope,
+            )
         });
         all.extend(external);
     }
 
     // Keep only violations that resolve to a real file under the scan scope
     // (or, for AES205 cycles / AES5xx orphans, within the parent workspace).
+    // At a workspace root the scope is the member dirs only, so a root-level
+    // packaging file (e.g. setup.py) never surfaces from any linter.
     all.retain(|v| {
         violation_in_scan_scope(
             v,
@@ -350,6 +374,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             &target_canon,
             parent_workspace.as_deref(),
             workspace_root.as_deref(),
+            member_scope,
         )
     });
 
@@ -358,14 +383,24 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
 /// Whether an external-lint violation falls inside the scan scope: its file
 /// resolves under the target, or it is an AES205 cycle resolved under the
-/// parent workspace.
+/// parent workspace. When the target is a workspace root (`member_dirs` is
+/// `Some`), a violation must additionally resolve inside one of the member
+/// dirs — the AES linters only lint `crates`/`packages`/`modules`, so root
+/// level files (e.g. a packaging `setup.py`) are out of scope for the external
+/// adapters too.
 fn external_violation_in_scope(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
+    member_dirs: Option<&[&std::path::Path]>,
 ) -> bool {
     let resolved_canon = resolve_violation_path(v, seam, target_canon, parent_workspace);
+    if let Some(members) = member_dirs {
+        return members
+            .iter()
+            .any(|m| resolved_canon.starts_with(m) && seam.io.path_exists(&resolved_canon));
+    }
     resolved_canon.starts_with(target_canon)
         || (v.code.code() == "AES205"
             && parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw)))
@@ -374,12 +409,16 @@ fn external_violation_in_scope(
 /// Whether a violation stays in the scan scope: the file exists under the
 /// target, or it is an AES205 cycle / AES5xx orphan under the parent workspace.
 /// Non-existent files are dropped so doubled/stale paths never surface as E902.
+/// When `member_dirs` is `Some` (workspace root target), the violation must
+/// additionally resolve inside one of the member dirs — root-level packaging
+/// files (e.g. setup.py) are out of scope for every linter.
 fn violation_in_scan_scope(
     v: &ViolationItem,
     seam: &FilesystemSeam,
     target_canon: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
     workspace_root: Option<&std::path::Path>,
+    member_dirs: Option<&[&std::path::Path]>,
 ) -> bool {
     let resolved_canon = resolve_violation_path(v, seam, target_canon, workspace_root);
     if !seam.io.path_exists(&resolved_canon) {
@@ -387,6 +426,11 @@ fn violation_in_scan_scope(
     }
     let in_target = resolved_canon.starts_with(target_canon);
     let in_parent_ws = parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw));
+    // At a workspace root, scope to member dirs only so root-level packaging
+    // files are never reported — matching what the AES linters lint.
+    if let Some(members) = member_dirs {
+        return members.iter().any(|m| resolved_canon.starts_with(m));
+    }
     in_target
         || (v.code.code() == "AES205" && in_parent_ws)
         || (v.code.code().starts_with("AES5") && in_parent_ws)

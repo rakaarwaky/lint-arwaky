@@ -7,7 +7,7 @@ from division.src.capability_division_analyzer import DivisionAnalyzer
 from multiplication.src.capability_multiplication_analyzer import (
     MultiplicationAnalyzer,
 )
-from shared.src.contract_calculator_aggregate import CalculatorAggregate
+from shared.src.contract_calculator_aggregate import ICalculatorAggregate
 from subtraction.src.capability_subtraction_analyzer import SubtractionAnalyzer
 
 # ─── Block 1: Struct Definition ───────────────────────────
@@ -21,5 +21,5 @@ class CalculatorContainer:
             division=DivisionAnalyzer(),
         ))
 
-    def orchestrator(self) -> CalculatorAggregate:
+    def orchestrator(self) -> ICalculatorAggregate:
         return self._orchestrator

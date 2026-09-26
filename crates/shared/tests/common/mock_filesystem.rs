@@ -27,18 +27,47 @@ use std::sync::Arc;
 /// Mock filesystem — path_exists returns false so collect_scan fails fast.
 pub struct MockFilesystem {
     discover: Vec<String>,
+    is_python: Option<bool>,
+    canonicalize_prefix: Option<String>,
 }
 
 impl MockFilesystem {
     pub fn new() -> Self {
         Self {
             discover: Vec::new(),
+            is_python: None,
+            canonicalize_prefix: None,
         }
     }
 
     /// Mock that reports the given files from `discover_files` / `scan_directory`.
     pub fn with_files(files: Vec<String>) -> Self {
-        Self { discover: files }
+        Self {
+            discover: files,
+            is_python: None,
+            canonicalize_prefix: None,
+        }
+    }
+
+    /// Mock that reports whether the target path contains Python files.
+    /// Useful for adapter tests that need `scan()` to proceed past the
+    /// `is_python_file_recursive` guard.
+    pub fn with_python_flag(is_python: bool) -> Self {
+        Self {
+            discover: Vec::new(),
+            is_python: Some(is_python),
+            canonicalize_prefix: None,
+        }
+    }
+
+    /// Mock that canonicalizes the path argument by prepending `prefix/`.
+    /// Combine with `with_python_flag(true)` for end-to-end adapter command tests.
+    pub fn with_canonicalize_prefix(prefix: &str) -> Self {
+        Self {
+            discover: Vec::new(),
+            is_python: Some(true),
+            canonicalize_prefix: Some(prefix.to_string()),
+        }
     }
 }
 
@@ -207,7 +236,7 @@ impl IToolResolutionProtocol for MockFilesystem {
         None
     }
     fn is_python_file_recursive(&self, _path: &FilePath) -> bool {
-        false
+        self.is_python.unwrap_or(false)
     }
     fn default_working_dir(&self, path: &FilePath) -> FilePath {
         path.clone()
@@ -231,7 +260,10 @@ impl IFileSystemIOProtocol for MockFilesystem {
         Ok(path.to_path_buf())
     }
     fn canonicalize_path_str(&self, path: &FilePath) -> FilePath {
-        path.clone()
+        match &self.canonicalize_prefix {
+            Some(prefix) => FilePath::new(format!("{prefix}/{}", path.value())).unwrap_or_default(),
+            None => path.clone(),
+        }
     }
     fn is_symlink(&self, _path: &std::path::Path) -> bool {
         false

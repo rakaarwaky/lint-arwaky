@@ -19,7 +19,7 @@ enum Command {
 
 fn main() {
     let cli = Cli::parse();
-    let mut container = CalculatorContainer::new();
+    let container = CalculatorContainer::new();
 
     match cli.command {
         Some(Command::Run { path: _ }) | None => {

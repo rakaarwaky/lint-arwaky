@@ -140,10 +140,24 @@ fn smoke_all_adapters_created_quickly() {
     let path = FilePath::new("/tmp".to_string()).unwrap();
 
     // Python adapters
-    let _ruff = external_lint_lint_arwaky::RuffAdapter::new(lint_exec.clone(), None, tr.clone());
-    let _bandit =
-        external_lint_lint_arwaky::BanditAdapter::new(lint_exec.clone(), None, tr.clone());
-    let _mypy = external_lint_lint_arwaky::MyPyAdapter::new(lint_exec.clone(), None, tr.clone());
+    let _ruff = external_lint_lint_arwaky::RuffAdapter::new(
+        lint_exec.clone(),
+        None,
+        io.clone(),
+        tr.clone(),
+    );
+    let _bandit = external_lint_lint_arwaky::BanditAdapter::new(
+        lint_exec.clone(),
+        None,
+        io.clone(),
+        tr.clone(),
+    );
+    let _mypy = external_lint_lint_arwaky::MyPyAdapter::new(
+        lint_exec.clone(),
+        None,
+        io.clone(),
+        tr.clone(),
+    );
 
     // JS adapters
     let _eslint =

@@ -77,6 +77,7 @@ fn create_ruff_adapter_and_scan_returns_empty() {
         Arc::new(MockLintExecutor),
         None,
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
@@ -89,6 +90,7 @@ fn create_bandit_adapter_and_scan_returns_empty() {
         Arc::new(MockLintExecutor),
         None,
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
@@ -100,6 +102,7 @@ fn create_mypy_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
         Arc::new(MockLintExecutor),
         None,
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
@@ -213,6 +216,7 @@ fn bandit_apply_fix_always_returns_false() {
         Arc::new(MockLintExecutor),
         None,
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let status = adapter.apply_fix(&path).unwrap();
@@ -224,6 +228,7 @@ fn mypy_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
         Arc::new(MockLintExecutor),
         None,
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
@@ -248,6 +253,7 @@ fn ruff_apply_fix_returns_true() {
     let adapter = external_lint_lint_arwaky::RuffAdapter::new(
         Arc::new(MockLintExecutor),
         None,
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();

@@ -1,9 +1,9 @@
-from shared.src.contract_calculator_protocol import CalculatorProtocol
+from shared.src.contract_calculator_protocol import ICalculatorProtocol
 from shared.src.taxonomy_expression_vo import ExpressionVO
 from shared.src.taxonomy_result_vo import ResultVO, create_result
 
 
-class DivisionAnalyzer(CalculatorProtocol):
+class DivisionAnalyzer(ICalculatorProtocol):
     def evaluate(self, expr: ExpressionVO) -> ResultVO | None:
         if expr.right == 0:
             return None

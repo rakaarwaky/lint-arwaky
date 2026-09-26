@@ -1,14 +1,24 @@
+"""calculator-domain aggregate contract (AES101 `_aggregate`).
+
+The single entry point over the calculator feature. Consumers pass a
+CalculatorRequest; the agent behind the aggregate dispatches to the rich
+protocol classes in `contract_calculator_protocol.py`.
+"""
+
 from abc import ABC, abstractmethod
 
-from .taxonomy_expression_vo import ExpressionVO
-from .taxonomy_result_vo import ResultVO
+from .taxonomy_calculator_request_vo import CalculatorRequest, CalculatorResponse
 
 
-class CalculatorAggregate(ABC):
-    @abstractmethod
-    def delegate(self, expr: ExpressionVO) -> ResultVO | None:
-        pass
+class ICalculatorAggregate(ABC):
+    """Aggregate trait — the single entry point over the calculator feature."""
 
     @abstractmethod
-    def history(self) -> list[ResultVO]:
-        pass
+    def execute(self, request: CalculatorRequest) -> CalculatorResponse:
+        """Execute a calculator request; return the corresponding response."""
+        ...
+
+
+__all__ = ["ICalculatorAggregate"]
+
+_layer_symbols = {"ICalculatorAggregate": ICalculatorAggregate}

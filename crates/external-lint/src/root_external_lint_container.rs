@@ -49,6 +49,7 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_ruff_adapter::RuffAdapter::new(
                 lint_executor.clone(),
                 None,
+                io.clone(),
                 tool_resolution.clone(),
             )),
         );
@@ -57,6 +58,7 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_bandit_adapter::BanditAdapter::new(
                 lint_executor.clone(),
                 None,
+                io.clone(),
                 tool_resolution.clone(),
             )),
         );
@@ -65,6 +67,7 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_mypy_adapter::MyPyAdapter::new(
                 lint_executor.clone(),
                 None,
+                io.clone(),
                 tool_resolution.clone(),
             )),
         );

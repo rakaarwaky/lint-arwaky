@@ -90,6 +90,7 @@ fn ruff_adapter_implements_protocol() {
         Arc::new(MockLintExecutor),
         None,
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "ruff");
 }
@@ -100,6 +101,7 @@ fn bandit_adapter_implements_protocol() {
         Arc::new(MockLintExecutor),
         None,
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "bandit");
 }
@@ -109,6 +111,7 @@ fn mypy_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
         Arc::new(MockLintExecutor),
         None,
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "mypy");
@@ -182,17 +185,20 @@ fn all_adapters_coerce_to_dyn_protocol() {
             Arc::new(MockLintExecutor),
             None,
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_bandit: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::BanditAdapter::new(
             Arc::new(MockLintExecutor),
             None,
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_mypy: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::MyPyAdapter::new(
             Arc::new(MockLintExecutor),
             None,
+            Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
     let _dyn_clippy: Box<dyn ILinterAdapterProtocol> =
