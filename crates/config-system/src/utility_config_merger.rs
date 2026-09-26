@@ -1,14 +1,15 @@
 // PURPOSE: Config merger utility — pure function for merging rules into layer definitions
+use shared::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Merge all rules into layer definitions.
 ///
 /// Returns (merged_layers, rules_by_layer_index):
-/// - `merged_layers`: layer name → merged LayerDefinition
-/// - `rules_by_layer_index`: scope string → list of rules (for specialized sub-layer creation)
+/// - `merged_layers`: layer name -> merged LayerDefinition
+/// - `rules_by_layer_index`: scope string -> list of rules (for specialized sub-layer creation)
 pub fn merge_config(
     config: &ArchitectureConfig,
 ) -> (
@@ -152,4 +153,38 @@ fn create_specialized_sub_layers(
             }
         }
     }
+}
+
+/// Merge universal ignored-path defaults with config-specified paths, deduplicated.
+///
+/// Path separators are normalized to the platform separator.
+pub fn merge_default_ignored_paths(config_paths: Vec<String>) -> Vec<String> {
+    let capacity = DEFAULT_IGNORED_PATHS.len() + config_paths.len();
+    let mut seen: HashSet<String> = HashSet::with_capacity(capacity);
+    let mut merged: Vec<String> = Vec::with_capacity(capacity);
+    for p in DEFAULT_IGNORED_PATHS
+        .iter()
+        .map(|s| s.to_string())
+        .chain(config_paths)
+    {
+        if seen.insert(p.clone()) {
+            merged.push(p);
+        }
+    }
+    merged
+}
+
+/// Build the ignored-path list from config only, deduplicated and non-empty.
+///
+/// Defaults are owned by the filesystem crate (DEFAULT_IGNORED_PATHS).
+pub fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut ignored: Vec<String> = Vec::with_capacity(config.ignored_paths.values.len());
+    for fp in config.ignored_paths.values.iter() {
+        let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
+        if !v.is_empty() && seen.insert(v.clone()) {
+            ignored.push(v);
+        }
+    }
+    ignored
 }

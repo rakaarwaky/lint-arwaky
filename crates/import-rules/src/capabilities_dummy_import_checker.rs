@@ -350,12 +350,20 @@ impl DummyImportChecker {
     }
 
     fn _check_surface_logic(file: &str, content: &str, violations: &mut Vec<LintResult>) {
+        let basename = std::path::Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        let layer = shared::common::utility_layer_detector::detect_layer_from_prefix(basename);
+        if layer.as_deref() != Some(shared::role_rules::LAYER_SURFACES) {
+            return;
+        }
         let lines: Vec<&str> = content.lines().collect();
         let lang = LanguageVO::from_path(file);
         let logic_patterns = [
             "lint_path(",
             "compute_score(",
-            "has_critical(",
+            "contains_critical_severity(",
             "walk_rs_files(",
         ];
 
