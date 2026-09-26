@@ -19,9 +19,10 @@ use tracing::{error, warn};
 
 use shared::common::ExitCode;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::file_watch::IChangeAnalyzerProtocol;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
-use shared::file_watch::{IWatchProviderProtocol, WatchConfig};
+use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
+use shared::file_watch::taxonomy_watch_request_vo::{WatchRequest, WatchResponse};
+use shared::file_watch::{IChangeAnalyzerProtocol, IWatchProviderProtocol};
 use shared::quality_rules::ICodeAnalysisAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -35,7 +36,36 @@ pub struct WatchOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl IWatchAggregate for WatchOrchestrator {
-    fn run(&self, config: WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
+    fn execute(&self, request: WatchRequest) -> WatchResponse {
+        match request {
+            WatchRequest::Run { config, running } => {
+                WatchResponse::Run {
+                    exit_code: self.run_watch_loop(&config, running),
+                }
+            }
+            WatchRequest::IsLintable { path } => WatchResponse::IsLintable {
+                lintable: self.analyzer.is_lintable(&path.value()),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl WatchOrchestrator {
+    pub fn new(
+        provider: Arc<dyn IWatchProviderProtocol>,
+        analyzer: Arc<dyn IChangeAnalyzerProtocol>,
+        linter: Arc<dyn ICodeAnalysisAggregate>,
+    ) -> Self {
+        Self {
+            provider,
+            analyzer,
+            linter,
+        }
+    }
+
+    fn run_watch_loop(&self, config: &WatchConfig, running: Arc<AtomicBool>) -> ExitCode {
         println!("Lint Arwaky v{} (Watch Mode)", env!("CARGO_PKG_VERSION"));
         println!("Target: {}", config.path.value());
         println!("Press Ctrl+C to stop.");
@@ -61,7 +91,7 @@ impl IWatchAggregate for WatchOrchestrator {
                 return ExitCode::RUNTIME_ERROR;
             }
         };
-        if let Err(e) = rt.block_on(self.provider.start(&config)) {
+        if let Err(e) = rt.block_on(self.provider.start(config)) {
             error!(error = %e, "failed to start watcher");
             return ExitCode::RUNTIME_ERROR;
         }
@@ -111,29 +141,5 @@ impl IWatchAggregate for WatchOrchestrator {
         }
         println!("Watcher stopped.");
         ExitCode::OK
-    }
-
-    fn provider(&self) -> Arc<dyn IWatchProviderProtocol> {
-        self.provider.clone()
-    }
-
-    fn is_lintable(&self, path: &str) -> bool {
-        self.analyzer.is_lintable(path)
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl WatchOrchestrator {
-    pub fn new(
-        provider: Arc<dyn IWatchProviderProtocol>,
-        analyzer: Arc<dyn IChangeAnalyzerProtocol>,
-        linter: Arc<dyn ICodeAnalysisAggregate>,
-    ) -> Self {
-        Self {
-            provider,
-            analyzer,
-            linter,
-        }
     }
 }
