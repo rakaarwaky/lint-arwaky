@@ -183,12 +183,25 @@ fn main() {
     init_tracing();
     let cli = Cli::parse();
 
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let filesystem: Arc<
         dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
-    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    > = fs_container.orchestrator();
+    let filesystem_io = fs_container.io();
+    let filesystem_workspace = fs_container.workspace();
+    let filesystem_tool_resolution = fs_container.tool_resolution();
+    let filesystem_parser = fs_container.parser();
+    let fs_seam = dispatcher::surface_check_action::FilesystemSeam {
+        io: filesystem_io.clone(),
+        workspace: filesystem_workspace.clone(),
+        parser: filesystem_parser.clone(),
+        aggregate: filesystem.clone(),
+    };
 
-    let config_container =
-        config_system::root_config_system_container::ConfigContainer::new(filesystem.clone());
+    let config_container = config_system::root_config_system_container::ConfigContainer::new(
+        filesystem.clone(),
+        filesystem_io.clone(),
+    );
     let config_orchestrator = config_container.orchestrator();
 
     let code_analysis_linter =
@@ -203,6 +216,9 @@ fn main() {
             &config_orchestrator,
             ".",
             filesystem.clone(),
+            filesystem_io.clone(),
+            filesystem_workspace.clone(),
+            filesystem_parser.clone(),
         );
     let import_orchestrator = import_container.orchestrator();
 
@@ -231,11 +247,15 @@ fn main() {
             &config_orchestrator,
             ".",
             filesystem.clone(),
+            filesystem_workspace.clone(),
         );
     let orphan_orchestrator = orphan_container.analyzer();
 
-    let ext_container =
-        external_lint::root_external_lint_container::ExternalLintContainer::new(filesystem.clone());
+    let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
+        filesystem.clone(),
+        filesystem_io.clone(),
+        filesystem_tool_resolution.clone(),
+    );
     let external_lint = ext_container.aggregate();
 
     let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
@@ -256,15 +276,20 @@ fn main() {
     > = {
         let container = auto_fix_container;
         let fs_for_factory = filesystem.clone();
-        Arc::new(move |_dry| container.orchestrator_with_filesystem(fs_for_factory.clone()))
+        let io_for_factory = filesystem_io.clone();
+        Arc::new(move |_dry| {
+            container.orchestrator_with_filesystem(fs_for_factory.clone(), io_for_factory.clone())
+        })
     };
 
-    let maintenance_container =
-        maintenance::root_maintenance_container::MaintenanceContainer::new(filesystem.clone());
+    let maintenance_container = maintenance::root_maintenance_container::MaintenanceContainer::new(
+        filesystem.clone(),
+        filesystem_io.clone(),
+    );
     let maintenance_orchestrator = maintenance_container.orchestrator();
 
     let setup_container =
-        project_setup::root_project_setup_container::SetupContainer::new(filesystem.clone());
+        project_setup::root_project_setup_container::SetupContainer::new(filesystem_io.clone());
     let setup_orchestrator = setup_container.aggregate();
 
     let watch_aggregate = file_watch::root_file_watch_container::FileWatchContainer::new()
@@ -278,6 +303,7 @@ fn main() {
         )
         .unwrap_or_default(),
         filesystem.clone(),
+        filesystem_io.clone(),
     );
     let git_orchestrator = git_container.aggregate();
 
@@ -308,9 +334,7 @@ fn main() {
         external: external_lint.clone(),
         orphan: orphan_orchestrator.clone(),
         config: config_orchestrator.clone(),
-        fs_factory: Arc::new(move || {
-            filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-        }),
+        fs_seam: Arc::new(fs_seam.clone()),
     };
 
     let exit_code = match cli.command {
@@ -324,6 +348,7 @@ fn main() {
                 path: Some(FilePath::new(path).unwrap_or_default()),
                 format: parse_format(&format),
                 filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
                 config_orchestrator: Some(config_orchestrator.clone()),
                 filter,
                 member,
@@ -340,6 +365,7 @@ fn main() {
                 path: Some(FilePath::new(path).unwrap_or_default()),
                 format: parse_format(&format),
                 filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
                 config_orchestrator: Some(config_orchestrator.clone()),
                 filter,
                 member,
@@ -355,6 +381,7 @@ fn main() {
             parse_format(&format),
             code_analysis_linter.clone(),
             filesystem.clone(),
+            fs_seam.clone(),
             filter,
             ignored_paths.clone(),
         ),
@@ -369,6 +396,7 @@ fn main() {
                 role_orchestrator: role_orchestrator.clone(),
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
             },
@@ -384,6 +412,7 @@ fn main() {
                 import_orchestrator: import_orchestrator.clone(),
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
             },
@@ -399,6 +428,7 @@ fn main() {
                 naming_orchestrator: naming_orchestrator.clone(),
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
             },
@@ -417,13 +447,20 @@ fn main() {
                 config_orchestrator: config_orchestrator.clone(),
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
                 filter,
                 fs_factory: Arc::new(|| {
-                    filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+                    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+                    dispatcher::surface_check_action::FilesystemSeam {
+                        io: c.io(),
+                        workspace: c.workspace(),
+                        parser: c.parser(),
+                        aggregate: c.orchestrator(),
+                    }
                 }),
-                orphan_factory: Arc::new(|config, fs| {
+                orphan_factory: Arc::new(|config, fs, ws| {
                     orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                        config, fs,
+                        config, fs, ws,
                     )
                     .analyzer()
                 }),
@@ -440,6 +477,7 @@ fn main() {
                 external_lint: external_lint.clone(),
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
                 config_parser: config_container.parser(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
@@ -453,6 +491,7 @@ fn main() {
                 config_orchestrator: config_orchestrator.clone(),
                 orphan_orchestrator: orphan_orchestrator.clone(),
                 filesystem: filesystem.clone(),
+                filesystem_io: filesystem_io.clone(),
                 path: Some(FilePath::new(path).unwrap_or_default()),
                 threshold: Threshold::new(threshold),
             },
@@ -490,7 +529,7 @@ fn main() {
         }
         Command::Init => cli_commands::surface_setup_command::handle_init(
             setup_orchestrator.clone(),
-            filesystem.clone(),
+            filesystem_io.clone(),
         ),
         Command::Install { sudo } => {
             cli_commands::surface_setup_command::handle_install(setup_orchestrator.clone(), sudo)

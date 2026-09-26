@@ -6,10 +6,11 @@ use std::sync::Arc;
 #[test]
 fn git_container_creates() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
-    let _container = GitContainer::new(fp, filesystem);
+    let _container = GitContainer::new(fp, filesystem, io);
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -21,10 +22,11 @@ fn git_container_creates() {
 #[test]
 fn git_container_aggregate_accessible() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem);
+    let container = GitContainer::new(fp, filesystem, io);
     let _agg = container.aggregate();
     let elapsed = start.elapsed();
     assert!(
@@ -43,10 +45,11 @@ fn git_container_is_send_sync() {
 #[test]
 fn git_container_aggregate_trait_object() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem);
+    let container = GitContainer::new(fp, filesystem, io);
     let _: Arc<dyn shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate> =
         container.aggregate();
     let elapsed = start.elapsed();

@@ -1,14 +1,11 @@
 // Unit tests — skills language relevance and filtering for init command.
 use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
-use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
-use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::project_setup::contract_setup_protocol::PreFlightResult;
 use shared::project_setup::{
-    CreateConfigDirResult, EMBEDDED_SKILLS, EmbeddedSkillVO, ISetupAggregate, ProjectLanguageVO,
-    ProjectLanguagesVO, SetupError, SetupRequest, SetupResponse, WriteConfigResult,
+    EMBEDDED_SKILLS, ISetupAggregate, ProjectLanguageVO, ProjectLanguagesVO, SetupRequest,
+    SetupResponse,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

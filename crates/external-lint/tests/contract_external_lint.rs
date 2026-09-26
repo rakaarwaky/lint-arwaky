@@ -148,6 +148,7 @@ fn eslint_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::ESLintAdapter::new(
         Arc::new(MockLintExecutor),
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "eslint");
 }
@@ -157,6 +158,7 @@ fn prettier_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::PrettierAdapter::new(
         Arc::new(MockLintExecutor),
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "prettier");
 }
@@ -165,6 +167,7 @@ fn prettier_adapter_implements_protocol() {
 fn tsc_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
         Arc::new(MockLintExecutor),
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     assert_adapter_contract(&adapter, "tsc");
@@ -213,15 +216,18 @@ fn all_adapters_coerce_to_dyn_protocol() {
         Box::new(external_lint_lint_arwaky::ESLintAdapter::new(
             Arc::new(MockLintExecutor),
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_prettier: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::PrettierAdapter::new(
             Arc::new(MockLintExecutor),
             Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
         ));
     let _dyn_tsc: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::TSCAdapter::new(
             Arc::new(MockLintExecutor),
+            Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
 }
@@ -244,6 +250,7 @@ fn stdio_client_implements_command_executor_protocol() {
 fn external_lint_executor_implements_protocol() {
     let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
         Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let _dyn_exec: &dyn IExternalLintExecutorProtocol = &executor;
@@ -280,6 +287,7 @@ fn orchestrator_implements_aggregate_protocol() {
     let deps = ExternalLintDeps {
         adapters: HashMap::new(),
         filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
         selector: Arc::new(
             external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
         ),

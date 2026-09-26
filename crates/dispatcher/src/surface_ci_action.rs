@@ -3,7 +3,9 @@ use std::sync::Arc;
 
 use shared::common::{FilePath, Severity, Threshold};
 use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::naming_rules::INamingRunnerAggregate;
@@ -36,6 +38,7 @@ pub struct CiScanDeps {
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 pub fn collect_ci(
@@ -47,7 +50,10 @@ pub fn collect_ci(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !deps.filesystem.path_exists(std::path::Path::new(&root_str)) {
+    if !deps
+        .filesystem_io
+        .path_exists(std::path::Path::new(&root_str))
+    {
         return Err(format!("Error: path '{}' does not exist", root_str));
     }
     let root = FilePath::new(root_str).map_err(|_| "invalid path".to_string())?;
@@ -59,7 +65,10 @@ pub fn collect_ci(
         .execute(ConfigRequest::ignored_paths(&root))
         .into_patterns();
     deps.filesystem
-        .build_file_index_with_ignored(root_path, &ignored.values);
+        .execute(FilesystemRequest::build_file_index_with_ignored(
+            root_path,
+            &ignored.values,
+        ));
 
     // Quality analysis (sync)
     let mut results = deps
@@ -68,17 +77,25 @@ pub fn collect_ci(
         .into_violations();
 
     // Import rules — pass pre-fetched FileEntry data
-    let file_list = deps.filesystem.file_list();
+    let file_list = deps
+        .filesystem
+        .execute(FilesystemRequest::FileList)
+        .into_file_list();
     let import_res = deps
         .import_orchestrator
-        .execute(ImportRequest::audit_with_entries(file_list))
+        .execute(ImportRequest::audit_with_entries(&file_list))
         .into_violations();
     results.extend(import_res);
 
     // Naming rules — pass pre-fetched FileEntry data
     let naming_res = deps
         .naming_orchestrator
-        .execute(NamingRequest::audit(deps.filesystem.file_list()))
+        .execute(NamingRequest::audit(
+            &deps
+                .filesystem
+                .execute(FilesystemRequest::FileList)
+                .into_file_list(),
+        ))
         .into_violations();
     results.extend(naming_res);
 

@@ -10,7 +10,11 @@ use std::sync::Arc;
 use shared::cli_commands::LintResult;
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 use shared::config_system::ArchitectureConfig;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ParseMetadata};
 use shared::import_rules::DEFAULT_SKIP_DIRS;
 use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
@@ -33,6 +37,9 @@ pub struct ImportOrchestratorDeps {
     pub cycle: Arc<dyn ICycleImportProtocol>,
     pub dummy: Arc<dyn IDummyImportCheckerProtocol>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
+    pub filesystem_workspace: Arc<dyn IWorkspaceProtocol>,
+    pub filesystem_parser: Arc<dyn IParserProtocol>,
 }
 
 pub struct ImportOrchestrator {
@@ -75,7 +82,7 @@ impl ImportOrchestrator {
         }
         if !self
             .deps
-            .filesystem
+            .filesystem_io
             .path_exists(std::path::Path::new(target.value()))
         {
             return Err(ScanError::new(
@@ -88,7 +95,7 @@ impl ImportOrchestrator {
 
         let root_dir = self
             .deps
-            .filesystem
+            .filesystem_workspace
             .workspace_root(target)
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
@@ -99,12 +106,15 @@ impl ImportOrchestrator {
             .filter_map(|f| {
                 self.deps
                     .filesystem
-                    .read_file(std::path::Path::new(f.value()))
+                    .execute(FilesystemRequest::read_file(std::path::Path::new(
+                        f.value(),
+                    )))
+                    .into_content_opt()
                     .map(|c| (f.value().to_string(), c))
             })
             .collect();
 
-        let import_list = self.deps.filesystem.import_list();
+        let import_list = self.deps.filesystem_parser.import_list();
         let imports_map: HashMap<String, Vec<ImportEntry>> = {
             let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
             for entry in import_list {
@@ -121,7 +131,10 @@ impl ImportOrchestrator {
                 let ids = self
                     .deps
                     .filesystem
-                    .used_identifiers_for(std::path::Path::new(f.value()));
+                    .execute(FilesystemRequest::used_identifiers(std::path::Path::new(
+                        f.value(),
+                    )))
+                    .into_identifiers();
                 if ids.is_empty() {
                     None
                 } else {
@@ -130,7 +143,11 @@ impl ImportOrchestrator {
             })
             .collect();
 
-        let implemented_traits = self.deps.filesystem.implemented_traits_map();
+        let implemented_traits = self
+            .deps
+            .filesystem
+            .execute(FilesystemRequest::ImplementedTraitsMap)
+            .into_traits_map();
 
         Ok(self.run_checks(
             &files,
@@ -150,7 +167,7 @@ impl ImportOrchestrator {
         if !self.config.enabled.value {
             return Vec::new();
         }
-        let import_list = self.deps.filesystem.import_list();
+        let import_list = self.deps.filesystem_parser.import_list();
         let imports_map: HashMap<String, Vec<ImportEntry>> = {
             let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
             for entry in import_list {
@@ -287,7 +304,11 @@ impl ImportOrchestrator {
         }
 
         // Cycle detection — prefer resolved imports when available
-        let resolved_imports_list = self.deps.filesystem.resolved_import_list();
+        let resolved_imports_list = self
+            .deps
+            .filesystem
+            .execute(FilesystemRequest::ResolvedImportList)
+            .into_imports();
         let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
             let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
             for entry in resolved_imports_list {
@@ -367,7 +388,11 @@ impl ImportOrchestrator {
                     ignored.push(entry);
                 }
             }
-            let entries = self.deps.filesystem.discover_source_files(path, &ignored);
+            let entries = self
+                .deps
+                .filesystem
+                .execute(FilesystemRequest::discover_source_files(path, &ignored))
+                .into_paths();
             files.extend(entries.iter().filter_map(|f| FilePath::new(f.clone()).ok()));
         } else if path.is_file() {
             match FilePath::new(path.to_string_lossy().to_string()) {

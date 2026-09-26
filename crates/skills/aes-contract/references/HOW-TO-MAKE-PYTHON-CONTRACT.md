@@ -39,10 +39,15 @@ Seven rules. Each one prevents a specific failure mode.
 5. **Aggregate = exactly one method.** The aggregate is the single entry point the  
  surface/root/CLI/MCP calls. All consumer verbs live in the agent, which dispatches to  
  the rich protocol classes. A dump-all `execute(op, …)` aggregate is the violation here.
-6. **Signatures use shared VOs** — no `str`/`int`/`float`/`list[str]`/`dict` for domain  
- values. `bool` allowed for semantic toggles and semantic predicates only. No union  
- return spanning several value shapes; operations that differ in return type are  
- separate methods, each returning its own VO. All methods fully type-annotated.
+6. **Signatures use shared VOs.** Domain values must not be `str`, `int`, `float`,
+   `list[str]`, or `dict` — wrap them in a taxonomy-defined VO before they appear in a
+   signature. `bool` is permitted only for semantic toggles or predicates (e.g.
+   `enabled: bool`), never for domain quantities. Enums are not banned; the ban targets
+   primitive leakage. A multi-variant response enum on the aggregate is correct and
+   expected — each variant must hold VO-wrapped values, not raw primitives. Protocol
+   methods keep one concrete VO return type; the aggregate response enum is the
+   sanctioned way to carry heterogeneous results across one `execute()` entry point.
+   All methods fully type-annotated.
 7. **Register in shared** `__init__.py` with `__all__` + `_layer_symbols` for harness  
  introspection.
 
@@ -175,7 +180,9 @@ Every contract file is required to carry the rows that apply. Each exists for on
 | Suffix in file + class names             | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                   |
 | One file per feature                     | All seams of a feature live together; consumers import from one module.            |
 | One class per capability seam            | A class lists only what its capability owns, so implementation is always complete. |
-| Rich named methods, one return type each | Each operation stays typed and discoverable; no dispatch bag, no union return.     |
+| Rich named methods, one return type each | Protocol classes: each method has one VO return; no
+   dispatch bag. Aggregate: one `execute()` method whose response is a taxonomy-defined
+   enum of VOs.     |
 | Abstract methods only                    | Outer layers depend on promises, not behaviour.                                    |
 | Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.            |
 | Shared VOs in signatures                 | Domain values stay opaque across layers; no primitive leakage.                     |
@@ -199,7 +206,8 @@ lint-arwaky-cli scan <contract-dir>
 #   - each capability implements one class from this file, and implements all of it
 #     (a partial implementation raises TypeError at instantiation — instantiate each
 #     capability once to prove it);
-#   - the aggregate declares exactly one method.
+#   - the aggregate declares exactly one `execute()` method; its response type is a
+#     taxonomy-defined VO enum (each variant holds VO-wrapped values, not primitives).
 # Fallback compile gate: python -c "import <shared_package>.contract_<concept>_<suffix>".
 ```
 

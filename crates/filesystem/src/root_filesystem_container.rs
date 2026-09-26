@@ -59,6 +59,32 @@ impl FilesystemContainer {
             graph: self.graph.clone(),
         }))
     }
+
+    /// Raw filesystem I/O seam — for consumers that need file reads, writes,
+    /// path checks, or subprocess runs rather than feature-level operations.
+    pub fn io(&self) -> Arc<dyn IFileSystemIOProtocol> {
+        self.io.clone()
+    }
+
+    /// Workspace structure detection seam.
+    pub fn workspace(&self) -> Arc<dyn IWorkspaceProtocol> {
+        self.workspace.clone()
+    }
+
+    /// External tool lookup seam.
+    pub fn tool_resolution(&self) -> Arc<dyn IToolResolutionProtocol> {
+        self.tool_resolution.clone()
+    }
+
+    /// Source parsing seam.
+    pub fn parser(&self) -> Arc<dyn IParserProtocol> {
+        self.parser.clone()
+    }
+
+    /// Dependency graph seam.
+    pub fn graph(&self) -> Arc<dyn IGraphProtocol> {
+        self.graph.clone()
+    }
 }
 
 impl Default for FilesystemContainer {

@@ -256,6 +256,7 @@ fn e2e_chained_python_import_graph_reaches_capabilities() {
     // so that BFS reachability marks the capabilities file alive.
     // This exercises resolve_import_target through the real pipeline,
     // not a hand-built graph.
+    use shared::filesystem::FilesystemRequest;
     use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
     let tmp = tempfile::TempDir::new().unwrap();
@@ -289,7 +290,9 @@ fn e2e_chained_python_import_graph_reaches_capabilities() {
 
     let orch = make_orchestrator();
     let root = tmp.path().to_path_buf();
-    let context = orch.build_orphan_graph_context(&root, &[]);
+    let context = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(&root, &[]))
+        .into_graph_context();
 
     let graph = &context.import_graph.mapping;
     // The entry file must import the surface (Strategy A on dotted path).

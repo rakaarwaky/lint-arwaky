@@ -7,6 +7,7 @@ use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::ArchitectureConfig;
+use shared::filesystem::FilesystemRequest;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use std::collections::HashMap;
@@ -54,8 +55,14 @@ fn make_orchestrator_at(tmp: &std::path::Path) -> Arc<dyn IImportRunnerAggregate
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let fs = fs_container.orchestrator();
     // Build file index so import_list() is populated for the temp dir
-    fs.build_file_index(tmp);
-    let container = ImportContainer::new_with_config(config, fs);
+    fs.execute(FilesystemRequest::build_file_index(tmp));
+    let container = ImportContainer::new_with_config(
+        config,
+        fs,
+        fs_container.io(),
+        fs_container.workspace(),
+        fs_container.parser(),
+    );
     container.orchestrator()
 }
 

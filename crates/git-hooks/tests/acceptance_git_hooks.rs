@@ -21,27 +21,29 @@ use tempfile::TempDir;
 
 fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let tmp = TempDir::new().unwrap();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem);
+    let container = GitContainer::new(fp, filesystem, io);
     (tmp, container.aggregate())
 }
 
 fn make_adapter(tmp: &TempDir) -> GitHookAdapter {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let _filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    GitHookAdapter::new(fp, filesystem)
+    GitHookAdapter::new(fp, io)
 }
 
 fn make_hook_manager(tmp: &TempDir) -> HookManager {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let _filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let adapter: Arc<dyn IHookManagerProtocol> =
-        Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
-    HookManager::new(adapter, filesystem)
+    let adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
+    HookManager::new(adapter, io)
 }
 
 fn write_file(path: &std::path::Path, content: &str) {

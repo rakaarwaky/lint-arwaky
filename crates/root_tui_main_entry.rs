@@ -12,15 +12,21 @@ fn main() -> anyhow::Result<()> {
 
     // DI: inject filesystem and orphan factories for SurfaceLintExecutor
     let fs_factory: Arc<
-        dyn Fn() -> Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>
-            + Send
-            + Sync,
+        dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync,
     > = Arc::new(|| {
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
+        let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+        dispatcher::surface_check_action::FilesystemSeam {
+            io: c.io(),
+            workspace: c.workspace(),
+            parser: c.parser(),
+            aggregate: c.orchestrator(),
+        }
     });
-    let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs| {
-        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(config, fs)
-            .analyzer()
+    let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, ws| {
+        orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
+            config, fs, ws,
+        )
+        .analyzer()
     });
 
     // Build TUI surfaces via dispatcher — SurfaceLintExecutor delegates to dispatcher functions.
@@ -28,6 +34,10 @@ fn main() -> anyhow::Result<()> {
         tui::surface_lint_action::SurfaceLintExecutor::new(
             deps.code_analysis_linter,
             deps.filesystem.clone(),
+            deps.filesystem_io.clone(),
+            deps.filesystem_workspace.clone(),
+            deps.filesystem_tool_resolution.clone(),
+            deps.fs_seam.clone(),
             fs_factory,
             orphan_factory,
         )
@@ -43,5 +53,5 @@ fn main() -> anyhow::Result<()> {
         .with_role_orchestrator(deps.role_orchestrator),
     );
 
-    tui::root_tui_container::TuiContainer::run(lint_executor, deps.filesystem)
+    tui::root_tui_container::TuiContainer::run(lint_executor, deps.filesystem_io)
 }

@@ -4,8 +4,10 @@ use shared::maintenance::IMaintenanceAggregate;
 use shared::maintenance::MaintenanceRequest;
 
 fn make_orch() -> std::sync::Arc<dyn IMaintenanceAggregate> {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer::new(fs)
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = fc.orchestrator();
+    let io = fc.io();
+    maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer::new(fs, io)
         .orchestrator()
 }
 

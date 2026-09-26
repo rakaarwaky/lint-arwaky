@@ -7,7 +7,11 @@ use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::ArchitectureConfig;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -40,16 +44,26 @@ fn test_config() -> ArchitectureConfig {
     )
 }
 
-fn make_filesystem() -> Arc<dyn IFilesystemAggregate> {
+fn make_filesystem() -> (
+    Arc<dyn IFilesystemAggregate>,
+    Arc<dyn IFileSystemIOProtocol>,
+    Arc<dyn IWorkspaceProtocol>,
+    Arc<dyn IParserProtocol>,
+) {
     let container = filesystem::root_filesystem_container::FilesystemContainer::new();
-    container.orchestrator()
+    (
+        container.orchestrator(),
+        container.io(),
+        container.workspace(),
+        container.parser(),
+    )
 }
 
 #[test]
 fn container_creates_orchestrator() {
     let config = test_config();
-    let fs = make_filesystem();
-    let container = ImportContainer::new_with_config(config, fs);
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
     let orchestrator = container.orchestrator();
     assert_eq!(
         orchestrator.execute(ImportRequest::Name).into_name(),
@@ -69,8 +83,8 @@ fn orchestrator_returns_empty_for_disabled_config() {
         FilePathList::new(vec![]),
         BooleanVO::new(false),
     );
-    let fs = make_filesystem();
-    let container = ImportContainer::new_with_config(config, fs);
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new("/tmp/nonexistent_path".to_string()).unwrap();
@@ -85,8 +99,8 @@ fn orchestrator_returns_empty_for_disabled_config() {
 #[test]
 fn orchestrator_errors_on_nonexistent_target() {
     let config = test_config();
-    let fs = make_filesystem();
-    let container = ImportContainer::new_with_config(config, fs);
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new("/tmp/definitely_does_not_exist_12345".to_string()).unwrap();
@@ -100,8 +114,8 @@ fn orchestrator_errors_on_nonexistent_target() {
 fn orchestrator_scans_empty_temp_dir_without_errors() {
     let tmp = TempDir::new().unwrap();
     let config = test_config();
-    let fs = make_filesystem();
-    let container = ImportContainer::new_with_config(config, fs);
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
@@ -127,8 +141,8 @@ fn orchestrator_scans_temp_dir_with_clean_rust_files() {
     .unwrap();
 
     let config = test_config();
-    let fs = make_filesystem();
-    let container = ImportContainer::new_with_config(config, fs);
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
@@ -150,10 +164,10 @@ fn orchestrator_detects_forbidden_import_in_temp_dir() {
     .unwrap();
 
     let config = test_config();
-    let fs = make_filesystem();
+    let (fs, fs_io, ws, parser) = make_filesystem();
     // Build file index so import_list() is populated
-    fs.build_file_index(tmp.path());
-    let container = ImportContainer::new_with_config(config, fs);
+    fs.execute(FilesystemRequest::build_file_index(tmp.path()));
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();

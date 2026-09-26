@@ -13,13 +13,15 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ExternalLintExecutor {
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
+    tool_resolution: Arc<dyn IToolResolutionProtocol>,
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
@@ -82,12 +84,12 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
         tool: &str,
         fix_arg: &str,
     ) -> Result<ComplianceStatus, LinterOperationError> {
-        let wd = self.filesystem.resolve_js_working_dir(path);
-        let abs_path_str = self.filesystem.canonicalize_path_str(path);
+        let wd = self.tool_resolution.resolve_js_working_dir(path);
+        let abs_path_str = self.io.canonicalize_path_str(path);
         let tool_name = ToolName::new(tool).unwrap_or_else(|_| ToolName {
             value: tool.to_string(),
         });
-        let cmd = match self.filesystem.resolve_js_cmd(
+        let cmd = match self.tool_resolution.resolve_js_cmd(
             &tool_name,
             vec![abs_path_str.value, fix_arg.to_string()],
             &wd,
@@ -107,11 +109,13 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
 impl ExternalLintExecutor {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             executor,
-            filesystem,
+            io,
+            tool_resolution,
         }
     }
 }

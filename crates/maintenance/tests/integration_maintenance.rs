@@ -5,8 +5,10 @@ use shared::maintenance::MaintenanceRequest;
 use std::sync::Arc;
 
 fn make_container() -> maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer::new(fs)
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = fc.orchestrator();
+    let io = fc.io();
+    maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer::new(fs, io)
 }
 
 #[test]

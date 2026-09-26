@@ -48,7 +48,11 @@ pub struct SurfaceLintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     filesystem: Arc<dyn IFilesystemAggregate>,
-    fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+    filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+    filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+    fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+    fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
     orphan_factory: Arc<OrphanFactory>,
 }
 
@@ -61,7 +65,7 @@ impl SurfaceLintExecutor {
             multi_project_orchestrator: self.config_orchestrator.clone(),
             filter: None,
             member: None,
-            filesystem: self.filesystem.clone(),
+            filesystem: Arc::new(self.fs_seam.as_ref().clone()),
             scan_aggregates: self.build_scan_aggregates(),
         };
         match collect_scan(opts) {
@@ -80,7 +84,7 @@ impl SurfaceLintExecutor {
             multi_project_orchestrator: self.config_orchestrator.clone(),
             filter: None,
             member: None,
-            filesystem: self.filesystem.clone(),
+            filesystem: Arc::new(self.fs_seam.as_ref().clone()),
             scan_aggregates: self.build_scan_aggregates(),
         };
         match collect_scan(opts) {
@@ -295,7 +299,7 @@ impl SurfaceLintExecutor {
                 );
             }
         };
-        let items = collect_init(setup, self.filesystem.clone());
+        let items = collect_init(setup, self.filesystem_io.clone());
         let mut output = String::from("Config initialization.\n");
         let mut has_errors = false;
         for item in &items {
@@ -423,7 +427,7 @@ impl SurfaceLintExecutor {
     }
 
     pub fn adapters(&self) -> LintExecutionResult {
-        let adapters = collect_adapters_detailed(self.filesystem.as_ref());
+        let adapters = collect_adapters_detailed(self.filesystem_tool_resolution.as_ref());
         let mut output = String::from("Active Linter Adapters:\n");
         for (i, adapter) in adapters.iter().enumerate() {
             let status = if adapter.installed { "[+]" } else { "[-]" };
@@ -454,12 +458,20 @@ impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         filesystem: Arc<dyn IFilesystemAggregate>,
-        fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+        filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+        filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+        filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+        fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+        fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
         orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
         Self {
             code_analysis,
             filesystem,
+            filesystem_io,
+            filesystem_workspace,
+            filesystem_tool_resolution,
+            fs_seam,
             fs_factory,
             orphan_factory,
             fix_orchestrator: None,
@@ -546,7 +558,7 @@ impl SurfaceLintExecutor {
             external: self.external_lint.clone()?,
             orphan: self.orphan_aggregate.clone()?,
             config: self.config_orchestrator.clone()?,
-            fs_factory: self.fs_factory.clone(),
+            fs_seam: self.fs_seam.clone(),
         })
     }
 
@@ -558,6 +570,7 @@ impl SurfaceLintExecutor {
             config_orchestrator: self.config_orchestrator.clone()?,
             orphan_orchestrator: self.orphan_aggregate.clone()?,
             filesystem: self.filesystem.clone(),
+            filesystem_io: self.filesystem_io.clone(),
         })
     }
 
@@ -566,6 +579,8 @@ impl SurfaceLintExecutor {
             self.orphan_aggregate.clone()?,
             self.config_orchestrator.clone()?,
             self.filesystem.clone(),
+            self.filesystem_io.clone(),
+            self.filesystem_workspace.clone(),
             self.fs_factory.clone(),
             self.orphan_factory.clone(),
         ))

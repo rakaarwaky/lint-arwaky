@@ -2,7 +2,7 @@ use crate::utility_orphan_filename::file_stem;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::orphan_rules::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
 use shared::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
@@ -10,12 +10,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct CapabilitiesOrphanAnalyzer {
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    workspace: Arc<dyn IWorkspaceProtocol>,
 }
 
 impl CapabilitiesOrphanAnalyzer {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { filesystem }
+    pub fn new(workspace: Arc<dyn IWorkspaceProtocol>) -> Self {
+        Self { workspace }
     }
 
     fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
@@ -90,7 +90,7 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
             let content_ref = content_map.get(fp).map(|s| s.as_str()).unwrap_or("");
             let identifiers = self.extract_identifiers(fp, content_ref, &stem);
             is_wired = self
-                .filesystem
+                .workspace
                 .check_wired_in_container(workspace_root, &PatternList::new(identifiers));
         }
 

@@ -131,7 +131,11 @@ fn e2e_full_pipeline_rust_python() {
     // Step 2: Build orchestrator with matching adapters
     let lint_exec: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(MockLintExecutor);
     let files = vec!["main.rs".to_string(), "app.py".to_string()];
-    let fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+    let _fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+        Arc::new(MockFilesystem::with_files(files.clone()));
+    let tr_arc: Arc<dyn shared::filesystem::IToolResolutionProtocol> =
+        Arc::new(MockFilesystem::with_files(files.clone()));
+    let io_arc: Arc<dyn shared::filesystem::IFileSystemIOProtocol> =
         Arc::new(MockFilesystem::with_files(files.clone()));
 
     let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
@@ -143,7 +147,7 @@ fn e2e_full_pipeline_rust_python() {
                     Arc::new(external_lint_lint_arwaky::RuffAdapter::new(
                         lint_exec.clone(),
                         None,
-                        fs_arc.clone(),
+                        tr_arc.clone(),
                     )),
                 );
             }
@@ -153,7 +157,7 @@ fn e2e_full_pipeline_rust_python() {
                     Arc::new(external_lint_lint_arwaky::MyPyAdapter::new(
                         lint_exec.clone(),
                         None,
-                        fs_arc.clone(),
+                        tr_arc.clone(),
                     )),
                 );
             }
@@ -163,7 +167,7 @@ fn e2e_full_pipeline_rust_python() {
                     Arc::new(external_lint_lint_arwaky::BanditAdapter::new(
                         lint_exec.clone(),
                         None,
-                        fs_arc.clone(),
+                        tr_arc.clone(),
                     )),
                 );
             }
@@ -176,6 +180,7 @@ fn e2e_full_pipeline_rust_python() {
     let deps = ExternalLintDeps {
         adapters,
         filesystem: Arc::new(MockFilesystem::with_files(files)),
+        filesystem_io: io_arc.clone(),
         selector: Arc::new(
             external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
         ),

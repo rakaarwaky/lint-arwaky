@@ -15,14 +15,14 @@ use tempfile::TempDir;
 
 fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let tmp = TempDir::new().unwrap();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let _filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let hook_adapter: Arc<dyn IHookManagerProtocol> =
-        Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
-    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(filesystem.clone()));
+    let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
+    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(io.clone()));
     let hook_protocol: Arc<dyn IHookProtocol> =
-        Arc::new(HookManager::new(hook_adapter.clone(), filesystem.clone()));
+        Arc::new(HookManager::new(hook_adapter.clone(), io.clone()));
     let orch: Arc<dyn IGitHooksAggregate> = Arc::new(GitHooksOrchestrator::new(
         diff_protocol,
         hook_protocol,
@@ -33,14 +33,14 @@ fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
 
 fn make_orchestrator() -> (TempDir, Arc<GitHooksOrchestrator>) {
     let tmp = TempDir::new().unwrap();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let _filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let hook_adapter: Arc<dyn IHookManagerProtocol> =
-        Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
-    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(filesystem.clone()));
+    let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
+    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(io.clone()));
     let hook_protocol: Arc<dyn IHookProtocol> =
-        Arc::new(HookManager::new(hook_adapter.clone(), filesystem.clone()));
+        Arc::new(HookManager::new(hook_adapter.clone(), io.clone()));
     let orch = Arc::new(GitHooksOrchestrator::new(
         diff_protocol,
         hook_protocol,

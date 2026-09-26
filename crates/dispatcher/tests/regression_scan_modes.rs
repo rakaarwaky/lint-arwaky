@@ -15,6 +15,19 @@ fn fs()
     filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
 }
 
+/// Seam bundle for ScanOptions: io + workspace + parser + aggregate.
+fn seam() -> std::sync::Arc<dispatcher_lint_arwaky::surface_check_action::FilesystemSeam> {
+    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    std::sync::Arc::new(
+        dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
+            io: c.io(),
+            workspace: c.workspace(),
+            parser: c.parser(),
+            aggregate: c.orchestrator(),
+        },
+    )
+}
+
 /// Resolve workspace root from CARGO_MANIFEST_DIR (crates/<name>/ → project root).
 fn workspace_root() -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -32,7 +45,7 @@ fn scan(path: &str) -> Vec<shared::common::ViolationItem> {
         multi_project_orchestrator: None,
         filter: None,
         member: None,
-        filesystem: fs(),
+        filesystem: seam(),
         scan_aggregates: None,
     };
     dispatcher_lint_arwaky::surface_check_action::collect_scan(opts).unwrap_or_default()

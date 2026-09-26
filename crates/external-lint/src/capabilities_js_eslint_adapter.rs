@@ -23,7 +23,8 @@ use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::common::{ErrorMessage, ScanError};
 use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
@@ -33,7 +34,8 @@ use std::sync::Arc;
 
 pub struct ESLintAdapter {
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
+    tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -45,7 +47,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
 
     fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = path.value();
-        if self.filesystem.is_file(Path::new(path_str))
+        if self.io.is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")
@@ -54,14 +56,14 @@ impl ILinterAdapterProtocol for ESLintAdapter {
             return Ok(LintResultList::default());
         }
 
-        let wd = self.filesystem.resolve_js_working_dir(path);
-        let abs_path = self.filesystem.canonicalize_path_str(path);
+        let wd = self.tool_resolution.resolve_js_working_dir(path);
+        let abs_path = self.io.canonicalize_path_str(path);
 
         let eslint_name = match ToolName::new("eslint") {
             Ok(n) => n,
             Err(_) => return Ok(LintResultList::default()),
         };
-        let cmd = match self.filesystem.resolve_js_cmd(
+        let cmd = match self.tool_resolution.resolve_js_cmd(
             &eslint_name,
             vec![abs_path.value, "--format".to_string(), "json".to_string()],
             &wd,
@@ -147,11 +149,13 @@ impl ILinterAdapterProtocol for ESLintAdapter {
 impl ESLintAdapter {
     pub fn new(
         lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             lint_executor,
-            filesystem,
+            io,
+            tool_resolution,
         }
     }
 }

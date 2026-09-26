@@ -3,7 +3,7 @@
 #[path = "../../shared/tests/common/mock_filesystem.rs"]
 mod mock_filesystem;
 
-use mock_filesystem::mock_filesystem;
+use mock_filesystem::{mock_filesystem, mock_workspace};
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ArchitectureConfig;
@@ -12,7 +12,7 @@ use shared::orphan_rules::{OrphanFileListVO, OrphanRequest};
 #[test]
 fn container_creates_with_default_config() {
     let fs = mock_filesystem();
-    let container = OrphanContainer::new(fs);
+    let container = OrphanContainer::new(fs, mock_workspace());
     let analyzer = container.analyzer();
     // analyzer() returns Arc<dyn IOrphanAggregate> — verify it's usable
     let files = OrphanFileListVO::new(vec![]);
@@ -27,7 +27,7 @@ fn container_creates_with_default_config() {
 fn container_creates_with_custom_config() {
     let fs = mock_filesystem();
     let config = ArchitectureConfig::default();
-    let container = OrphanContainer::new_with_config(config, fs);
+    let container = OrphanContainer::new_with_config(config, fs, mock_workspace());
     let analyzer = container.analyzer();
     let files = OrphanFileListVO::new(vec![]);
     let root = FilePath::new(".".to_string()).unwrap();
@@ -42,7 +42,7 @@ fn container_creates_with_custom_config() {
 fn container_creates_with_ignored_paths() {
     let fs = mock_filesystem();
     let ignored = vec!["target".to_string(), ".git".to_string()];
-    let container = OrphanContainer::new_with_ignored(ignored, fs);
+    let container = OrphanContainer::new_with_ignored(ignored, fs, mock_workspace());
     let analyzer = container.analyzer();
     let files = OrphanFileListVO::new(vec![]);
     let root = FilePath::new(".".to_string()).unwrap();
@@ -55,7 +55,7 @@ fn container_creates_with_ignored_paths() {
 #[test]
 fn analyzer_scan_orphans_on_empty_dir() {
     let fs = mock_filesystem();
-    let container = OrphanContainer::new(fs);
+    let container = OrphanContainer::new(fs, mock_workspace());
     let analyzer = container.analyzer();
     let root = FilePath::new(".".to_string()).unwrap();
     let (context, results) = analyzer
@@ -77,7 +77,7 @@ fn analyzer_returns_empty_for_disabled_config() {
         enabled: BooleanVO::new(false),
         ..Default::default()
     };
-    let container = OrphanContainer::new_with_config(config, fs);
+    let container = OrphanContainer::new_with_config(config, fs, mock_workspace());
     let analyzer = container.analyzer();
 
     let files = OrphanFileListVO::new(vec!["src/taxonomy_color.rs".to_string()]);
@@ -97,7 +97,7 @@ fn analyzer_check_orphans_with_context_returns_empty_for_no_files() {
     use std::collections::HashMap;
 
     let fs = mock_filesystem();
-    let container = OrphanContainer::new(fs);
+    let container = OrphanContainer::new(fs, mock_workspace());
     let analyzer = container.analyzer();
 
     let files = OrphanFileListVO::new(vec![]);

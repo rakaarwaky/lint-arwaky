@@ -10,6 +10,7 @@ use shared::config_system::ArchitectureConfig;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::orphan_rules::{OrphanRequest, OrphanResponse};
 
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::OrphanFileListVO;
 use shared::orphan_rules::{
@@ -45,6 +46,7 @@ pub struct ArchOrphanDeps {
     pub agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     pub surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
 }
 
 pub struct ArchOrphanAnalyzer {
@@ -97,7 +99,10 @@ impl ArchOrphanAnalyzer {
         let ignored = self.ignored_paths();
         self.deps
             .filesystem
-            .build_orphan_graph_context(root_path, &ignored)
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                root_path, &ignored,
+            ))
+            .into_graph_context()
     }
 
     pub fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
@@ -123,7 +128,10 @@ impl ArchOrphanAnalyzer {
         let context = self
             .deps
             .filesystem
-            .build_orphan_graph_context(root_path, ignored);
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                root_path, ignored,
+            ))
+            .into_graph_context();
         let files_vo = OrphanFileListVO::new(context.all_workspace_files.clone());
         let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
         (context, results)
@@ -224,7 +232,7 @@ impl ArchOrphanAnalyzer {
         let root_path = std::path::Path::new(root_dir.value());
         let top_root = self
             .deps
-            .filesystem
+            .filesystem_workspace
             .workspace_root(root_dir)
             .unwrap_or_else(|| root_path.to_path_buf());
         let all_files_rel: Vec<String> = context
@@ -288,7 +296,11 @@ impl ArchOrphanAnalyzer {
             .iter()
             .filter_map(|f| {
                 let path = FilePath::new(f.clone()).ok()?;
-                let content = self.deps.filesystem.read_cached(&path);
+                let content = self
+                    .deps
+                    .filesystem
+                    .execute(FilesystemRequest::read_cached(&path))
+                    .into_content();
                 let c = content.value();
                 if c.is_empty() {
                     tracing::warn!(file = %f, "file content empty or not in cache");

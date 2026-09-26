@@ -19,6 +19,11 @@ use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 /// All shared dependencies constructed once and consumed by entry points.
 pub struct CommonDeps {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+    pub filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+    pub filesystem_parser: Arc<dyn shared::filesystem::IParserProtocol>,
+    pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub config_parser: Arc<dyn shared::config_system::IConfigParserProtocol>,
     pub config_reader: Arc<dyn shared::config_system::IConfigReaderProtocol>,
@@ -32,18 +37,30 @@ pub struct CommonDeps {
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
     pub fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
-    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
 }
 
 impl CommonDeps {
     /// Build every container orchestrator with a single "." project root.
     pub fn build() -> Self {
-        let filesystem: Arc<dyn IFilesystemAggregate> =
-            filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+        let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+        let filesystem: Arc<dyn IFilesystemAggregate> = fs_container.orchestrator();
+        let filesystem_io = fs_container.io();
+        let filesystem_workspace = fs_container.workspace();
+        let filesystem_tool_resolution = fs_container.tool_resolution();
+        let filesystem_parser = fs_container.parser();
+        let fs_seam = Arc::new(dispatcher::surface_check_action::FilesystemSeam {
+            io: filesystem_io.clone(),
+            workspace: filesystem_workspace.clone(),
+            parser: filesystem_parser.clone(),
+            aggregate: filesystem.clone(),
+        });
 
-        let config_container =
-            config_system::root_config_system_container::ConfigContainer::new(filesystem.clone());
+        let config_container = config_system::root_config_system_container::ConfigContainer::new(
+            filesystem.clone(),
+            filesystem_io.clone(),
+        );
         let config_orchestrator = config_container.orchestrator();
 
         let code_analysis_linter =
@@ -58,6 +75,9 @@ impl CommonDeps {
                 &config_orchestrator,
                 ".",
                 filesystem.clone(),
+                filesystem_io.clone(),
+                filesystem_workspace.clone(),
+                filesystem_parser.clone(),
             );
         let import_orchestrator = import_container.orchestrator();
 
@@ -86,11 +106,14 @@ impl CommonDeps {
                 &config_orchestrator,
                 ".",
                 filesystem.clone(),
+                filesystem_workspace.clone(),
             );
         let orphan_orchestrator = orphan_container.analyzer();
 
         let ext_container = external_lint::root_external_lint_container::ExternalLintContainer::new(
             filesystem.clone(),
+            filesystem_io.clone(),
+            filesystem_tool_resolution.clone(),
         );
         let external_lint = ext_container.aggregate();
 
@@ -109,16 +132,27 @@ impl CommonDeps {
         let fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync> = {
             let container = auto_fix_container;
             let fs_for_factory = filesystem.clone();
-            Arc::new(move |_dry| container.orchestrator_with_filesystem(fs_for_factory.clone()))
+            let io_for_factory = filesystem_io.clone();
+            Arc::new(move |_dry| {
+                container
+                    .orchestrator_with_filesystem(fs_for_factory.clone(), io_for_factory.clone())
+            })
         };
 
-        let fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync> =
-            Arc::new(|| {
-                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
-            });
-        let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs| {
+        let fs_factory: Arc<
+            dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync,
+        > = Arc::new(|| {
+            let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+            dispatcher::surface_check_action::FilesystemSeam {
+                io: c.io(),
+                workspace: c.workspace(),
+                parser: c.parser(),
+                aggregate: c.orchestrator(),
+            }
+        });
+        let orphan_factory: Arc<OrphanFactory> = Arc::new(|config, fs, ws| {
             orphan_rules::root_orphan_detector_container::OrphanContainer::new_with_config(
-                config, fs,
+                config, fs, ws,
             )
             .analyzer()
         });
@@ -126,19 +160,28 @@ impl CommonDeps {
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
             shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
             filesystem.clone(),
+            filesystem_io.clone(),
         );
         let git_hooks_aggregate = git_container.aggregate();
 
         let maintenance_container =
-            maintenance::root_maintenance_container::MaintenanceContainer::new(filesystem.clone());
+            maintenance::root_maintenance_container::MaintenanceContainer::new(
+                filesystem.clone(),
+                filesystem_io.clone(),
+            );
         let maintenance_orchestrator = maintenance_container.orchestrator();
 
         let setup_container =
-            project_setup::root_project_setup_container::SetupContainer::new(filesystem.clone());
+            project_setup::root_project_setup_container::SetupContainer::new(filesystem_io.clone());
         let setup_orchestrator = setup_container.aggregate();
 
         CommonDeps {
             filesystem,
+            filesystem_io,
+            filesystem_workspace,
+            filesystem_tool_resolution,
+            filesystem_parser,
+            fs_seam,
             config_orchestrator,
             config_parser: config_container.parser(),
             config_reader: config_container.reader(),

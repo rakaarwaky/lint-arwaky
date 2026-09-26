@@ -38,9 +38,10 @@ impl AutoFixContainer {
         filesystem: Arc<
             dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
         >,
+        io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
     ) -> Arc<dyn IFixAggregate> {
         let file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol> =
-            Arc::new(FileAdapter::new(filesystem));
+            Arc::new(FileAdapter::new(filesystem, io));
         self.orchestrator(file_adapter)
     }
 }

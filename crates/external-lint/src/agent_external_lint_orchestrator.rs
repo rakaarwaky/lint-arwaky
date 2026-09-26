@@ -23,6 +23,7 @@ use shared::external_lint::taxonomy_external_lint_request_vo::{
 };
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -30,6 +31,7 @@ use tracing::warn;
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     pub selector: Arc<dyn IExternalLintSelectorProtocol>,
 }
 
@@ -128,7 +130,7 @@ impl ExternalLintOrchestrator {
             all.retain(|v| {
                 !self
                     .deps
-                    .filesystem
+                    .filesystem_io
                     .should_ignore(&v.file, &context.ignored_paths)
             });
         }

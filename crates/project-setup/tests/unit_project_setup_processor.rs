@@ -17,7 +17,8 @@ impl ISetupInstallerProtocol for StubInstaller {
 
 fn make_processor() -> impl ISetupManagementProtocol {
     use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = c.io();
     SetupManagementProcessor::new(Arc::new(StubInstaller), fs)
 }
 

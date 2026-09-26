@@ -29,7 +29,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -41,7 +41,7 @@ use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProt
 
 /// Adapter for Rust Clippy static analysis.
 pub struct RustLinterAdapter {
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
     executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
@@ -55,7 +55,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
 
     fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let mut results = Vec::new();
-        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
+        let working_dir = self.tool_resolution.resolve_cargo_working_dir(path);
         let working_dir_str = working_dir.value();
 
         let cargo_toml = Path::new(working_dir_str).join("Cargo.toml");
@@ -176,7 +176,7 @@ impl ILinterAdapterProtocol for RustLinterAdapter {
     }
 
     fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        let working_dir = self.filesystem.resolve_cargo_working_dir(path);
+        let working_dir = self.tool_resolution.resolve_cargo_working_dir(path);
         let cmd = vec![
             "cargo".to_string(),
             "clippy".to_string(),
@@ -199,12 +199,12 @@ impl RustLinterAdapter {
     pub fn new(
         executor: Arc<dyn ICommandExecutorProtocol>,
         bin_path: Option<FilePath>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             executor,
             _bin_path: bin_path,
-            filesystem,
+            tool_resolution,
         }
     }
 }

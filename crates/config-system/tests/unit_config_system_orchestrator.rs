@@ -16,13 +16,13 @@ use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_orchestrator() -> ConfigOrchestrator {
-    let fs = common::make_fs();
+    let io = common::make_io();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
-        config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
-        parser: Arc::new(ConfigParserProvider::new(fs.clone())),
+        workspace_detector: Arc::new(WorkspaceDetector::new(io.clone())),
+        config_reader: Arc::new(ConfigYamlReader::new(io.clone())),
+        parser: Arc::new(ConfigParserProvider::new(io.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
-        filesystem: fs,
+        filesystem: common::make_fs(),
     })
 }
 

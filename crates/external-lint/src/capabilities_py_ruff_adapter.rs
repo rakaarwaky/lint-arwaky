@@ -24,14 +24,14 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::quality_rules::LinterOperationError;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct RuffAdapter {
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
@@ -45,7 +45,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
 
     fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         // Skip if no Python files exist in the target path
-        if !self.filesystem.is_python_file_recursive(path) {
+        if !self.tool_resolution.is_python_file_recursive(path) {
             return Ok(LintResultList::new(vec![]));
         }
 
@@ -60,7 +60,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
             "--exit-zero".to_string(),
             "--no-cache".to_string(),
         ];
-        let working_dir = self.filesystem.default_working_dir(path);
+        let working_dir = self.tool_resolution.default_working_dir(path);
 
         let response = self
             .lint_executor
@@ -144,7 +144,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
             "--fix".to_string(),
             "--exit-zero".to_string(),
         ];
-        let working_dir = self.filesystem.default_working_dir(path);
+        let working_dir = self.tool_resolution.default_working_dir(path);
 
         let _ = self
             .lint_executor
@@ -160,12 +160,12 @@ impl RuffAdapter {
     pub fn new(
         lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
         bin_path: Option<FilePath>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             lint_executor,
             bin_path,
-            filesystem,
+            tool_resolution,
         }
     }
 

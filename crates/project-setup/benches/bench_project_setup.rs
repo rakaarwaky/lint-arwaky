@@ -6,15 +6,15 @@ use shared::project_setup::SetupRequest;
 fn bench_container_creation(c: &mut Criterion) {
     c.bench_function("setup_container_creation", |b| {
         b.iter(|| {
-            let fs =
-                filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-            SetupContainer::new(fs)
+            let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+            SetupContainer::new(fs_container.io())
         });
     });
 }
 
 fn bench_generate_mcp_config(c: &mut Criterion) {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = fs_container.io();
     let container = SetupContainer::new(fs);
     let agg = container.aggregate();
     c.bench_function("setup_generate_mcp_config", |b| {
@@ -26,7 +26,8 @@ fn bench_generate_mcp_config(c: &mut Criterion) {
 }
 
 fn bench_detect_language(c: &mut Criterion) {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = fs_container.io();
     let container = SetupContainer::new(fs);
     let agg = container.aggregate();
     c.bench_function("setup_detect_language", |b| {
@@ -35,7 +36,8 @@ fn bench_detect_language(c: &mut Criterion) {
 }
 
 fn bench_generate_env(c: &mut Criterion) {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = fs_container.io();
     let container = SetupContainer::new(fs);
     let agg = container.aggregate();
     let home = DirectoryPath::new("/tmp/bench").unwrap();
@@ -45,7 +47,8 @@ fn bench_generate_env(c: &mut Criterion) {
 }
 
 fn bench_get_config_template(c: &mut Criterion) {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = fs_container.io();
     let container = SetupContainer::new(fs);
     let agg = container.aggregate();
     c.bench_function("setup_get_config_template", |b| {

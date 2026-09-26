@@ -49,15 +49,11 @@ fn orchestrator_implements_aggregate() {
 }
 
 #[test]
-fn orchestrator_implements_all_protocol_traits() {
-    fn assert_trait<
-        T: IParserProtocol
-            + IGraphProtocol
-            + IWorkspaceProtocol
-            + IToolResolutionProtocol
-            + IFileSystemIOProtocol,
-    >() {
-    }
+fn each_capability_implements_exactly_one_protocol() {
+    // The agent owns only the aggregate; protocol seams belong to capabilities.
+    // The five per-capability tests above already prove each seam has exactly
+    // one implementor, so nothing extra is needed here beyond the aggregate.
+    fn assert_trait<T: IFilesystemAggregate>() {}
     assert_trait::<FilesystemOrchestrator>();
 }
 

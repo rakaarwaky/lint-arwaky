@@ -14,6 +14,7 @@ use shared::config_system::{
     IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
 };
 use shared::external_lint::IExternalLintAggregate;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::IGitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
@@ -42,7 +43,12 @@ pub struct McpServerDependencies {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    pub filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+    pub filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+    pub filesystem_parser: Arc<dyn shared::filesystem::IParserProtocol>,
+    pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+    pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
     // DI: config parsing functions
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
@@ -76,7 +82,7 @@ impl McpActionSurface {
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
             filter: None,
             member: None,
-            filesystem: self.deps.filesystem.clone(),
+            filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
             scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
                 quality: self.deps.code_analysis_linter.clone(),
                 role: self.deps.role_orchestrator.clone(),
@@ -85,7 +91,7 @@ impl McpActionSurface {
                 external: self.deps.external_lint.clone(),
                 orphan: self.deps.orphan_orchestrator.clone(),
                 config: self.deps.config_orchestrator.clone(),
-                fs_factory: self.deps.fs_factory.clone(),
+                fs_seam: self.deps.fs_seam.clone(),
             }),
         };
         match dispatcher::surface_check_action::collect_scan(opts) {
@@ -119,6 +125,7 @@ impl McpActionSurface {
                 config_orchestrator: self.deps.config_orchestrator.clone(),
                 orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
                 filesystem: self.deps.filesystem.clone(),
+                filesystem_io: self.deps.filesystem_io.clone(),
             },
             Some(fp),
             Threshold::new(threshold as u32),
@@ -189,6 +196,7 @@ impl McpActionSurface {
             self.deps.code_analysis_linter.clone(),
             None,
             self.deps.filesystem.clone(),
+            self.deps.filesystem_io.clone(),
             &[],
         ) {
             Ok(violations) => violations_response("quality", path, &violations),
@@ -207,6 +215,7 @@ impl McpActionSurface {
             self.deps.import_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
+            self.deps.filesystem_io.clone(),
             &[],
         ) {
             Ok(violations) => violations_response("import", path, &violations),
@@ -225,6 +234,7 @@ impl McpActionSurface {
             self.deps.naming_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
+            self.deps.filesystem_io.clone(),
             &[],
         ) {
             Ok(violations) => violations_response("naming", path, &violations),
@@ -259,6 +269,8 @@ impl McpActionSurface {
                 self.deps.orphan_orchestrator.clone(),
                 self.deps.config_orchestrator.clone(),
                 self.deps.filesystem.clone(),
+                self.deps.filesystem_io.clone(),
+                self.deps.filesystem_workspace.clone(),
                 self.deps.fs_factory.clone(),
                 self.deps.orphan_factory.clone(),
             ),
@@ -288,6 +300,7 @@ impl McpActionSurface {
             Some(fp),
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
+            self.deps.filesystem_io.clone(),
             self.deps.config_parser.clone(),
             None,
             &[],
@@ -447,7 +460,7 @@ impl McpActionSurface {
             "init" | "install" => {
                 let items = dispatcher::surface_setup_action::collect_init(
                     self.deps.setup_orchestrator.clone(),
-                    self.deps.filesystem.clone(),
+                    self.deps.filesystem_io.clone(),
                 );
                 let any_failure = items.iter().any(|i| !i.ok);
                 let exit_code = if any_failure { 2 } else { 0 };
@@ -533,7 +546,12 @@ impl McpActionSurface {
             .iter()
             .map(std::path::Path::new)
             .find(|p| p.exists())
-            .and_then(|p| self.deps.filesystem.read_file(p));
+            .and_then(|p| {
+                self.deps
+                    .filesystem
+                    .execute(FilesystemRequest::read_file(p))
+                    .into_content_opt()
+            });
         let content = match content {
             Some(c) => c,
             None => {

@@ -132,27 +132,32 @@ fn smoke_all_adapters_created_quickly() {
     let cmd_exec: Arc<
         dyn shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol,
     > = Arc::new(MockCmdExecutor);
-    let fs: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+    let _fs: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::new());
+    let tr: Arc<dyn shared::filesystem::IToolResolutionProtocol> = Arc::new(MockFilesystem::new());
+    let io: Arc<dyn shared::filesystem::IFileSystemIOProtocol> = Arc::new(MockFilesystem::new());
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
 
     // Python adapters
-    let _ruff = external_lint_lint_arwaky::RuffAdapter::new(lint_exec.clone(), None, fs.clone());
+    let _ruff = external_lint_lint_arwaky::RuffAdapter::new(lint_exec.clone(), None, tr.clone());
     let _bandit =
-        external_lint_lint_arwaky::BanditAdapter::new(lint_exec.clone(), None, fs.clone());
-    let _mypy = external_lint_lint_arwaky::MyPyAdapter::new(lint_exec.clone(), None, fs.clone());
+        external_lint_lint_arwaky::BanditAdapter::new(lint_exec.clone(), None, tr.clone());
+    let _mypy = external_lint_lint_arwaky::MyPyAdapter::new(lint_exec.clone(), None, tr.clone());
 
     // JS adapters
-    let _eslint = external_lint_lint_arwaky::ESLintAdapter::new(lint_exec.clone(), fs.clone());
-    let _prettier = external_lint_lint_arwaky::PrettierAdapter::new(lint_exec.clone(), fs.clone());
-    let _tsc = external_lint_lint_arwaky::TSCAdapter::new(lint_exec.clone(), fs.clone());
+    let _eslint =
+        external_lint_lint_arwaky::ESLintAdapter::new(lint_exec.clone(), io.clone(), tr.clone());
+    let _prettier =
+        external_lint_lint_arwaky::PrettierAdapter::new(lint_exec.clone(), io.clone(), tr.clone());
+    let _tsc =
+        external_lint_lint_arwaky::TSCAdapter::new(lint_exec.clone(), io.clone(), tr.clone());
 
     // Rust adapters
     let _clippy =
-        external_lint_lint_arwaky::RustLinterAdapter::new(cmd_exec.clone(), None, fs.clone());
-    let _fmt = external_lint_lint_arwaky::RustFmtAdapter::new(cmd_exec.clone(), None, fs.clone());
-    let _audit = external_lint_lint_arwaky::CargoAuditAdapter::new(cmd_exec.clone(), fs.clone());
+        external_lint_lint_arwaky::RustLinterAdapter::new(cmd_exec.clone(), None, tr.clone());
+    let _fmt = external_lint_lint_arwaky::RustFmtAdapter::new(cmd_exec.clone(), None, tr.clone());
+    let _audit = external_lint_lint_arwaky::CargoAuditAdapter::new(cmd_exec.clone(), tr.clone());
 
     // Scan each (should return immediately with mock filesystem)
     let _ = _ruff.scan(&path);
@@ -175,6 +180,7 @@ fn smoke_external_lint_executor_creation() {
     let start = Instant::now();
     let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
         Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();

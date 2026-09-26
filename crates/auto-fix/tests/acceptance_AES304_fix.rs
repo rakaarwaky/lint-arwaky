@@ -6,11 +6,11 @@ use shared::common::FilePath;
 use tempfile::TempDir;
 
 fn make_dry_run_orch() -> std::sync::Arc<dyn IFixAggregate> {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    container.orchestrator_with_filesystem(filesystem)
+    container.orchestrator_with_filesystem(filesystem, fs_container.io())
 }
 
 #[test]

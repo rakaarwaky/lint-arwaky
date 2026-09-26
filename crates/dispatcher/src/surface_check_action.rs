@@ -7,7 +7,11 @@ use shared::common::FilePath;
 use shared::common::ViolationItem;
 use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use shared::external_lint::IExternalLintAggregate;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::naming_rules::INamingRunnerAggregate;
@@ -22,7 +26,17 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
 
-/// Bundles the 6 scan aggregates + config source + filesystem factory so that
+/// Capability seams exposed alongside the filesystem aggregate, so callers can
+/// dispatch individual protocol operations without leaking the aggregate layer.
+#[derive(Clone)]
+pub struct FilesystemSeam {
+    pub io: Arc<dyn IFileSystemIOProtocol>,
+    pub workspace: Arc<dyn IWorkspaceProtocol>,
+    pub parser: Arc<dyn IParserProtocol>,
+    pub aggregate: Arc<dyn IFilesystemAggregate>,
+}
+
+/// Bundles the 6 scan aggregates + config source + filesystem seam so that
 /// `collect_scan` can dispatch all linters in-process (W10).
 #[derive(Clone)]
 pub struct ScanAggregates {
@@ -33,8 +47,8 @@ pub struct ScanAggregates {
     pub external: Arc<dyn IExternalLintAggregate>,
     pub orphan: Arc<dyn IOrphanAggregate>,
     pub config: Arc<dyn IConfigOrchestratorAggregate>,
-    /// Creates a fresh filesystem instance (uncached pipeline) per scan.
-    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    /// Provides raw protocol seams + aggregate per scan run.
+    pub fs_seam: Arc<FilesystemSeam>,
 }
 
 pub struct ScanOptions {
@@ -42,7 +56,7 @@ pub struct ScanOptions {
     pub multi_project_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub filter: Option<String>,
     pub member: Option<String>,
-    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem: Arc<FilesystemSeam>,
     /// In-process aggregate bundle (W10). `None` falls back to subprocess.
     pub scan_aggregates: Option<ScanAggregates>,
 }
@@ -56,7 +70,7 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !opts.filesystem.path_exists(std::path::Path::new(&root)) {
+    if !opts.filesystem.io.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 
@@ -64,7 +78,7 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
     // in-process linters scan the intended scope. Subprocess fallback keeps the
     // raw path (its per-linter normalization differs).
     let root = if opts.scan_aggregates.is_some() {
-        canonicalize_scan_root(&opts.filesystem, &root)
+        canonicalize_scan_root(&opts.filesystem.io, &root)
     } else {
         root
     };
@@ -84,8 +98,8 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
 
 /// Canonicalize a scan root (falling back to the raw path when the filesystem
 /// cannot canonicalize it, e.g. the path does not exist yet).
-fn canonicalize_scan_root(fs: &Arc<dyn IFilesystemAggregate>, root: &str) -> String {
-    fs.canonicalize(std::path::Path::new(root))
+fn canonicalize_scan_root(io: &Arc<dyn IFileSystemIOProtocol>, root: &str) -> String {
+    io.canonicalize(std::path::Path::new(root))
         .unwrap_or_else(|_| PathBuf::from(root))
         .to_string_lossy()
         .to_string()
@@ -132,27 +146,24 @@ fn apply_filter(mut violations: Vec<ViolationItem>, filter: &Option<String>) -> 
 pub use collect_scan as collect_check;
 
 /// Check if a path belongs to a workspace member.
-pub fn is_member_path(path: &FilePath, fs_agg: &dyn IFilesystemAggregate) -> bool {
-    fs_agg.is_member_path(path)
+pub fn is_member_path(path: &FilePath, ws: &dyn IWorkspaceProtocol) -> bool {
+    ws.is_member_path(path)
 }
 
 /// Run all 6 linters via subprocesses for a given path; return violations.
-pub fn collect_scan_json(
-    path: &str,
-    fs_agg: &dyn IFilesystemAggregate,
-) -> Result<Vec<ViolationItem>, String> {
-    if !fs_agg.path_exists(std::path::Path::new(path)) {
+pub fn collect_scan_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<ViolationItem>, String> {
+    if !seam.io.path_exists(std::path::Path::new(path)) {
         return Err(format!("Error: path '{}' does not exist", path));
     }
-    Ok(run_all_linters_json(path, fs_agg))
+    Ok(run_all_linters_json(path, seam))
 }
 
 /// Default check: subprocess JSON scan of all linters.
 pub fn collect_default_check(
     project_root: &str,
-    fs_agg: &dyn IFilesystemAggregate,
+    seam: &FilesystemSeam,
 ) -> Result<Vec<ViolationItem>, String> {
-    collect_scan_json(project_root, fs_agg)
+    collect_scan_json(project_root, seam)
 }
 
 /// Run all 6 linters in-process through their aggregate entry points (W10).
@@ -168,10 +179,11 @@ pub fn collect_default_check(
 /// non-existent file is dropped (with no violation emitted) so stale or
 /// doubled paths can never surface as E902.
 fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
-    let fs = (agg.fs_factory)();
+    let seam = agg.fs_seam.clone();
 
     let target = std::path::Path::new(path);
-    let target_canon = fs
+    let target_canon = seam
+        .io
         .canonicalize(target)
         .unwrap_or_else(|_| std::path::PathBuf::from(path));
     let target_canon_str = target_canon.to_string_lossy().to_string();
@@ -196,7 +208,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
     // Single-file target: build a one-entry index and run the auditors on it.
     if scan_root.is_file() {
-        return run_single_file_scan(&fs, &scan_root, agg, &root_fp, &ignored);
+        return run_single_file_scan(&seam, &scan_root, agg, &root_fp, &ignored);
     }
 
     // Discover source files under the target, matching the per-linter commands
@@ -221,14 +233,15 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     // An explicit scan of a fixture dir must not ignore the target itself —
     // `build_file_index_with_ignored` uses ignore::WalkBuilder, so an ignore
     // entry matching the scan root's own name suppresses its entire subtree.
-    fs.build_file_index_with_ignored(
-        std::path::Path::new(&scan_root),
-        &build_index_ignored(&ignored, &scan_root),
-    );
+    seam.aggregate
+        .execute(FilesystemRequest::build_file_index_with_ignored(
+            std::path::Path::new(&scan_root),
+            &build_index_ignored(&ignored, &scan_root),
+        ));
 
-    let discovered = discover_lintable_files(&fs, &scan_root, &ignored);
-    let entries = build_entries(&fs, &discovered);
-    let import_map = build_import_map(&fs, &entries);
+    let discovered = discover_lintable_files(&seam, &scan_root, &ignored);
+    let entries = build_entries(&seam, &discovered);
+    let import_map = build_import_map(&seam, &entries);
 
     let parent_workspace = target_canon
         .parent()
@@ -287,7 +300,12 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     // against the process CWD, exactly like the spawned linters did).
     let ext_target_fp = FilePath::new(path.to_string()).unwrap_or_default();
     {
-        let ext_files = fs.discover_files(std::path::Path::new(&target_canon_str));
+        let ext_files = seam
+            .aggregate
+            .execute(FilesystemRequest::discover_files(std::path::Path::new(
+                &target_canon_str,
+            )))
+            .into_paths();
         let has_rust = ext_files.iter().any(|f| f.ends_with(".rs"));
         let has_python = ext_files.iter().any(|f| f.ends_with(".py"));
         let has_js = ext_files.iter().any(|f| {
@@ -314,14 +332,14 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .map(ViolationItem::from_lint_result)
             .collect();
         external.retain(|v| {
-            external_violation_in_scope(v, &fs, &target_canon, parent_workspace.as_deref())
+            external_violation_in_scope(v, &seam, &target_canon, parent_workspace.as_deref())
         });
         all.extend(external);
     }
 
     // Keep only violations that resolve to a real file under the scan scope
     // (or, for AES205 cycles / AES5xx orphans, within the parent workspace).
-    all.retain(|v| violation_in_scan_scope(v, &fs, &target_canon, parent_workspace.as_deref()));
+    all.retain(|v| violation_in_scan_scope(v, &seam, &target_canon, parent_workspace.as_deref()));
 
     all
 }
@@ -331,11 +349,11 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 /// parent workspace.
 fn external_violation_in_scope(
     v: &ViolationItem,
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     target_canon: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
 ) -> bool {
-    let resolved_canon = resolve_violation_path(v, fs, target_canon);
+    let resolved_canon = resolve_violation_path(v, seam, target_canon);
     resolved_canon.starts_with(target_canon)
         || (v.code.code() == "AES205"
             && parent_workspace.is_some_and(|pw| resolved_canon.starts_with(pw)))
@@ -346,12 +364,12 @@ fn external_violation_in_scope(
 /// Non-existent files are dropped so doubled/stale paths never surface as E902.
 fn violation_in_scan_scope(
     v: &ViolationItem,
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     target_canon: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
 ) -> bool {
-    let resolved_canon = resolve_violation_path(v, fs, target_canon);
-    if !fs.path_exists(&resolved_canon) {
+    let resolved_canon = resolve_violation_path(v, seam, target_canon);
+    if !seam.io.path_exists(&resolved_canon) {
         return false; // E902 guard: non-existent file — drop, no violation.
     }
     let in_target = resolved_canon.starts_with(target_canon);
@@ -366,7 +384,7 @@ fn violation_in_scan_scope(
 /// is, falling back to the path itself when canonicalization fails).
 fn resolve_violation_path(
     v: &ViolationItem,
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     target_canon: &std::path::Path,
 ) -> std::path::PathBuf {
     let file_path = std::path::Path::new(&v.file.value);
@@ -375,26 +393,33 @@ fn resolve_violation_path(
     } else {
         target_canon.join(file_path)
     };
-    fs.canonicalize(&resolved).unwrap_or(resolved)
+    seam.io.canonicalize(&resolved).unwrap_or(resolved)
 }
 
 /// Run all 6 linters on a single-file target, returning in-scope violations.
 fn run_single_file_scan(
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     agg: &ScanAggregates,
     root_fp: &shared::common::taxonomy_path_vo::FilePath,
     ignored: &[String],
 ) -> Vec<ViolationItem> {
-    let content = fs
-        .read_lintable_file(&scan_root.to_string_lossy())
+    let content = seam
+        .aggregate
+        .execute(FilesystemRequest::read_lintable_file(
+            &scan_root.to_string_lossy(),
+        ))
+        .into_content_opt()
         .unwrap_or_default();
     let extension = scan_root
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or("")
         .to_string();
-    let language = match fs.detect_language_from_path(scan_root.to_string_lossy().as_ref()) {
+    let language = match seam
+        .workspace
+        .detect_language_from_path(scan_root.to_string_lossy().as_ref())
+    {
         shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
             shared::filesystem::taxonomy_filesystem_vo::Language::Rust
         }
@@ -414,7 +439,7 @@ fn run_single_file_scan(
         parse_ok: !content.is_empty(),
         parse_metadata: None,
     }];
-    fs.parse_all(&mut entries);
+    seam.parser.parse_all(&mut entries);
     let import_map: std::collections::HashMap<
         String,
         Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>,
@@ -475,14 +500,17 @@ fn run_single_file_scan(
 /// under a workspace root only member dirs carry source; elsewhere member-dir
 /// names and fixture dirs are skipped. Returns the discovered file paths.
 fn discover_lintable_files(
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     ignored: &[String],
 ) -> Vec<String> {
     // Discover the target's own files with the config ignore list (a dir
     // named `workspaces-bad` never matches a file pattern, so fixture
     // targets are unaffected by the index build's fixture-dir exclusion).
-    let mut discovered = fs.discover_source_files(scan_root, ignored);
+    let mut discovered = seam
+        .aggregate
+        .execute(FilesystemRequest::discover_source_files(scan_root, ignored))
+        .into_paths();
     // Recurse into subdirs so nested source trees (crates/<name>/src/*) are
     // fully covered, matching what the subprocess linters walk.
     let is_ws_root = ["crates", "packages", "modules"]
@@ -490,7 +518,7 @@ fn discover_lintable_files(
         .any(|name| scan_root.join(name).is_dir());
     let skip_dirs = build_skip_dirs(is_ws_root, scan_root);
     bfs_enter_subdirs(
-        fs,
+        seam,
         scan_root,
         &skip_dirs,
         is_ws_root,
@@ -533,7 +561,7 @@ fn build_skip_dirs(
 /// source files. At a workspace root the depth-0 level is gated to member dirs
 /// only; deeper levels enter every subdir. `discovered` is extended in place.
 fn bfs_enter_subdirs(
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     skip_dirs: &std::collections::HashSet<&str>,
     is_ws_root: bool,
@@ -545,7 +573,11 @@ fn bfs_enter_subdirs(
     let mut seen: std::collections::HashSet<std::path::PathBuf> = std::collections::HashSet::new();
     while let Some((dir, depth)) = queue.pop() {
         let gate_members = is_ws_root && depth == 0;
-        for entry in fs.scan_directory(dir.as_path()) {
+        for entry in seam
+            .aggregate
+            .execute(FilesystemRequest::scan_directory(dir.as_path()))
+            .into_paths()
+        {
             let entry_path = std::path::Path::new(&entry);
             if !entry_path.is_dir() {
                 continue;
@@ -564,7 +596,13 @@ fn bfs_enter_subdirs(
             if !seen.insert(entry_path.to_path_buf()) {
                 continue;
             }
-            discovered.extend(fs.discover_source_files(entry_path, ignored));
+            discovered.extend(
+                seam.aggregate
+                    .execute(FilesystemRequest::discover_source_files(
+                        entry_path, ignored,
+                    ))
+                    .into_paths(),
+            );
             let next_depth = if is_ws_root && is_member_dir {
                 1
             } else {
@@ -604,18 +642,22 @@ fn build_index_ignored(ignored: &[String], scan_root: &std::path::Path) -> Vec<S
 /// Build parsed `FileEntry`s for the discovered file paths, running the
 /// tree-sitter parse so `parse_metadata` is populated for the auditors.
 fn build_entries(
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     discovered: &[String],
 ) -> Vec<shared::filesystem::taxonomy_filesystem_vo::FileEntry> {
     let mut entries: Vec<shared::filesystem::taxonomy_filesystem_vo::FileEntry> = Vec::new();
     for file_path in discovered {
-        let content = fs.read_lintable_file(file_path).unwrap_or_default();
+        let content = seam
+            .aggregate
+            .execute(FilesystemRequest::read_lintable_file(file_path))
+            .into_content_opt()
+            .unwrap_or_default();
         let extension = std::path::Path::new(file_path)
             .extension()
             .and_then(|e| e.to_str())
             .unwrap_or("")
             .to_string();
-        let language = fs.detect_language_from_path(file_path);
+        let language = seam.workspace.detect_language_from_path(file_path);
         let language = match language {
             shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
                 shared::filesystem::taxonomy_filesystem_vo::Language::Rust
@@ -639,7 +681,7 @@ fn build_entries(
     }
     // Fills `parse_metadata` (needed for AES203 unused-import detection) and
     // rewrites the parser's import cache with this target's scoped imports.
-    fs.parse_all(&mut entries);
+    seam.parser.parse_all(&mut entries);
     entries
 }
 
@@ -647,11 +689,14 @@ fn build_entries(
 /// a workspace-wide import map keyed by absolute source path, so
 /// AES201/202/203/205 see cross-member imports.
 fn build_import_map(
-    fs: &Arc<dyn IFilesystemAggregate>,
+    seam: &FilesystemSeam,
     entries: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
 ) -> std::collections::HashMap<String, Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>>
 {
-    let ws_snapshot = fs.import_list_snapshot();
+    let ws_snapshot = seam
+        .aggregate
+        .execute(FilesystemRequest::ImportListSnapshot)
+        .into_imports();
     let scoped_keys: std::collections::HashSet<&std::path::Path> =
         entries.iter().map(|e| e.path.as_path()).collect();
     let out_of_scope: Vec<_> = ws_snapshot
@@ -664,7 +709,7 @@ fn build_import_map(
         Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>,
     > = std::collections::HashMap::new();
     for entry in entries {
-        for imp in fs.imports_for(&entry.path) {
+        for imp in seam.parser.imports_for(&entry.path) {
             import_map
                 .entry(entry.path.to_string_lossy().to_string())
                 .or_default()
@@ -679,7 +724,7 @@ fn build_import_map(
 }
 
 /// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
-fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<ViolationItem> {
+fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Vec<ViolationItem> {
     let exe_path = match std::env::current_exe() {
         Ok(p) => p,
         Err(_) => std::path::PathBuf::from("lint-arwaky-cli"),
@@ -715,11 +760,13 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
     }
 
     // Normalize relative paths to absolute before filtering.
-    let target_canonical = fs_agg.canonicalize(std::path::Path::new(path)).ok();
+    let target_canonical = seam.io.canonicalize(std::path::Path::new(path)).ok();
     // Detect workspace root for resolving relative paths from orphan scan
     // (orphan scan returns paths like "crates/calculator/src/foo.rs" relative to workspace root)
-    let ws_root = fs_agg.find_workspace_root(std::path::Path::new(path));
-    normalize_violation_paths(&mut all, fs_agg, &target_canonical, &ws_root);
+    let ws_root = seam
+        .workspace
+        .workspace_root(&FilePath::new(path.to_string()).unwrap_or_default());
+    normalize_violation_paths(&mut all, seam, &target_canonical, &ws_root);
 
     // Filter: only keep violations whose file path is within the target directory.
     // Exception: AES205 cycle violations are global — keep them if the file is
@@ -730,7 +777,7 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
             .and_then(|p| p.parent())
             .map(|p| p.to_path_buf());
         all.retain(|v| {
-            json_violation_in_target(v, fs_agg, canonical_target, parent_workspace.as_deref())
+            json_violation_in_target(v, seam, canonical_target, parent_workspace.as_deref())
         });
     }
 
@@ -742,7 +789,7 @@ fn run_all_linters_json(path: &str, fs_agg: &dyn IFilesystemAggregate) -> Vec<Vi
 /// target, then the target's parent. Absolute paths are left untouched.
 fn normalize_violation_paths(
     violations: &mut [ViolationItem],
-    fs_agg: &dyn IFilesystemAggregate,
+    seam: &FilesystemSeam,
     target_canonical: &Option<std::path::PathBuf>,
     ws_root: &Option<std::path::PathBuf>,
 ) {
@@ -760,7 +807,7 @@ fn normalize_violation_paths(
             target_parent,
         ];
         for base in bases.into_iter().flatten() {
-            if let Ok(canon) = fs_agg.canonicalize(&base.join(file_path)) {
+            if let Ok(canon) = seam.io.canonicalize(&base.join(file_path)) {
                 v.file = FilePath::new(canon.to_string_lossy().to_string())
                     .unwrap_or_else(|_| v.file.clone());
                 break;
@@ -773,7 +820,7 @@ fn normalize_violation_paths(
 /// (or, for AES205 cycles, inside the parent workspace).
 fn json_violation_in_target(
     v: &ViolationItem,
-    fs_agg: &dyn IFilesystemAggregate,
+    seam: &FilesystemSeam,
     canonical_target: &std::path::Path,
     parent_workspace: Option<&std::path::Path>,
 ) -> bool {
@@ -781,24 +828,24 @@ fn json_violation_in_target(
     // Always retain AES205 cycle violations if within the same parent workspace
     if v.code.code() == "AES205" {
         if let Some(pw) = parent_workspace {
-            if let Ok(canonical) = fs_agg.canonicalize(file_path) {
+            if let Ok(canonical) = seam.io.canonicalize(file_path) {
                 if canonical.starts_with(pw) {
                     return true;
                 }
             }
         }
     }
-    if let Ok(canonical) = fs_agg.canonicalize(file_path) {
+    if let Ok(canonical) = seam.io.canonicalize(file_path) {
         return canonical.starts_with(canonical_target);
     }
     if let Ok(cwd) = std::env::current_dir() {
         let joined = cwd.join(file_path);
-        let cwd_joined = fs_agg.canonicalize(&joined).unwrap_or(joined);
+        let cwd_joined = seam.io.canonicalize(&joined).unwrap_or(joined);
         if cwd_joined.starts_with(canonical_target) {
             return true;
         }
     }
-    if let Ok(target_joined) = fs_agg.canonicalize(&canonical_target.join(file_path)) {
+    if let Ok(target_joined) = seam.io.canonicalize(&canonical_target.join(file_path)) {
         return target_joined.starts_with(canonical_target);
     }
     false

@@ -3,7 +3,7 @@ use shared::config_system::contract_config_protocol::IConfigReaderProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
 use tracing::warn;
 
@@ -14,7 +14,7 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ConfigYamlReader {
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -33,12 +33,12 @@ impl IConfigReaderProtocol for ConfigYamlReader {
             while !current.as_os_str().is_empty() && depth < 5 {
                 let candidate = current.join(filename);
                 // FR-001: Reject symlinks pointing outside project root
-                if let Ok(meta) = self.filesystem.symlink_metadata(&candidate)
+                if let Ok(meta) = self.io.symlink_metadata(&candidate)
                     && meta.file_type().is_symlink()
-                    && let Ok(canonical) = self.filesystem.canonicalize(&candidate)
+                    && let Ok(canonical) = self.io.canonicalize(&candidate)
                 {
                     let root_canonical = self
-                        .filesystem
+                        .io
                         .canonicalize(std::path::Path::new(&project_root.value))
                         .unwrap_or_else(|_| std::path::PathBuf::from(&project_root.value));
                     if !canonical.starts_with(&root_canonical) {
@@ -52,7 +52,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                         continue;
                     }
                 }
-                match self.filesystem.read_to_string(&candidate) {
+                match self.io.read_to_string(&candidate) {
                     Ok(content) => {
                         return Ok(Some(ConfigSource::new(
                             language.as_str(),
@@ -93,7 +93,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
         ] {
             for filename in lang.config_file_names() {
                 let candidate = std::path::PathBuf::from(&project_root.value).join(filename);
-                match self.filesystem.read_to_string(&candidate) {
+                match self.io.read_to_string(&candidate) {
                     Ok(_content) => {
                         let path = FilePath::new(candidate.to_string_lossy().to_string()).map_err(
                             |e| {
@@ -128,8 +128,8 @@ impl IConfigReaderProtocol for ConfigYamlReader {
 
 impl ConfigYamlReader {
     /// Create a new YAML config reader with filesystem IO dependency.
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { filesystem }
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
     }
 
     /// Read config from XDG-compliant directories in priority order.
@@ -168,7 +168,7 @@ impl ConfigYamlReader {
         }
 
         for path in &candidates {
-            match self.filesystem.read_to_string(path) {
+            match self.io.read_to_string(path) {
                 Ok(content) => {
                     return Ok(Some(ConfigSource::new(
                         language.as_str(),

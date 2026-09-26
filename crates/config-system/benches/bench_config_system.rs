@@ -37,9 +37,10 @@ fn bench_workspace_detect(c: &mut Criterion) {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let fs_arc: std::sync::Arc<
         dyn shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol,
-    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    > = fs_container.io();
     let detector = WorkspaceDetector::new(fs_arc);
     let mut group = c.benchmark_group("workspace_detect");
     group.sample_size(30);
@@ -94,10 +95,11 @@ fn bench_load_config_sync(c: &mut Criterion) {
         BenchmarkId::new("load", "rust_project"),
         &root,
         |b, path| {
+            let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
             let fs: std::sync::Arc<
                 dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
-            > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-            let orch = ConfigContainer::new(fs).orchestrator();
+            > = fs_container.orchestrator();
+            let orch = ConfigContainer::new(fs, fs_container.io()).orchestrator();
             b.iter(|| {
                 std::hint::black_box(
                     orch.execute(ConfigRequest::load_sync(path))

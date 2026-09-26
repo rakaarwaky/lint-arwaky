@@ -13,8 +13,16 @@ use std::sync::Arc;
 
 use mock_filesystem::MockFilesystem;
 
-fn mock_fs() -> Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> {
-    Arc::new(MockFilesystem::new())
+/// Seam bundle for ScanOptions: io + workspace + parser + aggregate.
+fn mock_seam() -> Arc<dispatcher_lint_arwaky::surface_check_action::FilesystemSeam> {
+    Arc::new(
+        dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
+            io: Arc::new(MockFilesystem::new()),
+            workspace: Arc::new(MockFilesystem::new()),
+            parser: Arc::new(MockFilesystem::new()),
+            aggregate: Arc::new(MockFilesystem::new()),
+        },
+    )
 }
 
 #[test]
@@ -24,7 +32,7 @@ fn collect_scan_nonexistent_path_returns_error() {
         multi_project_orchestrator: None,
         filter: None,
         member: None,
-        filesystem: mock_fs(),
+        filesystem: mock_seam(),
         scan_aggregates: None,
     };
     let result = collect_scan(opts);
@@ -40,7 +48,7 @@ fn collect_scan_with_filter_returns_error_for_nonexistent() {
         multi_project_orchestrator: None,
         filter: Some("AES".to_string()),
         member: None,
-        filesystem: mock_fs(),
+        filesystem: mock_seam(),
         scan_aggregates: None,
     };
     let result = collect_scan(opts);

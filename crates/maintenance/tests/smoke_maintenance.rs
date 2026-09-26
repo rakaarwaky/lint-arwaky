@@ -5,9 +5,10 @@ use shared::maintenance::IMaintenanceAggregate;
 #[test]
 fn maintenance_container_creates() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    let _container = MaintenanceContainer::new(filesystem);
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fc.orchestrator();
+    let container_io = fc.io();
+    let _container = MaintenanceContainer::new(filesystem, container_io);
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -19,9 +20,10 @@ fn maintenance_container_creates() {
 #[test]
 fn maintenance_orchestrator_creates() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    let container = MaintenanceContainer::new(filesystem);
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fc.orchestrator();
+    let container_io = fc.io();
+    let container = MaintenanceContainer::new(filesystem, container_io);
     let _orch = container.orchestrator();
     let elapsed = start.elapsed();
     assert!(
@@ -34,9 +36,10 @@ fn maintenance_orchestrator_creates() {
 #[test]
 fn maintenance_orchestrator_is_trait_object() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    let container = MaintenanceContainer::new(filesystem);
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fc.orchestrator();
+    let container_io = fc.io();
+    let container = MaintenanceContainer::new(filesystem, container_io);
     let orch = container.orchestrator();
     let _: std::sync::Arc<dyn IMaintenanceAggregate> = orch;
     let elapsed = start.elapsed();

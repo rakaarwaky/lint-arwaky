@@ -5,13 +5,13 @@ use shared::config_system::contract_config_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_identifier_vo::ConfigKey;
 use shared::config_system::taxonomy_setting_vo::ProjectConfig;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ConfigParserProvider {
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -20,7 +20,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match self.filesystem.read_to_string(std::path::Path::new(p)) {
+        let content = match self.io.read_to_string(std::path::Path::new(p)) {
             Ok(c) => c,
             Err(e) => {
                 let msg = if e.kind() == std::io::ErrorKind::NotFound {
@@ -49,7 +49,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
-        let content = match self.filesystem.read_to_string(std::path::Path::new(p)) {
+        let content = match self.io.read_to_string(std::path::Path::new(p)) {
             Ok(c) => c,
             Err(e) => {
                 let msg = if e.kind() == std::io::ErrorKind::NotFound {
@@ -121,7 +121,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
 
 impl ConfigParserProvider {
     /// Create a new config parser with filesystem IO dependency.
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { filesystem }
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
     }
 }

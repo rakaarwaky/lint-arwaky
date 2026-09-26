@@ -7,7 +7,9 @@ use std::process::Command;
 use std::sync::Arc;
 
 use shared::common::FilePath;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 
@@ -24,11 +26,16 @@ pub fn collect_role_direct(
 ) -> Result<Vec<ViolationItem>, String> {
     // Build file index for target path
     let root_path = std::path::Path::new(root);
-    fs_agg.build_file_index_with_ignored(root_path, ignored_paths);
+    fs_agg.execute(FilesystemRequest::build_file_index_with_ignored(
+        root_path,
+        ignored_paths,
+    ));
 
     // Pass pre-fetched FileEntry data to role orchestrator
     let results = role_orchestrator
-        .execute(RoleRequest::audit(fs_agg.file_list()))
+        .execute(RoleRequest::audit(
+            &fs_agg.execute(FilesystemRequest::FileList).into_file_list(),
+        ))
         .into_violations();
     let mut violations: Vec<ViolationItem> = results
         .iter()
@@ -48,12 +55,13 @@ pub fn collect_role(
     _role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     filter: Option<String>,
     _fs_agg: Arc<dyn IFilesystemAggregate>,
+    _filesystem_io: Arc<dyn IFileSystemIOProtocol>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !_fs_agg.path_exists(std::path::Path::new(&root)) {
+    if !_filesystem_io.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 

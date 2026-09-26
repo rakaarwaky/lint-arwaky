@@ -41,10 +41,15 @@ Seven rules. Each one prevents a specific failure mode.
  surface/root/CLI/MCP calls. All consumer verbs live in the agent, which dispatches to  
  the rich protocol interfaces. A dump-all `execute(op, …)` aggregate is the violation  
  here.
-6. **Signatures use shared VOs** — no `string`/`number`/`string[]`/`Record<string,T>`  
- for domain values. `boolean` allowed for semantic toggles only. No union return  
- spanning several value shapes; when operations genuinely differ in return type, they  
- are separate methods. All methods fully type-annotated.
+6. **Signatures use shared VOs.** Domain values must not be `string`, `number`,
+   `string[]`, or `Record<string,T>` — wrap them in a taxonomy-defined VO before they
+   appear in a signature. `boolean` is permitted only for semantic toggles or
+   predicates (e.g. `enabled: boolean`), never for domain quantities. Enums are not
+   banned; the ban targets primitive leakage. A multi-variant response type on the
+   aggregate is correct and expected — each variant must hold VO-wrapped values, not
+   raw primitives. Protocol methods keep one concrete VO return type; the aggregate
+   response type is the sanctioned way to carry heterogeneous results across one
+   `execute()` entry point. All methods fully type-annotated.
 7. **Register in shared** `index.ts` so the pair is importable.
 
 ---
@@ -147,7 +152,9 @@ Every contract file is required to carry the rows that apply. Each exists for on
 | Suffix in file + type names              | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                        |
 | One file per feature                     | All seams of a feature live together; consumers import from one module.                 |
 | One interface per capability seam        | An interface lists only what its capability owns, so implementation is always complete. |
-| Rich named methods, one return type each | Each operation stays typed and discoverable; no dispatch bag, no union return.          |
+| Rich named methods, one return type each | Protocol interfaces: each method has one VO
+   return; no dispatch bag. Aggregate: one `execute()` method whose response is a
+   taxonomy-defined enum of VOs.          |
 | Signature-only interface                 | Outer layers depend on promises, not behaviour.                                         |
 | Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.                 |
 | Shared VOs in signatures                 | Domain values stay opaque across layers; no primitive leakage.                          |
@@ -171,8 +178,9 @@ lint-arwaky-cli scan <contract-dir>
 #   - each capability implements one interface from this file, and implements all of it
 #     (a partial implementation produces a type error — compile each capability to
 #     prove it);
-#   - the aggregate declares exactly one method; interfaces are signature-only
-#     (no class implementation).
+#   - the aggregate declares exactly one `execute()` method; its response type is a
+#     taxonomy-defined VO enum (each variant holds VO-wrapped values, not primitives).
+#   - protocol interfaces are signature-only (no class implementation).
 # Fallback compile gate: npx tsc --noEmit.
 ```
 

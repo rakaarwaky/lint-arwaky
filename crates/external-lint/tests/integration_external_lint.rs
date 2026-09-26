@@ -147,6 +147,7 @@ fn create_eslint_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::ESLintAdapter::new(
         Arc::new(MockLintExecutor),
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
@@ -158,6 +159,7 @@ fn create_prettier_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::PrettierAdapter::new(
         Arc::new(MockLintExecutor),
         Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
@@ -168,6 +170,7 @@ fn create_prettier_adapter_and_scan_returns_empty() {
 fn create_tsc_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
         Arc::new(MockLintExecutor),
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
@@ -232,6 +235,7 @@ fn mypy_apply_fix_always_returns_false() {
 fn tsc_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
         Arc::new(MockLintExecutor),
+        Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();

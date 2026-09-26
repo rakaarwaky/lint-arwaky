@@ -4,7 +4,7 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 use shared::maintenance::taxonomy_doctor_vo::{
     DependencyInfo, DependencyReport, DoctorResultVO, HealthCheckAdapterVO, HealthCheckResult,
@@ -15,16 +15,16 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 pub struct MaintenanceChecker {
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 impl MaintenanceChecker {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
-        Self { filesystem }
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { io }
     }
 
     fn check_tool(&self, name: &str, args: &[&str], required: bool) -> ToolStatus {
-        let (stdout, _, success) = self.filesystem.run_external_command_in(name, args, ".");
+        let (stdout, _, success) = self.io.run_external_command_in(name, args, ".");
         let (status, version) = if success {
             let ver = stdout.lines().next().unwrap_or("").trim().to_string();
             ("OK".to_string(), ver)
@@ -107,9 +107,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let root = &project_path.value;
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
-            let (s, _, _) =
-                self.filesystem
-                    .run_external_command_in("cargo", &["audit", "--json"], root);
+            let (s, _, _) = self
+                .io
+                .run_external_command_in("cargo", &["audit", "--json"], root);
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
                 if let Some(list) = json
@@ -166,7 +166,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
             let content = self
-                .filesystem
+                .io
                 .read_to_string(&cargo_lock)
                 .map_err(|e| e.to_string())?;
             let mut dependencies = Vec::new();
@@ -221,7 +221,7 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         let mut rust_files = 0u64;
         let mut js_files = 0u64;
         for entry_path in self
-            .filesystem
+            .io
             .read_dir_entries_as_pathbuf(root_path)
             .unwrap_or_default()
         {
@@ -269,13 +269,13 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         ] {
             let path = std::path::Path::new(".").join(dir);
             if path.exists() {
-                let _ = self.filesystem.remove_dir_all(&path);
+                let _ = self.io.remove_dir_all(&path);
             }
         }
     }
 
     fn update(&self) {
-        let _ = self.filesystem.run_external_command_in(
+        let _ = self.io.run_external_command_in(
             "pip",
             &["install", "--upgrade", "ruff", "mypy", "bandit"],
             ".",

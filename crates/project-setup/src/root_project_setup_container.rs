@@ -1,6 +1,6 @@
 // PURPOSE: SetupContainer — wiring for project-setup feature (root layer, wiring only)
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::project_setup::{ISetupAggregate, ISetupManagementProtocol};
 
 use std::sync::Arc;
@@ -15,13 +15,11 @@ pub struct SetupContainer {
 // ─── Block 2: Container Construction ──────────────────────
 
 impl SetupContainer {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         let installer =
             Arc::new(crate::capabilities_setup_installer_adapter::SetupInstallerAdapter::new());
         let protocol = Arc::new(
-            crate::capabilities_setup_processor::SetupManagementProcessor::new(
-                installer, filesystem,
-            ),
+            crate::capabilities_setup_processor::SetupManagementProcessor::new(installer, io),
         );
         let aggregate = Arc::new(
             crate::agent_setup_orchestrator::SetupManagementOrchestrator::new(protocol.clone()),

@@ -10,7 +10,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader {
-    config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader::new(common::make_fs())
+    config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader::new(common::make_io())
 }
 
 #[test]

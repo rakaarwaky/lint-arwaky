@@ -9,7 +9,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_parser() -> ConfigParserProvider {
-    ConfigParserProvider::new(common::make_fs())
+    ConfigParserProvider::new(common::make_io())
 }
 
 // FR-009 Scenario 1: Cargo.toml with [tool.lint-arwaky] → parsed correctly
