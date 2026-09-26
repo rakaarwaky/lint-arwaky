@@ -12,8 +12,9 @@
 > **Location**: Shared domain package next to taxonomy, registered in the shared  
 > `index.ts`.
 >
-> **Length**: `_protocol` = every method the capabilities expose; `_aggregate` = one entry  
-> point. Only methods outer layers actually call.
+> **Length**: One file per feature. A `_protocol` file may declare **one interface per**  
+> **capability seam**; each interface is **rich** — one method per operation, each with a  
+> concrete return type. An `_aggregate` file declares **exactly one method**.
 
 ---
 
@@ -25,17 +26,21 @@ Seven rules. Each one prevents a specific failure mode.
  `I<Name>Aggregate`. File: `contract_<concept>_<suffix>.ts`.
 2. `export interface` **only — no class implementations.** Never private-helper  
  signatures, never convenience API (`AES101`/`AES102`).
-3. **Protocol = rich, one method per capability operation.** The interface declares every  
- operation its capabilities implement, each with its own named method and its own typed  
- signature. A capability implements the whole interface. No `execute(op, …)` dispatch,  
- no `any` argument bag, no union return spanning differing result shapes — every method  
- has one concrete return type.
-4. **Aggregate = ONE method.** The aggregate is the single entry point the  
+3. **One file per feature, one interface per capability seam, each interface rich.** A  
+ `_protocol` file for a feature with several capabilities declares one `export  interface` per seam — `I<Injector>Protocol`, `I<Sender>Protocol`, `I<Stream>Protocol`  
+ — side by side in the same file. Each interface carries **every** method its  
+ capability implements, each with its own named signature and **one concrete return**  
+ **type**. Never `execute(op, …)` dispatch, never an untyped argument bag, never a union  
+ return spanning several value shapes.
+4. **A capability implements exactly one interface, and all of it.** Because each  
+ interface is scoped to one capability's own operations, an interface is never partially  
+ implemented: it declares only the methods that capability owns, and that capability  
+ defines every one of them. This is why a single file per feature is enough — no  
+ per-method splitting, and no stubs.
+5. **Aggregate = exactly one method.** The aggregate is the single entry point the  
  surface/root/CLI/MCP calls. All consumer verbs live in the agent, which dispatches to  
- the rich protocol. A dump-all `execute(op, …)` aggregate is the violation here, not a  
- rich one.
-5. **Allowed imports: taxonomy types and other contract types only.** Capabilities,  
- agents, surface, root invert the dependency arrow (`AES201`/`AES205`).
+ the rich protocol interfaces. A dump-all `execute(op, …)` aggregate is the violation  
+ here.
 6. **Signatures use shared VOs** — no `string`/`number`/`string[]`/`Record<string,T>`  
  for domain values. `boolean` allowed for semantic toggles only. No union return  
  spanning several value shapes; when operations genuinely differ in return type, they  
@@ -46,11 +51,13 @@ Seven rules. Each one prevents a specific failure mode.
 
 ## Workflow
 
-1. **Determine suffix** — `_protocol` (inward, rich) or `_aggregate` (outward, one method).
-2. **Create file** → `contract_<concept>_<suffix>.ts`.
-3. **Draft protocol** — one interface, one method per capability operation, each with a  
- concrete return type.
-4. **Draft aggregate** — one interface, one method.
+1. **Determine suffix** — `_protocol` (inward, rich interfaces) or `_aggregate` (outward,  
+ one method).
+2. **List the feature's capability seams** — group the feature's operations by the  
+ capability that owns them. One group becomes one interface.
+3. **Create file** → `contract_<concept>_<suffix>.ts`, one interface per seam.
+4. **Draft each interface** — every method its capability implements, one concrete return  
+ type each.
 5. **Register** in shared `index.ts`.
 6. **Verify** → `lint-arwaky-cli scan <contract-dir>`.
 
@@ -58,46 +65,74 @@ Seven rules. Each one prevents a specific failure mode.
 
 Copy, fill, delete nothing.
 
-### Protocol interface — rich, one named method per operation
+### Protocol file — one interface per capability seam, each rich
 
 ```typescript
+/** <Feature>-domain capability contracts (AES102 `_protocol`).
+
+One file for the <feature> feature. Each interface below is one capability
+seam: an interface carries every method that capability implements, with one
+concrete return type each, so a capability implements its interface outright
+and never carries stubs.
+*/
+
 import { VO, ResultVO } from '../shared/<domain>/taxonomy_<name>_vo';
 
-export interface I<Name>Protocol {
-    /** Capability contract for <domain>: every operation the capabilities expose. */
+export interface I<Seam1>Protocol {
+    /** <Seam 1> capability: <what it owns>. */
 
     /** <What this operation does.> */
     <operation1>(param: VO): ResultVO;
 
     /** <What this operation does.> */
     <operation2>(page: PageVO, timeout: TimeoutVO): TextVO;
+}
 
-    /** Add one method per new capability operation. */
-    <operationN>(/* … */): ResultVO;
+export interface I<Seam2>Protocol {
+    /** <Seam 2> capability: <what it owns>. */
+
+    /** <What this operation does.> */
+    <operation1>(path: PathVO, content: TextVO): PathVO;
+}
+
+export interface I<SeamN>Protocol {
+    /** <Seam N> capability: <what it owns>. */
+
+    /** <What this operation does.> */
+    <operation1>(/* … */): ResultVO;
 }
 ```
 
-**One file → one interface → many named methods.** Each method is a real, typed operation.  
-Violations: an `execute(op, …)` that dispatches several features behind one name, an  
-untyped argument bag, or a union return that papers over differing result shapes. A  
-capability implements the whole interface, so it never carries stubs for operations it  
-does not own — if it does not own them, it does not implement this interface.
+**One file → one feature → one interface per capability seam → many named methods per**  
+**interface.**
 
-### Aggregate interface — one method
+Violations: an `execute(op, …)` that dispatches several features behind one name, an  
+untyped argument bag, a union return that papers over differing result shapes, an  
+interface that declares methods its implementors do not own, or an implementor that  
+leaves a declared method unimplemented.
+
+### Aggregate file — one method
 
 ```typescript
+/** <Feature>-domain aggregate contract (AES101 `_aggregate`).
+
+The single entry point over the <feature> feature. Consumers pass a request; the agent
+behind the aggregate dispatches to the rich protocol interfaces in
+`contract_<feature>_protocol.ts`.
+*/
+
 import { RequestVO, ResponseVO } from '../shared/<domain>/taxonomy_<name>_vo';
 
-export interface I<Name>Aggregate {
-    /** Single entry point over <domain>; the agent dispatches internally. */
+export interface I<Feature>Aggregate {
+    /** Single entry point over the <feature> feature. */
     execute(request: RequestVO): ResponseVO;
 }
 ```
 
-**The aggregate is the one door consumers knock on.** Consumers never see the protocol's  
-method list; the agent behind the aggregate routes the request to the right capability  
-operation. Adding a consumer verb = a new property on `RequestVO` + the agent's  
-dispatch branch, not a new aggregate method.
+**The aggregate is the one door consumers knock on.** Consumers never see the protocol  
+interfaces' method lists; the agent behind the aggregate routes the request to the right  
+capability. Adding a consumer verb = a new property on `RequestVO` + the agent's dispatch  
+branch, not a new aggregate method.
 
 ---
 
@@ -106,17 +141,18 @@ dispatch branch, not a new aggregate method.
 Every contract file is required to carry the rows that apply. Each exists for one reason.
 
 
-| Section                            | Why it belongs here                                                            |
-| ---------------------------------- | ------------------------------------------------------------------------------ |
-| Module docstring (required)        | Names the contract's role: capability interface or entry-point interface.      |
-| Suffix in file + type name         | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.               |
-| Protocol: rich, named methods      | Each operation stays typed and discoverable; no dispatch bag, no union return. |
-| Protocol: one concrete return type | Callers know the result shape without narrowing a union.                       |
-| Aggregate: exactly one method      | Consumers depend on one stable entry point, not a shifting method list.        |
-| Signature-only interface           | Outer layers depend on promises, not behaviour.                                |
-| Shared VOs in signatures           | Domain values stay opaque across layers; no primitive leakage.                 |
-| No impl-layer imports              | Keeps the dependency arrow (capabilities → contract ← agent).                  |
-| Register in shared `index.ts`      | Importable without reaching into private modules.                              |
+| Section                                  | Why it belongs here                                                                     |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| Module docstring (required)              | Names the feature and the seams in the file.                                            |
+| Suffix in file + type names              | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                        |
+| One file per feature                     | All seams of a feature live together; consumers import from one module.                 |
+| One interface per capability seam        | An interface lists only what its capability owns, so implementation is always complete. |
+| Rich named methods, one return type each | Each operation stays typed and discoverable; no dispatch bag, no union return.          |
+| Signature-only interface                 | Outer layers depend on promises, not behaviour.                                         |
+| Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.                 |
+| Shared VOs in signatures                 | Domain values stay opaque across layers; no primitive leakage.                          |
+| No impl-layer imports                    | Keeps the dependency arrow (capabilities → contract ← agent).                           |
+| Register in shared `index.ts`            | Importable without reaching into private modules.                                       |
 
 
 ---
@@ -128,10 +164,15 @@ lint-arwaky-cli scan <contract-dir>
 # Checks: AES101/AES102 (filename contract_<concept>_{protocol,aggregate}),
 # AES201–AES205 (layer imports: no impl-layer imports; protocol ≠ aggregate import),
 # AES402 (no primitives in signatures), role rules (contract ↔ capabilities/agent/surface).
-# Manual (not machine-checked): protocol methods are all named and individually typed
-# (no `execute(op, …)`, no untyped argument bag, no union return spanning differing result
-# shapes); aggregate declares exactly one method; interface signature-only
-# (no class implementation).
+# Manual (not machine-checked):
+#   - every method in every protocol interface is named and individually typed
+#     (no `execute(op, …)`, no untyped argument bag, no union return spanning differing
+#     result shapes);
+#   - each capability implements one interface from this file, and implements all of it
+#     (a partial implementation produces a type error — compile each capability to
+#     prove it);
+#   - the aggregate declares exactly one method; interfaces are signature-only
+#     (no class implementation).
 # Fallback compile gate: npx tsc --noEmit.
 ```
 

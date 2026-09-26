@@ -63,7 +63,7 @@ pub fn collect_external_direct(
         config_entries,
     };
 
-    let scan_results = external_lint.scan_all_with_context(&root_fp, &context);
+    let scan_results = external_lint.execute(shared::external_lint::ExternalLintRequest::scan_all_with_context(&root_fp, &context)).into_violations();
     let mut violations: Vec<ViolationItem> = scan_results
         .values
         .iter()

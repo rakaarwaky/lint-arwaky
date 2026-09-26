@@ -288,8 +288,10 @@ fn orchestrator_implements_aggregate_protocol() {
     let _dyn_agg: &dyn IExternalLintAggregate = &orchestrator;
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let result = _dyn_agg.scan_all(&path);
+    let result = _dyn_agg.execute(shared::external_lint::ExternalLintRequest::scan_all(&path))
+        .into_violations();
     assert!(result.values.is_empty()); // no adapters registered, so no results
-    let names = _dyn_agg.adapter_names();
+    let names = _dyn_agg.execute(shared::external_lint::ExternalLintRequest::adapter_names())
+        .into_adapter_names();
     assert!(names.is_empty());
 }

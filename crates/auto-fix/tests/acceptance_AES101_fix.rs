@@ -1,5 +1,6 @@
 // Acceptance tests — verify AES101 (naming convention) violations are fixable via symbol rename.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
+use shared::auto_fix::FixRequest;
 use shared::auto_fix::IFixAggregate;
 use shared::common::FilePath;
 use tempfile::TempDir;
@@ -31,7 +32,7 @@ fn aes101_naming_violation_is_fixable_dry_run() {
     )
     .unwrap();
 
-    let result = orch.execute(&fp, true); // per-request dry_run
+    let result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
     assert!(
         result.is_success(),
         "AES101 fix dry-run should succeed: {}",
@@ -63,7 +64,7 @@ fn aes101_dry_run_does_not_modify_file() {
     )
     .unwrap();
 
-    let _result = orch.execute(&fp, true); // per-request dry_run
+    let _result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
     let content = std::fs::read_to_string(tmp.path().join("aes101_nomod.rs")).unwrap();
     assert_eq!(content, original, "Dry-run must not modify the file");
 }

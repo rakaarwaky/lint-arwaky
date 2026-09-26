@@ -21,8 +21,7 @@ use shared_lint_arwaky::filesystem::{
     IToolResolutionProtocol, IWorkspaceProtocol,
 };
 use shared_lint_arwaky::git_hooks::{
-    IGitHooksAggregate, IHookManagerAggregate, IDiffProtocol, IHookManagerProtocol,
-    IHookProtocol,
+    IDiffProtocol, IGitHooksAggregate, IHookManagerProtocol, IHookProtocol,
 };
 use shared_lint_arwaky::import_rules::{
     ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
@@ -227,7 +226,6 @@ fn git_hooks_contracts_are_traits() {
     assert_trait::<dyn IHookProtocol>();
     assert_trait::<dyn IHookManagerProtocol>();
     assert_trait::<dyn IGitHooksAggregate>();
-    assert_trait::<dyn IHookManagerAggregate>();
 }
 
 #[test]
@@ -236,7 +234,6 @@ fn git_hooks_contracts_are_send_sync() {
     assert_send_sync::<dyn IHookProtocol>();
     assert_send_sync::<dyn IHookManagerProtocol>();
     assert_send_sync::<dyn IGitHooksAggregate>();
-    assert_send_sync::<dyn IHookManagerAggregate>();
 }
 
 #[test]

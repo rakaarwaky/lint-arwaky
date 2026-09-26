@@ -2,7 +2,7 @@
 // Runs lint → apply auto-fixes → re-lint to measure improvement.
 // Supports dry-run mode (preview only) via the fix_orchestrator_factory closure.
 // Adapted: sync (no async_trait, no tokio).
-use shared::auto_fix::IFixAggregate;
+use shared::auto_fix::{FixRequest, IFixAggregate};
 use shared::cli_commands::LintResult;
 use shared::common::FilePath;
 use shared::quality_rules::ICodeAnalysisAggregate;
@@ -48,7 +48,7 @@ pub fn collect_fix(
         .collect();
 
     let fix_orch = (fix_orchestrator_factory)(dry_run);
-    let fix_result = fix_orch.execute(&project_path, dry_run);
+    let fix_result = fix_orch.execute(FixRequest::execute(&project_path, dry_run));
 
     let (after_count, fixed_count, success) = if dry_run {
         (results.len(), 0usize, true)
@@ -64,7 +64,7 @@ pub fn collect_fix(
         before_count: results.len(),
         after_count,
         fixed_count,
-        output: fix_result.output.value,
+        output: fix_result.into_fix_result().output.value,
         success,
         fixable,
     })
@@ -94,7 +94,7 @@ pub fn collect_fix_direct(
         .cloned()
         .collect();
 
-    let fix_result = fix_orchestrator.execute(&project_path, dry_run);
+    let fix_result = fix_orchestrator.execute(FixRequest::execute(&project_path, dry_run));
 
     let (after_count, fixed_count, success) = if dry_run {
         (results.len(), 0usize, true)
@@ -110,7 +110,7 @@ pub fn collect_fix_direct(
         before_count: results.len(),
         after_count,
         fixed_count,
-        output: fix_result.output.value,
+        output: fix_result.into_fix_result().output.value,
         success,
         fixable,
     })

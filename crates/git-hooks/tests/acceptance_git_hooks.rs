@@ -12,6 +12,7 @@ use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared::common::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared::git_hooks::GitHooksRequest;
 use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO, IHookManagerProtocol, IHookProtocol};
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -227,7 +228,7 @@ fn fr003_only_removes_pre_commit_hook() {
 fn fr004_check_on_non_git_dir_returns_empty_results() {
     let (tmp, aggregate) = make_container();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let results = aggregate.run_git_hooks_check(&fp);
+    let results = aggregate.execute(GitHooksRequest::run_check(&fp)).into_results();
     // Non-git directory → no changes detected → empty results
     assert!(
         results.is_empty(),
@@ -239,7 +240,7 @@ fn fr004_check_on_non_git_dir_returns_empty_results() {
 fn fr004_check_does_not_panic_on_invalid_path() {
     let (_, aggregate) = make_container();
     let fp = FilePath::new("/nonexistent/path/that/does/not/exist".to_string()).unwrap();
-    let _results = aggregate.run_git_hooks_check(&fp);
+    let _results = aggregate.execute(GitHooksRequest::run_check(&fp)).into_results();
     // Should not panic even with invalid path
 }
 
@@ -516,7 +517,9 @@ fn hook_manager_identity_is_git_hook_manager() {
 #[test]
 fn orchestrator_hook_manager_identity_delegates_correctly() {
     let (_, aggregate) = make_container();
-    let identity = aggregate.hook_protocol().get_hook_manager_identity();
+    let identity = aggregate
+        .execute(GitHooksRequest::get_manager_identity())
+        .into_identity();
     assert_eq!(
         identity.value(),
         "git_hook_manager",
@@ -530,9 +533,9 @@ fn non_git_repo_all_operations_are_safe() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
 
     // None of these should panic on a non-git directory
-    let _results = aggregate.run_git_hooks_check(&fp);
-    let install = aggregate.install_hook(&fp);
-    let uninstall = aggregate.uninstall_hook();
+    let _results = aggregate.execute(GitHooksRequest::run_check(&fp)).into_results();
+    let install = aggregate.execute(GitHooksRequest::install(&fp)).into_status();
+    let uninstall = aggregate.execute(GitHooksRequest::uninstall()).into_status();
 
     assert!(install.is_ok(), "install should not error");
     assert!(uninstall.is_ok(), "uninstall should not error");

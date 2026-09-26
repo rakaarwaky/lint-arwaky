@@ -14,7 +14,6 @@ fn e2e_all_aggregates_support_arc_dynamic_dispatch() {
     assert_arc::<dyn shared_lint_arwaky::auto_fix::IFixAggregate>();
     assert_arc::<dyn shared_lint_arwaky::file_watch::IWatchAggregate>();
     assert_arc::<dyn shared_lint_arwaky::git_hooks::IGitHooksAggregate>();
-    assert_arc::<dyn shared_lint_arwaky::git_hooks::IHookManagerAggregate>();
     assert_arc::<dyn shared_lint_arwaky::maintenance::IMaintenanceAggregate>();
     assert_arc::<dyn shared_lint_arwaky::external_lint::IExternalLintAggregate>();
     assert_arc::<dyn shared_lint_arwaky::report_formatter::IReportFormatterAggregate>();

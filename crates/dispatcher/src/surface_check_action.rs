@@ -290,7 +290,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         };
         let mut external: Vec<ViolationItem> = agg
             .external
-            .scan_all_with_context(&ext_target_fp, &context)
+            .execute(shared::external_lint::ExternalLintRequest::scan_all_with_context(&ext_target_fp, &context)).into_violations()
             .values
             .iter()
             .map(ViolationItem::from_lint_result)

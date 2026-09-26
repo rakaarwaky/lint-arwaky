@@ -1,6 +1,7 @@
 // Benchmark tests for auto-fix — dry-run pipeline throughput.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use shared::auto_fix::FixRequest;
 use shared::auto_fix::IFixAggregate;
 use shared::common::FilePath;
 use std::sync::Arc;
@@ -44,7 +45,7 @@ fn bench_dry_run_single(c: &mut Criterion) {
 
     group.bench_function("single_file", |b| {
         b.iter(|| {
-            std::hint::black_box(orch.execute(&fp, true)); // per-request dry_run
+            std::hint::black_box(orch.execute(FixRequest::execute(&fp, true))); // per-request dry_run
         });
     });
 
@@ -63,7 +64,7 @@ fn bench_dry_run_batch(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("files", n), &fps, |b, fps| {
             b.iter(|| {
                 for fp in fps {
-                    std::hint::black_box(orch.execute(fp, true)); // per-request dry_run
+                    std::hint::black_box(orch.execute(FixRequest::execute(fp, true))); // per-request dry_run
                 }
             });
         });

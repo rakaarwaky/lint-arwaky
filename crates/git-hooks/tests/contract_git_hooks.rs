@@ -7,7 +7,6 @@ use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-use shared::git_hooks::contract_orchestrator_aggregate::IHookManagerAggregate;
 
 #[test]
 fn diff_checker_implements_diff_protocol() {
@@ -34,12 +33,6 @@ fn orchestrator_implements_git_hooks_aggregate() {
 }
 
 #[test]
-fn orchestrator_implements_hook_management_aggregate() {
-    fn assert_trait<T: IHookManagerAggregate>() {}
-    assert_trait::<GitHooksOrchestrator>();
-}
-
-#[test]
 fn all_capabilities_are_send_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<DiffChecker>();
@@ -60,30 +53,20 @@ fn hook_manager_can_be_arc_trait_object() {
     assert_object_safe::<HookManager>();
 }
 
-// ─── New aggregate methods contract tests ─────────────────
+// ─── Aggregate contract tests ──────────────────────────────
+// AES101 `_aggregate`: exactly one method, the request/response entry point.
 
 #[test]
-fn aggregate_has_initialize_config_method() {
-    fn assert_method<T: IGitHooksAggregate>() {
-        // Verify the method exists and has the right signature by calling it
-        let _ = |t: &T, path: &str| t.initialize_config(path);
-    }
-    assert_method::<GitHooksOrchestrator>();
+fn aggregate_is_object_safe() {
+    fn assert_object_safe<T: IGitHooksAggregate + Send + Sync>() {}
+    assert_object_safe::<GitHooksOrchestrator>();
 }
 
 #[test]
-fn aggregate_has_update_ignore_rule_method() {
+fn aggregate_exposes_a_single_execute_entry_point() {
+    use shared::git_hooks::GitHooksRequest;
     fn assert_method<T: IGitHooksAggregate>() {
-        use shared::git_hooks::HookIgnoreUpdateVO;
-        let _ = |t: &T, req: HookIgnoreUpdateVO| t.update_ignore_rule(req);
-    }
-    assert_method::<GitHooksOrchestrator>();
-}
-
-#[test]
-fn aggregate_has_get_diff_data_method() {
-    fn assert_method<T: IGitHooksAggregate>() {
-        let _ = |t: &T, p1: &str, p2: &str| t.get_diff_data(p1, p2);
+        let _ = |t: &T, request: GitHooksRequest| t.execute(request);
     }
     assert_method::<GitHooksOrchestrator>();
 }
