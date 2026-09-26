@@ -13,14 +13,14 @@ fn fr_001_all_aggregates_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::naming_rules::INamingRunnerAggregate>();
     assert_send_sync::<dyn shared_lint_arwaky::orphan_rules::IOrphanAggregate>();
     assert_send_sync::<dyn shared_lint_arwaky::role_rules::IRoleRunnerAggregate>();
-    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::LintFixOrchestratorAggregate>();
+    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFixAggregate>();
     assert_send_sync::<dyn shared_lint_arwaky::file_watch::IWatchAggregate>();
-    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::GitHooksAggregate>();
-    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::HookManagementOrchestratorAggregate>();
-    assert_send_sync::<dyn shared_lint_arwaky::maintenance::MaintenanceCommandsAggregate>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IGitHooksAggregate>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IHookManagerAggregate>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IMaintenanceAggregate>();
     assert_send_sync::<dyn shared_lint_arwaky::external_lint::IExternalLintAggregate>();
     assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IReportFormatterAggregate>();
-    assert_send_sync::<dyn shared_lint_arwaky::project_setup::SetupManagementAggregate>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::ISetupAggregate>();
 }
 
 #[test]
@@ -161,18 +161,18 @@ fn fr_003_all_contract_traits_are_object_safe() {
     // Infrastructure
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::LintFixOrchestratorAggregate>();
+    assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixAggregate>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeAnalyzerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchProviderProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchAggregate>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookManagerProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::GitHooksAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::HookManagementOrchestratorAggregate>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IGitHooksAggregate>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookManagerAggregate>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IMaintenanceCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IToolExecutorProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::maintenance::MaintenanceCommandsAggregate>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::IMaintenanceAggregate>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::ILinterAdapterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::ICommandExecutorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::IExternalLintExecutorProtocol>();
@@ -183,5 +183,5 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IReportFormatterAggregate>();
     assert_trait::<dyn shared_lint_arwaky::project_setup::ISetupManagementProtocol>();
     assert_trait::<dyn shared_lint_arwaky::project_setup::ISetupInstallerProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::project_setup::SetupManagementAggregate>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::ISetupAggregate>();
 }

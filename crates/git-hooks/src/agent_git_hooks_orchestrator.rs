@@ -16,10 +16,10 @@ use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use shared::git_hooks::contract_orchestrator_aggregate::IHookManagerAggregate;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 
 use std::sync::Arc;
@@ -34,7 +34,7 @@ pub struct GitHooksOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
-impl GitHooksAggregate for GitHooksOrchestrator {
+impl IGitHooksAggregate for GitHooksOrchestrator {
     fn diff_protocol(&self) -> &dyn IDiffProtocol {
         self.diff_protocol.as_ref()
     }
@@ -56,7 +56,7 @@ impl GitHooksAggregate for GitHooksOrchestrator {
     }
 }
 
-impl HookManagementOrchestratorAggregate for GitHooksOrchestrator {
+impl IHookManagerAggregate for GitHooksOrchestrator {
     fn get_hook_manager(&self) -> &dyn IHookManagerProtocol {
         self.hook_manager.as_ref()
     }

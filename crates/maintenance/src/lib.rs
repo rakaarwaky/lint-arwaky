@@ -1,5 +1,5 @@
 pub use shared::maintenance::IMaintenanceCheckerProtocol;
-pub use shared::maintenance::MaintenanceCommandsAggregate;
+pub use shared::maintenance::IMaintenanceAggregate;
 
 pub mod agent_maintenance_orchestrator;
 pub use agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};

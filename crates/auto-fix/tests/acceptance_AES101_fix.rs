@@ -1,10 +1,10 @@
 // Acceptance tests — verify AES101 (naming convention) violations are fixable via symbol rename.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::FilePath;
 use tempfile::TempDir;
 
-fn make_orch() -> std::sync::Arc<dyn LintFixOrchestratorAggregate> {
+fn make_orch() -> std::sync::Arc<dyn IFixAggregate> {
     let filesystem =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();

@@ -11,7 +11,7 @@ pub mod taxonomy_fix_vo;
 
 // ── Contract traits ──
 pub use contract_file_adapter_protocol::IFileAdapterProtocol;
-pub use contract_fix_aggregate::LintFixOrchestratorAggregate;
+pub use contract_fix_aggregate::IFixAggregate;
 pub use contract_fix_protocol::IFixProtocol;
 
 // ── Taxonomy types ──

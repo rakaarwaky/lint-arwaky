@@ -6,19 +6,19 @@
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::Threshold;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::GitHooksAggregate;
+use shared::git_hooks::IGitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
-use shared::project_setup::SetupManagementAggregate;
+use shared::project_setup::ISetupAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
@@ -28,11 +28,11 @@ use shared::common::taxonomy_violation_item_vo::ViolationItem;
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub fix_orchestrator_factory:
-        Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
+        Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
-    pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
-    pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    pub maintenance_orchestrator: Arc<dyn IMaintenanceAggregate>,
+    pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
+    pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,

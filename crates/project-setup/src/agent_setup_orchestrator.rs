@@ -14,7 +14,7 @@
 use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
 use shared::project_setup::contract_setup_management_protocol::PreFlightResult;
 use shared::project_setup::{
     EmbeddedSkillVO, ISetupManagementProtocol, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
@@ -30,7 +30,7 @@ pub struct SetupManagementOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
-impl SetupManagementAggregate for SetupManagementOrchestrator {
+impl ISetupAggregate for SetupManagementOrchestrator {
     fn check_http(&self, _url: &TransportUrlVO) -> SuccessStatus {
         SuccessStatus::new(true)
     }

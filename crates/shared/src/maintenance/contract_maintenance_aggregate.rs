@@ -1,4 +1,4 @@
-// PURPOSE: Aggregate: MaintenanceCommandsAggregate trait — contract for maintenance operations (stats, doctor, clean, update, cancel)
+// PURPOSE: Aggregate: IMaintenanceAggregate trait — contract for maintenance operations (stats, doctor, clean, update, cancel)
 use crate::common::taxonomy_action_vo::JobId;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::maintenance::taxonomy_doctor_vo::{
@@ -6,7 +6,7 @@ use crate::maintenance::taxonomy_doctor_vo::{
 };
 use crate::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 
-pub trait MaintenanceCommandsAggregate: Send + Sync {
+pub trait IMaintenanceAggregate: Send + Sync {
     fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO;
     fn clean(&self);
     fn update(&self);

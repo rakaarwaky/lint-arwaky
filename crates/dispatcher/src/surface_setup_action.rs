@@ -1,8 +1,8 @@
 // PURPOSE: SetupCommandsSurface — project setup business logic, no formatting.
-// handle_install delegates to SetupManagementAggregate.
+// handle_install delegates to ISetupAggregate.
 // No direct std::process::Command calls.
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::project_setup::{ProjectLanguagesVO, SetupManagementAggregate};
+use shared::project_setup::{ProjectLanguagesVO, ISetupAggregate};
 use std::sync::Arc;
 
 /// One setup step outcome — message + success flag for CLI rendering.
@@ -28,7 +28,7 @@ pub struct McpConfigReport {
 }
 
 pub fn collect_init(
-    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    setup_orchestrator: Arc<dyn ISetupAggregate>,
     filesystem: Arc<dyn IFileSystemIOProtocol>,
 ) -> Vec<SetupInitItem> {
     let mut items: Vec<SetupInitItem> = Vec::new();
@@ -234,7 +234,7 @@ fn copy_dir_all(
     Ok(count)
 }
 
-pub fn collect_install(setup: Arc<dyn SetupManagementAggregate>, sudo: bool) -> InstallReport {
+pub fn collect_install(setup: Arc<dyn ISetupAggregate>, sudo: bool) -> InstallReport {
     let py_ok = setup.install_python_adapters().value;
     let js_ok = setup.install_javascript_adapters(sudo).value;
     InstallReport { py_ok, js_ok }

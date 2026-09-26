@@ -2,12 +2,12 @@
 
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::{GitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
+use shared::git_hooks::{IGitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
 
 use std::sync::Arc;
 
 pub struct GitContainer {
-    aggregate: Arc<dyn GitHooksAggregate>,
+    aggregate: Arc<dyn IGitHooksAggregate>,
 }
 
 impl GitContainer {
@@ -26,7 +26,7 @@ impl GitContainer {
                 filesystem.clone(),
             ));
 
-        let aggregate: Arc<dyn GitHooksAggregate> = Arc::new(
+        let aggregate: Arc<dyn IGitHooksAggregate> = Arc::new(
             crate::agent_git_hooks_orchestrator::GitHooksOrchestrator::new(
                 diff_protocol,
                 hook_protocol,
@@ -37,7 +37,7 @@ impl GitContainer {
         Self { aggregate }
     }
 
-    pub fn aggregate(&self) -> Arc<dyn GitHooksAggregate> {
+    pub fn aggregate(&self) -> Arc<dyn IGitHooksAggregate> {
         self.aggregate.clone()
     }
 }

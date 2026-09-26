@@ -9,7 +9,7 @@ pub mod taxonomy_skills_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_setup_aggregate::SetupManagementAggregate;
+pub use contract_setup_aggregate::ISetupAggregate;
 pub use contract_setup_installer_protocol::ISetupInstallerProtocol;
 pub use contract_setup_management_protocol::ISetupManagementProtocol;
 

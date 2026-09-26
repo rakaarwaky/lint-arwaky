@@ -1,7 +1,7 @@
 use shared::common::taxonomy_action_vo::JobId;
 use shared::common::taxonomy_path_vo::FilePath;
 
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
 use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 
 use shared::maintenance::taxonomy_doctor_vo::{
@@ -21,7 +21,7 @@ pub struct MaintenanceCommandsOrchestrator {
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
-impl MaintenanceCommandsAggregate for MaintenanceCommandsOrchestrator {
+impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
     fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
         self.deps.checker.stats(project_path)
     }

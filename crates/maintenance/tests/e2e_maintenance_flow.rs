@@ -1,8 +1,8 @@
 // E2E tests — full maintenance flow: diagnose → health check → stats → doctor.
 use shared::common::FilePath;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 
-fn make_orch() -> std::sync::Arc<dyn MaintenanceCommandsAggregate> {
+fn make_orch() -> std::sync::Arc<dyn IMaintenanceAggregate> {
     let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer::new(fs)
         .orchestrator()

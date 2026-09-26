@@ -1,6 +1,6 @@
 // Integration tests — full DI wiring via MaintenanceContainer.
 use shared::common::FilePath;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 use std::sync::Arc;
 
 fn make_container() -> maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer {
@@ -17,7 +17,7 @@ fn container_creates_successfully() {
 fn container_returns_orchestrator() {
     let container = make_container();
     let orch = container.orchestrator();
-    let _: Arc<dyn MaintenanceCommandsAggregate> = orch;
+    let _: Arc<dyn IMaintenanceAggregate> = orch;
 }
 
 #[test]

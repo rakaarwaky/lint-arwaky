@@ -4,10 +4,10 @@ use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::contract_hook_protocol::IHookProtocol;
 use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use shared::git_hooks::contract_orchestrator_aggregate::IHookManagerAggregate;
 
 #[test]
 fn diff_checker_implements_diff_protocol() {
@@ -29,13 +29,13 @@ fn hook_manager_implements_hook_protocol() {
 
 #[test]
 fn orchestrator_implements_git_hooks_aggregate() {
-    fn assert_trait<T: GitHooksAggregate>() {}
+    fn assert_trait<T: IGitHooksAggregate>() {}
     assert_trait::<GitHooksOrchestrator>();
 }
 
 #[test]
 fn orchestrator_implements_hook_management_aggregate() {
-    fn assert_trait<T: HookManagementOrchestratorAggregate>() {}
+    fn assert_trait<T: IHookManagerAggregate>() {}
     assert_trait::<GitHooksOrchestrator>();
 }
 
@@ -50,7 +50,7 @@ fn all_capabilities_are_send_sync() {
 
 #[test]
 fn orchestrator_can_be_boxed_as_trait_object() {
-    fn assert_object_safe<T: GitHooksAggregate>() {}
+    fn assert_object_safe<T: IGitHooksAggregate>() {}
     assert_object_safe::<GitHooksOrchestrator>();
 }
 
@@ -64,7 +64,7 @@ fn hook_manager_can_be_arc_trait_object() {
 
 #[test]
 fn aggregate_has_initialize_config_method() {
-    fn assert_method<T: GitHooksAggregate>() {
+    fn assert_method<T: IGitHooksAggregate>() {
         // Verify the method exists and has the right signature by calling it
         let _ = |t: &T, path: &str| t.initialize_config(path);
     }
@@ -73,7 +73,7 @@ fn aggregate_has_initialize_config_method() {
 
 #[test]
 fn aggregate_has_update_ignore_rule_method() {
-    fn assert_method<T: GitHooksAggregate>() {
+    fn assert_method<T: IGitHooksAggregate>() {
         use shared::git_hooks::HookIgnoreUpdateVO;
         let _ = |t: &T, req: HookIgnoreUpdateVO| t.update_ignore_rule(req);
     }
@@ -82,7 +82,7 @@ fn aggregate_has_update_ignore_rule_method() {
 
 #[test]
 fn aggregate_has_get_diff_data_method() {
-    fn assert_method<T: GitHooksAggregate>() {
+    fn assert_method<T: IGitHooksAggregate>() {
         let _ = |t: &T, p1: &str, p2: &str| t.get_diff_data(p1, p2);
     }
     assert_method::<GitHooksOrchestrator>();

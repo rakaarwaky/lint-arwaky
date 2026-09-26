@@ -3,7 +3,7 @@
 // shared is the foundation crate: it declares contracts but implements none.
 
 use shared_lint_arwaky::auto_fix::{
-    IFileAdapterProtocol, IFixProtocol, LintFixOrchestratorAggregate,
+    IFileAdapterProtocol, IFixProtocol, IFixAggregate,
 };
 use shared_lint_arwaky::config_system::{
     IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
@@ -21,7 +21,7 @@ use shared_lint_arwaky::filesystem::{
     IToolResolutionProtocol, IWorkspaceProtocol,
 };
 use shared_lint_arwaky::git_hooks::{
-    GitHooksAggregate, HookManagementOrchestratorAggregate, IDiffProtocol, IHookManagerProtocol,
+    IGitHooksAggregate, IHookManagerAggregate, IDiffProtocol, IHookManagerProtocol,
     IHookProtocol,
 };
 use shared_lint_arwaky::import_rules::{
@@ -29,7 +29,7 @@ use shared_lint_arwaky::import_rules::{
     IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol,
 };
 use shared_lint_arwaky::maintenance::{
-    IMaintenanceCheckerProtocol, IToolExecutorProtocol, MaintenanceCommandsAggregate,
+    IMaintenanceCheckerProtocol, IToolExecutorProtocol, IMaintenanceAggregate,
 };
 use shared_lint_arwaky::naming_rules::{INamingCheckerProtocol, INamingRunnerAggregate};
 use shared_lint_arwaky::orphan_rules::{
@@ -38,7 +38,7 @@ use shared_lint_arwaky::orphan_rules::{
     IUtilityOrphanProtocol,
 };
 use shared_lint_arwaky::project_setup::{
-    ISetupInstallerProtocol, ISetupManagementProtocol, SetupManagementAggregate,
+    ISetupInstallerProtocol, ISetupManagementProtocol, ISetupAggregate,
 };
 use shared_lint_arwaky::quality_rules::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
@@ -197,14 +197,14 @@ fn role_rule_contracts_are_send_sync() {
 fn auto_fix_contracts_are_traits() {
     assert_trait::<dyn IFileAdapterProtocol>();
     assert_trait::<dyn IFixProtocol>();
-    assert_trait::<dyn LintFixOrchestratorAggregate>();
+    assert_trait::<dyn IFixAggregate>();
 }
 
 #[test]
 fn auto_fix_contracts_are_send_sync() {
     assert_send_sync::<dyn IFileAdapterProtocol>();
     assert_send_sync::<dyn IFixProtocol>();
-    assert_send_sync::<dyn LintFixOrchestratorAggregate>();
+    assert_send_sync::<dyn IFixAggregate>();
 }
 
 #[test]
@@ -226,8 +226,8 @@ fn git_hooks_contracts_are_traits() {
     assert_trait::<dyn IDiffProtocol>();
     assert_trait::<dyn IHookProtocol>();
     assert_trait::<dyn IHookManagerProtocol>();
-    assert_trait::<dyn GitHooksAggregate>();
-    assert_trait::<dyn HookManagementOrchestratorAggregate>();
+    assert_trait::<dyn IGitHooksAggregate>();
+    assert_trait::<dyn IHookManagerAggregate>();
 }
 
 #[test]
@@ -235,22 +235,22 @@ fn git_hooks_contracts_are_send_sync() {
     assert_send_sync::<dyn IDiffProtocol>();
     assert_send_sync::<dyn IHookProtocol>();
     assert_send_sync::<dyn IHookManagerProtocol>();
-    assert_send_sync::<dyn GitHooksAggregate>();
-    assert_send_sync::<dyn HookManagementOrchestratorAggregate>();
+    assert_send_sync::<dyn IGitHooksAggregate>();
+    assert_send_sync::<dyn IHookManagerAggregate>();
 }
 
 #[test]
 fn maintenance_contracts_are_traits() {
     assert_trait::<dyn IMaintenanceCheckerProtocol>();
     assert_trait::<dyn IToolExecutorProtocol>();
-    assert_trait::<dyn MaintenanceCommandsAggregate>();
+    assert_trait::<dyn IMaintenanceAggregate>();
 }
 
 #[test]
 fn maintenance_contracts_are_send_sync() {
     assert_send_sync::<dyn IMaintenanceCheckerProtocol>();
     assert_send_sync::<dyn IToolExecutorProtocol>();
-    assert_send_sync::<dyn MaintenanceCommandsAggregate>();
+    assert_send_sync::<dyn IMaintenanceAggregate>();
 }
 
 #[test]
@@ -288,14 +288,14 @@ fn report_formatter_contracts_are_send_sync() {
 fn project_setup_contracts_are_traits() {
     assert_trait::<dyn ISetupManagementProtocol>();
     assert_trait::<dyn ISetupInstallerProtocol>();
-    assert_trait::<dyn SetupManagementAggregate>();
+    assert_trait::<dyn ISetupAggregate>();
 }
 
 #[test]
 fn project_setup_contracts_are_send_sync() {
     assert_send_sync::<dyn ISetupManagementProtocol>();
     assert_send_sync::<dyn ISetupInstallerProtocol>();
-    assert_send_sync::<dyn SetupManagementAggregate>();
+    assert_send_sync::<dyn ISetupAggregate>();
 }
 
 // ── Core VOs are Send + Sync (used across async boundaries) ─

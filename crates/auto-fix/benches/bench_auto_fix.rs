@@ -1,12 +1,12 @@
 // Benchmark tests for auto-fix — dry-run pipeline throughput.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::FilePath;
 use std::sync::Arc;
 use tempfile::TempDir;
 
-fn make_dry_run_orch() -> Arc<dyn LintFixOrchestratorAggregate> {
+fn make_dry_run_orch() -> Arc<dyn IFixAggregate> {
     let filesystem =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();

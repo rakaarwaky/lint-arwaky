@@ -11,10 +11,10 @@ pub mod taxonomy_hook_error;
 
 // ── Contract traits ──
 pub use contract_diff_protocol::IDiffProtocol;
-pub use contract_git_hooks_aggregate::GitHooksAggregate;
+pub use contract_git_hooks_aggregate::IGitHooksAggregate;
 pub use contract_hook_protocol::IHookProtocol;
 pub use contract_manager_protocol::IHookManagerProtocol;
-pub use contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+pub use contract_orchestrator_aggregate::IHookManagerAggregate;
 
 // ── Taxonomy types ──
 pub use taxonomy_git_diff_data_vo::GitDiffDataVO;

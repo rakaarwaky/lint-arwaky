@@ -13,7 +13,7 @@ use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
 pub type SetupMgmtProtocol = Box<dyn ISetupManagementProtocol>;
 
-pub trait SetupManagementAggregate: Send + Sync {
+pub trait ISetupAggregate: Send + Sync {
     fn check_http(&self, url: &TransportUrlVO) -> SuccessStatus;
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO;
     fn generate_mcp_config(&self) -> McpConfigVO;

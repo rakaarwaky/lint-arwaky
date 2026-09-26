@@ -1,19 +1,19 @@
 // PURPOSE: MaintenanceCommandsSurface — maintenance business logic, no formatting.
-// Delegates all operations through MaintenanceCommandsAggregate.
+// Delegates all operations through IMaintenanceAggregate.
 // No direct std::process::Command or filesystem I/O — aggregate handles subprocess execution.
 use shared::common::FilePath;
 use shared::maintenance::{
-    DependencyReport, HealthCheckResult, MaintenanceCommandsAggregate, SecurityScanReport,
+    DependencyReport, HealthCheckResult, IMaintenanceAggregate, SecurityScanReport,
     ToolchainDiagnostics,
 };
 use std::sync::Arc;
 
-pub fn collect_doctor(maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> ToolchainDiagnostics {
+pub fn collect_doctor(maintenance: Arc<dyn IMaintenanceAggregate>) -> ToolchainDiagnostics {
     maintenance.diagnose_toolchain()
 }
 
 pub fn collect_security(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+    maintenance: Arc<dyn IMaintenanceAggregate>,
     path: Option<FilePath>,
 ) -> Result<SecurityScanReport, String> {
     let target = match &path {
@@ -25,7 +25,7 @@ pub fn collect_security(
 }
 
 pub fn collect_dependencies(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+    maintenance: Arc<dyn IMaintenanceAggregate>,
     path: Option<FilePath>,
 ) -> Result<DependencyReport, String> {
     let target = match &path {
@@ -39,7 +39,7 @@ pub fn collect_dependencies(
 }
 
 pub fn collect_health_check(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+    maintenance: Arc<dyn IMaintenanceAggregate>,
 ) -> HealthCheckResult {
     maintenance.health_check()
 }

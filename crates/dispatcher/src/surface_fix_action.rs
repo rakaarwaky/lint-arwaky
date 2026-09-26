@@ -2,7 +2,7 @@
 // Runs lint → apply auto-fixes → re-lint to measure improvement.
 // Supports dry-run mode (preview only) via the fix_orchestrator_factory closure.
 // Adapted: sync (no async_trait, no tokio).
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::cli_commands::LintResult;
 use shared::common::FilePath;
 use shared::quality_rules::ICodeAnalysisAggregate;
@@ -28,7 +28,7 @@ pub fn collect_fix(
     dry_run: bool,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator_factory: Arc<
-        dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync,
+        dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync,
     >,
 ) -> Result<FixReport, String> {
     let project_path = match path {
@@ -76,7 +76,7 @@ pub fn collect_fix_direct(
     path: Option<FilePath>,
     dry_run: bool,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>,
+    fix_orchestrator: Arc<dyn IFixAggregate>,
 ) -> Result<FixReport, String> {
     let project_path = match path {
         Some(p) => p,

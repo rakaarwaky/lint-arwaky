@@ -242,7 +242,7 @@ fn main() {
     // BF-1: dry_run is now per-request via execute(path, dry_run), not baked into orchestrator.
     // Factory ignores the bool parameter for backwards compatibility; callers pass dry_run to execute().
     let fix_orchestrator_factory: Arc<
-        dyn Fn(bool) -> Arc<dyn shared::auto_fix::LintFixOrchestratorAggregate> + Send + Sync,
+        dyn Fn(bool) -> Arc<dyn shared::auto_fix::IFixAggregate> + Send + Sync,
     > = {
         let container = auto_fix_container;
         let fs_for_factory = filesystem.clone();

@@ -47,7 +47,7 @@ fn git_container_aggregate_trait_object() {
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
     let container = GitContainer::new(fp, filesystem);
-    let _: Arc<dyn shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate> =
+    let _: Arc<dyn shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate> =
         container.aggregate();
     let elapsed = start.elapsed();
     assert!(

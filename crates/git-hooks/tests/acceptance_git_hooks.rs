@@ -11,14 +11,14 @@ use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared::common::FilePath;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO, IHookManagerProtocol, IHookProtocol};
 use std::sync::Arc;
 use tempfile::TempDir;
 
 // ─── Helpers ──────────────────────────────────────────────
 
-fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
+fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let tmp = TempDir::new().unwrap();
     let filesystem =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();

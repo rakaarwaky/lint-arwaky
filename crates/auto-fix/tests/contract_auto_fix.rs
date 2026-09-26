@@ -4,7 +4,7 @@ use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use shared::auto_fix::IFileAdapterProtocol;
 use shared::auto_fix::IFixProtocol;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 
 #[test]
 fn file_adapter_implements_file_adapter_protocol() {
@@ -20,7 +20,7 @@ fn lint_fix_processor_implements_fix_protocol() {
 
 #[test]
 fn fix_orchestrator_implements_fix_orchestrator_aggregate() {
-    fn assert_trait<T: LintFixOrchestratorAggregate>() {}
+    fn assert_trait<T: IFixAggregate>() {}
     assert_trait::<FixOrchestrator>();
 }
 
@@ -34,7 +34,7 @@ fn all_capabilities_are_send_sync() {
 
 #[test]
 fn orchestrator_can_be_boxed_as_trait_object() {
-    fn assert_object_safe<T: LintFixOrchestratorAggregate>() {}
+    fn assert_object_safe<T: IFixAggregate>() {}
     assert_object_safe::<FixOrchestrator>();
 }
 

@@ -1,14 +1,14 @@
 // PURPOSE: SetupContainer — wiring for project-setup feature (root layer, wiring only)
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::project_setup::{ISetupManagementProtocol, SetupManagementAggregate};
+use shared::project_setup::{ISetupManagementProtocol, ISetupAggregate};
 
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct SetupContainer {
-    aggregate: Arc<dyn SetupManagementAggregate>,
+    aggregate: Arc<dyn ISetupAggregate>,
     protocol: Arc<dyn ISetupManagementProtocol>,
 }
 
@@ -32,7 +32,7 @@ impl SetupContainer {
         }
     }
 
-    pub fn aggregate(&self) -> Arc<dyn SetupManagementAggregate> {
+    pub fn aggregate(&self) -> Arc<dyn ISetupAggregate> {
         self.aggregate.clone()
     }
 

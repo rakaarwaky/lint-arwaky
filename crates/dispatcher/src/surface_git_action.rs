@@ -7,7 +7,7 @@
 // abstract subprocess calls behind a contract trait.
 use shared::cli_commands::LintResult;
 use shared::common::{FilePath, GitBranchName};
-use shared::git_hooks::GitHooksAggregate;
+use shared::git_hooks::IGitHooksAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use std::process::Command;
 use std::sync::Arc;
@@ -64,9 +64,9 @@ pub struct HookReport {
     pub message: String,
 }
 
-/// Install pre-commit hook via GitHooksAggregate.
+/// Install pre-commit hook via IGitHooksAggregate.
 pub fn collect_install_hook(
-    git_hooks: Arc<dyn GitHooksAggregate>,
+    git_hooks: Arc<dyn IGitHooksAggregate>,
     executable_path: &FilePath,
 ) -> Result<HookReport, String> {
     match git_hooks.install_hook(executable_path) {
@@ -87,8 +87,8 @@ pub fn collect_install_hook(
     }
 }
 
-/// Uninstall pre-commit hook via GitHooksAggregate.
-pub fn collect_uninstall_hook(git_hooks: Arc<dyn GitHooksAggregate>) -> Result<HookReport, String> {
+/// Uninstall pre-commit hook via IGitHooksAggregate.
+pub fn collect_uninstall_hook(git_hooks: Arc<dyn IGitHooksAggregate>) -> Result<HookReport, String> {
     match git_hooks.uninstall_hook() {
         Ok(status) => Ok(HookReport {
             action: "uninstall".to_string(),

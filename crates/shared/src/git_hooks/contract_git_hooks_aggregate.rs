@@ -1,4 +1,4 @@
-// PURPOSE: GitHooksAggregate — unified aggregate trait for git hooks orchestration
+// PURPOSE: IGitHooksAggregate — unified aggregate trait for git hooks orchestration
 use crate::common::taxonomy_job_vo::SuccessStatus;
 use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
@@ -8,7 +8,7 @@ use crate::git_hooks::contract_hook_protocol::IHookProtocol;
 use crate::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
 
-pub trait GitHooksAggregate: Send + Sync {
+pub trait IGitHooksAggregate: Send + Sync {
     /// Access to diff protocol (read operations)
     fn diff_protocol(&self) -> &dyn IDiffProtocol;
 

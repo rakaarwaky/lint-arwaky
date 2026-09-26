@@ -16,17 +16,17 @@ use dispatcher::surface_plugin_action::collect_adapters_detailed;
 use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
 use dispatcher::surface_version_action::collect_version;
 
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::GitHooksAggregate;
+use shared::git_hooks::IGitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
-use shared::project_setup::SetupManagementAggregate;
+use shared::project_setup::ISetupAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::tui::{ActionFlags, LintExecutionResult};
@@ -37,10 +37,10 @@ use std::sync::Arc;
 
 pub struct SurfaceLintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-    fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
-    setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
-    maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
-    hook_port: Option<Arc<dyn GitHooksAggregate>>,
+    fix_orchestrator: Option<Arc<dyn IFixAggregate>>,
+    setup_aggregate: Option<Arc<dyn ISetupAggregate>>,
+    maintenance: Option<Arc<dyn IMaintenanceAggregate>>,
+    hook_port: Option<Arc<dyn IGitHooksAggregate>>,
     config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     external_lint: Option<Arc<dyn IExternalLintAggregate>>,
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
@@ -475,22 +475,22 @@ impl SurfaceLintExecutor {
         }
     }
 
-    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>) -> Self {
+    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn IFixAggregate>) -> Self {
         self.fix_orchestrator = Some(fix_orchestrator);
         self
     }
 
-    pub fn with_setup(mut self, setup_aggregate: Arc<dyn SetupManagementAggregate>) -> Self {
+    pub fn with_setup(mut self, setup_aggregate: Arc<dyn ISetupAggregate>) -> Self {
         self.setup_aggregate = Some(setup_aggregate);
         self
     }
 
-    pub fn with_maintenance(mut self, maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> Self {
+    pub fn with_maintenance(mut self, maintenance: Arc<dyn IMaintenanceAggregate>) -> Self {
         self.maintenance = Some(maintenance);
         self
     }
 
-    pub fn with_hook_port(mut self, hook_port: Arc<dyn GitHooksAggregate>) -> Self {
+    pub fn with_hook_port(mut self, hook_port: Arc<dyn IGitHooksAggregate>) -> Self {
         self.hook_port = Some(hook_port);
         self
     }

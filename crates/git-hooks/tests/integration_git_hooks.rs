@@ -1,12 +1,12 @@
 // Integration tests — full DI wiring via GitContainer.
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared::common::FilePath;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
 use std::sync::Arc;
 use tempfile::TempDir;
 
-fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
+fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let tmp = TempDir::new().unwrap();
     let filesystem =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
@@ -27,7 +27,7 @@ fn container_creates_with_filesystem() {
 #[test]
 fn container_aggregate_is_trait_object() {
     let (_, aggregate) = make_container();
-    let _: Arc<dyn GitHooksAggregate> = aggregate;
+    let _: Arc<dyn IGitHooksAggregate> = aggregate;
 }
 
 #[test]

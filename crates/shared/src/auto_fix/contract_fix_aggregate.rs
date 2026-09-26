@@ -1,4 +1,4 @@
-// PURPOSE: LintFixOrchestratorAggregate — aggregate trait for auto-fix orchestration
+// PURPOSE: IFixAggregate — aggregate trait for auto-fix orchestration
 //
 // FRD API Contract alignment:
 //   - `execute(path, dry_run)` — per-request dry_run (FR-004 assumption §9)
@@ -15,7 +15,7 @@ use std::sync::Arc;
 /// Implementations coordinate protocol dependencies (file adapter, renamer,
 /// etc.) and produce a [`FixResult`] summarising what was changed or why
 /// the fix could not be applied.
-pub trait LintFixOrchestratorAggregate: Send + Sync {
+pub trait IFixAggregate: Send + Sync {
     /// Run linter + apply fixes. `dry_run` is selectable per request.
     fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult;
 

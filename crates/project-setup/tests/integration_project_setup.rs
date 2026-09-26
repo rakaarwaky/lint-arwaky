@@ -1,6 +1,6 @@
 // Integration tests — full DI wiring via SetupContainer.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::{ISetupManagementProtocol, SetupManagementAggregate};
+use shared::project_setup::{ISetupManagementProtocol, ISetupAggregate};
 use std::sync::Arc;
 
 fn make_container() -> SetupContainer {
@@ -16,7 +16,7 @@ fn container_creates_successfully() {
 #[test]
 fn container_returns_aggregate() {
     let container = make_container();
-    let _: Arc<dyn SetupManagementAggregate> = container.aggregate();
+    let _: Arc<dyn ISetupAggregate> = container.aggregate();
 }
 
 #[test]

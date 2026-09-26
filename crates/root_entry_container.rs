@@ -3,16 +3,16 @@
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::maintenance::contract_maintenance_aggregate::MaintenanceCommandsAggregate;
+use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::orphan_rules::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_setup_aggregate::SetupManagementAggregate;
+use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 
@@ -26,11 +26,11 @@ pub struct CommonDeps {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
-    pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
-    pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
-    pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
+    pub maintenance_orchestrator: Arc<dyn IMaintenanceAggregate>,
+    pub setup_orchestrator: Arc<dyn ISetupAggregate>,
+    pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
     pub fix_orchestrator_factory:
-        Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
+        Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
     pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
 }
@@ -99,7 +99,7 @@ impl CommonDeps {
             auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
         // BF-1: dry_run is now per-request via execute(path, dry_run), not baked into orchestrator.
         let fix_orchestrator_factory: Arc<
-            dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync,
+            dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync,
         > = {
             let container = auto_fix_container;
             let fs_for_factory = filesystem.clone();

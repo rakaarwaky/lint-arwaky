@@ -8,7 +8,7 @@ use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
 use shared::project_setup::contract_setup_management_protocol::PreFlightResult;
 use shared::project_setup::{
     CreateConfigDirResult, EMBEDDED_SKILLS, EmbeddedSkillVO, ProjectLanguageVO, ProjectLanguagesVO,
-    SetupError, SetupManagementAggregate, WriteConfigResult,
+    SetupError, ISetupAggregate, WriteConfigResult,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -142,7 +142,7 @@ struct MockSetupOrchestrator {
     detected: ProjectLanguagesVO,
 }
 
-impl SetupManagementAggregate for MockSetupOrchestrator {
+impl ISetupAggregate for MockSetupOrchestrator {
     fn check_http(&self, _url: &TransportUrlVO) -> SuccessStatus {
         SuccessStatus::new(true)
     }

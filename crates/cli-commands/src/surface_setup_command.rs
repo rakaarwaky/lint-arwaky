@@ -2,11 +2,11 @@
 // Calls dispatcher for setup business logic, only adds CLI output.
 use shared::common::ExitCode;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::project_setup::SetupManagementAggregate;
+use shared::project_setup::ISetupAggregate;
 use std::sync::Arc;
 
 pub fn handle_init(
-    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    setup_orchestrator: Arc<dyn ISetupAggregate>,
     filesystem: Arc<dyn IFileSystemIOProtocol>,
 ) -> ExitCode {
     let items = dispatcher::surface_setup_action::collect_init(setup_orchestrator, filesystem);
@@ -26,7 +26,7 @@ pub fn handle_init(
     }
 }
 
-pub fn handle_install(setup: Arc<dyn SetupManagementAggregate>, sudo: bool) -> ExitCode {
+pub fn handle_install(setup: Arc<dyn ISetupAggregate>, sudo: bool) -> ExitCode {
     let report = dispatcher::surface_setup_action::collect_install(setup, sudo);
 
     println!("Lint Arwaky — Install Adapter Dependencies");

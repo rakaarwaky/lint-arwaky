@@ -5,7 +5,7 @@
 // only unused/forbidden imports are deleted, and bypass comments are removed.
 //
 // This orchestrator bridges the IFixProtocol (capabilities layer) to the
-// LintFixOrchestratorAggregate contract (surface layer). It's intentionally
+// IFixAggregate contract (surface layer). It's intentionally
 // thin — all fix logic lives in LintFixProcessor.
 //
 // Safety policy:
@@ -19,7 +19,7 @@
 // - BF-5: Removed duplicate `run_fix` — consolidated with aggregate `execute`
 // - TR-2: Aggregate trait includes `manual_report` for FR-005
 
-use shared::auto_fix::contract_fix_aggregate::LintFixOrchestratorAggregate;
+use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
 use shared::auto_fix::{FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol};
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_message_vo::LintMessage;
@@ -38,7 +38,7 @@ pub struct FixOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
-impl LintFixOrchestratorAggregate for FixOrchestrator {
+impl IFixAggregate for FixOrchestrator {
     /// Per-request dry_run via parameter (BF-1, FR-004 assumption §9).
     fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult {
         self.fix_protocol.execute(path, dry_run)

@@ -1,6 +1,6 @@
 // Smoke tests — verify maintenance container and core operations complete within 5s.
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 
 #[test]
 fn maintenance_container_creates() {
@@ -38,7 +38,7 @@ fn maintenance_orchestrator_is_trait_object() {
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
     let container = MaintenanceContainer::new(filesystem);
     let orch = container.orchestrator();
-    let _: std::sync::Arc<dyn MaintenanceCommandsAggregate> = orch;
+    let _: std::sync::Arc<dyn IMaintenanceAggregate> = orch;
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

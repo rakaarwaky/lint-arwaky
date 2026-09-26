@@ -1,7 +1,7 @@
 // Integration tests — full DI wiring via AutoFixContainer with real quality-rules.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use shared::auto_fix::IFileAdapterProtocol;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::ContentString;
 use shared::common::FilePath;
 use std::sync::Arc;
@@ -21,7 +21,7 @@ fn container_orchestrator_with_filesystem() {
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
-    let _: Arc<dyn LintFixOrchestratorAggregate> = orch;
+    let _: Arc<dyn IFixAggregate> = orch;
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn container_orchestrator_with_custom_file_adapter() {
     let file_adapter: Arc<dyn IFileAdapterProtocol> =
         Arc::new(auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter::new(filesystem));
     let orch = container.orchestrator(file_adapter);
-    let _: Arc<dyn LintFixOrchestratorAggregate> = orch;
+    let _: Arc<dyn IFixAggregate> = orch;
 }
 
 #[test]

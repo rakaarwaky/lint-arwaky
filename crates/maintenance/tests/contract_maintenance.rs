@@ -3,12 +3,12 @@ use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommands
 use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
 use maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
 use shared::maintenance::{
-    IMaintenanceCheckerProtocol, IToolExecutorProtocol, MaintenanceCommandsAggregate,
+    IMaintenanceCheckerProtocol, IToolExecutorProtocol, IMaintenanceAggregate,
 };
 
 #[test]
 fn orchestrator_implements_commands_aggregate() {
-    fn assert_trait<T: MaintenanceCommandsAggregate>() {}
+    fn assert_trait<T: IMaintenanceAggregate>() {}
     assert_trait::<MaintenanceCommandsOrchestrator>();
 }
 

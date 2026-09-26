@@ -9,7 +9,7 @@ use crate::common::taxonomy_source_vo::ContentString;
 /// depend on std::fs directly.
 ///
 /// Ownership: `auto_fix` crate owns this protocol. Consumers access it via
-/// `LintFixOrchestratorAggregate::file_adapter()` — no direct DI needed.
+/// `IFixAggregate::file_adapter()` — no direct DI needed.
 pub trait IFileAdapterProtocol: Send + Sync {
     fn read_file(&self, path: &FilePath) -> Option<ContentString>;
     fn write_file(&self, path: &FilePath, content: &ContentString) -> bool;

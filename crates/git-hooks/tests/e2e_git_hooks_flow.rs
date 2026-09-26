@@ -5,15 +5,15 @@ use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::FilePath;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared::git_hooks::contract_orchestrator_aggregate::IHookManagerAggregate;
 use shared::git_hooks::{
     GitDiffStatus, HookIgnoreUpdateVO, IDiffProtocol, IHookManagerProtocol, IHookProtocol,
 };
 use std::sync::Arc;
 use tempfile::TempDir;
 
-fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
+fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let tmp = TempDir::new().unwrap();
     let filesystem =
         filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
@@ -23,7 +23,7 @@ fn make_container() -> (TempDir, Arc<dyn GitHooksAggregate>) {
     let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(filesystem.clone()));
     let hook_protocol: Arc<dyn IHookProtocol> =
         Arc::new(HookManager::new(hook_adapter.clone(), filesystem.clone()));
-    let orch: Arc<dyn GitHooksAggregate> = Arc::new(GitHooksOrchestrator::new(
+    let orch: Arc<dyn IGitHooksAggregate> = Arc::new(GitHooksOrchestrator::new(
         diff_protocol,
         hook_protocol,
         hook_adapter,
@@ -287,7 +287,7 @@ fn e2e_orchestrator_delegates_to_hook_protocol() {
 fn e2e_orchestrator_exposes_hook_manager_via_aggregate() {
     let (_, orch) = make_orchestrator();
 
-    // HookManagementOrchestratorAggregate is object-safe and accessible
+    // IHookManagerAggregate is object-safe and accessible
     let manager: &dyn IHookManagerProtocol = orch.get_hook_manager();
     let identity = orch.get_hook_manager_identity();
     assert_eq!(identity.value(), "git_hook_manager");

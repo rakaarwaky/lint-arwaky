@@ -1,6 +1,6 @@
 // Smoke tests — verify container creation and orchestrator creation complete within 5s.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 
 #[test]
 fn auto_fix_container_creates() {
@@ -39,7 +39,7 @@ fn auto_fix_orchestrator_is_trait_object() {
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
-    let _: std::sync::Arc<dyn LintFixOrchestratorAggregate> = orch;
+    let _: std::sync::Arc<dyn IFixAggregate> = orch;
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

@@ -2,13 +2,13 @@
 // Calls dispatcher for maintenance business logic, only adds CLI output.
 use shared::common::ExitCode;
 use shared::common::FilePath;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 use std::sync::Arc;
 use tracing::error;
 
 use crate::utility_output_text_formatter::status_icon;
 
-pub fn handle_doctor(maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> ExitCode {
+pub fn handle_doctor(maintenance: Arc<dyn IMaintenanceAggregate>) -> ExitCode {
     let diag = dispatcher::surface_maintenance_action::collect_doctor(maintenance);
 
     println!("Environment Diagnostics");
@@ -65,7 +65,7 @@ pub fn handle_doctor(maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> Exit
 }
 
 pub fn handle_security(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+    maintenance: Arc<dyn IMaintenanceAggregate>,
     path: Option<FilePath>,
 ) -> ExitCode {
     let target = match &path {
@@ -104,7 +104,7 @@ pub fn handle_security(
 }
 
 pub fn handle_dependencies(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+    maintenance: Arc<dyn IMaintenanceAggregate>,
     path: Option<FilePath>,
 ) -> ExitCode {
     let target = match &path {
