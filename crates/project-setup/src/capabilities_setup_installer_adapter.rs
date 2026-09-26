@@ -9,8 +9,8 @@
 // elevated permissions.
 
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
-use shared::project_setup::contract_setup_protocol::InstallPackagesResult;
+use shared::project_setup::contract_setup_installer_protocol::ISetupInstallerProtocol;
+use shared::project_setup::contract_setup_installer_protocol::InstallPackagesResult;
 use shared::project_setup::taxonomy_setup_contract_vo::SetupError;
 
 // ─── Block 1: Struct Definition ───────────────────────────

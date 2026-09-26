@@ -14,13 +14,13 @@ pub mod taxonomy_violation_role_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_agent_role_protocol::IAgentRoleChecker;
-pub use contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-pub use contract_role_contract_protocol::IContractRoleChecker;
+pub use contract_agent_role_protocol::IAgentRoleProtocol;
+pub use contract_capabilities_role_protocol::ICapabilitiesRoleProtocol;
+pub use contract_role_contract_protocol::IContractRoleProtocol;
 pub use contract_role_runner_aggregate::IRoleRunnerAggregate;
-pub use contract_surface_role_protocol::ISurfaceRoleChecker;
-pub use contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-pub use contract_utility_role_protocol::IUtilityRoleChecker;
+pub use contract_surface_role_protocol::ISurfaceRoleProtocol;
+pub use contract_taxonomy_role_protocol::ITaxonomyRoleProtocol;
+pub use contract_utility_role_protocol::IUtilityRoleProtocol;
 
 // ── Taxonomy types ──
 pub use taxonomy_layer_names_constant::LAYER_AGENT;

@@ -5,7 +5,7 @@ use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::project_setup::contract_setup_protocol::PreFlightResult;
+use shared::project_setup::contract_setup_management_protocol::PreFlightResult;
 use shared::project_setup::{
     CreateConfigDirResult, EMBEDDED_SKILLS, EmbeddedSkillVO, ProjectLanguageVO, ProjectLanguagesVO,
     SetupError, SetupManagementAggregate, WriteConfigResult,

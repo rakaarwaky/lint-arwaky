@@ -42,8 +42,7 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::import_rules::IUnusedImportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingConventionChecker>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::ISuffixPrefixChecker>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IMandatoryClassProtocol>();
@@ -58,12 +57,12 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::orphan_rules::ISurfacesOrphanProtocol>();
     assert_trait::<dyn shared_lint_arwaky::orphan_rules::IOrphanParserProtocol>();
     // Role
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IContractRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IUtilityRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IAgentRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleChecker>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IContractRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IUtilityRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IAgentRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     // Infrastructure
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixProtocol>();

@@ -1,5 +1,4 @@
-use crate::common::taxonomy_common_vo::PatternList;
-// PURPOSE: ISetupProtocol — protocol trait for project setup step definitions
+// PURPOSE: ISetupManagementProtocol — protocol trait for project setup step definitions
 // AES402: All primitive `String` / `Result<(), String>` / `Result<PathBuf, String>`
 // return types in ISetupManagementProtocol are replaced with strongly-typed VOs.
 //   * `String` returns → `McpBinaryNameVO` / `ProjectLanguageVO`
@@ -50,14 +49,4 @@ pub trait ISetupManagementProtocol: Send + Sync {
     /// Create the global config directory and return its path.
     fn create_global_config_dir(&self) -> CreateConfigDirResult;
     fn file_exists(&self, path: &str) -> bool;
-}
-
-/// AES402: `Result<(), String>` is replaced with `Result<(), SetupError>`
-/// so callers can pattern-match on specific failure modes (Io vs
-/// InvalidState vs Other) instead of inspecting free-form error strings.
-pub type InstallPackagesResult = Result<(), SetupError>;
-
-pub trait ISetupInstallerProtocol: Send + Sync {
-    fn install_python_packages(&self, packages: &PatternList) -> InstallPackagesResult;
-    fn install_npm_packages(&self, packages: &PatternList, sudo: bool) -> InstallPackagesResult;
 }

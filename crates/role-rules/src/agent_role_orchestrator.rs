@@ -5,13 +5,13 @@
 
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
-use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleChecker;
-use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleProtocol;
+use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleProtocol;
+use shared::role_rules::contract_role_contract_protocol::IContractRoleProtocol;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
+use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleProtocol;
+use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleProtocol;
+use shared::role_rules::contract_utility_role_protocol::IUtilityRoleProtocol;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -20,12 +20,12 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 // ─── Block 1: Struct Definitions ──────────────────────────
 
 pub struct RoleCheckerDeps {
-    pub taxonomy: Arc<dyn ITaxonomyRoleChecker>,
-    pub contract: Arc<dyn IContractRoleChecker>,
-    pub capabilities: Arc<dyn ICapabilitiesRoleChecker>,
-    pub surface: Arc<dyn ISurfaceRoleChecker>,
-    pub agent: Arc<dyn IAgentRoleChecker>,
-    pub utility: Arc<dyn IUtilityRoleChecker>,
+    pub taxonomy: Arc<dyn ITaxonomyRoleProtocol>,
+    pub contract: Arc<dyn IContractRoleProtocol>,
+    pub capabilities: Arc<dyn ICapabilitiesRoleProtocol>,
+    pub surface: Arc<dyn ISurfaceRoleProtocol>,
+    pub agent: Arc<dyn IAgentRoleProtocol>,
+    pub utility: Arc<dyn IUtilityRoleProtocol>,
 }
 
 pub struct RoleOrchestrator {

@@ -9,13 +9,13 @@
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::contract_agent_role_protocol::IAgentRoleChecker;
+use shared::role_rules::contract_agent_role_protocol::IAgentRoleProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AgentRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-impl IAgentRoleChecker for AgentRoleChecker {
+impl IAgentRoleProtocol for AgentRoleChecker {
     fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>) {
         if layer != "agent" && !layer.starts_with("agent(") {
             return;

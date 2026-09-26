@@ -1,4 +1,4 @@
-// PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleChecker for AES401: taxonomy primitive usage + constant purity
+// PURPOSE: TaxonomyRoleChecker — ITaxonomyRoleProtocol for AES401: taxonomy primitive usage + constant purity
 //
 // ALGORITHM:
 //   Uses FileEntry from the filesystem crate. ParseMetadata (if available) provides
@@ -10,13 +10,13 @@
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleChecker;
+use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TaxonomyRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-impl ITaxonomyRoleChecker for TaxonomyRoleChecker {
+impl ITaxonomyRoleProtocol for TaxonomyRoleChecker {
     fn check_entity(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         if !Self::has_suffix(&file.path, "_entity") {
             return;

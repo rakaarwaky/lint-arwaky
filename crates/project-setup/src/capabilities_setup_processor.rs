@@ -15,7 +15,7 @@ use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::project_setup::ISetupManagementProtocol;
-use shared::project_setup::contract_setup_protocol::{PackageManagerStatus, PreFlightResult};
+use shared::project_setup::contract_setup_management_protocol::{PackageManagerStatus, PreFlightResult};
 use shared::project_setup::taxonomy_setup_contract_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,

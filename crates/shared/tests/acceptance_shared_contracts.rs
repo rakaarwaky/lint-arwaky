@@ -42,8 +42,7 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::IUnusedImportProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::INamingConventionChecker>();
-    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::ISuffixPrefixChecker>();
+    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::IMandatoryClassProtocol>();
@@ -58,12 +57,12 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::orphan_rules::ISurfacesOrphanProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::orphan_rules::IOrphanParserProtocol>();
     // Role
-    assert_send_sync::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleChecker>();
-    assert_send_sync::<dyn shared_lint_arwaky::role_rules::IContractRoleChecker>();
-    assert_send_sync::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleChecker>();
-    assert_send_sync::<dyn shared_lint_arwaky::role_rules::IUtilityRoleChecker>();
-    assert_send_sync::<dyn shared_lint_arwaky::role_rules::IAgentRoleChecker>();
-    assert_send_sync::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleChecker>();
+    assert_send_sync::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::role_rules::IContractRoleProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::role_rules::IUtilityRoleProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::role_rules::IAgentRoleProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     // Infrastructure
     assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFixProtocol>();
@@ -134,8 +133,7 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::IImportRunnerAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingConventionChecker>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::ISuffixPrefixChecker>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingRunnerAggregate>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
@@ -153,12 +151,12 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::orphan_rules::IOrphanParserProtocol>();
     assert_trait::<dyn shared_lint_arwaky::orphan_rules::IOrphanAggregate>();
     // Role
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IContractRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IUtilityRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IAgentRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleChecker>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IContractRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IUtilityRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IAgentRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::role_rules::IRoleRunnerAggregate>();
     // Infrastructure
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();

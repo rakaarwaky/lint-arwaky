@@ -31,9 +31,7 @@ use shared_lint_arwaky::import_rules::{
 use shared_lint_arwaky::maintenance::{
     IMaintenanceCheckerProtocol, IToolExecutorProtocol, MaintenanceCommandsAggregate,
 };
-use shared_lint_arwaky::naming_rules::{
-    INamingConventionChecker, INamingRunnerAggregate, ISuffixPrefixChecker,
-};
+use shared_lint_arwaky::naming_rules::{INamingCheckerProtocol, INamingRunnerAggregate};
 use shared_lint_arwaky::orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
     IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
@@ -48,8 +46,8 @@ use shared_lint_arwaky::quality_rules::{
 };
 use shared_lint_arwaky::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
 use shared_lint_arwaky::role_rules::{
-    IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
-    ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
+    IAgentRoleProtocol, ICapabilitiesRoleProtocol, IContractRoleProtocol, IRoleRunnerAggregate,
+    ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 
 fn assert_trait<T: ?Sized>() {}
@@ -118,15 +116,13 @@ fn import_rule_contracts_are_send_sync() {
 
 #[test]
 fn naming_rule_contracts_are_traits() {
-    assert_trait::<dyn INamingConventionChecker>();
-    assert_trait::<dyn ISuffixPrefixChecker>();
+    assert_trait::<dyn INamingCheckerProtocol>();
     assert_trait::<dyn INamingRunnerAggregate>();
 }
 
 #[test]
 fn naming_rule_contracts_are_send_sync() {
-    assert_send_sync::<dyn INamingConventionChecker>();
-    assert_send_sync::<dyn ISuffixPrefixChecker>();
+    assert_send_sync::<dyn INamingCheckerProtocol>();
     assert_send_sync::<dyn INamingRunnerAggregate>();
 }
 
@@ -176,23 +172,23 @@ fn orphan_rule_contracts_are_send_sync() {
 
 #[test]
 fn role_rule_contracts_are_traits() {
-    assert_trait::<dyn ITaxonomyRoleChecker>();
-    assert_trait::<dyn IContractRoleChecker>();
-    assert_trait::<dyn ICapabilitiesRoleChecker>();
-    assert_trait::<dyn IUtilityRoleChecker>();
-    assert_trait::<dyn IAgentRoleChecker>();
-    assert_trait::<dyn ISurfaceRoleChecker>();
+    assert_trait::<dyn ITaxonomyRoleProtocol>();
+    assert_trait::<dyn IContractRoleProtocol>();
+    assert_trait::<dyn ICapabilitiesRoleProtocol>();
+    assert_trait::<dyn IUtilityRoleProtocol>();
+    assert_trait::<dyn IAgentRoleProtocol>();
+    assert_trait::<dyn ISurfaceRoleProtocol>();
     assert_trait::<dyn IRoleRunnerAggregate>();
 }
 
 #[test]
 fn role_rule_contracts_are_send_sync() {
-    assert_send_sync::<dyn ITaxonomyRoleChecker>();
-    assert_send_sync::<dyn IContractRoleChecker>();
-    assert_send_sync::<dyn ICapabilitiesRoleChecker>();
-    assert_send_sync::<dyn IUtilityRoleChecker>();
-    assert_send_sync::<dyn IAgentRoleChecker>();
-    assert_send_sync::<dyn ISurfaceRoleChecker>();
+    assert_send_sync::<dyn ITaxonomyRoleProtocol>();
+    assert_send_sync::<dyn IContractRoleProtocol>();
+    assert_send_sync::<dyn ICapabilitiesRoleProtocol>();
+    assert_send_sync::<dyn IUtilityRoleProtocol>();
+    assert_send_sync::<dyn IAgentRoleProtocol>();
+    assert_send_sync::<dyn ISurfaceRoleProtocol>();
     assert_send_sync::<dyn IRoleRunnerAggregate>();
 }
 
