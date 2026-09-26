@@ -4,6 +4,7 @@ use quality_rules_lint_arwaky::agent_quality_orchestrator::has_critical;
 
 use shared::cli_commands::LintResult;
 use shared::common::Severity;
+use shared::quality_rules::CodeAnalysisRequest;
 
 #[test]
 fn container_creation_smoke() {
@@ -32,7 +33,9 @@ fn basic_check_on_simple_file() {
         parse_ok: true,
         parse_metadata: None,
     }];
-    let results = linter.run_analysis_with_entries(&entries);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .into_violations();
     // Just verify it doesn't panic and returns a Vec
     let _count = results.len();
 }
@@ -48,7 +51,9 @@ fn score_calculation_smoke() {
         Severity::CRITICAL,
         "test violation",
     )];
-    let score = linter.calc_score(&results);
+    let score = linter
+        .execute(CodeAnalysisRequest::calc_score(&results))
+        .into_score();
     assert!(score.value() >= 0.0 && score.value() <= 100.0);
 }
 

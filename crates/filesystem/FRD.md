@@ -250,6 +250,21 @@ fn lint(fs: &dyn IFilesystemAggregate) { ... }
 
 All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protocol trait.
 
+## Integration Points
+
+| System | Direction | Purpose | Failure mode |
+|--------|-----------|---------|--------------|
+| tree-sitter | in | Parse Rust / Python / TS source into ASTs | parse warnings; file skipped, not failed |
+| rayon (or std::thread pool) | in | Parallelise per-file parse and graph construction | work cancelled mid-scan; partial graph |
+| caller aggregate (e.g. naming / import / quality rules) | out | Consume `GraphAnalysisContext` produced here | caller sees stale or partial context if a walk was interrupted |
+
+## Assumptions & Constraints
+
+- One workspace root; paths passed in are relative to it and contain no `..` escapes.
+- tree-sitter grammars for the three supported languages are always available at parse time.
+- A parse warning (see `IParserProtocol::parse_warnings`) never aborts a scan; the file is treated as best-effort.
+- `IGraphProtocol` results are not persisted; they live for the duration of one scan and are discarded after the caller reports.
+
 ### IParserProtocol (6 operations)
 
 
@@ -381,7 +396,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 
 ## Test Scenarios
 
-### FR-001: AST Parsing & Import Extraction
+### SCEN-001: AST Parsing & Import Extraction
 
 
 | # | Scenario | Expected |
@@ -396,7 +411,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 | 8 | Barrel re-export through `mod.rs` | Resolved to original source |
 | 9 | 1,000 files parsed in parallel | Completes in < 1s |
 
-### FR-002: Dependency Graph Construction
+### SCEN-002: Dependency Graph Construction
 
 
 | # | Scenario | Expected |
@@ -409,7 +424,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 | 6 | File with no incoming edges | Identified as orphan |
 | 7 | Circular dependency chain | Cycle detected via SCC |
 
-### FR-003: File I/O & Directory Operations
+### SCEN-003: File I/O & Directory Operations
 
 
 | # | Scenario | Expected |
@@ -423,7 +438,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 | 7 | Write + read back | Content matches |
 | 8 | Scan with ignored patterns | Ignored files excluded |
 
-### FR-004: Tool Resolution
+### SCEN-004: Tool Resolution
 
 
 | # | Scenario | Expected |
@@ -433,7 +448,7 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 | 3 | Config file present | Detected = true |
 | 4 | Cargo.toml in ancestor | Found |
 
-### FR-005: Workspace Detection
+### SCEN-005: Workspace Detection
 
 
 | # | Scenario | Expected |
@@ -466,5 +481,6 @@ All operations are accessible via `&dyn IFilesystemAggregate`. Grouped by protoc
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)

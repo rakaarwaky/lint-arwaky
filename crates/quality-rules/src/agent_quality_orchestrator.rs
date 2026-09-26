@@ -20,12 +20,15 @@
 use rayon::prelude::*;
 use shared::cli_commands::{LintResult, LintResultList};
 
-use shared::quality_rules::contract_bypass_checker_protocol::IBypassCheckerProtocol;
-use shared::quality_rules::contract_class_protocol::IMandatoryClassProtocol;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::quality_rules::contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-use shared::quality_rules::contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-use shared::quality_rules::contract_line_protocol::ILineCheckerProtocol;
+use shared::quality_rules::contract_quality_protocol::IBypassCheckerProtocol;
+use shared::quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
+use shared::quality_rules::contract_quality_protocol::IDeadInheritanceProtocol;
+use shared::quality_rules::contract_quality_protocol::ILineCheckerProtocol;
+use shared::quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
+use shared::quality_rules::taxonomy_code_analysis_request_vo::{
+    CodeAnalysisRequest, CodeAnalysisResponse,
+};
 
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -61,42 +64,70 @@ pub struct CodeAnalysisOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
-    fn run_code_analysis(&self, project_root: &FilePath) -> LintResultList {
-        LintResultList::new(self.legacy_entry_disabled("run_code_analysis", project_root.value()))
+    fn execute(&self, request: CodeAnalysisRequest) -> CodeAnalysisResponse {
+        match request {
+            CodeAnalysisRequest::RunAnalysis { files } => CodeAnalysisResponse::Analysis {
+                violations: self.run_analysis_with_entries(&files),
+            },
+            CodeAnalysisRequest::CalcScore { results } => CodeAnalysisResponse::Score {
+                score: self.calc_score(&results),
+            },
+            CodeAnalysisRequest::FormatReport {
+                results,
+                project_root,
+            } => CodeAnalysisResponse::Report {
+                content: self.format_report(&LintResultList::new(results), &project_root),
+            },
+            CodeAnalysisRequest::CheckCritical { results } => CodeAnalysisResponse::Critical {
+                is_critical: self.check_critical(&results),
+            },
+            CodeAnalysisRequest::ActiveRules => CodeAnalysisResponse::Rules {
+                rules: self.active_rules(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+/// Check if any CRITICAL severity violations exist in results.
+#[rustfmt::skip]
+pub fn has_critical
+    (results: &[LintResult]) -> bool {
+    results.iter().any(|r| r.severity == Severity::CRITICAL)
+}
+
+impl CodeAnalysisOrchestrator {
+    pub fn new(deps: CodeAnalysisDeps, config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
+        Self {
+            deps,
+            config,
+            layer_map,
+        }
     }
 
-    fn run_code_analysis_dir(&self, src_dir: &FilePath) -> LintResultList {
-        LintResultList::new(self.legacy_entry_disabled("run_code_analysis_dir", src_dir.value()))
-    }
-
-    fn run_code_analysis_path(&self, path: &FilePath) -> Vec<LintResult> {
-        self.legacy_entry_disabled("run_code_analysis_path", path.value())
-    }
-
-    fn calc_score(&self, results: &[LintResult]) -> Score {
-        let cs: fn(&[LintResult]) -> f64 = compute_score;
-        Score::new(cs(results))
-    }
-
-    fn check_critical(&self, results: &[LintResult]) -> BooleanVO {
-        let hc: fn(&[LintResult]) -> bool = has_critical;
-        BooleanVO::new(hc(results))
-    }
-
-    fn format_report(&self, results: &LintResultList, project_root: &FilePath) -> DisplayContent {
-        DisplayContent::new(self.render_report(&results.values, project_root.value()))
-    }
-
-    fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
-        self.config
-            .rules
-            .iter()
-            .map(|r| r.code_analysis.clone())
-            .collect()
+    /// Render a compliance report from results.
+    pub fn render_report(&self, results: &[LintResult], project_root: &str) -> String {
+        // Pre-allocated header (static string, no repeat allocation)
+        let header = "============================================================";
+        let mut output = String::with_capacity(results.len() * 80 + 120);
+        output.push_str(header);
+        output.push_str("\n  AES Architecture Compliance Report \n");
+        output.push_str(header);
+        output.push_str(&format!("\n  Project: {}\n", project_root));
+        output.push_str(&format!("  Violations: {}\n", results.len()));
+        output.push('\n');
+        for r in results {
+            output.push_str(&format!(
+                "  [{}] {} - {}\n",
+                r.code, r.file.value, r.message.value
+            ));
+        }
+        output
     }
 
     /// Run analysis on pre-parsed file entries from the filesystem crate.
-    fn run_analysis_with_entries(
+    pub fn run_analysis_with_entries(
         &self,
         files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
     ) -> Vec<LintResult> {
@@ -209,58 +240,30 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
 
         violations
     }
-}
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-/// Check if any CRITICAL severity violations exist in results.
-#[rustfmt::skip]
-pub fn has_critical
-    (results: &[LintResult]) -> bool {
-    results.iter().any(|r| r.severity == Severity::CRITICAL)
-}
-
-impl CodeAnalysisOrchestrator {
-    pub fn new(deps: CodeAnalysisDeps, config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
-        Self {
-            deps,
-            config,
-            layer_map,
-        }
+    pub fn calc_score(&self, results: &[LintResult]) -> Score {
+        let cs: fn(&[LintResult]) -> f64 = compute_score;
+        Score::new(cs(results))
     }
 
-    /// Legacy entry points cannot run without pre-fetched FileEntry data (crate is zero-I/O).
-    /// Fail loudly so callers cannot silently skip AES301–AES305.
-    fn legacy_entry_disabled(&self, method: &str, target: &str) -> Vec<LintResult> {
-        vec![LintResult::new_arch(
-            target,
-            0,
-            "AES301",
-            Severity::CRITICAL,
-            format!(
-                "AES301 API_MISUSE: quality-rules entry point `{}` requires pre-fetched file entries.\nWHY? This method returns no results by design (zero-I/O aggregate).\nFIX: Call filesystem.build_file_index() then run_analysis_with_entries(file_list()).",
-                method
-            ),
-        )]
+    pub fn check_critical(&self, results: &[LintResult]) -> BooleanVO {
+        let hc: fn(&[LintResult]) -> bool = has_critical;
+        BooleanVO::new(hc(results))
     }
 
-    /// Render a compliance report from results.
-    pub fn render_report(&self, results: &[LintResult], project_root: &str) -> String {
-        // Pre-allocated header (static string, no repeat allocation)
-        let header = "============================================================";
-        let mut output = String::with_capacity(results.len() * 80 + 120);
-        output.push_str(header);
-        output.push_str("\n  AES Architecture Compliance Report \n");
-        output.push_str(header);
-        output.push_str(&format!("\n  Project: {}\n", project_root));
-        output.push_str(&format!("  Violations: {}\n", results.len()));
-        output.push('\n');
-        for r in results {
-            output.push_str(&format!(
-                "  [{}] {} - {}\n",
-                r.code, r.file.value, r.message.value
-            ));
-        }
-        output
+    pub fn format_report(
+        &self,
+        results: &LintResultList,
+        project_root: &FilePath,
+    ) -> DisplayContent {
+        DisplayContent::new(self.render_report(&results.values, project_root.value()))
+    }
+
+    pub fn active_rules(&self) -> Vec<CodeAnalysisRuleVO> {
+        self.config
+            .rules
+            .iter()
+            .map(|r| r.code_analysis.clone())
+            .collect()
     }
 }

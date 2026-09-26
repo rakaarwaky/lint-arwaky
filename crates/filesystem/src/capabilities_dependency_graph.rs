@@ -5,7 +5,7 @@
 // Capabilities: struct DependencyGraph — implements IGraphProtocol
 // 3-block structure per AES skill
 
-use shared::filesystem::contract_graph_protocol::IGraphProtocol;
+use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, FileNodeVO, ImplEntry, ImportEdgeVO, ImportEntry,
 };

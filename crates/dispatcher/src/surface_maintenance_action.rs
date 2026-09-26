@@ -1,19 +1,22 @@
 // PURPOSE: MaintenanceCommandsSurface — maintenance business logic, no formatting.
-// Delegates all operations through MaintenanceCommandsAggregate.
+// Delegates all operations through IMaintenanceAggregate.
 // No direct std::process::Command or filesystem I/O — aggregate handles subprocess execution.
 use shared::common::FilePath;
+use shared::maintenance::MaintenanceRequest;
 use shared::maintenance::{
-    DependencyReport, HealthCheckResult, MaintenanceCommandsAggregate, SecurityScanReport,
+    DependencyReport, HealthCheckResult, IMaintenanceAggregate, SecurityScanReport,
     ToolchainDiagnostics,
 };
 use std::sync::Arc;
 
-pub fn collect_doctor(maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> ToolchainDiagnostics {
-    maintenance.diagnose_toolchain()
+pub fn collect_doctor(maintenance: Arc<dyn IMaintenanceAggregate>) -> ToolchainDiagnostics {
+    maintenance
+        .execute(MaintenanceRequest::diagnose_toolchain())
+        .into_toolchain()
 }
 
 pub fn collect_security(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+    maintenance: Arc<dyn IMaintenanceAggregate>,
     path: Option<FilePath>,
 ) -> Result<SecurityScanReport, String> {
     let target = match &path {
@@ -21,11 +24,13 @@ pub fn collect_security(
         None => ".".to_string(),
     };
     let fp = FilePath::new(target).map_err(|_| "invalid path".to_string())?;
-    Ok(maintenance.run_security_scan(&fp))
+    Ok(maintenance
+        .execute(MaintenanceRequest::security_scan(&fp))
+        .into_security_report())
 }
 
 pub fn collect_dependencies(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
+    maintenance: Arc<dyn IMaintenanceAggregate>,
     path: Option<FilePath>,
 ) -> Result<DependencyReport, String> {
     let target = match &path {
@@ -34,12 +39,13 @@ pub fn collect_dependencies(
     };
     let fp = FilePath::new(target).map_err(|_| "invalid path".to_string())?;
     maintenance
-        .run_dependency_report(&fp)
+        .execute(MaintenanceRequest::dependency_report(&fp))
+        .into_dependency_report()
         .map_err(|e| format!("Error: {e}"))
 }
 
-pub fn collect_health_check(
-    maintenance: Arc<dyn MaintenanceCommandsAggregate>,
-) -> HealthCheckResult {
-    maintenance.health_check()
+pub fn collect_health_check(maintenance: Arc<dyn IMaintenanceAggregate>) -> HealthCheckResult {
+    maintenance
+        .execute(MaintenanceRequest::health_check())
+        .into_health()
 }

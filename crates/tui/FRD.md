@@ -1,13 +1,7 @@
 # FRD — tui (v2.0.0)
-
----
-
 ## System Overview
-
 The tui crate is a **Smart Surface** — a Ratatui-based interactive terminal UI for lint-arwaky. It is a thin wrapper that parses keyboard/mouse input, delegates **all business logic** to the `dispatcher` crate via `dispatcher::surface_*_action::*`, and renders output. No business logic lives here.
-
 ### Architecture & Data Flow
-
 ```mermaid
 flowchart TD
     A["Terminal\n(keyboard / mouse)"] -->|"crossterm events"| B["tui\n(Smart Surface)"]
@@ -20,16 +14,11 @@ flowchart TD
     B -->|"ratatui render\n(finalize / draw)"| A
 
 ```
-
 ### Dependency Rule
-
 - TUI imports: shared (taxonomies, aggregates), dispatcher (surface_*_action)
 - TUI must NOT own business logic — delegates to dispatcher via DI
-
 ## Functional Requirements
-
 ### FR-001: Terminal Setup & Event Loop
-
 **What it produces**: Initialized terminal with raw mode, alternate screen, mouse capture, and blocking event loop.
 
 | Output         | Description                                       |
@@ -56,10 +45,7 @@ flowchart TD
 
 **Error Handling**: `anyhow::Result<()>`.
 
----
-
 ### FR-002: Input Translation
-
 **What it produces**: `TuiEvent` variants from crossterm events.
 
 | Output   | Description                             |
@@ -76,8 +62,6 @@ flowchart TD
 - **Mouse**: left click → selection, drag → scrollbar, scroll up/down → scroll.
 - **Ctrl+ combos**: q=quit, s=security, p=dependencies, y=copy-to-file.
 - **Key mapping reference**:
-
-
   | Key          | TuiEvent                          | Category    |
   | -------------- | ----------------------------------- | ------------- |
   | `j`/↓       | MoveDown                          | Navigation  |
@@ -117,10 +101,7 @@ flowchart TD
 
 **Error Handling**: Infallible — always returns a `TuiEvent`.
 
----
-
 ### FR-003: File Navigation
-
 **What it produces**: Updated `AppState` with directory listings and file previews.
 
 | Output                | Description                             |
@@ -147,10 +128,7 @@ flowchart TD
 
 **Error Handling**: Silent — invalid paths produce status messages, no errors.
 
----
-
 ### FR-004: Lint Action Execution
-
 **What it produces**: `LintExecutionResult` with output text and violation count.
 
 | Output          | Description                                     |
@@ -178,10 +156,7 @@ flowchart TD
 
 **Error Handling**: Embedded in `LintExecutionResult` — never returns `Err`.
 
----
-
 ### FR-005: Domain Aggregate Facade
-
 **What it produces**: `LintExecutionResult` for each lint action, delegating to domain aggregates via dispatcher functions.
 
 | Output                 | Description                                            |
@@ -217,10 +192,7 @@ flowchart TD
 
 **Error Handling**: Embedded in `LintExecutionResult`.
 
----
-
 ### FR-006: Search Mode
-
 **What it produces**: Filtered file list based on incremental search query.
 
 | Output             | Description                                |
@@ -246,10 +218,7 @@ flowchart TD
 
 **Error Handling**: Infallible.
 
----
-
 ### FR-007: Path Dialog
-
 **What it produces**: Updated project root and current directory from user input.
 
 | Output           | Description                          |
@@ -274,10 +243,7 @@ flowchart TD
 
 **Error Handling**: Silent validation — status message on failure.
 
----
-
 ### FR-008: Mouse Interaction
-
 **What it produces**: Updated panel focus and scroll positions from mouse input.
 
 | Output          | Description                               |
@@ -303,10 +269,7 @@ flowchart TD
 
 **Error Handling**: Infallible.
 
----
-
 ### FR-009: UI Rendering
-
 **What it produces**: Ratatui widgets for each panel.
 
 | Output           | Description                    |
@@ -339,10 +302,7 @@ flowchart TD
 
 **Error Handling**: Infallible rendering.
 
----
-
 ### FR-010: Clipboard & File Export
-
 **What it produces**: Copied content to clipboard or `lint-results.txt`.
 
 | Output         | Description                                     |
@@ -365,10 +325,7 @@ flowchart TD
 
 **Error Handling**: Status messages on failure.
 
----
-
 ### FR-011: Logging
-
 **What it produces**: Structured tracing logs for TUI events.
 
 | Output             | Description                                  |
@@ -380,7 +337,7 @@ flowchart TD
 
 **Business Rules**:
 
-- `init()`: sets up tracing subscriber with hourly-rotating file appender (`log/tui.log`) and optional console output.
+- `init()`: sets up a tracing subscriber with an hourly-rotating file appender under the XDG state dir (`$XDG_STATE_HOME/lint-arwaky/log/tui.log`, i.e. `~/.local/state/lint-arwaky/log` on Linux) with no console layer (stdout is owned by ratatui). Falls back to `./log` with an eprintln notice if `dirs::state_dir()` is unavailable.
 - `record()`: logs event variant name at `tracing::debug!(target = "tui")` for navigation events, `tracing::info!(target = "tui")` for action events.
 - **Integration point**: `record(&tui_event)` is called in the event loop immediately after `from_crossterm_event()` translates a crossterm event, and before the event is dispatched to the action handler or intercepted for scan management.
 
@@ -390,10 +347,7 @@ flowchart TD
 
 **Error Handling**: `anyhow::Result<()>` for init.
 
----
-
 ### FR-012: Utility Functions
-
 **What it produces**: Stateless helper functions for file operations and result formatting.
 
 | Output             | Description                                                                |
@@ -423,10 +377,7 @@ flowchart TD
 
 **Error Handling**: Returns empty/default on failure.
 
----
-
-## Consumer Access Pattern
-
+## API Contract
 TUI is a terminal binary — not consumed as a library. Entry point:
 
 ```rust
@@ -434,24 +385,29 @@ TUI is a terminal binary — not consumed as a library. Entry point:
 let container = TuiContainer::new();
 container.run(lint_executor, filesystem)?;
 ```
-
----
+## Integration Points
+| System | Direction | Purpose | Failure mode |
+|--------|-----------|---------|--------------|
+| ratatui + crossterm | in | Terminal rendering and raw-mode input | terminal without raw mode → startup error, FR-001 |
+| lint aggregates (import / naming / quality / orphan) | out | Called through `lint_executor` for check / scan / fix | executor error surfaced in preview pane |
+| filesystem crate | out | File / directory walking for the browser | directory unreadable → "Empty or inaccessible" status |
+| arboard (clipboard) | out | Copy-to-file / export | clipboard unavailable → skip, no crash |
+| tracing (log) | out | Structured log lines to stderr | log loss does not affect the TUI session |
+## Assumptions & Constraints
+- One TUI session owns the terminal (raw mode); a background scan thread is the only concurrent work.
+- `AppState` is the sole mutable state container; actions are stateless.
+- Terminal supports raw mode, alt-screen, and at least 5 rows × 10 cols; otherwise the binary exits with a clear message.
+- All lint rules run through the injected aggregates — the TUI holds no rule logic of its own.
 
 ## Non-functional Requirements
-
 - **Performance**: Event loop polls at 50ms. Scan runs in background thread.
 - **Memory**: Stateless actions — `AppState` is the only mutable state.
 - **Terminal**: Requires terminal with raw mode support. Minimum 5 rows × 10 cols.
 - **Dependencies**: ratatui, crossterm, arboard (clipboard), tracing (logging).
 - **No Business Logic**: All lint logic delegated to aggregates via DI.
 
----
-
 ## Test Scenarios
-
-### FR-002: Input Translation
-
-
+### SCEN-002: Input Translation
 | #  | Scenario                             | Expected                     |
 | ---- | -------------------------------------- | ------------------------------ |
 | 1  | Press 'j' in normal mode             | TuiEvent::MoveDown           |
@@ -466,20 +422,14 @@ container.run(lint_executor, filesystem)?;
 | 10 | Press 'y' with Ctrl                  | TuiEvent::CopyToFile         |
 | 11 | Press '?' in normal mode             | TuiEvent::ToggleHelp         |
 | 12 | Press '/' in normal mode             | TuiEvent::ToggleSearch       |
-
-### FR-003: File Navigation
-
-
+### SCEN-003: File Navigation
 | # | Scenario                | Expected                         |
 | --- | ------------------------- | ---------------------------------- |
 | 1 | Navigate into directory | Entries loaded, selection reset  |
 | 2 | Navigate into file      | Preview loaded (up to 100 lines) |
 | 3 | Navigate back from root | No-op (clamped)                  |
 | 4 | Enter empty directory   | "Empty or inaccessible" status   |
-
-### FR-004: Lint Actions
-
-
+### SCEN-004: Lint Actions
 | #  | Scenario                            | Expected                                  |
 | ---- | ------------------------------------- | ------------------------------------------- |
 | 1  | Press 'c' (check) on file           | Code analysis results in preview          |
@@ -492,10 +442,7 @@ container.run(lint_executor, filesystem)?;
 | 8  | Press 'd' (doctor) globally         | Toolchain diagnostics output              |
 | 9  | Scan in progress, press 'c'         | Action blocked, no output change          |
 | 10 | Press 'p' (dependencies) on file    | Dependency report or CLI fallback message |
-
-### FR-005: Domain Aggregate Facade
-
-
+### SCEN-005: Domain Aggregate Facade
 | # | Scenario                                   | Expected                                  |
 | --- | -------------------------------------------- | ------------------------------------------- |
 | 1 | check() with code_analysis aggregate       | LintExecutionResult with violation count  |
@@ -507,11 +454,7 @@ container.run(lint_executor, filesystem)?;
 | 7 | doctor() without maintenance               | CLI fallback message                      |
 | 8 | version() always returns success           | Version string in output                  |
 
----
-
 ## Glossary
-
-
 | Term                     | Definition                                                        |
 | -------------------------- | ------------------------------------------------------------------- |
 | **Smart Surface**        | Thin UI wrapper — parses input, calls aggregates, renders output |
@@ -522,9 +465,7 @@ container.run(lint_executor, filesystem)?;
 | **TuiEvent**             | Normalized UI event dispatched to action handler                  |
 | **LintExecutionResult**  | Output text + violation count from a lint action                  |
 
----
-
 ## Reference
-
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)

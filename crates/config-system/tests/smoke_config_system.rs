@@ -2,6 +2,7 @@
 mod common;
 
 use shared::common::FilePath;
+use shared::config_system::ConfigRequest;
 use tempfile::TempDir;
 
 #[test]
@@ -11,7 +12,9 @@ fn config_system_boots_and_loads_defaults() {
     let orch = container.orchestrator();
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = orch.load_project_config(&fp);
+    let result = orch
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     let _ = result.config.enabled; // validated by successful load
     assert!(!result.source.language.is_empty());
     let elapsed = start.elapsed();
@@ -29,7 +32,8 @@ fn config_system_sync_load_responds() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let config = common::make_container()
         .orchestrator()
-        .load_config_sync(&fp);
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     assert!(config.enabled.value);
     let elapsed = start.elapsed();
     assert!(

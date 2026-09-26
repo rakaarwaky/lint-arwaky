@@ -5,6 +5,7 @@
 //   - Directory names in blue bold
 //   - Selected item highlighted with dark gray background
 //   - Focus indicator on the panel border (cyan when focused, gray when not)
+use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
@@ -24,10 +25,10 @@ impl FileListView {
         let is_focused = state.panel_focus == PanelFocus::FileList;
         let border_style = if is_focused {
             Style::default()
-                .fg(Color::Cyan)
+                .fg(theme::ACCENT)
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::DarkGray)
+            Style::default().fg(theme::SEPARATOR)
         };
 
         let block = Block::default()
@@ -61,10 +62,10 @@ impl FileListView {
 
                 let name_style = if entry.is_dir {
                     Style::default()
-                        .fg(Color::Blue)
+                        .fg(theme::DIRECTORY)
                         .add_modifier(Modifier::BOLD)
                 } else {
-                    Style::default().fg(Color::White)
+                    Style::default().fg(theme::LABEL)
                 };
 
                 let line = Line::from(vec![
@@ -74,7 +75,7 @@ impl FileListView {
 
                 let item_style = if Some(i) == display_selected {
                     Style::default()
-                        .bg(Color::DarkGray)
+                        .bg(theme::HIGHLIGHT)
                         .add_modifier(Modifier::BOLD)
                 } else {
                     Style::default()
@@ -99,7 +100,7 @@ impl FileListView {
 
         let list = List::new(items).block(block).highlight_style(
             Style::default()
-                .bg(Color::DarkGray)
+                .bg(theme::HIGHLIGHT)
                 .add_modifier(Modifier::BOLD),
         );
 
@@ -115,13 +116,13 @@ impl Default for FileListView {
 
 fn layer_color(layer: &AesLayer) -> Color {
     match layer {
-        AesLayer::Taxonomy => Color::Cyan,
-        AesLayer::Contract => Color::Blue,
-        AesLayer::Utility => Color::Yellow,
-        AesLayer::Capabilities => Color::Magenta,
-        AesLayer::Agent => Color::Green,
-        AesLayer::Surfaces => Color::Red,
-        AesLayer::Root => Color::White,
-        AesLayer::None => Color::DarkGray,
+        AesLayer::Taxonomy => theme::ACCENT,
+        AesLayer::Contract => theme::DIRECTORY,
+        AesLayer::Utility => theme::KEY,
+        AesLayer::Capabilities => theme::CAPABILITIES_BADGE,
+        AesLayer::Agent => theme::CLEAN,
+        AesLayer::Surfaces => theme::VIOLATIONS,
+        AesLayer::Root => theme::LABEL,
+        AesLayer::None => theme::SEPARATOR,
     }
 }

@@ -7,7 +7,7 @@ use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use serde::{Deserialize, Serialize};
 
 /// Represents a configuration source with its language, path, and raw content.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ConfigSource {
     pub language: String,
     pub path: FilePath,
@@ -29,7 +29,7 @@ impl ConfigSource {
 }
 
 /// Result type for config loading operations containing the parsed config, source info, and warnings.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ConfigResult {
     pub config: ArchitectureConfig,
     pub source: ConfigSource,

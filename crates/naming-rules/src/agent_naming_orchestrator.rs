@@ -5,17 +5,15 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::naming_rules::contract_naming_checker_protocol::{
-    INamingConventionChecker, ISuffixPrefixChecker,
-};
+use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct NamingOrchestratorDeps {
-    pub naming_convention_checker: Arc<dyn INamingConventionChecker>,
-    pub suffix_prefix_checker: Arc<dyn ISuffixPrefixChecker>,
+    pub naming_checker: Arc<dyn INamingCheckerProtocol>,
     pub config: Arc<ArchitectureConfig>,
     pub layer_map: Arc<LayerMapVO>,
 }
@@ -27,6 +25,29 @@ pub struct NamingOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl INamingRunnerAggregate for NamingOrchestrator {
+    fn execute(&self, request: NamingRequest) -> NamingResponse {
+        match request {
+            NamingRequest::RunAuditWithEntries { files } => NamingResponse::Audit {
+                violations: self.run_audit_with_entries(&files),
+            },
+            NamingRequest::Name => NamingResponse::Name {
+                name: self.name().to_string(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl NamingOrchestrator {
+    pub fn new(deps: NamingOrchestratorDeps) -> Self {
+        Self { deps }
+    }
+
+    pub fn name(&self) -> &str {
+        "naming-rules"
+    }
+
+    /// Run audit on pre-parsed file entries from the filesystem crate.
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         // Naming checks are path-only — do NOT skip parse failures.
         // `content.is_empty()` is used as a proxy for "unreadable" per the FRD glossary.
@@ -41,17 +62,6 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let root = FilePath::new(".".to_string()).unwrap_or_default();
 
         self.run_checks(&file_list, &root)
-    }
-
-    fn name(&self) -> &str {
-        "naming-rules"
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl NamingOrchestrator {
-    pub fn new(deps: NamingOrchestratorDeps) -> Self {
-        Self { deps }
     }
 
     /// Check if a specific AES rule is enabled in the configuration.
@@ -69,7 +79,7 @@ impl NamingOrchestrator {
 
         if Self::is_rule_enabled(&self.deps.config, "AES101") {
             let mut naming_results = LintResultList::new(Vec::new());
-            self.deps.naming_convention_checker.check_file_naming(
+            self.deps.naming_checker.check_file_naming(
                 self.deps.config.as_ref(),
                 self.deps.layer_map.as_ref(),
                 files,
@@ -81,7 +91,7 @@ impl NamingOrchestrator {
 
         if Self::is_rule_enabled(&self.deps.config, "AES102") {
             let mut suffix_results = LintResultList::new(Vec::new());
-            self.deps.suffix_prefix_checker.check_domain_suffixes(
+            self.deps.naming_checker.check_domain_suffixes(
                 self.deps.config.as_ref(),
                 self.deps.layer_map.as_ref(),
                 files,

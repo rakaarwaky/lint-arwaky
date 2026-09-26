@@ -360,6 +360,46 @@ flowchart TD
 
 ---
 
+## API Contract
+
+| Operation | Input | Output | Error Shape | As Stated / As Intended |
+|---|---|---|---|---|
+| `scan_all` | `&[workspace members]`, filter | `Vec<Violation>` | `Err("path does not exist")` | as stated |
+| `validate_ci` | threshold | pass/fail + score | `Err` on invalid threshold | as stated |
+| `run_linter` | member, linter id | `Vec<Violation>` | `Err` if member unknown | as stated |
+| `auto_fix` | member, dry-run flag | `FixResult` | `Err(file_not_found)` | as stated |
+| `git_diff_scan` | repo path, range | `Vec<Violation>` | `Err` on non-repo path | as stated |
+| `hook_install` | hook type | ok/err | `Err` on non-git dir | as stated |
+| `show_config` | — | `ArchitectureConfig` | — | as stated |
+| `project_setup` | target, langs | install report | `Err` on missing tool | as stated |
+| `maintenance_ops` | op name | op result | `Err` on unknown op | as stated |
+| `plugin_mgmt` | plugin, action | action result | `Err` on load fail | as stated |
+| `file_watch` | path | watch report | `Err` on I/O | as stated |
+| `output_violation` | violation | formatted string | — | as stated |
+| `version_info` | — | tool version string | — | as stated |
+
+## Integration Points
+
+| System | Direction | Purpose | Failure mode |
+|---|---|---|---|
+| CLI surface (`cli-commands`) | in | Dispatches user commands into these aggregates | caller error, no TUI |
+| MCP surface (`mcp-server`) | in | Same dispatch, JSON-RPC boundary | JSON error envelope |
+| each linter crate (`import-rules`, `naming-rules`, …) | out | Individual violation providers | linter `Err` bubbles up |
+| `auto-fix` crate | out | `FixResult` for remediation | `Err(file_not_found)` |
+| `git-hooks` crate | out | Hook install / diff-scan | non-git dir → `Err` |
+| `project-setup` / `maintenance` crates | out | `init`, `doctor`, `deps` ops | missing tool → exit 3 |
+| `file-watch` crate | out | Continuous rescan on change | I/O `Err` stops watch |
+
+## Assumptions & Constraints
+
+- All aggregate dependencies are injected as `Arc<dyn Trait>`; the dispatcher holds no concrete lower-layer types.
+- The dispatcher is the single orchestration point between surfaces (CLI / MCP / TUI) and rule / linter crates.
+- No formatting: the dispatcher returns raw data; surfaces own presentation.
+- All functions are synchronous; no async runtime in this crate.
+- A 1,000-file scan is expected to complete in under 5 s including subprocess overhead.
+
+---
+
 ## Non-functional Requirements
 
 - **Performance**: Scan of 1,000 files completes in < 5s (subprocess overhead included).
@@ -372,7 +412,7 @@ flowchart TD
 
 ## Test Scenarios
 
-### FR-001: Unified Scan
+### SCEN-001: Unified Scan
 
 | # | Scenario                  | Expected                                         |
 | - | ------------------------- | ------------------------------------------------ |
@@ -382,7 +422,7 @@ flowchart TD
 | 4 | Scan with invalid member  | Returns`Err("no workspace member matching")`   |
 | 5 | Scan empty project        | Returns empty Vec                                |
 
-### FR-002: CI Validation
+### SCEN-002: CI Validation
 
 | # | Scenario                      | Expected                                 |
 | - | ----------------------------- | ---------------------------------------- |
@@ -391,7 +431,7 @@ flowchart TD
 | 3 | CI with score below threshold | Pass = false, reasons contains score msg |
 | 4 | CI with no violations         | Pass = true, score = 100                 |
 
-### FR-003: Individual Linters
+### SCEN-003: Individual Linters
 
 | # | Scenario                       | Expected                              |
 | - | ------------------------------ | ------------------------------------- |
@@ -400,7 +440,7 @@ flowchart TD
 | 3 | Orphan scan on multi-workspace | Builds unified graph, filters per member |
 | 4 | Role scan via subprocess       | Returns violations (or empty on fail) |
 
-### FR-004: Auto-Fix
+### SCEN-004: Auto-Fix
 
 | # | Scenario                           | Expected                                    |
 | - | ---------------------------------- | ------------------------------------------- |
@@ -408,7 +448,7 @@ flowchart TD
 | 2 | Execute with fixable violations    | fixed_count > 0                             |
 | 3 | Execute with no fixable violations | fixable list is empty, no changes           |
 
-### FR-005: Git Diff
+### SCEN-005: Git Diff
 
 | # | Scenario                           | Expected                               |
 | - | ---------------------------------- | -------------------------------------- |
@@ -416,7 +456,7 @@ flowchart TD
 | 2 | Diff with non-existent base        | Returns git diff error                 |
 | 3 | Diff with filter                   | Only matching files included           |
 
-### FR-005: Hook Management
+### SCEN-005: Hook Management
 
 | # | Scenario                    | Expected                            |
 | - | --------------------------- | ----------------------------------- |
@@ -444,5 +484,6 @@ flowchart TD
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)

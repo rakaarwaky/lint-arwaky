@@ -1,4 +1,4 @@
-// PURPOSE: UtilityRoleChecker — IUtilityRoleChecker for AES404: utility role boundary violations
+// PURPOSE: UtilityRoleChecker — IUtilityRoleProtocol for AES404: utility role boundary violations
 //
 // ALGORITHM:
 //   Uses ParseMetadata when available to detect forbidden type definitions.
@@ -7,13 +7,13 @@
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::contract_utility_role_protocol::IUtilityRoleChecker;
+use shared::role_rules::contract_role_protocol::IUtilityRoleProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct UtilityRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-impl IUtilityRoleChecker for UtilityRoleChecker {
+impl IUtilityRoleProtocol for UtilityRoleChecker {
     fn check_utility_convention(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         if let Some(meta) = &file.parse_metadata {
             self._check_with_metadata(file, meta, violations);

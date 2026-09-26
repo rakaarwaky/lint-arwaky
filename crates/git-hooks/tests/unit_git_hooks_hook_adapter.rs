@@ -6,10 +6,11 @@ use shared::git_hooks::IHookManagerProtocol;
 use tempfile::TempDir;
 
 fn make_adapter(tmp: &TempDir) -> GitHookAdapter {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let _filesystem = fc.orchestrator();
+    let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    GitHookAdapter::new(fp, filesystem)
+    GitHookAdapter::new(fp, io)
 }
 
 fn make_git_repo(tmp: &TempDir) {

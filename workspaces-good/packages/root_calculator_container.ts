@@ -1,4 +1,4 @@
-import { CalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
+import { ICalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
 import {
   CalculatorOrchestrator,
   CalculatorOrchestratorDeps,
@@ -22,7 +22,7 @@ export class CalculatorContainer {
     } as CalculatorOrchestratorDeps);
   }
 
-  getOrchestrator(): CalculatorAggregate {
+  getOrchestrator(): ICalculatorAggregate {
     return this.orchestrator;
   }
 }

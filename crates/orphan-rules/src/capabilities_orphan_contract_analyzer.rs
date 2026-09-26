@@ -77,9 +77,12 @@ impl ContractOrphanAnalyzer {
     ///
     /// ```
     /// use std::collections::HashMap;
+    /// use std::path::Path;
     ///
-    /// let content_map = HashMap::new();
-    /// assert!(!is_trait_re_exported_in_barrel(&[], &[], &content_map));
+    /// // `is_trait_re_exported_in_barrel` is a private helper on
+    /// // `ContractOrphanAnalyzer`; it is exercised through the public
+    /// // `IContractOrphanProtocol::is_contract_orphan` entry point.
+    /// let content_map: HashMap<String, String> = HashMap::new();
     /// ```
     ///
     /// # Arguments

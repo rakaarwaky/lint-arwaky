@@ -10,15 +10,20 @@ use std::sync::Arc;
 use shared::cli_commands::LintResult;
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 use shared::config_system::ArchitectureConfig;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ParseMetadata};
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ParseMetadata};
 use shared::import_rules::DEFAULT_SKIP_DIRS;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
-use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
+use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
+use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_import_request_vo::{ImportRequest, ImportResponse};
 
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use tracing::warn;
@@ -32,6 +37,9 @@ pub struct ImportOrchestratorDeps {
     pub cycle: Arc<dyn ICycleImportProtocol>,
     pub dummy: Arc<dyn IDummyImportCheckerProtocol>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
+    pub filesystem_workspace: Arc<dyn IWorkspaceProtocol>,
+    pub filesystem_parser: Arc<dyn IParserProtocol>,
 }
 
 pub struct ImportOrchestrator {
@@ -44,13 +52,37 @@ pub struct ImportOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl IImportRunnerAggregate for ImportOrchestrator {
-    fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
+    fn execute(&self, request: ImportRequest) -> ImportResponse {
+        match request {
+            ImportRequest::RunAudit { target } => {
+                let result = self.run_audit(&target);
+                ImportResponse::Audit { result }
+            }
+            ImportRequest::RunAuditWithEntries { files } => {
+                let violations = self.run_audit_with_entries(&files);
+                ImportResponse::AuditEntries { violations }
+            }
+            ImportRequest::RunAuditWithEntriesAndImports { files, imports_map } => {
+                let violations = self.run_audit_with_entries_and_imports(&files, &imports_map);
+                ImportResponse::AuditEntries { violations }
+            }
+            ImportRequest::Name => ImportResponse::Name {
+                name: self.name().to_string(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl ImportOrchestrator {
+    pub fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
         if !self.config.enabled.value {
             return Ok(Vec::new());
         }
         if !self
             .deps
-            .filesystem
+            .filesystem_io
             .path_exists(std::path::Path::new(target.value()))
         {
             return Err(ScanError::new(
@@ -63,25 +95,26 @@ impl IImportRunnerAggregate for ImportOrchestrator {
 
         let root_dir = self
             .deps
-            .filesystem
+            .filesystem_workspace
             .workspace_root(target)
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
-        // Pre-read all file contents into a map so capabilities don't do I/O.
         let content_map: HashMap<String, String> = files
             .values
             .iter()
             .filter_map(|f| {
                 self.deps
                     .filesystem
-                    .read_file(std::path::Path::new(f.value()))
+                    .execute(FilesystemRequest::read_file(std::path::Path::new(
+                        f.value(),
+                    )))
+                    .into_content_opt()
                     .map(|c| (f.value().to_string(), c))
             })
             .collect();
 
-        // Build import map from filesystem's AST parser (avoids re-parsing in checkers)
-        let import_list = self.deps.filesystem.import_list();
+        let import_list = self.deps.filesystem_parser.import_list();
         let imports_map: HashMap<String, Vec<ImportEntry>> = {
             let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
             for entry in import_list {
@@ -91,7 +124,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             map
         };
 
-        // Build used_identifiers map from filesystem's tree-sitter AST cache
         let used_identifiers_map: HashMap<String, Vec<String>> = files
             .values
             .iter()
@@ -99,7 +131,10 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 let ids = self
                     .deps
                     .filesystem
-                    .used_identifiers_for(std::path::Path::new(f.value()));
+                    .execute(FilesystemRequest::used_identifiers(std::path::Path::new(
+                        f.value(),
+                    )))
+                    .into_identifiers();
                 if ids.is_empty() {
                     None
                 } else {
@@ -108,9 +143,11 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             })
             .collect();
 
-        // Build cross-file trait implementation map for implicit trait usage detection.
-        // Maps trait_name → [type_names that implement it] across all Rust files.
-        let implemented_traits = self.deps.filesystem.implemented_traits_map();
+        let implemented_traits = self
+            .deps
+            .filesystem
+            .execute(FilesystemRequest::ImplementedTraitsMap)
+            .into_traits_map();
 
         Ok(self.run_checks(
             &files,
@@ -122,13 +159,29 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         ))
     }
 
-    fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         "import-rules"
     }
 
-    fn run_audit_with_entries(
+    pub fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
+        if !self.config.enabled.value {
+            return Vec::new();
+        }
+        let import_list = self.deps.filesystem_parser.import_list();
+        let imports_map: HashMap<String, Vec<ImportEntry>> = {
+            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
+            for entry in import_list {
+                let key = entry.source_file.to_string_lossy().to_string();
+                map.entry(key).or_default().push(entry);
+            }
+            map
+        };
+        self.run_audit_with_entries_and_imports(files, &imports_map)
+    }
+    pub fn run_audit_with_entries_and_imports(
         &self,
-        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        files: &[FileEntry],
+        imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
@@ -146,17 +199,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .filter(|f| f.parse_ok)
             .map(|f| (f.path.to_string_lossy().to_string(), f.content.clone()))
             .collect();
-
-        // Build import map from filesystem's AST parser
-        let import_list = self.deps.filesystem.import_list();
-        let imports_map: HashMap<String, Vec<ImportEntry>> = {
-            let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
-            for entry in import_list {
-                let key = entry.source_file.to_string_lossy().to_string();
-                map.entry(key).or_default().push(entry.clone());
-            }
-            map
-        };
 
         // Build used_identifiers map from FileEntry.parse_metadata (tree-sitter AST)
         let used_identifiers_map: HashMap<String, Vec<String>> = files
@@ -204,17 +246,13 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         self.run_checks(
             &file_list,
             &content_map,
-            &imports_map,
+            imports_map,
             &used_identifiers_map,
             &implemented_traits,
             &root_dir,
         )
     }
-}
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-impl ImportOrchestrator {
     pub fn new(
         deps: ImportOrchestratorDeps,
         config: ArchitectureConfig,
@@ -266,7 +304,11 @@ impl ImportOrchestrator {
         }
 
         // Cycle detection — prefer resolved imports when available
-        let resolved_imports_list = self.deps.filesystem.resolved_import_list();
+        let resolved_imports_list = self
+            .deps
+            .filesystem
+            .execute(FilesystemRequest::ResolvedImportList)
+            .into_imports();
         let resolved_imports_map: HashMap<String, Vec<ImportEntry>> = {
             let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
             for entry in resolved_imports_list {
@@ -346,7 +388,11 @@ impl ImportOrchestrator {
                     ignored.push(entry);
                 }
             }
-            let entries = self.deps.filesystem.discover_source_files(path, &ignored);
+            let entries = self
+                .deps
+                .filesystem
+                .execute(FilesystemRequest::discover_source_files(path, &ignored))
+                .into_paths();
             files.extend(entries.iter().filter_map(|f| FilePath::new(f.clone()).ok()));
         } else if path.is_file() {
             match FilePath::new(path.to_string_lossy().to_string()) {

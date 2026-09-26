@@ -1,25 +1,23 @@
 // quality-rules — taxonomy and contract types
-pub mod contract_bypass_checker_protocol;
-pub mod contract_class_protocol;
 pub mod contract_code_analysis_aggregate;
-pub mod contract_code_metric_analyzer_protocol;
-pub mod contract_dead_inheritance_protocol;
-pub mod contract_line_protocol;
+pub mod contract_quality_protocol;
 pub mod taxonomy_analysis_vo;
 pub use crate::common::taxonomy_code_analysis_vo;
 pub use crate::common::taxonomy_operation_error;
+pub mod taxonomy_code_analysis_request_vo;
 pub mod taxonomy_violation_code_analysis_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_bypass_checker_protocol::IBypassCheckerProtocol;
-pub use contract_class_protocol::IMandatoryClassProtocol;
 pub use contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-pub use contract_code_metric_analyzer_protocol::ICodeMetricAnalyzerProtocol;
-pub use contract_dead_inheritance_protocol::IDeadInheritanceProtocol;
-pub use contract_line_protocol::ILineCheckerProtocol;
+pub use contract_quality_protocol::IBypassCheckerProtocol;
+pub use contract_quality_protocol::ICodeMetricAnalyzerProtocol;
+pub use contract_quality_protocol::IDeadInheritanceProtocol;
+pub use contract_quality_protocol::ILineCheckerProtocol;
+pub use contract_quality_protocol::IMandatoryClassProtocol;
+pub use taxonomy_code_analysis_request_vo::{CodeAnalysisRequest, CodeAnalysisResponse};
 
 // ── Taxonomy types ──
 pub use taxonomy_analysis_vo::GraphAnalysisContext;

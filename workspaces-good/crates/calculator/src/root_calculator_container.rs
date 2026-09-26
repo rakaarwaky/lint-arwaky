@@ -3,7 +3,7 @@ use crate::capabilities_addition_analyzer::AdditionAnalyzer;
 use crate::capabilities_division_analyzer::DivisionAnalyzer;
 use crate::capabilities_multiplication_analyzer::MultiplicationAnalyzer;
 use crate::capabilities_subtraction_analyzer::SubtractionAnalyzer;
-use calculator_shared::contract_calculator_aggregate::CalculatorAggregate;
+use calculator_shared::contract_calculator_aggregate::ICalculatorAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -24,8 +24,8 @@ impl CalculatorContainer {
         Self { orchestrator }
     }
 
-    pub fn orchestrator(&mut self) -> &mut dyn CalculatorAggregate {
-        &mut self.orchestrator
+    pub fn orchestrator(&self) -> &dyn ICalculatorAggregate {
+        &self.orchestrator
     }
 }
 

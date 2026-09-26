@@ -8,12 +8,11 @@ use std::sync::Arc;
 use tempfile::TempDir;
 
 fn make_hook_manager(tmp: &TempDir) -> HookManager {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let io = fs_container.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let adapter: Arc<dyn IHookManagerProtocol> =
-        Arc::new(GitHookAdapter::new(fp, filesystem.clone()));
-    HookManager::new(adapter, filesystem)
+    let adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
+    HookManager::new(adapter, io)
 }
 
 fn write_file(path: &std::path::Path, content: &str) {

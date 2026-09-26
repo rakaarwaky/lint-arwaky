@@ -1,11 +1,11 @@
 // PURPOSE: Module declarations for role-rules (role auditors, orchestrator, container)
 pub use agent_role_orchestrator::RoleCheckerDeps;
-pub use shared::role_rules::IAgentRoleChecker;
-pub use shared::role_rules::ICapabilitiesRoleChecker;
-pub use shared::role_rules::IContractRoleChecker;
+pub use shared::role_rules::IAgentRoleProtocol;
+pub use shared::role_rules::ICapabilitiesRoleProtocol;
+pub use shared::role_rules::IContractRoleProtocol;
 pub use shared::role_rules::IRoleRunnerAggregate;
-pub use shared::role_rules::ISurfaceRoleChecker;
-pub use shared::role_rules::ITaxonomyRoleChecker;
+pub use shared::role_rules::ISurfaceRoleProtocol;
+pub use shared::role_rules::ITaxonomyRoleProtocol;
 pub use shared::role_rules::taxonomy_layer_names_vo::{
     LayerNames, layer_agent, layer_capabilities, layer_contract, layer_global, layer_root,
     layer_surfaces, layer_taxonomy,

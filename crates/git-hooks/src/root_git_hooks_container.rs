@@ -2,31 +2,34 @@
 
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::{GitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::git_hooks::{IDiffProtocol, IGitHooksAggregate, IHookManagerProtocol, IHookProtocol};
 
 use std::sync::Arc;
 
 pub struct GitContainer {
-    aggregate: Arc<dyn GitHooksAggregate>,
+    aggregate: Arc<dyn IGitHooksAggregate>,
 }
 
 impl GitContainer {
-    pub fn new(root_dir: FilePath, filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new(
+        root_dir: FilePath,
+        _filesystem: Arc<dyn IFilesystemAggregate>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+    ) -> Self {
         let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(
-            crate::capabilities_hook_adapter::GitHookAdapter::new(root_dir, filesystem.clone()),
+            crate::capabilities_hook_adapter::GitHookAdapter::new(root_dir, io.clone()),
         );
 
         let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(
-            crate::capabilities_diff_checker::DiffChecker::new(filesystem.clone()),
+            crate::capabilities_diff_checker::DiffChecker::new(io.clone()),
         );
         let hook_adapter_clone = Arc::clone(&hook_adapter);
-        let hook_protocol: Arc<dyn IHookProtocol> =
-            Arc::new(crate::capabilities_hook_manager::HookManager::new(
-                hook_adapter_clone,
-                filesystem.clone(),
-            ));
+        let hook_protocol: Arc<dyn IHookProtocol> = Arc::new(
+            crate::capabilities_hook_manager::HookManager::new(hook_adapter_clone, io),
+        );
 
-        let aggregate: Arc<dyn GitHooksAggregate> = Arc::new(
+        let aggregate: Arc<dyn IGitHooksAggregate> = Arc::new(
             crate::agent_git_hooks_orchestrator::GitHooksOrchestrator::new(
                 diff_protocol,
                 hook_protocol,
@@ -37,7 +40,7 @@ impl GitContainer {
         Self { aggregate }
     }
 
-    pub fn aggregate(&self) -> Arc<dyn GitHooksAggregate> {
+    pub fn aggregate(&self) -> Arc<dyn IGitHooksAggregate> {
         self.aggregate.clone()
     }
 }

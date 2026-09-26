@@ -1,4 +1,4 @@
-// PURPOSE: SurfaceRoleChecker — ISurfaceRoleChecker for AES406: smart/utility/passive surface role checks
+// PURPOSE: SurfaceRoleChecker — ISurfaceRoleProtocol for AES406: smart/utility/passive surface role checks
 //
 // ALGORITHM (uses ParseMetadata when available):
 //   1. Classify surface by suffix: Smart (_command, _controller, _page, _entry, _router),
@@ -13,7 +13,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ParseMetadata, PythonMetadata, RustMetadata, TypeScriptMetadata,
 };
-use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleChecker;
+use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
 
 const MAX_PUBLIC_METHODS: usize = 50;
 const MAX_CONTROL_FLOW: usize = 50;
@@ -22,7 +22,7 @@ const MAX_CONTROL_FLOW: usize = 50;
 pub struct SurfaceRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-impl ISurfaceRoleChecker for SurfaceRoleChecker {
+impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         // Smart surfaces are exempt from passive/utility checks — function count runs in check_fn_count_limit.
         let _ = (file, violations);

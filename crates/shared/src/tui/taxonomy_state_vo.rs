@@ -52,6 +52,15 @@ pub struct AppState {
     pub watch_results: String,
     /// Whether a background scan is currently running.
     pub scanning: bool,
+    /// Whether a background global action (install/doctor/init/mcp-config) is running.
+    pub action_pending: bool,
+    /// Receiver for the background global-action thread's result (mirror of the scan receiver).
+    pub action_result_rx:
+        Option<std::sync::mpsc::Receiver<crate::tui::taxonomy_lint_result_vo::LintExecutionResult>>,
+    /// Shared cancel flag read by the background scan thread; set when the user presses Esc mid-scan.
+    pub scan_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
+    /// Destructive action awaiting user confirmation (I5 confirm gate).
+    pub pending_confirm: Option<crate::tui::taxonomy_confirm_vo::ConfirmState>,
     /// Current phase description shown during scanning (e.g. "AES checks").
     pub scan_phase: String,
     /// Number of files processed so far.
@@ -93,6 +102,10 @@ impl AppState {
             watch_receiver: None,
             watch_results: String::new(),
             scanning: false,
+            action_pending: false,
+            action_result_rx: None,
+            scan_cancel: None,
+            pending_confirm: None,
             scan_phase: String::new(),
             scan_files_done: 0,
             scan_files_total: 0,
@@ -165,22 +178,6 @@ impl AppState {
         }
     }
 
-    pub fn cycle_focus_forward(&mut self) {
-        self.panel_focus = match self.panel_focus {
-            PanelFocus::Tree => PanelFocus::FileList,
-            PanelFocus::FileList => PanelFocus::Preview,
-            PanelFocus::Preview => PanelFocus::Tree,
-        };
-    }
-
-    pub fn cycle_focus_backward(&mut self) {
-        self.panel_focus = match self.panel_focus {
-            PanelFocus::Tree => PanelFocus::Preview,
-            PanelFocus::FileList => PanelFocus::Tree,
-            PanelFocus::Preview => PanelFocus::FileList,
-        };
-    }
-
     pub fn set_status(&mut self, msg: impl Into<String>) {
         self.status_message = msg.into();
     }
@@ -233,7 +230,7 @@ impl AppState {
     /// Mark the scan as started with the given phase and total file count.
     pub fn set_scanning(&mut self, scanning: bool, phase: String, total: usize) {
         self.scanning = scanning;
-        self.scan_phase = phase;
+        self.scan_phase = if scanning { phase } else { String::new() };
         self.scan_files_done = 0;
         self.scan_files_total = total;
         self.scan_violations = 0;
@@ -253,5 +250,23 @@ impl AppState {
         self.scan_files_done = 0;
         self.scan_files_total = 0;
         self.scan_violations = total_violations;
+    }
+
+    /// Cycle panel focus forward; the Tree panel is display-only and never a target.
+    pub fn cycle_focus_forward(&mut self) {
+        self.panel_focus = match self.panel_focus {
+            PanelFocus::Tree => PanelFocus::FileList,
+            PanelFocus::FileList => PanelFocus::Preview,
+            PanelFocus::Preview => PanelFocus::FileList,
+        };
+    }
+
+    /// Cycle panel focus backward; the Tree panel is display-only and never a target.
+    pub fn cycle_focus_backward(&mut self) {
+        self.panel_focus = match self.panel_focus {
+            PanelFocus::Tree => PanelFocus::Preview,
+            PanelFocus::Preview => PanelFocus::FileList,
+            PanelFocus::FileList => PanelFocus::Preview,
+        };
     }
 }

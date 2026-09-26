@@ -8,7 +8,7 @@ use crate::utility_import_symbol_extractor;
 use shared::cli_commands::LintResult;
 use shared::common::{FilePath, LintMessage, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use std::collections::HashMap;
 
@@ -185,6 +185,8 @@ pub fn is_known_trait_pattern(raw_path: &str, alias_str: &str) -> bool {
         || raw_path.ends_with("::cmp::PartialOrd")
         || raw_path.ends_with("::ops::Add")
         || raw_path.ends_with("::ops::Deref")
+        || raw_path.ends_with("::str::FromStr")
+        || raw_path.ends_with("::str::ToString")
     {
         return true;
     }

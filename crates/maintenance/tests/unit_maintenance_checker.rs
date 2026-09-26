@@ -3,8 +3,10 @@ use shared::common::FilePath;
 use shared::maintenance::IMaintenanceCheckerProtocol;
 
 fn make_checker() -> impl IMaintenanceCheckerProtocol {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker::new(fs)
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let _fs = fc.orchestrator();
+    let io = fc.io();
+    maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker::new(io)
 }
 
 #[test]

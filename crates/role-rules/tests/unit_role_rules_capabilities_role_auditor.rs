@@ -2,7 +2,7 @@
 use role_rules_lint_arwaky::capabilities_capabilities_role_auditor::CapabilitiesRoleChecker;
 use shared::common::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::ICapabilitiesRoleChecker;
+use shared::role_rules::ICapabilitiesRoleProtocol;
 
 use shared::filesystem::taxonomy_filesystem_vo::{Language, ParseMetadata, RustMetadata};
 use std::path::PathBuf;

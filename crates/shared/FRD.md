@@ -213,6 +213,15 @@ All accessible from `shared::common::utility_*` modules. Pure functions with no 
 
 ---
 
+## Integration Points
+
+| System | Direction | Purpose | Failure mode |
+| --- | --- | --- | --- |
+| All other crates | out | Consume VOs, protocol/aggregate traits, and utility functions | N/A (pure types, no failure) |
+| `config-system` crate | out | Define config enums and merge contracts | N/A |
+| `external-lint` crate | out | Define `AdapterDetail`, exit-code, and tool-name VOs | N/A |
+| `report-formatter` crate | out | Consume `LintResult` / `ViolationItem` for output | N/A |
+
 ## Non-functional Requirements
 
 - **Performance**: Zero runtime overhead — all types are compile-time checked.
@@ -221,9 +230,18 @@ All accessible from `shared::common::utility_*` modules. Pure functions with no 
 - **Security**: `ExitCode` constants enforce the exit code contract. `ConfigLanguage` enum prevents path injection.
 - **Reliability**: Macros produce consistent, well-typed VOs with standard derives.
 
+## Assumptions & Constraints
+
+- `shared` exposes no I/O, no file access, and no side effects — all types are compile-time checked.
+- All public traits require `Send + Sync`; no interior mutability is allowed in shared VOs.
+- VOs are identity-less: equality is by value, not reference.
+- The crate is consumed by every other crate; it has no internal dependencies beyond the standard library.
+
 ---
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
+
+## Test Scenarios
 
 | # | Scenario | Expected | Rule |
 |---|----------|----------|------|
@@ -254,5 +272,6 @@ All accessible from `shared::common::utility_*` modules. Pure functions with no 
 ## Reference
 
 - PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - AES Rules: [.agents/rules/RULES_AES.md](../../.agents/rules/RULES_AES.md)

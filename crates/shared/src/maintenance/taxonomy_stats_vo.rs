@@ -4,7 +4,7 @@ use crate::common::taxonomy_common_vo::Score;
 use crate::common::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct MaintenanceStatsVO {
     pub project_path: FilePath,
     pub total_files: Count,

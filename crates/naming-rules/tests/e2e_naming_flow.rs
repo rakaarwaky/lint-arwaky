@@ -2,8 +2,7 @@
 use naming_rules_lint_arwaky::agent_naming_orchestrator::{
     NamingOrchestrator, NamingOrchestratorDeps,
 };
-use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 use shared::common::PatternList;
 use shared::common::SuffixPolicyVO;
@@ -13,6 +12,7 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -49,6 +49,20 @@ fn make_file_entries(dir: &std::path::Path, names: &[&str]) -> Vec<FileEntry> {
         .collect()
 }
 
+/// Drive the aggregate and unwrap the audit payload, panicking on any other variant.
+fn run_audit(
+    orch: &dyn INamingRunnerAggregate,
+    entries: &[FileEntry],
+) -> Vec<shared::common::taxonomy_lint_result_vo::LintResult> {
+    let request = NamingRequest::RunAuditWithEntries {
+        files: entries.to_vec(),
+    };
+    match orch.execute(request) {
+        NamingResponse::Audit { violations } => violations,
+        NamingResponse::Name { .. } => panic!("expected an audit response"),
+    }
+}
+
 #[test]
 fn e2e_convention_violations_found() {
     let tmp = TempDir::new().unwrap();
@@ -63,13 +77,12 @@ fn e2e_convention_violations_found() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_convention_checker: Arc::new(NamingConventionChecker::new()),
-        suffix_prefix_checker: Arc::new(SuffixPrefixChecker::new()),
+        naming_checker: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         !results.is_empty(),
@@ -93,13 +106,12 @@ fn e2e_suffix_violations_found() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_convention_checker: Arc::new(NamingConventionChecker::new()),
-        suffix_prefix_checker: Arc::new(SuffixPrefixChecker::new()),
+        naming_checker: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         !results.is_empty(),
@@ -120,13 +132,12 @@ fn e2e_clean_files_no_violations() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_convention_checker: Arc::new(NamingConventionChecker::new()),
-        suffix_prefix_checker: Arc::new(SuffixPrefixChecker::new()),
+        naming_checker: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         results.is_empty(),
@@ -150,13 +161,12 @@ fn e2e_mixed_files_partial_violations() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_convention_checker: Arc::new(NamingConventionChecker::new()),
-        suffix_prefix_checker: Arc::new(SuffixPrefixChecker::new()),
+        naming_checker: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         results.len() >= 2,
@@ -177,7 +187,7 @@ fn e2e_container_wiring_produces_same_results() {
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config.clone(), layer_map.clone());
     let orch = container.orchestrator();
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(orch.as_ref(), &entries);
 
     assert!(
         !results.is_empty(),
@@ -220,13 +230,12 @@ fn e2e_aes101_disabled_skips_convention_check() {
     let config = Arc::new(make_config_with_disabled_aes101());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_convention_checker: Arc::new(NamingConventionChecker::new()),
-        suffix_prefix_checker: Arc::new(SuffixPrefixChecker::new()),
+        naming_checker: Arc::new(NamingChecker::new()),
         config,
         layer_map,
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     let aes101_count = results
         .iter()

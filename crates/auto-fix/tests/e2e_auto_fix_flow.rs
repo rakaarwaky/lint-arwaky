@@ -1,17 +1,18 @@
 // E2E tests — full pipeline: create container → dry-run fix → verify result.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
+use shared::auto_fix::FixRequest;
 use shared::auto_fix::IFileAdapterProtocol;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::{ContentString, FilePath};
 use std::sync::Arc;
 use tempfile::TempDir;
 
-fn make_dry_run_orch() -> Arc<dyn LintFixOrchestratorAggregate> {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+fn make_dry_run_orch() -> Arc<dyn IFixAggregate> {
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    container.orchestrator_with_filesystem(filesystem)
+    container.orchestrator_with_filesystem(filesystem, fs_container.io())
 }
 
 #[test]
@@ -21,7 +22,9 @@ fn e2e_dry_run_clean_file() {
     std::fs::write(tmp.path().join("clean.rs"), "fn main() {}\n").unwrap();
     let fp = FilePath::new(tmp.path().join("clean.rs").to_string_lossy().to_string()).unwrap();
 
-    let result = orch.execute(&fp, true); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(
         result.is_success(),
         "Should succeed on clean file: {}",
@@ -40,7 +43,9 @@ fn e2e_dry_run_file_with_unused_import() {
     .unwrap();
     let fp = FilePath::new(tmp.path().join("unused.rs").to_string_lossy().to_string()).unwrap();
 
-    let result = orch.execute(&fp, true); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(result.is_success(), "Dry-run should succeed: {}", result);
     // Verify file not modified in dry-run
     let content = std::fs::read_to_string(tmp.path().join("unused.rs")).unwrap();
@@ -61,15 +66,20 @@ fn e2e_dry_run_file_with_bypass_comment() {
     .unwrap();
     let fp = FilePath::new(tmp.path().join("bypass.rs").to_string_lossy().to_string()).unwrap();
 
-    let result = orch.execute(&fp, true); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(result.is_success(), "Dry-run should succeed: {}", result);
 }
 
 #[test]
 fn e2e_file_adapter_round_trip() {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-    let adapter = auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter::new(filesystem);
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
+    let adapter = auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter::new(
+        filesystem,
+        fs_container.io(),
+    );
 
     let tmp = TempDir::new().unwrap();
     let file = tmp.path().join("round_trip.txt");
@@ -99,7 +109,9 @@ fn e2e_per_request_dry_run_toggle() {
     let fp = FilePath::new(tmp.path().join("toggle.rs").to_string_lossy().to_string()).unwrap();
 
     // First call: dry_run=true (should not modify)
-    let result1 = orch.execute(&fp, true);
+    let result1 = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result();
     assert!(result1.is_success());
     let content_after_dry = std::fs::read_to_string(tmp.path().join("toggle.rs")).unwrap();
     assert!(
@@ -108,6 +120,8 @@ fn e2e_per_request_dry_run_toggle() {
     );
 
     // Second call: dry_run=false (may apply fixes)
-    let result2 = orch.execute(&fp, false);
+    let result2 = orch
+        .execute(FixRequest::execute(&fp, false))
+        .into_fix_result();
     assert!(result2.is_success());
 }

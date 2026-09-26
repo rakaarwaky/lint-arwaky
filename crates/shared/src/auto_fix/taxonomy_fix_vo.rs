@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct FixResult {
     pub output: DescriptionVO,
     #[serde(default)]

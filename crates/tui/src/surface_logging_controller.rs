@@ -1,5 +1,9 @@
 // PURPOSE: Initialize tracing-based logging for the TUI.
-// Output: file under `log/` plus optional terminal output.
+// Logs to `$XDG_STATE_HOME/lint-arwaky/log` (or `~/.local/state/lint-arwaky/log`)
+// so the scanned project directory is never polluted. Falls back to `./log`
+// when the XDG state dir is unavailable; the fallback is surfaced via eprintln
+// because the TUI status line is only reachable after the event loop starts.
+// No console (stdout) layer — stdout is owned by ratatui.
 use shared::tui::TuiEvent;
 use std::fs;
 use tracing::level_filters::LevelFilter;
@@ -9,22 +13,22 @@ use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{EnvFilter, fmt};
 
 pub fn init() -> anyhow::Result<()> {
-    let log_dir = std::path::Path::new("log");
-    fs::create_dir_all(log_dir)?;
+    let log_dir = match dirs::state_dir() {
+        Some(state_dir) => state_dir.join("lint-arwaky").join("log"),
+        None => {
+            eprintln!("lint-arwaky: XDG state dir unavailable; writing TUI logs to ./log instead");
+            fs::canonicalize(".")?.join("log")
+        }
+    };
+    fs::create_dir_all(&log_dir)?;
 
-    let file_appender = RollingFileAppender::new(Rotation::HOURLY, log_dir, "tui.log");
+    let file_appender = RollingFileAppender::new(Rotation::HOURLY, &log_dir, "tui.log");
     let file_layer = fmt::layer()
         .with_target(true)
         .with_thread_ids(false)
         .with_file(true)
         .with_line_number(true)
         .with_writer(file_appender);
-
-    let console_layer = fmt::layer()
-        .with_target(false)
-        .with_thread_ids(false)
-        .with_file(false)
-        .with_line_number(false);
 
     let filter = EnvFilter::builder()
         .with_default_directive(LevelFilter::INFO.into())
@@ -33,7 +37,6 @@ pub fn init() -> anyhow::Result<()> {
     tracing_subscriber::registry()
         .with(filter)
         .with(file_layer)
-        .with(console_layer)
         .with(tracing_error::ErrorLayer::default())
         .try_init()
         .ok();
@@ -55,6 +58,8 @@ pub fn record(event: &TuiEvent) {
         TuiEvent::ActionCheck => tracing::info!(target = "tui", "ActionCheck"),
         TuiEvent::ActionScan => tracing::info!(target = "tui", "ActionScan"),
         TuiEvent::ActionFix => tracing::info!(target = "tui", "ActionFix"),
+        TuiEvent::ActionFixLive => tracing::info!(target = "tui", "ActionFixLive"),
+        TuiEvent::CancelScan => tracing::info!(target = "tui", "CancelScan"),
         TuiEvent::ActionCi => tracing::info!(target = "tui", "ActionCi"),
         TuiEvent::ActionWatch => tracing::info!(target = "tui", "ActionWatch"),
         TuiEvent::ActionOrphan => tracing::info!(target = "tui", "ActionOrphan"),
@@ -80,6 +85,9 @@ pub fn record(event: &TuiEvent) {
         TuiEvent::PathBackspace => tracing::debug!(target = "tui", "PathBackspace"),
         TuiEvent::PathConfirm => tracing::debug!(target = "tui", "PathConfirm"),
         TuiEvent::PathUseCurrent => tracing::debug!(target = "tui", "PathUseCurrent"),
+        TuiEvent::ChangeProjectRoot => tracing::info!(target = "tui", "ChangeProjectRoot"),
+        TuiEvent::ConfirmAction => tracing::debug!(target = "tui", "ConfirmAction"),
+        TuiEvent::CancelConfirm => tracing::debug!(target = "tui", "CancelConfirm"),
         TuiEvent::Quit => tracing::info!(target = "tui", "Quit"),
         TuiEvent::Resize(w, h) => tracing::debug!(target = "tui", "Resize({},{})", w, h),
         TuiEvent::MouseClick(col, row) => {

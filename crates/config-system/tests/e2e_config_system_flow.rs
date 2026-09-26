@@ -3,6 +3,7 @@ mod common;
 
 use shared::common::FilePath;
 use shared::config_system::ConfigLanguage;
+use shared::config_system::ConfigRequest;
 use std::fs;
 use tempfile::TempDir;
 
@@ -48,16 +49,22 @@ fn full_config_lifecycle_rust_workspace() {
     let container = common::make_container();
     let orch = container.orchestrator();
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
-    let result = orch.load_project_config(&fp);
+    let result = orch
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     assert_eq!(result.source.language, "rust");
     assert!(result.config.enabled.value);
     assert!(!result.config.layers.is_empty());
-    let workspaces = orch.discover_workspaces(&fp);
+    let workspaces = orch
+        .execute(ConfigRequest::discover_workspaces(&fp))
+        .into_workspaces();
     assert_eq!(workspaces.len(), 2);
     let ws_names: Vec<String> = workspaces.iter().map(|w| w.path.basename()).collect();
     assert!(ws_names.contains(&"core".to_string()));
     assert!(ws_names.contains(&"cli".to_string()));
-    let ignored = orch.ignored_paths(&fp);
+    let ignored = orch
+        .execute(ConfigRequest::ignored_paths(&fp))
+        .into_patterns();
     assert!(ignored.values.contains(&"target".to_string()));
     assert!(ignored.values.contains(&".git".to_string()));
 }
@@ -75,7 +82,11 @@ fn full_config_lifecycle_typescript_fallback() {
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
     let result = common::make_container()
         .orchestrator()
-        .load_config_for_language(&fp, ConfigLanguage::TypeScript);
+        .execute(ConfigRequest::load_for_language(
+            &fp,
+            ConfigLanguage::TypeScript,
+        ))
+        .into_config_result();
     assert_eq!(result.source.language, "typescript");
     assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
 }

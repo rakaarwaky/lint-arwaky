@@ -3,9 +3,10 @@
 // Renders a centered popup overlay when show_path_dialog is true.
 // User can type a path, confirm, or use current directory.
 // Uses centered_rect() helper to calculate popup dimensions.
+use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
+use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use shared::tui::AppState;
@@ -27,10 +28,10 @@ impl PathScreen {
             .borders(Borders::ALL)
             .border_style(
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(theme::ACCENT)
                     .add_modifier(Modifier::BOLD),
             )
-            .style(Style::default().bg(Color::Black));
+            .style(Style::default().bg(theme::BACKGROUND));
 
         let cwd = std::env::current_dir()
             .map(|p| p.to_string_lossy().to_string())
@@ -46,23 +47,23 @@ impl PathScreen {
             Line::from(""),
             Line::from(Span::styled(
                 "  Type path or press Enter for current dir:",
-                Style::default().fg(Color::White),
+                Style::default().fg(theme::LABEL),
             )),
             Line::from(""),
             Line::from(vec![
-                Span::styled("  > ", Style::default().fg(Color::Green)),
+                Span::styled("  > ", Style::default().fg(theme::FOCUS_CONFIRM)),
                 Span::styled(
                     input_display,
                     Style::default()
-                        .fg(Color::Yellow)
+                        .fg(theme::PATH_INPUT)
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled("_", Style::default().fg(Color::White)),
+                Span::styled("_", Style::default().fg(theme::LABEL)),
             ]),
             Line::from(""),
             Line::from(Span::styled(
                 "  [Enter] Confirm   [Tab] Use current dir   [Esc] Quit",
-                Style::default().fg(Color::DarkGray),
+                Style::default().fg(theme::SEPARATOR),
             )),
         ];
 

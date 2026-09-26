@@ -8,7 +8,9 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::ArchitectureConfig;
 use shared::orphan_rules::IOrphanAggregate;
+use shared::orphan_rules::{OrphanRequest, OrphanResponse};
 
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::OrphanFileListVO;
 use shared::orphan_rules::{
@@ -44,6 +46,7 @@ pub struct ArchOrphanDeps {
     pub agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     pub surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
 }
 
 pub struct ArchOrphanAnalyzer {
@@ -53,33 +56,70 @@ pub struct ArchOrphanAnalyzer {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IOrphanAggregate for ArchOrphanAnalyzer {
-    fn build_orphan_graph_context(
-        &self,
-        _files: &OrphanFileListVO,
-        root_dir: &FilePath,
-    ) -> GraphAnalysisContext {
+    fn execute(&self, request: OrphanRequest) -> OrphanResponse {
+        match request {
+            OrphanRequest::BuildGraphContext { root_dir, .. } => OrphanResponse::GraphContext {
+                context: self.build_orphan_graph_context(&root_dir),
+            },
+            OrphanRequest::IdentifyEntryPoints { files } => OrphanResponse::EntryPoints {
+                files: self.identify_orphan_entry_points(&files),
+            },
+            OrphanRequest::Check { files, root_dir } => OrphanResponse::Violations {
+                violations: self.check_orphans(&files, &root_dir),
+            },
+            OrphanRequest::CheckWithContext {
+                files,
+                root_dir,
+                context,
+            } => OrphanResponse::Violations {
+                violations: self.check_orphans_with_context(&files, &root_dir, &context),
+            },
+            OrphanRequest::CheckWithEntries { files, context } => OrphanResponse::Violations {
+                violations: self.check_orphans_with_entries(&files, &context),
+            },
+            OrphanRequest::Scan { root_dir, ignored } => {
+                let (context, violations) = self.scan_orphans(&root_dir, &ignored.values);
+                OrphanResponse::ScanOutcome {
+                    context,
+                    violations,
+                }
+            }
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl ArchOrphanAnalyzer {
+    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
+        Self { deps, config }
+    }
+
+    pub fn build_orphan_graph_context(&self, root_dir: &FilePath) -> GraphAnalysisContext {
         let root_path = std::path::Path::new(root_dir.value());
         let ignored = self.ignored_paths();
         self.deps
             .filesystem
-            .build_orphan_graph_context(root_path, &ignored)
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                root_path, &ignored,
+            ))
+            .into_graph_context()
     }
 
-    fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
+    pub fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
         crate::utility_orphan_filename::identify_entry_points(std::slice::from_ref(files), &[])
     }
 
-    fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult> {
+    pub fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
         }
-        let context = self.build_orphan_graph_context(files, root_dir);
+        let context = self.build_orphan_graph_context(root_dir);
         let all_files = context.all_workspace_files.clone();
         let full_files_vo = OrphanFileListVO::new(all_files);
         self._check_orphans_inner(files, root_dir, &context, &full_files_vo)
     }
 
-    fn scan_orphans(
+    pub fn scan_orphans(
         &self,
         root_dir: &FilePath,
         ignored: &[String],
@@ -88,13 +128,16 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let context = self
             .deps
             .filesystem
-            .build_orphan_graph_context(root_path, ignored);
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                root_path, ignored,
+            ))
+            .into_graph_context();
         let files_vo = OrphanFileListVO::new(context.all_workspace_files.clone());
         let results = self.check_orphans_with_context(&files_vo, root_dir, &context);
         (context, results)
     }
 
-    fn check_orphans_with_context(
+    pub fn check_orphans_with_context(
         &self,
         files: &OrphanFileListVO,
         root_dir: &FilePath,
@@ -115,7 +158,8 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         // so file_vo is the same as files — no need to expand again.
         self._check_orphans_inner(files, root_dir, context, files)
     }
-    fn check_orphans_with_entries(
+
+    pub fn check_orphans_with_entries(
         &self,
         files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
         context: &GraphAnalysisContext,
@@ -131,13 +175,6 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
         let file_vo = OrphanFileListVO::new(file_paths);
         let root_dir = FilePath::new(".".to_string()).unwrap_or_default();
         self._check_orphans_inner(&file_vo, &root_dir, context, &file_vo)
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl ArchOrphanAnalyzer {
-    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
-        Self { deps, config }
     }
 
     /// Scans workspace files for orphaned architecture-layer files.
@@ -195,7 +232,7 @@ impl ArchOrphanAnalyzer {
         let root_path = std::path::Path::new(root_dir.value());
         let top_root = self
             .deps
-            .filesystem
+            .filesystem_workspace
             .workspace_root(root_dir)
             .unwrap_or_else(|| root_path.to_path_buf());
         let all_files_rel: Vec<String> = context
@@ -259,7 +296,11 @@ impl ArchOrphanAnalyzer {
             .iter()
             .filter_map(|f| {
                 let path = FilePath::new(f.clone()).ok()?;
-                let content = self.deps.filesystem.read_cached(&path);
+                let content = self
+                    .deps
+                    .filesystem
+                    .execute(FilesystemRequest::read_cached(&path))
+                    .into_content();
                 let c = content.value();
                 if c.is_empty() {
                     tracing::warn!(file = %f, "file content empty or not in cache");

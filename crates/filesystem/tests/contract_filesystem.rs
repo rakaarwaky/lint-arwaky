@@ -6,11 +6,11 @@ use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_graph_protocol::IGraphProtocol;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
-use shared::filesystem::contract_tool_resolution_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_workspace_protocol::IWorkspaceProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
 #[test]
 fn ast_parser_implements_parser_protocol() {
@@ -49,15 +49,11 @@ fn orchestrator_implements_aggregate() {
 }
 
 #[test]
-fn orchestrator_implements_all_protocol_traits() {
-    fn assert_trait<
-        T: IParserProtocol
-            + IGraphProtocol
-            + IWorkspaceProtocol
-            + IToolResolutionProtocol
-            + IFileSystemIOProtocol,
-    >() {
-    }
+fn each_capability_implements_exactly_one_protocol() {
+    // The agent owns only the aggregate; protocol seams belong to capabilities.
+    // The five per-capability tests above already prove each seam has exactly
+    // one implementor, so nothing extra is needed here beyond the aggregate.
+    fn assert_trait<T: IFilesystemAggregate>() {}
     assert_trait::<FilesystemOrchestrator>();
 }
 

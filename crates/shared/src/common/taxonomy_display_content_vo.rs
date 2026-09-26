@@ -1,7 +1,7 @@
 // PURPOSE: DisplayContent — value object for formatted display output (previews, human-readable sizes, etc.)
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DisplayContent {
     pub value: String,
 }

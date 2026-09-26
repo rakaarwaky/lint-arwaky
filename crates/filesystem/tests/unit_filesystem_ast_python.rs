@@ -115,3 +115,61 @@ fn decorated_class_with_multiple_bases() {
         vec!["AppProtocol".to_string(), "Mixin".to_string()]
     );
 }
+
+// ─── AES203 regression: identifiers inside f-string interpolations ──────
+
+use filesystem_lint_arwaky::utility_ast_python::extract_python_identifiers;
+
+#[test]
+fn fstring_interpolation_identifiers_are_extracted() {
+    // Regression: identifiers referenced inside `{...}` of an f-string must
+    // count as real usages (AES203 false positive otherwise).
+    let content = "def f(x):\n    return f\"a {x} b {foo(x)} c\"\n";
+    let tree = parse(content);
+    let ids = extract_python_identifiers(&tree, content);
+
+    assert!(ids.iter().any(|s| s == "x"), "x not found: {ids:?}");
+    assert!(ids.iter().any(|s| s == "foo"), "foo not found: {ids:?}");
+    assert!(ids.iter().any(|s| s == "f"), "f not found: {ids:?}");
+}
+
+#[test]
+fn plain_string_content_is_not_leaked_as_identifiers() {
+    // Plain (non-f) strings must not leak their content as identifiers.
+    let content = "greeting = \"hello world\"\n";
+    let tree = parse(content);
+    let ids = extract_python_identifiers(&tree, content);
+
+    assert_eq!(ids, vec!["greeting".to_string()], "ids: {ids:?}");
+}
+
+#[test]
+fn concatenated_fstring_interpolations_are_extracted() {
+    // Adjacent literal + f-string parts: interpolations must still be counted.
+    let content = "def g(x):\n    return \"pre\" f\"-{x}-\" \"post\"\n";
+    let tree = parse(content);
+    let ids = extract_python_identifiers(&tree, content);
+
+    assert!(ids.iter().any(|s| s == "x"), "x not found: {ids:?}");
+    assert!(ids.iter().any(|s| s == "g"), "g not found: {ids:?}");
+}
+
+#[test]
+fn aes203_regression_escape_used_inside_fstring_markup() {
+    // Exact shape of the real-world regression: rich.markup.escape is used
+    // only inside an f-string; it must be detected as used, not flagged
+    // AES203 UNUSED_IMPORT.
+    let content = concat!(
+        "from rich.markup import escape\n",
+        "def render(v):\n",
+        "    return f\"[bold red]{escape(v)}[/]\"\n",
+    );
+    let tree = parse(content);
+    let ids = extract_python_identifiers(&tree, content);
+
+    assert!(
+        ids.iter().any(|s| s == "escape"),
+        "escape not detected inside f-string: {ids:?}"
+    );
+    assert!(ids.iter().any(|s| s == "v"), "v not found: {ids:?}");
+}

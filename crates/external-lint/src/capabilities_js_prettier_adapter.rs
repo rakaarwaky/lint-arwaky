@@ -20,8 +20,9 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::external_lint::IExternalLintExecutorProtocol;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
@@ -31,7 +32,8 @@ use std::sync::Arc;
 
 pub struct PrettierAdapter {
     lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
+    tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -43,7 +45,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
     fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         let path_str = path.value();
-        if self.filesystem.is_file(Path::new(path_str))
+        if self.io.is_file(Path::new(path_str))
             && !path_str.ends_with(".ts")
             && !path_str.ends_with(".tsx")
             && !path_str.ends_with(".js")
@@ -52,14 +54,14 @@ impl ILinterAdapterProtocol for PrettierAdapter {
             return Ok(LintResultList::default());
         }
 
-        let wd = self.filesystem.resolve_js_working_dir(path);
-        let abs_path = self.filesystem.canonicalize_path_str(path);
+        let wd = self.tool_resolution.resolve_js_working_dir(path);
+        let abs_path = self.io.canonicalize_path_str(path);
 
         let prettier_name = match ToolName::new("prettier") {
             Ok(n) => n,
             Err(_) => return Ok(LintResultList::default()),
         };
-        let cmd = match self.filesystem.resolve_js_cmd(
+        let cmd = match self.tool_resolution.resolve_js_cmd(
             &prettier_name,
             vec!["--check".to_string(), abs_path.value],
             &wd,
@@ -119,11 +121,13 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 impl PrettierAdapter {
     pub fn new(
         lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             lint_executor,
-            filesystem,
+            io,
+            tool_resolution,
         }
     }
 }

@@ -7,9 +7,10 @@
 //     lint results or action output
 //
 // format_shortcuts() renders each row as colored spans (yellow keys, white labels).
+use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use shared::tui::{AppState, PreviewMode};
@@ -35,13 +36,25 @@ impl ShortcutComponent {
             _ => default_rows(),
         };
 
+        // I1: while search mode is active, show the live search line instead of shortcuts.
+        if state.search_mode {
+            let text = format!(
+                "search: {} (Enter confirm / Esc cancel)",
+                state.search_query
+            );
+            let paragraph =
+                Paragraph::new(text).style(Style::default().bg(theme::BACKGROUND).fg(theme::KEY));
+            frame.render_widget(paragraph, area);
+            return;
+        }
+
         let text = vec![
             Line::from(format_shortcuts(&row1)),
             Line::from(format_shortcuts(&row2)),
             Line::from(format_shortcuts(&row3)),
         ];
 
-        let paragraph = Paragraph::new(text).style(Style::default().bg(Color::Black));
+        let paragraph = Paragraph::new(text).style(Style::default().bg(theme::BACKGROUND));
         frame.render_widget(paragraph, area);
     }
 }
@@ -57,9 +70,10 @@ fn default_rows() -> ShortcutRows {
         vec![
             ("c", "check"),
             ("s", "scan"),
-            ("f", "fix"),
+            ("f", "fix (dry)"),
+            ("F", "fix (live)"),
             ("t", "ci"),
-            ("w", "toggle watch"),
+            ("w", "watch (CLI only)"),
             ("o", "orphan"),
             ("d", "doctor"),
             ("i", "init"),
@@ -88,7 +102,8 @@ fn context_sensitive_rows(_state: &AppState) -> ShortcutRows {
     (
         vec![
             ("c", "re-check"),
-            ("f", "fix"),
+            ("f", "fix (dry)"),
+            ("F", "fix (live)"),
             ("Esc", "back"),
             ("j/k", "scroll"),
         ],
@@ -118,11 +133,11 @@ fn format_shortcuts<'a>(shortcuts: &'a [(&'a str, &'a str)]) -> Vec<Span<'a>> {
         }
         spans.push(Span::styled(
             format!("{}:", key),
-            Style::default().fg(Color::Yellow),
+            Style::default().fg(theme::KEY),
         ));
         spans.push(Span::styled(
             label.to_string(),
-            Style::default().fg(Color::White),
+            Style::default().fg(theme::LABEL),
         ));
     }
     spans

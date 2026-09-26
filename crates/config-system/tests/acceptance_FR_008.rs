@@ -3,7 +3,7 @@
 mod common;
 
 use shared::common::FilePath;
-use shared::config_system::IConfigOrchestratorAggregate;
+use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use std::fs;
 use tempfile::TempDir;
 
@@ -16,13 +16,13 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
     use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
     use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 
-    let fs = common::make_fs();
+    let io = common::make_io();
     ConfigOrchestrator::new(ConfigOrchestratorDeps {
-        workspace_detector: Arc::new(WorkspaceDetector::new(fs.clone())),
-        config_reader: Arc::new(ConfigYamlReader::new(fs.clone())),
-        parser: Arc::new(ConfigParserProvider::new(fs.clone())),
+        workspace_detector: Arc::new(WorkspaceDetector::new(io.clone())),
+        config_reader: Arc::new(ConfigYamlReader::new(io.clone())),
+        parser: Arc::new(ConfigParserProvider::new(io.clone())),
         validator: Arc::new(ConfigRulesValidator::new()),
-        filesystem: fs,
+        filesystem: common::make_fs(),
     })
 }
 
@@ -39,7 +39,9 @@ fn us8_no_config_returns_8_default_ignored_paths() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let paths = make_orchestrator().ignored_paths(&fp);
+    let paths = make_orchestrator()
+        .execute(ConfigRequest::ignored_paths(&fp))
+        .into_patterns();
 
     assert!(paths.values.contains(&".git".to_string()));
     assert!(paths.values.contains(&"node_modules".to_string()));
@@ -67,7 +69,9 @@ fn us8_config_adds_new_path() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let paths = make_orchestrator().ignored_paths(&fp);
+    let paths = make_orchestrator()
+        .execute(ConfigRequest::ignored_paths(&fp))
+        .into_patterns();
 
     assert!(paths.values.contains(&"tests".to_string()));
     // Should have 12 defaults + 1 config = 13 (but "tests" is already a default, so deduped to 12)
@@ -86,7 +90,9 @@ fn us8_config_duplicate_path_is_deduplicated() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let paths = make_orchestrator().ignored_paths(&fp);
+    let paths = make_orchestrator()
+        .execute(ConfigRequest::ignored_paths(&fp))
+        .into_patterns();
 
     // Count occurrences of ".git" — should be exactly 1
     let git_count = paths.values.iter().filter(|v| *v == ".git").count();
@@ -106,7 +112,9 @@ fn us8_config_empty_string_is_filtered() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let paths = make_orchestrator().ignored_paths(&fp);
+    let paths = make_orchestrator()
+        .execute(ConfigRequest::ignored_paths(&fp))
+        .into_patterns();
 
     // Empty string should not appear
     assert!(!paths.values.contains(&"".to_string()));

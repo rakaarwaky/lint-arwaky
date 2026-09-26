@@ -5,7 +5,7 @@
 // CapabilitiesExternalLintSelector with its default configuration.
 
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::external_lint::contract_external_lint_selector_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 
 use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 

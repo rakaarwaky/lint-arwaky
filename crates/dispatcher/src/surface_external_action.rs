@@ -8,15 +8,18 @@
 // The surface layer performs all pre-computation (language detection, config
 // loading) and passes an `ExternalLintContext` to the orchestrator, which
 // runs adapters with zero filesystem I/O.
+use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
 
 use shared::common::FilePath;
-use shared::config_system::contract_parser_protocol::IConfigParserProtocol;
+use shared::config_system::contract_config_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
 use shared::common::ViolationItem;
 
@@ -26,6 +29,7 @@ pub fn collect_external_direct(
     path: Option<FilePath>,
     external_lint: Arc<dyn IExternalLintAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
+    filesystem_io: Arc<dyn IFileSystemIOProtocol>,
     config_parser: Arc<dyn IConfigParserProtocol>,
     filter: Option<String>,
     ignored_paths: &[String],
@@ -34,17 +38,22 @@ pub fn collect_external_direct(
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !filesystem.path_exists(std::path::Path::new(&root)) {
+    if !filesystem_io.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
 
     // Build file index for target path (respects config ignored_paths)
     let root_path = std::path::Path::new(&root);
-    filesystem.build_file_index_with_ignored(root_path, ignored_paths);
+    filesystem.execute(FilesystemRequest::build_file_index_with_ignored(
+        root_path,
+        ignored_paths,
+    ));
 
     // Detect languages from discovered files (extension check only — no file I/O)
-    let files = filesystem.discover_files(root_path);
+    let files = filesystem
+        .execute(FilesystemRequest::discover_files(root_path))
+        .into_paths();
     let has_rust = files.iter().any(|f| f.ends_with(".rs"));
     let has_python = files.iter().any(|f| f.ends_with(".py"));
     let has_js = files.iter().any(|f| {
@@ -52,7 +61,8 @@ pub fn collect_external_direct(
     });
 
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
-    let config_entries = load_config_entries(root_path, &*config_parser, &*filesystem);
+    let config_entries =
+        load_config_entries(root_path, &*config_parser, &*filesystem, &*filesystem_io);
 
     let context = ExternalLintContext {
         has_rust,
@@ -62,12 +72,22 @@ pub fn collect_external_direct(
         config_entries,
     };
 
-    let scan_results = external_lint.scan_all_with_context(&root_fp, &context);
+    let scan_results = external_lint
+        .execute(
+            shared::external_lint::ExternalLintRequest::scan_all_with_context(&root_fp, &context),
+        )
+        .into_violations();
     let mut violations: Vec<ViolationItem> = scan_results
         .values
         .iter()
         .map(ViolationItem::from_lint_result)
         .collect();
+
+    // External tools (bandit, ruff, ...) scan the whole target tree, including
+    // files outside the workspace member dirs (crates/ packages/ modules/).
+    // Internal scanners already filter via build_file_index_impl; mirror that
+    // here so root-level files (e.g. setup.py) are not reported.
+    filter_outside_member_dirs(&mut violations, &root, filesystem.as_ref());
 
     if let Some(ref filter_str) = filter {
         let filter_upper = filter_str.to_uppercase();
@@ -77,12 +97,44 @@ pub fn collect_external_direct(
     Ok(violations)
 }
 
+/// Drop violations whose file is outside any workspace member dir
+/// (crates/, packages/, modules/) when the target is (or is inside) a
+/// workspace root that defines member dirs. Mirrors `build_file_index_impl`.
+pub fn filter_outside_member_dirs(
+    violations: &mut Vec<ViolationItem>,
+    root: &str,
+    fs: &dyn IFilesystemAggregate,
+) {
+    let root_path = Path::new(root);
+    let ws_root = match fs
+        .execute(FilesystemRequest::find_workspace_root(root_path))
+        .into_root()
+    {
+        Some(r) => r,
+        None => return,
+    };
+    let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
+        .iter()
+        .filter(|d| ws_root.join(d).is_dir())
+        .copied()
+        .collect();
+    if member_dirs.is_empty() {
+        return;
+    }
+    violations.retain(|v| {
+        let file_path = Path::new(&v.file.value);
+        let rel = file_path.strip_prefix(&ws_root).unwrap_or(file_path);
+        member_dirs.iter().any(|d| rel.starts_with(d))
+    });
+}
+
 /// Walk up from `root_path` looking for lint_arwaky.config.*.yaml files.
 /// Returns parsed adapter entries if any config file is found, else empty vec.
 fn load_config_entries(
     root_path: &std::path::Path,
     config_parser: &dyn IConfigParserProtocol,
-    fs: &dyn IFilesystemAggregate,
+    _fs: &dyn IFilesystemAggregate,
+    fs_io: &dyn IFileSystemIOProtocol,
 ) -> Vec<AdapterEntry> {
     let config_names = vec!["lint_arwaky.config.yaml"];
     let start = if root_path.is_file() {
@@ -95,7 +147,7 @@ fn load_config_entries(
         for cfg_name in &config_names {
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists() {
-                if let Ok(content) = fs.read_to_string(&cfg_path) {
+                if let Ok(content) = fs_io.read_to_string(&cfg_path) {
                     let entries = config_parser.parse_adapter_entries_from_yaml(&content.value);
                     if !entries.is_empty() {
                         return entries;
@@ -113,12 +165,13 @@ pub fn collect_external(
     _external_lint: Arc<dyn IExternalLintAggregate>,
     filter: Option<String>,
     _filesystem: Arc<dyn IFilesystemAggregate>,
+    filesystem_io: Arc<dyn IFileSystemIOProtocol>,
 ) -> Result<Vec<ViolationItem>, String> {
     let root = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
     };
-    if !_filesystem.path_exists(std::path::Path::new(&root)) {
+    if !filesystem_io.path_exists(std::path::Path::new(&root)) {
         return Err(format!("Error: path '{}' does not exist", root));
     }
 

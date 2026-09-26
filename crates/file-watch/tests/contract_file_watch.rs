@@ -2,9 +2,9 @@
 use file_watch_lint_arwaky::agent_watch_orchestrator::WatchOrchestrator;
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::contract_change_analyzer_protocol::IChangeAnalyzerProtocol;
-use shared::file_watch::contract_provider_protocol::IWatchProviderProtocol;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
+use shared::file_watch::contract_watch_protocol::IChangeAnalyzerProtocol;
+use shared::file_watch::contract_watch_protocol::IWatchProviderProtocol;
 
 #[test]
 fn change_analyzer_implements_change_analyzer_protocol() {

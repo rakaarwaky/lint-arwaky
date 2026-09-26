@@ -12,19 +12,25 @@ use std::sync::Arc;
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use shared::common::taxonomy_duration_vo::Timeout;
-use shared::external_lint::contract_adapter_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::external_lint::{
     IExternalLintAggregate, IExternalLintExecutorProtocol, IExternalLintSelectorProtocol,
 };
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 
 pub struct ExternalLintContainer {
     aggregate: Arc<dyn IExternalLintAggregate>,
 }
 
 impl ExternalLintContainer {
-    pub fn new(filesystem: Arc<dyn IFilesystemAggregate>) -> Self {
+    pub fn new(
+        filesystem: Arc<dyn IFilesystemAggregate>,
+        io: Arc<dyn IFileSystemIOProtocol>,
+        tool_resolution: Arc<dyn IToolResolutionProtocol>,
+    ) -> Self {
         let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(
             crate::capabilities_stdio_client::StdioClient::new(Timeout::new(60.0)),
         );
@@ -32,7 +38,8 @@ impl ExternalLintContainer {
         let lint_executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(
             crate::capabilities_external_lint_executor::ExternalLintExecutor::new(
                 executor.clone(),
-                filesystem.clone(),
+                io.clone(),
+                tool_resolution.clone(),
             ),
         );
 
@@ -42,7 +49,8 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_ruff_adapter::RuffAdapter::new(
                 lint_executor.clone(),
                 None,
-                filesystem.clone(),
+                io.clone(),
+                tool_resolution.clone(),
             )),
         );
         adapters.insert(
@@ -50,7 +58,8 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_bandit_adapter::BanditAdapter::new(
                 lint_executor.clone(),
                 None,
-                filesystem.clone(),
+                io.clone(),
+                tool_resolution.clone(),
             )),
         );
         adapters.insert(
@@ -58,14 +67,16 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_py_mypy_adapter::MyPyAdapter::new(
                 lint_executor.clone(),
                 None,
-                filesystem.clone(),
+                io.clone(),
+                tool_resolution.clone(),
             )),
         );
         adapters.insert(
             "eslint".to_string(),
             Arc::new(crate::capabilities_js_eslint_adapter::ESLintAdapter::new(
                 lint_executor.clone(),
-                filesystem.clone(),
+                io.clone(),
+                tool_resolution.clone(),
             )),
         );
         adapters.insert(
@@ -73,7 +84,8 @@ impl ExternalLintContainer {
             Arc::new(
                 crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
                     lint_executor.clone(),
-                    filesystem.clone(),
+                    io.clone(),
+                    tool_resolution.clone(),
                 ),
             ),
         );
@@ -81,7 +93,8 @@ impl ExternalLintContainer {
             "tsc".to_string(),
             Arc::new(crate::capabilities_js_tsc_adapter::TSCAdapter::new(
                 lint_executor.clone(),
-                filesystem.clone(),
+                io.clone(),
+                tool_resolution.clone(),
             )),
         );
         adapters.insert(
@@ -90,7 +103,7 @@ impl ExternalLintContainer {
                 crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
                     executor.clone(),
                     None,
-                    filesystem.clone(),
+                    tool_resolution.clone(),
                 ),
             ),
         );
@@ -99,7 +112,7 @@ impl ExternalLintContainer {
             Arc::new(crate::capabilities_rs_fmt_adapter::RustFmtAdapter::new(
                 executor.clone(),
                 None,
-                filesystem.clone(),
+                tool_resolution.clone(),
             )),
         );
         adapters.insert(
@@ -107,7 +120,7 @@ impl ExternalLintContainer {
             Arc::new(
                 crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(
                     executor.clone(),
-                    filesystem.clone(),
+                    tool_resolution.clone(),
                 ),
             ),
         );
@@ -120,6 +133,7 @@ impl ExternalLintContainer {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
                 adapters,
                 filesystem,
+                filesystem_io: io,
                 selector,
             })),
         }

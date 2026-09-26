@@ -8,6 +8,10 @@ pub fn make_fs() -> Arc<dyn IFilesystemAggregate> {
     filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
 }
 
+pub fn make_io() -> Arc<dyn shared::filesystem::IFileSystemIOProtocol> {
+    filesystem::root_filesystem_container::FilesystemContainer::new().io()
+}
+
 pub fn make_container() -> ConfigContainer {
-    ConfigContainer::new(make_fs())
+    ConfigContainer::new(make_fs(), make_io())
 }

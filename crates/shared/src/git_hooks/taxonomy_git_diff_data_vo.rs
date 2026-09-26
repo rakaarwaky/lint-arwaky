@@ -2,9 +2,10 @@
 use serde::{Deserialize, Serialize};
 
 /// Semantic status of the diff between two file versions.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum GitDiffStatus {
     /// Files are byte-identical (or content-identical after normalization).
+    #[default]
     Unchanged,
     /// Files differ in content.
     Modified,
@@ -22,7 +23,7 @@ pub enum GitDiffStatus {
 /// "version1" / "version2"). The score is reserved for future use (currently
 /// always 0.0); kept as a field so callers do not have to introduce a new VO
 /// once we wire up a real similarity score.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct GitDiffSideVO {
     pub path: String,
     pub similarity_score: f64,
@@ -40,7 +41,7 @@ impl GitDiffSideVO {
 /// Strongly-typed replacement for the previous
 /// `HashMap<String, serde_json::Value>` return type. Each field has a real
 /// domain meaning — there is no `serde_json::Value` in the contract surface.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct GitDiffDataVO {
     pub version1: GitDiffSideVO,
     pub version2: GitDiffSideVO,

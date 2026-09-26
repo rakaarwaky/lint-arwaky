@@ -1,3 +1,7 @@
+/// Lint Arwaky — architecture linter for Rust, Python, and TypeScript.
+///
+/// Aggregates every workspace crate and re-exports them for binaries
+/// (`lint-arwaky-cli`, `lint-arwaky-mcp`, `lint-arwaky-tui`).
 pub use auto_fix;
 pub use cli_commands;
 pub use config_system;

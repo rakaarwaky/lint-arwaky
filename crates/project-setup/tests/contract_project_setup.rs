@@ -2,13 +2,11 @@
 use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use shared::project_setup::{
-    ISetupInstallerProtocol, ISetupManagementProtocol, SetupManagementAggregate,
-};
+use shared::project_setup::{ISetupAggregate, ISetupInstallerProtocol, ISetupManagementProtocol};
 
 #[test]
 fn setup_management_orchestrator_implements_aggregate() {
-    fn assert_trait<T: SetupManagementAggregate>() {}
+    fn assert_trait<T: ISetupAggregate>() {}
     assert_trait::<SetupManagementOrchestrator>();
 }
 
@@ -34,7 +32,7 @@ fn all_contracts_are_send_sync() {
 
 #[test]
 fn orchestrator_can_be_arc_trait_object() {
-    fn assert_object_safe<T: SetupManagementAggregate>() {}
+    fn assert_object_safe<T: ISetupAggregate>() {}
     assert_object_safe::<SetupManagementOrchestrator>();
 }
 

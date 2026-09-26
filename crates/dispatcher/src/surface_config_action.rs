@@ -2,7 +2,7 @@
 // Adapted: sync — iterates known languages using read_config (sync) instead of
 // list_config_files (async). No tokio runtime needed.
 use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
 use std::sync::Arc;
 
 /// One discovered config file (content already redacted).
@@ -60,21 +60,21 @@ pub fn collect_config_show(
 
     let mut report = ConfigShowReport::default();
     for lang in &languages {
-        match orchestrator.read_config(&project_root, *lang) {
-            Ok(Some(source)) => {
+        let source = orchestrator
+            .execute(ConfigRequest::read_config(&project_root, *lang))
+            .into_read_source();
+        match source {
+            Some(source) => {
                 report.entries.push(ConfigShowEntry {
                     language: lang.as_str().to_string(),
                     path: source.path.value.clone(),
                     content: redact_secrets(&source.raw_content),
                 });
             }
-            Ok(None) => {}
-            Err(e) => {
-                report.warnings.push(format!(
-                    "Warning: Failed to read config for {}: {}",
-                    lang.as_str(),
-                    e
-                ));
+            None => {
+                report
+                    .warnings
+                    .push(format!("Warning: No config found for {}.", lang.as_str()));
             }
         }
     }

@@ -15,11 +15,11 @@ use shared::cli_commands::LintResultList;
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_diff_protocol::IDiffProtocol;
-use shared::git_hooks::contract_git_hooks_aggregate::GitHooksAggregate;
-use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
-use shared::git_hooks::contract_orchestrator_aggregate::HookManagementOrchestratorAggregate;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
+use shared::git_hooks::taxonomy_git_hooks_request_vo::{GitHooksRequest, GitHooksResponse};
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 
 use std::sync::Arc;
@@ -32,43 +32,87 @@ pub struct GitHooksOrchestrator {
     hook_manager: Arc<dyn IHookManagerProtocol>,
 }
 
-// ─── Block 2: Aggregate Trait Implementation ──────────────
+// ─── Block 2: Aggregate Trait Implementations ─────────────
 
-impl GitHooksAggregate for GitHooksOrchestrator {
-    fn diff_protocol(&self) -> &dyn IDiffProtocol {
-        self.diff_protocol.as_ref()
-    }
-
-    fn hook_protocol(&self) -> &dyn IHookProtocol {
-        self.hook_protocol.as_ref()
-    }
-
-    fn run_git_hooks_check(&self, path: &FilePath) -> LintResultList {
-        self.diff_protocol().run_git_diff_check(path)
-    }
-
-    fn install_hook(&self, executable_path: &FilePath) -> Result<SuccessStatus, GitHookError> {
-        self.hook_protocol().install_pre_commit(executable_path)
-    }
-
-    fn uninstall_hook(&self) -> Result<SuccessStatus, GitHookError> {
-        self.hook_protocol().uninstall_pre_commit()
-    }
-}
-
-impl HookManagementOrchestratorAggregate for GitHooksOrchestrator {
-    fn get_hook_manager(&self) -> &dyn IHookManagerProtocol {
-        self.hook_manager.as_ref()
-    }
-
-    fn get_hook_manager_identity(&self) -> Identity {
-        self.hook_protocol().get_hook_manager_identity()
+impl IGitHooksAggregate for GitHooksOrchestrator {
+    fn execute(&self, request: GitHooksRequest) -> GitHooksResponse {
+        match request {
+            GitHooksRequest::RunCheck { path } => GitHooksResponse::RunCheck {
+                results: self.run_git_hooks_check(&path),
+            },
+            GitHooksRequest::Install { executable_path } => GitHooksResponse::Install {
+                status: self.install_hook(&executable_path),
+            },
+            GitHooksRequest::Uninstall => GitHooksResponse::Uninstall {
+                status: self.uninstall_hook(),
+            },
+            GitHooksRequest::InitializeConfig { path } => GitHooksResponse::InitializeConfig {
+                description: self.initialize_config(&path),
+            },
+            GitHooksRequest::UpdateIgnoreRule { request } => GitHooksResponse::UpdateIgnoreRule {
+                description: self.update_ignore_rule(request),
+            },
+            GitHooksRequest::DiffData { path1, path2 } => GitHooksResponse::DiffData {
+                data: self.get_diff_data(&path1, &path2),
+            },
+            GitHooksRequest::GetManagerIdentity => GitHooksResponse::GetManagerIdentity {
+                identity: self.get_hook_manager_identity(),
+            },
+        }
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl GitHooksOrchestrator {
+    pub fn diff_protocol(&self) -> &dyn IDiffProtocol {
+        self.diff_protocol.as_ref()
+    }
+
+    pub fn hook_protocol(&self) -> &dyn IHookProtocol {
+        self.hook_protocol.as_ref()
+    }
+
+    pub fn run_git_hooks_check(&self, path: &FilePath) -> LintResultList {
+        self.diff_protocol().run_git_diff_check(path)
+    }
+
+    pub fn install_hook(&self, executable_path: &FilePath) -> Result<SuccessStatus, GitHookError> {
+        self.hook_protocol().install_pre_commit(executable_path)
+    }
+
+    pub fn uninstall_hook(&self) -> Result<SuccessStatus, GitHookError> {
+        self.hook_protocol().uninstall_pre_commit()
+    }
+
+    pub fn initialize_config(
+        &self,
+        path: &str,
+    ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
+        self.hook_protocol().initialize_config(path)
+    }
+
+    pub fn update_ignore_rule(
+        &self,
+        request: shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO,
+    ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
+        self.hook_protocol().update_ignore_rule(request)
+    }
+
+    pub fn get_diff_data(
+        &self,
+        path1: &str,
+        path2: &str,
+    ) -> shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO {
+        self.hook_protocol().get_diff_data(path1, path2)
+    }
+
+    pub fn get_hook_manager(&self) -> Arc<dyn IHookManagerProtocol> {
+        self.hook_manager.clone()
+    }
+    pub fn get_hook_manager_identity(&self) -> Identity {
+        self.hook_protocol().get_hook_manager_identity()
+    }
     pub fn new(
         diff_protocol: Arc<dyn IDiffProtocol>,
         hook_protocol: Arc<dyn IHookProtocol>,

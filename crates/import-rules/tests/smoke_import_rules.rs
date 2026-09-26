@@ -13,12 +13,15 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::ArchitectureConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
-
 fn minimal_config() -> ArchitectureConfig {
     let mut layers = HashMap::new();
     layers.insert(
@@ -39,18 +42,26 @@ fn minimal_config() -> ArchitectureConfig {
     )
 }
 
-fn make_filesystem() -> Arc<dyn IFilesystemAggregate> {
+fn make_filesystem() -> (
+    Arc<dyn IFilesystemAggregate>,
+    Arc<dyn IFileSystemIOProtocol>,
+    Arc<dyn IWorkspaceProtocol>,
+    Arc<dyn IParserProtocol>,
+) {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-    c.orchestrator()
+    (c.orchestrator(), c.io(), c.workspace(), c.parser())
 }
 
 #[test]
 fn smoke_container_creation() {
     let config = minimal_config();
-    let fs = make_filesystem();
-    let container = ImportContainer::new_with_config(config, fs);
+    let (fs, fs_io, ws, parser) = make_filesystem();
+    let container = ImportContainer::new_with_config(config, fs, fs_io, ws, parser);
     let orch = container.orchestrator();
-    assert_eq!(orch.name(), "import-rules");
+    assert_eq!(
+        orch.execute(ImportRequest::Name).into_name(),
+        "import-rules"
+    );
 }
 
 #[test]

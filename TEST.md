@@ -99,11 +99,13 @@ cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 
 ### 3.1 Thresholds
 
+Thresholds match the §1 Expected Violation Counts table (100+ violations per language).
+
 | Criteria                       | PASS   | FAIL       |
 | ------------------------------ | ------ | ---------- |
-| Total violations (Rust scan)   | >= 300 | < 300 or 0 |
-| Total violations (Python scan) | >= 300 | < 300 or 0 |
-| Total violations (JS/TS scan)  | >= 300 | < 300 or 0 |
+| Total violations (Rust scan)   | >= 100 | < 100 or 0 |
+| Total violations (Python scan) | >= 100 | < 100 or 0 |
+| Total violations (JS/TS scan)  | >= 100 | < 100 or 0 |
 | Unique AES codes (Rust)        | >= 24  | < 24       |
 | Unique AES codes (Python)      | >= 24  | < 24       |
 | Unique AES codes (JS/TS)       | >= 24  | < 24       |

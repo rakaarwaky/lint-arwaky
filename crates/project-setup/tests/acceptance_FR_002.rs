@@ -4,7 +4,8 @@ use shared::common::taxonomy_path_vo::DirectoryPath;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = c.io();
     SetupContainer::new(fs)
 }
 
