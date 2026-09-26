@@ -14,6 +14,7 @@ use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::orphan_rules::OrphanRequest;
+use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
@@ -238,7 +239,8 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
     all.extend(
         agg.quality
-            .run_analysis_with_entries(&entries)
+            .execute(CodeAnalysisRequest::run_analysis(&entries))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );
@@ -420,7 +422,8 @@ fn run_single_file_scan(
     let mut all: Vec<ViolationItem> = Vec::new();
     all.extend(
         agg.quality
-            .run_analysis_with_entries(&entries)
+            .execute(CodeAnalysisRequest::run_analysis(&entries))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );

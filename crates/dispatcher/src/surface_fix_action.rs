@@ -7,6 +7,7 @@ use shared::cli_commands::LintResult;
 use shared::common::FilePath;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
+use shared::quality_rules::CodeAnalysisRequest;
 use std::sync::Arc;
 
 /// Auto-fix outcome — formatted by CLI/MCP surfaces.
@@ -34,7 +35,9 @@ pub fn collect_fix(
         None => FilePath::new(".").unwrap_or_default(),
     };
 
-    let results = code_analysis_linter.run_code_analysis(&project_path);
+    let results = code_analysis_linter
+        .execute(CodeAnalysisRequest::run_analysis(&[]))
+        .into_violations();
 
     let fixable: Vec<LintResult> = results
         .iter()
@@ -51,7 +54,9 @@ pub fn collect_fix(
     let (after_count, fixed_count, success) = if dry_run {
         (results.len(), 0usize, true)
     } else {
-        let after_results = code_analysis_linter.run_code_analysis(&project_path);
+        let after_results = code_analysis_linter
+            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .into_violations();
         let fixed_count = results.len().saturating_sub(after_results.len());
         (after_results.len(), fixed_count, after_results.is_empty())
     };
@@ -81,7 +86,9 @@ pub fn collect_fix_direct(
         None => FilePath::new(".").unwrap_or_default(),
     };
 
-    let results = code_analysis_linter.run_code_analysis(&project_path);
+    let results = code_analysis_linter
+        .execute(CodeAnalysisRequest::run_analysis(&[]))
+        .into_violations();
 
     let fixable: Vec<LintResult> = results
         .iter()
@@ -97,7 +104,9 @@ pub fn collect_fix_direct(
     let (after_count, fixed_count, success) = if dry_run {
         (results.len(), 0usize, true)
     } else {
-        let after_results = code_analysis_linter.run_code_analysis(&project_path);
+        let after_results = code_analysis_linter
+            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .into_violations();
         let fixed_count = results.len().saturating_sub(after_results.len());
         (after_results.len(), fixed_count, after_results.is_empty())
     };

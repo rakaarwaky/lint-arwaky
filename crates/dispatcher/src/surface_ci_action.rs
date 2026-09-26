@@ -10,6 +10,7 @@ use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::orphan_rules::OrphanRequest;
+use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
 /// CI evaluation result — formatted by CLI/MCP surfaces.
@@ -61,7 +62,10 @@ pub fn collect_ci(
         .build_file_index_with_ignored(root_path, &ignored.values);
 
     // Quality analysis (sync)
-    let mut results = deps.code_analysis_linter.run_code_analysis_path(&root);
+    let mut results = deps
+        .code_analysis_linter
+        .execute(CodeAnalysisRequest::run_analysis(&[]))
+        .into_violations();
 
     // Import rules — pass pre-fetched FileEntry data
     let file_list = deps.filesystem.file_list();
@@ -85,8 +89,14 @@ pub fn collect_ci(
         .into_scan_outcome();
     results.extend(orphan_res);
 
-    let score = deps.code_analysis_linter.calc_score(&results);
-    let has_crit = deps.code_analysis_linter.check_critical(&results);
+    let score = deps
+        .code_analysis_linter
+        .execute(CodeAnalysisRequest::calc_score(&results))
+        .into_score();
+    let has_crit = deps
+        .code_analysis_linter
+        .execute(CodeAnalysisRequest::check_critical(&results))
+        .into_is_critical();
     let below_threshold = score.value() < threshold.value() as f64;
 
     let mut reasons: Vec<String> = Vec::new();

@@ -8,6 +8,7 @@ use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
 use shared::common::ViolationItem;
+use shared::quality_rules::CodeAnalysisRequest;
 
 pub fn collect_quality(
     path: Option<FilePath>,
@@ -31,7 +32,9 @@ pub fn collect_quality(
 
     // Pass pre-fetched FileEntry data to quality orchestrator
     let file_list = fs_agg.file_list();
-    let results = code_analysis_linter.run_analysis_with_entries(file_list);
+    let results = code_analysis_linter
+        .execute(CodeAnalysisRequest::run_analysis(file_list))
+        .into_violations();
     let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)

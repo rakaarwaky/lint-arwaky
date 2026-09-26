@@ -8,6 +8,7 @@
 use shared::cli_commands::LintResult;
 use shared::common::{FilePath, GitBranchName};
 use shared::git_hooks::{GitHooksRequest, IGitHooksAggregate};
+use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use std::process::Command;
 use std::sync::Arc;
@@ -43,8 +44,10 @@ pub fn collect_git_diff(
         .collect();
 
     let mut results: Vec<LintResult> = Vec::new();
-    for f in &files {
-        let r = code_analysis_linter.run_code_analysis_path(f);
+    for _f in &files {
+        let r = code_analysis_linter
+            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .into_violations();
         results.extend(r);
     }
 
