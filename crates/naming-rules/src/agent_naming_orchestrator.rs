@@ -7,6 +7,7 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -24,6 +25,30 @@ pub struct NamingOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl INamingRunnerAggregate for NamingOrchestrator {
+    fn execute(&self, request: NamingRequest) -> NamingResponse {
+        match request {
+            NamingRequest::RunAuditWithEntries { files } => {
+                NamingResponse::Audit {
+                    violations: self.run_audit_with_entries(&files),
+                }
+            }
+            NamingRequest::Name => NamingResponse::Name {
+                name: self.name().to_string(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl NamingOrchestrator {
+    pub fn new(deps: NamingOrchestratorDeps) -> Self {
+        Self { deps }
+    }
+
+    pub fn name(&self) -> &str {
+        "naming-rules"
+    }
+
     /// Run audit on pre-parsed file entries from the filesystem crate.
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         // Naming checks are path-only — do NOT skip parse failures.
@@ -39,17 +64,6 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         let root = FilePath::new(".".to_string()).unwrap_or_default();
 
         self.run_checks(&file_list, &root)
-    }
-
-    fn name(&self) -> &str {
-        "naming-rules"
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl NamingOrchestrator {
-    pub fn new(deps: NamingOrchestratorDeps) -> Self {
-        Self { deps }
     }
 
     /// Check if a specific AES rule is enabled in the configuration.

@@ -1,7 +1,7 @@
 // PURPOSE: Naming rules scan business logic, no formatting.
 //
 // Data Flow:
-//   CLI → collect_naming → filesystem.file_list() → naming_orchestrator.run_audit_with_entries → violations
+//   CLI → collect_naming → filesystem.file_list() → naming_orchestrator.execute → violations
 //
 // The naming-rules crate performs zero I/O — it receives &[FileEntry] and
 // returns LintResult violations. All filesystem access is handled by the
@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use shared::naming_rules::INamingRunnerAggregate;
 
 use shared::common::ViolationItem;
@@ -38,21 +39,26 @@ pub fn collect_naming(
     fs_agg.build_file_index_with_ignored(root_path, ignored_paths);
 
     // 4. Run naming audit — orchestrator does zero I/O, only delegates
-    //    to naming_convention_checker (AES101) and suffix_prefix_checker (AES102).
-    let results = naming_orchestrator.run_audit_with_entries(fs_agg.file_list());
+    //    to the rich INamingCheckerProtocol (AES101 + AES102).
+    let request = NamingRequest::RunAuditWithEntries {
+        files: fs_agg.file_list().to_vec(),
+    };
+    let NamingResponse::Audit { violations: results } = naming_orchestrator.execute(request) else {
+        return Err("naming audit returned an unexpected response".to_string());
+    };
 
-    // 4. Convert LintResult to ViolationItem for output formatting
+    // 5. Convert LintResult to ViolationItem for output formatting
     let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)
         .collect();
 
-    // 5. Apply optional filter (by violation code)
+    // 6. Apply optional filter (by violation code)
     if let Some(ref filter_str) = filter {
         let filter_upper = filter_str.to_uppercase();
         violations.retain(|v| v.code.code().contains(&filter_upper));
     }
 
-    // 6. Return violations — CLI formats output and maps exit code
+    // 7. Return violations — CLI formats output and maps exit code
     Ok(violations)
 }

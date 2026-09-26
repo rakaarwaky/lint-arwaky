@@ -14,6 +14,7 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::naming_rules::INamingCheckerProtocol;
+use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
@@ -151,7 +152,7 @@ fn bench_orchestrator_full_audit(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("mixed_entries", label), &n, |b, &n| {
             let entries = generate_file_entries(n, "capabilities_user");
             b.iter(|| {
-                std::hint::black_box(orch.run_audit_with_entries(&entries));
+                std::hint::black_box(orch.execute(NamingRequest::RunAuditWithEntries { files: entries.clone() }));
             });
         });
     }

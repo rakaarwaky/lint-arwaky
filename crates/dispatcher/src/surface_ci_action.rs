@@ -5,6 +5,7 @@ use shared::common::{FilePath, Severity, Threshold};
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::import_rules::IImportRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
@@ -65,7 +66,8 @@ pub fn collect_ci(
     // Naming rules — pass pre-fetched FileEntry data
     let naming_res = deps
         .naming_orchestrator
-        .run_audit_with_entries(deps.filesystem.file_list());
+        .execute(NamingRequest::audit(deps.filesystem.file_list()))
+        .into_violations();
     results.extend(naming_res);
 
     // Orphan detection (sync) — reuse already-fetched ignored paths

@@ -9,6 +9,7 @@ use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::import_rules::IImportRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
@@ -251,7 +252,8 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     );
     all.extend(
         agg.naming
-            .run_audit_with_entries(&entries)
+            .execute(NamingRequest::audit(&entries))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );
@@ -413,7 +415,8 @@ fn run_single_file_scan(
     );
     all.extend(
         agg.naming
-            .run_audit_with_entries(&entries)
+            .execute(NamingRequest::audit(&entries))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );

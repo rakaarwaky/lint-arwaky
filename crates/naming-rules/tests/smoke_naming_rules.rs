@@ -11,6 +11,7 @@ use shared::common::taxonomy_lint_result_vo::LintResultList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -31,7 +32,10 @@ fn container_creation_smoke() {
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config, layer_map);
     let orch = container.orchestrator();
-    assert_eq!(orch.name(), "naming-rules");
+    match orch.execute(NamingRequest::Name) {
+        NamingResponse::Name { name } => assert_eq!(name, "naming-rules"),
+        NamingResponse::Audit { .. } => panic!("expected a name response"),
+    }
 }
 
 #[test]

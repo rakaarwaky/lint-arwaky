@@ -5,6 +5,7 @@ use naming_rules_lint_arwaky::agent_naming_orchestrator::{
 use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use shared::naming_rules::INamingCheckerProtocol;
 use shared::naming_rules::INamingRunnerAggregate;
 use std::sync::Arc;
@@ -33,5 +34,8 @@ fn naming_orchestrator_name_returns_expected() {
         layer_map,
     };
     let orch = NamingOrchestrator::new(deps);
-    assert_eq!(orch.name(), "naming-rules");
+    match orch.execute(NamingRequest::Name) {
+        NamingResponse::Name { name } => assert_eq!(name, "naming-rules"),
+        NamingResponse::Audit { .. } => panic!("expected a name response"),
+    }
 }

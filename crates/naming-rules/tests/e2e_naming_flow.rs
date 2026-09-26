@@ -10,6 +10,7 @@ use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
@@ -48,6 +49,20 @@ fn make_file_entries(dir: &std::path::Path, names: &[&str]) -> Vec<FileEntry> {
         .collect()
 }
 
+/// Drive the aggregate and unwrap the audit payload, panicking on any other variant.
+fn run_audit(
+    orch: &dyn INamingRunnerAggregate,
+    entries: &[FileEntry],
+) -> Vec<shared::common::taxonomy_lint_result_vo::LintResult> {
+    let request = NamingRequest::RunAuditWithEntries {
+        files: entries.to_vec(),
+    };
+    match orch.execute(request) {
+        NamingResponse::Audit { violations } => violations,
+        NamingResponse::Name { .. } => panic!("expected an audit response"),
+    }
+}
+
 #[test]
 fn e2e_convention_violations_found() {
     let tmp = TempDir::new().unwrap();
@@ -67,7 +82,7 @@ fn e2e_convention_violations_found() {
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         !results.is_empty(),
@@ -96,7 +111,7 @@ fn e2e_suffix_violations_found() {
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         !results.is_empty(),
@@ -122,7 +137,7 @@ fn e2e_clean_files_no_violations() {
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         results.is_empty(),
@@ -151,7 +166,7 @@ fn e2e_mixed_files_partial_violations() {
         layer_map: layer_map.clone(),
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     assert!(
         results.len() >= 2,
@@ -172,7 +187,7 @@ fn e2e_container_wiring_produces_same_results() {
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config.clone(), layer_map.clone());
     let orch = container.orchestrator();
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(orch.as_ref(), &entries);
 
     assert!(
         !results.is_empty(),
@@ -220,7 +235,7 @@ fn e2e_aes101_disabled_skips_convention_check() {
         layer_map,
     };
     let orch = NamingOrchestrator::new(deps);
-    let results = orch.run_audit_with_entries(&entries);
+    let results = run_audit(&orch, &entries);
 
     let aes101_count = results
         .iter()
