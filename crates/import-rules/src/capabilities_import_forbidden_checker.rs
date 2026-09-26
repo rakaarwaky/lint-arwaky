@@ -17,7 +17,7 @@ use shared::orphan_rules::taxonomy_orphan_parse_result_vo::{AstImportVO, FilePar
 
 use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
-use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
+use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use std::collections::{HashMap, HashSet};
 

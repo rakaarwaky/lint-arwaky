@@ -8,10 +8,10 @@ use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 
-use shared::git_hooks::contract_hook_protocol::IHookProtocol;
-use shared::git_hooks::contract_manager_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
@@ -22,7 +22,7 @@ use std::sync::Arc;
 
 pub struct HookManager {
     hook_adapter: Arc<dyn IHookManagerProtocol>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -46,11 +46,11 @@ impl IHookProtocol for HookManager {
     fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
         let config_path = std::path::Path::new(&config_file);
-        if self.filesystem.path_exists(config_path) {
+        if self.io.path_exists(config_path) {
             return DescriptionVO::new(format!("ALREADY_EXISTS:{}", config_file));
         }
         let default_config = "# Lint Arwaky Configuration\nignored_paths: []\n";
-        match self.filesystem.write_string(config_path, default_config) {
+        match self.io.write_string(config_path, default_config) {
             Ok(()) => DescriptionVO::new(format!("Initialized {}", config_file)),
             Err(e) => DescriptionVO::new(format!("Failed to initialize config: {}", e)),
         }
@@ -65,7 +65,7 @@ impl IHookProtocol for HookManager {
             ));
         }
 
-        let content = match self.filesystem.read_to_string(config_path) {
+        let content = match self.io.read_to_string(config_path) {
             Ok(c) => c,
             Err(e) => {
                 return DescriptionVO::new(format!("Failed to read config: {}", e));
@@ -111,7 +111,7 @@ impl IHookProtocol for HookManager {
 
         match serde_yaml_ng::to_string(&doc) {
             Ok(yaml_str) => {
-                if let Err(e) = self.filesystem.write_string(config_path, &yaml_str) {
+                if let Err(e) = self.io.write_string(config_path, &yaml_str) {
                     return DescriptionVO::new(format!("Failed to write config: {}", e));
                 }
                 let verb = if request.remove { "Removed" } else { "Added" };
@@ -122,8 +122,8 @@ impl IHookProtocol for HookManager {
     }
 
     fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        let p1_exists = self.filesystem.path_exists(std::path::Path::new(path1));
-        let p2_exists = self.filesystem.path_exists(std::path::Path::new(path2));
+        let p1_exists = self.io.path_exists(std::path::Path::new(path1));
+        let p2_exists = self.io.path_exists(std::path::Path::new(path2));
 
         if !p1_exists && !p2_exists {
             return GitDiffDataVO {
@@ -150,8 +150,8 @@ impl IHookProtocol for HookManager {
             };
         }
 
-        let p1_is_file = self.filesystem.is_file(std::path::Path::new(path1));
-        let p2_is_file = self.filesystem.is_file(std::path::Path::new(path2));
+        let p1_is_file = self.io.is_file(std::path::Path::new(path1));
+        let p2_is_file = self.io.is_file(std::path::Path::new(path2));
 
         if !p1_is_file || !p2_is_file {
             return GitDiffDataVO {
@@ -183,12 +183,9 @@ impl IHookProtocol for HookManager {
 impl HookManager {
     pub fn new(
         hook_adapter: Arc<dyn IHookManagerProtocol>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
+        io: Arc<dyn IFileSystemIOProtocol>,
     ) -> Self {
-        Self {
-            hook_adapter,
-            filesystem,
-        }
+        Self { hook_adapter, io }
     }
 
     fn compute_diff_score(&self, path1: &str, path2: &str) -> Result<f64, std::io::Error> {
@@ -196,12 +193,12 @@ impl HookManager {
             return Ok(0.0);
         }
         let bytes1 = self
-            .filesystem
+            .io
             .read_to_string(std::path::Path::new(path1))
             .map(|s| s.value.into_bytes())
             .unwrap_or_else(|_| self.read_raw_bytes(path1));
         let bytes2 = self
-            .filesystem
+            .io
             .read_to_string(std::path::Path::new(path2))
             .map(|s| s.value.into_bytes())
             .unwrap_or_else(|_| self.read_raw_bytes(path2));

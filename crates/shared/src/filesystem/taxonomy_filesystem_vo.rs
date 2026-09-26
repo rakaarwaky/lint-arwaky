@@ -451,7 +451,7 @@ pub struct ScanTiming {
 // ═══════════════════════════════════════════════════════════════
 
 /// Analysis context produced by filesystem graph construction.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct GraphAnalysisContext {
     pub import_graph: ImportGraph,
     pub inbound_links: InboundLinkMap,
@@ -477,7 +477,7 @@ impl GraphAnalysisContext {
 }
 
 /// Forward dependency graph: file → files it imports.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct ImportGraph {
     pub mapping: HashMap<String, Vec<String>>,
 }
@@ -489,7 +489,7 @@ impl ImportGraph {
 }
 
 /// Reverse dependency map: file → files that import it.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct InboundLinkMap {
     pub mapping: HashMap<String, Vec<String>>,
 }
@@ -501,12 +501,31 @@ impl InboundLinkMap {
 
     /// Retrieve importers for a file path, falling back to canonical or suffix matching.
     pub fn get_importers(&self, path: &str) -> Option<&Vec<String>> {
-        let mut result: Option<&Vec<String>> = None;
+        let mut result = self.exact_or_prefixed(path);
 
-        if let Some(v) = self.mapping.get(path) {
-            result = Some(v);
+        if result.is_none() {
+            result = self.marker_relative(path);
         }
 
+        // `middle_dot` always competes against the current best and keeps the
+        // longer match (original semantics — not a priority-ordered short-circuit).
+        result = self.middle_dot_variant(result, path);
+
+        if result.is_none() {
+            result = self.clean_path(path);
+        }
+        if result.is_none() {
+            result = self.normalized_equal(path);
+        }
+        if result.is_none() {
+            result = self.boundary_suffix(path);
+        }
+        result
+    }
+
+    /// Priority 1: exact key match, then `./`-prefixed key with the longest result.
+    fn exact_or_prefixed(&self, path: &str) -> Option<&Vec<String>> {
+        let mut result = self.mapping.get(path);
         let with_prefix = format!("./{}", path);
         if let Some(v) = self.mapping.get(&with_prefix) {
             if let Some(existing) = result {
@@ -517,96 +536,125 @@ impl InboundLinkMap {
                 result = Some(v);
             }
         }
-
-        if result.is_none() {
-            for marker in &["/crates/", "/packages/", "/modules/"] {
-                if let Some(pos) = path.find(marker) {
-                    let rel = &path[pos + 1..];
-                    if let Some(v) = self.mapping.get(rel) {
-                        result = Some(v);
-                        break;
-                    }
-                }
-            }
-        }
-
-        if let Some(pos) = path.find("/crates/") {
-            let with_middle_dot = format!("{}/.{}", &path[..pos], &path[pos..]);
-            if let Some(v) = self.mapping.get(&with_middle_dot) {
-                if let Some(existing) = result {
-                    if v.len() > existing.len() {
-                        result = Some(v);
-                    }
-                } else {
-                    result = Some(v);
-                }
-            }
-        }
-
-        if result.is_none() {
-            let clean = path.strip_prefix("./").unwrap_or(path);
-            if let Some(v) = self.mapping.get(clean) {
-                result = Some(v);
-            }
-        }
-
-        if result.is_none() {
-            let clean = path.strip_prefix("./").unwrap_or(path);
-            for (k, v) in &self.mapping {
-                let k_clean = k.strip_prefix("./").unwrap_or(k);
-                if k_clean == clean {
-                    result = Some(v);
-                    break;
-                }
-            }
-        }
-
-        // Broad suffix matching — skip empty keys to avoid `"".ends_with("") == true`.
-        // Also require the suffix boundary to align on a path separator so that
-        // e.g. `foo_vo.rs` doesn't match `bar_vo.rs`.
-        if result.is_none() {
-            let clean = path.strip_prefix("./").unwrap_or(path);
-            for (k, v) in &self.mapping {
-                let k_clean = k.strip_prefix("./").unwrap_or(k);
-                if k_clean.is_empty() || clean.is_empty() {
-                    continue;
-                }
-                // k_clean ends with clean: the mapping key's last chars == the lookup path
-                // Must align on a path separator or be the full path
-                if k_clean.ends_with(clean) {
-                    let before = k_clean.len() - clean.len();
-                    if before == 0
-                        || k_clean
-                            .as_bytes()
-                            .get(before)
-                            .is_some_and(|b| *b == b'/' || *b == b'\\')
-                    {
-                        result = Some(v);
-                        break;
-                    }
-                }
-                // clean ends with k_clean: the lookup path's last chars == the mapping key
-                if clean.ends_with(k_clean) {
-                    let before = clean.len() - k_clean.len();
-                    if before == 0
-                        || clean
-                            .as_bytes()
-                            .get(before)
-                            .is_some_and(|b| *b == b'/' || *b == b'\\')
-                    {
-                        result = Some(v);
-                        break;
-                    }
-                }
-            }
-        }
-
         result
+    }
+
+    /// Priority 2: strip the first `/crates/`, `/packages/`, or `/modules/` marker
+    /// and match the remainder as a relative key.
+    fn marker_relative(&self, path: &str) -> Option<&Vec<String>> {
+        for marker in &["/crates/", "/packages/", "/modules/"] {
+            if let Some(pos) = path.find(marker) {
+                let rel = &path[pos + 1..];
+                if let Some(v) = self.mapping.get(rel) {
+                    return Some(v);
+                }
+            }
+        }
+        None
+    }
+
+    /// Priority 3: insert `/.` after the first `/crates/` marker
+    /// (e.g. `a/crates/b.rs` → `a/./crates/b.rs`), keeping the longest match
+    /// between `current` and the middle-dot variant.
+    fn middle_dot_variant<'a>(
+        &'a self,
+        current: Option<&'a Vec<String>>,
+        path: &str,
+    ) -> Option<&'a Vec<String>> {
+        let Some(pos) = path.find("/crates/") else {
+            return current;
+        };
+        let with_middle_dot = format!("{}/.{}", &path[..pos], &path[pos..]);
+        match self.mapping.get(&with_middle_dot) {
+            Some(v) => match current {
+                Some(existing) if v.len() > existing.len() => Some(v),
+                Some(existing) => Some(existing),
+                None => Some(v),
+            },
+            None => current,
+        }
+    }
+
+    /// Priority 4: strip a leading `./` and match the cleaned key directly.
+    fn clean_path(&self, path: &str) -> Option<&Vec<String>> {
+        let clean = path.strip_prefix("./").unwrap_or(path);
+        self.mapping.get(clean)
+    }
+
+    /// Priority 5: exact match on the `./`-stripped key (original step 6).
+    fn normalized_equal(&self, path: &str) -> Option<&Vec<String>> {
+        let clean = path.strip_prefix("./").unwrap_or(path);
+        self.mapping.iter().find_map(|(k, v)| {
+            let k_clean = k.strip_prefix("./").unwrap_or(k);
+            (k_clean == clean).then_some(v)
+        })
+    }
+
+    /// Priority 6: boundary-aligned suffix matching in both directions.
+    /// Requires the boundary to sit on a path separator so that e.g.
+    /// `foo_vo.rs` does not match `bar_vo.rs`.
+    /// Picks the longest (most specific) matching key; equal-length keys are
+    /// broken lexicographically so results are deterministic regardless of
+    /// HashMap iteration order. Keys are normalized the same way the matcher
+    /// normalizes them, so `/src/a.rs` and `src/a.rs` score identically.
+    fn boundary_suffix(&self, path: &str) -> Option<&Vec<String>> {
+        let clean = normalize_path(path.strip_prefix("./").unwrap_or(path));
+        let mut best: Option<(&Vec<String>, usize, String)> = None;
+        for (k, v) in &self.mapping {
+            let k_norm = normalize_path(k.strip_prefix("./").unwrap_or(k));
+            if k_norm.is_empty() || clean.is_empty() {
+                continue;
+            }
+            let matched_len = if boundary_ends_with(k_norm, clean) {
+                Some(k_norm.len())
+            } else if boundary_ends_with(clean, k_norm) {
+                // Reverse direction: the matching key's length is what makes a
+                // candidate specific, so score by k_norm.len() here too.
+                Some(k_norm.len())
+            } else {
+                None
+            };
+            let Some(len) = matched_len else { continue };
+            let better = match best {
+                None => true,
+                Some((_, best_len, ref best_key)) => {
+                    len > best_len || (len == best_len && k_norm < best_key.as_str())
+                }
+            };
+            if better {
+                best = Some((v, len, k_norm.to_string()));
+            }
+        }
+        best.map(|(v, _, _)| v)
     }
 }
 
+/// Strip leading `./` and `/` so equivalent path forms compare identically.
+fn normalize_path(p: &str) -> &str {
+    p.trim_start_matches("./").trim_start_matches('/')
+}
+
+/// True when `full` ends with `suffix` and the boundary before the suffix is
+/// either the start of the string or a path separator (`/` or `\`).
+/// Leading `./` and `/` are stripped from both sides first so a suffix like
+/// `/b_vo.rs` is treated the same as `b_vo.rs` (the separator check then
+/// applies to the byte just before the matched suffix).
+fn boundary_ends_with(full: &str, suffix: &str) -> bool {
+    let full = full.trim_start_matches("./").trim_start_matches('/');
+    let suffix = suffix.trim_start_matches("./").trim_start_matches('/');
+    if !full.ends_with(suffix) {
+        return false;
+    }
+    let before = full.len() - suffix.len();
+    before == 0
+        || full
+            .as_bytes()
+            .get(before - 1)
+            .is_some_and(|b| *b == b'/' || *b == b'\\')
+}
+
 /// Inheritance relationships: file → inherited trait/interface names.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct InheritanceMap {
     pub mapping: HashMap<String, Vec<String>>,
 }

@@ -13,6 +13,8 @@ fn init_tracing() {
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn".into()),
         )
+        .with_writer(std::io::stderr)
+        .with_ansi(false)
         .finish()
         .with(tracing_error::ErrorLayer::default())
         .init();
@@ -31,11 +33,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         git_hooks_aggregate: deps.git_hooks_aggregate,
         setup_orchestrator: deps.setup_orchestrator,
         config_orchestrator: deps.config_orchestrator,
+        config_parser: deps.config_parser,
+        config_reader: deps.config_reader,
         external_lint: deps.external_lint,
         import_orchestrator: deps.import_orchestrator,
         naming_orchestrator: deps.naming_orchestrator,
         role_orchestrator: deps.role_orchestrator,
         filesystem: deps.filesystem,
+        filesystem_io: deps.filesystem_io,
+        filesystem_workspace: deps.filesystem_workspace,
+        filesystem_tool_resolution: deps.filesystem_tool_resolution,
+        filesystem_parser: deps.filesystem_parser,
+        fs_seam: deps.fs_seam,
         fs_factory: deps.fs_factory,
         orphan_factory: deps.orphan_factory,
         parse_config_yaml,

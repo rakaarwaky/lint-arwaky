@@ -2,9 +2,10 @@
 //
 // Displays current status message, selected file name, and violation count.
 // Violation count is colored red when > 0, green when 0.
+use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style};
+use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use shared::tui::AppState;
@@ -46,22 +47,22 @@ impl StatusComponent {
             };
 
             let violation_style = if state.scan_violations > 0 {
-                Style::default().fg(Color::Red)
+                Style::default().fg(theme::VIOLATIONS)
             } else {
-                Style::default().fg(Color::Yellow)
+                Style::default().fg(theme::PENDING)
             };
 
             Line::from(vec![
                 Span::styled(
                     format!(" {} ", phase_display),
                     Style::default()
-                        .fg(Color::Cyan)
+                        .fg(theme::ACCENT)
                         .add_modifier(ratatui::style::Modifier::BOLD),
                 ),
-                Span::styled(progress_detail, Style::default().fg(Color::White)),
-                Span::styled(" \u{2502} ", Style::default().fg(Color::DarkGray)),
+                Span::styled(progress_detail, Style::default().fg(theme::LABEL)),
+                Span::styled(" \u{2502} ", Style::default().fg(theme::SEPARATOR)),
                 Span::styled(
-                    format!("{} violations", state.scan_violations),
+                    format!("⚠ {} violations", state.scan_violations),
                     violation_style,
                 ),
             ])
@@ -72,23 +73,26 @@ impl StatusComponent {
             };
 
             let violation_style = if state.violation_count > 0 {
-                Style::default().fg(Color::Red)
+                Style::default().fg(theme::VIOLATIONS)
             } else {
-                Style::default().fg(Color::Green)
+                Style::default().fg(theme::CLEAN)
             };
 
             Line::from(vec![
-                Span::styled(" Status: ", Style::default().fg(Color::DarkGray)),
-                Span::styled(&state.status_message, Style::default().fg(Color::White)),
-                Span::styled(" \u{2502} ", Style::default().fg(Color::DarkGray)),
-                Span::styled("Selected: ", Style::default().fg(Color::DarkGray)),
-                Span::styled(selected_name, Style::default().fg(Color::Cyan)),
-                Span::styled(" \u{2502} ", Style::default().fg(Color::DarkGray)),
-                Span::styled(format!("{} viol.", state.violation_count), violation_style),
+                Span::styled(" Status: ", Style::default().fg(theme::SEPARATOR)),
+                Span::styled(&state.status_message, Style::default().fg(theme::LABEL)),
+                Span::styled(" \u{2502} ", Style::default().fg(theme::SEPARATOR)),
+                Span::styled("Selected: ", Style::default().fg(theme::SEPARATOR)),
+                Span::styled(selected_name, Style::default().fg(theme::ACCENT)),
+                Span::styled(" \u{2502} ", Style::default().fg(theme::SEPARATOR)),
+                Span::styled(
+                    format!("⚠ {} viol.", state.violation_count),
+                    violation_style,
+                ),
             ])
         };
 
-        let paragraph = Paragraph::new(line).style(Style::default().bg(Color::Black));
+        let paragraph = Paragraph::new(line).style(Style::default().bg(theme::BACKGROUND));
         frame.render_widget(paragraph, area);
     }
 }

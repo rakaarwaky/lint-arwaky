@@ -1,6 +1,5 @@
 // Smoke tests — quick boot + respond within 5s.
-use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 use naming_rules_lint_arwaky::utility_naming_checker::{get_stem, get_suffix};
 use shared::common::PatternList;
@@ -13,6 +12,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -32,7 +32,10 @@ fn container_creation_smoke() {
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config, layer_map);
     let orch = container.orchestrator();
-    assert_eq!(orch.name(), "naming-rules");
+    match orch.execute(NamingRequest::Name) {
+        NamingResponse::Name { name } => assert_eq!(name, "naming-rules"),
+        NamingResponse::Audit { .. } => panic!("expected a name response"),
+    }
 }
 
 #[test]
@@ -48,7 +51,7 @@ fn orchestrator_basic_check_smoke() {
     let root = FilePath::new(".".to_string()).unwrap();
     let mut results = LintResultList::new(Vec::new());
 
-    container.naming_convention_checker().check_file_naming(
+    container.naming_checker().check_file_naming(
         &ArchitectureConfig::default(),
         &make_layer_map(),
         &files,
@@ -77,11 +80,6 @@ fn get_suffix_smoke() {
 }
 
 #[test]
-fn naming_convention_checker_construction_smoke() {
-    let _ = NamingConventionChecker::new();
-}
-
-#[test]
-fn suffix_prefix_checker_construction_smoke() {
-    let _ = SuffixPrefixChecker::new();
+fn naming_checker_construction_smoke() {
+    let _ = NamingChecker::new();
 }

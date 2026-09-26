@@ -5,6 +5,7 @@ use shared::common::ExitCode;
 use std::sync::Arc;
 use tracing::error;
 
+use dispatcher::surface_check_action::FilesystemSeam;
 use shared::cli_commands::Format;
 use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
@@ -18,9 +19,12 @@ pub struct ScanCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
     pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     pub filter: Option<String>,
     pub member: Option<String>,
+    /// In-process aggregate bundle (W10); `None` falls back to subprocess.
+    pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
 }
 
 /// Parameters for the `import` command.
@@ -30,6 +34,7 @@ pub struct ImportCommandParams {
     pub import_orchestrator: Arc<dyn shared::import_rules::IImportRunnerAggregate>,
     pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
 }
@@ -41,6 +46,7 @@ pub struct NamingCommandParams {
     pub naming_orchestrator: Arc<dyn shared::naming_rules::INamingRunnerAggregate>,
     pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
 }
@@ -52,6 +58,7 @@ pub struct RoleCommandParams {
     pub role_orchestrator: Arc<dyn shared::role_rules::IRoleRunnerAggregate>,
     pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
 }
@@ -65,8 +72,9 @@ pub struct OrphanCommandParams {
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
-    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    pub fs_factory: Arc<dyn Fn() -> FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
 }
 
@@ -77,6 +85,7 @@ pub struct ExternalCommandParams {
     pub external_lint: Arc<dyn shared::external_lint::IExternalLintAggregate>,
     pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
     pub config_parser: Arc<dyn shared::config_system::IConfigParserProtocol>,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
@@ -89,10 +98,10 @@ fn resolve_root(path: &Option<FilePath>) -> String {
     }
 }
 
-fn is_member(path: &Option<FilePath>, fs: &dyn IFilesystemAggregate) -> bool {
+fn is_member(path: &Option<FilePath>, seam: &FilesystemSeam) -> bool {
     dispatcher::surface_check_action::is_member_path(
         &FilePath::new(resolve_root(path)).unwrap_or_default(),
-        fs,
+        seam.workspace.as_ref(),
     )
 }
 
@@ -106,13 +115,14 @@ fn exit_for(violations: usize) -> ExitCode {
 
 /// `scan` — run all 6 linters via subprocesses (dispatcher self-invocation).
 pub fn handle_scan(params: ScanCommandParams) -> ExitCode {
-    let member_flag = is_member(&params.path, params.filesystem.as_ref());
+    let member_flag = is_member(&params.path, &params.filesystem_seam);
     let opts = dispatcher::surface_check_action::ScanOptions {
         path: params.path,
         multi_project_orchestrator: params.config_orchestrator,
         filter: params.filter,
         member: params.member,
-        filesystem: params.filesystem.clone(),
+        filesystem: Arc::new(params.filesystem_seam.clone()),
+        scan_aggregates: params.scan_aggregates.clone(),
     };
     let root = resolve_root(&opts.path);
     match dispatcher::surface_check_action::collect_scan(opts) {
@@ -138,6 +148,7 @@ pub fn handle_quality(
     format: Format,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
+    filesystem_seam: FilesystemSeam,
     filter: Option<String>,
     ignored_paths: Vec<String>,
 ) -> ExitCode {
@@ -147,6 +158,7 @@ pub fn handle_quality(
         code_analysis_linter,
         filter,
         filesystem.clone(),
+        filesystem_seam.io.clone(),
         &ignored_paths,
     ) {
         Ok(violations) => {
@@ -154,7 +166,7 @@ pub fn handle_quality(
                 &violations,
                 &root,
                 format,
-                is_member(&path, filesystem.as_ref()),
+                is_member(&path, &filesystem_seam),
             );
             exit_for(violations.len())
         }
@@ -173,6 +185,7 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
         params.import_orchestrator,
         params.filter,
         params.filesystem.clone(),
+        params.filesystem_seam.io.clone(),
         &params.ignored_paths,
     ) {
         Ok(violations) => {
@@ -180,7 +193,7 @@ pub fn handle_import(params: ImportCommandParams) -> ExitCode {
                 &violations,
                 &root,
                 params.format,
-                is_member(&params.path, params.filesystem.as_ref()),
+                is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
         }
@@ -199,6 +212,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
         params.naming_orchestrator,
         params.filter,
         params.filesystem.clone(),
+        params.filesystem_seam.io.clone(),
         &params.ignored_paths,
     ) {
         Ok(violations) => {
@@ -206,7 +220,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
                 &violations,
                 &root,
                 params.format,
-                is_member(&params.path, params.filesystem.as_ref()),
+                is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
         }
@@ -232,7 +246,7 @@ pub fn handle_role(params: RoleCommandParams) -> ExitCode {
                 &violations,
                 &root,
                 params.format,
-                is_member(&params.path, params.filesystem.as_ref()),
+                is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
         }
@@ -253,6 +267,8 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
             params.orphan_orchestrator,
             params.config_orchestrator,
             params.filesystem.clone(),
+            params.filesystem_seam.io.clone(),
+            params.filesystem_seam.workspace.clone(),
             params.fs_factory,
             params.orphan_factory,
         ),
@@ -263,7 +279,7 @@ pub fn handle_orphan(params: OrphanCommandParams) -> ExitCode {
                 &violations,
                 &root,
                 params.format,
-                is_member(&params.path, params.filesystem.as_ref()),
+                is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
         }
@@ -281,6 +297,7 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         params.path.clone(),
         params.external_lint,
         params.filesystem,
+        params.filesystem_seam.io.clone(),
         params.config_parser,
         params.filter,
         &params.ignored_paths,

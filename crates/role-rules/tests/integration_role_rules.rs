@@ -2,6 +2,7 @@
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
@@ -27,7 +28,7 @@ fn container_creates_with_default_config() {
     let config = ArchitectureConfig::default();
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
-    assert_eq!(orch.name(), "role-rules");
+    assert_eq!(orch.execute(RoleRequest::Name).into_name(), "role-rules");
 }
 
 #[test]
@@ -35,7 +36,7 @@ fn orchestrator_returns_empty_for_no_files() {
     let config = ArchitectureConfig::default();
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
-    let results = orch.run_audit_with_entries(&[]);
+    let results = orch.execute(RoleRequest::audit(&[])).into_violations();
     assert!(results.is_empty());
 }
 
@@ -51,7 +52,7 @@ fn orchestrator_dispatches_taxonomy_files() {
         Language::Rust,
         "pub struct BadConstant {\n    val: i32,\n}\n",
     );
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes401: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES401")
@@ -74,7 +75,7 @@ fn orchestrator_dispatches_capability_files() {
         Language::Rust,
         "pub struct Foo {}\npub struct Bar {}\n",
     );
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes403: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES403")
@@ -97,7 +98,7 @@ fn orchestrator_dispatches_agent_files() {
         Language::Rust,
         "pub struct MyOrchestrator {}\n",
     );
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes405: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES405")
@@ -120,7 +121,7 @@ fn orchestrator_dispatches_utility_files() {
         Language::Rust,
         "pub struct BadHelper {}\n",
     );
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes404: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES404")
@@ -141,7 +142,7 @@ fn orchestrator_skips_barrel_files() {
         make_file("src/taxonomy/mod.rs", Language::Rust, "pub struct Bad {}"),
         make_file("src/taxonomy/lib.rs", Language::Rust, "pub struct Bad {}"),
     ];
-    let results = orch.run_audit_with_entries(&files);
+    let results = orch.execute(RoleRequest::audit(&files)).into_violations();
     assert!(
         results.is_empty(),
         "barrel files (mod.rs, lib.rs) should be skipped"
@@ -156,7 +157,7 @@ fn orchestrator_skips_unparseable_files() {
 
     let mut file = make_file("src/taxonomy_bad.rs", Language::Rust, "pub struct Bad {}");
     file.parse_ok = false;
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     assert!(results.is_empty(), "unparseable files should be skipped");
 }
 
@@ -167,6 +168,6 @@ fn orchestrator_skips_empty_content() {
     let orch = container.orchestrator();
 
     let file = make_file("src/taxonomy_empty.rs", Language::Rust, "");
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     assert!(results.is_empty(), "empty content files should be skipped");
 }

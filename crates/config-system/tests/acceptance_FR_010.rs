@@ -9,7 +9,7 @@ use std::fs;
 use tempfile::TempDir;
 
 fn make_reader() -> ConfigYamlReader {
-    ConfigYamlReader::new(common::make_fs())
+    ConfigYamlReader::new(common::make_io())
 }
 
 // FR-010: Multiple languages have config files → all returned

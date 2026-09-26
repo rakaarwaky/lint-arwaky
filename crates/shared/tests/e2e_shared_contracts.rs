@@ -11,14 +11,13 @@ fn e2e_all_aggregates_support_arc_dynamic_dispatch() {
     assert_arc::<dyn shared_lint_arwaky::naming_rules::INamingRunnerAggregate>();
     assert_arc::<dyn shared_lint_arwaky::orphan_rules::IOrphanAggregate>();
     assert_arc::<dyn shared_lint_arwaky::role_rules::IRoleRunnerAggregate>();
-    assert_arc::<dyn shared_lint_arwaky::auto_fix::LintFixOrchestratorAggregate>();
+    assert_arc::<dyn shared_lint_arwaky::auto_fix::IFixAggregate>();
     assert_arc::<dyn shared_lint_arwaky::file_watch::IWatchAggregate>();
-    assert_arc::<dyn shared_lint_arwaky::git_hooks::GitHooksAggregate>();
-    assert_arc::<dyn shared_lint_arwaky::git_hooks::HookManagementOrchestratorAggregate>();
-    assert_arc::<dyn shared_lint_arwaky::maintenance::MaintenanceCommandsAggregate>();
+    assert_arc::<dyn shared_lint_arwaky::git_hooks::IGitHooksAggregate>();
+    assert_arc::<dyn shared_lint_arwaky::maintenance::IMaintenanceAggregate>();
     assert_arc::<dyn shared_lint_arwaky::external_lint::IExternalLintAggregate>();
     assert_arc::<dyn shared_lint_arwaky::report_formatter::IReportFormatterAggregate>();
-    assert_arc::<dyn shared_lint_arwaky::project_setup::SetupManagementAggregate>();
+    assert_arc::<dyn shared_lint_arwaky::project_setup::ISetupAggregate>();
 }
 
 // Verify all protocols are object-safe (used as dyn in DI)
@@ -42,8 +41,7 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::import_rules::IUnusedImportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingConventionChecker>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::ISuffixPrefixChecker>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IMandatoryClassProtocol>();
@@ -58,12 +56,12 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::orphan_rules::ISurfacesOrphanProtocol>();
     assert_trait::<dyn shared_lint_arwaky::orphan_rules::IOrphanParserProtocol>();
     // Role
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IContractRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IUtilityRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::IAgentRoleChecker>();
-    assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleChecker>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ITaxonomyRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IContractRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IUtilityRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IAgentRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     // Infrastructure
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixProtocol>();

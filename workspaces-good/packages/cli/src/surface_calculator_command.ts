@@ -1,12 +1,12 @@
-import { CalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
+import { ICalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
 import {
-  ExpressionVO,
-  createExpression,
-} from "calculator-shared/src/taxonomy_expression_vo";
-import { operationFromSymbol } from "calculator-shared/src/taxonomy_operation_vo";
+  requestDelegate,
+  requestHistory,
+} from "calculator-shared/src/taxonomy_calculator_request_vo";
+import { parseExpression } from "calculator-shared/src/utility_expression_parser";
 import * as readline from "readline";
 
-export function run(calc: CalculatorAggregate): void {
+export function run(calc: ICalculatorAggregate): void {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stderr,
@@ -25,38 +25,26 @@ export function run(calc: CalculatorAggregate): void {
         return;
       }
       if (trimmed === "h") {
-        const hist = calc.history();
-        if (hist.length === 0) {
-          console.error("  Belum ada riwayat");
-        } else {
-          hist.forEach((r) => console.error(`  ${r.expression}`));
+        const resp = calc.execute(requestHistory());
+        if (resp.kind === "history") {
+          if (resp.results.length === 0) {
+            console.error("  Belum ada riwayat");
+          } else {
+            resp.results.forEach((r) => console.error(`  ${r.expression}`));
+          }
         }
         prompt();
         return;
       }
-      const parts = trimmed.split(/\s+/);
-      if (parts.length !== 3) {
+      const expr = parseExpression(trimmed);
+      if (expr === null) {
         console.error("  Format: <angka> <operator> <angka>");
         prompt();
         return;
       }
-      const left = parseFloat(parts[0]);
-      const op = operationFromSymbol(parts[1]);
-      const right = parseFloat(parts[2]);
-      if (isNaN(left) || isNaN(right)) {
-        console.error("  Input bukan angka");
-        prompt();
-        return;
-      }
-      if (op === null) {
-        console.error(`  '${parts[1]}' bukan operator valid`);
-        prompt();
-        return;
-      }
-      const expr: ExpressionVO = createExpression(left, op, right);
-      const result = calc.delegate(expr);
-      if (result) {
-        console.error(`  = ${result.value}`);
+      const resp = calc.execute(requestDelegate(expr));
+      if (resp.kind === "delegation" && resp.result) {
+        console.error(`  = ${resp.result.value}`);
       } else {
         console.error("  Error: tidak bisa hitung");
       }

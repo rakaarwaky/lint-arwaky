@@ -1,7 +1,7 @@
 // Unit tests for ASTParser — FR-001: AST Parsing & Import Extraction.
 use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
 use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::contract_parser_protocol::IParserProtocol;
+use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 

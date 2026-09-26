@@ -1,8 +1,8 @@
 use crate::surface_lint_action::SurfaceLintExecutor;
 use shared::common::FilePath;
-use shared::tui::{LintExecutionResult, ScanUpdate};
+use shared::tui::{ConfirmState, LintExecutionResult, ScanUpdate};
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::tui::TuiEvent;
 use shared::tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
@@ -21,7 +21,7 @@ use crate::utility_file_system;
 /// Filesystem operations use direct utility calls instead of protocol ports.
 pub struct SurfaceActionHandler {
     lint_port: Arc<SurfaceLintExecutor>,
-    filesystem: Arc<dyn IFilesystemAggregate>,
+    io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 // ─── Block 2: Background Task Methods ─────────────────────
@@ -43,6 +43,8 @@ impl SurfaceActionHandler {
         state.preview_scroll = 0;
 
         let lint_port = self.lint_port.clone();
+        let cancel = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        state.scan_cancel = Some(cancel.clone());
         let (tx, rx) = std::sync::mpsc::sync_channel(16);
         std::thread::spawn(move || {
             let _ = tx.send(ScanUpdate::Progress {
@@ -50,6 +52,11 @@ impl SurfaceActionHandler {
                 done: 0,
                 total: 0,
             });
+            // User requested cancellation (Esc) while the scan was in flight.
+            if cancel.load(std::sync::atomic::Ordering::Relaxed) {
+                let _ = tx.send(ScanUpdate::Cancelled);
+                return;
+            }
             let result = lint_port.scan(&path);
             let _ = tx.send(ScanUpdate::Complete {
                 output: result.output,
@@ -85,22 +92,77 @@ impl SurfaceActionHandler {
                         violation_count
                     ));
                 }
+                ScanUpdate::Cancelled => {
+                    state.finish_scan(0);
+                    state.scanning = false;
+                    state.scan_cancel = None;
+                    state.preview_mode = PreviewMode::ActionOutput;
+                    state.preview_scroll = 0;
+                    state.set_status("Scan cancelled");
+                }
             }
         }
+    }
+
+    /// Start a long-running global action (install/doctor/init/mcp-config) on a
+    /// background thread so the event loop keeps pumping events (50 ms poll cycle).
+    /// The result receiver is stored on `state.action_result_rx`; returns `false`
+    /// when an action is already in flight.
+    pub fn start_background_action(
+        &self,
+        state: &mut AppState,
+        label: &str,
+        action: Box<dyn FnOnce(&SurfaceLintExecutor) -> LintExecutionResult + Send>,
+    ) -> bool {
+        if state.action_pending {
+            return false;
+        }
+        state.action_pending = true;
+        state.set_status(format!("Running {label}..."));
+        let lint_port = self.lint_port.clone();
+        let (tx, rx) = std::sync::mpsc::sync_channel(4);
+        std::thread::spawn(move || {
+            let result = action(lint_port.as_ref());
+            let _ = tx.send(result);
+        });
+        state.action_result_rx = Some(rx);
+        true
+    }
+
+    /// Poll the background global-action receiver (non-blocking) and apply its result.
+    pub fn poll_background_action(
+        &self,
+        state: &mut AppState,
+        rx: &std::sync::mpsc::Receiver<LintExecutionResult>,
+    ) {
+        if let Ok(result) = rx.try_recv() {
+            state.action_pending = false;
+            state.preview_text = result.output;
+            state.violation_count = result.violation_count;
+            state.preview_scroll = 0;
+            state.preview_mode = PreviewMode::ActionOutput;
+            let status = if result.success { "Done" } else { "Error" };
+            state.set_status(status);
+        }
+    }
+
+    /// Poll the stored `action_result_rx` (if any) while an action is pending.
+    /// Clears `action_pending` when no receiver is left (already reaped).
+    pub fn poll_pending_background_action(&self, state: &mut AppState) {
+        let Some(rx) = state.action_result_rx.take() else {
+            state.action_pending = false;
+            return;
+        };
+        self.poll_background_action(state, &rx);
+        state.action_result_rx = Some(rx);
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl SurfaceActionHandler {
-    pub fn new(
-        lint_port: Arc<SurfaceLintExecutor>,
-        filesystem: Arc<dyn IFilesystemAggregate>,
-    ) -> Self {
-        Self {
-            lint_port,
-            filesystem,
-        }
+    pub fn new(lint_port: Arc<SurfaceLintExecutor>, io: Arc<dyn IFileSystemIOProtocol>) -> Self {
+        Self { lint_port, io }
     }
 
     /// Main event dispatch — maps every TuiEvent variant to a concrete action.
@@ -149,7 +211,7 @@ impl SurfaceActionHandler {
                 state.preview_scroll = state.preview_scroll.saturating_add(10);
                 state.preview_scroll = state.preview_scroll.min(self.max_preview_scroll(state));
             }
-            // ---- Focus cycling between panels (FileList / Preview / Tree) ----
+            // ---- Focus cycling between panels (Tree is display-only, never focused) ----
             TuiEvent::FocusNext => state.cycle_focus_forward(),
             TuiEvent::FocusPrev => state.cycle_focus_backward(),
             // ---- Directory navigation ----
@@ -199,30 +261,85 @@ impl SurfaceActionHandler {
             // ---- Lint actions that operate on the selected file/directory ----
             TuiEvent::ActionCheck => self.run_action(state, |lp, p, f| lp.check(p, f)),
             TuiEvent::ActionScan => self.run_action(state, |lp, p, _f| lp.scan(p)),
-            TuiEvent::ActionFix => self.run_action(state, |lp, p, f| lp.fix(p, f)),
+            // Plain `f` is always a dry-run fix; `F` (ActionFixLive) applies fixes.
+            TuiEvent::ActionFix => {
+                state.action_flags.dry_run = true;
+                self.run_action(state, |lp, p, f| lp.fix(p, f))
+            }
+            TuiEvent::ActionFixLive => {
+                state.action_flags.dry_run = false;
+                self.run_action(state, |lp, p, f| lp.fix(p, f))
+            }
             TuiEvent::ActionCi => self.run_action(state, |lp, p, f| lp.ci(p, f)),
             TuiEvent::ActionOrphan => self.run_action(state, |lp, p, _f| lp.orphan(p)),
             TuiEvent::ActionSecurity => self.run_action(state, |lp, p, _f| lp.security(p)),
             TuiEvent::ActionDependencies => self.run_action(state, |lp, p, _f| lp.dependencies(p)),
-            // ---- Setup/global actions that don't need a selected path ----
-            TuiEvent::ActionDoctor => self.run_action_no_path(state, |lp| lp.doctor()),
-            TuiEvent::ActionInit => {
-                let flags = state.action_flags.clone();
-                self.run_action_no_path(state, |lp| lp.init(&flags))
+            // ---- Cancel an in-flight background scan (Esc while scanning) ----
+            TuiEvent::CancelScan => {
+                if let Some(cancel) = state.scan_cancel.as_ref() {
+                    cancel.store(true, std::sync::atomic::Ordering::Relaxed);
+                    state.set_status("Cancelling scan...");
+                }
             }
+            // ---- I5 confirm gate: destructive actions require explicit confirmation ----
             TuiEvent::ActionInstall => {
-                let flags = state.action_flags.clone();
-                self.run_action_no_path(state, |lp| lp.install(&flags))
+                state.pending_confirm = Some(ConfirmState {
+                    pending: TuiEvent::ActionInstall,
+                    label: "Install lint-arwaky binaries into PATH".to_string(),
+                });
+                state.set_status("Confirm: install?");
+            }
+            TuiEvent::ActionInit => {
+                state.pending_confirm = Some(ConfirmState {
+                    pending: TuiEvent::ActionInit,
+                    label: "Initialize project setup".to_string(),
+                });
+                state.set_status("Confirm: init?");
+            }
+            TuiEvent::ActionUninstallHook => {
+                state.pending_confirm = Some(ConfirmState {
+                    pending: TuiEvent::ActionUninstallHook,
+                    label: "Uninstall pre-commit hook".to_string(),
+                });
+                state.set_status("Confirm: uninstall hook?");
+            }
+            TuiEvent::ConfirmAction => {
+                let Some(confirm) = state.pending_confirm.take() else {
+                    return;
+                };
+                state.preview_mode = PreviewMode::ActionOutput;
+                self.handle(state, confirm.pending);
+            }
+            TuiEvent::CancelConfirm => {
+                let Some(confirm) = state.pending_confirm.take() else {
+                    return;
+                };
+                state.preview_mode = PreviewMode::ActionOutput;
+                state.set_status(format!("Cancelled: {}", confirm.label));
+            }
+            // ---- I4: re-open the project root dialog with current root pre-filled ----
+            TuiEvent::ChangeProjectRoot => {
+                state.path_input = state.project_root.clone();
+                state.show_path_dialog = true;
+            }
+            // ---- Background global actions: run on a worker thread, poll in event loop ----
+            TuiEvent::ActionDoctor => {
+                self.start_background_action(
+                    state,
+                    "doctor",
+                    Box::new(|lp: &SurfaceLintExecutor| lp.doctor()),
+                );
             }
             TuiEvent::ActionMcpConfig => {
                 let flags = state.action_flags.clone();
-                self.run_action_no_path(state, |lp| lp.mcp_config(&flags))
+                self.start_background_action(
+                    state,
+                    "mcp-config",
+                    Box::new(move |lp: &SurfaceLintExecutor| lp.mcp_config(&flags)),
+                );
             }
             TuiEvent::ActionConfigShow => self.run_action_no_path(state, |lp| lp.config_show()),
             TuiEvent::ActionInstallHook => self.run_action_no_path(state, |lp| lp.install_hook()),
-            TuiEvent::ActionUninstallHook => {
-                self.run_action_no_path(state, |lp| lp.uninstall_hook())
-            }
             TuiEvent::ActionAdapters => self.run_action_no_path(state, |lp| lp.adapters()),
             TuiEvent::ActionVersion => self.run_action_no_path(state, |lp| lp.version()),
             // ---- Watch: FR-006 says watch is NOT supported in TUI ----
@@ -236,16 +353,25 @@ impl SurfaceActionHandler {
             TuiEvent::PathBackspace => {
                 state.path_input.pop();
             }
-            // ---- Path dialog: confirm typed path ----
+            // ---- Path dialog: confirm typed path (empty input falls back to CWD) ----
             TuiEvent::PathConfirm => {
-                let path = FilePath::new(state.path_input.clone()).unwrap_or_default();
+                let raw = if state.path_input.trim().is_empty() {
+                    std::env::current_dir()
+                        .map(|p| p.to_string_lossy().to_string())
+                        .unwrap_or_else(|_| ".".to_string())
+                } else {
+                    state.path_input.trim().to_string()
+                };
+                let path = FilePath::new(raw.clone()).unwrap_or_default();
                 if utility_file_system::is_valid_directory(&path) {
-                    state.project_root = state.path_input.clone();
-                    state.current_dir = state.path_input.clone();
+                    state.project_root = raw.clone();
+                    state.current_dir = raw.clone();
                     state.show_path_dialog = false;
                     self.load_directory(state, &state.current_dir.clone());
                 } else {
-                    state.set_status("Invalid path");
+                    state.set_status(
+                        "Invalid path — type a directory, or press Tab for current dir",
+                    );
                 }
             }
             // ---- Path dialog: use CWD as project root ----
@@ -263,8 +389,15 @@ impl SurfaceActionHandler {
                 state.terminal_height = h;
                 state.terminal_width = w;
             }
-            // ---- Quit and mouse scroll ----
-            TuiEvent::Quit => state.should_quit = true,
+            // ---- Quit: Esc first closes the help overlay, then actually quits ----
+            TuiEvent::Quit => {
+                if state.show_help {
+                    state.show_help = false;
+                    state.preview_mode = PreviewMode::ActionOutput;
+                } else {
+                    state.should_quit = true;
+                }
+            }
             TuiEvent::MouseClick(col, row) => self.handle_mouse_click(state, col, row),
             TuiEvent::MouseDrag(col, row) => self.handle_mouse_drag(state, col, row),
             TuiEvent::MouseScrollUp(_col, _row) => {
@@ -330,7 +463,7 @@ impl SurfaceActionHandler {
         let fp = FilePath::new(path).unwrap_or_default();
         let dir_path = std::path::Path::new(fp.value());
         let paths = self
-            .filesystem
+            .io
             .read_dir_entries_as_pathbuf(dir_path)
             .unwrap_or_default();
         state.entries = paths
@@ -364,7 +497,7 @@ impl SurfaceActionHandler {
         let fp = FilePath::new(path.to_string()).unwrap_or_default();
         let file_path = std::path::Path::new(fp.value());
         let max_lines = 100;
-        let display = match self.filesystem.read_to_string(file_path) {
+        let display = match self.io.read_to_string(file_path) {
             Ok(content) => {
                 let lines: Vec<&str> = content.value.lines().take(max_lines).collect();
                 let mut output = String::new();
@@ -451,7 +584,7 @@ impl SurfaceActionHandler {
     }
 
     /// Copy the current preview content to a file `lint-results.txt` in the current directory.
-    /// Delegates I/O to self.filesystem.write_text_to_file().
+    /// Delegates I/O to the filesystem io seam.
     fn copy_to_file(&self, state: &mut AppState) {
         let text = &state.preview_text;
         if text.is_empty() {
@@ -460,7 +593,7 @@ impl SurfaceActionHandler {
         }
 
         let path = std::path::Path::new("lint-results.txt");
-        match self.filesystem.write_string(path, text) {
+        match self.io.write_string(path, text) {
             Ok(()) => state.set_status("Saved to lint-results.txt"),
             Err(e) => state.set_status(format!("Save failed: {e}")),
         }

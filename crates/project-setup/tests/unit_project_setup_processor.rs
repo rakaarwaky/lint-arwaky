@@ -17,7 +17,8 @@ impl ISetupInstallerProtocol for StubInstaller {
 
 fn make_processor() -> impl ISetupManagementProtocol {
     use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = c.io();
     SetupManagementProcessor::new(Arc::new(StubInstaller), fs)
 }
 
@@ -247,4 +248,16 @@ fn pre_flight_check_returns_results() {
         !results.is_empty(),
         "Pre-flight check should return at least one entry"
     );
+}
+
+#[test]
+fn get_embedded_skills_returns_all_skills() {
+    let proc = make_processor();
+    let skills = proc.get_embedded_skills();
+    assert_eq!(skills.len(), 55);
+    for skill in skills {
+        assert!(!skill.name().is_empty());
+        assert!(!skill.relative_path().is_empty());
+        assert!(!skill.content().is_empty());
+    }
 }

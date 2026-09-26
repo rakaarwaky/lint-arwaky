@@ -2,6 +2,7 @@
 mod common;
 
 use shared::common::FilePath;
+use shared::config_system::ConfigRequest;
 use tempfile::TempDir;
 
 #[test]
@@ -10,7 +11,8 @@ fn us3_no_config_file_uses_defaults() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp);
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     assert!(result.config.enabled.value);
     assert!(
         result
@@ -26,7 +28,14 @@ fn us3_defaults_are_valid_and_usable() {
     let tmp = TempDir::new().unwrap();
     let orch = common::make_container().orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let config = orch.load_config_sync(&fp);
+    let config = orch
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     assert!(config.enabled.value);
-    assert!(!orch.ignored_paths(&fp).is_empty());
+    assert!(
+        !orch
+            .execute(ConfigRequest::ignored_paths(&fp))
+            .into_patterns()
+            .is_empty()
+    );
 }

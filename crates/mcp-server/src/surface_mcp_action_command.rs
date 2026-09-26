@@ -6,19 +6,22 @@
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::Threshold;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::{
+    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
+};
 use shared::external_lint::IExternalLintAggregate;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::GitHooksAggregate;
+use shared::git_hooks::IGitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
-use shared::project_setup::SetupManagementAggregate;
+use shared::project_setup::ISetupAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 
@@ -27,19 +30,25 @@ use shared::common::taxonomy_violation_item_vo::ViolationItem;
 #[derive(Clone)]
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    pub fix_orchestrator_factory:
-        Arc<dyn Fn(bool) -> Arc<dyn LintFixOrchestratorAggregate> + Send + Sync>,
+    pub fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
-    pub maintenance_orchestrator: Arc<dyn MaintenanceCommandsAggregate>,
-    pub git_hooks_aggregate: Arc<dyn GitHooksAggregate>,
-    pub setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    pub maintenance_orchestrator: Arc<dyn IMaintenanceAggregate>,
+    pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
+    pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub config_parser: Arc<dyn IConfigParserProtocol>,
+    pub config_reader: Arc<dyn IConfigReaderProtocol>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    pub filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+    pub filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+    pub filesystem_parser: Arc<dyn shared::filesystem::IParserProtocol>,
+    pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+    pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
     // DI: config parsing functions
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
@@ -73,7 +82,17 @@ impl McpActionSurface {
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
             filter: None,
             member: None,
-            filesystem: self.deps.filesystem.clone(),
+            filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
+            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
+                quality: self.deps.code_analysis_linter.clone(),
+                role: self.deps.role_orchestrator.clone(),
+                import: self.deps.import_orchestrator.clone(),
+                naming: self.deps.naming_orchestrator.clone(),
+                external: self.deps.external_lint.clone(),
+                orphan: self.deps.orphan_orchestrator.clone(),
+                config: self.deps.config_orchestrator.clone(),
+                fs_seam: self.deps.fs_seam.clone(),
+            }),
         };
         match dispatcher::surface_check_action::collect_scan(opts) {
             Ok(violations) => {
@@ -106,6 +125,7 @@ impl McpActionSurface {
                 config_orchestrator: self.deps.config_orchestrator.clone(),
                 orphan_orchestrator: self.deps.orphan_orchestrator.clone(),
                 filesystem: self.deps.filesystem.clone(),
+                filesystem_io: self.deps.filesystem_io.clone(),
             },
             Some(fp),
             Threshold::new(threshold as u32),
@@ -176,6 +196,7 @@ impl McpActionSurface {
             self.deps.code_analysis_linter.clone(),
             None,
             self.deps.filesystem.clone(),
+            self.deps.filesystem_io.clone(),
             &[],
         ) {
             Ok(violations) => violations_response("quality", path, &violations),
@@ -194,6 +215,7 @@ impl McpActionSurface {
             self.deps.import_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
+            self.deps.filesystem_io.clone(),
             &[],
         ) {
             Ok(violations) => violations_response("import", path, &violations),
@@ -212,6 +234,7 @@ impl McpActionSurface {
             self.deps.naming_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
+            self.deps.filesystem_io.clone(),
             &[],
         ) {
             Ok(violations) => violations_response("naming", path, &violations),
@@ -246,6 +269,8 @@ impl McpActionSurface {
                 self.deps.orphan_orchestrator.clone(),
                 self.deps.config_orchestrator.clone(),
                 self.deps.filesystem.clone(),
+                self.deps.filesystem_io.clone(),
+                self.deps.filesystem_workspace.clone(),
                 self.deps.fs_factory.clone(),
                 self.deps.orphan_factory.clone(),
             ),
@@ -275,7 +300,8 @@ impl McpActionSurface {
             Some(fp),
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
-            self.deps.config_orchestrator.clone(),
+            self.deps.filesystem_io.clone(),
+            self.deps.config_parser.clone(),
             None,
             &[],
         ) {
@@ -418,7 +444,7 @@ impl McpActionSurface {
                     Ok(report) => {
                         serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "install-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
-                    Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
+                    Err(e) => serde_json::json!({"error": e.to_string(), "exit_code": 2}),
                 }
             }
             "uninstall-hook" => {
@@ -428,13 +454,13 @@ impl McpActionSurface {
                     Ok(report) => {
                         serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "uninstall-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
-                    Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
+                    Err(e) => serde_json::json!({"error": e.to_string(), "exit_code": 2}),
                 }
             }
             "init" | "install" => {
                 let items = dispatcher::surface_setup_action::collect_init(
                     self.deps.setup_orchestrator.clone(),
-                    self.deps.filesystem.clone(),
+                    self.deps.filesystem_io.clone(),
                 );
                 let any_failure = items.iter().any(|i| !i.ok);
                 let exit_code = if any_failure { 2 } else { 0 };
@@ -502,11 +528,7 @@ impl McpActionSurface {
 
     /// Read skill documentation by section.
     pub fn handle_read_skill(&self, section: Option<String>) -> serde_json::Value {
-        let skills = [
-            "lint-arwaky-rust",
-            "lint-arwaky-python",
-            "lint-arwaky-typescript",
-        ];
+        let skills = ["lint-arwaky"];
         let mut candidates: Vec<String> = skills
             .iter()
             .flat_map(|s| vec![format!(".agents/skills/{}/SKILL.md", s)])
@@ -524,7 +546,12 @@ impl McpActionSurface {
             .iter()
             .map(std::path::Path::new)
             .find(|p| p.exists())
-            .and_then(|p| self.deps.filesystem.read_file(p));
+            .and_then(|p| {
+                self.deps
+                    .filesystem
+                    .execute(FilesystemRequest::read_file(p))
+                    .into_content_opt()
+            });
         let content = match content {
             Some(c) => c,
             None => {
@@ -558,7 +585,7 @@ impl McpActionSurface {
             }
         };
 
-        let config_files = match self.deps.config_orchestrator.list_config_files(&fp) {
+        let config_files = match self.deps.config_reader.list_config_files(&fp) {
             Ok(files) => files,
             Err(e) => {
                 return serde_json::json!({"path": path, "language": language, "error": format!("Failed to list config files: {}", e), "exit_code": 2}).to_string()
@@ -574,7 +601,7 @@ impl McpActionSurface {
 
         for (lang, _config_path) in &config_files {
             layers.push(lang.as_str());
-            if let Ok(Some(source)) = self.deps.config_orchestrator.read_config(&fp, *lang) {
+            if let Ok(Some(source)) = self.deps.config_reader.read_config(&fp, *lang) {
                 let arch_config = (self.deps.parse_config_yaml)(&source.raw_content);
                 rules_enabled.push(lang.as_str());
                 ignored_paths.extend(

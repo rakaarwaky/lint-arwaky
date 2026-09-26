@@ -11,9 +11,10 @@ use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChec
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use shared::common::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use shared::role_rules::{
-    IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
-    ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
+    IAgentRoleProtocol, ICapabilitiesRoleProtocol, IContractRoleProtocol, IRoleRunnerAggregate,
+    ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 use std::sync::Arc;
 
@@ -29,11 +30,11 @@ fn dummy_file() -> FileEntry {
     }
 }
 
-// ── TaxonomyRoleChecker → ITaxonomyRoleChecker ─────────────
+// ── TaxonomyRoleChecker → ITaxonomyRoleProtocol ─────────────
 
 #[test]
 fn taxonomy_role_checker_implements_protocol() {
-    let checker: Arc<dyn ITaxonomyRoleChecker> = Arc::new(TaxonomyRoleChecker::new());
+    let checker: Arc<dyn ITaxonomyRoleProtocol> = Arc::new(TaxonomyRoleChecker::new());
     let file = dummy_file();
     let mut v: Vec<LintResult> = Vec::new();
     checker.check_entity(&file, &mut v);
@@ -42,31 +43,31 @@ fn taxonomy_role_checker_implements_protocol() {
     checker.check_constant(&file, &mut v);
 }
 
-// ── ContractRoleChecker → IContractRoleChecker ─────────────
+// ── ContractRoleChecker → IContractRoleProtocol ─────────────
 
 #[test]
 fn contract_role_checker_implements_protocol() {
-    let checker: Arc<dyn IContractRoleChecker> = Arc::new(ContractRoleChecker::new());
+    let checker: Arc<dyn IContractRoleProtocol> = Arc::new(ContractRoleChecker::new());
     let file = dummy_file();
     let _proto: Vec<LintResult> = checker.check_protocol(&file);
     let _agg: Vec<LintResult> = checker.check_aggregate(&file);
 }
 
-// ── CapabilitiesRoleChecker → ICapabilitiesRoleChecker ─────
+// ── CapabilitiesRoleChecker → ICapabilitiesRoleProtocol ─────
 
 #[test]
 fn capabilities_role_checker_implements_protocol() {
-    let checker: Arc<dyn ICapabilitiesRoleChecker> = Arc::new(CapabilitiesRoleChecker::new());
+    let checker: Arc<dyn ICapabilitiesRoleProtocol> = Arc::new(CapabilitiesRoleChecker::new());
     let file = dummy_file();
     let mut v: Vec<LintResult> = Vec::new();
     checker.check_capability_routing(&file, "capabilities", &mut v);
 }
 
-// ── SurfaceRoleChecker → ISurfaceRoleChecker ───────────────
+// ── SurfaceRoleChecker → ISurfaceRoleProtocol ───────────────
 
 #[test]
 fn surface_role_checker_implements_protocol() {
-    let checker: Arc<dyn ISurfaceRoleChecker> = Arc::new(SurfaceRoleChecker::new());
+    let checker: Arc<dyn ISurfaceRoleProtocol> = Arc::new(SurfaceRoleChecker::new());
     let file = dummy_file();
     let mut v: Vec<LintResult> = Vec::new();
     checker.check_smart_surface(&file, &mut v);
@@ -75,21 +76,21 @@ fn surface_role_checker_implements_protocol() {
     checker.check_fn_count_limit(&file, &mut v);
 }
 
-// ── AgentRoleChecker → IAgentRoleChecker ───────────────────
+// ── AgentRoleChecker → IAgentRoleProtocol ───────────────────
 
 #[test]
 fn agent_role_checker_implements_protocol() {
-    let checker: Arc<dyn IAgentRoleChecker> = Arc::new(AgentRoleChecker::new());
+    let checker: Arc<dyn IAgentRoleProtocol> = Arc::new(AgentRoleChecker::new());
     let file = dummy_file();
     let mut v: Vec<LintResult> = Vec::new();
     checker.check_agent_routing(&file, "agent", &mut v);
 }
 
-// ── UtilityRoleChecker → IUtilityRoleChecker ───────────────
+// ── UtilityRoleChecker → IUtilityRoleProtocol ───────────────
 
 #[test]
 fn utility_role_checker_implements_protocol() {
-    let checker: Arc<dyn IUtilityRoleChecker> = Arc::new(UtilityRoleChecker::new());
+    let checker: Arc<dyn IUtilityRoleProtocol> = Arc::new(UtilityRoleChecker::new());
     let file = dummy_file();
     let mut v: Vec<LintResult> = Vec::new();
     checker.check_utility_convention(&file, &mut v);
@@ -110,7 +111,12 @@ fn role_orchestrator_implements_aggregate() {
     };
     let orchestrator: Arc<dyn IRoleRunnerAggregate> =
         Arc::new(RoleOrchestrator::new(deps, &config));
-    let results = orchestrator.run_audit_with_entries(&[]);
+    let results = orchestrator
+        .execute(RoleRequest::audit(&[]))
+        .into_violations();
     assert!(results.is_empty());
-    assert_eq!(orchestrator.name(), "role-rules");
+    assert_eq!(
+        orchestrator.execute(RoleRequest::Name).into_name(),
+        "role-rules"
+    );
 }

@@ -7,7 +7,7 @@
 
 use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::contract_graph_protocol::IGraphProtocol;
+use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ImportType,
 };

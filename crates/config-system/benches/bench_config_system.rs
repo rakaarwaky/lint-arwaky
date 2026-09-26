@@ -6,8 +6,9 @@ use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_validator_protocol::IConfigValidatorProtocol;
-use shared::config_system::contract_workspace_detector_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::ConfigRequest;
+use shared::config_system::contract_config_protocol::IConfigValidatorProtocol;
+use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus, ProjectConfig};
 use shared::config_system::utility_config_parser::parse_config_yaml;
 use std::fs;
@@ -36,9 +37,10 @@ fn bench_workspace_detect(c: &mut Criterion) {
     let tmp = TempDir::new().unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let fs_arc: std::sync::Arc<
-        dyn shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol,
-    > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+        dyn shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol,
+    > = fs_container.io();
     let detector = WorkspaceDetector::new(fs_arc);
     let mut group = c.benchmark_group("workspace_detect");
     group.sample_size(30);
@@ -93,11 +95,17 @@ fn bench_load_config_sync(c: &mut Criterion) {
         BenchmarkId::new("load", "rust_project"),
         &root,
         |b, path| {
+            let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
             let fs: std::sync::Arc<
                 dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
-            > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
-            let orch = ConfigContainer::new(fs).orchestrator();
-            b.iter(|| std::hint::black_box(orch.load_config_sync(path)))
+            > = fs_container.orchestrator();
+            let orch = ConfigContainer::new(fs, fs_container.io()).orchestrator();
+            b.iter(|| {
+                std::hint::black_box(
+                    orch.execute(ConfigRequest::load_sync(path))
+                        .into_sync_config(),
+                )
+            })
         },
     );
     group.finish();

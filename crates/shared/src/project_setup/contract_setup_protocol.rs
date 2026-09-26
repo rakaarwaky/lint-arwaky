@@ -1,20 +1,26 @@
+// PURPOSE: setup-domain capability contracts (AES102 `_protocol`).
+//
+// One file for the setup feature. Each trait below is one capability
+// seam: a trait carries every method that capability implements, with one
+// concrete return type each, so a capability implements its trait outright
+// and never carries unimplemented stubs.
+
 use crate::common::taxonomy_common_vo::PatternList;
-// PURPOSE: ISetupProtocol — protocol trait for project setup step definitions
-// AES402: All primitive `String` / `Result<(), String>` / `Result<PathBuf, String>`
-// return types in ISetupManagementProtocol are replaced with strongly-typed VOs.
-//   * `String` returns → `McpBinaryNameVO` / `ProjectLanguageVO`
-//   * `Result<(), String>` → `WriteConfigResult` (= `Result<DescriptionVO, SetupError>`)
-//   * `Result<PathBuf, String>` → `CreateConfigDirResult` (= `Result<PathBuf, SetupError>`)
-//   * `&str` parameters → kept (idiomatic borrow, AES402 allows)
-//   * `bool` parameters → kept (semantic toggle, AES402 allows)
 use crate::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::project_setup::taxonomy_setup_contract_vo::{
-    CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
-    WriteConfigResult,
+use crate::project_setup::taxonomy_setup_contract_vo::SetupError;
+pub use crate::project_setup::taxonomy_setup_contract_vo::{
+    CreateConfigDirResult, McpBinaryNameVO, PackageManagerStatus, PreFlightResult,
+    ProjectLanguageVO, ProjectLanguagesVO, WriteConfigResult,
 };
+use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
-pub use crate::project_setup::taxonomy_setup_contract_vo::{PackageManagerStatus, PreFlightResult};
+pub type InstallPackagesResult = Result<(), SetupError>;
+
+pub trait ISetupInstallerProtocol: Send + Sync {
+    fn install_python_packages(&self, packages: &PatternList) -> InstallPackagesResult;
+    fn install_npm_packages(&self, packages: &PatternList, sudo: bool) -> InstallPackagesResult;
+}
 
 pub trait ISetupManagementProtocol: Send + Sync {
     fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO;
@@ -41,20 +47,12 @@ pub trait ISetupManagementProtocol: Send + Sync {
     fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError>;
     /// Pre-flight check: verify package managers are available (FR-007).
     fn pre_flight_check(&self) -> PreFlightResult;
+    /// Retrieve all embedded skill files compiled into the binary.
+    fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO];
     /// Write a configuration file to disk. Returns a description of the
     /// operation on success, or a structured `SetupError` on failure.
     fn write_config_file(&self, filename: &str, content: &str) -> WriteConfigResult;
     /// Create the global config directory and return its path.
     fn create_global_config_dir(&self) -> CreateConfigDirResult;
     fn file_exists(&self, path: &str) -> bool;
-}
-
-/// AES402: `Result<(), String>` is replaced with `Result<(), SetupError>`
-/// so callers can pattern-match on specific failure modes (Io vs
-/// InvalidState vs Other) instead of inspecting free-form error strings.
-pub type InstallPackagesResult = Result<(), SetupError>;
-
-pub trait ISetupInstallerProtocol: Send + Sync {
-    fn install_python_packages(&self, packages: &PatternList) -> InstallPackagesResult;
-    fn install_npm_packages(&self, packages: &PatternList, sudo: bool) -> InstallPackagesResult;
 }

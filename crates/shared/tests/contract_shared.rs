@@ -2,9 +2,7 @@
 // is usable as a bound, object-safe where declared, and Send + Sync.
 // shared is the foundation crate: it declares contracts but implements none.
 
-use shared_lint_arwaky::auto_fix::{
-    IFileAdapterProtocol, IFixProtocol, LintFixOrchestratorAggregate,
-};
+use shared_lint_arwaky::auto_fix::{IFileAdapterProtocol, IFixAggregate, IFixProtocol};
 use shared_lint_arwaky::config_system::{
     IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
     IConfigValidatorProtocol, IWorkspaceDetectorProtocol,
@@ -21,26 +19,23 @@ use shared_lint_arwaky::filesystem::{
     IToolResolutionProtocol, IWorkspaceProtocol,
 };
 use shared_lint_arwaky::git_hooks::{
-    GitHooksAggregate, HookManagementOrchestratorAggregate, IDiffProtocol, IHookManagerProtocol,
-    IHookProtocol,
+    IDiffProtocol, IGitHooksAggregate, IHookManagerProtocol, IHookProtocol,
 };
 use shared_lint_arwaky::import_rules::{
     ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
     IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol,
 };
 use shared_lint_arwaky::maintenance::{
-    IMaintenanceCheckerProtocol, IToolExecutorProtocol, MaintenanceCommandsAggregate,
+    IMaintenanceAggregate, IMaintenanceCheckerProtocol, IToolExecutorProtocol,
 };
-use shared_lint_arwaky::naming_rules::{
-    INamingConventionChecker, INamingRunnerAggregate, ISuffixPrefixChecker,
-};
+use shared_lint_arwaky::naming_rules::{INamingCheckerProtocol, INamingRunnerAggregate};
 use shared_lint_arwaky::orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
     IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
     IUtilityOrphanProtocol,
 };
 use shared_lint_arwaky::project_setup::{
-    ISetupInstallerProtocol, ISetupManagementProtocol, SetupManagementAggregate,
+    ISetupAggregate, ISetupInstallerProtocol, ISetupManagementProtocol,
 };
 use shared_lint_arwaky::quality_rules::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
@@ -48,8 +43,8 @@ use shared_lint_arwaky::quality_rules::{
 };
 use shared_lint_arwaky::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
 use shared_lint_arwaky::role_rules::{
-    IAgentRoleChecker, ICapabilitiesRoleChecker, IContractRoleChecker, IRoleRunnerAggregate,
-    ISurfaceRoleChecker, ITaxonomyRoleChecker, IUtilityRoleChecker,
+    IAgentRoleProtocol, ICapabilitiesRoleProtocol, IContractRoleProtocol, IRoleRunnerAggregate,
+    ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 
 fn assert_trait<T: ?Sized>() {}
@@ -118,15 +113,13 @@ fn import_rule_contracts_are_send_sync() {
 
 #[test]
 fn naming_rule_contracts_are_traits() {
-    assert_trait::<dyn INamingConventionChecker>();
-    assert_trait::<dyn ISuffixPrefixChecker>();
+    assert_trait::<dyn INamingCheckerProtocol>();
     assert_trait::<dyn INamingRunnerAggregate>();
 }
 
 #[test]
 fn naming_rule_contracts_are_send_sync() {
-    assert_send_sync::<dyn INamingConventionChecker>();
-    assert_send_sync::<dyn ISuffixPrefixChecker>();
+    assert_send_sync::<dyn INamingCheckerProtocol>();
     assert_send_sync::<dyn INamingRunnerAggregate>();
 }
 
@@ -176,23 +169,23 @@ fn orphan_rule_contracts_are_send_sync() {
 
 #[test]
 fn role_rule_contracts_are_traits() {
-    assert_trait::<dyn ITaxonomyRoleChecker>();
-    assert_trait::<dyn IContractRoleChecker>();
-    assert_trait::<dyn ICapabilitiesRoleChecker>();
-    assert_trait::<dyn IUtilityRoleChecker>();
-    assert_trait::<dyn IAgentRoleChecker>();
-    assert_trait::<dyn ISurfaceRoleChecker>();
+    assert_trait::<dyn ITaxonomyRoleProtocol>();
+    assert_trait::<dyn IContractRoleProtocol>();
+    assert_trait::<dyn ICapabilitiesRoleProtocol>();
+    assert_trait::<dyn IUtilityRoleProtocol>();
+    assert_trait::<dyn IAgentRoleProtocol>();
+    assert_trait::<dyn ISurfaceRoleProtocol>();
     assert_trait::<dyn IRoleRunnerAggregate>();
 }
 
 #[test]
 fn role_rule_contracts_are_send_sync() {
-    assert_send_sync::<dyn ITaxonomyRoleChecker>();
-    assert_send_sync::<dyn IContractRoleChecker>();
-    assert_send_sync::<dyn ICapabilitiesRoleChecker>();
-    assert_send_sync::<dyn IUtilityRoleChecker>();
-    assert_send_sync::<dyn IAgentRoleChecker>();
-    assert_send_sync::<dyn ISurfaceRoleChecker>();
+    assert_send_sync::<dyn ITaxonomyRoleProtocol>();
+    assert_send_sync::<dyn IContractRoleProtocol>();
+    assert_send_sync::<dyn ICapabilitiesRoleProtocol>();
+    assert_send_sync::<dyn IUtilityRoleProtocol>();
+    assert_send_sync::<dyn IAgentRoleProtocol>();
+    assert_send_sync::<dyn ISurfaceRoleProtocol>();
     assert_send_sync::<dyn IRoleRunnerAggregate>();
 }
 
@@ -201,14 +194,14 @@ fn role_rule_contracts_are_send_sync() {
 fn auto_fix_contracts_are_traits() {
     assert_trait::<dyn IFileAdapterProtocol>();
     assert_trait::<dyn IFixProtocol>();
-    assert_trait::<dyn LintFixOrchestratorAggregate>();
+    assert_trait::<dyn IFixAggregate>();
 }
 
 #[test]
 fn auto_fix_contracts_are_send_sync() {
     assert_send_sync::<dyn IFileAdapterProtocol>();
     assert_send_sync::<dyn IFixProtocol>();
-    assert_send_sync::<dyn LintFixOrchestratorAggregate>();
+    assert_send_sync::<dyn IFixAggregate>();
 }
 
 #[test]
@@ -230,8 +223,7 @@ fn git_hooks_contracts_are_traits() {
     assert_trait::<dyn IDiffProtocol>();
     assert_trait::<dyn IHookProtocol>();
     assert_trait::<dyn IHookManagerProtocol>();
-    assert_trait::<dyn GitHooksAggregate>();
-    assert_trait::<dyn HookManagementOrchestratorAggregate>();
+    assert_trait::<dyn IGitHooksAggregate>();
 }
 
 #[test]
@@ -239,22 +231,21 @@ fn git_hooks_contracts_are_send_sync() {
     assert_send_sync::<dyn IDiffProtocol>();
     assert_send_sync::<dyn IHookProtocol>();
     assert_send_sync::<dyn IHookManagerProtocol>();
-    assert_send_sync::<dyn GitHooksAggregate>();
-    assert_send_sync::<dyn HookManagementOrchestratorAggregate>();
+    assert_send_sync::<dyn IGitHooksAggregate>();
 }
 
 #[test]
 fn maintenance_contracts_are_traits() {
     assert_trait::<dyn IMaintenanceCheckerProtocol>();
     assert_trait::<dyn IToolExecutorProtocol>();
-    assert_trait::<dyn MaintenanceCommandsAggregate>();
+    assert_trait::<dyn IMaintenanceAggregate>();
 }
 
 #[test]
 fn maintenance_contracts_are_send_sync() {
     assert_send_sync::<dyn IMaintenanceCheckerProtocol>();
     assert_send_sync::<dyn IToolExecutorProtocol>();
-    assert_send_sync::<dyn MaintenanceCommandsAggregate>();
+    assert_send_sync::<dyn IMaintenanceAggregate>();
 }
 
 #[test]
@@ -292,14 +283,14 @@ fn report_formatter_contracts_are_send_sync() {
 fn project_setup_contracts_are_traits() {
     assert_trait::<dyn ISetupManagementProtocol>();
     assert_trait::<dyn ISetupInstallerProtocol>();
-    assert_trait::<dyn SetupManagementAggregate>();
+    assert_trait::<dyn ISetupAggregate>();
 }
 
 #[test]
 fn project_setup_contracts_are_send_sync() {
     assert_send_sync::<dyn ISetupManagementProtocol>();
     assert_send_sync::<dyn ISetupInstallerProtocol>();
-    assert_send_sync::<dyn SetupManagementAggregate>();
+    assert_send_sync::<dyn ISetupAggregate>();
 }
 
 // ── Core VOs are Send + Sync (used across async boundaries) ─

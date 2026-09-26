@@ -422,6 +422,7 @@ flowchart TD
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Filesystem crate

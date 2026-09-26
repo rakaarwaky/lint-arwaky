@@ -29,6 +29,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::{
     AdapterName, ContentString, Count, DescriptionVO, ErrorCode, LineNumber, LintMessage,
 };
+use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::{Arc, LazyLock};
 
@@ -65,8 +66,11 @@ impl IFixProtocol for LintFixProcessor {
     /// FR-001/002/003/004: Run linter, filter fixable violations, apply fixes.
     /// `dry_run` is selectable per request (BF-1, FR-004 assumption §9).
     fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult {
-        let analysis = self.linter.run_code_analysis(path);
-        let results = &analysis.values;
+        let analysis = self
+            .linter
+            .execute(CodeAnalysisRequest::run_analysis(&[]))
+            .into_violations();
+        let results = &analysis;
 
         let naming_violations: Vec<_> = results
             .iter()
@@ -173,7 +177,10 @@ impl IFixProtocol for LintFixProcessor {
         // BF-4: No double linting — use pre-fix results.len() as remaining count
         let remaining = if !dry_run && fixed_count > 0 {
             // Re-lint only when we actually made changes to count remaining violations
-            let after_results = self.linter.run_code_analysis(path).values;
+            let after_results = self
+                .linter
+                .execute(CodeAnalysisRequest::run_analysis(&[]))
+                .into_violations();
             after_results.len()
         } else {
             results.len()
@@ -311,17 +318,15 @@ impl LintFixProcessor {
 
         // ─── Detect fixable bypass patterns (runtime-constructed to avoid AES304 false positives) ───
         let allow_attr = format!("#[{}", "allow(");
-        let unwrap_call = "unwrap()".to_string();
         let suppress_comment = format!("no{}", "qa");
         let type_ignore = "type: ignore";
 
         let is_allow_attr = trimmed.starts_with(&allow_attr);
         let is_comment_line =
             trimmed.starts_with("//") || (trimmed.starts_with('#') && !is_allow_attr);
-        let is_unwrap = trimmed == unwrap_call
-            || trimmed.ends_with("unwrap();")
-            || trimmed.ends_with("unwrap())")
-            || trimmed.ends_with("unwrap()}");
+        let is_unwrap = trimmed.contains("unwrap()");
+
+        let hash_comments = file_path.ends_with(".py");
 
         let has_bypass = is_allow_attr
             || is_unwrap
@@ -358,7 +363,7 @@ impl LintFixProcessor {
                     || trimmed.contains("HACK")
                     || trimmed.contains("XXX")
                 {
-                    let stripped = strip_inline_comment(l);
+                    let stripped = strip_inline_comment(l, hash_comments);
                     if !stripped.trim().is_empty() {
                         result.push_str(&stripped);
                         result.push('\n');
@@ -543,12 +548,20 @@ impl LintFixProcessor {
 
 /// Strip inline comment from a code line, preserving leading whitespace.
 /// For `    let x = foo()  // FIXME: refactor` → `    let x = foo()  `
-fn strip_inline_comment(line: &str) -> String {
+/// When `hash_comments` is true (Python files), `#` is also treated as a
+/// comment start, but Rust-style `#[` attribute lines are left alone.
+fn strip_inline_comment(line: &str, hash_comments: bool) -> String {
     if let Some(pos) = line.find("//") {
-        line[..pos].to_string()
-    } else {
-        line.to_string()
+        return line[..pos].to_string();
     }
+    if hash_comments {
+        if let Some(pos) = line.find('#') {
+            if !line[pos..].starts_with("#[") {
+                return line[..pos].to_string();
+            }
+        }
+    }
+    line.to_string()
 }
 
 /// Count occurrences of `target` that match word boundaries.

@@ -1,8 +1,9 @@
 // PURPOSE: SetupCommandsSurface — project setup business logic, no formatting.
-// handle_install delegates to SetupManagementAggregate.
+// handle_install delegates to ISetupAggregate.
 // No direct std::process::Command calls.
-use shared::filesystem::contract_filesystem_io_protocol::IFileSystemIOProtocol;
-use shared::project_setup::SetupManagementAggregate;
+use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared::project_setup::SetupRequest;
+use shared::project_setup::{ISetupAggregate, ProjectLanguagesVO};
 use std::sync::Arc;
 
 /// One setup step outcome — message + success flag for CLI rendering.
@@ -28,18 +29,23 @@ pub struct McpConfigReport {
 }
 
 pub fn collect_init(
-    setup_orchestrator: Arc<dyn SetupManagementAggregate>,
+    setup_orchestrator: Arc<dyn ISetupAggregate>,
     filesystem: Arc<dyn IFileSystemIOProtocol>,
 ) -> Vec<SetupInitItem> {
     let mut items: Vec<SetupInitItem> = Vec::new();
 
-    let languages = setup_orchestrator.detect_languages();
+    let languages = setup_orchestrator
+        .execute(SetupRequest::detect_languages())
+        .into_languages();
     let target = "lint_arwaky.config.yaml";
 
     // Write unified config once — all languages share the same template
     let first_lang = languages.iter().next().map(|l| l.value().to_string());
     let lang_str = first_lang.as_deref().unwrap_or("all");
-    let content = match setup_orchestrator.get_config_template(lang_str) {
+    let content = match setup_orchestrator
+        .execute(SetupRequest::get_config_template(lang_str))
+        .into_template()
+    {
         Ok(c) => c,
         Err(e) => {
             items.push(SetupInitItem {
@@ -49,7 +55,10 @@ pub fn collect_init(
             return items;
         }
     };
-    match setup_orchestrator.write_config_file(target, content) {
+    match setup_orchestrator
+        .execute(SetupRequest::write_config_file(target, &content))
+        .into_write_result()
+    {
         Ok(desc) => {
             items.push(SetupInitItem {
                 message: format!(
@@ -68,13 +77,7 @@ pub fn collect_init(
     }
 
     // Distribute docs from XDG config to project (always overwrite)
-    let doc_files = [
-        "ARCHITECTURE.md",
-        "MIGRATION_RUST.md",
-        "MIGRATION_PYTHON.md",
-        "MIGRATION_TYPESCRIPT.md",
-        "RULES_AES.md",
-    ];
+    let doc_files = ["ARCHITECTURE.md", "RULES_AES.md"];
     if let Some(config_dir) = dirs::config_dir() {
         let xdg_base = config_dir.join("lint-arwaky");
         for doc in &doc_files {
@@ -87,7 +90,10 @@ pub fn collect_init(
                 continue;
             }
             match filesystem.read_to_string(&xdg_src) {
-                Ok(content) => match setup_orchestrator.write_config_file(doc, &content.value) {
+                Ok(content) => match setup_orchestrator
+                    .execute(SetupRequest::write_config_file(doc, &content.value))
+                    .into_write_result()
+                {
                     Ok(_) => items.push(SetupInitItem {
                         message: format!("  {doc} — copied/overwritten from XDG config"),
                         ok: true,
@@ -104,7 +110,7 @@ pub fn collect_init(
             }
         }
 
-        // Copy .agents/ from XDG config to current project
+        // Copy .agents/ from XDG config to current project (skips skills - embedded binary constants used)
         let xdg_agents = xdg_base.join(".agents");
         if xdg_agents.exists() && xdg_agents.is_dir() {
             let target_agents = std::path::Path::new(".agents");
@@ -137,7 +143,86 @@ pub fn collect_init(
         });
     }
 
+    // Install embedded skills from binary constants (filtered by detected languages)
+    let embedded_skills = setup_orchestrator
+        .execute(SetupRequest::get_embedded_skills())
+        .into_skills();
+    let mut installed_count = 0;
+    let mut install_failed = false;
+    let skills_root = std::path::Path::new(".agents").join("skills");
+
+    for skill in embedded_skills {
+        if is_skill_relevant_for_languages(skill.language, &languages) {
+            let target_file = skills_root.join(skill.relative_path);
+            if let Some(parent) = target_file.parent() {
+                if let Err(e) = filesystem.create_dir_all(parent) {
+                    items.push(SetupInitItem {
+                        message: format!(
+                            "  .agents/skills/ — directory error for {}: {e}",
+                            skill.name
+                        ),
+                        ok: false,
+                    });
+                    install_failed = true;
+                    continue;
+                }
+            }
+            match filesystem.write_string(&target_file, skill.content) {
+                Ok(_) => installed_count += 1,
+                Err(e) => {
+                    items.push(SetupInitItem {
+                        message: format!("  .agents/skills/ — write error for {}: {e}", skill.name),
+                        ok: false,
+                    });
+                    install_failed = true;
+                }
+            }
+        }
+    }
+
+    let detected_names: Vec<&str> = languages.iter().map(|l| l.value()).collect();
+    let lang_summary = if detected_names.is_empty() {
+        "all / default".to_string()
+    } else {
+        detected_names.join(", ")
+    };
+
+    if !install_failed {
+        items.push(SetupInitItem {
+            message: format!(
+                "  .agents/skills/ — installed {installed_count} skill file(s) for detected language(s) [{lang_summary}]"
+            ),
+            ok: true,
+        });
+    }
+
     items
+}
+
+/// Determine whether a skill is relevant given the detected project languages.
+/// If skill_language is None (language-agnostic), always returns true.
+/// If no languages are detected in the project, returns true as default.
+/// Otherwise, checks if the skill language matches any detected language.
+pub fn is_skill_relevant_for_languages(
+    skill_language: Option<&str>,
+    detected_languages: &ProjectLanguagesVO,
+) -> bool {
+    let Some(lang) = skill_language else {
+        return true;
+    };
+
+    if detected_languages.is_empty() {
+        return true;
+    }
+
+    match lang {
+        "python" => detected_languages.iter().any(|l| l.value() == "python"),
+        "rust" => detected_languages.iter().any(|l| l.value() == "rust"),
+        "typescript" | "javascript" => detected_languages
+            .iter()
+            .any(|l| l.value() == "javascript" || l.value() == "typescript"),
+        _ => false,
+    }
 }
 
 fn copy_dir_all(
@@ -149,6 +234,9 @@ fn copy_dir_all(
     let mut count = 0;
     for entry_path in fs.read_dir_entries_as_pathbuf(src)? {
         let file_name = entry_path.file_name().unwrap_or_default();
+        if file_name == "skills" {
+            continue;
+        }
         let dst_path = dst.join(file_name);
         if entry_path.is_dir() {
             count += copy_dir_all(&entry_path, &dst_path, fs)?;
@@ -160,9 +248,15 @@ fn copy_dir_all(
     Ok(count)
 }
 
-pub fn collect_install(setup: Arc<dyn SetupManagementAggregate>, sudo: bool) -> InstallReport {
-    let py_ok = setup.install_python_adapters().value;
-    let js_ok = setup.install_javascript_adapters(sudo).value;
+pub fn collect_install(setup: Arc<dyn ISetupAggregate>, sudo: bool) -> InstallReport {
+    let py_ok = setup
+        .execute(SetupRequest::install_python_adapters())
+        .into_status()
+        .value;
+    let js_ok = setup
+        .execute(SetupRequest::install_javascript_adapters(sudo))
+        .into_status()
+        .value;
     InstallReport { py_ok, js_ok }
 }
 

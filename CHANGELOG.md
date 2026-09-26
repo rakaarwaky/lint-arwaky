@@ -1,6 +1,121 @@
 # Changelog
+## 3.6.3 (2026-09-09)
+
+### Bug Fixes
+
+- **AES203 f-string interpolation false positive**: identifiers referenced
+  inside f-string `{...}` (e.g. `f"{escape(v)}"`) were never collected, so
+  imports used only inside f-strings were flagged UNUSED_IMPORT. Fix skips
+  literal text but recurses into `interpolation` children (#262)
+- fix(scripts): add sccache and mold prerequisite checks to local installer (#250)
+
+## 3.6.2 (2026-08-22)
+
+### Bug Fixes
+
+- fix(ci): resolve duplicate env key in auto-release workflow (#247)
+
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
+
+## 3.6.1 (2026-08-14)
+
+### Bug Fixes
+
+- **AES202 grouped public barrel imports**: includes the fix merged in PR #241,
+  where grouped Python imports from a public `__init__.py` are split into one
+  resolved entry per symbol before canonical source resolution. This preserves
+  taxonomy, contract(protocol), contract(aggregate), and utility provenance for
+  all symbols in the group and removes false-positive mandatory-import
+  violations.
+
+### Release / Maintenance
+
+- Bumped the workspace root and all crates to version `3.6.1` using
+  `scripts/bump.sh`.
+- Includes regression coverage for the public barrel import scenario from PR
+  #241.
+
+## 3.6.0 (2026-08-14)
+
+### Bug Fixes
+
+- **AES202 public Python barrel imports**: grouped multi-line exports from
+  `__init__.py` are now resolved back to their canonical taxonomy, contract,
+  and utility source files. Inline comments in continued imports are handled
+  safely, and multi-level relative exports such as `..shared` preserve their
+  Python package depth. This removes false-positive mandatory-import findings
+  for valid public API imports.
+
+### Release / Maintenance
+
+- Synchronized the workspace root and all crates to version `3.6.0`.
+- Added regression coverage for grouped barrel exports, inline comments, and
+  nested relative imports.
+
+## 3.5.1 (2026-08-13)
+
+### Bug Fixes
+
+- **AES203 false positive on `import ... as <alias>` bindings (HIGH)**: unused
+  import detection now tracks the module-scope binding name for aliased
+  imports instead of the original imported name. `from x import y as z`
+  (Python), `use foo::bar as baz` (Rust, including grouped
+  `use foo::{bar as baz}`), and `import { X as Y }` / default imports (TS/JS)
+  are no longer flagged as unused when the alias is referenced. Also fixes the
+  adjacent `import os.path` binding (binds `os`, not `os.path`) and strips the
+  `use` and `pub use` prefixes from grouped Rust raw paths so they resolve.
+  Includes 15 filesystem extractor unit tests and 6 AES203 acceptance
+  regression tests.
+
+## 3.5.0 (2026-08-12)
+
+### Features
+
+- **DI-aware orphan traceability (issues #191-193)**: Orphan detection now
+  follows dependency-injection wiring — container files (`*_container.*`) add
+  synthetic edges to the import graph, and contract→capabilities trait impl
+  bridges are traced via `InheritanceMap`. Eliminates false-positive
+  AES503/AES505 findings on DI-based projects.
+- **Three-strategy Python import resolution**: `resolve_import_target()` now
+  handles double-prefix paths (`modules.image.src.agent_...`) and bare module
+  names in nested dirs (Strategy C via stem index), fixing chained-import
+  reachability for AES503. Includes 6 unit + 2 acceptance tests.
+- **Deterministic O(1) stem index (Strategy C)**: `resolve_import_target()`
+  now uses a sorted `HashMap<stem, Vec<path>>` instead of `HashSet::iter().find()`,
+  making resolution deterministic when files share a stem and reducing
+  per-import complexity from O(imports × files) to O(1).
+- **CI automation workflows**: PR labeler, solo-developer automation, and
+  release-via-PR flow (protected `main` now releases through release PRs
+  instead of direct tag pushes).
+
+### Bug Fixes
+
+- **External lint scans no longer report root-level files** outside
+  `crates/`/`packages`/`modules` (e.g. `setup.py`) — `lac scan workspaces-good`
+  returns 0 violations.
+- **Orphan-rules reachability normalization**: direct contract reachability
+  check normalized; AES503 message improved when capabilities are reachable
+  via DI impl bridge.
+- **syn 3.0.3 compatibility**: adapted to the `trait_` tuple change.
+- **workspaces-good fixture formatting**: rustfmt applied to clear a
+  false-positive gate.
+
+### CI / Maintenance
+
+- **Release workflow sccache fix**: release builds were failing with
+  `sccache: No such file or directory` because the tracked `.cargo/config.toml`
+  sets `rustc-wrapper = "sccache"` but the release job never installed it —
+  now installs `mozilla-actions/sccache-action`.
+- **sccache workflow hardening**: consistent sccache setup across CI jobs,
+  disabled GitHub cache backend, pinned actions to verified SHAs, zizmor
+  template-injection warnings resolved.
+- **Dependency bumps**: syn 3.0.3, rmcp 3.1.2, async-trait 0.1.92, thiserror
+  2.0.20, clap 4.6.6, ignore 0.4.33 + grouped dependabot updates.
+- **Repowise/Codacy config**: fixture workspaces excluded from indexing and
+  static analysis; local cache files and worktrees ignored.
+
+---
 
 ## 2.0.0 (2026-08-08)
 

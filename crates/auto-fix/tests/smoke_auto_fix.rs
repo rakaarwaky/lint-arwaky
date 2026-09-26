@@ -1,6 +1,6 @@
 // Smoke tests — verify container creation and orchestrator creation complete within 5s.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 
 #[test]
 fn auto_fix_container_creates() {
@@ -18,11 +18,11 @@ fn auto_fix_container_creates() {
 #[test]
 fn auto_fix_orchestrator_creates() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    let _orch = container.orchestrator_with_filesystem(filesystem);
+    let _orch = container.orchestrator_with_filesystem(filesystem, fs_container.io());
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,
@@ -34,12 +34,12 @@ fn auto_fix_orchestrator_creates() {
 #[test]
 fn auto_fix_orchestrator_is_trait_object() {
     let start = std::time::Instant::now();
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    let orch = container.orchestrator_with_filesystem(filesystem);
-    let _: std::sync::Arc<dyn LintFixOrchestratorAggregate> = orch;
+    let orch = container.orchestrator_with_filesystem(filesystem, fs_container.io());
+    let _: std::sync::Arc<dyn IFixAggregate> = orch;
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

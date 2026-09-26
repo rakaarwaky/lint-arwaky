@@ -7,7 +7,7 @@ use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_executor_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -38,6 +38,12 @@ impl ICommandExecutorProtocol for StdioClient {
         }
         cmd.current_dir(working_dir.value())
             .env("PYTHONUNBUFFERED", "1");
+        eprintln!(
+            "EXTRACTRADE execute_command: bin={} wd={} first_args={:?}",
+            cmd_list[0],
+            working_dir.value(),
+            &cmd_list[1..cmd_list.len().min(4)]
+        );
 
         let mut child = cmd
             .stdout(std::process::Stdio::piped())

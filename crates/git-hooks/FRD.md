@@ -310,7 +310,7 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-### FR-001 — Git Diff Detection
+### SCEN-001 — Git Diff Detection
 
 
 | # | Scenario                                        | Expected                   | Rule   |
@@ -326,7 +326,7 @@ flowchart TD
 | 9 | Detached HEAD                                   | Fallback strategies handle | FR-001 |
 | 10 | Renamed files classified via `--diff-filter=R`   | Old/new paths parsed       | FR-001 |
 
-### FR-002 — Hook Installation
+### SCEN-002 — Hook Installation
 
 
 | # | Scenario                 | Expected                                    | Rule   |
@@ -339,7 +339,7 @@ flowchart TD
 | 6 | Windows                  | Permission setting skipped                  | FR-002 |
 | 7 | Empty executable path    | Defaults to "lint-arwaky-cli"               | FR-002 |
 
-### FR-003 — Hook Uninstallation
+### SCEN-003 — Hook Uninstallation
 
 
 | # | Scenario           | Expected                        | Rule   |
@@ -348,7 +348,7 @@ flowchart TD
 | 2 | Hook doesn't exist | SuccessStatus(true), idempotent | FR-003 |
 | 3 | Not a git repo     | SuccessStatus(false)            | FR-003 |
 
-### FR-004 — Check Execution
+### SCEN-004 — Check Execution
 
 
 | # | Scenario                        | Expected              | Rule   |
@@ -358,7 +358,7 @@ flowchart TD
 | 3 | Changed file with parse failure | Skipped by linters, no warning | FR-004 |
 | 4 | All changed files non-lintable  | Empty result list     | FR-004 |
 
-### FR-005 — Diff Data Comparison
+### SCEN-005 — Diff Data Comparison
 
 
 | # | Scenario                   | Expected                            | Rule   |
@@ -371,7 +371,7 @@ flowchart TD
 | 6 | Both paths missing         | BothMissing                         | FR-005 |
 | 7 | Same file path twice       | Score 0.0, Unchanged                | FR-005 |
 
-### FR-006 — Ignore Rule Management
+### SCEN-006 — Ignore Rule Management
 
 
 | # | Scenario                  | Expected                               | Rule   |
@@ -381,7 +381,7 @@ flowchart TD
 | 3 | Config file not found     | Error suggesting`lint-arwaky-cli init` | FR-006 |
 | 4 | Rule already exists (add) | No-op, "already present"               | FR-006 |
 
-### FR-007 — Config Initialization
+### SCEN-007 — Config Initialization
 
 
 | # | Scenario              | Expected                             | Rule   |
@@ -427,6 +427,7 @@ flowchart TD
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - CLI Commands FRD: `crates/cli-commands/FRD.md` (FR-012 git-diff command)

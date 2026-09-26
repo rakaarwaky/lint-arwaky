@@ -3,8 +3,7 @@ use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use naming_rules_lint_arwaky::agent_naming_orchestrator::{
     NamingOrchestrator, NamingOrchestratorDeps,
 };
-use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use naming_rules_lint_arwaky::capabilities_suffix_prefix_checker::SuffixPrefixChecker;
+use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use shared::common::PatternList;
 use shared::common::SuffixPolicyVO;
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
@@ -14,10 +13,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::naming_rules::INamingConventionChecker;
+use shared::naming_rules::INamingCheckerProtocol;
 use shared::naming_rules::INamingRunnerAggregate;
-use shared::naming_rules::ISuffixPrefixChecker;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
+use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -62,12 +61,12 @@ fn generate_file_entries(n: usize, name_pattern: &str) -> Vec<FileEntry> {
         .collect()
 }
 
-fn bench_naming_convention_checker(c: &mut Criterion) {
-    let mut group = c.benchmark_group("naming_convention_checker");
+fn bench_naming_checker(c: &mut Criterion) {
+    let mut group = c.benchmark_group("naming_checker");
     group.significance_level(0.05).confidence_level(0.95);
     group.sample_size(30);
 
-    let checker = NamingConventionChecker::new();
+    let checker = NamingChecker::new();
     let config = ArchitectureConfig::default();
     let layer_map = make_layer_map();
     let root = FilePath::new(".".to_string()).unwrap();
@@ -102,19 +101,6 @@ fn bench_naming_convention_checker(c: &mut Criterion) {
             });
         });
     }
-
-    group.finish();
-}
-
-fn bench_suffix_prefix_checker(c: &mut Criterion) {
-    let mut group = c.benchmark_group("suffix_prefix_checker");
-    group.significance_level(0.05).confidence_level(0.95);
-    group.sample_size(30);
-
-    let checker = SuffixPrefixChecker::new();
-    let config = ArchitectureConfig::default();
-    let layer_map = make_layer_map();
-    let root = FilePath::new(".".to_string()).unwrap();
 
     for (n, label) in [(10, "10_files"), (50, "50_files"), (100, "100_files")] {
         group.bench_with_input(BenchmarkId::new("valid_suffixes", label), &n, |b, &n| {
@@ -156,8 +142,7 @@ fn bench_orchestrator_full_audit(c: &mut Criterion) {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_convention_checker: Arc::new(NamingConventionChecker::new()),
-        suffix_prefix_checker: Arc::new(SuffixPrefixChecker::new()),
+        naming_checker: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -167,7 +152,9 @@ fn bench_orchestrator_full_audit(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("mixed_entries", label), &n, |b, &n| {
             let entries = generate_file_entries(n, "capabilities_user");
             b.iter(|| {
-                std::hint::black_box(orch.run_audit_with_entries(&entries));
+                std::hint::black_box(orch.execute(NamingRequest::RunAuditWithEntries {
+                    files: entries.clone(),
+                }));
             });
         });
     }
@@ -175,10 +162,5 @@ fn bench_orchestrator_full_audit(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(
-    benches,
-    bench_naming_convention_checker,
-    bench_suffix_prefix_checker,
-    bench_orchestrator_full_audit,
-);
+criterion_group!(benches, bench_naming_checker, bench_orchestrator_full_audit,);
 criterion_main!(benches);

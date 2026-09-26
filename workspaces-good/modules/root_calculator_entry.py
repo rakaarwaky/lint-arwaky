@@ -1,11 +1,11 @@
-import sys
-import os
 import argparse
+import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, str(Path(__file__).parent))
 
-from root_calculator_container import CalculatorContainer
 from cli.src.surface_calculator_command import run
+from root_calculator_container import CalculatorContainer
 
 
 def main():

@@ -136,7 +136,7 @@ flowchart TD
 
     | Category                    | Patterns                                                                                                                             | Language   |
     | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
-    | Rust forbidden tokens       | `unwrap()`, `expect()`, `panic!`, `todo!`, `unimplemented!`, `unreachable!`                                              | Rust       |
+    | Rust forbidden tokens       | `unwrap()`, `expect()`, `panic!`, `todo!`, `unimpl!`, `unreachable!`                                              | Rust       |
     | Rust attribute bypasses     | `#[allow(`, `#[warn(`, `#[deny(`                                                                                               | Rust       |
     | Python bypasses             | `raise NotImplementedError`, `assert false`                                                                                      | Python     |
     | Comment/annotation bypasses | `type: ignore`, `noqa`, `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `lint-disable`, `FIXME`, `HACK`, `XXX` | All        |
@@ -389,6 +389,7 @@ AES3XX:
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - **Filesystem crate** (external): filesystem aggregate and file walker

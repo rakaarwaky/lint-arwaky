@@ -1,7 +1,7 @@
 // Unit tests for SurfaceRoleChecker — surfaces-layer role audit (AES406).
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::ISurfaceRoleChecker;
+use shared::role_rules::ISurfaceRoleProtocol;
 
 use shared::filesystem::taxonomy_filesystem_vo::{
     Language, ParseMetadata, RustMetadata, TypeScriptMetadata,

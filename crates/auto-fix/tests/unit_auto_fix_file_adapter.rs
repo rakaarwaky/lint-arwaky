@@ -5,10 +5,10 @@ use shared::common::FilePath;
 use tempfile::TempDir;
 
 fn make_adapter() -> (FileAdapter, tempfile::TempDir) {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
     let tmp = TempDir::new().unwrap();
-    let adapter = FileAdapter::new(filesystem);
+    let adapter = FileAdapter::new(filesystem, fs_container.io());
     (adapter, tmp)
 }
 

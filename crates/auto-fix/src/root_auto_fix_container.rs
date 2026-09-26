@@ -5,7 +5,7 @@
 use crate::agent_fix_orchestrator::FixOrchestrator;
 use crate::capabilities_file_adapter::FileAdapter;
 use crate::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::Arc;
 
@@ -26,7 +26,7 @@ impl AutoFixContainer {
     pub fn orchestrator(
         &self,
         file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol>,
-    ) -> Arc<dyn LintFixOrchestratorAggregate> {
+    ) -> Arc<dyn IFixAggregate> {
         let fix_protocol =
             LintFixProcessor::new(self.code_analysis_linter.clone(), file_adapter.clone());
         Arc::new(FixOrchestrator::new(Arc::new(fix_protocol), file_adapter))
@@ -38,9 +38,10 @@ impl AutoFixContainer {
         filesystem: Arc<
             dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
         >,
-    ) -> Arc<dyn LintFixOrchestratorAggregate> {
+        io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+    ) -> Arc<dyn IFixAggregate> {
         let file_adapter: Arc<dyn shared::auto_fix::IFileAdapterProtocol> =
-            Arc::new(FileAdapter::new(filesystem));
+            Arc::new(FileAdapter::new(filesystem, io));
         self.orchestrator(file_adapter)
     }
 }

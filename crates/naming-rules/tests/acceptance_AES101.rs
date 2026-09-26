@@ -1,5 +1,5 @@
 // Acceptance tests — AES101 naming convention (map to FRD user stories).
-use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
+use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::taxonomy_layer_vo::LayerNameVO;
@@ -9,8 +9,8 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::naming_rules::RULE_CODE_NAMING_CONVENTION;
 use std::collections::HashMap;
 
-fn checker() -> NamingConventionChecker {
-    NamingConventionChecker::new()
+fn checker() -> NamingChecker {
+    NamingChecker::new()
 }
 
 fn layer_map() -> LayerMapVO {
@@ -209,7 +209,7 @@ fn excepted_filename_passes() {
 
 #[test]
 fn check_file_naming_via_trait_api() {
-    use shared::naming_rules::INamingConventionChecker;
+    use shared::naming_rules::INamingCheckerProtocol;
 
     let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
     let layer_map = layer_map();

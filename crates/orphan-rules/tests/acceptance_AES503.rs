@@ -1,5 +1,6 @@
 // Acceptance tests — AES503: Capabilities orphan detection.
-#[path = "mock_filesystem.rs"]
+#[allow(dead_code, unused_imports)]
+#[path = "../../shared/tests/common/mock_filesystem.rs"]
 mod mock_filesystem;
 
 use filesystem::agent_filesystem_orchestrator::{
@@ -10,11 +11,12 @@ use filesystem::capabilities_dependency_graph::DependencyGraph;
 use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use mock_filesystem::mock_filesystem;
+use mock_filesystem::mock_workspace;
 use orphan_rules_lint_arwaky::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
 use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::ICapabilitiesOrphanProtocol;
 use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
@@ -22,7 +24,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 fn capabilities_analyzer() -> CapabilitiesOrphanAnalyzer {
-    CapabilitiesOrphanAnalyzer::new(mock_filesystem())
+    CapabilitiesOrphanAnalyzer::new(mock_workspace())
 }
 
 fn reachable_for(fp: &FilePath) -> ReachabilityResult {
@@ -196,7 +198,12 @@ fn aes503_chained_python_import_reachable() {
     .unwrap();
 
     let orch = build_orchestrator();
-    let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+    let context = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(
+            tmp.path(),
+            &[],
+        ))
+        .into_graph_context();
 
     let entry = "modules/image/src/root_image_entry.py".to_string();
     let surface = "modules/image/src/surfaces_image_cli.py".to_string();
@@ -239,7 +246,12 @@ fn aes503_broken_chain_detects_unreachable() {
     .unwrap();
 
     let orch = build_orchestrator();
-    let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+    let context = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(
+            tmp.path(),
+            &[],
+        ))
+        .into_graph_context();
 
     let entry = "modules/image/src/root_image_entry.py".to_string();
     let surface = "modules/image/src/surfaces_image_cli.py".to_string();
@@ -335,7 +347,9 @@ fn aes503_di_impl_bridge_reaches_capabilities() {
     .unwrap();
 
     let orch = build_orchestrator();
-    let context = orch.build_orphan_graph_context(root, &[]);
+    let context = orch
+        .execute(FilesystemRequest::build_orphan_graph_context(root, &[]))
+        .into_graph_context();
 
     let entry = "modules/app/src/root_cli_main_entry.py".to_string();
     let surface = "modules/app/src/surface_app_cli.py".to_string();

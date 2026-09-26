@@ -2,6 +2,7 @@
 mod common;
 
 use shared::common::FilePath;
+use shared::config_system::ConfigRequest;
 use shared::config_system::{ConfigLanguage, ProjectConfig};
 
 use std::fs;
@@ -30,7 +31,8 @@ fn container_orchestrator_loads_defaults_for_empty_project() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp);
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     assert!(!result.warnings.is_empty());
 }
 
@@ -46,7 +48,8 @@ fn container_orchestrator_loads_real_config() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp);
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     assert_eq!(result.source.language, "rust");
 }
 

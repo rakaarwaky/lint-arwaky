@@ -16,6 +16,7 @@ mod di_aware_orphan_tests {
     use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
     use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
     use shared::common::taxonomy_path_vo::FilePath;
+    use shared::filesystem::FilesystemRequest;
     use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
     use shared::orphan_rules::contract_orphan_protocol::IContractOrphanProtocol;
     use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
@@ -120,7 +121,12 @@ pub fn create_app() -> MyOrchestrator {
         .unwrap();
 
         let orch = build_orchestrator();
-        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+        let context = orch
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                tmp.path(),
+                &[],
+            ))
+            .into_graph_context();
 
         // Verify the inheritance map has the impl edge: contract → capabilities
         let inheritance = &context.inheritance_map;
@@ -201,7 +207,12 @@ pub fn create_app() -> MyOrchestrator {
         .unwrap();
 
         let orch = build_orchestrator();
-        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+        let context = orch
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                tmp.path(),
+                &[],
+            ))
+            .into_graph_context();
 
         // Verify inheritance map has the impl edge
         assert!(
@@ -258,7 +269,12 @@ pub fn create_app() -> MyOrchestrator {
         .unwrap();
 
         let orch = build_orchestrator();
-        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+        let context = orch
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                tmp.path(),
+                &[],
+            ))
+            .into_graph_context();
 
         // Verify contract has an implementor in inheritance map
         assert!(
@@ -348,7 +364,12 @@ pub fn create_app() -> MyOrchestrator {
         .unwrap();
 
         let orch = build_orchestrator();
-        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+        let context = orch
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                tmp.path(),
+                &[],
+            ))
+            .into_graph_context();
 
         // Both implementations should be in the inheritance map
         let impls = context.inheritance_map.mapping.get("IProto").unwrap();
@@ -391,7 +412,12 @@ pub fn create_app() -> MyOrchestrator {
         .unwrap();
 
         let orch = build_orchestrator();
-        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+        let context = orch
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                tmp.path(),
+                &[],
+            ))
+            .into_graph_context();
 
         let impls_a = context
             .inheritance_map
@@ -435,7 +461,12 @@ pub fn create_app() -> MyOrchestrator {
         .unwrap();
 
         let orch = build_orchestrator();
-        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+        let context = orch
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                tmp.path(),
+                &[],
+            ))
+            .into_graph_context();
 
         assert!(
             !context
@@ -472,7 +503,12 @@ pub fn create_app() -> MyOrchestrator {
         .unwrap();
 
         let orch = build_orchestrator();
-        let context = orch.build_orphan_graph_context(tmp.path(), &[]);
+        let context = orch
+            .execute(FilesystemRequest::build_orphan_graph_context(
+                tmp.path(),
+                &[],
+            ))
+            .into_graph_context();
 
         let impls_a = context
             .inheritance_map

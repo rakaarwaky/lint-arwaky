@@ -1,15 +1,16 @@
 // Acceptance tests — verify AES201 (forbidden import) violations are fixable.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::FixRequest;
+use shared::auto_fix::IFixAggregate;
 use shared::common::FilePath;
 use tempfile::TempDir;
 
-fn make_dry_run_orch() -> std::sync::Arc<dyn LintFixOrchestratorAggregate> {
-    let filesystem =
-        filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+fn make_dry_run_orch() -> std::sync::Arc<dyn IFixAggregate> {
+    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let filesystem = fs_container.orchestrator();
     let qa = quality_rules::CodeAnalysisContainer::new();
     let container = AutoFixContainer::new(qa.code_analysis_linter());
-    container.orchestrator_with_filesystem(filesystem)
+    container.orchestrator_with_filesystem(filesystem, fs_container.io())
 }
 
 #[test]
@@ -30,7 +31,9 @@ fn aes201_forbidden_import_is_fixable() {
     )
     .unwrap();
 
-    let result = orch.execute(&fp, true); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(
         result.is_success(),
         "AES201 fix dry-run should succeed: {}",
@@ -65,7 +68,9 @@ fn aes201_output_mentions_fixable_codes() {
     )
     .unwrap();
 
-    let result = orch.execute(&fp, true); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     let output = result.output.value();
     assert!(
         output.contains("Dry-run")

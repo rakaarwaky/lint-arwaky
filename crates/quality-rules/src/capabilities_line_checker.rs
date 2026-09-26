@@ -1,5 +1,5 @@
 use shared::cli_commands::LintResult;
-use shared::quality_rules::contract_line_protocol::ILineCheckerProtocol;
+use shared::quality_rules::contract_quality_protocol::ILineCheckerProtocol;
 
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_severity_vo::Severity;

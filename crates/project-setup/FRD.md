@@ -198,12 +198,14 @@ flowchart TD
 - **Description**: Load language-specific lint-arwaky configuration
   templates.
 - **Input**: Language identifier string (`"rust"`, `"python"`,
-  `"javascript"`, `"typescript"`).
+  `"javascript"`, `"typescript"`, `"all"`).
 - **Output**: `Result<&'static str, SetupError>` — embedded YAML config
   content, or error for unknown language.
 - **Business Rules**:
 
-  - `"rust"`, `"python"`, `"javascript"`, `"typescript"` → `lint_arwaky.config.yaml` (unified)
+  - `"rust"`, `"python"`, `"javascript"`, `"typescript"`, `"all"` → `lint_arwaky.config.yaml` (unified)
+  - `"all"` is the fallback used when the detectable-language list is empty, so
+    `init` still writes a config in a directory with no recognized source files
   - Unknown language → returns `Err(SetupError::UnknownLanguage)` with
     list of supported languages. **No silent default.**
   - Templates are embedded at compile time.
@@ -329,7 +331,7 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-### FR-001 — MCP Config
+### SCEN-001 — MCP Config
 
 
 | #  | Scenario                  | Expected                                      | Rule   |
@@ -345,7 +347,7 @@ flowchart TD
 | 9  | Binary not found anywhere | Bare name`lint-arwaky-mcp`                    | FR-001 |
 | 10 | LINT_ARWAKY_MCP_BIN set   | Env var path used                             | FR-001 |
 
-### FR-002 — Env File
+### SCEN-002 — Env File
 
 
 | # | Scenario         | Expected                   | Rule   |
@@ -353,7 +355,7 @@ flowchart TD
 | 1 | Normal home path | Correct PHANTOM_ROOT value | FR-002 |
 | 2 | Empty home path  | PHANTOM_ROOT=/             | FR-002 |
 
-### FR-003 — Language Detection
+### SCEN-003 — Language Detection
 
 
 | # | Scenario                    | Expected                | Rule   |
@@ -365,7 +367,7 @@ flowchart TD
 | 5 | Multi-language project      | All detected languages  | FR-003 |
 | 6 | target/, node_modules/ dirs | Skipped                 | FR-003 |
 
-### FR-004 — Adapter Installation
+### SCEN-004 — Adapter Installation
 
 
 | # | Scenario             | Expected                                  | Rule   |
@@ -377,7 +379,7 @@ flowchart TD
 | 5 | Rust tools           | Suggestion message (not installed)        | FR-004 |
 | 6 | Empty package list   | Ok(()) without spawning                   | FR-004 |
 
-### FR-005 — Config Template
+### SCEN-005 — Config Template
 
 
 | # | Scenario               | Expected                            | Rule   |
@@ -388,7 +390,7 @@ flowchart TD
 | 4 | Unknown language       | Error with supported languages list | FR-005 |
 | 5 | "Rust" (case mismatch) | Normalized to "rust"                | FR-005 |
 
-### FR-006 — Config Writing
+### SCEN-006 — Config Writing
 
 
 | # | Scenario                 | Expected                       | Rule   |
@@ -397,7 +399,7 @@ flowchart TD
 | 2 | Create global config dir | ~/.config/lint-arwaky/ created | FR-006 |
 | 3 | Dir already exists       | Idempotent                     | FR-006 |
 
-### FR-007 — Pre-flight Check
+### SCEN-007 — Pre-flight Check
 
 
 | # | Scenario      | Expected           | Rule   |
@@ -440,6 +442,7 @@ flowchart TD
 
 ## Reference
 
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - CLI Commands FRD: `crates/cli-commands/FRD.md` (FR-009 MCP binary resolution)

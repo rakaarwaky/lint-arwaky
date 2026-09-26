@@ -16,17 +16,17 @@ use dispatcher::surface_plugin_action::collect_adapters_detailed;
 use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
 use dispatcher::surface_version_action::collect_version;
 
-use shared::auto_fix::LintFixOrchestratorAggregate;
+use shared::auto_fix::IFixAggregate;
 use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::GitHooksAggregate;
+use shared::git_hooks::IGitHooksAggregate;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::MaintenanceCommandsAggregate;
+use shared::maintenance::IMaintenanceAggregate;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
-use shared::project_setup::SetupManagementAggregate;
+use shared::project_setup::ISetupAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::tui::{ActionFlags, LintExecutionResult};
@@ -37,10 +37,10 @@ use std::sync::Arc;
 
 pub struct SurfaceLintExecutor {
     code_analysis: Arc<dyn ICodeAnalysisAggregate>,
-    fix_orchestrator: Option<Arc<dyn LintFixOrchestratorAggregate>>,
-    setup_aggregate: Option<Arc<dyn SetupManagementAggregate>>,
-    maintenance: Option<Arc<dyn MaintenanceCommandsAggregate>>,
-    hook_port: Option<Arc<dyn GitHooksAggregate>>,
+    fix_orchestrator: Option<Arc<dyn IFixAggregate>>,
+    setup_aggregate: Option<Arc<dyn ISetupAggregate>>,
+    maintenance: Option<Arc<dyn IMaintenanceAggregate>>,
+    hook_port: Option<Arc<dyn IGitHooksAggregate>>,
     config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
     external_lint: Option<Arc<dyn IExternalLintAggregate>>,
     orphan_aggregate: Option<Arc<dyn IOrphanAggregate>>,
@@ -48,7 +48,11 @@ pub struct SurfaceLintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     filesystem: Arc<dyn IFilesystemAggregate>,
-    fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+    filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+    filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+    filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+    fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+    fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
     orphan_factory: Arc<OrphanFactory>,
 }
 
@@ -61,7 +65,8 @@ impl SurfaceLintExecutor {
             multi_project_orchestrator: self.config_orchestrator.clone(),
             filter: None,
             member: None,
-            filesystem: self.filesystem.clone(),
+            filesystem: Arc::new(self.fs_seam.as_ref().clone()),
+            scan_aggregates: self.build_scan_aggregates(),
         };
         match collect_scan(opts) {
             Ok(violations) => {
@@ -79,7 +84,8 @@ impl SurfaceLintExecutor {
             multi_project_orchestrator: self.config_orchestrator.clone(),
             filter: None,
             member: None,
-            filesystem: self.filesystem.clone(),
+            filesystem: Arc::new(self.fs_seam.as_ref().clone()),
+            scan_aggregates: self.build_scan_aggregates(),
         };
         match collect_scan(opts) {
             Ok(violations) => {
@@ -293,7 +299,7 @@ impl SurfaceLintExecutor {
                 );
             }
         };
-        let items = collect_init(setup, self.filesystem.clone());
+        let items = collect_init(setup, self.filesystem_io.clone());
         let mut output = String::from("Config initialization.\n");
         let mut has_errors = false;
         for item in &items {
@@ -421,7 +427,7 @@ impl SurfaceLintExecutor {
     }
 
     pub fn adapters(&self) -> LintExecutionResult {
-        let adapters = collect_adapters_detailed(self.filesystem.as_ref());
+        let adapters = collect_adapters_detailed(self.filesystem_tool_resolution.as_ref());
         let mut output = String::from("Active Linter Adapters:\n");
         for (i, adapter) in adapters.iter().enumerate() {
             let status = if adapter.installed { "[+]" } else { "[-]" };
@@ -452,12 +458,20 @@ impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         filesystem: Arc<dyn IFilesystemAggregate>,
-        fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
+        filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+        filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+        filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+        fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+        fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
         orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
         Self {
             code_analysis,
             filesystem,
+            filesystem_io,
+            filesystem_workspace,
+            filesystem_tool_resolution,
+            fs_seam,
             fs_factory,
             orphan_factory,
             fix_orchestrator: None,
@@ -473,22 +487,22 @@ impl SurfaceLintExecutor {
         }
     }
 
-    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn LintFixOrchestratorAggregate>) -> Self {
+    pub fn with_fix(mut self, fix_orchestrator: Arc<dyn IFixAggregate>) -> Self {
         self.fix_orchestrator = Some(fix_orchestrator);
         self
     }
 
-    pub fn with_setup(mut self, setup_aggregate: Arc<dyn SetupManagementAggregate>) -> Self {
+    pub fn with_setup(mut self, setup_aggregate: Arc<dyn ISetupAggregate>) -> Self {
         self.setup_aggregate = Some(setup_aggregate);
         self
     }
 
-    pub fn with_maintenance(mut self, maintenance: Arc<dyn MaintenanceCommandsAggregate>) -> Self {
+    pub fn with_maintenance(mut self, maintenance: Arc<dyn IMaintenanceAggregate>) -> Self {
         self.maintenance = Some(maintenance);
         self
     }
 
-    pub fn with_hook_port(mut self, hook_port: Arc<dyn GitHooksAggregate>) -> Self {
+    pub fn with_hook_port(mut self, hook_port: Arc<dyn IGitHooksAggregate>) -> Self {
         self.hook_port = Some(hook_port);
         self
     }
@@ -535,6 +549,19 @@ impl SurfaceLintExecutor {
         self
     }
 
+    fn build_scan_aggregates(&self) -> Option<dispatcher::surface_check_action::ScanAggregates> {
+        Some(dispatcher::surface_check_action::ScanAggregates {
+            quality: self.code_analysis.clone(),
+            role: self.role_orchestrator.clone()?,
+            import: self.import_orchestrator.clone()?,
+            naming: self.naming_orchestrator.clone()?,
+            external: self.external_lint.clone()?,
+            orphan: self.orphan_aggregate.clone()?,
+            config: self.config_orchestrator.clone()?,
+            fs_seam: self.fs_seam.clone(),
+        })
+    }
+
     fn build_ci_deps(&self) -> Option<CiScanDeps> {
         Some(CiScanDeps {
             code_analysis_linter: self.code_analysis.clone(),
@@ -543,6 +570,7 @@ impl SurfaceLintExecutor {
             config_orchestrator: self.config_orchestrator.clone()?,
             orphan_orchestrator: self.orphan_aggregate.clone()?,
             filesystem: self.filesystem.clone(),
+            filesystem_io: self.filesystem_io.clone(),
         })
     }
 
@@ -551,6 +579,8 @@ impl SurfaceLintExecutor {
             self.orphan_aggregate.clone()?,
             self.config_orchestrator.clone()?,
             self.filesystem.clone(),
+            self.filesystem_io.clone(),
+            self.filesystem_workspace.clone(),
             self.fs_factory.clone(),
             self.orphan_factory.clone(),
         ))

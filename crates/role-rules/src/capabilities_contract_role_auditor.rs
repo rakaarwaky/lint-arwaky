@@ -1,4 +1,4 @@
-// PURPOSE: ContractRoleChecker — IContractRoleChecker for AES402: contract primitive type audits
+// PURPOSE: ContractRoleChecker — IContractRoleProtocol for AES402: contract primitive type audits
 //
 // ALGORITHM:
 //   Uses FileEntry from the filesystem crate. Detects primitive types in contract
@@ -14,13 +14,13 @@ use shared::common::utility_signature_parser::{
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::contract_role_contract_protocol::IContractRoleChecker;
+use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct ContractRoleChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
-impl IContractRoleChecker for ContractRoleChecker {
+impl IContractRoleProtocol for ContractRoleChecker {
     fn check_protocol(&self, file: &FileEntry) -> Vec<LintResult> {
         let mut violations = Vec::new();
         self.check_contract_primitive(file, &mut violations);

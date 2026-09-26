@@ -1,10 +1,12 @@
 // Acceptance test — FR-001: MCP Configuration Generation.
 // Tests all 7 client formats, binary resolution, and alwaysAllow list.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
+use shared::project_setup::SetupRequest;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
-    let fs = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
+    let c = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let fs = c.io();
     SetupContainer::new(fs)
 }
 
@@ -14,7 +16,9 @@ fn make_container() -> SetupContainer {
 fn fr001_claude_config_wraps_in_mcp_servers() {
     let container = make_container();
     let agg = container.aggregate();
-    let config = agg.mcp_config_claude();
+    let config = agg
+        .execute(SetupRequest::mcp_config_claude())
+        .into_mcp_config();
     let value = config.value();
     assert!(
         value.get("mcpServers").is_some(),
@@ -31,7 +35,9 @@ fn fr001_claude_config_wraps_in_mcp_servers() {
 fn fr001_cursor_config_wraps_in_mcp_servers() {
     let container = make_container();
     let agg = container.aggregate();
-    let config = agg.mcp_config_cursor();
+    let config = agg
+        .execute(SetupRequest::mcp_config_cursor())
+        .into_mcp_config();
     let value = config.value();
     assert!(
         value.get("mcpServers").is_some(),
@@ -43,7 +49,9 @@ fn fr001_cursor_config_wraps_in_mcp_servers() {
 fn fr001_windsurf_config_wraps_in_mcp_servers() {
     let container = make_container();
     let agg = container.aggregate();
-    let config = agg.mcp_config_windsurf();
+    let config = agg
+        .execute(SetupRequest::mcp_config_windsurf())
+        .into_mcp_config();
     let value = config.value();
     assert!(
         value.get("mcpServers").is_some(),
@@ -55,7 +63,9 @@ fn fr001_windsurf_config_wraps_in_mcp_servers() {
 fn fr001_copilot_config_wraps_in_mcp_servers() {
     let container = make_container();
     let agg = container.aggregate();
-    let config = agg.mcp_config_copilot();
+    let config = agg
+        .execute(SetupRequest::mcp_config_copilot())
+        .into_mcp_config();
     let value = config.value();
     assert!(
         value.get("mcpServers").is_some(),
@@ -67,7 +77,9 @@ fn fr001_copilot_config_wraps_in_mcp_servers() {
 fn fr001_hermes_config_is_base_directly() {
     let container = make_container();
     let agg = container.aggregate();
-    let config = agg.mcp_config_hermes();
+    let config = agg
+        .execute(SetupRequest::mcp_config_hermes())
+        .into_mcp_config();
     let value = config.value();
     assert!(
         value.get("lint-arwaky").is_some(),
@@ -79,7 +91,9 @@ fn fr001_hermes_config_is_base_directly() {
 fn fr001_vscode_config_wraps_in_mcp_servers() {
     let container = make_container();
     let agg = container.aggregate();
-    let config = agg.mcp_config_vscode();
+    let config = agg
+        .execute(SetupRequest::mcp_config_vscode())
+        .into_mcp_config();
     let value = config.value();
     assert!(
         value.get("mcp").is_some(),
@@ -96,7 +110,9 @@ fn fr001_vscode_config_wraps_in_mcp_servers() {
 fn fr001_all_client_contains_all_formats() {
     let container = make_container();
     let agg = container.aggregate();
-    let config = agg.mcp_config_all();
+    let config = agg
+        .execute(SetupRequest::mcp_config_all())
+        .into_mcp_config();
     let value = config.value();
     for client in &[
         "claude-code",
@@ -186,12 +202,36 @@ fn fr001_all_client_configs_are_valid_json() {
     let container = make_container();
     let agg = container.aggregate();
     for (name, config) in &[
-        ("claude", agg.mcp_config_claude()),
-        ("cursor", agg.mcp_config_cursor()),
-        ("windsurf", agg.mcp_config_windsurf()),
-        ("copilot", agg.mcp_config_copilot()),
-        ("hermes", agg.mcp_config_hermes()),
-        ("vscode", agg.mcp_config_vscode()),
+        (
+            "claude",
+            agg.execute(SetupRequest::mcp_config_claude())
+                .into_mcp_config(),
+        ),
+        (
+            "cursor",
+            agg.execute(SetupRequest::mcp_config_cursor())
+                .into_mcp_config(),
+        ),
+        (
+            "windsurf",
+            agg.execute(SetupRequest::mcp_config_windsurf())
+                .into_mcp_config(),
+        ),
+        (
+            "copilot",
+            agg.execute(SetupRequest::mcp_config_copilot())
+                .into_mcp_config(),
+        ),
+        (
+            "hermes",
+            agg.execute(SetupRequest::mcp_config_hermes())
+                .into_mcp_config(),
+        ),
+        (
+            "vscode",
+            agg.execute(SetupRequest::mcp_config_vscode())
+                .into_mcp_config(),
+        ),
     ] {
         let json_str = serde_json::to_string(config.value()).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json_str).unwrap();
@@ -211,12 +251,36 @@ fn fr001_configs_writable_to_disk() {
     let tmp = TempDir::new().unwrap();
 
     for (name, config) in &[
-        ("claude", agg.mcp_config_claude()),
-        ("cursor", agg.mcp_config_cursor()),
-        ("windsurf", agg.mcp_config_windsurf()),
-        ("copilot", agg.mcp_config_copilot()),
-        ("hermes", agg.mcp_config_hermes()),
-        ("vscode", agg.mcp_config_vscode()),
+        (
+            "claude",
+            agg.execute(SetupRequest::mcp_config_claude())
+                .into_mcp_config(),
+        ),
+        (
+            "cursor",
+            agg.execute(SetupRequest::mcp_config_cursor())
+                .into_mcp_config(),
+        ),
+        (
+            "windsurf",
+            agg.execute(SetupRequest::mcp_config_windsurf())
+                .into_mcp_config(),
+        ),
+        (
+            "copilot",
+            agg.execute(SetupRequest::mcp_config_copilot())
+                .into_mcp_config(),
+        ),
+        (
+            "hermes",
+            agg.execute(SetupRequest::mcp_config_hermes())
+                .into_mcp_config(),
+        ),
+        (
+            "vscode",
+            agg.execute(SetupRequest::mcp_config_vscode())
+                .into_mcp_config(),
+        ),
     ] {
         let json_str = serde_json::to_string_pretty(config.value()).unwrap();
         let path = tmp.path().join(format!("mcp_{}.json", name));

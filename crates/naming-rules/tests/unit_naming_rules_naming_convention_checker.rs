@@ -1,9 +1,9 @@
-// Unit tests for NamingConventionChecker — AES101 file naming validation.
-use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
+// Unit tests for NamingChecker — AES101 file naming validation.
+use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use shared::common::LayerNameVO;
 
-fn checker() -> NamingConventionChecker {
-    NamingConventionChecker::new()
+fn checker() -> NamingChecker {
+    NamingChecker::new()
 }
 
 #[test]

@@ -3,6 +3,7 @@ use quality_rules_lint_arwaky::CodeAnalysisContainer;
 
 use shared::common::FilePath;
 use shared::config_system::ArchitectureConfig;
+use shared::quality_rules::CodeAnalysisRequest;
 
 // ── Container construction ──────────────────────────────────
 
@@ -10,7 +11,16 @@ use shared::config_system::ArchitectureConfig;
 fn default_container_creates_successfully() {
     let container = CodeAnalysisContainer::new();
     let linter = container.code_analysis_linter();
-    assert!(!linter.active_rules().is_empty() || linter.active_rules().is_empty()); // no panic
+    assert!(
+        !linter
+            .execute(CodeAnalysisRequest::active_rules())
+            .into_rules()
+            .is_empty()
+            || linter
+                .execute(CodeAnalysisRequest::active_rules())
+                .into_rules()
+                .is_empty()
+    ); // no panic
 }
 
 #[test]
@@ -19,7 +29,13 @@ fn container_with_custom_config_creates_successfully() {
     let layer_map = shared::common::LayerMapVO::new(std::collections::HashMap::new());
     let container = CodeAnalysisContainer::new_with_config(config, layer_map);
     let linter = container.code_analysis_linter();
-    assert_eq!(linter.active_rules().len(), 0); // default config has no rules
+    assert_eq!(
+        linter
+            .execute(CodeAnalysisRequest::active_rules())
+            .into_rules()
+            .len(),
+        0
+    ); // default config has no rules
 }
 
 // ── Orchestrator run_analysis_with_entries ────────────────────
@@ -28,7 +44,9 @@ fn container_with_custom_config_creates_successfully() {
 fn run_analysis_with_empty_entries_returns_empty() {
     let container = CodeAnalysisContainer::new();
     let linter = container.code_analysis_linter();
-    let results = linter.run_analysis_with_entries(&[]);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&[]))
+        .into_violations();
     assert!(results.is_empty());
 }
 
@@ -48,7 +66,9 @@ fn run_analysis_skips_unparseable_entries() {
         parse_ok: false,
         parse_metadata: None,
     }];
-    let results = linter.run_analysis_with_entries(&entries);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .into_violations();
     assert!(results.is_empty());
 }
 
@@ -68,7 +88,9 @@ fn run_analysis_skips_empty_content() {
         parse_ok: true,
         parse_metadata: None,
     }];
-    let results = linter.run_analysis_with_entries(&entries);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .into_violations();
     assert!(results.is_empty());
 }
 
@@ -88,7 +110,9 @@ fn run_analysis_detects_bypass_in_code() {
         parse_ok: true,
         parse_metadata: None,
     }];
-    let results = linter.run_analysis_with_entries(&entries);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .into_violations();
     assert!(
         results.iter().any(|r| r.code.code().contains("AES304")),
         "Expected AES304 bypass violation"
@@ -101,7 +125,9 @@ fn run_analysis_detects_bypass_in_code() {
 fn score_perfect_when_no_violations() {
     let container = CodeAnalysisContainer::new();
     let linter = container.code_analysis_linter();
-    let score = linter.calc_score(&[]);
+    let score = linter
+        .execute(CodeAnalysisRequest::calc_score(&[]))
+        .into_score();
     assert!(score.value() >= 100.0 || score.value() <= 0.0); // score is either 100 or calculated
 }
 
@@ -113,7 +139,9 @@ fn format_report_returns_content() {
     let linter = container.code_analysis_linter();
     let results = shared::cli_commands::LintResultList::new(Vec::new());
     let root = FilePath::new("/project".to_string()).unwrap();
-    let report = linter.format_report(&results, &root);
+    let report = linter
+        .execute(CodeAnalysisRequest::format_report(&results.values, &root))
+        .into_content();
     assert!(
         report
             .value()

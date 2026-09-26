@@ -3,6 +3,7 @@ use quality_rules_lint_arwaky::CodeAnalysisContainer;
 
 use shared::common::FilePath;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared::quality_rules::CodeAnalysisRequest;
 use std::path::PathBuf;
 
 #[test]
@@ -40,14 +41,18 @@ fn e2e_detects_all_violation_types() {
         },
     ];
 
-    let results = linter.run_analysis_with_entries(&entries);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .into_violations();
 
     // Should find AES304 violations
     let has_aes304 = results.iter().any(|r| r.code.code().contains("AES304"));
     assert!(has_aes304, "Expected AES304 bypass violations");
 
     // Score should be less than 100 with violations present
-    let score = linter.calc_score(&results);
+    let score = linter
+        .execute(CodeAnalysisRequest::calc_score(&results))
+        .into_score();
     assert!(
         score.value() < 100.0,
         "Score should be < 100 when violations exist, got {}",
@@ -57,7 +62,12 @@ fn e2e_detects_all_violation_types() {
     // Report should contain violation data
     let results_list = shared::cli_commands::LintResultList::new(results);
     let root = FilePath::new("/project".to_string()).unwrap();
-    let report = linter.format_report(&results_list, &root);
+    let report = linter
+        .execute(CodeAnalysisRequest::format_report(
+            &results_list.values,
+            &root,
+        ))
+        .into_content();
     assert!(report.value().contains("AES"));
 }
 
@@ -85,7 +95,9 @@ fn e2e_disabled_config_returns_empty() {
         parse_metadata: None,
     }];
 
-    let results = linter.run_analysis_with_entries(&entries);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .into_violations();
     assert!(
         results.is_empty(),
         "Disabled config should return empty results"
@@ -109,7 +121,9 @@ fn e2e_bypass_patterns_in_comment_detected() {
         parse_metadata: None,
     }];
 
-    let results = linter.run_analysis_with_entries(&entries);
+    let results = linter
+        .execute(CodeAnalysisRequest::run_analysis(&entries))
+        .into_violations();
     let has_aes304 = results.iter().any(|r| r.code.code().contains("AES304"));
     assert!(has_aes304, "Expected AES304 for FIXME/HACK in comments");
 }

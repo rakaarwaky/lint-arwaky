@@ -67,7 +67,7 @@ impl AdapterMetadata {
 
 string_value_object!(EnvContentVO);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct McpConfigVO {
     #[serde(default)]
     pub value: HashMap<String, serde_json::Value>,

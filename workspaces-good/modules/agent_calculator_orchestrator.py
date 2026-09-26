@@ -1,21 +1,23 @@
-from typing import List, Optional
-
-from shared.src.contract_calculator_aggregate import CalculatorAggregate
-from shared.src.contract_calculator_protocol import CalculatorProtocol
+from shared.src.contract_calculator_aggregate import ICalculatorAggregate
+from shared.src.contract_calculator_protocol import ICalculatorProtocol
+from shared.src.taxonomy_calculator_request_vo import (
+    CalculatorRequest,
+    CalculatorResponse,
+    CalculatorVerb,
+)
 from shared.src.taxonomy_expression_vo import ExpressionVO
 from shared.src.taxonomy_operation_vo import OperationVO
 from shared.src.taxonomy_result_vo import ResultVO
-
 
 # ─── Block 1: Struct Definition ───────────────────────────
 
 class CalculatorOrchestratorDeps:
     def __init__(
         self,
-        addition: CalculatorProtocol,
-        subtraction: CalculatorProtocol,
-        multiplication: CalculatorProtocol,
-        division: CalculatorProtocol,
+        addition: ICalculatorProtocol,
+        subtraction: ICalculatorProtocol,
+        multiplication: ICalculatorProtocol,
+        division: ICalculatorProtocol,
     ):
         self.addition = addition
         self.subtraction = subtraction
@@ -23,14 +25,23 @@ class CalculatorOrchestratorDeps:
         self.division = division
 
 
-# ─── Block 2: Protocol Implementation ─────────────────────
+# ─── Block 2: Aggregate Implementation ────────────────────
 
-class CalculatorOrchestrator(CalculatorAggregate):
+class CalculatorOrchestrator(ICalculatorAggregate):
     def __init__(self, deps: CalculatorOrchestratorDeps):
         self._deps = deps
-        self._history: List[ResultVO] = []
+        self._history: list[ResultVO] = []
 
-    def delegate(self, expr: ExpressionVO) -> Optional[ResultVO]:
+    def execute(self, request: CalculatorRequest) -> CalculatorResponse:
+        if request.verb is CalculatorVerb.DELEGATE:
+            return CalculatorResponse.delegation(self._delegate(request.expr))
+        return CalculatorResponse.history(self._history_snapshot())
+
+# ─── Block 3: Helpers, Private Methods ────────────────────
+
+    def _delegate(self, expr: ExpressionVO | None) -> ResultVO | None:
+        if expr is None:
+            return None
         analyzer_map = {
             OperationVO.ADD: self._deps.addition,
             OperationVO.SUBTRACT: self._deps.subtraction,
@@ -45,5 +56,5 @@ class CalculatorOrchestrator(CalculatorAggregate):
             self._history.append(result)
         return result
 
-    def history(self) -> List[ResultVO]:
+    def _history_snapshot(self) -> list[ResultVO]:
         return list(self._history)
