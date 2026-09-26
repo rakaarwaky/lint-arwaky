@@ -35,11 +35,11 @@ pub enum FixResponse {
 }
 
 impl FixResponse {
-    /// Take the fix result. Panics if a different verb was served.
+    /// Take the fix result. Returns an empty result if a different verb was served.
     pub fn into_fix_result(self) -> FixResult {
         match self {
             Self::Execute { result } => result,
-            Self::ManualReport { .. } => panic!("expected an Execute response"),
+            Self::ManualReport { .. } => FixResult::default(),
         }
     }
 

@@ -5,14 +5,14 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
+use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_error::ConfigError;
-use crate::config_system::taxonomy_setting_vo::ProjectConfig;
 use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use crate::config_system::taxonomy_source_vo::ConfigSource;
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::config_system::taxonomy_validation_vo::ValidationResult;
 pub use crate::config_system::taxonomy_config_vo::WorkspaceType;
+use crate::config_system::taxonomy_setting_vo::ProjectConfig;
+use crate::config_system::taxonomy_source_vo::ConfigSource;
+use crate::config_system::taxonomy_validation_vo::ValidationResult;
 
 pub trait IConfigParserProtocol: Send + Sync {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError>;

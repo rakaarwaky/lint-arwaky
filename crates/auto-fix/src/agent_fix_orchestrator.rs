@@ -19,8 +19,8 @@
 // - BF-5: Removed duplicate `run_fix` — consolidated with aggregate `execute`
 // - TR-2: Aggregate trait includes `manual_report` for FR-005
 
-use shared::auto_fix::taxonomy_fix_request_vo::{FixRequest, FixResponse};
 use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
+use shared::auto_fix::taxonomy_fix_request_vo::{FixRequest, FixResponse};
 use shared::auto_fix::{FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol};
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_message_vo::LintMessage;
@@ -42,12 +42,12 @@ pub struct FixOrchestrator {
 impl IFixAggregate for FixOrchestrator {
     fn execute(&self, request: FixRequest) -> FixResponse {
         match request {
-            FixRequest::Execute { path, dry_run } => {
-                FixResponse::Execute { result: self.execute_impl(&path, dry_run) }
-            }
-            FixRequest::ManualReport { violations } => {
-                FixResponse::ManualReport { reports: self.manual_report_impl(&violations) }
-            }
+            FixRequest::Execute { path, dry_run } => FixResponse::Execute {
+                result: self.execute_impl(&path, dry_run),
+            },
+            FixRequest::ManualReport { violations } => FixResponse::ManualReport {
+                reports: self.manual_report_impl(&violations),
+            },
         }
     }
 }

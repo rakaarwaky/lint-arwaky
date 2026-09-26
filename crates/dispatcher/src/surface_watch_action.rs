@@ -31,7 +31,8 @@ pub fn handle_watch(
         return Err(format!("[error] failed to set Ctrl+C handler: {e}"));
     }
 
-    let WatchResponse::Run { exit_code } = watch_aggregate.execute(WatchRequest::run(config, running))
+    let WatchResponse::Run { exit_code } =
+        watch_aggregate.execute(WatchRequest::run(config, running))
     else {
         return Err("watch session returned an unexpected response".to_string());
     };

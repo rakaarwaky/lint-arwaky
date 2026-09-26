@@ -27,9 +27,7 @@ pub fn collect_fix(
     path: Option<FilePath>,
     dry_run: bool,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    fix_orchestrator_factory: Arc<
-        dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync,
-    >,
+    fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
 ) -> Result<FixReport, String> {
     let project_path = match path {
         Some(p) => p,

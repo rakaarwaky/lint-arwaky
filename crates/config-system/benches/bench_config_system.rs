@@ -6,6 +6,7 @@ use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::config_system::ConfigRequest;
 use shared::config_system::contract_config_protocol::IConfigValidatorProtocol;
 use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus, ProjectConfig};
@@ -97,7 +98,12 @@ fn bench_load_config_sync(c: &mut Criterion) {
                 dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
             > = filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator();
             let orch = ConfigContainer::new(fs).orchestrator();
-            b.iter(|| std::hint::black_box(orch.load_config_sync(path)))
+            b.iter(|| {
+                std::hint::black_box(
+                    orch.execute(ConfigRequest::load_sync(path))
+                        .into_sync_config(),
+                )
+            })
         },
     );
     group.finish();

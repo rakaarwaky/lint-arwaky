@@ -1,7 +1,7 @@
 // Integration tests — full DI wiring via AutoFixContainer with real quality-rules.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::IFileAdapterProtocol;
 use shared::auto_fix::FixRequest;
+use shared::auto_fix::IFileAdapterProtocol;
 use shared::auto_fix::IFixAggregate;
 use shared::common::ContentString;
 use shared::common::FilePath;
@@ -76,7 +76,9 @@ fn orchestrator_execute_on_empty_project_dry_run() {
     std::fs::write(tmp.path().join("main.rs"), "fn main() {}\n").unwrap();
     let fp = FilePath::new(tmp.path().join("main.rs").to_string_lossy().to_string()).unwrap();
 
-    let result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run=true
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run=true
     assert!(result.is_success(), "Dry-run should succeed: {}", result);
 }
 
@@ -92,7 +94,9 @@ fn orchestrator_execute_per_request_dry_run_false() {
     std::fs::write(tmp.path().join("main.rs"), "fn main() {}\n").unwrap();
     let fp = FilePath::new(tmp.path().join("main.rs").to_string_lossy().to_string()).unwrap();
 
-    let result = orch.execute(FixRequest::execute(&fp, false)).into_fix_result(); // per-request dry_run=false
+    let result = orch
+        .execute(FixRequest::execute(&fp, false))
+        .into_fix_result(); // per-request dry_run=false
     assert!(
         result.is_success(),
         "Non-dry-run should succeed: {}",
@@ -108,6 +112,8 @@ fn orchestrator_manual_report_empty() {
     let container = AutoFixContainer::new(qa.code_analysis_linter());
     let orch = container.orchestrator_with_filesystem(filesystem);
 
-    let report = orch.execute(FixRequest::manual_report(&[])).into_manual_report();
+    let report = orch
+        .execute(FixRequest::manual_report(&[]))
+        .into_manual_report();
     assert!(report.is_empty(), "Empty violations → empty report");
 }

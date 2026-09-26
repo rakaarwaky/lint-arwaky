@@ -5,13 +5,13 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_source_vo::ContentString;
 use crate::auto_fix::taxonomy_fix_outcome_vo::FixOutcome;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_source_vo::ContentString;
 
 pub trait IFileAdapterProtocol: Send + Sync {
     fn read_file(&self, path: &FilePath) -> Option<ContentString>;

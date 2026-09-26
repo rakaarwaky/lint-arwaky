@@ -33,6 +33,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         git_hooks_aggregate: deps.git_hooks_aggregate,
         setup_orchestrator: deps.setup_orchestrator,
         config_orchestrator: deps.config_orchestrator,
+        config_parser: deps.config_parser,
+        config_reader: deps.config_reader,
         external_lint: deps.external_lint,
         import_orchestrator: deps.import_orchestrator,
         naming_orchestrator: deps.naming_orchestrator,

@@ -13,11 +13,11 @@ use std::sync::Arc;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
@@ -288,10 +288,12 @@ fn orchestrator_implements_aggregate_protocol() {
     let _dyn_agg: &dyn IExternalLintAggregate = &orchestrator;
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let result = _dyn_agg.execute(shared::external_lint::ExternalLintRequest::scan_all(&path))
+    let result = _dyn_agg
+        .execute(shared::external_lint::ExternalLintRequest::scan_all(&path))
         .into_violations();
     assert!(result.values.is_empty()); // no adapters registered, so no results
-    let names = _dyn_agg.execute(shared::external_lint::ExternalLintRequest::adapter_names())
+    let names = _dyn_agg
+        .execute(shared::external_lint::ExternalLintRequest::adapter_names())
         .into_adapter_names();
     assert!(names.is_empty());
 }

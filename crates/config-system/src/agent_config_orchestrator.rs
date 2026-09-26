@@ -11,6 +11,7 @@ use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::contract_config_protocol::WorkspaceType;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared::config_system::taxonomy_config_request_vo::{ConfigRequest, ConfigResponse};
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
@@ -106,13 +107,64 @@ impl IWorkspaceDetectorProtocol for ConfigOrchestrator {
 // ─── Block 3: Aggregate Trait Implementation ──────────────
 
 impl IConfigOrchestratorAggregate for ConfigOrchestrator {
-    fn load_project_config(&self, project_root: &FilePath) -> ConfigResult {
+    fn execute(&self, request: ConfigRequest) -> ConfigResponse {
+        match request {
+            ConfigRequest::LoadProjectConfig { project_root } => {
+                ConfigResponse::LoadProjectConfig {
+                    result: self.load_project_config(&project_root),
+                }
+            }
+            ConfigRequest::LoadForLanguage {
+                project_root,
+                language,
+            } => ConfigResponse::LoadForLanguage {
+                result: self.load_config_for_language(&project_root, language),
+            },
+            ConfigRequest::ReadConfig {
+                project_root,
+                language,
+            } => ConfigResponse::ReadConfig {
+                source: self.read_config(&project_root, language),
+            },
+            ConfigRequest::DiscoverWorkspaces { root } => ConfigResponse::DiscoverWorkspaces {
+                workspaces: self.discover_workspaces(&root),
+            },
+            ConfigRequest::LoadSync { project_root } => ConfigResponse::LoadSync {
+                config: self.load_config_sync(&project_root),
+            },
+            ConfigRequest::IgnoredPaths { project_root } => ConfigResponse::IgnoredPaths {
+                patterns: self.ignored_paths(&project_root),
+            },
+            ConfigRequest::IgnoredPathsForLanguage {
+                project_root,
+                language,
+            } => ConfigResponse::IgnoredPathsForLanguage {
+                patterns: self.ignored_paths_for_language(&project_root, language),
+            },
+        }
+    }
+}
+
+impl ConfigOrchestrator {
+    pub fn read_config(
+        &self,
+        project_root: &FilePath,
+        language: ConfigLanguage,
+    ) -> Option<ConfigSource> {
+        self.deps
+            .config_reader
+            .read_config(project_root, language)
+            .ok()
+            .flatten()
+    }
+
+    pub fn load_project_config(&self, project_root: &FilePath) -> ConfigResult {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
         self.load_config_for_language(project_root, language)
     }
 
-    fn load_config_for_language(
+    pub fn load_config_for_language(
         &self,
         project_root: &FilePath,
         language: ConfigLanguage,
@@ -158,7 +210,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         }
     }
 
-    fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
+    pub fn discover_workspaces(&self, root: &FilePath) -> Vec<WorkspaceInfo> {
         let workspaces = self
             .deps
             .workspace_detector
@@ -183,7 +235,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
             .collect()
     }
 
-    fn load_config_sync(&self, project_root: &FilePath) -> ArchitectureConfig {
+    pub fn load_config_sync(&self, project_root: &FilePath) -> ArchitectureConfig {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
 
@@ -193,7 +245,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         }
     }
 
-    fn ignored_paths(&self, project_root: &FilePath) -> PatternList {
+    pub fn ignored_paths(&self, project_root: &FilePath) -> PatternList {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
         let result = self.load_config_for_language(project_root, language);
@@ -202,7 +254,7 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
         )))
     }
 
-    fn ignored_paths_for_language(
+    pub fn ignored_paths_for_language(
         &self,
         project_root: &FilePath,
         language: ConfigLanguage,

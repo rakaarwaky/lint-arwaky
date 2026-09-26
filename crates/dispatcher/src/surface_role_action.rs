@@ -8,8 +8,8 @@ use std::sync::Arc;
 
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use shared::role_rules::IRoleRunnerAggregate;
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 
 use shared::common::ViolationItem;
 
@@ -27,7 +27,9 @@ pub fn collect_role_direct(
     fs_agg.build_file_index_with_ignored(root_path, ignored_paths);
 
     // Pass pre-fetched FileEntry data to role orchestrator
-    let results = role_orchestrator.execute(RoleRequest::audit(&fs_agg.file_list())).into_violations();
+    let results = role_orchestrator
+        .execute(RoleRequest::audit(fs_agg.file_list()))
+        .into_violations();
     let mut violations: Vec<ViolationItem> = results
         .iter()
         .map(ViolationItem::from_lint_result)

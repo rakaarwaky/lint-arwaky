@@ -5,8 +5,8 @@ use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::FilePath;
-use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::GitHooksRequest;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::{
     GitDiffStatus, HookIgnoreUpdateVO, IDiffProtocol, IHookManagerProtocol, IHookProtocol,
 };
@@ -65,7 +65,9 @@ fn e2e_hook_install_then_uninstall_round_trip() {
 
     // Install hook via the full aggregate chain
     let exec_path = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-    let install_result = aggregate.execute(GitHooksRequest::install(&exec_path)).into_status();
+    let install_result = aggregate
+        .execute(GitHooksRequest::install(&exec_path))
+        .into_status();
     assert!(
         install_result.is_ok(),
         "install_hook should succeed: {:?}",
@@ -87,7 +89,9 @@ fn e2e_hook_install_then_uninstall_round_trip() {
     );
 
     // Uninstall hook via the full aggregate chain
-    let uninstall_result = aggregate.execute(GitHooksRequest::uninstall()).into_status();
+    let uninstall_result = aggregate
+        .execute(GitHooksRequest::uninstall())
+        .into_status();
     assert!(
         uninstall_result.is_ok(),
         "uninstall_hook should succeed: {:?}",
@@ -115,7 +119,9 @@ fn e2e_uninstall_is_idempotent() {
     std::fs::create_dir_all(&hooks_dir).unwrap();
 
     // Uninstall when no hook exists — should still succeed
-    let result = aggregate.execute(GitHooksRequest::uninstall()).into_status();
+    let result = aggregate
+        .execute(GitHooksRequest::uninstall())
+        .into_status();
     assert!(result.is_ok(), "idempotent uninstall should succeed");
     assert!(result.unwrap().value, "should return true even if no hook");
 }
@@ -129,7 +135,9 @@ fn e2e_install_creates_hooks_directory_when_missing() {
 
     // Install should handle non-git gracefully
     let exec_path = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-    let result = aggregate.execute(GitHooksRequest::install(&exec_path)).into_status();
+    let result = aggregate
+        .execute(GitHooksRequest::install(&exec_path))
+        .into_status();
     assert!(
         result.is_ok(),
         "install should not error on non-git: {:?}",
@@ -150,7 +158,9 @@ fn e2e_config_init_then_add_ignore_rule() {
 
     // Step 1: Initialize config
     let init_result = aggregate
-        .execute(GitHooksRequest::initialize_config(tmp.path().to_str().unwrap()))
+        .execute(GitHooksRequest::initialize_config(
+            tmp.path().to_str().unwrap(),
+        ))
         .into_description();
     assert!(
         init_result.value.contains("Initialized"),
@@ -164,7 +174,9 @@ fn e2e_config_init_then_add_ignore_rule() {
 
     let request =
         HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
-    let add_result = aggregate.execute(GitHooksRequest::update_ignore_rule(request)).into_description();
+    let add_result = aggregate
+        .execute(GitHooksRequest::update_ignore_rule(request))
+        .into_description();
     assert!(
         add_result.value.contains("Added"),
         "should add rule: {}",
@@ -181,7 +193,9 @@ fn e2e_config_init_then_add_ignore_rule() {
     // Step 4: Try adding the same rule again (idempotent)
     let request_dup =
         HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
-    let dup_result = aggregate.execute(GitHooksRequest::update_ignore_rule(request_dup)).into_description();
+    let dup_result = aggregate
+        .execute(GitHooksRequest::update_ignore_rule(request_dup))
+        .into_description();
     assert!(
         dup_result.value.contains("already present"),
         "duplicate add should be no-op: {}",
@@ -194,16 +208,22 @@ fn e2e_config_init_then_remove_ignore_rule() {
     let (tmp, aggregate) = make_container();
 
     // Initialize and add a rule first
-    aggregate.execute(GitHooksRequest::initialize_config(tmp.path().to_str().unwrap()));
+    aggregate.execute(GitHooksRequest::initialize_config(
+        tmp.path().to_str().unwrap(),
+    ));
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     let request =
         HookIgnoreUpdateVO::new("target", false, config_path.to_str().unwrap().to_string());
-    aggregate.execute(GitHooksRequest::update_ignore_rule(request)).into_description();
+    aggregate
+        .execute(GitHooksRequest::update_ignore_rule(request))
+        .into_description();
 
     // Now remove it
     let remove_request =
         HookIgnoreUpdateVO::new("target", true, config_path.to_str().unwrap().to_string());
-    let remove_result = aggregate.execute(GitHooksRequest::update_ignore_rule(remove_request)).into_description();
+    let remove_result = aggregate
+        .execute(GitHooksRequest::update_ignore_rule(remove_request))
+        .into_description();
     assert!(
         remove_result.value.contains("Removed"),
         "should remove rule: {}",
@@ -230,13 +250,23 @@ fn e2e_diff_data_identical_then_modified_flow() {
     // Step 1: Identical files
     write_file(&p1, "same content here");
     write_file(&p2, "same content here");
-    let result = aggregate.execute(GitHooksRequest::diff_data(p1.to_str().unwrap(), p2.to_str().unwrap())).into_diff_data();
+    let result = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p1.to_str().unwrap(),
+            p2.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(result.status, GitDiffStatus::Unchanged);
     assert!((result.difference - 0.0).abs() < f64::EPSILON);
 
     // Step 2: Modify second file
     write_file(&p2, "modified content here");
-    let result = aggregate.execute(GitHooksRequest::diff_data(p1.to_str().unwrap(), p2.to_str().unwrap())).into_diff_data();
+    let result = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p1.to_str().unwrap(),
+            p2.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(result.status, GitDiffStatus::Modified);
     assert!(result.difference > 0.0);
 }
@@ -250,7 +280,12 @@ fn e2e_diff_data_missing_files_flow() {
     let p2 = tmp.path().join("missing.txt");
     write_file(&p1, "content");
 
-    let result = aggregate.execute(GitHooksRequest::diff_data(p1.to_str().unwrap(), p2.to_str().unwrap())).into_diff_data();
+    let result = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p1.to_str().unwrap(),
+            p2.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(result.status, GitDiffStatus::MissingSecond);
 
     // Only second file exists
@@ -258,7 +293,12 @@ fn e2e_diff_data_missing_files_flow() {
     let p4 = tmp.path().join("also_exists.txt");
     write_file(&p4, "content");
 
-    let result = aggregate.execute(GitHooksRequest::diff_data(p3.to_str().unwrap(), p4.to_str().unwrap())).into_diff_data();
+    let result = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p3.to_str().unwrap(),
+            p4.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(result.status, GitDiffStatus::MissingFirst);
 }
 
@@ -309,40 +349,45 @@ fn e2e_full_user_workflow_init_install_check_config() {
 
     // 1. Initialize config
     let init = aggregate
-        .execute(GitHooksRequest::initialize_config(tmp.path().to_str().unwrap()))
+        .execute(GitHooksRequest::initialize_config(
+            tmp.path().to_str().unwrap(),
+        ))
         .into_description();
     assert!(init.value.contains("Initialized"));
 
     // 2. Add ignore rule
     let config_path = tmp.path().join("lint_arwaky.config.yaml");
     let add = aggregate
-        .execute(GitHooksRequest::update_ignore_rule(HookIgnoreUpdateVO::new(
-            "vendor",
-            false,
-            config_path.to_str().unwrap().to_string(),
-        )))
+        .execute(GitHooksRequest::update_ignore_rule(
+            HookIgnoreUpdateVO::new("vendor", false, config_path.to_str().unwrap().to_string()),
+        ))
         .into_description();
     assert!(add.value.contains("Added"));
 
     // 3. Remove ignore rule
     let remove = aggregate
-        .execute(GitHooksRequest::update_ignore_rule(HookIgnoreUpdateVO::new(
-            "vendor",
-            true,
-            config_path.to_str().unwrap().to_string(),
-        )))
+        .execute(GitHooksRequest::update_ignore_rule(
+            HookIgnoreUpdateVO::new("vendor", true, config_path.to_str().unwrap().to_string()),
+        ))
         .into_description();
     assert!(remove.value.contains("Removed"));
 
     // 4. Check on non-git dir (should not panic)
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let _results = aggregate.execute(GitHooksRequest::run_check(&fp)).into_results();
+    let _results = aggregate
+        .execute(GitHooksRequest::run_check(&fp))
+        .into_results();
 
     // 5. Diff data comparison
     let p1 = tmp.path().join("a.txt");
     let p2 = tmp.path().join("b.txt");
     write_file(&p1, "hello");
     write_file(&p2, "world");
-    let diff = aggregate.execute(GitHooksRequest::diff_data(p1.to_str().unwrap(), p2.to_str().unwrap())).into_diff_data();
+    let diff = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p1.to_str().unwrap(),
+            p2.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(diff.status, GitDiffStatus::Modified);
 }

@@ -2,6 +2,7 @@
 mod common;
 
 use shared::common::FilePath;
+use shared::config_system::ConfigRequest;
 use std::fs;
 use tempfile::TempDir;
 
@@ -17,7 +18,8 @@ fn us1_config_in_project_root_is_found() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let result = common::make_container()
         .orchestrator()
-        .load_project_config(&fp);
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
     assert!(
         !result
@@ -40,7 +42,8 @@ fn us1_config_in_parent_directory_is_found() {
     let fp = FilePath::new(nested.to_string_lossy().to_string()).unwrap();
     let result = common::make_container()
         .orchestrator()
-        .load_config_for_language(&fp, ConfigLanguage::Rust);
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
     assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
 }
 

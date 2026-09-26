@@ -16,8 +16,8 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
-use std::collections::HashMap;
 use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
+use std::collections::HashMap;
 use std::sync::Arc;
 fn minimal_config() -> ArchitectureConfig {
     let mut layers = HashMap::new();
@@ -50,7 +50,10 @@ fn smoke_container_creation() {
     let fs = make_filesystem();
     let container = ImportContainer::new_with_config(config, fs);
     let orch = container.orchestrator();
-    assert_eq!(orch.execute(ImportRequest::Name).into_name(), "import-rules");
+    assert_eq!(
+        orch.execute(ImportRequest::Name).into_name(),
+        "import-rules"
+    );
 }
 
 #[test]

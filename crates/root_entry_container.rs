@@ -20,6 +20,8 @@ use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 pub struct CommonDeps {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub config_parser: Arc<dyn shared::config_system::IConfigParserProtocol>,
+    pub config_reader: Arc<dyn shared::config_system::IConfigReaderProtocol>,
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
@@ -29,8 +31,7 @@ pub struct CommonDeps {
     pub maintenance_orchestrator: Arc<dyn IMaintenanceAggregate>,
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
-    pub fix_orchestrator_factory:
-        Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
+    pub fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
     pub fs_factory: Arc<dyn Fn() -> Arc<dyn IFilesystemAggregate> + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
 }
@@ -61,14 +62,19 @@ impl CommonDeps {
         let import_orchestrator = import_container.orchestrator();
 
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
-            Arc::new(config_orchestrator.load_config_sync(
-                &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-            )),
+            Arc::new(
+                config_orchestrator
+                    .execute(shared::config_system::ConfigRequest::load_sync(
+                        &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+                    ))
+                    .into_sync_config(),
+            ),
             Arc::new(shared::common::LayerMapVO::new(
                 config_orchestrator
-                    .load_config_sync(
+                    .execute(shared::config_system::ConfigRequest::load_sync(
                         &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-                    )
+                    ))
+                    .into_sync_config()
                     .layers
                     .clone(),
             )),
@@ -89,18 +95,18 @@ impl CommonDeps {
         let external_lint = ext_container.aggregate();
 
         let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
-            config_orchestrator.load_config_sync(
-                &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
-            ),
+            config_orchestrator
+                .execute(shared::config_system::ConfigRequest::load_sync(
+                    &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+                ))
+                .into_sync_config(),
         );
         let role_orchestrator = role_container.orchestrator();
 
         let auto_fix_container =
             auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
         // BF-1: dry_run is now per-request via execute(path, dry_run), not baked into orchestrator.
-        let fix_orchestrator_factory: Arc<
-            dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync,
-        > = {
+        let fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync> = {
             let container = auto_fix_container;
             let fs_for_factory = filesystem.clone();
             Arc::new(move |_dry| container.orchestrator_with_filesystem(fs_for_factory.clone()))
@@ -134,6 +140,8 @@ impl CommonDeps {
         CommonDeps {
             filesystem,
             config_orchestrator,
+            config_parser: config_container.parser(),
+            config_reader: config_container.reader(),
             code_analysis_linter,
             import_orchestrator,
             naming_orchestrator,

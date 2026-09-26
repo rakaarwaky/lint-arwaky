@@ -1,7 +1,7 @@
 // PURPOSE: SetupContainer — wiring for project-setup feature (root layer, wiring only)
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::project_setup::{ISetupManagementProtocol, ISetupAggregate};
+use shared::project_setup::{ISetupAggregate, ISetupManagementProtocol};
 
 use std::sync::Arc;
 

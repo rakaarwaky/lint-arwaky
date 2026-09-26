@@ -11,12 +11,12 @@ use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChec
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
 use shared::common::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use shared::role_rules::{
     IAgentRoleProtocol, ICapabilitiesRoleProtocol, IContractRoleProtocol, IRoleRunnerAggregate,
     ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 use std::sync::Arc;
-use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 
 fn dummy_file() -> FileEntry {
     FileEntry {
@@ -111,7 +111,12 @@ fn role_orchestrator_implements_aggregate() {
     };
     let orchestrator: Arc<dyn IRoleRunnerAggregate> =
         Arc::new(RoleOrchestrator::new(deps, &config));
-    let results = orchestrator.execute(RoleRequest::audit(&[])).into_violations();
+    let results = orchestrator
+        .execute(RoleRequest::audit(&[]))
+        .into_violations();
     assert!(results.is_empty());
-    assert_eq!(orchestrator.execute(RoleRequest::Name).into_name(), "role-rules");
+    assert_eq!(
+        orchestrator.execute(RoleRequest::Name).into_name(),
+        "role-rules"
+    );
 }

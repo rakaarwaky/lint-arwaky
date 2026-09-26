@@ -5,14 +5,14 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::common::taxonomy_path_vo::FilePath;
-use std::collections::HashMap;
-use crate::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use crate::quality_rules::taxonomy_analysis_vo::InheritanceMap;
 use crate::quality_rules::taxonomy_analysis_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
-use crate::quality_rules::taxonomy_analysis_vo::InheritanceMap;
+use std::collections::HashMap;
 
 pub trait IAgentOrphanProtocol: Send + Sync {
     /// Detect agent-layer orphans: orchestrators never composed into a root container.

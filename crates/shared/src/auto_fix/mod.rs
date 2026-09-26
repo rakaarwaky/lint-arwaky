@@ -10,8 +10,8 @@ pub mod taxonomy_fix_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_fix_protocol::IFileAdapterProtocol;
 pub use contract_fix_aggregate::IFixAggregate;
+pub use contract_fix_protocol::IFileAdapterProtocol;
 pub use contract_fix_protocol::IFixProtocol;
 
 // ── Taxonomy types ──

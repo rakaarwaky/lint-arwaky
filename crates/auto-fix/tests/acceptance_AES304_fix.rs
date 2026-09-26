@@ -31,7 +31,9 @@ fn aes304_bypass_comment_is_fixable() {
     )
     .unwrap();
 
-    let result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(
         result.is_success(),
         "AES304 fix dry-run should succeed: {}",
@@ -66,7 +68,9 @@ fn aes304_unwrap_pattern_detected() {
     )
     .unwrap();
 
-    let result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(
         result.is_success(),
         "AES304 unwrap dry-run should succeed: {}",
@@ -89,7 +93,9 @@ fn aes304_dry_run_does_not_modify_file() {
     )
     .unwrap();
 
-    let _result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
+    let _result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     let content = std::fs::read_to_string(tmp.path().join("aes304_nomod.rs")).unwrap();
     assert_eq!(content, original, "Dry-run must not modify the file");
 }

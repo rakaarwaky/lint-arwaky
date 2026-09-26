@@ -38,8 +38,6 @@ pub fn collect_dependencies(
         .map_err(|e| format!("Error: {e}"))
 }
 
-pub fn collect_health_check(
-    maintenance: Arc<dyn IMaintenanceAggregate>,
-) -> HealthCheckResult {
+pub fn collect_health_check(maintenance: Arc<dyn IMaintenanceAggregate>) -> HealthCheckResult {
     maintenance.health_check()
 }

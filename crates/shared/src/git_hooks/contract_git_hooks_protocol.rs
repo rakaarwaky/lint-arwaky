@@ -6,13 +6,13 @@
 // and never carries unimplemented stubs.
 
 use crate::common::taxonomy_git_vo::GitBranchName;
+use crate::common::taxonomy_job_vo::SuccessStatus;
+use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
-use crate::common::taxonomy_job_vo::SuccessStatus;
-use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
 use crate::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
 

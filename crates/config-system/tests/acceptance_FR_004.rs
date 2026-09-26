@@ -2,6 +2,7 @@
 mod common;
 
 use shared::common::FilePath;
+use shared::config_system::ConfigRequest;
 use std::fs;
 use tempfile::TempDir;
 
@@ -15,7 +16,8 @@ fn us4_discovers_all_workspace_member_types() {
     let fp = FilePath::new(root.to_string_lossy().to_string()).unwrap();
     let workspaces = common::make_container()
         .orchestrator()
-        .discover_workspaces(&fp);
+        .execute(ConfigRequest::discover_workspaces(&fp))
+        .into_workspaces();
     assert_eq!(workspaces.len(), 3);
     let names: Vec<String> = workspaces.iter().map(|w| w.path.basename()).collect();
     assert!(names.contains(&"rust-lib".to_string()));
@@ -36,7 +38,8 @@ fn us4_each_member_gets_own_config() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let workspaces = common::make_container()
         .orchestrator()
-        .discover_workspaces(&fp);
+        .execute(ConfigRequest::discover_workspaces(&fp))
+        .into_workspaces();
     assert_eq!(workspaces.len(), 1);
     assert_eq!(workspaces[0].workspace_type, "rust");
 }
@@ -48,7 +51,8 @@ fn us4_empty_workspace_returns_empty() {
     assert!(
         common::make_container()
             .orchestrator()
-            .discover_workspaces(&fp)
+            .execute(ConfigRequest::discover_workspaces(&fp))
+            .into_workspaces()
             .is_empty()
     );
 }

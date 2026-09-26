@@ -12,9 +12,7 @@ pub fn handle_fix(
     path: Option<FilePath>,
     dry_run: bool,
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    fix_orchestrator_factory: Arc<
-        dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync,
-    >,
+    fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
 ) -> ExitCode {
     match dispatcher::surface_fix_action::collect_fix(
         path,

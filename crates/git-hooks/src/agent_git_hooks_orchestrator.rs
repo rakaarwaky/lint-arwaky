@@ -15,10 +15,10 @@ use shared::cli_commands::LintResultList;
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
 use shared::git_hooks::taxonomy_git_hooks_request_vo::{GitHooksRequest, GitHooksResponse};
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 
@@ -85,15 +85,25 @@ impl GitHooksOrchestrator {
         self.hook_protocol().uninstall_pre_commit()
     }
 
-    pub fn initialize_config(&self, path: &str) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
+    pub fn initialize_config(
+        &self,
+        path: &str,
+    ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
         self.hook_protocol().initialize_config(path)
     }
 
-    pub fn update_ignore_rule(&self, request: shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
+    pub fn update_ignore_rule(
+        &self,
+        request: shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO,
+    ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
         self.hook_protocol().update_ignore_rule(request)
     }
 
-    pub fn get_diff_data(&self, path1: &str, path2: &str) -> shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO {
+    pub fn get_diff_data(
+        &self,
+        path1: &str,
+        path2: &str,
+    ) -> shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO {
         self.hook_protocol().get_diff_data(path1, path2)
     }
 

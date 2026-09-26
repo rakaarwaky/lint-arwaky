@@ -27,11 +27,9 @@ pub struct NamingOrchestrator {
 impl INamingRunnerAggregate for NamingOrchestrator {
     fn execute(&self, request: NamingRequest) -> NamingResponse {
         match request {
-            NamingRequest::RunAuditWithEntries { files } => {
-                NamingResponse::Audit {
-                    violations: self.run_audit_with_entries(&files),
-                }
-            }
+            NamingRequest::RunAuditWithEntries { files } => NamingResponse::Audit {
+                violations: self.run_audit_with_entries(&files),
+            },
             NamingRequest::Name => NamingResponse::Name {
                 name: self.name().to_string(),
             },

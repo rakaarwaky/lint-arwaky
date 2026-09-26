@@ -2,12 +2,12 @@
 use std::sync::Arc;
 
 use shared::common::{FilePath, Severity, Threshold};
-use shared::config_system::IConfigOrchestratorAggregate;
+use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
-use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
@@ -52,7 +52,10 @@ pub fn collect_ci(
 
     // Build file index once — all rule checkers consume fresh data (respects config ignored_paths)
     let root_path = std::path::Path::new(root.value());
-    let ignored = deps.config_orchestrator.ignored_paths(&root);
+    let ignored = deps
+        .config_orchestrator
+        .execute(ConfigRequest::ignored_paths(&root))
+        .into_patterns();
     deps.filesystem
         .build_file_index_with_ignored(root_path, &ignored.values);
 
@@ -63,7 +66,7 @@ pub fn collect_ci(
     let file_list = deps.filesystem.file_list();
     let import_res = deps
         .import_orchestrator
-        .execute(ImportRequest::audit_with_entries(&file_list))
+        .execute(ImportRequest::audit_with_entries(file_list))
         .into_violations();
     results.extend(import_res);
 

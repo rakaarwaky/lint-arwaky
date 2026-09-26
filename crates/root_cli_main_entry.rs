@@ -209,11 +209,17 @@ fn main() {
     let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
         Arc::new(
             config_orchestrator
-                .load_config_sync(&FilePath::new(".".to_string()).unwrap_or_default()),
+                .execute(shared::config_system::ConfigRequest::load_sync(
+                    &FilePath::new(".".to_string()).unwrap_or_default(),
+                ))
+                .into_sync_config(),
         ),
         Arc::new(shared::common::LayerMapVO::new(
             config_orchestrator
-                .load_config_sync(&FilePath::new(".".to_string()).unwrap_or_default())
+                .execute(shared::config_system::ConfigRequest::load_sync(
+                    &FilePath::new(".".to_string()).unwrap_or_default(),
+                ))
+                .into_sync_config()
                 .layers
                 .clone(),
         )),
@@ -233,7 +239,11 @@ fn main() {
     let external_lint = ext_container.aggregate();
 
     let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
-        config_orchestrator.load_config_sync(&FilePath::new(".".to_string()).unwrap_or_default()),
+        config_orchestrator
+            .execute(shared::config_system::ConfigRequest::load_sync(
+                &FilePath::new(".".to_string()).unwrap_or_default(),
+            ))
+            .into_sync_config(),
     );
     let role_orchestrator = role_container.orchestrator();
 
@@ -282,7 +292,10 @@ fn main() {
 
     // Extract ignored_paths from config for all sub-commands.
     let ignored_paths: Vec<String> = config_orchestrator
-        .ignored_paths(&FilePath::new(".".to_string()).unwrap_or_default())
+        .execute(shared::config_system::ConfigRequest::ignored_paths(
+            &FilePath::new(".".to_string()).unwrap_or_default(),
+        ))
+        .into_patterns()
         .values
         .clone();
 
@@ -427,7 +440,7 @@ fn main() {
                 external_lint: external_lint.clone(),
                 report_formatter: report_formatter.clone(),
                 filesystem: filesystem.clone(),
-                config_parser: config_orchestrator.clone(),
+                config_parser: config_container.parser(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
             },

@@ -69,7 +69,10 @@ pub fn collect_install_hook(
     git_hooks: Arc<dyn IGitHooksAggregate>,
     executable_path: &FilePath,
 ) -> Result<HookReport, String> {
-    match git_hooks.execute(GitHooksRequest::install(executable_path)).into_status() {
+    match git_hooks
+        .execute(GitHooksRequest::install(executable_path))
+        .into_status()
+    {
         Ok(status) => Ok(HookReport {
             action: "install".to_string(),
             success: status.value(),
@@ -88,8 +91,13 @@ pub fn collect_install_hook(
 }
 
 /// Uninstall pre-commit hook via IGitHooksAggregate.
-pub fn collect_uninstall_hook(git_hooks: Arc<dyn IGitHooksAggregate>) -> Result<HookReport, String> {
-    match git_hooks.execute(GitHooksRequest::uninstall()).into_status() {
+pub fn collect_uninstall_hook(
+    git_hooks: Arc<dyn IGitHooksAggregate>,
+) -> Result<HookReport, String> {
+    match git_hooks
+        .execute(GitHooksRequest::uninstall())
+        .into_status()
+    {
         Ok(status) => Ok(HookReport {
             action: "uninstall".to_string(),
             success: status.value(),

@@ -32,7 +32,9 @@ fn aes101_naming_violation_is_fixable_dry_run() {
     )
     .unwrap();
 
-    let result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(
         result.is_success(),
         "AES101 fix dry-run should succeed: {}",
@@ -64,7 +66,9 @@ fn aes101_dry_run_does_not_modify_file() {
     )
     .unwrap();
 
-    let _result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
+    let _result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     let content = std::fs::read_to_string(tmp.path().join("aes101_nomod.rs")).unwrap();
     assert_eq!(content, original, "Dry-run must not modify the file");
 }

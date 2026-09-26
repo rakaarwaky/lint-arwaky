@@ -27,7 +27,9 @@ impl ImportContainer {
         filesystem: Arc<dyn IFilesystemAggregate>,
     ) -> Self {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
-        let config = orchestrator.load_config_sync(&fp);
+        let config = orchestrator
+            .execute(shared::config_system::ConfigRequest::load_sync(&fp))
+            .into_sync_config();
         Self::new_with_config(config, filesystem)
     }
 

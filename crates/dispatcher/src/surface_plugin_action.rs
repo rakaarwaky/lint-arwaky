@@ -6,7 +6,9 @@ use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use std::sync::Arc;
 
 pub fn collect_adapters(external_lint: Arc<dyn IExternalLintAggregate>) -> AdapterNameList {
-    external_lint.execute(shared::external_lint::ExternalLintRequest::AdapterNames).into_adapter_names()
+    external_lint
+        .execute(shared::external_lint::ExternalLintRequest::AdapterNames)
+        .into_adapter_names()
 }
 
 /// Adapter with binary availability metadata — used by TUI for detailed display.

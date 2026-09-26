@@ -2,7 +2,7 @@
 
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::{IGitHooksAggregate, IDiffProtocol, IHookManagerProtocol, IHookProtocol};
+use shared::git_hooks::{IDiffProtocol, IGitHooksAggregate, IHookManagerProtocol, IHookProtocol};
 
 use std::sync::Arc;
 

@@ -11,9 +11,9 @@ pub mod taxonomy_watch_request_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
+pub use contract_watch_aggregate::IWatchAggregate;
 pub use contract_watch_protocol::IChangeAnalyzerProtocol;
 pub use contract_watch_protocol::IWatchProviderProtocol;
-pub use contract_watch_aggregate::IWatchAggregate;
 
 // ── Taxonomy types ──
 pub use taxonomy_diff_result_vo::GitDiffResultVO;

@@ -1,7 +1,7 @@
 use crate::agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
 use crate::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::maintenance::{IMaintenanceCheckerProtocol, IMaintenanceAggregate};
+use shared::maintenance::{IMaintenanceAggregate, IMaintenanceCheckerProtocol};
 use std::sync::Arc;
 
 pub struct MaintenanceContainer {

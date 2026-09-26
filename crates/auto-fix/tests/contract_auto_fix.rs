@@ -3,8 +3,8 @@ use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
 use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
 use shared::auto_fix::IFileAdapterProtocol;
-use shared::auto_fix::IFixProtocol;
 use shared::auto_fix::IFixAggregate;
+use shared::auto_fix::IFixProtocol;
 
 #[test]
 fn file_adapter_implements_file_adapter_protocol() {

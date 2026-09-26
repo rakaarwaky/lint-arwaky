@@ -8,8 +8,8 @@ use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 
-use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
 
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{

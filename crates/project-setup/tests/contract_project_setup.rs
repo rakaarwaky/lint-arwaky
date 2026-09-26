@@ -2,9 +2,7 @@
 use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use shared::project_setup::{
-    ISetupInstallerProtocol, ISetupManagementProtocol, ISetupAggregate,
-};
+use shared::project_setup::{ISetupAggregate, ISetupInstallerProtocol, ISetupManagementProtocol};
 
 #[test]
 fn setup_management_orchestrator_implements_aggregate() {

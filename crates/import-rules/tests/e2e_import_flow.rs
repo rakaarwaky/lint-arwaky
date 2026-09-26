@@ -7,8 +7,8 @@ use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::ArchitectureConfig;
-use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::import_rules::IImportRunnerAggregate;
+use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -71,7 +71,10 @@ fn e2e_capabilities_importing_agent_detected() {
 
     let orch = make_orchestrator_at(tmp.path());
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let results = orch.execute(ImportRequest::audit(&target)).into_result().unwrap();
+    let results = orch
+        .execute(ImportRequest::audit(&target))
+        .into_result()
+        .unwrap();
 
     let aes201: Vec<_> = results
         .iter()
@@ -95,7 +98,10 @@ fn e2e_capabilities_importing_surfaces_detected() {
 
     let orch = make_orchestrator_at(tmp.path());
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let results = orch.execute(ImportRequest::audit(&target)).into_result().unwrap();
+    let results = orch
+        .execute(ImportRequest::audit(&target))
+        .into_result()
+        .unwrap();
 
     let aes201: Vec<_> = results
         .iter()
@@ -119,7 +125,10 @@ fn e2e_clean_file_no_violations() {
 
     let orch = make_orchestrator_at(tmp.path());
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let results = orch.execute(ImportRequest::audit(&target)).into_result().unwrap();
+    let results = orch
+        .execute(ImportRequest::audit(&target))
+        .into_result()
+        .unwrap();
 
     let aes201: Vec<_> = results
         .iter()
@@ -149,7 +158,10 @@ fn e2e_multiple_violations_across_files() {
 
     let orch = make_orchestrator_at(tmp.path());
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let results = orch.execute(ImportRequest::audit(&target)).into_result().unwrap();
+    let results = orch
+        .execute(ImportRequest::audit(&target))
+        .into_result()
+        .unwrap();
 
     let aes201: Vec<_> = results
         .iter()
@@ -183,7 +195,9 @@ fn e2e_audit_with_entries_returns_results() {
         parse_metadata: None,
     };
 
-    let results = orch.execute(ImportRequest::audit_with_entries(&[file_entry])).into_violations();
+    let results = orch
+        .execute(ImportRequest::audit_with_entries(&[file_entry]))
+        .into_violations();
     // Should at least not panic and produce some result
     // Note: run_audit_with_entries may produce different results than run_audit
     // since it uses pre-parsed entries rather than filesystem scan

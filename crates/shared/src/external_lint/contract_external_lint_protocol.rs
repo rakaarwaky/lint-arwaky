@@ -5,15 +5,15 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
+use crate::common::taxonomy_adapter_list_vo::AdapterNameList;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_message_vo::ComplianceStatus;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::quality_rules::taxonomy_analysis_vo::LintResultList;
-use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_duration_vo::Timeout;
+use crate::common::taxonomy_message_vo::ComplianceStatus;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_response_data_vo::ResponseData;
-use crate::common::taxonomy_adapter_list_vo::AdapterNameList;
+use crate::quality_rules::taxonomy_analysis_vo::LintResultList;
+use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
 
 pub trait ILinterAdapterProtocol: Send + Sync {
     fn name(&self) -> AdapterName;

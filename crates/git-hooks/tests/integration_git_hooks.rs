@@ -1,13 +1,13 @@
 // Integration tests — full DI wiring via GitContainer.
-use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
-use shared::common::FilePath;
-use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::GitHooksRequest;
-use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
 use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
+use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
+use shared::common::FilePath;
+use shared::git_hooks::GitHooksRequest;
+use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
 use shared::git_hooks::{IDiffProtocol, IHookManagerProtocol, IHookProtocol};
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -70,7 +70,9 @@ fn run_git_hooks_check_on_temp_dir() {
     let (tmp, aggregate) = make_container();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     // Should not panic even on a non-git directory
-    let _results = aggregate.execute(GitHooksRequest::run_check(&fp)).into_results();
+    let _results = aggregate
+        .execute(GitHooksRequest::run_check(&fp))
+        .into_results();
 }
 
 #[test]
@@ -78,7 +80,9 @@ fn install_hook_on_non_git_dir_returns_ok() {
     let (tmp, aggregate) = make_container();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     // Non-git directory: should return SuccessStatus with false
-    let result = aggregate.execute(GitHooksRequest::install(&fp)).into_status();
+    let result = aggregate
+        .execute(GitHooksRequest::install(&fp))
+        .into_status();
     assert!(
         result.is_ok(),
         "install_hook should not error: {:?}",
@@ -89,7 +93,9 @@ fn install_hook_on_non_git_dir_returns_ok() {
 #[test]
 fn uninstall_hook_on_non_git_dir_returns_ok() {
     let (_, aggregate) = make_container();
-    let result = aggregate.execute(GitHooksRequest::uninstall()).into_status();
+    let result = aggregate
+        .execute(GitHooksRequest::uninstall())
+        .into_status();
     assert!(
         result.is_ok(),
         "uninstall_hook should not error: {:?}",
@@ -103,7 +109,9 @@ fn uninstall_hook_on_non_git_dir_returns_ok() {
 fn aggregate_initialize_config_on_temp_dir() {
     let (tmp, aggregate) = make_container();
     let result = aggregate
-        .execute(GitHooksRequest::initialize_config(tmp.path().to_str().unwrap()))
+        .execute(GitHooksRequest::initialize_config(
+            tmp.path().to_str().unwrap(),
+        ))
         .into_description();
     assert!(
         result.value.contains("Initialized"),
@@ -121,7 +129,9 @@ fn aggregate_update_ignore_rule_config_not_found() {
         false,
         config_path.to_str().unwrap().to_string(),
     );
-    let result = aggregate.execute(GitHooksRequest::update_ignore_rule(request)).into_description();
+    let result = aggregate
+        .execute(GitHooksRequest::update_ignore_rule(request))
+        .into_description();
     assert!(
         result.value.contains("not found") || result.value.contains("Run lint-arwaky-cli"),
         "should report not found: {}",
@@ -134,7 +144,12 @@ fn aggregate_get_diff_data_both_missing() {
     let (tmp, aggregate) = make_container();
     let p1 = tmp.path().join("missing1.txt");
     let p2 = tmp.path().join("missing2.txt");
-    let result = aggregate.execute(GitHooksRequest::diff_data(p1.to_str().unwrap(), p2.to_str().unwrap())).into_diff_data();
+    let result = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p1.to_str().unwrap(),
+            p2.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(result.status, GitDiffStatus::BothMissing);
 }
 
@@ -145,7 +160,12 @@ fn aggregate_get_diff_data_identical_files() {
     let p2 = tmp.path().join("b.txt");
     std::fs::write(&p1, "same content").unwrap();
     std::fs::write(&p2, "same content").unwrap();
-    let result = aggregate.execute(GitHooksRequest::diff_data(p1.to_str().unwrap(), p2.to_str().unwrap())).into_diff_data();
+    let result = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p1.to_str().unwrap(),
+            p2.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(result.status, GitDiffStatus::Unchanged);
     assert!((result.difference - 0.0).abs() < f64::EPSILON);
 }
@@ -157,7 +177,12 @@ fn aggregate_get_diff_data_different_files() {
     let p2 = tmp.path().join("b.txt");
     std::fs::write(&p1, "hello").unwrap();
     std::fs::write(&p2, "world").unwrap();
-    let result = aggregate.execute(GitHooksRequest::diff_data(p1.to_str().unwrap(), p2.to_str().unwrap())).into_diff_data();
+    let result = aggregate
+        .execute(GitHooksRequest::diff_data(
+            p1.to_str().unwrap(),
+            p2.to_str().unwrap(),
+        ))
+        .into_diff_data();
     assert_eq!(result.status, GitDiffStatus::Modified);
     assert!(result.difference > 0.0);
 }

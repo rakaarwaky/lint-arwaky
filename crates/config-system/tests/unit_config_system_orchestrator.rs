@@ -9,7 +9,7 @@ use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidato
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
 
 use std::fs;
 use std::sync::Arc;
@@ -33,7 +33,9 @@ fn load_project_config_uses_defaults_when_no_file() {
     // (without it, walking up finds parent `packages/` dir → TypeScript detection)
     std::fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = make_orchestrator().load_project_config(&fp);
+    let result = make_orchestrator()
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     assert!(!result.warnings.is_empty());
     assert!(
         result
@@ -54,7 +56,9 @@ fn load_project_config_reads_existing_yaml() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = make_orchestrator().load_project_config(&fp);
+    let result = make_orchestrator()
+        .execute(ConfigRequest::load_project_config(&fp))
+        .into_config_result();
     assert_eq!(result.source.language, "rust");
     assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
 }
@@ -68,7 +72,12 @@ fn load_config_for_language_python() {
     )
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = make_orchestrator().load_config_for_language(&fp, ConfigLanguage::Python);
+    let result = make_orchestrator()
+        .execute(ConfigRequest::load_for_language(
+            &fp,
+            ConfigLanguage::Python,
+        ))
+        .into_config_result();
     assert_eq!(result.source.language, "python");
 }
 
@@ -81,7 +90,9 @@ fn load_config_for_language_injects_defaults_when_no_layers() {
     )
     .unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = make_orchestrator().load_config_for_language(&fp, ConfigLanguage::Rust);
+    let result = make_orchestrator()
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
     assert!(
         result
             .warnings
@@ -94,7 +105,9 @@ fn load_config_for_language_injects_defaults_when_no_layers() {
 fn load_config_sync_returns_defaults_for_empty_dir() {
     let tmp = TempDir::new().unwrap();
     let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
-    let config = make_orchestrator().load_config_sync(&fp);
+    let config = make_orchestrator()
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     assert!(config.enabled.value);
 }
 
@@ -108,7 +121,9 @@ fn load_config_sync_finds_config_in_current_dir() {
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
-    let config = make_orchestrator().load_config_sync(&fp);
+    let config = make_orchestrator()
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     assert!(!config.enabled.value);
 }
 
@@ -116,7 +131,9 @@ fn load_config_sync_finds_config_in_current_dir() {
 fn ignored_paths_includes_hardcoded_defaults() {
     let tmp = TempDir::new().unwrap();
     let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
-    let paths = make_orchestrator().ignored_paths(&fp);
+    let paths = make_orchestrator()
+        .execute(ConfigRequest::ignored_paths(&fp))
+        .into_patterns();
     assert!(paths.values.contains(&"target".to_string()));
     assert!(paths.values.contains(&"node_modules".to_string()));
     assert!(paths.values.contains(&".git".to_string()));
@@ -131,14 +148,25 @@ fn discover_workspaces_returns_members() {
     fs::create_dir_all(crates.join("beta")).unwrap();
     fs::write(crates.join("alpha").join("Cargo.toml"), "").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert_eq!(make_orchestrator().discover_workspaces(&fp).len(), 2);
+    assert_eq!(
+        make_orchestrator()
+            .execute(ConfigRequest::discover_workspaces(&fp))
+            .into_workspaces()
+            .len(),
+        2
+    );
 }
 
 #[test]
 fn discover_workspaces_returns_empty_for_non_workspace() {
     let tmp = TempDir::new().unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    assert!(make_orchestrator().discover_workspaces(&fp).is_empty());
+    assert!(
+        make_orchestrator()
+            .execute(ConfigRequest::discover_workspaces(&fp))
+            .into_workspaces()
+            .is_empty()
+    );
 }
 
 #[test]
@@ -152,8 +180,12 @@ fn config_cache_returns_same_arc_on_second_load() {
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
     let sut = make_orchestrator();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let r1 = sut.load_config_for_language(&fp, ConfigLanguage::Rust);
-    let r2 = sut.load_config_for_language(&fp, ConfigLanguage::Rust);
+    let r1 = sut
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
+    let r2 = sut
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
     assert_eq!(r1.source.path, r2.source.path);
 }
 
@@ -182,7 +214,9 @@ fn load_config_sync_finds_config_from_deep_file_path() {
     fs::write(&nested_file, "def handle(): pass\n").unwrap();
 
     let fp = FilePath::new(nested_file.to_string_lossy().to_string()).unwrap();
-    let config = make_orchestrator().load_config_sync(&fp);
+    let config = make_orchestrator()
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     // Config has enabled: false, so we verify it was loaded (not the default which has enabled: true)
     assert!(!config.enabled.value);
 }
@@ -209,7 +243,9 @@ fn load_config_sync_finds_config_from_very_deep_file_path() {
     fs::write(&deep_file, "# test\n").unwrap();
 
     let fp = FilePath::new(deep_file.to_string_lossy().to_string()).unwrap();
-    let config = make_orchestrator().load_config_sync(&fp);
+    let config = make_orchestrator()
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     assert!(!config.enabled.value);
 }
 
@@ -228,7 +264,9 @@ fn load_config_sync_returns_defaults_for_deep_file_with_no_config() {
     fs::write(&deep_file, "def handle(): pass\n").unwrap();
 
     let fp = FilePath::new(deep_file.to_string_lossy().to_string()).unwrap();
-    let config = make_orchestrator().load_config_sync(&fp);
+    let config = make_orchestrator()
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     // Default config has enabled: true
     assert!(config.enabled.value);
 }
@@ -253,7 +291,9 @@ fn load_config_sync_finds_rust_config_from_deep_crate_file() {
     fs::write(&nested_file, "fn main() {}\n").unwrap();
 
     let fp = FilePath::new(nested_file.to_string_lossy().to_string()).unwrap();
-    let config = make_orchestrator().load_config_sync(&fp);
+    let config = make_orchestrator()
+        .execute(ConfigRequest::load_sync(&fp))
+        .into_sync_config();
     assert!(!config.enabled.value);
 }
 

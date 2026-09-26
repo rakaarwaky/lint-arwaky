@@ -31,7 +31,9 @@ fn aes201_forbidden_import_is_fixable() {
     )
     .unwrap();
 
-    let result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     assert!(
         result.is_success(),
         "AES201 fix dry-run should succeed: {}",
@@ -66,7 +68,9 @@ fn aes201_output_mentions_fixable_codes() {
     )
     .unwrap();
 
-    let result = orch.execute(FixRequest::execute(&fp, true)).into_fix_result(); // per-request dry_run
+    let result = orch
+        .execute(FixRequest::execute(&fp, true))
+        .into_fix_result(); // per-request dry_run
     let output = result.output.value();
     assert!(
         output.contains("Dry-run")

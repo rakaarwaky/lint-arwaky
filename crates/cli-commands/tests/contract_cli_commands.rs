@@ -33,9 +33,7 @@ fn contract_fix_command_handle_fix_exists() {
             bool,
             std::sync::Arc<dyn shared::quality_rules::ICodeAnalysisAggregate>,
             std::sync::Arc<
-                dyn Fn(bool) -> std::sync::Arc<dyn shared::auto_fix::IFixAggregate>
-                    + Send
-                    + Sync,
+                dyn Fn(bool) -> std::sync::Arc<dyn shared::auto_fix::IFixAggregate> + Send + Sync,
             >,
         ) -> shared::common::ExitCode,
     >();

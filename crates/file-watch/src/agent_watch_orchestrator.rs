@@ -38,13 +38,11 @@ pub struct WatchOrchestrator {
 impl IWatchAggregate for WatchOrchestrator {
     fn execute(&self, request: WatchRequest) -> WatchResponse {
         match request {
-            WatchRequest::Run { config, running } => {
-                WatchResponse::Run {
-                    exit_code: self.run_watch_loop(&config, running),
-                }
-            }
+            WatchRequest::Run { config, running } => WatchResponse::Run {
+                exit_code: self.run_watch_loop(&config, running),
+            },
             WatchRequest::IsLintable { path } => WatchResponse::IsLintable {
-                lintable: self.analyzer.is_lintable(&path.value()),
+                lintable: self.analyzer.is_lintable(path.value()),
             },
         }
     }

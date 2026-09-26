@@ -10,8 +10,8 @@ use std::sync::Arc;
 
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::{NamingRequest, NamingResponse};
 
 use shared::common::ViolationItem;
 
@@ -43,7 +43,10 @@ pub fn collect_naming(
     let request = NamingRequest::RunAuditWithEntries {
         files: fs_agg.file_list().to_vec(),
     };
-    let NamingResponse::Audit { violations: results } = naming_orchestrator.execute(request) else {
+    let NamingResponse::Audit {
+        violations: results,
+    } = naming_orchestrator.execute(request)
+    else {
         return Err("naming audit returned an unexpected response".to_string());
     };
 

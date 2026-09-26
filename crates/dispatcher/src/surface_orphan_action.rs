@@ -6,7 +6,9 @@ use std::sync::Arc;
 use tracing::debug;
 
 use shared::common::FilePath;
-use shared::config_system::{ArchitectureConfig, ConfigLanguage, IConfigOrchestratorAggregate};
+use shared::config_system::{
+    ArchitectureConfig, ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate,
+};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 
@@ -66,7 +68,10 @@ pub fn collect_orphan(
     let root_fp = FilePath::new(root.clone()).map_err(|_| "invalid path".to_string())?;
 
     // discover_workspaces is sync in new API
-    let workspaces = deps.config_orchestrator.discover_workspaces(&root_fp);
+    let workspaces = deps
+        .config_orchestrator
+        .execute(ConfigRequest::discover_workspaces(&root_fp))
+        .into_workspaces();
 
     if workspaces.is_empty() {
         return scan_single_root(
@@ -119,7 +124,8 @@ pub fn collect_orphan(
             .unwrap_or(ConfigLanguage::Rust);
         let ignored = deps
             .config_orchestrator
-            .ignored_paths_for_language(&ws.path, lang);
+            .execute(ConfigRequest::ignored_paths_for_language(&ws.path, lang))
+            .into_patterns();
         all_ignored.extend(ignored.values.iter().cloned());
     }
     unified_fs.build_file_index_with_ignored(root_path, &all_ignored);
@@ -235,7 +241,9 @@ fn scan_single_root(
     let scan_root_fp = FilePath::new(scan_root_str.clone()).unwrap_or_else(|_| root_fp.clone());
 
     // Load config for workspace root to get ignored_paths
-    let ws_config = config_orchestrator.load_config_sync(&scan_root_fp);
+    let ws_config = config_orchestrator
+        .execute(ConfigRequest::load_sync(&scan_root_fp))
+        .into_sync_config();
 
     // Build file index for the entire workspace (respects config ignored_paths)
     let ignored_strs: Vec<String> = ws_config

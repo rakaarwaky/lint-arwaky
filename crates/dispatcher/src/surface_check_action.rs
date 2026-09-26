@@ -5,17 +5,17 @@
 // remains the fallback when aggregates are absent (`scan_aggregates: None`).
 use shared::common::FilePath;
 use shared::common::ViolationItem;
-use shared::config_system::IConfigOrchestratorAggregate;
+use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
+use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::naming_rules::INamingRunnerAggregate;
+use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
-use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use shared::role_rules::IRoleRunnerAggregate;
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -94,7 +94,9 @@ fn canonicalize_scan_root(fs: &Arc<dyn IFilesystemAggregate>, root: &str) -> Str
 fn validate_member_path(opts: &ScanOptions, root: &str, member: &str) -> Result<String, String> {
     if let Some(ref orchestrator) = opts.multi_project_orchestrator {
         let root_fp = FilePath::new(root.to_string()).map_err(|_| "invalid path".to_string())?;
-        let workspaces = orchestrator.discover_workspaces(&root_fp);
+        let workspaces = orchestrator
+            .execute(ConfigRequest::discover_workspaces(&root_fp))
+            .into_workspaces();
         if !workspaces.is_empty() {
             let matched = workspaces.iter().any(|ws| {
                 let ws_file = std::path::Path::new(&ws.path.value)
@@ -183,7 +185,8 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
     let ignored = agg
         .config
-        .ignored_paths(&root_fp)
+        .execute(ConfigRequest::ignored_paths(&root_fp))
+        .into_patterns()
         .values
         .iter()
         .map(|v| v.to_string())
@@ -290,7 +293,13 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         };
         let mut external: Vec<ViolationItem> = agg
             .external
-            .execute(shared::external_lint::ExternalLintRequest::scan_all_with_context(&ext_target_fp, &context)).into_violations()
+            .execute(
+                shared::external_lint::ExternalLintRequest::scan_all_with_context(
+                    &ext_target_fp,
+                    &context,
+                ),
+            )
+            .into_violations()
             .values
             .iter()
             .map(ViolationItem::from_lint_result)

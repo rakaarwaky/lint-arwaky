@@ -8,8 +8,8 @@ use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
 use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 
 // ── Compile-time trait bound assertions ────────────────────
 

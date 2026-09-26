@@ -17,9 +17,9 @@ use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
 use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
-use shared::import_rules::taxonomy_import_request_vo::{ImportRequest, ImportResponse};
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
+use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared::import_rules::taxonomy_import_request_vo::{ImportRequest, ImportResponse};
 
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use tracing::warn;
@@ -55,12 +55,8 @@ impl IImportRunnerAggregate for ImportOrchestrator {
                 let violations = self.run_audit_with_entries(&files);
                 ImportResponse::AuditEntries { violations }
             }
-            ImportRequest::RunAuditWithEntriesAndImports {
-                files,
-                imports_map,
-            } => {
-                let violations =
-                    self.run_audit_with_entries_and_imports(&files, &imports_map);
+            ImportRequest::RunAuditWithEntriesAndImports { files, imports_map } => {
+                let violations = self.run_audit_with_entries_and_imports(&files, &imports_map);
                 ImportResponse::AuditEntries { violations }
             }
             ImportRequest::Name => ImportResponse::Name {
@@ -150,10 +146,7 @@ impl ImportOrchestrator {
         "import-rules"
     }
 
-    pub fn run_audit_with_entries(
-        &self,
-        files: &[FileEntry],
-    ) -> Vec<LintResult> {
+    pub fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
         }
@@ -242,8 +235,6 @@ impl ImportOrchestrator {
             &root_dir,
         )
     }
-
-
 
     pub fn new(
         deps: ImportOrchestratorDeps,

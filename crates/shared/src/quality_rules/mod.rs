@@ -10,12 +10,12 @@ pub mod taxonomy_violation_code_analysis_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
+pub use contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 pub use contract_quality_protocol::IBypassCheckerProtocol;
-pub use contract_quality_protocol::IMandatoryClassProtocol;
 pub use contract_quality_protocol::ICodeMetricAnalyzerProtocol;
 pub use contract_quality_protocol::IDeadInheritanceProtocol;
 pub use contract_quality_protocol::ILineCheckerProtocol;
-pub use contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+pub use contract_quality_protocol::IMandatoryClassProtocol;
 
 // ── Taxonomy types ──
 pub use taxonomy_analysis_vo::GraphAnalysisContext;

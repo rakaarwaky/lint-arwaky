@@ -8,11 +8,11 @@ pub mod taxonomy_external_lint_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_external_lint_protocol::ILinterAdapterProtocol;
+pub use contract_external_lint_aggregate::IExternalLintAggregate;
 pub use contract_external_lint_protocol::ICommandExecutorProtocol;
 pub use contract_external_lint_protocol::IExternalLintExecutorProtocol;
 pub use contract_external_lint_protocol::IExternalLintSelectorProtocol;
-pub use contract_external_lint_aggregate::IExternalLintAggregate;
+pub use contract_external_lint_protocol::ILinterAdapterProtocol;
 
 // ── Taxonomy VOs ──
 pub use taxonomy_external_lint_request_vo::ExternalLintRequest;

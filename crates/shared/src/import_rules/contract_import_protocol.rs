@@ -6,20 +6,20 @@
 // and never carries unimplemented stubs.
 
 use crate::common::taxonomy_definition_vo::LayerMapVO;
+use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_lint_result_vo::LintResult;
+use crate::common::taxonomy_lint_result_vo::LintResultList;
+use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_paths_vo::FilePathList;
+use crate::common::taxonomy_source_vo::ContentString;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
 use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use crate::import_rules::taxonomy_dependency_edge_vo::DependencyEdge;
 use crate::import_rules::taxonomy_import_error::ImportError;
 use std::collections::HashMap;
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::common::taxonomy_lint_result_vo::LintResultList;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::common::taxonomy_message_vo::LintMessage;
 
 pub trait ICycleImportProtocol: Send + Sync {
     fn scan(

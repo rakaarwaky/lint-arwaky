@@ -47,7 +47,9 @@ impl ImportRequest {
 /// Result of an import aggregate request.
 pub enum ImportResponse {
     /// Audit result from a path-based run (may fail if the path is missing).
-    Audit { result: Result<Vec<LintResult>, ScanError> },
+    Audit {
+        result: Result<Vec<LintResult>, ScanError>,
+    },
     /// Violations found by an entry-based audit.
     AuditEntries { violations: Vec<LintResult> },
     /// Adapter name of the orchestrator.

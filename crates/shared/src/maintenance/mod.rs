@@ -7,9 +7,9 @@ pub mod taxonomy_stats_vo;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_maintenance_protocol::IToolExecutorProtocol;
 pub use contract_maintenance_aggregate::IMaintenanceAggregate;
 pub use contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+pub use contract_maintenance_protocol::IToolExecutorProtocol;
 
 // ── Taxonomy types ──
 pub use taxonomy_doctor_vo::DependencyInfo;

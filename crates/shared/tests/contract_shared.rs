@@ -2,9 +2,7 @@
 // is usable as a bound, object-safe where declared, and Send + Sync.
 // shared is the foundation crate: it declares contracts but implements none.
 
-use shared_lint_arwaky::auto_fix::{
-    IFileAdapterProtocol, IFixProtocol, IFixAggregate,
-};
+use shared_lint_arwaky::auto_fix::{IFileAdapterProtocol, IFixAggregate, IFixProtocol};
 use shared_lint_arwaky::config_system::{
     IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
     IConfigValidatorProtocol, IWorkspaceDetectorProtocol,
@@ -28,7 +26,7 @@ use shared_lint_arwaky::import_rules::{
     IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol,
 };
 use shared_lint_arwaky::maintenance::{
-    IMaintenanceCheckerProtocol, IToolExecutorProtocol, IMaintenanceAggregate,
+    IMaintenanceAggregate, IMaintenanceCheckerProtocol, IToolExecutorProtocol,
 };
 use shared_lint_arwaky::naming_rules::{INamingCheckerProtocol, INamingRunnerAggregate};
 use shared_lint_arwaky::orphan_rules::{
@@ -37,7 +35,7 @@ use shared_lint_arwaky::orphan_rules::{
     IUtilityOrphanProtocol,
 };
 use shared_lint_arwaky::project_setup::{
-    ISetupInstallerProtocol, ISetupManagementProtocol, ISetupAggregate,
+    ISetupAggregate, ISetupInstallerProtocol, ISetupManagementProtocol,
 };
 use shared_lint_arwaky::quality_rules::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,

@@ -9,8 +9,10 @@ use dispatcher::surface_orphan_action::OrphanFactory;
 use shared::auto_fix::IFixAggregate;
 use shared::common::Threshold;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::IConfigOrchestratorAggregate;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::{
+    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
+};
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::IGitHooksAggregate;
@@ -27,13 +29,14 @@ use shared::common::taxonomy_violation_item_vo::ViolationItem;
 #[derive(Clone)]
 pub struct McpServerDependencies {
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
-    pub fix_orchestrator_factory:
-        Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
+    pub fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub maintenance_orchestrator: Arc<dyn IMaintenanceAggregate>,
     pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
+    pub config_parser: Arc<dyn IConfigParserProtocol>,
+    pub config_reader: Arc<dyn IConfigReaderProtocol>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
@@ -285,7 +288,7 @@ impl McpActionSurface {
             Some(fp),
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
-            self.deps.config_orchestrator.clone(),
+            self.deps.config_parser.clone(),
             None,
             &[],
         ) {
@@ -564,7 +567,7 @@ impl McpActionSurface {
             }
         };
 
-        let config_files = match self.deps.config_orchestrator.list_config_files(&fp) {
+        let config_files = match self.deps.config_reader.list_config_files(&fp) {
             Ok(files) => files,
             Err(e) => {
                 return serde_json::json!({"path": path, "language": language, "error": format!("Failed to list config files: {}", e), "exit_code": 2}).to_string()
@@ -580,7 +583,7 @@ impl McpActionSurface {
 
         for (lang, _config_path) in &config_files {
             layers.push(lang.as_str());
-            if let Ok(Some(source)) = self.deps.config_orchestrator.read_config(&fp, *lang) {
+            if let Ok(Some(source)) = self.deps.config_reader.read_config(&fp, *lang) {
                 let arch_config = (self.deps.parse_config_yaml)(&source.raw_content);
                 rules_enabled.push(lang.as_str());
                 ignored_paths.extend(

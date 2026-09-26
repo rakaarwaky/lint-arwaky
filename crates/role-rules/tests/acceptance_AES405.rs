@@ -3,8 +3,8 @@
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use std::path::PathBuf;
 use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
+use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
     FileEntry {
