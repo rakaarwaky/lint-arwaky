@@ -8,6 +8,7 @@ use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::contract_agent_role_protocol::IAgentRoleProtocol;
 use shared::role_rules::contract_capabilities_role_protocol::ICapabilitiesRoleProtocol;
 use shared::role_rules::contract_role_contract_protocol::IContractRoleProtocol;
+use shared::role_rules::taxonomy_role_request_vo::{RoleRequest, RoleResponse};
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
 use shared::role_rules::contract_surface_role_protocol::ISurfaceRoleProtocol;
 use shared::role_rules::contract_taxonomy_role_protocol::ITaxonomyRoleProtocol;
@@ -36,19 +37,31 @@ pub struct RoleOrchestrator {
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IRoleRunnerAggregate for RoleOrchestrator {
-    fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
-        let mut results = Vec::new();
-        self.run_all_role_checks(files, &mut results);
-        results
-    }
-
-    fn name(&self) -> &str {
-        "role-rules"
+    fn execute(&self, request: RoleRequest) -> RoleResponse {
+        match request {
+            RoleRequest::RunAuditWithEntries { files } => {
+                let violations = self.run_audit_with_entries(&files);
+                RoleResponse::Audit { violations }
+            }
+            RoleRequest::Name => RoleResponse::Name {
+                name: self.name().to_string(),
+            },
+        }
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl RoleOrchestrator {
+    pub fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
+        let mut results = Vec::new();
+        self.run_all_role_checks(files, &mut results);
+        results
+    }
+
+    pub fn name(&self) -> &str {
+        "role-rules"
+    }
+
     pub fn new(deps: RoleCheckerDeps, config: &ArchitectureConfig) -> Self {
         let ignored_paths: Vec<String> = config
             .ignored_paths

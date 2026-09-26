@@ -16,6 +16,7 @@ use shared::role_rules::{
     ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 use std::sync::Arc;
+use shared::role_rules::taxonomy_role_request_vo::{RoleRequest, RoleResponse};
 
 fn dummy_file() -> FileEntry {
     FileEntry {
@@ -110,7 +111,7 @@ fn role_orchestrator_implements_aggregate() {
     };
     let orchestrator: Arc<dyn IRoleRunnerAggregate> =
         Arc::new(RoleOrchestrator::new(deps, &config));
-    let results = orchestrator.run_audit_with_entries(&[]);
+    let results = orchestrator.execute(RoleRequest::audit(&[])).into_violations();
     assert!(results.is_empty());
-    assert_eq!(orchestrator.name(), "role-rules");
+    assert_eq!(orchestrator.execute(RoleRequest::Name).into_name(), "role-rules");
 }

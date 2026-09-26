@@ -3,6 +3,7 @@ use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use std::fs;
+use shared::role_rules::taxonomy_role_request_vo::{RoleRequest, RoleResponse};
 
 /// Create a FileEntry from a file on disk (simulates filesystem → orchestrator pipeline).
 fn file_entry_from_path(path: &std::path::Path, content: &str, lang: Language) -> FileEntry {
@@ -39,7 +40,7 @@ fn e2e_taxonomy_violation_detected() {
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
 
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes401: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES401")
@@ -66,7 +67,7 @@ fn e2e_capability_violation_detected() {
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
 
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes403: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES403")
@@ -93,7 +94,7 @@ fn e2e_utility_violation_detected() {
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
 
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes404: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES404")
@@ -120,7 +121,7 @@ fn e2e_agent_violation_detected() {
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
 
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes405: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES405")
@@ -151,7 +152,7 @@ fn e2e_surface_violation_detected() {
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
 
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     let aes406: Vec<_> = results
         .iter()
         .filter(|r| r.code.code() == "AES406")
@@ -197,7 +198,7 @@ fn e2e_mixed_files_produce_correct_violations() {
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
 
-    let results = orch.run_audit_with_entries(&files);
+    let results = orch.execute(RoleRequest::audit(&files)).into_violations();
 
     let codes: Vec<&str> = results.iter().map(|r| r.code.code()).collect();
     assert!(

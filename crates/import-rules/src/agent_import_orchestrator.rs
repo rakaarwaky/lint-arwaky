@@ -11,12 +11,13 @@ use shared::cli_commands::LintResult;
 use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
 use shared::config_system::ArchitectureConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ParseMetadata};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ParseMetadata};
 use shared::import_rules::DEFAULT_SKIP_DIRS;
 use shared::import_rules::contract_cycle_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_dummy_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_forbidden_protocol::IImportForbiddenProtocol;
 use shared::import_rules::contract_import_mandatory_protocol::IImportMandatoryProtocol;
+use shared::import_rules::taxonomy_import_request_vo::{ImportRequest, ImportResponse};
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
 use shared::import_rules::contract_unused_import_protocol::IUnusedImportProtocol;
 
@@ -44,7 +45,35 @@ pub struct ImportOrchestrator {
 // ─── Block 2: Aggregate Trait Implementation ──────────────
 
 impl IImportRunnerAggregate for ImportOrchestrator {
-    fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
+    fn execute(&self, request: ImportRequest) -> ImportResponse {
+        match request {
+            ImportRequest::RunAudit { target } => {
+                let result = self.run_audit(&target);
+                ImportResponse::Audit { result }
+            }
+            ImportRequest::RunAuditWithEntries { files } => {
+                let violations = self.run_audit_with_entries(&files);
+                ImportResponse::AuditEntries { violations }
+            }
+            ImportRequest::RunAuditWithEntriesAndImports {
+                files,
+                imports_map,
+            } => {
+                let violations =
+                    self.run_audit_with_entries_and_imports(&files, &imports_map);
+                ImportResponse::AuditEntries { violations }
+            }
+            ImportRequest::Name => ImportResponse::Name {
+                name: self.name().to_string(),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+
+impl ImportOrchestrator {
+    pub fn run_audit(&self, target: &FilePath) -> Result<Vec<LintResult>, ScanError> {
         if !self.config.enabled.value {
             return Ok(Vec::new());
         }
@@ -68,7 +97,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
             .unwrap_or_else(|| FilePath::new(".").unwrap_or_default());
 
-        // Pre-read all file contents into a map so capabilities don't do I/O.
         let content_map: HashMap<String, String> = files
             .values
             .iter()
@@ -80,7 +108,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             })
             .collect();
 
-        // Build import map from filesystem's AST parser (avoids re-parsing in checkers)
         let import_list = self.deps.filesystem.import_list();
         let imports_map: HashMap<String, Vec<ImportEntry>> = {
             let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
@@ -91,7 +118,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             map
         };
 
-        // Build used_identifiers map from filesystem's tree-sitter AST cache
         let used_identifiers_map: HashMap<String, Vec<String>> = files
             .values
             .iter()
@@ -108,8 +134,6 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             })
             .collect();
 
-        // Build cross-file trait implementation map for implicit trait usage detection.
-        // Maps trait_name → [type_names that implement it] across all Rust files.
         let implemented_traits = self.deps.filesystem.implemented_traits_map();
 
         Ok(self.run_checks(
@@ -122,18 +146,17 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         ))
     }
 
-    fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         "import-rules"
     }
 
-    fn run_audit_with_entries(
+    pub fn run_audit_with_entries(
         &self,
-        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        files: &[FileEntry],
     ) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
         }
-        // Use the orchestrator's own filesystem cache for the import map.
         let import_list = self.deps.filesystem.import_list();
         let imports_map: HashMap<String, Vec<ImportEntry>> = {
             let mut map: HashMap<String, Vec<ImportEntry>> = HashMap::new();
@@ -145,10 +168,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
         };
         self.run_audit_with_entries_and_imports(files, &imports_map)
     }
-
-    fn run_audit_with_entries_and_imports(
+    pub fn run_audit_with_entries_and_imports(
         &self,
-        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        files: &[FileEntry],
         imports_map: &HashMap<String, Vec<ImportEntry>>,
     ) -> Vec<LintResult> {
         if !self.config.enabled.value {
@@ -220,11 +242,9 @@ impl IImportRunnerAggregate for ImportOrchestrator {
             &root_dir,
         )
     }
-}
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl ImportOrchestrator {
+
     pub fn new(
         deps: ImportOrchestratorDeps,
         config: ArchitectureConfig,

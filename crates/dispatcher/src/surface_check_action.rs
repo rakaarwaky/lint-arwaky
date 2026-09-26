@@ -8,11 +8,13 @@ use shared::common::ViolationItem;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::import_rules::IImportRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use shared::role_rules::IRoleRunnerAggregate;
 use std::path::PathBuf;
 use std::process::Command;
@@ -238,7 +240,8 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     );
     all.extend(
         agg.role
-            .run_audit_with_entries(&entries)
+            .execute(RoleRequest::audit(&entries))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );
@@ -246,7 +249,11 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     // (the dispatcher's fs instance differs from the import orchestrator's own).
     all.extend(
         agg.import
-            .run_audit_with_entries_and_imports(&entries, &import_map)
+            .execute(ImportRequest::audit_with_entries_and_imports(
+                &entries,
+                &import_map,
+            ))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );
@@ -403,13 +410,18 @@ fn run_single_file_scan(
     );
     all.extend(
         agg.role
-            .run_audit_with_entries(&entries)
+            .execute(RoleRequest::audit(&entries))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );
     all.extend(
         agg.import
-            .run_audit_with_entries_and_imports(&entries, &import_map)
+            .execute(ImportRequest::audit_with_entries_and_imports(
+                &entries,
+                &import_map,
+            ))
+            .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
     );

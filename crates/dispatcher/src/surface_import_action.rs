@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::import_rules::IImportRunnerAggregate;
 
 use shared::common::ViolationItem;
@@ -31,9 +32,8 @@ pub fn collect_import(
     // Pass pre-fetched FileEntry data to import orchestrator
     let file_list = fs_agg.file_list();
     let results = import_orchestrator
-        .run_audit_with_entries(file_list)
-        .into_iter()
-        .collect::<Vec<_>>();
+        .execute(ImportRequest::audit_with_entries(&file_list))
+        .into_violations();
 
     let mut violations: Vec<ViolationItem> = results
         .iter()

@@ -2,6 +2,7 @@
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared::role_rules::taxonomy_role_request_vo::RoleRequest;
 use shared::role_rules::IRoleRunnerAggregate;
 use std::path::PathBuf;
 
@@ -28,7 +29,7 @@ fn smoke_container_creation() {
     let config = ArchitectureConfig::default();
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
-    assert_eq!(orch.name(), "role-rules");
+    assert_eq!(orch.execute(RoleRequest::Name).into_name(), "role-rules");
 }
 
 #[test]
@@ -46,7 +47,7 @@ fn smoke_orchestrator_creation() {
         utility: Arc::new(role_rules_lint_arwaky::UtilityRoleChecker::new()),
     };
     let orch = RoleOrchestrator::new(deps, &config);
-    assert_eq!(orch.name(), "role-rules");
+    assert_eq!(orch.execute(RoleRequest::Name).into_name(), "role-rules");
 }
 
 #[test]
@@ -60,7 +61,7 @@ fn smoke_basic_audit_clean_file() {
         Language::Rust,
         "pub fn hello() -> String {\n    \"hi\".to_string()\n}\n",
     );
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     // A generic module file (no role prefix) should produce no violations
     assert!(results.is_empty());
 }
@@ -77,7 +78,7 @@ fn smoke_basic_audit_detects_violation() {
         Language::Rust,
         "pub struct BareAgent {}\n",
     );
-    let results = orch.run_audit_with_entries(&[file]);
+    let results = orch.execute(RoleRequest::audit(&[file])).into_violations();
     assert!(
         !results.is_empty(),
         "bare agent file should produce at least one violation"
@@ -100,7 +101,7 @@ fn smoke_multiple_files() {
         ),
         make_file("src/utility_three.rs", Language::Rust, "pub struct C {}\n"),
     ];
-    let results = orch.run_audit_with_entries(&files);
+    let results = orch.execute(RoleRequest::audit(&files)).into_violations();
     // At least some of these should produce violations
     assert!(
         !results.is_empty(),

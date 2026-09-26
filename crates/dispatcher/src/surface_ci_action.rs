@@ -5,6 +5,7 @@ use shared::common::{FilePath, Severity, Threshold};
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::import_rules::IImportRunnerAggregate;
+use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use shared::naming_rules::taxonomy_naming_request_vo::NamingRequest;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::orphan_rules::IOrphanAggregate;
@@ -60,7 +61,10 @@ pub fn collect_ci(
 
     // Import rules — pass pre-fetched FileEntry data
     let file_list = deps.filesystem.file_list();
-    let import_res = deps.import_orchestrator.run_audit_with_entries(file_list);
+    let import_res = deps
+        .import_orchestrator
+        .execute(ImportRequest::audit_with_entries(&file_list))
+        .into_violations();
     results.extend(import_res);
 
     // Naming rules — pass pre-fetched FileEntry data

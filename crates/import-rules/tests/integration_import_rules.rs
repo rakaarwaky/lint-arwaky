@@ -10,8 +10,8 @@ use shared::config_system::ArchitectureConfig;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::collections::HashMap;
 use std::sync::Arc;
+use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
 use tempfile::TempDir;
-
 fn test_config() -> ArchitectureConfig {
     let mut layers = HashMap::new();
     layers.insert(
@@ -51,7 +51,7 @@ fn container_creates_orchestrator() {
     let fs = make_filesystem();
     let container = ImportContainer::new_with_config(config, fs);
     let orchestrator = container.orchestrator();
-    assert_eq!(orchestrator.name(), "import-rules");
+    assert_eq!(orchestrator.execute(ImportRequest::Name).into_name(), "import-rules");
 }
 
 #[test]
@@ -71,7 +71,7 @@ fn orchestrator_returns_empty_for_disabled_config() {
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new("/tmp/nonexistent_path".to_string()).unwrap();
-    let result = orchestrator.run_audit(&target);
+    let result = orchestrator.execute(ImportRequest::audit(&target)).into_result();
     // disabled config returns Ok(empty) regardless of path
     assert!(result.is_ok());
     assert!(result.unwrap().is_empty());
@@ -85,7 +85,7 @@ fn orchestrator_errors_on_nonexistent_target() {
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new("/tmp/definitely_does_not_exist_12345".to_string()).unwrap();
-    let result = orchestrator.run_audit(&target);
+    let result = orchestrator.execute(ImportRequest::audit(&target)).into_result();
     assert!(result.is_err());
 }
 
@@ -98,7 +98,7 @@ fn orchestrator_scans_empty_temp_dir_without_errors() {
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = orchestrator.run_audit(&target);
+    let result = orchestrator.execute(ImportRequest::audit(&target)).into_result();
     assert!(result.is_ok());
     assert!(
         result.unwrap().is_empty(),
@@ -123,7 +123,7 @@ fn orchestrator_scans_temp_dir_with_clean_rust_files() {
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = orchestrator.run_audit(&target);
+    let result = orchestrator.execute(ImportRequest::audit(&target)).into_result();
     assert!(result.is_ok());
 }
 
@@ -146,7 +146,7 @@ fn orchestrator_detects_forbidden_import_in_temp_dir() {
     let orchestrator = container.orchestrator();
 
     let target = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let result = orchestrator.run_audit(&target).unwrap();
+    let result = orchestrator.execute(ImportRequest::audit(&target)).into_result().unwrap();
     assert!(
         result.iter().any(|r| r.code.code() == "AES201"),
         "Should detect AES201 forbidden import violation"
