@@ -198,7 +198,7 @@ The base codebase must be clean of internal architecture rule violations.
 - [ ] Build a clean release:
 
   ```bash
-  bash scripts/install.local.sh
+  bash scripts/install.sh --mode local
   ```
 - [ ] Run scan on bad workspaces (should find violations):
 
@@ -268,7 +268,7 @@ The base codebase must be clean of internal architecture rule violations.
 ## 5. Instructions for AI Agents
 
 1. **Automated verification**: Every time you modify code, rebuild with
-   `scripts/install.local.sh` and run `check .` locally.
+   `scripts/install.sh` and run `check .` locally.
 2. **Fix the root cause, do not bypass**: Never use inline bypasses
    (`unwrap`, `expect`, `panic!`, `noqa`, `#[allow(...)]`, `FIXME`, `HACK`)
    to suppress architecture warnings.

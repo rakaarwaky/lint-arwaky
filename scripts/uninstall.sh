@@ -13,6 +13,7 @@ usage() {
     echo ""
     echo "Options:"
     echo "  --local       Uninstall local (XDG) installation (default)"
+    echo "  --dev         Uninstall dev installation (alias for --local)"
     echo "  --global      Uninstall global system-wide installation"
     echo "  --all         Uninstall both local and global"
     echo "  --dry-run     Show what would be removed without removing"
@@ -26,6 +27,7 @@ DRY_RUN=false
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --local)   MODE="local"; shift ;;
+        --dev)     MODE="local"; shift ;;
         --global)  MODE="global"; shift ;;
         --all)     MODE="all"; shift ;;
         --dry-run) DRY_RUN=true; shift ;;
@@ -121,9 +123,10 @@ uninstall_global() {
 uninstall_hooks() {
     echo ""
     echo "Git hooks:"
-    local hooks_dir="$PROJECT_ROOT/.git/hooks"
-    if [ -f "$hooks_dir/pre-commit" ]; then
-        if grep -q "lint-arwaky" "$hooks_dir/pre-commit" 2>/dev/null; then
+    local hooks_dir
+    hooks_dir="$(git -C "$PROJECT_ROOT" rev-parse --git-path hooks 2>/dev/null)" || hooks_dir=""
+    if [ -n "$hooks_dir" ] && [ -f "$hooks_dir/pre-commit" ]; then
+        if grep -q "lint-arwaky\|gates.sh" "$hooks_dir/pre-commit" 2>/dev/null; then
             if $DRY_RUN; then
                 echo "  [dry-run] Would remove: $hooks_dir/pre-commit"
             else

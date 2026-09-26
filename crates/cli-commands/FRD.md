@@ -201,9 +201,9 @@ fails.
   - Delegates to `dispatcher::surface_setup_action::collect_init`.
   - Detects languages present in the project.
   - Creates `lint_arwaky.config.<lang>.yaml` for each detected language.
-  - Distributes docs from XDG config: `ARCHITECTURE.md`, `MIGRATION_RUST.md`,
-    `MIGRATION_PYTHON.md`, `MIGRATION_TYPESCRIPT.md`, `RULES_AES.md`.
-  - Copies `.agents/` (prompts, rules, skills) from XDG config into project.
+  - Distributes docs from XDG config: `ARCHITECTURE.md`, `RULES_AES.md`.
+  - Provisions skills from XDG config into `.agents/skills/` (one skill directory at a time; existing project skills kept, missing ones created, updated ones overwritten).
+  - Copies `.agents/` (rules, prompts) from XDG config into project.
   - Overwrites existing files.
 - **Edge Cases**:
 

@@ -98,7 +98,7 @@ Most linters catch syntax errors or style mistakes. They do not catch:
 ### Option 1: Remote Install (pre-built binary)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/install.remote.sh | bash
+curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/install.sh | bash -s -- --mode remote
 ```
 
 ### Option 2: Build from Source
@@ -106,7 +106,7 @@ curl -sSL https://raw.githubusercontent.com/rakaarwaky/lint-arwaky/main/scripts/
 ```bash
 git clone https://github.com/rakaarwaky/lint-arwaky.git
 cd lint-arwaky
-bash scripts/install.local.sh
+bash scripts/install.sh --mode local
 ```
 
 Requires Rust 1.70+ and Cargo.
@@ -321,8 +321,7 @@ lint-arwaky/
 │   ├── maintenance/        # doctor / security / deps
 │   └── tui/                # Interactive terminal UI
 ├── scripts/
-│   ├── install.remote.sh   # Pre-built binary installer
-│   └── install.local.sh    # Build-from-source installer
+│   ├── install.sh          # Unified installer: --mode local | global | remote
 ├── PRD.md                  # Product requirements
 ├── ARCHITECTURE.md         # AES specification
 ├── DEPLOY.md               # MCP deployment guide

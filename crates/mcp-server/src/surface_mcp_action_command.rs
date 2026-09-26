@@ -418,7 +418,7 @@ impl McpActionSurface {
                     Ok(report) => {
                         serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "install-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
-                    Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
+                    Err(e) => serde_json::json!({"error": e.to_string(), "exit_code": 2}),
                 }
             }
             "uninstall-hook" => {
@@ -428,7 +428,7 @@ impl McpActionSurface {
                     Ok(report) => {
                         serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "uninstall-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
-                    Err(e) => serde_json::json!({"error": format!("{e}"), "exit_code": 2}),
+                    Err(e) => serde_json::json!({"error": e.to_string(), "exit_code": 2}),
                 }
             }
             "init" | "install" => {

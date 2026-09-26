@@ -291,7 +291,7 @@ def run_lint_scan(workspace_root: Path, crate_path: Path) -> str:
                 cli_bin = str(cli_bin_candidate)
 
     if not cli_bin:
-        print("Warning: lint-arwaky-cli not found. Run install.local.sh first.")
+        print("Warning: lint-arwaky-cli not found. Run `scripts/install.sh` first.")
         return ""
 
     try:

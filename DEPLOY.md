@@ -23,7 +23,7 @@ No external services required. The MCP server speaks JSON-RPC 2.0 over stdin/std
 
 ```bash
 # Linux
-bash scripts/install.local.sh
+bash scripts/install.sh --mode local
 ```
 
 The installer builds from source and places binaries in `target/release/`.

@@ -88,9 +88,7 @@ copy_docs_to_config() {
     local project_root="${2:-$PROJECT_ROOT}"
     local Docs=(
         "ARCHITECTURE.md"
-        "MIGRATION_RUST.md"
-        "MIGRATION_PYTHON.md"
-        "MIGRATION_TYPESCRIPT.md"
+        "RULES_AES.md"
     )
     for DOC in "${Docs[@]}"; do
         SRC="$project_root/$DOC"
@@ -116,14 +114,6 @@ copy_agents_to_config() {
     if [ -d "$agents_src" ]; then
         mkdir -p "$agents_dst/skills" "$agents_dst/rules" "$agents_dst/prompts"
 
-        for SKILL_DIR in "$agents_src"/skills/*; do
-            if [ -d "$SKILL_DIR" ]; then
-                SKILL_NAME=$(basename "$SKILL_DIR")
-                cp -r "$SKILL_DIR" "$agents_dst/skills/$SKILL_NAME"
-                echo "  .agents/skills/$SKILL_NAME -> $config_dir/.agents/skills/$SKILL_NAME"
-            fi
-        done
-
         for RULE_FILE in "$agents_src"/rules/*; do
             if [ -f "$RULE_FILE" ]; then
                 RULE_NAME=$(basename "$RULE_FILE")
@@ -139,6 +129,40 @@ copy_agents_to_config() {
                 echo "  .agents/prompts/$PROMPT_NAME -> $config_dir/.agents/prompts/$PROMPT_NAME"
             fi
         done
+    fi
+}
+
+# ── Provisioned Skills Copy ───────────────────────────────────────────────────
+# Copies the top-level `skills/` folder into the XDG config at
+# <config>/.agents/skills/. `init` provisions from there into a project.
+copy_skills_to_config() {
+    local config_dir="$1"
+    local project_root="${2:-$PROJECT_ROOT}"
+    local skills_src="$project_root/skills"
+    local skills_dst="$config_dir/.agents/skills"
+
+    if [ ! -d "$skills_src" ]; then
+        echo "  [skip] no skills/ folder at $skills_src"
+        return 0
+    fi
+
+    mkdir -p "$skills_dst"
+
+    local copied=0
+    for SKILL_DIR in "$skills_src"/*; do
+        if [ -d "$SKILL_DIR" ]; then
+            SKILL_NAME=$(basename "$SKILL_DIR")
+            rm -rf "${skills_dst:?}/$SKILL_NAME"
+            cp -r "$SKILL_DIR" "$skills_dst/$SKILL_NAME"
+            echo "  skills/$SKILL_NAME -> $skills_dst/$SKILL_NAME"
+            copied=$((copied + 1))
+        fi
+    done
+
+    if [ "$copied" -eq 0 ]; then
+        echo "  [skip] skills/ is empty — add a <skill-name>/SKILL.md to provision"
+    else
+        echo "  $copied skill(s) provisioned to $skills_dst"
     fi
 }
 

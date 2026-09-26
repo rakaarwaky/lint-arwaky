@@ -68,13 +68,7 @@ pub fn collect_init(
     }
 
     // Distribute docs from XDG config to project (always overwrite)
-    let doc_files = [
-        "ARCHITECTURE.md",
-        "MIGRATION_RUST.md",
-        "MIGRATION_PYTHON.md",
-        "MIGRATION_TYPESCRIPT.md",
-        "RULES_AES.md",
-    ];
+    let doc_files = ["ARCHITECTURE.md", "RULES_AES.md"];
     if let Some(config_dir) = dirs::config_dir() {
         let xdg_base = config_dir.join("lint-arwaky");
         for doc in &doc_files {
@@ -104,31 +98,36 @@ pub fn collect_init(
             }
         }
 
-        // Copy .agents/ from XDG config to current project
-        let xdg_agents = xdg_base.join(".agents");
-        if xdg_agents.exists() && xdg_agents.is_dir() {
-            let target_agents = std::path::Path::new(".agents");
-            match copy_dir_all(&xdg_agents, target_agents, &*filesystem) {
-                Ok(count) => {
-                    items.push(SetupInitItem {
-                        message: format!(
-                            "  .agents/ — copied/overwritten {count} file(s) from XDG config"
-                        ),
-                        ok: true,
-                    });
-                }
-                Err(e) => {
-                    items.push(SetupInitItem {
-                        message: format!("  .agents/ — copy error: {e}"),
-                        ok: false,
-                    });
-                }
+        // Provision skills from XDG config, one skill directory at a time.
+        // A provisioned skill is overwritten in place so upstream updates land;
+        // skills that exist only in the project are left untouched.
+        let xdg_skills = xdg_base.join(".agents").join("skills");
+        let target_skills = std::path::Path::new(".agents").join("skills");
+        match provision_skills(&xdg_skills, &target_skills, &*filesystem) {
+            SkillProvision::Provisioned {
+                copied,
+                overwritten,
+                kept,
+            } => {
+                items.push(SetupInitItem {
+                    message: format!(
+                        "  .agents/skills/ — {copied} provisioned, {overwritten} overwritten, {kept} local-only skill(s) left untouched"
+                    ),
+                    ok: true,
+                });
             }
-        } else {
-            items.push(SetupInitItem {
-                message: "  .agents/ — not in XDG config, skipping".to_string(),
-                ok: true,
-            });
+            SkillProvision::SourceMissing => {
+                items.push(SetupInitItem {
+                    message: "  .agents/skills/ — no provisioned skills in XDG config".to_string(),
+                    ok: true,
+                });
+            }
+            SkillProvision::Failed(e) => {
+                items.push(SetupInitItem {
+                    message: format!("  .agents/skills/ — copy error: {e}"),
+                    ok: false,
+                });
+            }
         }
     } else {
         items.push(SetupInitItem {
@@ -138,6 +137,81 @@ pub fn collect_init(
     }
 
     items
+}
+
+/// Outcome of skill provisioning.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SkillProvision {
+    /// Skills were provisioned. `copied` were new, `overwritten` replaced an
+    /// existing skill of the same name, and `kept` local-only skills were
+    /// left untouched.
+    Provisioned {
+        copied: usize,
+        overwritten: usize,
+        kept: usize,
+    },
+    /// The source directory is absent or holds no skill directories.
+    SourceMissing,
+    Failed(String),
+}
+
+/// Copy each provisioned skill into `target`, one skill directory at a time.
+///
+/// A skill present in `source` is overwritten in place when it already exists
+/// at `target` (upstream updates land on the next `init`), created when it
+/// does not. Skill directories that exist only under `target` are left
+/// untouched — they never appear in the provisioned set.
+pub fn provision_skills(
+    source: &std::path::Path,
+    target: &std::path::Path,
+    fs: &dyn IFileSystemIOProtocol,
+) -> SkillProvision {
+    let entries = match fs.read_dir_entries_as_pathbuf(source) {
+        Ok(entries) => entries,
+        Err(_) => return SkillProvision::SourceMissing,
+    };
+    if entries.is_empty() {
+        return SkillProvision::SourceMissing;
+    }
+    if let Err(e) = fs.create_dir_all(target) {
+        return SkillProvision::Failed(e.to_string());
+    }
+
+    let mut copied = 0;
+    let mut overwritten = 0;
+    for entry in &entries {
+        let name = match entry.file_name().and_then(|n| n.to_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+        if name.starts_with('.') || !entry.is_dir() {
+            continue;
+        }
+        let dst = target.join(name);
+        if dst.exists() {
+            overwritten += 1;
+        } else {
+            copied += 1;
+        }
+        if let Err(e) = copy_dir_all(entry, &dst, fs) {
+            return SkillProvision::Failed(e.to_string());
+        }
+    }
+
+    let kept = match fs.read_dir_entries_as_pathbuf(target) {
+        Ok(target_entries) => target_entries
+            .iter()
+            .filter(|e| e.is_dir())
+            .count()
+            .saturating_sub(copied + overwritten),
+        Err(_) => 0,
+    };
+
+    SkillProvision::Provisioned {
+        copied,
+        overwritten,
+        kept,
+    }
 }
 
 fn copy_dir_all(
