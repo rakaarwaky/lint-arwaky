@@ -7,9 +7,10 @@
 //   1. Config YAML — committed at `<manifest>/config/`, in-package already.
 //   2. Skill markdown — committed at `<manifest>/skills/`, in-package already.
 //
-// `cargo package` stages `<manifest>/skills/` into the tarball, so
-// `include_str!(concat!(env!("OUT_DIR"), "/skills/..."))` stays valid for a
-// consumer that builds straight from the registry.
+// `cargo package` stages `<manifest>/skills/` into the tarball via the
+// `[package] include` list in Cargo.toml, so `include_str!(concat!(env!("OUT_DIR"),
+// "/skills/..."))` stays valid for a consumer that builds straight from the
+// registry.
 use std::fs;
 use std::path::Path;
 
@@ -55,18 +56,32 @@ fn stage_config(manifest_dir: &Path, out_dir: &Path) {
     println!("cargo:rerun-if-changed=config/lint_arwaky.config.yaml");
 }
 
-/// Recursively copy `<manifest>/skills/` into `OUT_DIR/skills/` so the
+/// Recursively copy skills source into `OUT_DIR/skills/` so the
 /// `include_str!` sites in `taxonomy_skills_constant.rs` resolve at compile
-/// time from inside the packaged crate.
+/// time.
+///
+/// In a workspace build the source of truth is
+/// `../../crates/skills/` (from the shared crate root, two levels up gets to
+/// the workspace root, then into `crates/skills/`). In a published tarball
+/// build the source is `<manifest>/skills/` (staged there by the preceding
+/// workspace build and packaged via `[package] include`).
+///
+/// Neither case is fatal: a binary without embedded skills still compiles;
+/// init-time skill installation simply yields an empty catalog.
 fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
-    let skills_src = manifest_dir.join("skills");
-    if !skills_src.is_dir() {
+    let skills_src = if manifest_dir.join("../../crates/skills").is_dir() {
+        manifest_dir.join("../../crates/skills")
+    } else if manifest_dir.join("skills").is_dir() {
+        manifest_dir.join("skills")
+    } else {
         eprintln!(
-            "Skills directory not found at {}. Copy crates/skills/ there to populate it.",
-            skills_src.display()
+            "Skills directory not found. Skipping embedding: neither \
+             ../../crates/skills/ nor skills/ exists under {}",
+            manifest_dir.display()
         );
-        std::process::exit(1);
-    }
+        println!("cargo:warning=skills directory missing — EMBEDDED_SKILLS will be empty");
+        return;
+    };
 
     let skills_dst = out_dir.join("skills");
     if let Err(e) = fs::create_dir_all(&skills_dst) {
@@ -75,7 +90,7 @@ fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
     }
     copy_dir_recursive(&skills_src, &skills_dst);
 
-    println!("cargo:rerun-if-changed=skills");
+    println!("cargo:rerun-if-changed=../../crates/skills");
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) {
