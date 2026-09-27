@@ -1,4 +1,23 @@
 # Changelog
+## 3.8.0 (2026-09-27)
+
+### Features
+
+- feat: add `skill` CLI subcommand (read + list) for embedded AES skill docs (#306)
+
+### Bug Fixes
+
+- fix(publish): stage skills via build.rs so crates.io packages resolve include_str! (#299)
+
+### Maintenance
+
+- refactor: enforce no bare &str domain values in contract signatures (#305)
+- docs: permit string/bool anywhere in contract signatures (#304)
+- docs(aes-docs): apply aes-docs invariants to all feature FRDs and root docs (#301)
+- docs(skills): audit and fix 41 documented issues across all aes-* skills (#300)
+- docs(skills): sync aes-migration to slim phase playbooks, rename references/ to reference/ (#298)
+- docs(aes-docs): specify .agents/state as gitignored session state dir in HOW-TO template (#291)
+
 ## 3.7.1 (2026-09-27)
 
 ### Fixes
