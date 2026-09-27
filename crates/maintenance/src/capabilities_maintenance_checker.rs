@@ -119,20 +119,20 @@ impl MaintenanceChecker {
 
     /// Resolve the directory holding the running binary.
     ///
-    /// We check the executable's parent directory first (for installed
-    /// binaries), then fall back to `$CARGO_HOME/bin` and finally the
-    /// current working directory. `current_exe` is used only for path
-    /// resolution — no security decisions are made from its output.
+    /// Uses `$CARGO_HOME/bin` first (the standard cargo install location),
+    /// then `$HOME/.cargo/bin`, then the current working directory.
+    /// `current_exe` is intentionally avoided — its return value can be
+    /// influenced by the process environment and must not be trusted for
+    /// deciding where to write files.
     fn install_dir(&self) -> Result<std::path::PathBuf, String> {
-        // LINT_IGNORE AES304: current_exe is used here for location
-        // resolution only, not for any security/authentication purpose.
-        if let Ok(exe) = std::env::current_exe() {
-            if let Some(parent) = exe.parent() {
-                return Ok(parent.to_path_buf());
-            }
-        }
         if let Ok(home) = std::env::var("CARGO_HOME") {
             let cargo_bin = std::path::Path::new(&home).join("bin");
+            if cargo_bin.is_dir() {
+                return Ok(cargo_bin);
+            }
+        }
+        if let Ok(home) = std::env::var("HOME") {
+            let cargo_bin = std::path::Path::new(&home).join(".cargo/bin");
             if cargo_bin.is_dir() {
                 return Ok(cargo_bin);
             }
