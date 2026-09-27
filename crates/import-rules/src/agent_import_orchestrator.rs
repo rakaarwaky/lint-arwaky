@@ -8,7 +8,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use shared::cli_commands::LintResult;
-use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError};
+use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError, SymbolName};
 use shared::config_system::ArchitectureConfig;
 use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -125,7 +125,7 @@ impl ImportOrchestrator {
             map
         };
 
-        let used_identifiers_map: HashMap<String, Vec<String>> = files
+        let used_identifiers_map: HashMap<String, Vec<SymbolName>> = files
             .values
             .iter()
             .filter_map(|f| {
@@ -139,7 +139,10 @@ impl ImportOrchestrator {
                 if ids.is_empty() {
                     None
                 } else {
-                    Some((f.value().to_string(), ids))
+                    Some((
+                        f.value().to_string(),
+                        ids.into_iter().map(SymbolName::new).collect(),
+                    ))
                 }
             })
             .collect();
@@ -202,7 +205,7 @@ impl ImportOrchestrator {
             .collect();
 
         // Build used_identifiers map from FileEntry.parse_metadata (tree-sitter AST)
-        let used_identifiers_map: HashMap<String, Vec<String>> = files
+        let used_identifiers_map: HashMap<String, Vec<SymbolName>> = files
             .iter()
             .filter_map(|f| {
                 let ids = match f.parse_metadata.as_ref()? {
@@ -212,7 +215,12 @@ impl ImportOrchestrator {
                     ParseMetadata::JavaScript(m) => Some(m.used_identifiers.clone()),
                     _ => None,
                 };
-                ids.map(|i| (f.path.to_string_lossy().to_string(), i))
+                ids.map(|i| {
+                    (
+                        f.path.to_string_lossy().to_string(),
+                        i.into_iter().map(SymbolName::new).collect(),
+                    )
+                })
             })
             .collect();
 
@@ -276,7 +284,7 @@ impl ImportOrchestrator {
         files: &FilePathList,
         content_map: &HashMap<String, String>,
         imports_map: &HashMap<String, Vec<ImportEntry>>,
-        used_identifiers_map: &HashMap<String, Vec<String>>,
+        used_identifiers_map: &HashMap<String, Vec<SymbolName>>,
         implemented_traits: &HashMap<String, Vec<String>>,
         root_dir: &FilePath,
     ) -> Vec<LintResult> {

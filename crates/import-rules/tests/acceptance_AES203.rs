@@ -1,6 +1,6 @@
 // PURPOSE: Acceptance tests — AES203 unused import detection.
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::{SymbolName, taxonomy_path_vo::FilePath};
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared::import_rules::IUnusedImportProtocol;
 use std::collections::HashMap;
@@ -73,7 +73,7 @@ fn aes203_used_import_no_violation() {
             "/tmp/test/src/app.rs",
             content,
             &imports,
-            &["HashMap".to_string()],
+            &[SymbolName::new("HashMap")],
             &no_traits(),
         )
         .unwrap();
@@ -246,7 +246,7 @@ fn aes203_python_aliased_import_used_via_alias_not_flagged() {
             "/tmp/test/src/app.py",
             content,
             &imports,
-            &["_gc".to_string()],
+            &[SymbolName::new("_gc")],
             &no_traits(),
         )
         .unwrap();
@@ -308,7 +308,7 @@ fn aes203_python_plain_import_statement_uses_first_segment_binding() {
             "/tmp/test/src/app.py",
             content,
             &imports,
-            &["os".to_string(), "path".to_string()],
+            &[SymbolName::new("os"), SymbolName::new("path")],
             &no_traits(),
         )
         .unwrap();
@@ -340,7 +340,7 @@ fn aes203_rust_aliased_use_import_used_via_alias_not_flagged() {
             "/tmp/test/src/app.rs",
             content,
             &imports,
-            &["Map".to_string()],
+            &[SymbolName::new("Map")],
             &no_traits(),
         )
         .unwrap();
@@ -372,7 +372,7 @@ fn aes203_typescript_aliased_named_import_used_via_alias_not_flagged() {
             "/tmp/test/src/app.ts",
             content,
             &imports,
-            &["Bar".to_string()],
+            &[SymbolName::new("Bar")],
             &no_traits(),
         )
         .unwrap();
@@ -406,7 +406,7 @@ fn aes203_typescript_namespace_import_used_via_alias_not_flagged() {
             "/tmp/test/src/app.ts",
             content,
             &imports,
-            &["utils".to_string()],
+            &[SymbolName::new("utils")],
             &no_traits(),
         )
         .unwrap();
@@ -427,7 +427,7 @@ fn aes203_used_identifiers_prevents_false_positive() {
             "/tmp/test/src/main.rs",
             content,
             &imports,
-            &["HashMap".to_string()],
+            &[SymbolName::new("HashMap")],
             &no_traits(),
         )
         .unwrap();
@@ -454,7 +454,7 @@ fn aes203_trait_protocol_import_not_flagged() {
     let imports = vec![rust_use(
         "calculator_shared::contract_calculator_protocol::CalculatorProtocol",
     )];
-    let used_ids = vec!["AdditionAnalyzer".to_string()];
+    let used_ids = vec![SymbolName::new("AdditionAnalyzer")];
 
     let mut traits = std::collections::HashMap::new();
     traits.insert(
@@ -482,7 +482,7 @@ fn aes203_trait_protocol_import_not_flagged() {
 fn aes203_trait_suffix_not_flagged_when_used() {
     let content = "use some_crate::MyTrait;\n\nfn main() {\n    println!(\"hi\");\n}\n";
     let imports = vec![rust_use("some_crate::MyTrait")];
-    let used_ids = vec!["main".to_string()];
+    let used_ids = vec![SymbolName::new("main")];
 
     let mut traits = std::collections::HashMap::new();
     traits.insert("MyTrait".to_string(), vec!["SomeType".to_string()]);
@@ -524,7 +524,7 @@ fn aes203_trait_map_detects_implicit_usage() {
     // implemented for a type used in this file via the trait map.
     let content = "use my_crate::MyCustomTrait;\n\nfn main() {\n    let _ = MyStruct;\n}\n";
     let imports = vec![rust_use("my_crate::MyCustomTrait")];
-    let used_ids = vec!["MyStruct".to_string(), "main".to_string()];
+    let used_ids = vec![SymbolName::new("MyStruct"), SymbolName::new("main")];
 
     let mut traits = HashMap::new();
     traits.insert("MyCustomTrait".to_string(), vec!["MyStruct".to_string()]);
@@ -550,7 +550,7 @@ fn aes203_trait_map_no_match_still_flags() {
     // Import a trait that is implemented for a DIFFERENT type than what's used here.
     let content = "use my_crate::MyCustomTrait;\n\nfn main() {\n    let _ = OtherStruct;\n}\n";
     let imports = vec![rust_use("my_crate::MyCustomTrait")];
-    let used_ids = vec!["OtherStruct".to_string(), "main".to_string()];
+    let used_ids = vec![SymbolName::new("OtherStruct"), SymbolName::new("main")];
 
     let mut traits = HashMap::new();
     traits.insert(
@@ -578,7 +578,7 @@ fn aes203_trait_map_last_segment_match() {
     // Import full path "crate::traits::MyTrait" — the map has "MyTrait"
     let content = "use crate::traits::MyTrait;\n\nfn main() {\n    let _ = Foo;\n}\n";
     let imports = vec![rust_use("crate::traits::MyTrait")];
-    let used_ids = vec!["Foo".to_string()];
+    let used_ids = vec![SymbolName::new("Foo")];
 
     let mut traits = HashMap::new();
     traits.insert("MyTrait".to_string(), vec!["Foo".to_string()]);

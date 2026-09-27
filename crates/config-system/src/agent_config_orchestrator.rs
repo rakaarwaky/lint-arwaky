@@ -1,5 +1,6 @@
 use dashmap::DashMap;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_cache_key_vo::CacheKey;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
@@ -43,7 +44,7 @@ pub struct ConfigOrchestratorDeps {
 
 pub struct ConfigOrchestrator {
     deps: ConfigOrchestratorDeps,
-    config_cache: DashMap<String, Arc<ArchitectureConfig>>,
+    config_cache: DashMap<CacheKey, Arc<ArchitectureConfig>>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -348,7 +349,8 @@ impl ConfigOrchestrator {
         source: &ConfigSource,
         language: ConfigLanguage,
     ) -> ArchitectureConfig {
-        let (parsed, _) = self.parse_cached(&source.path, &source.raw_content);
+        let (parsed, _) =
+            self.parse_cached(&CacheKey::new(source.path.value()), &source.raw_content);
         let (merged, _) = self
             .deps
             .parser
@@ -359,17 +361,21 @@ impl ConfigOrchestrator {
 
 impl IConfigCacheProtocol for ConfigOrchestrator {
     /// FR-007: parse once per key, then serve every later request from the cache.
-    fn parse_cached(&self, cache_key: &str, yaml_str: &str) -> (ArchitectureConfig, Vec<String>) {
+    fn parse_cached(
+        &self,
+        cache_key: &CacheKey,
+        yaml_str: &str,
+    ) -> (ArchitectureConfig, Vec<String>) {
         if let Some(cached) = self.config_cache.get(cache_key) {
             return (cached.value().as_ref().clone(), Vec::new());
         }
         let (parsed, warnings) = self.deps.parser.parse_config_yaml_with_warnings(yaml_str);
         self.config_cache
-            .insert(cache_key.to_string(), Arc::new(parsed.clone()));
+            .insert(cache_key.clone(), Arc::new(parsed.clone()));
         (parsed, warnings)
     }
 
-    fn is_cached(&self, cache_key: &str) -> bool {
+    fn is_cached(&self, cache_key: &CacheKey) -> bool {
         self.config_cache.contains_key(cache_key)
     }
 }

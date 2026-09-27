@@ -62,7 +62,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+        _: &shared::common::taxonomy_tool_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -74,7 +74,7 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &str,
+        _: &shared::common::taxonomy_tool_name_vo::ToolName,
         _: &str,
     ) -> Result<
         shared::common::taxonomy_message_vo::ComplianceStatus,
@@ -368,7 +368,7 @@ fn output_normalizer_implements_protocol() {
     let _dyn: &dyn INormalizeProtocol = &normalizer;
     let root = FilePath::new("/tmp".to_string()).unwrap();
     let (results, warnings) = _dyn.normalize(
-        "clippy",
+        &shared::common::taxonomy_tool_name_vo::ToolName::new("clippy"),
         r#"[{"file":"main.rs","line":3,"column":1,"code":"dead_code","message":"unused","severity":"style"}]"#,
         &root,
     );
@@ -378,7 +378,11 @@ fn output_normalizer_implements_protocol() {
     assert!(warnings.is_empty());
 
     // Malformed JSON yields no results plus a warning, never a panic.
-    let (empty, warns) = _dyn.normalize("clippy", "not json", &root);
+    let (empty, warns) = _dyn.normalize(
+        &shared::common::taxonomy_tool_name_vo::ToolName::new("clippy"),
+        "not json",
+        &root,
+    );
     assert!(empty.values.is_empty());
     assert_eq!(warns.len(), 1);
 }
@@ -388,7 +392,6 @@ fn output_normalizer_implements_protocol() {
 #[test]
 fn external_lint_executor_implements_js_resolution_protocol() {
     use shared::external_lint::IJsToolResolutionProtocol;
-    use shared::filesystem::taxonomy_filesystem_vo::ToolName;
     let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
         Arc::new(MockCmdExecutor),
         Arc::new(MockFilesystem::new()),
@@ -396,7 +399,7 @@ fn external_lint_executor_implements_js_resolution_protocol() {
     );
     let _dyn: &dyn IJsToolResolutionProtocol = &executor;
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let tool = ToolName::new("eslint").unwrap();
+    let tool = shared::common::taxonomy_tool_name_vo::ToolName::new("eslint");
     // The mock filesystem holds no local `node_modules/.bin/eslint`.
     assert!(
         _dyn.resolve_js_cmd(&tool, vec!["file.js".into(), "--fix".into()], &path)

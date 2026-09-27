@@ -50,7 +50,7 @@ fn workspace_capability_detects_language() {
 fn tool_resolution_capability_checks_path() {
     let container = FilesystemContainer::new();
     let tools = container.tool_resolution();
-    let name = shared::filesystem::taxonomy_filesystem_vo::ToolName::new("sh").unwrap();
+    let name = shared::common::taxonomy_tool_name_vo::ToolName::new("sh");
     assert!(tools.is_binary_available(&name));
 }
 

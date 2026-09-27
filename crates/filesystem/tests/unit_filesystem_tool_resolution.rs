@@ -1,8 +1,8 @@
 // Unit tests for CapabilitiesToolResolution — FR-004: Tool Resolution.
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use tempfile::TempDir;
 
 fn make_tool() -> CapabilitiesToolResolution {
@@ -12,14 +12,14 @@ fn make_tool() -> CapabilitiesToolResolution {
 #[test]
 fn is_binary_available_sh() {
     let tool = make_tool();
-    let name = ToolName::new("sh").unwrap();
+    let name = ToolName::new("sh");
     assert!(tool.is_binary_available(&name));
 }
 
 #[test]
 fn is_binary_available_nonexistent() {
     let tool = make_tool();
-    let name = ToolName::new("totally_nonexistent_binary_99999").unwrap();
+    let name = ToolName::new("totally_nonexistent_binary_99999");
     assert!(!tool.is_binary_available(&name));
 }
 
@@ -62,7 +62,7 @@ fn has_cargo_lock_finds_it() {
 fn has_local_bin_false_for_empty_dir() {
     let tmp = TempDir::new().unwrap();
     let tool = make_tool();
-    let name = ToolName::new("eslint").unwrap();
+    let name = ToolName::new("eslint");
     assert!(!tool.has_local_bin(tmp.path(), &name));
 }
 
@@ -82,7 +82,7 @@ fn has_local_bin_true_when_binary_exists() {
         .unwrap();
     }
     let tool = make_tool();
-    let name = ToolName::new("eslint").unwrap();
+    let name = ToolName::new("eslint");
     assert!(tool.has_local_bin(tmp.path(), &name));
 }
 

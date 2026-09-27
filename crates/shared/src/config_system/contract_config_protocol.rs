@@ -7,6 +7,7 @@
 // does not count toward the per-FR protocols.
 
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
+use crate::common::taxonomy_cache_key_vo::CacheKey;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_error::ConfigError;
@@ -92,10 +93,14 @@ pub trait IConfigValidateProtocol: Send + Sync {
 pub trait IConfigCacheProtocol: Send + Sync {
     /// Parse `yaml_str` and memoize it under `cache_key`; a hit returns the
     /// previously cached value without re-parsing.
-    fn parse_cached(&self, cache_key: &str, yaml_str: &str) -> (ArchitectureConfig, Vec<String>);
+    fn parse_cached(
+        &self,
+        cache_key: &CacheKey,
+        yaml_str: &str,
+    ) -> (ArchitectureConfig, Vec<String>);
 
     /// Whether `cache_key` currently holds a parsed config.
-    fn is_cached(&self, cache_key: &str) -> bool;
+    fn is_cached(&self, cache_key: &CacheKey) -> bool;
 }
 
 /// FR-ConfigSystem-008: build the complete ignored-path list from config plus

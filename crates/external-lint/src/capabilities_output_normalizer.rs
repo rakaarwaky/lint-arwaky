@@ -13,6 +13,7 @@ use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::external_lint::contract_external_lint_protocol::INormalizeProtocol;
 
 /// Shared normalizer for the tool-native severity mapping.
@@ -21,13 +22,13 @@ pub struct OutputNormalizer;
 impl INormalizeProtocol for OutputNormalizer {
     fn normalize(
         &self,
-        tool_name: &str,
+        tool_name: &ToolName,
         raw_output: &str,
         root: &FilePath,
     ) -> (LintResultList, Vec<String>) {
         let mut results = Vec::new();
         let mut warnings = Vec::new();
-        let source = AdapterName::raw(tool_name);
+        let source = AdapterName::raw(tool_name.value());
 
         let parsed: serde_json::Value = match serde_json::from_str(raw_output) {
             Ok(v) => v,
@@ -69,7 +70,7 @@ impl INormalizeProtocol for OutputNormalizer {
             let code = if code.contains("::") {
                 code.to_string()
             } else {
-                format!("{}::{}", tool_name, code)
+                format!("{}::{}", tool_name.value(), code)
             };
             let message = entry
                 .get("message")
@@ -87,7 +88,11 @@ impl INormalizeProtocol for OutputNormalizer {
                 code: ErrorCode::raw(code.clone()),
                 message: LintMessage::new(message.to_string()),
                 source: Some(source.clone()),
-                severity: self.map_severity(tool_name, &code, tool_severity),
+                severity: self.map_severity(
+                    tool_name,
+                    &ErrorCode::raw(code.clone()),
+                    &parse_severity_str(tool_severity),
+                ),
                 enclosing_scope: None,
                 related_locations: LocationList::new(),
             });
@@ -96,42 +101,70 @@ impl INormalizeProtocol for OutputNormalizer {
         (LintResultList::new(results), warnings)
     }
 
-    fn map_severity(&self, tool_name: &str, code: &str, tool_severity: &str) -> Severity {
-        match tool_name {
+    fn map_severity(
+        &self,
+        tool_name: &ToolName,
+        code: &ErrorCode,
+        tool_severity: &Severity,
+    ) -> Severity {
+        let code_str = code.code();
+        // Tool-native severity labels ("correctness", "High", "2") collapse to
+        // the enum here, so map them back to the level each tool's FRD prescribes.
+        match tool_name.value() {
             "clippy" => match tool_severity {
-                "correctness" => Severity::CRITICAL,
-                "suspicious" | "perf" => Severity::HIGH,
-                "style" | "complexity" => Severity::MEDIUM,
-                _ => Severity::LOW,
+                Severity::INFO => Severity::LOW,
+                Severity::LOW => Severity::MEDIUM,
+                Severity::MEDIUM => Severity::HIGH,
+                _ => Severity::CRITICAL,
             },
             "rustfmt" | "prettier" => Severity::MEDIUM,
             "cargo-audit" => match tool_severity {
-                "Critical" => Severity::CRITICAL,
-                "High" => Severity::HIGH,
-                "Medium" => Severity::MEDIUM,
-                _ => Severity::LOW,
+                Severity::INFO => Severity::LOW,
+                Severity::LOW => Severity::MEDIUM,
+                Severity::MEDIUM => Severity::HIGH,
+                _ => Severity::CRITICAL,
             },
-            "ruff" => map_ruff_severity(code),
+            "ruff" => map_ruff_severity(code_str),
             "mypy" => match tool_severity {
-                "error" => Severity::HIGH,
-                "warning" => Severity::MEDIUM,
-                "note" => Severity::LOW,
+                Severity::HIGH | Severity::CRITICAL => Severity::HIGH,
+                Severity::LOW => Severity::LOW,
                 // A parse failure blocks all type checking, so escalate.
-                _ if code.contains("syntax") || code.contains("parse") => Severity::CRITICAL,
+                _ if code_str.contains("syntax") || code_str.contains("parse") => {
+                    Severity::CRITICAL
+                }
                 _ => Severity::MEDIUM,
             },
             "bandit" => match tool_severity {
-                "HIGH" => Severity::HIGH,
-                "MEDIUM" => Severity::MEDIUM,
+                Severity::HIGH | Severity::CRITICAL => Severity::HIGH,
+                Severity::MEDIUM => Severity::MEDIUM,
                 _ => Severity::LOW,
             },
             "eslint" => match tool_severity {
-                "2" | "error" => Severity::HIGH,
+                Severity::HIGH | Severity::CRITICAL => Severity::HIGH,
                 _ => Severity::MEDIUM,
             },
             "tsc" => Severity::HIGH,
             _ => Severity::MEDIUM,
         }
+    }
+}
+
+/// Carry a tool-native severity token into the `Severity` enum as an ordered
+/// rank, so the per-tool mapping can compare it without string literals.
+///
+/// `error`/`High`/`2` rank highest, `note`/`Low`/`1` lowest, anything
+/// unrecognized — which is most tool output — lands on `INFO`.
+fn parse_severity_str(raw: &str) -> Severity {
+    match raw {
+        "error" | "Error" | "ERROR" | "2" | "Critical" | "CRITICAL" => Severity::CRITICAL,
+        "High" | "HIGH" | "high" | "warning" | "Warning" | "WARNING" | "correctness" => {
+            Severity::HIGH
+        }
+        "Medium" | "MEDIUM" | "medium" | "style" | "complexity" | "suspicious" | "perf" => {
+            Severity::MEDIUM
+        }
+        "Low" | "LOW" | "low" | "note" | "Note" | "1" | "convention" | "nit" => Severity::LOW,
+        _ => Severity::INFO,
     }
 }
 

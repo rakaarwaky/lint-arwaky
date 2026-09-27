@@ -6,6 +6,7 @@ use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_config_language_vo::ConfigLanguage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
+use shared::common::taxonomy_tool_name_vo::ToolName as CommonToolName;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
@@ -125,18 +126,18 @@ impl IWorkspaceProtocol for MockFilesystem {
 }
 
 impl IToolResolutionProtocol for MockFilesystem {
-    fn is_executable_in_path(&self, _executable: &ToolName) -> bool {
+    fn is_executable_in_path(&self, _executable: &CommonToolName) -> bool {
         false
     }
-    fn is_binary_available(&self, _bin_name: &ToolName) -> bool {
+    fn is_binary_available(&self, _bin_name: &CommonToolName) -> bool {
         false
     }
-    fn has_local_bin(&self, _working_dir: &std::path::Path, _executable: &ToolName) -> bool {
+    fn has_local_bin(&self, _working_dir: &std::path::Path, _executable: &CommonToolName) -> bool {
         false
     }
     fn resolve_js_cmd(
         &self,
-        _executable: &ToolName,
+        _executable: &CommonToolName,
         _args: Vec<String>,
         _working_dir: &FilePath,
     ) -> Option<Vec<String>> {
@@ -266,7 +267,7 @@ impl IFileSystemIOProtocol for MockFilesystem {
     }
     fn run_external_command_in(
         &self,
-        _name: &str,
+        _name: &CommonToolName,
         _args: &[&str],
         _current_dir: &str,
     ) -> (String, String, bool) {

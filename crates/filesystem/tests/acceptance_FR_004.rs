@@ -8,8 +8,8 @@
 
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use tempfile::TempDir;
 
 fn make_tool() -> CapabilitiesToolResolution {
@@ -19,7 +19,7 @@ fn make_tool() -> CapabilitiesToolResolution {
 #[test]
 fn us1_binary_in_path_detected() {
     let tool = make_tool();
-    let sh = ToolName::new("sh").unwrap();
+    let sh = ToolName::new("sh");
     assert!(tool.is_binary_available(&sh));
     assert!(tool.is_executable_in_path(&sh));
 }
@@ -27,7 +27,7 @@ fn us1_binary_in_path_detected() {
 #[test]
 fn us1_nonexistent_binary_not_detected() {
     let tool = make_tool();
-    let name = ToolName::new("definitely_not_a_real_binary_9999").unwrap();
+    let name = ToolName::new("definitely_not_a_real_binary_9999");
     assert!(!tool.is_binary_available(&name));
     assert!(!tool.is_executable_in_path(&name));
 }
@@ -48,7 +48,7 @@ fn us2_local_node_modules_binary() {
         .unwrap();
     }
     let tool = make_tool();
-    let name = ToolName::new("eslint").unwrap();
+    let name = ToolName::new("eslint");
     assert!(tool.has_local_bin(tmp.path(), &name));
 }
 
@@ -56,7 +56,7 @@ fn us2_local_node_modules_binary() {
 fn us2_missing_local_binary() {
     let tmp = TempDir::new().unwrap();
     let tool = make_tool();
-    let name = ToolName::new("eslint").unwrap();
+    let name = ToolName::new("eslint");
     assert!(!tool.has_local_bin(tmp.path(), &name));
 }
 

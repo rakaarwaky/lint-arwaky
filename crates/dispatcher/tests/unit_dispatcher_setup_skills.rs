@@ -2,6 +2,7 @@
 use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::project_setup::{
     EMBEDDED_SKILLS, ISetupAggregate, ProjectLanguageVO, ProjectLanguagesVO, SetupRequest,
@@ -321,7 +322,7 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     }
     fn run_external_command_in(
         &self,
-        _name: &str,
+        _name: &ToolName,
         _args: &[&str],
         _current_dir: &str,
     ) -> (String, String, bool) {

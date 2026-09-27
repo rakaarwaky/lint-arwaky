@@ -4,6 +4,7 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::maintenance::contract_maintenance_protocol::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
@@ -92,9 +93,11 @@ impl ISecurityScanProtocol for MaintenanceChecker {
         let root = &project_path.value;
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
         if cargo_lock.exists() {
-            let (s, _, _) = self
-                .io
-                .run_external_command_in("cargo", &["audit", "--json"], root);
+            let (s, _, _) = self.io.run_external_command_in(
+                &ToolName::new("cargo"),
+                &["audit", "--json"],
+                root,
+            );
             let mut findings = Vec::new();
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&s) {
                 if let Some(list) = json
@@ -269,7 +272,7 @@ impl ICacheCleanupProtocol for MaintenanceChecker {
 impl IToolUpdateProtocol for MaintenanceChecker {
     fn update(&self) {
         let _ = self.io.run_external_command_in(
-            "pip",
+            &ToolName::new("pip"),
             &["install", "--upgrade", "ruff", "mypy", "bandit"],
             ".",
         );
@@ -377,7 +380,9 @@ impl MaintenanceChecker {
     }
 
     fn check_tool(&self, name: &str, args: &[&str], required: bool) -> ToolStatus {
-        let (stdout, _, success) = self.io.run_external_command_in(name, args, ".");
+        let (stdout, _, success) = self
+            .io
+            .run_external_command_in(&ToolName::new(name), args, ".");
         let (status, version) = if success {
             let ver = stdout.lines().next().unwrap_or("").trim().to_string();
             ("OK".to_string(), ver)
@@ -400,7 +405,7 @@ impl MaintenanceChecker {
             GITHUB_REPO
         );
         let (stdout, stderr, success) = self.io.run_external_command_in(
-            "curl",
+            &ToolName::new("curl"),
             &["-fsSL", "-H", "Accept: application/vnd.github+json", &url],
             ".",
         );
@@ -517,7 +522,7 @@ impl MaintenanceChecker {
 
         // 1. Download the release asset.
         let (_, stderr, success) = self.io.run_external_command_in(
-            "curl",
+            &ToolName::new("curl"),
             &["-fsSL", "-o", &tmp_str, &asset_url],
             &dir_str,
         );
@@ -533,7 +538,7 @@ impl MaintenanceChecker {
 
         // 2. Download the published checksum.
         let (_, _, ok) = self.io.run_external_command_in(
-            "curl",
+            &ToolName::new("curl"),
             &["-fsSL", "-o", &checksum_tmp_str, &checksum_url],
             &dir_str,
         );
@@ -545,9 +550,11 @@ impl MaintenanceChecker {
         }
 
         // 3. Verify the downloaded asset against the published checksum.
-        let (stdout, _, verified) =
-            self.io
-                .run_external_command_in("sha256sum", &["--check", &checksum_tmp_str], &dir_str);
+        let (stdout, _, verified) = self.io.run_external_command_in(
+            &ToolName::new("sha256sum"),
+            &["--check", &checksum_tmp_str],
+            &dir_str,
+        );
         let _ = self.io.remove_file(&checksum_tmp);
         if !verified {
             let _ = self.io.remove_file(&tmp);
@@ -555,17 +562,21 @@ impl MaintenanceChecker {
         }
 
         // 4. Move the verified binary into place and mark it executable.
-        let (_, _, moved) =
-            self.io
-                .run_external_command_in("mv", &[&tmp_str, &target_str], &dir_str);
+        let (_, _, moved) = self.io.run_external_command_in(
+            &ToolName::new("mv"),
+            &[&tmp_str, &target_str],
+            &dir_str,
+        );
         if !moved {
             let _ = self.io.remove_file(&tmp);
             return Err("failed to move downloaded binary into place".to_string());
         }
 
-        let (_, _, chmodded) =
-            self.io
-                .run_external_command_in("chmod", &["+x", &target_str], &dir_str);
+        let (_, _, chmodded) = self.io.run_external_command_in(
+            &ToolName::new("chmod"),
+            &["+x", &target_str],
+            &dir_str,
+        );
         if !chmodded {
             return Err("failed to make downloaded binary executable".to_string());
         }

@@ -42,18 +42,18 @@ Seven rules. Each one prevents a specific failure mode.
  the rich protocol interfaces. A dump-all `execute(op, …)` aggregate is the violation  
  here.
 6. **Signatures use shared VOs for domain values.** Domain values must not be numeric
-   primitives — `number`, `number[]`, `Record<number,T>` — wrap them in a taxonomy-defined
-   VO before they appear in a signature. `string` and `boolean` are **permitted anywhere**
-   in a contract signature: paths, filenames, tool names, language identifiers, log
-   messages, and toggle/predicate flags (`enabled: boolean`) all belong to the signature's
-   mechanics rather than to the domain value it carries, so no VO wrapper is required
-   for them. Enums are not banned; the ban targets numeric primitive leakage. A
-   multi-variant response type on the aggregate is correct and expected — each variant
-   must hold VO-wrapped values where a domain value is carried, and primitive payloads
-   are acceptable for identifiers, counts, and flags. Protocol methods keep one concrete
-   VO return type; the aggregate response type is the sanctioned way to carry
-   heterogeneous results across one `execute()` entry point. All methods fully
-   type-annotated.
+   primitives — `number`, `number[]`, `Record<number,T>` — or bare string types — `string` —
+   wrap them in a taxonomy-defined VO before they appear in a signature.
+   `boolean` is permitted for semantic toggles or predicates (e.g. `enabled: boolean`), never for domain quantities. A domain value travelling as a bare `string` in a contract
+   signature is a leak; the fix is always the same: introduce a typed wrapper
+   (`LanguageVO`, `ToolName`, `LayerNameVO`, etc.) and accept `LanguageVO` instead of
+   `string`. A `language: LanguageVO` parameter is the right pattern; a raw `language: string` is not. Enums are not banned; the ban targets numeric primitive
+   leakage. A multi-variant response type on the aggregate is correct and expected —
+   each variant must hold VO-wrapped values where a domain value is carried, and
+   primitive payloads are acceptable for identifiers, counts, and flags. Protocol
+   methods keep one concrete VO return type; the aggregate response type is the
+   sanctioned way to carry heterogeneous results across one `execute()` entry point.
+   All methods fully type-annotated.
 7. **Register in shared** `index.ts` so the pair is importable.
 
 ---
@@ -159,7 +159,7 @@ Every contract file is required to carry the rows that apply. Each exists for on
 | Rich named methods, one return type each | Protocol interfaces: each method has one VO return; no dispatch bag.       |
 | Signature-only interface                 | Outer layers depend on promises, not behaviour.                                         |
 | Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.                 |
-| Shared VOs in signatures                 | Numeric domain values stay behind VOs; `string`/`boolean` are permitted.          |
+| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; `boolean` permitted.|                 | Numeric domain values stay behind VOs; `string`/`boolean` are permitted.          |
 | No impl-layer imports                    | Keeps the dependency arrow (capabilities → contract ← agent).                           |
 | Register in shared `index.ts`            | Importable without reaching into private modules.                                       |
 
@@ -186,13 +186,20 @@ lint-arwaky-cli scan <contract-dir>
 # Fallback compile gate: npx tsc --noEmit.
 ```
 
-**Boolean and string types in contract signatures.** `string` and `boolean` are allowed
-anywhere in a `contract_*_protocol` or `contract_*_aggregate` signature. They are not
-treated as domain values needing a VO wrapper: a path, filename, tool name, language
-identifier, log message, or enable/disable flag describes *what* a capability operates on
-mechanically, not the domain value it carries. The same types in a `taxonomy_*_entity`
-field declaration are a different matter — an entity's own state is domain data, so
-`boolean` there is treated as a primitive (see
+**Why `string` is banned in contracts.** A bare `string` in a contract signature is
+not a placeholder — it is a type hole. The type checker cannot tell whether `name:
+string` is a tool name, a layer name, a file path, a YAML blob, or a symbol identifier;
+none of those are interchangeable, but the signature gives no clue. A typed wrapper
+makes the intent explicit at the call site, so a caller cannot accidentally pass a path
+where a tool name is expected without the type checker complaining. This is the same
+reasoning that drove the rename: signatures must communicate domain structure, not just
+runtime shape.
+
+**Boolean in signatures vs. taxonomy.** `bool` is treated as a primitive in
+`taxonomy_*_entity` field declarations (no carve-out; see
 [../../aes-taxonomy/references/HOW-TO-MAKE-RUST-TAXONOMY.md](../../aes-taxonomy/references/HOW-TO-MAKE-RUST-TAXONOMY.md)).
-The distinguishing question is ownership: does the value belong to the entity's state
-(taxonomy, wrap it) or to the operation being invoked (contract signature, keep it)?
+In contract signatures (`contract_*_protocol` / `contract_*_aggregate`), `bool`
+is permitted only for semantic toggles or predicates (e.g. `enabled: bool`)
+because the signature describes *when* a capability runs, not the domain value
+it operates on. A taxonomy entity field named `enabled` would still need an
+enum-like VO, not a raw `bool`.

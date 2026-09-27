@@ -6,6 +6,7 @@
 // and never carries unimplemented stubs.
 
 use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_tool_name_vo::ToolName;
 use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
 pub use crate::maintenance::taxonomy_maintenance_vo::ToolOutput;
 use crate::maintenance::taxonomy_maintenance_vo::{
@@ -60,8 +61,8 @@ pub trait ISelfUpdateProtocol: Send + Sync {
 
 /// IToolExecutorProtocol — internal tool-execution infra seam (no FR).
 pub trait IToolExecutorProtocol: Send + Sync {
-    fn run_tool(&self, name: &str, args: &[&str]) -> ToolOutput;
-    fn run_tool_in_dir(&self, name: &str, args: &[&str], dir: &FilePath) -> ToolOutput;
-    fn tool_exists(&self, name: &str) -> bool;
+    fn run_tool(&self, name: &ToolName, args: &[&str]) -> ToolOutput;
+    fn run_tool_in_dir(&self, name: &ToolName, args: &[&str], dir: &FilePath) -> ToolOutput;
+    fn tool_exists(&self, name: &ToolName) -> bool;
     fn get_binary_path(&self) -> FilePath;
 }

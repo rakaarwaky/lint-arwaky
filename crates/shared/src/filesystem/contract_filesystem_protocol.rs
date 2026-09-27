@@ -10,7 +10,7 @@ use crate::common::taxonomy_config_language_vo::ConfigLanguage;
 use crate::common::taxonomy_language_vo::Language;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::filesystem::taxonomy_filesystem_vo::ToolName;
+use crate::common::taxonomy_tool_name_vo::ToolName;
 use crate::filesystem::taxonomy_filesystem_vo::{
     ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
 };
@@ -125,7 +125,7 @@ pub trait IFileSystemIOProtocol: Send + Sync {
     /// Execute an external command with working directory.
     fn run_external_command_in(
         &self,
-        name: &str,
+        name: &ToolName,
         args: &[&str],
         current_dir: &str,
     ) -> (String, String, bool);

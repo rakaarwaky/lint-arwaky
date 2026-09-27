@@ -11,12 +11,12 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::external_lint::contract_external_lint_protocol::ICargoDirProtocol;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -96,16 +96,13 @@ impl IJsToolResolutionProtocol for ExternalLintExecutor {
     fn js_apply_fix(
         &self,
         path: &FilePath,
-        tool: &str,
+        tool: &ToolName,
         fix_arg: &str,
     ) -> Result<ComplianceStatus, LinterOperationError> {
         let wd = self.tool_resolution.resolve_js_working_dir(path);
         let abs_path_str = self.io.canonicalize_path_str(path);
-        let tool_name = ToolName::new(tool).unwrap_or_else(|_| ToolName {
-            value: tool.to_string(),
-        });
         let cmd = match self.tool_resolution.resolve_js_cmd(
-            &tool_name,
+            tool,
             vec![abs_path_str.value, fix_arg.to_string()],
             &wd,
         ) {
@@ -114,7 +111,7 @@ impl IJsToolResolutionProtocol for ExternalLintExecutor {
                 return Ok(ComplianceStatus::new(false));
             }
         };
-        let response = self.exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool))?;
+        let response = self.exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool.value()))?;
         Ok(ComplianceStatus::new(response.returncode == 0))
     }
 }
