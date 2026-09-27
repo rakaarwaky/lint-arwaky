@@ -4,10 +4,14 @@ Each subdirectory is one skill, holding a `SKILL.md` at its root.
 
 ## How it reaches a project
 
-1. `scripts/install.sh` (via `--mode local`, `global`, or `remote`) copies this
-   folder into the XDG config directory at `~/.config/lint-arwaky/.agents/skills/`.
-2. `lint-arwaky init` copies each skill from there into the target project's
-   `.agents/skills/`.
+Skills are **embedded into the binary at compile time** via `include_str!` in
+[`taxonomy_skills_constant.rs`](../../shared/src/project_setup/taxonomy_skills_constant.rs).
+`lint-arwaky init` writes them directly from those constants into the target project's
+`.agents/skills/`, filtered by the languages detected in that project.
+
+1. Edit the markdown source here; changes land in the binary at the next build.
+2. Run `python3 tools/regenerate_skills.py` after adding, removing, or renaming a skill file.
+3. `lint-arwaky init` writes the filtered set to `.agents/skills/` on the target.
 
 Init overwrites a provisioned skill file in place, so a skill that changed
 upstream lands in the project on the next run. Skills that exist only in the
@@ -17,12 +21,14 @@ project — anything not in this folder — are left alone.
 
 skills/
 ├── <skill-name>/SKILL.md   # one directory per skill
+└── <skill-name>/references/<HOW-TO-*.md>  # optional language-specific playbooks
 
 ## Naming
 
-- Language skills: `<action>-<language>` (e.g. `create-agent-rust`,
-  `fix-bypass-python`, `lint-arwaky-typescript`)
-- Role skills: `role-<role-name>` (e.g. `role-architect`, `role-tech-lead`)
+All provisioned skills follow the `aes-<layer>` convention:
+`aes-taxonomy`, `aes-contract`, `aes-capabilities`, `aes-agent`,
+`aes-surface`, `aes-utility`, `aes-root`, `aes-docs`, `aes-migration`,
+`aes-lint-arwaky`, `aes-testing-suite`.
 
 ## Notes
 

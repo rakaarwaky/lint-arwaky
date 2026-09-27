@@ -72,7 +72,8 @@ lint-arwaky-cli scan workspaces-bad/packages --format json
 lint-arwaky-cli scan workspaces-bad/packages --member animator
 lint-arwaky-cli scan workspaces-bad/packages --filter AES201
 lint-arwaky-cli fix packages/ --dry-run --filter AES101
-lint-arwaky-cli ci packages/ --threshold 80 --format junit
+lint-arwaky-cli ci packages/ --threshold 80
+lint-arwaky-cli scan packages/ --format junit -o reports/
 lint-arwaky-cli orphan packages/ --format json
 lint-arwaky-cli role packages/ --filter AES403
 lint-arwaky-cli security packages/
@@ -93,7 +94,7 @@ lint-arwaky-cli scan packages/ --format sarif \
   contract interface injected through DI (`aes-contract`).
 - **AES303** → add the missing `class` / `interface` / `enum`.
 - **AES304** → remove `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `eslint-disable`
-  (`fix-bypass`).
+  (`lint-arwaky-cli fix <path> --filter AES304`).
 - **AES403** → every capability class MUST implement its protocol interface.
 - **AES405** → every agent class MUST implement its aggregate interface; use concrete types
   instead of `any`.

@@ -14,13 +14,23 @@
 
 ## Rules
 
+Nine rules. Each one governs one migration phase.
 
+1. **Phase 0 first — audit before touching anything.** Run `lint-arwaky-cli scan .`; record baseline violations to choose strategy.
+2. **Taxonomy before contract before capabilities.** VOs must exist before protocols can reference them.
+3. **Protocol = one file per feature, one trait per capability seam, each trait rich.** One trait declares every method its capability owns, each with a concrete return type. Never a mega `execute(op, …)` that dispatches multiple features behind one name.
+4. **Aggregate = exactly one method.** The single `execute(request)` entry point; the response is a taxonomy-defined enum of VOs. New consumer verbs are new variants on the request enum, not new aggregate methods.
+5. **Utility is stateless free functions only.** No class, no interface, no upward imports (AES404).
+6. **Capabilities implement protocol; agent implements aggregate.** No cross-layer imports (AES201).
+7. **Surface calls aggregate; never imports agent or capabilities.** Dependency arrow points down (AES201 purpose).
+8. **Root wires everything; never contains business logic.** Container constructs; entry bootstraps.
+9. **Verify at every phase.** `lint-arwaky-cli scan <layer-dir>` → 0 before moving to next phase.
 
 ## Workflow
 
 1. **Phase 0 — Audit** — run `lint-arwaky-cli scan .`; record baseline.
 2. **Phase 1 — Taxonomy** — extract VOs, errors, constants.
-3. **Phase 2 — Contract** — create protocol (1 method) + aggregate (many exports).
+3. **Phase 2 — Contract** — create protocol (one file per feature, one trait per capability seam) + aggregate (exactly one `execute()` method).
 4. **Phase 3 — Utility** — extract stateless helpers to shared.
 5. **Phase 4 — Capabilities** — implement protocols with business logic.
 6. **Phase 5 — Agent** — implement aggregate, delegate to capabilities.
@@ -28,21 +38,7 @@
 8. **Phase 7 — Root** — wire containers, bootstrap entry.
 9. **Phase 8 — Verify** — full scan → 0 violations; compile clean.
 
-Nine rules. Each one governs one migration phase.
-
-1. **Phase 0 first — audit before touching anything.** Run `lint-arwaky-cli scan .`; record baseline violations to choose strategy.
-2. **Taxonomy before contract before capabilities.** VOs must exist before protocols can reference them.
-3. **Protocol = one method per feature.** Never a mega `execute(op, …)` that dispatches multiple features.
-4. **Aggregate = many methods, one per export.** Rich consumer surface; surface/root call specific verbs.
-5. **Utility is stateless free functions only.** No class, no interface, no upward imports (AES404).
-6. **Capabilities implement protocol; agent implements aggregate.** No cross-layer imports (AES201).
-7. **Surface calls aggregate; never imports agent or capabilities.** Dependency arrow points down (AES201 purpose).
-8. **Root wires everything; never contains business logic.** Container constructs; entry bootstraps.
-9. **Verify at every phase.** `lint-arwaky-cli scan <layer-dir>` → 0 before moving to next phase.
-
 ---
-
-
 
 ## Template
 
@@ -68,16 +64,26 @@ export interface <EntityName> {
 
 ```typescript
 // packages/shared/src/<domain>/contract_<domain>_protocol.ts
+import { RequestVO, ResponseVO } from "./taxonomy_<domain>_vo";
 import { <VOName>, <ResultVO> } from "./taxonomy_<domain>_vo";
 
-export interface I<Domain>Protocol {
-  <feature>(arg: <VOName>): Promise<<ResultVO> | null>;
+// One file per feature, one interface per capability seam, each interface rich.
+export interface I<Seam1>Protocol {
+  /** <What this seam owns.> */
+  <operation_1>(arg: <VOName>): Promise<<ResultVO> | null>;
+  /** <What this seam owns.> */
+  <operation_2>(arg: <VOName>): Promise<<ResultVO> | null>;
+}
+
+export interface I<Seam2>Protocol {
+  /** <What this seam owns.> */
+  <operation_1>(arg: <VOName>): Promise<<ResultVO> | null>;
 }
 
 // packages/shared/src/<domain>/contract_<domain>_aggregate.ts
+// Exactly one method — the single entry point consumers call.
 export interface I<Domain>Aggregate {
-  list_<thing>(): Promise<<VOName>[]>;
-  create_<thing>(arg: <VOName>): Promise<ExitCode>;
+  execute(request: RequestVO): Promise<ResponseVO>;
 }
 ```
 
@@ -100,11 +106,17 @@ export function <helper>(arg: <VOName>): <VOName> {
 import { I<Domain>Protocol } from "@shared/<domain>/contract_<domain>_protocol";
 import { <VOName>, <ResultVO> } from "@shared/<domain>/taxonomy_<domain>_vo";
 
-export class <Capability> implements I<Domain>Protocol {
-  constructor(private readonly dep: SomeDep) {}
+export class <Capability> implements I<Seam1>Protocol {
+  // Dependencies are typed against a contract protocol, never a raw type.
+  constructor(private readonly dep: I<SeamDependency>Protocol) {}
 
-  async <feature>(arg: <VOName>): Promise<<ResultVO> | null> {
+  // Every declared method is implemented — a partial implementation is a compile error.
+  async <operation_1>(arg: <VOName>): Promise<<ResultVO> | null> {
     // Business logic here
+    ...
+  }
+
+  async <operation_2>(arg: <VOName>): Promise<<ResultVO> | null> {
     ...
   }
 }
@@ -118,10 +130,15 @@ import { I<Domain>Aggregate } from "@shared/<domain>/contract_<domain>_aggregate
 import { I<Domain>Protocol } from "@shared/<domain>/contract_<domain>_protocol";
 
 export class <Domain>Orchestrator implements I<Domain>Aggregate {
-  constructor(private readonly proto: I<Domain>Protocol) {}
+  // The agent holds protocol traits (not the aggregate), dispatched via execute().
+  constructor(private readonly proto: I<Seam1>Protocol) {}
 
-  async list_<thing>(): Promise<<VOName>[]> {
-    return this.proto.<feature>(...).then(r => r ? [r] : []);
+  // One method: match the request, dispatch to the owning protocol interface.
+  async execute(request: RequestVO): Promise<ResponseVO> {
+    if (request instanceof RequestVO.<Variant1>) {
+      return new ResponseVO.<Result1>(await this.proto.<operation_1>(..));
+    }
+    return new ResponseVO.<Result2>(await this.proto.<operation_2>(..));
   }
 }
 ```
@@ -150,8 +167,8 @@ import { <Domain>Orchestrator } from "./agent_<domain>_orchestrator";
 export class <Domain>Container {
   readonly aggregate: I<Domain>Aggregate;
 
-  constructor(dep: SomeDep) {
-    const proto: I<Domain>Protocol = new <Capability>(dep);
+  constructor(dep: I<SeamDependency>Protocol) {
+    const proto: I<Seam1>Protocol = new <Capability>(dep);
     this.aggregate = new <Domain>Orchestrator(proto);
   }
 }

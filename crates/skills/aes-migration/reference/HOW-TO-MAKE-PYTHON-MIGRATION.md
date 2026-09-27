@@ -14,13 +14,23 @@
 
 ## Rules
 
+Nine rules. Each one governs one migration phase.
 
+1. **Phase 0 first — audit before touching anything.** Run `lint-arwaky-cli scan .`; record baseline violations to choose strategy.
+2. **Taxonomy before contract before capabilities.** VOs must exist before protocols can reference them.
+3. **Protocol = one file per feature, one trait per capability seam, each trait rich.** One trait declares every method its capability owns, each with a concrete return type. Never a mega `execute(op, …)` that dispatches multiple features behind one name.
+4. **Aggregate = exactly one method.** The single `execute(request)` entry point; the response is a taxonomy-defined enum of VOs. New consumer verbs are new variants on the request enum, not new aggregate methods.
+5. **Utility is stateless free functions only.** No class, no state, no upward imports (AES404).
+6. **Capabilities implement protocol; agent implements aggregate.** No cross-layer imports (AES201).
+7. **Surface calls aggregate; never imports agent or capabilities.** Dependency arrow points down (AES201 purpose).
+8. **Root wires everything; never contains business logic.** Container constructs; entry bootstraps.
+9. **Verify at every phase.** `lint-arwaky-cli scan <layer-dir>` → 0 before moving to next phase.
 
 ## Workflow
 
 1. **Phase 0 — Audit** — run `lint-arwaky-cli scan .`; record baseline.
 2. **Phase 1 — Taxonomy** — extract VOs, errors, constants.
-3. **Phase 2 — Contract** — create protocol (1 method) + aggregate (many exports).
+3. **Phase 2 — Contract** — create protocol (one file per feature, one trait per capability seam) + aggregate (exactly one `execute()` method).
 4. **Phase 3 — Utility** — extract stateless helpers to shared.
 5. **Phase 4 — Capabilities** — implement protocols with business logic.
 6. **Phase 5 — Agent** — implement aggregate, delegate to capabilities.
@@ -28,21 +38,7 @@
 8. **Phase 7 — Root** — wire containers, bootstrap entry.
 9. **Phase 8 — Verify** — full scan → 0 violations; compile clean.
 
-Nine rules. Each one governs one migration phase.
-
-1. **Phase 0 first — audit before touching anything.** Run `lint-arwaky-cli scan .`; record baseline violations to choose strategy.
-2. **Taxonomy before contract before capabilities.** VOs must exist before protocols can reference them.
-3. **Protocol = one method per feature.** Never a mega `execute(op, …)` that dispatches multiple features.
-4. **Aggregate = many methods, one per export.** Rich consumer surface; surface/root call specific verbs.
-5. **Utility is stateless free functions only.** No class, no state, no upward imports (AES404).
-6. **Capabilities implement protocol; agent implements aggregate.** No cross-layer imports (AES201).
-7. **Surface calls aggregate; never imports agent or capabilities.** Dependency arrow points down (AES201 purpose).
-8. **Root wires everything; never contains business logic.** Container constructs; entry bootstraps.
-9. **Verify at every phase.** `lint-arwaky-cli scan <layer-dir>` → 0 before moving to next phase.
-
 ---
-
-
 
 ## Template
 
@@ -68,25 +64,35 @@ class <VOName>:
 ```python
 # modules/shared/src/contract_<domain>_protocol.py
 from abc import ABC, abstractmethod
+from modules.shared.src.taxonomy_<domain>_request import RequestVO
+from modules.shared.src.taxonomy_<domain>_response import ResponseVO
 from modules.shared.src.taxonomy_<domain>_vo import <VO>
 
-class I<Domain>Protocol(ABC):
-    """One method for one feature."""
+# One file per feature, one ABC per capability seam, each ABC rich.
+class I<Seam1>Protocol(ABC):
+    """<What this seam owns.>"""
 
     @abstractmethod
-    def <feature>(self, arg: <VO>) -> <ResultVO>:
+    def <operation_1>(self, arg: <VO>) -> <ResultVO>:
+        ...
+
+    @abstractmethod
+    def <operation_2>(self, arg: <VO>) -> <ResultVO>:
+        ...
+
+class I<Seam2>Protocol(ABC):
+    """<What this seam owns.>"""
+
+    @abstractmethod
+    def <operation_1>(self, arg: <VO>) -> <ResultVO>:
         ...
 
 # modules/shared/src/contract_<domain>_aggregate.py
 class I<Domain>Aggregate(ABC):
-    """Many methods, one per export."""
+    """The single entry point — exactly one method."""
 
     @abstractmethod
-    def list_<thing>(self) -> list[<VO>]:
-        ...
-
-    @abstractmethod
-    def create_<thing>(self, arg: <VO>) -> ExitCode:
+    def execute(self, request: RequestVO) -> ResponseVO:
         ...
 ```
 
@@ -108,19 +114,22 @@ def <helper>(arg: <VO>) -> <VO>:
 from modules.shared.src.contract_<domain>_protocol import I<Domain>Protocol
 from modules.shared.src.taxonomy_<domain>_vo import <VO>
 
-class <Capability>(I<Domain>Protocol):
-    """Block 1: Struct with DI deps."""
-    def __init__(self, dep: SomeDep) -> None:
+class <Capability>(I<Seam1>Protocol):
+    """Block 1: Struct with DI deps typed against a contract protocol."""
+    def __init__(self, dep: I<SeamDependency>Protocol) -> None:
         self._dep = dep
 
-    """Block 2: Protocol implementation."""
-    def <feature>(self, arg: <VO>) -> <ResultVO>:
+    """Block 2: Protocol implementation — every declared method, no stubs."""
+    def <operation_1>(self, arg: <VO>) -> <ResultVO>:
         # Business logic here
+        ...
+
+    def <operation_2>(self, arg: <VO>) -> <ResultVO>:
         ...
 
     """Block 3: Factory."""
     @classmethod
-    def create(cls, dep: SomeDep) -> I<Domain>Protocol:
+    def create(cls, dep: I<SeamDependency>Protocol) -> I<Seam1>Protocol:
         return cls(dep)
 ```
 
@@ -136,9 +145,12 @@ class <Domain>Orchestrator(I<Domain>Aggregate):
     def __init__(self, protocol: I<Domain>Protocol) -> None:
         self._protocol = protocol
 
-    """Block 2: Aggregate implementation — orchestrate, don't compute."""
-    def list_<thing>(self) -> list[<VO>]:
-        return self._protocol.<feature>(...)  # delegate only
+    """Block 2: Aggregate implementation — one method, dispatch to protocols."""
+    def execute(self, request: RequestVO) -> ResponseVO:
+        # Match the request, delegate to the owning protocol trait. Never compute here.
+        if isinstance(request, RequestVO.<Variant1>):
+            return ResponseVO.<Result1>(self._protocol.<operation_1>(..))
+        return ResponseVO.<Result2>(self._protocol.<operation_2>(..))
 ```
 
 ### Phase 6 — Surface
@@ -161,7 +173,7 @@ from modules.<domain>.src.agent_<domain>_orchestrator import <Domain>Orchestrato
 from modules.shared.src.contract_<domain>_aggregate import I<Domain>Aggregate
 
 class <Domain>Container:
-    def __init__(self, dep: SomeDep) -> None:
+    def __init__(self, dep: I<SeamDependency>Protocol) -> None:
         proto = <Capability>.create(dep)
         self._orchestrator = <Domain>Orchestrator(proto)
 

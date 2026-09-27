@@ -56,8 +56,10 @@ Allowed: iteration to call deps, routing results, propagating errors.
 
 **Error rules:**
 - Rule 1: Never silently discard — no `checker.check() ?? ""`.
-- Rule 2: Analysis orchestration → `<ResultVO>[]`, catch per-item into VO.
-- Rule 3: Execution orchestration → `Result<ExecutionReport, AgentExecutionError>`.
+- Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
+  holds VO-wrapped values, not raw primitives.
+- Rule 3: Execution orchestration → return `Result<ExecutionReport, AgentExecutionError>`
+  wrapped in a VO variant.
 - Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
 
 **VO rules:** `string`/`number` forbidden for domain fields/contracts. `boolean` for toggles only.
@@ -79,15 +81,22 @@ Allowed: iteration to call deps, routing results, propagating errors.
 ```typescript
 import { <VO> } from '../shared/<domain>/taxonomy_<name>_vo';
 import { I<Name>Aggregate } from '../shared/<domain>/contract_<name>_aggregate';
+import { I<Seam>Protocol } from '../shared/<domain>/contract_<name>_protocol';
 
 // ─── Block 1: Class Definition & Constructor ──────────────
 export class Agent<Name> {
-    constructor(private readonly aggregate: I<Name>Aggregate) {}
+    // Injected deps are protocol interfaces (what the agent dispatches to), not the aggregate.
+    constructor(private readonly dep: I<Seam>Protocol) {}
 
     // ─── Block 2: Aggregate Method Implementation ─────────
-    execute(request: <RequestVO>): <ResultVO>[] {
-        // orchestration only — delegate to aggregate
-        return this.aggregate.process(request);
+    // Exactly one method — the single entry point. Dispatch to the owning protocol.
+    async execute(request: <RequestVO>): Promise<<ResponseVO>> {
+        // Orchestration only: match the request variant, delegate to the protocol.
+        // No computation, no I/O, no silently discarded errors.
+        if (request instanceof <RequestVO>.<Variant1>) {
+            return new <ResponseVO>.<Result1>(await this.dep.<operation_1>(..));
+        }
+        return new <ResponseVO>.<Result2>(await this.dep.<operation_2>(..));
     }
 
     // ─── Block 3: Utility Methods, Factories & Helpers ────

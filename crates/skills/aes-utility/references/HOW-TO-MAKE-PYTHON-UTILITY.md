@@ -17,7 +17,9 @@
 ### Import rules
 
 **Allowed imports:** Taxonomy only.
-**Forbidden:** Capabilities, Agent, Surface, Contract.
+**Forbidden:** Capabilities, Agent, Surface, Contract, and other `utility_*` files.
+This last one is a cross-file rule in all three languages, not Rust-specific: a utility
+importing another utility couples two helpers that should be independently extractable.
 
 1. Only module-level functions — no `class`, no `self`.
 2. Pure + deterministic — no `random`, no `datetime.now()`, no global mutable state.
@@ -59,8 +61,9 @@ def <function_name>(<param_name>: str) -> str:
     # pure function logic here
     pass
 
-def <function_name>(<param_name>: str) -> str:
-    """<Description of what this function does>.
+
+def <second_function_name>(<param_name>: str) -> str:
+    """<Description of what this second function does>.
 
     Args:
         <param_name>: <description>

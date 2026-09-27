@@ -152,9 +152,7 @@ Every contract file is required to carry the rows that apply. Each exists for on
 | Suffix in file + type names              | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                        |
 | One file per feature                     | All seams of a feature live together; consumers import from one module.                 |
 | One interface per capability seam        | An interface lists only what its capability owns, so implementation is always complete. |
-| Rich named methods, one return type each | Protocol interfaces: each method has one VO
-   return; no dispatch bag. Aggregate: one `execute()` method whose response is a
-   taxonomy-defined enum of VOs.          |
+| Rich named methods, one return type each | Protocol interfaces: each method has one VO return; no dispatch bag.       |
 | Signature-only interface                 | Outer layers depend on promises, not behaviour.                                         |
 | Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.                 |
 | Shared VOs in signatures                 | Domain values stay opaque across layers; no primitive leakage.                          |
@@ -184,3 +182,11 @@ lint-arwaky-cli scan <contract-dir>
 # Fallback compile gate: npx tsc --noEmit.
 ```
 
+**Boolean in signatures vs. taxonomy.** `bool` is treated as a primitive in
+`taxonomy_*_entity` field declarations (no carve-out; see
+[references/HOW-TO-MAKE-RUST-TAXONOMY.md](references/HOW-TO-MAKE-RUST-TAXONOMY.md)).
+In contract signatures (`contract_*_protocol` / `contract_*_aggregate`), `bool`
+is permitted only for semantic toggles or predicates (e.g. `enabled: bool`)
+because the signature describes *when* a capability runs, not the domain value
+it operates on. A taxonomy entity field named `enabled` would still need an
+enum-like VO, not a raw `bool`.

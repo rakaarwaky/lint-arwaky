@@ -156,8 +156,8 @@ Every contract file is required to carry the rows that apply. Each exists for on
 | Suffix in file + trait names             | AES101/AES102 resolve `_protocol` vs `_aggregate` from the name.                   |
 | One file per feature                     | All seams of a feature live together; consumers import from one module.            |
 | One trait per capability seam            | A trait lists only what its capability owns, so implementation is always complete. |
-| Rich named methods, one return type each | Protocol traits: each method has one VO return; no dispatch bag. Aggregate: one
-   `execute()` method whose response is a taxonomy-defined enum of VOs.     |
+| Rich named methods, one return type each | Protocol traits: each method has one VO return; no dispatch bag.        |
+| Aggregate: exactly one method            | One `execute()` whose response is a taxonomy-defined enum of VOs.        |
 | Method signatures only (`;`)             | Outer layers depend on promises, not behaviour.                                    |
 | `Send + Sync` + object-safe              | Trait objects cross thread/task boundaries without surprises.                      |
 | Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.            |
@@ -183,8 +183,17 @@ lint-arwaky-cli scan <contract-dir>
 #     (a partial implementation cannot compile — build each capability to prove it);
 #   - the aggregate declares exactly one `execute()` method; its response type is a
 #     taxonomy-defined VO enum (each variant holds VO-wrapped values, not primitives).
-#   - protocol traits are object-safe (`where Self: Sized`), `Send + Sync` bounded,
-#     with no default bodies.
+#   - protocol traits are object-safe (`Box<dyn I<Seam>Protocol>` must compile), `Send + Sync`
+#     bounded, with no default bodies. A `where Self: Sized` bound on a protocol method would
+#     break object safety and the DI pattern — do not add it.
 # Fallback compile gate: cargo check -p <crate-name>.
 ```
 
+**Boolean in signatures vs. taxonomy.** `bool` is treated as a primitive in
+`taxonomy_*_entity` field declarations (no carve-out; see
+[references/HOW-TO-MAKE-RUST-TAXONOMY.md](references/HOW-TO-MAKE-RUST-TAXONOMY.md)).
+In contract signatures (`contract_*_protocol` / `contract_*_aggregate`), `bool`
+is permitted only for semantic toggles or predicates (e.g. `enabled: bool`)
+because the signature describes *when* a capability runs, not the domain value
+it operates on. A taxonomy entity field named `enabled` would still need an
+enum-like VO, not a raw `bool`.

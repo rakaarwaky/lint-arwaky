@@ -17,7 +17,9 @@
 ### Import rules
 
 **Allowed imports:** Taxonomy only (`shared/taxonomy_*`).
-**Forbidden:** import from Capabilities, Agent, Surface, Contract.
+**Forbidden:** import from Capabilities, Agent, Surface, Contract, or other `utility_*` files.
+The last one is a cross-file rule in all three languages, not Rust-specific: a utility
+importing another utility couples two helpers that should be independently extractable.
 
 1. Only exported functions — no `class`.
 2. Pure + deterministic — no `Math.random()`, no `Date.now()`, no global mutable state.

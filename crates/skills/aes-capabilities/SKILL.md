@@ -47,7 +47,7 @@ metadata:
 > **Audience**: The agent creating or validating a capability file.
 > **Scope**: Python, Rust, and TypeScript `capabilities_<domain>_<role>` files — 3-block structure, ≥1 protocol implementor, ≤3 types.
 
-The **aggregate** decides which suffix, which imports, and which structure apply.
+The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO |
@@ -71,7 +71,7 @@ A rule cannot drift from the gate. Cite the linter, not this file, when pointing
 
 | Layer | Rule |
 | ----- | ---- |
-| Naming | File `capabilities_<domain>_<role>` — role from internal/external naming lists; forbidden suffixes `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_protocol`/`_aggregate`/`_utility` (AES101/AES102). |
+| Naming | File `capabilities_<domain>_<role>` — role from internal/external naming lists; forbidden suffixes `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_constants`/`_protocol`/`_aggregate`/`_utility`/`_request`/`_response` (AES101/AES102). |
 | Structure | 3-block order: Block 1 type+ctor → Block 2 protocol methods only → Block 3 factories/dunders/helpers. ≥1 protocol implementor, ≤3 types (AES403). |
 | Imports | Taxonomy + `_protocol` contracts + utility only — never agents, siblings, surface, local domain models (AES201–AES205). |
 | DI | Protocol interfaces only (`Arc<dyn Trait>` in Rust); shared VOs in fields/signatures. |

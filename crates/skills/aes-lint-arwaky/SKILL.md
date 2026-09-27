@@ -23,8 +23,8 @@ metadata:
     - aes-surface
     - aes-root
     - aes-testing-suite
-    - cleanup-consolidate
-    - fix-bypass
+    - aes-utility
+    - aes-root
   triggers:
     - lint arwaky
     - lint arwaky python
@@ -96,9 +96,9 @@ the routing HOW-TO. `tests/` / `benches/` are **not** AES layers (see `aes-testi
 Scan failed or findings non-zero?
 ├─ exit 2 → config/parse → lint_arwaky.config.yaml / path → fix config, re-run
 ├─ exit 1, findings present
-│  ├─ CRITICAL 🔴 AES201 / AES205 / AES304 → structural; route via HOW-TO-USE-LINT-ROUTING.md (aes-contract / fix-bypass)
+│  ├─ CRITICAL 🔴 AES201 / AES205 → structural; route via HOW-TO-USE-LINT-ROUTING.md (aes-contract)
 │  ├─ HIGH 🟡 AES101–102, AES202, AES301–303, AES401–403, AES406, AES505–506 → fix / aes-{layer}
-│  ├─ MEDIUM/LOW 🟢 AES203–204, AES305, AES404–405, AES501–504 → fix or cleanup-consolidate
+│  ├─ MEDIUM/LOW 🟢 AES203–204, AES305, AES404–405, AES501–504 → fix (AES101/203 auto-fix) or aes-{layer} (manual)
 │  └─ After each AES101 rename → barrel update (language HOW-TO) or orphan reappears
 └─ exit 0 but code unhealthy → language verify failed → HOW-TO-USE-LINT-<LANG>.md pipeline
 
@@ -164,5 +164,5 @@ lint-arwaky-cli orphan <path> --format json
 ## Related Skills
 
 `aes-taxonomy` · `aes-utility` · `aes-contract` · `aes-capabilities` ·
-`aes-agent` · `aes-surface` · `aes-root` · `aes-testing-suite` · `cleanup-consolidate` ·
-`fix-bypass`
+`aes-agent` · `aes-surface` · `aes-root` · `aes-testing-suite` · `aes-utility` ·
+`aes-taxonomy`

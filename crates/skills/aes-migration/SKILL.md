@@ -76,7 +76,7 @@ A rule cannot drift from the gate. Cite the linter, not this file, when pointing
 | ----- | ---- | ---- |
 | 0 — Audit | Scan before touching anything; record baseline violations. | `lint-arwaky-cli scan .` |
 | 1 — Taxonomy | Value objects, errors, events, constants only; no I/O; no upward imports (AES201). | `lint-arwaky-cli scan <taxonomy-dir>` |
-| 2 — Contract | Protocol = 1 method / feature; aggregate = many methods / exports; pure declarations only. | `lint-arwaky-cli scan <contract-dir>` |
+| 2 — Contract | Protocol = one file per feature, one trait per capability seam (each rich); aggregate = exactly one `execute()` method. | `lint-arwaky-cli scan <contract-dir>` |
 | 3 — Utility | Stateless free functions; taxonomy-only imports; ≥2 consumers (else keep private). | `lint-arwaky-cli scan <utility-dir>` |
 | 4 — Capabilities | 3-block structure; ≥1 protocol implementor; ≤3 type declarations per file (AES403). | `lint-arwaky-cli scan <capabilities-dir>` |
 | 5 — Agent | Implements aggregate; DI via protocol types (`Arc<dyn Trait>` / constructor injection); ≤3 types (AES405). | `lint-arwaky-cli scan <agent-dir>` |
@@ -101,8 +101,8 @@ Ask these questions in order. The first "No" dictates your next action.
 3. **Does the taxonomy layer expose only domain values (no I/O, no upward imports)?**
    - *No* → strip I/O to capabilities; fix primitives to VOs (AES401); re-scan.
    - *Yes* → proceed to Phase 2.
-4. **Is every protocol single-method and every aggregate multi-method?**
-   - *No* → split into per-feature protocols; expand aggregate exports (AES402/AES403).
+4. **Is every protocol file one trait per capability seam, and every aggregate one `execute()` method?**
+   - *No* → split protocols per seam (each trait owns its capability's methods); collapse aggregate to a single `execute(request) -> response` (AES402/AES403).
    - *Yes* → proceed to Phase 3.
 5. **Does `lint-arwaky-cli scan <project-root>` exit 0?**
    - *No* → fix findings in order: taxonomy → contract → utility → capabilities → agent → surface → root.
@@ -115,7 +115,7 @@ Ask these questions in order. The first "No" dictates your next action.
 1. **Load the language playbook**: Python → `reference/HOW-TO-MAKE-PYTHON-MIGRATION.md`, Rust → `reference/HOW-TO-MAKE-RUST-MIGRATION.md`, TypeScript → `reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md`.
 2. **Phase 0 — Audit**: Run `lint-arwaky-cli scan .`; categorize violations by layer; choose strategy.
 3. **Phase 1 — Taxonomy**: Extract VOs, errors, constants; register in shared barrel.
-4. **Phase 2 — Contract**: Create `I<Concept>Protocol` (1 method) and `I<Concept>Aggregate` (many methods); register.
+4. **Phase 2 — Contract**: Create `I<Concept>Protocol` (one file per feature, one trait per capability seam) and `I<Concept>Aggregate` (exactly one `execute()` method); register.
 5. **Phase 3 — Utility**: Extract stateless helpers; move to shared; register.
 6. **Phase 4 — Capabilities**: Implement protocols; follow 3-block structure; verify AES403.
 7. **Phase 5 — Agent**: Implement aggregates; inject via constructors; verify AES405.
@@ -155,8 +155,9 @@ A pass means naming, layer imports, primitives, and roles are clean. Structural 
 
 ### Human Checks
 
-A machine pass does not mean the migration is right. Protocol thinness, aggregate export
-richness, and "only methods outer layers call" still need a reader (layer HOW-TUs).
+A machine pass does not mean the migration is right. Per-seam protocol shape (one file per
+feature, one trait per seam, many methods per trait) and aggregate cardinality (exactly one
+`execute()`) still need a reader (layer HOW-TUs).
 
 ---
 
@@ -166,7 +167,7 @@ richness, and "only methods outer layers call" still need a reader (layer HOW-TU
 - [ ] Language playbook loaded (`HOW-TO-MAKE-PYTHON-MIGRATION.md` / `HOW-TO-MAKE-RUST-MIGRATION.md` / `HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md`).
 - [ ] Each layer skill consulted: `aes-taxonomy`, `aes-contract`, `aes-utility`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-root`.
 - [ ] Every touched layer's `Verify` block executed.
-- [ ] Protocol = one method for one feature; aggregate = one method per export (manual).
+- [ ] Protocol = one file per feature, one trait per seam, each rich; aggregate = exactly one `execute()` method (manual).
 - [ ] Files registered in `__init__.py` / `mod.rs` / `index.ts`.
 - [ ] Language fallback compile clean if the playbook lists it.
 
@@ -177,8 +178,8 @@ richness, and "only methods outer layers call" still need a reader (layer HOW-TU
 The linter covers naming, imports, and primitives. These need a reader (language playbook § Troubleshooting):
 
 - **Skipping taxonomy**: jumping to capabilities without VOs → primitive leakage (AES401).
-- **Mega-protocol**: one protocol with many methods → split into per-feature protocols.
-- **Mirror-aggregate**: aggregate that mirrors protocol exactly → add rich export surface.
+- **Thin-protocol**: one protocol per method per feature — instead, one file per feature, one trait per capability seam, each trait rich.
+- **Fat-aggregate**: aggregate with many methods — instead, exactly one `execute()` method returning a taxonomy-defined response enum.
 - **Import inversion**: capabilities importing agent, or surface importing capabilities → route through contract (AES201).
 - **Utility with state**: class / `self` / `this` in utility → free functions only (AES404).
 - **Agent with business logic**: computation in agent → move to capabilities (AES405).
