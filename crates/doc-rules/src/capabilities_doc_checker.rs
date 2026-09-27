@@ -140,6 +140,35 @@ fn blank_fenced(text: &str) -> String {
     out
 }
 
+impl IDocCheckerProtocol for DocChecker {
+    /// Walk the document chain under the request's root and audit every
+    /// recognized document against all invariants.
+    fn audit(&self, request: DocRequest) -> DocResponse {
+        let DocRequest::AuditAll { root } = request;
+        let documents = self.collect_documents(&root);
+        let master = documents
+            .iter()
+            .find(|d| {
+                d.path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .is_some_and(|n| consts::MASTER_DOC_CANDIDATES.contains(&n))
+            })
+            .map(|d| d.text.as_str());
+
+        let mut findings = Vec::new();
+        for doc in &documents {
+            findings.extend(self.audit_document(doc, master, &root));
+        }
+        // Folder-level checks (AES605) need the workspace root directly.
+        self.check_feature_folder(&root, &mut findings);
+
+        DocResponse::Findings {
+            findings: sorted(findings),
+        }
+    }
+}
+
 impl DocChecker {
     /// Collect every document the chain recognizes under *root*.
     pub fn collect_documents(&self, root: &Path) -> Vec<DocSource> {
@@ -476,6 +505,11 @@ impl DocChecker {
             return;
         };
         for (number, line) in doc.text.lines().enumerate() {
+            // Table rows define status vocabulary (e.g. the "Implemented"
+            // glossary in ROADMAP.md); they are definitions, not claims.
+            if line.trim_start().starts_with('|') {
+                continue;
+            }
             for (pattern, what) in patterns {
                 // A macro invocation such as `unimplemented!` names a language
                 // token rather than making a claim about this feature's
@@ -770,33 +804,4 @@ fn sorted(findings: Vec<DocFinding>) -> Vec<DocFinding> {
         ))
     });
     out
-}
-
-impl IDocCheckerProtocol for DocChecker {
-    /// Walk the document chain under the request's root and audit every
-    /// recognized document against all invariants.
-    fn audit(&self, request: DocRequest) -> DocResponse {
-        let DocRequest::AuditAll { root } = request;
-        let documents = self.collect_documents(&root);
-        let master = documents
-            .iter()
-            .find(|d| {
-                d.path
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .is_some_and(|n| consts::MASTER_DOC_CANDIDATES.contains(&n))
-            })
-            .map(|d| d.text.as_str());
-
-        let mut findings = Vec::new();
-        for doc in &documents {
-            findings.extend(self.audit_document(doc, master, &root));
-        }
-        // Folder-level checks (AES605) need the workspace root directly.
-        self.check_feature_folder(&root, &mut findings);
-
-        DocResponse::Findings {
-            findings: sorted(findings),
-        }
-    }
 }

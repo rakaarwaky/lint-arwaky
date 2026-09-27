@@ -1,4 +1,7 @@
-// PURPOSE: DiffChecker — IDiffProtocol implementation for git diff analysis (capabilities layer)
+// PURPOSE: DiffChecker — FR-001/FR-004 protocol implementations (capabilities layer)
+//
+// IDiffDetectionProtocol covers git diff detection; IHookCheckProtocol covers
+// the check that runs the lint pipeline over the changed files.
 
 use std::collections::HashSet;
 
@@ -9,7 +12,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
 use shared::file_watch::GitDiffResultVO;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookCheckProtocol;
 use shared::git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
 
 use std::sync::Arc;
@@ -28,24 +32,7 @@ pub struct DiffChecker {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IDiffProtocol for DiffChecker {
-    fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
-        let default_branch = self.get_default_branch_sync(path);
-        let changed_files = self.collect_changed_files_sync(path, &default_branch);
-
-        // Filter to lintable source files only
-        let _lintable: Vec<FilePath> = changed_files
-            .values
-            .iter()
-            .filter(|f| is_lintable_file(f))
-            .cloned()
-            .collect();
-
-        // TODO: delegate to linter aggregates for AES analysis on lintable files.
-        // Requires linter aggregate integration — returns empty for now.
-        LintResultList::new(Vec::new())
-    }
-
+impl IDiffDetectionProtocol for DiffChecker {
     fn get_diff(&self, path: &FilePath) -> GitDiffResultVO {
         let default_branch = self.get_default_branch_sync(path);
 
@@ -100,6 +87,25 @@ impl IDiffProtocol for DiffChecker {
 
     fn get_default_branch(&self, path: &FilePath) -> GitBranchName {
         GitBranchName::new(self.get_default_branch_sync(path))
+    }
+}
+
+impl IHookCheckProtocol for DiffChecker {
+    fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
+        let default_branch = self.get_default_branch_sync(path);
+        let changed_files = self.collect_changed_files_sync(path, &default_branch);
+
+        // Filter to lintable source files only
+        let _lintable: Vec<FilePath> = changed_files
+            .values
+            .iter()
+            .filter(|f| is_lintable_file(f))
+            .cloned()
+            .collect();
+
+        // TODO: delegate to linter aggregates for AES analysis on lintable files.
+        // Requires linter aggregate integration — returns empty for now.
+        LintResultList::new(Vec::new())
     }
 }
 

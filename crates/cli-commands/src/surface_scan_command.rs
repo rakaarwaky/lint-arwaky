@@ -86,7 +86,7 @@ pub struct ExternalCommandParams {
     pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
-    pub config_parser: Arc<dyn shared::config_system::IConfigParserProtocol>,
+    pub config_parser: Arc<dyn shared::config_system::IConfigParseProtocol>,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
 }

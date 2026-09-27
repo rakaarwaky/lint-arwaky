@@ -15,14 +15,27 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
-struct MockLintExecutor;
-impl IExternalLintExecutorProtocol for MockLintExecutor {
+/// Backs the `ICommandExecutorProtocol` seam: raw execution plus the FR-006
+/// `exec_cmd_*` error-mapping wrappers.
+struct MockCmdExecutor;
+impl ICommandExecutorProtocol for MockCmdExecutor {
+    fn execute_command(
+        &self,
+        _: shared::common::taxonomy_common_vo::PatternList,
+        _: FilePath,
+        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+    ) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
+    fn health_check(&self) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
     fn exec_cmd_scan(
         &self,
         _: Vec<String>,
@@ -42,6 +55,22 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
     ) -> Result<ResponseData, shared::common::taxonomy_operation_error::LinterOperationError> {
         Ok(ResponseData::default())
     }
+}
+
+/// Backs the FR-007 `IJsToolResolutionProtocol` seam for the JS adapters.
+struct MockJsResolution;
+impl IJsToolResolutionProtocol for MockJsResolution {
+    fn resolve_js_cmd(
+        &self,
+        _: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+        _: Vec<String>,
+        _: &FilePath,
+    ) -> Option<Vec<String>> {
+        None
+    }
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
     fn js_apply_fix(
         &self,
         _: &FilePath,
@@ -57,21 +86,6 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
     }
 }
 
-struct MockCmdExecutor;
-impl ICommandExecutorProtocol for MockCmdExecutor {
-    fn execute_command(
-        &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
-        _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
-    ) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-    fn health_check(&self) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-}
-
 // ─── Contract: ILinterAdapterProtocol ─────────────────────
 
 fn assert_adapter_contract(adapter: &dyn ILinterAdapterProtocol, expected_name: &str) {
@@ -81,13 +95,13 @@ fn assert_adapter_contract(adapter: &dyn ILinterAdapterProtocol, expected_name: 
     // scan() and apply_fix() must be callable (no panic)
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let _ = adapter.scan(&path);
-    let _ = adapter.apply_fix(&path);
+    let _ = adapter.fix(&path);
 }
 
 #[test]
 fn ruff_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::RuffAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -98,7 +112,7 @@ fn ruff_adapter_implements_protocol() {
 #[test]
 fn bandit_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::BanditAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -109,7 +123,7 @@ fn bandit_adapter_implements_protocol() {
 #[test]
 fn mypy_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -149,7 +163,8 @@ fn cargo_audit_adapter_implements_protocol() {
 #[test]
 fn eslint_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::ESLintAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockJsResolution),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -159,7 +174,8 @@ fn eslint_adapter_implements_protocol() {
 #[test]
 fn prettier_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::PrettierAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockJsResolution),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -169,7 +185,7 @@ fn prettier_adapter_implements_protocol() {
 #[test]
 fn tsc_adapter_implements_protocol() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -182,21 +198,21 @@ fn tsc_adapter_implements_protocol() {
 fn all_adapters_coerce_to_dyn_protocol() {
     let _dyn_ruff: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::RuffAdapter::new(
-            Arc::new(MockLintExecutor),
+            Arc::new(MockCmdExecutor),
             None,
             Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
     let _dyn_bandit: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::BanditAdapter::new(
-            Arc::new(MockLintExecutor),
+            Arc::new(MockCmdExecutor),
             None,
             Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
     let _dyn_mypy: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::MyPyAdapter::new(
-            Arc::new(MockLintExecutor),
+            Arc::new(MockCmdExecutor),
             None,
             Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
@@ -220,19 +236,21 @@ fn all_adapters_coerce_to_dyn_protocol() {
         ));
     let _dyn_eslint: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::ESLintAdapter::new(
-            Arc::new(MockLintExecutor),
+            Arc::new(MockCmdExecutor),
+            Arc::new(MockJsResolution),
             Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
     let _dyn_prettier: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::PrettierAdapter::new(
-            Arc::new(MockLintExecutor),
+            Arc::new(MockCmdExecutor),
+            Arc::new(MockJsResolution),
             Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
     let _dyn_tsc: Box<dyn ILinterAdapterProtocol> =
         Box::new(external_lint_lint_arwaky::TSCAdapter::new(
-            Arc::new(MockLintExecutor),
+            Arc::new(MockCmdExecutor),
             Arc::new(MockFilesystem::new()),
             Arc::new(MockFilesystem::new()),
         ));
@@ -250,7 +268,7 @@ fn stdio_client_implements_command_executor_protocol() {
     let _ = _dyn_client.health_check();
 }
 
-// ─── Contract: ExternalLintExecutor implements IExternalLintExecutorProtocol ──
+// ─── Contract: ExternalLintExecutor implements ICommandExecutorProtocol ──
 
 #[test]
 fn external_lint_executor_implements_protocol() {
@@ -259,7 +277,7 @@ fn external_lint_executor_implements_protocol() {
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
-    let _dyn_exec: &dyn IExternalLintExecutorProtocol = &executor;
+    let _dyn_exec: &dyn ICommandExecutorProtocol = &executor;
     // verify callable methods
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let _ = _dyn_exec.exec_cmd_adapter(
@@ -310,4 +328,79 @@ fn orchestrator_implements_aggregate_protocol() {
         .execute(shared::external_lint::ExternalLintRequest::adapter_names())
         .into_adapter_names();
     assert!(names.is_empty());
+}
+
+// ─── Contract: ExternalLintExecutor implements ICargoDirProtocol (FR-008) ──
+
+#[test]
+fn external_lint_executor_implements_cargo_dir_protocol() {
+    use shared::external_lint::ICargoDirProtocol;
+    let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
+    );
+    let _dyn: &dyn ICargoDirProtocol = &executor;
+    let wd = _dyn.resolve_cargo_working_dir(&FilePath::new("/tmp".to_string()).unwrap());
+    assert!(!wd.value().is_empty());
+}
+
+// ─── Contract: LanguageDetector implements ILanguageDetectProtocol (FR-001) ──
+
+#[test]
+fn language_detector_implements_protocol() {
+    use shared::external_lint::ILanguageDetectProtocol;
+    let detector =
+        external_lint_lint_arwaky::LanguageDetector::new(Arc::new(MockFilesystem::new()));
+    let _dyn: &dyn ILanguageDetectProtocol = &detector;
+    let (has_rust, has_python, has_js) =
+        _dyn.detect_languages(&FilePath::new("/tmp".to_string()).unwrap());
+    // No files were registered on the mock filesystem — all booleans are false.
+    assert!(!has_rust && !has_python && !has_js);
+}
+
+// ─── Contract: OutputNormalizer implements INormalizeProtocol (FR-005) ──
+
+#[test]
+fn output_normalizer_implements_protocol() {
+    use shared::external_lint::INormalizeProtocol;
+    let normalizer = external_lint_lint_arwaky::OutputNormalizer;
+    let _dyn: &dyn INormalizeProtocol = &normalizer;
+    let root = FilePath::new("/tmp".to_string()).unwrap();
+    let (results, warnings) = _dyn.normalize(
+        "clippy",
+        r#"[{"file":"main.rs","line":3,"column":1,"code":"dead_code","message":"unused","severity":"style"}]"#,
+        &root,
+    );
+    assert_eq!(results.values.len(), 1);
+    assert_eq!(results.values[0].code.to_string(), "clippy::dead_code");
+    assert_eq!(results.values[0].file.value(), "/tmp/main.rs");
+    assert!(warnings.is_empty());
+
+    // Malformed JSON yields no results plus a warning, never a panic.
+    let (empty, warns) = _dyn.normalize("clippy", "not json", &root);
+    assert!(empty.values.is_empty());
+    assert_eq!(warns.len(), 1);
+}
+
+// ─── Contract: ExternalLintExecutor implements IJsToolResolutionProtocol (FR-007) ──
+
+#[test]
+fn external_lint_executor_implements_js_resolution_protocol() {
+    use shared::external_lint::IJsToolResolutionProtocol;
+    use shared::filesystem::taxonomy_filesystem_vo::ToolName;
+    let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockFilesystem::new()),
+        Arc::new(MockFilesystem::new()),
+    );
+    let _dyn: &dyn IJsToolResolutionProtocol = &executor;
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let tool = ToolName::new("eslint").unwrap();
+    // The mock filesystem holds no local `node_modules/.bin/eslint`.
+    assert!(
+        _dyn.resolve_js_cmd(&tool, vec!["file.js".into(), "--fix".into()], &path)
+            .is_none()
+    );
+    assert_eq!(_dyn.resolve_js_working_dir(&path).value(), "/tmp");
 }

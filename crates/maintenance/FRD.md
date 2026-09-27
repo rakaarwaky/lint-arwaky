@@ -281,6 +281,37 @@ flowchart TD
 
 ---
 
+### FR-Maintenance-010: Subprocess Tool Executor
+
+- **Description**: Run an external command-line tool as a subprocess and report
+  its outcome. Every diagnostic FR (001, 004, 005, 006, 007, 009) reaches an
+  external binary through this one seam, so tool invocation and exit-code
+  handling live in exactly one place.
+- **Input**: A tool `name`, a slice of `args`, and — for `run_tool_in_dir` — the
+  working directory.
+- **Output**: `ToolOutput` carrying exit status, stdout, and stderr.
+- **Business Rules**:
+  - `run_tool` inherits the process working directory; `run_tool_in_dir` runs the
+    tool in the caller-supplied directory.
+  - The tool is resolved through `tool_exists` / `get_binary_path` before
+    execution; a missing binary is an error, not an empty success.
+  - stdout and stderr are captured separately; neither is streamed to the parent
+    process.
+  - All execution is synchronous via `std::process::Command`. No async runtime
+    dependency.
+- **Edge Cases**:
+  - Binary not on PATH → `tool_exists` false; the calling FR reports its own
+    missing-tool outcome.
+  - Non-zero exit code → returned in `ToolOutput`, not raised as a panic.
+  - Tool writes to stderr while succeeding → stderr is captured, exit status
+    still zero.
+- **Error Handling**: A failed spawn (binary missing, permission denied, cwd
+  removed) produces an error `ToolOutput` with empty stdout/stderr and a
+  descriptive message; callers translate it into their own reason-coded outcome.
+
+
+---
+
 ## API Contract
 
 ### Protocol API
@@ -347,6 +378,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-007 — Dependencies** — e.g. Rust project with Cargo.lock → Parses all packages
 - **SCEN-008 — Adapter Health Check** — e.g. All 9 adapters installed → All available: true
 - **SCEN-009 — Self-Update** — e.g. GitHub reachable, same version → already_up_to_date=true, upgraded=false
+- **SCEN-010 — Subprocess Tool Executor** — e.g. Run an installed tool → stdout captured, exit code in `ToolOutput`
 
 ### SCEN-001 — Doctor
 
@@ -443,6 +475,21 @@ FRD Ref: FR-Maintenance-009
 | 3 | check_only=true | No download performed; status reports current tag |
 | 4 | Network unavailable | latest_version empty, status starts with "Error:" |
 | 5 | Local version ahead of release | already_up_to_date=true (local > released) |
+
+---
+
+### SCEN-010 — Subprocess Tool Executor
+
+FRD Ref: FR-Maintenance-010
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Run an installed tool | stdout captured, exit code in `ToolOutput` |
+| 2 | Run with a non-existent tool name | Error `ToolOutput`, empty stdout/stderr |
+| 3 | Tool exits non-zero | Non-zero status returned, not a panic |
+| 4 | Run in a caller-supplied directory | Tool's working directory matches the supplied path |
+| 5 | `tool_exists` for an absent binary | `false` |
+
 
 ---
 

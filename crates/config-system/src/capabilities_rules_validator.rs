@@ -1,5 +1,5 @@
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::config_system::contract_config_protocol::IConfigValidatorProtocol;
+use shared::config_system::contract_config_protocol::IConfigValidateProtocol;
 use shared::config_system::taxonomy_config_vo::AdapterStatus;
 use shared::config_system::taxonomy_config_vo::ProjectConfig;
 use shared::config_system::taxonomy_config_vo::ValidationResult;
@@ -10,7 +10,7 @@ pub struct ConfigRulesValidator;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IConfigValidatorProtocol for ConfigRulesValidator {
+impl IConfigValidateProtocol for ConfigRulesValidator {
     fn is_adapter_enabled(&self, config: &ProjectConfig, adapter_name: &AdapterName) -> bool {
         for adapter in &config.adapters {
             if adapter.name == *adapter_name {

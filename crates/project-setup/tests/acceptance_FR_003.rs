@@ -12,8 +12,8 @@ fn make_container() -> SetupContainer {
 #[test]
 fn fr003_detect_language_returns_valid_language_or_none() {
     let container = make_container();
-    let proto = container.protocol();
-    let result = proto.detect_language();
+    let lang_det = container.language_detection();
+    let result = lang_det.detect_language();
     if let Some(lang) = result {
         let valid = ["rust", "python", "javascript"];
         assert!(
@@ -29,8 +29,8 @@ fn fr003_detect_language_returns_valid_language_or_none() {
 #[test]
 fn fr003_detect_languages_returns_list() {
     let container = make_container();
-    let proto = container.protocol();
-    let langs = proto.detect_languages();
+    let lang_det = container.language_detection();
+    let langs = lang_det.detect_languages();
     // In this repo, rust should always be detected (Cargo.toml exists)
     if !langs.is_empty() {
         let valid = ["rust", "python", "javascript"];
@@ -47,8 +47,8 @@ fn fr003_detect_languages_returns_list() {
 #[test]
 fn fr003_get_config_template_rust() {
     let container = make_container();
-    let proto = container.protocol();
-    let result = proto.get_config_template("rust");
+    let config_tpl = container.config_template();
+    let result = config_tpl.get_config_template("rust");
     assert!(result.is_ok(), "FR-003: 'rust' should have a template");
     let template = result.unwrap();
     assert!(!template.is_empty());
@@ -58,8 +58,8 @@ fn fr003_get_config_template_rust() {
 #[test]
 fn fr003_get_config_template_python() {
     let container = make_container();
-    let proto = container.protocol();
-    let result = proto.get_config_template("python");
+    let config_tpl = container.config_template();
+    let result = config_tpl.get_config_template("python");
     assert!(result.is_ok(), "FR-003: 'python' should have a template");
     let template = result.unwrap();
     assert!(!template.is_empty());
@@ -68,8 +68,8 @@ fn fr003_get_config_template_python() {
 #[test]
 fn fr003_get_config_template_javascript() {
     let container = make_container();
-    let proto = container.protocol();
-    let result = proto.get_config_template("javascript");
+    let config_tpl = container.config_template();
+    let result = config_tpl.get_config_template("javascript");
     assert!(
         result.is_ok(),
         "FR-003: 'javascript' should have a template"

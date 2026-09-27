@@ -15,14 +15,26 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::IExternalLintExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
-struct MockLintExecutor;
-impl IExternalLintExecutorProtocol for MockLintExecutor {
+struct MockCmdExecutor;
+impl ICommandExecutorProtocol for MockCmdExecutor {
+    fn execute_command(
+        &self,
+        _: shared::common::taxonomy_common_vo::PatternList,
+        _: FilePath,
+        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+    ) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
+    fn health_check(&self) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
     fn exec_cmd_scan(
         &self,
         _: Vec<String>,
@@ -42,6 +54,21 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
     ) -> Result<ResponseData, LinterOperationError> {
         Ok(ResponseData::default())
     }
+}
+
+struct MockJsResolution;
+impl IJsToolResolutionProtocol for MockJsResolution {
+    fn resolve_js_cmd(
+        &self,
+        _: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+        _: Vec<String>,
+        _: &FilePath,
+    ) -> Option<Vec<String>> {
+        None
+    }
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
     fn js_apply_fix(
         &self,
         _: &FilePath,
@@ -52,29 +79,12 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
     }
 }
 
-struct MockCmdExecutor;
-impl shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol
-    for MockCmdExecutor
-{
-    fn execute_command(
-        &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
-        _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
-    ) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-    fn health_check(&self) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-}
-
 // ─── Integration: Individual adapter creation ─────────────
 
 #[test]
 fn create_ruff_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::RuffAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -87,7 +97,7 @@ fn create_ruff_adapter_and_scan_returns_empty() {
 #[test]
 fn create_bandit_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::BanditAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -100,7 +110,7 @@ fn create_bandit_adapter_and_scan_returns_empty() {
 #[test]
 fn create_mypy_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -148,7 +158,8 @@ fn create_cargo_audit_adapter_and_scan_returns_empty() {
 #[test]
 fn create_eslint_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::ESLintAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockJsResolution),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -160,7 +171,8 @@ fn create_eslint_adapter_and_scan_returns_empty() {
 #[test]
 fn create_prettier_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::PrettierAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
+        Arc::new(MockJsResolution),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -172,7 +184,7 @@ fn create_prettier_adapter_and_scan_returns_empty() {
 #[test]
 fn create_tsc_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -213,51 +225,51 @@ fn selector_with_custom_lists() {
 #[test]
 fn bandit_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::BanditAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let status = adapter.apply_fix(&path).unwrap();
+    let status = adapter.fix(&path).unwrap();
     assert!(!status.value); // bandit doesn't fix
 }
 
 #[test]
 fn mypy_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let status = adapter.apply_fix(&path).unwrap();
+    let status = adapter.fix(&path).unwrap();
     assert!(!status.value); // mypy doesn't fix
 }
 
 #[test]
 fn tsc_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let status = adapter.apply_fix(&path).unwrap();
+    let status = adapter.fix(&path).unwrap();
     assert!(!status.value); // tsc doesn't fix
 }
 
 #[test]
 fn ruff_apply_fix_returns_true() {
     let adapter = external_lint_lint_arwaky::RuffAdapter::new(
-        Arc::new(MockLintExecutor),
+        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let status = adapter.apply_fix(&path).unwrap();
+    let status = adapter.fix(&path).unwrap();
     assert!(status.value); // ruff --fix exits 0 → true
 }
 
@@ -269,6 +281,6 @@ fn cargo_audit_apply_fix_returns_true() {
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let status = adapter.apply_fix(&path).unwrap();
+    let status = adapter.fix(&path).unwrap();
     assert!(status.value);
 }

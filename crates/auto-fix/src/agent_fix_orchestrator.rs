@@ -1,11 +1,12 @@
-// PURPOSE: FixOrchestrator — orchestrates auto-fix operations via IFixProtocol (agent layer)
+// PURPOSE: FixOrchestrator — orchestrates auto-fix operations via the FR-backed
+// protocol traits (agent layer)
 //
 // The auto-fix feature applies safe, automatic fixes to common violations.
 // Only RO removal operations are automated — no code is added or modified,
 // only unused/forbidden imports are deleted, and bypass comments are removed.
 //
-// This orchestrator bridges the IFixProtocol (capabilities layer) to the
-// IFixAggregate contract (surface layer). It's intentionally
+// This orchestrator bridges the auto-fix capability protocols (capabilities
+// layer) to the IFixAggregate contract (surface layer). It's intentionally
 // thin — all fix logic lives in LintFixProcessor.
 //
 // Safety policy:
@@ -18,11 +19,15 @@
 // - BF-2: `manual_report` now on aggregate trait (not just concrete struct)
 // - BF-5: Removed duplicate `run_fix` — consolidated with aggregate `execute`
 // - TR-2: Aggregate trait includes `manual_report` for FR-005
+// - SPLIT: one fat `IFixProtocol` dependency replaced by one seam per FR
 
 use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
 use shared::auto_fix::taxonomy_fix_request::FixRequest;
 use shared::auto_fix::taxonomy_fix_response::FixResponse;
-use shared::auto_fix::{FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol};
+use shared::auto_fix::{
+    FixOutcome, FixResult, IBypassFixProtocol, IFileAdapterProtocol, IFixPipelineProtocol,
+    IManualReportProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+};
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -30,11 +35,20 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-/// FixOrchestrator — pure delegation to IFixProtocol.
+/// FixOrchestratorDeps — one capability seam per FR-AutoFix requirement.
+pub struct FixOrchestratorDeps {
+    pub pipeline: Arc<dyn IFixPipelineProtocol>,
+    pub manual_report: Arc<dyn IManualReportProtocol>,
+    pub bypass_fix: Arc<dyn IBypassFixProtocol>,
+    pub unused_import_fix: Arc<dyn IUnusedImportFixProtocol>,
+    pub symbol_rename: Arc<dyn ISymbolRenameProtocol>,
+}
+
+/// FixOrchestrator — pure delegation to the auto-fix capability protocols.
 ///
 /// No business logic — just wires the aggregate contract to the fix processor.
 pub struct FixOrchestrator {
-    fix_protocol: Arc<dyn IFixProtocol>,
+    deps: FixOrchestratorDeps,
     file_adapter: Arc<dyn IFileAdapterProtocol>,
 }
 
@@ -57,39 +71,36 @@ impl IFixAggregate for FixOrchestrator {
 
 impl FixOrchestrator {
     pub fn execute_impl(&self, path: &FilePath, dry_run: bool) -> FixResult {
-        self.fix_protocol.execute(path, dry_run)
+        self.deps.pipeline.execute(path, dry_run)
     }
     pub fn manual_report_impl(&self, violations: &[LintResult]) -> Vec<LintMessage> {
-        self.fix_protocol.report_non_fixable(violations)
+        self.deps.manual_report.report_non_fixable(violations)
     }
     pub fn file_adapter(&self) -> Arc<dyn IFileAdapterProtocol> {
         self.file_adapter.clone()
     }
-    pub fn new(
-        fix_protocol: Arc<dyn IFixProtocol>,
-        file_adapter: Arc<dyn IFileAdapterProtocol>,
-    ) -> Self {
-        Self {
-            fix_protocol,
-            file_adapter,
-        }
+    pub fn new(deps: FixOrchestratorDeps, file_adapter: Arc<dyn IFileAdapterProtocol>) -> Self {
+        Self { deps, file_adapter }
     }
 
     /// Convenience: apply a single bypass fix at the given line.
     pub fn fix_bypass(&self, file_path: &str, line: u32) -> FixOutcome {
-        self.fix_protocol
+        self.deps
+            .bypass_fix
             .fix_bypass_comments(file_path, shared::common::LineNumber::new(line as i64))
     }
 
     /// Convenience: apply a single unused-import fix at the given line.
     pub fn fix_unused_import(&self, file_path: &str, line: u32) -> FixOutcome {
-        self.fix_protocol
+        self.deps
+            .unused_import_fix
             .fix_unused_import(file_path, shared::common::LineNumber::new(line as i64))
     }
 
     /// Convenience: rename a symbol across the file (FR-003).
     pub fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome {
-        self.fix_protocol
+        self.deps
+            .symbol_rename
             .rename_symbol(file_path, old_name, new_name)
     }
 }

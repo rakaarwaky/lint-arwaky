@@ -146,7 +146,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         Ok(LintResultList::new(results))
     }
 
-    fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(true))
     }
 }

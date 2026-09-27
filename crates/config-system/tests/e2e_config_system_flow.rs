@@ -97,7 +97,7 @@ fn e2e_reader_lists_multi_language_configs() {
     fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = common::make_container()
-        .reader()
+        .lister()
         .list_config_files(&fp)
         .unwrap();
     // Unified config: all languages share one file, so list returns 1 entry

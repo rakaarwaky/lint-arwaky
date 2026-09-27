@@ -10,8 +10,8 @@ fn make_container() -> SetupContainer {
 #[test]
 fn fr005_which_mcp_binary_returns_non_empty() {
     let container = make_container();
-    let proto = container.protocol();
-    let binary = proto.which_mcp_binary();
+    let mcp = container.mcp_config();
+    let binary = mcp.which_mcp_binary();
     assert!(
         !binary.value().is_empty(),
         "FR-005: which_mcp_binary should return a non-empty path"
@@ -21,8 +21,8 @@ fn fr005_which_mcp_binary_returns_non_empty() {
 #[test]
 fn fr005_which_mcp_binary_contains_lint_arwaky_mcp() {
     let container = make_container();
-    let proto = container.protocol();
-    let binary = proto.which_mcp_binary();
+    let mcp = container.mcp_config();
+    let binary = mcp.which_mcp_binary();
     assert!(
         binary.value().contains("lint-arwaky-mcp") || binary.value().contains("lint-arwaky"),
         "FR-005: binary path '{}' should reference lint-arwaky-mcp",
@@ -33,19 +33,19 @@ fn fr005_which_mcp_binary_contains_lint_arwaky_mcp() {
 #[test]
 fn fr005_file_exists_check() {
     let container = make_container();
-    let proto = container.protocol();
+    let path_existence = container.path_existence();
     assert!(
-        proto.file_exists("Cargo.toml"),
+        path_existence.file_exists("Cargo.toml"),
         "FR-005: Cargo.toml should exist"
     );
-    assert!(!proto.file_exists("definitely_does_not_exist_12345.txt"));
+    assert!(!path_existence.file_exists("definitely_does_not_exist_12345.txt"));
 }
 
 #[test]
 fn fr005_pre_flight_check() {
     let container = make_container();
-    let proto = container.protocol();
-    let results = proto.pre_flight_check();
+    let pre_flight = container.pre_flight();
+    let results = pre_flight.pre_flight_check();
     assert!(
         !results.is_empty(),
         "FR-005: pre_flight_check should return results"

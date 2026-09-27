@@ -177,6 +177,32 @@ flowchart TD
 
 ---
 
+### FR-AutoFix-006: File I/O Adapter
+
+- **Description**: Read, write, and query file-system paths on behalf of the fix
+  operations. This seam carries no lint logic, but it can fail independently
+  (missing file, permission error, partial write) and therefore carries its own
+  requirement.
+- **Input**: A `FilePath` and, for write, a `ContentString`.
+- **Output**: `Option<ContentString>` for read, `bool` for write and exists.
+- **Business Rules**:
+  - `read_file` returns `None` when the path does not exist or cannot be read.
+  - `write_file` returns `false` on any I/O failure; callers must not assume
+    atomicity.
+  - `path_exists` returns `true` only for paths that are reachable and readable.
+  - All operations are synchronous; no async runtime dependency.
+- **Edge Cases**:
+  - Path is a directory on read → returns `None`.
+  - Parent directory missing on write → write fails; the caller decides whether
+    to create parents.
+  - File locked by another process → platform-dependent access error, surfaced
+    as `None` or `false`.
+- **Error Handling**: All errors are returned through the `bool` / `None` result;
+  the caller inspects the return to decide retry, skip, or report.
+
+
+---
+
 ## API Contract
 
 ### Protocol API
@@ -227,6 +253,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-002 — Bypass Fix** — e.g. `unwrap()` on target line → Replaced with `expect("safe")`, `Applied`
 - **SCEN-003 — Symbol Renaming** — e.g. Symbol rename, 3 occurrences → All replaced, `Applied` + count
 - **SCEN-004–FR-AutoFix-005 — Dry-Run & Non-Fixable** — e.g. Dry-run with fixable violations → Outcomes reported, no files modified
+- **SCEN-006 — File I/O Adapter** — e.g. Read an existing file → `Some(content)`; read non-existent → `None`; write success → `true`
 - **Idempotency & Error Handling** — e.g. Second run after fix → No further `Applied` outcomes
 
 ### SCEN-001 — Unused Import Removal
@@ -288,6 +315,21 @@ FRD Ref: FR-AutoFix-004, FR-AutoFix-005
 | -- | -------------------- | ---------------------------- |
 | 1  | Second run after fix | No further `Applied` outcomes |
 | 2  | Write failure        | `Failed(write_error)`        |
+
+---
+
+### SCEN-006 — File I/O Adapter
+
+FRD Ref: FR-AutoFix-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Read an existing file | `Some(content)` |
+| 2 | Read a non-existent file | `None` |
+| 3 | Write to a valid path | `true` |
+| 4 | Write to a read-only path | `false` |
+| 5 | `path_exists` for a directory | `true` |
+
 
 ---
 

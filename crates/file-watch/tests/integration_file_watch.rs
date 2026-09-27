@@ -14,9 +14,33 @@ fn container_default_creates() {
 }
 
 #[test]
-fn container_provider_accessible() {
+fn container_start_accessible() {
     let container = FileWatchContainer::new();
-    let _provider = container.provider();
+    let _start = container.start();
+}
+
+#[test]
+fn container_broadcast_accessible() {
+    let container = FileWatchContainer::new();
+    let _broadcast = container.broadcast();
+}
+
+#[test]
+fn container_shutdown_accessible() {
+    let container = FileWatchContainer::new();
+    let _shutdown = container.shutdown();
+}
+
+#[test]
+fn container_filter_accessible() {
+    let container = FileWatchContainer::new();
+    let _filter = container.filter();
+}
+
+#[test]
+fn container_dedup_accessible() {
+    let container = FileWatchContainer::new();
+    let _dedup = container.dedup();
 }
 
 #[test]
@@ -37,11 +61,31 @@ fn container_aggregate_is_trait_object() {
 
 #[test]
 fn is_lintable_via_protocol() {
-    use shared::file_watch::contract_watch_protocol::IChangeAnalyzerProtocol;
+    use shared::file_watch::contract_watch_protocol::ILintableFilterProtocol;
     let analyzer = file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer::new();
     assert!(analyzer.is_lintable("main.rs"));
     assert!(analyzer.is_lintable("app.py"));
     assert!(analyzer.is_lintable("index.ts"));
     assert!(!analyzer.is_lintable("image.png"));
     assert!(!analyzer.is_lintable("data.bin"));
+}
+
+#[test]
+fn is_lintable_via_container_filter() {
+    let container = FileWatchContainer::new();
+    assert!(container.filter().is_lintable("main.rs"));
+    assert!(!container.filter().is_lintable("image.png"));
+}
+
+#[test]
+fn dedup_via_container_dedup() {
+    use shared::file_watch::{WatchEvent, WatchEventKind};
+    let container = FileWatchContainer::new();
+    let events = vec![
+        WatchEvent::new("main.rs".to_string(), WatchEventKind::Modified),
+        WatchEvent::new("main.rs".to_string(), WatchEventKind::Created),
+        WatchEvent::new("app.py".to_string(), WatchEventKind::Modified),
+    ];
+    let deduped = container.dedup().dedup_events(events);
+    assert_eq!(deduped.len(), 2);
 }

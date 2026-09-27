@@ -1,6 +1,6 @@
 // Benchmark tests for file-watch — change analyzer throughput.
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use shared::file_watch::IChangeAnalyzerProtocol;
+use shared::file_watch::{IEventDedupProtocol, ILintableFilterProtocol};
 use shared::file_watch::{WatchEvent, WatchEventKind};
 
 fn bench_change_analyzer_filter_lintable(c: &mut Criterion) {
@@ -28,8 +28,8 @@ fn bench_change_analyzer_filter_lintable(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_change_analyzer_analyze(c: &mut Criterion) {
-    let mut group = c.benchmark_group("change_analyzer_analyze");
+fn bench_change_analyzer_dedup_events(c: &mut Criterion) {
+    let mut group = c.benchmark_group("change_analyzer_dedup_events");
     group.significance_level(0.05).confidence_level(0.95);
 
     let analyzer = file_watch_lint_arwaky::ChangeAnalyzer::new();
@@ -45,7 +45,7 @@ fn bench_change_analyzer_analyze(c: &mut Criterion) {
     for n in [10, 50, 100] {
         group.bench_with_input(BenchmarkId::new("dedup_batch", n), &events[..n], |b, e| {
             b.iter(|| {
-                std::hint::black_box(analyzer.analyze(e.to_vec()));
+                std::hint::black_box(analyzer.dedup_events(e.to_vec()));
             });
         });
     }
@@ -56,6 +56,6 @@ fn bench_change_analyzer_analyze(c: &mut Criterion) {
 criterion_group!(
     benches,
     bench_change_analyzer_filter_lintable,
-    bench_change_analyzer_analyze,
+    bench_change_analyzer_dedup_events,
 );
 criterion_main!(benches);

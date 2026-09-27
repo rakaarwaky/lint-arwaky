@@ -1,6 +1,7 @@
 // PURPOSE: SetupOrchestrator — orchestrates project initialization and setup operations
 //
-// Delegates all operations to ISetupManagementProtocol (capabilities layer).
+// Delegates to the setup capability protocols (capabilities layer). The
+// orchestrator holds one Arc<dyn ...> per protocol seam it calls.
 // This is a thin agent layer that passes through aggregate contract calls.
 //
 // Key operations:
@@ -12,22 +13,40 @@
 //   - Pre-flight checks for package manager availability
 
 use shared::cli_commands::taxonomy_command_vo::TransportUrlVO;
-use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
+use shared::common::taxonomy_job_vo::EnvContentVO;
+use shared::common::taxonomy_job_vo::McpConfigVO;
+use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
 use shared::project_setup::contract_setup_protocol::PreFlightResult;
 use shared::project_setup::taxonomy_setup_request::SetupRequest;
 use shared::project_setup::taxonomy_setup_response::SetupResponse;
 use shared::project_setup::{
-    EmbeddedSkillVO, ISetupManagementProtocol, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
+    EmbeddedSkillVO, IAdapterInstallationProtocol, IConfigTemplateProtocol, IConfigWritingProtocol,
+    IEnvGenerationProtocol, IFilePathExistenceProtocol, ILanguageDetectionProtocol,
+    IMcpConfigGenerationProtocol, IPreFlightProtocol, ProjectLanguageVO, ProjectLanguagesVO,
+    SetupError,
 };
 
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+/// Collaborators for SetupManagementOrchestrator, grouped to keep the
+/// constructor below the clippy argument-count threshold.
+pub struct SetupProtocols {
+    pub mcp_config: Arc<dyn IMcpConfigGenerationProtocol>,
+    pub env_generation: Arc<dyn IEnvGenerationProtocol>,
+    pub language_detection: Arc<dyn ILanguageDetectionProtocol>,
+    pub adapter_installation: Arc<dyn IAdapterInstallationProtocol>,
+    pub config_template: Arc<dyn IConfigTemplateProtocol>,
+    pub config_writing: Arc<dyn IConfigWritingProtocol>,
+    pub pre_flight: Arc<dyn IPreFlightProtocol>,
+    pub path_existence: Arc<dyn IFilePathExistenceProtocol>,
+}
+
 pub struct SetupManagementOrchestrator {
-    protocol: Arc<dyn ISetupManagementProtocol>,
+    protocols: SetupProtocols,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -102,8 +121,8 @@ impl ISetupAggregate for SetupManagementOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl SetupManagementOrchestrator {
-    pub fn new(protocol: Arc<dyn ISetupManagementProtocol>) -> Self {
-        Self { protocol }
+    pub fn new(protocols: SetupProtocols) -> Self {
+        Self { protocols }
     }
 
     pub fn check_http(&self, _url: &TransportUrlVO) -> SuccessStatus {
@@ -112,67 +131,71 @@ impl SetupManagementOrchestrator {
 
     /// Delegate to protocol (generate_env ignores transport, uses home only per FR-002).
     pub fn generate_env(&self, home: &DirectoryPath) -> EnvContentVO {
-        self.protocol.generate_env(home)
+        self.protocols.env_generation.generate_env(home)
     }
 
     pub fn generate_mcp_config(&self) -> McpConfigVO {
-        self.protocol.generate_mcp_config()
+        self.protocols.mcp_config.generate_mcp_config()
     }
 
     pub fn mcp_config_claude(&self) -> McpConfigVO {
-        self.protocol.mcp_config_claude()
+        self.protocols.mcp_config.mcp_config_claude()
     }
 
     pub fn mcp_config_cursor(&self) -> McpConfigVO {
-        self.protocol.mcp_config_cursor()
+        self.protocols.mcp_config.mcp_config_cursor()
     }
 
     pub fn mcp_config_windsurf(&self) -> McpConfigVO {
-        self.protocol.mcp_config_windsurf()
+        self.protocols.mcp_config.mcp_config_windsurf()
     }
 
     pub fn mcp_config_copilot(&self) -> McpConfigVO {
-        self.protocol.mcp_config_copilot()
+        self.protocols.mcp_config.mcp_config_copilot()
     }
 
     pub fn mcp_config_hermes(&self) -> McpConfigVO {
-        self.protocol.mcp_config_hermes()
+        self.protocols.mcp_config.mcp_config_hermes()
     }
 
     pub fn mcp_config_vscode(&self) -> McpConfigVO {
-        self.protocol.mcp_config_vscode()
+        self.protocols.mcp_config.mcp_config_vscode()
     }
 
     pub fn mcp_config_all(&self) -> McpConfigVO {
-        self.protocol.mcp_config_all()
+        self.protocols.mcp_config.mcp_config_all()
     }
 
     pub fn install_python_adapters(&self) -> SuccessStatus {
-        self.protocol.install_python_adapters()
+        self.protocols
+            .adapter_installation
+            .install_python_adapters()
     }
 
     pub fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus {
-        self.protocol.install_javascript_adapters(sudo)
+        self.protocols
+            .adapter_installation
+            .install_javascript_adapters(sudo)
     }
 
     pub fn detect_language(&self) -> Option<ProjectLanguageVO> {
-        self.protocol.detect_language()
+        self.protocols.language_detection.detect_language()
     }
 
     pub fn detect_languages(&self) -> ProjectLanguagesVO {
-        self.protocol.detect_languages()
+        self.protocols.language_detection.detect_languages()
     }
 
     pub fn get_config_template(&self, language: &str) -> Result<&'static str, SetupError> {
-        self.protocol.get_config_template(language)
+        self.protocols.config_template.get_config_template(language)
     }
 
     pub fn pre_flight_check(&self) -> PreFlightResult {
-        self.protocol.pre_flight_check()
+        self.protocols.pre_flight.pre_flight_check()
     }
 
     pub fn get_embedded_skills(&self) -> &'static [EmbeddedSkillVO] {
-        self.protocol.get_embedded_skills()
+        self.protocols.config_template.get_embedded_skills()
     }
 
     pub fn write_config_file(
@@ -180,16 +203,18 @@ impl SetupManagementOrchestrator {
         filename: &str,
         content: &str,
     ) -> shared::project_setup::taxonomy_setup_vo::WriteConfigResult {
-        self.protocol.write_config_file(filename, content)
+        self.protocols
+            .config_writing
+            .write_config_file(filename, content)
     }
 
     pub fn create_global_config_dir(
         &self,
     ) -> shared::project_setup::taxonomy_setup_vo::CreateConfigDirResult {
-        self.protocol.create_global_config_dir()
+        self.protocols.config_writing.create_global_config_dir()
     }
 
     pub fn file_exists(&self, path: &str) -> bool {
-        self.protocol.file_exists(path)
+        self.protocols.path_existence.file_exists(path)
     }
 }

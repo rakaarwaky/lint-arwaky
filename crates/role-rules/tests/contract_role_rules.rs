@@ -15,8 +15,8 @@ use shared::common::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::taxonomy_role_request::RoleRequest;
 use shared::role_rules::{
-    IAgentRoleProtocol, ICapabilitiesRoleProtocol, IContractRoleProtocol, IRoleRunnerAggregate,
-    ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
+    IAgentRoleProtocol, ICapabilitiesRoleProtocol, IClassificationProtocol, IContractRoleProtocol,
+    IRoleRunnerAggregate, ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 use std::sync::Arc;
 
@@ -117,6 +117,26 @@ fn utility_role_checker_implements_protocol() {
 }
 
 // ── RoleOrchestrator → IRoleRunnerAggregate ────────────────
+
+#[test]
+fn role_orchestrator_implements_classification_protocol() {
+    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
+    let deps = RoleCheckerDeps {
+        taxonomy: Arc::new(TaxonomyRoleChecker::new()),
+        contract: Arc::new(ContractRoleChecker::new()),
+        capabilities_rust: rust_auditor.clone(),
+        capabilities_python: Arc::new(CapabilitiesPythonRoleAuditor::new()),
+        capabilities_typescript: Arc::new(CapabilitiesTypeScriptRoleAuditor::new()),
+        capabilities: rust_auditor,
+        surface: Arc::new(SurfaceRoleChecker::new()),
+        agent: Arc::new(AgentRoleChecker::new()),
+        utility: Arc::new(UtilityRoleChecker::new()),
+    };
+    let orch = RoleOrchestrator::new(deps, &config);
+    let file = dummy_file();
+    assert!(orch.classify_layer(&file).is_none());
+}
 
 #[test]
 fn role_orchestrator_implements_aggregate() {

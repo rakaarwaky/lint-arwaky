@@ -12,10 +12,10 @@ fn make_container() -> SetupContainer {
 #[test]
 fn fr002_env_contains_phantom_root() {
     let container = make_container();
-    let proto = container.protocol();
+    let env_gen = container.env_generation();
     let tmp = TempDir::new().unwrap();
     let home = DirectoryPath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let env = proto.generate_env(&home);
+    let env = env_gen.generate_env(&home);
     assert!(
         env.value().contains("PHANTOM_ROOT="),
         "FR-002: .env must contain PHANTOM_ROOT"
@@ -30,10 +30,10 @@ fn fr002_env_contains_phantom_root() {
 #[test]
 fn fr002_env_contains_header() {
     let container = make_container();
-    let proto = container.protocol();
+    let env_gen = container.env_generation();
     let tmp = TempDir::new().unwrap();
     let home = DirectoryPath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let env = proto.generate_env(&home);
+    let env = env_gen.generate_env(&home);
     assert!(
         env.value()
             .contains("Lint Arwaky Environment Configuration"),
@@ -54,12 +54,13 @@ fn fr002_env_empty_home_path_rejected() {
 #[test]
 fn fr002_env_writable_to_disk() {
     let container = make_container();
-    let proto = container.protocol();
+    let env_gen = container.env_generation();
+    let config_writing = container.config_writing();
     let tmp = TempDir::new().unwrap();
     let home = DirectoryPath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let env = proto.generate_env(&home);
+    let env = env_gen.generate_env(&home);
     let path = tmp.path().join(".env");
-    let result = proto.write_config_file(&path.to_string_lossy(), env.value());
+    let result = config_writing.write_config_file(&path.to_string_lossy(), env.value());
     assert!(result.is_ok(), "FR-002: .env should be writable");
     let content = std::fs::read_to_string(&path).unwrap();
     assert!(content.contains("PHANTOM_ROOT="));

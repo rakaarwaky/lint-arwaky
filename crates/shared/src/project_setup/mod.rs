@@ -11,8 +11,14 @@ pub mod taxonomy_skills_constant;
 
 // ── Contract traits ──
 pub use contract_setup_aggregate::ISetupAggregate;
-pub use contract_setup_protocol::ISetupInstallerProtocol;
-pub use contract_setup_protocol::ISetupManagementProtocol;
+pub use contract_setup_protocol::IAdapterInstallationProtocol;
+pub use contract_setup_protocol::IConfigTemplateProtocol;
+pub use contract_setup_protocol::IConfigWritingProtocol;
+pub use contract_setup_protocol::IEnvGenerationProtocol;
+pub use contract_setup_protocol::IFilePathExistenceProtocol;
+pub use contract_setup_protocol::ILanguageDetectionProtocol;
+pub use contract_setup_protocol::IMcpConfigGenerationProtocol;
+pub use contract_setup_protocol::IPreFlightProtocol;
 pub use taxonomy_setup_request::SetupRequest;
 pub use taxonomy_setup_response::SetupResponse;
 

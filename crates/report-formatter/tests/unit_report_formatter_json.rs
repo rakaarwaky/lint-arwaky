@@ -3,7 +3,8 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IReportFormatterProtocol;
+use shared::report_formatter::IFormatDelegationProtocol;
+use shared::report_formatter::IJsonFormatProtocol;
 
 fn report_with_mixed_results() -> ScanReport {
     let aes = LintResult {

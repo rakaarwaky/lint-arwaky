@@ -5,8 +5,8 @@ use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidato
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared::config_system::{
-    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
-    IConfigValidatorProtocol, IWorkspaceDetectorProtocol,
+    IConfigOrchestratorAggregate, IConfigParseProtocol, IConfigReadProtocol,
+    IConfigValidateProtocol, IWorkspaceDetectProtocol,
 };
 
 #[test]
@@ -16,26 +16,26 @@ fn config_orchestrator_implements_aggregate() {
 }
 
 #[test]
-fn config_yaml_reader_implements_reader_protocol() {
-    fn assert_trait<T: IConfigReaderProtocol>() {}
+fn config_yaml_reader_implements_read_protocol() {
+    fn assert_trait<T: IConfigReadProtocol>() {}
     assert_trait::<ConfigYamlReader>();
 }
 
 #[test]
-fn config_rules_validator_implements_validator_protocol() {
-    fn assert_trait<T: IConfigValidatorProtocol>() {}
+fn config_rules_validator_implements_validate_protocol() {
+    fn assert_trait<T: IConfigValidateProtocol>() {}
     assert_trait::<ConfigRulesValidator>();
 }
 
 #[test]
-fn workspace_detector_implements_detector_protocol() {
-    fn assert_trait<T: IWorkspaceDetectorProtocol>() {}
+fn workspace_detector_implements_detect_protocol() {
+    fn assert_trait<T: IWorkspaceDetectProtocol>() {}
     assert_trait::<WorkspaceDetector>();
 }
 
 #[test]
-fn config_parser_provider_implements_parser_protocol() {
-    fn assert_trait<T: IConfigParserProtocol>() {}
+fn config_parser_provider_implements_parse_protocol() {
+    fn assert_trait<T: IConfigParseProtocol>() {}
     assert_trait::<ConfigParserProvider>();
 }
 

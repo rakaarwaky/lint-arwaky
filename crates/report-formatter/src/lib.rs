@@ -1,8 +1,8 @@
 // PURPOSE: report-formatter — formatting capabilities for ScanReport output
 //
-// Provides text, JSON, SARIF, and JUnit formatters implementing
-// IReportFormatterProtocol. Consumed by cli-commands via
-// IReportFormatterAggregate (agent layer).
+// Provides text, JSON, SARIF, and JUnit formatters, each implementing its
+// FR-ReportFormatter-NNN format seam plus the FR-005 delegation seam.
+// Consumed by cli-commands via IReportFormatterAggregate (agent layer).
 pub mod agent_report_formatter_orchestrator;
 pub mod capabilities_json_formatter;
 pub mod capabilities_junit_formatter;

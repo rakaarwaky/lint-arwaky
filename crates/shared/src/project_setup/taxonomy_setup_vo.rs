@@ -9,7 +9,7 @@ use crate::common::taxonomy_suggestion_vo::DescriptionVO;
 
 /// Name of the MCP binary as resolved on the host PATH (e.g. "lint-arwaky-cli").
 /// Replaces the previous `String` return type of
-/// `ISetupManagementProtocol::which_mcp_binary`.
+/// `IMcpConfigGenerationProtocol::which_mcp_binary`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct McpBinaryNameVO {
     pub value: String,
@@ -28,7 +28,7 @@ impl McpBinaryNameVO {
 
 /// Programming language detected for a project (e.g. "rust", "python",
 /// "javascript", "typescript"). Replaces the previous `String` return type
-/// of `ISetupManagementProtocol::detect_language`.
+/// of `ILanguageDetectionProtocol::detect_language`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ProjectLanguageVO {
     pub value: String,
@@ -47,7 +47,7 @@ impl ProjectLanguageVO {
 
 /// List of programming languages detected for a project. Replaces the
 /// previous `Vec<String>` return type of
-/// `ISetupManagementProtocol::detect_languages`.
+/// `ILanguageDetectionProtocol::detect_languages`.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct ProjectLanguagesVO {
     pub values: Vec<ProjectLanguageVO>,

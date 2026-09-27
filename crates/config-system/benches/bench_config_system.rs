@@ -7,8 +7,8 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ConfigRequest;
-use shared::config_system::contract_config_protocol::IConfigValidatorProtocol;
-use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::contract_config_protocol::IConfigValidateProtocol;
+use shared::config_system::contract_config_protocol::IWorkspaceDetectProtocol;
 use shared::config_system::taxonomy_config_vo::{AdapterEntry, AdapterStatus, ProjectConfig};
 use shared::config_system::utility_config_parser::parse_config_yaml;
 use std::fs;

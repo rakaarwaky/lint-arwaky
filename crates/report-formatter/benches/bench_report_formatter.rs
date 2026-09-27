@@ -6,6 +6,10 @@ use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::{LintResult, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared::report_formatter::IJUnitFormatProtocol;
+use shared::report_formatter::IJsonFormatProtocol;
+use shared::report_formatter::ISarifFormatProtocol;
+use shared::report_formatter::ITextFormatProtocol;
 
 fn report_with_n_violations(n: usize) -> ScanReport {
     let results = (0..n)
@@ -56,7 +60,7 @@ fn bench_sarif_format(c: &mut Criterion) {
         let report = report_with_n_violations(n);
         group.throughput(Throughput::Elements(n as u64));
         group.bench_with_input(BenchmarkId::new("violations", n), &report, |b, r| {
-            b.iter(|| std::hint::black_box(SarifFormatter::new().format_sarif_report(r)))
+            b.iter(|| std::hint::black_box(SarifFormatter::new().format_sarif(r)))
         });
     }
     group.finish();
@@ -68,7 +72,7 @@ fn bench_junit_format(c: &mut Criterion) {
         let report = report_with_n_violations(n);
         group.throughput(Throughput::Elements(n as u64));
         group.bench_with_input(BenchmarkId::new("violations", n), &report, |b, r| {
-            b.iter(|| std::hint::black_box(JunitFormatter::new().format_junit_report(r)))
+            b.iter(|| std::hint::black_box(JunitFormatter::new().format_junit(r)))
         });
     }
     group.finish();

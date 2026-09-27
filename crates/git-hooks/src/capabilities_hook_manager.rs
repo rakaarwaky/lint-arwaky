@@ -1,15 +1,18 @@
-// PURPOSE: HookManager — IHookProtocol implementation for git hook management (capabilities layer)
+// PURPOSE: HookManager — FR-005/FR-006/FR-007 protocol implementations (capabilities layer)
 //
-// Delegates low-level hook file operations to the adapter and implements
-// config initialization, ignore rule management, and diff data comparison.
+// Owns the config-side requirements: diff data comparison, ignore rule
+// management, and default config initialization.
 
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 
-use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffDataProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IIgnoreRuleProtocol;
 
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::git_hooks::taxonomy_git_diff_data_vo::{
@@ -21,28 +24,14 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct HookManager {
-    hook_adapter: Arc<dyn IHookManagerProtocol>,
+    hook_installer: Arc<dyn IHookInstallProtocol>,
+    hook_uninstaller: Arc<dyn IHookUninstallProtocol>,
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IHookProtocol for HookManager {
-    fn install_pre_commit(
-        &self,
-        executable_path: &FilePath,
-    ) -> Result<SuccessStatus, GitHookError> {
-        self.hook_adapter.install_pre_commit(executable_path)
-    }
-
-    fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
-        self.hook_adapter.uninstall_pre_commit()
-    }
-
-    fn get_hook_manager_identity(&self) -> Identity {
-        Identity::new("git_hook_manager")
-    }
-
+impl IConfigInitProtocol for HookManager {
     fn initialize_config(&self, path: &str) -> DescriptionVO {
         let config_file = format!("{}/lint_arwaky.config.yaml", path);
         let config_path = std::path::Path::new(&config_file);
@@ -55,7 +44,9 @@ impl IHookProtocol for HookManager {
             Err(e) => DescriptionVO::new(format!("Failed to initialize config: {}", e)),
         }
     }
+}
 
+impl IIgnoreRuleProtocol for HookManager {
     fn update_ignore_rule(&self, request: HookIgnoreUpdateVO) -> DescriptionVO {
         let config_path = std::path::Path::new(&request.config_path);
         if !config_path.exists() {
@@ -120,7 +111,9 @@ impl IHookProtocol for HookManager {
             Err(e) => DescriptionVO::new(format!("Failed to serialize config: {}", e)),
         }
     }
+}
 
+impl IDiffDataProtocol for HookManager {
     fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
         let p1_exists = self.io.path_exists(std::path::Path::new(path1));
         let p2_exists = self.io.path_exists(std::path::Path::new(path2));
@@ -178,14 +171,38 @@ impl IHookProtocol for HookManager {
     }
 }
 
+impl IHookInstallProtocol for HookManager {
+    fn install_pre_commit(
+        &self,
+        executable_path: &FilePath,
+    ) -> Result<SuccessStatus, GitHookError> {
+        self.hook_installer.install_pre_commit(executable_path)
+    }
+
+    fn get_hook_manager_identity(&self) -> Identity {
+        Identity::new("git_hook_manager")
+    }
+}
+
+impl IHookUninstallProtocol for HookManager {
+    fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
+        self.hook_uninstaller.uninstall_pre_commit()
+    }
+}
+
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl HookManager {
     pub fn new(
-        hook_adapter: Arc<dyn IHookManagerProtocol>,
+        hook_installer: Arc<dyn IHookInstallProtocol>,
+        hook_uninstaller: Arc<dyn IHookUninstallProtocol>,
         io: Arc<dyn IFileSystemIOProtocol>,
     ) -> Self {
-        Self { hook_adapter, io }
+        Self {
+            hook_installer,
+            hook_uninstaller,
+            io,
+        }
     }
 
     fn compute_diff_score(&self, path1: &str, path2: &str) -> Result<f64, std::io::Error> {

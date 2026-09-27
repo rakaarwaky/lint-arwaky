@@ -1,4 +1,5 @@
-// PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations via IFixProtocol, tracks fix results
+// PURPOSE: LintFixProcessor — applies auto-fixes for architecture violations,
+// split across 5 FR-backed protocol traits (AES102) plus the infra adapter.
 //
 // FRD compliance: every fix attempt returns a reason-coded FixOutcome
 // (Applied / Skipped(reason) / Failed(reason)), never a bare boolean.
@@ -20,7 +21,10 @@
 // - TR-3: Removed `emit_fix_event`/`is_fixable`/`fixable_codes` from protocol
 // - RC-1: Fixed FRD ambiguity — "remove comment from line" = strip, not delete
 
-use shared::auto_fix::contract_fix_protocol::IFixProtocol;
+use shared::auto_fix::contract_fix_protocol::{
+    IBypassFixProtocol, IFixPipelineProtocol, IManualReportProtocol, ISymbolRenameProtocol,
+    IUnusedImportFixProtocol,
+};
 use shared::auto_fix::{
     FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, SkipReason,
 };
@@ -60,11 +64,10 @@ pub struct LintFixProcessor {
     file_adapter: Arc<dyn IFileAdapterProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: Protocol Trait Implementations ──────────────
 
-impl IFixProtocol for LintFixProcessor {
-    /// FR-001/002/003/004: Run linter, filter fixable violations, apply fixes.
-    /// `dry_run` is selectable per request (BF-1, FR-004 assumption §9).
+/// FR-004 — pipeline orchestrator method.
+impl IFixPipelineProtocol for LintFixProcessor {
     fn execute(&self, path: &FilePath, dry_run: bool) -> FixResult {
         let analysis = self
             .linter
@@ -235,23 +238,35 @@ impl IFixProtocol for LintFixProcessor {
             error,
         }
     }
+}
 
+/// FR-002 — bypass pattern removal/replacement.
+impl IBypassFixProtocol for LintFixProcessor {
     fn fix_bypass_comments(&self, file_path: &str, line: LineNumber) -> FixOutcome {
         // Standalone calls use the default dry_run=false
         self.fix_bypass_comments_impl(file_path, line.value as u32, false)
     }
+}
 
+/// FR-001 — unused import removal.
+impl IUnusedImportFixProtocol for LintFixProcessor {
     fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome {
         // Standalone calls use the default dry_run=false
         self.fix_unused_import_impl(file_path, line.value as u32, false)
     }
+}
 
-    /// FR-003: Public rename_symbol — delegates to rename_symbol_impl.
+/// FR-003 — mechanical symbol rename.
+impl ISymbolRenameProtocol for LintFixProcessor {
+    /// Public rename_symbol — delegates to rename_symbol_impl.
     fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome {
         // Standalone calls default to dry_run=false
         self.rename_symbol_impl(file_path, old_name, new_name, false)
     }
+}
 
+/// FR-005 — non-fixable violation report.
+impl IManualReportProtocol for LintFixProcessor {
     fn report_non_fixable(&self, violations: &[LintResult]) -> Vec<LintMessage> {
         let mut manual: Vec<LintMessage> = Vec::new();
         for r in violations {

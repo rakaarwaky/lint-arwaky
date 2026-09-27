@@ -9,7 +9,8 @@
 // elevated permissions.
 
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::project_setup::contract_setup_protocol::ISetupInstallerProtocol;
+use shared::common::taxonomy_job_vo::SuccessStatus;
+use shared::project_setup::contract_setup_protocol::IAdapterInstallationProtocol;
 use shared::project_setup::contract_setup_protocol::InstallPackagesResult;
 use shared::project_setup::taxonomy_setup_vo::SetupError;
 
@@ -19,7 +20,7 @@ pub struct SetupInstallerAdapter;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl ISetupInstallerProtocol for SetupInstallerAdapter {
+impl IAdapterInstallationProtocol for SetupInstallerAdapter {
     fn install_python_packages(&self, packages: &PatternList) -> InstallPackagesResult {
         if packages.is_empty() {
             return Ok(());
@@ -73,6 +74,21 @@ impl ISetupInstallerProtocol for SetupInstallerAdapter {
                 status.code()
             )))
         }
+    }
+
+    /// Install the Python adapter set (ruff, mypy, bandit).
+    fn install_python_adapters(&self) -> SuccessStatus {
+        let res = self.install_python_packages(&PatternList::new(vec!["ruff", "mypy", "bandit"]));
+        SuccessStatus::new(res.is_ok())
+    }
+
+    /// Install the JavaScript adapter set (eslint, prettier, typescript).
+    fn install_javascript_adapters(&self, sudo: bool) -> SuccessStatus {
+        let res = self.install_npm_packages(
+            &PatternList::new(vec!["eslint", "prettier", "typescript"]),
+            sudo,
+        );
+        SuccessStatus::new(res.is_ok())
     }
 }
 

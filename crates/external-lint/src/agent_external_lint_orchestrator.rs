@@ -17,10 +17,13 @@ use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IAdapterScanProtocol;
+use shared::external_lint::contract_external_lint_protocol::ILanguageDetectProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::external_lint::taxonomy_external_lint_request::ExternalLintRequest;
 use shared::external_lint::taxonomy_external_lint_response::ExternalLintResponse;
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
+use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use tracing::warn;
@@ -63,6 +66,7 @@ impl ExternalLintOrchestrator {
     pub fn scan_all(&self, path: &FilePath) -> LintResultList {
         self.scan_all_with_context(path, &ExternalLintContext::default())
     }
+
     pub fn scan_all_with_context(
         &self,
         path: &FilePath,
@@ -146,5 +150,33 @@ impl ExternalLintOrchestrator {
     }
     pub fn new(deps: ExternalLintDeps) -> Self {
         Self { deps }
+    }
+}
+
+// ─── Block 4: FR-001 language detection ────────────────────
+
+impl ILanguageDetectProtocol for ExternalLintOrchestrator {
+    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool) {
+        let files = self
+            .deps
+            .filesystem
+            .execute(FilesystemRequest::discover_files(std::path::Path::new(
+                &path.value,
+            )))
+            .into_paths();
+        let has_rust = files.iter().any(|f| f.ends_with(".rs"));
+        let has_python = files.iter().any(|f| f.ends_with(".py"));
+        let has_js = files.iter().any(|f| {
+            f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
+        });
+        (has_rust, has_python, has_js)
+    }
+}
+
+// ─── Block 5: FR-003 scan_all aggregation ─────────────────
+
+impl IAdapterScanProtocol for ExternalLintOrchestrator {
+    fn scan_all(&self, path: &FilePath, context: &ExternalLintContext) -> LintResultList {
+        self.scan_all_with_context(path, context)
     }
 }

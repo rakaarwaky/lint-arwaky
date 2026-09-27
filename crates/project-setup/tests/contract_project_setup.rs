@@ -2,7 +2,11 @@
 use project_setup_lint_arwaky::agent_setup_orchestrator::SetupManagementOrchestrator;
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
 use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
-use shared::project_setup::{ISetupAggregate, ISetupInstallerProtocol, ISetupManagementProtocol};
+use shared::project_setup::{
+    IAdapterInstallationProtocol, IConfigTemplateProtocol, IConfigWritingProtocol,
+    IEnvGenerationProtocol, IFilePathExistenceProtocol, ILanguageDetectionProtocol,
+    IMcpConfigGenerationProtocol, IPreFlightProtocol, ISetupAggregate,
+};
 
 #[test]
 fn setup_management_orchestrator_implements_aggregate() {
@@ -11,15 +15,51 @@ fn setup_management_orchestrator_implements_aggregate() {
 }
 
 #[test]
-fn setup_management_processor_implements_protocol() {
-    fn assert_trait<T: ISetupManagementProtocol>() {}
+fn setup_management_processor_implements_mcp_config_protocol() {
+    fn assert_trait<T: IMcpConfigGenerationProtocol>() {}
     assert_trait::<SetupManagementProcessor>();
 }
 
 #[test]
-fn setup_installer_adapter_implements_installer_protocol() {
-    fn assert_trait<T: ISetupInstallerProtocol>() {}
+fn setup_management_processor_implements_env_generation_protocol() {
+    fn assert_trait<T: IEnvGenerationProtocol>() {}
+    assert_trait::<SetupManagementProcessor>();
+}
+
+#[test]
+fn setup_management_processor_implements_language_detection_protocol() {
+    fn assert_trait<T: ILanguageDetectionProtocol>() {}
+    assert_trait::<SetupManagementProcessor>();
+}
+
+#[test]
+fn setup_installer_adapter_implements_adapter_installation_protocol() {
+    fn assert_trait<T: IAdapterInstallationProtocol>() {}
     assert_trait::<SetupInstallerAdapter>();
+}
+
+#[test]
+fn setup_management_processor_implements_config_template_protocol() {
+    fn assert_trait<T: IConfigTemplateProtocol>() {}
+    assert_trait::<SetupManagementProcessor>();
+}
+
+#[test]
+fn setup_management_processor_implements_config_writing_protocol() {
+    fn assert_trait<T: IConfigWritingProtocol>() {}
+    assert_trait::<SetupManagementProcessor>();
+}
+
+#[test]
+fn setup_management_processor_implements_pre_flight_protocol() {
+    fn assert_trait<T: IPreFlightProtocol>() {}
+    assert_trait::<SetupManagementProcessor>();
+}
+
+#[test]
+fn setup_management_processor_implements_path_existence_protocol() {
+    fn assert_trait<T: IFilePathExistenceProtocol>() {}
+    assert_trait::<SetupManagementProcessor>();
 }
 
 #[test]
@@ -37,13 +77,13 @@ fn orchestrator_can_be_arc_trait_object() {
 }
 
 #[test]
-fn protocol_can_be_arc_trait_object() {
-    fn assert_object_safe<T: ISetupManagementProtocol>() {}
+fn mcp_config_protocol_can_be_arc_trait_object() {
+    fn assert_object_safe<T: IMcpConfigGenerationProtocol>() {}
     assert_object_safe::<SetupManagementProcessor>();
 }
 
 #[test]
-fn installer_can_be_arc_trait_object() {
-    fn assert_object_safe<T: ISetupInstallerProtocol>() {}
+fn adapter_protocol_can_be_arc_trait_object() {
+    fn assert_object_safe<T: IAdapterInstallationProtocol>() {}
     assert_object_safe::<SetupInstallerAdapter>();
 }

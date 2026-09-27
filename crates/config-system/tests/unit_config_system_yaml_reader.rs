@@ -3,7 +3,7 @@ mod common;
 
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigReaderProtocol};
+use shared::config_system::{ConfigLanguage, IConfigListProtocol, IConfigReadProtocol};
 
 use std::fs;
 use tempfile::TempDir;

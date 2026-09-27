@@ -126,7 +126,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
         Ok(LintResultList::new(results))
     }
 
-    fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let working_dir = self.tool_resolution.resolve_cargo_working_dir(path);
         let cmd = vec!["cargo".to_string(), "fmt".to_string()];
         let _ = self.executor.execute_command(

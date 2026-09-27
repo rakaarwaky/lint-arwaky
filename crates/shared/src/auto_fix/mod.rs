@@ -11,8 +11,12 @@ pub mod taxonomy_fix_vo;
 
 // ── Contract traits ──
 pub use contract_fix_aggregate::IFixAggregate;
+pub use contract_fix_protocol::IBypassFixProtocol;
 pub use contract_fix_protocol::IFileAdapterProtocol;
-pub use contract_fix_protocol::IFixProtocol;
+pub use contract_fix_protocol::IFixPipelineProtocol;
+pub use contract_fix_protocol::IManualReportProtocol;
+pub use contract_fix_protocol::ISymbolRenameProtocol;
+pub use contract_fix_protocol::IUnusedImportFixProtocol;
 
 // ── Taxonomy types ──
 pub use taxonomy_fix_applied_event::FixApplied;

@@ -2,7 +2,11 @@ use shared::common::taxonomy_action_vo::JobId;
 use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
-use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::contract_maintenance_protocol::{
+    IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
+    IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol, IToolUpdateProtocol,
+    IToolchainDiagnosticProtocol,
+};
 use shared::maintenance::taxonomy_maintenance_request::MaintenanceRequest;
 use shared::maintenance::taxonomy_maintenance_response::MaintenanceResponse;
 
@@ -15,12 +19,29 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+/// One injected seam per maintenance FR; `MaintenanceChecker` supplies all nine.
 pub struct MaintenanceDeps {
-    pub checker: Arc<dyn IMaintenanceCheckerProtocol>,
+    pub toolchain: Arc<dyn IToolchainDiagnosticProtocol>,
+    pub doctor: Arc<dyn IDoctorProtocol>,
+    pub stats: Arc<dyn IProjectStatsProtocol>,
+    pub clean: Arc<dyn ICacheCleanupProtocol>,
+    pub update: Arc<dyn IToolUpdateProtocol>,
+    pub self_update: Arc<dyn ISelfUpdateProtocol>,
+    pub health: Arc<dyn IAdapterHealthProtocol>,
+    pub security: Arc<dyn ISecurityScanProtocol>,
+    pub dependency_report: Arc<dyn IDependencyReportProtocol>,
 }
 
 pub struct MaintenanceCommandsOrchestrator {
-    deps: MaintenanceDeps,
+    toolchain: Arc<dyn IToolchainDiagnosticProtocol>,
+    doctor: Arc<dyn IDoctorProtocol>,
+    stats: Arc<dyn IProjectStatsProtocol>,
+    clean: Arc<dyn ICacheCleanupProtocol>,
+    update: Arc<dyn IToolUpdateProtocol>,
+    self_update: Arc<dyn ISelfUpdateProtocol>,
+    health: Arc<dyn IAdapterHealthProtocol>,
+    security: Arc<dyn ISecurityScanProtocol>,
+    dependency_report: Arc<dyn IDependencyReportProtocol>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -70,47 +91,57 @@ impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
 
 impl MaintenanceCommandsOrchestrator {
     pub fn new(deps: MaintenanceDeps) -> Self {
-        Self { deps }
+        Self {
+            toolchain: deps.toolchain,
+            doctor: deps.doctor,
+            stats: deps.stats,
+            clean: deps.clean,
+            update: deps.update,
+            self_update: deps.self_update,
+            health: deps.health,
+            security: deps.security,
+            dependency_report: deps.dependency_report,
+        }
     }
 
     pub fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
-        self.deps.checker.stats(project_path)
+        self.stats.stats(project_path)
     }
 
     pub fn clean(&self) {
-        self.deps.checker.clean()
+        self.clean.clean()
     }
 
     pub fn update(&self) {
-        self.deps.checker.update()
+        self.update.update()
     }
 
     pub fn self_update(&self, check_only: bool) -> SelfUpdateResultVO {
-        self.deps.checker.self_update(check_only)
+        self.self_update.self_update(check_only)
     }
 
     pub fn doctor(&self) -> DoctorResultVO {
-        self.deps.checker.doctor()
+        self.doctor.doctor()
     }
 
     pub fn cancel(&self, _job_id: JobId) {}
 
     pub fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        self.deps.checker.diagnose_toolchain()
+        self.toolchain.diagnose_toolchain()
     }
 
     pub fn health_check(&self) -> HealthCheckResult {
-        self.deps.checker.health_check()
+        self.health.health_check()
     }
 
     pub fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
-        self.deps.checker.run_security_scan(project_path)
+        self.security.run_security_scan(project_path)
     }
 
     pub fn run_dependency_report(
         &self,
         project_path: &FilePath,
     ) -> Result<DependencyReport, String> {
-        self.deps.checker.run_dependency_report(project_path)
+        self.dependency_report.run_dependency_report(project_path)
     }
 }

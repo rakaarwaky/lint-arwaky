@@ -68,7 +68,6 @@ impl INamingConventionProtocol for NamingChecker {
 
         results.values.extend(violations);
     }
-
 }
 
 impl ISuffixPolicyProtocol for NamingChecker {

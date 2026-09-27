@@ -8,7 +8,8 @@ pub mod taxonomy_naming_response;
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Contract traits ──
-pub use contract_naming_checker_protocol::INamingCheckerProtocol;
+pub use contract_naming_checker_protocol::INamingConventionProtocol;
+pub use contract_naming_checker_protocol::ISuffixPolicyProtocol;
 pub use contract_naming_runner_aggregate::INamingRunnerAggregate;
 
 // ── Taxonomy types ──

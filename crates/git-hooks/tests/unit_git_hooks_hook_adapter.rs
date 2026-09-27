@@ -2,7 +2,8 @@
 
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use shared::common::FilePath;
-use shared::git_hooks::IHookManagerProtocol;
+use shared::git_hooks::IHookInstallProtocol;
+use shared::git_hooks::IHookUninstallProtocol;
 use tempfile::TempDir;
 
 fn make_adapter(tmp: &TempDir) -> GitHookAdapter {

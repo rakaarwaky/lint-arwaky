@@ -8,7 +8,13 @@ pub mod taxonomy_report_vo;
 
 // ── Contract traits ──
 pub use contract_report_formatter_aggregate::IReportFormatterAggregate;
-pub use contract_report_formatter_protocol::IReportFormatterProtocol;
+pub use contract_report_formatter_protocol::IDefaultReportFallbackProtocol;
+pub use contract_report_formatter_protocol::IFormatDelegationProtocol;
+pub use contract_report_formatter_protocol::IJUnitFormatProtocol;
+pub use contract_report_formatter_protocol::IJsonFormatProtocol;
+pub use contract_report_formatter_protocol::ISarifFormatProtocol;
+pub use contract_report_formatter_protocol::ITextFormatProtocol;
+pub use contract_report_formatter_protocol::IXmlEscapeProtocol;
 pub use taxonomy_report_vo::JsonDiagnostic;
 pub use taxonomy_report_vo::JsonReportDto;
 pub use taxonomy_report_vo::JsonSummary;

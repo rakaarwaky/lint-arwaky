@@ -11,8 +11,16 @@ pub mod taxonomy_maintenance_vo;
 
 // ── Contract traits ──
 pub use contract_maintenance_aggregate::IMaintenanceAggregate;
-pub use contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+pub use contract_maintenance_protocol::IAdapterHealthProtocol;
+pub use contract_maintenance_protocol::ICacheCleanupProtocol;
+pub use contract_maintenance_protocol::IDependencyReportProtocol;
+pub use contract_maintenance_protocol::IDoctorProtocol;
+pub use contract_maintenance_protocol::IProjectStatsProtocol;
+pub use contract_maintenance_protocol::ISecurityScanProtocol;
+pub use contract_maintenance_protocol::ISelfUpdateProtocol;
 pub use contract_maintenance_protocol::IToolExecutorProtocol;
+pub use contract_maintenance_protocol::IToolUpdateProtocol;
+pub use contract_maintenance_protocol::IToolchainDiagnosticProtocol;
 pub use taxonomy_maintenance_constant::GITHUB_REPO;
 pub use taxonomy_maintenance_request::MaintenanceRequest;
 pub use taxonomy_maintenance_response::MaintenanceResponse;

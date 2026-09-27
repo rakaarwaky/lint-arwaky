@@ -3,19 +3,38 @@
 // One file for the role feature. Each trait below is one capability
 // seam: a trait carries every method that capability implements, with one
 // concrete return type each, so a capability implements its trait outright
-// and never carries unimplemented stubs.
+// and never carries unimplemented stubs. One trait per FR-RoleRules-001..007.
 
+use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::filesystem::taxonomy_filesystem_vo::ExternalReferenceMap;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 
-pub trait IAgentRoleProtocol: Send + Sync {
-    /// AES405: enforce agent type composition.
-    /// Rule 1 — >= 1 struct must implement an aggregate trait.
-    /// Rule 2 — max 3 types (struct + enum).
-    fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>);
+/// FR-RoleRules-001: classify each file by its filename prefix to determine its
+/// AES layer, then dispatch to the layer-specific role checker. The prefix is
+/// the first `_`-separated segment of the file stem; `root` and unrecognised
+/// prefixes are skipped.
+pub trait IClassificationProtocol: Send + Sync {
+    /// Resolve the AES layer name for a file from its filename prefix.
+    /// Returns `None` when the prefix maps to no layer, so the file is skipped.
+    fn classify_layer(&self, file: &FileEntry) -> Option<LayerNameVO>;
 }
 
+/// FR-RoleRules-002 (AES401): taxonomy purity and constant placement.
+pub trait ITaxonomyRoleProtocol: Send + Sync {
+    fn check_entity(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+    fn check_error(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+    fn check_event(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+    fn check_constant(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+}
+
+/// FR-RoleRules-003 (AES402): contract primitive restriction.
+pub trait IContractRoleProtocol: Send + Sync {
+    fn check_protocol(&self, file: &FileEntry) -> Vec<LintResult>;
+    fn check_aggregate(&self, file: &FileEntry) -> Vec<LintResult>;
+}
+
+/// FR-RoleRules-004 (AES403): capability protocol implementation.
 pub trait ICapabilitiesRoleProtocol: Send + Sync {
     /// Entry point for every AES403 capability sub-check.
     ///
@@ -80,25 +99,23 @@ pub trait ICapabilitiesRoleProtocol: Send + Sync {
     );
 }
 
-pub trait IContractRoleProtocol: Send + Sync {
-    fn check_protocol(&self, file: &FileEntry) -> Vec<LintResult>;
-    fn check_aggregate(&self, file: &FileEntry) -> Vec<LintResult>;
+/// FR-RoleRules-005 (AES404): utility purity.
+pub trait IUtilityRoleProtocol: Send + Sync {
+    fn check_utility_convention(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 }
 
+/// FR-RoleRules-006 (AES405): agent orchestrator composition.
+pub trait IAgentRoleProtocol: Send + Sync {
+    /// AES405: enforce agent type composition.
+    /// Rule 1 — >= 1 struct must implement an aggregate trait.
+    /// Rule 2 — max 3 types (struct + enum).
+    fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>);
+}
+
+/// FR-RoleRules-007 (AES406): surface passive role.
 pub trait ISurfaceRoleProtocol: Send + Sync {
     fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
     fn check_utility_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
     fn check_passive_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
     fn check_fn_count_limit(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
-}
-
-pub trait ITaxonomyRoleProtocol: Send + Sync {
-    fn check_entity(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
-    fn check_error(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
-    fn check_event(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
-    fn check_constant(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
-}
-
-pub trait IUtilityRoleProtocol: Send + Sync {
-    fn check_utility_convention(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 }

@@ -3,12 +3,14 @@
 // FRD-compliant: accepts pre-parsed FileEntry from the filesystem crate.
 // No file I/O or AST parsing is performed internally.
 
+use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::ExternalReferenceMap;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::filesystem::taxonomy_filesystem_vo::ParseMetadata;
 use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared::role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
+use shared::role_rules::contract_role_protocol::IClassificationProtocol;
 use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
 use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
 use shared::role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
@@ -39,6 +41,32 @@ pub struct RoleOrchestrator {
     deps: RoleCheckerDeps,
     config: ArchitectureConfig,
     ignored_paths: Vec<String>,
+}
+
+// ─── FR-001: File Classification and Dispatch ─────────────
+
+impl IClassificationProtocol for RoleOrchestrator {
+    fn classify_layer(&self, file: &FileEntry) -> Option<LayerNameVO> {
+        let filename = file
+            .path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default();
+        let stem = Path::new(filename)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or_default();
+        match stem.split('_').next().unwrap_or_default() {
+            "taxonomy" => Some(LayerNameVO::new("taxonomy")),
+            "contract" => Some(LayerNameVO::new("contract")),
+            "capabilities" | "capability" => Some(LayerNameVO::new("capabilities")),
+            "utility" => Some(LayerNameVO::new("utility")),
+            "agent" => Some(LayerNameVO::new("agent")),
+            "surface" | "surfaces" => Some(LayerNameVO::new("surfaces")),
+            // `root` is pure DI wiring; unrecognised prefixes are skipped.
+            _ => None,
+        }
+    }
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────

@@ -13,24 +13,52 @@ use crate::maintenance::taxonomy_maintenance_vo::{
     ToolchainDiagnostics,
 };
 
-pub trait IMaintenanceCheckerProtocol: Send + Sync {
-    fn diagnose_toolchain(&self) -> ToolchainDiagnostics;
-    fn health_check(&self) -> HealthCheckResult;
-    fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport;
-    fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String>;
-    fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO;
-    fn clean(&self);
-    fn update(&self);
+/// FR-Maintenance-001: Environment Health Check (doctor).
+pub trait IDoctorProtocol: Send + Sync {
     fn doctor(&self) -> DoctorResultVO;
-    /// Check the latest GitHub release and optionally install it.
-    ///
-    /// When `check_only` is `true`, only query the API and report the result
-    /// without downloading or replacing any binary.
-    /// When `check_only` is `false`, download the latest release binary and
-    /// install it to `$CARGO_HOME/bin` or fall back to `$HOME/.cargo/bin`.
+}
+
+/// FR-Maintenance-002: Project Statistics (stats).
+pub trait IProjectStatsProtocol: Send + Sync {
+    fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO;
+}
+
+/// FR-Maintenance-003: Cache Cleanup (clean).
+pub trait ICacheCleanupProtocol: Send + Sync {
+    fn clean(&self);
+}
+
+/// FR-Maintenance-004: Tool Update (update).
+pub trait IToolUpdateProtocol: Send + Sync {
+    fn update(&self);
+}
+
+/// FR-Maintenance-005: Diagnose Toolchain.
+pub trait IToolchainDiagnosticProtocol: Send + Sync {
+    fn diagnose_toolchain(&self) -> ToolchainDiagnostics;
+}
+
+/// FR-Maintenance-006: Security Scan.
+pub trait ISecurityScanProtocol: Send + Sync {
+    fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport;
+}
+
+/// FR-Maintenance-007: Dependency Report.
+pub trait IDependencyReportProtocol: Send + Sync {
+    fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String>;
+}
+
+/// FR-Maintenance-008: Adapter Health Check.
+pub trait IAdapterHealthProtocol: Send + Sync {
+    fn health_check(&self) -> HealthCheckResult;
+}
+
+/// FR-Maintenance-009: Self-Update (binary).
+pub trait ISelfUpdateProtocol: Send + Sync {
     fn self_update(&self, check_only: bool) -> SelfUpdateResultVO;
 }
 
+/// IToolExecutorProtocol — internal tool-execution infra seam (no FR).
 pub trait IToolExecutorProtocol: Send + Sync {
     fn run_tool(&self, name: &str, args: &[&str]) -> ToolOutput;
     fn run_tool_in_dir(&self, name: &str, args: &[&str], dir: &FilePath) -> ToolOutput;
