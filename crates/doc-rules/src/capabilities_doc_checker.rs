@@ -165,13 +165,25 @@ impl DocChecker {
 
     /// Audit one document; *master* is the root master text, used by
     /// cross-cutting invariants that need workspace context.
-    fn audit_document(&self, doc: &DocSource, master: Option<&str>) -> Vec<DocFinding> {
+    /// *root* is used to render the document path relative to the audit root.
+    fn audit_document(
+        &self,
+        doc: &DocSource,
+        master: Option<&str>,
+        root: &Path,
+    ) -> Vec<DocFinding> {
         let name = doc
             .path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or_default()
             .to_string();
+        let rel = doc
+            .path
+            .strip_prefix(root)
+            .unwrap_or(&doc.path)
+            .to_string_lossy()
+            .replace('\\', "/");
         let sections = self.sections(&doc.text);
         let mut findings = Vec::new();
 
@@ -208,6 +220,10 @@ impl DocChecker {
         // ── AES605: Feature folder health ──
         // (folder-level checks run after all docs are collected in audit())
 
+        // Stamp every finding with the document it came from.
+        for f in &mut findings {
+            f.doc = rel.clone();
+        }
         findings
     }
 
@@ -252,6 +268,7 @@ impl DocChecker {
                 .max(1);
             let num = caps.get(2).map_or("", |m| m.as_str());
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_FR_FORMAT,
                 consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
                 format!(
@@ -286,6 +303,7 @@ impl DocChecker {
                     .count()
                     .max(1);
                 findings.push(DocFinding::new(
+                    "",
                     consts::RULE_CODE_FR_FORMAT,
                     consts::FR_FIELDS_VIOLATION_FIELD_MISSING,
                     format!(
@@ -315,6 +333,7 @@ impl DocChecker {
                 .any(|line| line.trim_start().starts_with("###") && line.contains(required));
             if !present {
                 findings.push(DocFinding::new(
+                    "",
                     consts::RULE_CODE_SECTION_STRUCTURE,
                     consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION,
                     format!(
@@ -336,6 +355,7 @@ impl DocChecker {
         };
         if !has_table_with_columns(&section.body, consts::INTEGRATION_COLUMNS) {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE,
                 format!(
@@ -357,6 +377,7 @@ impl DocChecker {
         };
         if !has_table_with_columns(&section.body, consts::NFR_COLUMNS) {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_NFR_NOT_TABLE,
                 format!(
@@ -389,6 +410,7 @@ impl DocChecker {
         sorted.sort_unstable();
         if ordered != sorted {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_ORDER,
                 format!(
@@ -410,6 +432,7 @@ impl DocChecker {
         };
         if !has_bullet(&blank_fenced(&section.body)) {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_SCENARIOS_EMPTY,
                 format!(
@@ -430,6 +453,7 @@ impl DocChecker {
         };
         if !has_bullet(&blank_fenced(&section.body)) {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_GLOSSARY_EMPTY,
                 format!(
@@ -451,6 +475,7 @@ impl DocChecker {
             for (pattern, what) in patterns {
                 if pattern.is_match(line) {
                     findings.push(DocFinding::new(
+                        "",
                         consts::RULE_CODE_SPEC_PURITY,
                         consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
                         format!(
@@ -472,6 +497,7 @@ impl DocChecker {
         for (number, line) in doc.text.lines().enumerate() {
             if let Some(matched) = re.find(line) {
                 findings.push(DocFinding::new(
+                    "",
                     consts::RULE_CODE_SPEC_PURITY,
                     consts::SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED,
                     format!(
@@ -496,6 +522,7 @@ impl DocChecker {
         };
         if !section.body.contains(consts::BACKLOG_DOC) {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_CROSSLINKS,
                 consts::CROSSLINKS_VIOLATION_NO_BACKLOG_LINK,
                 format!(
@@ -507,6 +534,7 @@ impl DocChecker {
         }
         if !section.body.contains(consts::PRD_DOC) {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_CROSSLINKS,
                 consts::CROSSLINKS_VIOLATION_NO_PRD_LINK,
                 format!(
@@ -545,6 +573,7 @@ impl DocChecker {
         }
         if master.is_some() {
             findings.push(DocFinding::new(
+                "",
                 consts::RULE_CODE_CROSSLINKS,
                 consts::CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED,
                 format!(
@@ -577,25 +606,27 @@ impl DocChecker {
                 }
                 let is_shared = feature.file_name().is_some_and(|n| n == consts::KERNEL_DIR);
                 if is_shared {
+                    let rel = format!("{}/shared", sub);
                     findings.push(DocFinding::new(
+                        rel.clone(),
                         consts::RULE_CODE_FEATURE_FOLDER,
                         consts::FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS,
                         format!(
                             "kernel folder '{}' must not carry a doc pair; move it to a feature folder",
-                            sub
+                            rel
                         ),
                     ));
                     continue;
                 }
                 let has_orchestrator = has_orchestrator(&feature);
                 if !has_orchestrator {
+                    let rel = format!("{}/{}", sub, entry.file_name().to_string_lossy());
                     findings.push(DocFinding::new(
+                        rel.clone(),
                         consts::RULE_CODE_FEATURE_FOLDER,
                         consts::FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR,
                         format!(
-                            "feature folder '{}/{}' carries a doc pair but holds no orchestrator; a feature folder must hold a *_orchestrator file",
-                            sub,
-                            entry.file_name().to_string_lossy()
+                            "feature folder '{rel}' carries a doc pair but holds no orchestrator; a feature folder must hold a *_orchestrator file",
                         ),
                     ));
                 }
@@ -717,10 +748,11 @@ fn sorted(findings: Vec<DocFinding>) -> Vec<DocFinding> {
     let mut seen = BTreeSet::new();
     let mut out: Vec<DocFinding> = findings
         .into_iter()
-        .filter(|f| seen.insert((f.code, f.violation_type, f.message.clone())))
+        .filter(|f| seen.insert((f.code, f.violation_type, f.doc.clone(), f.message.clone())))
         .collect();
     out.sort_by(|a, b| {
-        (a.code, a.violation_type, a.message.clone()).cmp(&(
+        (&a.doc, a.code, a.violation_type, a.message.clone()).cmp(&(
+            &b.doc,
             b.code,
             b.violation_type,
             b.message.clone(),
@@ -747,7 +779,7 @@ impl IDocCheckerProtocol for DocChecker {
 
         let mut findings = Vec::new();
         for doc in &documents {
-            findings.extend(self.audit_document(doc, master));
+            findings.extend(self.audit_document(doc, master, &root));
         }
         // Folder-level checks (AES605) need the workspace root directly.
         self.check_feature_folder(&root, &mut findings);

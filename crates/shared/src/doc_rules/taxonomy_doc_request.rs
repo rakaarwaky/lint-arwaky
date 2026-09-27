@@ -18,12 +18,16 @@ pub struct DocFinding {
     pub code: &'static str,
     /// A machine-parseable subtype so consumers can route by violation kind.
     pub violation_type: &'static str,
+    /// The document this finding belongs to, relative to the audit root when
+    /// possible (used by the CLI to group output by file).
+    pub doc: String,
     /// Human-readable detail about what drifted.
     pub message: String,
 }
 
 impl DocFinding {
     pub fn new(
+        doc: impl Into<String>,
         code: &'static str,
         violation_type: &'static str,
         message: impl Into<String>,
@@ -31,6 +35,7 @@ impl DocFinding {
         Self {
             code,
             violation_type,
+            doc: doc.into(),
             message: message.into(),
         }
     }

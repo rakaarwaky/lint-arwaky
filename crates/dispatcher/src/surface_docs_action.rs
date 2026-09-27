@@ -25,8 +25,8 @@ pub fn collect_docs(
         .into_iter()
         .map(|finding| {
             format!(
-                "{} {}: {}",
-                finding.code, finding.violation_type, finding.message
+                "{} {}: {}: {}",
+                finding.code, finding.violation_type, finding.doc, finding.message
             )
         })
         .collect())
