@@ -56,7 +56,7 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-REPORTFORMATTER-001: Text Format Output
+### FR-ReportFormatter-001: Text Format Output
 
 - **Description**: Produce human-readable text output with severity badges and violation details.
 - **Input**: `ScanReport`, `Format::Text`.
@@ -81,7 +81,7 @@ flowchart TD
 
 ---
 
-### FR-REPORTFORMATTER-002: JSON Format Output
+### FR-ReportFormatter-002: JSON Format Output
 
 - **Description**: Produce pretty-printed JSON output for CI/CD integration.
 - **Input**: `ScanReport`, `Format::Json`.
@@ -100,7 +100,7 @@ flowchart TD
 
 ---
 
-### FR-REPORTFORMATTER-003: SARIF 2.1.0 Format Output
+### FR-ReportFormatter-003: SARIF 2.1.0 Format Output
 
 - **Description**: Produce SARIF 2.1.0 JSON format for IDE integration and GitHub Code Scanning.
 - **Input**: `ScanReport`, `Format::Sarif`.
@@ -132,7 +132,7 @@ flowchart TD
 
 ---
 
-### FR-REPORTFORMATTER-004: JUnit XML Format Output
+### FR-ReportFormatter-004: JUnit XML Format Output
 
 - **Description**: Produce JUnit XML format for CI/CD test report integration.
 - **Input**: `ScanReport`, `Format::Junit`.
@@ -156,7 +156,7 @@ flowchart TD
 
 ---
 
-### FR-REPORTFORMATTER-005: Format Delegation (Orchestrator)
+### FR-ReportFormatter-005: Format Delegation (Orchestrator)
 
 - **Description**: Route formatting request to the appropriate capabilities formatter based on `Format` enum.
 - **Input**: `ScanReport`, `Format`.
@@ -177,7 +177,7 @@ flowchart TD
 
 ---
 
-### FR-REPORTFORMATTER-006: Default Report Fallback
+### FR-ReportFormatter-006: Default Report Fallback
 
 - **Description**: Produce a simple text summary when the requested format doesn't match the formatter's supported format.
 - **Input**: `ScanReport`.
@@ -197,7 +197,7 @@ flowchart TD
 
 ---
 
-### FR-REPORTFORMATTER-007: XML Escape Utility
+### FR-ReportFormatter-007: XML Escape Utility
 
 - **Description**: Escape special XML characters for safe inclusion in JUnit XML output.
 - **Input**: `&str`.
@@ -223,82 +223,50 @@ flowchart TD
 ### Protocol API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `format` | `ScanReport` | `DisplayContent` | None — formatting is infallible | — | Single method covering every output format the feature supports: text, JSON, SARIF, and JUnit. |
+|---|---|---|---|---|---|
+| `format` | &ScanReport, Format | `DisplayContent` | — | — | Format. |
+| `supported_format` | — | `Format` | — | — | Supported format. |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `format` | `ScanReport`, `Format` | `DisplayContent` | None | — | Route the request to the formatter matching the requested format. |
-| `format_text` | `ScanReport` | `DisplayContent` | None | — | Render human-readable text with severity badges and grouped counts. |
-| `format_json` | `ScanReport` | `DisplayContent` | Serialization error falls back to an empty object | — | Render pretty-printed JSON for CI consumption. |
-| `format_sarif` | `ScanReport` | `DisplayContent` | Serialization error falls back to an empty object | — | Render SARIF 2.1.0 JSON for IDE and code-scanning integration. |
-| `format_junit` | `ScanReport` | `DisplayContent` | None | — | Render JUnit XML for CI test-report integration. |
-| `format_default` | `ScanReport` | `String` | None | — | Render the plain summary used when no other format matches. |
-| `escape_xml` | `&str` | `String` | None | — | Escape the five XML significant characters for safe inclusion in JUnit output. |
-
----
+|---|---|---|---|---|---|
+| `format` | &ScanReport, Format | `DisplayContent` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
-
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
-| Shared crate | in | Supplies taxonomy value objects, the formatter protocol and aggregate traits, the report and display types | None — types only, no runtime failure |
-| JSON serialization library | in | Serializes JSON and SARIF documents | Serialization error → empty-object fallback string |
-| Surface layer | out | Consumes formatted output through the aggregate trait | None — the aggregate is infallible |
-| Other rule crates | n/a | Deliberately not depended on; formatters read only the scan report | n/a — no dependency exists |
-
----
+| `shared` crate | in | Supply the taxonomy value objects, the formatter protocol and aggregate contracts, and the JSON and SARIF value objects | A value object is missing at compile time → the build fails before any format is produced |
+| JSON serialization library | in | Serialize the JSON and SARIF outputs | Serialization fails on a value → the failure is reported and no partial document is emitted |
+| Report formatter protocol | out (internal) | Define the shape each format implementation satisfies | A formatter does not satisfy the protocol → it is not registered and the format is reported as unavailable |
+| Report formatter aggregate | out (internal) | Route a report to the formatter for the requested format | An unknown format is requested → an invalid-argument error is returned instead of a default rendering |
+| `Format` enum | out (internal) | Name the supported output formats | A format is added to the enum without a registered implementation → the format is rejected at selection time |
 
 ## Non-functional Requirements
-
 | Metric | Target | Measurement method |
 | --- | --- | --- |
-| Text rendering throughput | Pre-allocated string capacity sized from the result count | Read the formatter's capacity computation and profile a large report |
-| Allocation footprint | No heap allocation beyond the output string | Confirm formatters hold no per-report state |
-| SARIF conformance | Output validates against the OASIS SARIF 2.1.0 schema | Validate rendered output against the published schema |
-| JUnit conformance | Output is well-formed XML with correct entity escaping | Parse rendered output and assert escaping round-trips |
-| Thread safety | Every formatter is `Send + Sync` | Assert the trait bounds on each formatter type |
-| Extensibility | A new format is added by implementing the protocol and adding a `Format` variant | Add a variant and confirm the exhaustive match forces the wiring |
+| Output allocation | String capacity is pre-allocated from the result count to avoid reallocation | Profile a large report and confirm the allocation count is bounded by the result count, not the string length |
+| Formatter memory | No allocation beyond the output string; formatters hold no state between calls | Measure retained memory after formatting a large report and assert it returns to baseline |
+| SARIF conformance | Output validates against the OASIS SARIF 2.1.0 schema | Validate a generated SARIF document against the published schema |
+| JUnit conformance | Output is well-formed XML with correct escaping | Parse generated JUnit XML and assert it is well-formed, including for findings containing markup characters |
+| JSON conformance | Output is valid and pretty-printed | Parse generated JSON and assert it round-trips and is indented |
+| Thread safety | Every formatter is `Send + Sync` | Assert the bound at compile time and share one formatter across threads in a test |
+| Extensibility | A new format is added by implementing the protocol and adding an enum variant | Add a format in a test branch and assert selection routes to it without touching the orchestrator |
+| Format selection | An unknown format is rejected at selection time | Request an unregistered format and assert an invalid-argument error rather than a default rendering |
 
----
+## Test Scenarios / QA Checklist
 
-## Test Scenarios
+Each scenario is stated below as a table of cases: the input condition and the expected result.
 
-- A report carrying AES violations renders human-readable output with severity badges.
-- A report carrying external lint results renders an external section with tool-native codes.
-- A report carrying parse-warning diagnostics renders a warnings section visually distinct from violations.
-- An empty report renders a clean report stating zero violations.
-- A normal report renders valid pretty-printed JSON.
-- A report with no results renders valid JSON with empty arrays and a zero summary.
-- A report with external lint results populates the `external_results` array.
-- A report carrying parse warnings populates the `diagnostics` array.
-- A normal report renders valid SARIF 2.1.0 with tool metadata.
-- A report holding critical or high severity violations maps to SARIF level `error`.
-- A report holding medium severity violations maps to SARIF level `warning`.
-- A report holding low or info severity violations maps to SARIF level `note`.
-- A report carrying a parse-warning diagnostic maps to SARIF level `note`.
-- A violation recorded at line 0 is clamped to line 1 in the SARIF location.
-- A report with no results renders valid SARIF with an empty results array.
-- A report carrying violations renders JUnit XML containing failure elements.
-- A report whose violations are all info severity renders clean test cases with no failure elements.
-- A report carrying parse-warning diagnostics renders test cases marked skipped.
-- Special characters in a violation message are properly XML-escaped.
-- The JUnit test and failure counts match the actual result set.
-- An empty report renders valid XML with zero tests and zero failures.
-- The orchestrator routes a text request to the text formatter.
-- The orchestrator routes a JSON request to the JSON formatter.
-- The orchestrator routes a SARIF request to the SARIF formatter.
-- The orchestrator routes a JUnit request to the JUnit formatter.
-- The default fallback groups a report's violations by code, sorted descending.
-- The default fallback on an empty report states zero violations.
-- The XML escape utility escapes all five significant characters correctly.
-- The XML escape utility leaves ordinary text unchanged.
+- **SCEN-001 — Text Format** — e.g. Report with AES violations → Human-readable output with severity badges
+- **SCEN-002 — JSON Format** — e.g. Normal report → Valid pretty-printed JSON
+- **SCEN-003 — SARIF Format** — e.g. Normal report → Valid SARIF 2.1.0 with tool metadata
+- **SCEN-004 — JUnit Format** — e.g. Normal violations → `<failure>` elements present
+- **SCEN-005–FR-ReportFormatter-007 — Orchestrator, Fallback, XML Escape** — e.g. Orchestrator routes Text → Text formatter invoked
+
 ### SCEN-001 — Text Format
 
-
-FRD Ref: FR-001
+FRD Ref: FR-ReportFormatter-001
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -309,8 +277,7 @@ FRD Ref: FR-001
 
 ### SCEN-002 — JSON Format
 
-
-FRD Ref: FR-002
+FRD Ref: FR-ReportFormatter-002
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -321,8 +288,7 @@ FRD Ref: FR-002
 
 ### SCEN-003 — SARIF Format
 
-
-FRD Ref: FR-003
+FRD Ref: FR-ReportFormatter-003
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -336,8 +302,7 @@ FRD Ref: FR-003
 
 ### SCEN-004 — JUnit Format
 
-
-FRD Ref: FR-004
+FRD Ref: FR-ReportFormatter-004
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -348,10 +313,9 @@ FRD Ref: FR-004
 | 5 | Test/failure counts | Match actual results |
 | 6 | Empty results | Valid XML with 0 tests, 0 failures |
 
-### SCEN-005–FR-007 — Orchestrator, Fallback, XML Escape
+### SCEN-005–FR-ReportFormatter-007 — Orchestrator, Fallback, XML Escape
 
-
-FRD Ref: FR-005, FR-006, FR-007
+FRD Ref: FR-ReportFormatter-005, FR-ReportFormatter-006, FR-ReportFormatter-007
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -363,7 +327,6 @@ FRD Ref: FR-005, FR-006, FR-007
 | 6 | Default fallback empty | "Violations: 0" |
 | 7 | XML escape all 5 characters | All escaped correctly |
 | 8 | XML escape normal text | Unchanged |
-
 
 ---
 
@@ -381,16 +344,15 @@ FRD Ref: FR-005, FR-006, FR-007
 ---
 
 ## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention.
-- **SARIF**: Static Analysis Results Interchange Format — the OASIS standard for tool output.
-- **JUnit XML**: XML format originally from JUnit, widely used for CI/CD test reporting.
-- **DisplayContent**: Semantic value object wrapping formatted string output.
-- **LintResult**: Individual violation finding: file, line, code, severity, and message.
-- **ScanReport**: Aggregated results plus diagnostics from a full pipeline run.
-- **Report Formatter Protocol**: Interface for individual format implementations (text, JSON, SARIF, JUnit).
-- **Report Formatter Aggregate**: Interface for the orchestrator that routes to the correct formatter.
-- **PARSE_WARN**: Non-AES warning for files that failed to parse. Appears as a `LintResult` with a `PARSE_*` code in `report.results`, or as a `PipelineDiagnostic` in `report.diagnostics`.
-- **Tool-native code**: An external linter's rule identifier, for example `clippy::needless_return` or `ruff::E501`.
+- **AES**: Agentic Engineering System — the 7-layer coding convention
+- **SARIF**: Static Analysis Results Interchange Format — OASIS standard for tool output
+- **JUnit XML**: XML format originally from JUnit, widely used for CI/CD test reporting
+- **DisplayContent**: Semantic VO wrapping formatted string output
+- **LintResult**: Individual violation finding with file, line, code, severity, message
+- **ScanReport**: Aggregated results + diagnostics from a full pipeline run
+- **Report Formatter Protocol**: Interface for individual format implementations (text, json, sarif, junit)
+- **Report Formatter Aggregate**: Interface for the orchestrator that routes to the correct formatter
+- **PARSE_WARN**: Non-AES warning for files that failed to parse. May appear as `LintResult` (code `PARSE_*`) in `report.results` or as `PipelineDiagnostic` in `report.diagnostics`.
+- **Tool-native code**: External linter rule identifier (e.g., `clippy::needless_return`, `ruff::E501`)
 
 ---

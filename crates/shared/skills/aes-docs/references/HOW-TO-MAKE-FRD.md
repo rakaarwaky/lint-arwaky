@@ -28,12 +28,12 @@ unique within the feature and stable forever.
 2. **A requirement is testable, or it is a wish.**
 State input, output, business rules, edge cases, error handling.
 3. **The API contract is two tables under one section.** `Protocol API`
-holds **exactly one row**: one method for the whole feature folder that
-covers every capability (not one row per leaf). `Aggregate API` holds one
-row per public method the feature's agent exposes (the feature
-orchestrator / agent, designed for the target — not a snapshot of today's
-code). Columns for both tables: Method, Input, Output, Error, Event,
-Description — real signatures, not invented capability names.
+lists **one row per capability method** the feature's protocol exposes
+(every method on the protocol trait). `Aggregate API` lists the
+**single `execute` entry point** — one row only, the composite verb the
+orchestrator exposes to the surface. Columns for both tables: Method,
+Input, Output, Error, Event, Description — real signatures, not invented
+capability names.
 4. **Scenarios are stated here; evidence lives in the backlog.**
 One scenario per bullet, so `scenario-evidence-count` can match them.
 5. **Non-functional numbers live here.**
@@ -101,13 +101,13 @@ Copy, fill, delete nothing.
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| <method> | <input> | <output> | <error> | <event> | one row only — one method for all capabilities |
+| <capability method> | <input> | <output> | <error> | <event> | one row per method on the protocol trait |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| <method> | <input> | <output> | <error> | <event> | <one sentence> |
+| <execute> | <request> | <response> | <error> | <event> | single composite entry point |
 
 
 ## Integration Points

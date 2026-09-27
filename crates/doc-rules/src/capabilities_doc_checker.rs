@@ -213,7 +213,11 @@ impl DocChecker {
         if name == consts::FRD_DOC {
             self.check_reference_crosslink(&sections, &mut findings);
         }
-        if name == consts::BACKLOG_DOC {
+        // The master owns the state vocabulary, so it is the one document
+        // allowed to carry those sections; a feature backlog restating them
+        // is the violation.
+        let is_master = doc.path.parent().is_some_and(|parent| parent == root);
+        if name == consts::BACKLOG_DOC && !is_master {
             self.check_state_vocab_restated(&sections, master, &mut findings);
         }
 
@@ -473,18 +477,25 @@ impl DocChecker {
         };
         for (number, line) in doc.text.lines().enumerate() {
             for (pattern, what) in patterns {
-                if pattern.is_match(line) {
-                    findings.push(DocFinding::new(
-                        "",
-                        consts::RULE_CODE_SPEC_PURITY,
-                        consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
-                        format!(
-                            "line {} carries {what} ('{}'); specs promise, backlogs report; move the claim to BACKLOG.md",
-                            number + 1,
-                            line.trim()
-                        ),
-                    ));
+                // A macro invocation such as `unimplemented!` names a language
+                // token rather than making a claim about this feature's
+                // progress, so a match immediately followed by `!` is skipped.
+                if !pattern
+                    .find_iter(line)
+                    .any(|m| !line[m.end()..].starts_with('!'))
+                {
+                    continue;
                 }
+                findings.push(DocFinding::new(
+                    "",
+                    consts::RULE_CODE_SPEC_PURITY,
+                    consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
+                    format!(
+                        "line {} carries {what} ('{}'); specs promise, backlogs report; move the claim to BACKLOG.md",
+                        number + 1,
+                        line.trim()
+                    ),
+                ));
             }
         }
     }

@@ -60,7 +60,7 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-ROLERULES-001: File Classification and Dispatch
+### FR-RoleRules-001: File Classification and Dispatch
 
 - **Description**: Classify each file received from the filesystem crate by its filename prefix to determine its AES layer, then dispatch to the appropriate layer-specific role checker.
 - **Input**: File data (path + content + language + parse metadata, from filesystem crate), architecture configuration.
@@ -82,9 +82,9 @@ flowchart TD
   - Apply ignore paths from architecture configuration using **segment matching** (split path by `/`, match per segment — pattern `test` matches segment `test` only, not `latest` or `contest`).
   - Files with no underscore in the name have no prefix match → silently skipped.
   - Files with unrecognized prefix → silently skipped.
-  - Barrel files are skipped: the module entry point, the library entry point, the package entry point, and the barrel file of each language.
+  - Barrel files (module barrels, library roots, binary entries, package markers, and index barrels) are skipped.
   - Files in the rule's `exceptions` list are skipped.
-  - The binary entry point is always skipped.
+  - Binary-entry files are always skipped.
 - **Edge Cases**:
 
   - Files matching multiple ignore patterns → excluded (any segment match suffices).
@@ -94,7 +94,7 @@ flowchart TD
 
 ---
 
-### FR-ROLERULES-002: Taxonomy Purity and Primitive Restriction (AES401)
+### FR-RoleRules-002: Taxonomy Purity and Primitive Restriction (AES401)
 
 - **Description**: Audit taxonomy layer files (`taxonomy_*`) for raw primitive types in type annotations and ensure constant files contain only pure constant declarations.
 - **Input**: `FileEntry` (path + content + language + parse metadata).
@@ -129,7 +129,7 @@ flowchart TD
 
 ---
 
-### FR-ROLERULES-003: Contract Primitive Restriction (AES402)
+### FR-RoleRules-003: Contract Primitive Restriction (AES402)
 
 - **Description**: Audit contract layer files (`contract_*`) for raw primitive types in method signatures. Uses the shared signature parser utility, not parse metadata.
 - **Input**: `FileEntry` (path + content + language + parse metadata).
@@ -139,7 +139,7 @@ flowchart TD
   - **Protocol check** (`_protocol` files): Detect raw primitives in method signatures (parameters and return types) of trait/interface definitions.
   - **Aggregate check** (`_aggregate` files): Same check on aggregate trait/interface definitions.
   - I/O protocol files (`io_protocol`, `filesystem_io`) are exempted from checking.
-  - Forbidden primitives: same list as FR-ROLERULES-002 per language.
+  - Forbidden primitives: same list as FR-RoleRules-002 per language.
   - Detection uses the shared `utility_signature_parser` functions which extract method signatures and scan parameter/return types for forbidden primitives.
   - Each violating signature is reported individually with line number.
 - **Edge Cases**:
@@ -151,7 +151,7 @@ flowchart TD
 
 ---
 
-### FR-ROLERULES-004: Capability Protocol Implementation (AES403)
+### FR-RoleRules-004: Capability Protocol Implementation (AES403)
 
 - **Description**: Audit capability files (`capabilities_*` / `capability_*`) for protocol implementation and composition constraints. This rule checks **implementation only**, not imports. Import validation is handled by the import-rules crate (AES201–AES206).
 - **Input**: `FileEntry` (path + content + language + parse metadata).
@@ -176,7 +176,7 @@ flowchart TD
 
 ---
 
-### FR-ROLERULES-005: Utility Purity (AES404)
+### FR-RoleRules-005: Utility Purity (AES404)
 
 - **Description**: Audit utility files (`utility_*`) to ensure they contain only stateless standalone functions with no type definitions.
 - **Input**: `FileEntry` (path + content + language + parse metadata).
@@ -198,7 +198,7 @@ flowchart TD
 
 ---
 
-### FR-ROLERULES-006: Agent Orchestrator Composition (AES405)
+### FR-RoleRules-006: Agent Orchestrator Composition (AES405)
 
 - **Description**: Audit agent files (`agent_*`) for correct aggregate implementation and composition constraints. This rule checks **implementation only**, not imports. Import validation is handled by the import-rules crate (AES201–AES206).
 - **Input**: `FileEntry` (path + content + language + parse metadata).
@@ -224,7 +224,7 @@ flowchart TD
 
 ---
 
-### FR-ROLERULES-007: Surface Passive Role (AES406)
+### FR-RoleRules-007: Surface Passive Role (AES406)
 
 - **Description**: Audit surface files (`surface_*` / `surfaces_*`) for role-appropriate constraints based on Smart/Utility/Passive classification.
 - **Input**: `FileEntry` (path + content + language + parse metadata).
@@ -262,112 +262,62 @@ flowchart TD
 ### Protocol API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `RoleRequest` (`RunAuditWithEntries { files }` or `Name`) | `RoleResponse` (`Audit { violations }` or `Name { name }`) | None | — | The single composite entry point covering classification, dispatch to all six layer checkers, and result collection. |
+|---|---|---|---|---|---|
+| `check_agent_routing` | &FileEntry, &str, &mut Vec<LintResult> | `` | — | — | Check agent routing. |
+| `check_capability_routing` | &FileEntry, &str, &mut Vec<LintResult> | `` | — | — | Check capability routing. |
+| `check_protocol` | &FileEntry | `Vec<LintResult>` | — | — | Check protocol. |
+| `check_aggregate` | &FileEntry | `Vec<LintResult>` | — | — | Check aggregate. |
+| `check_smart_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check smart surface. |
+| `check_utility_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check utility surface. |
+| `check_passive_surface` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check passive surface. |
+| `check_fn_count_limit` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check fn count limit. |
+| `check_entity` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check entity. |
+| `check_error` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check error. |
+| `check_event` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check event. |
+| `check_constant` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check constant. |
+| `check_utility_convention` | &FileEntry, &mut Vec<LintResult> | `` | — | — | Check utility convention. |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `RoleRequest` | `RoleResponse` | None | — | Aggregate request/response dispatch for the whole role audit. |
-| `run_audit_with_entries` | `&[FileEntry]` | `Vec<LintResult>` | None | — | Classify every entry by prefix and run the matching layer checker, collecting all violations. |
-| `run_all_role_checks` | `&[FileEntry]`, `&mut Vec<LintResult>` | Accumulated violations in place | None | — | Per-file loop that applies skip rules, ignore paths, rule enablement, and exceptions before dispatching. |
-| `name` | — | `&str` | None | — | Report the runner's own name. |
-
----
+|---|---|---|---|---|---|
+| `execute` | RoleRequest | `RoleResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
-
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
-| `IRoleRunnerAggregate` | in | Aggregate contract the surface composes to invoke the audit | Aggregate unavailable → the surface falls back to its other lint paths |
-| `ITaxonomyRoleChecker` | in | Contract for taxonomy-layer purity checks (AES401) | Checker returns an error → propagated to the caller |
-| `IContractRoleChecker` | in | Contract for contract-layer signature checks (AES402) | Checker returns an error → propagated to the caller |
-| `ICapabilitiesRoleChecker` | in | Contract for capability-layer implementation checks (AES403) | Checker returns an error → propagated to the caller |
-| `IUtilityRoleChecker` | in | Contract for utility-layer purity checks (AES404) | Checker returns an error → propagated to the caller |
-| `IAgentRoleChecker` | in | Contract for agent-layer composition checks (AES405) | Checker returns an error → propagated to the caller |
-| `ISurfaceRoleChecker` | in | Contract for surface-layer role checks (AES406) | Checker returns an error → propagated to the caller |
-| `LayerNames` taxonomy VO | in | Layer name constants used to classify files and to pass the layer to a checker | Absent → a file with a recognized prefix is not dispatched |
-| `RoleCheckerDeps` | out | DI bundle carrying all six injected checker instances | A checker missing from the bundle → that layer is not dispatched |
-| `RoleContainer` root | out | DI composition root wiring all six checkers into the aggregate | Wiring incomplete → the aggregate returns an empty violation list |
-| `filesystem` crate | in | File walking, content loading, and AST parsing for every supported language | Unreadable or unparseable files are excluded from the returned list and never reach role-rules |
-| `shared` crate | in | Contracts, value objects, the default barrel-file exception list, and the shared signature parser | Signature parser unavailable → AES402 falls back to line-based scanning |
-| Configuration (YAML) | in | Rule enable/disable toggles, ignore paths, and per-rule exceptions | Configuration absent → defaults apply and every rule stays enabled |
-
----
+| Role runner aggregate contract | out (internal) | Expose the single composite entry point the surface calls | A request supplies no entries → the orchestrator returns an empty result set and performs no I/O of its own |
+| Layer-specific role checker protocols | out (internal) | Define the shape each of the six per-layer role checks implements | A checker does not satisfy its protocol → it is not wired, and that layer's rules are reported as not run |
+| Layer names taxonomy | in | Name the seven layers a file can be classified into | A prefix maps to no layer → the file is skipped by the layer-role rules and checked structurally |
+| `filesystem` aggregate | in | Walk the workspace, read content, and provide full AST parse metadata for every supported language | A file cannot be read or parsed → it is excluded from the analyzed set and the rest of the walk proceeds |
+| `shared` crate | in | Supply the contracts, value objects, and the default barrel-file exception list | Parse metadata is unavailable → the checker falls back to line-based scanning rather than reporting nothing |
+| `Rayon` | in (internal) | Parallelize the per-file role checks | A worker is interrupted → the parallel iterator yields only the results it completed, and the run is reported as partial |
 
 ## Non-functional Requirements
-
 | Metric | Target | Measurement method |
 | --- | --- | --- |
-| Classification cost | O(1) per file (one prefix match) | Read the prefix split in the classification loop and count comparisons per file |
-| I/O during check execution | Zero — no reads, no writes, no parsing | Assert the crate's imports contain no filesystem or parser call in a check path |
-| Parse-metadata reuse | File collection and parsing performed once by the filesystem crate, reused by all six checkers | Count parse invocations in a full-scan trace; each file is parsed once |
-| Parse-metadata representation | Structured typed structs, not raw strings | Inspect the shape of the parse metadata the filesystem crate supplies |
-| Detection accuracy | AST parse metadata when available, line-based scanning as fallback, with precisely defined skip rules per rule | Run each rule against fixtures with and without parse metadata and compare the violation set |
-| Language coverage | Rust, Python, TypeScript, and JavaScript all produce accurate violations | Run the acceptance suite for each language and assert the expected violation set |
-| Configurable behaviour | Rule enable/disable, ignore paths, and per-rule exceptions are configuration-driven | Toggle each setting and assert the corresponding change in violations |
-| Threshold stability | Numeric thresholds (`max_types` = 3, `max_public_methods` = 50, `max_control_flow` = 50) are hardcoded constants, not read from config | Change the configured threshold and confirm the behaviour does not move |
+| Check execution | Role checks read in-memory parse metadata and perform no I/O or parsing | Deny filesystem access during the check phase and assert findings are still produced |
+| Collection cost | Files are collected and parsed once per scan, not once per rule | Count parse operations for one scan and confirm it does not grow with rule count |
+| Classification | O(1) per file by prefix match | Scale the file count tenfold and confirm linear growth with a small constant |
+| Memory | File data is resident for the scan; parse metadata is structured rather than raw strings | Measure retained memory and assert it tracks the structured metadata size |
+| Language coverage | Rust, Python, TypeScript, and JavaScript all produce accurate violations through parse metadata | Assert each supported language has a fixture that reports a violation at the exact line |
+| Fallback correctness | Line-based scanning is used only when parse metadata is unavailable, and agrees with the metadata path | Run both paths over the same inputs and assert the finding sets match |
+| Threshold determinism | Numeric thresholds are compiled-in constants, not configuration | Assert the threshold constants are not read from configuration |
+| Configuration coverage | Enable/disable toggles, ignored paths, and per-rule exceptions are configuration-driven | Flip each setting and assert the corresponding rules change behaviour |
 
----
+## Test Scenarios / QA Checklist
 
-## Test Scenarios
+Each scenario is stated below as a table of cases: the input condition and the expected result.
 
-- A taxonomy entity file with a `String` field type produces an AES401 violation at the exact line where the primitive appears.
-- A taxonomy entity file whose fields all use custom value objects produces no AES401 violation.
-- A taxonomy entity file with an `i32` field type produces an AES401 violation.
-- A taxonomy error file whose parameter is a `bool` primitive produces an AES401 violation.
-- A taxonomy event file with a list-of-strings field produces an AES401 violation because raw list collections are forbidden in event definitions.
-- A taxonomy constant file containing only `pub const` declarations produces no AES401 violation.
-- A taxonomy constant file containing a helper function produces an AES401 violation because functions are forbidden in constant files.
-- A taxonomy constant file containing a struct definition produces an AES401 violation.
-- A taxonomy VO file that contains only custom types produces no AES401 violation.
-- An empty taxonomy file produces no AES401 violation.
-- A contract protocol file with a `String` parameter in a method signature produces an AES402 violation.
-- A contract protocol file whose method parameters are all custom value objects produces no AES402 violation.
-- A contract protocol file with a `bool` return type produces an AES402 violation.
-- A contract aggregate file with zero methods produces no AES402 violation because there is nothing to extract.
-- A contract aggregate file with an `i64` method signature produces an AES402 violation.
-- A contract protocol file whose signatures are entirely typed with custom value objects produces no AES402 violation.
-- A capability file that contains a struct implementing a protocol trait produces no AES403 violation.
-- A capability file with no struct implementing any protocol trait produces an AES403 violation classified as `MissingProtocolImplementor`.
-- A capability file with four type declarations (exceeding the maximum of three) produces an AES403 violation classified as `TooManyTypes`; Rule 2 is skipped when Rule 1 fails.
-- A capability file with exactly three types including a helper struct produces no AES403 violation because the count is at the limit and helpers are allowed.
-- A capability file with exactly three types including one implementor produces no AES403 violation.
-- A capability file with more than three types and no implementor produces an AES403 violation classified as `TooManyTypes` only; the missing-implementor rule is skipped.
-- A Rust utility file containing a `struct Foo` definition produces an AES404 violation.
-- A Rust utility file containing only a `fn helper()` definition produces no AES404 violation.
-- A Rust utility file containing an `enum Bar` definition produces an AES404 violation.
-- A Python utility file containing only `def helper()` definitions produces no AES404 violation because functions are permitted.
-- A Python utility file containing a `class Foo` definition produces an AES404 violation.
-- A TypeScript utility file containing an `export function helper()` definition produces no AES404 violation.
-- A TypeScript utility file containing an `export class Foo` definition produces an AES404 violation.
-- A TypeScript utility file containing an `export interface IFoo` definition produces an AES404 violation.
-- A utility file whose `struct` text appears only inside a comment is not flagged because the AST does not parse comments as code.
-- An empty utility file produces no AES404 violation.
-- An agent file containing a struct that implements an aggregate trait produces no AES405 violation.
-- An agent file with no struct implementing any aggregate trait produces an AES405 violation classified as `MissingAggregateImplementor`.
-- An agent file with four type declarations (exceeding the maximum of three) produces an AES405 violation classified as `TooManyTypes`; Rule 2 is skipped when Rule 1 fails.
-- An agent file with a helper struct plus an orchestrator struct (two types total) produces no AES405 violation because the count is within limits.
-- An agent file with one implementor struct and two helper structs (three types total) produces no AES405 violation.
-- An agent file that contains an `Any` type annotation on a non-comment line produces an AES405 violation classified as `AnyTypeAnnotation`.
-- An agent file whose `: Any` appears only inside a comment is not flagged because comment lines are excluded from the annotation check.
-- A passive surface file with 51 function definitions (exceeding the maximum of 50) produces an AES406 violation classified as `TooManyMethods`.
-- A passive surface file with exactly 50 function definitions produces no AES406 violation because it is at the threshold.
-- A smart surface file with 100 function definitions produces no AES406 violation because smart surfaces are exempt from hierarchy checks.
-- A smart surface file that contains control-flow statements produces no AES406 violation because smart surfaces are exempt from domain-logic checks.
-- A passive surface file with 51 control-flow statements (exceeding the maximum of 50) produces an AES406 violation classified as `DomainLogic`.
-- A utility surface file with 40 control-flow statements produces no AES406 violation because the count is below the threshold.
-- A surface file with an unclassifiable suffix is treated as Passive for the purposes of AES406.
-- A root-layer file such as `root_app_entry` is completely skipped and produces zero violations because root files are pure DI wiring.
-- When the architecture configuration has `enabled` set to false, the entire scan produces zero violations regardless of any files present.
-- When rule AES401 is individually disabled in the configuration, no AES401 violations appear while other rules continue to run.
-- When the `ignored_paths` configuration contains `["tests"]`, files under the `tests/` directory produce no violations.
-- A file with no underscore in its stem is silently skipped because there is no prefix to match.
-- A file whose prefix is not recognized by any rule is silently skipped.
-- A barrel file matching the default exception list is skipped during role checking.
-- A file listed in a rule's exceptions list is skipped for that specific rule but is still checked by other enabled rules.
-- The same role rule is executed across a multi-language workspace containing Rust, Python, and TypeScript files, and each language produces the correct violations for its syntax.
+- **AES401 — Taxonomy Purity** — e.g. Taxonomy entity file with `String` field type → AES401 violation at exact line
+- **AES402 — Contract Primitive Restriction** — e.g. Contract protocol with `String` in method parameter → AES402 violation
+- **AES403 — Capability Protocol Implementation** — e.g. Capability file with protocol implementor → No violation
+- **AES404 — Utility Purity** — e.g. Rust utility file with `struct Foo` → AES404 violation
+- **AES405 — Agent Orchestrator Composition** — e.g. Agent file with aggregate trait implementor → No violation
+- **AES406 — Surface Passive Role** — e.g. Passive surface with 51 functions (max=50) → AES406 — TooManyMethods
+- **Classification & Configuration** — e.g. Root layer file (`root_app_entry`) → Completely skipped, zero violations
+
+### AES401 — Taxonomy Purity
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -453,10 +403,9 @@ flowchart TD
 | 4 | Config `ignored_paths: ["tests"]` | `tests/` directory files produce no violations |
 | 5 | File with no underscore (`main`) | Silently skipped |
 | 6 | File with unrecognized prefix (`foobar_x_y`) | Silently skipped |
-| 7 | Barrel file (`mod.rs`) | Skipped |
+| 7 | Barrel file (module barrel) | Skipped |
 | 8 | File in exceptions list | Skipped for that rule |
 | 9 | Multi-language workspace: same rule across Rust, Python, TS | Correct violations per language |
-
 
 ---
 
@@ -475,17 +424,15 @@ flowchart TD
 ---
 
 ## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer coding convention.
-- **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root).
-- **Smart surface**: Surface with a `_command`, `_controller`, `_page`, `_entry`, or `_router` suffix — may contain orchestration logic.
-- **Utility surface**: Surface with a `_hook`, `_store`, `_action`, or `_screen` suffix — supports smart surfaces.
-- **Passive surface**: Any surface file not classified as Smart or Utility — presentation-only.
-- **Primitive type**: Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures.
-- **VO**: Value Object — a typed wrapper around a primitive that replaces raw types in signatures.
-- **Parse metadata**: Structured AST-derived data (type declarations, impl blocks, method signatures, function definitions) provided by the filesystem crate.
-- **Filesystem crate**: External crate that handles file walking, reading, and AST parsing; returns file data to role-rules.
-- **Segment matching**: Path matching by splitting on `/` and comparing individual segments rather than substring containment.
-
+- **AES**: Agentic Engineering System — the 7-layer coding convention
+- **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
+- **Smart surface**: Surface with `_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration logic
+- **Utility surface**: Surface with `_hook`, `_store`, `_action`, `_screen` suffix — supports smart surfaces
+- **Passive surface**: Any surface file not classified as Smart or Utility — presentation-only
+- **Primitive type**: Raw language types (`String`, `int`, `bool`, etc.) that violate VO-based signatures
+- **VO**: Value Object — a typed wrapper around a primitive that replaces raw types in signatures
+- **Parse metadata**: Structured AST-derived data (type declarations, impl blocks, method signatures, function definitions) provided by the filesystem crate
+- **Filesystem crate**: External crate that handles file walking, reading, AST parsing. Returns file data to role-rules.
+- **Segment matching**: Path matching by splitting on `/` and comparing individual segments (not substring containment)
 
 ---

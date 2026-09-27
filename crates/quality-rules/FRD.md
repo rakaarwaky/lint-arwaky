@@ -61,7 +61,7 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-QUALITYRULES-001: Maximum File Line Count (AES301)
+### FR-QualityRules-001: Maximum File Line Count (AES301)
 
 - **Description**: Source files must not exceed the maximum allowed line count to prevent bloated, unmaintainable files.
 - **Input**: File data from filesystem crate (path + content), architecture configuration.
@@ -71,7 +71,7 @@ flowchart TD
   - Max line count is read from the rule's YAML configuration (`max_lines`).
   - Default max: 1000 lines.
   - Applies to: Rust, Python, TypeScript, JavaScript source files with AES-compliant naming (layer prefix detected by `detect_layer_from_prefix`). Files without a recognized layer prefix are silently skipped.
-  - Barrel files and entry points (the module entry point, the library entry point, the package entry point, the barrel file) are skipped.
+  - Barrel files (module barrels, library roots, package markers, and index barrels) are skipped.
   - Files in the rule's `exceptions` list are skipped.
   - All lines are counted, including blank lines, comments, and docstrings.
   - Files at exactly `max_lines` → passes (comparison is strict `>`).
@@ -84,7 +84,7 @@ flowchart TD
 
 ---
 
-### FR-QUALITYRULES-002: Minimum File Line Count (AES302)
+### FR-QualityRules-002: Minimum File Line Count (AES302)
 
 - **Description**: Source files must have minimum length to avoid empty placeholders and stub files.
 - **Input**: File data from filesystem crate (path + content), architecture configuration.
@@ -104,7 +104,7 @@ flowchart TD
 
 ---
 
-### FR-QUALITYRULES-003: Mandatory Definitions & Dead Inheritance (AES303)
+### FR-QualityRules-003: Mandatory Definitions & Dead Inheritance (AES303)
 
 - **Description**: Source files must declare at least one primary symbol (struct, enum, trait, class, interface, type) to prevent empty placeholder files. Additionally, declarations that exist but contain no real implementation (dead inheritance) are flagged.
 - **Input**: File data from filesystem crate (path + content), architecture configuration.
@@ -125,7 +125,7 @@ flowchart TD
     - Empty Python classes (`class Foo: pass` or `class Foo: ...`) → AES303 (`DeadInheritance`).
     - Empty JS/TS classes (`class Foo {}`) → AES303 (`DeadInheritance`).
     - `#[cfg(test)]` blocks are skipped during dead inheritance scanning.
-  - **Skipped files**: the package entry point, the binary entry point, `py.typed`, the module entry point, the library entry point, and the typed constant source.
+  - **Skipped files**: package markers, module barrels, library roots, binary entries, type-stub markers, and taxonomy constant files.
   - If `mandatory_class_definition` is disabled in the rule config, skip entirely.
   - Files in the rule's `exceptions` list are skipped.
 - **Edge Cases**:
@@ -138,7 +138,7 @@ flowchart TD
 
 ---
 
-### FR-QUALITYRULES-004: Bypass Detection (AES304)
+### FR-QualityRules-004: Bypass Detection (AES304)
 
 - **Description**: Detects and flags any attempt to suppress warnings/errors, panic, or use unsafe fallbacks in production code. All patterns are flagged regardless of whether they appear in code or comments. Patterns inside string literals are NOT flagged.
 - **Input**: File data from filesystem crate (path + content), architecture configuration with forbidden bypass patterns.
@@ -176,7 +176,7 @@ flowchart TD
 
 ---
 
-### FR-QUALITYRULES-005: Duplicate Code Detection (AES305)
+### FR-QualityRules-005: Duplicate Code Detection (AES305)
 
 - **Description**: Compares code blocks across all workspace files and flags files with excessive content overlap.
 - **Input**: File data from filesystem crate (path + content), architecture configuration.
@@ -209,105 +209,55 @@ flowchart TD
 ### Protocol API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `run_audit_with_entries` | `&[FileEntry]`, architecture config | Lint results | Configuration or I/O errors from upstream aggregate | — | Single composite entry point: runs all quality checks (AES301–AES305) over the pre-fetched file list. |
+|---|---|---|---|---|---|
+| `check_bypass_comments` | &str, &str, &mut Vec<LintResult> | `` | — | — | Check bypass comments. |
+| `check_cargo_toml` | &str, &mut Vec<LintResult> | `` | — | — | Check cargo toml. |
+| `check_mandatory_class_definition` | &str, Option<&LayerDefinition>, &str, &mut Vec<LintResult> | `` | — | — | Check mandatory class definition. |
+| `handle_duplicates_entries` | &[(PathBuf, String)] | `Vec<(String, AesCodeAnalysisViolation)>` | — | — | Handle duplicates entries. |
+| `check_dead_inheritance` | &str, &str, &mut Vec<LintResult> | `` | — | — | Check dead inheritance. |
+| `check_line_counts` | &str, Option<&LayerDefinition>, &str, &mut Vec<LintResult> | `` | — | — | Check line counts. |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `run_audit_with_entries` | `&[FileEntry]`, config | Lint results | Configuration error | — | Aggregate orchestrator; dispatches to each checker and merges results. |
-| `check_line_counts` | `FileData`, config | AES301/AES302 violations | None | — | Verify file line counts against configured max/min thresholds. |
-| `check_definitions` | `FileData`, config | AES303 violations | None | — | Ensure each file declares at least one primary symbol and detect dead inheritance. |
-| `detect_bypasses` | `FileData`, config | AES304 violations | None | — | Scan for forbidden tokens, attributes, and comment bypass patterns. |
-| `analyze_duplication` | `Vec<FileData>`, config | AES305 violations | None | — | Sliding-window hash comparison to detect duplicated code blocks across files. |
-| `check_cargo_toml_bypass` | `FileContent`, config | AES304 violations | None | — | Inspect Cargo.toml for clippy allow bypass directives. |
-
----
+|---|---|---|---|---|---|
+| `execute` | CodeAnalysisRequest | `CodeAnalysisResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
-
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
-| Configuration system (shared crate) | in | Read per-rule thresholds, forbidden bypass patterns, and ignored paths from YAML | Missing or malformed config → default values applied; rule skipped if essential field absent |
-| Taxonomy definitions (shared crate) | in | Provide layer definition metadata for min/max line thresholds and mandatory class toggle | Undefined layer → file silently skipped from min/max checks |
-| Bypass detector utility (this crate) | in | Substring matching with string-literal position awareness and `cfg(test)` skip logic | Regex compilation failure → rule disabled for affected pattern set |
-| Language mapper utility (this crate) | in | Detect source language from file extension to apply language-specific patterns | Unsupported extension → file skipped |
-| Code duplication detector utility (this crate) | in | Line normalization, sliding-window hashing, and hash-based deduplication | Hash collision → conservative: no false violation |
-| Mandatory checker utility (this crate) | in | Symbol detection helpers for primary definition and dead inheritance checks | Token parse failure → file skipped for definition check |
-| Compliance score utility (shared crate) | in | Calculate aggregate compliance score from individual rule violations | Score calculation error → logged; violations still reported |
-| Filesystem aggregate (filesystem crate) | in | Provide pre-fetched file list with path and content; exclude unreadable files | Aggregate unavailable → audit cannot proceed; caller returns error |
-| Surface layer | out | Receives `LintResult` for report formatting and persistence | Report error → violations still emitted; caller handles formatting failure |
-
----
+| `shared` config module | in | Supply per-rule thresholds, forbidden bypass patterns, and ignored paths | A threshold is absent → the rule's compiled-in default applies |
+| `shared` taxonomy module | in | Supply the layer definition for line limits, the mandatory-class toggle, and exception lists | An exception is not configured → the rule applies to that file |
+| `shared` compliance score module | in | Compute the aggregate compliance score from the findings | No findings → the score is the clean-tree maximum, never an error value |
+| Bypass detection utility | out (internal) | Match suppression patterns while avoiding matches inside string and char literals | A line cannot be classified → it is not flagged, so a rule never reports on an unparseable line |
+| Language mapping utility | out (internal) | Derive a file's language from its extension | An extension is unknown → the file is skipped by language-specific rules and counted as uncovered |
+| Code duplication utility | out (internal) | Normalize lines, hash fixed-size windows, and deduplicate | A file is too short for a full window → it cannot produce a duplication finding |
+| Mandatory checker utility | out (internal) | Detect the symbols a scope must declare | A scope is absent from config → the mandatory check is skipped for that scope |
+| `filesystem` aggregate | in | Walk the workspace, read content, filter by extension, and apply ignore rules | A file cannot be read → it is excluded from the analyzed set and the rest of the walk proceeds |
 
 ## Non-functional Requirements
-
 | Metric | Target | Measurement method |
 | --- | --- | --- |
-| Performance | Analyze 1,000 source files in < 3 seconds | Measure wall-clock time over a 1,000-file workspace |
-| Memory | O(n) where n = total file content; duplication analyzer stores window hashes, not full content | Profile RSS during audit of a large workspace |
-| Accuracy | Zero false positives for valid code; bypass detection uses string-literal position awareness to avoid inside-string matches | Run audit against a known-clean workspace and a crafted violation workspace |
+| 1,000-file analysis | Under 3 s | Time a full analysis over a 1,000-file workspace |
+| Duplication cost | Line normalization is O(n) per file | Scale one file's length tenfold and confirm linear growth |
+| Memory | O(n) in total workspace content; window hashes are retained instead of full content | Measure retained memory against two workspace sizes and confirm it tracks the hash set, not the content |
+| Content reads | Files are pre-read once by the filesystem layer rather than per rule | Count content reads for one analysis and confirm it does not grow with rule count |
+| Accuracy | Zero false positives on valid code | Assert the good-workspace fixtures report zero violations |
+| String-literal awareness | A suppression pattern inside a string or char literal is not reported | Plant a suppression pattern inside a literal and assert no finding |
+| Duplication accuracy | Normalization suppresses differences in punctuation and formatting | Compare two near-identical blocks that differ only in punctuation and assert no finding |
+| Zero I/O | The rules perform no filesystem access of their own | Run the analysis with filesystem access denied and assert it still produces findings |
 
----
+## Test Scenarios / QA Checklist
 
-## Test Scenarios
+Each scenario is stated below as a table of cases: the input condition and the expected result.
 
-- A file with 1,500 lines when the maximum is 1,000 produces an AES301 violation.
-- A file with exactly 1,000 lines when the maximum is 1,000 passes (strict greater-than comparison).
-- A file with 999 lines when the maximum is 1,000 passes.
-- A barrel file or module entry point with 2,000 lines is skipped and produces no violation.
-- A file in the exception list with 2,000 lines is skipped and produces no violation.
-- A file with 500 lines of comments and 500 lines of code totals 1,000 lines and passes the maximum check.
-- A file with 3 lines when the minimum is 10 produces an AES302 violation.
-- A file with exactly 10 lines when the minimum is 10 passes (strict less-than comparison).
-- A file with 15 lines when the minimum is 10 passes.
-- The package entry point with 1 line is skipped and produces no violation.
-- A file containing only comments (5 lines) produces an AES302 violation because comments count toward the total.
-- A Rust file declaring a public struct with body passes the mandatory definition check.
-- A Rust file containing only use statements with no struct, enum, trait, or type declaration produces an AES303 missing-definition violation.
-- A Python file declaring a class passes the mandatory definition check.
-- A Python file containing only imports produces an AES303 missing-definition violation.
-- A TypeScript file declaring an exported interface passes the mandatory definition check.
-- A Rust file with a unit struct and no impl block produces an AES303 dead-inheritance violation.
-- A Rust file with a unit struct followed by an impl block passes without violation.
-- A Rust tuple struct passes without being flagged as a unit struct.
-- A Python class containing only `pass` produces an AES303 dead-inheritance violation.
-- A TypeScript class with an empty body produces an AES303 dead-inheritance violation.
-- A typed constant source file with no definitions is skipped and produces no violation.
-- A `#[cfg(test)]` module containing a unit struct without an impl is skipped and produces no violation.
-- A file in the exception list produces no violation.
-- A Rust file with `foo.unwrap()` produces an AES304 violation.
-- A Rust file with `foo.expect("msg")` produces an AES304 violation.
-- A Rust file with `panic!("error")` produces an AES304 violation.
-- A Rust file with `todo!()` produces an AES304 violation.
-- A Rust file with `#[allow(unused)]` produces an AES304 violation.
-- A Rust file with `foo.unwrap_or_default()` passes (safe variant).
-- A Rust file with `foo.unwrap_or(42)` passes (safe variant).
-- A Rust file with `"unwrap()"` inside a string literal passes (inside string).
-- A Python file with `# type: ignore` produces an AES304 violation.
-- A Python file with `# noqa` produces an AES304 violation.
-- A Python file with `raise NotImplementedError` produces an AES304 violation.
-- A TypeScript file with `// @ts-ignore` produces an AES304 violation.
-- A TypeScript file with `// @ts-expect-error` produces an AES304 violation.
-- Any file with `// FIXME: refactor this` produces an AES304 violation.
-- Any file with `// HACK: temporary workaround` produces an AES304 violation.
-- Any file with `// TODO: implement later` passes (TODO is not in the pattern list).
-- A Rust file with `unwrap()` inside a `#[cfg(test)]` module passes (cfg test skipped).
-- A Cargo.toml file with `level = "allow"` under `[lints.clippy]` produces an AES304 violation.
-- A Rust file with `print!("unwrap()")` inside a string literal passes.
-- A file in the exception list produces no bypass violation.
-- Two files with 80% identical normalized code blocks produce AES305 violations on both files.
-- Two files with 30% overlap when the threshold is 50% pass without violation.
-- A file shorter than the configured `min_lines` window size passes (skipped).
-- A workspace with a single file produces no duplication violation (nothing to compare against).
-- Three identical files each produce an AES305 violation.
-- A file consisting of only whitespace passes after normalization leaves it too short to form a window.
-- When rule AES301 is disabled in configuration, no AES301 violations are emitted.
-- When rule AES304 is disabled in configuration, no AES304 violations are emitted.
-- A file in the exception list produces no violation for that rule.
-- A custom `max_lines = 500` in configuration causes AES301 to use 500 instead of the default 1,000.
-- Custom bypass patterns in configuration cause AES304 to apply those patterns instead of defaults.
+- **AES301 — Maximum File Line Count** — e.g. File with 1500 lines, max = 1000 → AES301 violation
+- **AES302 — Minimum File Line Count** — e.g. File with 3 lines, min = 10 → AES302 violation
+- **AES303 — Mandatory Definitions & Dead Inheritance** — e.g. Rust file with`pub struct Foo { ... }` → No violation
+- **AES304 — Bypass Detection** — e.g. Rust file with`foo.unwrap()` → AES304 violation
+- **AES305 — Duplicate Code Detection** — e.g. Two files with 80% identical code blocks → AES305 violation (both files)
+- **Configuration** — e.g. Rule AES301 disabled in config → No AES301 violations
+
 ### AES301 — Maximum File Line Count
 
 | # | Scenario | Expected |
@@ -315,7 +265,7 @@ flowchart TD
 | 1 | File with 1500 lines, max = 1000 | AES301 violation |
 | 2 | File with exactly 1000 lines, max = 1000 | No violation (strict`>`) |
 | 3 | File with 999 lines, max = 1000 | No violation |
-| 4 | Barrel file (`mod.rs`) with 2000 lines | No violation — exception |
+| 4 | Barrel file with 2000 lines | No violation — exception |
 | 5 | File in exceptions list with 2000 lines | No violation — exception |
 | 6 | File with 500 lines of comments + 500 lines of code | No violation (1000 total, not > 1000) |
 
@@ -326,7 +276,7 @@ flowchart TD
 | 1 | File with 3 lines, min = 10 | AES302 violation |
 | 2 | File with exactly 10 lines, min = 10 | No violation (strict`<`) |
 | 3 | File with 15 lines, min = 10 | No violation |
-| 4 | `__init__.py` with 1 line | No violation — exception |
+| 4 | Python package marker with 1 line | No violation — exception |
 | 5 | File with only comments (5 lines) | AES302 violation (comments count) |
 
 ### AES303 — Mandatory Definitions & Dead Inheritance
@@ -343,7 +293,7 @@ flowchart TD
 | 8 | Rust file with`struct Foo(i32)` (tuple struct) | No violation (not unit struct) |
 | 9 | Python file with`class Foo: pass` | AES303 — DeadInheritance |
 | 10 | TS file with`class Foo {}` | AES303 — DeadInheritance |
-| 11 | `*_constant.rs` file with no definitions | No violation — skipped |
+| 11 | Taxonomy constant file with no definitions | No violation — skipped |
 | 12 | `#[cfg(test)]` module with `struct TestFoo;` and no impl | No violation — cfg(test) skipped |
 | 13 | File in exceptions list | No violation — exception |
 
@@ -393,7 +343,6 @@ flowchart TD
 | 4 | Custom`max_lines = 500` in config | AES301 uses 500 instead of 1000 |
 | 5 | Custom bypass patterns in config | AES304 uses custom patterns |
 
-
 ---
 
 ## Assumptions & Constraints
@@ -409,15 +358,14 @@ flowchart TD
 ---
 
 ## Glossary
-
-- **AES**: Agentic Engineering System — the 7-layer architecture framework.
-- **Bypass**: Any attempt to suppress, ignore, or work around warnings/errors (e.g., `unwrap()`, `#[allow(...)]`, `noqa`, `FIXME`).
-- **Diagnostic**: Violation report with file location, rule code, severity, and message.
-- **Dead inheritance**: Empty or stub definitions (unit structs without impl, empty classes) that provide no real implementation.
-- **Primary symbol**: A meaningful type declaration (struct, enum, trait, class, interface, type alias).
-- **Window**: A contiguous block of N normalized lines used for duplication comparison.
-- **Safe variant**: `unwrap_or()`, `unwrap_or_else()`, `unwrap_or_default()` — not flagged as bypass.
-- **Severity levels**: CRITICAL (bypasses), HIGH (line count), MEDIUM (dead inheritance, duplication).
+- **AES**: Agentic Engineering System — the 7-layer architecture framework
+- **Bypass**: Any attempt to suppress, ignore, or work around warnings/errors (e.g.,`unwrap()`, `#[allow(...)]`, `noqa`, `FIXME`)
+- **Diagnostic**: Violation report with file location, rule code, severity, and message
+- **Dead inheritance**: Empty or stub definitions (unit structs without impl, empty classes) that provide no real implementation
+- **Primary symbol**: A meaningful type declaration (struct, enum, trait, class, interface, type alias)
+- **Window**: A contiguous block of N normalized lines used for duplication comparison
+- **Safe variant**: `unwrap_or()`, `unwrap_or_else()`, `unwrap_or_default()` — not flagged as bypass
+- **Severity levels**: CRITICAL (bypasses), HIGH (line count), MEDIUM (dead inheritance, duplication)
 - **Filesystem crate**: External crate that handles file walking, reading, and filtering. Returns file data to quality-rules.
 
 ---

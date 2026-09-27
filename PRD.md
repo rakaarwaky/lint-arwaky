@@ -1,6 +1,6 @@
 # PRD — Lint Arwaky
 
-> Product Requirements. Describes WHAT this project does and WHY. Real condition lives in [ROADMAP.md](ROADMAP.md).
+> Product Requirements. Describes WHAT this project does and WHY. Real condition lives in [BACKLOG.md](BACKLOG.md).
 
 ## Problem Statement
 
@@ -33,7 +33,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
 | Auto-fix safety | Remove + replace + rename only; no structural or multi-file edits |
 | Surface parity | MCP, CLI, and TUI expose the same commands |
 | MCP tools | 5: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config` |
-| Acceptance tests | One named file per FR requirement, placed beside its test suite |
+| Acceptance tests | One acceptance test file per FR, named after the FR ID |
 | Doctor exit code | 0 when diagnostic completes; 2 only on internal failure |
 | Auto-fix outcomes | Reason-coded: `Applied` / `Skipped(reason)` / `Failed(reason)` |
 | Concurrency | `std::thread` / `rayon`; async only in file-watch and mcp-server |
@@ -57,7 +57,7 @@ Five groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quali
 
 ## Feature Requirements (Prioritized)
 
-> Real condition for each feature lives in [ROADMAP.md](ROADMAP.md). This section is specification only.
+> Real condition for each feature lives in [BACKLOG.md](BACKLOG.md). This section is specification only.
 
 ### P0 — Must Have
 
@@ -76,7 +76,7 @@ Five groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quali
 - Watch mode for continuous linting. Acceptance: `watch` re-lints on file save.
 - TUI file browser. Acceptance: TUI renders file tree, runs lint actions, exits cleanly.
 - Workspace exit-code contract enforced everywhere. Acceptance: all commands return codes 0/1/2/3 per contract.
-- Acceptance tests: one named file per FR requirement, placed beside its test suite.
+- Acceptance tests standardized: one test file per FR, named after the FR ID.
 
 ### P2 — Nice to Have
 
@@ -109,4 +109,4 @@ Crate responsibilities are listed in [AGENTS.md](AGENTS.md#workspace-packages-st
 
 ## Reference
 
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Testing: [TEST.md](TEST.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Roadmap: [ROADMAP.md](ROADMAP.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Testing: [TEST.md](TEST.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Backlog: [BACKLOG.md](BACKLOG.md)
