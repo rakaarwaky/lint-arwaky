@@ -1,4 +1,8 @@
 # Changelog
+## 3.7.1 (2026-09-27)
+
+- No significant changes
+
 ## 3.7.0 (2026-09-27)
 
 ### Features
