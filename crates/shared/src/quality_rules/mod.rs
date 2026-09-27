@@ -4,7 +4,8 @@ pub mod contract_quality_protocol;
 pub mod taxonomy_analysis_vo;
 pub use crate::common::taxonomy_code_analysis_vo;
 pub use crate::common::taxonomy_operation_error;
-pub mod taxonomy_code_analysis_request_vo;
+pub mod taxonomy_code_analysis_request;
+pub mod taxonomy_code_analysis_response;
 pub mod taxonomy_violation_code_analysis_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -17,7 +18,8 @@ pub use contract_quality_protocol::ICodeMetricAnalyzerProtocol;
 pub use contract_quality_protocol::IDeadInheritanceProtocol;
 pub use contract_quality_protocol::ILineCheckerProtocol;
 pub use contract_quality_protocol::IMandatoryClassProtocol;
-pub use taxonomy_code_analysis_request_vo::{CodeAnalysisRequest, CodeAnalysisResponse};
+pub use taxonomy_code_analysis_request::CodeAnalysisRequest;
+pub use taxonomy_code_analysis_response::CodeAnalysisResponse;
 
 // ── Taxonomy types ──
 pub use taxonomy_analysis_vo::GraphAnalysisContext;

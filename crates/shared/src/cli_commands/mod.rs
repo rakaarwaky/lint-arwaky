@@ -8,7 +8,7 @@ pub mod taxonomy_protocol_vo;
 // to the canonical module so both paths resolve to the same type.
 pub use crate::common::taxonomy_lint_result_vo as taxonomy_result_vo;
 pub mod taxonomy_scan_report_vo;
-pub mod taxonomy_scan_request_vo;
+pub mod taxonomy_scan_request;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -28,6 +28,6 @@ pub use taxonomy_scan_report_vo::DiagnosticSeverity;
 pub use taxonomy_scan_report_vo::PipelineDiagnostic;
 pub use taxonomy_scan_report_vo::PipelineError;
 pub use taxonomy_scan_report_vo::ScanReport;
-pub use taxonomy_scan_request_vo::ScanMode;
-pub use taxonomy_scan_request_vo::ScanRequest;
-pub use taxonomy_scan_request_vo::ScanTarget;
+pub use taxonomy_scan_request::ScanMode;
+pub use taxonomy_scan_request::ScanRequest;
+pub use taxonomy_scan_request::ScanTarget;

@@ -18,9 +18,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::external_lint::taxonomy_external_lint_request_vo::{
-    ExternalLintRequest, ExternalLintResponse,
-};
+use shared::external_lint::taxonomy_external_lint_request::ExternalLintRequest;
+use shared::external_lint::taxonomy_external_lint_response::ExternalLintResponse;
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;

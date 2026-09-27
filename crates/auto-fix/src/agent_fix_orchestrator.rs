@@ -20,7 +20,8 @@
 // - TR-2: Aggregate trait includes `manual_report` for FR-005
 
 use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
-use shared::auto_fix::taxonomy_fix_request_vo::{FixRequest, FixResponse};
+use shared::auto_fix::taxonomy_fix_request::FixRequest;
+use shared::auto_fix::taxonomy_fix_response::FixResponse;
 use shared::auto_fix::{FixOutcome, FixResult, IFileAdapterProtocol, IFixProtocol};
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_message_vo::LintMessage;

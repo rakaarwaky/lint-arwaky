@@ -1,11 +1,10 @@
-// PURPOSE: WatchRequestVO / WatchResponseVO — aggregate request/response for the watch domain
-use crate::common::taxonomy_common_error::ExitCode;
+// PURPOSE: WatchRequest — request payload for the watch aggregate
+
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
-/// Consumer verb carried by the watch aggregate's single entry point.
 pub enum WatchRequest {
     /// Start the watch loop and block until the running flag clears.
     Run {
@@ -14,14 +13,6 @@ pub enum WatchRequest {
     },
     /// Ask whether a path has a lintable source extension.
     IsLintable { path: FilePath },
-}
-
-/// Result of a watch aggregate request.
-pub enum WatchResponse {
-    /// Terminal status of a completed run request.
-    Run { exit_code: ExitCode },
-    /// Answer to an `IsLintable` request.
-    IsLintable { lintable: bool },
 }
 
 impl WatchRequest {

@@ -1,9 +1,7 @@
 import { ICalculatorAggregate } from "calculator-shared/src/contract_calculator_aggregate";
 import { ICalculatorProtocol } from "calculator-shared/src/contract_calculator_protocol";
-import {
-  CalculatorRequest,
-  CalculatorResponse,
-} from "calculator-shared/src/taxonomy_calculator_request_vo";
+import { CalculatorRequest } from "calculator-shared/src/taxonomy_calculator_request";
+import { CalculatorResponse } from "calculator-shared/src/taxonomy_calculator_response";
 import { ExpressionVO } from "calculator-shared/src/taxonomy_expression_vo";
 import { OperationVO } from "calculator-shared/src/taxonomy_operation_vo";
 import { ResultVO } from "calculator-shared/src/taxonomy_result_vo";

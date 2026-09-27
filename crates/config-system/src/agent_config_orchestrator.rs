@@ -1,7 +1,6 @@
 use dashmap::DashMap;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared::config_system::contract_config_protocol::IConfigParserProtocol;
@@ -11,7 +10,8 @@ use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
 use shared::config_system::contract_config_protocol::WorkspaceType;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_request_vo::{ConfigRequest, ConfigResponse};
+use shared::config_system::taxonomy_config_request::ConfigRequest;
+use shared::config_system::taxonomy_config_response::ConfigResponse;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
 use shared::config_system::taxonomy_setting_vo::AdapterEntry;
@@ -20,7 +20,6 @@ use shared::config_system::taxonomy_source_vo::ConfigResult;
 use shared::config_system::taxonomy_source_vo::ConfigSource;
 use shared::config_system::taxonomy_validation_vo::ValidationResult;
 use shared::config_system::utility_config_parser::default_config_for_language;
-use shared::config_system::utility_config_parser::parse_config_yaml;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
@@ -41,7 +40,48 @@ pub struct ConfigOrchestrator {
     config_cache: DashMap<String, Arc<ArchitectureConfig>>,
 }
 
-// ─── Block 2: Protocol Trait Delegations ──────────────────
+// ─── Block 2: Aggregate Trait Implementation ──────────────
+
+impl IConfigOrchestratorAggregate for ConfigOrchestrator {
+    fn execute(&self, request: ConfigRequest) -> ConfigResponse {
+        match request {
+            ConfigRequest::LoadProjectConfig { project_root } => {
+                ConfigResponse::LoadProjectConfig {
+                    result: self.load_project_config(&project_root),
+                }
+            }
+            ConfigRequest::LoadForLanguage {
+                project_root,
+                language,
+            } => ConfigResponse::LoadForLanguage {
+                result: self.load_config_for_language(&project_root, language),
+            },
+            ConfigRequest::ReadConfig {
+                project_root,
+                language,
+            } => ConfigResponse::ReadConfig {
+                source: self.read_config(&project_root, language),
+            },
+            ConfigRequest::DiscoverWorkspaces { root } => ConfigResponse::DiscoverWorkspaces {
+                workspaces: self.discover_workspaces(&root),
+            },
+            ConfigRequest::LoadSync { project_root } => ConfigResponse::LoadSync {
+                config: self.load_config_sync(&project_root),
+            },
+            ConfigRequest::IgnoredPaths { project_root } => ConfigResponse::IgnoredPaths {
+                patterns: self.ignored_paths(&project_root),
+            },
+            ConfigRequest::IgnoredPathsForLanguage {
+                project_root,
+                language,
+            } => ConfigResponse::IgnoredPathsForLanguage {
+                patterns: self.ignored_paths_for_language(&project_root, language),
+            },
+        }
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits, Protocol Delegations, Helpers ─────
 
 impl IConfigReaderProtocol for ConfigOrchestrator {
     fn read_config(
@@ -104,58 +144,19 @@ impl IWorkspaceDetectorProtocol for ConfigOrchestrator {
     }
 }
 
-// ─── Block 3: Aggregate Trait Implementation ──────────────
-
-impl IConfigOrchestratorAggregate for ConfigOrchestrator {
-    fn execute(&self, request: ConfigRequest) -> ConfigResponse {
-        match request {
-            ConfigRequest::LoadProjectConfig { project_root } => {
-                ConfigResponse::LoadProjectConfig {
-                    result: self.load_project_config(&project_root),
-                }
-            }
-            ConfigRequest::LoadForLanguage {
-                project_root,
-                language,
-            } => ConfigResponse::LoadForLanguage {
-                result: self.load_config_for_language(&project_root, language),
-            },
-            ConfigRequest::ReadConfig {
-                project_root,
-                language,
-            } => ConfigResponse::ReadConfig {
-                source: self.read_config(&project_root, language),
-            },
-            ConfigRequest::DiscoverWorkspaces { root } => ConfigResponse::DiscoverWorkspaces {
-                workspaces: self.discover_workspaces(&root),
-            },
-            ConfigRequest::LoadSync { project_root } => ConfigResponse::LoadSync {
-                config: self.load_config_sync(&project_root),
-            },
-            ConfigRequest::IgnoredPaths { project_root } => ConfigResponse::IgnoredPaths {
-                patterns: self.ignored_paths(&project_root),
-            },
-            ConfigRequest::IgnoredPathsForLanguage {
-                project_root,
-                language,
-            } => ConfigResponse::IgnoredPathsForLanguage {
-                patterns: self.ignored_paths_for_language(&project_root, language),
-            },
-        }
-    }
-}
-
 impl ConfigOrchestrator {
     pub fn read_config(
         &self,
         project_root: &FilePath,
         language: ConfigLanguage,
     ) -> Option<ConfigSource> {
-        self.deps
-            .config_reader
-            .read_config(project_root, language)
-            .ok()
-            .flatten()
+        match self.deps.config_reader.read_config(project_root, language) {
+            Ok(source) => source,
+            Err(e) => {
+                warn!(root = %project_root.value, error = %e, "failed to read config; no config source");
+                None
+            }
+        }
     }
 
     pub fn load_project_config(&self, project_root: &FilePath) -> ConfigResult {
@@ -171,24 +172,19 @@ impl ConfigOrchestrator {
     ) -> ConfigResult {
         match self.deps.config_reader.read_config(project_root, language) {
             Ok(Some(source)) => {
-                let had_layers = {
-                    let cache_key = source.path.to_string();
-                    !self
-                        .config_cache
-                        .entry(cache_key)
-                        .or_insert_with(|| Arc::new(parse_config_yaml(&source.raw_content)))
-                        .value()
-                        .layers
-                        .is_empty()
-                };
-                let config = self.merge_and_fill_defaults_cached(&source, language);
-                let mut warnings = Vec::new();
+                let (parsed_config, parse_warnings) = self
+                    .deps
+                    .parser
+                    .parse_config_yaml_with_warnings(&source.raw_content);
+                let had_layers = !parsed_config.layers.is_empty();
+                let mut warnings = parse_warnings;
                 if !had_layers {
                     warnings.push(
                         "Config file had no architecture layers, using built-in defaults for layers only."
                             .to_string(),
                     );
                 }
+                let config = self.merge_and_fill_defaults_cached(&source, language);
                 ConfigResult::new(config, source, warnings)
             }
             Ok(None) => {
@@ -226,11 +222,29 @@ impl ConfigOrchestrator {
             .map(|ws| {
                 let ws_type = self.deps.workspace_detector.detect(&ws);
                 let language = ConfigLanguage::from(ws_type);
-                let config = match self.deps.config_reader.read_config(&ws, language) {
-                    Ok(Some(source)) => self.merge_and_fill_defaults_cached(&source, language),
-                    _ => default_config_for_language(language.as_str()),
-                };
-                WorkspaceInfo::new(ws, language.to_string(), config)
+                match self.deps.config_reader.read_config(&ws, language) {
+                    Ok(Some(source)) => {
+                        let config = self.merge_and_fill_defaults_cached(&source, language);
+                        WorkspaceInfo::new(ws, language.to_string(), config)
+                    }
+                    Ok(None) => {
+                        warn!(
+                            ws = %ws.value,
+                            "workspace has no config file; using built-in defaults"
+                        );
+                        let config = default_config_for_language(language.as_str());
+                        WorkspaceInfo::new(ws, language.to_string(), config)
+                    }
+                    Err(e) => {
+                        warn!(
+                            ws = %ws.value,
+                            error = %e,
+                            "workspace config read failed; using built-in defaults"
+                        );
+                        let config = default_config_for_language(language.as_str());
+                        WorkspaceInfo::new(ws, language.to_string(), config)
+                    }
+                }
             })
             .collect()
     }
@@ -241,7 +255,21 @@ impl ConfigOrchestrator {
 
         match self.deps.config_reader.read_config(project_root, language) {
             Ok(Some(source)) => self.merge_and_fill_defaults_cached(&source, language),
-            _ => default_config_for_language(language.as_str()),
+            Ok(None) => {
+                warn!(
+                    root = %project_root.value,
+                    "no config file found; using built-in defaults"
+                );
+                default_config_for_language(language.as_str())
+            }
+            Err(e) => {
+                warn!(
+                    root = %project_root.value,
+                    error = %e,
+                    "config read failed; using built-in defaults"
+                );
+                default_config_for_language(language.as_str())
+            }
         }
     }
 
@@ -249,9 +277,9 @@ impl ConfigOrchestrator {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
         let result = self.load_config_for_language(project_root, language);
-        PatternList::new(merge_default_ignored_paths(ignored_paths_from_config(
-            &result.config,
-        )))
+        PatternList::new(crate::utility_config_merger::merge_default_ignored_paths(
+            crate::utility_config_merger::ignored_paths_from_config(&result.config),
+        ))
     }
 
     pub fn ignored_paths_for_language(
@@ -260,15 +288,11 @@ impl ConfigOrchestrator {
         language: ConfigLanguage,
     ) -> PatternList {
         let result = self.load_config_for_language(project_root, language);
-        PatternList::new(merge_default_ignored_paths(ignored_paths_from_config(
-            &result.config,
-        )))
+        PatternList::new(crate::utility_config_merger::merge_default_ignored_paths(
+            crate::utility_config_merger::ignored_paths_from_config(&result.config),
+        ))
     }
-}
 
-// ─── Block 4: Constructors, Helpers, Private Methods ──────
-
-impl ConfigOrchestrator {
     /// Create a new config orchestrator with all required protocol dependencies.
     pub fn new(deps: ConfigOrchestratorDeps) -> Self {
         Self {
@@ -292,7 +316,14 @@ impl ConfigOrchestrator {
         let parsed = self
             .config_cache
             .entry(cache_key)
-            .or_insert_with(|| Arc::new(parse_config_yaml(&source.raw_content)))
+            .or_insert_with(|| {
+                Arc::new(
+                    self.deps
+                        .parser
+                        .parse_config_yaml_with_warnings(&source.raw_content)
+                        .0,
+                )
+            })
             .value()
             .as_ref()
             .clone();
@@ -304,39 +335,4 @@ impl ConfigOrchestrator {
         }
         config
     }
-}
-
-/// FR-008: Merge universal defaults + config paths, deduplicated.
-/// Path separators normalized to platform separator.
-fn merge_default_ignored_paths(config_paths: Vec<String>) -> Vec<String> {
-    let capacity = DEFAULT_IGNORED_PATHS.len() + config_paths.len();
-    let mut seen: std::collections::HashSet<String> =
-        std::collections::HashSet::with_capacity(capacity);
-    let mut merged: Vec<String> = Vec::with_capacity(capacity);
-    for p in DEFAULT_IGNORED_PATHS
-        .iter()
-        .map(|s| s.to_string())
-        .chain(config_paths)
-    {
-        if seen.insert(p.clone()) {
-            merged.push(p);
-        }
-    }
-    merged
-}
-
-/// FR-008: Build ignored paths from config only.
-/// Defaults are owned by filesystem crate (DEFAULT_IGNORED_PATHS).
-fn ignored_paths_from_config(config: &ArchitectureConfig) -> Vec<String> {
-    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-    let mut ignored: Vec<String> = Vec::with_capacity(config.ignored_paths.values.len());
-
-    // Config-specified paths with dedup, empty strings filtered
-    for fp in config.ignored_paths.values.iter() {
-        let v = fp.value.replace('/', std::path::MAIN_SEPARATOR_STR);
-        if !v.is_empty() && seen.insert(v.clone()) {
-            ignored.push(v);
-        }
-    }
-    ignored
 }

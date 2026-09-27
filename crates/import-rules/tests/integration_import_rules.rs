@@ -12,7 +12,7 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::import_rules::taxonomy_import_request_vo::ImportRequest;
+use shared::import_rules::taxonomy_import_request::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;

@@ -23,7 +23,8 @@ use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
 use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
 use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_request_vo::{ImportRequest, ImportResponse};
+use shared::import_rules::taxonomy_import_request::ImportRequest;
+use shared::import_rules::taxonomy_import_response::ImportResponse;
 
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use tracing::warn;

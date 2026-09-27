@@ -26,9 +26,8 @@ use shared::quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtoco
 use shared::quality_rules::contract_quality_protocol::IDeadInheritanceProtocol;
 use shared::quality_rules::contract_quality_protocol::ILineCheckerProtocol;
 use shared::quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
-use shared::quality_rules::taxonomy_code_analysis_request_vo::{
-    CodeAnalysisRequest, CodeAnalysisResponse,
-};
+use shared::quality_rules::taxonomy_code_analysis_request::CodeAnalysisRequest;
+use shared::quality_rules::taxonomy_code_analysis_response::CodeAnalysisResponse;
 
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::common::taxonomy_path_vo::FilePath;
@@ -89,13 +88,6 @@ impl ICodeAnalysisAggregate for CodeAnalysisOrchestrator {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
-
-/// Check if any CRITICAL severity violations exist in results.
-#[rustfmt::skip]
-pub fn has_critical
-    (results: &[LintResult]) -> bool {
-    results.iter().any(|r| r.severity == Severity::CRITICAL)
-}
 
 impl CodeAnalysisOrchestrator {
     pub fn new(deps: CodeAnalysisDeps, config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
@@ -247,8 +239,7 @@ impl CodeAnalysisOrchestrator {
     }
 
     pub fn check_critical(&self, results: &[LintResult]) -> BooleanVO {
-        let hc: fn(&[LintResult]) -> bool = has_critical;
-        BooleanVO::new(hc(results))
+        BooleanVO::new(crate::utility_compliance_checker::contains_critical_severity(results))
     }
 
     pub fn format_report(

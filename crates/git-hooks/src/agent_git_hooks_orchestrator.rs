@@ -19,7 +19,8 @@ use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
-use shared::git_hooks::taxonomy_git_hooks_request_vo::{GitHooksRequest, GitHooksResponse};
+use shared::git_hooks::taxonomy_git_hooks_request::GitHooksRequest;
+use shared::git_hooks::taxonomy_git_hooks_response::GitHooksResponse;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 
 use std::sync::Arc;

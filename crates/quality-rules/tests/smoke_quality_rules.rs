@@ -1,6 +1,6 @@
 // PURPOSE: Smoke tests — quick boot + respond within 5s
 use quality_rules_lint_arwaky::CodeAnalysisContainer;
-use quality_rules_lint_arwaky::agent_quality_orchestrator::has_critical;
+use quality_rules_lint_arwaky::contains_critical_severity;
 
 use shared::cli_commands::LintResult;
 use shared::common::Severity;
@@ -58,7 +58,7 @@ fn score_calculation_smoke() {
 }
 
 #[test]
-fn has_critical_smoke() {
+fn critical_severity_detection_smoke() {
     let results_with_critical = vec![LintResult::new_arch(
         "src/lib.rs",
         1,
@@ -66,7 +66,7 @@ fn has_critical_smoke() {
         Severity::CRITICAL,
         "critical issue",
     )];
-    assert!(has_critical(&results_with_critical));
+    assert!(contains_critical_severity(&results_with_critical));
 
     let results_without_critical = vec![LintResult::new_arch(
         "src/lib.rs",
@@ -75,5 +75,5 @@ fn has_critical_smoke() {
         Severity::LOW,
         "minor issue",
     )];
-    assert!(!has_critical(&results_without_critical));
+    assert!(!contains_critical_severity(&results_without_critical));
 }

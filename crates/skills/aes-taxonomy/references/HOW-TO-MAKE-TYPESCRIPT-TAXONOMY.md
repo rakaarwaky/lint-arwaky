@@ -4,7 +4,7 @@
 >
 > **Audience**: Agents and engineers scaffolding AES taxonomy files in the shared domain.
 >
-> **Scope**: TypeScript taxonomy files named `taxonomy_<domain>_<concept>_<suffix>.ts` using suffixes `_vo`, `_entity`, `_error`, `_event`, `_constant` only.
+> **Scope**: TypeScript taxonomy files named `taxonomy_<domain>_<concept>_<suffix>.ts` using suffixes `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response` only.
 >
 > **Location**: TypeScript shared domain source root next to contracts:
 >
@@ -525,7 +525,7 @@ export { OrderCreated } from './taxonomy_order_order_created_event';
 | Check | Enforcement | Why it belongs here |
 |---|---|---|
 | Correct file pattern: `taxonomy_<domain>_<concept>_<suffix>.ts` (underscores only). | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
-| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect. |
+| Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect. |
 | File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect. |
 | No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect. |
 | Registered in shared `index.ts`. | Machine-checked: AES501 orphan check. | Required by AES layer rules and the linter; missing it is a defect. |
