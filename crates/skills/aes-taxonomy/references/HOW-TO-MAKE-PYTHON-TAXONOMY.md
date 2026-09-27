@@ -77,6 +77,8 @@ taxonomy_order_order_entity.py
 taxonomy_order_order_not_found_error.py
 taxonomy_order_order_created_event.py
 taxonomy_order_order_constant.py
+taxonomy_order_order_request.py
+taxonomy_order_order_response.py
 ```
 
 The filename must match the taxonomy type it contains.
@@ -89,6 +91,8 @@ taxonomy_order_order_entity.py          -> Order
 taxonomy_order_order_not_found_error.py -> OrderNotFoundError
 taxonomy_order_order_created_event.py   -> OrderCreated
 taxonomy_order_order_constant.py        -> ORDER_* constants
+taxonomy_order_order_request.py         -> OrderRequest + OrderVerb
+taxonomy_order_order_response.py        -> OrderResponse
 ```
 
 Allowed suffixes are exactly:
@@ -99,6 +103,8 @@ entity
 error
 event
 constant
+request
+response
 ```
 
 Anything else fails AES102.
@@ -114,6 +120,8 @@ Anything else fails AES102.
 | `_error.py` | Domain errors | Extend `Exception`; store VO fields only |
 | `_event.py` | Domain events | Immutable, VO payload fields only |
 | `_constant.py` | Compile-time constants | Pure literals only — no functions, no I/O |
+| `_request.py` | Aggregate request payloads | `@dataclass` with `verb` field or classmethod factories; VO payload fields |
+| `_response.py` | Aggregate response payloads | `@dataclass` with VO payload fields and classmethod factories; carries one outcome type |
 
 ---
 
@@ -154,6 +162,11 @@ A leaf VO may expose a read-only accessor such as `.value` for its wrapped primi
 
 Constants are the explicit exception for literal values because constant files contain compile-time literals, not domain fields.
 
+`_request` and `_response` are a second exception. AES401 is not gated on those
+suffixes, and their role scope `taxonomy(request,response)` permits primitive
+enum discriminants. A `Verb` enum, a `bool` flag, and an `| None` operand
+placeholder are all correct in these files. Domain *values* still belong in VOs.
+
 ---
 
 ### File length (AES302)
@@ -178,6 +191,8 @@ Docstrings and comments count. For constants, each constant should have a descri
    Error
    Event
    Constant
+   Request
+   Response
    ```
 
 2. Create the file:
@@ -223,7 +238,25 @@ Docstrings and comments count. For constants, each constant should have a descri
    Name events as past-tense domain facts.
    ```
 
-7. For Constants:
+7. For Requests:
+   ```text
+   Use a @dataclass with a `verb` discriminator field (e.g., an Enum).
+   Use classmethod factories so callers call CalculatorRequest.delegate(...) instead of
+     instantiating the dataclass directly.
+   VO payload fields only — no raw str or float for domain values.
+   No I/O.
+   ```
+
+8. For Responses:
+   ```text
+   Use a @dataclass with optional VO fields that distinguish each outcome.
+   Use classmethod factories so callers call CalculatorResponse.history(...) instead of
+     instantiating the dataclass directly.
+   VO payload fields only — no raw str or float for domain values.
+   No I/O.
+   ```
+
+9. For Constants:
    ```text
    Use module-level literal assignments only.
    No functions.
@@ -232,9 +265,9 @@ Docstrings and comments count. For constants, each constant should have a descri
    No computed values.
    ```
 
-8. Register the public type in the domain `__init__.py`.
+10. Register the public type in the domain `__init__.py`.
 
-9. Verify the module imports:
+11. Verify the module imports:
    ```bash
    python -c "import modules.shared.src.<domain>.taxonomy_<domain>_<concept>_<suffix>"
    ```
@@ -501,6 +534,162 @@ payload: dict
 
 ---
 
+### Request
+
+Request files carry the **inbound** payload of one aggregate entry point. A
+`verb` enum names which consumer verb is being invoked, and classmethod factories
+build each variant so callers never assemble the dataclass by hand.
+
+Template:
+
+```python
+from dataclasses import dataclass
+from enum import Enum, auto
+
+from .taxonomy_<domain>_<concept>_vo import <VO>
+
+
+class <Name>Verb(Enum):
+    """Consumer verbs carried by the <Name> aggregate's single entry point."""
+
+    <VERB> = auto()
+
+
+@dataclass
+class <Name>Request:
+    """A consumer verb plus its operand, if the verb needs one."""
+
+    verb: <Name>Verb
+    <field>: <VO> | None = None
+
+    @classmethod
+    def <verb>(cls, <field>: <VO>) -> "<Name>Request":
+        return cls(verb=<Name>Verb.<VERB>, <field>=<field>)
+
+
+__all__ = ["<Name>Verb", "<Name>Request"]
+```
+
+Concrete example:
+
+```python
+"""CalculatorRequest — request VOs for the calculator aggregate."""
+
+from dataclasses import dataclass
+from enum import Enum, auto
+
+from .taxonomy_expression_vo import ExpressionVO
+
+
+class CalculatorVerb(Enum):
+    """Consumer verbs carried by the calculator aggregate's single entry point."""
+
+    DELEGATE = auto()
+    HISTORY = auto()
+
+
+@dataclass
+class CalculatorRequest:
+    """A consumer verb plus its operand, if the verb needs one."""
+
+    verb: CalculatorVerb
+    expr: ExpressionVO | None = None
+
+    @classmethod
+    def delegate(cls, expr: ExpressionVO) -> "CalculatorRequest":
+        return cls(verb=CalculatorVerb.DELEGATE, expr=expr)
+
+    @classmethod
+    def history(cls) -> "CalculatorRequest":
+        return cls(verb=CalculatorVerb.HISTORY)
+
+
+__all__ = ["CalculatorVerb", "CalculatorRequest"]
+```
+
+Request rules:
+- The file name is `taxonomy_<domain>_<concept>_request.py` and it holds the `<Name>Verb` enum plus the `<Name>Request` dataclass. Both are exported in `__all__`.
+- The verb enum is a closed set — one member per consumer verb. Add a member when you add a verb; never widen the set at runtime.
+- Operand fields are `| None` with a default, because not every verb needs an operand. A verb that needs no operand gets a factory that takes no argument.
+- Factory return type is a string literal (`"CalculatorRequest"`) because the class is still being defined inside the classmethod body.
+- Declare `__all__` so the barrel can re-export the request and its verb explicitly.
+
+---
+
+### Response
+
+Response files carry the **outbound** payload of one aggregate entry point. Each
+verb's outcome is a distinct field, and classmethod factories build each shape.
+
+Template:
+
+```python
+from dataclasses import dataclass, field
+
+from .taxonomy_<domain>_<concept>_vo import <VO>
+
+
+@dataclass
+class <Name>Response:
+    """Results of a <Name> aggregate request."""
+
+    <single>: <VO> | None = None
+    <many>: list[<VO>] = field(default_factory=list)
+
+    @classmethod
+    def <verb>(cls, <single>: <VO> | None) -> "<Name>Response":
+        return cls(<single>=<single>)
+
+    @classmethod
+    def <history_verb>(cls, <many>: list[<VO>]) -> "<Name>Response":
+        return cls(<many>=list(<many>))
+
+
+__all__ = ["<Name>Response"]
+```
+
+Concrete example:
+
+```python
+"""CalculatorResponse — response VOs for the calculator aggregate."""
+
+from dataclasses import dataclass, field
+
+from .taxonomy_result_vo import ResultVO
+
+
+@dataclass
+class CalculatorResponse:
+    """Results of a calculator aggregate request.
+
+    `result` holds the outcome of a DELEGATE verb; `results` holds the full
+    calculation history for a HISTORY verb.
+    """
+
+    result: ResultVO | None = None
+    results: list[ResultVO] = field(default_factory=list)
+
+    @classmethod
+    def delegation(cls, result: ResultVO | None) -> "CalculatorResponse":
+        return cls(result=result)
+
+    @classmethod
+    def history(cls, results: list[ResultVO]) -> "CalculatorResponse":
+        return cls(results=list(results))
+
+
+__all__ = ["CalculatorResponse"]
+```
+
+Response rules:
+- The file name is `taxonomy_<domain>_<concept>_response.py` and it holds the `<Name>Response` dataclass.
+- Each request verb has a matching factory. Fields default to `None` or an empty list, so an unserved verb leaves its field empty rather than raising.
+- Collection fields use `field(default_factory=list)` — a mutable default is not allowed in a dataclass.
+- A list argument is copied with `list(...)` so the response does not alias the caller's list.
+- Document which verb each field belongs to in the class docstring, so the contract layer can read the field names without opening the contract.
+
+---
+
 ### Constants
 
 Use the singular `_constant` suffix:
@@ -578,12 +767,17 @@ from .taxonomy_order_order_id_vo import OrderId
 from .taxonomy_order_order_entity import Order
 from .taxonomy_order_order_not_found_error import OrderNotFoundError
 from .taxonomy_order_order_created_event import OrderCreated
+from .taxonomy_order_order_request import OrderRequest, OrderVerb
+from .taxonomy_order_order_response import OrderResponse
 
 __all__ = [
     "OrderId",
     "Order",
     "OrderNotFoundError",
     "OrderCreated",
+    "OrderRequest",
+    "OrderVerb",
+    "OrderResponse",
 ]
 ```
 
@@ -613,6 +807,9 @@ __all__ = [
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors expose an `error_id` property (stable numeric id), an `error_code` property (stable string name), and a `message` property derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_id`/`error_code` and to read the description without parsing `__str__`. | Required by AES best practice; missing it is a defect. |
 | Constants are pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
+| Request files define a closed `Verb` enum plus a dataclass with classmethod factories per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Response files define a dataclass with one field per request verb plus classmethod factories. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Request and response files declare `__all__` and are re-exported explicitly in the barrel. | Convention — the linter checks reachability, not export style. | Required by AES taxonomy convention; missing it is a defect. |
 | No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
 | `python -c "import ..."` passes. | Manual fallback gate. | Required by the Python packaging check; missing it is a defect. |
 

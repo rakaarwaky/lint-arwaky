@@ -76,6 +76,8 @@ taxonomy_order_order_entity.ts
 taxonomy_order_order_not_found_error.ts
 taxonomy_order_order_created_event.ts
 taxonomy_order_order_constant.ts
+taxonomy_order_order_request.ts
+taxonomy_order_order_response.ts
 ```
 
 The filename must match the taxonomy type it contains.
@@ -88,6 +90,8 @@ taxonomy_order_order_entity.ts          -> Order
 taxonomy_order_order_not_found_error.ts -> OrderNotFoundError
 taxonomy_order_order_created_event.ts   -> OrderCreated
 taxonomy_order_order_constant.ts        -> ORDER_* constants
+taxonomy_order_order_request.ts         -> OrderRequest + request*() factories
+taxonomy_order_order_response.ts        -> OrderResponse
 ```
 
 Allowed suffixes are exactly:
@@ -98,6 +102,8 @@ entity
 error
 event
 constant
+request
+response
 ```
 
 Anything else fails AES102. The filename itself must use underscores only — kebab-case (`taxonomy-order-money-vo.ts`) fails AES101.
@@ -113,6 +119,8 @@ Anything else fails AES102. The filename itself must use underscores only — ke
 | `_error.ts` | Domain errors | Extend `Error`, set `this.name`, store VO fields only |
 | `_event.ts` | Domain events | Immutable (`readonly`), VO payload fields only |
 | `_constant.ts` | Compile-time constants | `export const` only — no functions, no I/O |
+| `_request.ts` | Aggregate request payloads | Discriminated union with a string-literal `verb` + `request<Verb>()` factory functions |
+| `_response.ts` | Aggregate response payloads | Discriminated union with a string-literal `kind`; VO payload fields per outcome |
 
 ---
 
@@ -151,6 +159,12 @@ A leaf VO may expose a read-only accessor (e.g., `get value(): string`) for its 
 
 Constants are the explicit exception for literal values because constant files contain compile-time literals, not domain fields.
 
+`_request` and `_response` are a second exception. AES401 is not gated on those
+suffixes, and their role scope `taxonomy(request,response)` permits primitive
+union discriminants. The `"verb"` and `"kind"` string literals that discriminate a
+request or response union are required, so they are correct in these files.
+Domain *values* still belong in VOs.
+
 ---
 
 ### File length (AES302)
@@ -175,6 +189,8 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    Error
    Event
    Constant
+   Request
+   Response
    ```
 
 2. Create the file:
@@ -221,7 +237,22 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    Name events as past-tense domain facts.
    ```
 
-7. For Constants:
+7. For Requests:
+   ```text
+   Use a discriminated union with a `verb` string literal.
+   Export a factory function per verb named request<Verb>().
+   VO payload fields only — no raw string or number for domain values.
+   No I/O.
+   ```
+
+8. For Responses:
+   ```text
+   Use a discriminated union with a `kind` string literal.
+   VO payload fields only — no raw string or number for domain values.
+   No I/O.
+   ```
+
+9. For Constants:
    ```text
    Use export const only.
    No functions.
@@ -229,9 +260,9 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    No I/O.
    ```
 
-8. Register the public type in the domain `index.ts`.
+10. Register the public type in the domain `index.ts`.
 
-9. Verify the project compiles:
+11. Verify the project compiles:
    ```bash
    npx tsc --noEmit
    ```
@@ -455,6 +486,105 @@ Events must be immutable and use VO payload fields only.
 
 ---
 
+### Request
+
+Request files carry the **inbound** payload of one aggregate entry point. A
+discriminated union names each verb via a literal `verb` key, and a named
+factory function per verb builds that variant.
+
+Template:
+
+```typescript
+import { <VO> } from './taxonomy_<domain>_<concept>_vo';
+
+/** <Name>Request — request VOs for the <Name> aggregate. */
+export type <Name>Request =
+  | { verb: '<VERB>'; <field>: <VO> }
+  | { verb: '<VERB2>'; };
+
+export function request<Verb>(<field>: <VO>): <Name>Request {
+  return { verb: '<VERB>', <field> };
+}
+
+export function request<Verb2>(): <Name>Request {
+  return { verb: '<VERB2>' };
+}
+```
+
+Concrete example:
+
+```typescript
+// packages/shared/src/calculator/taxonomy_calculator_request.ts
+/**
+ * CalculatorRequest — request VOs for the calculator aggregate.
+ */
+
+import { ExpressionVO } from "./taxonomy_expression_vo";
+
+/** Consumer verbs carried by the calculator aggregate's single entry point. */
+export type CalculatorRequest =
+  | { verb: "delegate"; expr: ExpressionVO }
+  | { verb: "history" };
+
+export function requestDelegate(expr: ExpressionVO): CalculatorRequest {
+  return { verb: "delegate", expr };
+}
+
+export function requestHistory(): CalculatorRequest {
+  return { verb: "history" };
+}
+```
+
+Request rules:
+- The file name is `taxonomy_<domain>_<concept>_request.ts` and it exports the `<Name>Request` type plus one factory function per verb, each prefixed `request`.
+- The union's discriminator is the string literal `"verb"`. One member per consumer verb, no runtime branches on dynamic strings.
+- Optional fields belong on the member whose verb needs them. A verb without operands declares no extra keys.
+- Factory functions accept their operand directly; they never receive a partial type.
+- The type is exported `export type`; the factories are exported regular values. This pairing is how barrel files `index.ts` can re-export both.
+
+---
+
+### Response
+
+Response files carry the **outbound** payload of one aggregate entry point. Each
+outcome is one union member keyed by `kind`, and callers discriminate on it at
+the call site.
+
+Template:
+
+```typescript
+import { <VO> } from './taxonomy_<domain>_<concept>_vo';
+
+/** <Name>Response — response VOs for the <Name> aggregate. */
+export type <Name>Response =
+  | { kind: '<VERB>'; <field>: <VO> }
+  | { kind: '<VERB2>'; };
+```
+
+Concrete example:
+
+```typescript
+// packages/shared/src/calculator/taxonomy_calculator_response.ts
+/**
+ * CalculatorResponse — response VOs for the calculator aggregate.
+ */
+
+import { ResultVO } from "./taxonomy_result_vo";
+
+/** Results of a calculator aggregate request. */
+export type CalculatorResponse =
+  | { kind: "delegation"; result: ResultVO | null }
+  | { kind: "history"; results: ResultVO[] };
+```
+
+Response rules:
+- The file name is `taxonomy_<domain>_<concept>_response.ts` and it exports the `<Name>Response` type.
+- `kind` is the discriminator. One member per consumer verb, matching the request side exactly.
+- A field can be `| null` for an outcome that produces a single optional value. Use `[]` for a collection outcome — never a bare `undefined`.
+- Document which verb each member serves in the JSDoc so the contract layer can read it without following the type graph.
+
+---
+
 ### Constants
 
 Use the singular `_constant` suffix:
@@ -516,6 +646,12 @@ export { OrderId } from './taxonomy_order_order_id_vo';
 export { Order } from './taxonomy_order_order_entity';
 export { OrderNotFoundError } from './taxonomy_order_order_not_found_error';
 export { OrderCreated } from './taxonomy_order_order_created_event';
+export type { OrderRequest } from './taxonomy_order_order_request';
+export {
+  requestDelegate,
+  requestHistory,
+} from './taxonomy_order_order_request';
+export type { OrderResponse } from './taxonomy_order_order_response';
 ```
 
 ---
@@ -544,6 +680,9 @@ export { OrderCreated } from './taxonomy_order_order_created_event';
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors expose an `error_id` getter (stable numeric id), an `error_code` getter (stable string name), and a `message` getter derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_id`/`error_code` and to read the description without string matching. | Required by AES best practice; missing it is a defect. |
 | Constants are `export const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
+| Request types are discriminated unions with one member per verb, and one `request*()` factory function per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Response types are discriminated unions keyed by `kind`, one member per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Request and response are re-exported explicitly from the domain `index.ts` — type-only with `export type` for the union, value exports for the factories. | Convention — the linter checks reachability, not export style. | Required by AES taxonomy convention; missing it is a defect. |
 | No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
 | `npx tsc --noEmit` passes. | Manual fallback gate. | Required by the TypeScript compilation check; missing it is a defect. |
 
