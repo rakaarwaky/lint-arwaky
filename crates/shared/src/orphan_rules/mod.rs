@@ -1,6 +1,7 @@
 // orphan-rules — contract and taxonomy types
 pub mod contract_orphan_aggregate;
 pub mod contract_orphan_protocol;
+pub mod taxonomy_orphan_constant;
 pub mod taxonomy_orphan_request;
 pub mod taxonomy_orphan_response;
 pub mod taxonomy_orphan_vo;
@@ -14,6 +15,7 @@ pub use contract_orphan_protocol::IOrphanParserProtocol;
 pub use contract_orphan_protocol::ISurfacesOrphanProtocol;
 pub use contract_orphan_protocol::ITaxonomyOrphanProtocol;
 pub use contract_orphan_protocol::IUtilityOrphanProtocol;
+pub use taxonomy_orphan_constant::CONSUMER_LAYERS;
 pub use taxonomy_orphan_request::OrphanRequest;
 pub use taxonomy_orphan_response::OrphanResponse;
 pub use taxonomy_orphan_vo::AesOrphanViolation;

@@ -9,27 +9,6 @@ use shared::quality_rules::taxonomy_analysis_vo::{
 
 pub struct SurfacesOrphanAnalyzer;
 
-impl Default for SurfacesOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl SurfacesOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
-    fn surface_category(suffix: &str) -> &'static str {
-        match suffix {
-            "command" | "controller" | "page" | "router" => "smart",
-            "hook" | "store" | "action" | "screen" => "utility",
-            "component" | "view" | "layout" => "passive",
-            _ => "unknown",
-        }
-    }
-}
-
 impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
     fn is_surface_orphan(
         &self,
@@ -71,5 +50,26 @@ impl ISurfacesOrphanProtocol for SurfacesOrphanAnalyzer {
             ),
             severity,
         )
+    }
+}
+
+impl Default for SurfacesOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl SurfacesOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+
+    fn surface_category(suffix: &str) -> &'static str {
+        match suffix {
+            "command" | "controller" | "page" | "router" => "smart",
+            "hook" | "store" | "action" | "screen" => "utility",
+            "component" | "view" | "layout" => "passive",
+            _ => "unknown",
+        }
     }
 }

@@ -19,6 +19,7 @@ pub use taxonomy_filesystem_response::FilesystemResponse;
 
 // ── Taxonomy types ──
 pub use taxonomy_filesystem_vo::DefinitionEntry;
+pub use taxonomy_filesystem_vo::ExternalReferenceMap;
 pub use taxonomy_filesystem_vo::FileEntry;
 pub use taxonomy_filesystem_vo::FileNodeVO;
 pub use taxonomy_filesystem_vo::GraphAnalysisContext;

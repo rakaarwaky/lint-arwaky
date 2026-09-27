@@ -2,6 +2,7 @@
 pub mod contract_role_protocol;
 pub mod contract_role_runner_aggregate;
 pub mod taxonomy_layer_names_constant;
+pub mod taxonomy_role_limit_constant;
 pub mod taxonomy_role_request;
 pub mod taxonomy_role_response;
 pub mod taxonomy_role_vo;
@@ -27,6 +28,8 @@ pub use taxonomy_layer_names_constant::LAYER_ROOT;
 pub use taxonomy_layer_names_constant::LAYER_SURFACES;
 pub use taxonomy_layer_names_constant::LAYER_TAXONOMY;
 pub use taxonomy_layer_names_constant::LAYER_UTILITY;
+pub use taxonomy_role_limit_constant::MAX_CONTROL_FLOW;
+pub use taxonomy_role_limit_constant::MAX_PUBLIC_METHODS;
 pub use taxonomy_role_request::RoleRequest;
 pub use taxonomy_role_response::RoleResponse;
 pub use taxonomy_role_vo::AesRoleViolation;

@@ -4,7 +4,9 @@
 // No file I/O or AST parsing is performed internally.
 
 use shared::common::taxonomy_lint_result_vo::LintResult;
+use shared::filesystem::taxonomy_filesystem_vo::ExternalReferenceMap;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared::filesystem::taxonomy_filesystem_vo::ParseMetadata;
 use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared::role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
@@ -24,6 +26,9 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 pub struct RoleCheckerDeps {
     pub taxonomy: Arc<dyn ITaxonomyRoleProtocol>,
     pub contract: Arc<dyn IContractRoleProtocol>,
+    pub capabilities_rust: Arc<dyn ICapabilitiesRoleProtocol>,
+    pub capabilities_python: Arc<dyn ICapabilitiesRoleProtocol>,
+    pub capabilities_typescript: Arc<dyn ICapabilitiesRoleProtocol>,
     pub capabilities: Arc<dyn ICapabilitiesRoleProtocol>,
     pub surface: Arc<dyn ISurfaceRoleProtocol>,
     pub agent: Arc<dyn IAgentRoleProtocol>,
@@ -82,6 +87,8 @@ impl RoleOrchestrator {
         if !self.config.enabled.value {
             return;
         }
+
+        let references = build_external_reference_map(files);
 
         for file in files {
             if !file.parse_ok || file.content.is_empty() {
@@ -153,9 +160,27 @@ impl RoleOrchestrator {
                 "capabilities" | "capability"
                     if self.is_rule_enabled("AES403") && !self.is_exception("AES403", filename) =>
                 {
-                    self.deps.capabilities.check_capability_routing(
+                    let language = file.language;
+                    let deps = &self.deps;
+                    let auditor: &dyn ICapabilitiesRoleProtocol = match language {
+                        shared::filesystem::taxonomy_filesystem_vo::Language::Rust => {
+                            &*deps.capabilities_rust
+                        }
+                        shared::filesystem::taxonomy_filesystem_vo::Language::Python => {
+                            &*deps.capabilities_python
+                        }
+                        shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+                        | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => {
+                            &*deps.capabilities_typescript
+                        }
+                        _ => {
+                            continue;
+                        }
+                    };
+                    auditor.check_capability_routing_with_references(
                         file,
                         "capabilities",
+                        &references,
                         violations,
                     );
                 }
@@ -208,4 +233,129 @@ impl RoleOrchestrator {
             .map(|r| r.enabled.value)
             .unwrap_or(true)
     }
+}
+
+// ─── Module-level helper ──────────────────────────────
+
+/// Build a workspace-wide map of which file references which method name.
+///
+/// The role rules receive every parsed file, so this is a single pass over
+/// `used_identifiers` per file. `used_identifiers` is populated by the
+/// filesystem parser from the file body (excluding `use` declarations), so a
+/// method name appearing in a caller file means the caller calls it.
+///
+/// Test and bench files are excluded from the main file index, so they are
+/// scanned separately here to keep the reference map complete.
+fn build_external_reference_map(files: &[FileEntry]) -> ExternalReferenceMap {
+    let mut map = ExternalReferenceMap::default();
+    for file in files {
+        let path = file.path.to_string_lossy().to_string();
+        if is_test_or_bench_path(&path) {
+            map.has_test_references = true;
+        }
+        let identifiers: Vec<String> = match &file.parse_metadata {
+            Some(ParseMetadata::Rust(r)) => r.used_identifiers.clone(),
+            Some(ParseMetadata::Python(py)) => py.used_identifiers.clone(),
+            Some(ParseMetadata::TypeScript(ts)) | Some(ParseMetadata::JavaScript(ts)) => {
+                ts.used_identifiers.clone()
+            }
+            _ => continue,
+        };
+        if identifiers.is_empty() {
+            continue;
+        }
+        map.by_file.insert(path, identifiers);
+    }
+    // Supplement with on-disk test/bench files, which the main index excludes.
+    let mut seen: std::collections::HashSet<String> = map.by_file.keys().cloned().collect();
+    if let Ok(ws_root) = std::env::current_dir() {
+        for sub in ["crates", "packages", "modules"] {
+            let base = ws_root.join(sub);
+            if !base.is_dir() {
+                continue;
+            }
+            if let Ok(members) = std::fs::read_dir(&base) {
+                for member in members.flatten() {
+                    let member_path = member.path();
+                    if !member_path.is_dir() {
+                        continue;
+                    }
+                    let src_dir = member_path.join("src");
+                    for sub_dir in ["tests", "benches"] {
+                        let dir = src_dir.join(sub_dir);
+                        if !dir.is_dir() {
+                            continue;
+                        }
+                        collect_test_refs(&dir, &mut map, &mut seen);
+                    }
+                }
+            }
+        }
+    }
+    map
+}
+
+fn is_test_or_bench_path(path: &str) -> bool {
+    path.contains("/tests/")
+        || path.contains("/benches/")
+        || path.contains("\\tests\\")
+        || path.contains("\\benches\\")
+}
+
+fn collect_test_refs(
+    dir: &std::path::Path,
+    map: &mut ExternalReferenceMap,
+    seen: &mut std::collections::HashSet<String>,
+) {
+    fn walk(
+        d: &std::path::Path,
+        map: &mut ExternalReferenceMap,
+        seen: &mut std::collections::HashSet<String>,
+    ) {
+        let entries = match std::fs::read_dir(d) {
+            Ok(e) => e,
+            Err(_) => return,
+        };
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.is_dir() {
+                walk(&p, map, seen);
+                continue;
+            }
+            let ext = p.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if !matches!(ext, "rs" | "py" | "ts" | "js") {
+                continue;
+            }
+            let path_str = p.to_string_lossy().to_string();
+            if !seen.insert(path_str.clone()) {
+                continue;
+            }
+            let content = match std::fs::read_to_string(&p) {
+                Ok(c) => c,
+                Err(_) => continue,
+            };
+            // Simple identifier harvest: trim lines, skip `use`/`import` declarations.
+            let identifiers: Vec<String> = content
+                .lines()
+                .filter(|l| {
+                    let t = l.trim();
+                    !t.is_empty() && !t.starts_with("use ") && !t.starts_with("import ")
+                })
+                .flat_map(|l| l.split(' ').map(|w| w.trim().to_string()))
+                .filter(|w| {
+                    w.chars()
+                        .next()
+                        .map(|c| c.is_ascii_lowercase())
+                        .unwrap_or(false)
+                        && w.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+                })
+                .collect();
+            if identifiers.is_empty() {
+                continue;
+            }
+            map.has_test_references = true;
+            map.by_file.insert(path_str, identifiers);
+        }
+    }
+    walk(dir, map, seen);
 }

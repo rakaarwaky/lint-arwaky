@@ -38,10 +38,16 @@ fn smoke_orchestrator_creation() {
     use std::sync::Arc;
 
     let config = ArchitectureConfig::default();
+    let rust_auditor = Arc::new(role_rules_lint_arwaky::CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
         taxonomy: Arc::new(role_rules_lint_arwaky::TaxonomyRoleChecker::new()),
         contract: Arc::new(role_rules_lint_arwaky::ContractRoleChecker::new()),
-        capabilities: Arc::new(role_rules_lint_arwaky::CapabilitiesRoleChecker::new()),
+        capabilities_rust: rust_auditor.clone(),
+        capabilities_python: Arc::new(role_rules_lint_arwaky::CapabilitiesPythonRoleAuditor::new()),
+        capabilities_typescript: Arc::new(
+            role_rules_lint_arwaky::CapabilitiesTypeScriptRoleAuditor::new(),
+        ),
+        capabilities: rust_auditor,
         surface: Arc::new(role_rules_lint_arwaky::SurfaceRoleChecker::new()),
         agent: Arc::new(role_rules_lint_arwaky::AgentRoleChecker::new()),
         utility: Arc::new(role_rules_lint_arwaky::UtilityRoleChecker::new()),

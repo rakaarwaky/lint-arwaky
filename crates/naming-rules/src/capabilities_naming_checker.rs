@@ -14,14 +14,12 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
 use shared::naming_rules::taxonomy_naming_constant::{
-    RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX, SPECIALIZED_LAYER_MARKER,
-    SUFFIX_POLICY_STRICT,
+    MIN_WORDS_DEFAULT, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
+    SPECIALIZED_LAYER_MARKER, SUFFIX_POLICY_STRICT,
 };
 
 use std::collections::HashMap;
 use std::sync::OnceLock;
-
-const MIN_WORDS_DEFAULT: usize = 3;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

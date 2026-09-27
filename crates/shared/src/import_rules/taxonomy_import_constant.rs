@@ -25,3 +25,9 @@ pub const SOURCE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
 /// Delegates to the single source of truth in `taxonomy_default_constant`.
 pub const DEFAULT_SKIP_DIRS: &[&str] =
     crate::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
+
+/// Rule code for AES201 — Forbidden Import
+pub const AES201_RULE_CODE: &str = "AES201";
+
+/// Rule code for AES202 — Mandatory Import
+pub const AES202_RULE_CODE: &str = "AES202";

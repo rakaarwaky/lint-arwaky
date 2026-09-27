@@ -101,8 +101,10 @@ impl Capabilities<NameCapability> {
         }
     }
 
-    // HELPERS: Should be `private` (no `pub`) or `pub(crate)` for testing.
-    // If a helper needs to be fully `pub` and reusable across modules, extract it to Utility.
+    // HELPERS: `pub fn` is only for genuine API. A helper with no caller in
+    // production code should be `fn` (private) or `pub(crate)` if a `#[cfg(test)]`
+    // module in the same file calls it. Integration tests under `tests/` compile
+    // as a separate crate, so a helper they call must stay `pub`.
     fn helper_method(&self) -> bool {
         // internal logic
         true
@@ -124,8 +126,9 @@ impl Capabilities<NameCapability> {
 | No local domain models, no agent/capability imports.                                          | Required by AES layer rules and the linter; missing it is a defect. |
 | `Arc<dyn Trait>` for DI; shared VOs for fields and trait signatures.                          | Required by AES layer rules and the linter; missing it is a defect. |
 | Constants → `taxonomy_<domain>_constant.rs`.                                                  | Required by AES layer rules and the linter; missing it is a defect. |
-| Helper functions in Block 3 are `private` or `pub(crate)` (not fully `pub` unless justified). | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 3 helpers with no production caller are `fn` or `pub(crate)`, not `pub`.                | Required by AES layer rules and the linter; missing it is a defect. |
 | Low-level, reusable, stateless ops → moved to Utility.                                        | Required by AES layer rules and the linter; missing it is a defect. |
+| `#[cfg(test)] mod tests` lives in `tests/`, never inline in the capability file.             | Required by AES layer rules and the linter; missing it is a defect. |
 | `cargo check -p <crate-name>` passes.                                                         | Required by AES layer rules and the linter; missing it is a defect. |
 
 
@@ -137,7 +140,11 @@ impl Capabilities<NameCapability> {
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Manual (not machine-checked): 3-block order; Block 2 only protocol methods; helper-vs-utility matrix; role naming lists.
+# AES403 machine-enforced: type budget ≤3; protocol implementor present;
+#   block order (protocol impl before inherent impl); local constants in
+#   taxonomy file, not in capabilities file; no inline #[cfg(test)] mod tests;
+#   pub helpers without production callers flagged.
+# Manual (not machine-checked): helper-vs-utility matrix; role naming lists.
 # Fallback compile gate: cargo check -p <crate-name>
 ```
 
