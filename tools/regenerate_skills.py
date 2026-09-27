@@ -2,7 +2,7 @@
 """Regenerate taxonomy_skills_constant.rs from crates/skills on disk.
 
 Each skill ships one language-agnostic SKILL.md (always installed) plus
-optional references/<HOW-TO-MAKE-*.md> files. Reference files whose
+optional reference(s)/<HOW-TO-MAKE-*.md> files. Reference files whose
 filename contains PYTHON, RUST, or TYPESCRIPT are installed only when that
 language is detected; all others are language-agnostic.
 
@@ -45,8 +45,8 @@ for rel in files:
         # <skill>/SKILL.md — language-agnostic
         name = parts[0]
         lang = None
-    elif len(parts) >= 3 and parts[1] == "references":
-        # <skill>/references/<HOW-TO>.md
+    elif len(parts) >= 3 and parts[1] in ("references", "reference"):
+        # <skill>/references/<HOW-TO>.md or <skill>/reference/<HOW-TO>.md
         name = parts[0]
         lang = detect_lang(parts[2])
     else:
@@ -61,7 +61,7 @@ lines = [
     "/// All embedded skills compiled into the binary for initialization.",
     "///",
     "/// Each skill ships a language-agnostic `SKILL.md` (always installed)",
-    "/// plus optional language-specific `references/<HOW-TO-*.md>` files",
+    "/// plus optional language-specific `reference(s)/<HOW-TO-*.md>` files",
     "/// that are installed only when that language is detected.",
     "///",
     "/// The markdown source of truth lives in `crates/skills/` — edit the",

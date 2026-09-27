@@ -4,7 +4,7 @@ use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
 /// All embedded skills compiled into the binary for initialization.
 ///
 /// Each skill ships a language-agnostic `SKILL.md` (always installed)
-/// plus optional language-specific `references/<HOW-TO-*.md>` files
+/// plus optional language-specific `reference(s)/<HOW-TO-*.md>` files
 /// that are installed only when that language is detected.
 ///
 /// The markdown source of truth lives in `crates/skills/` — edit the
@@ -214,22 +214,20 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     ),
     EmbeddedSkillVO::new(
         "aes-migration",
-        "aes-migration/references/HOW-TO-MAKE-PYTHON-MIGRATION.md",
-        include_str!("../../../skills/aes-migration/references/HOW-TO-MAKE-PYTHON-MIGRATION.md"),
+        "aes-migration/reference/HOW-TO-MAKE-PYTHON-MIGRATION.md",
+        include_str!("../../../skills/aes-migration/reference/HOW-TO-MAKE-PYTHON-MIGRATION.md"),
         Some("python"),
     ),
     EmbeddedSkillVO::new(
         "aes-migration",
-        "aes-migration/references/HOW-TO-MAKE-RUST-MIGRATION.md",
-        include_str!("../../../skills/aes-migration/references/HOW-TO-MAKE-RUST-MIGRATION.md"),
+        "aes-migration/reference/HOW-TO-MAKE-RUST-MIGRATION.md",
+        include_str!("../../../skills/aes-migration/reference/HOW-TO-MAKE-RUST-MIGRATION.md"),
         Some("rust"),
     ),
     EmbeddedSkillVO::new(
         "aes-migration",
-        "aes-migration/references/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md",
-        include_str!(
-            "../../../skills/aes-migration/references/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md"
-        ),
+        "aes-migration/reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md",
+        include_str!("../../../skills/aes-migration/reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md"),
         Some("typescript"),
     ),
     EmbeddedSkillVO::new(
