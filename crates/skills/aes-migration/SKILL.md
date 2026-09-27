@@ -40,13 +40,13 @@ metadata:
 > **Audience**: The agent planning or executing a migration to AES.
 > **Scope**: Python, Rust, and TypeScript projects; references contain full migration playbooks.
 
-This skill is a **router** — it points at language-specific migration guides under [`references/`](references/) and the layer skills that execute each phase. Rules, templates, and verify blocks live in the referenced HOW-TUs.
+This skill is a **router** — it points at language-specific migration guides under [`reference/`](reference/) and the layer skills that execute each phase. Rules, templates, and verify blocks live in the referenced HOW-TUs.
 
 | Language | Playbook | Source |
 | -------- | -------- | ------ |
-| Python   | Phase-based migration workflow | [references/HOW-TO-MAKE-PYTHON-MIGRATION.md](references/HOW-TO-MAKE-PYTHON-MIGRATION.md) |
-| Rust     | Phase-based migration workflow | [references/HOW-TO-MAKE-RUST-MIGRATION.md](references/HOW-TO-MAKE-RUST-MIGRATION.md) |
-| TypeScript | Phase-based migration workflow | [references/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md](references/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md) |
+| Python   | Phase-based migration workflow | [reference/HOW-TO-MAKE-PYTHON-MIGRATION.md](reference/HOW-TO-MAKE-PYTHON-MIGRATION.md) |
+| Rust     | Phase-based migration workflow | [reference/HOW-TO-MAKE-RUST-MIGRATION.md](reference/HOW-TO-MAKE-RUST-MIGRATION.md) |
+| TypeScript | Phase-based migration workflow | [reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md](reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md) |
 
 **The dependency model:**
 
@@ -112,7 +112,7 @@ Ask these questions in order. The first "No" dictates your next action.
 
 ## Workflow
 
-1. **Load the language playbook**: Python → `references/HOW-TO-MAKE-PYTHON-MIGRATION.md`, Rust → `references/HOW-TO-MAKE-RUST-MIGRATION.md`, TypeScript → `references/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md`.
+1. **Load the language playbook**: Python → `reference/HOW-TO-MAKE-PYTHON-MIGRATION.md`, Rust → `reference/HOW-TO-MAKE-RUST-MIGRATION.md`, TypeScript → `reference/HOW-TO-MAKE-TYPESCRIPT-MIGRATION.md`.
 2. **Phase 0 — Audit**: Run `lint-arwaky-cli scan .`; categorize violations by layer; choose strategy.
 3. **Phase 1 — Taxonomy**: Extract VOs, errors, constants; register in shared barrel.
 4. **Phase 2 — Contract**: Create `I<Concept>Protocol` (1 method) and `I<Concept>Aggregate` (many methods); register.
