@@ -57,8 +57,9 @@ e.g. `for file in files { self.checker.check(file) }` = OK. `files.iter().map(|f
 
 **Error rules:**
 - Rule 1: Never silently discard — no `checker.check().unwrap_or_default()`.
-- Rule 2: Analysis orchestration → `Vec<<ResultVO>>`, match per-item into VO.
-- Rule 3: Execution orchestration → `Result<ExecutionReport, AgentExecutionError>`.
+- Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
+  holds VO-wrapped values, not raw primitives.
+- Rule 3: Execution orchestration → return `Result<ExecutionReport, AgentExecutionError>` wrapped in a VO variant.
 - Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
 
 **VO rules:** `String`/`i32`..`u64`/`f32`/`f64`/`char` forbidden for domain fields/contracts. `bool` for toggles; `&str` for borrowed non-domain input only.
@@ -85,15 +86,22 @@ use shared::<domain>::taxonomy_<name>_vo::<VO>;
 use shared::<domain>::contract_<name>_aggregate::I<Name>Aggregate;
 
 // ─── Block 1: Struct Definition ──────────────────────────
+// Injected deps are protocol traits (what the agent dispatches to), not the aggregate.
 pub struct Agent<Name> {
-    aggregate: Arc<dyn I<Name>Aggregate>,
+    // One field per capability seam, typed against the seam's protocol trait.
+    dep: Arc<dyn I<Seam>Protocol>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ─────────────
+// Exactly one method — the single entry point. Dispatch to the owning protocol trait.
 impl I<Name>Aggregate for Agent<Name> {
-    fn execute(&self, request: &<RequestVO>) -> Vec<<ResultVO>> {
-        // orchestration only — delegate to aggregate
-        self.aggregate.process(request)
+    fn execute(&self, request: <RequestVO>) -> <ResponseVO> {
+        // Orchestration only: match the request variant, delegate to the protocol.
+        // No computation, no I/O, no silently discarded errors.
+        match request {
+            <RequestVO>::<Variant1> { .. } => <ResponseVO>::<Result1>(self.dep.<operation_1>(..)),
+            <RequestVO>::<Variant2> { .. } => <ResponseVO>::<Result2>(self.dep.<operation_2>(..)),
+        }
     }
 }
 

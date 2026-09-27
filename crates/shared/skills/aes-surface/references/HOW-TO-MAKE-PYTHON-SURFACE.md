@@ -46,7 +46,7 @@ class Surface<Name>:
 
     def handle(self, event: TuiEvent) -> Result[UiState, SurfaceError]:
         # orchestration only
-        return Ok(UiState.idle())
+        return Result.ok(UiState.idle())
 ```
 
 ---

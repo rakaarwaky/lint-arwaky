@@ -18,7 +18,7 @@ metadata:
     - aes-taxonomy
     - aes-capabilities
     - aes-agent
-    - cleanup-consolidate
+    - aes-taxonomy
   triggers:
     - create utility
     - create utility python
@@ -46,7 +46,7 @@ metadata:
 > **Audience**: The agent creating or validating a utility file.
 > **Scope**: Python, Rust, and TypeScript `utility_<domain>_<role>` files â€” no class/struct/impl.
 
-The **aggregate** decides which suffix, which imports, and which structure apply.
+The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO |
@@ -154,4 +154,4 @@ The linter covers naming, imports, and primitives. These need a reader (HOW-TO Â
 
 - `aes-taxonomy`
 - `aes-capabilities`
-- `cleanup-consolidate`
+- `aes-root`

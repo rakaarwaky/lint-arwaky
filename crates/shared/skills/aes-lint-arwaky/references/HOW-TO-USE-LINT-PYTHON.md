@@ -48,13 +48,12 @@ Copy, fill, delete nothing.
 ### Adapters & external tooling
 
 `lint-arwaky-cli install` installs external adapters; `lint-arwaky-cli adapters` lists the
-active ones (Ruff, Mypy, Radon, Bandit, …). `get_config` accepts `"language": "python"`.
+active ones (Ruff, Mypy, Bandit, …). `get_config` accepts `"language": "python"`.
 
 | Adapter | Standalone command | What it covers |
 | ------- | ------------------ | -------------- |
 | Ruff | `ruff check src/` | lint + style gate |
 | Mypy | `mypy src/` | static type checking |
-| Radon | `lint-arwaky-cli quality modules/` | complexity / quality metrics |
 | Bandit | `lint-arwaky-cli security modules/` | security issues |
 | CVE check | `lint-arwaky-cli dependencies modules/` | library vulnerabilities |
 
@@ -72,7 +71,8 @@ lint-arwaky-cli scan workspaces-bad/modules
 lint-arwaky-cli scan workspaces-bad/modules --format json
 lint-arwaky-cli scan workspaces-bad/modules --filter AES201
 lint-arwaky-cli orphan modules/ --member animator
-lint-arwaky-cli ci modules/ --threshold 80 --format junit
+lint-arwaky-cli ci modules/ --threshold 80
+lint-arwaky-cli scan modules/ --format junit -o reports/
 
 # Reports → XDG data dir
 lint-arwaky-cli scan modules/ --format json \
@@ -89,7 +89,9 @@ lint-arwaky-cli scan modules/ --format sarif \
   `utility` (mandatory: `taxonomy` + `contract(*_protocol)`); forbidden: other `capabilities_*`,
   `agent`, `surface`, `root`. Break the dependency through a contract protocol/aggregate —
   `aes-contract`.
-- **AES204 / AES304** → `fix-bypass`.
+- **AES204** → remove the dummy import and its stub (`aes-{layer}`).
+- **AES304** → auto-fixable via `lint-arwaky-cli fix <path> --filter AES304`, or fix the
+  root cause and delete the suppression manually.
 - **AES403** → every capability class MUST inherit its protocol ABC.
 - **AES405** → every agent class MUST inherit its aggregate ABC, no direct `capabilities_*`
   import, no `: Any` on aggregate signatures.

@@ -26,6 +26,7 @@ Six rules. Each one prevents a specific failure mode.
    the same way other tools do; direct `lint-arwaky-cli` / `lac` are equivalent fallbacks.
 2. **Shared flags are defined only here.** Global options, aliases, subcommands, MCP tools, and
    exit codes are not restated in the language HOW-TOs — those only add language deltas.
+   Exit code 3 (prerequisite missing) is reachable from the `external` family when an adapter binary is not installed.
 3. **Always choose an explicit `--format` when the output is consumed.** `json` for triage
    pipelines, `sarif`/`junit` for CI, `text` for humans. Default text is not machine-stable.
 4. **Scope before you auto-fix.** `fix` supports `--dry-run` and `--filter <CODE>`; run dry-run
@@ -33,7 +34,8 @@ Six rules. Each one prevents a specific failure mode.
 5. **`--filter` is an AES code, not a substring.** e.g. `AES101`, `AES201`. Family subcommands
    (`import`, `naming`, `role`, `orphan`, …) already narrow the linter; use `--filter` for a
    single rule within a family.
-6. **Exit code is the gate.** `0` pass · `1` violations (blocks merge) · `2` config/parse error.
+6. **Exit code is the gate.** `0` pass · `1` violations (blocks merge) · `2` config/parse error ·
+   `3` prerequisite missing (a required external tool is not installed).
    CI and hooks key off this; do not re-parse stdout to decide success.
 
 ---
@@ -81,21 +83,24 @@ lac fix . --dry-run
 | -------------------------------------- | ------------------------------------------------------------------------------ |
 | `scan` / `check [PATH]`            | Run all linters; `--format` text / json / sarif / junit, `--member <NAME>`, `--filter <CODE>`, `-o <DIR>` |
 | `fix [PATH]`                       | Apply safe automatic fixes; `--dry-run`, `--filter <CODE>`                |
-| `ci [PATH]`                        | Quality gate; `--threshold <SCORE>` (default 80, exit 1 below it), `--format` |
+| `ci [PATH]`                        | Quality gate; `--threshold <SCORE>` (default 80, exit 1 below it). No `--format` flag. |
 | `quality`/`import`/`naming`/`role`/`orphan`/`external` | Run one linter family in isolation (same flags as `scan`; `orphan` accepts `--member`) |
 | `security [PATH]`                  | Code security issues (Bandit / `cargo audit` / ESLint security)             |
 | `dependencies [PATH]`              | Third-party CVE scan of the lockfile/manifest                              |
 | `watch [PATH]`                     | Re-lint on file save                                                       |
 | `install-hook` / `uninstall-hook`  | Manage the Git pre-commit integration                                    |
 | `init` / `install`                 | Write `lint_arwaky.config.yaml` / install external adapter binaries       |
-| `config-show` / `adapters` / `mcp-config` | Print active rules, enabled adapters, MCP client JSON                     |
+| `config` / `adapters` / `mcp-config` | Print active rules, enabled adapters, MCP client JSON                     |
 | `doctor` / `version`               | Environment diagnostics / binary version                                 |
 
 ```bash
 # Per-rule targeting and reporting
 lint-arwaky-cli scan . --format json --filter AES201
-lint-arwaky-cli orphan crates/ --member shared_common --format json
+lint-arwaky-cli orphan crates/ --member shared_common
 lint-arwaky-cli fix modules/ --dry-run --filter AES101
+
+# CI gate (no --format flag; exit code is the gate)
+lint-arwaky-cli ci . --threshold 90
 
 # Reports go to the XDG data dir
 lint-arwaky-cli scan crates/ --format sarif \
@@ -129,9 +134,9 @@ The 7 strictly-ordered layers, **bottom-up** (a layer may only depend on layers 
 
 | # | Layer prefix   | Purpose                                             | Example                    |
 | - | ---------------- | ----------------------------------------------------- | ---------------------------- |
-| 1 | `taxonomy_`    | value objects, entities, errors, events, constants  | `taxonomy_status_type.py`  |
+| 1 | `taxonomy_`    | value objects, entities, errors, events, constants  | `taxonomy_user_vo.py`      |
 | 2 | `utility_`     | pure, stateless helpers                             | `utility_hash_helper.py`   |
-| 3 | `contract_`    | protocols, aggregates, schemas, DTOs                | `contract_payload_model.py`|
+| 3 | `contract_`    | protocols, aggregates (no implementation)             | `contract_payload_protocol.py` |
 | 4 | `capabilities_`| domain logic and business rules                     | `capabilities_task_executor.py` |
 | 5 | `agent_`       | orchestration across subsystems                       | `agent_billing_orchestrator.rs` |
 | 6 | `surface_`     | CLI / MCP / REST / TUI / GUI adapters                 | `surface_cli_adapter.py`   |

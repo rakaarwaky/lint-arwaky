@@ -19,8 +19,8 @@ metadata:
     - agents-md
     - pep257
   related_skills:
-    - cleanup-consolidate
-    - fix-bypass
+    - aes-taxonomy
+    - aes-contract
     - aes-lint-arwaky
   triggers:
     - add docs
@@ -265,5 +265,5 @@ The invariant codes above cover the machine-checkable ones. These need a reader:
 ## Related Skills
 
 - `aes-lint-arwaky`
-- `cleanup-consolidate`
-- `fix-bypass`
+- `aes-taxonomy`
+- `aes-contract`

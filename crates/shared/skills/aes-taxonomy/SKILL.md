@@ -53,7 +53,7 @@ metadata:
 > **Audience**: The agent creating or validating a taxonomy file.
 > **Scope**: Python, Rust, and TypeScript `taxonomy_<domain>_<suffix>` files in the shared domain.
 
-The **aggregate** decides which suffix, which imports, and which structure apply.
+The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO |

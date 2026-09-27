@@ -71,7 +71,8 @@ lint-arwaky-cli scan workspaces-bad/crates
 lint-arwaky-cli scan workspaces-bad/crates --format json
 lint-arwaky-cli scan workspaces-bad/crates --member shared
 lint-arwaky-cli scan workspaces-bad/crates --filter AES401
-lint-arwaky-cli ci crates/ --threshold 80 --format junit
+lint-arwaky-cli ci crates/ --threshold 80
+lint-arwaky-cli scan crates/ --format junit -o reports/
 lint-arwaky-cli naming crates/
 lint-arwaky-cli orphan crates/ --member shared_common --format json
 lint-arwaky-cli import crates/code_analysis
@@ -98,7 +99,7 @@ lint-arwaky-cli scan .
   Route the new interface through `aes-contract`.
 - **AES303** → add the missing `struct` / `enum` / `trait`.
 - **AES304** → remove `#[allow(...)]`; replace `unwrap()` / `expect()` / `panic!()` with real
-  error handling (`fix-bypass`).
+  error handling (`lint-arwaky-cli fix <path> --filter AES304`).
 - **AES403 / AES405** → capability `impl`s target the `_protocol` trait; agent structs hold
   `Arc<dyn Trait>` aggregates and never `use` capabilities directly.
 - **AES404** → utility modules: free functions only — no contract `impl` blocks, no state,
