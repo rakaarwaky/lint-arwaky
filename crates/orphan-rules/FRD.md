@@ -327,6 +327,112 @@ flowchart TD
 - A configuration with custom entry-point patterns recognizes additional entry points.
 - A 10,000-file workspace completes the full orphan scan in under five seconds.
 - The contract analyzer with 50 traits against 500 files completes in under two seconds (map lookups).
+  - **Rust** uses full AST parsing via `syn` (shared crate). **Python/TS** use comment-aware line-based parsing (shared crate).
+  - Zero false positives on transitively reachable code. A file is valid if it is transitively reachable from an entry point.
+  - Known limitation: macro-generated code (Rust `macro_rules!`, proc macros) is not expanded — trait implementations inside macros are invisible to the detector.
+  - Parse failure → orphan (fail-strict). This eliminates false negatives at the cost of potential false positives for files with syntax errors.
+- **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon`. Graph analysis is read-only after construction.
+- **Configurability**:
+
+  - **Hardcoded conventions (permanent, by design)**:
+    - Layer detection from filename prefix (`taxonomy_*`, `contract_*`, `utility_*`, `capabilities_*`, `agent_*`, `surface_*`, `root_*`).
+    - Workspace directory structure (`crates/`, `packages/`, `modules/`).
+    - Barrel file names (`DEFAULT_RULE_EXCEPTIONS`).
+    - Default entry point suffix pattern (`_entry.*`).
+  - **Configurable (via YAML)**:
+    - Additional entry point patterns per layer.
+    - Per-layer orphan check toggle (`check_orphan`).
+    - Per-rule enable/disable (AES501–AES506).
+    - Per-layer exceptions.
+    - Ignored paths.
+
+## Test Scenarios / QA Checklist
+### Core Detection
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Workspace with 100 files, 5 orphans across 3 layers | All 5 detected, 0 false positives |
+| 2 | Circular imports between two capabilities | Both reachable, neither flagged |
+| 3 | Workspace with zero entry points | All non-barrel files flagged as orphans |
+| 4 | Cross-crate imports (crate A imports from crate B) | Graph resolves correctly |
+| 5 | Configuration disabled | Full orphan scan returns empty immediately |
+| 6 | File with parse failure | Flagged as orphan (fail-strict) |
+
+### Barrel Files
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Python `__init__.py` package marker | Skipped, not flagged |
+| 2 | TypeScript barrel `index.ts` re-exports | Skipped, not flagged |
+| 3 | Rust `mod.rs` re-exports | Skipped, not flagged |
+| 4 | Rust `lib.rs` library root | Skipped, not flagged |
+
+### AES501 — Taxonomy Orphan
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Taxonomy file imported by a contract file | Not orphan |
+| 2 | Taxonomy file imported only by other taxonomy files | Orphan (no non-taxonomy consumer) |
+| 3 | Taxonomy file with no inbound links | Orphan |
+| 4 | Taxonomy file imported by capabilities file | Not orphan |
+
+### AES502 — Contract Orphan
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Protocol with implementation AND callers | Not orphan |
+| 2 | Protocol with implementation but zero callers | Orphan |
+| 3 | Protocol with callers but no implementation | Orphan |
+| 4 | Aggregate re-exported in barrel file | Not orphan (public API) |
+| 5 | Aggregate behind an agent, called by surface | Not orphan |
+| 6 | Contract file with no traits (only type aliases) | Not orphan (nothing to check) |
+
+### AES503 — Capabilities Orphan
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Capability struct referenced in container file | Not orphan |
+| 2 | Capability file transitively reachable from entry point | Not orphan |
+| 3 | Capability file not in alive set, not in any container | Orphan |
+| 4 | Capability imported by other capabilities, chain reaches container | Not orphan (chain alive) |
+
+### AES504 — Utility Orphan
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Utility imported by a capabilities file | Not orphan |
+| 2 | Utility imported only by other utilities | Orphan (utility chain = dead code) |
+| 3 | Utility with no inbound links | Orphan |
+| 4 | Utility imported by agent file | Not orphan |
+
+### AES505 — Agent Orphan
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Agent aggregate called by container file | Not orphan |
+| 2 | Agent aggregate not called by any container/lib | Orphan (HIGH) |
+| 3 | Agent with no aggregate implementation | Not orphan (skip check) |
+| 4 | Agent with aggregate traits, none found in containers | Orphan (HIGH) |
+
+### AES506 — Surface Orphan
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Smart surface (`_command`) reachable from entry point | Not orphan |
+| 2 | Smart surface not reachable from any entry point | Orphan (HIGH) |
+| 3 | Utility surface (`_hook`) reachable from entry point | Not orphan |
+| 4 | Utility surface not reachable from any entry point | Orphan (MEDIUM) |
+| 5 | Passive surface (`_component`) reachable from entry point | Not orphan |
+| 6 | Passive surface not reachable from any entry point | Orphan (LOW) |
+| 7 | Surface file with unclassifiable suffix | Skipped (no check) |
+
+### Configuration
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Config `check_orphan: false` for a layer | No violations for that layer |
+| 2 | Config with exceptions list | Excepted files produce no violations |
+| 3 | Config with `ignored_paths: ["tests"]` | `tests/` segment files produce no violations |
+| 4 | Config with AES501 disabled | No taxonomy orphan violations |
+| 5 | Config with custom entry point patterns | Additional entry points recognized |
+
+### Performance
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | 10,000 file workspace | Completes in under 5 seconds |
+| 2 | Contract analyzer with 50 traits × 500 files | Completes in under 2 seconds (map lookups) |
+
 
 ## Assumptions & Constraints
 - Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
@@ -384,3 +490,9 @@ AES50X:
   enabled: true
   exceptions: []
 ```
+
+## Reference
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Filesystem crate FRD: `../filesystem/FRD.md`

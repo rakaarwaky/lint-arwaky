@@ -41,7 +41,8 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::IUnusedImportProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::INamingConventionProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::ISuffixPolicyProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::IMandatoryClassProtocol>();
@@ -132,7 +133,8 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::IImportRunnerAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingConventionProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::ISuffixPolicyProtocol>();
     assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingRunnerAggregate>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();

@@ -355,6 +355,63 @@ flowchart TD
 - A JavaScript tool not found anywhere raises an error at execution time.
 - A Cargo manifest found in a parent directory makes the Cargo tools use that directory.
 - No Cargo manifest in the directory hierarchy skips the adapter with a warning.
+### Language Detection & Adapter Selection
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rust-only project | Only clippy, rustfmt, cargo-audit run |
+| 2 | Python-only project | Only ruff, mypy, bandit run |
+| 3 | JS-only project | Only eslint, prettier, tsc run |
+| 4 | Multi-language project | All 9 adapters run |
+| 5 | Empty directory | No adapters run, empty result list |
+| 6 | Single .rs file path | Only Rust adapters run |
+
+### Adapter Execution
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Adapter binary not installed | Warning printed, other adapters continue |
+| 2 | Adapter produces JSON output | Correctly parsed into LintResult |
+| 3 | Adapter produces empty output | Empty result list |
+| 4 | All adapters fail | Returns empty result list with warnings |
+| 5 | One adapter fails | Other adapters still run |
+| 6 | Timeout exceeded | Adapter returns error, others continue |
+| 7 | Sequential execution | Adapters run one after another |
+
+### Auto-Fix
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | ESLint fix | `eslint --fix` executed |
+| 2 | Prettier fix | `prettier --write` executed |
+| 3 | Ruff fix | `ruff check --fix` executed |
+| 4 | Clippy fix | `cargo clippy --fix` executed |
+| 5 | Rustfmt fix | `cargo fmt` executed |
+| 6 | TSC/MyPy/Bandit/audit fix | No-op (no auto-fix capability) |
+
+### Normalization
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Clippy `correctness` lint | Severity CRITICAL, code `clippy::<name>` |
+| 2 | Clippy `style` lint | Severity MEDIUM |
+| 3 | Ruff `E501` (line too long) | Severity LOW, code `ruff::E501` |
+| 4 | Ruff `S105` (hardcoded password) | Severity CRITICAL, code `ruff::S105` |
+| 5 | ESLint severity 2 (error) | Severity HIGH, code `eslint::<rule>` |
+| 6 | cargo-audit critical vulnerability | Severity CRITICAL, code `cargo-audit::RUSTSEC-*` |
+| 7 | Tool produces invalid JSON | Empty results, warning logged |
+| 8 | Relative file path in tool output | Canonicalized to absolute path |
+
+### Tool Path Resolution
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | JS tool found in node_modules/.bin | Local binary used |
+| 2 | JS tool not found locally | Global PATH fallback used |
+| 3 | JS tool not found anywhere | Error at execution |
+| 4 | Cargo.toml found in parent directory | Cargo tools use that directory |
+| 5 | No Cargo.toml in hierarchy | Adapter skipped with warning |
+
 
 ---
 

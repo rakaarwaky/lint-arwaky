@@ -392,6 +392,121 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 - A manifest with `[tool.lint-arwaky]` is parsed correctly.
 - A manifest without a `[tool]` section returns None.
 - Invalid TOML syntax returns a `ConfigError`.
+### SCEN-001 — Config Discovery and Loading
+
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Config exists at project root | Loaded from project root |
+| 2 | Config not at root, exists at parent (depth 1) | Loaded from parent |
+| 3 | Config not at root/parent, exists at XDG user | Loaded from XDG user |
+| 4 | Config only at XDG system dir | Loaded from XDG system |
+| 5 | No config anywhere | Embedded defaults used |
+| 6 | Symlink pointing outside project root | Rejected |
+| 7 | YAML parse failure at priority 1 | Warning logged, priority 2 searched |
+| 8 | Permission denied at priority 1 | Warning logged, priority 2 searched |
+
+### SCEN-002 — Language Resolution
+
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Any language (Rust/Python/TypeScript) | `lint_arwaky.config.yaml` |
+| 2 | Unknown language | Empty list, embedded defaults |
+
+### SCEN-003 — Workspace Detection
+
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Directory with Cargo.toml | Rust |
+| 2 | Directory with pyproject.toml | Python |
+| 3 | Directory with package.json | TypeScript |
+| 4 | Parent dir is `crates/` | Rust |
+| 5 | Parent dir is `packages/` | TypeScript |
+| 6 | Parent dir is `modules/` | Python |
+| 7 | No markers anywhere | Unknown |
+| 8 | Both Cargo.toml and package.json | First match wins |
+| 9 | Directory with `__init__.py` only | Python |
+
+### SCEN-004 — Workspace Members
+
+
+FRD Ref: FR-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Root with crates/foo, crates/bar | [crates/foo, crates/bar] |
+| 2 | Root with no workspace dirs | Empty vec + warning |
+| 3 | Root is `crates/` itself | Direct subdirectories returned |
+| 4 | I/O error on one member dir | Warning logged, other members returned |
+
+### SCEN-005 — Config Merging
+
+
+FRD Ref: FR-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Config with empty layers array | Defaults injected + warning |
+| 2 | Duplicate rule values | Deduplicated by value containment |
+| 3 | Config error during load | Defaults used + warning |
+| 4 | Empty ignored_paths in config | Defaults preserved (not overridden) |
+| 5 | Scoped rule `agent(container\ | registry)` |
+
+### SCEN-006 — Validation
+
+
+FRD Ref: FR-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Score threshold 50.0 | Valid |
+| 2 | Score threshold 0.0 | Valid |
+| 3 | Score threshold 100.0 | Valid |
+| 4 | Score threshold -1.0 | Invalid |
+| 5 | Score threshold 101.0 | Invalid |
+| 6 | Unknown adapter name | Enabled (default true) |
+
+### SCEN-007 — Caching
+
+
+FRD Ref: FR-007
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Same config file requested twice | Parsed once, cached |
+| 2 | Concurrent requests for same key | Single parse (DashMap) |
+
+### SCEN-008 — Ignored Paths
+
+
+FRD Ref: FR-008
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | No config ignored paths | 8 universal defaults returned |
+| 2 | Config adds "tests" | Defaults + "tests" |
+| 3 | Config adds ".git" (already default) | Deduplicated, not added twice |
+| 4 | Config adds empty string | Filtered out |
+
+### SCEN-009 — TOML Parsing
+
+
+FRD Ref: FR-009
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Cargo.toml with `[tool.lint-arwaky]` | Parsed correctly |
+| 2 | Cargo.toml without `[tool]` | Returns None |
+| 3 | Invalid TOML syntax | ConfigError returned |
+
 
 ---
 

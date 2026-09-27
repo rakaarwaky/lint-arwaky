@@ -358,6 +358,107 @@ flowchart TD
 - Initializing when no config is present creates the default config and reports success.
 - Initializing when the config already exists is idempotent and reports an `ALREADY_EXISTS` status.
 - A config write failure returns an error description.
+### SCEN-001 — Git Diff Detection
+
+
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Default branch from`origin/HEAD` | Correct branch detected |
+| 2 | `symbolic-ref` fails | Defaults to "main" |
+| 3 | Changed files via`origin/main...HEAD` | Correct file list |
+| 4 | All branch variants empty | Fallback to`HEAD` diff |
+| 5 | All diff strategies fail | Fallback to`ls-files` |
+| 6 | Lintable filter: .rs, .py, .ts, .js, .jsx, .tsx | Included |
+| 7 | Non-lintable: .md, .toml, .json, .png, .lock | Excluded |
+| 8 | Empty diff | total_changed: 0 |
+| 9 | Detached HEAD | Fallback strategies handle |
+| 10 | Renamed files classified via `--diff-filter=R` | Old/new paths parsed |
+
+### SCEN-002 — Hook Installation
+
+
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Normal install | Hook script created with correct executable |
+| 2 | `.git/hooks/` missing | Directory created |
+| 3 | Hook file already exists | Overwritten |
+| 4 | Not a git repo | SuccessStatus(false), no error |
+| 5 | Unix permissions | 0o755 set |
+| 6 | Windows | Permission setting skipped |
+| 7 | Empty executable path | Defaults to "lint-arwaky-cli" |
+
+### SCEN-003 — Hook Uninstallation
+
+
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Hook exists | Removed, SuccessStatus(true) |
+| 2 | Hook doesn't exist | SuccessStatus(true), idempotent |
+| 3 | Not a git repo | SuccessStatus(false) |
+
+### SCEN-004 — Check Execution
+
+
+
+FRD Ref: FR-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Changed files with violations | Lint results returned |
+| 2 | No changed files | Empty result list |
+| 3 | Changed file with parse failure | Skipped by linters, no warning |
+| 4 | All changed files non-lintable | Empty result list |
+
+### SCEN-005 — Diff Data Comparison
+
+
+
+FRD Ref: FR-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Both files identical | Score 0.0, status Unchanged |
+| 2 | Files partially different | Score between 0.0 and 1.0, Modified |
+| 3 | First file missing | MissingFirst |
+| 4 | Second file missing | MissingSecond |
+| 5 | Both paths are directories | NotAFile |
+| 6 | Both paths missing | BothMissing |
+| 7 | Same file path twice | Score 0.0, Unchanged |
+
+### SCEN-006 — Ignore Rule Management
+
+
+
+FRD Ref: FR-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Add ignore rule | Rule added to config |
+| 2 | Remove ignore rule | Rule removed from config |
+| 3 | Config file not found | Error suggesting`lint-arwaky-cli init` |
+| 4 | Rule already exists (add) | No-op, "already present" |
+
+### SCEN-007 — Config Initialization
+
+
+
+FRD Ref: FR-007
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Config not present | Default config created, success |
+| 2 | Config already exists | Idempotent, "ALREADY_EXISTS" status |
+| 3 | Write failure | Error description returned |
+
 
 ---
 

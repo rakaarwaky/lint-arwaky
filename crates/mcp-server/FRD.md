@@ -322,6 +322,85 @@ flowchart TD
 - A `get_config` call on an invalid path returns `exit_code: 2`.
 - An MCP tools list returns exactly 5 tools.
 - The server info response carries the name, version, and protocol version.
+### SCEN-001 — Execute Command
+
+
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | `check`/`scan` returns violations + exit_code | Matches CLI on same fixture |
+| 2 | `fix` applies real fixes (or dry-run report) | No placeholder success |
+| 3 | `install-hook` / `uninstall-hook` | Changes hook state like CLI |
+| 4 | `security` tool missing | exit_code 3 |
+| 5 | Unknown action | Error + exit_code 2 |
+| 6 | `watch` action | Explicit`unsupported` + exit_code 2 |
+| 7 | Files with parse failures | Silently skipped, not counted as violations |
+| 8 | Missing path argument | Defaults to "." |
+| 9 | `version` action | Version info + exit_code 0 |
+| 10 | `adapters` action | Delegates to health check |
+
+### SCEN-002 — List Commands
+
+
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | List without filter | Full command catalog |
+| 2 | List with domain filter | Filtered subset |
+| 3 | No matches | Empty commands, total 0 |
+
+### SCEN-003 — Read Skill
+
+
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Read full skill | Content returned |
+| 2 | Read specific section | Section content returned |
+| 3 | Missing skill | Error + searched paths, exit_code 2 |
+| 4 | Missing section | Error, exit_code 2 |
+
+### SCEN-004 — Health Check
+
+
+
+FRD Ref: FR-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | All adapters installed | All adapters available, exit_code 0 |
+| 2 | Some adapters missing | Correct status per adapter, exit_code 0 |
+| 3 | All adapters missing | adapters_available 0, exit_code 0 |
+
+### SCEN-005 — Get Config
+
+
+
+FRD Ref: FR-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Config file exists | Effective config returned |
+| 2 | No config file | Embedded defaults + warning, exit_code 0 |
+| 3 | Invalid path | exit_code 2 |
+
+### SCEN-006 — Protocol Registration
+
+
+
+FRD Ref: FR-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | MCP tools/list | Exactly 5 tools returned |
+| 2 | Server info | Name, version, protocol version |
+
 
 ---
 

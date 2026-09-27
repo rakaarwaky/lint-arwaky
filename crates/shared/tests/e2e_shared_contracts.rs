@@ -41,7 +41,8 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::import_rules::IUnusedImportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingConventionProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::ISuffixPolicyProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IMandatoryClassProtocol>();

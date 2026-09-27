@@ -5,7 +5,9 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::contract_naming_checker_protocol::{
+    INamingConventionProtocol, ISuffixPolicyProtocol,
+};
 use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
 use shared::naming_rules::taxonomy_naming_request::NamingRequest;
 use shared::naming_rules::taxonomy_naming_response::NamingResponse;
@@ -14,7 +16,8 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct NamingOrchestratorDeps {
-    pub naming_checker: Arc<dyn INamingCheckerProtocol>,
+    pub naming_convention: Arc<dyn INamingConventionProtocol>,
+    pub suffix_policy: Arc<dyn ISuffixPolicyProtocol>,
     pub config: Arc<ArchitectureConfig>,
     pub layer_map: Arc<LayerMapVO>,
 }
@@ -80,7 +83,7 @@ impl NamingOrchestrator {
 
         if Self::is_rule_enabled(&self.deps.config, "AES101") {
             let mut naming_results = LintResultList::new(Vec::new());
-            self.deps.naming_checker.check_file_naming(
+            self.deps.naming_convention.check_file_naming(
                 self.deps.config.as_ref(),
                 self.deps.layer_map.as_ref(),
                 files,
@@ -92,7 +95,7 @@ impl NamingOrchestrator {
 
         if Self::is_rule_enabled(&self.deps.config, "AES102") {
             let mut suffix_results = LintResultList::new(Vec::new());
-            self.deps.naming_checker.check_domain_suffixes(
+            self.deps.suffix_policy.check_domain_suffixes(
                 self.deps.config.as_ref(),
                 self.deps.layer_map.as_ref(),
                 files,

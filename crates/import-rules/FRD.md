@@ -138,6 +138,7 @@ flowchart TD
 - **Error Handling**: Unreadable files are skipped silently. Files with unparseable content produce no violations (fail-safe). Parse failures produce empty import lists.
 
 ### FR-IMPORTRULES-002: Mandatory Layer Imports (AES202)
+### FR-002: Mandatory Layer Imports (AES202)
 
 - **Description**: Verifies that specific scopes contain required imports as defined in the `mandatory` field of each `conditions` entry.
 - **Input**: File data, raw file contents (from filesystem crate), architecture configuration, layer map.
@@ -154,6 +155,7 @@ flowchart TD
 - **Error Handling**: Unreadable files are skipped. Missing config defaults to no mandatory requirements.
 
 ### FR-IMPORTRULES-003: Unused Import Detection (AES203)
+### FR-003: Unused Import Detection (AES203)
 
 - **Description**: Detects and flags imported symbols that are never referenced within the file body. Uses AST-based usage tracking for all languages.
 - **Input**: File data, raw file contents (from filesystem crate), `used_identifiers_map` (required, from filesystem's `used_identifiers_for(path)` via tree-sitter AST).
@@ -181,6 +183,7 @@ flowchart TD
 - **Error Handling**: Files that fail parsing produce no violations. Unreadable files produce no violations.
 
 ### FR-IMPORTRULES-004: Dummy Import Detection (AES204)
+### FR-004: Dummy Import Detection (AES204)
 
 - **Description**: Detects imports, functions, and trait implementations that are dummy/stub code existing only to suppress unused-import warnings. This rule specifically targets **AI-generated cheating patterns** where AI creates dummy functions to make imports appear "used" and circumvent AES203.
 - **Input**: File data, raw file contents (from filesystem crate), layer map.
@@ -216,6 +219,7 @@ flowchart TD
 - **Error Handling**: Files that fail parsing produce no violations. Unreadable files produce no violations.
 
 ### FR-IMPORTRULES-005: Circular Dependency Detection (AES205)
+### FR-005: Circular Dependency Detection (AES205)
 
 - **Description**: Builds a dependency graph of imports across all workspace files and detects cycles using 3-color DFS.
 - **Input**: File data, raw file contents (from filesystem crate), architecture configuration, layer map.
@@ -277,6 +281,89 @@ flowchart TD
 | False positive rate | Zero for valid imports across Rust, Python, TypeScript, JavaScript | Scan `workspaces-good/` fixtures, assert 0 violations |
 
 ## Test Scenarios
+  - Check 1,000 files in < 2 seconds (validated via criterion benchmark).
+  - Check 5,000 files in < 8 seconds.
+  - AES205 cycle detection is O(V + E) — linear in the number of layer-level edges.
+  - File-level checks (AES203, AES204) are parallelized via `rayon` (`par_iter`).
+  - Mandatory, forbidden, and cycle checks (AES201, AES202, AES205) run sequentially.
+- **Memory**:
+
+  - O(n) where n = number of imports across all files.
+  - Parse results are not shared across checkers — each checker re-parses each file independently (a file may be parsed several times per audit invocation).
+  - All file contents are pre-loaded into an in-memory `content_map` at the start of the audit (`run_audit`), including barrel files.
+- **Accuracy**:
+
+  - **Rust** uses full AST parsing via `syn` (shared crate). **Python/TypeScript/JavaScript** use tree-sitter AST for identifier extraction (via `ParseMetadata.used_identifiers` from filesystem crate).
+  - **Zero false positives** for valid imports across all supported languages (Rust, Python, TypeScript/JavaScript).
+  - Tree-sitter AST (Python/TS) and `syn` AST (Rust) eliminate false positives from matches inside comments, string literals, and multi-line constructs.
+  - AES203 accuracy: usage tracking based on tree-sitter identifiers; retains a small heuristic set for trait detection (`prelude`, `async_trait`, `::io::Write`, `Ext`/`Iterator`/`Stream` suffixes).
+  - Known limitation: macro-generated code (see FR-009). Macro body exemption is the only accepted source of potential false negatives.
+- **Concurrency**: Thread-safe via trait object shared ownership. File-level analysis is parallelized via `rayon`. AST parsing is stateless and thread-safe. No async runtime dependency.
+
+
+## Test Scenarios / QA Checklist
+
+### AES201 — Forbidden Import
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | File imports from forbidden layer | AES201 CRITICAL |
+| 2 | File imports from allowed layer | No violation |
+| 3 | File imports from layer not in allowed or forbidden | AES201 WARNING (grey area) |
+| 4 | File with no imports | No violation |
+| 5 | capabilities file imports utility | No violation (allowed) |
+| 6 | utility file imports capabilities | AES201 CRITICAL (forbidden) |
+| 7 | surface(component) imports contract | AES201 CRITICAL (forbidden) |
+| 8 | surface(command) imports contract(aggregate) | No violation (allowed) |
+| 9 | agent imports capabilities | AES201 CRITICAL (forbidden, via DI) |
+| 10 | contract(protocol) imports contract(aggregate) | AES201 CRITICAL (forbidden) |
+
+### AES202 — Mandatory Import
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Capabilities file missing taxonomy import | AES202 violation |
+| 2 | Capabilities file missing contract(protocol) import | AES202 violation |
+| 3 | Capabilities file has both taxonomy and contract(protocol) | No violation |
+| 4 | File in exception list | No violation — exception |
+| 5 | taxonomy(entity) missing taxonomy(vo) import | AES202 violation |
+
+### AES203 — Unused Import
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Import declared but never referenced in code | AES203 violation |
+| 2 | Import declared and used in code | No violation |
+| 3 | Import used only in comments | AES203 violation |
+| 4 | Import used only inside macro body (non-derive) | No violation (exempt) |
+| 5 | Import used in`#[derive(...)]` | No violation (detected) |
+
+### AES204 — Dummy Import
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Function named`_use_serialization()` containing import reference | AES204 violation (dummy function) |
+| 2 | Function named`dummy_helper()` containing import reference | AES204 violation (dummy function) |
+| 3 | Trait impl with all method bodies =`todo!()` | AES204 violation (dummy impl) |
+| 4 | Trait impl with 1 real method + 1`todo!()` method | No violation (has real logic) |
+| 5 | Import`Foo` only referenced inside `_use_foo()`, not in real logic | AES204 violation (dummy import) |
+| 6 | Import`Bar` referenced in `_use_bar()` AND in real function | No violation (real usage exists) |
+| 7 | `pub use` re-export | No violation (public API) |
+| 8 | Taxonomy file has`_use_vo()` referencing taxonomy VO, VO not used in real logic | AES204 violation (taxonomy intent) |
+| 9 | Surface file calls`lint_path(` directly | AES204 violation (surface logic bypass) |
+| 10 | Barrel file (`mod.rs`) with re-exports | No violation (exempt) |
+
+### AES205 — Circular Dependency
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Two layers importing each other | AES205 violation |
+| 2 | Linear dependency chain | No violation |
+| 3 | Self-import (file imports itself) | No violation (silently ignored) |
+| 4 | Indirect cycle (A → B → C → A) | AES205 violation |
+
+### Configuration
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rule disabled in config | No violation for that rule |
+| 2 | File in exceptions list | No violation for that file |
+| 3 | File matches multiple conditions | Checked against all matched conditions |
+
 
 - File imports from a forbidden layer → AES201 CRITICAL diagnostic.
 - File imports from an allowed layer → no violation.
@@ -427,3 +514,12 @@ Files and directories are skipped if they match any of these criteria:
 | `.py`         | Python     |
 | `.js`, `.jsx` | JavaScript |
 | `.ts`, `.tsx` | TypeScript |
+
+
+## Reference
+
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Filesystem crate
+- Shared crate

@@ -373,6 +373,119 @@ flowchart TD
 - A check-only self-update performs no download and reports the current release tag.
 - An unavailable network leaves `latest_version` empty and a status beginning with `Error:`.
 - A local version ahead of the release reports `already_up_to_date: true`.
+### SCEN-001 — Doctor
+
+
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | All required tools OK | healthy: true, all statuses "OK" |
+| 2 | Missing rustc (required) | healthy: false |
+| 3 | Missing ruff (optional) | Status "WARN" in adapter_statuses |
+| 4 | Language runtimes installed | Versions reported (rustc, python3, node) |
+| 5 | Language runtime missing | Version "NOT FOUND" |
+
+### SCEN-002 — Stats
+
+
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Directory with mixed files | Per-language counts + overall totals |
+| 2 | Python project with test files | Correct test ratio |
+| 3 | Directory with no source files | All zeros, ratio 0.0 |
+| 4 | Empty directory | All zeros, ratio 0.0 |
+
+### SCEN-003 — Clean
+
+
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Project with .pytest_cache, __pycache__ | Directories removed |
+| 2 | Project with target/ | Directory removed |
+| 3 | No cache directories | No-op |
+
+### SCEN-004 — Update
+
+
+
+FRD Ref: FR-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Python tools upgrade | pip install --upgrade per tool |
+| 2 | pip not installed | Warning, no crash |
+
+### SCEN-005 — Diagnose
+
+
+
+FRD Ref: FR-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | cargo + rustc installed | Status "OK" |
+| 2 | Missing clippy (required) | Status "FAIL" |
+| 3 | Missing mypy (optional) | Status "WARN" |
+| 4 | Missing eslint (optional) | Status "WARN" |
+
+### SCEN-006 — Security
+
+
+
+FRD Ref: FR-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rust project with Cargo.lock | Runs cargo-audit |
+| 2 | No Cargo.lock | tool_installed: false, empty findings |
+| 3 | cargo-audit not installed | tool_installed: false, empty findings |
+| 4 | No vulnerabilities | Empty findings, success |
+
+### SCEN-007 — Dependencies
+
+
+
+FRD Ref: FR-007
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rust project with Cargo.lock | Parses all packages |
+| 2 | No Cargo.lock | Returns error |
+| 3 | Empty Cargo.lock | Empty dependency list |
+
+### SCEN-008 — Adapter Health Check
+
+
+
+FRD Ref: FR-008
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | All 9 adapters installed | All available: true |
+| 2 | Missing ruff | ruff available: false |
+| 3 | No adapters installed | All available: false |
+
+### SCEN-009 — Self-Update
+
+
+FRD Ref: FR-009
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | GitHub reachable, same version | already_up_to_date=true, upgraded=false |
+| 2 | GitHub reachable, newer version | latest_version set, upgraded=true (when not check-only) |
+| 3 | check_only=true | No download performed; status reports current tag |
+| 4 | Network unavailable | latest_version empty, status starts with "Error:" |
+| 5 | Local version ahead of release | already_up_to_date=true (local > released) |
+
 
 ---
 

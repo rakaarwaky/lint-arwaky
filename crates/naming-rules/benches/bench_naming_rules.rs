@@ -13,7 +13,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::naming_rules::INamingCheckerProtocol;
+use shared::naming_rules::INamingConventionProtocol;
+use shared::naming_rules::ISuffixPolicyProtocol;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use shared::naming_rules::taxonomy_naming_request::NamingRequest;
@@ -142,7 +143,8 @@ fn bench_orchestrator_full_audit(c: &mut Criterion) {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_checker: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingChecker::new()),
+        suffix_policy: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };

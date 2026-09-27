@@ -408,6 +408,96 @@ fails.
 - `watch` monitors the project and triggers a re-scan on file change.
 - A `watch` signal handler setup failure exits 2.
 - The individual linters (quality, import, naming, role, orphan, external) each scan the correct subset of rules.
+## Test Scenarios / QA Checklist
+### SCEN-001 — Check/Scan
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | `check` / `scan` run full pipeline | Correct exit 0/1/2 |
+| 2 | Non-existent path | Exit 2 |
+| 3 | Workspace member discovery + `--member` | Correct member targeted |
+| 4 | No workspace members | Falls back to single-scan |
+| 5 | Pipeline fails for one workspace | Warning logged, others continue |
+
+### SCEN-002 — CI
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Score ≥ threshold, no CRITICAL | Exit 0 |
+| 2 | Score ≥ threshold, CRITICAL present | Exit 1 (auto-fail) |
+| 3 | Score < threshold | Exit 1 |
+| 4 | Score exactly at threshold | Exit 0 (passes) |
+
+### SCEN-003 — Fix
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | `fix` applies remove/replace/rename | Reports fixed count |
+| 2 | `fix --dry-run` | Preview only, no changes |
+| 3 | No violations before fix | Reports 0 fixed |
+| 4 | All violations fixed | "all violations resolved" |
+| 5 | Violations remain after fix | Exit 1 |
+
+### SCEN-004 — Doctor
+
+FRD Ref: FR-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | All tools installed | All OK, exit 0 |
+| 2 | Some tools missing | MISSING listed, still exit 0 |
+| 3 | Doctor internal failure | Exit 2 |
+
+### SCEN-005 — Security
+
+FRD Ref: FR-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Tool not installed | Exit 3 |
+| 2 | No vulnerabilities | Exit 0 |
+| 3 | Vulnerabilities found | Exit 1, findings listed |
+
+### SCEN-006 — Dependencies
+
+FRD Ref: FR-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Normal project | Lists up to 30 deps |
+| 2 | > 30 dependencies | Truncated with "... and N more" |
+| 3 | No dependency file | Error, exit 2 |
+
+### SCEN-007–FR-011 — Setup & Config
+
+FRD Ref: FR-007, FR-008, FR-009, FR-010, FR-011
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | `init` creates config for detected languages | Config files created |
+| 2 | `install` partial failure | Exit 1 |
+| 3 | `mcp-config` correct JSON per client | Valid JSON output |
+| 4 | `config-show` redacts secrets | AWS keys / base64 redacted |
+| 5 | `config-show` no config found | "Run lint-arwaky init" message |
+| 6 | `adapters` lists enabled adapters | Bullet list or "(none enabled)" |
+
+### SCEN-012–FR-014 — Git, Watch, Individual
+
+FRD Ref: FR-012, FR-013, FR-014
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | `git-diff` analyzes only changed files | Correct subset scanned |
+| 2 | `watch` monitors and re-scans | Re-scan on file change |
+| 3 | `watch` handler setup fails | Exit 2 |
+| 4 | Individual linters (quality/import/naming/role/orphan/external) | Correct subset of rules |
+
 
 ## Assumptions & Constraints
 - All surface handlers follow AES406: zero business logic, only dispatch.
@@ -434,3 +524,20 @@ fails.
 - **LintResult**: Individual violation finding with file, line, code, severity, message.
 - **ScanReport**: Aggregated results plus diagnostics from a full pipeline run.
 - **Parse skip**: Files that fail to parse are skipped by the per-group analyzers; no separate warning diagnostic is emitted.
+| Term             | Definition                                                                                             |
+| ------------------ | -------------------------------------------------------------------------------------------------------- |
+| **AES**          | Agentic Engineering System — the 7-layer coding convention                                            |
+| **Pipeline**     | The 6-group analysis sequence: code analysis, naming, import, external, role, orphan                   |
+| **Surface**      | Thin CLI handler layer — parses args, delegates to agents, formats output                             |
+| **Aggregate**    | Agent-layer orchestrator implementing a contract trait                                                 |
+| **DI Container** | Composition root that wires capabilities to contract protocols                                         |
+| **LintResult**   | Individual violation finding with file, line, code, severity, message                                  |
+| **ScanReport**   | Aggregated results + diagnostics from a full pipeline run                                              |
+| **Parse skip**   | Files that fail to parse are skipped by the per-group analyzers; no separate warning diagnostic is emitted. |
+
+## Reference
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- MCP Server FRD: `crates/mcp-server/FRD.md`
+- Report Formatter FRD: `crates/report-formatter/FRD.md`

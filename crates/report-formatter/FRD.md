@@ -295,6 +295,75 @@ flowchart TD
 - The default fallback on an empty report states zero violations.
 - The XML escape utility escapes all five significant characters correctly.
 - The XML escape utility leaves ordinary text unchanged.
+### SCEN-001 — Text Format
+
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Report with AES violations | Human-readable output with severity badges |
+| 2 | Report with external lint results | External section with tool-native codes |
+| 3 | Report with PARSE_WARN diagnostics | Warnings section, visually distinct |
+| 4 | Empty report | "0 violations" clean report |
+
+### SCEN-002 — JSON Format
+
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Normal report | Valid pretty-printed JSON |
+| 2 | Empty results | Valid JSON with empty arrays, zero summary |
+| 3 | Report with external results | `external_results` array populated |
+| 4 | Report with PARSE_WARN | `diagnostics` array populated |
+
+### SCEN-003 — SARIF Format
+
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Normal report | Valid SARIF 2.1.0 with tool metadata |
+| 2 | CRITICAL/HIGH severity | SARIF level "error" |
+| 3 | MEDIUM severity | SARIF level "warning" |
+| 4 | LOW/INFO severity | SARIF level "note" |
+| 5 | PARSE_WARN diagnostic | SARIF level "note" |
+| 6 | Line number 0 | Clamped to 1 |
+| 7 | Empty results | Valid SARIF with empty results array |
+
+### SCEN-004 — JUnit Format
+
+
+FRD Ref: FR-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Normal violations | `<failure>` elements present |
+| 2 | INFO severity violations | Clean `<testcase>` without `<failure>` |
+| 3 | PARSE_WARN diagnostics | `<testcase>` with `<skipped>` |
+| 4 | Special characters in message | Properly XML-escaped |
+| 5 | Test/failure counts | Match actual results |
+| 6 | Empty results | Valid XML with 0 tests, 0 failures |
+
+### SCEN-005–FR-007 — Orchestrator, Fallback, XML Escape
+
+
+FRD Ref: FR-005, FR-006, FR-007
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Orchestrator routes Text | Text formatter invoked |
+| 2 | Orchestrator routes JSON | JSON formatter invoked |
+| 3 | Orchestrator routes SARIF | SARIF formatter invoked |
+| 4 | Orchestrator routes JUnit | JUnit formatter invoked |
+| 5 | Default fallback with violations | Counts by code, sorted descending |
+| 6 | Default fallback empty | "Violations: 0" |
+| 7 | XML escape all 5 characters | All escaped correctly |
+| 8 | XML escape normal text | Unchanged |
+
 
 ---
 

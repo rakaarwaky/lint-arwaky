@@ -12,7 +12,9 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingCheckerProtocol;
+use shared::naming_rules::contract_naming_checker_protocol::{
+    INamingConventionProtocol, ISuffixPolicyProtocol,
+};
 use shared::naming_rules::taxonomy_naming_constant::{
     MIN_WORDS_DEFAULT, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
     SPECIALIZED_LAYER_MARKER, SUFFIX_POLICY_STRICT,
@@ -32,8 +34,9 @@ pub struct NamingChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl INamingCheckerProtocol for NamingChecker {
-    /// AES101 — check each file's stem against the layer_concern_role convention.
+impl INamingConventionProtocol for NamingChecker {
+    /// FR-NamingRules-001 — AES101: check each file's stem against the
+    /// layer_concern_role convention.
     fn check_file_naming(
         &self,
         config: &ArchitectureConfig,
@@ -66,7 +69,11 @@ impl INamingCheckerProtocol for NamingChecker {
         results.values.extend(violations);
     }
 
-    /// AES102 — check each file's layer suffix and role prefix against the per-layer policy.
+}
+
+impl ISuffixPolicyProtocol for NamingChecker {
+    /// FR-NamingRules-002 — AES102: check each file's layer suffix and role
+    /// prefix against the per-layer policy.
     fn check_domain_suffixes(
         &self,
         config: &ArchitectureConfig,

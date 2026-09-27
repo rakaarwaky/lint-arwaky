@@ -201,6 +201,54 @@ flowchart TD
 - When rule AES101 is disabled in configuration, no AES101 violations are emitted.
 - When rule AES102 is disabled in configuration, no AES102 violations are emitted.
 - A file present in the exceptions list produces no violation for that file.
+### AES101 — Naming Convention
+
+
+| # | Input Scenario | Expected Output |
+| - | - | - |
+| 1 | Valid snake_case file, 3+ words, recognized layer prefix (`taxonomy_user_vo`) | No violation |
+| 2 | File with uppercase characters in stem (`Taxonomy_User_Vo`) | AES101 — invalid snake_case |
+| 3 | File with only 2 words (`taxonomy_user`) | AES101 — too few words |
+| 4 | File with hyphens (`taxonomy-user-vo`) | AES101 — invalid separator |
+| 5 | File with dots (`taxonomy.user.vo`) | AES101 — invalid character |
+| 6 | Barrel file (`mod.rs`, `__init__.py`, `index.ts`) | No violation — exception |
+| 7 | File in exception list (`main.rs`, `lib.rs`) | No violation — exception |
+| 8 | Valid file but`min_words` config set to 5, file has 3 words | AES101 — below configured min |
+| 9 | File with unrecognized prefix (`foobar_user_vo`) | No violation — unknown prefix out of scope (AES101 pass, AES102 skip) |
+| 10 | File with digits in segment (`taxonomy_v2_vo`) | No violation (digits allowed) |
+
+### AES102 — Suffix/Prefix Validation
+
+
+| # | Input Scenario | Expected Output |
+| - | - | - |
+| 1 | `taxonomy_user_vo` — prefix taxonomy, suffix vo (in strict allow-list) | No violation |
+| 2 | `taxonomy_user_protocol` — prefix taxonomy, suffix protocol (belongs to contract) | AES102 — prefix-suffix mismatch |
+| 3 | `contract_user_vo` — prefix contract, suffix vo (belongs to taxonomy) | AES102 — prefix-suffix mismatch |
+| 4 | `agent_user_helper` — prefix agent, suffix helper (not in strict allow-list) | AES102 — suffix mismatch (agent requires`orchestrator`) |
+| 5 | `utility_user_helper` — prefix utility, suffix helper (flexible, not forbidden) | No violation |
+| 6 | `utility_user_protocol` — prefix utility, suffix protocol (in forbidden list) | AES102 — forbidden suffix |
+| 7 | `capabilities_user_vo` — prefix capabilities, suffix vo (in forbidden list) | AES102 — forbidden suffix |
+| 8 | `capabilities_user_checker` — prefix capabilities, suffix checker (flexible, not forbidden) | No violation |
+| 9 | `surface_user_command` — prefix surface, suffix command (in strict allow-list) | No violation |
+| 10 | `surface_user_helper` — prefix surface, suffix helper (not in strict allow-list) | AES102 — suffix mismatch |
+| 11 | `root_app_entry` — prefix root, suffix entry (in strict allow-list) | No violation |
+| 12 | `root_app_helper` — prefix root, suffix helper (not in strict allow-list) | AES102 — suffix mismatch |
+| 13 | `build.rs` | No violation — exception |
+| 14 | File in exception list for its layer | No violation — exception |
+| 15 | `taxonomy_user` — no suffix (single word after prefix) | AES102 — suffix mismatch (strict policy requires suffix) |
+
+### Configuration
+
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rule AES101 disabled in config | No AES101 violations |
+| 2 | Rule AES102 disabled in config | No AES102 violations |
+| 3 | File in exceptions list | No violation for that file |
+
+
+> **Per-rule toggling:** Each rule can be enabled/disabled via `config.rules[].enabled` (boolean, default `true`). The orchestrator checks this field via `is_rule_enabled()` before invoking the corresponding checker. When `enabled: false`, the checker is not called and zero violations are emitted for that rule.
 
 ---
 

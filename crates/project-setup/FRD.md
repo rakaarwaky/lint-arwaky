@@ -390,6 +390,103 @@ flowchart TD
 - Creating the global config directory when it already exists is idempotent.
 - A pre-flight check with pip available reports status `ok`.
 - A pre-flight check with npm absent reports status `not_found`.
+### SCEN-001 — MCP Config
+
+
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Claude config | `mcpServers` wrapper with `lint-arwaky` entry |
+| 2 | Cursor config | `mcpServers` wrapper |
+| 3 | Windsurf config | `mcpServers` wrapper |
+| 4 | Copilot config | `mcpServers` wrapper |
+| 5 | Hermes config | Base config without wrapper |
+| 6 | VS Code config | `mcp.servers` wrapper |
+| 7 | `all` client | All client formats in one JSON |
+| 8 | Binary in CARGO_HOME/bin | Resolved path used |
+| 9 | Binary not found anywhere | Bare name`lint-arwaky-mcp` |
+| 10 | LINT_ARWAKY_MCP_BIN set | Env var path used |
+
+### SCEN-002 — Env File
+
+
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Normal home path | Correct PHANTOM_ROOT value |
+| 2 | Empty home path | PHANTOM_ROOT=/ |
+
+### SCEN-003 — Language Detection
+
+
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Cargo.toml exists | Rust detected |
+| 2 | pyproject.toml exists | Python detected |
+| 3 | package.json exists | JavaScript detected |
+| 4 | Empty directory | Empty list (no default) |
+| 5 | Multi-language project | All detected languages |
+| 6 | target/, node_modules/ dirs | Skipped |
+
+### SCEN-004 — Adapter Installation
+
+
+
+FRD Ref: FR-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Python install | pip install --user ruff mypy bandit |
+| 2 | Python PEP 668 retry | --break-system-packages on failure |
+| 3 | JS install | npm install -g eslint prettier typescript |
+| 4 | JS install with sudo | sudo npm install -g |
+| 5 | Rust tools | Suggestion message (not installed) |
+| 6 | Empty package list | Ok(()) without spawning |
+
+### SCEN-005 — Config Template
+
+
+
+FRD Ref: FR-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | "rust" | Rust config template |
+| 2 | "python" | Python config template |
+| 3 | "typescript" | TypeScript config template |
+| 4 | Unknown language | Error with supported languages list |
+| 5 | "Rust" (case mismatch) | Normalized to "rust" |
+
+### SCEN-006 — Config Writing
+
+
+
+FRD Ref: FR-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Write config file | Byte count in description |
+| 2 | Create global config dir | ~/.config/lint-arwaky/ created |
+| 3 | Dir already exists | Idempotent |
+
+### SCEN-007 — Pre-flight Check
+
+
+
+FRD Ref: FR-007
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | pip available | status "ok" |
+| 2 | npm not found | status "not_found" |
+
 
 ---
 

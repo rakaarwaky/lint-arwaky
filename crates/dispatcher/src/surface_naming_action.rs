@@ -46,7 +46,7 @@ pub fn collect_naming(
     ));
 
     // 4. Run naming audit — orchestrator does zero I/O, only delegates
-    //    to the rich INamingCheckerProtocol (AES101 + AES102).
+    //    to the naming convention and suffix-policy protocols (AES101 + AES102).
     let request = NamingRequest::RunAuditWithEntries {
         files: fs_agg
             .execute(FilesystemRequest::FileList)

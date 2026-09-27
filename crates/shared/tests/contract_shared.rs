@@ -28,7 +28,9 @@ use shared_lint_arwaky::import_rules::{
 use shared_lint_arwaky::maintenance::{
     IMaintenanceAggregate, IMaintenanceCheckerProtocol, IToolExecutorProtocol,
 };
-use shared_lint_arwaky::naming_rules::{INamingCheckerProtocol, INamingRunnerAggregate};
+use shared_lint_arwaky::naming_rules::{
+    INamingConventionProtocol, INamingRunnerAggregate, ISuffixPolicyProtocol,
+};
 use shared_lint_arwaky::orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
     IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
@@ -113,13 +115,15 @@ fn import_rule_contracts_are_send_sync() {
 
 #[test]
 fn naming_rule_contracts_are_traits() {
-    assert_trait::<dyn INamingCheckerProtocol>();
+    assert_trait::<dyn INamingConventionProtocol>();
+    assert_trait::<dyn ISuffixPolicyProtocol>();
     assert_trait::<dyn INamingRunnerAggregate>();
 }
 
 #[test]
 fn naming_rule_contracts_are_send_sync() {
-    assert_send_sync::<dyn INamingCheckerProtocol>();
+    assert_send_sync::<dyn INamingConventionProtocol>();
+    assert_send_sync::<dyn ISuffixPolicyProtocol>();
     assert_send_sync::<dyn INamingRunnerAggregate>();
 }
 

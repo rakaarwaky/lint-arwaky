@@ -369,6 +369,94 @@ flowchart TD
 - A file listed in a rule's exceptions list is skipped for that specific rule but is still checked by other enabled rules.
 - The same role rule is executed across a multi-language workspace containing Rust, Python, and TypeScript files, and each language produces the correct violations for its syntax.
 
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Taxonomy entity file with `String` field type | AES401 violation at exact line |
+| 2 | Taxonomy entity file with custom VO field | No violation |
+| 3 | Taxonomy entity file with `i32` field type | AES401 violation |
+| 4 | Taxonomy error file with `bool` parameter | AES401 violation |
+| 5 | Taxonomy event file with `Vec<String>` field | AES401 violation |
+| 6 | Taxonomy constant file with `pub const` only | No violation |
+| 7 | Taxonomy constant file with `fn helper()` | AES401 violation (function in constant file) |
+| 8 | Taxonomy constant file with `struct Foo` | AES401 violation (struct in constant file) |
+| 9 | Taxonomy VO file with custom types only | No violation |
+| 10 | Empty taxonomy file | No violation |
+
+### AES402 — Contract Primitive Restriction
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Contract protocol with `String` in method parameter | AES402 violation |
+| 2 | Contract protocol with custom VO in method parameter | No violation |
+| 3 | Contract protocol with `bool` return type | AES402 violation |
+| 4 | Contract aggregate with zero methods | No violation |
+| 5 | Contract aggregate with `i64` in method signature | AES402 violation |
+| 6 | Contract protocol with all VO-typed signatures | No violation |
+
+### AES403 — Capability Protocol Implementation
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Capability file with protocol implementor | No violation |
+| 2 | Capability file with no protocol implementor | AES403 — MissingProtocolImplementor |
+| 3 | Capability file with 4 type declarations (max=3) | AES403 — TooManyTypes |
+| 4 | Capability file with 3 types including helper struct | No violation (helper allowed, count = 3) |
+| 5 | Capability file with exactly 3 types, 1 implementor | No violation |
+| 6 | Capability file with >3 types, no implementor | AES403 — TooManyTypes only (Rule 2 skipped) |
+
+### AES404 — Utility Purity
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rust utility file with `struct Foo` | AES404 violation |
+| 2 | Rust utility file with only `fn helper()` | No violation |
+| 3 | Rust utility file with `enum Bar` | AES404 violation |
+| 4 | Python utility file with `def helper()` | No violation (functions allowed) |
+| 5 | Python utility file with `class Foo` | AES404 violation |
+| 6 | TS utility file with `export function helper()` | No violation |
+| 7 | TS utility file with `export class Foo` | AES404 violation |
+| 8 | TS utility file with `export interface IFoo` | AES404 violation |
+| 9 | Utility file with `struct` inside comment | No violation (AST ignores comments) |
+| 10 | Empty utility file | No violation |
+
+### AES405 — Agent Orchestrator Composition
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Agent file with aggregate trait implementor | No violation |
+| 2 | Agent file with no aggregate implementor | AES405 — MissingAggregateImplementor |
+| 3 | Agent file with 4 type declarations (max=3) | AES405 — TooManyTypes |
+| 4 | Agent file with helper struct + orchestrator struct (2 types) | No violation |
+| 5 | Agent file with implementor + 2 helpers (3 types) | No violation |
+| 6 | Agent file with `Any` type annotation | AES405 — AnyTypeAnnotation |
+| 7 | Agent file with `: Any` in comment | No violation (comment skipped) |
+
+### AES406 — Surface Passive Role
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Passive surface with 51 functions (max=50) | AES406 — TooManyMethods |
+| 2 | Passive surface with 50 functions | No violation |
+| 3 | Smart surface with 100 functions | No violation (exempt) |
+| 4 | Smart surface with control-flow statements | No violation (exempt from domain logic check) |
+| 5 | Passive surface with 51 control-flow statements (max=50) | AES406 — DomainLogic |
+| 6 | Utility surface with 40 control-flow statements | No violation (below threshold) |
+| 7 | Surface file with unclassifiable suffix | Treated as Passive |
+
+### Classification & Configuration
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Root layer file (`root_app_entry`) | Completely skipped, zero violations |
+| 2 | Config `architecture.enabled: false` | Zero violations for entire scan |
+| 3 | Config AES401 `enabled: false` | No AES401 violations, other rules still run |
+| 4 | Config `ignored_paths: ["tests"]` | `tests/` directory files produce no violations |
+| 5 | File with no underscore (`main`) | Silently skipped |
+| 6 | File with unrecognized prefix (`foobar_x_y`) | Silently skipped |
+| 7 | Barrel file (`mod.rs`) | Skipped |
+| 8 | File in exceptions list | Skipped for that rule |
+| 9 | Multi-language workspace: same rule across Rust, Python, TS | Correct violations per language |
+
 
 ---
 

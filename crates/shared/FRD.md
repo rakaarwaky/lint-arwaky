@@ -181,6 +181,24 @@ All operations are accessible as public items from `shared`. The crate provides 
 
 ---
 
+## Test Scenarios
+
+## Test Scenarios
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | All contract traits compile as `Send + Sync` | Compile succeeds |
+| 2 | `string_value_object!` produces `Display + From<&str>` | Macro expansion succeeds |
+| 3 | `primitive_value_object!` produces `Display + Copy` | Macro expansion succeeds |
+| 4 | `Severity::score_impact()` returns correct weights | Correct numeric values |
+| 5 | `ExitCode` constants match PRD spec (0, 1, 2, 3) | Exact match |
+| 6 | `detect_language()` identifies .rs/.py/.ts/.js extensions | Correct language enum |
+| 7 | `compute_score()` produces 0–100 range | Score in [0, 100] |
+| 8 | `is_path_ignored()` handles `**/*.ext` patterns | Correct filtering |
+
+
+---
+
 ## Glossary
 
 - **VO**: Value Object — an immutable, identity-less typed wrapper.

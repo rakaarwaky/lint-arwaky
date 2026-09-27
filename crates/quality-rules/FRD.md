@@ -308,6 +308,91 @@ flowchart TD
 - A file in the exception list produces no violation for that rule.
 - A custom `max_lines = 500` in configuration causes AES301 to use 500 instead of the default 1,000.
 - Custom bypass patterns in configuration cause AES304 to apply those patterns instead of defaults.
+### AES301 — Maximum File Line Count
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | File with 1500 lines, max = 1000 | AES301 violation |
+| 2 | File with exactly 1000 lines, max = 1000 | No violation (strict`>`) |
+| 3 | File with 999 lines, max = 1000 | No violation |
+| 4 | Barrel file (`mod.rs`) with 2000 lines | No violation — exception |
+| 5 | File in exceptions list with 2000 lines | No violation — exception |
+| 6 | File with 500 lines of comments + 500 lines of code | No violation (1000 total, not > 1000) |
+
+### AES302 — Minimum File Line Count
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | File with 3 lines, min = 10 | AES302 violation |
+| 2 | File with exactly 10 lines, min = 10 | No violation (strict`<`) |
+| 3 | File with 15 lines, min = 10 | No violation |
+| 4 | `__init__.py` with 1 line | No violation — exception |
+| 5 | File with only comments (5 lines) | AES302 violation (comments count) |
+
+### AES303 — Mandatory Definitions & Dead Inheritance
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rust file with`pub struct Foo { ... }` | No violation |
+| 2 | Rust file with only`use` statements, no struct/enum/trait/type | AES303 — MissingDefinition |
+| 3 | Python file with`class Foo:` | No violation |
+| 4 | Python file with only imports | AES303 — MissingDefinition |
+| 5 | TS file with`export interface IFoo { ... }` | No violation |
+| 6 | Rust file with`struct Foo;` and no `impl` block | AES303 — DeadInheritance |
+| 7 | Rust file with`struct Foo;` followed by `impl Foo { ... }` | No violation (has implementation) |
+| 8 | Rust file with`struct Foo(i32)` (tuple struct) | No violation (not unit struct) |
+| 9 | Python file with`class Foo: pass` | AES303 — DeadInheritance |
+| 10 | TS file with`class Foo {}` | AES303 — DeadInheritance |
+| 11 | `*_constant.rs` file with no definitions | No violation — skipped |
+| 12 | `#[cfg(test)]` module with `struct TestFoo;` and no impl | No violation — cfg(test) skipped |
+| 13 | File in exceptions list | No violation — exception |
+
+### AES304 — Bypass Detection
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rust file with`foo.unwrap()` | AES304 violation |
+| 2 | Rust file with`foo.expect("msg")` | AES304 violation |
+| 3 | Rust file with`panic!("error")` | AES304 violation |
+| 4 | Rust file with`todo!()` | AES304 violation |
+| 5 | Rust file with`#[allow(unused)]` | AES304 violation |
+| 6 | Rust file with`foo.unwrap_or_default()` | No violation (safe variant) |
+| 7 | Rust file with`foo.unwrap_or(42)` | No violation (safe variant) |
+| 8 | Rust file with`let s = "unwrap()"` (string literal) | No violation (inside string) |
+| 9 | Python file with`# type: ignore` | AES304 violation |
+| 10 | Python file with`# noqa` | AES304 violation |
+| 11 | Python file with`raise NotImplementedError` | AES304 violation |
+| 12 | TS file with`// @ts-ignore` | AES304 violation |
+| 13 | TS file with`// @ts-expect-error` | AES304 violation |
+| 14 | Any file with`// FIXME: refactor this` | AES304 violation |
+| 15 | Any file with`// HACK: temporary workaround` | AES304 violation |
+| 16 | Any file with`// TODO: implement later` | No violation (TODO not in pattern list) |
+| 17 | Rust file with`unwrap()` inside `#[cfg(test)]` module | No violation — cfg(test) skipped |
+| 18 | Cargo.toml with`level = "allow"` under `[lints.clippy]` | AES304 violation |
+| 19 | Rust file with`print!("unwrap()")` (string literal) | No violation (inside string) |
+| 20 | File in exceptions list | No violation — exception |
+
+### AES305 — Duplicate Code Detection
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Two files with 80% identical code blocks | AES305 violation (both files) |
+| 2 | Two files with 30% overlap, threshold = 50% | No violation |
+| 3 | File shorter than`min_lines` | No violation — skipped |
+| 4 | Single file in workspace | No violation (nothing to compare) |
+| 5 | Three files all identical | AES305 violation (all three files) |
+| 6 | File with only whitespace lines (very short after normalization) | No violation — skipped |
+
+### Configuration
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Rule AES301 disabled in config | No AES301 violations |
+| 2 | Rule AES304 disabled in config | No AES304 violations |
+| 3 | File in exceptions list | No violation for that file |
+| 4 | Custom`max_lines = 500` in config | AES301 uses 500 instead of 1000 |
+| 5 | Custom bypass patterns in config | AES304 uses custom patterns |
+
 
 ---
 

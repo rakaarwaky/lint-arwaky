@@ -52,7 +52,7 @@ fn orchestrator_basic_check_smoke() {
     let root = FilePath::new(".".to_string()).unwrap();
     let mut results = LintResultList::new(Vec::new());
 
-    container.naming_checker().check_file_naming(
+    container.naming_convention().check_file_naming(
         &ArchitectureConfig::default(),
         &make_layer_map(),
         &files,

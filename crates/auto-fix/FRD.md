@@ -263,6 +263,69 @@ flowchart TD
 - An empty violation list produces an empty manual report.
 - A second auto-fix run over an already-corrected file produces no further `Applied` outcomes.
 - A file write failure yields `Failed(write_error)` and leaves the file unmodified.
+### SCEN-001 — Unused Import Removal
+
+
+FRD Ref: FR-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Unused import at valid line | Removed, `Applied` |
+| 2 | Line 0 or beyond EOF | `Skipped(line_out_of_bounds)` |
+| 3 | Non-import line | `Skipped(not_an_import_line)` |
+| 4 | Multi-line import block | `Skipped(multi_line_import)` |
+| 5 | File does not exist | `Failed(file_not_found)` |
+| 6 | JS `= require(` pattern | Detected and removed |
+
+### SCEN-002 — Bypass Fix
+
+
+FRD Ref: FR-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | `unwrap()` on target line | Replaced with `expect("safe")`, `Applied` |
+| 2 | `#[allow(unused)]` line | Removed entirely, `Applied` |
+| 3 | `// noqa` comment | Stripped from line, `Applied` |
+| 4 | `// FIXME: refactor` comment | Stripped from line, `Applied` |
+| 5 | `panic!("error")` | `Skipped(unsafe_removal)` |
+| 6 | `todo!()` | `Skipped(unsafe_removal)` |
+| 7 | `unimplemented!()` | `Skipped(unsafe_removal)` |
+| 9 | Missing file | `Failed(file_not_found)` |
+| 10 | No bypass on target line | `Skipped(no_bypass_pattern)` |
+
+### SCEN-003 — Symbol Renaming
+
+
+FRD Ref: FR-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Symbol rename, 3 occurrences | All replaced, `Applied` + count |
+| 2 | Symbol already valid snake_case | `Skipped(already_valid)` |
+| 3 | Symbol not found in file | `Skipped(symbol_not_found)` |
+| 4 | Missing file | `Failed(file_not_found)` |
+| 5 | New name is a Rust keyword | `Skipped(keyword_conflict)` |
+
+### SCEN-004–FR-005 — Dry-Run & Non-Fixable
+
+
+FRD Ref: FR-004, FR-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Dry-run with fixable violations | Outcomes reported, no files modified |
+| 2 | Dry-run with no violations | "No automatic fixes applied" |
+| 3 | Non-fixable violations (AES401) | In manual report |
+| 4 | AES304 `panic!` skipped | In manual report as unsafe_removal |
+| 5 | Empty violation list | Empty manual report |
+
+### Idempotency & Error Handling
+
+| #  | Scenario             | Expected                     |
+| -- | -------------------- | ---------------------------- |
+| 1  | Second run after fix | No further `Applied` outcomes |
+| 2  | Write failure        | `Failed(write_error)`        |
 
 ---
 
