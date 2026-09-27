@@ -15,11 +15,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::IExternalLintExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
@@ -30,8 +29,19 @@ use external_lint_lint_arwaky::capabilities_external_lint_selector::Capabilities
 
 // ─── Mocks ────────────────────────────────────────────────
 
-struct MockLintExecutor;
-impl IExternalLintExecutorProtocol for MockLintExecutor {
+struct MockCmdExecutor;
+impl ICommandExecutorProtocol for MockCmdExecutor {
+    fn execute_command(
+        &self,
+        _: shared::common::taxonomy_common_vo::PatternList,
+        _: FilePath,
+        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+    ) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
+    fn health_check(&self) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
     fn exec_cmd_scan(
         &self,
         _: Vec<String>,
@@ -50,14 +60,6 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
         _: AdapterName,
     ) -> Result<ResponseData, LinterOperationError> {
         Ok(ResponseData::default())
-    }
-    fn js_apply_fix(
-        &self,
-        _: &FilePath,
-        _: &str,
-        _: &str,
-    ) -> Result<ComplianceStatus, LinterOperationError> {
-        Ok(ComplianceStatus::new(false))
     }
 }
 
@@ -129,7 +131,7 @@ fn e2e_full_pipeline_rust_python() {
     let selected_names: Vec<String> = selected.iter().map(|a| a.value().to_string()).collect();
 
     // Step 2: Build orchestrator with matching adapters
-    let lint_exec: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(MockLintExecutor);
+    let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
     let files = vec!["main.rs".to_string(), "app.py".to_string()];
     let _fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::with_files(files.clone()));

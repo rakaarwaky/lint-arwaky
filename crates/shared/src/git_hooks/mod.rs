@@ -11,9 +11,13 @@ pub mod taxonomy_hook_error;
 
 // ── Contract traits ──
 pub use contract_git_hooks_aggregate::IGitHooksAggregate;
-pub use contract_git_hooks_protocol::IDiffProtocol;
-pub use contract_git_hooks_protocol::IHookManagerProtocol;
-pub use contract_git_hooks_protocol::IHookProtocol;
+pub use contract_git_hooks_protocol::IConfigInitProtocol;
+pub use contract_git_hooks_protocol::IDiffDataProtocol;
+pub use contract_git_hooks_protocol::IDiffDetectionProtocol;
+pub use contract_git_hooks_protocol::IHookCheckProtocol;
+pub use contract_git_hooks_protocol::IHookInstallProtocol;
+pub use contract_git_hooks_protocol::IHookUninstallProtocol;
+pub use contract_git_hooks_protocol::IIgnoreRuleProtocol;
 
 // ── Taxonomy types ──
 pub use taxonomy_git_diff_data_vo::GitDiffDataVO;

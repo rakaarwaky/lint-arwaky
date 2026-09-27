@@ -3,6 +3,7 @@ use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared::report_formatter::ITextFormatProtocol;
 
 fn result(code: &str, sev: Severity, tool: &str) -> LintResult {
     LintResult {

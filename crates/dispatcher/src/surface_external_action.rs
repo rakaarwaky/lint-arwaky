@@ -13,7 +13,7 @@ use std::process::Command;
 use std::sync::Arc;
 
 use shared::common::FilePath;
-use shared::config_system::contract_config_protocol::IConfigParserProtocol;
+use shared::config_system::contract_config_protocol::IConfigParseProtocol;
 use shared::config_system::taxonomy_config_vo::AdapterEntry;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
@@ -30,7 +30,7 @@ pub fn collect_external_direct(
     external_lint: Arc<dyn IExternalLintAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filesystem_io: Arc<dyn IFileSystemIOProtocol>,
-    config_parser: Arc<dyn IConfigParserProtocol>,
+    config_parser: Arc<dyn IConfigParseProtocol>,
     filter: Option<String>,
     ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
@@ -132,7 +132,7 @@ pub fn filter_outside_member_dirs(
 /// Returns parsed adapter entries if any config file is found, else empty vec.
 fn load_config_entries(
     root_path: &std::path::Path,
-    config_parser: &dyn IConfigParserProtocol,
+    config_parser: &dyn IConfigParseProtocol,
     _fs: &dyn IFilesystemAggregate,
     fs_io: &dyn IFileSystemIOProtocol,
 ) -> Vec<AdapterEntry> {

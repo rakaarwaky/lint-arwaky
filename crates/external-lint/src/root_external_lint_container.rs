@@ -2,7 +2,8 @@
 //
 // The DI container that assembles the external lint subsystem:
 //   1. Creates a StdioClient (ICommandExecutorProtocol) for subprocess execution
-//   2. Creates ExternalLintExecutor (IExternalLintExecutorProtocol) for command execution
+//   2. Creates ExternalLintExecutor, which serves the ICommandExecutorProtocol,
+//      IJsToolResolutionProtocol, and ICargoDirProtocol seams
 //   3. Registers all 9 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
 //
 // Each adapter follows the same pattern: Arc<dyn ILinterAdapterProtocol> in a HashMap keyed by name.
@@ -13,10 +14,9 @@ use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrch
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 use shared::common::taxonomy_duration_vo::Timeout;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::external_lint::{
-    IExternalLintAggregate, IExternalLintExecutorProtocol, IExternalLintSelectorProtocol,
-};
+use shared::external_lint::{IExternalLintAggregate, IExternalLintSelectorProtocol};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
@@ -35,13 +35,15 @@ impl ExternalLintContainer {
             crate::capabilities_stdio_client::StdioClient::new(Timeout::new(60.0)),
         );
 
-        let lint_executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(
+        let lint_executor_impl = Arc::new(
             crate::capabilities_external_lint_executor::ExternalLintExecutor::new(
                 executor.clone(),
                 io.clone(),
                 tool_resolution.clone(),
             ),
         );
+        let lint_executor: Arc<dyn ICommandExecutorProtocol> = lint_executor_impl.clone();
+        let js_resolution: Arc<dyn IJsToolResolutionProtocol> = lint_executor_impl.clone();
 
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
         adapters.insert(
@@ -75,6 +77,7 @@ impl ExternalLintContainer {
             "eslint".to_string(),
             Arc::new(crate::capabilities_js_eslint_adapter::ESLintAdapter::new(
                 lint_executor.clone(),
+                js_resolution.clone(),
                 io.clone(),
                 tool_resolution.clone(),
             )),
@@ -84,6 +87,7 @@ impl ExternalLintContainer {
             Arc::new(
                 crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
                     lint_executor.clone(),
+                    js_resolution.clone(),
                     io.clone(),
                     tool_resolution.clone(),
                 ),

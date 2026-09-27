@@ -3,6 +3,7 @@ use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared::report_formatter::ISarifFormatProtocol;
 
 fn result(code: &str, sev: Severity, line: i64) -> LintResult {
     LintResult {
@@ -29,7 +30,7 @@ fn us1_normal_report_has_tool_metadata() {
         diagnostics: vec![],
         score: None,
     };
-    let v = parse(SarifFormatter::new().format_sarif_report(&report).value());
+    let v = parse(SarifFormatter::new().format_sarif(&report).value());
     let driver = &v["runs"][0]["tool"]["driver"];
     assert_eq!(driver["name"], "lint-arwaky");
     assert!(!driver["version"].as_str().unwrap().is_empty());
@@ -51,7 +52,7 @@ fn us2_critical_high_map_to_error_level() {
         diagnostics: vec![],
         score: None,
     };
-    let v = parse(SarifFormatter::new().format_sarif_report(&report).value());
+    let v = parse(SarifFormatter::new().format_sarif(&report).value());
     let levels: Vec<&str> = v["runs"][0]["results"]
         .as_array()
         .unwrap()
@@ -68,7 +69,7 @@ fn us3_medium_maps_to_warning_level() {
         diagnostics: vec![],
         score: None,
     };
-    let v = parse(SarifFormatter::new().format_sarif_report(&report).value());
+    let v = parse(SarifFormatter::new().format_sarif(&report).value());
     assert_eq!(v["runs"][0]["results"][0]["level"], "warning");
 }
 
@@ -82,7 +83,7 @@ fn us4_low_info_map_to_note_level() {
         diagnostics: vec![],
         score: None,
     };
-    let v = parse(SarifFormatter::new().format_sarif_report(&report).value());
+    let v = parse(SarifFormatter::new().format_sarif(&report).value());
     let levels: Vec<&str> = v["runs"][0]["results"]
         .as_array()
         .unwrap()
@@ -103,7 +104,7 @@ fn us5_parse_warn_diagnostic_is_note() {
         )],
         score: None,
     };
-    let v = parse(SarifFormatter::new().format_sarif_report(&report).value());
+    let v = parse(SarifFormatter::new().format_sarif(&report).value());
     assert_eq!(v["runs"][0]["results"][0]["rule_id"], "PARSE_WARN");
     assert_eq!(v["runs"][0]["results"][0]["level"], "note");
 }
@@ -115,7 +116,7 @@ fn us6_line_zero_clamped_to_one() {
         diagnostics: vec![],
         score: None,
     };
-    let v = parse(SarifFormatter::new().format_sarif_report(&report).value());
+    let v = parse(SarifFormatter::new().format_sarif(&report).value());
     let region = &v["runs"][0]["results"][0]["locations"][0]["physical_location"]["region"];
     assert_eq!(region["start_line"], 1);
 }
@@ -124,7 +125,7 @@ fn us6_line_zero_clamped_to_one() {
 fn us7_empty_results_is_valid_sarif_with_empty_array() {
     let v = parse(
         SarifFormatter::new()
-            .format_sarif_report(&ScanReport::new(vec![], vec![]))
+            .format_sarif(&ScanReport::new(vec![], vec![]))
             .value(),
     );
     assert!(v["runs"][0]["results"].as_array().unwrap().is_empty());
@@ -145,6 +146,6 @@ fn us8_external_results_included_with_tool_native_id() {
         diagnostics: vec![],
         score: None,
     };
-    let v = parse(SarifFormatter::new().format_sarif_report(&report).value());
+    let v = parse(SarifFormatter::new().format_sarif(&report).value());
     assert_eq!(v["runs"][0]["results"][0]["rule_id"], "ruff::E501");
 }

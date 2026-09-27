@@ -16,15 +16,26 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::IExternalLintExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
-struct MockLintExecutor;
-impl IExternalLintExecutorProtocol for MockLintExecutor {
+struct MockCmdExecutor;
+impl ICommandExecutorProtocol for MockCmdExecutor {
+    fn execute_command(
+        &self,
+        _: shared::common::taxonomy_common_vo::PatternList,
+        _: FilePath,
+        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+    ) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
+    fn health_check(&self) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
     fn exec_cmd_scan(
         &self,
         _: Vec<String>,
@@ -44,6 +55,21 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
     ) -> Result<ResponseData, LinterOperationError> {
         Ok(ResponseData::default())
     }
+}
+
+struct MockJsResolution;
+impl IJsToolResolutionProtocol for MockJsResolution {
+    fn resolve_js_cmd(
+        &self,
+        _: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+        _: Vec<String>,
+        _: &FilePath,
+    ) -> Option<Vec<String>> {
+        None
+    }
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
     fn js_apply_fix(
         &self,
         _: &FilePath,
@@ -51,23 +77,6 @@ impl IExternalLintExecutorProtocol for MockLintExecutor {
         _: &str,
     ) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
-    }
-}
-
-struct MockCmdExecutor;
-impl shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol
-    for MockCmdExecutor
-{
-    fn execute_command(
-        &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
-        _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
-    ) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-    fn health_check(&self) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
     }
 }
 
@@ -128,7 +137,7 @@ fn smoke_stdio_client_creation() {
 fn smoke_all_adapters_created_quickly() {
     let start = Instant::now();
 
-    let lint_exec: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(MockLintExecutor);
+    let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
     let cmd_exec: Arc<
         dyn shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol,
     > = Arc::new(MockCmdExecutor);
@@ -160,10 +169,19 @@ fn smoke_all_adapters_created_quickly() {
     );
 
     // JS adapters
-    let _eslint =
-        external_lint_lint_arwaky::ESLintAdapter::new(lint_exec.clone(), io.clone(), tr.clone());
-    let _prettier =
-        external_lint_lint_arwaky::PrettierAdapter::new(lint_exec.clone(), io.clone(), tr.clone());
+    let js_res: Arc<dyn IJsToolResolutionProtocol> = Arc::new(MockJsResolution);
+    let _eslint = external_lint_lint_arwaky::ESLintAdapter::new(
+        lint_exec.clone(),
+        js_res.clone(),
+        io.clone(),
+        tr.clone(),
+    );
+    let _prettier = external_lint_lint_arwaky::PrettierAdapter::new(
+        lint_exec.clone(),
+        js_res.clone(),
+        io.clone(),
+        tr.clone(),
+    );
     let _tsc =
         external_lint_lint_arwaky::TSCAdapter::new(lint_exec.clone(), io.clone(), tr.clone());
 

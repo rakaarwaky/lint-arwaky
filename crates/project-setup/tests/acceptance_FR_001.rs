@@ -135,8 +135,8 @@ fn fr001_all_client_contains_all_formats() {
 #[test]
 fn fr001_binary_resolved_non_empty() {
     let container = make_container();
-    let proto = container.protocol();
-    let binary = proto.which_mcp_binary();
+    let mcp = container.mcp_config();
+    let binary = mcp.which_mcp_binary();
     assert!(
         !binary.value().is_empty(),
         "FR-001 QA#8: resolved binary must be non-empty"
@@ -146,8 +146,8 @@ fn fr001_binary_resolved_non_empty() {
 #[test]
 fn fr001_binary_falls_back_to_bare_name() {
     let container = make_container();
-    let proto = container.protocol();
-    let binary = proto.which_mcp_binary();
+    let mcp = container.mcp_config();
+    let binary = mcp.which_mcp_binary();
     assert!(
         binary.value().contains("lint-arwaky"),
         "FR-001 QA#9: fallback binary should reference lint-arwaky, got: {}",
@@ -160,9 +160,9 @@ fn fr001_binary_falls_back_to_bare_name() {
 #[test]
 fn fr001_base_config_command_matches_resolved_binary() {
     let container = make_container();
-    let proto = container.protocol();
-    let bin = proto.which_mcp_binary();
-    let config = proto.generate_mcp_config();
+    let mcp = container.mcp_config();
+    let bin = mcp.which_mcp_binary();
+    let config = mcp.generate_mcp_config();
     let server = config.value().get("lint-arwaky").unwrap();
     let cmd = server.get("command").unwrap().as_str().unwrap();
     assert_eq!(
@@ -177,8 +177,8 @@ fn fr001_base_config_command_matches_resolved_binary() {
 #[test]
 fn fr001_always_allow_matches_frd() {
     let container = make_container();
-    let proto = container.protocol();
-    let config = proto.generate_mcp_config();
+    let mcp = container.mcp_config();
+    let config = mcp.generate_mcp_config();
     let server = config.value().get("lint-arwaky").unwrap();
     let allow = server.get("alwaysAllow").unwrap().as_array().unwrap();
     let expected = vec![
@@ -247,7 +247,7 @@ fn fr001_all_client_configs_are_valid_json() {
 fn fr001_configs_writable_to_disk() {
     let container = make_container();
     let agg = container.aggregate();
-    let proto = container.protocol();
+    let config_writing = container.config_writing();
     let tmp = TempDir::new().unwrap();
 
     for (name, config) in &[
@@ -284,7 +284,7 @@ fn fr001_configs_writable_to_disk() {
     ] {
         let json_str = serde_json::to_string_pretty(config.value()).unwrap();
         let path = tmp.path().join(format!("mcp_{}.json", name));
-        let result = proto.write_config_file(&path.to_string_lossy(), &json_str);
+        let result = config_writing.write_config_file(&path.to_string_lossy(), &json_str);
         assert!(
             result.is_ok(),
             "FR-001: {} config should be writable: {:?}",

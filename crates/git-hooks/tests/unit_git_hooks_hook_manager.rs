@@ -3,7 +3,10 @@
 use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
 use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use shared::common::FilePath;
-use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO, IHookManagerProtocol, IHookProtocol};
+use shared::git_hooks::{
+    GitDiffStatus, HookIgnoreUpdateVO, IConfigInitProtocol, IDiffDataProtocol,
+    IHookInstallProtocol, IHookUninstallProtocol, IIgnoreRuleProtocol,
+};
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -11,8 +14,11 @@ fn make_hook_manager(tmp: &TempDir) -> HookManager {
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let io = fs_container.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
-    HookManager::new(adapter, io)
+    let installer: Arc<dyn IHookInstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp.clone(), io.clone()));
+    let uninstaller: Arc<dyn IHookUninstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp, io.clone()));
+    HookManager::new(installer, uninstaller, io)
 }
 
 fn write_file(path: &std::path::Path, content: &str) {

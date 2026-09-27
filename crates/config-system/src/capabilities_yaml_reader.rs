@@ -1,5 +1,7 @@
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_protocol::IConfigReaderProtocol;
+use shared::config_system::contract_config_protocol::IConfigLanguageProtocol;
+use shared::config_system::contract_config_protocol::IConfigListProtocol;
+use shared::config_system::contract_config_protocol::IConfigReadProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_config_vo::ConfigSource;
@@ -19,7 +21,7 @@ pub struct ConfigYamlReader {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IConfigReaderProtocol for ConfigYamlReader {
+impl IConfigReadProtocol for ConfigYamlReader {
     fn read_config(
         &self,
         project_root: &FilePath,
@@ -80,7 +82,9 @@ impl IConfigReaderProtocol for ConfigYamlReader {
         // Fall back to XDG-compliant directories
         self.read_any(language)
     }
+}
 
+impl IConfigListProtocol for ConfigYamlReader {
     fn list_config_files(
         &self,
         project_root: &FilePath,
@@ -121,6 +125,16 @@ impl IConfigReaderProtocol for ConfigYamlReader {
             }
         }
         Ok(found)
+    }
+}
+
+impl IConfigLanguageProtocol for ConfigYamlReader {
+    fn config_file_names(&self, language: ConfigLanguage) -> Vec<String> {
+        language
+            .config_file_names()
+            .iter()
+            .map(|name| (*name).to_string())
+            .collect()
     }
 }
 

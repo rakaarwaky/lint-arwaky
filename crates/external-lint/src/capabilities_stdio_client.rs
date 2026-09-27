@@ -3,8 +3,10 @@ use std::collections::HashMap;
 use std::process::Command;
 use std::time::Duration;
 
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_duration_vo::Timeout;
+use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
@@ -125,6 +127,37 @@ impl ICommandExecutorProtocol for StdioClient {
 
     fn health_check(&self) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::new())
+    }
+
+    fn exec_cmd_scan(
+        &self,
+        args: Vec<String>,
+        working_dir: FilePath,
+        timeout_secs: f64,
+        adapter_name: Option<AdapterName>,
+        path: &FilePath,
+    ) -> Result<ResponseData, LinterOperationError> {
+        self.execute_command(
+            PatternList::new(args),
+            working_dir,
+            Some(Timeout::new(timeout_secs)),
+        )
+        .map_err(|e| crate::map_scan_error(e, path.clone(), adapter_name))
+    }
+
+    fn exec_cmd_adapter(
+        &self,
+        args: Vec<String>,
+        working_dir: FilePath,
+        timeout_secs: f64,
+        adapter_name: AdapterName,
+    ) -> Result<ResponseData, LinterOperationError> {
+        self.execute_command(
+            PatternList::new(args),
+            working_dir,
+            Some(Timeout::new(timeout_secs)),
+        )
+        .map_err(|e| crate::map_adapter_error(e, adapter_name))
     }
 }
 

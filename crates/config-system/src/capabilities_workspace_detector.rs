@@ -1,5 +1,6 @@
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
+use shared::config_system::contract_config_protocol::IWorkspaceDetectProtocol;
+use shared::config_system::contract_config_protocol::IWorkspaceMembersProtocol;
 use shared::config_system::contract_config_protocol::WorkspaceType;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
@@ -16,7 +17,7 @@ pub struct WorkspaceDetector {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IWorkspaceDetectorProtocol for WorkspaceDetector {
+impl IWorkspaceDetectProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::PathBuf::from(&path.value);
 
@@ -42,7 +43,9 @@ impl IWorkspaceDetectorProtocol for WorkspaceDetector {
                 .is_ok()
         })
     }
+}
 
+impl IWorkspaceMembersProtocol for WorkspaceDetector {
     fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {
         let root_path = std::path::Path::new(&root.value);
         let mut members = Vec::new();

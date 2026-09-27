@@ -10,10 +10,14 @@ pub mod taxonomy_external_lint_vo;
 
 // ── Contract traits ──
 pub use contract_external_lint_aggregate::IExternalLintAggregate;
+pub use contract_external_lint_protocol::IAdapterScanProtocol;
+pub use contract_external_lint_protocol::ICargoDirProtocol;
 pub use contract_external_lint_protocol::ICommandExecutorProtocol;
-pub use contract_external_lint_protocol::IExternalLintExecutorProtocol;
 pub use contract_external_lint_protocol::IExternalLintSelectorProtocol;
+pub use contract_external_lint_protocol::IJsToolResolutionProtocol;
+pub use contract_external_lint_protocol::ILanguageDetectProtocol;
 pub use contract_external_lint_protocol::ILinterAdapterProtocol;
+pub use contract_external_lint_protocol::INormalizeProtocol;
 
 // ── Taxonomy VOs ──
 pub use taxonomy_external_lint_request::ExternalLintRequest;

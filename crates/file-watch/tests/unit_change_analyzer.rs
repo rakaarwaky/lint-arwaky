@@ -1,6 +1,6 @@
 // Unit tests — ChangeAnalyzer edge cases and deduplication logic.
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
-use shared::file_watch::contract_watch_protocol::IChangeAnalyzerProtocol;
+use shared::file_watch::contract_watch_protocol::{IEventDedupProtocol, ILintableFilterProtocol};
 use shared::file_watch::taxonomy_watch_config_vo::{WatchEvent, WatchEventKind};
 
 // ─── is_lintable edge cases (FR-003) ──────────────────────
@@ -99,12 +99,12 @@ fn is_lintable_path_with_directories() {
     assert!(!analyzer.is_lintable("/home/user/project/image.png"));
 }
 
-// ─── analyze deduplication (FR-004) ───────────────────────
+// ─── dedup_events deduplication (FR-004) ───────────────────────
 
 #[test]
 fn analyze_empty_input() {
     let analyzer = ChangeAnalyzer::new();
-    let result = analyzer.analyze(vec![]);
+    let result = analyzer.dedup_events(vec![]);
     assert!(result.is_empty());
 }
 
@@ -116,7 +116,7 @@ fn analyze_no_duplicates() {
         WatchEvent::new("b.py".to_string(), WatchEventKind::Modified),
         WatchEvent::new("c.ts".to_string(), WatchEventKind::Modified),
     ];
-    let result = analyzer.analyze(events);
+    let result = analyzer.dedup_events(events);
     assert_eq!(result.len(), 3);
 }
 
@@ -128,7 +128,7 @@ fn analyze_all_same_path() {
         WatchEvent::new("main.rs".to_string(), WatchEventKind::Modified),
         WatchEvent::new("main.rs".to_string(), WatchEventKind::Modified),
     ];
-    let result = analyzer.analyze(events);
+    let result = analyzer.dedup_events(events);
     assert_eq!(result.len(), 1);
     assert_eq!(result[0].path, "main.rs");
 }
@@ -143,7 +143,7 @@ fn analyze_mixed_duplicates() {
         WatchEvent::new("c.ts".to_string(), WatchEventKind::Modified),
         WatchEvent::new("b.py".to_string(), WatchEventKind::Removed),
     ];
-    let result = analyzer.analyze(events);
+    let result = analyzer.dedup_events(events);
     assert_eq!(result.len(), 3);
     let paths: Vec<&str> = result.iter().map(|e| e.path.as_str()).collect();
     assert!(paths.contains(&"a.rs"));
@@ -196,7 +196,7 @@ fn filter_lintable_all_non_lintable() {
     assert!(result.is_empty());
 }
 
-// ─── Combined: analyze + filter_lintable pipeline ──────────
+// ─── Combined: dedup_events + filter_lintable pipeline ──────
 
 #[test]
 fn pipeline_dedup_then_filter() {
@@ -207,7 +207,7 @@ fn pipeline_dedup_then_filter() {
         WatchEvent::new("image.png".to_string(), WatchEventKind::Modified),
         WatchEvent::new("app.py".to_string(), WatchEventKind::Modified),
     ];
-    let deduped = analyzer.analyze(events);
+    let deduped = analyzer.dedup_events(events);
     let filtered = analyzer.filter_lintable(deduped);
     assert_eq!(filtered.len(), 2);
     let paths: Vec<&str> = filtered.iter().map(|e| e.path.as_str()).collect();

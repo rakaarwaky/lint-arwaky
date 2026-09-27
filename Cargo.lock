@@ -1051,6 +1051,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "doc-rules-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "regex",
+ "shared-lint-arwaky",
+ "tempfile",
+]
+
+[[package]]
 name = "document-features"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2989,6 +2998,7 @@ dependencies = [
  "dialoguer",
  "dirs",
  "dispatcher-lint-arwaky",
+ "doc-rules-lint-arwaky",
  "external-lint-lint-arwaky",
  "file-watch-lint-arwaky",
  "filesystem-lint-arwaky",

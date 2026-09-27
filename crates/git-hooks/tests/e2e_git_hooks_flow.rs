@@ -8,7 +8,7 @@ use shared::common::FilePath;
 use shared::git_hooks::GitHooksRequest;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::{
-    GitDiffStatus, HookIgnoreUpdateVO, IDiffProtocol, IHookManagerProtocol, IHookProtocol,
+    GitDiffStatus, HookIgnoreUpdateVO, IHookInstallProtocol, IHookUninstallProtocol,
 };
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -19,14 +19,24 @@ fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let _filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
-    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(io.clone()));
-    let hook_protocol: Arc<dyn IHookProtocol> =
-        Arc::new(HookManager::new(hook_adapter.clone(), io.clone()));
+    let hook_installer: Arc<dyn IHookInstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp.clone(), io.clone()));
+    let hook_uninstaller: Arc<dyn IHookUninstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp, io.clone()));
+    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
+    let hook_manager = Arc::new(HookManager::new(
+        hook_installer.clone(),
+        hook_uninstaller.clone(),
+        io.clone(),
+    ));
     let orch: Arc<dyn IGitHooksAggregate> = Arc::new(GitHooksOrchestrator::new(
-        diff_protocol,
-        hook_protocol,
-        hook_adapter,
+        diff_checker.clone(),
+        diff_checker.clone(),
+        hook_installer.clone(),
+        hook_uninstaller.clone(),
+        hook_manager.clone(),
+        hook_manager.clone(),
+        hook_manager.clone(),
     ));
     (tmp, orch)
 }
@@ -37,14 +47,24 @@ fn make_orchestrator() -> (TempDir, Arc<GitHooksOrchestrator>) {
     let _filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
-    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(io.clone()));
-    let hook_protocol: Arc<dyn IHookProtocol> =
-        Arc::new(HookManager::new(hook_adapter.clone(), io.clone()));
+    let hook_installer: Arc<dyn IHookInstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp.clone(), io.clone()));
+    let hook_uninstaller: Arc<dyn IHookUninstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp, io.clone()));
+    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
+    let hook_manager = Arc::new(HookManager::new(
+        hook_installer.clone(),
+        hook_uninstaller.clone(),
+        io.clone(),
+    ));
     let orch = Arc::new(GitHooksOrchestrator::new(
-        diff_protocol,
-        hook_protocol,
-        hook_adapter,
+        diff_checker.clone(),
+        diff_checker.clone(),
+        hook_installer.clone(),
+        hook_uninstaller.clone(),
+        hook_manager.clone(),
+        hook_manager.clone(),
+        hook_manager.clone(),
     ));
     (tmp, orch)
 }
@@ -310,7 +330,7 @@ fn e2e_orchestrator_delegates_to_diff_protocol() {
 
     // Verify the diff protocol seam stays reachable through the orchestrator
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let _result = orch.diff_protocol().run_git_diff_check(&fp);
+    let _result = orch.run_git_hooks_check(&fp);
     // Should not panic on a non-git directory
 }
 
@@ -324,19 +344,18 @@ fn e2e_orchestrator_delegates_to_hook_protocol() {
 }
 
 #[test]
-fn e2e_orchestrator_exposes_hook_manager_via_aggregate() {
+fn e2e_orchestrator_exposes_hook_uninstall_seam_via_aggregate() {
     let (_, orch) = make_orchestrator();
 
-    // IHookManagerAggregate is object-safe and accessible
-    let manager: Arc<dyn IHookManagerProtocol> = orch.get_hook_manager();
+    // The uninstall seam is object-safe and reachable through the orchestrator
     let identity = orch.get_hook_manager_identity();
     assert_eq!(identity.value(), "git_hook_manager");
 
-    // Manager should be usable
-    let result = manager.uninstall_pre_commit();
+    // Uninstalling outside a git repository is a no-op success
+    let result = orch.uninstall_hook();
     assert!(
         result.is_ok(),
-        "hook manager uninstall should work: {:?}",
+        "hook uninstall should work: {:?}",
         result.err()
     );
 }

@@ -1,16 +1,18 @@
-// PURPOSE: GitHookAdapter — IHookManagerProtocol implementation for low-level hook file operations (capabilities layer)
+// PURPOSE: GitHookAdapter — FR-002/FR-003 protocol implementations (capabilities layer)
 //
 // Handles .git/hooks/ directory creation, hook script writing, permission
 // setting, and hook removal. This is the lowest-level hook component that
 // interacts directly with the filesystem.
 
 use shared::common::taxonomy_job_vo::SuccessStatus;
+use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::FileMode;
-use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use std::sync::Arc;
 
@@ -23,7 +25,7 @@ pub struct GitHookAdapter {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IHookManagerProtocol for GitHookAdapter {
+impl IHookInstallProtocol for GitHookAdapter {
     fn install_pre_commit(
         &self,
         executable_path: &FilePath,
@@ -77,6 +79,12 @@ exit 0
         Ok(SuccessStatus::new(true))
     }
 
+    fn get_hook_manager_identity(&self) -> Identity {
+        Identity::new("git_hook_manager")
+    }
+}
+
+impl IHookUninstallProtocol for GitHookAdapter {
     fn uninstall_pre_commit(&self) -> Result<SuccessStatus, GitHookError> {
         if !self.is_git_repo() {
             return Ok(SuccessStatus::new(false));

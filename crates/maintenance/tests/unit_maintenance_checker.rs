@@ -1,8 +1,11 @@
 // Unit tests — MaintenanceChecker methods.
+use maintenance_lint_arwaky::{
+    IAdapterHealthProtocol, IDependencyReportProtocol, IDoctorProtocol, IProjectStatsProtocol,
+    ISecurityScanProtocol, ISelfUpdateProtocol, IToolchainDiagnosticProtocol,
+};
 use shared::common::FilePath;
-use shared::maintenance::IMaintenanceCheckerProtocol;
 
-fn make_checker() -> impl IMaintenanceCheckerProtocol {
+fn make_checker() -> maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _fs = fc.orchestrator();
     let io = fc.io();

@@ -1,0 +1,18 @@
+[package]
+name = "doc-rules-lint-arwaky"
+version = "3.7.1"
+edition = "2024"
+description = "Structural invariants for the AES document chain (AES601–AES605)."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+[lints]
+workspace = true
+
+[dependencies]
+shared.workspace = true
+regex.workspace = true
+
+[dev-dependencies]
+tempfile = "3"

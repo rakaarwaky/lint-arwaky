@@ -13,6 +13,7 @@ pub mod taxonomy_role_vo;
 // ── Contract traits ──
 pub use contract_role_protocol::IAgentRoleProtocol;
 pub use contract_role_protocol::ICapabilitiesRoleProtocol;
+pub use contract_role_protocol::IClassificationProtocol;
 pub use contract_role_protocol::IContractRoleProtocol;
 pub use contract_role_protocol::ISurfaceRoleProtocol;
 pub use contract_role_protocol::ITaxonomyRoleProtocol;

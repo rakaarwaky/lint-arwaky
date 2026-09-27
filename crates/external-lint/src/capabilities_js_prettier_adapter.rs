@@ -19,7 +19,8 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::IExternalLintExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
@@ -31,7 +32,8 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct PrettierAdapter {
-    lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+    lint_executor: Arc<dyn ICommandExecutorProtocol>,
+    js_resolution: Arc<dyn IJsToolResolutionProtocol>,
     io: Arc<dyn IFileSystemIOProtocol>,
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
@@ -109,8 +111,8 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         Ok(LintResultList::new(results))
     }
 
-    fn apply_fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.lint_executor
+    fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+        self.js_resolution
             .js_apply_fix(path, "prettier", "--write")
             .map_err(crate::convert_executor_error)
     }
@@ -120,12 +122,14 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
 impl PrettierAdapter {
     pub fn new(
-        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
+        js_resolution: Arc<dyn IJsToolResolutionProtocol>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
             lint_executor,
+            js_resolution,
             io,
             tool_resolution,
         }

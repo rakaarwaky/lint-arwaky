@@ -6,8 +6,9 @@ use crate::capabilities_yaml_reader::ConfigYamlReader;
 // Utility module wired into entry for orphan reachability (AES504)
 use crate::utility_config_parser;
 use shared::config_system::{
-    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
-    IConfigValidatorProtocol,
+    IConfigLanguageProtocol, IConfigListProtocol, IConfigOrchestratorAggregate,
+    IConfigParseProtocol, IConfigReadProtocol, IConfigTomlProtocol, IConfigValidateProtocol,
+    IWorkspaceMembersProtocol,
 };
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
@@ -16,9 +17,13 @@ use std::sync::Arc;
 
 pub struct ConfigContainer {
     orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    reader: Arc<dyn IConfigReaderProtocol>,
-    parser: Arc<dyn IConfigParserProtocol>,
-    validator: Arc<dyn IConfigValidatorProtocol>,
+    reader: Arc<dyn IConfigReadProtocol>,
+    parser: Arc<dyn IConfigParseProtocol>,
+    toml_parser: Arc<dyn IConfigTomlProtocol>,
+    validator: Arc<dyn IConfigValidateProtocol>,
+    detector: Arc<dyn IWorkspaceMembersProtocol>,
+    language: Arc<dyn IConfigLanguageProtocol>,
+    lister: Arc<dyn IConfigListProtocol>,
 }
 
 impl ConfigContainer {
@@ -34,15 +39,19 @@ impl ConfigContainer {
 
         Self {
             orchestrator: Arc::new(ConfigOrchestrator::new(ConfigOrchestratorDeps {
-                workspace_detector,
+                workspace_detector: workspace_detector.clone(),
                 config_reader: yaml_reader.clone(),
                 parser: parser.clone(),
                 validator: validator.clone(),
                 filesystem,
             })),
-            reader: yaml_reader,
-            parser,
-            validator,
+            reader: yaml_reader.clone(),
+            lister: yaml_reader.clone(),
+            parser: parser.clone(),
+            toml_parser: parser.clone(),
+            validator: validator.clone(),
+            detector: workspace_detector.clone(),
+            language: yaml_reader,
         }
     }
 
@@ -50,16 +59,32 @@ impl ConfigContainer {
         self.orchestrator.clone()
     }
 
-    pub fn reader(&self) -> Arc<dyn IConfigReaderProtocol> {
+    pub fn reader(&self) -> Arc<dyn IConfigReadProtocol> {
         self.reader.clone()
     }
 
-    pub fn parser(&self) -> Arc<dyn IConfigParserProtocol> {
+    pub fn lister(&self) -> Arc<dyn IConfigListProtocol> {
+        self.lister.clone()
+    }
+
+    pub fn language(&self) -> Arc<dyn IConfigLanguageProtocol> {
+        self.language.clone()
+    }
+
+    pub fn parser(&self) -> Arc<dyn IConfigParseProtocol> {
         self.parser.clone()
     }
 
-    pub fn validator(&self) -> Arc<dyn IConfigValidatorProtocol> {
+    pub fn toml_parser(&self) -> Arc<dyn IConfigTomlProtocol> {
+        self.toml_parser.clone()
+    }
+
+    pub fn validator(&self) -> Arc<dyn IConfigValidateProtocol> {
         self.validator.clone()
+    }
+
+    pub fn detector(&self) -> Arc<dyn IWorkspaceMembersProtocol> {
+        self.detector.clone()
     }
 
     /// Get default AES configuration (from shared parser).

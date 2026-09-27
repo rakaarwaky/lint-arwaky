@@ -6,9 +6,10 @@ use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared::common::FilePath;
 use shared::git_hooks::GitHooksRequest;
+use shared::git_hooks::IHookInstallProtocol;
+use shared::git_hooks::IHookUninstallProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
-use shared::git_hooks::{IDiffProtocol, IHookManagerProtocol, IHookProtocol};
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -18,14 +19,24 @@ fn make_orchestrator() -> Arc<GitHooksOrchestrator> {
     let io = fc.io();
     let tmp_path = std::env::temp_dir();
     let fp = FilePath::new(tmp_path.to_string_lossy().to_string()).unwrap();
-    let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
-    let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(DiffChecker::new(io.clone()));
-    let hook_protocol: Arc<dyn IHookProtocol> =
-        Arc::new(HookManager::new(hook_adapter.clone(), io.clone()));
+    let hook_installer: Arc<dyn IHookInstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp.clone(), io.clone()));
+    let hook_uninstaller: Arc<dyn IHookUninstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp, io.clone()));
+    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
+    let hook_manager = Arc::new(HookManager::new(
+        hook_installer.clone(),
+        hook_uninstaller.clone(),
+        io.clone(),
+    ));
     Arc::new(GitHooksOrchestrator::new(
-        diff_protocol,
-        hook_protocol,
-        hook_adapter,
+        diff_checker.clone(),
+        diff_checker.clone(),
+        hook_installer.clone(),
+        hook_uninstaller.clone(),
+        hook_manager.clone(),
+        hook_manager.clone(),
+        hook_manager.clone(),
     ))
 }
 

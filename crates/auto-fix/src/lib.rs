@@ -1,5 +1,8 @@
 pub use shared::auto_fix::IFixAggregate;
-pub use shared::auto_fix::IFixProtocol;
+pub use shared::auto_fix::{
+    IBypassFixProtocol, IFixPipelineProtocol, IManualReportProtocol, ISymbolRenameProtocol,
+    IUnusedImportFixProtocol,
+};
 
 pub mod agent_fix_orchestrator;
 pub use agent_fix_orchestrator::FixOrchestrator;

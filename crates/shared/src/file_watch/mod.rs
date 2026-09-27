@@ -11,8 +11,12 @@ pub mod taxonomy_watch_response;
 
 // ── Contract traits ──
 pub use contract_watch_aggregate::IWatchAggregate;
-pub use contract_watch_protocol::IChangeAnalyzerProtocol;
-pub use contract_watch_protocol::IWatchProviderProtocol;
+pub use contract_watch_protocol::IChangeLintProtocol;
+pub use contract_watch_protocol::IEventDedupProtocol;
+pub use contract_watch_protocol::ILintableFilterProtocol;
+pub use contract_watch_protocol::IWatchBroadcastProtocol;
+pub use contract_watch_protocol::IWatchShutdownProtocol;
+pub use contract_watch_protocol::IWatchStartProtocol;
 
 // ── Taxonomy types ──
 pub use taxonomy_service_error::WatchServiceError;

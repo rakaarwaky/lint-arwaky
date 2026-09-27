@@ -2,7 +2,7 @@
 pub use shared::common::taxonomy_adapter_error::{AdapterError, ScanError, ValidationError};
 
 /// Convert between the two `LinterOperationError` types in the shared crate.
-/// `common::LinterOperationError` is used by `IExternalLintExecutorProtocol`.
+/// `common::LinterOperationError` is used by the external-lint protocol seams.
 /// `quality_rules::LinterOperationError` is used by `ILinterAdapterProtocol`.
 pub(crate) fn convert_executor_error(
     e: shared::common::taxonomy_operation_error::LinterOperationError,
@@ -15,10 +15,44 @@ pub(crate) fn convert_executor_error(
     }
 }
 
+/// Map a raw subprocess failure onto the scan error the caller expects (FR-006).
+pub(crate) fn map_scan_error(
+    e: anyhow::Error,
+    path: shared::common::taxonomy_path_vo::FilePath,
+    adapter_name: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
+) -> shared::common::taxonomy_operation_error::LinterOperationError {
+    use shared::common::ScanError;
+    use shared::common::taxonomy_common_vo::ErrorMessage;
+    shared::common::taxonomy_operation_error::LinterOperationError::Scan(ScanError {
+        path,
+        message: ErrorMessage::new(e.to_string()),
+        error_code: None,
+        adapter_name,
+        cause: None,
+    })
+}
+
+/// Map a raw subprocess failure onto the adapter error the caller expects (FR-006).
+pub(crate) fn map_adapter_error(
+    e: anyhow::Error,
+    adapter_name: shared::common::taxonomy_adapter_name_vo::AdapterName,
+) -> shared::common::taxonomy_operation_error::LinterOperationError {
+    use shared::common::taxonomy_adapter_error::AdapterError;
+    use shared::common::taxonomy_common_vo::ErrorMessage;
+    shared::common::taxonomy_operation_error::LinterOperationError::Adapter(AdapterError::new(
+        adapter_name,
+        ErrorMessage::new(e.to_string()),
+    ))
+}
+
 pub mod agent_external_lint_orchestrator;
 pub mod capabilities_external_lint_executor;
 pub use capabilities_external_lint_executor::ExternalLintExecutor;
 pub mod capabilities_external_lint_selector;
+pub mod capabilities_language_detector;
+pub use capabilities_language_detector::LanguageDetector;
+pub mod capabilities_output_normalizer;
+pub use capabilities_output_normalizer::OutputNormalizer;
 pub mod capabilities_stdio_client;
 pub use capabilities_stdio_client::StdioClient;
 pub mod capabilities_js_eslint_adapter;

@@ -2,7 +2,7 @@
 use file_watch_lint_arwaky::capabilities_change_analyzer::ChangeAnalyzer;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
 use file_watch_lint_arwaky::root_file_watch_container::FileWatchContainer;
-use shared::file_watch::contract_watch_protocol::IWatchProviderProtocol;
+use shared::file_watch::contract_watch_protocol::IWatchStartProtocol;
 use std::sync::Arc;
 
 #[test]
@@ -57,7 +57,7 @@ fn change_analyzer_creates() {
 fn container_provider_is_trait_object() {
     let start = std::time::Instant::now();
     let container = FileWatchContainer::new();
-    let _: Arc<dyn IWatchProviderProtocol> = container.provider();
+    let _: Arc<dyn IWatchStartProtocol> = container.start();
     let elapsed = start.elapsed();
     assert!(
         elapsed.as_secs() < 5,

@@ -1,0 +1,13 @@
+// doc_rules — doc-invariant auditors for the AES document chain
+pub mod contract_doc_aggregate;
+pub mod contract_doc_protocol;
+pub mod taxonomy_doc_constant;
+pub mod taxonomy_doc_request;
+pub mod taxonomy_doc_response;
+
+// ─── Re-exports ────────────────────────────────────────────
+pub use contract_doc_aggregate::IDocRunnerAggregate;
+pub use contract_doc_protocol::IDocCheckerProtocol;
+pub use taxonomy_doc_constant::*;
+pub use taxonomy_doc_request::{DocFinding, DocRequest};
+pub use taxonomy_doc_response::DocResponse;

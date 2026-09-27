@@ -28,12 +28,35 @@ unique within the feature and stable forever.
 2. **A requirement is testable, or it is a wish.**
 State input, output, business rules, edge cases, error handling.
 3. **The API contract is two tables under one section.** `Protocol API`
-holds **exactly one row**: one method for the whole feature folder that
-covers every capability (not one row per leaf). `Aggregate API` holds one
-row per public method the feature's agent exposes (the feature
-orchestrator / agent, designed for the target — not a snapshot of today's
-code). Columns for both tables: Method, Input, Output, Error, Event,
-Description — real signatures, not invented capability names.
+lists **one row per capability method** the feature's protocol exposes
+(every method on the protocol trait). `Aggregate API` lists the
+**single `execute` entry point** — one row only, the composite verb the
+orchestrator exposes to the surface. Columns for both tables: Method,
+Input, Output, Error, Event, Description — real signatures, not invented
+capability names.
+3a. **The FR count must match the protocol class count.** The number of
+`### FR-<Feature>-NNN:` headings and the number of `pub trait I*Protocol`
+declarations across the feature's contract protocol files must be equal
+(`protocol-count-mismatch`).
+One protocol class is one capability seam, and one seam is one
+requirement. **A single protocol file may declare many protocol classes** —
+count the classes, never the files. Method counts are irrelevant: a
+protocol class carrying nine methods for nine commands is still one class
+and therefore one FR. When the two counts differ, fix it in whichever
+direction preserves the most spec intent:
+
+| # | Direction | Use when | Effect |
+|---|-----------|----------|--------|
+| 1 | **Split methods into more classes** | One class holds several genuinely different capabilities and an FR already describes each one separately. | classes up, FRs unchanged |
+| 2 | **Merge methods into one class** | One class is too fat — its methods collapse into fewer coherent seams — and the FRs already match the smaller count. | classes down, FRs unchanged |
+| 3 | **Merge FRs down to the class count** | FRs describe orchestrator dispatch, traversal, or sub-steps of one capability rather than distinct capabilities. | FRs down |
+| 4 | **Split FRs up to the class count** | One class legitimately covers several capabilities but the FRs are lumped together, or the classes were split per direction 1 and the FRs must follow. | FRs up |
+
+Order of preference: direction **1** or **2** when the code shape is
+genuinely wrong, direction **3** when the extra FRs are infrastructure
+narrative, direction **4** last. Never pad or delete a real requirement
+just to satisfy the count — if neither direction preserves the spec,
+split the class.
 4. **Scenarios are stated here; evidence lives in the backlog.**
 One scenario per bullet, so `scenario-evidence-count` can match them.
 5. **Non-functional numbers live here.**
@@ -101,13 +124,13 @@ Copy, fill, delete nothing.
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| <method> | <input> | <output> | <error> | <event> | one row only — one method for all capabilities |
+| <capability method> | <input> | <output> | <error> | <event> | one row per method on the protocol trait |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| <method> | <input> | <output> | <error> | <event> | <one sentence> |
+| <execute> | <request> | <response> | <error> | <event> | single composite entry point |
 
 
 ## Integration Points

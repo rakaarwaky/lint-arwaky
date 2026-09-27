@@ -59,7 +59,7 @@ fn container_reader_lists_config_files() {
     fs::write(tmp.path().join("lint_arwaky.config.yaml"), "a: 1").unwrap();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = common::make_container()
-        .reader()
+        .lister()
         .list_config_files(&fp)
         .unwrap();
     assert_eq!(files.len(), 1);

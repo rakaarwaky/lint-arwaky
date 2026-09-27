@@ -1,10 +1,26 @@
 // Unit tests for LintFixProcessor — standalone fix methods (bypass, unused import, rename).
 // Uses a mock FileAdapter that reads/writes directly (bypasses filesystem aggregate cache).
 use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::{FixOutcome, IFileAdapterProtocol, IFixProtocol};
-use shared::common::{ContentString, FilePath};
+use shared::auto_fix::{
+    FixOutcome, IBypassFixProtocol, IFileAdapterProtocol, IManualReportProtocol,
+    ISymbolRenameProtocol, IUnusedImportFixProtocol,
+};
+use shared::common::{ContentString, FilePath, Severity};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+
+/// Build a LintResult with the given code for FR-005 manual-report tests.
+fn violation(code: &str, severity: Severity) -> shared::common::LintResult {
+    shared::common::LintResult {
+        file: FilePath::new("src/main.rs").unwrap(),
+        line: shared::common::LineNumber::new(3),
+        code: shared::common::ErrorCode::raw(code),
+        message: shared::common::LintMessage::new(format!("violation {code}")),
+        source: Some(shared::common::AdapterName::raw("architecture")),
+        severity,
+        ..Default::default()
+    }
+}
 
 /// Mock adapter backed by a HashMap — no filesystem aggregate cache issues.
 struct MockAdapter {
@@ -206,4 +222,34 @@ fn rename_skips_nonexistent_symbol() {
     let p = make_processor(make_files(&[(fp, "fn main() {}\n")]));
     let outcome = p.rename_symbol(fp, "nonexistent", "renamed");
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
+}
+
+// ── report_non_fixable tests (FR-005) ────────────────────
+
+#[test]
+fn manual_report_lists_only_non_fixable_codes() {
+    let p = make_processor(make_files(&[]));
+    let violations = vec![
+        violation("AES101", Severity::HIGH),
+        violation("AES203", Severity::LOW),
+        violation("AES304", Severity::MEDIUM),
+        violation("AES401", Severity::LOW),
+        violation("clippy::needless_return", Severity::MEDIUM),
+    ];
+    let report = p.report_non_fixable(&violations);
+    assert_eq!(report.len(), 2, "only AES401 and tool-native codes remain");
+    let joined = report
+        .iter()
+        .map(|m| m.value().to_string())
+        .collect::<Vec<_>>()
+        .join("\n");
+    assert!(joined.contains("AES401"));
+    assert!(joined.contains("clippy::needless_return"));
+    assert!(!joined.contains("AES101"));
+}
+
+#[test]
+fn manual_report_on_empty_violations_is_empty() {
+    let p = make_processor(make_files(&[]));
+    assert!(p.report_non_fixable(&[]).is_empty());
 }

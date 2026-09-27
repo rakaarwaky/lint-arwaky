@@ -4,7 +4,8 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::xml_escape;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IReportFormatterProtocol;
+use shared::report_formatter::IFormatDelegationProtocol;
+use shared::report_formatter::IJUnitFormatProtocol;
 
 fn result(code: &str, sev: Severity, message: &str) -> LintResult {
     LintResult {
@@ -20,7 +21,7 @@ fn result(code: &str, sev: Severity, message: &str) -> LintResult {
 
 #[test]
 fn empty_report_produces_valid_xml_skeleton() {
-    let out = JunitFormatter::new().format_junit_report(&ScanReport::new(vec![], vec![]));
+    let out = JunitFormatter::new().format_junit(&ScanReport::new(vec![], vec![]));
     let xml = out.value();
     assert!(xml.starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
     assert!(
@@ -41,7 +42,7 @@ fn non_info_violations_produce_failure_elements() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("tests=\"2\" failures=\"2\""));
@@ -59,7 +60,7 @@ fn info_violations_produce_clean_testcase() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("tests=\"1\" failures=\"0\""));
@@ -79,7 +80,7 @@ fn parse_warn_diagnostics_become_skipped() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("tests=\"1\" failures=\"0\" skipped=\"1\""));
@@ -99,7 +100,7 @@ fn special_characters_are_escaped() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("bad &quot;quote&quot; &lt;tag&gt; &amp; &apos;apos&apos;"));
@@ -122,7 +123,7 @@ fn external_results_use_tool_native_classname() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("classname=\"ruff::E501\""));
@@ -132,7 +133,7 @@ fn external_results_use_tool_native_classname() {
 #[test]
 fn direct_format_junit_slice_works() {
     let results = vec![result("AES101", Severity::LOW, "minor")];
-    let out = JunitFormatter::new().format_junit(&results);
+    let out = JunitFormatter::new().format_junit_slice(&results);
     assert!(out.value().contains("tests=\"1\""));
     assert!(out.value().contains("classname=\"AES101\""));
 }

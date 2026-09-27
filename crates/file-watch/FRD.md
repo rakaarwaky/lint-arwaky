@@ -29,7 +29,7 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-FILEWATCH-001: Start Filesystem Watcher
+### FR-FileWatch-001: Start Filesystem Watcher
 
 - **Description**: Initialize a debounced filesystem watcher on a target path using the `notify` crate.
 - **Input**: Watch configuration containing path (string), debounce interval in milliseconds (u64), recursive flag (bool), and ignore patterns (list of strings).
@@ -45,7 +45,7 @@ flowchart TD
   - Poisoned mutex (watcher lock) — recover via lock recovery.
 - **Error Handling**: Returns an error with descriptive message for: path not found, debouncer creation failure, watch path failure.
 
-### FR-FILEWATCH-002: Receive and Broadcast File Change Events
+### FR-FileWatch-002: Receive and Broadcast File Change Events
 
 - **Description**: Receive debounced filesystem events, filter by ignore patterns, and broadcast file change events to all subscribers.
 - **Input**: Raw debounced event from the `notify-debouncer-mini` callback.
@@ -59,7 +59,7 @@ flowchart TD
   - Multiple subscribers — each receives independent copies via subscription.
 - **Error Handling**: No error returned; dropped events are non-fatal.
 
-### FR-FILEWATCH-003: Filter Lintable Files
+### FR-FileWatch-003: Filter Lintable Files
 
 - **Description**: Determine whether a file path is lintable based on its extension.
 - **Input**: File path string.
@@ -70,12 +70,12 @@ flowchart TD
   - Extension matching is suffix-based (no case normalization).
 - **Edge Cases**:
   - File with no extension — not lintable.
-  - File with multiple dots — matches on the final extension.
+  - File with multiple dots (e.g. a double-dotted TypeScript test) — matches on the final extension.
   - Hidden files (e.g., `.gitignore`) — not lintable (no matching extension).
   - Files with extensions not in the list (e.g., `.txt`, `.png`, `.lock`) — not lintable.
 - **Error Handling**: Returns false for non-lintable paths; no error thrown.
 
-### FR-FILEWATCH-004: Deduplicate Watch Events
+### FR-FileWatch-004: Deduplicate Watch Events
 
 - **Description**: Deduplicate a batch of watch events by file path, keeping only the latest event per file.
 - **Input**: List of file change events.
@@ -89,13 +89,13 @@ flowchart TD
   - All events for same path — returns single event.
 - **Error Handling**: No error paths; pure in-memory operation.
 
-### FR-FILEWATCH-005: Run Lint on Changed Files
+### FR-FileWatch-005: Run Lint on Changed Files
 
 - **Description**: On each detected file change, delegate to the injected `ICodeAnalysisAggregate` and report violations and score.
 - **Input**: File change event with file path.
 - **Output**: Printed output: `[change] <path> | <count> violations, score <score>`.
 - **Business Rules**:
-  - Only lintable files (per FR-FILEWATCH-003) trigger a lint run.
+  - Only lintable files (per FR-FileWatch-003) trigger a lint run.
   - Score is calculated via the code analysis aggregate's score calculation method.
   - Initial full lint runs on startup before watching begins.
 - **Edge Cases**:
@@ -104,7 +104,7 @@ flowchart TD
   - Broadcast lagged (events missed) — continue without processing missed events.
 - **Error Handling**: Lint failures are non-fatal; event loop continues.
 
-### FR-FILEWATCH-006: Graceful Shutdown
+### FR-FileWatch-006: Graceful Shutdown
 
 - **Description**: Stop the watcher and event loop on Ctrl+C signal.
 - **Input**: Atomic running flag (set to false by `ctrlc` handler in the CLI surface).
@@ -123,59 +123,56 @@ flowchart TD
 ### Protocol API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `run_watch` | `WatchConfig`, `Arc<AtomicBool>` | `ExitCode` | Runtime error on async runtime creation failure | — | Single entry point covering the whole feature folder: initial lint, watch start, event loop, and shutdown. |
+|---|---|---|---|---|---|
+| `analyze` | Vec<WatchEvent> | `Vec<WatchEvent>` | — | — | Analyze. |
+| `is_lintable` | &str | `bool` | — | — | Is lintable. |
+| `filter_lintable` | Vec<WatchEvent> | `Vec<WatchEvent>` | — | — | Filter lintable. |
+| `subscribe` | — | `tokio::sync::broadcast::Receiver<WatchEvent>` | — | — | Subscribe. |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `run_watch` | `WatchConfig`, `Arc<AtomicBool>` | `ExitCode` | Runtime error on async runtime creation failure | — | Synchronous entry point; creates the async runtime when absent, then delegates to the async run. |
-| `start_watch` | `WatchConfig` | `Result<()>` | Error when the path is absent or the debouncer cannot be created | — | Create the debouncer, register the watch path, and begin receiving events. |
-| `stop_watch` | — | `Result<()>` | Error while dropping the debouncer | — | Drop the debouncer to stop watching. |
-| `subscribe` | — | `broadcast::Receiver<WatchEvent>` | None | `WatchEvent` broadcast | Subscribe to deduplicated file change events. |
-| `watch_feature_available` | — | `bool` | None | — | Report whether the watch feature is compiled in. |
-| `is_lintable` | `FilePath` | `bool` | None | — | Decide whether a path carries a lintable extension. |
-| `analyze_events` | `Vec<WatchEvent>` | `Vec<WatchEvent>` | None | — | Deduplicate a batch of events, keeping the latest per path. |
-| `filter_lintable_events` | `Vec<WatchEvent>` | `Vec<WatchEvent>` | None | — | Keep only the events whose path is lintable. |
-| `run_lint_on_change` | `FilePath` | Printed report | Non-fatal; the loop continues | — | Delegate a changed file to the injected code analysis aggregate and report violations and score. |
+|---|---|---|---|---|---|
+| `execute` | WatchRequest | `WatchResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
-
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
-| Code analysis aggregate | in | Run lint analysis over a changed file | Aggregate error logged; the event loop continues |
-| `notify` | in | OS-level filesystem event monitoring (inotify on Linux) | Watcher construction fails → runtime error |
-| `notify-debouncer-mini` | in | Debounce rapid filesystem events into one | Debouncer creation fails → runtime error |
-| `tokio` | in | Async runtime hosting the event loop and broadcast channel | Runtime creation fails → runtime error exit code |
-| Watch provider protocol | out | Contract for the notify-backed provider | Provider returns an error → propagated to the caller |
-| Change analyzer protocol | out | Contract for deduplication and lintable filtering | Analysis returns an error → propagated to the caller |
-| Watch aggregate | out | Aggregate surface the surface layer composes | Aggregate unavailable → the surface falls back to its CLI path |
+| Code analysis aggregate | in | Re-run analysis over a changed file, injected at runtime rather than compiled against | Analysis fails for a file → the failure is reported and the watch loop continues with the next event |
+| Watch provider protocol | out (internal) | Define the interface the OS event provider implements | The OS watch limit is reached → the watch call reports failure instead of silently watching a subset |
+| Change analyzer protocol | out (internal) | Decide whether a raw event is worth re-analysing | An event cannot be classified → it is treated as a change, so a lint run is spent rather than a change missed |
+| Watch aggregate | out (internal) | Expose the single composite entry point the surface calls | The watched path does not exist → a watch error is returned and no loop is started |
+| `notify` | in | Deliver OS-level filesystem events | The kernel watch descriptor limit is hit → events stop arriving and the provider surfaces the error |
+| `notify-debouncer-mini` | in | Coalesce bursts of events into one, so one save does not trigger many analyses | A burst never settles → the debounce window elapses and the pending change is analysed once |
+| Async runtime | in | Drive the event loop and the broadcast channel | The loop task is cancelled → subscribers are notified and shutdown proceeds |
 
 ## Non-functional Requirements
-
 | Metric | Target | Measurement method |
 | --- | --- | --- |
-| Change detection latency | Within the configured debounce interval (default 200ms) | Timestamp a file write and the resulting lint run |
-| Idle poll interval | 100ms | Read the event loop timer constant |
-| Broadcast channel capacity | 256 events | Read the channel capacity constant |
-| Detection completeness | All modifications within watched directories are detected, subject to OS inotify limits | Modify each watched file and assert an event arrives |
-| False positive rate | Editor temp-file events suppressed by ignore patterns | Save from a temp file and assert no event is broadcast |
+| Detection latency | A change is reported within the 200 ms debounce window | Touch a file and time from the write to the delivered event |
+| Idle polling | The event loop polls at 100 ms when idle | Measure the loop's wake interval while no events occur |
+| Burst coalescing | One save burst produces exactly one analysis run | Issue N writes inside one debounce window and count the analysis runs |
+| Non-lintable files | A change to a non-lintable file triggers no analysis | Modify a non-source file and assert no analysis run is started |
+| Ignored paths | A change under an ignored path triggers no analysis | Modify a file matching an ignore pattern and assert no analysis run is started |
+| Recursion | Changes in watched subdirectories are reported when recursive, and are not when non-recursive | Modify a nested file under both watch modes and compare delivered events |
+| Subscriber fan-out | Every subscriber receives the same event sequence | Attach two subscribers, trigger one change, and compare both received sequences |
+| Overflow | A lagging broadcast channel does not crash the event loop | Overflow the channel while the loop runs and assert it continues and reports the drop |
+| Shutdown | Interrupt during a run stops the watcher cleanly | Send an interrupt mid-run and assert the process exits without a panic |
 
 ## Test Scenarios
 
-- Starting the watcher on an existing directory yields events within the debounce window.
-- Starting the watcher on a non-existent path returns a watch error.
-- Modifying a lintable source file triggers a lint run and reports violations.
-- Modifying a non-lintable file triggers no lint run.
-- Rapid modifications to one file produce exactly one lint run after debounce.
-- A file matching an ignore pattern is skipped and triggers no lint run.
-- Ctrl+C during a watch run shuts the watcher down gracefully.
-- Every subscriber receives the same event.
-- A lagged broadcast channel lets the event loop continue without crashing.
-- The startup lint run prints a baseline violation count and score.
-- Recursive watch mode reports subdirectory changes.
-- Non-recursive watch mode ignores subdirectory changes.
+- Start watcher on existing directory — events received within debounce window.
+- Start watcher on non-existent path — returns watch error.
+- Modify a `.rs` file — lint triggered, violations reported.
+- Modify a `.txt` file — lint not triggered (non-lintable extension).
+- Rapid modifications to same file — only one lint run after debounce.
+- File matching ignore pattern — event skipped, no lint run.
+- Ctrl+C during watch — graceful shutdown, watcher stopped.
+- Multiple subscribers — all receive the same events.
+- Broadcast channel lagged — event loop continues without crash.
+- Initial lint on startup — baseline violations and score printed.
+- Recursive watch — subdirectory changes detected.
+- Non-recursive watch — subdirectory changes ignored.
 
 ## Assumptions & Constraints
 
@@ -186,7 +183,7 @@ flowchart TD
 
 ## Glossary
 
-- **Debounce**: Coalesce multiple rapid filesystem events into a single event after a quiet period.
+- **Debounce**: Coalesce multiple rapid events into a single event after a quiet period.
 - **Lintable**: A file whose extension matches one of the supported linting targets.
-- **File Change Event**: A structured representation of a filesystem change event emitted by the debouncer.
-- **inotify**: Linux kernel subsystem used by the `notify` crate for filesystem event monitoring.
+- **File Change Event**: A structured representation of a filesystem change event.
+- **inotify**: Linux kernel subsystem for filesystem event monitoring.

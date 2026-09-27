@@ -1,4 +1,4 @@
-// PURPOSE: NotifyWatchProvider — IWatchProviderProtocol implementation using notify crate (inotify on Linux)
+// PURPOSE: NotifyWatchProvider — IWatchStartProtocol + IWatchBroadcastProtocol + IWatchShutdownProtocol implementation using notify crate (inotify on Linux)
 
 use std::sync::Mutex;
 use std::time::Duration;
@@ -7,7 +7,9 @@ use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
 use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::file_watch::contract_watch_protocol::IWatchProviderProtocol;
+use shared::file_watch::contract_watch_protocol::{
+    IWatchBroadcastProtocol, IWatchShutdownProtocol, IWatchStartProtocol,
+};
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
 use shared::file_watch::taxonomy_watch_config_vo::WatchEvent;
@@ -24,10 +26,10 @@ pub struct NotifyWatchProvider {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 // NOTE: #[async_trait] required — shared contract still uses it.
-// Remove when IWatchProviderProtocol switches to native async fn in traits.
+// Remove when protocol traits switch to native async fn in traits.
 
 #[async_trait::async_trait]
-impl IWatchProviderProtocol for NotifyWatchProvider {
+impl IWatchStartProtocol for NotifyWatchProvider {
     async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError> {
         let path_str = config.path.value();
         let path = std::path::Path::new(path_str);
@@ -94,6 +96,20 @@ impl IWatchProviderProtocol for NotifyWatchProvider {
         Ok(())
     }
 
+    async fn is_available(&self) -> BooleanVO {
+        BooleanVO::new(cfg!(feature = "watch"))
+    }
+}
+
+#[async_trait::async_trait]
+impl IWatchBroadcastProtocol for NotifyWatchProvider {
+    fn subscribe(&self) -> broadcast::Receiver<WatchEvent> {
+        self.tx.subscribe()
+    }
+}
+
+#[async_trait::async_trait]
+impl IWatchShutdownProtocol for NotifyWatchProvider {
     async fn stop(&self) -> Result<(), WatchServiceError> {
         let mut guard = match self.watcher.lock() {
             Ok(guard) => guard,
@@ -103,14 +119,6 @@ impl IWatchProviderProtocol for NotifyWatchProvider {
             drop(debouncer);
         }
         Ok(())
-    }
-
-    async fn is_available(&self) -> BooleanVO {
-        BooleanVO::new(cfg!(feature = "watch"))
-    }
-
-    fn subscribe(&self) -> broadcast::Receiver<WatchEvent> {
-        self.tx.subscribe()
     }
 }
 

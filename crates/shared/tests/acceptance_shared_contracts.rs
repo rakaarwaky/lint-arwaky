@@ -25,10 +25,16 @@ fn fr_001_all_aggregates_are_send_sync() {
 #[test]
 fn fr_001_all_protocols_are_send_sync() {
     // Config
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigReaderProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigParserProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigValidatorProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IWorkspaceDetectorProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigReadProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigLanguageProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IWorkspaceDetectProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IWorkspaceMembersProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigTomlProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigParseProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigValidateProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigCacheProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigIgnoredPathsProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigListProtocol>();
     // Filesystem
     assert_send_sync::<dyn shared_lint_arwaky::filesystem::IFileSystemIOProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::filesystem::IGraphProtocol>();
@@ -41,7 +47,8 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::IUnusedImportProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::INamingConventionProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::naming_rules::ISuffixPolicyProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::quality_rules::IMandatoryClassProtocol>();
@@ -61,25 +68,62 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::role_rules::IUtilityRoleProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::role_rules::IAgentRoleProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::role_rules::IClassificationProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     // Infrastructure
     assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFixProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::file_watch::IChangeAnalyzerProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::file_watch::IWatchProviderProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IDiffProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IHookProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IHookManagerProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IMaintenanceCheckerProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IUnusedImportFixProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IBypassFixProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::ISymbolRenameProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFixPipelineProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IManualReportProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::file_watch::IWatchStartProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::file_watch::IWatchBroadcastProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::file_watch::IWatchShutdownProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::file_watch::ILintableFilterProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::file_watch::IEventDedupProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IDiffDetectionProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IHookInstallProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IHookUninstallProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IHookCheckProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IDiffDataProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IIgnoreRuleProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::git_hooks::IConfigInitProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IDoctorProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::ICacheCleanupProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolUpdateProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolchainDiagnosticProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::ISecurityScanProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IDependencyReportProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IAdapterHealthProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::maintenance::ISelfUpdateProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolExecutorProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::external_lint::ILinterAdapterProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::external_lint::ICommandExecutorProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::external_lint::IExternalLintExecutorProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::external_lint::IAdapterScanProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::external_lint::IExternalLintSelectorProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::external_lint::ILanguageDetectProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::external_lint::INormalizeProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::external_lint::IJsToolResolutionProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::external_lint::ICargoDirProtocol>();
     // Surface
-    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IReportFormatterProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::project_setup::ISetupManagementProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::project_setup::ISetupInstallerProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::ITextFormatProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IJsonFormatProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::ISarifFormatProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IJUnitFormatProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IFormatDelegationProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IDefaultReportFallbackProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IXmlEscapeProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::IAdapterInstallationProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::IConfigTemplateProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::IConfigWritingProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::IEnvGenerationProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::IFilePathExistenceProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::ILanguageDetectionProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::IMcpConfigGenerationProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::project_setup::IPreFlightProtocol>();
 }
 
 // FR-002: Core VOs must be Send + Sync (cross-thread safety)
@@ -112,11 +156,17 @@ fn fr_002_core_value_objects_are_send_sync() {
 #[test]
 fn fr_003_all_contract_traits_are_object_safe() {
     fn assert_trait<T: ?Sized>() {}
-    // Config
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigReaderProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigParserProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigValidatorProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceDetectorProtocol>();
+    // Config — 10 protocols + 1 aggregate = 11 contract seams
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigReadProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigLanguageProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceDetectProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceMembersProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigTomlProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigParseProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigValidateProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigCacheProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigIgnoredPathsProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigListProtocol>();
     assert_trait::<dyn shared_lint_arwaky::config_system::IConfigOrchestratorAggregate>();
     // Filesystem
     assert_trait::<dyn shared_lint_arwaky::filesystem::IFileSystemIOProtocol>();
@@ -132,7 +182,8 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::import_rules::IDummyImportCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::ICycleImportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::import_rules::IImportRunnerAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingCheckerProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingConventionProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::naming_rules::ISuffixPolicyProtocol>();
     assert_trait::<dyn shared_lint_arwaky::naming_rules::INamingRunnerAggregate>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::IBypassCheckerProtocol>();
     assert_trait::<dyn shared_lint_arwaky::quality_rules::ILineCheckerProtocol>();
@@ -155,31 +206,68 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::role_rules::ICapabilitiesRoleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::role_rules::IUtilityRoleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::role_rules::IAgentRoleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::role_rules::IClassificationProtocol>();
     assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::role_rules::IRoleRunnerAggregate>();
     // Infrastructure
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::auto_fix::IUnusedImportFixProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::auto_fix::IBypassFixProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::auto_fix::ISymbolRenameProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixPipelineProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::auto_fix::IManualReportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeAnalyzerProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchProviderProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchStartProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchBroadcastProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchShutdownProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::ILintableFilterProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IEventDedupProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookManagerProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffDetectionProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookInstallProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookUninstallProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookCheckProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffDataProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IIgnoreRuleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::git_hooks::IConfigInitProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IGitHooksAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::maintenance::IMaintenanceCheckerProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::IDoctorProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::ICacheCleanupProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::IToolUpdateProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::IToolchainDiagnosticProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::ISecurityScanProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::IDependencyReportProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::IAdapterHealthProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::maintenance::ISelfUpdateProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IToolExecutorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IMaintenanceAggregate>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::ILinterAdapterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::ICommandExecutorProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::IExternalLintExecutorProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::external_lint::IAdapterScanProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::IExternalLintSelectorProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::external_lint::ILanguageDetectProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::external_lint::INormalizeProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::external_lint::IJsToolResolutionProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::external_lint::ICargoDirProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::IExternalLintAggregate>();
     // Surface
-    assert_trait::<dyn shared_lint_arwaky::report_formatter::IReportFormatterProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::report_formatter::ITextFormatProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::report_formatter::IJsonFormatProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::report_formatter::ISarifFormatProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::report_formatter::IJUnitFormatProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::report_formatter::IFormatDelegationProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::report_formatter::IDefaultReportFallbackProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::report_formatter::IXmlEscapeProtocol>();
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IReportFormatterAggregate>();
-    assert_trait::<dyn shared_lint_arwaky::project_setup::ISetupManagementProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::project_setup::ISetupInstallerProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::IAdapterInstallationProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::IConfigTemplateProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::IConfigWritingProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::IEnvGenerationProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::IFilePathExistenceProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::ILanguageDetectionProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::IMcpConfigGenerationProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::project_setup::IPreFlightProtocol>();
     assert_trait::<dyn shared_lint_arwaky::project_setup::ISetupAggregate>();
 }

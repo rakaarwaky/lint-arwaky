@@ -7,9 +7,7 @@
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- CLI Commands FRD: `crates/cli-commands/FRD.md` (FR-PROJECTSETUP-009 MCP binary resolution)
 - Maintenance FRD: `crates/maintenance/FRD.md` (doctor, diagnose)
-- MCP Server FRD: `crates/mcp-server/FRD.md`
 
 ## System Overview
 
@@ -59,7 +57,7 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-PROJECTSETUP-001: MCP Configuration Generation
+### FR-ProjectSetup-001: MCP Configuration Generation
 
 - **Description**: Generate MCP server configuration files in formats
   compatible with different AI clients.
@@ -90,7 +88,7 @@ flowchart TD
     | hermes      | base config directly (no wrapper)   |
     | vscode      | `{"mcp": {"servers": { ...base }}}` |
     | all         | JSON object with all client formats |
-  - Binary resolution priority (aligned with cli-commands FR-PROJECTSETUP-009):
+  - Binary resolution priority (aligned with cli-commands FR-009):
 
     1. `LINT_ARWAKY_MCP_BIN` environment variable (must point to existing file).
     2. Sibling of current executable (`lint-arwaky-mcp` next to `lint-arwaky-cli`).
@@ -109,7 +107,7 @@ flowchart TD
 
 ---
 
-### FR-PROJECTSETUP-002: Environment File Generation
+### FR-ProjectSetup-002: Environment File Generation
 
 - **Description**: Generate `.env` configuration file for the lint-arwaky
   environment.
@@ -136,7 +134,7 @@ flowchart TD
 
 ---
 
-### FR-PROJECTSETUP-003: Language Detection
+### FR-ProjectSetup-003: Language Detection
 
 - **Description**: Detect programming languages present in a project
   directory.
@@ -146,9 +144,8 @@ flowchart TD
 - **Business Rules**:
 
   - Phase 1 (marker-based): checks for `crates/`, `Cargo.toml` (Rust),
-    `packages/`, `modules/`, `pyproject.toml`, the Python setup script,
-    `requirements.txt` (Python), `package.json`, `tsconfig.json`
-    (JavaScript/TypeScript).
+    `packages/`, `modules/`, `pyproject.toml`, `requirements.txt`, a Python packaging manifest
+    (Python), `package.json`, `tsconfig.json` (JavaScript/TypeScript).
   - Phase 2 (file-extension scan): recursively scans directory tree
     (depth ≤ 4) for `.rs`, `.py`, `.ts`, `.tsx`, `.mts`, `.cts`, `.js`,
     `.jsx`, `.mjs`, `.cjs` extensions.
@@ -168,7 +165,7 @@ flowchart TD
 
 ---
 
-### FR-PROJECTSETUP-004: Adapter Installation
+### FR-ProjectSetup-004: Adapter Installation
 
 - **Description**: Install linter adapters for Python and JavaScript
   projects.
@@ -202,7 +199,7 @@ flowchart TD
 
 ---
 
-### FR-PROJECTSETUP-005: Config Template Loading
+### FR-ProjectSetup-005: Config Template Loading
 
 - **Description**: Load language-specific lint-arwaky configuration
   templates.
@@ -226,7 +223,7 @@ flowchart TD
 
 ---
 
-### FR-PROJECTSETUP-006: Config File Writing and Global Config Directory
+### FR-ProjectSetup-006: Config File Writing and Global Config Directory
 
 - **Description**: Write configuration files to disk and create XDG-compliant
   global config directories.
@@ -250,7 +247,7 @@ flowchart TD
 
 ---
 
-### FR-PROJECTSETUP-007: Pre-flight Check
+### FR-ProjectSetup-007: Pre-flight Check
 
 - **Description**: Verify that package managers (pip, npm) are available
   before adapter installation. This is a lightweight pre-check, not a full
@@ -271,7 +268,7 @@ flowchart TD
 
 ---
 
-### FR-PROJECTSETUP-008: File Existence Check
+### FR-ProjectSetup-008: File Existence Check
 
 - **Description**: Check whether a file exists at the given path.
 - **Input**: Path string.
@@ -279,10 +276,6 @@ flowchart TD
 - **Business Rules**:
 
   - Delegates to `std::path::Path::new(path).exists()`.
-- **Edge Cases**:
-
-  - Path with special characters — returned result reflects the actual filesystem state.
-  - Path pointing to a directory rather than a file — the check reflects whatever exists at that path.
 - **Error Handling**: Non-existent path returns `false`.
 
 ---
@@ -292,104 +285,152 @@ flowchart TD
 ### Protocol API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `SetupRequest` | `SetupResponse` | Setup errors carried in the response variant | — | Single composite entry point on the setup management protocol, dispatching every request variant to the setup capabilities. |
+|---|---|---|---|---|---|
+| `install_python_packages` | &PatternList | `InstallPackagesResult` | — | — | Install python packages. |
+| `install_npm_packages` | &PatternList, bool | `InstallPackagesResult` | — | — | Install npm packages. |
+| `generate_env` | &DirectoryPath | `EnvContentVO` | — | — | Generate env. |
+| `generate_mcp_config` | — | `McpConfigVO` | — | — | Generate mcp config. |
+| `mcp_config_claude` | — | `McpConfigVO` | — | — | Mcp config claude. |
+| `mcp_config_cursor` | — | `McpConfigVO` | — | — | Mcp config cursor. |
+| `mcp_config_windsurf` | — | `McpConfigVO` | — | — | Mcp config windsurf. |
+| `mcp_config_copilot` | — | `McpConfigVO` | — | — | Mcp config copilot. |
+| `mcp_config_hermes` | — | `McpConfigVO` | — | — | Mcp config hermes. |
+| `mcp_config_vscode` | — | `McpConfigVO` | — | — | Mcp config vscode. |
+| `mcp_config_all` | — | `McpConfigVO` | — | — | Mcp config all. |
+| `which_mcp_binary` | — | `McpBinaryNameVO` | — | — | Which mcp binary. |
+| `install_python_adapters` | — | `SuccessStatus` | — | — | Install python adapters. |
+| `install_javascript_adapters` | bool | `SuccessStatus` | — | — | Install javascript adapters. |
+| `detect_language` | — | `Option<ProjectLanguageVO>` | — | — | Detect language. |
+| `detect_languages` | — | `ProjectLanguagesVO` | — | — | Detect languages. |
+| `get_config_template` | &str | `&'static str` | `SetupError` | — | Get config template. |
+| `pre_flight_check` | — | `PreFlightResult` | — | — | Pre flight check. |
+| `get_embedded_skills` | — | `&'static [EmbeddedSkillVO]` | — | — | Get embedded skills. |
+| `write_config_file` | &str, &str | `WriteConfigResult` | — | — | Write config file. |
+| `create_global_config_dir` | — | `CreateConfigDirResult` | — | — | Create global config dir. |
+| `file_exists` | &str | `bool` | — | — | File exists. |
 
 ### Aggregate API
 
 | Method | Input | Output | Error | Event | Description |
-| --- | --- | --- | --- | --- | --- |
-| `execute` | `SetupRequest` | `SetupResponse` | Setup errors carried in the response variant | — | Dispatch a typed setup request to the matching capability. |
-| `generate_mcp_config` | client name, transport | `McpConfigVO` | None | — | Generate the MCP configuration in the format the named client expects. |
-| `mcp_config_claude` | transport | `McpConfigVO` | None | — | Generate the `mcpServers` wrapper format used by Claude Code. |
-| `mcp_config_cursor` | transport | `McpConfigVO` | None | — | Generate the `mcpServers` wrapper format used by Cursor. |
-| `mcp_config_windsurf` | transport | `McpConfigVO` | None | — | Generate the `mcpServers` wrapper format used by Windsurf. |
-| `mcp_config_copilot` | transport | `McpConfigVO` | None | — | Generate the `mcpServers` wrapper format used by Copilot. |
-| `mcp_config_hermes` | transport | `McpConfigVO` | None | — | Generate the unwrapped base configuration used by Hermes. |
-| `mcp_config_vscode` | transport | `McpConfigVO` | None | — | Generate the `mcp.servers` wrapper format used by VS Code. |
-| `mcp_config_all` | transport | `McpConfigVO` | None | — | Generate one JSON object holding every client format. |
-| `generate_env` | `DirectoryPath` | `EnvContentVO` | Directory creation failure is non-fatal | — | Generate environment file content including the phantom root value. |
-| `detect_language` | — | `Option<ProjectLanguageVO>` | Unreadable directory → skipped | — | Return the primary detected project language, or none when nothing is found. |
-| `detect_languages` | — | `ProjectLanguagesVO` | Unreadable directory → skipped | — | Return every language detected in the project directory. |
-| `get_config_template` | Language string | `Result<&'static str, SetupError>` | `SetupError::UnknownLanguage` with the supported list | — | Return the embedded YAML configuration template for a language. |
-| `get_embedded_skills` | — | `&'static [EmbeddedSkillVO]` | None | — | Return the skill definitions installed by the init command. |
-| `write_config_file` | Filename, content | `WriteConfigResult` | IO setup error on write failure | — | Write a configuration file to disk and report the byte count written. |
-| `create_global_config_dir` | — | `CreateConfigDirResult` | Invalid state error when the XDG directory cannot be determined; IO setup error on creation failure | — | Create the XDG-compliant global configuration directory. |
-| `install_python_adapters` | — | `SuccessStatus` | IO setup error on spawn failure; other setup error on non-zero exit | — | Install the Python linter adapters through pip. |
-| `install_javascript_adapters` | `sudo: bool` | `SuccessStatus` | IO setup error on spawn failure; other setup error on non-zero exit | — | Install the JavaScript linter adapters through npm. |
-| `pre_flight_check` | — | `PreFlightResult` | Spawn failure reported as `not_found` | — | Report whether the pip and npm package managers are available. |
-| `file_exists` | Path string | `bool` | None | — | Report whether a file exists at the given path. |
-| `check_http` | `TransportUrlVO` | `SuccessStatus` | Non-zero exit reported as failure | — | Probe a transport endpoint for reachability. |
-
----
+|---|---|---|---|---|---|
+| `execute` | SetupRequest | `SetupResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
-
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
-| `shared` crate | in | Value objects, contract traits, and I/O utilities for the setup pipeline | Compile-time dependency; unavailable at build time |
-| `pip` / `python3 -m pip` | in | Install Python linter adapters (`ruff`, `mypy`, `bandit`) | Spawn failure → IO setup error; non-zero exit → other setup error |
-| `npm` | in | Install JavaScript linter adapters (`eslint`, `prettier`, `typescript`) | Spawn failure → IO setup error; non-zero exit → other setup error |
-| `dirs` crate | in | Resolve XDG-compliant config directory | Directory resolution failure → invalid state error |
-| Filesystem I/O | in | Write config files, create global config directory, check file existence | Write failure → IO setup error; directory creation failure → IO setup error |
-| Embedded YAML templates | in | Provide default configuration templates per language at compile time | Unknown language → `SetupError::UnknownLanguage` |
-| Rust toolchain (`rustup`) | out | Consumer receives suggestion to use `rustup component add` for Rust linters | Adapter not installed — user must run `rustup` manually |
-| Lint-arwaky CLI binary | out | Child process resolved via binary resolution chain; used by MCP config generation | Binary not found → bare name emitted in config |
-
----
+| `shared` crate | in | Supply value objects plus the setup-management, installer, and aggregate contracts | A contract is missing at compile time → the build fails before setup runs |
+| `pip` / `python3 -m pip` | in | Install the Python adapter | The interpreter is managed by the OS and refuses the install → the retry adds the system-packages override |
+| `npm` | in | Install the JavaScript adapter | Node.js is absent → the JavaScript adapter install is reported as skipped and the rest of setup continues |
+| `dirs` crate | in | Resolve the per-user configuration directory | The platform has no such convention → setup falls back to the project-local configuration path |
+| Filesystem | in | Create directories, write configuration files, and check existence | A path is not writable → setup reports the failing path and leaves the existing configuration in place |
+| Embedded configuration templates | in | Provide the default per-language configuration, compiled into the binary so nothing is downloaded | A language has no embedded template → that language's configuration is skipped and reported |
 
 ## Non-functional Requirements
-
 | Metric | Target | Measurement method |
 | --- | --- | --- |
-| Language detection depth | Scans up to depth 4 | Detect languages in a project with sources nested four levels deep |
-| Language detection early termination | Stops once all languages are found | Detect in a project with all three languages; confirm the extension scan is skipped |
-| Adapter installation | I/O-bound; completion time bounded by subprocess and network, not CPU | Time a full adapter installation run |
-| Memory: config templates | Compile-time embedded, zero runtime allocation | Confirm no filesystem read for templates at runtime |
-| Memory: language detection | Uses mutable flags, not collections | Inspect the detection loop for collection allocation |
-| MCP config format accuracy | Formats match expectations for Claude, Cursor, Windsurf, Copilot, Hermes, and VS Code | Generate each client config and validate its structure against the client spec |
-| Binary resolution accuracy | Resolves the correct `lint-arwaky-mcp` path | Generate a config with the binary installed at each candidate location |
-| PEP 668 compatibility | Python install retries with `--break-system-packages` | Attempt an install on a PEP 668 managed environment and confirm the retry succeeds |
-| Portability | Runs on Linux, macOS, and Windows; npm requires Node.js | Run the init flow on each supported platform |
+| Language detection | Scans to depth 4 at most, stopping early once every language is found | Instrument the walk and assert it stops at the first directory containing all markers |
+| Detection memory | Detection uses scalar flags rather than collections | Inspect the detection state for the absence of allocated collections |
+| Template residency | Configuration templates are compiled in, so nothing is downloaded at run time | Assert the binary carries the templates and that a run performs no template fetch |
+| Install latency | Installation cost is dominated by network and subprocess time, not by local work | Time a run with adapters already present and compare against a cold run |
+| MCP config fidelity | Every supported client receives the config shape that client expects | Diff the generated config against each client's documented schema |
+| Binary resolution | The MCP server binary is found at the expected install path | Install to a custom prefix and assert the resolved path matches |
+| Managed-interpreter retry | A system-managed interpreter refusal is retried with the system-packages override | Run the install against a managed interpreter and assert the retry happens and is reported |
+| Portability | Install succeeds on Linux, macOS, and Windows, with npm gated on Node.js presence | Run the installer on each platform and assert the JavaScript step is skipped where Node is absent |
 
----
+## Test Scenarios / QA Checklist
 
-## Test Scenarios
+Each scenario is stated below as a table of cases: the input condition and the expected result.
 
-- Generating the Claude Code config produces an `mcpServers` wrapper containing the `lint-arwaky` entry.
-- Generating the Cursor config produces an `mcpServers` wrapper.
-- Generating the Windsurf config produces an `mcpServers` wrapper.
-- Generating the Copilot config produces an `mcpServers` wrapper.
-- Generating the Hermes config produces the base config without a wrapper.
-- Generating the VS Code config produces an `mcp.servers` wrapper.
-- Generating the `all` client config produces every client format in one JSON object.
-- A binary present in the cargo home bin directory is used as the resolved path.
-- A binary absent from every candidate location yields the bare name `lint-arwaky-mcp`.
-- A set `LINT_ARWAKY_MCP_BIN` environment variable supplies the resolved path.
-- A normal home path yields the correct phantom root value.
-- An empty home path yields `PHANTOM_ROOT=/`.
-- A project with `Cargo.toml` detects Rust.
-- A project with `pyproject.toml` detects Python.
-- A project with `package.json` detects JavaScript.
-- An empty directory returns an empty list with no default language.
-- A multi-language project detects all of its languages.
-- `target/` and `node_modules/` directories are skipped during detection.
-- A Python install runs pip with the user flag for the Python adapters.
-- A Python install on a PEP 668 environment retries with the break-system-packages flag.
-- A JavaScript install runs a global npm install for the JavaScript adapters.
-- A JavaScript install with the sudo flag prefixes the npm command with sudo.
-- Rust tools produce a suggestion message rather than an install.
-- An empty package list returns `Ok(())` without spawning a process.
-- Requesting the `"rust"` template returns the Rust config template.
-- Requesting the `"python"` template returns the Python config template.
-- Requesting the `"typescript"` template returns the TypeScript config template.
-- Requesting an unknown language returns an error listing the supported languages.
-- Requesting `"Rust"` normalizes the case and returns the Rust template.
-- Writing a config file reports the byte count in its description.
-- Creating the global config directory creates the XDG config path.
-- Creating the global config directory when it already exists is idempotent.
-- A pre-flight check with pip available reports status `ok`.
-- A pre-flight check with npm absent reports status `not_found`.
+- **SCEN-001 — MCP Config** — e.g. Claude config → `mcpServers` wrapper with `lint-arwaky` entry
+- **SCEN-002 — Env File** — e.g. Normal home path → Correct PHANTOM_ROOT value
+- **SCEN-003 — Language Detection** — e.g. Cargo.toml exists → Rust detected
+- **SCEN-004 — Adapter Installation** — e.g. Python install → pip install --user ruff mypy bandit
+- **SCEN-005 — Config Template** — e.g. "rust" → Rust config template
+- **SCEN-006 — Config Writing** — e.g. Write config file → Byte count in description
+- **SCEN-007 — Pre-flight Check** — e.g. pip available → status "ok"
+
+### SCEN-001 — MCP Config
+
+FRD Ref: FR-ProjectSetup-001
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Claude config | `mcpServers` wrapper with `lint-arwaky` entry |
+| 2 | Cursor config | `mcpServers` wrapper |
+| 3 | Windsurf config | `mcpServers` wrapper |
+| 4 | Copilot config | `mcpServers` wrapper |
+| 5 | Hermes config | Base config without wrapper |
+| 6 | VS Code config | `mcp.servers` wrapper |
+| 7 | `all` client | All client formats in one JSON |
+| 8 | Binary in CARGO_HOME/bin | Resolved path used |
+| 9 | Binary not found anywhere | Bare name`lint-arwaky-mcp` |
+| 10 | LINT_ARWAKY_MCP_BIN set | Env var path used |
+
+### SCEN-002 — Env File
+
+FRD Ref: FR-ProjectSetup-002
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Normal home path | Correct PHANTOM_ROOT value |
+| 2 | Empty home path | PHANTOM_ROOT=/ |
+
+### SCEN-003 — Language Detection
+
+FRD Ref: FR-ProjectSetup-003
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Cargo.toml exists | Rust detected |
+| 2 | pyproject.toml exists | Python detected |
+| 3 | package.json exists | JavaScript detected |
+| 4 | Empty directory | Empty list (no default) |
+| 5 | Multi-language project | All detected languages |
+| 6 | target/, node_modules/ dirs | Skipped |
+
+### SCEN-004 — Adapter Installation
+
+FRD Ref: FR-ProjectSetup-004
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Python install | pip install --user ruff mypy bandit |
+| 2 | Python PEP 668 retry | --break-system-packages on failure |
+| 3 | JS install | npm install -g eslint prettier typescript |
+| 4 | JS install with sudo | sudo npm install -g |
+| 5 | Rust tools | Suggestion message (not installed) |
+| 6 | Empty package list | Ok(()) without spawning |
+
+### SCEN-005 — Config Template
+
+FRD Ref: FR-ProjectSetup-005
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | "rust" | Rust config template |
+| 2 | "python" | Python config template |
+| 3 | "typescript" | TypeScript config template |
+| 4 | Unknown language | Error with supported languages list |
+| 5 | "Rust" (case mismatch) | Normalized to "rust" |
+
+### SCEN-006 — Config Writing
+
+FRD Ref: FR-ProjectSetup-006
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | Write config file | Byte count in description |
+| 2 | Create global config dir | ~/.config/lint-arwaky/ created |
+| 3 | Dir already exists | Idempotent |
+
+### SCEN-007 — Pre-flight Check
+
+FRD Ref: FR-ProjectSetup-007
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | pip available | status "ok" |
+| 2 | npm not found | status "not_found" |
 
 ---
 
@@ -411,12 +452,12 @@ flowchart TD
 
 ## Glossary
 
-- **AES**: Agentic Engineering System — the 7-layer coding convention.
-- **MCP**: Model Context Protocol — JSON-RPC standard for AI agent tool integration.
-- **Adapter**: External linter binary (ruff, mypy, clippy, eslint, etc.).
-- **PEP 668**: Python enhancement proposal marking system-managed Python environments; requires `--break-system-packages` for `pip install`.
-- **XDG**: X Desktop Group base directory specification (`~/.config`, `~/.local/share`, etc.).
-- **PHANTOM_ROOT**: Environment variable used by JS/TS linters to resolve the project root.
-- **Config template**: Embedded YAML content providing the default lint-arwaky configuration for a language.
+- **AES**: Agentic Engineering System — the 7-layer coding convention
+- **MCP**: Model Context Protocol — JSON-RPC standard for AI agent tool integration
+- **Adapter**: External linter binary (ruff, mypy, clippy, eslint, etc.)
+- **PEP 668**: Python enhancement proposal marking system-managed Python environments; requires`--break-system-packages` for `pip install`
+- **XDG**: X Desktop Group base directory specification (`~/.config`, `~/.local/share`, etc.)
+- **PHANTOM_ROOT**: Environment variable used by JS/TS linters to resolve project root
+- **Config template**: Embedded YAML file providing default lint-arwaky configuration per language
 
 ---

@@ -13,7 +13,10 @@ use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared::common::FilePath;
 use shared::git_hooks::GitHooksRequest;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO, IHookManagerProtocol, IHookProtocol};
+use shared::git_hooks::{
+    GitDiffStatus, HookIgnoreUpdateVO, IConfigInitProtocol, IDiffDataProtocol,
+    IHookInstallProtocol, IHookUninstallProtocol, IIgnoreRuleProtocol,
+};
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -42,8 +45,11 @@ fn make_hook_manager(tmp: &TempDir) -> HookManager {
     let _filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let adapter: Arc<dyn IHookManagerProtocol> = Arc::new(GitHookAdapter::new(fp, io.clone()));
-    HookManager::new(adapter, io)
+    let installer: Arc<dyn IHookInstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp.clone(), io.clone()));
+    let uninstaller: Arc<dyn IHookUninstallProtocol> =
+        Arc::new(GitHookAdapter::new(fp, io.clone()));
+    HookManager::new(installer, uninstaller, io)
 }
 
 fn write_file(path: &std::path::Path, content: &str) {
@@ -160,7 +166,7 @@ fn fr003_removes_existing_hook() {
     write_file(&hooks_dir.join("pre-commit"), "#!/bin/bash\nexit 0\n");
 
     let adapter = make_adapter(&tmp);
-    let result = adapter.uninstall_pre_commit();
+    let result = IHookUninstallProtocol::uninstall_pre_commit(&adapter);
     assert!(
         result.is_ok(),
         "uninstall should succeed: {:?}",
@@ -184,7 +190,7 @@ fn fr003_idempotent_when_hook_missing() {
     // No pre-commit file
 
     let adapter = make_adapter(&tmp);
-    let result = adapter.uninstall_pre_commit();
+    let result = IHookUninstallProtocol::uninstall_pre_commit(&adapter);
     assert!(result.is_ok(), "uninstall should succeed");
     assert!(
         result.unwrap().value,
@@ -197,7 +203,7 @@ fn fr003_not_git_repo_returns_false() {
     let tmp = TempDir::new().unwrap();
     // No .git directory
     let adapter = make_adapter(&tmp);
-    let result = adapter.uninstall_pre_commit().unwrap();
+    let result = IHookUninstallProtocol::uninstall_pre_commit(&adapter).unwrap();
     assert!(!result.value, "non-git repo should return false");
 }
 
@@ -210,7 +216,7 @@ fn fr003_only_removes_pre_commit_hook() {
     write_file(&hooks_dir.join("commit-msg"), "#!/bin/bash\nexit 0\n");
 
     let adapter = make_adapter(&tmp);
-    adapter.uninstall_pre_commit().unwrap();
+    IHookUninstallProtocol::uninstall_pre_commit(&adapter).unwrap();
 
     assert!(
         !hooks_dir.join("pre-commit").exists(),

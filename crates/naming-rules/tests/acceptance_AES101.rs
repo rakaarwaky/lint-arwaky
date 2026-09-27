@@ -209,7 +209,7 @@ fn excepted_filename_passes() {
 
 #[test]
 fn check_file_naming_via_trait_api() {
-    use shared::naming_rules::INamingCheckerProtocol;
+    use shared::naming_rules::INamingConventionProtocol;
 
     let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
     let layer_map = layer_map();

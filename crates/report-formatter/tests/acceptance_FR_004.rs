@@ -3,6 +3,7 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared::report_formatter::IJUnitFormatProtocol;
 
 fn result(code: &str, sev: Severity, message: &str) -> LintResult {
     LintResult {
@@ -24,7 +25,7 @@ fn us1_normal_violations_have_failure_elements() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("<failure message=\"high: forbidden import\" type=\"high\">"));
@@ -40,7 +41,7 @@ fn us2_info_violations_have_no_failure_element() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("classname=\"AES401\""));
@@ -59,7 +60,7 @@ fn us3_parse_warn_diagnostics_become_skipped() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("<testcase classname=\"PARSE_WARN\" name=\"parser\">"));
@@ -74,7 +75,7 @@ fn us4_special_characters_are_xml_escaped() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("a &lt; b &amp; c &gt; d &quot;e&quot; &apos;f&apos;"));
@@ -92,7 +93,7 @@ fn us5_test_and_failure_counts_match_results() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("tests=\"3\" failures=\"2\""));
@@ -101,7 +102,7 @@ fn us5_test_and_failure_counts_match_results() {
 #[test]
 fn us6_empty_results_give_zero_tests_and_failures() {
     let xml = JunitFormatter::new()
-        .format_junit_report(&ScanReport::new(vec![], vec![]))
+        .format_junit(&ScanReport::new(vec![], vec![]))
         .value()
         .to_string();
     assert!(xml.contains("tests=\"0\" failures=\"0\""));
@@ -123,7 +124,7 @@ fn us7_external_results_have_tool_native_classname() {
         score: None,
     };
     let xml = JunitFormatter::new()
-        .format_junit_report(&report)
+        .format_junit(&report)
         .value()
         .to_string();
     assert!(xml.contains("classname=\"eslint::no-unused-vars\""));

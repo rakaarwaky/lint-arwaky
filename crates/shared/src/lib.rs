@@ -9,6 +9,7 @@ pub mod config_system;
 pub mod filesystem;
 
 // ── Layer 2: Lint rules ─────────────────────────────────────
+pub mod doc_rules;
 pub mod external_lint;
 pub mod import_rules;
 pub mod naming_rules;

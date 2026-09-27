@@ -45,8 +45,8 @@ fn container_provides_both_checkers() {
     let layer_map = Arc::new(make_layer_map());
     let container = NamingContainer::new(config, layer_map);
     // Both checkers should be accessible
-    let _nc = container.naming_checker();
-    let _sp = container.naming_checker();
+    let _nc = container.naming_convention();
+    let _sp = container.suffix_policy();
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn orchestrator_produces_results_for_invalid_names() {
     let mut results = LintResultList::new(Vec::new());
 
     // Run convention checker
-    container.naming_checker().check_file_naming(
+    container.naming_convention().check_file_naming(
         &ArchitectureConfig::default(),
         &make_layer_map(),
         &files,
@@ -89,7 +89,7 @@ fn orchestrator_clean_file_no_violations() {
     let root = FilePath::new(".".to_string()).unwrap();
     let mut results = LintResultList::new(Vec::new());
 
-    container.naming_checker().check_file_naming(
+    container.naming_convention().check_file_naming(
         &ArchitectureConfig::default(),
         &make_layer_map(),
         &files,

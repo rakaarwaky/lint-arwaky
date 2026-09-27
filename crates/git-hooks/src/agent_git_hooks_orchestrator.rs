@@ -4,21 +4,23 @@
 // lint-arwaky runs `check` on staged files. If violations are found, the
 // commit is blocked.
 //
-// This orchestrator delegates to three sub-components:
-//   - IDiffProtocol: extracts the diff of staged files (git diff --cached)
-//   - IHookProtocol: manages hook lifecycle (install/uninstall the hook script)
-//   - IHookManagerProtocol: low-level file operations for .git/hooks/ directory
-//
-// The orchestrator itself contains no git logic — it's pure composition.
+// The orchestrator composes one seam per FR (seven capability protocols) and
+// holds no git logic of its own — it is pure composition.
 
 use shared::cli_commands::LintResultList;
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookManagerProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffDataProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookCheckProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
+use shared::git_hooks::contract_git_hooks_protocol::IIgnoreRuleProtocol;
+use shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO;
+use shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO;
 use shared::git_hooks::taxonomy_git_hooks_request::GitHooksRequest;
 use shared::git_hooks::taxonomy_git_hooks_response::GitHooksResponse;
 use shared::git_hooks::taxonomy_hook_error::GitHookError;
@@ -28,9 +30,13 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct GitHooksOrchestrator {
-    diff_protocol: Arc<dyn IDiffProtocol>,
-    hook_protocol: Arc<dyn IHookProtocol>,
-    hook_manager: Arc<dyn IHookManagerProtocol>,
+    diff_detection: Arc<dyn IDiffDetectionProtocol>,
+    hook_check: Arc<dyn IHookCheckProtocol>,
+    hook_install: Arc<dyn IHookInstallProtocol>,
+    hook_uninstall: Arc<dyn IHookUninstallProtocol>,
+    diff_data: Arc<dyn IDiffDataProtocol>,
+    ignore_rules: Arc<dyn IIgnoreRuleProtocol>,
+    config_init: Arc<dyn IConfigInitProtocol>,
 }
 
 // ─── Block 2: Aggregate Trait Implementations ─────────────
@@ -66,63 +72,65 @@ impl IGitHooksAggregate for GitHooksOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl GitHooksOrchestrator {
-    pub fn diff_protocol(&self) -> &dyn IDiffProtocol {
-        self.diff_protocol.as_ref()
+    pub fn diff_protocol(&self) -> &dyn IDiffDetectionProtocol {
+        self.diff_detection.as_ref()
     }
 
-    pub fn hook_protocol(&self) -> &dyn IHookProtocol {
-        self.hook_protocol.as_ref()
+    pub fn hook_protocol(&self) -> &dyn IHookInstallProtocol {
+        self.hook_install.as_ref()
     }
 
     pub fn run_git_hooks_check(&self, path: &FilePath) -> LintResultList {
-        self.diff_protocol().run_git_diff_check(path)
+        self.hook_check.run_git_diff_check(path)
     }
 
     pub fn install_hook(&self, executable_path: &FilePath) -> Result<SuccessStatus, GitHookError> {
-        self.hook_protocol().install_pre_commit(executable_path)
+        self.hook_install.install_pre_commit(executable_path)
     }
 
     pub fn uninstall_hook(&self) -> Result<SuccessStatus, GitHookError> {
-        self.hook_protocol().uninstall_pre_commit()
+        self.hook_uninstall.uninstall_pre_commit()
     }
 
     pub fn initialize_config(
         &self,
         path: &str,
     ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
-        self.hook_protocol().initialize_config(path)
+        self.config_init.initialize_config(path)
     }
 
     pub fn update_ignore_rule(
         &self,
-        request: shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO,
+        request: HookIgnoreUpdateVO,
     ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
-        self.hook_protocol().update_ignore_rule(request)
+        self.ignore_rules.update_ignore_rule(request)
     }
 
-    pub fn get_diff_data(
-        &self,
-        path1: &str,
-        path2: &str,
-    ) -> shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO {
-        self.hook_protocol().get_diff_data(path1, path2)
+    pub fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
+        self.diff_data.get_diff_data(path1, path2)
     }
 
-    pub fn get_hook_manager(&self) -> Arc<dyn IHookManagerProtocol> {
-        self.hook_manager.clone()
-    }
     pub fn get_hook_manager_identity(&self) -> Identity {
-        self.hook_protocol().get_hook_manager_identity()
+        self.hook_install.get_hook_manager_identity()
     }
+
     pub fn new(
-        diff_protocol: Arc<dyn IDiffProtocol>,
-        hook_protocol: Arc<dyn IHookProtocol>,
-        hook_manager: Arc<dyn IHookManagerProtocol>,
+        diff_detection: Arc<dyn IDiffDetectionProtocol>,
+        hook_check: Arc<dyn IHookCheckProtocol>,
+        hook_install: Arc<dyn IHookInstallProtocol>,
+        hook_uninstall: Arc<dyn IHookUninstallProtocol>,
+        diff_data: Arc<dyn IDiffDataProtocol>,
+        ignore_rules: Arc<dyn IIgnoreRuleProtocol>,
+        config_init: Arc<dyn IConfigInitProtocol>,
     ) -> Self {
         Self {
-            diff_protocol,
-            hook_protocol,
-            hook_manager,
+            diff_detection,
+            hook_check,
+            hook_install,
+            hook_uninstall,
+            diff_data,
+            ignore_rules,
+            config_init,
         }
     }
 }

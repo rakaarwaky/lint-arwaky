@@ -2,71 +2,165 @@
 // is usable as a bound, object-safe where declared, and Send + Sync.
 // shared is the foundation crate: it declares contracts but implements none.
 
-use shared_lint_arwaky::auto_fix::{IFileAdapterProtocol, IFixAggregate, IFixProtocol};
+use shared_lint_arwaky::auto_fix::{
+    IBypassFixProtocol, IFileAdapterProtocol, IFixAggregate, IFixPipelineProtocol,
+    IManualReportProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+};
 use shared_lint_arwaky::config_system::{
-    IConfigOrchestratorAggregate, IConfigParserProtocol, IConfigReaderProtocol,
-    IConfigValidatorProtocol, IWorkspaceDetectorProtocol,
+    IConfigCacheProtocol, IConfigIgnoredPathsProtocol, IConfigLanguageProtocol,
+    IConfigListProtocol, IConfigOrchestratorAggregate, IConfigParseProtocol, IConfigReadProtocol,
+    IConfigTomlProtocol, IConfigValidateProtocol, IWorkspaceDetectProtocol,
+    IWorkspaceMembersProtocol,
 };
 use shared_lint_arwaky::external_lint::{
-    ICommandExecutorProtocol, IExternalLintAggregate, IExternalLintExecutorProtocol,
-    IExternalLintSelectorProtocol, ILinterAdapterProtocol,
+    IAdapterScanProtocol, ICargoDirProtocol, ICommandExecutorProtocol, IExternalLintAggregate,
+    IExternalLintSelectorProtocol, IJsToolResolutionProtocol, ILanguageDetectProtocol,
+    ILinterAdapterProtocol, INormalizeProtocol,
 };
 use shared_lint_arwaky::file_watch::{
-    IChangeAnalyzerProtocol, IWatchAggregate, IWatchProviderProtocol,
+    IChangeLintProtocol, IEventDedupProtocol, ILintableFilterProtocol, IWatchAggregate,
+    IWatchBroadcastProtocol, IWatchShutdownProtocol, IWatchStartProtocol,
 };
 use shared_lint_arwaky::filesystem::{
     IFileSystemIOProtocol, IFilesystemAggregate, IGraphProtocol, IParserProtocol,
     IToolResolutionProtocol, IWorkspaceProtocol,
 };
 use shared_lint_arwaky::git_hooks::{
-    IDiffProtocol, IGitHooksAggregate, IHookManagerProtocol, IHookProtocol,
+    IConfigInitProtocol, IDiffDataProtocol, IDiffDetectionProtocol, IGitHooksAggregate,
+    IHookCheckProtocol, IHookInstallProtocol, IHookUninstallProtocol, IIgnoreRuleProtocol,
 };
 use shared_lint_arwaky::import_rules::{
     ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
     IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol,
 };
 use shared_lint_arwaky::maintenance::{
-    IMaintenanceAggregate, IMaintenanceCheckerProtocol, IToolExecutorProtocol,
+    IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
+    IMaintenanceAggregate, IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol,
+    IToolExecutorProtocol, IToolUpdateProtocol, IToolchainDiagnosticProtocol,
 };
-use shared_lint_arwaky::naming_rules::{INamingCheckerProtocol, INamingRunnerAggregate};
+use shared_lint_arwaky::naming_rules::{
+    INamingConventionProtocol, INamingRunnerAggregate, ISuffixPolicyProtocol,
+};
 use shared_lint_arwaky::orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
     IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
     IUtilityOrphanProtocol,
 };
 use shared_lint_arwaky::project_setup::{
-    ISetupAggregate, ISetupInstallerProtocol, ISetupManagementProtocol,
+    IAdapterInstallationProtocol, IConfigTemplateProtocol, IConfigWritingProtocol,
+    IEnvGenerationProtocol, IFilePathExistenceProtocol, ILanguageDetectionProtocol,
+    IMcpConfigGenerationProtocol, IPreFlightProtocol, ISetupAggregate,
 };
 use shared_lint_arwaky::quality_rules::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
     IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
 };
-use shared_lint_arwaky::report_formatter::{IReportFormatterAggregate, IReportFormatterProtocol};
+use shared_lint_arwaky::report_formatter::{
+    IDefaultReportFallbackProtocol, IFormatDelegationProtocol, IJUnitFormatProtocol,
+    IJsonFormatProtocol, IReportFormatterAggregate, ISarifFormatProtocol, ITextFormatProtocol,
+    IXmlEscapeProtocol,
+};
 use shared_lint_arwaky::role_rules::{
-    IAgentRoleProtocol, ICapabilitiesRoleProtocol, IContractRoleProtocol, IRoleRunnerAggregate,
-    ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
+    IAgentRoleProtocol, ICapabilitiesRoleProtocol, IClassificationProtocol, IContractRoleProtocol,
+    IRoleRunnerAggregate, ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
 
 fn assert_trait<T: ?Sized>() {}
 fn assert_send_sync<T: Send + Sync + ?Sized>() {}
 
 // ── Config-system contracts ─────────────────────────────────
+// One `#[test]` per trait, each with a uniquely named local helper so no
+// helper name repeats inside a single function.
 #[test]
-fn config_contracts_are_traits() {
-    assert_trait::<dyn IConfigReaderProtocol>();
-    assert_trait::<dyn IConfigParserProtocol>();
-    assert_trait::<dyn IConfigValidatorProtocol>();
-    assert_trait::<dyn IWorkspaceDetectorProtocol>();
-    assert_trait::<dyn IConfigOrchestratorAggregate>();
+fn config_read_contract_is_a_trait() {
+    fn assert_read_trait<T: ?Sized>() {}
+    assert_read_trait::<dyn IConfigReadProtocol>();
+}
+
+#[test]
+fn config_language_contract_is_a_trait() {
+    fn assert_language_trait<T: ?Sized>() {}
+    assert_language_trait::<dyn IConfigLanguageProtocol>();
+}
+
+#[test]
+fn workspace_detect_contract_is_a_trait() {
+    fn assert_detect_trait<T: ?Sized>() {}
+    assert_detect_trait::<dyn IWorkspaceDetectProtocol>();
+}
+
+#[test]
+fn workspace_members_contract_is_a_trait() {
+    fn assert_members_trait<T: ?Sized>() {}
+    assert_members_trait::<dyn IWorkspaceMembersProtocol>();
+}
+
+#[test]
+fn config_parse_contract_is_a_trait() {
+    fn assert_parse_trait<T: ?Sized>() {}
+    assert_parse_trait::<dyn IConfigParseProtocol>();
+}
+
+#[test]
+fn config_validate_contract_is_a_trait() {
+    fn assert_validate_trait<T: ?Sized>() {}
+    assert_validate_trait::<dyn IConfigValidateProtocol>();
+}
+
+#[test]
+fn config_cache_contract_is_a_trait() {
+    fn assert_cache_trait<T: ?Sized>() {}
+    assert_cache_trait::<dyn IConfigCacheProtocol>();
+}
+
+#[test]
+fn config_ignored_paths_contract_is_a_trait() {
+    fn assert_ignored_paths_trait<T: ?Sized>() {}
+    assert_ignored_paths_trait::<dyn IConfigIgnoredPathsProtocol>();
+}
+
+#[test]
+fn config_toml_contract_is_a_trait() {
+    fn assert_toml_trait<T: ?Sized>() {}
+    assert_toml_trait::<dyn IConfigTomlProtocol>();
+}
+
+#[test]
+fn config_list_contract_is_a_trait() {
+    fn assert_list_trait<T: ?Sized>() {}
+    assert_list_trait::<dyn IConfigListProtocol>();
+}
+
+#[test]
+fn config_orchestrator_aggregate_contract_is_a_trait() {
+    fn assert_aggregate_trait<T: ?Sized>() {}
+    assert_aggregate_trait::<dyn IConfigOrchestratorAggregate>();
 }
 
 #[test]
 fn config_contracts_are_send_sync() {
-    assert_send_sync::<dyn IConfigReaderProtocol>();
-    assert_send_sync::<dyn IConfigParserProtocol>();
-    assert_send_sync::<dyn IConfigValidatorProtocol>();
-    assert_send_sync::<dyn IWorkspaceDetectorProtocol>();
-    assert_send_sync::<dyn IConfigOrchestratorAggregate>();
+    fn assert_read_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_language_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_detect_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_members_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_parse_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_validate_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_cache_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_ignored_paths_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_toml_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_list_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_aggregate_sync<T: Send + Sync + ?Sized>() {}
+    assert_read_sync::<dyn IConfigReadProtocol>();
+    assert_language_sync::<dyn IConfigLanguageProtocol>();
+    assert_detect_sync::<dyn IWorkspaceDetectProtocol>();
+    assert_members_sync::<dyn IWorkspaceMembersProtocol>();
+    assert_parse_sync::<dyn IConfigParseProtocol>();
+    assert_validate_sync::<dyn IConfigValidateProtocol>();
+    assert_cache_sync::<dyn IConfigCacheProtocol>();
+    assert_ignored_paths_sync::<dyn IConfigIgnoredPathsProtocol>();
+    assert_toml_sync::<dyn IConfigTomlProtocol>();
+    assert_list_sync::<dyn IConfigListProtocol>();
+    assert_aggregate_sync::<dyn IConfigOrchestratorAggregate>();
 }
 
 // ── Filesystem contracts ────────────────────────────────────
@@ -113,13 +207,15 @@ fn import_rule_contracts_are_send_sync() {
 
 #[test]
 fn naming_rule_contracts_are_traits() {
-    assert_trait::<dyn INamingCheckerProtocol>();
+    assert_trait::<dyn INamingConventionProtocol>();
+    assert_trait::<dyn ISuffixPolicyProtocol>();
     assert_trait::<dyn INamingRunnerAggregate>();
 }
 
 #[test]
 fn naming_rule_contracts_are_send_sync() {
-    assert_send_sync::<dyn INamingCheckerProtocol>();
+    assert_send_sync::<dyn INamingConventionProtocol>();
+    assert_send_sync::<dyn ISuffixPolicyProtocol>();
     assert_send_sync::<dyn INamingRunnerAggregate>();
 }
 
@@ -169,6 +265,7 @@ fn orphan_rule_contracts_are_send_sync() {
 
 #[test]
 fn role_rule_contracts_are_traits() {
+    assert_trait::<dyn IClassificationProtocol>();
     assert_trait::<dyn ITaxonomyRoleProtocol>();
     assert_trait::<dyn IContractRoleProtocol>();
     assert_trait::<dyn ICapabilitiesRoleProtocol>();
@@ -180,6 +277,7 @@ fn role_rule_contracts_are_traits() {
 
 #[test]
 fn role_rule_contracts_are_send_sync() {
+    assert_send_sync::<dyn IClassificationProtocol>();
     assert_send_sync::<dyn ITaxonomyRoleProtocol>();
     assert_send_sync::<dyn IContractRoleProtocol>();
     assert_send_sync::<dyn ICapabilitiesRoleProtocol>();
@@ -193,103 +291,227 @@ fn role_rule_contracts_are_send_sync() {
 #[test]
 fn auto_fix_contracts_are_traits() {
     assert_trait::<dyn IFileAdapterProtocol>();
-    assert_trait::<dyn IFixProtocol>();
+    assert_trait::<dyn IUnusedImportFixProtocol>();
+    assert_trait::<dyn IBypassFixProtocol>();
+    assert_trait::<dyn ISymbolRenameProtocol>();
+    assert_trait::<dyn IFixPipelineProtocol>();
+    assert_trait::<dyn IManualReportProtocol>();
     assert_trait::<dyn IFixAggregate>();
 }
 
 #[test]
 fn auto_fix_contracts_are_send_sync() {
     assert_send_sync::<dyn IFileAdapterProtocol>();
-    assert_send_sync::<dyn IFixProtocol>();
+    assert_send_sync::<dyn IUnusedImportFixProtocol>();
+    assert_send_sync::<dyn IBypassFixProtocol>();
+    assert_send_sync::<dyn ISymbolRenameProtocol>();
+    assert_send_sync::<dyn IFixPipelineProtocol>();
+    assert_send_sync::<dyn IManualReportProtocol>();
     assert_send_sync::<dyn IFixAggregate>();
 }
 
 #[test]
 fn file_watch_contracts_are_traits() {
-    assert_trait::<dyn IChangeAnalyzerProtocol>();
-    assert_trait::<dyn IWatchProviderProtocol>();
+    assert_trait::<dyn IWatchStartProtocol>();
+    assert_trait::<dyn IWatchBroadcastProtocol>();
+    assert_trait::<dyn IWatchShutdownProtocol>();
+    assert_trait::<dyn ILintableFilterProtocol>();
+    assert_trait::<dyn IEventDedupProtocol>();
+    assert_trait::<dyn IChangeLintProtocol>();
     assert_trait::<dyn IWatchAggregate>();
 }
 
 #[test]
 fn file_watch_contracts_are_send_sync() {
-    assert_send_sync::<dyn IChangeAnalyzerProtocol>();
-    assert_send_sync::<dyn IWatchProviderProtocol>();
+    assert_send_sync::<dyn IWatchStartProtocol>();
+    assert_send_sync::<dyn IWatchBroadcastProtocol>();
+    assert_send_sync::<dyn IWatchShutdownProtocol>();
+    assert_send_sync::<dyn ILintableFilterProtocol>();
+    assert_send_sync::<dyn IEventDedupProtocol>();
+    assert_send_sync::<dyn IChangeLintProtocol>();
     assert_send_sync::<dyn IWatchAggregate>();
 }
 
 #[test]
 fn git_hooks_contracts_are_traits() {
-    assert_trait::<dyn IDiffProtocol>();
-    assert_trait::<dyn IHookProtocol>();
-    assert_trait::<dyn IHookManagerProtocol>();
+    assert_trait::<dyn IDiffDetectionProtocol>();
+    assert_trait::<dyn IHookInstallProtocol>();
+    assert_trait::<dyn IHookUninstallProtocol>();
+    assert_trait::<dyn IHookCheckProtocol>();
+    assert_trait::<dyn IDiffDataProtocol>();
+    assert_trait::<dyn IIgnoreRuleProtocol>();
+    assert_trait::<dyn IConfigInitProtocol>();
     assert_trait::<dyn IGitHooksAggregate>();
 }
 
 #[test]
 fn git_hooks_contracts_are_send_sync() {
-    assert_send_sync::<dyn IDiffProtocol>();
-    assert_send_sync::<dyn IHookProtocol>();
-    assert_send_sync::<dyn IHookManagerProtocol>();
+    assert_send_sync::<dyn IDiffDetectionProtocol>();
+    assert_send_sync::<dyn IHookInstallProtocol>();
+    assert_send_sync::<dyn IHookUninstallProtocol>();
+    assert_send_sync::<dyn IHookCheckProtocol>();
+    assert_send_sync::<dyn IDiffDataProtocol>();
+    assert_send_sync::<dyn IIgnoreRuleProtocol>();
+    assert_send_sync::<dyn IConfigInitProtocol>();
     assert_send_sync::<dyn IGitHooksAggregate>();
 }
 
 #[test]
 fn maintenance_contracts_are_traits() {
-    assert_trait::<dyn IMaintenanceCheckerProtocol>();
+    assert_trait::<dyn IDoctorProtocol>();
+    assert_trait::<dyn IProjectStatsProtocol>();
+    assert_trait::<dyn ICacheCleanupProtocol>();
+    assert_trait::<dyn IToolUpdateProtocol>();
+    assert_trait::<dyn IToolchainDiagnosticProtocol>();
+    assert_trait::<dyn ISecurityScanProtocol>();
+    assert_trait::<dyn IDependencyReportProtocol>();
+    assert_trait::<dyn IAdapterHealthProtocol>();
+    assert_trait::<dyn ISelfUpdateProtocol>();
     assert_trait::<dyn IToolExecutorProtocol>();
     assert_trait::<dyn IMaintenanceAggregate>();
 }
 
 #[test]
 fn maintenance_contracts_are_send_sync() {
-    assert_send_sync::<dyn IMaintenanceCheckerProtocol>();
+    assert_send_sync::<dyn IDoctorProtocol>();
+    assert_send_sync::<dyn IProjectStatsProtocol>();
+    assert_send_sync::<dyn ICacheCleanupProtocol>();
+    assert_send_sync::<dyn IToolUpdateProtocol>();
+    assert_send_sync::<dyn IToolchainDiagnosticProtocol>();
+    assert_send_sync::<dyn ISecurityScanProtocol>();
+    assert_send_sync::<dyn IDependencyReportProtocol>();
+    assert_send_sync::<dyn IAdapterHealthProtocol>();
+    assert_send_sync::<dyn ISelfUpdateProtocol>();
     assert_send_sync::<dyn IToolExecutorProtocol>();
     assert_send_sync::<dyn IMaintenanceAggregate>();
 }
 
+// One `#[test]` per trait, each with a uniquely named local helper so no
+// helper name repeats inside a single function.
 #[test]
-fn external_lint_contracts_are_traits() {
-    assert_trait::<dyn ILinterAdapterProtocol>();
-    assert_trait::<dyn ICommandExecutorProtocol>();
-    assert_trait::<dyn IExternalLintExecutorProtocol>();
-    assert_trait::<dyn IExternalLintSelectorProtocol>();
-    assert_trait::<dyn IExternalLintAggregate>();
+fn external_language_detect_contract_is_a_trait() {
+    fn assert_language_detect_trait<T: ?Sized>() {}
+    assert_language_detect_trait::<dyn ILanguageDetectProtocol>();
+}
+
+#[test]
+fn external_selector_contract_is_a_trait() {
+    fn assert_selector_trait<T: ?Sized>() {}
+    assert_selector_trait::<dyn IExternalLintSelectorProtocol>();
+}
+
+#[test]
+fn external_linter_adapter_contract_is_a_trait() {
+    fn assert_adapter_trait<T: ?Sized>() {}
+    assert_adapter_trait::<dyn ILinterAdapterProtocol>();
+}
+
+#[test]
+fn external_normalize_contract_is_a_trait() {
+    fn assert_normalize_trait<T: ?Sized>() {}
+    assert_normalize_trait::<dyn INormalizeProtocol>();
+}
+
+#[test]
+fn external_command_executor_contract_is_a_trait() {
+    fn assert_command_executor_trait<T: ?Sized>() {}
+    assert_command_executor_trait::<dyn ICommandExecutorProtocol>();
+}
+
+#[test]
+fn external_js_resolution_contract_is_a_trait() {
+    fn assert_js_resolution_trait<T: ?Sized>() {}
+    assert_js_resolution_trait::<dyn IJsToolResolutionProtocol>();
+}
+
+#[test]
+fn external_cargo_dir_contract_is_a_trait() {
+    fn assert_cargo_dir_trait<T: ?Sized>() {}
+    assert_cargo_dir_trait::<dyn ICargoDirProtocol>();
+}
+
+#[test]
+fn external_lint_aggregate_contract_is_a_trait() {
+    fn assert_aggregate_trait<T: ?Sized>() {}
+    assert_aggregate_trait::<dyn IExternalLintAggregate>();
+}
+
+#[test]
+fn external_adapter_scan_contract_is_a_trait() {
+    fn assert_adapter_scan_trait<T: ?Sized>() {}
+    assert_adapter_scan_trait::<dyn IAdapterScanProtocol>();
 }
 
 #[test]
 fn external_lint_contracts_are_send_sync() {
-    assert_send_sync::<dyn ILinterAdapterProtocol>();
-    assert_send_sync::<dyn ICommandExecutorProtocol>();
-    assert_send_sync::<dyn IExternalLintExecutorProtocol>();
-    assert_send_sync::<dyn IExternalLintSelectorProtocol>();
-    assert_send_sync::<dyn IExternalLintAggregate>();
+    fn assert_detect_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_selector_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_adapter_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_normalize_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_command_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_js_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_cargo_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_aggregate_sync<T: Send + Sync + ?Sized>() {}
+    fn assert_adapter_scan_sync<T: Send + Sync + ?Sized>() {}
+    assert_detect_sync::<dyn ILanguageDetectProtocol>();
+    assert_selector_sync::<dyn IExternalLintSelectorProtocol>();
+    assert_adapter_sync::<dyn ILinterAdapterProtocol>();
+    assert_normalize_sync::<dyn INormalizeProtocol>();
+    assert_command_sync::<dyn ICommandExecutorProtocol>();
+    assert_js_sync::<dyn IJsToolResolutionProtocol>();
+    assert_cargo_sync::<dyn ICargoDirProtocol>();
+    assert_aggregate_sync::<dyn IExternalLintAggregate>();
+    assert_adapter_scan_sync::<dyn IAdapterScanProtocol>();
 }
 
 // ── Surface contracts ───────────────────────────────────────
 #[test]
 fn report_formatter_contracts_are_traits() {
-    assert_trait::<dyn IReportFormatterProtocol>();
+    assert_trait::<dyn ITextFormatProtocol>();
+    assert_trait::<dyn IJsonFormatProtocol>();
+    assert_trait::<dyn ISarifFormatProtocol>();
+    assert_trait::<dyn IJUnitFormatProtocol>();
+    assert_trait::<dyn IFormatDelegationProtocol>();
+    assert_trait::<dyn IDefaultReportFallbackProtocol>();
+    assert_trait::<dyn IXmlEscapeProtocol>();
     assert_trait::<dyn IReportFormatterAggregate>();
 }
 
 #[test]
 fn report_formatter_contracts_are_send_sync() {
-    assert_send_sync::<dyn IReportFormatterProtocol>();
+    assert_send_sync::<dyn ITextFormatProtocol>();
+    assert_send_sync::<dyn IJsonFormatProtocol>();
+    assert_send_sync::<dyn ISarifFormatProtocol>();
+    assert_send_sync::<dyn IJUnitFormatProtocol>();
+    assert_send_sync::<dyn IFormatDelegationProtocol>();
+    assert_send_sync::<dyn IDefaultReportFallbackProtocol>();
+    assert_send_sync::<dyn IXmlEscapeProtocol>();
     assert_send_sync::<dyn IReportFormatterAggregate>();
 }
 
 #[test]
 fn project_setup_contracts_are_traits() {
-    assert_trait::<dyn ISetupManagementProtocol>();
-    assert_trait::<dyn ISetupInstallerProtocol>();
+    assert_trait::<dyn IAdapterInstallationProtocol>();
+    assert_trait::<dyn IConfigTemplateProtocol>();
+    assert_trait::<dyn IConfigWritingProtocol>();
+    assert_trait::<dyn IEnvGenerationProtocol>();
+    assert_trait::<dyn IFilePathExistenceProtocol>();
+    assert_trait::<dyn ILanguageDetectionProtocol>();
+    assert_trait::<dyn IMcpConfigGenerationProtocol>();
+    assert_trait::<dyn IPreFlightProtocol>();
     assert_trait::<dyn ISetupAggregate>();
 }
 
 #[test]
 fn project_setup_contracts_are_send_sync() {
-    assert_send_sync::<dyn ISetupManagementProtocol>();
-    assert_send_sync::<dyn ISetupInstallerProtocol>();
+    assert_send_sync::<dyn IAdapterInstallationProtocol>();
+    assert_send_sync::<dyn IConfigTemplateProtocol>();
+    assert_send_sync::<dyn IConfigWritingProtocol>();
+    assert_send_sync::<dyn IEnvGenerationProtocol>();
+    assert_send_sync::<dyn IFilePathExistenceProtocol>();
+    assert_send_sync::<dyn ILanguageDetectionProtocol>();
+    assert_send_sync::<dyn IMcpConfigGenerationProtocol>();
+    assert_send_sync::<dyn IPreFlightProtocol>();
     assert_send_sync::<dyn ISetupAggregate>();
 }
 

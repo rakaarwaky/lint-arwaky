@@ -5,7 +5,7 @@
 mod common;
 
 use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigReaderProtocol};
+use shared::config_system::{ConfigLanguage, IConfigReadProtocol};
 use std::fs;
 use tempfile::TempDir;
 

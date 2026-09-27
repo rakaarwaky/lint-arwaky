@@ -5,7 +5,11 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProtocol;
+use shared::maintenance::contract_maintenance_protocol::{
+    IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
+    IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol, IToolUpdateProtocol,
+    IToolchainDiagnosticProtocol,
+};
 use shared::maintenance::taxonomy_maintenance_constant::GITHUB_REPO;
 use shared::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
 use shared::maintenance::taxonomy_maintenance_vo::{
@@ -19,7 +23,7 @@ pub struct MaintenanceChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
 }
 
-impl IMaintenanceCheckerProtocol for MaintenanceChecker {
+impl IToolchainDiagnosticProtocol for MaintenanceChecker {
     fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
         let mut rust_tools = vec![self.check_tool("rustc", &["--version"], true)];
         rust_tools.push(self.check_tool("cargo", &["--version"], true));
@@ -46,9 +50,10 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             binary_path,
         }
     }
+}
 
+impl IAdapterHealthProtocol for MaintenanceChecker {
     fn health_check(&self) -> HealthCheckResult {
-        // FRD FR-004: all 9 adapters must be checked
         let mut adapters = Vec::new();
         for (name, bin, args, lang) in &[
             (
@@ -80,7 +85,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
         }
         HealthCheckResult { adapters }
     }
+}
 
+impl ISecurityScanProtocol for MaintenanceChecker {
     fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport {
         let root = &project_path.value;
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
@@ -138,7 +145,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         }
     }
+}
 
+impl IDependencyReportProtocol for MaintenanceChecker {
     fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String> {
         let root = &project_path.value;
         let cargo_lock = std::path::Path::new(root).join("Cargo.lock");
@@ -189,7 +198,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             Err("No Cargo.lock found".to_string())
         }
     }
+}
 
+impl IProjectStatsProtocol for MaintenanceChecker {
     fn stats(&self, project_path: &FilePath) -> MaintenanceStatsVO {
         let root = &project_path.value;
         let root_path = std::path::Path::new(root);
@@ -237,7 +248,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             js_files: Count::new(js_files as i64),
         }
     }
+}
 
+impl ICacheCleanupProtocol for MaintenanceChecker {
     fn clean(&self) {
         for dir in &[
             ".pytest_cache",
@@ -251,7 +264,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         }
     }
+}
 
+impl IToolUpdateProtocol for MaintenanceChecker {
     fn update(&self) {
         let _ = self.io.run_external_command_in(
             "pip",
@@ -259,7 +274,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             ".",
         );
     }
+}
 
+impl ISelfUpdateProtocol for MaintenanceChecker {
     fn self_update(&self, check_only: bool) -> SelfUpdateResultVO {
         let current = Self::normalize_version(env!("CARGO_PKG_VERSION"));
         let tag = match self.fetch_latest_tag() {
@@ -301,7 +318,9 @@ impl IMaintenanceCheckerProtocol for MaintenanceChecker {
             }
         }
     }
+}
 
+impl IDoctorProtocol for MaintenanceChecker {
     fn doctor(&self) -> DoctorResultVO {
         let tools = self.diagnose_toolchain();
         let rust_ver = tools

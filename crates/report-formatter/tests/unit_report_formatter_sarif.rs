@@ -3,7 +3,8 @@ use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IReportFormatterProtocol;
+use shared::report_formatter::IFormatDelegationProtocol;
+use shared::report_formatter::ISarifFormatProtocol;
 
 fn result(code: &str, sev: Severity, line: i64) -> LintResult {
     LintResult {
@@ -29,7 +30,7 @@ fn parse_sarif(out: &str) -> serde_json::Value {
 
 #[test]
 fn empty_report_is_valid_sarif() {
-    let out = SarifFormatter::new().format_sarif_report(&ScanReport::new(vec![], vec![]));
+    let out = SarifFormatter::new().format_sarif(&ScanReport::new(vec![], vec![]));
     let v = parse_sarif(out.value());
     let runs = v["runs"].as_array().unwrap();
     assert_eq!(runs.len(), 1);
@@ -50,7 +51,7 @@ fn severity_mapping_matches_sarif_levels() {
         diagnostics: vec![],
         score: None,
     };
-    let out = SarifFormatter::new().format_sarif_report(&report);
+    let out = SarifFormatter::new().format_sarif(&report);
     let v = parse_sarif(out.value());
     let results = v["runs"][0]["results"].as_array().unwrap();
     let levels: Vec<&str> = results
@@ -67,7 +68,7 @@ fn result_carries_rule_id_message_and_location() {
         diagnostics: vec![],
         score: None,
     };
-    let out = SarifFormatter::new().format_sarif_report(&report);
+    let out = SarifFormatter::new().format_sarif(&report);
     let v = parse_sarif(out.value());
     let r = &v["runs"][0]["results"][0];
     assert_eq!(r["rule_id"], "AES201");
@@ -89,7 +90,7 @@ fn line_zero_is_clamped_to_one() {
         diagnostics: vec![],
         score: None,
     };
-    let out = SarifFormatter::new().format_sarif_report(&report);
+    let out = SarifFormatter::new().format_sarif(&report);
     let v = parse_sarif(out.value());
     assert_eq!(
         v["runs"][0]["results"][0]["locations"][0]["physical_location"]["region"]["start_line"],
@@ -108,7 +109,7 @@ fn parse_warn_diagnostics_become_note_results() {
         )],
         score: None,
     };
-    let out = SarifFormatter::new().format_sarif_report(&report);
+    let out = SarifFormatter::new().format_sarif(&report);
     let v = parse_sarif(out.value());
     let results = v["runs"][0]["results"].as_array().unwrap();
     assert_eq!(results.len(), 1);
@@ -131,7 +132,7 @@ fn external_results_included_with_tool_native_rule_id() {
         diagnostics: vec![],
         score: None,
     };
-    let out = SarifFormatter::new().format_sarif_report(&report);
+    let out = SarifFormatter::new().format_sarif(&report);
     let v = parse_sarif(out.value());
     let r = &v["runs"][0]["results"][0];
     assert_eq!(r["rule_id"], "clippy::needless_return");
@@ -148,7 +149,7 @@ fn rules_metadata_contains_all_rule_ids() {
         diagnostics: vec![],
         score: None,
     };
-    let out = SarifFormatter::new().format_sarif_report(&report);
+    let out = SarifFormatter::new().format_sarif(&report);
     let v = parse_sarif(out.value());
     let rules = v["runs"][0]["rules"].as_array().unwrap();
     let ids: Vec<&str> = rules.iter().map(|r| r["id"].as_str().unwrap()).collect();
@@ -160,7 +161,7 @@ fn rules_metadata_contains_all_rule_ids() {
 #[test]
 fn direct_format_sarif_slice_works() {
     let results = vec![result("AES301", Severity::MEDIUM, 3)];
-    let out = SarifFormatter::new().format_sarif(&results);
+    let out = SarifFormatter::new().format_sarif_slice(&results);
     let v = parse_sarif(out.value());
     assert_eq!(v["runs"][0]["results"].as_array().unwrap().len(), 1);
 }

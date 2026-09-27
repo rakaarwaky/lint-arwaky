@@ -20,7 +20,7 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::IExternalLintExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
@@ -32,7 +32,7 @@ use std::sync::Arc;
 pub struct BanditAdapter {
     pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
     pub io: Arc<dyn IFileSystemIOProtocol>,
-    lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+    lint_executor: Arc<dyn ICommandExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
 
@@ -131,7 +131,7 @@ impl ILinterAdapterProtocol for BanditAdapter {
         Ok(LintResultList::new(results))
     }
 
-    fn apply_fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+    fn fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
     }
 }
@@ -140,7 +140,7 @@ impl ILinterAdapterProtocol for BanditAdapter {
 
 impl BanditAdapter {
     pub fn new(
-        lint_executor: Arc<dyn IExternalLintExecutorProtocol>,
+        lint_executor: Arc<dyn ICommandExecutorProtocol>,
         bin_path: Option<FilePath>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,

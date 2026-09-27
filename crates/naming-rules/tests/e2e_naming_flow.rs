@@ -78,7 +78,8 @@ fn e2e_convention_violations_found() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_checker: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingChecker::new()),
+        suffix_policy: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -107,7 +108,8 @@ fn e2e_suffix_violations_found() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_checker: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingChecker::new()),
+        suffix_policy: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -133,7 +135,8 @@ fn e2e_clean_files_no_violations() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_checker: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingChecker::new()),
+        suffix_policy: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -162,7 +165,8 @@ fn e2e_mixed_files_partial_violations() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_checker: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingChecker::new()),
+        suffix_policy: Arc::new(NamingChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -231,7 +235,8 @@ fn e2e_aes101_disabled_skips_convention_check() {
     let config = Arc::new(make_config_with_disabled_aes101());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_checker: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingChecker::new()),
+        suffix_policy: Arc::new(NamingChecker::new()),
         config,
         layer_map,
     };

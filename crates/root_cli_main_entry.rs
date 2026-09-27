@@ -108,6 +108,11 @@ enum Command {
         #[arg(long)]
         filter: Option<String>,
     },
+    /// Doc invariants audit (AES601–AES605) over the document chain
+    Docs {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+    },
     /// CI threshold validation
     Ci {
         #[arg(value_name = "PATH", default_value = ".")]
@@ -488,6 +493,13 @@ fn main() {
                 config_parser: config_container.parser(),
                 filter,
                 ignored_paths: ignored_paths.clone(),
+            },
+        ),
+        Command::Docs { path } => cli_commands::surface_scan_command::handle_docs(
+            cli_commands::surface_scan_command::DocsCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                doc_orchestrator:
+                    doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
             },
         ),
         Command::Ci { path, threshold } => cli_commands::surface_ci_command::handle_ci(

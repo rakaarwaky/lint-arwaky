@@ -3,7 +3,7 @@
 use shared::common::FilePath;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::git_hooks::{IDiffProtocol, IGitHooksAggregate, IHookManagerProtocol, IHookProtocol};
+use shared::git_hooks::{IGitHooksAggregate, IHookInstallProtocol, IHookUninstallProtocol};
 
 use std::sync::Arc;
 
@@ -17,23 +17,30 @@ impl GitContainer {
         _filesystem: Arc<dyn IFilesystemAggregate>,
         io: Arc<dyn IFileSystemIOProtocol>,
     ) -> Self {
-        let hook_adapter: Arc<dyn IHookManagerProtocol> = Arc::new(
+        let hook_installer: Arc<dyn IHookInstallProtocol> = Arc::new(
+            crate::capabilities_hook_adapter::GitHookAdapter::new(root_dir.clone(), io.clone()),
+        );
+        let hook_uninstaller: Arc<dyn IHookUninstallProtocol> = Arc::new(
             crate::capabilities_hook_adapter::GitHookAdapter::new(root_dir, io.clone()),
         );
-
-        let diff_protocol: Arc<dyn IDiffProtocol> = Arc::new(
-            crate::capabilities_diff_checker::DiffChecker::new(io.clone()),
-        );
-        let hook_adapter_clone = Arc::clone(&hook_adapter);
-        let hook_protocol: Arc<dyn IHookProtocol> = Arc::new(
-            crate::capabilities_hook_manager::HookManager::new(hook_adapter_clone, io),
-        );
+        let diff_checker = Arc::new(crate::capabilities_diff_checker::DiffChecker::new(
+            io.clone(),
+        ));
+        let hook_manager = Arc::new(crate::capabilities_hook_manager::HookManager::new(
+            hook_installer.clone(),
+            hook_uninstaller.clone(),
+            io,
+        ));
 
         let aggregate: Arc<dyn IGitHooksAggregate> = Arc::new(
             crate::agent_git_hooks_orchestrator::GitHooksOrchestrator::new(
-                diff_protocol,
-                hook_protocol,
-                hook_adapter,
+                diff_checker.clone(),
+                diff_checker.clone(),
+                hook_installer.clone(),
+                hook_uninstaller.clone(),
+                hook_manager.clone(),
+                hook_manager.clone(),
+                hook_manager.clone(),
             ),
         );
 

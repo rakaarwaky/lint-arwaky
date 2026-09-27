@@ -15,7 +15,8 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::OrphanFileListVO;
 use shared::orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
-    ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
+    IEntryPointProtocol, IGraphContextProtocol, IReachabilityProtocol, ISurfacesOrphanProtocol,
+    ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
 
 use shared::common::taxonomy_common_vo::BooleanVO;
@@ -88,13 +89,10 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 }
 
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl ArchOrphanAnalyzer {
-    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
-        Self { deps, config }
-    }
+// ─── FR-001/002/003: graph context, entry points, reachability ───
 
-    pub fn build_orphan_graph_context(&self, root_dir: &FilePath) -> GraphAnalysisContext {
+impl IGraphContextProtocol for ArchOrphanAnalyzer {
+    fn build_orphan_graph_context(&self, root_dir: &FilePath) -> GraphAnalysisContext {
         let root_path = std::path::Path::new(root_dir.value());
         let ignored = self.ignored_paths();
         self.deps
@@ -104,9 +102,37 @@ impl ArchOrphanAnalyzer {
             ))
             .into_graph_context()
     }
+}
 
-    pub fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
+impl IEntryPointProtocol for ArchOrphanAnalyzer {
+    fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
         crate::utility_orphan_filename::identify_entry_points(std::slice::from_ref(files), &[])
+    }
+}
+
+impl IReachabilityProtocol for ArchOrphanAnalyzer {
+    fn trace_alive_files(
+        &self,
+        entry_points: &OrphanFileListVO,
+        context: &GraphAnalysisContext,
+    ) -> ReachabilityResult {
+        let alive_set = crate::utility_orphan_graph::trace_reachability(
+            &entry_points.values,
+            &context.import_graph,
+        );
+        ReachabilityResult::new(
+            alive_set
+                .into_iter()
+                .map(|s| FilePath::new(s).unwrap_or_default())
+                .collect(),
+        )
+    }
+}
+
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
+impl ArchOrphanAnalyzer {
+    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
+        Self { deps, config }
     }
 
     pub fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult> {

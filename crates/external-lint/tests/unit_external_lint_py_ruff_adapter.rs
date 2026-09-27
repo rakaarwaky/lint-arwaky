@@ -6,55 +6,55 @@ use external_lint_lint_arwaky::capabilities_py_ruff_adapter::RuffAdapter;
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;
+use shared::common::taxonomy_adapter_name_vo::AdapterName;
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_duration_vo::Timeout;
+use shared::common::taxonomy_operation_error::LinterOperationError;
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::common::taxonomy_severity_vo::Severity;
-use std::sync::{Arc, Mutex};
+use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use std::sync::Arc;
+
+/// Backs the FR-006 `ICommandExecutorProtocol` seam: raw execution plus the
+/// `exec_cmd_*` error-mapping wrappers. Returns empty output for every call.
+struct MockCmdExecutor;
+
+impl ICommandExecutorProtocol for MockCmdExecutor {
+    fn execute_command(
+        &self,
+        _: PatternList,
+        _: FilePath,
+        _: Option<Timeout>,
+    ) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
+    fn health_check(&self) -> anyhow::Result<ResponseData> {
+        Ok(ResponseData::default())
+    }
+    fn exec_cmd_scan(
+        &self,
+        _: Vec<String>,
+        _: FilePath,
+        _: f64,
+        _: Option<AdapterName>,
+        _: &FilePath,
+    ) -> Result<ResponseData, LinterOperationError> {
+        Ok(ResponseData::default())
+    }
+    fn exec_cmd_adapter(
+        &self,
+        _: Vec<String>,
+        _: FilePath,
+        _: f64,
+        _: AdapterName,
+    ) -> Result<ResponseData, LinterOperationError> {
+        Ok(ResponseData::default())
+    }
+}
 
 fn make_adapter() -> RuffAdapter {
-    use shared::external_lint::IExternalLintExecutorProtocol;
-
-    struct EmptyLintExecutor;
-    impl IExternalLintExecutorProtocol for EmptyLintExecutor {
-        fn exec_cmd_scan(
-            &self,
-            _: Vec<String>,
-            _: shared::common::taxonomy_path_vo::FilePath,
-            _: f64,
-            _: Option<shared::common::taxonomy_adapter_name_vo::AdapterName>,
-            _: &shared::common::taxonomy_path_vo::FilePath,
-        ) -> Result<
-            shared::common::taxonomy_response_data_vo::ResponseData,
-            shared::common::taxonomy_operation_error::LinterOperationError,
-        > {
-            Ok(shared::common::taxonomy_response_data_vo::ResponseData::default())
-        }
-        fn exec_cmd_adapter(
-            &self,
-            _: Vec<String>,
-            _: shared::common::taxonomy_path_vo::FilePath,
-            _: f64,
-            _: shared::common::taxonomy_adapter_name_vo::AdapterName,
-        ) -> Result<
-            shared::common::taxonomy_response_data_vo::ResponseData,
-            shared::common::taxonomy_operation_error::LinterOperationError,
-        > {
-            Ok(shared::common::taxonomy_response_data_vo::ResponseData::default())
-        }
-        fn js_apply_fix(
-            &self,
-            _: &shared::common::taxonomy_path_vo::FilePath,
-            _: &str,
-            _: &str,
-        ) -> Result<
-            shared::common::taxonomy_message_vo::ComplianceStatus,
-            shared::common::taxonomy_operation_error::LinterOperationError,
-        > {
-            Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
-                false,
-            ))
-        }
-    }
-
-    let executor: Arc<dyn IExternalLintExecutorProtocol> = Arc::new(EmptyLintExecutor);
+    let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
     RuffAdapter::new(
         executor,
         None,
@@ -135,11 +135,9 @@ fn unknown_code_defaults_to_medium() {
 #[test]
 fn relative_scan_target_is_canonicalized_to_absolute_in_cmd() {
     use shared::common::taxonomy_adapter_name_vo::AdapterName;
-    use shared::common::taxonomy_message_vo::ComplianceStatus;
     use shared::common::taxonomy_operation_error::LinterOperationError;
     use shared::common::taxonomy_path_vo::FilePath;
     use shared::common::taxonomy_response_data_vo::ResponseData;
-    use shared::external_lint::IExternalLintExecutorProtocol;
     use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
     use std::sync::Mutex;
 
@@ -147,7 +145,18 @@ fn relative_scan_target_is_canonicalized_to_absolute_in_cmd() {
     struct CapturingLintExecutor {
         last_cmd: Mutex<Option<Vec<String>>>,
     }
-    impl IExternalLintExecutorProtocol for CapturingLintExecutor {
+    impl ICommandExecutorProtocol for CapturingLintExecutor {
+        fn execute_command(
+            &self,
+            _: shared::common::taxonomy_common_vo::PatternList,
+            _: FilePath,
+            _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+        ) -> anyhow::Result<ResponseData> {
+            Ok(ResponseData::default())
+        }
+        fn health_check(&self) -> anyhow::Result<ResponseData> {
+            Ok(ResponseData::default())
+        }
         fn exec_cmd_scan(
             &self,
             _: Vec<String>,
@@ -167,14 +176,6 @@ fn relative_scan_target_is_canonicalized_to_absolute_in_cmd() {
         ) -> Result<ResponseData, LinterOperationError> {
             *self.last_cmd.lock().unwrap() = Some(cmd);
             Ok(ResponseData::default())
-        }
-        fn js_apply_fix(
-            &self,
-            _: &FilePath,
-            _: &str,
-            _: &str,
-        ) -> Result<ComplianceStatus, LinterOperationError> {
-            Ok(ComplianceStatus::new(false))
         }
     }
 

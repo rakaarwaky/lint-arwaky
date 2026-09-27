@@ -1,0 +1,134 @@
+// PURPOSE: doc invariant rule codes, violation types, and shared vocabulary for the doc-rules feature
+
+/// ─── AES601 — FR format ─────────────────────────────────────────────────────
+/// Violation types for FR-ID and FR-field violations.
+pub const RULE_CODE_FR_FORMAT: &str = "AES601";
+
+/// FR-ID is bare (`FR-NNN`) without a feature prefix.
+pub const FR_ID_VIOLATION_MISSING_FEATURE_PREFIX: &str = "id_missing_feature_prefix";
+
+/// FR-ID does not read as an imperative action.
+pub const FR_ID_VIOLATION_NOT_IMPERATIVE: &str = "id_not_imperative";
+
+/// A required FR field is absent from a requirement block.
+pub const FR_FIELDS_VIOLATION_FIELD_MISSING: &str = "field_missing";
+
+/// ─── AES602 — Section structure ─────────────────────────────────────────────
+pub const RULE_CODE_SECTION_STRUCTURE: &str = "AES602";
+
+/// Sections appear in an order that does not match the template.
+pub const SECTION_STRUCTURE_VIOLATION_ORDER: &str = "order_violation";
+
+/// The API Contract section is missing one of its required subsections.
+pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION: &str = "api_no_subsection";
+
+/// Integration Points is present but is not a table with the required columns.
+pub const SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE: &str = "integration_not_table";
+
+/// Non-functional Requirements is present but is not a table with the required columns.
+pub const SECTION_STRUCTURE_VIOLATION_NFR_NOT_TABLE: &str = "nfr_not_table";
+
+/// Test Scenarios has no bullet items.
+pub const SECTION_STRUCTURE_VIOLATION_SCENARIOS_EMPTY: &str = "scenarios_empty";
+
+/// Glossary has no bullet items.
+pub const SECTION_STRUCTURE_VIOLATION_GLOSSARY_EMPTY: &str = "glossary_empty";
+
+/// ─── AES603 — Spec purity ───────────────────────────────────────────────────
+pub const RULE_CODE_SPEC_PURITY: &str = "AES603";
+
+/// A spec names a concrete source file.
+pub const SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED: &str = "source_file_named";
+
+/// A spec carries implementation state (checkboxes, status fields, progress).
+pub const SPEC_PURITY_VIOLATION_STATUS_LEAK: &str = "status_leak";
+
+/// ─── AES604 — Crosslinks ────────────────────────────────────────────────────
+pub const RULE_CODE_CROSSLINKS: &str = "AES604";
+
+/// An FRD does not link its BACKLOG.md in the Reference section.
+pub const CROSSLINKS_VIOLATION_NO_BACKLOG_LINK: &str = "no_backlog_link";
+
+/// An FRD does not link its PRD.md in the Reference section.
+pub const CROSSLINKS_VIOLATION_NO_PRD_LINK: &str = "no_prd_link";
+
+/// A scenario in the FRD has no corresponding evidence row in the backlog.
+pub const CROSSLINKS_VIOLATION_SCENARIO_NO_EVIDENCE: &str = "scenario_no_evidence";
+
+/// State vocabulary is restated in a sub-doc instead of living only in the master.
+pub const CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED: &str = "state_vocab_restated";
+
+/// ─── AES605 — Feature folder health ─────────────────────────────────────────
+pub const RULE_CODE_FEATURE_FOLDER: &str = "AES605";
+
+/// A folder carrying a doc pair is not a feature folder (no orchestrator present).
+pub const FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR: &str = "no_orchestrator";
+
+/// Kernel folders (shared) carry a doc pair when they should be empty.
+pub const FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
+
+/// ─── Shape constants ────────────────────────────────────────────────────────
+/// Adapter name the doc checker reports under.
+pub const ADAPTER_NAME: &str = "architecture";
+
+/// Document names this feature recognizes, per the document chain.
+pub const PRD_DOC: &str = "PRD.md";
+pub const ROADMAP_DOC: &str = "ROADMAP.md";
+pub const FRD_DOC: &str = "FRD.md";
+pub const BACKLOG_DOC: &str = "BACKLOG.md";
+pub const README_DOC: &str = "README.md";
+pub const AGENTS_DOC: &str = "AGENTS.md";
+
+/// The root master, which owns the state vocabulary and the feature roll-up.
+/// A legacy root BACKLOG.md is accepted so a workspace can migrate in place.
+pub const MASTER_DOC_CANDIDATES: &[&str] = &[ROADMAP_DOC, BACKLOG_DOC];
+
+/// Sections that exist only in the root master, per HOW-TO-MAKE-ROADMAP.
+pub const MASTER_ONLY_SECTIONS: &[&str] = &[
+    "State Definitions",
+    "Status Policy",
+    "Feature Roll-up",
+    "Branches in Flight",
+    "Risk Register",
+];
+
+/// A folder is a feature folder only when it holds an orchestrator.
+pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";
+
+/// Kernel folders are not features and carry no doc pair.
+pub const KERNEL_DIR: &str = "shared";
+
+/// Template section order, per HOW-TO-MAKE-FRD.
+pub const FRD_SECTION_ORDER: &[&str] = &[
+    "Reference",
+    "System Overview",
+    "Functional Requirements",
+    "API Contract",
+    "Integration Points",
+    "Non-functional",
+    "Test Scenarios",
+    "Assumptions",
+    "Glossary",
+];
+
+/// The six fields every requirement must state, per HOW-TO-MAKE-FRD Rule 2.
+pub const FR_FIELDS: &[&str] = &[
+    "Description",
+    "Input",
+    "Output",
+    "Business Rules",
+    "Edge Cases",
+    "Error Handling",
+];
+
+/// Columns the API Contract tables must carry.
+pub const API_COLUMNS: &[&str] = &["Method", "Input", "Output", "Error", "Event", "Description"];
+
+/// Columns Integration Points must carry.
+pub const INTEGRATION_COLUMNS: &[&str] = &["System", "Direction", "Purpose", "Failure mode"];
+
+/// Columns Non-functional Requirements must carry.
+pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
+
+/// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
+pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];

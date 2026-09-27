@@ -6,7 +6,7 @@ use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidato
 use shared::common::AdapterName;
 use shared::common::{Count, Score};
 use shared::config_system::{
-    AdapterEntry, AdapterStatus, IConfigValidatorProtocol, ProjectConfig, Thresholds,
+    AdapterEntry, AdapterStatus, IConfigValidateProtocol, ProjectConfig, Thresholds,
 };
 
 fn make_validator() -> ConfigRulesValidator {

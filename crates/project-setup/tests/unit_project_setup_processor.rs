@@ -1,25 +1,22 @@
 // Unit tests — SetupManagementProcessor protocol methods.
-use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::{ISetupInstallerProtocol, ISetupManagementProtocol, SetupError};
-use std::sync::Arc;
+use shared::project_setup::{
+    IConfigTemplateProtocol, IConfigWritingProtocol, IEnvGenerationProtocol,
+    IFilePathExistenceProtocol, ILanguageDetectionProtocol, IMcpConfigGenerationProtocol,
+    IPreFlightProtocol,
+};
 
-struct StubInstaller;
-
-impl ISetupInstallerProtocol for StubInstaller {
-    fn install_python_packages(&self, _packages: &PatternList) -> Result<(), SetupError> {
-        Ok(())
-    }
-    fn install_npm_packages(&self, _packages: &PatternList, _sudo: bool) -> Result<(), SetupError> {
-        Ok(())
-    }
-}
-
-fn make_processor() -> impl ISetupManagementProtocol {
+fn make_processor() -> impl IMcpConfigGenerationProtocol
++ IEnvGenerationProtocol
++ ILanguageDetectionProtocol
++ IConfigTemplateProtocol
++ IConfigWritingProtocol
++ IPreFlightProtocol
++ IFilePathExistenceProtocol {
     use project_setup_lint_arwaky::capabilities_setup_processor::SetupManagementProcessor;
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
     let fs = c.io();
-    SetupManagementProcessor::new(Arc::new(StubInstaller), fs)
+    SetupManagementProcessor::new(fs)
 }
 
 #[test]
@@ -150,10 +147,6 @@ fn get_config_template_unknown_returns_error() {
     let proc = make_processor();
     let result = proc.get_config_template("kotlin");
     assert!(result.is_err(), "Unknown language should return Err");
-    match result.unwrap_err() {
-        SetupError::UnknownLanguage(_) => {}
-        e => panic!("Expected UnknownLanguage error, got: {:?}", e),
-    }
 }
 
 #[test]
@@ -181,27 +174,6 @@ fn detect_languages_returns_at_least_one() {
     let proc = make_processor();
     let langs = proc.detect_languages();
     assert!(!langs.is_empty(), "Should detect at least one language");
-}
-
-#[test]
-fn install_python_adapters_returns_success() {
-    let proc = make_processor();
-    let status = proc.install_python_adapters();
-    assert!(status.value(), "Stub installer should always succeed");
-}
-
-#[test]
-fn install_javascript_adapters_returns_success() {
-    let proc = make_processor();
-    let status = proc.install_javascript_adapters(false);
-    assert!(status.value(), "Stub installer should always succeed");
-}
-
-#[test]
-fn install_javascript_adapters_with_sudo() {
-    let proc = make_processor();
-    let status = proc.install_javascript_adapters(true);
-    assert!(status.value(), "Stub installer should always succeed");
 }
 
 #[test]
@@ -235,7 +207,6 @@ fn create_global_config_dir_succeeds() {
     let result = proc.create_global_config_dir();
     match result {
         Ok(path) => assert!(path.exists() || path.to_string_lossy().contains("lint-arwaky")),
-        Err(SetupError::InvalidState(_)) => {}
         Err(e) => panic!("Unexpected error: {:?}", e),
     }
 }

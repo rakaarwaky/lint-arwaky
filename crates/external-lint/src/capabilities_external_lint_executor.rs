@@ -1,18 +1,19 @@
-// PURPOSE: ExternalLintExecutor — implements IExternalLintExecutorProtocol
-// Wraps ICommandExecutorProtocol and adds error mapping for scan/adapter operations.
+// PURPOSE: ExternalLintExecutor — implements ICommandExecutorProtocol,
+// IJsToolResolutionProtocol, and ICargoDirProtocol.
+// Wraps the raw command executor and adds error mapping for scan/adapter operations.
 
 use std::sync::Arc;
 
-use shared::common::ScanError;
-use shared::common::taxonomy_adapter_error::AdapterError;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::{ErrorMessage, PatternList};
+use shared::common::taxonomy_common_vo::PatternList;
+use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::IExternalLintExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::ICargoDirProtocol;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::ToolName;
@@ -25,9 +26,22 @@ pub struct ExternalLintExecutor {
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
-// ─── Block 2: Protocol Trait Implementation ───────────────
+// ─── Block 2: FR-006 command execution with error mapping ─
 
-impl IExternalLintExecutorProtocol for ExternalLintExecutor {
+impl ICommandExecutorProtocol for ExternalLintExecutor {
+    fn execute_command(
+        &self,
+        command: PatternList,
+        working_dir: FilePath,
+        timeout: Option<Timeout>,
+    ) -> anyhow::Result<ResponseData> {
+        self.executor.execute_command(command, working_dir, timeout)
+    }
+
+    fn health_check(&self) -> anyhow::Result<ResponseData> {
+        self.executor.health_check()
+    }
+
     fn exec_cmd_scan(
         &self,
         args: Vec<String>,
@@ -40,19 +54,9 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
             .execute_command(
                 PatternList::new(args),
                 working_dir,
-                Some(shared::common::taxonomy_duration_vo::Timeout::new(
-                    timeout_secs,
-                )),
+                Some(Timeout::new(timeout_secs)),
             )
-            .map_err(|e| {
-                LinterOperationError::Scan(ScanError {
-                    path: path.clone(),
-                    message: ErrorMessage::new(e.to_string()),
-                    error_code: None,
-                    adapter_name,
-                    cause: None,
-                })
-            })
+            .map_err(|e| crate::map_scan_error(e, path.clone(), adapter_name))
     }
 
     fn exec_cmd_adapter(
@@ -66,16 +70,27 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
             .execute_command(
                 PatternList::new(args),
                 working_dir,
-                Some(shared::common::taxonomy_duration_vo::Timeout::new(
-                    timeout_secs,
-                )),
+                Some(Timeout::new(timeout_secs)),
             )
-            .map_err(|e| {
-                LinterOperationError::Adapter(AdapterError::new(
-                    adapter_name,
-                    ErrorMessage::new(e.to_string()),
-                ))
-            })
+            .map_err(|e| crate::map_adapter_error(e, adapter_name))
+    }
+}
+
+// ─── Block 2b: FR-007 JS tool resolution ──────────────────
+
+impl IJsToolResolutionProtocol for ExternalLintExecutor {
+    fn resolve_js_cmd(
+        &self,
+        tool_name: &ToolName,
+        args: Vec<String>,
+        working_dir: &FilePath,
+    ) -> Option<Vec<String>> {
+        self.tool_resolution
+            .resolve_js_cmd(tool_name, args, working_dir)
+    }
+
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        self.tool_resolution.resolve_js_working_dir(path)
     }
 
     fn js_apply_fix(
@@ -101,6 +116,14 @@ impl IExternalLintExecutorProtocol for ExternalLintExecutor {
         };
         let response = self.exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool))?;
         Ok(ComplianceStatus::new(response.returncode == 0))
+    }
+}
+
+// ─── Block 2c: FR-008 cargo working directory resolution ──
+
+impl ICargoDirProtocol for ExternalLintExecutor {
+    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
+        self.tool_resolution.resolve_cargo_working_dir(path)
     }
 }
 
