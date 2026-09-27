@@ -2,7 +2,8 @@
 
 use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
 use crate::maintenance::taxonomy_maintenance_vo::{
-    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
+    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, SelfUpdateResultVO,
+    ToolchainDiagnostics,
 };
 
 pub enum MaintenanceResponse {
@@ -11,6 +12,9 @@ pub enum MaintenanceResponse {
     },
     Clean,
     Update,
+    SelfUpdate {
+        result: SelfUpdateResultVO,
+    },
     Doctor {
         result: DoctorResultVO,
     },
@@ -40,6 +44,14 @@ impl MaintenanceResponse {
     /// Report whether a cleanup or update ran. Returns false for other verbs.
     pub fn into_ran(self) -> bool {
         matches!(self, Self::Clean | Self::Update)
+    }
+
+    /// Extract the self-update result. Returns an error result for other verbs.
+    pub fn into_self_update(self) -> SelfUpdateResultVO {
+        match self {
+            Self::SelfUpdate { result } => result,
+            _ => SelfUpdateResultVO::error("", "no self-update result available"),
+        }
     }
 
     pub fn into_doctor(self) -> DoctorResultVO {

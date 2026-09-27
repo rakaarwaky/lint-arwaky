@@ -153,3 +153,53 @@ impl std::fmt::Display for MaintenanceStatsVO {
         )
     }
 }
+
+// ─── Self-update ───────────────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SelfUpdateResultVO {
+    /// The version currently running (from CARGO_PKG_VERSION).
+    pub current_version: String,
+    /// The latest release tag found on GitHub, or empty on error.
+    pub latest_version: String,
+    /// True when a newer release is available and was installed.
+    pub already_up_to_date: bool,
+    /// True when a newer version was successfully downloaded and installed.
+    pub upgraded: bool,
+    /// Human-readable status message (e.g. "Already up to date (v3.7.0)").
+    pub status: String,
+}
+
+impl SelfUpdateResultVO {
+    pub fn success(current: &str, latest: &str, already_up_to_date: bool) -> Self {
+        let upgraded = !already_up_to_date;
+        let status = if already_up_to_date {
+            format!("Already up to date ({})", latest)
+        } else {
+            format!("Upgraded from {} to {}", current, latest)
+        };
+        Self {
+            current_version: current.to_string(),
+            latest_version: latest.to_string(),
+            already_up_to_date,
+            upgraded,
+            status,
+        }
+    }
+
+    pub fn error(current: &str, message: &str) -> Self {
+        Self {
+            current_version: current.to_string(),
+            latest_version: String::new(),
+            already_up_to_date: false,
+            upgraded: false,
+            status: format!("Error: {}", message),
+        }
+    }
+}
+
+impl std::fmt::Display for SelfUpdateResultVO {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.status)
+    }
+}

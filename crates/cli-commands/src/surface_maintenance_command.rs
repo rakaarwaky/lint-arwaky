@@ -103,6 +103,38 @@ pub fn handle_security(
     }
 }
 
+/// `update` — self-update the CLI binary from the latest GitHub release.
+///
+/// `check_only` reports whether a newer release exists without downloading.
+pub fn handle_self_update(
+    maintenance: Arc<dyn IMaintenanceAggregate>,
+    check_only: bool,
+) -> ExitCode {
+    let result =
+        dispatcher::surface_maintenance_action::collect_self_update(maintenance, check_only);
+
+    println!("Lint Arwaky Self-Update");
+    println!();
+    println!("  Current version: {}", result.current_version);
+    if result.latest_version.is_empty() {
+        error!(error = %result.status, "update failed");
+        println!("  {}", result.status);
+        return ExitCode::RUNTIME_ERROR;
+    }
+    println!("  Latest release:  {}", result.latest_version);
+    println!(
+        "  {} {}",
+        status_icon(result.upgraded || result.already_up_to_date),
+        result.status
+    );
+    if check_only {
+        println!();
+        println!("  Check only — no binary was downloaded or replaced.");
+    }
+
+    ExitCode::OK
+}
+
 pub fn handle_dependencies(
     maintenance: Arc<dyn IMaintenanceAggregate>,
     path: Option<FilePath>,

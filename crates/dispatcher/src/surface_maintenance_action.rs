@@ -5,7 +5,7 @@ use shared::common::FilePath;
 use shared::maintenance::MaintenanceRequest;
 use shared::maintenance::{
     DependencyReport, HealthCheckResult, IMaintenanceAggregate, SecurityScanReport,
-    ToolchainDiagnostics,
+    SelfUpdateResultVO, ToolchainDiagnostics,
 };
 use std::sync::Arc;
 
@@ -48,4 +48,13 @@ pub fn collect_health_check(maintenance: Arc<dyn IMaintenanceAggregate>) -> Heal
     maintenance
         .execute(MaintenanceRequest::health_check())
         .into_health()
+}
+
+pub fn collect_self_update(
+    maintenance: Arc<dyn IMaintenanceAggregate>,
+    check_only: bool,
+) -> SelfUpdateResultVO {
+    maintenance
+        .execute(MaintenanceRequest::self_update(check_only))
+        .into_self_update()
 }

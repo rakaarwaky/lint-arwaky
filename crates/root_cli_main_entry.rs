@@ -170,6 +170,13 @@ enum Command {
     UninstallHook,
     /// Print version
     Version,
+    /// Self-update: install latest release binary from GitHub
+    #[command(name = "update", alias = "la")]
+    Update {
+        /// Check for a newer release without installing
+        #[arg(long)]
+        check_only: bool,
+    },
 }
 
 fn parse_format(s: &str) -> Format {
@@ -522,6 +529,12 @@ fn main() {
             cli_commands::surface_maintenance_command::handle_dependencies(
                 maintenance_orchestrator.clone(),
                 Some(FilePath::new(path).unwrap_or_default()),
+            )
+        }
+        Command::Update { check_only } => {
+            cli_commands::surface_maintenance_command::handle_self_update(
+                maintenance_orchestrator.clone(),
+                check_only,
             )
         }
         Command::Adapters => {

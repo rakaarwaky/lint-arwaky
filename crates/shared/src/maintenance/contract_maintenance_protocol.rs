@@ -9,7 +9,8 @@ use crate::common::taxonomy_path_vo::FilePath;
 use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
 pub use crate::maintenance::taxonomy_maintenance_vo::ToolOutput;
 use crate::maintenance::taxonomy_maintenance_vo::{
-    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
+    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, SelfUpdateResultVO,
+    ToolchainDiagnostics,
 };
 
 pub trait IMaintenanceCheckerProtocol: Send + Sync {
@@ -21,6 +22,13 @@ pub trait IMaintenanceCheckerProtocol: Send + Sync {
     fn clean(&self);
     fn update(&self);
     fn doctor(&self) -> DoctorResultVO;
+    /// Check the latest GitHub release and optionally install it.
+    ///
+    /// When `check_only` is `true`, only query the API and report the result
+    /// without downloading or replacing any binary.
+    /// When `check_only` is `false`, download the latest release binary and
+    /// install it to `$CARGO_HOME/bin` or fall back to `$HOME/.cargo/bin`.
+    fn self_update(&self, check_only: bool) -> SelfUpdateResultVO;
 }
 
 pub trait IToolExecutorProtocol: Send + Sync {

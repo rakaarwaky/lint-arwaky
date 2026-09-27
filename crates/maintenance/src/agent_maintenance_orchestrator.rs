@@ -8,7 +8,8 @@ use shared::maintenance::taxonomy_maintenance_response::MaintenanceResponse;
 
 use shared::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
 use shared::maintenance::taxonomy_maintenance_vo::{
-    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
+    DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, SelfUpdateResultVO,
+    ToolchainDiagnostics,
 };
 use std::sync::Arc;
 
@@ -37,6 +38,9 @@ impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
                 self.update();
                 MaintenanceResponse::Update
             }
+            MaintenanceRequest::SelfUpdate { check_only } => MaintenanceResponse::SelfUpdate {
+                result: self.self_update(check_only),
+            },
             MaintenanceRequest::Doctor => MaintenanceResponse::Doctor {
                 result: self.doctor(),
             },
@@ -79,6 +83,10 @@ impl MaintenanceCommandsOrchestrator {
 
     pub fn update(&self) {
         self.deps.checker.update()
+    }
+
+    pub fn self_update(&self, check_only: bool) -> SelfUpdateResultVO {
+        self.deps.checker.self_update(check_only)
     }
 
     pub fn doctor(&self) -> DoctorResultVO {

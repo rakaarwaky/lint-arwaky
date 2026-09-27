@@ -10,6 +10,11 @@ pub enum MaintenanceRequest {
     Clean,
     /// Update dependencies to their latest compatible versions.
     Update,
+    /// Install the latest lint-arwaky release binary from GitHub.
+    SelfUpdate {
+        /// Check the latest release and report status without installing.
+        check_only: bool,
+    },
     /// Run environment and dependency diagnostics.
     Doctor,
     /// Cancel a running background job.
@@ -35,6 +40,10 @@ impl MaintenanceRequest {
     }
     pub fn update() -> Self {
         Self::Update
+    }
+    /// Request a self-update check/install from GitHub releases.
+    pub fn self_update(check_only: bool) -> Self {
+        Self::SelfUpdate { check_only }
     }
     pub fn doctor() -> Self {
         Self::Doctor

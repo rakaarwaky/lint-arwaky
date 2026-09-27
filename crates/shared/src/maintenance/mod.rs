@@ -24,6 +24,7 @@ pub use taxonomy_maintenance_vo::HealthCheckResult;
 pub use taxonomy_maintenance_vo::MaintenanceStatsVO;
 pub use taxonomy_maintenance_vo::SecurityFinding;
 pub use taxonomy_maintenance_vo::SecurityScanReport;
+pub use taxonomy_maintenance_vo::SelfUpdateResultVO;
 pub use taxonomy_maintenance_vo::ToolOutput;
 pub use taxonomy_maintenance_vo::ToolStatus;
 pub use taxonomy_maintenance_vo::ToolchainDiagnostics;

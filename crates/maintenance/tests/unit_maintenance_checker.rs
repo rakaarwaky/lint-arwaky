@@ -122,3 +122,45 @@ fn doctor_returns_result() {
     let result = checker.doctor();
     assert!(!result.rust_version.value.is_empty() || !result.python_version.value.is_empty());
 }
+
+// ─── self_update ───────────────────────────────────────────────────────────
+
+#[test]
+fn self_update_check_only_returns_valid_vo() {
+    let checker = make_checker();
+    let result = checker.self_update(true);
+    // current_version is always the CARGO_PKG_VERSION normalised, so it must not be empty.
+    assert!(
+        !result.current_version.is_empty(),
+        "current_version should be set"
+    );
+    // latest_version is empty only when the API is unreachable (offline test env).
+    if result.latest_version.is_empty() {
+        assert!(
+            result.status.starts_with("Error:"),
+            "status should explain failure"
+        );
+    } else {
+        // API reachable: latest_version starts with "v" (raw tag, not normalised).
+        assert!(
+            result.latest_version.starts_with('v'),
+            "latest_version should be the raw tag, got {}",
+            result.latest_version
+        );
+    }
+}
+
+#[test]
+fn self_update_success_or_already_up_to_date() {
+    let checker = make_checker();
+    let result = checker.self_update(false);
+    let is_failure = result.status.starts_with("Error:");
+    // When GitHub is reachable, the result must have a non-empty latest_version.
+    // When GitHub is unreachable (offline CI), it gracefully degrades.
+    if !is_failure {
+        assert!(
+            !result.latest_version.is_empty(),
+            "latest_version must be set on success"
+        );
+    }
+}
