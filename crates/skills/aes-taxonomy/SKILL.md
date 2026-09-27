@@ -49,7 +49,7 @@ metadata:
 
 # aes-taxonomy
 
-> **Purpose**: Scaffold AES taxonomy files (VO / entity / error / event / constant) — the stable language of the domain.
+> **Purpose**: Scaffold AES taxonomy files (VO / entity / error / event / constant / request / response) — the stable language of the domain.
 > **Audience**: The agent creating or validating a taxonomy file.
 > **Scope**: Python, Rust, and TypeScript `taxonomy_<domain>_<suffix>` files in the shared domain.
 
@@ -77,7 +77,7 @@ A rule cannot drift from the gate. Cite the linter, not this file, when pointing
 
 | Layer | Rule |
 | ----- | ---- |
-| Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response`/`_request`/`_response` (AES101/AES102). |
+| Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response` (AES101/AES102). |
 | Imports | Taxonomy + stdlib only — never capabilities, agents, surface, root, contracts; no I/O (AES201). |
 | Primitives | Domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values (AES401). |
 | Construction | VOs validate on construction; immutable; constants are pure literals. |
@@ -92,8 +92,8 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 Ask these questions in order. The first "No" dictates your next action.
 
-1. **Is this a domain value, identity, failure, fact, or literal?**
-   - *Value* → `_vo`; *identity* → `_entity`; *failure* → `_error`; *fact* → `_event`; *literal* → `_constant`.
+1. **Is this a domain value, identity, failure, fact, literal, or an aggregate boundary?**
+   - *Value* → `_vo`; *identity* → `_entity`; *failure* → `_error`; *fact* → `_event`; *literal* → `_constant`; *inbound aggregate call* → `_request`; *outbound aggregate call* → `_response`.
 2. **Does the file import anything above taxonomy or touch I/O?**
    - *Yes* → strip the import / move I/O to capabilities or utility.
 3. **Are domain fields raw primitives?**
@@ -108,7 +108,7 @@ Ask these questions in order. The first "No" dictates your next action.
 ## Workflow
 
 1. Resolve the shared taxonomy dir beside contracts.
-2. Determine type (VO / Entity / Error / Event / Constant). Run `lint-arwaky-cli scan <layer-path>` — findings are your work list.
+2. Determine type (VO / Entity / Error / Event / Constant / Request / Response). Run `lint-arwaky-cli scan <layer-path>` — findings are your work list.
 3. Draft the file from the language HOW-TO § Template / § Section Contract.
 4. Register in `__init__.py` / `mod.rs` / `index.ts`.
 5. Verify with `lint-arwaky-cli scan <layer-path>` (HOW-TO § Verify), then wire through `aes-contract` / `aes-capabilities` as needed.
