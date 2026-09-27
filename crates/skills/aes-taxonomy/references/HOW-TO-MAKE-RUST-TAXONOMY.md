@@ -83,6 +83,8 @@ taxonomy_order_order_entity.rs
 taxonomy_order_order_not_found_error.rs
 taxonomy_order_order_created_event.rs
 taxonomy_order_order_constant.rs
+taxonomy_order_order_request.rs
+taxonomy_order_order_response.rs
 ```
 
 The filename must match the taxonomy type it contains.
@@ -95,6 +97,8 @@ taxonomy_order_order_entity.rs          -> Order
 taxonomy_order_order_not_found_error.rs -> OrderError
 taxonomy_order_order_created_event.rs   -> OrderCreated
 taxonomy_order_order_constant.rs        -> ORDER_* constants
+taxonomy_order_order_request.rs         -> OrderRequest
+taxonomy_order_order_response.rs        -> OrderResponse
 ```
 
 Allowed suffixes are exactly:
@@ -105,6 +109,8 @@ entity
 error
 event
 constant
+request
+response
 ```
 
 Anything else fails AES102.
@@ -120,6 +126,8 @@ Anything else fails AES102.
 | `_error.rs` | Domain errors | Implement `std::error::Error` + `Display`; store VO fields only |
 | `_event.rs` | Domain events | Immutable, VO payload fields only |
 | `_constant.rs` | Compile-time constants | `pub const` only — no functions, no I/O |
+| `_request.rs` | Aggregate request payloads | `pub enum` with VO-bearing variants + constructor methods; carries a verb/action name |
+| `_response.rs` | Aggregate response payloads | `pub enum` with VO-bearing variants + extractor methods; returns an outcome |
 
 ---
 
@@ -158,6 +166,12 @@ A leaf VO may privately encapsulate a primitive value (like `String` or `i64`) f
 
 Constants are the explicit exception for literal values because constant files contain compile-time literals, not domain fields.
 
+`_request` and `_response` are a second exception. AES401 is not gated on those
+suffixes, and their role scope `taxonomy(request,response)` permits primitive
+enum discriminants. A request variant carrying a `bool` flag or a `Vec` of
+results, and a response discriminant such as a `&'static str` kind, are both
+correct. Domain *values* still belong in VOs.
+
 ---
 
 ### File length (AES302)
@@ -182,6 +196,8 @@ Doc comments count. For constants, each constant should have a descriptive comme
    Error
    Event
    Constant
+   Request
+   Response
    ```
 
 2. Create the file:
@@ -227,7 +243,23 @@ Doc comments count. For constants, each constant should have a descriptive comme
    Name events as past-tense domain facts.
    ```
 
-7. For Constants:
+7. For Requests:
+   ```text
+   Use a pub enum whose variants carry VO payload fields.
+   Each variant represents one verb/action the aggregate accepts.
+   Implement constructor helper methods on the impl block.
+   No I/O.
+   ```
+
+8. For Responses:
+   ```text
+   Use a pub enum whose variants carry VO payload fields.
+   Each variant represents one outcome the caller may inspect.
+   Implement extractor methods that pull out a specific variant's payload.
+   No I/O.
+   ```
+
+9. For Constants:
    ```text
    Use pub const only.
    No functions.
@@ -235,9 +267,9 @@ Doc comments count. For constants, each constant should have a descriptive comme
    No I/O.
    ```
 
-8. Register the module and re-export the public type in the domain `mod.rs`.
+10. Register the module and re-export the public type in the domain `mod.rs`.
 
-9. Verify the crate compiles:
+11. Verify the crate compiles:
    ```bash
    cargo check -p shared
    ```
@@ -523,6 +555,131 @@ Events must be immutable and use VO payload fields only.
 
 ---
 
+### Request
+
+Request files carry the **inbound** payload of one aggregate entry point. One verb
+per variant, VO payload fields, and a constructor for each verb so callers never
+build the enum by hand.
+
+Template:
+
+```rust
+use crate::<domain>::taxonomy_<domain>_<concept>_vo::<VO>;
+
+pub enum <Name>Request {
+    /// <Verb description>.
+    <Verb> { <field>: <VO> },
+}
+
+impl <Name>Request {
+    pub fn <verb>(<field>: &<VO>) -> Self {
+        Self::<Verb> {
+            <field>: <field>.clone(),
+        }
+    }
+}
+```
+
+Concrete example:
+
+```rust
+use crate::common::taxonomy_lint_result_vo::LintResult;
+use crate::common::taxonomy_path_vo::FilePath;
+
+pub enum FixRequest {
+    /// Run linter + apply fixes.
+    Execute { path: FilePath, dry_run: bool },
+    /// Report violations that require manual intervention.
+    ManualReport { violations: Vec<LintResult> },
+}
+
+impl FixRequest {
+    pub fn execute(path: &FilePath, dry_run: bool) -> Self {
+        Self::Execute {
+            path: path.clone(),
+            dry_run,
+        }
+    }
+
+    pub fn manual_report(violations: &[LintResult]) -> Self {
+        Self::ManualReport {
+            violations: violations.to_vec(),
+        }
+    }
+}
+```
+
+Request rules:
+- The enum name matches the filename: `taxonomy_<domain>_<concept>_request.rs` holds `<Name>Request`.
+- Every variant names one consumer verb. Doc comment the verb so the contract layer can route on it.
+- Constructor methods take references or slices and clone internally, so the enum is always fully owned.
+- `bool` and collection fields such as `dry_run` or `Vec<LintResult>` are allowed here. AES401 does not gate on the `_request` suffix, and a request boundary legitimately carries flags and lists.
+
+---
+
+### Response
+
+Response files carry the **outbound** payload of one aggregate entry point. Each
+variant is one outcome, and the extractor methods let callers read a specific
+outcome without matching on the enum themselves.
+
+Template:
+
+```rust
+use crate::<domain>::taxonomy_<domain>_<concept>_vo::<VO>;
+
+pub enum <Name>Response {
+    <Variant> { <field>: <VO> },
+}
+
+impl <Name>Response {
+    /// Extract the <Variant> outcome. Returns a default if a different verb was served.
+    pub fn into_<variant>(self) -> <VO> {
+        match self {
+            Self::<Variant> { <field> } => <field>,
+            Self::Other { .. } => <VO>::default(),
+        }
+    }
+}
+```
+
+Concrete example:
+
+```rust
+use crate::auto_fix::taxonomy_fix_vo::FixResult;
+use crate::common::taxonomy_message_vo::LintMessage;
+
+pub enum FixResponse {
+    Execute { result: FixResult },
+    ManualReport { reports: Vec<LintMessage> },
+}
+
+impl FixResponse {
+    /// Take the fix result. Returns an empty result if a different verb was served.
+    pub fn into_fix_result(self) -> FixResult {
+        match self {
+            Self::Execute { result } => result,
+            Self::ManualReport { .. } => FixResult::default(),
+        }
+    }
+
+    pub fn into_manual_report(self) -> Vec<LintMessage> {
+        match self {
+            Self::ManualReport { reports } => reports,
+            Self::Execute { .. } => Vec::new(),
+        }
+    }
+}
+```
+
+Response rules:
+- The enum name matches the filename: `taxonomy_<domain>_<concept>_response.rs` holds `<Name>Response`.
+- Variants mirror the request verbs one to one, so each verb has exactly one response shape.
+- Extractor methods consume `self` (`into_*`), keeping the response single-use and the call site free of destructuring.
+- Every match arm must be exhaustive. A wrong-verb arm returns an empty or default payload rather than panicking.
+
+---
+
 ### Constants
 
 Use the singular `_constant` suffix:
@@ -585,11 +742,15 @@ pub mod taxonomy_order_order_entity;
 pub mod taxonomy_order_order_not_found_error;
 pub mod taxonomy_order_order_created_event;
 pub mod taxonomy_order_order_constant;
+pub mod taxonomy_order_order_request;
+pub mod taxonomy_order_order_response;
 
 pub use taxonomy_order_order_id_vo::OrderId;
 pub use taxonomy_order_order_entity::Order;
 pub use taxonomy_order_order_not_found_error::OrderError;
 pub use taxonomy_order_order_created_event::OrderCreated;
+pub use taxonomy_order_order_request::OrderRequest;
+pub use taxonomy_order_order_response::OrderResponse;
 ```
 
 ---
@@ -618,6 +779,8 @@ pub use taxonomy_order_order_created_event::OrderCreated;
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors expose an `error_id` field (stable numeric id), an `error_code` field (stable string name), and a `message` field derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_id`/`error_code` and to read the description without parsing `Display`. | Required by AES best practice; missing it is a defect. |
 | Constants are `pub const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
+| Request enums carry VO payload fields in their variants and expose a named constructor per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Response enums carry VO payload fields in their variants and expose an `into_*` extractor per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | No I/O, network, database, filesystem, environment, randomness, or time retrieval. | Convention — not machine-checked fully. The reader verifies this; the linter does not guarantee it. | Required by AES taxonomy convention; missing it is a defect. |
 | `cargo check -p <crate-name>` passes. | Manual fallback gate. | Required by the Rust compilation check; missing it is a defect. |
 
