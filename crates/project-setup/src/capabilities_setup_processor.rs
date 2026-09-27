@@ -16,11 +16,11 @@ use shared::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::project_setup::ISetupManagementProtocol;
 use shared::project_setup::contract_setup_protocol::{PackageManagerStatus, PreFlightResult};
-use shared::project_setup::taxonomy_setup_contract_vo::{
+use shared::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
+use shared::project_setup::taxonomy_setup_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,
 };
-use shared::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
 use std::collections::HashMap;
 use std::sync::Arc;

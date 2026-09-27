@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use shared::file_watch::contract_watch_protocol::IChangeAnalyzerProtocol;
-use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
+use shared::file_watch::taxonomy_watch_config_vo::WatchEvent;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

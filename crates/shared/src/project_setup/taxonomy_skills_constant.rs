@@ -1,5 +1,5 @@
 // PURPOSE: Embedded skills constants compiled directly into binary
-use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
+use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
 
 /// All embedded skills compiled into the binary for initialization.
 ///

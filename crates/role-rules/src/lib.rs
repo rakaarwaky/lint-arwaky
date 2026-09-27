@@ -6,7 +6,7 @@ pub use shared::role_rules::IContractRoleProtocol;
 pub use shared::role_rules::IRoleRunnerAggregate;
 pub use shared::role_rules::ISurfaceRoleProtocol;
 pub use shared::role_rules::ITaxonomyRoleProtocol;
-pub use shared::role_rules::taxonomy_layer_names_vo::{
+pub use shared::role_rules::taxonomy_role_vo::{
     LayerNames, layer_agent, layer_capabilities, layer_contract, layer_global, layer_root,
     layer_surfaces, layer_taxonomy,
 };

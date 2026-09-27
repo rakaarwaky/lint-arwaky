@@ -5,8 +5,8 @@
 // Surface layer depends on this aggregate to format ScanReport output.
 // The aggregate delegates to the appropriate capabilities formatter
 // (text, json, sarif, junit) based on the requested format.
+use crate::cli_commands::taxonomy_command_vo::ScanReport;
 use crate::cli_commands::taxonomy_format_vo::Format;
-use crate::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use crate::common::taxonomy_display_content_vo::DisplayContent;
 
 /// IReportFormatterAggregate — aggregate protocol for report formatting.

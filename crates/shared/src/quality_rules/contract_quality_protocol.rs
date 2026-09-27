@@ -7,7 +7,7 @@
 
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::quality_rules::taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
+use crate::quality_rules::taxonomy_analysis_vo::AesCodeAnalysisViolation;
 use std::path::PathBuf;
 
 pub trait IBypassCheckerProtocol: Send + Sync {

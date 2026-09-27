@@ -1,10 +1,73 @@
-// PURPOSE: taxonomy_orphan_parse_result_vo — value objects for AST/structured parse results.
-// Shared across orphan-rules and import-rules. All parsers return these types.
-
+// PURPOSE: Orphan rule value objects — contract list VOs, parse-result types,
+//          and the violation enum (AES501-506).
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+
+use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_path_vo::FilePath;
+
+// ─── Contract surface VOs ──────────────────────────────────────────────
+
+/// List of file paths under orphan-detection analysis. Wraps `Vec<String>`
+/// (raw path strings as emitted by the directory walker). Replaces the
+/// previous `&[String]` parameter and `Vec<String>` return type used in
+/// `IOrphanGraphResolverProtocol::build_graph_context` and
+/// `identify_entry_points`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OrphanFileListVO {
+    pub values: Vec<String>,
+}
+
+impl OrphanFileListVO {
+    pub fn new(values: Vec<String>) -> Self {
+        Self { values }
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, String> {
+        self.values.iter()
+    }
+
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
+}
+
+/// List of configured entry-point patterns (e.g. glob prefixes or exact
+/// paths) the resolver should treat as reachable entry points. Replaces
+/// the previous `&[String]` parameter on
+/// `IOrphanGraphResolverProtocol::identify_entry_points`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OrphanEntryPatternListVO {
+    pub values: Vec<String>,
+}
+
+impl OrphanEntryPatternListVO {
+    pub fn new(values: Vec<String>) -> Self {
+        Self { values }
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, String> {
+        self.values.iter()
+    }
+
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
+}
+
+// ─── AST parse results ─────────────────────────────────────────────────
+
 use syn::visit::Visit;
 
-// ─── Block 1: Identifier Visitor (for Rust AST walking) ───
+// ─── Block 1: Identifier Visitor (for Rust AST walking) ────────────────
 
 /// Walks a Rust AST and collects all identifier references.
 /// Used by `utility_rust_parser::parse_rust` to populate `used_identifiers`.
@@ -69,7 +132,7 @@ pub fn extract_idents_from_stream(stream: proc_macro2::TokenStream, out: &mut Ve
     }
 }
 
-// ─── Block 2: Import Edge ─────────────────────────────────
+// ─── Block 2: Import Edge ──────────────────────────────────────────────
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstImportVO {
@@ -126,7 +189,7 @@ impl AstImportVO {
     }
 }
 
-// ─── Block 2: Trait Implementation ────────────────────────
+// ─── Block 3: Trait Implementation ────────────────────────────────────
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstTraitImplVO {
@@ -139,7 +202,7 @@ pub struct AstTraitImplVO {
     pub is_dummy: bool,
 }
 
-// ─── Block 3: Definitions ─────────────────────────────────
+// ─── Block 4: Definitions ─────────────────────────────────────────────
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstStructDefVO {
@@ -160,7 +223,7 @@ pub struct AstModDeclVO {
     pub is_pub: bool,
 }
 
-// ─── Block 4: Function Definition ─────────────────────────
+// ─── Block 5: Function Definition ─────────────────────────────────────
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AstFnDefVO {
@@ -174,7 +237,7 @@ pub struct AstFnDefVO {
     pub is_dummy: bool,
 }
 
-// ─── Block 5: Per-Language Parse Results ──────────────────
+// ─── Block 6: Per-Language Parse Results ───────────────────────────────
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RustParseResultVO {
@@ -208,7 +271,7 @@ pub struct TsParseResultVO {
     pub parse_ok: bool,
 }
 
-// ─── Block 6: Unified Result ──────────────────────────────
+// ─── Block 7: Unified Result ──────────────────────────────────────────
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileParseResultVO {
@@ -218,7 +281,7 @@ pub enum FileParseResultVO {
     Unsupported,
 }
 
-// ─── Block 7: Query Helpers ───────────────────────────────
+// ─── Block 8: Query Helpers ───────────────────────────────────────────
 
 impl RustParseResultVO {
     pub fn has_trait_impl(&self, trait_name: &str) -> bool {
@@ -304,4 +367,46 @@ impl TsParseResultVO {
     pub fn is_identifier_used(&self, name: &str) -> bool {
         self.used_identifiers.iter().any(|id| id == name)
     }
+}
+
+/// A set of file paths used for orphan-analysis reachability checks.
+pub type FilePathSet = HashSet<FilePath>;
+
+// ─── Violation payloads ────────────────────────────────────────────────
+
+#[derive(Debug, Clone)]
+pub enum AesOrphanViolation {
+    TaxonomyOrphan {
+        stem: String,
+        category: &'static str,
+        reason: Option<LintMessage>,
+    },
+    ContractOrphan {
+        suffix: String,
+        trait_name: String,
+        target_layer: &'static str,
+        reason: Option<LintMessage>,
+    },
+    CapabilitiesOrphan {
+        stem: String,
+        reason: Option<LintMessage>,
+    },
+    UtilityOrphan {
+        stem: String,
+        reason: Option<LintMessage>,
+    },
+    UtilityDeadCode {
+        stem: String,
+        imported_by: Vec<String>,
+        reason: Option<LintMessage>,
+    },
+    AgentOrphan {
+        agg_name: String,
+        reason: Option<LintMessage>,
+    },
+    SurfaceOrphan {
+        category: &'static str,
+        stem: String,
+        reason: Option<LintMessage>,
+    },
 }

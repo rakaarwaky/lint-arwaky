@@ -8,12 +8,12 @@
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::project_setup::taxonomy_setup_contract_vo::SetupError;
-pub use crate::project_setup::taxonomy_setup_contract_vo::{
+use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
+use crate::project_setup::taxonomy_setup_vo::SetupError;
+pub use crate::project_setup::taxonomy_setup_vo::{
     CreateConfigDirResult, McpBinaryNameVO, PackageManagerStatus, PreFlightResult,
     ProjectLanguageVO, ProjectLanguagesVO, WriteConfigResult,
 };
-use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
 pub type InstallPackagesResult = Result<(), SetupError>;
 

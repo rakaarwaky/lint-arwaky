@@ -12,7 +12,7 @@ use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::file_watch::taxonomy_diff_result_vo::GitDiffResultVO;
+use crate::file_watch::taxonomy_watch_config_vo::GitDiffResultVO;
 use crate::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
 use crate::git_hooks::taxonomy_hook_error::GitHookError;
 
