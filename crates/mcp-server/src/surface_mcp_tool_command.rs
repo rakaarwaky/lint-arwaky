@@ -6,7 +6,7 @@
 use rmcp::handler::server::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{
-    Implementation, ProtocolVersion, ServerCapabilities, ServerInfo, ToolsCapability,
+    Implementation, ProtocolVersion, ServerCapabilities, ServerConfig, ToolsCapability,
 };
 use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
@@ -96,11 +96,11 @@ impl LintArwakyMcpServer {
 
 #[tool_handler]
 impl ServerHandler for LintArwakyMcpServer {
-    fn get_info(&self) -> ServerInfo {
+    fn get_info(&self) -> ServerConfig {
         let mut builder = ServerCapabilities::builder();
         builder.tools = Some(ToolsCapability::default());
         let capabilities = builder.build();
-        ServerInfo::new(capabilities)
+        ServerConfig::new(capabilities)
             .with_server_info(Implementation::new(
                 "lint-arwaky",
                 env!("CARGO_PKG_VERSION"),
