@@ -400,6 +400,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **Adapter**: A wrapper around an external linter tool that normalizes its output to the unified LintResult format
 - **Language Detection**: Lightweight filesystem scan to determine which programming languages are present

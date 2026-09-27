@@ -7,7 +7,6 @@
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- CLI Commands FRD: `crates/cli-commands/FRD.md` (FR-012 git-diff command)
 - Config System FRD: `crates/config-system/FRD.md` (config resolution)
 - Project Setup FRD: `crates/project-setup/FRD.md` (config initialization)
 
@@ -424,6 +423,7 @@ FRD Ref: FR-GitHooks-007
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **Pre-commit hook**: A git hook that runs before a commit is finalized; can block the commit by exiting non-zero
 - **Lintable file**: A source code file that can be analyzed by lint-arwaky (.rs, .py, .ts, .js, .jsx, .tsx)

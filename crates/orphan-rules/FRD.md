@@ -409,6 +409,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - Surface files with unclassifiable suffixes are skipped (no orphan check performed).
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **Orphan**: A source file not transitively reachable from any entry point, or failing layer-specific consumer requirements
 - **Entry point**: A file that anchors the reachability graph (main, lib, container, entry, root)

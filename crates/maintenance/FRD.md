@@ -466,6 +466,7 @@ FRD Ref: FR-Maintenance-009
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **Toolchain**: The set of programming language tools (compilers, linters, formatters) installed on the system
 - **Dependency Report**: A listing of all project dependencies with name, version, and classification

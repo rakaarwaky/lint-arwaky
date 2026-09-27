@@ -8,7 +8,6 @@
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Quality Rules FRD: `crates/quality-rules/FRD.md` (AES304 bypass patterns)
-- CLI Commands FRD: `crates/cli-commands/FRD.md` (fix command)
 
 ## System Overview
 
@@ -308,6 +307,7 @@ FRD Ref: FR-AutoFix-004, FR-AutoFix-005
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **AES101**: Naming convention violation (e.g., non-snake_case symbols)
 - **AES203**: Unused import violation

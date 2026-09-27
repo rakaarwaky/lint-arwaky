@@ -236,6 +236,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer architecture framework
 - **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
 - **Suffix**: Last underscore-separated token in the filename indicating role (`vo`, `protocol`, `orchestrator`, `checker`, etc.)

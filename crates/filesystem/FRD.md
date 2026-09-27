@@ -514,6 +514,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 ---
 
 ## Glossary
+
 - **IFilesystemAggregate**: Composed trait: all 5 protocols + cache/orchestration accessors = 80 methods
 - **IParserProtocol**: AST parse results and import extraction queries
 - **IGraphProtocol**: Dependency graph, definitions, implementations, reachability, cycles, orphans

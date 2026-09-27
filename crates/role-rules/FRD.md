@@ -424,6 +424,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
 - **Smart surface**: Surface with `_command`, `_controller`, `_page`, `_entry`, `_router` suffix — may contain orchestration logic

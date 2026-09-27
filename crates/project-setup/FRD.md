@@ -7,9 +7,7 @@
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- CLI Commands FRD: `crates/cli-commands/FRD.md` (FR-009 MCP binary resolution)
 - Maintenance FRD: `crates/maintenance/FRD.md` (doctor, diagnose)
-- MCP Server FRD: `crates/mcp-server/FRD.md`
 
 ## System Overview
 
@@ -453,6 +451,7 @@ FRD Ref: FR-ProjectSetup-007
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **MCP**: Model Context Protocol — JSON-RPC standard for AI agent tool integration
 - **Adapter**: External linter binary (ruff, mypy, clippy, eslint, etc.)

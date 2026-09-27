@@ -473,6 +473,7 @@ FRD Ref: FR-ConfigSystem-009
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **ConfigLanguage**: Typed enum restricting language input to Rust, Python, TypeScript
 - **WorkspaceType**: Enum identifying project language from marker files

@@ -7,7 +7,6 @@
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- CLI Commands FRD: `crates/cli-commands/FRD.md` (consumer of report-formatter)
 - External Lint FRD: `crates/external-lint/FRD.md` (tool-native codes)
 
 ## System Overview
@@ -344,6 +343,7 @@ FRD Ref: FR-ReportFormatter-005, FR-ReportFormatter-006, FR-ReportFormatter-007
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **SARIF**: Static Analysis Results Interchange Format — OASIS standard for tool output
 - **JUnit XML**: XML format originally from JUnit, widely used for CI/CD test reporting

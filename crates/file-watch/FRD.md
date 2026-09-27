@@ -182,6 +182,7 @@ flowchart TD
 - The crate runs on the Tokio async runtime; must be compatible with both single-threaded and multi-threaded runtimes.
 
 ## Glossary
+
 - **Debounce**: Coalesce multiple rapid events into a single event after a quiet period.
 - **Lintable**: A file whose extension matches one of the supported linting targets.
 - **File Change Event**: A structured representation of a filesystem change event.

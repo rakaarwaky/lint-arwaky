@@ -358,6 +358,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 ---
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer architecture framework
 - **Bypass**: Any attempt to suppress, ignore, or work around warnings/errors (e.g.,`unwrap()`, `#[allow(...)]`, `noqa`, `FIXME`)
 - **Diagnostic**: Violation report with file location, rule code, severity, and message

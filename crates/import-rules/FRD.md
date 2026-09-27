@@ -390,6 +390,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - File walking, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the external filesystem crate. Import-rules consumes pre-parsed `ImportEntry` and `used_identifiers_for(path)` — no internal parsing for import/usage detection.
 
 ## Glossary
+
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **Layer**: Architectural boundary (taxonomy, contract, utility, capabilities, agent, surface, root)
 - **Diagnostic**: Violation report with file path, line, column, rule code, severity, and message
