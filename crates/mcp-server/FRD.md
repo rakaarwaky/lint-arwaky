@@ -2,6 +2,15 @@ FRD — mcp-server
 
 ---
 
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- CLI Commands FRD: `crates/cli-commands/FRD.md`
+- External Lint FRD: `crates/external-lint/FRD.md`
+- Config System FRD: `crates/config-system/FRD.md`
+
 ## System Overview
 
 The mcp-server crate implements a Model Context Protocol (MCP) server that
@@ -60,7 +69,7 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-001: Execute Command
+### FR-MCPSERVER-001: Execute Command
 
 - **Description**: Execute any lint-arwaky CLI-equivalent action via MCP with
   the same business outcome as the CLI.
@@ -119,7 +128,7 @@ flowchart TD
 
 ---
 
-### FR-002: List Commands
+### FR-MCPSERVER-002: List Commands
 
 - **Description**: List available CLI commands with descriptions and examples,
   optionally filtered by domain.
@@ -138,7 +147,7 @@ flowchart TD
 
 ---
 
-### FR-003: Read Skill
+### FR-MCPSERVER-003: Read Skill
 
 - **Description**: Read skill documentation by section from candidate
   locations.
@@ -157,7 +166,7 @@ flowchart TD
 
 ---
 
-### FR-004: Health Check
+### FR-MCPSERVER-004: Health Check
 
 - **Description**: Report adapter availability and server version.
 - **Input**: None.
@@ -179,7 +188,7 @@ flowchart TD
 
 ---
 
-### FR-005: Get Config
+### FR-MCPSERVER-005: Get Config
 
 - **Description**: Return the effective architecture configuration for a
   target path/language so agents can reason about rules, thresholds, and
@@ -204,7 +213,7 @@ flowchart TD
 
 ---
 
-### FR-006: MCP Protocol Registration
+### FR-MCPSERVER-006: MCP Protocol Registration
 
 - **Description**: Register all five tools and server metadata with the MCP
   framework.
@@ -225,115 +234,94 @@ flowchart TD
 
 ## API Contract
 
+### Protocol API
 
-| Operation       | Input                  | Output                           | Description                  |
-| ----------------- | ------------------------ | ---------------------------------- | ------------------------------ |
-| Execute command | action + args          | JSON + exit_code                 | CLI-parity action execution  |
-| List commands   | optional domain        | JSON command catalog             | Discover actions             |
-| Read skill      | optional section       | JSON content/error               | Documentation access         |
-| Health check    | none                   | JSON adapter status              | Environment health           |
-| Get config      | optional path/language | JSON effective config            | Agent-readable configuration |
-| Server info     | none                   | Server metadata                  | MCP handshake                |
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute_command` | Action string plus an optional argument map (`path`, `threshold`, `client`, `dry_run`, `format`, `member`, `base`, …) | JSON with `status`, `action`, `exit_code`, and action-specific fields | Unknown action → `error` + `exit_code: 2`; pipeline failure → `exit_code: 2`; missing scan tool → `exit_code: 3` | JSON-RPC tool call | Single composite entry point on the MCP tool surface: dispatches every allowlisted action to the same aggregates the CLI uses. |
+
+### Aggregate API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute_command` | Action string plus arguments | JSON with `exit_code` | Errors returned as JSON with `error` + `exit_code`; never a silent success | — | Route the action to the matching per-action executor. |
+| `execute_check` | Path (defaults to `.`) | JSON with violations and `exit_code` | `exit_code: 2` on pipeline failure | — | Run the full analysis pipeline over the target path. |
+| `execute_ci` | Path, threshold (default 80) | JSON with score and `exit_code` | `exit_code: 2` on pipeline failure | — | Run CI-mode analysis and compare the score against the threshold. |
+| `execute_fix` | Path, `dry_run` flag | JSON with applied, skipped, and failed counts | `exit_code: 2` on pipeline failure | — | Apply automatic safe fixes, honouring dry-run preview mode. |
+| `execute_quality` | Path | JSON with results and `exit_code` | `exit_code: 2` on invalid path | — | Run code-quality analysis only (AES301–305). |
+| `execute_import` | Path | JSON with results and `exit_code` | `exit_code: 2` on invalid path | — | Run import-rule analysis only (AES201–205). |
+| `execute_naming` | Path | JSON with results and `exit_code` | `exit_code: 2` on invalid path | — | Run naming-rule analysis only (AES101–102). |
+| `execute_role` | Path | JSON with results and `exit_code` | `exit_code: 2` on invalid path | — | Run role-rule analysis only (AES401–406). |
+| `execute_orphan` | Path | JSON with results and `exit_code` | `exit_code: 2` on invalid path | — | Run orphan detection only (AES501–506). |
+| `execute_external` | Path | JSON with results and `exit_code` | `exit_code: 2` on invalid path | — | Run external linter analysis. |
+| `execute_doctor` | — | JSON with toolchain diagnostics and `exit_code` | `exit_code: 2` on internal failure | — | Report toolchain diagnostics; exit 0 whenever the diagnostic completes. |
+| `execute_security` | Path | JSON with findings and `exit_code` | `exit_code: 3` when the scan tool is missing; `2` on scan failure | — | Run a vulnerability scan over the target project. |
+| `execute_dependencies` | Path | JSON with the dependency list and `exit_code` | `exit_code: 2` when the report cannot be produced | — | Produce the project dependency report. |
+| `execute_version` | — | JSON with the current version and `exit_code: 0` | None | — | Return the current lint-arwaky version. |
+| `execute_watch` | — | JSON with `unsupported` and `exit_code: 2` | Deferred until a long-lived MCP watch design exists | — | Report that the watch action is explicitly unsupported over MCP. |
+| `handle_health_check` | — | JSON with `version`, `adapters_available`, `adapters_total`, and per-adapter status | Spawn or `which` failure for a tool → that adapter marked `not_installed` | — | Report adapter availability and the server version; always `exit_code: 0`. |
+| `handle_list_commands` | Optional domain filter | JSON with `commands`, `total`, `exit_code: 0` | `exit_code: 2` on serialization failure | — | Return the command catalog, optionally filtered by domain. |
+| `handle_read_skill` | Optional section filter | JSON with `content` or `error`, plus `exit_code` | Not found → error plus the searched paths and `exit_code: 2` | — | Read skill documentation from the candidate locations. |
+| `handle_get_config` | Path, optional language hint | JSON with the effective config, source paths, warnings, and `exit_code` | Invalid path → `exit_code: 2`; no config file → embedded defaults with a warning | — | Return the effective architecture configuration for the target. |
 
 ---
 
 ## Integration Points
 
-- **Internal**:
-
-  - CLI command aggregates / analysis pipeline (same aggregates as CLI).
-  - `auto-fix`, `maintenance`, `git-hooks`, `project-setup`, `config-system`,
-    `external-lint` — operation aggregates via dispatcher.
-  - `shared` — taxonomy VOs and contracts.
-  - All linter aggregates receive data from the `filesystem` crate via
-    `IFilesystemAggregate` trait (same data flow as CLI).
-- **External**:
-
-  - MCP protocol library (JSON-RPC, tool registration).
-  - Host process environment (`which`, cargo, language toolchains).
-  - Tokio async runtime (via `rmcp`).
+| System | Direction | Purpose | Failure mode |
+| --- | --- | --- | --- |
+| `dispatcher` | in | All lint, fix, CI, setup, git, and maintenance actions via the `surface_*_action` modules | Action returns an error → mapped to the matching `exit_code` |
+| CLI command aggregates and analysis pipeline | in | The same aggregates the CLI uses, so every action has full CLI parity | Aggregate unavailable → error with `exit_code: 2` |
+| `auto-fix`, `maintenance`, `git-hooks`, `project-setup`, `config-system`, `external-lint` | in | Operation aggregates reached through the dispatcher | Aggregate returns an error → error field in the JSON response |
+| `shared` | in | Taxonomy VOs, contracts, and the static command catalog | Compile-time dependency; unavailable at build time |
+| `filesystem` | in | File read access for skill documentation only | File read failure treated as not found → `exit_code: 2` |
+| MCP protocol library (`rmcp`) | in | JSON-RPC framing and tool registration | Registration failure prevents server start (fail fast) |
+| Host process environment | in | `which`, cargo, and language toolchains resolved for the health check | Tool not found → that adapter reported `not_installed` |
+| Tokio async runtime | in | Hosts the stdio server loop and the async tool handlers | Runtime creation failure → server exits with a runtime error |
 
 ---
 
 ## Non-functional Requirements
 
-- **Performance**: `list_commands` / `read_skill` / `get_config` /
-  `health_check` under 5s typical. `execute_command` bounded by underlying
-  pipeline performance.
-- **Parity**: For every non-watch action, MCP and CLI produce equivalent
-  exit semantics and side effects.
-- **Concurrency**: MCP server runs on the Tokio async runtime (rmcp). Tool
-  handlers are `async fn`; concurrent requests are handled by the runtime.
-  File mutations (`fix`)
-  are serialized per path to prevent race conditions.
-- **Security**: Unknown actions never invoke arbitrary shell; only
-  allowlisted actions. Config secrets redacted in `get_config` response.
+| Metric | Target | Measurement method |
+| --- | --- | --- |
+| Lightweight tool latency | `list_commands`, `read_skill`, `get_config`, and `health_check` complete within 5s typically | Time each tool call against a local project |
+| `execute_command` latency | Bounded by the underlying pipeline performance | Time a full `check` action and compare against the same CLI run |
+| CLI parity | For every non-watch action, MCP and CLI produce equivalent exit semantics and side effects | Run each action through both surfaces and diff the resulting state and exit code |
+| Action safety | Unknown actions never invoke an arbitrary shell; only allowlisted actions run | Send an unknown action name and assert no subprocess is spawned |
+| Secret handling | Config secrets are redacted in the `get_config` response | Return a config containing secret-shaped values and assert they are masked |
+| Concurrency | Tool handlers are `async fn` on the Tokio runtime; file mutations (`fix`) are serialized per path | Run concurrent fix requests against one path and assert no interleaving corruption |
+| Action completeness | No placeholder success, no empty success without side effects, no "action + path only" stubs | Compare every allowlisted action's response against its CLI counterpart |
 
 ---
 
-
 ## Test Scenarios
 
-### SCEN-001 — Execute Command
-
-
-| # | Scenario                                      | Expected                            | Rule   |
-| --- | ----------------------------------------------- | ------------------------------------- | -------- |
-| 1 | `check`/`scan` returns violations + exit_code | Matches CLI on same fixture         | FR-001 |
-| 2 | `fix` applies real fixes (or dry-run report)  | No placeholder success              | FR-001 |
-| 3 | `install-hook` / `uninstall-hook`             | Changes hook state like CLI         | FR-001 |
-| 4 | `security` tool missing                       | exit_code 3                         | FR-001 |
-| 5 | Unknown action                                | Error + exit_code 2                 | FR-001 |
-| 6 | `watch` action                                | Explicit`unsupported` + exit_code 2 | FR-001 |
-| 7 | Files with parse failures             | Silently skipped, not counted as violations | FR-001 |
-| 8 | Missing path argument                         | Defaults to "."                     | FR-001 |
-| 9 | `version` action                              | Version info + exit_code 0          | FR-001 |
-| 10 | `adapters` action                             | Delegates to health check           | FR-001 |
-
-### SCEN-002 — List Commands
-
-
-| # | Scenario                | Expected                | Rule   |
-| --- | ------------------------- | ------------------------- | -------- |
-| 1 | List without filter     | Full command catalog    | FR-002 |
-| 2 | List with domain filter | Filtered subset         | FR-002 |
-| 3 | No matches              | Empty commands, total 0 | FR-002 |
-
-### SCEN-003 — Read Skill
-
-
-| # | Scenario              | Expected                            | Rule   |
-| --- | ----------------------- | ------------------------------------- | -------- |
-| 1 | Read full skill       | Content returned                    | FR-003 |
-| 2 | Read specific section | Section content returned            | FR-003 |
-| 3 | Missing skill         | Error + searched paths, exit_code 2 | FR-003 |
-| 4 | Missing section       | Error, exit_code 2                  | FR-003 |
-
-### SCEN-004 — Health Check
-
-
-| # | Scenario                 | Expected                                | Rule   |
-| --- | -------------------------- | ----------------------------------------- | -------- |
-| 1 | All adapters installed    | All adapters available, exit_code 0     | FR-004 |
-| 2 | Some adapters missing     | Correct status per adapter, exit_code 0 | FR-004 |
-| 3 | All adapters missing      | adapters_available 0, exit_code 0       | FR-004 |
-
-### SCEN-005 — Get Config
-
-
-| # | Scenario           | Expected                                 | Rule   |
-| --- | -------------------- | ------------------------------------------ | -------- |
-| 1 | Config file exists | Effective config returned                | FR-005 |
-| 2 | No config file     | Embedded defaults + warning, exit_code 0 | FR-005 |
-| 3 | Invalid path       | exit_code 2                              | FR-005 |
-
-### SCEN-006 — Protocol Registration
-
-
-| # | Scenario       | Expected                        | Rule   |
-| --- | ---------------- | --------------------------------- | -------- |
-| 1 | MCP tools/list | Exactly 5 tools returned        | FR-006 |
-| 2 | Server info    | Name, version, protocol version | FR-006 |
+- A `check` or `scan` action returns the violations and an `exit_code` matching the CLI on the same fixture.
+- A `fix` action applies real fixes, or reports the dry-run preview, with no placeholder success.
+- An `install-hook` or `uninstall-hook` action changes the hook state the same way the CLI does.
+- A `security` action with the scan tool missing returns `exit_code: 3`.
+- An unknown action returns an error with `exit_code: 2`.
+- A `watch` action returns an explicit `unsupported` status with `exit_code: 2`.
+- Files with parse failures are silently skipped and are not counted as violations.
+- A missing `path` argument defaults to `.`.
+- A `version` action returns the version information with `exit_code: 0`.
+- An `adapters` action delegates to the health check handler and reports the same adapter status.
+- Listing commands without a filter returns the full command catalog.
+- Listing commands with a domain filter returns the filtered subset.
+- Listing commands with a filter that matches nothing returns an empty command list with `total: 0`.
+- Reading a full skill returns its content.
+- Reading a specific section returns only that section's content.
+- Reading a missing skill returns an error with the searched paths and `exit_code: 2`.
+- Reading a missing section returns an error with `exit_code: 2`.
+- A health check with all adapters installed reports every adapter as available with `exit_code: 0`.
+- A health check with some adapters missing reports the correct per-adapter status with `exit_code: 0`.
+- A health check with all adapters missing reports `adapters_available: 0` with `exit_code: 0`.
+- A `get_config` call on a project with a config file returns the effective config.
+- A `get_config` call with no config file returns the embedded defaults plus a warning with `exit_code: 0`.
+- A `get_config` call on an invalid path returns `exit_code: 2`.
+- An MCP tools list returns exactly 5 tools.
+- The server info response carries the name, version, and protocol version.
 
 ---
 
@@ -352,23 +340,11 @@ flowchart TD
 
 ## Glossary
 
-
-| Term                   | Definition                                                                                    |
-| ------------------------ | ----------------------------------------------------------------------------------------------- |
-| **AES**                | Agentic Engineering System — the 7-layer coding convention                                   |
-| **MCP**                | Model Context Protocol — JSON-RPC standard for AI agent tools                                |
-| **Parity**             | Same business outcome for an action via CLI or MCP                                            |
-| **Exit Code Contract** | 0 ok, 1 policy fail, 2 runtime error, 3 prerequisite missing                                  |
-| **Parse skip**         | Files that fail to parse are skipped by the underlying analyzers; no separate warning diagnostic is emitted. |
-| **stdio**              | Standard input/output transport for MCP JSON-RPC communication                                |
+- **AES**: Agentic Engineering System — the 7-layer coding convention.
+- **MCP**: Model Context Protocol — JSON-RPC standard for AI agent tools.
+- **Parity**: The same business outcome for an action whether it is invoked via the CLI or MCP.
+- **Exit Code Contract**: 0 ok, 1 policy fail, 2 runtime error, 3 prerequisite missing.
+- **Parse skip**: Files that fail to parse are skipped by the underlying analyzers; no separate warning diagnostic is emitted.
+- **stdio**: Standard input/output transport for MCP JSON-RPC communication.
 
 ---
-
-## Reference
-
-- PRD: [PRD.md](../../PRD.md)
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this crate; this file is specification only.
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- CLI Commands FRD: `crates/cli-commands/FRD.md`
-- External Lint FRD: `crates/external-lint/FRD.md`
-- Config System FRD: `crates/config-system/FRD.md`

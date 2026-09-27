@@ -2,6 +2,12 @@
 
 ---
 
+## Reference
+
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+
 ## System Overview
 
 The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, and TSC on Rust, Python, and JS/TS files. It normalizes their JSON/text reports into the unified lint-arwaky violation format using **tool-native rule codes** (e.g., `clippy::needless_return`, `ruff::E501`) and integrates them into the compliance report.
@@ -40,7 +46,7 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-001: Detect Project Languages
+### FR-EXTERNALLINT-001: Detect Project Languages
 
 - **Description**: Determine which languages (Rust, Python, JS/TS) are present in the project using a lightweight extension walk via the filesystem aggregate's `discover_files()`.
 - **Input**: Filesystem aggregate reference.
@@ -60,7 +66,7 @@ flowchart TD
 
 ---
 
-### FR-002: Select Adapters by Language
+### FR-EXTERNALLINT-002: Select Adapters by Language
 
 - **Description**: Based on detected languages, select the appropriate set of linter adapters to run.
 - **Input**: Booleans `has_rust`, `has_python`, `has_js`.
@@ -80,7 +86,7 @@ flowchart TD
 
 ---
 
-### FR-003: Execute Scan Across Adapters
+### FR-EXTERNALLINT-003: Execute Scan Across Adapters
 
 - **Description**: Run all selected adapters one after another in adapter-list order, aggregating results. The orchestrator optionally filters adapters by configuration entries and post-filters results by ignored paths.
 - **Input**: Target path, optional context (config entries, ignored paths).
@@ -104,7 +110,7 @@ flowchart TD
 
 ---
 
-### FR-004: Apply Auto-Fix via Adapters
+### FR-EXTERNALLINT-004: Apply Auto-Fix via Adapters
 
 - **Description**: Run an external linter tool's native fix command for a specific file, returning whether the fix succeeded.
 - **Input**: Tool name, file path, fix argument (e.g., `--fix`, `--write`).
@@ -127,7 +133,7 @@ flowchart TD
 
 ---
 
-### FR-005: Normalize External Tool Output
+### FR-EXTERNALLINT-005: Normalize External Tool Output
 
 - **Description**: Each adapter normalizes its external tool's stdout/JSON output into `LintResult` structs compatible with the unified lint-arwaky format. Rule codes use **tool-native identifiers** (e.g., `clippy::needless_return`, `ruff::E501`).
 - **Input**: Raw output from external linter subprocess (JSON or text).
@@ -198,7 +204,7 @@ flowchart TD
 
 ---
 
-### FR-006: Execute Subprocess Commands
+### FR-EXTERNALLINT-006: Execute Subprocess Commands
 
 - **Description**: Run external linter tools as subprocesses with timeout, stdout/stderr capture, and error mapping.
 - **Input**: Command args, working directory (optional), timeout, adapter name.
@@ -221,7 +227,7 @@ flowchart TD
 
 ---
 
-### FR-007: Resolve JS Tool Paths
+### FR-EXTERNALLINT-007: Resolve JS Tool Paths
 
 - **Description**: For JS/TS tools, prefer local `node_modules/.bin/` binaries over global installations.
 - **Input**: Tool name, arguments, working directory.
@@ -242,7 +248,7 @@ flowchart TD
 
 ---
 
-### FR-008: Resolve Cargo Working Directory
+### FR-EXTERNALLINT-008: Resolve Cargo Working Directory
 
 - **Description**: For Rust tools (clippy, rustfmt, cargo-audit), find the directory containing `Cargo.toml` or `Cargo.lock`.
 - **Input**: Target path.
@@ -262,109 +268,93 @@ flowchart TD
 
 ## API Contract
 
-| Operation                     | Input                                     | Output                    | Purpose                                                                    |
-| ------------------------------- | ------------------------------------------- | --------------------------- | ---------------------------------------------------------------------------- |
-| Full external lint scan       | Target path, context                      | Lint results              | Select adapters, run all sequentially, filter by ignored paths            |
-| Apply auto-fix                | Tool name, file path, fix arg              | Compliance status         | Run external tool's native fix command                                    |
-| Detect project languages      | Filesystem aggregate                       | Language booleans         | Determine which languages are present                                     |
-| Select adapters               | Language booleans                          | Adapter list              | Select adapters based on detected languages                               |
-| Execute subprocess            | Command args, working directory, timeout   | Subprocess result         | Run external tool as subprocess with timeout and error mapping            |
-| Resolve JS tool path          | Tool name, arguments, working dir          | Resolved command          | Resolve JS tool with local node_modules/.bin fallback                     |
-| Resolve Cargo working dir     | Target path                                | Working directory or none | Find directory containing Cargo.toml, or skip adapter                     |
+### Protocol API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | `ExternalLintRequest` | `ExternalLintResponse` | Adapter failures carried as warnings inside the response | — | Single composite entry point on the external lint protocol trait, dispatching every request variant to the orchestrator's adapters. |
+
+### Aggregate API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | `ExternalLintRequest` | `ExternalLintResponse` | Adapter failures carried as warnings | — | Dispatch a typed external lint request to the matching capability. |
+| `scan_all` | `FilePath` | `LintResultList` | Missing tools warn; scan continues with available adapters | — | Select adapters for the detected languages and run them all sequentially. |
+| `scan_all_with_context` | `FilePath`, `ExternalLintContext` | `LintResultList` | Config-restricted adapter names warn; scan continues | — | Run the scan with an explicit language, config, and ignored-path context. |
+| `adapter_names` | — | `AdapterNameList` | None | — | Return the names of the adapters available for selection. |
 
 ---
 
 ## Integration Points
 
-- **Internal**:
-
-  - Linter adapter protocol — interface for all linter adapters (scan + apply_fix).
-  - External lint aggregate — aggregate trait for the dispatcher.
-  - External lint selector protocol — adapter selection by language.
-  - Command executor protocol — protocol for subprocess execution.
-  - External lint executor protocol — executor with error mapping for Python/JS adapters.
-- **External**:
-
-  - **`filesystem` crate** — provides language detection via file extension walk, JS tool resolution, Cargo working directory resolution, and ignored-paths filtering.
-  - `cargo clippy` — Rust idiom, performance, and style linting + auto-fix.
-  - `rustfmt --check` / `cargo fmt` — Rust formatting verification + auto-fix.
-  - `cargo audit --json` — Rust dependency vulnerability auditing.
-  - `ruff check` — Python linting + auto-fix.
-  - `mypy` — Python static type checking.
-  - `bandit -r` — Python security vulnerability scanning.
-  - `eslint` — JavaScript/TypeScript linting + auto-fix.
-  - `prettier --check` / `prettier --write` — JavaScript/TypeScript formatting verification + auto-fix.
-  - `tsc --noEmit` — TypeScript type checking.
+| System | Direction | Purpose | Failure mode |
+| --- | --- | --- | --- |
+| Linter adapter protocol | in | Interface every linter adapter implements (scan + apply fix) | Missing protocol impl → construction error |
+| External lint aggregate | in | Aggregate trait consumed by the dispatcher | Aggregate unavailable → no external findings |
+| External lint selector protocol | in | Selects adapters by detected language | Selection failure → empty adapter list |
+| Command executor protocol | in | Subprocess execution with timeout and error mapping | Spawn failure → adapter skipped with warning; timeout → adapter error |
+| External lint executor protocol | in | Executor with error mapping for the Python and JS adapters | Parse failure → empty results with warning |
+| `filesystem` crate | in | Language detection via file extension walk, JS tool path resolution, Cargo working directory resolution, and ignored-path filtering | Tool not found locally → falls back to global PATH; no Cargo manifest in hierarchy → adapter skipped with warning |
+| `cargo clippy` | in | Rust idiom, performance, and style linting with auto-fix | Binary not installed → warning printed, other adapters continue |
+| `rustfmt --check` / `cargo fmt` | in | Rust formatting verification with auto-fix | Binary not installed → warning printed, other adapters continue |
+| `cargo audit --json` | in | Rust dependency vulnerability auditing | Binary not installed → warning printed, other adapters continue |
+| `ruff check` | in | Python linting with auto-fix | Binary not installed → warning printed, other adapters continue |
+| `mypy` | in | Python static type checking | Binary not installed → warning printed, other adapters continue |
+| `bandit -r` | in | Python security vulnerability scanning | Binary not installed → warning printed, other adapters continue |
+| `eslint` | in | JavaScript/TypeScript linting with auto-fix | Binary not installed → warning printed, other adapters continue |
+| `prettier --check` / `prettier --write` | in | JavaScript/TypeScript formatting verification with auto-fix | Binary not installed → warning printed, other adapters continue |
+| `tsc --noEmit` | in | TypeScript type checking | Binary not installed → warning printed, other adapters continue |
 
 ---
 
 ## Non-functional Requirements
 
-- **Performance**: All adapters run sequentially; total scan time is the sum of adapter times. Language detection is O(n) in file count.
-- **Memory**: Each adapter's results are collected in Vec. JSON parsing loads full tool output into memory. No thread overhead.
-- **Accuracy**: Severity mapping is tool-specific (see FR-005 table). Unknown tool severities default to MEDIUM. Tool-native rule codes preserve full diagnostic information.
-- **Concurrency**: Sequential execution. No threads, no async runtime dependency.
+| Metric | Target | Measurement method |
+| --- | --- | --- |
+| Scan execution model | Adapters run sequentially; total scan time is the sum of adapter times | Time a full multi-language scan and compare to the sum of individual adapter times |
+| Language detection cost | O(n) in file count | Measure detection on directories of increasing file count |
+| Memory per adapter | Results collected in a Vec; no thread overhead | Peak memory per adapter measured in isolation |
+| JSON parsing | Full tool output loaded into memory | Confirm no streaming or truncation on large JSON outputs |
+| Unknown severity | Defaults to MEDIUM | Run each tool and verify unknown severities map to MEDIUM |
+| Rule code fidelity | Tool-native rule codes preserve full diagnostic information | Run each tool and assert the rule code is unchanged from its native output |
+| Subprocess timeout | Default 60s for Python/JS adapters; 120–180s for Rust adapters | Inject a slow adapter and confirm it is killed at the configured limit |
 
 ---
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
-### Language Detection & Adapter Selection
-
-| # | Scenario                        | Expected                              | Rule       |
-| --- | --------------------------------- | --------------------------------------- | ------------ |
-| 1 | Rust-only project               | Only clippy, rustfmt, cargo-audit run | FR-001/002 |
-| 2 | Python-only project             | Only ruff, mypy, bandit run           | FR-001/002 |
-| 3 | JS-only project                 | Only eslint, prettier, tsc run        | FR-001/002 |
-| 4 | Multi-language project          | All 9 adapters run                    | FR-001/002 |
-| 5 | Empty directory                 | No adapters run, empty result list    | FR-001/002 |
-| 6 | Single .rs file path            | Only Rust adapters run                | FR-001/002 |
-
-### Adapter Execution
-
-| # | Scenario                                      | Expected                                          | Rule   |
-| --- | ----------------------------------------------- | --------------------------------------------------- | -------- |
-| 1 | Adapter binary not installed                  | Warning printed, other adapters continue          | FR-003 |
-| 2 | Adapter produces JSON output                  | Correctly parsed into LintResult                  | FR-005 |
-| 3 | Adapter produces empty output                 | Empty result list                                 | FR-005 |
-| 4 | All adapters fail                             | Returns empty result list with warnings           | FR-003 |
-| 5 | One adapter fails                             | Other adapters still run                          | FR-003 |
-| 6 | Timeout exceeded                              | Adapter returns error, others continue            | FR-006 |
-| 7 | Sequential execution                         | Adapters run one after another                    | FR-003 |
-
-### Auto-Fix
-
-| # | Scenario                        | Expected                          | Rule   |
-| --- | --------------------------------- | ----------------------------------- | -------- |
-| 1 | ESLint fix                     | `eslint --fix` executed           | FR-004 |
-| 2 | Prettier fix                   | `prettier --write` executed       | FR-004 |
-| 3 | Ruff fix                       | `ruff check --fix` executed       | FR-004 |
-| 4 | Clippy fix                     | `cargo clippy --fix` executed     | FR-004 |
-| 5 | Rustfmt fix                    | `cargo fmt` executed              | FR-004 |
-| 6 | TSC/MyPy/Bandit/audit fix      | No-op (no auto-fix capability)    | FR-004 |
-
-### Normalization
-
-| # | Scenario                           | Expected                                        | Rule   |
-| --- | ------------------------------------ | ------------------------------------------------- | -------- |
-| 1 | Clippy `correctness` lint          | Severity CRITICAL, code `clippy::<name>`        | FR-005 |
-| 2 | Clippy `style` lint                | Severity MEDIUM                                 | FR-005 |
-| 3 | Ruff `E501` (line too long)        | Severity LOW, code `ruff::E501`                 | FR-005 |
-| 4 | Ruff `S105` (hardcoded password)   | Severity CRITICAL, code `ruff::S105`            | FR-005 |
-| 5 | ESLint severity 2 (error)          | Severity HIGH, code `eslint::<rule>`            | FR-005 |
-| 6 | cargo-audit critical vulnerability | Severity CRITICAL, code `cargo-audit::RUSTSEC-*`| FR-005 |
-| 7 | Tool produces invalid JSON         | Empty results, warning logged                   | FR-005 |
-| 8 | Relative file path in tool output  | Canonicalized to absolute path                  | FR-005 |
-
-### Tool Path Resolution
-
-| # | Scenario                             | Expected                                   | Rule   |
-| --- | -------------------------------------- | -------------------------------------------- | -------- |
-| 1 | JS tool found in node_modules/.bin   | Local binary used                          | FR-007 |
-| 2 | JS tool not found locally            | Global PATH fallback used                  | FR-007 |
-| 3 | JS tool not found anywhere           | Error at execution                         | FR-007 |
-| 4 | Cargo.toml found in parent directory | Cargo tools use that directory             | FR-008 |
-| 5 | No Cargo.toml in hierarchy           | Adapter skipped with warning               | FR-008 |
+- A Rust-only project runs only the clippy, rustfmt, and cargo-audit adapters.
+- A Python-only project runs only the ruff, mypy, and bandit adapters.
+- A JavaScript-only project runs only the eslint, prettier, and tsc adapters.
+- A multi-language project runs all 9 adapters.
+- An empty directory runs no adapters and returns an empty result list.
+- A single Rust source file path runs only the Rust adapters.
+- An adapter whose binary is not installed prints a warning and the other adapters continue.
+- An adapter producing JSON output is parsed into the unified lint result.
+- An adapter producing empty output yields an empty result list.
+- A run where all adapters fail returns an empty result list with warnings.
+- A run where one adapter fails still runs the other adapters.
+- An adapter exceeding its timeout returns an error and the other adapters continue.
+- Adapters execute sequentially, one after another.
+- An ESLint fix executes the tool's native fix command.
+- A Prettier fix executes the tool's write command.
+- A Ruff fix executes the tool's check-and-fix command.
+- A Clippy fix executes the tool's fix command.
+- A Rustfmt fix executes the tool's format command.
+- A fix request for tsc, mypy, bandit, or cargo-audit is a no-op since those tools have no auto-fix capability.
+- A Clippy `correctness` lint maps to CRITICAL severity with a `clippy::` prefixed rule name.
+- A Clippy `style` lint maps to MEDIUM severity.
+- A Ruff `E501` finding (line too long) maps to LOW severity with code `ruff::E501`.
+- A Ruff `S105` finding (hardcoded password) maps to CRITICAL severity with code `ruff::S105`.
+- An ESLint severity 2 (error) maps to HIGH severity with a `eslint::` prefixed rule name.
+- A cargo-audit critical vulnerability maps to CRITICAL severity with a `cargo-audit::RUSTSEC-*` code.
+- A tool producing invalid JSON yields empty results and logs a warning.
+- A relative file path in tool output is canonicalized to an absolute path.
+- A JavaScript tool found in the local binary directory uses the local binary.
+- A JavaScript tool not found locally falls back to the global PATH.
+- A JavaScript tool not found anywhere raises an error at execution time.
+- A Cargo manifest found in a parent directory makes the Cargo tools use that directory.
+- No Cargo manifest in the directory hierarchy skips the adapter with a warning.
 
 ---
 
@@ -383,21 +373,13 @@ flowchart TD
 
 ## Glossary
 
-| Term                   | Definition                                                                                              |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| **AES**                | Agentic Engineering System — the 7-layer coding convention                                             |
-| **Adapter**            | A wrapper around an external linter tool that normalizes its output to the unified LintResult format    |
-| **Language Detection** | Lightweight filesystem scan to determine which programming languages are present                       |
-| **Canonicalize**       | Resolve a relative file path to its absolute path                                                       |
-| **Normalization**      | Convert tool-specific severity/message/line/code format to the unified LintResult format                |
-| **Tool-native code**   | Rule identifier using the original tool's naming (e.g., `clippy::needless_return`, `ruff::E501`)         |
-| **Subprocess**         | External process spawned via `std::process::Command` to run a linter tool                               |
-| **Auto-fix**           | Running an external tool's native fix command to automatically correct violations                      |
+- **AES**: Agentic Engineering System — the 7-layer coding convention.
+- **Adapter**: A wrapper around an external linter tool that normalizes its output to the unified lint result format.
+- **Language Detection**: Lightweight filesystem scan to determine which programming languages are present.
+- **Canonicalize**: Resolve a relative file path to its absolute path.
+- **Normalization**: Convert a tool-specific severity, message, line, and code format to the unified lint result format.
+- **Tool-native code**: Rule identifier using the original tool's naming (e.g., `clippy::needless_return`, `ruff::E501`).
+- **Subprocess**: External process spawned via `std::process::Command` to run a linter tool.
+- **Auto-fix**: Running an external tool's native fix command to automatically correct violations.
 
 ---
-
-## Reference
-
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)

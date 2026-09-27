@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,13 +16,13 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| GITH-01 | FR-001 | SCEN-001 - Git Diff Detection — 10 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| GITH-02 | FR-002 | SCEN-002 - Hook Installation — 7 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| GITH-03 | FR-003 | SCEN-003 - Hook Uninstallation — 3 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| GITH-04 | FR-004 | SCEN-004 - Check Execution — 4 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| GITH-05 | FR-005 | SCEN-005 - Diff Data Comparison — 7 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| GITH-06 | FR-006 | SCEN-006 - Ignore Rule Management — 4 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| GITH-07 | FR-007 | SCEN-007 - Config Initialization — 3 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| GITH-01 | FR-GITHOOKS-001 | SCEN-001 - Git Diff Detection — 10 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| GITH-02 | FR-GITHOOKS-002 | SCEN-002 - Hook Installation — 7 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| GITH-03 | FR-GITHOOKS-003 | SCEN-003 - Hook Uninstallation — 3 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| GITH-04 | FR-GITHOOKS-004 | SCEN-004 - Check Execution — 4 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| GITH-05 | FR-GITHOOKS-005 | SCEN-005 - Diff Data Comparison — 7 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| GITH-06 | FR-GITHOOKS-006 | SCEN-006 - Ignore Rule Management — 4 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| GITH-07 | FR-GITHOOKS-007 | SCEN-007 - Config Initialization — 3 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

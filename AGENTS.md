@@ -217,7 +217,7 @@ See [PRD.md](PRD.md#exit-code-contract) for full details.
 
 - [PRD.md](PRD.md): What the product does and why — feature tiers, exit codes, non-functional goals.
 - [ARCHITECTURE.md](ARCHITECTURE.md): The full 7-layer AES specification and naming rules.
-- [BACKLOG.md](BACKLOG.md): Real condition — what is done, what is in flight, with re-runnable evidence.
+- [ROADMAP.md](ROADMAP.md): Real condition — what is done, what is in flight, with re-runnable evidence.
 - [TEST.md](TEST.md): Test workspaces and pass/fail criteria.
 - [CONTRIBUTING.md](CONTRIBUTING.md): Setup, code style, and PR process.
 - [DEPLOY.md](DEPLOY.md): MCP client setup and release deployment.

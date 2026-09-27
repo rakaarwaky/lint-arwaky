@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,13 +16,13 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| PROJ-01 | FR-001 | SCEN-001 - MCP Config — 10 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| PROJ-02 | FR-002 | SCEN-002 - Env File — 2 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| PROJ-03 | FR-003 | SCEN-003 - Language Detection — 6 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| PROJ-04 | FR-004 | SCEN-004 - Adapter Installation — 6 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| PROJ-05 | FR-005 | SCEN-005 - Config Template — 5 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| PROJ-06 | FR-006 | SCEN-006 - Config Writing — 3 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| PROJ-07 | FR-007 | SCEN-007 - Pre-flight Check — 2 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| PROJ-01 | FR-PROJECTSETUP-001 | SCEN-001 - MCP Config — 10 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| PROJ-02 | FR-PROJECTSETUP-002 | SCEN-002 - Env File — 2 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| PROJ-03 | FR-PROJECTSETUP-003 | SCEN-003 - Language Detection — 6 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| PROJ-04 | FR-PROJECTSETUP-004 | SCEN-004 - Adapter Installation — 6 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| PROJ-05 | FR-PROJECTSETUP-005 | SCEN-005 - Config Template — 5 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| PROJ-06 | FR-PROJECTSETUP-006 | SCEN-006 - Config Writing — 3 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| PROJ-07 | FR-PROJECTSETUP-007 | SCEN-007 - Pre-flight Check — 2 scenarios verified | P0 | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

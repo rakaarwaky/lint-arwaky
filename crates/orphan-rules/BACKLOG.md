@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,16 +16,16 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| ORPH-01 | FR-001 | Core Detection — 6 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-02 | FR-002 | Barrel Files — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-03 | FR-003 | AES501 - Taxonomy Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-04 | FR-004 | AES502 - Contract Orphan — 6 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-05 | FR-005 | AES503 - Capabilities Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-06 | FR-006 | AES504 - Utility Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-07 | FR-007 | AES505 - Agent Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-08 | FR-008 | AES506 - Surface Orphan — 7 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-09 | FR-009 | Configuration — 5 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ORPH-10 | FR-010 | Performance — 2 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-01 | FR-ORPHANRULES-001 | Core Detection — 6 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-02 | FR-ORPHANRULES-002 | Barrel Files — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-03 | FR-ORPHANRULES-003 | AES501 - Taxonomy Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-04 | FR-ORPHANRULES-004 | AES502 - Contract Orphan — 6 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-05 | FR-ORPHANRULES-005 | AES503 - Capabilities Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-06 | FR-ORPHANRULES-006 | AES504 - Utility Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-07 | FR-ORPHANRULES-007 | AES505 - Agent Orphan — 4 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-08 | FR-ORPHANRULES-008 | AES506 - Surface Orphan — 7 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-09 | FR-ORPHANRULES-009 | Configuration — 5 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ORPH-10 | FR-ORPHANRULES-010 | Performance — 2 scenarios verified | P0 | Done | `cargo test -p orphan_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

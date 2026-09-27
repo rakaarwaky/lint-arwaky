@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,15 +16,21 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| EXTE-01 | FR-001 | Adapter Execution — 7 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| EXTE-02 | FR-002 | Auto-Fix — 6 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| EXTE-03 | FR-003 | Normalization — 8 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| EXTE-04 | FR-004 | Tool Path Resolution — 5 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| EXTE-01 | FR-EXTERNALLINT-001 | Adapter Execution — 7 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| EXTE-02 | FR-EXTERNALLINT-002 | Auto-Fix — 6 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| EXTE-03 | FR-EXTERNALLINT-003 | Normalization — 8 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| EXTE-04 | FR-EXTERNALLINT-004 | Tool Path Resolution — 5 scenarios verified | P0 | Done | `cargo test -p external_lint --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 
 | Scenario | Kind | Test file | Test name | Last verified |
 |---|---|---|---|---|
+| Rust-only project | Only clippy, rustfmt, cargo-audit run | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
+| Python-only project | Only ruff, mypy, bandit run | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
+| JS-only project | Only eslint, prettier, tsc run | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
+| Multi-language project | All 9 adapters run | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
+| Empty directory | No adapters run, empty result list | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
+| Single .rs file path | Only Rust adapters run | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
 | Adapter binary not installed | Warning printed, other adapters continu… | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
 | Adapter produces JSON output | Correctly parsed into LintResult | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |
 | Adapter produces empty output | Empty result list | Automated | `tests/external-lint/` | cargo test -p external_lint | `29c71083` |

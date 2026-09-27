@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-27
 
 ## Current Condition
@@ -16,15 +16,15 @@ Last Updated: 2026-09-27
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| MAIN-01 | FR-001 | SCEN-001 - Doctor — 5 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-02 | FR-002 | SCEN-002 - Stats — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-03 | FR-003 | SCEN-003 - Clean — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-04 | FR-004 | SCEN-004 - Update — 2 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-05 | FR-005 | SCEN-005 - Diagnose — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-06 | FR-006 | SCEN-006 - Security — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-07 | FR-007 | SCEN-007 - Dependencies — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-08 | FR-008 | SCEN-008 - Adapter Health Check — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-09 | FR-009 | Self-update: query GitHub release, install binary when newer | P1 | Done | Implemented at `feat/maintenance-update-cmd` — `update` subcommand + `--check-only` flag | @raka | None | 2026-09-27 |
+| MAIN-01 | FR-MAINTENANCE-001 | SCEN-001 - Doctor — 5 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-02 | FR-MAINTENANCE-002 | SCEN-002 - Stats — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-03 | FR-MAINTENANCE-003 | SCEN-003 - Clean — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-04 | FR-MAINTENANCE-004 | SCEN-004 - Update — 2 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-05 | FR-MAINTENANCE-005 | SCEN-005 - Diagnose — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-06 | FR-MAINTENANCE-006 | SCEN-006 - Security — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-07 | FR-MAINTENANCE-007 | SCEN-007 - Dependencies — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-08 | FR-MAINTENANCE-008 | SCEN-008 - Adapter Health Check — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-09 | FR-MAINTENANCE-009 | Self-update: query GitHub release, install binary when newer | P1 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17); `update` subcommand with `--check-only` flag | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 
@@ -62,6 +62,7 @@ Last Updated: 2026-09-27
 | Latest release equals current | `already_up_to_date` = true, no install | Automated | `tests/unit_shared_maintenance.rs` | cargo test -p shared | `2026-09-27` |
 | API unreachable | `latest_version` empty, status starts with `Error:` | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance | `2026-09-27` |
 | `check_only` flag set | No download performed | Manual | `./lint-arwaky-cli update --check-only` | CLI smoke test | `2026-09-27` |
+| Local version ahead of release | `already_up_to_date` = true, no install | Gap | — | — | — |
 
 ## Blockers
 
@@ -88,4 +89,4 @@ None
 | Date | Change | By |
 |---|---|---|
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
-| 2026-09-27 | Added FR-009: self-update — GitHub release query + binary install | @raka |
+| 2026-09-27 | Added FR-MAINTENANCE-009: self-update — GitHub release query + binary install | @raka |
