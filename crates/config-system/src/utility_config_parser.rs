@@ -65,9 +65,9 @@ pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
 /// ```
 pub fn parse_adapter_entries_from_yaml(
     yaml_str: &str,
-) -> Vec<shared::config_system::taxonomy_setting_vo::AdapterEntry> {
+) -> Vec<shared::config_system::taxonomy_config_vo::AdapterEntry> {
     use shared::common::taxonomy_adapter_name_vo::AdapterName;
-    use shared::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus};
+    use shared::config_system::taxonomy_config_vo::{AdapterEntry, AdapterStatus};
     let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
         Ok(v) => v,
         Err(_) => return Vec::new(),

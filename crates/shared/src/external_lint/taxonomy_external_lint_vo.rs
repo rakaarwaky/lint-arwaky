@@ -3,7 +3,7 @@
 // Contains all data the orchestrator needs to run adapter scans without performing
 // any filesystem I/O. The surface layer computes this context before delegation.
 
-use crate::config_system::taxonomy_setting_vo::AdapterEntry;
+use crate::config_system::taxonomy_config_vo::AdapterEntry;
 
 /// Pre-computed context for external lint scan.
 /// Passed from surface layer to orchestrator to eliminate agent-layer I/O.
