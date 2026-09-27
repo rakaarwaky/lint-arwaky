@@ -3,7 +3,8 @@
 
 pub mod contract_filesystem_aggregate;
 pub mod contract_filesystem_protocol;
-pub mod taxonomy_filesystem_request_vo;
+pub mod taxonomy_filesystem_request;
+pub mod taxonomy_filesystem_response;
 pub mod taxonomy_filesystem_vo;
 
 pub use contract_filesystem_protocol::IFileSystemIOProtocol;
@@ -11,7 +12,8 @@ pub use contract_filesystem_protocol::IGraphProtocol;
 pub use contract_filesystem_protocol::IParserProtocol;
 pub use contract_filesystem_protocol::IToolResolutionProtocol;
 pub use contract_filesystem_protocol::IWorkspaceProtocol;
-pub use taxonomy_filesystem_request_vo::{FilesystemRequest, FilesystemResponse};
+pub use taxonomy_filesystem_request::FilesystemRequest;
+pub use taxonomy_filesystem_response::FilesystemResponse;
 
 // ─── Re-exports ────────────────────────────────────────────
 

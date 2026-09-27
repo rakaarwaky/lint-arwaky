@@ -11,9 +11,7 @@ use shared_lint_arwaky::cli_commands::taxonomy_protocol_vo::{
 use shared_lint_arwaky::cli_commands::taxonomy_scan_report_vo::{
     DiagnosticSeverity, PipelineDiagnostic, PipelineError, ScanReport,
 };
-use shared_lint_arwaky::cli_commands::taxonomy_scan_request_vo::{
-    ScanMode, ScanRequest, ScanTarget,
-};
+use shared_lint_arwaky::cli_commands::taxonomy_scan_request::{ScanMode, ScanRequest, ScanTarget};
 use shared_lint_arwaky::common::Score;
 use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
 

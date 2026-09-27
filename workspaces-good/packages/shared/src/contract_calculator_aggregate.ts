@@ -6,10 +6,8 @@
  * protocol interface in `contract_calculator_protocol.ts`.
  */
 
-import type {
-  CalculatorRequest,
-  CalculatorResponse,
-} from "./taxonomy_calculator_request_vo";
+import type { CalculatorRequest } from "./taxonomy_calculator_request";
+import type { CalculatorResponse } from "./taxonomy_calculator_response";
 
 /** Aggregate interface — the single entry point over the calculator feature. */
 export interface ICalculatorAggregate {

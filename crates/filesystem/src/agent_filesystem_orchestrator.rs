@@ -15,7 +15,8 @@ use shared::{
         contract_filesystem_protocol::IParserProtocol,
         contract_filesystem_protocol::IToolResolutionProtocol,
         contract_filesystem_protocol::IWorkspaceProtocol,
-        taxonomy_filesystem_request_vo::{FilesystemRequest, FilesystemResponse},
+        taxonomy_filesystem_request::FilesystemRequest,
+        taxonomy_filesystem_response::FilesystemResponse,
         taxonomy_filesystem_vo::{
             DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
             ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
@@ -54,7 +55,7 @@ pub struct FilesystemOrchestrator {
     pub(crate) cached_implementations: OnceLock<HashMap<String, Vec<PathBuf>>>,
 }
 
-// ═══ IFilesystemAggregate ════════════════
+// ─── Block 2: Aggregate Trait Implementation ──────────────
 impl IFilesystemAggregate for FilesystemOrchestrator {
     fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
         match request {
@@ -578,7 +579,7 @@ impl FilesystemOrchestrator {
             .map(|s| format!("{}/", s))
             .collect();
         ignored.extend_from_slice(extra_ignored);
-        let abs_root = std::fs::canonicalize(&ws_root).unwrap_or(ws_root);
+        let abs_root = self.deps.io.canonicalize(&ws_root).unwrap_or(ws_root);
         let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
             .iter()
             .filter(|d| abs_root.join(d).is_dir())

@@ -64,7 +64,7 @@ Rules, templates, section contracts, and Verify blocks live in the language HOW-
 
 **The layer chain:**
 
-`taxonomy_*_vo|entity|error|event|constant` (bottom layer) → contract → capabilities → agent → surface → root
+`taxonomy_*_vo|entity|error|event|constant|request|response` (bottom layer) → contract → capabilities → agent → surface → root
 
 Each file answers one layer's job. A method or import in the wrong layer is the defect this skill exists to prevent.
 
@@ -77,7 +77,7 @@ A rule cannot drift from the gate. Cite the linter, not this file, when pointing
 
 | Layer | Rule |
 | ----- | ---- |
-| Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant` (AES101/AES102). |
+| Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response`/`_request`/`_response` (AES101/AES102). |
 | Imports | Taxonomy + stdlib only — never capabilities, agents, surface, root, contracts; no I/O (AES201). |
 | Primitives | Domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values (AES401). |
 | Construction | VOs validate on construction; immutable; constants are pure literals. |

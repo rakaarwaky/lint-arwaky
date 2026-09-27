@@ -1,7 +1,8 @@
 pub mod contract_setup_aggregate;
 pub mod contract_setup_protocol;
 pub mod taxonomy_setup_contract_vo;
-pub mod taxonomy_setup_request_vo;
+pub mod taxonomy_setup_request;
+pub mod taxonomy_setup_response;
 pub mod taxonomy_skills_constant;
 pub mod taxonomy_skills_vo;
 
@@ -12,7 +13,8 @@ pub mod taxonomy_skills_vo;
 pub use contract_setup_aggregate::ISetupAggregate;
 pub use contract_setup_protocol::ISetupInstallerProtocol;
 pub use contract_setup_protocol::ISetupManagementProtocol;
-pub use taxonomy_setup_request_vo::{SetupRequest, SetupResponse};
+pub use taxonomy_setup_request::SetupRequest;
+pub use taxonomy_setup_response::SetupResponse;
 
 // ── Taxonomy types ──
 pub use contract_setup_aggregate::SetupMgmtProtocol;
