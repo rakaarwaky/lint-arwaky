@@ -35,7 +35,7 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
 | AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.        |
 | AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.            |
-| AES403 | Capabilities Role | HIGH     | Role  | Capability exceeds max 3 type declarations or has no protocol implementation.                   |
+| AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, local const, inline test, or public helper. |
 | AES404 | Utility Role      | MEDIUM   | Role  | Utility violates stateless function rules, contains trait impls                                 |
 | AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
 | AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
@@ -277,17 +277,24 @@ Checks for primitive types (`String`, `i32`, `bool`, `int`, `float`, etc.) in co
 
 ### AES403 — Capabilities Role
 
-**Severity:** HIGH / MEDIUM
+**Severity:** HIGH / MEDIUM / LOW
 
-Capability routing and protocol enforcement. Two sub-checks — each with its own severity:
+Capability routing, protocol enforcement, and 3-block structure. Six sub-checks — each with its own severity:
 
+| Sub-check                        | Severity   | Description                                                                                          |
+| -------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| **CapabilityTooManyTypes**       | **HIGH**   | File exceeds max 3 type declarations.                                                                 |
+| **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait.                        |
+| **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).    |
+| **CapabilityLocalConstant**      | **MEDIUM** | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs`.                        |
+| **CapabilityEmbeddedTest**       | **LOW**    | `#[cfg(test)]` or `mod tests` declared inline; test code belongs in `tests/`.                          |
+| **CapabilityPublicHelper**       | **MEDIUM** | Block 3 helper with no production caller (own-module or external) is `pub`; change to `fn` or `pub(crate)` (tests in `tests/` compile as separate crate and require `pub`). |
 
-| Sub-check                   | Severity   | Description                                                                    |
-| ----------------------------- | ------------ | -------------------------------------------------------------------------------- |
-| **CapabilityTooManyTypes**  | **HIGH**   | File exceeds max 3 type declarations                                          |
-| **CapabilityNoImplementor** | **MEDIUM** | No struct/class in the capability file implements a`_protocol` contract trait. |
+**Structure rule (3-block):** a capability file reads Block 1 (type + constructor) → Block 2 (protocol methods only) → Block 3 (factories, std traits, helpers). The `CapabilityBlockOrder` sub-check enforces the 2-before-3 half of that order.
 
-**FIX:** Ensure capability implements its protocol; split routing across multiple capabilities.
+**Language coverage:** all six sub-checks run for Rust, Python, and TypeScript/JavaScript. Each language has its own implementation of the block-order, constant-placement, test-placement, and helper-visibility sub-checks, since the syntactic markers differ (`impl X for` vs `class X(Base)` vs `class X implements I`).
+
+**FIX:** Ensure capability implements its protocol; split routing across multiple capabilities; reorder impl blocks so the protocol implementation comes first.
 
 ---
 

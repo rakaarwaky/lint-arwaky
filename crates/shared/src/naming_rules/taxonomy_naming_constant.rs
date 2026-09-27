@@ -31,3 +31,6 @@ pub const SOURCE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];
 
 /// Marker in specialized layer names (e.g., "agent(orchestrator)")
 pub const SPECIALIZED_LAYER_MARKER: &str = "(";
+
+/// Default minimum word count for stem validation in naming checks
+pub const MIN_WORDS_DEFAULT: usize = 3;

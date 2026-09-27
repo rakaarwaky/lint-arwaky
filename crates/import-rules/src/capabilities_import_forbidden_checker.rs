@@ -18,10 +18,9 @@ use shared::orphan_rules::taxonomy_orphan_vo::{AstImportVO, FileParseResultVO};
 use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
+use shared::import_rules::taxonomy_import_constant::AES201_RULE_CODE;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use std::collections::{HashMap, HashSet};
-
-const AES201_RULE_CODE: &str = "AES201";
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

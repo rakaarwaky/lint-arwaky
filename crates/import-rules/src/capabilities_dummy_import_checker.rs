@@ -14,48 +14,6 @@ use shared::import_rules::taxonomy_import_error::ImportError;
 
 pub struct DummyImportChecker;
 
-impl DummyImportChecker {}
-
-struct DummyFileContext {
-    lines: Vec<String>,
-    lang: LanguageVO,
-    dummy_ranges: Vec<(LineNumber, LineNumber)>,
-    dummy_impl_traits: Vec<String>,
-}
-
-impl DummyFileContext {
-    fn compute(file: &str, content: &str, _layer_map: &LayerMapVO) -> Option<Self> {
-        let basename = std::path::Path::new(file)
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or("");
-        if utility_import_resolver::is_barrel_file(basename) {
-            return None;
-        }
-        let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
-        let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
-        let lang = LanguageVO::from_path(file);
-        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&str_refs, lang);
-        let dummy_impl_traits: Vec<String> =
-            utility_dummy_detector::dummy_impl_traits_with_lines(&str_refs)
-                .into_iter()
-                .map(|(t, _)| t.value().to_string())
-                .collect();
-        Some(Self {
-            lines,
-            lang,
-            dummy_ranges,
-            dummy_impl_traits,
-        })
-    }
-
-    fn str_refs(&self) -> Vec<&str> {
-        self.lines.iter().map(|s| s.as_str()).collect()
-    }
-}
-
-// ─── Block 2: Protocol Trait Implementation ───────────────
-
 impl IDummyImportCheckerProtocol for DummyImportChecker {
     fn rule_name(&self) -> Identity {
         Identity::new("AES204")
@@ -172,7 +130,6 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits & Helpers ─────────
 impl Default for DummyImportChecker {
     fn default() -> Self {
         Self::new()
@@ -399,4 +356,42 @@ impl DummyImportChecker {
 fn is_future_import(lines: &[&str], symbol: &str) -> bool {
     let content = lines.join("\n");
     utility_import_resolver::is_future_import(&content, symbol)
+}
+
+struct DummyFileContext {
+    lines: Vec<String>,
+    lang: LanguageVO,
+    dummy_ranges: Vec<(LineNumber, LineNumber)>,
+    dummy_impl_traits: Vec<String>,
+}
+
+impl DummyFileContext {
+    fn compute(file: &str, content: &str, _layer_map: &LayerMapVO) -> Option<Self> {
+        let basename = std::path::Path::new(file)
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        if utility_import_resolver::is_barrel_file(basename) {
+            return None;
+        }
+        let lines: Vec<String> = content.lines().map(|l| l.to_string()).collect();
+        let str_refs: Vec<&str> = lines.iter().map(|s| s.as_str()).collect();
+        let lang = LanguageVO::from_path(file);
+        let dummy_ranges = utility_dummy_detector::dummy_function_ranges(&str_refs, lang);
+        let dummy_impl_traits: Vec<String> =
+            utility_dummy_detector::dummy_impl_traits_with_lines(&str_refs)
+                .into_iter()
+                .map(|(t, _)| t.value().to_string())
+                .collect();
+        Some(Self {
+            lines,
+            lang,
+            dummy_ranges,
+            dummy_impl_traits,
+        })
+    }
+
+    fn str_refs(&self) -> Vec<&str> {
+        self.lines.iter().map(|s| s.as_str()).collect()
+    }
 }

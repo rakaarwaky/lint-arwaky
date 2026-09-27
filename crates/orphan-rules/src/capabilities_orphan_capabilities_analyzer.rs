@@ -13,45 +13,6 @@ pub struct CapabilitiesOrphanAnalyzer {
     workspace: Arc<dyn IWorkspaceProtocol>,
 }
 
-impl CapabilitiesOrphanAnalyzer {
-    pub fn new(workspace: Arc<dyn IWorkspaceProtocol>) -> Self {
-        Self { workspace }
-    }
-
-    fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
-        let mut identifiers: Vec<String> = Vec::new();
-        match shared::common::parse_file_content(file_path, content) {
-            FileParseResultVO::Rust(result) => {
-                identifiers.extend(result.struct_names());
-                identifiers.extend(result.trait_names());
-            }
-            FileParseResultVO::Python(result) => {
-                identifiers.extend(result.class_names());
-            }
-            FileParseResultVO::TypeScript(result) => {
-                identifiers.extend(result.class_names());
-            }
-            FileParseResultVO::Unsupported => {}
-        }
-        identifiers.push(stem.to_string());
-        let pascal_stem: String = stem
-            .split('_')
-            .filter(|s| !s.is_empty())
-            .map(|s| {
-                let mut c = s.chars();
-                match c.next() {
-                    Some(f) => f.to_uppercase().to_string() + c.as_str(),
-                    None => String::new(),
-                }
-            })
-            .collect();
-        identifiers.push(pascal_stem);
-        identifiers.sort();
-        identifiers.dedup();
-        identifiers
-    }
-}
-
 impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
     /// Determines whether a capabilities file is unreachable, unwired, or both.
     ///
@@ -121,5 +82,44 @@ impl ICapabilitiesOrphanProtocol for CapabilitiesOrphanAnalyzer {
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)
+    }
+}
+
+impl CapabilitiesOrphanAnalyzer {
+    pub fn new(workspace: Arc<dyn IWorkspaceProtocol>) -> Self {
+        Self { workspace }
+    }
+
+    fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
+        let mut identifiers: Vec<String> = Vec::new();
+        match shared::common::parse_file_content(file_path, content) {
+            FileParseResultVO::Rust(result) => {
+                identifiers.extend(result.struct_names());
+                identifiers.extend(result.trait_names());
+            }
+            FileParseResultVO::Python(result) => {
+                identifiers.extend(result.class_names());
+            }
+            FileParseResultVO::TypeScript(result) => {
+                identifiers.extend(result.class_names());
+            }
+            FileParseResultVO::Unsupported => {}
+        }
+        identifiers.push(stem.to_string());
+        let pascal_stem: String = stem
+            .split('_')
+            .filter(|s| !s.is_empty())
+            .map(|s| {
+                let mut c = s.chars();
+                match c.next() {
+                    Some(f) => f.to_uppercase().to_string() + c.as_str(),
+                    None => String::new(),
+                }
+            })
+            .collect();
+        identifiers.push(pascal_stem);
+        identifiers.sort();
+        identifiers.dedup();
+        identifiers
     }
 }

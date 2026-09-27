@@ -14,9 +14,7 @@ use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, ParseMetadata, PythonMetadata, RustMetadata, TypeScriptMetadata,
 };
 use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
-
-const MAX_PUBLIC_METHODS: usize = 50;
-const MAX_CONTROL_FLOW: usize = 50;
+use shared::role_rules::taxonomy_role_limit_constant::{MAX_CONTROL_FLOW, MAX_PUBLIC_METHODS};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct SurfaceRoleChecker {}

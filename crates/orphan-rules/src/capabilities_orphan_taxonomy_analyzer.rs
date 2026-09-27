@@ -11,18 +11,6 @@ use std::collections::HashMap;
 
 pub struct TaxonomyOrphanAnalyzer;
 
-impl Default for TaxonomyOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl TaxonomyOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     fn is_taxonomy_orphan(
         &self,
@@ -168,5 +156,17 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::LOW)
+    }
+}
+
+impl Default for TaxonomyOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TaxonomyOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
     }
 }

@@ -8,30 +8,6 @@ use std::collections::HashMap;
 
 pub struct AgentOrphanAnalyzer;
 
-impl Default for AgentOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AgentOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
-    fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
-        let mut traits = match shared::common::parse_file_content(file_path, content) {
-            FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
-            FileParseResultVO::Python(result) => result.aggregate_names(),
-            FileParseResultVO::TypeScript(result) => result.aggregate_names(),
-            FileParseResultVO::Unsupported => Vec::new(),
-        };
-        traits.sort();
-        traits.dedup();
-        traits
-    }
-}
-
 impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
     fn is_agent_orphan(
         &self,
@@ -120,5 +96,29 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::HIGH)
+    }
+}
+
+impl Default for AgentOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AgentOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+
+    fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
+        let mut traits = match shared::common::parse_file_content(file_path, content) {
+            FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
+            FileParseResultVO::Python(result) => result.aggregate_names(),
+            FileParseResultVO::TypeScript(result) => result.aggregate_names(),
+            FileParseResultVO::Unsupported => Vec::new(),
+        };
+        traits.sort();
+        traits.dedup();
+        traits
     }
 }

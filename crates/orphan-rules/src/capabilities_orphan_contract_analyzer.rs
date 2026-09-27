@@ -9,18 +9,190 @@ use shared::quality_rules::taxonomy_analysis_vo::{
 use std::collections::HashMap;
 
 pub struct ContractOrphanAnalyzer;
+impl IContractOrphanProtocol for ContractOrphanAnalyzer {
+    /// Determines whether a contract is orphaned based on reachability and implementation status.
+    ///
+    /// A contract is considered reachable when it is directly reachable from an entry file or
+    /// when at least one of its implementors is reachable. Protocol and aggregate contracts
+    /// are orphaned when no implementation is found, unless they are re-exported from a
+    /// configured barrel file.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let result = analyzer.is_contract_orphan(
+    ///     &file_path,
+    ///     &root_dir,
+    ///     &inheritance_map,
+    ///     &all_files,
+    ///     &content_map,
+    ///     &alive_files,
+    /// );
+    /// assert!(!result.is_orphan);
+    /// ```
+    fn is_contract_orphan(
+        &self,
+        f: &FilePath,
+        _root_dir: &FilePath,
+        inheritance_map: &InheritanceMap,
+        all_files: &[String],
+        content_map: &HashMap<String, String>,
+        alive_files: &ReachabilityResult,
+    ) -> OrphanIndicatorResult {
+        let fp = f.value();
+        let suffix = file_suffix(fp);
+        let content = content_map.get(fp).cloned().unwrap_or_default();
+        if content.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
 
-impl Default for ContractOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
+        let trait_names = self.extract_trait_names(fp, &content);
+        if trait_names.is_empty() {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        // Condition 1: not reachable from any _entry file.
+        // P3 (symmetric contract wiring): a contract is also considered reachable
+        // when it has an alive implementor — the contract is consumed purely via DI
+        // (its capabilities/agents are wired, not statically imported by entry).
+        let is_reachable = is_path_alive(fp, alive_files)
+            || self.has_alive_implementor(inheritance_map, &trait_names, alive_files);
+        if !is_reachable {
+            return OrphanIndicatorResult::new(
+                true,
+                format!(
+                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY? Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
+                    suffix,
+                    trait_names.join(", "),
+                    suffix,
+                    trait_names.join(", "),
+                    trait_names.join(", ")
+                ),
+                Severity::MEDIUM,
+            );
+        }
+
+        // Use all_files directly — orchestrator already provides full workspace file list
+        let search_files: Vec<String> = all_files.to_vec();
+
+        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        // Condition 2: protocol not implemented by capabilities
+        if suffix == "protocol" {
+            let unimplemented: Vec<String> = trait_names
+                .iter()
+                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .cloned()
+                .collect();
+            if !unimplemented.is_empty() {
+                return OrphanIndicatorResult::new(
+                    true,
+                    format!(
+                        "AES502 CONTRACT_ORPHAN: Contract protocol '{}' is not implemented.\nWHY? Contract protocol '{}' is not implemented by any capabilities_* file.\nFIX: Implement '{}' in a capabilities_* file.",
+                        unimplemented.join(", "),
+                        unimplemented.join(", "),
+                        unimplemented.join(", ")
+                    ),
+                    Severity::MEDIUM,
+                );
+            }
+        }
+
+        // Condition 3: aggregate not implemented by agent
+        if suffix == "aggregate" {
+            let unimplemented: Vec<String> = trait_names
+                .iter()
+                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .cloned()
+                .collect();
+            if !unimplemented.is_empty() {
+                return OrphanIndicatorResult::new(
+                    true,
+                    format!(
+                        "AES502 CONTRACT_ORPHAN: Contract aggregate '{}' is not implemented.\nWHY? Contract aggregate '{}' is not implemented by any agent_* file.\nFIX: Implement '{}' in an agent_* file.",
+                        unimplemented.join(", "),
+                        unimplemented.join(", "),
+                        unimplemented.join(", ")
+                    ),
+                    Severity::MEDIUM,
+                );
+            }
+        }
+
+        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
     }
 }
 
-impl ContractOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
+/// Normalizes a workspace-relative path for comparison.
+///
+/// Strips a leading `./` prefix and converts backslashes to forward slashes so
+/// that paths originating from different sources compare consistently.
+pub fn normalize_rel_path(p: &str) -> String {
+    p.trim_start_matches("./").replace('\\', "/")
+}
 
+/// Determines whether two workspace-relative paths refer to the same file.
+///
+/// Both inputs use the same `path_to_relative` format (workspace-relative,
+/// forward slashes). Matching is strict: exact equality after normalization, or a
+/// suffix match that begins at a path-separator boundary. Bare-basename matching
+/// is intentionally avoided so that common names such as `mod.rs`, `index.ts`, or
+/// `lib.rs` in one module cannot validate an unrelated file in another module.
+pub fn paths_equivalent(rel: &str, alive: &str) -> bool {
+    let a = normalize_rel_path(rel);
+    let b = normalize_rel_path(alive);
+    if a == b {
+        return true;
+    }
+    // Suffix match only at a separator boundary. A path without any directory
+    // component (bare basename) is only ever equal — never a suffix match — so
+    // a bare `lib.rs` cannot validate an unrelated deeper `lib.rs`.
+    if a.contains('/') {
+        if let Some(rest) = b.strip_suffix(&a) {
+            if rest.is_empty() || rest.ends_with('/') {
+                return true;
+            }
+        }
+    }
+    if b.contains('/') {
+        if let Some(rest) = a.strip_suffix(&b) {
+            if rest.is_empty() || rest.ends_with('/') {
+                return true;
+            }
+        }
+    }
+    false
+}
+
+/// Determines whether a workspace-relative path corresponds to any reachable file path.
+///
+/// Paths may be relative or absolute and may include a `./` prefix. Matching uses
+/// [`paths_equivalent`], so common file names in different modules never collide.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// assert!(is_path_alive("src/lib.rs", &alive_files));
+/// ```
+///
+/// # Arguments
+///
+/// * `rel` - Workspace-relative path to compare.
+/// * `alive_files` - Reachability results containing paths known to be reachable.
+///
+/// # Returns
+///
+/// `true` if a reachable path matches the supplied path, `false` otherwise.
+pub fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
+    alive_files
+        .paths
+        .iter()
+        .any(|af| paths_equivalent(rel, af.value()))
+}
+
+impl ContractOrphanAnalyzer {
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
         match shared::common::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
@@ -157,239 +329,14 @@ impl ContractOrphanAnalyzer {
     }
 }
 
-/// Normalizes a workspace-relative path for comparison.
-///
-/// Strips a leading `./` prefix and converts backslashes to forward slashes so
-/// that paths originating from different sources compare consistently.
-fn normalize_rel_path(p: &str) -> String {
-    p.trim_start_matches("./").replace('\\', "/")
-}
-
-/// Determines whether two workspace-relative paths refer to the same file.
-///
-/// Both inputs use the same `path_to_relative` format (workspace-relative,
-/// forward slashes). Matching is strict: exact equality after normalization, or a
-/// suffix match that begins at a path-separator boundary. Bare-basename matching
-/// is intentionally avoided so that common names such as `mod.rs`, `index.ts`, or
-/// `lib.rs` in one module cannot validate an unrelated file in another module.
-fn paths_equivalent(rel: &str, alive: &str) -> bool {
-    let a = normalize_rel_path(rel);
-    let b = normalize_rel_path(alive);
-    if a == b {
-        return true;
-    }
-    // Suffix match only at a separator boundary. A path without any directory
-    // component (bare basename) is only ever equal — never a suffix match — so
-    // a bare `lib.rs` cannot validate an unrelated deeper `lib.rs`.
-    if a.contains('/') {
-        if let Some(rest) = b.strip_suffix(&a) {
-            if rest.is_empty() || rest.ends_with('/') {
-                return true;
-            }
-        }
-    }
-    if b.contains('/') {
-        if let Some(rest) = a.strip_suffix(&b) {
-            if rest.is_empty() || rest.ends_with('/') {
-                return true;
-            }
-        }
-    }
-    false
-}
-
-/// Determines whether a workspace-relative path corresponds to any reachable file path.
-///
-/// Paths may be relative or absolute and may include a `./` prefix. Matching uses
-/// [`paths_equivalent`], so common file names in different modules never collide.
-///
-/// # Examples
-///
-/// ```rust,ignore
-/// assert!(is_path_alive("src/lib.rs", &alive_files));
-/// ```
-///
-/// # Arguments
-///
-/// * `rel` - Workspace-relative path to compare.
-/// * `alive_files` - Reachability results containing paths known to be reachable.
-///
-/// # Returns
-///
-/// `true` if a reachable path matches the supplied path, `false` otherwise.
-fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
-    alive_files
-        .paths
-        .iter()
-        .any(|af| paths_equivalent(rel, af.value()))
-}
-
-impl IContractOrphanProtocol for ContractOrphanAnalyzer {
-    /// Determines whether a contract is orphaned based on reachability and implementation status.
-    ///
-    /// A contract is considered reachable when it is directly reachable from an entry file or
-    /// when at least one of its implementors is reachable. Protocol and aggregate contracts
-    /// are orphaned when no implementation is found, unless they are re-exported from a
-    /// configured barrel file.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// let result = analyzer.is_contract_orphan(
-    ///     &file_path,
-    ///     &root_dir,
-    ///     &inheritance_map,
-    ///     &all_files,
-    ///     &content_map,
-    ///     &alive_files,
-    /// );
-    /// assert!(!result.is_orphan);
-    /// ```
-    fn is_contract_orphan(
-        &self,
-        f: &FilePath,
-        _root_dir: &FilePath,
-        inheritance_map: &InheritanceMap,
-        all_files: &[String],
-        content_map: &HashMap<String, String>,
-        alive_files: &ReachabilityResult,
-    ) -> OrphanIndicatorResult {
-        let fp = f.value();
-        let suffix = file_suffix(fp);
-        let content = content_map.get(fp).cloned().unwrap_or_default();
-        if content.is_empty() {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
-        let trait_names = self.extract_trait_names(fp, &content);
-        if trait_names.is_empty() {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
-        // Condition 1: not reachable from any _entry file.
-        // P3 (symmetric contract wiring): a contract is also considered reachable
-        // when it has an alive implementor — the contract is consumed purely via DI
-        // (its capabilities/agents are wired, not statically imported by entry).
-        let is_reachable = is_path_alive(fp, alive_files)
-            || self.has_alive_implementor(inheritance_map, &trait_names, alive_files);
-        if !is_reachable {
-            return OrphanIndicatorResult::new(
-                true,
-                format!(
-                    "AES502 CONTRACT_ORPHAN: Contract {} '{}' is not reachable.\nWHY? Contract {} '{}' is not reachable from any _entry file.\nFIX: Import '{}' from a _entry file.",
-                    suffix,
-                    trait_names.join(", "),
-                    suffix,
-                    trait_names.join(", "),
-                    trait_names.join(", ")
-                ),
-                Severity::MEDIUM,
-            );
-        }
-
-        // Use all_files directly — orchestrator already provides full workspace file list
-        let search_files: Vec<String> = all_files.to_vec();
-
-        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
-        // Condition 2: protocol not implemented by capabilities
-        if suffix == "protocol" {
-            let unimplemented: Vec<String> = trait_names
-                .iter()
-                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
-                .cloned()
-                .collect();
-            if !unimplemented.is_empty() {
-                return OrphanIndicatorResult::new(
-                    true,
-                    format!(
-                        "AES502 CONTRACT_ORPHAN: Contract protocol '{}' is not implemented.\nWHY? Contract protocol '{}' is not implemented by any capabilities_* file.\nFIX: Implement '{}' in a capabilities_* file.",
-                        unimplemented.join(", "),
-                        unimplemented.join(", "),
-                        unimplemented.join(", ")
-                    ),
-                    Severity::MEDIUM,
-                );
-            }
-        }
-
-        // Condition 3: aggregate not implemented by agent
-        if suffix == "aggregate" {
-            let unimplemented: Vec<String> = trait_names
-                .iter()
-                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
-                .cloned()
-                .collect();
-            if !unimplemented.is_empty() {
-                return OrphanIndicatorResult::new(
-                    true,
-                    format!(
-                        "AES502 CONTRACT_ORPHAN: Contract aggregate '{}' is not implemented.\nWHY? Contract aggregate '{}' is not implemented by any agent_* file.\nFIX: Implement '{}' in an agent_* file.",
-                        unimplemented.join(", "),
-                        unimplemented.join(", "),
-                        unimplemented.join(", ")
-                    ),
-                    Severity::MEDIUM,
-                );
-            }
-        }
-
-        OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
+impl ContractOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-#[cfg(test)]
-mod path_alive_tests {
-    use super::is_path_alive;
-    use shared::common::taxonomy_path_vo::FilePath;
-    use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
-    use std::collections::HashSet;
-
-    fn alive(paths: &[&str]) -> ReachabilityResult {
-        ReachabilityResult::new(
-            paths
-                .iter()
-                .filter_map(|p| FilePath::new(p.to_string()).ok())
-                .collect::<HashSet<_>>(),
-        )
-    }
-
-    #[test]
-    fn exact_workspace_relative_match_is_alive() {
-        let set = alive(&["crates/a/src/capabilities_foo.rs"]);
-        assert!(is_path_alive("crates/a/src/capabilities_foo.rs", &set));
-    }
-
-    #[test]
-    fn suffix_match_at_separator_boundary_is_alive() {
-        // Deeper absolute path still resolves to the same relative file.
-        let set = alive(&["crates/a/src/capabilities_foo.rs"]);
-        assert!(is_path_alive("a/src/capabilities_foo.rs", &set));
-    }
-
-    #[test]
-    fn partial_stem_does_not_false_match() {
-        // `xcontract_foo.rs` must NOT match `contract_foo.rs`.
-        let set = alive(&["crates/a/src/contract_foo.rs"]);
-        assert!(!is_path_alive("crates/a/src/xcontract_foo.rs", &set));
-        assert!(!is_path_alive("contract_foo.rs", &set));
-    }
-
-    #[test]
-    fn same_basename_in_other_module_does_not_false_match() {
-        // A `lib.rs`/`mod.rs` in a different module must not validate an
-        // unrelated file with the same basename.
-        let set = alive(&["crates/a/src/lib.rs"]);
-        assert!(!is_path_alive("crates/b/src/lib.rs", &set));
-        assert!(!is_path_alive("lib.rs", &set));
-    }
-
-    #[test]
-    fn leading_dot_slash_and_backslashes_are_normalized() {
-        let set = alive(&["crates/a/src/contract_foo.rs"]);
-        assert!(is_path_alive("./crates/a/src/contract_foo.rs", &set));
-        assert!(is_path_alive("crates\\a\\src\\contract_foo.rs", &set));
+impl Default for ContractOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
     }
 }

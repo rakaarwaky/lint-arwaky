@@ -24,16 +24,6 @@ pub struct ASTParser {
     imports: RwLock<Vec<ImportEntry>>,
 }
 
-impl ASTParser {
-    pub fn new() -> Self {
-        Self {
-            asts: DashMap::new(),
-            warnings: OnceLock::new(),
-            imports: RwLock::new(Vec::new()),
-        }
-    }
-}
-
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 
 impl IParserProtocol for ASTParser {
@@ -106,6 +96,16 @@ impl IParserProtocol for ASTParser {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
+
+impl ASTParser {
+    pub fn new() -> Self {
+        Self {
+            asts: DashMap::new(),
+            warnings: OnceLock::new(),
+            imports: RwLock::new(Vec::new()),
+        }
+    }
+}
 
 impl ASTParser {
     /// Parse all files in parallel using rayon.

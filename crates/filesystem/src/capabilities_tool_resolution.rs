@@ -12,12 +12,6 @@ use std::path::Path;
 
 pub struct CapabilitiesToolResolution;
 
-impl CapabilitiesToolResolution {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 
 impl IToolResolutionProtocol for CapabilitiesToolResolution {
@@ -84,6 +78,12 @@ impl IToolResolutionProtocol for CapabilitiesToolResolution {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
+
+impl CapabilitiesToolResolution {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl Default for CapabilitiesToolResolution {
     fn default() -> Self {

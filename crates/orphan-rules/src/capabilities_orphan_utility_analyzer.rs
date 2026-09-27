@@ -2,50 +2,14 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::contract_orphan_protocol::IUtilityOrphanProtocol;
+use shared::orphan_rules::taxonomy_orphan_constant::CONSUMER_LAYERS;
 use shared::orphan_rules::taxonomy_orphan_vo::FileParseResultVO;
 use shared::quality_rules::taxonomy_analysis_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;
 
-const CONSUMER_LAYERS: &[&str] = &["capabilities", "agent", "surface", "surfaces", "root"];
-
 pub struct UtilityOrphanAnalyzer;
-
-impl Default for UtilityOrphanAnalyzer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl UtilityOrphanAnalyzer {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match shared::common::parse_file_content(file_path, content) {
-            FileParseResultVO::Rust(result) => {
-                let in_imports = result.imports.iter().any(|imp| {
-                    imp.segments.iter().any(|seg| {
-                        seg == module_name || seg.starts_with(&format!("{module_name}_"))
-                    })
-                });
-                let in_usage = result.used_identifiers.iter().any(|id| id == module_name);
-                in_imports || in_usage
-            }
-            FileParseResultVO::Python(result) => result.imports.iter().any(|imp| {
-                imp.raw_path.contains(module_name)
-                    || imp.segments.iter().any(|seg| seg == module_name)
-            }),
-            FileParseResultVO::TypeScript(result) => result.imports.iter().any(|imp| {
-                imp.raw_path.contains(module_name)
-                    || imp.segments.iter().any(|seg| seg == module_name)
-            }),
-            FileParseResultVO::Unsupported => false,
-        }
-    }
-}
 
 impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
     fn is_utility_orphan(
@@ -187,5 +151,40 @@ impl IUtilityOrphanProtocol for UtilityOrphanAnalyzer {
         };
 
         OrphanIndicatorResult::new(true, reason, Severity::MEDIUM)
+    }
+}
+
+impl Default for UtilityOrphanAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl UtilityOrphanAnalyzer {
+    pub fn new() -> Self {
+        Self
+    }
+
+    pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
+        match shared::common::parse_file_content(file_path, content) {
+            FileParseResultVO::Rust(result) => {
+                let in_imports = result.imports.iter().any(|imp| {
+                    imp.segments.iter().any(|seg| {
+                        seg == module_name || seg.starts_with(&format!("{module_name}_"))
+                    })
+                });
+                let in_usage = result.used_identifiers.iter().any(|id| id == module_name);
+                in_imports || in_usage
+            }
+            FileParseResultVO::Python(result) => result.imports.iter().any(|imp| {
+                imp.raw_path.contains(module_name)
+                    || imp.segments.iter().any(|seg| seg == module_name)
+            }),
+            FileParseResultVO::TypeScript(result) => result.imports.iter().any(|imp| {
+                imp.raw_path.contains(module_name)
+                    || imp.segments.iter().any(|seg| seg == module_name)
+            }),
+            FileParseResultVO::Unsupported => false,
+        }
     }
 }

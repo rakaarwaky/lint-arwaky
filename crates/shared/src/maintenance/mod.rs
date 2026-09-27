@@ -1,6 +1,7 @@
 // maintenance — contract and taxonomy types
 pub mod contract_maintenance_aggregate;
 pub mod contract_maintenance_protocol;
+pub mod taxonomy_maintenance_constant;
 pub mod taxonomy_maintenance_request;
 pub mod taxonomy_maintenance_response;
 pub mod taxonomy_maintenance_vo;
@@ -12,6 +13,7 @@ pub mod taxonomy_maintenance_vo;
 pub use contract_maintenance_aggregate::IMaintenanceAggregate;
 pub use contract_maintenance_protocol::IMaintenanceCheckerProtocol;
 pub use contract_maintenance_protocol::IToolExecutorProtocol;
+pub use taxonomy_maintenance_constant::GITHUB_REPO;
 pub use taxonomy_maintenance_request::MaintenanceRequest;
 pub use taxonomy_maintenance_response::MaintenanceResponse;
 

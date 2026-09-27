@@ -10,11 +10,9 @@ use shared::common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileLi
 use shared::file_watch::GitDiffResultVO;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IDiffProtocol;
+use shared::git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
 
 use std::sync::Arc;
-
-/// Lintable file extensions (source code only).
-const LINTABLE_EXTENSIONS: &[&str] = &["rs", "py", "ts", "js", "jsx", "tsx"];
 
 /// Returns `true` if the file extension is a lintable source type.
 pub fn is_lintable_file(fp: &FilePath) -> bool {

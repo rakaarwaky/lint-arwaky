@@ -11,11 +11,11 @@ use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use crate::utility_import_resolver;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
+use shared::import_rules::taxonomy_import_constant::AES202_RULE_CODE;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
-const AES202_RULE_CODE: &str = "AES202";
 static EMPTY_HASHSET: LazyLock<HashSet<String>> = LazyLock::new(HashSet::new);
 
 // ─── Block 1: Struct Definition ───────────────────────────

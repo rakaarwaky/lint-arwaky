@@ -1,6 +1,7 @@
 pub mod contract_git_hooks_aggregate;
 pub mod contract_git_hooks_protocol;
 pub mod taxonomy_git_diff_data_vo;
+pub mod taxonomy_git_hooks_constant;
 pub mod taxonomy_git_hooks_request;
 pub mod taxonomy_git_hooks_response;
 pub mod taxonomy_hook_error;
@@ -19,6 +20,7 @@ pub use taxonomy_git_diff_data_vo::GitDiffDataVO;
 pub use taxonomy_git_diff_data_vo::GitDiffSideVO;
 pub use taxonomy_git_diff_data_vo::GitDiffStatus;
 pub use taxonomy_git_diff_data_vo::HookIgnoreUpdateVO;
+pub use taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
 pub use taxonomy_git_hooks_request::GitHooksRequest;
 pub use taxonomy_git_hooks_response::GitHooksResponse;
 pub use taxonomy_hook_error::GitHookError;

@@ -13,12 +13,6 @@ use std::path::{Path, PathBuf};
 
 pub struct CapabilitiesWorkspace;
 
-impl CapabilitiesWorkspace {
-    pub fn new() -> Self {
-        Self
-    }
-}
-
 // ─── Block 2: Public Contract (domain protocol ONLY) ──────
 
 impl IWorkspaceProtocol for CapabilitiesWorkspace {
@@ -74,6 +68,12 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
 }
 
 // ─── Block 3: Constructors, Std Traits & Helpers ─────────
+
+impl CapabilitiesWorkspace {
+    pub fn new() -> Self {
+        Self
+    }
+}
 
 impl Default for CapabilitiesWorkspace {
     fn default() -> Self {
