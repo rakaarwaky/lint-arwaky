@@ -29,6 +29,7 @@ use shared::auto_fix::{
     FailReason, FixApplied, FixOutcome, FixResult, IFileAdapterProtocol, SkipReason,
 };
 use shared::common::taxonomy_lint_result_vo::LintResult;
+use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::{
     AdapterName, ContentString, Count, DescriptionVO, ErrorCode, LineNumber, LintMessage,
@@ -259,9 +260,14 @@ impl IUnusedImportFixProtocol for LintFixProcessor {
 /// FR-003 — mechanical symbol rename.
 impl ISymbolRenameProtocol for LintFixProcessor {
     /// Public rename_symbol — delegates to rename_symbol_impl.
-    fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome {
+    fn rename_symbol(
+        &self,
+        file_path: &str,
+        old_name: &SymbolName,
+        new_name: &SymbolName,
+    ) -> FixOutcome {
         // Standalone calls default to dry_run=false
-        self.rename_symbol_impl(file_path, old_name, new_name, false)
+        self.rename_symbol_impl(file_path, old_name.value(), new_name.value(), false)
     }
 }
 

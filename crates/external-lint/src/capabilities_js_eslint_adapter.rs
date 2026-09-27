@@ -19,6 +19,7 @@ use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::common::{ErrorMessage, ScanError};
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
@@ -26,7 +27,6 @@ use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionPro
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -61,10 +61,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
         let wd = self.tool_resolution.resolve_js_working_dir(path);
         let abs_path = self.io.canonicalize_path_str(path);
 
-        let eslint_name = match ToolName::new("eslint") {
-            Ok(n) => n,
-            Err(_) => return Ok(LintResultList::default()),
-        };
+        let eslint_name = ToolName::new("eslint");
         let cmd = match self.tool_resolution.resolve_js_cmd(
             &eslint_name,
             vec![abs_path.value, "--format".to_string(), "json".to_string()],
@@ -141,7 +138,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
 
     fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         self.js_resolution
-            .js_apply_fix(path, "eslint", "--fix")
+            .js_apply_fix(path, &ToolName::new("eslint"), "--fix")
             .map_err(crate::convert_executor_error)
     }
 }

@@ -20,12 +20,12 @@ use shared::common::taxonomy_lint_vo::LocationList;
 use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -67,10 +67,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
             args.push(abs_path.value);
         }
 
-        let tsc_name = match ToolName::new("tsc") {
-            Ok(n) => n,
-            Err(_) => return Ok(LintResultList::default()),
-        };
+        let tsc_name = ToolName::new("tsc");
         let cmd = match self.tool_resolution.resolve_js_cmd(&tsc_name, args, &wd) {
             Some(c) => c,
             None => return Ok(LintResultList::default()),

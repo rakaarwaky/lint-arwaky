@@ -30,6 +30,7 @@ use shared::auto_fix::{
 };
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_message_vo::LintMessage;
+use shared::common::taxonomy_name_vo::SymbolName;
 use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
@@ -98,7 +99,12 @@ impl FixOrchestrator {
     }
 
     /// Convenience: rename a symbol across the file (FR-003).
-    pub fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome {
+    pub fn rename_symbol(
+        &self,
+        file_path: &str,
+        old_name: &SymbolName,
+        new_name: &SymbolName,
+    ) -> FixOutcome {
         self.deps
             .symbol_rename
             .rename_symbol(file_path, old_name, new_name)

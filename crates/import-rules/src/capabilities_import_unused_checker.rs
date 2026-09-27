@@ -6,7 +6,7 @@
 use crate::utility_import_resolver;
 use crate::utility_import_symbol_extractor;
 use shared::cli_commands::LintResult;
-use shared::common::{FilePath, LintMessage, Severity};
+use shared::common::{FilePath, LintMessage, Severity, SymbolName};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
@@ -20,7 +20,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         path: &FilePath,
         content: &str,
         import_entries: &[ImportEntry],
-        used_identifiers: &[String],
+        used_identifiers: &[SymbolName],
     ) -> Result<Vec<LintMessage>, ImportError> {
         if utility_import_resolver::is_barrel_file(&path.basename()) {
             return Ok(Vec::new());
@@ -53,7 +53,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         file: &str,
         content: &str,
         import_entries: &[ImportEntry],
-        used_identifiers: &[String],
+        used_identifiers: &[SymbolName],
         implemented_traits: &HashMap<String, Vec<String>>,
     ) -> Result<Vec<LintResult>, ImportError> {
         let basename = std::path::Path::new(file)
@@ -140,7 +140,7 @@ impl UnusedImportRuleChecker {
 pub fn is_trait_used_for_method_dispatch(
     trait_alias: &str,
     implemented_traits: &HashMap<String, Vec<String>>,
-    used_identifiers: &[String],
+    used_identifiers: &[SymbolName],
 ) -> bool {
     // Find trait implementations — check both short name and full paths
     let implementing_types: Option<&Vec<String>> =
@@ -155,7 +155,7 @@ pub fn is_trait_used_for_method_dispatch(
     };
     // Check if any type that implements this trait is used in the file
     let id_set: std::collections::HashSet<&str> =
-        used_identifiers.iter().map(|s| s.as_str()).collect();
+        used_identifiers.iter().map(|s| s.value()).collect();
     types.iter().any(|t| id_set.contains(t.as_str()))
 }
 

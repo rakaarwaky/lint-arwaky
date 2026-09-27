@@ -167,7 +167,7 @@ pub trait IUnusedImportProtocol: Send + Sync {
         path: &FilePath,
         content: &str,
         import_entries: &[ImportEntry],
-        used_identifiers: &[String],
+        used_identifiers: &[SymbolName],
     ) -> Result<Vec<LintMessage>, ImportError>;
 
     /// Check unused imports given file path and content.
@@ -180,7 +180,7 @@ pub trait IUnusedImportProtocol: Send + Sync {
         file: &str,
         content: &str,
         import_entries: &[ImportEntry],
-        used_identifiers: &[String],
+        used_identifiers: &[SymbolName],
         implemented_traits: &HashMap<String, Vec<String>>,
     ) -> Result<Vec<LintResult>, ImportError>;
 }

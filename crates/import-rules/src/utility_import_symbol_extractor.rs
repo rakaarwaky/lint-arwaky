@@ -1,5 +1,6 @@
 // PURPOSE: utility_import_symbol_extractor — AST-based unused import detection.
 use shared::common::taxonomy_layer_vo::Identity;
+use shared::common::taxonomy_name_vo::SymbolName;
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::{HashMap, HashSet};
 
@@ -9,10 +10,10 @@ pub fn extract_used_symbols(
     _file_path: &str,
     _content: &str,
     imported_aliases: &HashMap<Identity, Identity>,
-    used_identifiers: &[String],
+    used_identifiers: &[SymbolName],
 ) -> HashSet<Identity> {
     let mut used = HashSet::new();
-    let id_set: HashSet<&str> = used_identifiers.iter().map(|s| s.as_str()).collect();
+    let id_set: HashSet<&str> = used_identifiers.iter().map(|s| s.value()).collect();
     for alias in imported_aliases.keys() {
         if id_set.contains(alias.value()) {
             used.insert(Identity::new(alias.value()));

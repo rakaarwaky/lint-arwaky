@@ -6,6 +6,7 @@ use shared::common::FilePath;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath as SharedFilePath;
 use shared::common::taxonomy_source_vo::ContentString;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::config_system::{IWorkspaceDetectProtocol, IWorkspaceMembersProtocol, WorkspaceType};
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::*;
@@ -112,7 +113,7 @@ impl IFileSystemIOProtocol for CleanMockFs {
     fn parse_output_lines(&self, output: &str) -> ParsedLines {
         ParsedLines::new(output.lines().map(String::from).collect())
     }
-    fn run_external_command_in(&self, _: &str, _: &[&str], _: &str) -> (String, String, bool) {
+    fn run_external_command_in(&self, _: &ToolName, _: &[&str], _: &str) -> (String, String, bool) {
         (String::new(), String::new(), false)
     }
     fn timing(&self) -> &ScanTiming {

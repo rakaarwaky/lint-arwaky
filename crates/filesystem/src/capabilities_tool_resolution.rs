@@ -4,8 +4,8 @@
 
 use crate::utility_tool_resolution;
 use shared::common::taxonomy_path_vo::FilePath;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -16,15 +16,15 @@ pub struct CapabilitiesToolResolution;
 
 impl IToolResolutionProtocol for CapabilitiesToolResolution {
     fn is_executable_in_path(&self, executable: &ToolName) -> bool {
-        utility_tool_resolution::is_executable_in_path(&executable.value)
+        utility_tool_resolution::is_executable_in_path(executable.value())
     }
 
     fn is_binary_available(&self, bin_name: &ToolName) -> bool {
-        utility_tool_resolution::is_binary_available(&bin_name.value)
+        utility_tool_resolution::is_binary_available(bin_name.value())
     }
 
     fn has_local_bin(&self, working_dir: &Path, executable: &ToolName) -> bool {
-        utility_tool_resolution::has_local_bin(working_dir, &executable.value)
+        utility_tool_resolution::has_local_bin(working_dir, executable.value())
     }
 
     fn resolve_js_cmd(
@@ -33,7 +33,7 @@ impl IToolResolutionProtocol for CapabilitiesToolResolution {
         args: Vec<String>,
         working_dir: &FilePath,
     ) -> Option<Vec<String>> {
-        utility_tool_resolution::resolve_js_cmd(&executable.value, args, &working_dir.value)
+        utility_tool_resolution::resolve_js_cmd(executable.value(), args, &working_dir.value)
     }
 
     fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {

@@ -5,7 +5,7 @@ use shared::auto_fix::{
     FixOutcome, IBypassFixProtocol, IFileAdapterProtocol, IManualReportProtocol,
     ISymbolRenameProtocol, IUnusedImportFixProtocol,
 };
-use shared::common::{ContentString, FilePath, Severity};
+use shared::common::{ContentString, FilePath, Severity, SymbolName};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -189,7 +189,11 @@ fn fix_unused_skips_non_import_line() {
 fn rename_replaces_word_boundaries() {
     let fp = "/tmp/rename.rs";
     let p = make_processor(make_files(&[(fp, "fn bad_name() { let bad_name = 1; }\n")]));
-    let outcome = p.rename_symbol(fp, "bad_name", "renamed_bad_name");
+    let outcome = p.rename_symbol(
+        fp,
+        &SymbolName::new("bad_name"),
+        &SymbolName::new("renamed_bad_name"),
+    );
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -200,7 +204,11 @@ fn rename_preserves_surrounding_text() {
         fp,
         "fn bad_name(x: i32) -> i32 { bad_name + 1 }\n",
     )]));
-    let outcome = p.rename_symbol(fp, "bad_name", "good_name");
+    let outcome = p.rename_symbol(
+        fp,
+        &SymbolName::new("bad_name"),
+        &SymbolName::new("good_name"),
+    );
     if let FixOutcome::Applied { changes } = &outcome {
         assert!(*changes >= 2, "Should replace at least 2 occurrences");
     } else {
@@ -212,7 +220,7 @@ fn rename_preserves_surrounding_text() {
 fn rename_skips_keyword_conflict() {
     let fp = "/tmp/kw.rs";
     let p = make_processor(make_files(&[(fp, "fn bad_fn() {}\n")]));
-    let outcome = p.rename_symbol(fp, "bad_fn", "fn");
+    let outcome = p.rename_symbol(fp, &SymbolName::new("bad_fn"), &SymbolName::new("fn"));
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 
@@ -220,7 +228,11 @@ fn rename_skips_keyword_conflict() {
 fn rename_skips_nonexistent_symbol() {
     let fp = "/tmp/nosym.rs";
     let p = make_processor(make_files(&[(fp, "fn main() {}\n")]));
-    let outcome = p.rename_symbol(fp, "nonexistent", "renamed");
+    let outcome = p.rename_symbol(
+        fp,
+        &SymbolName::new("nonexistent"),
+        &SymbolName::new("renamed"),
+    );
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 

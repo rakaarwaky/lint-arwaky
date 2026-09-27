@@ -1,5 +1,6 @@
 // Unit tests — ToolExecutorAdapter methods.
 use shared::common::FilePath;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::maintenance::IToolExecutorProtocol;
 
 fn make_executor() -> impl IToolExecutorProtocol {
@@ -9,7 +10,7 @@ fn make_executor() -> impl IToolExecutorProtocol {
 #[test]
 fn run_tool_echo_succeeds() {
     let executor = make_executor();
-    let output = executor.run_tool("echo", &["hello"]);
+    let output = executor.run_tool(&ToolName::new("echo"), &["hello"]);
     assert!(output.success, "echo should succeed");
     assert!(
         output.stdout.contains("hello"),
@@ -20,7 +21,7 @@ fn run_tool_echo_succeeds() {
 #[test]
 fn run_tool_nonexistent_fails() {
     let executor = make_executor();
-    let output = executor.run_tool("nonexistent_tool_12345", &[]);
+    let output = executor.run_tool(&ToolName::new("nonexistent_tool_12345"), &[]);
     assert!(!output.success, "Nonexistent tool should fail");
 }
 
@@ -28,21 +29,24 @@ fn run_tool_nonexistent_fails() {
 fn run_tool_in_dir() {
     let executor = make_executor();
     let dir = FilePath::new("/tmp".to_string()).unwrap();
-    let output = executor.run_tool_in_dir("pwd", &[], &dir);
+    let output = executor.run_tool_in_dir(&ToolName::new("pwd"), &[], &dir);
     assert!(output.success, "pwd should succeed");
 }
 
 #[test]
 fn tool_exists_echo() {
     let executor = make_executor();
-    assert!(executor.tool_exists("echo"), "echo should exist");
+    assert!(
+        executor.tool_exists(&ToolName::new("echo")),
+        "echo should exist"
+    );
 }
 
 #[test]
 fn tool_exists_nonexistent() {
     let executor = make_executor();
     assert!(
-        !executor.tool_exists("nonexistent_tool_12345"),
+        !executor.tool_exists(&ToolName::new("nonexistent_tool_12345")),
         "Nonexistent tool should not exist"
     );
 }
@@ -57,6 +61,6 @@ fn get_binary_path_non_empty() {
 #[test]
 fn executor_is_default_constructible() {
     let executor = maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
-    let output = executor.run_tool("echo", &["test"]);
+    let output = executor.run_tool(&ToolName::new("echo"), &["test"]);
     assert!(output.success);
 }

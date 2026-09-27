@@ -1,5 +1,6 @@
 // Unit tests for UnusedImportRuleChecker — AES203 unused import detection.
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
+use shared::common::SymbolName;
 use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use shared::import_rules::IUnusedImportProtocol;
 use std::collections::HashMap;
@@ -66,7 +67,7 @@ fn main() {
             "/tmp/test/src/app.rs",
             content,
             &imports,
-            &["HashMap".to_string()],
+            &[SymbolName::new("HashMap")],
             &no_traits(),
         )
         .unwrap();
@@ -150,7 +151,7 @@ fn trait_used_for_method_dispatch_detected() {
         "CalculatorProtocol".to_string(),
         vec!["Calculator".to_string()],
     );
-    let used_ids = vec!["Calculator".to_string(), "main".to_string()];
+    let used_ids = vec![SymbolName::new("Calculator"), SymbolName::new("main")];
     assert!(is_trait_used_for_method_dispatch(
         "CalculatorProtocol",
         &traits,
@@ -165,7 +166,7 @@ fn trait_not_used_for_method_dispatch() {
         "CalculatorProtocol".to_string(),
         vec!["Calculator".to_string()],
     );
-    let used_ids = vec!["SomeOtherType".to_string()];
+    let used_ids = vec![SymbolName::new("SomeOtherType")];
     assert!(!is_trait_used_for_method_dispatch(
         "CalculatorProtocol",
         &traits,
@@ -176,7 +177,7 @@ fn trait_not_used_for_method_dispatch() {
 #[test]
 fn trait_not_in_project_not_dispatch() {
     let traits: HashMap<String, Vec<String>> = HashMap::new();
-    let used_ids = vec!["Foo".to_string()];
+    let used_ids = vec![SymbolName::new("Foo")];
     assert!(!is_trait_used_for_method_dispatch(
         "Foo", &traits, &used_ids
     ));

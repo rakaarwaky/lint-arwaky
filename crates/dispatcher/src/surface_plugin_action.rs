@@ -1,8 +1,8 @@
 // PURPOSE: PluginCommandsSurface — adapter/plugin listing business logic, no formatting.
 use shared::common::AdapterNameList;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::ToolName;
 use std::sync::Arc;
 
 pub fn collect_adapters(external_lint: Arc<dyn IExternalLintAggregate>) -> AdapterNameList {
@@ -48,9 +48,7 @@ pub fn collect_adapters_detailed(
         list.push(AdapterDetail {
             name: b.into(),
             label: l.into(),
-            installed: tool_resolution.is_binary_available(&ToolName {
-                value: b.to_string(),
-            }),
+            installed: tool_resolution.is_binary_available(&ToolName::new(b)),
         });
     }
     list

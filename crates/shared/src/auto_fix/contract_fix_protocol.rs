@@ -11,6 +11,7 @@ use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_source_vo::ContentString;
 
@@ -36,7 +37,12 @@ pub trait IBypassFixProtocol: Send + Sync {
 /// FR-AutoFix-003: word-boundary-aware mechanical symbol rename.
 pub trait ISymbolRenameProtocol: Send + Sync {
     /// FR-003: Rename a symbol across the file (mechanical `renamed_` prefix).
-    fn rename_symbol(&self, file_path: &str, old_name: &str, new_name: &str) -> FixOutcome;
+    fn rename_symbol(
+        &self,
+        file_path: &str,
+        old_name: &SymbolName,
+        new_name: &SymbolName,
+    ) -> FixOutcome;
 }
 
 /// FR-AutoFix-004: run the whole fix pipeline, with per-request dry-run.

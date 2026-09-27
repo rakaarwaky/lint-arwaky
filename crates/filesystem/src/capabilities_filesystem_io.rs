@@ -6,6 +6,7 @@ use crate::utility_filesystem_io;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
+use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
@@ -143,11 +144,11 @@ impl IFileSystemIOProtocol for CapabilitiesFileSystemIO {
 
     fn run_external_command_in(
         &self,
-        name: &str,
+        name: &ToolName,
         args: &[&str],
         current_dir: &str,
     ) -> (String, String, bool) {
-        utility_filesystem_io::run_external_command_in(name, args, current_dir)
+        utility_filesystem_io::run_external_command_in(name.value(), args, current_dir)
     }
 
     // ── Scan Timing ──────────────────────────────────────────

@@ -312,7 +312,7 @@ fn bench_tool_resolution(c: &mut Criterion) {
     group.sample_size(30);
 
     let tool = CapabilitiesToolResolution::new();
-    let sh_name = shared::filesystem::taxonomy_filesystem_vo::ToolName::new("sh").unwrap();
+    let sh_name = shared::common::taxonomy_tool_name_vo::ToolName::new("sh");
 
     group.bench_function("is_binary_available", |b| {
         b.iter(|| {

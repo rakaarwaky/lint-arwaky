@@ -9,12 +9,13 @@ use crate::common::taxonomy_adapter_list_vo::AdapterNameList;
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_duration_vo::Timeout;
+use crate::common::taxonomy_error_vo::ErrorCode;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_response_data_vo::ResponseData;
 use crate::common::taxonomy_severity_vo::Severity;
+use crate::common::taxonomy_tool_name_vo::ToolName;
 use crate::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
-use crate::filesystem::taxonomy_filesystem_vo::ToolName;
 use crate::quality_rules::taxonomy_analysis_vo::LintResultList;
 use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
 
@@ -68,13 +69,18 @@ pub trait INormalizeProtocol: Send + Sync {
     /// warnings raised while parsing.
     fn normalize(
         &self,
-        tool_name: &str,
+        tool_name: &ToolName,
         raw_output: &str,
         root: &FilePath,
     ) -> (LintResultList, Vec<String>);
 
     /// Map one tool-native severity or rule code to a lint-arwaky `Severity`.
-    fn map_severity(&self, tool_name: &str, code: &str, tool_severity: &str) -> Severity;
+    fn map_severity(
+        &self,
+        tool_name: &ToolName,
+        code: &ErrorCode,
+        tool_severity: &Severity,
+    ) -> Severity;
 }
 
 /// FR-ExternalLint-006: execute an external linter tool as a subprocess with
@@ -136,7 +142,7 @@ pub trait IJsToolResolutionProtocol: Send + Sync {
     fn js_apply_fix(
         &self,
         path: &FilePath,
-        tool: &str,
+        tool: &ToolName,
         fix_arg: &str,
     ) -> Result<ComplianceStatus, LinterOperationError>;
 }

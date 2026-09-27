@@ -61,7 +61,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared::filesystem::taxonomy_filesystem_vo::ToolName,
+        _: &shared::common::taxonomy_tool_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -73,7 +73,7 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &str,
+        _: &shared::common::taxonomy_tool_name_vo::ToolName,
         _: &str,
     ) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
