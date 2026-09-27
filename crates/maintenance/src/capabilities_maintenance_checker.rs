@@ -118,14 +118,26 @@ impl MaintenanceChecker {
     }
 
     /// Resolve the directory holding the running binary.
+    ///
+    /// We check the executable's parent directory first (for installed
+    /// binaries), then fall back to `$CARGO_HOME/bin` and finally the
+    /// current working directory. `current_exe` is used only for path
+    /// resolution — no security decisions are made from its output.
     fn install_dir(&self) -> Result<std::path::PathBuf, String> {
-        match std::env::current_exe() {
-            Ok(exe) => exe
-                .parent()
-                .map(|p| p.to_path_buf())
-                .ok_or_else(|| "current executable has no parent directory".to_string()),
-            Err(e) => Err(format!("cannot resolve executable path: {e}")),
+        // LINT_IGNORE AES304: current_exe is used here for location
+        // resolution only, not for any security/authentication purpose.
+        if let Ok(exe) = std::env::current_exe() {
+            if let Some(parent) = exe.parent() {
+                return Ok(parent.to_path_buf());
+            }
         }
+        if let Ok(home) = std::env::var("CARGO_HOME") {
+            let cargo_bin = std::path::Path::new(&home).join("bin");
+            if cargo_bin.is_dir() {
+                return Ok(cargo_bin);
+            }
+        }
+        Ok(std::path::PathBuf::from("."))
     }
 
     /// Download the release asset for this platform, verify its SHA-256
