@@ -50,6 +50,14 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                 |
 | AES506 | Surface Orphan      | HIGH     | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface. |
 
+| Code   | Name                  | Severity | Group  | Description                                                                                     |
+| -------- | --------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------- |
+| AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields.                  |
+| AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present.                  |
+| AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
+| AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
+| AES605 | Feature Folder Health | MEDIUM   | Doc    | Every folder with a doc pair holds an orchestrator; kernel folders carry no docs.                |
+
 ---
 
 ## Group 1: Naming
@@ -401,3 +409,86 @@ Orphan detection per category:
 - **Smart** (`_command` / `_controller` / `_page` / `_entry`) — must be imported by entry
 - **Utility** (`_hook` / `_store` / `_action` / `_screen` / `_router`) — must be imported by smart surface
 - **Passive** (`_component` / `_view` / `_layout`) — must be imported by smart or utility surface
+
+---
+
+## Group 6: Document Invariants
+
+These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md` at the workspace root, plus the `FRD.md` / `BACKLOG.md` pair in each feature folder. Unlike groups 1–5 they read Markdown, not source code, so they run through the `docs` command rather than `scan`.
+
+**Run:** `lint-arwaky-cli docs .`
+
+**Finding shape:** each code groups one category. A finding carries `code`, a `violation_type` naming the exact sub-invariant that failed, and a `message` giving the line and the concrete drift. The `violation_type` is stable and machine-readable; the message is for a human.
+
+**Documented by:** the HOW-TO-MAKE-FRD / HOW-TO-MAKE-ROADMAP templates in the `aes-docs` skill.
+
+---
+
+### AES601 — FR Format
+
+**Severity:** HIGH
+
+Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling.
+
+| Violation type        | Fires when                                                              |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `id_missing_feature_prefix` | An ID reads `FR-NNN` with no feature prefix.                        |
+| `field_missing`            | A requirement omits one or more of the six fields; the message names each. |
+
+---
+
+### AES602 — Section Structure
+
+**Severity:** HIGH
+
+Sections follow the template order (Reference, System Overview, Functional Requirements, API Contract, Integration Points, Non-functional, Test Scenarios, Assumptions, Glossary), and each carries the shape its type requires.
+
+| Violation type               | Fires when                                                            |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `order_violation`             | The level-2 sections appear out of template order.                    |
+| `api_no_subsection`           | API Contract is missing its Protocol API or Aggregate API subsection.  |
+| `integration_not_table`       | Integration Points is not a table with System, Direction, Purpose, Failure mode. |
+| `nfr_not_table`               | Non-functional Requirements is not a table with Metric, Target, Measurement method. |
+| `scenarios_empty`             | Test Scenarios carries no bullet items.                               |
+| `glossary_empty`              | Glossary carries no `- **Term**: definition` bullets.                  |
+
+---
+
+### AES603 — Spec Purity
+
+**Severity:** HIGH
+
+A spec promises; it never reports state. Applies to every promise-bearing document: PRD, FRD, ROADMAP, ARCHITECTURE, CONTRIBUTING.
+
+| Violation type         | Fires when                                                              |
+| ------------------------ | ------------------------------------------------------------------------ |
+| `source_file_named`     | The spec names a concrete source file (`.py`, `.rs`, `.ts`, `.tsx`); the message names the file. |
+| `status_leak`           | The spec carries checkboxes, a Status field, implementation state, release state, a status marker, or a progress percentage. |
+
+---
+
+### AES604 — Crosslinks
+
+**Severity:** HIGH
+
+Documents reference each other, and the state vocabulary lives in exactly one place.
+
+| Violation type             | Fires when                                                              |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `no_backlog_link`           | An FRD's Reference section does not link its BACKLOG.md.                |
+| `no_prd_link`               | An FRD's Reference section does not link its PRD.md.                    |
+| `state_vocab_restated`      | A feature backlog restates a root-master section (State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register). |
+
+---
+
+### AES605 — Feature Folder Health
+
+**Severity:** MEDIUM
+
+A doc pair marks a feature, and only a feature holds one.
+
+| Violation type     | Fires when                                                              |
+| -------------------- | ------------------------------------------------------------------------ |
+| `no_orchestrator`   | A folder carries a doc pair but holds no `*_orchestrator` file.        |
+| `shared_has_docs`   | A kernel folder (`shared`) carries a doc pair.                          |
+

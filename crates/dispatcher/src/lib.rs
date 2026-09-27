@@ -5,6 +5,7 @@
 pub mod surface_check_action;
 pub mod surface_ci_action;
 pub mod surface_config_action;
+pub mod surface_docs_action;
 pub mod surface_external_action;
 pub mod surface_fix_action;
 pub mod surface_git_action;

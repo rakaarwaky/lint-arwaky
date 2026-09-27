@@ -91,6 +91,12 @@ pub struct ExternalCommandParams {
     pub ignored_paths: Vec<String>,
 }
 
+/// Parameters for the `docs` command.
+pub struct DocsCommandParams {
+    pub path: Option<FilePath>,
+    pub doc_orchestrator: Arc<dyn shared::doc_rules::IDocRunnerAggregate>,
+}
+
 fn resolve_root(path: &Option<FilePath>) -> String {
     match path {
         Some(p) => p.value().to_string(),
@@ -223,6 +229,30 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
                 is_member(&params.path, &params.filesystem_seam),
             );
             exit_for(violations.len())
+        }
+        Err(e) => {
+            error!(error = %e, "operation failed");
+            ExitCode::RUNTIME_ERROR
+        }
+    }
+}
+
+/// `docs` — doc invariant audit (AES601–AES605) over the workspace document
+/// chain. This is a markdown-only check, so it bypasses the filesystem index
+/// and calls the doc orchestrator directly on the target path.
+pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
+    match dispatcher::surface_docs_action::collect_docs(&root, params.doc_orchestrator) {
+        Ok(findings) => {
+            if findings.is_empty() {
+                tracing::info!("no document invariants violated");
+                ExitCode::OK
+            } else {
+                for finding in &findings {
+                    tracing::warn!(finding, "document invariant violated");
+                }
+                ExitCode::POLICY_FAIL
+            }
         }
         Err(e) => {
             error!(error = %e, "operation failed");
