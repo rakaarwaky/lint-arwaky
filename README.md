@@ -42,6 +42,8 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 | `install-hook` / `uninstall-hook` | Git pre-commit hook |
 | `init` / `install` / `mcp-config` / `config-show` | Setup and config |
 | `version` / `adapters` | Info |
+| `skill list` | List embedded AES skill documentation |
+| `skill read <name>` | Print a skill's SKILL.md (`--with-references` adds language HOW-TOs) |
 
 Exit codes: `0` Ok · `1` policy fail · `2` runtime error · `3` prerequisite missing.
 

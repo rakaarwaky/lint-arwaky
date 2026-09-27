@@ -182,6 +182,25 @@ enum Command {
         #[arg(long)]
         check_only: bool,
     },
+    /// Read or list embedded AES skill documentation
+    Skill {
+        #[command(subcommand)]
+        sub: SkillSubCommand,
+    },
+}
+
+#[derive(Subcommand)]
+enum SkillSubCommand {
+    /// Print the SKILL.md (and optionally references) for the named skill
+    Read {
+        #[arg(value_name = "NAME")]
+        name: String,
+        /// Also print language-specific reference HOW-TOs
+        #[arg(long)]
+        with_references: bool,
+    },
+    /// List all embedded skills
+    List,
 }
 
 fn parse_format(s: &str) -> Format {
@@ -609,6 +628,13 @@ fn main() {
             println!("lint-arwaky {}", report.version);
             shared::common::ExitCode::OK
         }
+        Command::Skill { sub } => match sub {
+            SkillSubCommand::Read {
+                name,
+                with_references,
+            } => cli_commands::surface_skill_command::handle_skill_read(&name, with_references),
+            SkillSubCommand::List => cli_commands::surface_skill_command::handle_skill_list(),
+        },
     };
 
     std::process::exit(exit_code.value() as i32);
