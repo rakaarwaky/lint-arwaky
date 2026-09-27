@@ -46,8 +46,8 @@ metadata:
 > **Audience**: The agent creating or validating a contract.
 > **Scope**: Python, Rust, and TypeScript contracts in the shared domain next to taxonomy.
 
-The **aggregate** decides which suffix, how thin the protocol is, and how rich the export surface is.
-Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
+The **layer** decides which suffix, how rich the protocol is, and how the consumer surface is shaped.
+Rules, templates, section contracts, and Verify blocks live in the language HOW-TOs under [`references/`](references/).
 
 | Language   | Declaration                                  | Body rule                          | HOW-TO |
 | ---------- | -------------------------------------------- | ---------------------------------- | ------ |
@@ -57,7 +57,7 @@ Rules, templates, section contracts, and Verify blocks live in the language HOW-
 
 **The contract chain:**
 
-`_protocol` (one method / one feature, inward) → agent → `_aggregate` (many methods / one per export, outward) → surface / root
+`_protocol` (one file per feature, one trait per capability seam, each trait rich — inward) → agent → `_aggregate` (exactly one `execute()` method, taxonomy-defined response enum — outward) → surface / root
 
 Each suffix answers one direction. A method in the wrong layer is the defect this skill exists to prevent.
 
@@ -71,15 +71,15 @@ A rule cannot drift from the gate. Cite the linter, not this file, when pointing
 | Layer | Rule |
 | ----- | ---- |
 | Naming | `contract_<concept>_<suffix>.<ext>` — suffix strictly `_protocol` or `_aggregate` (AES101/AES102). |
-| Protocol shape | Exactly **one method for one feature** — uniform across every capability in the domain. |
-| Aggregate shape | **Many methods, one per export** — the rich consumer surface, not a dump-all `execute()`. |
+| Protocol shape | One file per feature, one trait/class/interface per capability seam, each rich with named methods. |
+| Aggregate shape | **Exactly one** `execute()` method; response is a taxonomy-defined enum of VOs. |
 | Body | Pure declaration only: abstract / trait-with-`;` / interface. No default bodies, no helpers. |
 | Imports | Taxonomy + other contracts only — never capabilities, agents, surface, root (AES201/AES205). |
 | Signatures | Shared VOs only — no raw primitives for domain values (AES402). |
 | Register | `__init__.py` / `mod.rs` / `index.ts`. |
 | Verify | `lint-arwaky-cli scan <contract-dir>` → 0. Language compile is fallback only. |
 
-Split standard (one method per feature / many exports), import details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
+Split standard (one file per feature, one trait per seam, many methods per trait; aggregate = one `execute()`), import details, templates, and Section Contract tables: **read the language HOW-TO** — do not restate them here.
 
 ---
 
@@ -90,10 +90,10 @@ Ask these questions in order. The first "No" dictates your next action.
 1. **Is the caller the agent (inward) or the surface (outward)?**
    - *Inward / capabilities implement it* → `_protocol`.
    - *Outward / surface calls it* → `_aggregate`.
-2. **Does the protocol have exactly one method for one feature?**
-   - *No* → strip extra methods; a second feature is a second capability, not a second method.
-3. **Does the aggregate expose one typed method per consumer export?**
-   - *No* → split into per-export methods (or collapse a protocol mirror / mega-`execute()`).
+2. **Does each protocol trait carry every method its capability owns?**
+   - *No* → add the missing methods to that trait; a second capability seam gets its own trait in the same file.
+3. **Does the aggregate declare exactly one `execute()` method?**
+   - *No* → collapse to a single `execute(request: RequestVO) -> ResponseVO`; new consumer verbs are new variants on `RequestVO` + a dispatch arm in the agent, not new aggregate methods.
 4. **Do signatures use shared VOs and no impl-layer imports?**
    - *No* → fix per HOW-TO Rules; `lint-arwaky-cli scan` will re-flag AES402/AES201.
 5. **Does `lint-arwaky-cli scan <contract-dir>` exit 0?**
@@ -106,8 +106,8 @@ Ask these questions in order. The first "No" dictates your next action.
 ```text
 shared-domain/                  # modules/shared/src | crates/shared/src | packages/shared/src
 ├── taxonomy_<concept>_vo.*     # VOs the contract signatures use
-├── contract_<concept>_protocol.*  # one method / one feature
-└── contract_<concept>_aggregate.* # many methods / one per export
+├── contract_<concept>_protocol.*  # one file per feature, one trait/class/interface per seam
+└── contract_<concept>_aggregate.* # exactly one execute() method
 
 ```text
 
@@ -119,8 +119,8 @@ Same shape for Python (`_protocol.py`), Rust (`_protocol.rs`), and TypeScript (`
 
 1. **Resolve the contract dir** in the shared domain beside taxonomy.
 2. **Analyze**: Which suffix? Who implements, who consumes? Run `lint-arwaky-cli scan <contract-dir>` — findings are your work list.
-3. **Draft protocol**: One method for one feature per [references/HOW-TO-MAKE-PYTHON-CONTRACT.md](references/HOW-TO-MAKE-PYTHON-CONTRACT.md) (or Rust/TS HOW-TO).
-4. **Draft aggregate**: One method per export, same HOW-TO § Template / § Section Contract.
+3. **Draft protocol**: One file per feature, one trait/class/interface per capability seam, each rich with named methods. See [references/HOW-TO-MAKE-PYTHON-CONTRACT.md](references/HOW-TO-MAKE-PYTHON-CONTRACT.md) (or Rust/TS HOW-TO).
+4. **Draft aggregate**: Exactly one `execute()` method returning a taxonomy-defined response enum. Same HOW-TO § Template / § Section Contract.
 5. **Register** in `__init__.py` / `mod.rs` / `index.ts`.
 6. **Verify**: `lint-arwaky-cli scan <contract-dir>` (HOW-TO § Verify), then implement with `aes-capabilities` / `aes-agent`.
 
@@ -139,13 +139,15 @@ lint-arwaky-cli scan <contract-dir>   # AES101/102, AES201–205, AES402, role �
 
 ```text
 
-A pass means naming, layer imports, primitives, and roles are clean. The split standard
-(one method / feature, many exports) is **manual** — the linter does not count methods.
+A pass means naming, layer imports, primitives, and roles are clean. The per-seam protocol shape
+(one file per feature, one trait per seam, many methods per trait) and aggregate cardinality
+(one `execute()` only) are **manual** — the linter does not count methods.
 
 ### Human Checks
 
-A machine pass does not mean the contract is right. Protocol thinness, aggregate export
-richness, and "only methods outer layers call" still need a reader (HOW-TO § Rules).
+A machine pass does not mean the contract is right. Per-seam protocol shape (one file per
+feature, one trait per seam, many methods per trait) and aggregate cardinality (exactly
+one `execute()`) still need a reader (HOW-TO § Rules).
 
 ---
 
@@ -153,7 +155,7 @@ richness, and "only methods outer layers call" still need a reader (HOW-TO § Ru
 
 - [ ] `lint-arwaky-cli scan <contract-dir>` exits 0.
 - [ ] Every touched HOW-TO's `Verify` block was executed.
-- [ ] Protocol = one method for one feature; aggregate = one method per export (manual).
+- [ ] Protocol = one file per feature, one trait/class/interface per capability seam, each rich; aggregate = exactly one `execute()` method returning a taxonomy-defined enum (manual).
 - [ ] File registered in `__init__.py` / `mod.rs` / `index.ts`.
 - [ ] Language fallback compile clean if the HOW-TO lists it.
 
@@ -163,8 +165,8 @@ richness, and "only methods outer layers call" still need a reader (HOW-TO § Ru
 
 The linter covers naming, imports, and primitives. These need a reader (HOW-TO § Rules):
 
-- **Protocol with several methods**: one feature = one method; split into a second capability.
-- **Aggregate that mirrors the protocol** or collapses to one `execute()`: export surface must be rich and typed, one method per consumer verb.
+- **Protocol with several methods**: one file = one feature; second capability seam gets its own trait in the same file — not a separate file.
+- **Aggregate with several methods**: exactly one `execute()` is the only legal entry point; adding a consumer verb means a new variant on `RequestVO`, not a new aggregate method.
 - **Contract importing capabilities/agents/surface/root**: dependency arrow inverted (AES201/AES205).
 - **Primitives in signatures**: replace with taxonomy VOs (AES402).
 - **Restating HOW-TO rules in SKILL.md**: delegate — this file only routes.

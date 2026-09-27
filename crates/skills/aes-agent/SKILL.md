@@ -49,7 +49,7 @@ metadata:
 > **Audience**: The agent creating or validating an agent orchestrator file.
 > **Scope**: Python, Rust, and TypeScript `agent_<domain>_orchestrator` files — one aggregate, 3-block structure.
 
-The **aggregate** decides which suffix, which imports, and which structure apply.
+The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO |

@@ -47,7 +47,7 @@ metadata:
 > **Audience**: The agent creating or validating a container or entry file.
 > **Scope**: Python, Rust, and TypeScript `root_<concept>_<container|entry>` files (plus documented barrel/entry exceptions).
 
-The **aggregate** decides which suffix, which imports, and which structure apply.
+The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
 | Language | Focus | Body rule | HOW-TO |
@@ -134,7 +134,8 @@ A machine pass does not mean the file is right. Layer purpose, structural order,
 
 - [ ] `lint-arwaky-cli scan <layer-path>` exits 0.
 - [ ] Every touched HOW-TO's `Verify` block was executed.
-- [ ] File registered in `__init__.py` / `mod.rs` / `index.ts`.
+- [ ] File registered in the right barrel for its language: `__init__.py` (Python), `mod.rs` (Rust),
+      or `index.ts` (TypeScript).
 - [ ] Language fallback compile clean if the HOW-TO lists it.
 - [ ] Related skills considered for the next layer up/down.
 

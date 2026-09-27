@@ -54,8 +54,9 @@ I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + dom
 
 **Error rules:**
 - Rule 1: Never silently discard — no `checker.check() or ""`.
-- Rule 2: Analysis orchestration → return `list[<ResultVO>]`, catch per-item into VO.
-- Rule 3: Execution orchestration → return `Result[...]`.
+- Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
+  holds VO-wrapped values, not raw primitives.
+- Rule 3: Execution orchestration → return `Result[...]` wrapped in a VO variant.
 - Rule 4: Delegate I/O errors to capabilities — agent only wraps into VO.
 
 **VO rules:** `str`/`int`/`float` forbidden for domain fields/contracts. `bool` for semantic toggles only.
@@ -77,17 +78,22 @@ I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + dom
 ```python
 from shared.<domain>.taxonomy_<name>_vo import <VO>
 from shared.<domain>.contract_<name>_aggregate import I<Name>Aggregate
+from shared.<domain>.contract_<name>_protocol import I<Seam>Protocol
 
 # ─── Block 1: Class Definition & Constructor ──────────────
 class Agent<Name>:
-    def __init__(self, aggregate: I<Name>Aggregate) -> None:
-        self._aggregate = aggregate
+    # Injected deps are protocol ABCs (what the agent dispatches to), not the aggregate.
+    def __init__(self, dep: I<Seam>Protocol) -> None:
+        self._dep = dep
 
     # ─── Block 2: Aggregate Method Implementation ─────────
-    def execute(self, request: <RequestVO>) -> list[<ResultVO>]:
-        # orchestration only — delegate to aggregate
-        results = self._aggregate.process(request)
-        return results
+    # Exactly one method — the single entry point. Dispatch to the owning protocol.
+    def execute(self, request: <RequestVO>) -> <ResponseVO>:
+        # Orchestration only: match the request variant, delegate to the protocol.
+        # No computation, no I/O, no silently discarded errors.
+        if isinstance(request, <RequestVO>.<Variant1>):
+            return <ResponseVO>.<Result1>(self._dep.<operation_1>(..))
+        return <ResponseVO>.<Result2>(self._dep.<operation_2>(..))
 
     # ─── Block 3: Dunder Methods, Factories & Helpers ─────
     def __repr__(self) -> str:

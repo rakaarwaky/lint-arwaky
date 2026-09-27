@@ -22,7 +22,7 @@ metadata:
 
   related_skills:
 
-    - test-driven-development
+    - aes-capabilities
     - aes-capabilities
     - aes-agent
     - aes-utility
@@ -148,7 +148,7 @@ Ask these questions in order. The first "No" dictates your next action.
 
 ```bash
 pytest --tb=short                                   # Python
-cargo test --workspace                              # Rust
+cargo nextest run --workspace --lib --tests -j 2     # Rust
 npx vitest run                                      # TypeScript
 
 # Plus per HOW-TO: pytest-benchmark / cargo bench / vitest bench, and coverage (Python/TS).
@@ -197,5 +197,4 @@ The runner covers green/red. These need a reader (HOW-TO § Rules):
 - `aes-agent`
 - `aes-utility`
 - `aes-lint-arwaky`
-- `test-driven-development`
 

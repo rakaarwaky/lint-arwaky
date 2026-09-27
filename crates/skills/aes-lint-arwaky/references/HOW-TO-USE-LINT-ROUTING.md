@@ -9,7 +9,7 @@
 > (AES201).
 >
 > **Location**: Decision table consulted after a scan; rule semantics ultimately come from
-> `internal/aes-lint-arwaky/RULES_AES.md` and `internal/aes-lint-arwaky/lint_arwaky.config.yaml` —
+> the project's `.agents/rules/RULES_AES.md` and `lint_arwaky.config.yaml` —
 > those files win if this table and the code disagree.
 >
 > **Length**: Triage order + one row per AES code + two reference matrices (suffix, imports).
@@ -27,8 +27,10 @@ Six rules. Each one prevents a specific failure mode.
    whose HOW-TO carries the language templates.
 3. **Auto-fix only AES101 / AES203 / AES304 via `fix`.** AES201 and AES205 are structural —
    manual, through `aes-contract` (or the layer's `aes-*`).
-4. **After any AES101 rename, update the barrel.** Python `__init__.py`, Rust `mod.rs`,
-   TypeScript `index.ts` — otherwise the rename becomes AES501–506.
+4. **After any AES101 rename, update the barrel AND confirm reachability.** Python
+   `__init__.py`, Rust `mod.rs`, TypeScript `index.ts` keep the file importable, but the orphan
+   check also requires a `_entry` file and a `contract_*`/higher-layer importer — barrel
+   registration alone does not clear AES501–506.
 5. **AES102 and AES201 are matrices, not vibes.** Check the suffix and import tables below
    before inventing a "close enough" role name or import.
 6. **`test` / `bench` are not AES layers.** Files under `tests/` and `benches/` follow
@@ -54,12 +56,12 @@ AES401–403, AES406, AES505–506 → 🟢 **MEDIUM/LOW** AES203–204, AES305,
 | AES201 (Forbidden Import) | A layer imports a layer it must not (matrix below) | Remove the cross-layer import; depend on a contract protocol/aggregate injected via DI | `aes-contract` |
 | AES202 (Mandatory Import) | A required import is missing (e.g. capabilities must import `contract(*_protocol)`) | Add the required import/type | `aes-{layer}` |
 | AES203 (Unused Import) | Imported symbol never used | `lint-arwaky-cli fix <path> --filter AES203` | — |
-| AES204 (Dummy Import) | Import kept only to satisfy a linter, with stub usage | Remove the dummy import and its stub | `fix-bypass` |
+| AES204 (Dummy Import) | Import kept only to satisfy a linter, with stub usage | Remove the dummy import and its stub; delete the unused symbol | `aes-{layer}` |
 | AES205 (Circular Import) | Two files/layers import each other | Extract the shared type or trait downward into `taxonomy` or `contract`; both sides import that | `aes-contract` |
-| AES301 (File Maximum Limit) | File exceeds the layer's max lines | Split by responsibility | `cleanup-consolidate` |
-| AES302 (File Minimum Limit) | File is below the minimum size | Merge into the parent module or delete | `cleanup-consolidate` |
+| AES301 (File Maximum Limit) | File exceeds the layer's max lines | Split by responsibility; extract shared logic to `aes-utility` if duplicated | `aes-{layer}`, `aes-utility` |
+| AES302 (File Minimum Limit) | File is below the minimum size | Merge into the parent module or delete the file | `aes-{layer}` |
 | AES303 (Mandatory Definition) | File has no class/struct/enum/trait of its own | Add the definition the filename promises | `aes-{layer}` |
-| AES304 (Bypass Comment) | `noqa`, `type: ignore`, `#[allow]`, `@ts-ignore`, `eslint-disable` … | Fix the root cause and delete the suppression | `fix-bypass` |
+| AES304 (Bypass Comment) | `noqa`, `type: ignore`, `#[allow]`, `@ts-ignore`, `eslint-disable` … | Auto-fixable, or fix the root cause and delete the suppression | `fix --filter AES304` or `aes-{layer}` |
 | AES305 (Duplication Code) | Same logic repeated across files | Extract shared logic into a pure utility | `aes-utility` |
 | AES401 (Taxonomy Role) | `_constant` purity; primitives in `_entity`/`_error`/`_event` | Replace primitives with taxonomy VOs | `aes-taxonomy` |
 | AES402 (Contract Role) | Contract trait/method signatures use primitives instead of taxonomy VO/constant | Replace primitives with VO/constant types | `aes-contract` |
@@ -67,7 +69,7 @@ AES401–403, AES406, AES505–506 → 🟢 **MEDIUM/LOW** AES203–204, AES305,
 | AES404 (Utility Role) | Utility must be stateless standalone functions and may import taxonomy only | Move stateful logic to capabilities; drop non-taxonomy imports | `aes-utility` |
 | AES405 (Agent Role) | Agent: >3 types, no aggregate implementor, `Any` annotations, direct capabilities import, state outside the constructor | Depend on `contract(*_aggregate)` and delegate to capabilities via protocols | `aes-agent` |
 | AES406 (Surface Role) | Surface >15 functions; business logic in a passive surface; role-boundary breach | Move logic down a layer; keep passive surfaces declarative | `aes-surface` |
-| AES501–506 (Orphan per layer) | A taxonomy/utility/contract/capabilities/agent/surface file nothing imports | Wire into the root container or delete dead code | `cleanup-consolidate`, `aes-root` |
+| AES501–506 (Orphan per layer) | A taxonomy/utility/contract/capabilities/agent/surface file nothing imports | Wire into the root container, or delete the dead file | `aes-{layer}`, `aes-root` |
 
 `{layer}` ∈ `taxonomy`, `utility`, `contract`, `capabilities`, `agent`, `surface`, `root` —
 the merged skill name (e.g. `aes-contract`), whose HOW-TO carries the templates for Python,
@@ -85,7 +87,7 @@ Every routing decision is required to carry the rows that apply. Each exists for
 | Fix table row per AES code | Every emitted code has exactly one fix path and one owning skill. |
 | AES102 suffix matrix | "Flexible" vs "strict" is layer-specific; guessing recreates AES102. |
 | AES201 import matrix | Allowed / mandatory / forbidden is per file scope, not a blanket rule. |
-| Barrel note after rename | AES101 without barrel update → AES501–506. |
+| Barrel + reachability note after rename | AES101 without barrel update breaks imports; barrel alone does not clear AES501–506. |
 | Non-layer note for tests | `tests/` / `benches/` are outside AES101–102. |
 | Source-of-truth pointer | `RULES_AES.md` + `lint_arwaky.config.yaml` win on disagreement. |
 
@@ -108,6 +110,7 @@ Manual (routing itself is not machine-checked):
 
 - [ ] Every CRITICAL code in the scan has a row in the fix table before you start fixing.
 - [ ] Each fix went to the Skill listed for that AES code (not a hand-rolled edit).
-- [ ] Barrel/`mod.rs`/`index.ts` updated after every AES101 rename.
+- [ ] Barrel/`mod.rs`/`index.ts` updated after every AES101 rename, and orphan reachability
+      confirmed (imported by a `_entry` file and a `contract_*`/higher-layer file).
 - [ ] AES102 / AES201 checked against the matrices, not memory.
 - [ ] Re-scan to 0; then language verify from the matching `HOW-TO-USE-LINT-<LANG>.md`.
