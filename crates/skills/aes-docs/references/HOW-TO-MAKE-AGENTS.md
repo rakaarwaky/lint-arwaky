@@ -11,6 +11,8 @@
 > **Location**: Project root.
 >
 > **Length**: 50–500 lines
+>
+> **State dir**: `.agents/state/` — local session state, gitignored
 
 ---
 
@@ -29,8 +31,11 @@
 5. **Mark optional sections clearly.** Do not force fake sections
  like pipeline diagrams just to fill a template.
 6. **Name every placeholder.** Use `` `<base-branch>` ``, `` `<state-dir>` ``,
- `` `<runtime>` ``.
+ `` `<runtime>` ``, `` `<worktree-dir>` ``.
 7. **Respect the length budget.** Target 50–500 lines.
+8. **Gitignore `<state-dir>`**. `<state-dir>` must not be committed — list it
+ in `.gitignore` (or a sibling ignore file). State files belong only to the
+ local developer workspace.
 
 ---
 
@@ -41,9 +46,12 @@
 
 1. **Determine context** — Agent config for single tool or multi-agent system.
 2. **Create file** → `` `.agents/agents/<name>.md` ``.
-3. **Write frontmatter** — name, description, persona, tools.
-4. **Write system prompt** — behavior rules, guardrails, response format.
-5. **Verify** → validate YAML frontmatter; check agent loads without error.
+3. **Ensure `<state-dir>` is gitignored** → add `<state-dir>/` to
+ `.gitignore`; run `git check-ignore -v <state-dir>/session-notes.md` to
+ confirm. Create the directory only after the ignore rule lands.
+4. **Write frontmatter** — name, description, persona, tools.
+5. **Write system prompt** — behavior rules, guardrails, response format.
+6. **Verify** → validate YAML frontmatter; check agent loads without error.
 
 ## Template
 
@@ -74,6 +82,8 @@ description: "`<Project>` operational guide. `<Authoritative doc>` wins on ambig
   approved output paths, running destructive cleanup.
 - Approvals do not carry across sessions unless recorded in
   `<state-dir>/session-notes.md`.
+- `<state-dir>` must be gitignored so it is never committed. Create
+  `<state-dir>/` if absent before writing any state files.
 - Do not write secrets, tokens, or private keys into todo files, session
   notes, PR bodies, or logs.
 
@@ -82,8 +92,10 @@ description: "`<Project>` operational guide. `<Authoritative doc>` wins on ambig
 - Write important state to the todo list and
   `<state-dir>/session-notes.md`.
 - If it is not written down, it does not exist.
+- `<state-dir>` = `.agents/state/`. Add it to `.gitignore` before creating it;
+  never commit it.
 - If `<state-dir>/` does not exist, create it before writing state
-  files.
+ files.
 
 ## Session Start
 
@@ -188,6 +200,7 @@ A change is done when:
 - A PR that merges a fix updates every invalidated backlog row in the
   same PR.
 - Generated output is under an approved output path.
+- `<state-dir>` is gitignored (`git check-ignore -v <state-dir>/session-notes.md` exits 0).
 - No destructive action ran without explicit approval.
 
 ## Writing Style
@@ -252,4 +265,6 @@ reason.
 ```bash
 aa check docs .
 # Checks: agents-section-missing, ci-command-drift, absolute-path, secret-in-docs, dead-link, doc-length.
+
+git check-ignore -v <state-dir>/session-notes.md   # must match an ignore rule
 ```
