@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,11 +16,11 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| REPO-01 | FR-001 | SCEN-001 - Text Format — 4 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| REPO-02 | FR-002 | SCEN-002 - JSON Format — 4 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| REPO-03 | FR-003 | SCEN-003 - SARIF Format — 7 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| REPO-04 | FR-004 | SCEN-004 - JUnit Format — 6 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| REPO-05 | FR-005 | SCEN-005 –FR-007 - Orchestrator, Fallback, XML Escape — 8 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| REPO-01 | FR-REPORTFORMATTER-001 | SCEN-001 - Text Format — 4 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| REPO-02 | FR-REPORTFORMATTER-002 | SCEN-002 - JSON Format — 4 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| REPO-03 | FR-REPORTFORMATTER-003 | SCEN-003 - SARIF Format — 7 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| REPO-04 | FR-REPORTFORMATTER-004 | SCEN-004 - JUnit Format — 6 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| REPO-05 | FR-REPORTFORMATTER-005 | SCEN-005 –FR-REPORTFORMATTER-007 - Orchestrator, Fallback, XML Escape — 8 scenarios verified | P0 | Done | `cargo test -p report_formatter --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

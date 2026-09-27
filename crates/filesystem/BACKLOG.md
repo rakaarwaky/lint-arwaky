@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,11 +16,11 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| FILE-01 | FR-001 | SCEN-001 AST Parsing & Import Extraction — 9 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-02 | FR-002 | SCEN-002 Dependency Graph Construction — 7 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-03 | FR-003 | SCEN-003 File I/O & Directory Operations — 8 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-04 | FR-004 | SCEN-004 Tool Resolution — 4 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-05 | FR-005 | SCEN-005 Workspace Detection — 4 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| FILE-01 | FR-FILESYSTEM-001 | SCEN-001 AST Parsing & Import Extraction — 9 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| FILE-02 | FR-FILESYSTEM-002 | SCEN-002 Dependency Graph Construction — 7 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| FILE-03 | FR-FILESYSTEM-003 | SCEN-003 File I/O & Directory Operations — 8 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| FILE-04 | FR-FILESYSTEM-004 | SCEN-004 Tool Resolution — 4 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| FILE-05 | FR-FILESYSTEM-005 | SCEN-005 Workspace Detection — 4 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

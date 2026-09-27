@@ -1,4 +1,12 @@
 # FRD — cli-commands (v0.2.0)
+
+## Reference
+- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
+- PRD: [PRD.md](../../PRD.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- MCP Server FRD: `crates/mcp-server/FRD.md`
+- Report Formatter FRD: `crates/report-formatter/FRD.md`
+
 ## System Overview
 The cli-commands crate is a **Smart Surface** — a thin CLI wrapper that
 parses command-line args, delegates **all business logic** to the
@@ -30,7 +38,7 @@ tools are listed in the body); exit **2** only if the doctor command itself
 fails.
 
 ## Functional Requirements
-### FR-001: Check/Scan Command (Mutual Aliases)
+### FR-CLICOMMANDS-001: Check/Scan Command (Mutual Aliases)
 - **Description**: Run full architecture compliance analysis on the target
   project or workspace. `check` and `scan` are 1:1 equivalent command aliases.
 - **Input**: `path`, `format`, `filter`, `member`.
@@ -63,7 +71,7 @@ fails.
   - Empty results across all workspaces → exit code 0.
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
 
-### FR-002: CI Command
+### FR-CLICOMMANDS-002: CI Command
 - **Description**: CI-optimized analysis with configurable threshold and
   auto-fail on CRITICAL violations.
 - **Input**: `path`, `threshold`.
@@ -82,7 +90,7 @@ fails.
   - No violations → score 100, passes.
 - **Error Handling**: None — pure computation on existing results.
 
-### FR-003: Fix Command
+### FR-CLICOMMANDS-003: Fix Command
 - **Description**: Apply automatic safe fixes to files that violate rules.
 - **Input**: `path`, `dry_run`.
 - **Output**: `ExitCode` (0 = all fixed, 1 = remaining violations).
@@ -102,7 +110,7 @@ fails.
   - All violations fixed → prints "all violations resolved".
 - **Error Handling**: Exit code 1 if any violations remain after fix.
 
-### FR-004: Doctor Command
+### FR-CLICOMMANDS-004: Doctor Command
 - **Description**: Toolchain diagnostics — check availability and version of
   required tools.
 - **Input**: Maintenance aggregate.
@@ -123,7 +131,7 @@ fails.
   - Some tools missing → shows MISSING status, still exit 0.
 - **Error Handling**: Internal failure of doctor → exit 2.
 
-### FR-005: Security Command
+### FR-CLICOMMANDS-005: Security Command
 - **Description**: Vulnerability scanning via cargo-audit (Rust) or bandit
   (Python).
 - **Input**: Maintenance aggregate, optional path.
@@ -142,7 +150,7 @@ fails.
   - Vulnerabilities found → exit code 1 with findings listed.
 - **Error Handling**: Tool not found → exit code 3; scan failures → exit code 2.
 
-### FR-006: Dependencies Command
+### FR-CLICOMMANDS-006: Dependencies Command
 - **Description**: Dependency report from Cargo.lock / pyproject.toml /
   package.json.
 - **Input**: Maintenance aggregate, optional path.
@@ -160,7 +168,7 @@ fails.
   - No dependency file found → error message.
 - **Error Handling**: Error from dependency report → error message + exit code 2.
 
-### FR-007: Init Command
+### FR-CLICOMMANDS-007: Init Command
 - **Description**: Create default lint-arwaky configuration files and
   distribute documentation.
 - **Input**: Setup aggregate, filesystem.
@@ -179,7 +187,7 @@ fails.
   - Write failure → error message, overall status set to partial failure.
 - **Error Handling**: Per-file errors logged; overall exit code 1 if any failure.
 
-### FR-008: Install Command
+### FR-CLICOMMANDS-008: Install Command
 - **Description**: Install adapter dependencies for detected languages.
 - **Input**: Setup aggregate, `sudo` flag.
 - **Output**: `ExitCode` (0 = success, 1 = partial failure).
@@ -198,7 +206,7 @@ fails.
 - **Error Handling**: Per-language install status reported; overall exit code 1
   if any failure.
 
-### FR-009: MCP Config Command
+### FR-CLICOMMANDS-009: MCP Config Command
 - **Description**: Print MCP server configuration JSON for a specified client.
 - **Input**: `client` name (claude, cursor, windsurf, copilot, hermes,
   vscode, all).
@@ -220,7 +228,7 @@ fails.
 - **Error Handling**: Canonicalization failure → error message with fallback to
   bare name.
 
-### FR-010: Config Show Command
+### FR-CLICOMMANDS-010: Config Show Command
 - **Description**: Display active configuration files and their contents with
   secret redaction.
 - **Input**: Config orchestrator aggregate.
@@ -239,7 +247,7 @@ fails.
   - Config read fails → warning logged, continues.
 - **Error Handling**: Config read errors logged as warnings.
 
-### FR-011: Adapters Command
+### FR-CLICOMMANDS-011: Adapters Command
 - **Description**: List enabled external lint adapters discovered by the
   external-lint layer.
 - **Input**: External lint aggregate.
@@ -255,7 +263,7 @@ fails.
   - No adapters → shows "(none enabled)".
 - **Error Handling**: None.
 
-### FR-012: Git Diff Command
+### FR-CLICOMMANDS-012: Git Diff Command
 - **Description**: Run AES analysis only on files changed since a specified
   git base.
 - **Input**: Code analysis aggregate, `base` branch, optional project path and filter.
@@ -275,7 +283,7 @@ fails.
   - File not lintable → skipped.
 - **Error Handling**: None — analysis runs per-file independently.
 
-### FR-013: Watch Command
+### FR-CLICOMMANDS-013: Watch Command
 - **Description**: Monitor file changes and trigger re-scans on modified files.
 - **Input**: Watch aggregate, optional project path.
 - **Output**: `ExitCode` (0 = clean shutdown; 2 = error setting up handler).
@@ -292,7 +300,7 @@ fails.
     exit 0.
 - **Error Handling**: Signal handler registration failure → exit code 2.
 
-### FR-014: Individual Linter Commands
+### FR-CLICOMMANDS-014: Individual Linter Commands
 - **Description**: Run a single linter independently for targeted analysis.
   Commands: `quality`, `import`, `naming`, `role`, `orphan`, `external`.
 - **Input**: Optional path, format; orphan may take member filter.
@@ -315,111 +323,91 @@ fails.
 - **Error Handling**: Pipeline failures printed to stderr, exit code 2 returned.
 
 ## API Contract
-| Operation    | Input                                             | Output    | Description                                   |
-| -------------- | --------------------------------------------------- | ----------- | ----------------------------------------------- |
-| Check        | check options                                     | Exit code | Analysis on project (1:1 alias of Scan)       |
-| Scan         | scan options                                      | Exit code | Multi-workspace analysis (1:1 alias of Check) |
-| Quality      | path, format                                      | Exit code | Code-quality analysis only (AES301–305)      |
-| Import       | path, format                                      | Exit code | Import-rule checks only (AES201–205)         |
-| Naming       | path, format                                      | Exit code | Naming-rule checks only (AES101–102)         |
-| Role         | path, format                                      | Exit code | Role-rule checks only (AES401–406)           |
-| Orphan       | path, member, format                              | Exit code | Orphan detection only (AES501–506)           |
-| External     | path, format                                      | Exit code | External linter checks only                   |
-| CI           | path, threshold                                   | Exit code | CI-mode threshold comparison                  |
-| Fix          | path, dry-run flag                                | Exit code | Apply automatic fixes                         |
-| Doctor       | maintenance aggregate                             | Exit code | Toolchain diagnostics                         |
-| Security     | maintenance aggregate, path                       | Exit code | Vulnerability scan                            |
-| Dependencies | maintenance aggregate, path                       | Exit code | Dependency report                             |
-| Init         | setup aggregate, filesystem                       | Exit code | Create config files                           |
-| Install      | setup aggregate, sudo flag                        | Exit code | Install adapter dependencies                  |
-| MCP Config   | client name                                       | Exit code | Print MCP client config JSON                  |
-| Config Show  | config orchestrator aggregate                     | Exit code | Display active config files                   |
-| Adapters     | external lint aggregate                           | Exit code | List enabled adapters                         |
-| Git Diff     | code analysis aggregate, branch, path, filter     | Exit code | Analyze git-changed files                     |
-| Watch        | watch aggregate, path                             | Exit code | File watch with auto-lint                     |
+### Protocol API
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `handle_command` | Parsed CLI arguments | `ExitCode` | Runtime error surfaces as exit code 2 | — | Single composite entry point for the CLI surface: resolves the subcommand, injects its aggregates, and dispatches to the matching handler. |
+
+### Aggregate API
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `handle_check` | `ScanCommandParams` | `ExitCode` | Pipeline failure → exit 2 | — | Run the full architecture compliance analysis on a project. |
+| `handle_scan` | `ScanCommandParams` | `ExitCode` | Pipeline failure → exit 2 | — | Run multi-workspace analysis; a 1:1 alias of the check command. |
+| `handle_quality` | `ScanCommandParams` | `ExitCode` | Non-existent path → exit 2 | — | Run code-quality analysis only (AES301–305). |
+| `handle_import` | `ImportCommandParams` | `ExitCode` | Non-existent path → exit 2 | — | Run import-rule checks only (AES201–205). |
+| `handle_naming` | `NamingCommandParams` | `ExitCode` | Non-existent path → exit 2 | — | Run naming-rule checks only (AES101–102). |
+| `handle_role` | `RoleCommandParams` | `ExitCode` | Non-existent path → exit 2 | — | Run role-rule checks only (AES401–406). |
+| `handle_orphan` | `OrphanCommandParams` | `ExitCode` | Non-existent path → exit 2 | — | Run orphan detection only (AES501–506). |
+| `handle_external` | `ExternalCommandParams` | `ExitCode` | Non-existent path → exit 2 | — | Run external linter checks only. |
+| `handle_ci` | `CiCommandParams` | `ExitCode` | None | — | Compare the compliance score against a threshold and auto-fail on CRITICAL violations. |
+| `handle_fix` | Fix params, path, dry-run flag | `ExitCode` | Remaining violations → exit 1 | — | Apply automatic safe fixes and report the fixed count. |
+| `handle_doctor` | `IMaintenanceAggregate` | `ExitCode` | Internal doctor failure → exit 2 | — | Report toolchain diagnostics; exit 0 whenever the diagnostic completes. |
+| `handle_security` | `IMaintenanceAggregate`, optional path | `ExitCode` | Scan tool missing → exit 3; scan failure → exit 2 | — | Run a vulnerability scan for the auto-detected project language. |
+| `handle_dependencies` | `IMaintenanceAggregate`, optional path | `ExitCode` | Report failure → exit 2 | — | Print a truncated dependency report. |
+| `handle_self_update` | `IMaintenanceAggregate`, `check_only` flag | `ExitCode` | Self-update failure → exit 2 | — | Query GitHub for the latest release and report upgrade status. |
+| `handle_init` | `ISetupAggregate`, filesystem | `ExitCode` | Any per-file write failure → exit 1 | — | Create default configuration files and distribute documentation. |
+| `handle_install` | `ISetupAggregate`, `sudo` flag | `ExitCode` | Any per-language install failure → exit 1 | — | Install adapter dependencies for the detected languages. |
+| `handle_mcp_config` | Client name | `ExitCode` | Canonicalization failure → fallback to bare name | — | Print the MCP server configuration JSON for the named client. |
+| `handle_config_show` | `IConfigOrchestratorAggregate` | `ExitCode` | Read errors logged as warnings | — | Display the active configuration files with secrets redacted. |
+| `handle_adapters` | `IExternalLintAggregate` | `ExitCode` | None | — | List the enabled external lint adapters. |
+| `handle_git_diff` | `ICodeAnalysisAggregate`, base branch, path, filter | `ExitCode` | None | — | Analyze only the files changed since the given git base. |
+| `handle_watch` | `IWatchAggregate`, optional path | `ExitCode` | Signal handler setup failure → exit 2 | — | Watch the project and re-scan on every file change. |
 
 ## Integration Points
-- **Internal**:
-
-  - `dispatcher` — all business logic delegated via `surface_*_action` modules.
-  - `report-formatter` — report formatter aggregate for text/JSON/SARIF/JUnit formatting.
-  - `shared` — taxonomy VOs (`ViolationItem`, `Format`), contract traits, utility functions.
-- **External**:
-
-  - Signal handling (`ctrlc` crate) for graceful watch shutdown.
-  - No async runtime dependency.
+| System | Direction | Purpose | Failure mode |
+| --- | --- | --- | --- |
+| `dispatcher` | in | All business logic delegated via the `surface_*_action` modules | Dispatcher returns an error → mapped to exit code 2 |
+| `report-formatter` | in | Aggregate producing text, JSON, SARIF, and JUnit reports | Formatting failure → raw findings printed to stderr |
+| `shared` | in | Taxonomy VOs (`ViolationItem`, `Format`), contract traits, and utility functions | Compile-time dependency; unavailable at build time |
+| `ctrlc` signal handling | in | Graceful shutdown for the watch command via an atomic running flag | Handler registration failure → error message and exit code 2 |
+| MCP binary resolution | out | Resolves the server binary through env var → sibling → bare name priority (no explicit PATH search) | Binary not found → bare name written into the generated config |
+| Config show redaction | out | Redacts AWS access keys and long base64 secrets before display | A secret pattern that does not match is displayed verbatim |
 
 ## Non-functional Requirements
-- **Cross-platform**: File walker uses canonical paths (not inodes), works on
-  all platforms including Windows.
-- **Performance**: Linter groups run sequentially as subprocesses (no thread pool).
-  Deferred container construction for lightweight commands (version, adapters).
-- **Concurrency**: Linter groups run sequentially. No async runtime dependency.
-- **Security**: MCP binary resolution uses env var → sibling → bare name
-  priority (no explicit PATH search). Config-show redacts AWS keys and base64
-  secrets.
-- **Surface compliance**: All handlers follow AES406 — zero business logic, only
-  dispatch and terminal formatting. Report formatting always delegated to the
-  report formatter aggregate.
+| Metric | Target | Measurement method |
+| --- | --- | --- |
+| Cross-platform path handling | File walker uses canonical paths (not inodes); works on all platforms including Windows | Run a scan on Windows and compare results against Linux |
+| Linter group execution | Groups run sequentially as subprocesses; no thread pool | Trace a scan and assert no concurrent analyzer execution |
+| Lightweight command latency | Container construction is deferred for lightweight commands (version, adapters) | Time the `adapters` and `version` commands from process start |
+| Concurrency model | Linter groups run sequentially; no async runtime dependency | Confirm the crate declares no async runtime dependency |
+| Secret redaction | AWS keys and base64 secrets are redacted before config content is printed | Feed a config containing both secret shapes and assert both are masked |
+| Surface compliance (AES406) | Zero business logic in handlers; only dispatch and terminal formatting | Review each handler for conditional logic beyond formatting |
+| Report formatting delegation | All report formatting is delegated to the report formatter aggregate | Assert no report formatting occurs inside the surface layer |
 
-## Test Scenarios / QA Checklist
-### SCEN-001 — Check/Scan
-| # | Scenario                                     | Expected                                           | Rule   |
-| --- | ---------------------------------------------- | ---------------------------------------------------- | -------- |
-| 1 | `check` / `scan` run full pipeline           | Correct exit 0/1/2                                 | FR-001 |
-| 2 | Non-existent path                            | Exit 2                                             | FR-001 |
-| 3 | Workspace member discovery + `--member`      | Correct member targeted                            | FR-001 |
-| 4 | No workspace members                         | Falls back to single-scan                          | FR-001 |
-| 5 | Pipeline fails for one workspace             | Warning logged, others continue                    | FR-001 |
-### SCEN-002 — CI
-| # | Scenario                             | Expected                        | Rule   |
-| --- | -------------------------------------- | --------------------------------- | -------- |
-| 1 | Score ≥ threshold, no CRITICAL      | Exit 0                          | FR-002 |
-| 2 | Score ≥ threshold, CRITICAL present | Exit 1 (auto-fail)              | FR-002 |
-| 3 | Score < threshold                    | Exit 1                          | FR-002 |
-| 4 | Score exactly at threshold           | Exit 0 (passes)                 | FR-002 |
-### SCEN-003 — Fix
-| # | Scenario                            | Expected                  | Rule   |
-| --- | ------------------------------------- | --------------------------- | -------- |
-| 1 | `fix` applies remove/replace/rename | Reports fixed count       | FR-003 |
-| 2 | `fix --dry-run`                     | Preview only, no changes  | FR-003 |
-| 3 | No violations before fix            | Reports 0 fixed           | FR-003 |
-| 4 | All violations fixed                | "all violations resolved" | FR-003 |
-| 5 | Violations remain after fix         | Exit 1                    | FR-003 |
-### SCEN-004 — Doctor
-| # | Scenario                | Expected                     | Rule   |
-| --- | ------------------------- | ------------------------------ | -------- |
-| 1 | All tools installed     | All OK, exit 0               | FR-004 |
-| 2 | Some tools missing      | MISSING listed, still exit 0 | FR-004 |
-| 3 | Doctor internal failure | Exit 2                       | FR-004 |
-### SCEN-005 — Security
-| # | Scenario              | Expected                | Rule   |
-| --- | ----------------------- | ------------------------- | -------- |
-| 1 | Tool not installed    | Exit 3                  | FR-005 |
-| 2 | No vulnerabilities    | Exit 0                  | FR-005 |
-| 3 | Vulnerabilities found | Exit 1, findings listed | FR-005 |
-### SCEN-006 — Dependencies
-| # | Scenario           | Expected                        | Rule   |
-| --- | -------------------- | --------------------------------- | -------- |
-| 1 | Normal project     | Lists up to 30 deps             | FR-006 |
-| 2 | > 30 dependencies  | Truncated with "... and N more" | FR-006 |
-| 3 | No dependency file | Error, exit 2                   | FR-006 |
-### SCEN-007–FR-011 — Setup & Config
-| # | Scenario                                     | Expected                        | Rule   |
-| --- | ---------------------------------------------- | --------------------------------- | -------- |
-| 1 | `init` creates config for detected languages | Config files created            | FR-007 |
-| 2 | `install` partial failure                    | Exit 1                          | FR-008 |
-| 3 | `mcp-config` correct JSON per client         | Valid JSON output               | FR-009 |
-| 4 | `config-show` redacts secrets                | AWS keys / base64 redacted      | FR-010 |
-| 5 | `config-show` no config found                | "Run lint-arwaky init" message  | FR-010 |
-| 6 | `adapters` lists enabled adapters            | Bullet list or "(none enabled)" | FR-011 |
-### SCEN-012–FR-014 — Git, Watch, Individual
-| # | Scenario                                                        | Expected                        | Rule   |
-| --- | ----------------------------------------------------------------- | --------------------------------- | -------- |
-| 1 | `git-diff` analyzes only changed files                          | Correct subset scanned          | FR-012 |
-| 2 | `watch` monitors and re-scans                                   | Re-scan on file change          | FR-013 |
-| 3 | `watch` handler setup fails                                     | Exit 2                          | FR-013 |
-| 4 | Individual linters (quality/import/naming/role/orphan/external) | Correct subset of rules         | FR-014 |
+## Test Scenarios
+- Running `check` and `scan` executes the full pipeline and returns the correct exit code of 0, 1, or 2.
+- A non-existent path returns exit code 2.
+- Workspace member discovery with `--member` targets the correct member.
+- A project with no workspace members falls back to a single scan.
+- A pipeline failure for one workspace logs a warning and the other workspaces continue.
+- A score at or above threshold with no CRITICAL violation exits 0.
+- A score at or above threshold with a CRITICAL violation present exits 1 by auto-fail.
+- A score below threshold exits 1.
+- A score exactly at the threshold exits 0.
+- `fix` applies the remove, replace, and rename operations and reports the fixed count.
+- `fix --dry-run` previews changes without applying them.
+- A project with no violations before the fix reports 0 fixed.
+- A project where all violations are fixed prints "all violations resolved".
+- A project where violations remain after the fix exits 1.
+- A machine with all tools installed reports all OK and exits 0.
+- A machine with some tools missing lists them as MISSING and still exits 0.
+- An internal doctor failure exits 2.
+- A security scan with the tool not installed exits 3.
+- A security scan with no vulnerabilities exits 0.
+- A security scan that finds vulnerabilities exits 1 with the findings listed.
+- A normal project dependency report lists up to 30 dependencies.
+- A project with more than 30 dependencies truncates the list with "... and N more".
+- A project with no dependency file reports an error and exits 2.
+- `init` creates config files for every detected language.
+- `install` with a partial failure exits 1.
+- `mcp-config` emits valid JSON in the correct shape for each client.
+- `config-show` redacts AWS keys and base64 secrets.
+- `config-show` with no config found prints the "Run lint-arwaky init" message.
+- `adapters` prints a bullet list of enabled adapters or "(none enabled)".
+- `git-diff` analyzes only the changed files and scans the correct subset.
+- `watch` monitors the project and triggers a re-scan on file change.
+- A `watch` signal handler setup failure exits 2.
+- The individual linters (quality, import, naming, role, orphan, external) each scan the correct subset of rules.
 
 ## Assumptions & Constraints
 - All surface handlers follow AES406: zero business logic, only dispatch.
@@ -438,20 +426,11 @@ fails.
   parse-warning diagnostic is emitted.
 
 ## Glossary
-| Term             | Definition                                                                                             |
-| ------------------ | -------------------------------------------------------------------------------------------------------- |
-| **AES**          | Agentic Engineering System — the 7-layer coding convention                                            |
-| **Pipeline**     | The 6-group analysis sequence: code analysis, naming, import, external, role, orphan                   |
-| **Surface**      | Thin CLI handler layer — parses args, delegates to agents, formats output                             |
-| **Aggregate**    | Agent-layer orchestrator implementing a contract trait                                                 |
-| **DI Container** | Composition root that wires capabilities to contract protocols                                         |
-| **LintResult**   | Individual violation finding with file, line, code, severity, message                                  |
-| **ScanReport**   | Aggregated results + diagnostics from a full pipeline run                                              |
-| **Parse skip**   | Files that fail to parse are skipped by the per-group analyzers; no separate warning diagnostic is emitted. |
-
-## Reference
-- Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
-- PRD: [PRD.md](../../PRD.md)
-- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- MCP Server FRD: `crates/mcp-server/FRD.md`
-- Report Formatter FRD: `crates/report-formatter/FRD.md`
+- **AES**: Agentic Engineering System — the 7-layer coding convention.
+- **Pipeline**: The 6-group analysis sequence: code analysis, naming, import, external, role, orphan.
+- **Surface**: Thin CLI handler layer — parses args, delegates to agents, formats output.
+- **Aggregate**: Agent-layer orchestrator implementing a contract trait.
+- **DI Container**: Composition root that wires capabilities to contract protocols.
+- **LintResult**: Individual violation finding with file, line, code, severity, message.
+- **ScanReport**: Aggregated results plus diagnostics from a full pipeline run.
+- **Parse skip**: Files that fail to parse are skipped by the per-group analyzers; no separate warning diagnostic is emitted.

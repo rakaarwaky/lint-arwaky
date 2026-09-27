@@ -119,7 +119,7 @@ crates/
 └── skills/            # Embedded skill content (source for init)
 ```
 
-Each crate has an `FRD.md` (spec) beside a `BACKLOG.md` (real condition). Root: [PRD.md](PRD.md), [BACKLOG.md](BACKLOG.md), [ARCHITECTURE.md](ARCHITECTURE.md).
+Each crate has an `FRD.md` (spec) beside a `BACKLOG.md` (real condition). Root: [PRD.md](PRD.md), [ROADMAP.md](ROADMAP.md), [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Contributing
 

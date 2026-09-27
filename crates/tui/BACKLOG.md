@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,10 +16,10 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| TUI-01 | FR-001 | SCEN-001 Input Translation — 12 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| TUI-02 | FR-002 | SCEN-002 File Navigation — 4 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| TUI-03 | FR-003 | SCEN-003 Lint Actions — 10 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| TUI-04 | FR-004 | SCEN-004 Domain Aggregate Facade — 8 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| TUI-01 | FR-TUI-001 | SCEN-001 Input Translation — 12 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| TUI-02 | FR-TUI-002 | SCEN-002 File Navigation — 4 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| TUI-03 | FR-TUI-003 | SCEN-003 Lint Actions — 10 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| TUI-04 | FR-TUI-004 | SCEN-004 Domain Aggregate Facade — 8 scenarios verified | P0 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

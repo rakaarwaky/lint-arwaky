@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,7 +16,7 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| FILE-01 | FR-001 | All scenarios verified | P0 | Done | `cargo test -p file_watch --lib --tests` → 0 failures at `29c71083` | @raka | None | 2026-09-17 |
+| FILE-01 | FR-FILEWATCH-001 | All scenarios verified | P0 | Done | `cargo test -p file_watch --lib --tests` → 0 failures at `29c71083` | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

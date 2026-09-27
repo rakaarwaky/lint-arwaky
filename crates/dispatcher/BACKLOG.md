@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,12 +16,12 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| DISP-01 | FR-001 | SCEN-001 Unified Scan — 5 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| DISP-02 | FR-002 | SCEN-002 CI Validation — 4 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| DISP-03 | FR-003 | SCEN-003 Individual Linters — 4 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| DISP-04 | FR-004 | SCEN-004 Auto-Fix — 3 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| DISP-05 | FR-005 | SCEN-005 Git Diff — 3 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| DISP-06 | FR-006 | SCEN-006 Hook Management — 3 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| DISP-01 | FR-DISPATCHER-001 | SCEN-001 Unified Scan — 5 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| DISP-02 | FR-DISPATCHER-002 | SCEN-002 CI Validation — 4 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| DISP-03 | FR-DISPATCHER-003 | SCEN-003 Individual Linters — 4 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| DISP-04 | FR-DISPATCHER-004 | SCEN-004 Auto-Fix — 3 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| DISP-05 | FR-DISPATCHER-005 | SCEN-005 Git Diff — 3 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| DISP-06 | FR-DISPATCHER-006 | SCEN-006 Hook Management — 3 scenarios verified | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 

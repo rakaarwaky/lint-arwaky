@@ -2,7 +2,7 @@
 
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
-State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
+State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
 Last Updated: 2026-09-17
 
 ## Current Condition
@@ -16,11 +16,11 @@ Last Updated: 2026-09-17
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| AUTO-01 | FR-001 | SCEN-001 - Unused Import Removal — 6 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| AUTO-02 | FR-002 | SCEN-002 - Bypass Fix — 10 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| AUTO-03 | FR-003 | SCEN-003 - Symbol Renaming — 5 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| AUTO-04 | FR-004 | SCEN-004 –FR-005 - Dry-Run & Non-Fixable — 5 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| AUTO-05 | FR-005 | Idempotency & Error Handling — 2 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| AUTO-01 | FR-AUTOFIX-001 | SCEN-001 - Unused Import Removal — 6 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| AUTO-02 | FR-AUTOFIX-002 | SCEN-002 - Bypass Fix — 10 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| AUTO-03 | FR-AUTOFIX-003 | SCEN-003 - Symbol Renaming — 5 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| AUTO-04 | FR-AUTOFIX-004 | SCEN-004 –FR-AUTOFIX-005 - Dry-Run & Non-Fixable — 5 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| AUTO-05 | FR-AUTOFIX-005 | Idempotency & Error Handling — 2 scenarios verified | P0 | Done | `cargo test -p auto_fix --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
 ## Scenario Evidence
 
