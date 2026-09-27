@@ -97,7 +97,10 @@ jobs:
 
           # Conventional commit detection.
           # Breaking change via subject: `feat!:`, `feat(scope)!:`, `fix!:` etc.
-          MAJOR_SUBJECT=$(git log "$RANGE" --oneline --grep='^[a-zA-Z]*(.*)!:' -E | head -1)
+          # The bang must sit directly before the colon, right after the type
+          # and optional scope — not anywhere later in the subject.
+          MAJOR_SUBJECT=$(git log "$RANGE" --oneline \
+            --grep='^[a-zA-Z]+(\([^)]+\))?!:' -E | head -1)
           # Breaking change via footer: `BREAKING CHANGE: ...` in the body.
           MAJOR_FOOTER=$(git log "$RANGE" --format=%B | grep -m1 '^BREAKING CHANGE:' || true)
           # Minor: only `feat:` or `feat(scope):` — not e.g. `feature:`.
