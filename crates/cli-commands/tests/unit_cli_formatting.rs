@@ -1,7 +1,7 @@
 // Unit tests — Formatting utility tests: group_by_member, status_icon, output structure.
 use cli_commands::utility_output_text_formatter::{group_by_member, status_icon};
-use shared::common::ViolationItem;
 use shared::common::{ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared::common::{ViolationItem, resolve_skill_hint_for_file};
 
 fn violation(file: &str, code: &str, line: i64) -> ViolationItem {
     ViolationItem {
@@ -79,4 +79,30 @@ fn group_by_member_single_file_path() {
     let grouped = group_by_member(&violations, "src/main.rs", None);
     // Should have at least one group
     assert!(!grouped.is_empty());
+}
+
+#[test]
+fn skill_hint_available_for_every_violation_in_a_scan() {
+    let violations = vec![
+        violation("crates/foo/contract_scan_protocol.rs", "AES201", 1),
+        violation("crates/foo/agent_scan_orchestrator.rs", "AES403", 2),
+        violation("crates/foo/utility_path_resolver.rs", "AES304", 3),
+        violation("crates/foo/taxonomy_setup_vo.rs", "AES101", 4),
+    ];
+
+    for v in &violations {
+        let hint = resolve_skill_hint_for_file(v.code.code(), &v.file.value);
+        assert!(
+            !hint.guidance().is_empty(),
+            "empty guidance for {}",
+            v.code.code()
+        );
+    }
+}
+
+#[test]
+fn skill_hint_for_contract_violation_points_to_contract_skill() {
+    let hint = resolve_skill_hint_for_file("AES201", "crates/foo/utility_path_resolver.rs");
+    assert_eq!(hint.skill, Some("aes-contract"));
+    assert_eq!(hint.guidance(), "lint-arwaky-cli skill read aes-contract");
 }
