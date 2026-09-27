@@ -6,11 +6,11 @@
 // and never carries unimplemented stubs.
 
 use crate::common::taxonomy_path_vo::FilePath;
-pub use crate::maintenance::taxonomy_doctor_vo::ToolOutput;
-use crate::maintenance::taxonomy_doctor_vo::{
+use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
+pub use crate::maintenance::taxonomy_maintenance_vo::ToolOutput;
+use crate::maintenance::taxonomy_maintenance_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
 };
-use crate::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 
 pub trait IMaintenanceCheckerProtocol: Send + Sync {
     fn diagnose_toolchain(&self) -> ToolchainDiagnostics;

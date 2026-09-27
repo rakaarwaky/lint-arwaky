@@ -1,9 +1,9 @@
 // PURPOSE: MaintenanceResponse — response payload for the maintenance aggregate
 
-use crate::maintenance::taxonomy_doctor_vo::{
+use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
+use crate::maintenance::taxonomy_maintenance_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
 };
-use crate::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 
 pub enum MaintenanceResponse {
     Stats {

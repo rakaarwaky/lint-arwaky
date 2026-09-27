@@ -1,15 +1,13 @@
 // Unit tests — shared/cli_commands taxonomy types.
 use clap::Parser;
 use shared_lint_arwaky::cli_commands::Format;
-use shared_lint_arwaky::cli_commands::taxonomy_cli_vo::{Cli, Commands};
-use shared_lint_arwaky::cli_commands::taxonomy_command_catalog_vo::{
-    COMMAND_CATALOG, CommandCatalogVO,
-};
-use shared_lint_arwaky::cli_commands::taxonomy_protocol_vo::{
-    TransportEndpoint, TransportProtocol, TransportUrlVO,
-};
-use shared_lint_arwaky::cli_commands::taxonomy_scan_report_vo::{
+use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{COMMAND_CATALOG, command_catalog};
+use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{Cli, Commands};
+use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{
     DiagnosticSeverity, PipelineDiagnostic, PipelineError, ScanReport,
+};
+use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{
+    TransportEndpoint, TransportProtocol, TransportUrlVO,
 };
 use shared_lint_arwaky::cli_commands::taxonomy_scan_request::{ScanMode, ScanRequest, ScanTarget};
 use shared_lint_arwaky::common::Score;
@@ -87,10 +85,10 @@ fn cli_global_flags_propagate() {
     assert!(cli.quiet);
 }
 
-// ── CommandCatalogVO ────────────────────────────────────────
+// ── command_catalog ──────────────────────────────────────────
 #[test]
 fn command_catalog_contains_core_commands() {
-    let catalog = CommandCatalogVO::command_catalog();
+    let catalog = command_catalog();
     assert!(catalog.len() >= 22);
     for (name, _, _) in COMMAND_CATALOG {
         assert!(catalog.contains_key(&shared_lint_arwaky::common::ActionName::from(*name)));
@@ -102,7 +100,7 @@ fn command_catalog_contains_core_commands() {
 
 #[test]
 fn command_metadata_display() {
-    let catalog = CommandCatalogVO::command_catalog();
+    let catalog = command_catalog();
     let check = catalog
         .get(&shared_lint_arwaky::common::ActionName::from("check"))
         .expect("check exists");

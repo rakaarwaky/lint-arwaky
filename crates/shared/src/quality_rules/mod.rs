@@ -6,7 +6,6 @@ pub use crate::common::taxonomy_code_analysis_vo;
 pub use crate::common::taxonomy_operation_error;
 pub mod taxonomy_code_analysis_request;
 pub mod taxonomy_code_analysis_response;
-pub mod taxonomy_violation_code_analysis_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -22,16 +21,16 @@ pub use taxonomy_code_analysis_request::CodeAnalysisRequest;
 pub use taxonomy_code_analysis_response::CodeAnalysisResponse;
 
 // ── Taxonomy types ──
+pub use taxonomy_analysis_vo::AesCodeAnalysisViolation;
 pub use taxonomy_analysis_vo::GraphAnalysisContext;
 pub use taxonomy_analysis_vo::ImportGraph;
 pub use taxonomy_analysis_vo::InboundLinkMap;
 pub use taxonomy_analysis_vo::InheritanceMap;
+pub use taxonomy_analysis_vo::Language;
 pub use taxonomy_analysis_vo::OrphanIndicatorResult;
 pub use taxonomy_analysis_vo::ReachabilityResult;
+pub use taxonomy_analysis_vo::ViolationKind;
+pub use taxonomy_analysis_vo::WORD_PATTERN_TOKENS;
 pub use taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 pub use taxonomy_code_analysis_vo::MandatoryImportRuleVO;
 pub use taxonomy_operation_error::LinterOperationError;
-pub use taxonomy_violation_code_analysis_vo::AesCodeAnalysisViolation;
-pub use taxonomy_violation_code_analysis_vo::Language;
-pub use taxonomy_violation_code_analysis_vo::ViolationKind;
-pub use taxonomy_violation_code_analysis_vo::WORD_PATTERN_TOKENS;

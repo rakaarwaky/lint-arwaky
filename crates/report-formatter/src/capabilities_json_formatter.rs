@@ -3,7 +3,7 @@ use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::report_formatter::contract_report_formatter_protocol::IReportFormatterProtocol;
-use shared::report_formatter::taxonomy_json_dto_vo::{
+use shared::report_formatter::taxonomy_report_vo::{
     JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,
 };
 

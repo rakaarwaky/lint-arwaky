@@ -2,7 +2,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_protocol::IConfigReaderProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_source_vo::ConfigSource;
+use shared::config_system::taxonomy_config_vo::ConfigSource;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
 use tracing::warn;
@@ -98,7 +98,7 @@ impl IConfigReaderProtocol for ConfigYamlReader {
                         let path = FilePath::new(candidate.to_string_lossy().to_string()).map_err(
                             |e| {
                                 ConfigError::new(
-                                    shared::config_system::taxonomy_identifier_vo::ConfigKey::new(
+                                    shared::config_system::taxonomy_config_vo::ConfigKey::new(
                                         "config.list",
                                     ),
                                     shared::common::ErrorMessage::new(format!(

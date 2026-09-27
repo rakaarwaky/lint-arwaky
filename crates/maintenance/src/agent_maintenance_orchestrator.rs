@@ -6,10 +6,10 @@ use shared::maintenance::contract_maintenance_protocol::IMaintenanceCheckerProto
 use shared::maintenance::taxonomy_maintenance_request::MaintenanceRequest;
 use shared::maintenance::taxonomy_maintenance_response::MaintenanceResponse;
 
-use shared::maintenance::taxonomy_doctor_vo::{
+use shared::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
+use shared::maintenance::taxonomy_maintenance_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, ToolchainDiagnostics,
 };
-use shared::maintenance::taxonomy_stats_vo::MaintenanceStatsVO;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

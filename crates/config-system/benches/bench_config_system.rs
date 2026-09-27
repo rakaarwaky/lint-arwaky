@@ -9,7 +9,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ConfigRequest;
 use shared::config_system::contract_config_protocol::IConfigValidatorProtocol;
 use shared::config_system::contract_config_protocol::IWorkspaceDetectorProtocol;
-use shared::config_system::taxonomy_setting_vo::{AdapterEntry, AdapterStatus, ProjectConfig};
+use shared::config_system::taxonomy_config_vo::{AdapterEntry, AdapterStatus, ProjectConfig};
 use shared::config_system::utility_config_parser::parse_config_yaml;
 use std::fs;
 use tempfile::TempDir;

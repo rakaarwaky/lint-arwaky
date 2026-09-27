@@ -1,11 +1,11 @@
 // PURPOSE: SetupResponse — response payload for the setup aggregate
 
 use crate::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
-use crate::project_setup::taxonomy_setup_contract_vo::{
+use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
+use crate::project_setup::taxonomy_setup_vo::{
     CreateConfigDirResult, PreFlightResult, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,
 };
-use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;
 
 pub enum SetupResponse {
     CheckHttp { status: SuccessStatus },

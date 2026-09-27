@@ -187,7 +187,7 @@ pub fn collect_orphan(
         })
         .collect();
     let unified_orphan_files =
-        shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(all_file_paths);
+        shared::orphan_rules::taxonomy_orphan_vo::OrphanFileListVO::new(all_file_paths);
 
     // Build ONE graph context from ALL files — this sees cross-member imports.
     // Use top_root (absolute workspace root) as root_dir so that path resolution
@@ -318,8 +318,7 @@ fn scan_single_root(
             }
         })
         .collect();
-    let orphan_files =
-        shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO::new(file_paths);
+    let orphan_files = shared::orphan_rules::taxonomy_orphan_vo::OrphanFileListVO::new(file_paths);
 
     // Build graph context from filesystem's pre-built data
     let context = ws_orchestrator

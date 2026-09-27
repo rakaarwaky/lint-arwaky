@@ -10,8 +10,8 @@ use shared::common::taxonomy_message_vo::LintMessage;
 use shared::file_watch::contract_watch_protocol::IWatchProviderProtocol;
 use shared::file_watch::taxonomy_service_error::WatchServiceError;
 use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
-use shared::file_watch::taxonomy_watch_event_vo::WatchEvent;
-use shared::file_watch::taxonomy_watch_event_vo::WatchEventKind;
+use shared::file_watch::taxonomy_watch_config_vo::WatchEvent;
+use shared::file_watch::taxonomy_watch_config_vo::WatchEventKind;
 use tokio::sync::broadcast;
 
 // ─── Block 1: Struct Definition ───────────────────────────

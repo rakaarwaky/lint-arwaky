@@ -1,16 +1,11 @@
-// PURPOSE: SetupContractVOs — value objects used by ISetupManagementProtocol and
-// ISetupInstallerProtocol contract surface.
-//
-// AES402: All primitive `String` / `Result<(), String>` / `Result<_, String>`
-// return types and parameter types in ISetupManagementProtocol and
-// ISetupInstallerProtocol are replaced with strongly-typed VOs.
-//
-// Naming: these VOs are scoped to the `project-setup` feature (which already
-// has its own `taxonomy_doctor_vo`, `taxonomy_language_vo`, `taxonomy_stats_vo`).
+// PURPOSE: Setup value objects — contract surface types (AES402), embedded skill metadata,
+//          and setup error variants.
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+
+// ─── Contract surface VOs ────────────────────────────────────────────
 
 /// Name of the MCP binary as resolved on the host PATH (e.g. "lint-arwaky-cli").
 /// Replaces the previous `String` return type of
@@ -140,3 +135,46 @@ pub type WriteConfigResult = Result<DescriptionVO, SetupError>;
 /// `FilePath` on success (which wraps `PathBuf` with the rest of the
 /// contract's path-handling surface) and a `SetupError` on failure.
 pub type CreateConfigDirResult = Result<PathBuf, SetupError>;
+
+// ─── Embedded skills ─────────────────────────────────────────────────
+
+/// Represents an embedded skill file compiled directly into the binary.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EmbeddedSkillVO {
+    pub name: &'static str,
+    pub relative_path: &'static str,
+    pub content: &'static str,
+    pub language: Option<&'static str>,
+}
+
+impl EmbeddedSkillVO {
+    pub const fn new(
+        name: &'static str,
+        relative_path: &'static str,
+        content: &'static str,
+        language: Option<&'static str>,
+    ) -> Self {
+        Self {
+            name,
+            relative_path,
+            content,
+            language,
+        }
+    }
+
+    pub const fn name(&self) -> &'static str {
+        self.name
+    }
+
+    pub const fn relative_path(&self) -> &'static str {
+        self.relative_path
+    }
+
+    pub const fn content(&self) -> &'static str {
+        self.content
+    }
+
+    pub const fn language(&self) -> Option<&'static str> {
+        self.language
+    }
+}

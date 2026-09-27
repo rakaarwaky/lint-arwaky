@@ -9,10 +9,10 @@ use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use crate::config_system::taxonomy_config_vo::ConfigSource;
+use crate::config_system::taxonomy_config_vo::ProjectConfig;
+use crate::config_system::taxonomy_config_vo::ValidationResult;
 pub use crate::config_system::taxonomy_config_vo::WorkspaceType;
-use crate::config_system::taxonomy_setting_vo::ProjectConfig;
-use crate::config_system::taxonomy_source_vo::ConfigSource;
-use crate::config_system::taxonomy_validation_vo::ValidationResult;
 
 pub trait IConfigParserProtocol: Send + Sync {
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError>;
@@ -31,7 +31,7 @@ pub trait IConfigParserProtocol: Send + Sync {
     fn parse_adapter_entries_from_yaml(
         &self,
         yaml_str: &str,
-    ) -> Vec<crate::config_system::taxonomy_setting_vo::AdapterEntry>;
+    ) -> Vec<crate::config_system::taxonomy_config_vo::AdapterEntry>;
 }
 
 pub trait IConfigReaderProtocol: Send + Sync {

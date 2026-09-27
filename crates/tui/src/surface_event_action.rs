@@ -534,7 +534,7 @@ impl SurfaceActionHandler {
         F: FnOnce(
             &SurfaceLintExecutor,
             &str,
-            &shared::tui::taxonomy_action_flags_vo::ActionFlags,
+            &shared::tui::taxonomy_tui_vo::ActionFlags,
         ) -> LintExecutionResult,
     {
         let path = state.selected_path();

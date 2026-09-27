@@ -1,9 +1,7 @@
 // PURPOSE: Pure filename utility functions for orphan detection (AES layer naming)
 // These are stateless, domain-agnostic, reusable across multiple capabilities.
 
-use shared::orphan_rules::taxonomy_orphan_contract_vo::{
-    OrphanEntryPatternListVO, OrphanFileListVO,
-};
+use shared::orphan_rules::taxonomy_orphan_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
 
 /// Identify entry points from file list using configured patterns.
 /// Pure function — no state, no I/O.

@@ -1,12 +1,18 @@
-// PURPOSE: DoctorResultVO, DoctorCheck, ToolOutput — VOs for project health diagnostics and tool execution results
+// PURPOSE: Maintenance value objects — doctor diagnostics, tool status, security and
+//          dependency reports, and project statistics.
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_common_error::ErrorMessage;
+use crate::common::taxonomy_common_vo::Count;
+use crate::common::taxonomy_common_vo::Score;
 use crate::common::taxonomy_message_vo::ComplianceStatus;
+use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+
+// ─── Doctor diagnostics ───────────────────────────────────────────────
 
 /// Output from executing an external tool (clippy, ruff, eslint, ...).
 pub struct ToolOutput {
@@ -26,8 +32,6 @@ pub struct DoctorResultVO {
     pub issues: Vec<ErrorMessage>,
     pub healthy: ComplianceStatus,
 }
-
-// Constructor removed — struct has pub fields, direct initialization preferred.
 
 impl std::fmt::Display for DoctorResultVO {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -70,6 +74,8 @@ pub struct HealthCheckResult {
     pub adapters: Vec<HealthCheckAdapterVO>,
 }
 
+// ─── Security and dependency reports ──────────────────────────────────
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct SecurityFinding {
     pub severity: String,
@@ -98,4 +104,52 @@ pub struct DependencyInfo {
 pub struct DependencyReport {
     pub language: String,
     pub dependencies: Vec<DependencyInfo>,
+}
+
+// ─── Project statistics ───────────────────────────────────────────────
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct MaintenanceStatsVO {
+    pub project_path: FilePath,
+    pub total_files: Count,
+    pub test_files: Count,
+    pub test_ratio: Score,
+    pub python_files: Count,
+    pub rust_files: Count,
+    pub js_files: Count,
+}
+
+impl MaintenanceStatsVO {
+    pub fn new(
+        project_path: FilePath,
+        total_files: Count,
+        test_files: Count,
+        test_ratio: Score,
+        python_files: Count,
+        rust_files: Count,
+        js_files: Count,
+    ) -> Self {
+        Self {
+            project_path,
+            total_files,
+            test_files,
+            test_ratio,
+            python_files,
+            rust_files,
+            js_files,
+        }
+    }
+}
+
+impl std::fmt::Display for MaintenanceStatsVO {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "MaintenanceStats({}: {} files, {} test, {:.1}%)",
+            self.project_path,
+            self.total_files.value,
+            self.test_files.value,
+            self.test_ratio.value * 100.0
+        )
+    }
 }

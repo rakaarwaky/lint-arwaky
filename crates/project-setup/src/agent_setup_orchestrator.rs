@@ -11,7 +11,7 @@
 //   - Config file writing and XDG config dir creation
 //   - Pre-flight checks for package manager availability
 
-use shared::cli_commands::taxonomy_protocol_vo::TransportUrlVO;
+use shared::cli_commands::taxonomy_command_vo::TransportUrlVO;
 use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
@@ -179,13 +179,13 @@ impl SetupManagementOrchestrator {
         &self,
         filename: &str,
         content: &str,
-    ) -> shared::project_setup::taxonomy_setup_contract_vo::WriteConfigResult {
+    ) -> shared::project_setup::taxonomy_setup_vo::WriteConfigResult {
         self.protocol.write_config_file(filename, content)
     }
 
     pub fn create_global_config_dir(
         &self,
-    ) -> shared::project_setup::taxonomy_setup_contract_vo::CreateConfigDirResult {
+    ) -> shared::project_setup::taxonomy_setup_vo::CreateConfigDirResult {
         self.protocol.create_global_config_dir()
     }
 
