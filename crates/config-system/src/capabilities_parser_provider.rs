@@ -3,8 +3,8 @@ use shared::common::taxonomy_common_vo::ErrorMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_protocol::IConfigParserProtocol;
 use shared::config_system::taxonomy_config_error::ConfigError;
-use shared::config_system::taxonomy_identifier_vo::ConfigKey;
-use shared::config_system::taxonomy_setting_vo::ProjectConfig;
+use shared::config_system::taxonomy_config_vo::ConfigKey;
+use shared::config_system::taxonomy_config_vo::ProjectConfig;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
@@ -112,7 +112,7 @@ impl IConfigParserProtocol for ConfigParserProvider {
     fn parse_adapter_entries_from_yaml(
         &self,
         yaml_str: &str,
-    ) -> Vec<shared::config_system::taxonomy_setting_vo::AdapterEntry> {
+    ) -> Vec<shared::config_system::taxonomy_config_vo::AdapterEntry> {
         crate::utility_config_parser::parse_adapter_entries_from_yaml(yaml_str)
     }
 }

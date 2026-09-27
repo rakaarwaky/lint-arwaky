@@ -7,7 +7,7 @@
 
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::orphan_rules::taxonomy_orphan_parse_result_vo::FileParseResultVO;
+use crate::orphan_rules::taxonomy_orphan_vo::FileParseResultVO;
 use crate::quality_rules::taxonomy_analysis_vo::InheritanceMap;
 use crate::quality_rules::taxonomy_analysis_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,

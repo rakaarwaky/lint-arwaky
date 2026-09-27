@@ -1,16 +1,16 @@
 // Unit tests — shared/config_system taxonomy types.
 use shared_lint_arwaky::config_system::taxonomy_config_error::ConfigError;
 use shared_lint_arwaky::config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared_lint_arwaky::config_system::taxonomy_config_vo::ConfigKey;
+use shared_lint_arwaky::config_system::taxonomy_config_vo::ValidationResult;
+use shared_lint_arwaky::config_system::taxonomy_config_vo::WorkspaceInfo;
+use shared_lint_arwaky::config_system::taxonomy_config_vo::{
+    AdapterEntry, AdapterStatus, ProjectConfig, Thresholds,
+};
 use shared_lint_arwaky::config_system::taxonomy_config_vo::{
     ArchitectureConfig, ArchitectureRule, NamingRuleVO, RoleRuleVO,
 };
-use shared_lint_arwaky::config_system::taxonomy_identifier_vo::ConfigKey;
-use shared_lint_arwaky::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
-use shared_lint_arwaky::config_system::taxonomy_setting_vo::{
-    AdapterEntry, AdapterStatus, ProjectConfig, Thresholds,
-};
-use shared_lint_arwaky::config_system::taxonomy_source_vo::{ConfigResult, ConfigSource};
-use shared_lint_arwaky::config_system::taxonomy_validation_vo::ValidationResult;
+use shared_lint_arwaky::config_system::taxonomy_config_vo::{ConfigResult, ConfigSource};
 use shared_lint_arwaky::config_system::{
     ConfigKey as ConfigKeyRe, ConfigLanguage as ConfigLanguageRe, ProjectConfig as ProjectConfigRe,
 };

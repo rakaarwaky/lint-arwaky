@@ -2,9 +2,9 @@
 
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::config_system::taxonomy_multi_project_workspace_info_vo::WorkspaceInfo;
-use crate::config_system::taxonomy_source_vo::ConfigResult;
-use crate::config_system::taxonomy_source_vo::ConfigSource;
+use crate::config_system::taxonomy_config_vo::ConfigResult;
+use crate::config_system::taxonomy_config_vo::ConfigSource;
+use crate::config_system::taxonomy_config_vo::WorkspaceInfo;
 
 pub enum ConfigResponse {
     LoadProjectConfig { result: ConfigResult },

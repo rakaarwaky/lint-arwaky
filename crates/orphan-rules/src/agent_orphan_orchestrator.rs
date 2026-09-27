@@ -218,9 +218,7 @@ impl ArchOrphanAnalyzer {
         );
         let configured = self.get_orphan_entry_points();
         let configured_vo =
-            shared::orphan_rules::taxonomy_orphan_contract_vo::OrphanEntryPatternListVO::new(
-                configured,
-            );
+            shared::orphan_rules::taxonomy_orphan_vo::OrphanEntryPatternListVO::new(configured);
 
         // FR-001: Orphan detection must always identify entry points from ALL workspace files
         // (not just the scanned module). This ensures cross-module imports are resolved correctly.

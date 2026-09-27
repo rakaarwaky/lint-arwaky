@@ -5,7 +5,7 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::auto_fix::taxonomy_fix_outcome_vo::FixOutcome;
+use crate::auto_fix::taxonomy_fix_vo::FixOutcome;
 use crate::auto_fix::taxonomy_fix_vo::FixResult;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_lint_result_vo::LintResult;

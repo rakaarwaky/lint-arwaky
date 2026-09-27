@@ -5,8 +5,8 @@
 // Defines the contract that all report formatters must implement. Each formatter
 // (text, json, sarif, junit) implements this trait to produce output in its
 // respective format.
+use crate::cli_commands::taxonomy_command_vo::ScanReport;
 use crate::cli_commands::taxonomy_format_vo::Format;
-use crate::cli_commands::taxonomy_scan_report_vo::ScanReport;
 use crate::common::taxonomy_display_content_vo::DisplayContent;
 
 /// IReportFormatterProtocol — protocol for formatting analysis results.

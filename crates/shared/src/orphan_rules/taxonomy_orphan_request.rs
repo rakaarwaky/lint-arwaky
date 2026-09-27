@@ -3,7 +3,7 @@
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
-use crate::orphan_rules::taxonomy_orphan_contract_vo::OrphanFileListVO;
+use crate::orphan_rules::taxonomy_orphan_vo::OrphanFileListVO;
 use crate::quality_rules::taxonomy_analysis_vo::GraphAnalysisContext;
 
 pub enum OrphanRequest {

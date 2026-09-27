@@ -512,7 +512,7 @@ impl McpActionSurface {
 
     /// List CLI commands filtered by domain.
     pub fn handle_list_commands(&self, domain: Option<String>) -> serde_json::Value {
-        let catalog = shared::cli_commands::taxonomy_command_catalog_vo::COMMAND_CATALOG;
+        let catalog = shared::cli_commands::taxonomy_command_vo::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
             .filter(|(name, _desc, _ex)| match domain.as_deref() {
