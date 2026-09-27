@@ -1,4 +1,15 @@
-// build.rs — copy config YAML files from crate-local config/ dir into OUT_DIR
+// PURPOSE: build script — stage publishable assets into OUT_DIR
+//
+// Both asset groups must resolve for the workspace build *and* for the isolated
+// build of a published `.crate` tarball (crates.io extracts the package to an
+// isolated directory, so any path above the crate root is missing there):
+//
+//   1. Config YAML — committed at `<manifest>/config/`, in-package already.
+//   2. Skill markdown — committed at `<manifest>/skills/`, in-package already.
+//
+// `cargo package` stages `<manifest>/skills/` into the tarball, so
+// `include_str!(concat!(env!("OUT_DIR"), "/skills/..."))` stays valid for a
+// consumer that builds straight from the registry.
 use std::fs;
 use std::path::Path;
 
@@ -18,17 +29,20 @@ fn main() {
         }
     };
 
-    // Config files live in <manifest>/config/ (within the crate, safe for crates.io)
-    let config_dir = Path::new(&manifest_dir).join("config");
+    stage_config(Path::new(&manifest_dir), Path::new(&out_dir));
+    stage_skills(Path::new(&manifest_dir), Path::new(&out_dir));
+}
 
+/// Copy `config/lint_arwaky.config.yaml` into `OUT_DIR`.
+fn stage_config(manifest_dir: &Path, out_dir: &Path) {
     let name = "lint_arwaky.config.yaml";
-    let src = config_dir.join(name);
-    let dst = Path::new(&out_dir).join(name);
+    let src = manifest_dir.join("config").join(name);
+    let dst = out_dir.join(name);
 
     if !src.exists() {
         eprintln!(
-            "Config file not found at {:?}. Check that config/ is in the crate root.",
-            src
+            "Config file not found at {}. Check that config/ is in the crate root.",
+            src.display()
         );
         std::process::exit(1);
     }
@@ -39,4 +53,61 @@ fn main() {
     }
 
     println!("cargo:rerun-if-changed=config/lint_arwaky.config.yaml");
+}
+
+/// Recursively copy `<manifest>/skills/` into `OUT_DIR/skills/` so the
+/// `include_str!` sites in `taxonomy_skills_constant.rs` resolve at compile
+/// time from inside the packaged crate.
+fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
+    let skills_src = manifest_dir.join("skills");
+    if !skills_src.is_dir() {
+        eprintln!(
+            "Skills directory not found at {}. Copy crates/skills/ there to populate it.",
+            skills_src.display()
+        );
+        std::process::exit(1);
+    }
+
+    let skills_dst = out_dir.join("skills");
+    if let Err(e) = fs::create_dir_all(&skills_dst) {
+        eprintln!("Failed to create {}: {e}", skills_dst.display());
+        std::process::exit(1);
+    }
+    copy_dir_recursive(&skills_src, &skills_dst);
+
+    println!("cargo:rerun-if-changed=skills");
+}
+
+fn copy_dir_recursive(src: &Path, dst: &Path) {
+    let entries = match fs::read_dir(src) {
+        Ok(e) => e,
+        Err(e) => {
+            eprintln!("Failed to read skills dir {}: {e}", src.display());
+            std::process::exit(1);
+        }
+    };
+
+    for entry in entries {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(e) => {
+                eprintln!("Failed to read entry in {}: {e}", src.display());
+                std::process::exit(1);
+            }
+        };
+        let path = entry.path();
+        let target = dst.join(entry.file_name());
+
+        if path.is_dir() {
+            let sub = dst.join(entry.file_name());
+            if let Err(e) = fs::create_dir_all(&sub) {
+                eprintln!("Failed to create {}: {e}", sub.display());
+                std::process::exit(1);
+            }
+            copy_dir_recursive(&path, &sub);
+        } else if let Err(e) = fs::copy(&path, &target) {
+            eprintln!("Failed to copy skill file {}: {e}", path.display());
+            std::process::exit(1);
+        }
+    }
 }
