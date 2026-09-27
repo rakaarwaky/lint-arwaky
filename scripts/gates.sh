@@ -89,13 +89,10 @@ run_gate "Rust Format" cargo fmt --all -- --check &
 wait_and_report $!
 echo "Phase 1 duration: $((SECONDS - ph1_start))s"
 
-# `crates/shared/skills/` is the packaged copy that `build.rs` stages into
-# OUT_DIR; `crates/skills/` is the workspace copy. They must stay byte-identical
-# or the published crate ships different markdown than the repo documents.
-run_gate "Skills Sync" bash -c '
-    diff -rq crates/skills crates/shared/skills
-' &
-wait_and_report $!
+# Skill markdown has a single source of truth at `crates/skills/`.
+# `crates/shared/skills/` is a gitignored staging dir that `build.rs` copies
+# from that source before the tarball is packaged, so there is no second copy
+# to keep in sync.
 
 # ─── Phase 2: Build + Clippy (single compilation) ─────────
 # clippy builds all targets in debug, then build binary (instant)
