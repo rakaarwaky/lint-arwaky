@@ -1,7 +1,11 @@
 # Changelog
 ## 3.7.1 (2026-09-27)
 
-- No significant changes
+### Fixes
+
+- Fixed `include_str!` resolution for the embedded skill markdown when building
+  the published `shared-lint-arwaky` crate from crates.io, by staging
+  `crates/shared/skills/` into `OUT_DIR` through `build.rs`.
 
 ## 3.7.0 (2026-09-27)
 

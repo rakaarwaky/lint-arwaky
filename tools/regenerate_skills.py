@@ -60,7 +60,7 @@ for rel in files:
 
 lines = [
     "// PURPOSE: Embedded skills constants compiled directly into binary",
-    "use crate::project_setup::taxonomy_skills_vo::EmbeddedSkillVO;",
+    "use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;",
     "",
     "/// All embedded skills compiled into the binary for initialization.",
     "///",
@@ -94,6 +94,19 @@ lines.append("];")
 lines.append("")
 
 OUT.write_text("\n".join(lines), encoding="utf-8")
+
+# Rustfmt canonizes the output so `cargo fmt --check` stays clean even when
+# string lengths shift after adding or removing skill files. The formatter may
+# fold long single-line include_str! spans across lines; keep it here so the
+# committed constant file and the generator stay in lockstep.
+import subprocess  # noqa: E402  (late import to delay until after OUT is written)
+subprocess.run(
+    ["rustfmt", str(OUT)],
+    check=True,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL,
+)
+
 py = sum(1 for *_, l in entries if l == "python")
 rs = sum(1 for *_, l in entries if l == "rust")
 ts = sum(1 for *_, l in entries if l == "typescript")

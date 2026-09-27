@@ -62,7 +62,7 @@ fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
     let skills_src = manifest_dir.join("skills");
     if !skills_src.is_dir() {
         eprintln!(
-            "Skills directory not found at {}. Run `bash scripts/sync_skills.sh` to populate it.",
+            "Skills directory not found at {}. Copy crates/skills/ there to populate it.",
             skills_src.display()
         );
         std::process::exit(1);
