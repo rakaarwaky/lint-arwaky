@@ -494,6 +494,84 @@ pub struct InboundLinkMap {
     pub mapping: HashMap<String, Vec<String>>,
 }
 
+/// Where a public helper method is referenced from, excluding its own file.
+///
+/// Built by the role orchestrator across the whole workspace so a rule can
+/// distinguish a helper that other modules genuinely call from one that is
+/// `pub` without cause. `tests` paths are kept separate because a helper
+/// covered only by an integration test still has to be `pub`: `pub(crate)`
+/// is invisible to a `tests/` target, which compiles as its own crate.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct ExternalReferenceMap {
+    /// Referencing file path → referenced method names.
+    pub by_file: HashMap<String, Vec<String>>,
+    /// True when at least one referencing file lives under a `tests/` directory.
+    pub has_test_references: bool,
+}
+
+impl ExternalReferenceMap {
+    /// True when `method` is referenced from any file other than `owning_file`.
+    pub fn referenced_externally(&self, owning_file: &str, method: &str) -> bool {
+        self.by_file
+            .iter()
+            .any(|(file, methods)| file != owning_file && methods.iter().any(|m| m == method))
+    }
+
+    /// True when `method` is referenced from a non-test file, including
+    /// `owning_file` itself. A helper called from inside its own module is
+    /// live even when no other module names it, so a same-file call must
+    /// count as production usage.
+    pub fn referenced_from_production(&self, owning_file: &str, method: &str) -> bool {
+        self.by_file.iter().any(|(file, methods)| {
+            methods.iter().any(|m| m == method)
+                && *file == owning_file
+                && !is_test_or_bench_path(file)
+        }) || self.referenced_externally_from_production(owning_file, method)
+    }
+
+    /// True when `method` is referenced from a file other than `owning_file`
+    /// that is not a test or bench target.
+    pub fn referenced_externally_from_production(&self, owning_file: &str, method: &str) -> bool {
+        self.by_file.iter().any(|(file, methods)| {
+            file != owning_file
+                && methods.iter().any(|m| m == method)
+                && !is_test_or_bench_path(file)
+        })
+    }
+
+    /// True when `method` is referenced only from `tests/` files.
+    pub fn referenced_only_from_tests(&self, owning_file: &str, method: &str) -> bool {
+        let mut any = false;
+        for (file, methods) in &self.by_file {
+            if file == owning_file || !methods.iter().any(|m| m == method) {
+                continue;
+            }
+            any = true;
+            if !is_test_or_bench_path(file) {
+                return false;
+            }
+        }
+        any
+    }
+
+    /// Referencing file paths for `method`, excluding `owning_file`.
+    pub fn referencing_files(&self, owning_file: &str, method: &str) -> Vec<String> {
+        self.by_file
+            .iter()
+            .filter(|(file, methods)| *file != owning_file && methods.iter().any(|m| m == method))
+            .map(|(file, _)| file.clone())
+            .collect()
+    }
+}
+
+/// True when a path string points into a test or benchmark target directory.
+fn is_test_or_bench_path(path: &str) -> bool {
+    path.contains("/tests/")
+        || path.contains("/benches/")
+        || path.contains("\\tests\\")
+        || path.contains("\\benches\\")
+}
+
 impl InboundLinkMap {
     pub fn new(value: HashMap<String, Vec<String>>) -> Self {
         Self { mapping: value }

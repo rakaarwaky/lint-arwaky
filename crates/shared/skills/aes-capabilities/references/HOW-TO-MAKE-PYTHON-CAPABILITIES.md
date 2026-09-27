@@ -106,7 +106,9 @@ class I<Name>Protocol(ABC):
 | Imports from `_protocol` module only.                             | Required by AES layer rules and the linter; missing it is a defect. |
 | No local domain models, no agent/capability imports.              | Required by AES layer rules and the linter; missing it is a defect. |
 | DI via protocol interfaces; shared VOs for fields and signatures. | Required by AES layer rules and the linter; missing it is a defect. |
-| Constants → `taxonomy_<domain>_constant.py`.                      | Required by AES layer rules and the linter; missing it is a defect. |
+| Constants → `taxonomy_<domain>_constant.py`.                     | Required by AES layer rules and the linter; missing it is a defect. |
+| Block 3 public helpers with no production caller are private (`def _name`). | Required by AES layer rules and the linter; missing it is a defect. |
+| Test classes (`class Test*`, `def test_*`) live in `tests/`, never inline. | Required by AES layer rules and the linter; missing it is a defect. |
 | Low-level ops → Utility.                                          | Required by AES layer rules and the linter; missing it is a defect. |
 | `python -c "import <module>"` passes.                             | Required by AES layer rules and the linter; missing it is a defect. |
 
@@ -119,7 +121,11 @@ class I<Name>Protocol(ABC):
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Manual (not machine-checked): 3-block order; Block 2 only protocol methods; helper-vs-utility matrix; role naming lists.
+# AES403 machine-enforced: class budget ≤3; protocol inheritor present;
+#   protocol method defined before the first private helper; module-level
+#   constants in taxonomy file; no inline test class or test function;
+#   public methods after the Block 2 boundary with no production caller flagged.
+# Manual (not machine-checked): helper-vs-utility matrix; role naming lists.
 # Fallback compile gate: python -c "import <shared_package>.<module>"
 ```
 
