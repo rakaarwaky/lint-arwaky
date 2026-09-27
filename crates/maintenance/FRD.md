@@ -1,4 +1,4 @@
-# FRD — maintenance (v2.0.0)
+# FRD — maintenance (v2.1.0)
 
 ---
 
@@ -6,9 +6,10 @@
 
 The maintenance crate provides operational health and upkeep commands for the
 lint-arwaky system: environment diagnostics, toolchain verification, adapter
-health checking, cache cleanup, tool updates, security scanning, dependency
-reporting, and project statistics. It is the ops-focused crate — it handles
-environment health, not code quality analysis.
+health checking, cache cleanup, tool updates, binary self-update from
+GitHub releases, security scanning, dependency reporting, and project
+statistics. It is the ops-focused crate — it handles environment health,
+not code quality analysis.
 
 The crate follows the AES 7-layer architecture: the maintenance checker
 (capabilities) implements the maintenance checker protocol, the maintenance
@@ -25,6 +26,7 @@ flowchart TD
     C -->|"doctor / diagnose / health"| D["maintenance checker"]
     C -->|"security / dependencies"| D
     C -->|"stats / clean / update"| D
+    C -->|"self-update"| D
 
     D --> F["filesystem / tool executor"]
     F -->|subprocess| G["Tool Output"]
@@ -240,6 +242,39 @@ flowchart TD
 
 ---
 
+### FR-009: Self-Update (binary)
+
+- **Description**: Query the latest release from GitHub and install the
+  `lint-arwaky-cli` binary when a newer version is available.
+- **Input**: None (operates on current executable path).
+- **Output**: `SelfUpdateResultVO` — current version, latest tag, upgrade
+  status, human-readable message.
+- **Business Rules**:
+  - Fetches the latest release from `https://api.github.com/repos/rakaarwaky/lint-arwaky/releases/latest`
+    using `curl` via the filesystem IO protocol.
+  - Compares `CARGO_PKG_VERSION` (normalised by stripping the `v` prefix)
+    against the release tag. Only installs when the release tag is strictly
+    greater.
+  - When `check_only` is `true`, reports the result without downloading.
+  - When `check_only` is `false`, downloads the `lint-arwaky-cli` asset and
+    the published `lint-arwaky-cli.sha256` checksum to a temporary file in the
+    same directory as the running binary, verifies the binary's SHA-256 hash
+    against the published value, then moves the verified binary over the
+    existing executable and marks it executable with `chmod +x`.
+- **Edge Cases**:
+  - Network unavailable → graceful error, no crash, `latest_version` empty.
+  - Release tag missing or malformed → graceful error.
+  - Current executable cannot be resolved → error.
+  - Download fails (missing asset, 404) → error logged, no binary replaced.
+  - Published checksum missing or SHA-256 mismatch → error logged, no binary
+    replaced; the downloaded asset is cleaned up.
+  - `chmod` fails → error logged, no binary replaced.
+  - Local version is ahead of the released version → no update triggered.
+- **Error Handling**: All failures return `SelfUpdateResultVO::error()` with
+  a descriptive message; the process exits with `RUNTIME_ERROR`.
+
+---
+
 ## API Contract
 
 
@@ -249,6 +284,7 @@ flowchart TD
 | Project statistics    | project path | Maintenance stats     | Count files in top-level directory, compute test ratio           |
 | Cache cleanup         | —           | —                    | Remove known cache directories from current directory            |
 | Tool update           | —           | —                    | Upgrade Python linter tools via pip                              |
+| Self-update           | check_only  | SelfUpdateResultVO   | Query GitHub release, install lint-arwaky-cli binary if newer    |
 | Toolchain diagnostics | —           | Toolchain diagnostics | Check Rust/Python/JS/VCS tool installations                     |
 | Security scan         | project path | Security scan report  | Run cargo-audit for Rust dependency vulnerabilities              |
 | Dependency report     | project path | Dependency list       | Parse Cargo.lock and list project dependencies                   |
@@ -269,7 +305,11 @@ flowchart TD
 - **External**:
 
   - `cargo audit --json` — Rust dependency vulnerability scanning.
-  - `pip install --upgrade` — Python tool upgrade.
+  - `pip install --upgrade` — Python tool upgrade.  - `mv`, `chmod`, `sha256sum` — atomic binary replacement, executable-bit
+    setting, and download integrity verification (all via the filesystem IO
+    protocol).
+  - `curl` — GitHub releases API query and release asset download.
+  - `mv`, `chmod` — atomic binary replacement and executable-bit setting.
   - `which <tool>` — tool availability detection (via filesystem aggregate).
   - `std::process::Command` — synchronous subprocess execution.
   - `std::fs` — filesystem I/O for cache cleanup.
@@ -369,12 +409,22 @@ flowchart TD
 | 2 | Missing ruff                    | ruff available: false                 | FR-008 |
 | 3 | No adapters installed          | All available: false                  | FR-008 |
 
+### SCEN-009 — Self-Update
+
+| # | Scenario                              | Expected                                          | Rule   |
+| --- | --------------------------------------- | --------------------------------------------------- | -------- |
+| 1 | GitHub reachable, same version         | already_up_to_date=true, upgraded=false             | FR-009 |
+| 2 | GitHub reachable, newer version        | latest_version set, upgraded=true (when not check-only) | FR-009 |
+| 3 | check_only=true                        | No download performed; status reports current tag   | FR-009 |
+| 4 | Network unavailable                    | latest_version empty, status starts with "Error:"   | FR-009 |
+| 5 | Local version ahead of release         | already_up_to_date=true (local > released)          | FR-009 |
+
 ---
 
 ## Assumptions & Constraints
 
-- The crate assumes `pip`, `cargo`, `npm`, `which`, and other tools are
-  available in the system PATH when invoked.
+- The crate assumes `pip`, `cargo`, `npm`, `which`, `curl`, `mv`, and
+  `chmod` are available in the system PATH when invoked.
 - Security scanning requires `cargo-audit` to be installed for Rust projects.
 - Dependency parsing is line-based (not full TOML/lockfile parsing); may
   miss edge cases in complex manifests.
@@ -399,6 +449,7 @@ flowchart TD
 | **Toolchain**         | The set of programming language tools (compilers, linters, formatters) installed on the system |
 | **Dependency Report** | A listing of all project dependencies with name, version, and classification                   |
 | **Cache Directory**   | Temporary build/lint output directories that can be safely deleted                             |
+| **Self-Update**       | Process of downloading the latest release binary from GitHub and replacing the running executable |
 | **Security Finding**  | A vulnerability detected by cargo-audit in project dependencies                                |
 
 ---

@@ -3,7 +3,7 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State / Health: defined in root [BACKLOG.md](../../BACKLOG.md) — cited here, not restated
-Last Updated: 2026-09-17
+Last Updated: 2026-09-27
 
 ## Current Condition
 
@@ -24,6 +24,7 @@ Last Updated: 2026-09-17
 | MAIN-06 | FR-006 | SCEN-006 - Security — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | MAIN-07 | FR-007 | SCEN-007 - Dependencies — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | MAIN-08 | FR-008 | SCEN-008 - Adapter Health Check — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| MAIN-09 | FR-009 | Self-update: query GitHub release, install binary when newer | P1 | Done | Implemented at `feat/maintenance-update-cmd` — `update` subcommand + `--check-only` flag | @raka | None | 2026-09-27 |
 
 ## Scenario Evidence
 
@@ -57,6 +58,10 @@ Last Updated: 2026-09-17
 | All 9 adapters installed | All available: true | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
 | Missing ruff | ruff available: false | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
 | No adapters installed | All available: false | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
+| Latest release is newer | `latest_version` = tag, `upgraded` = true | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance | `2026-09-27` |
+| Latest release equals current | `already_up_to_date` = true, no install | Automated | `tests/unit_shared_maintenance.rs` | cargo test -p shared | `2026-09-27` |
+| API unreachable | `latest_version` empty, status starts with `Error:` | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance | `2026-09-27` |
+| `check_only` flag set | No download performed | Manual | `./lint-arwaky-cli update --check-only` | CLI smoke test | `2026-09-27` |
 
 ## Blockers
 
@@ -83,3 +88,4 @@ None
 | Date | Change | By |
 |---|---|---|
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
+| 2026-09-27 | Added FR-009: self-update — GitHub release query + binary install | @raka |

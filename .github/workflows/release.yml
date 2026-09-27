@@ -64,12 +64,18 @@ jobs:
           cp target/release/lint-arwaky-cli lint-arwaky-cli
           cp target/release/lint-arwaky-mcp lint-arwaky-mcp
 
+      # `lint-arwaky-cli update` verifies the downloaded binary against this
+      # checksum before replacing the running executable.
+      - name: Generate checksums
+        run: sha256sum lint-arwaky-cli lint-arwaky-mcp > lint-arwaky-cli.sha256
+
       - uses: actions/upload-artifact@v7
         with:
           name: binaries
           path: |
             lint-arwaky-cli
             lint-arwaky-mcp
+            lint-arwaky-cli.sha256
 
   smoke-test:
     name: Smoke test binaries
@@ -128,4 +134,5 @@ jobs:
           files: |
             lint-arwaky-cli
             lint-arwaky-mcp
+            lint-arwaky-cli.sha256
           generate_release_notes: true
