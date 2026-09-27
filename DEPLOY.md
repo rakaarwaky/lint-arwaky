@@ -72,7 +72,7 @@ cargo build --release --target x86_64-pc-windows-msvc
 
 ```bash
 lint-arwaky-cli version
-# Expected: lint-arwaky 3.6.1
+# Expected: lint-arwaky 3.7.0
 
 lint-arwaky-cli maintenance doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)

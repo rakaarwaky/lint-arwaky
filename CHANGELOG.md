@@ -1,4 +1,77 @@
 # Changelog
+## 3.7.0 (2026-09-27)
+
+### Features
+
+- **Master plan: critical fixes, TUI hardening, in-process dispatch** (#275):
+  bundled release covering dispatcher in-process dispatch, TUI hardening, and
+  the accumulated critical fixes from the master plan workstream
+- **Request/response taxonomy type split** (#283): taxonomy VO types are split
+  into `_request` and `_response` suffixed files, so request and response
+  shapes live in separate files rather than sharing one `_vo` module. Applies
+  across all 14 domain crates plus the `workspaces-good` fixtures for Rust,
+  Python, and TypeScript
+- **Consolidated AES skill pack** (#266, #280): 24 per-language skill files
+  (`add-docs-rust`, `create-contract-python`, …) are replaced by 11 `aes-*`
+  skills that each carry a `SKILL.md` plus per-language `references/`. Skill
+  sources moved under `crates/skills/` for git tracking (#272)
+
+### Bug Fixes
+
+- **Agent orchestrator guide compliance** (#285): all 14 agent orchestrators
+  now follow `HOW-TO-MAKE-RUST-AGENT.md`:
+  - `agent_config_orchestrator.rs` restructured to the 3-block layout
+    (struct → aggregate impl → constructors/helpers), its two free functions
+    extracted to `utility_config_merger.rs`, its three silent error discards
+    (`.ok().flatten()` and two `_ =>` fallbacks) replaced with explicit
+    `match` arms that log, and the injected parser dep now carries the real
+    parse work instead of a decorative pass-through
+  - `agent_filesystem_orchestrator.rs` — `std::fs::canonicalize` replaced
+    with the injected `IFileSystemIOProtocol::canonicalize`
+  - `agent_watch_orchestrator.rs` — 6 `println!` calls converted to
+    `tracing::info!`, removing stdout writes from the agent layer
+  - `agent_quality_orchestrator.rs` — `has_critical` free function extracted
+    to `utility_compliance_checker.rs` as `contains_critical_severity`
+  - `capabilities_dummy_import_checker.rs` — the AES204 surface-logic check
+    is now gated to surface-layer files via `detect_layer_from_prefix`; it
+    previously matched a hardcoded name list against every file in a crate
+    and produced false positives on agent and utility files
+- **E902 doubled-path false positive** (#281): Python external-lint adapters
+  (Ruff, MyPy, Bandit) canonicalize target paths to absolute paths before
+  invocation, and workspace-root scans only lint files inside member
+  directories (`crates/`, `packages/`, `modules/`) — no longer root-level files
+  such as `setup.py`
+- **`init` accepts `"all"` language** (#279): falls back to installing every
+  language when no source files are detected, with improved taxonomy error
+  documentation
+- **rmcp 3.4.0 deprecation** (#287): `rmcp::model::ServerInfo` renamed to
+  `ServerConfig` in the MCP tool surface
+- **install.sh execute permission** (#265): the installer script is no longer
+  checked out without the execute bit
+
+### Documentation
+
+- **Spec/status split across all 19 crates** (#273): each `FRD.md` now
+  separates specification from status
+- **Doc upgrades and broken doc-test fixes** (#271)
+- **Git workflow section in AGENTS.md** (#274) documenting `main` branch
+  protection and the required status checks
+- **Consolidated-skill references** (#267) replacing the per-language fan-out
+  in guides and migration docs
+
+### Maintenance
+
+- **Dependency bumps**: cargo-dependencies group (clap 4.6.7, rmcp 3.4.0,
+  syn 3.0.6, camino 1.2.6) (#268, #287), dirs and tree-sitter (#269),
+  js-yaml 4.3.2 (#264)
+- **Branch sync**: `develop` was brought up to date with `main` (51 conflicts
+  resolved, 16 orphan `_vo` files removed) and then promoted back to `main`
+  (#284, #286). Both branches are now at the same commit
+- **Release automation**: the auto-release breaking-change regex
+  `^[a-zA-Z]*(.*)!:` is unanchored and false-positives on any subject
+  containing `!:` anywhere, which made it compute v4.0.0 for a release with
+  no breaking changes
+
 ## 3.6.3 (2026-09-09)
 
 ### Bug Fixes
