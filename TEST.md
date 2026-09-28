@@ -182,6 +182,8 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 
 ## 4. Release Eligibility Checklist
 
+The product-engineering release gate, dependency map, demo walkthrough, artifact manifest, and role sign-offs are tracked in this checklist and `ROADMAP.md`.
+
 Before releasing the binary to production or deploying to a client,
 complete all verification tasks below.
 

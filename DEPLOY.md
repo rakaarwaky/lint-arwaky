@@ -1,6 +1,6 @@
 # Deployment Guide — Lint Arwaky
 
-**Status**: PRODUCTION-READY —
+**Status**: RELEASE CANDIDATE — pending final sign-offs and candidate artifact registration. The release gate is tracked in this guide and `ROADMAP.md`.
 
 ---
 
@@ -64,7 +64,7 @@ cargo build --release --target x86_64-unknown-linux-gnu
 # macOS Apple Silicon
 cargo build --release --target aarch64-apple-darwin
 
-# Windows MSVC
+# Windows MSVC (experimental build-only target; unsupported runtime until WS-10 closes)
 cargo build --release --target x86_64-pc-windows-msvc
 ```
 
@@ -184,10 +184,12 @@ lint-arwaky-cli init
 - [ ] `cargo test --workspace` passes
 - [ ] `cargo run --bin lint-arwaky-cli -- check .` reports 0 CRITICAL findings
 - [ ] `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings` clean
-- [ ] `lint-arwaky-cli version` returns `2.0.0`
+- [ ] `lint-arwaky-cli version` returns the candidate version recorded in `Cargo.toml`
 - [ ] `lint-arwaky-cli doctor` reports no issues
-- [ ] `lint-arwaky-mcp` responds to `tools/list` with the expected tools
-- [ ] `health_check` MCP tool returns all adapters healthy
+- [ ] `lint-arwaky-mcp` responds to `tools/list` with all 5 expected tools
+- [ ] `health_check` MCP tool reports adapter availability, including missing optional tools
+- [ ] Bad Rust, Python, and TypeScript fixtures produce findings; good fixtures produce 0 findings
+- [ ] Demo configuration, external-tool availability, and expected exit codes are recorded
 
 ### Deploy
 
@@ -197,6 +199,8 @@ lint-arwaky-cli init
 - [ ] Tag the release: `git tag vX.Y.Z`
 - [ ] Push tag: `git push origin vX.Y.Z`
 - [ ] Run installer smoke-test on a clean machine
+- [ ] Record candidate tag, binary inventory, platform, checksum, and provenance
+- [ ] Obtain Product, Engineering, QA, Documentation, and Operations sign-offs
 
 ### Post-Deploy
 
@@ -208,11 +212,13 @@ lint-arwaky-cli init
 
 ## Rollback Plan
 
-Reinstall the previous release:
+Reinstall the previous known-good release tag recorded in the release checklist:
 
 ```bash
-cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag vX.Y.Z
+cargo install --git https://github.com/rakaarwaky/lint-arwaky --tag <previous-stable-tag>
 ```
+
+Rollback owner, trigger threshold, retained artifact, and post-rollback verification must be recorded before the candidate is marked Released.
 
 Or rebuild from a specific tag:
 

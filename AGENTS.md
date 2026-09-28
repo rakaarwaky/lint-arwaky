@@ -43,7 +43,7 @@ CARGO_INCREMENTAL=0 cargo build --release
 
 ## Project Overview
 
-**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 24 rules across 5 groups. The project itself is written in Rust and is self-auditing (it passes its own lint rules).
+**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 29 rules across 6 groups. The project itself is written in Rust and is self-auditing (it passes its own lint rules).
 
 **Key docs:**
 
@@ -53,7 +53,7 @@ CARGO_INCREMENTAL=0 cargo build --release
 | [PRD.md](PRD.md) | Product requirements, feature map, exit codes |
 | [TEST.md](TEST.md) | Test workspaces, pass/fail criteria, expected violation counts |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, code style, PR process |
-| [RULES_AES.md](.agents/rules/RULES_AES.md) | All 24 AES rules with severities and descriptions |
+| [RULES_AES.md](.agents/rules/RULES_AES.md) | All 29 AES rules with severities and descriptions |
 
 ---
 
