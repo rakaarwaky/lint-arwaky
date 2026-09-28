@@ -90,6 +90,8 @@ pub const FRD_DOC: &str = "FRD.md";
 pub const BACKLOG_DOC: &str = "BACKLOG.md";
 pub const README_DOC: &str = "README.md";
 pub const AGENTS_DOC: &str = "AGENTS.md";
+pub const ARCHITECTURE_DOC: &str = "ARCHITECTURE.md";
+pub const CONTRIBUTING_DOC: &str = "CONTRIBUTING.md";
 
 /// The root master, which owns the state vocabulary and the feature roll-up.
 /// A legacy root BACKLOG.md is accepted so a workspace can migrate in place.
@@ -145,37 +147,145 @@ pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 /// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
-/// Level-2 sections an AGENTS.md must always carry, per the
-/// HOW-TO-MAKE-AGENTS Section Contract. Each of these carries at least
-/// one link to its corresponding document; level-3 headings stay free.
-pub const AGENTS_REQUIRED_H2: &[&str] = &[
-    "Precedence",
-    "Security",
-    "Architecture",
-    "Contributing",
-    "License",
-    "Commands",
-    "Git Workflow",
-    "Definition of Done",
-    "Related Documents",
-];
-
-/// Level-2 sections an AGENTS.md may carry beyond the required set.
-/// Each is recognized by its leading words, so
+/// ─── AES606 — Document heading structure ──────────────────────────────
+/// Mapping from root-document filename to the H2 contracts derived from
+/// each document's Section Contract table in the corresponding
+/// HOW-TO-MAKE-*.md template. The `required` set is mandatory; the
+/// `allowed` set is recognized but not enforced. Level-3+ headings stay
+/// free-form per project. Matching is by leading words, so
 /// `## Architecture: AES 7-Layer System` satisfies "Architecture".
-pub const AGENTS_ALLOWED_H2: &[&str] = &[
-    "Project Overview",
-    "Build & dev",
-    "Format & lint",
-    "Quality gates",
-    "Self-lint",
-    "Scan test projects",
-    "MCP server & TUI",
-    "Architecture",
-    "Naming Convention",
-    "Workspace Packages Structure",
-    "Skills & Roles",
-    "Branch Management",
-    "Exit Code Contract",
-    "Pitfalls",
+///
+/// Any H2 outside `required ∪ allowed` fires `h2_unexpected`.
+/// Every heading inside `required` but absent from the file fires
+/// `h2_missing`. A file with zero or more-than-one H1 fires `h1_count`.
+pub type DocH2Contract = (
+    &'static str,
+    &'static [&'static str],
+    &'static [&'static str],
+);
+
+pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
+    (
+        AGENTS_DOC,
+        &[
+            "Precedence",
+            "Security",
+            "Architecture",
+            "Contributing",
+            "License",
+            "Commands",
+            "Git Workflow",
+            "Definition of Done",
+            "Related Documents",
+        ],
+        &[
+            "Project Overview",
+            "Build & dev",
+            "Format & lint",
+            "Quality gates",
+            "Self-lint",
+            "Scan test projects",
+            "MCP server & TUI",
+            "Naming Convention",
+            "Workspace Packages Structure",
+            "Skills & Roles",
+            "Branch Management",
+            "Exit Code Contract",
+            "Pitfalls",
+        ],
+    ),
+    (
+        ARCHITECTURE_DOC,
+        &[
+            "Purpose",
+            "Workspace Organization",
+            "Naming Convention",
+            "Vertical Slicing Layout",
+            "Taxonomy Layer",
+            "Contract Layer",
+            "Utility Layer",
+            "Capabilities Layer",
+            "Agent Layer",
+            "Surface Layer",
+            "Root Layer",
+        ],
+        &[],
+    ),
+    (
+        CONTRIBUTING_DOC,
+        &[
+            "Principles",
+            "Development Setup",
+            "Feature Change",
+            "Documentation Change",
+            "Quality Verification & PR Process",
+        ],
+        &[
+            "Prerequisites",
+            "Running the binaries",
+            "Branch Management",
+            "Why Contribute",
+            "Questions?",
+        ],
+    ),
+    (
+        PRD_DOC,
+        &[
+            "Problem Statement",
+            "Goals & Success Metrics",
+            "User Personas",
+            "Scope",
+            "Feature Requirements",
+            "Non-functional Requirements",
+            "Open Questions / Risks",
+        ],
+        &[
+            "Product Decisions",
+            "Exit Code Contract",
+            "AES Rule Summary",
+            "Feature Map",
+            "Reference",
+        ],
+    ),
+    (
+        README_DOC,
+        &[
+            "Prerequisites",
+            "Quick Start",
+            "Architecture",
+            "Project Structure",
+            "Available Scripts/Commands",
+            "Configuration",
+            "Testing",
+            "Contributing",
+            "License",
+        ],
+        &[
+            "AES Rules",
+            "MCP Server",
+            "Integrate as a CI Gate",
+            "Performance",
+        ],
+    ),
+    (
+        ROADMAP_DOC,
+        &[
+            "Current Condition",
+            "State Definitions",
+            "Status Policy",
+            "Feature Roll-up",
+            "Branches in Flight",
+            "Risk Register",
+        ],
+        &[
+            "Feature Index",
+            "Health Definitions",
+            "Backlog",
+            "Blockers",
+            "Dependencies",
+            "Release Readiness",
+            "Deferred",
+            "Change Log",
+        ],
+    ),
 ];

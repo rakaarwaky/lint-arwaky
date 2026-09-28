@@ -73,6 +73,80 @@ The feature does the work a surface delegates to.
     .to_string()
 }
 
+/// A PRD.md that satisfies its own AES606 H2 contract.
+fn conforming_prd() -> &'static str {
+    r"# PRD — sample
+
+## Problem Statement
+
+The problem.
+
+## Goals & Success Metrics
+
+- Fewer defects.
+
+## User Personas
+
+- A maintainer.
+
+## Scope
+
+In scope: the checker.
+
+## Feature Requirements
+
+- P0 — the checker reports every violation.
+
+## Non-functional Requirements
+
+| Metric | Target |
+| --- | --- |
+| Dispatch | One call |
+
+## Open Questions / Risks
+
+- None.
+"
+}
+
+/// A ROADMAP.md that satisfies its own AES606 H2 contract.
+fn conforming_roadmap() -> &'static str {
+    r"# ROADMAP — sample
+
+## Current Condition
+
+Everything is green.
+
+## State Definitions
+
+| State | Meaning |
+| --- | --- |
+| Done | Shipped. |
+
+## Status Policy
+
+A row is Done with a command.
+
+## Feature Roll-up
+
+| ID | Item |
+| --- | --- |
+| WS-1 | Docs. |
+
+## Branches in Flight
+
+| Branch | State |
+| --- | --- |
+| none | — |
+
+## Risk Register
+
+| Risk | Mitigation |
+| --- | --- |
+| None | — |
+"
+}
+
 /// Build a workspace whose only feature folder is a real feature, so AES605
 /// (folder health) does not fire on a conforming document set.
 fn write_workspace(dir: &Path, frd: &str) {
@@ -85,8 +159,8 @@ fn write_workspace(dir: &Path, frd: &str) {
         "//! sample orchestrator\n",
     )
     .unwrap();
-    fs::write(dir.join("PRD.md"), "# PRD — sample\n").unwrap();
-    fs::write(dir.join("ROADMAP.md"), "# ROADMAP — sample\n").unwrap();
+    fs::write(dir.join("PRD.md"), conforming_prd()).unwrap();
+    fs::write(dir.join("ROADMAP.md"), conforming_roadmap()).unwrap();
 }
 
 /// Build a workspace with a conforming AGENTS.md so AES606 stays silent.
@@ -100,8 +174,8 @@ fn write_agents_workspace(dir: &Path) {
         "//! sample orchestrator\n",
     )
     .unwrap();
-    fs::write(dir.join("PRD.md"), "# PRD — sample\n").unwrap();
-    fs::write(dir.join("ROADMAP.md"), "# ROADMAP — sample\n").unwrap();
+    fs::write(dir.join("PRD.md"), conforming_prd()).unwrap();
+    fs::write(dir.join("ROADMAP.md"), conforming_roadmap()).unwrap();
     fs::write(
         dir.join("AGENTS.md"),
         "# Sample AGENTS.md\n\n\
@@ -764,5 +838,224 @@ Tests pass.
     assert!(
         !has(&findings, "AES606", "h2_unexpected") && !has(&findings, "AES606", "h2_missing"),
         "the project's own H2 set must be accepted; got: {findings:#?}"
+    );
+}
+
+/// Audit a single root document inside a workspace whose AGENTS.md is
+/// already conforming, so only that document contributes findings.
+fn audit_root_doc(name: &str, text: &str) -> Vec<(String, String, String)> {
+    let tmp = tempfile::tempdir().unwrap();
+    write_agents_workspace(tmp.path());
+    fs::write(tmp.path().join(name), text).unwrap();
+    audit(tmp.path())
+}
+
+#[test]
+fn aes606_reports_a_missing_h2_naming_the_document() {
+    // A ROADMAP.md without Risk Register must name the document and section.
+    let text = conforming_roadmap().replace("## Risk Register", "## Risks");
+    let findings = audit_root_doc("ROADMAP.md", &text);
+    assert!(has(&findings, "AES606", "h2_missing"));
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("ROADMAP.md") && message.contains("Risk Register"),
+        "message must name the document and section; got: {message}"
+    );
+}
+
+#[test]
+fn aes606_reports_an_off_template_h2_with_a_remedy() {
+    let text = r#"# Sample README
+
+## Prerequisites
+
+- A toolchain.
+
+## Quick Start
+
+Run it.
+
+## Architecture
+
+Delegate to ARCHITECTURE.md.
+
+## Project Structure
+
+Where things live.
+
+## Available Scripts/Commands
+
+The daily loop.
+
+## Configuration
+
+What to set.
+
+## Testing
+
+Run the tests.
+
+## Contributing
+
+Read CONTRIBUTING.md.
+
+## License
+
+MIT.
+
+## Random Extra
+
+Off-template.
+"#;
+    let findings = audit_root_doc("README.md", text);
+    assert!(has(&findings, "AES606", "h2_unexpected"));
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES606" && v == "h2_unexpected")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("random extra") && message.contains("level-3"),
+        "message must name the heading and the remedy; got: {message}"
+    );
+}
+
+#[test]
+fn aes606_accepts_a_conforming_prd() {
+    let findings = audit_root_doc("PRD.md", conforming_prd());
+    assert!(
+        !has(&findings, "AES606", "h2_missing") && !has(&findings, "AES606", "h2_unexpected"),
+        "a conforming PRD must be accepted; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes606_fires_h1_count_when_a_document_has_no_h1() {
+    let findings = audit_root_doc(
+        "CONTRIBUTING.md",
+        "## Principles
+
+- No bypasses.
+",
+    );
+    assert!(has(&findings, "AES606", "h1_count"));
+}
+
+#[test]
+fn aes606_fires_when_an_architecture_layer_section_is_absent() {
+    // Strip Root Layer from an otherwise-conforming ARCHITECTURE.md.
+    let text = r#"# Architecture
+
+## 1. Purpose
+
+Why.
+
+## 2. Workspace Organization
+
+Terms.
+
+## 3. Naming Convention
+
+Rule.
+
+## 4. Vertical Slicing Layout
+
+Layout.
+
+## 5. Taxonomy Layer
+
+Base.
+
+## 6. Contract Layer
+
+Boundary.
+
+## 7. Utility Layer
+
+Mechanics.
+
+## 8. Capabilities Layer
+
+Behavior.
+
+## 9. Agent Layer
+
+Sequence.
+
+## 10. Surface Layer
+
+Outer.
+"#;
+    let findings = audit_root_doc("ARCHITECTURE.md", text);
+    assert!(has(&findings, "AES606", "h2_missing"), "{findings:#?}");
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap_or_default();
+    assert!(
+        message.contains("Root Layer"),
+        "only Root Layer is absent; got: {message}"
+    );
+}
+
+#[test]
+fn aes606_strips_a_leading_list_index_before_matching() {
+    // Numbered sections like `## 11. Root Layer` must match the
+    // template entry "Root Layer" instead of firing h2_unexpected.
+    let text = r#"# Architecture
+
+## 1. Purpose
+
+Why.
+
+## 2. Workspace Organization
+
+Terms.
+
+## 3. Naming Convention
+
+Rule.
+
+## 4. Vertical Slicing Layout
+
+Layout.
+
+## 5. Taxonomy Layer
+
+Base.
+
+## 6. Contract Layer
+
+Boundary.
+
+## 7. Utility Layer
+
+Mechanics.
+
+## 8. Capabilities Layer
+
+Behavior.
+
+## 9. Agent Layer
+
+Sequence.
+
+## 10. Surface Layer
+
+Outer.
+
+## 11. Root Layer
+
+Entry.
+"#;
+    let findings = audit_root_doc("ARCHITECTURE.md", text);
+    assert!(
+        !has(&findings, "AES606", "h2_missing") && !has(&findings, "AES606", "h2_unexpected"),
+        "numbered sections must match after index stripping; got: {findings:#?}"
     );
 }

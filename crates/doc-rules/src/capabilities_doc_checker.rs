@@ -86,6 +86,14 @@ fn heading_re() -> Option<&'static regex::Regex> {
         .as_ref()
 }
 
+/// Look up the H2 contract for a recognized root document.
+fn doc_h2_contract(name: &str) -> Option<(&[&str], &[&str])> {
+    consts::DOC_HEADING_CONTRACTS
+        .iter()
+        .find(|(n, _, _)| *n == name)
+        .map(|(_, required, allowed)| (*required, *allowed))
+}
+
 /// Bullet matcher.
 fn bullet_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
@@ -120,7 +128,15 @@ fn normalize_heading(title: &str) -> String {
             }
         })
         .collect();
-    stripped.split_whitespace().collect::<Vec<_>>().join(" ")
+    let collapsed = stripped.split_whitespace().collect::<Vec<_>>().join(" ");
+    // Drop a leading list index so "4. Vertical Slicing Folder Structure"
+    // still matches the template section name.
+    match collapsed.split_once(' ') {
+        Some((first, rest)) if first.chars().all(|c| c.is_ascii_digit()) && !first.is_empty() => {
+            rest.to_string()
+        }
+        _ => collapsed,
+    }
 }
 
 /// Strip fenced code blocks so prose checks ignore examples.
@@ -180,6 +196,8 @@ impl DocChecker {
             consts::BACKLOG_DOC,
             consts::README_DOC,
             consts::AGENTS_DOC,
+            consts::ARCHITECTURE_DOC,
+            consts::CONTRIBUTING_DOC,
         ] {
             let path = root.join(name);
             if let Some(source) = read_source(&path) {
@@ -253,9 +271,10 @@ impl DocChecker {
         // ── AES605: Feature folder health ──
         // (folder-level checks run after all docs are collected in audit())
 
-        // ── AES606: Agent doc heading structure ──
-        if name == consts::AGENTS_DOC {
-            self.check_agents_heading(doc, &mut findings);
+        // ── AES606: Document heading structure ──
+        // Applied to every document that has a registered H2 contract.
+        if let Some((required, allowed)) = doc_h2_contract(&name) {
+            self.check_doc_heading(doc, &name, required, allowed, &mut findings);
         }
 
         // Stamp every finding with the document it came from.
@@ -635,10 +654,17 @@ impl DocChecker {
         }
     }
 
-    /// An AGENTS.md must carry exactly one level-1 heading and every H2
-    /// section from `AGENTS_REQUIRED_H2`. Level-3 headings are free-form,
-    /// so a project may add or rename them freely.
-    fn check_agents_heading(&self, doc: &DocSource, findings: &mut Vec<DocFinding>) {
+    /// A document must carry exactly one level-1 heading, every required H2
+    /// from its template, and no H2 outside the agreed set. Level-3
+    /// headings are free-form per project.
+    fn check_doc_heading(
+        &self,
+        doc: &DocSource,
+        name: &str,
+        required: &[&str],
+        allowed: &[&str],
+        findings: &mut Vec<DocFinding>,
+    ) {
         let Some(re) = heading_re() else {
             return;
         };
@@ -646,19 +672,18 @@ impl DocChecker {
         // `# Tests (matches CI "Tests" job)` must not read as a heading.
         let prose = blank_fenced(&doc.text);
         let captures: Vec<_> = re.captures_iter(&prose).collect();
-        let h1: Vec<&str> = captures
+        let h1_count: usize = captures
             .iter()
             .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 1))
-            .map(|c| c.get(2).map_or("", |m| m.as_str()))
-            .collect();
-        if h1.len() != 1 {
+            .count();
+        if h1_count != 1 {
             findings.push(DocFinding::new(
                 "",
                 consts::RULE_CODE_AGENT_DOC_STRUCTURE,
                 consts::AGENT_DOC_STRUCTURE_VIOLATION_H1_COUNT,
                 format!(
-                    "AGENTS.md must open with exactly one level-1 heading, found {}; the template names one H1 at the top of the file",
-                    h1.len()
+                    "{name} must open with exactly one level-1 heading, found {}; the template names one H1 at the top of the file",
+                    h1_count
                 ),
             ));
         }
@@ -667,7 +692,7 @@ impl DocChecker {
             .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 2))
             .map(|c| normalize_heading(c.get(2).map_or("", |m| m.as_str())))
             .collect();
-        let missing: Vec<&str> = consts::AGENTS_REQUIRED_H2
+        let missing: Vec<&str> = required
             .iter()
             .copied()
             .filter(|want| {
@@ -682,18 +707,18 @@ impl DocChecker {
                 consts::RULE_CODE_AGENT_DOC_STRUCTURE,
                 consts::AGENT_DOC_STRUCTURE_VIOLATION_H2_MISSING,
                 format!(
-                    "AGENTS.md has no H2 heading for {}; each of these level-2 sections is mandatory in every project — {}",
+                    "{name} has no H2 heading for {}; each of these level-2 sections is mandatory — {}",
                     missing.join(", "),
-                    consts::AGENTS_REQUIRED_H2.join(", ")
+                    required.join(", ")
                 ),
             ));
         }
         // The H2 set is closed: a heading at level 2 that is not in the
-        // agreed template must be demoted to a level-3 heading or removed.
-        let unexpected: Vec<&str> = consts::AGENTS_REQUIRED_H2
+        // required + allowed union must be demoted to a level-3 heading or removed.
+        let unexpected: Vec<&str> = required
             .iter()
             .copied()
-            .chain(consts::AGENTS_ALLOWED_H2.iter().copied())
+            .chain(allowed.iter().copied())
             .collect::<std::collections::BTreeSet<_>>()
             .iter()
             .copied()
@@ -712,7 +737,7 @@ impl DocChecker {
                 consts::RULE_CODE_AGENT_DOC_STRUCTURE,
                 consts::AGENT_DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
                 format!(
-                    "AGENTS.md carries H2 heading(s) outside the template: {}; move each to a level-3 heading or remove it",
+                    "{name} carries H2 heading(s) outside the template: {}; move each to a level-3 heading or remove it",
                     unexpected_h2.join(", ")
                 ),
             ));
@@ -866,14 +891,15 @@ fn next_heading_start(text: &str, from_index: usize) -> usize {
 }
 
 /// Is this document a spec (promise-bearing) rather than a status report?
+///
+/// ARCHITECTURE.md and CONTRIBUTING.md are excluded on purpose: AES603 bans
+/// source-file names, and both documents exist to teach the file-naming rule
+/// and the pre-merge checklist, so the patterns they must carry are part of
+/// their contract. Their own templates hold those same lines.
 fn is_spec(name: &str) -> bool {
     matches!(
         name,
-        consts::FRD_DOC
-            | consts::PRD_DOC
-            | consts::ROADMAP_DOC
-            | "ARCHITECTURE.md"
-            | "CONTRIBUTING.md"
+        consts::FRD_DOC | consts::PRD_DOC | consts::ROADMAP_DOC
     )
 }
 

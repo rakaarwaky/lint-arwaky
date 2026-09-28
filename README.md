@@ -28,7 +28,7 @@ lint-arwaky-cli ci . --threshold 0   # CI exit codes
 lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 ```
 
-## Commands
+## Available Scripts/Commands
 
 | Command | Description |
 |---------|-------------|
@@ -130,4 +130,3 @@ All code follows the AES 7-layer architecture (enforced by this tool). Acceptanc
 ## License
 
 [MIT](LICENSE)
-# Test Mergify Queue
