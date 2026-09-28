@@ -599,12 +599,10 @@ impl SurfaceActionHandler {
     fn run_action_bg<F>(&self, state: &mut AppState, label: &'static str, action: F)
     where
         F: FnOnce(
-                &SurfaceLintExecutor,
-                &str,
-                &shared::tui::taxonomy_tui_vo::ActionFlags,
-            ) -> LintExecutionResult
-            + Send
-            + 'static,
+            &SurfaceLintExecutor,
+            &str,
+            &shared::tui::taxonomy_tui_vo::ActionFlags,
+        ) -> LintExecutionResult + Send + 'static,
     {
         let path = state.selected_path();
         let flags = state.action_flags.clone();
