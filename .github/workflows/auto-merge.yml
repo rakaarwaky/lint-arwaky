@@ -1,6 +1,7 @@
 name: Auto-merge gated PRs
 
-# Merges a PR automatically once all required status checks pass.
+# Enables GitHub's native auto-merge (squash) on release PRs only.
+# All other PRs are merged by Mergify's merge queue — see .mergify.yml.
 # The GitHub ruleset on main requires the 6 quality-gate checks
 # (Format, Clippy, Build, Tests, Self-Lint, Codacy). GitHub's native
 # auto-merge holds the PR until those checks succeed, then merges.
@@ -17,11 +18,16 @@ jobs:
   enable-auto-merge:
     name: Enable auto-merge
     runs-on: ubuntu-latest
-    # Only for PRs targeting main, not draft, and not already merged.
+    # Only for release PRs targeting main: opened by the release bot,
+    # head branch matches release/v*, and not a draft. All other PRs
+    # are merged by Mergify's queue — do NOT enable GitHub auto-merge
+    # on them, as it would race against the integration-commit run.
     if: >
       github.event.pull_request.base.ref == 'main' &&
       github.event.pull_request.draft == false &&
-      github.event.pull_request.merged == false
+      github.event.pull_request.merged == false &&
+      startsWith(github.event.pull_request.head.ref, 'release/v') &&
+      github.event.pull_request.user.login == 'github-actions[bot]'
     steps:
       - name: Enable auto-merge (squash)
         env:

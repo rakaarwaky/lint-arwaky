@@ -150,6 +150,26 @@ Key crates: `shared` (VOs/contracts/utilities), `config-system` (config load/mer
 
 **Role pipeline:** `Architect` → `Business Analyst` → `Tech Lead` → `Fullstack Developer` (review then execute). Plan files go to `.agents/plans/`.
 
+### Mergify Stacks (dependent PRs)
+
+When a feature spans multiple commits that each need their own PR, use `mergify stack`:
+
+```bash
+git stash -u                     # always stash before stack ops
+mergify stack new feat/my-stack  # creates a new branch from main
+# ... make commit(s), then:
+mergify stack push               # creates/updates stacked PRs automatically
+mergify stack list               # show the current stack
+mergify stack reorder A B C      # reorder commits in the stack
+mergify stack sync               # rebase onto latest main
+mergify stack note -m "why"      # attach an explanation before amending
+git commit --amend
+mergify stack push               # pushes the amended stack
+```
+
+Stacks manage their own `Depends-On:` headers and GitHub-native stacking.
+Never use `git rebase -i` on a stack branch — use `mergify stack {edit,fixup,squash,reorder,move,drop}` instead. See `.agents/skills/github/mergify-stack/SKILL.md` for the full reference.
+
 ---
 
 ## Branch Management
@@ -167,6 +187,22 @@ When merging a PR to develop:
 
 `main` is protected by the "Protect main - quality gates" ruleset: 6 required status checks (Format, Clippy, Build, Tests, Self-Lint, Codacy) must pass before any commit lands. **Direct pushes to `main` are rejected** — always go through a PR.
 
+**Mergify merge queue** (configured in `.mergify.yml`): every non-draft, conflict-free PR targeting `main` is auto-queued. The queue rebases the PR onto the latest `main`, runs all 6 quality-gate checks on the integration commit, and merges via squash once everything passes. You never need to comment `@mergifyio queue` or click merge manually.
+
+Mergify CLI is installed (`mergify --version`). Useful commands:
+
+```bash
+mergify config validate                    # validate .mergify.yml after edits
+mergify config simulate <PR_URL>           # preview what rules would do
+mergify queue status                       # see what's in the queue
+mergify queue show <PR_NUMBER>             # inspect a specific PR in the queue
+mergify stack new <branch-name>            # create a new stacked PR branch
+mergify stack push                         # push + create/update stacked PRs
+mergify stack list                         # show commit ↔ PR mapping
+mergify events --pr <PR_NUMBER> --since 7d # audit what Mergify did to a PR
+mergify freeze create --reason "..." --timezone UTC  # pause all merges
+```
+
 Every change:
 
 ```bash
@@ -180,6 +216,7 @@ git push -u origin <branch-name>
 
 gh pr create --base main --head <branch-name> \
   --title "<type>: <short description>"
+# Mergify auto-queues it — no further action needed.
 ```
 
 After merge (squash, `--delete-branch`):
