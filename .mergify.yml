@@ -13,7 +13,6 @@
 #                      PRs end-to-end. See AGENTS.md.
 #   • Priority     —  `hotfix` label jumps to the front; `refactor` drops
 #                      to the back so feature PRs aren't blocked.
-#   • Auto-rebase  —  every PR auto-rebases on the latest main on each push.
 #   • Stale-cleanup —  PRs >30 days old with no activity for 14 days get a
 #                      reminder, then auto-close after 7 more days.
 #
@@ -72,14 +71,10 @@ priority_rules:
     priority: low
 
 pull_request_rules:
-  # ── Auto-rebase on every push to keep the PR on top of main ───────────
-  - name: auto-rebase
-    conditions:
-      - base = main
-      - -merged
-      - -closed
-    actions:
-      rebase: {}
+  # NOTE: auto-rebase removed. The merge queue's serial mode already rebases
+  # PRs onto latest main before testing. An explicit auto-rebase rule fails
+  # for PRs created by other GitHub Apps (arena-ai-coding-agent) because
+  # Mergify cannot impersonate another app's bot identity.
 
   # ── Warn on conflicts so you can see them in the PR list ───────────────
   - name: warn-on-conflicts
