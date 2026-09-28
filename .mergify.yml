@@ -1,0 +1,149 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Mergify configuration for rakaarwaky/lint-arwaky
+#
+# What this gives you as a solo developer:
+#   • Merge queue  —  all 6 quality-gate checks run on an integration commit
+#                      so you never land a PR that breaks main by itself but
+#                      fails in combination. Mergify auto-injects the
+#                      required checks from the GitHub ruleset.
+#   • Auto-queue   —  any non-draft, conflict-free PR to main is dropped
+#                      straight into the queue; no @mergifyio queue comment
+#                      needed.
+#   • Stacks       —  `mergify stack` (already installed) manages dependent
+#                      PRs end-to-end. See AGENTS.md.
+#   • Priority     —  `hotfix` label jumps to the front; `refactor` drops
+#                      to the back so feature PRs aren't blocked.
+#   • Auto-rebase  —  every PR auto-rebases on the latest main on each push.
+#   • Stale-cleanup —  PRs >30 days old with no activity for 14 days get a
+#                      reminder, then auto-close after 7 more days.
+#
+# The auto-merge.yml workflow is kept for the release PR path (which Mergify
+# does not cover); Mergify takes over all other PR merges.
+# ─────────────────────────────────────────────────────────────────────────────
+
+defaults:
+  queue_rule:
+    # Rebase PRs onto latest main before running CI on the integration commit.
+    update_method: rebase
+    merge_method: squash
+    # No explicit merge_conditions: the GitHub ruleset "Protect main - quality
+    # gates" (Format, Clippy, Build, Tests, Self-Lint, Codacy Static Code
+    # Analysis) is read by Mergify and injected as conditions on both queueing
+    # and merging. Keeping the list empty also keeps the queue CI single-step,
+    # which is what enables in-place checks below.
+
+merge_queue:
+  # Serial mode: PRs tested one at a time against the latest main tip.
+  mode: serial
+  # In-place checks: Mergify tests the PR on its own branch (after updating
+  # it against main) instead of creating a temporary draft PR. This is
+  # required because the ruleset sets
+  # strict_required_status_checks_policy ("require branches to be up to date
+  # before merging"), which blocks a draft-PR-based run from ever merging.
+  # It is also one CI run instead of two.
+  max_parallel_checks: 1
+  # Only post comments for terminal outcomes (merged or dequeued).
+  status_comments: outcomes
+  # Show a "Queue this pull request" checkbox so you can click instead of typing.
+  queue_controls_comment: true
+
+merge_protections_settings:
+  # Auto-queue every non-draft, conflict-free PR targeting main.
+  auto_merge_conditions:
+    - base = main
+    - -draft
+    - -conflict
+  # Post a status comment on each PR so you always know where it sits.
+  post_comment: true
+  reporting_method: check-runs
+
+queue_rules:
+  - name: default
+
+priority_rules:
+  - name: hotfixes-first
+    conditions:
+      - label = hotfix
+    priority: high
+  - name: refactors-last
+    conditions:
+      - label = refactor
+    priority: low
+
+pull_request_rules:
+  # ── Auto-rebase on every push to keep the PR on top of main ───────────
+  - name: auto-rebase
+    conditions:
+      - base = main
+      - -merged
+      - -closed
+    actions:
+      rebase: {}
+
+  # ── Warn on conflicts so you can see them in the PR list ───────────────
+  - name: warn-on-conflicts
+    conditions:
+      - conflict
+      - -merged
+      - -closed
+    actions:
+      label:
+        add:
+          - conflict
+
+  # ── Close stale PRs (no activity for 14 days, open for 30+ days) ──────
+  - name: stale-cleanup
+    conditions:
+      - base = main
+      - -merged
+      - -closed
+      - -label = stale
+      - updated-at < 14 days ago
+      - created-at < 30 days ago
+    actions:
+      comment:
+        message: >
+          This PR has been open for 30 days with no commits for 14.
+          If you're still working on it, push a commit or leave a comment.
+          Otherwise, this PR will auto-close in 7 days.
+      label:
+        add:
+          - stale
+
+  # ── Auto-close truly abandoned stale PRs after 7 more days ────────────
+  - name: close-abandoned-stale
+    conditions:
+      - base = main
+      - -merged
+      - -closed
+      - label = stale
+      - updated-at < 7 days ago
+    actions:
+      close:
+        message: 'Closed automatically — no activity for 7+ days after a stale warning.'
+      label:
+        remove:
+          - stale
+
+  # ── Welcome comment on new PRs (created within the last 5 minutes) ────
+  - name: welcome-new-pr
+    conditions:
+      - base = main
+      - -merged
+      - -closed
+      - -label = stale
+      - created-at < 5 minutes ago
+    actions:
+      comment:
+        message: >
+          Thanks for the PR! CI is running — the merge queue will pick it up
+          automatically once all 6 quality gates pass.
+
+  # ── Notify when a PR merges ───────────────────────────────────────────
+  - name: merged-notification
+    conditions:
+      - merged
+      - base = main
+    actions:
+      comment:
+        message: Merged via the merge queue. Thanks for the contribution!
