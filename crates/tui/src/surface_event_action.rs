@@ -358,9 +358,7 @@ impl SurfaceActionHandler {
                             Box::new(|lp: &SurfaceLintExecutor| lp.uninstall_hook()),
                         );
                     }
-                    other => {
-                        state.set_status(format!("Nothing to confirm for {other:?}"));
-                    }
+                    other => state.set_status(format!("Nothing to confirm for {other:?}")),
                 }
             }
             TuiEvent::CancelConfirm => {
@@ -602,7 +600,9 @@ impl SurfaceActionHandler {
             &SurfaceLintExecutor,
             &str,
             &shared::tui::taxonomy_tui_vo::ActionFlags,
-        ) -> LintExecutionResult + Send + 'static,
+        ) -> LintExecutionResult
+            + Send
+            + 'static,
     {
         let path = state.selected_path();
         let flags = state.action_flags.clone();
