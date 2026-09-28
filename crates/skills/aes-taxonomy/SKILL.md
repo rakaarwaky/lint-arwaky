@@ -72,14 +72,16 @@ Each file answers one layer's job. A method or import in the wrong layer is the 
 
 ## Invariants
 
-Every rule is machine-checked by `lint-arwaky-cli scan <layer-path>` (see each HOW-TO § Verify).
-A rule cannot drift from the gate. Cite the linter, not this file, when pointing at a rule.
+Machine-checked rules are enforced by `lint-arwaky-cli scan <layer-path>` (see each HOW-TO § Verify).
+Convention-level rules are enforced by reading; the linter covers what it can, and the
+HOW-TO states explicitly which of the three is the case. Cite the HOW-TO, not this file, when pointing at a rule.
 
 | Layer | Rule |
 | ----- | ---- |
 | Naming | File `taxonomy_<domain>_<suffix>` — suffix strictly `_vo`/`_entity`/`_error`/`_event`/`_constant`/`_request`/`_response` (AES101/AES102). |
 | Imports | Taxonomy + stdlib only — never capabilities, agents, surface, root, contracts; no I/O (AES201). |
 | Primitives | Domain fields wrap VOs — no raw `str`/`int`/`float`/`String`/`string`/`number` for domain values (AES401). |
+| Error contract | Every `_error` file exposes `error_id` + `error_code` + `message`. Ids come from per-feature blocks: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …; a feature is a folder with an `agent_*_orchestrator` file. Ids never change across releases. |
 | Construction | VOs validate on construction; immutable; constants are pure literals. |
 | Register | Shared barrel: `__init__.py` / `mod.rs` / `index.ts`. |
 | Verify | `lint-arwaky-cli scan <layer-path>` → 0. Language compile is fallback only. |

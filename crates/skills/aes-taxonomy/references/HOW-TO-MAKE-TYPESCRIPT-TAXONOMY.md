@@ -223,6 +223,9 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    Set this.name to the class name.
    Store VO fields only — no raw string, number, or Record payloads.
    Expose an error_id getter (stable numeric id) for fast machine branching.
+     Ids are allocated in per-feature blocks: common errors use 000X; each
+     feature (a folder with an `agent_*_orchestrator.ts`) gets its own block:
+     feature 1 uses 1000–1999, feature 2 uses 2000–2999, and so on.
    Expose an error_code getter (stable string identifier) for human-readable
      error classification.
    Provide a message getter that returns a human-readable description
@@ -438,8 +441,10 @@ Every error must expose all four:
 
 Both the error id and the error code stay stable across releases. Renaming or
 reformatting the message is a compatible change; changing the id or the code
-is a breaking one. Allocate ids in blocks per domain (order errors from 1000,
-billing errors from 2000) so two domains cannot collide on the same number.
+is a breaking one. Allocate ids in per-feature blocks: common errors use the
+`000X` block; each feature — a folder that contains an `agent_*_orchestrator.ts`
+— gets its own block in sequence: feature 1 uses `1000–1999`, feature 2 uses
+`2000–2999`, and so on. Surface-only folders never own an error type.
 
 Good:
 
@@ -678,7 +683,7 @@ export type { OrderResponse } from './taxonomy_order_order_response';
 | Events use VO payload fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors extend `Error` and set `this.name`. | Convention for semantic correctness; structural inheritance is checked by compiler. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors expose an `error_id` getter (stable numeric id), an `error_code` getter (stable string name), and a `message` getter derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_id`/`error_code` and to read the description without string matching. | Required by AES best practice; missing it is a defect. |
+| Errors expose an `error_id` getter (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` getter (stable string name), and a `message` getter derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are getters; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect. |
 | Constants are `export const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
 | Request types are discriminated unions with one member per verb, and one `request*()` factory function per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Response types are discriminated unions keyed by `kind`, one member per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |

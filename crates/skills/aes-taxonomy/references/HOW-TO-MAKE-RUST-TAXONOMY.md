@@ -229,6 +229,10 @@ Doc comments count. For constants, each constant should have a descriptive comme
    Implement std::error::Error and std::fmt::Display (usually via thiserror).
    Store VO fields only in enum variants.
    Expose an error_id field (stable numeric id) for fast machine branching.
+     Ids are allocated in per-feature blocks: common errors use 000X; each
+     feature (a folder with an `agent_*_orchestrator.rs`) gets its own block:
+     feature 1 uses 1000–1999, feature 2 uses 2000–2999, and so on.
+     Both the id and the code stay stable across releases.
    Expose an error_code field (plain string identifier) for human-readable
      error classification.
    Provide a message field derived from the stored VOs, error id, and error code
@@ -391,6 +395,7 @@ Entity fields must be taxonomy VOs.
 
 ```rust
 use thiserror::Error;
+use crate::common::taxonomy_error_vo::{ErrorCode, ErrorId};
 use crate::<domain>::taxonomy_<domain>_<concept>_vo::<VO>;
 
 #[derive(Debug, Error)]
@@ -401,16 +406,18 @@ pub enum <Name>Error {
 
 impl <Name>Error {
     /// Stable numeric id. Callers branch on this, never on the message.
-    pub fn error_id(&self) -> u16 {
+    /// Allocate from the owning feature's block — common uses 000X, feature 1
+    /// uses 1XXX, feature 2 uses 2XXX, and so on.
+    pub fn error_id(&self) -> ErrorId {
         match self {
-            Self::<Variant>(..) => <NNNN>,
+            Self::<Variant>(..) => ErrorId::raw(<NNNN>),
         }
     }
 
     /// Stable machine-readable name. Callers branch on this, never on the message.
-    pub fn error_code(&self) -> &'static str {
+    pub fn error_code(&self) -> ErrorCode {
         match self {
-            Self::<Variant>(..) => "<DOMAIN>_<REASON>",
+            Self::<Variant>(..) => ErrorCode::raw("<DOMAIN>_<REASON>"),
         }
     }
 
@@ -432,6 +439,7 @@ Concrete example:
 
 ```rust
 use thiserror::Error;
+use crate::common::taxonomy_error_vo::{ErrorCode, ErrorId};
 use crate::order::taxonomy_order_order_id_vo::OrderId;
 
 #[derive(Debug, Error)]
@@ -442,16 +450,16 @@ pub enum OrderError {
 
 impl OrderError {
     /// Stable numeric id. Callers branch on this, never on the message.
-    pub fn error_id(&self) -> u16 {
+    pub fn error_id(&self) -> ErrorId {
         match self {
-            Self::NotFound(_) => 1001,
+            Self::NotFound(_) => ErrorId::raw(1001),
         }
     }
 
     /// Stable machine-readable name. Callers branch on this, never on the message.
-    pub fn error_code(&self) -> &'static str {
+    pub fn error_code(&self) -> ErrorCode {
         match self {
-            Self::NotFound(_) => "ORDER_NOT_FOUND",
+            Self::NotFound(_) => ErrorCode::raw("ORDER_NOT_FOUND"),
         }
     }
 
@@ -480,8 +488,10 @@ Every error must expose all four:
 
 Both the error id and the error code stay stable across releases. Renaming or
 reformatting the message is a compatible change; changing the id or the code
-is a breaking one. Allocate ids in blocks per domain (order errors from 1000,
-billing errors from 2000) so two domains cannot collide on the same number.
+is a breaking one. Allocate ids in per-feature blocks: common errors use the
+`000X` block; each feature — a folder that contains an `agent_*_orchestrator.rs`
+— gets its own block in sequence: feature 1 uses `1000–1999`, feature 2 uses
+`2000–2999`, and so on. Surface-only folders never own an error type.
 
 Good:
 
@@ -493,15 +503,15 @@ pub enum OrderError {
 }
 
 impl OrderError {
-    pub fn error_id(&self) -> u16 {
+    pub fn error_id(&self) -> ErrorId {
         match self {
-            Self::NotFound(_) => 1001,
+            Self::NotFound(_) => ErrorId::raw(1001),
         }
     }
 
-    pub fn error_code(&self) -> &'static str {
+    pub fn error_code(&self) -> ErrorCode {
         match self {
-            Self::NotFound(_) => "ORDER_NOT_FOUND",
+            Self::NotFound(_) => ErrorCode::raw("ORDER_NOT_FOUND"),
         }
     }
 }
@@ -777,7 +787,7 @@ pub use taxonomy_order_order_response::OrderResponse;
 | Events use VO payload fields only. | Machine-checked — see primitive note above. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors implement `std::error::Error` + `Display`. | Convention for semantic correctness; structural derivation is checked by compiler. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors expose an `error_id` field (stable numeric id), an `error_code` field (stable string name), and a `message` field derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_id`/`error_code` and to read the description without parsing `Display`. | Required by AES best practice; missing it is a defect. |
+| Errors expose an `error_id` (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` (stable string name), and a `message` derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are surface methods; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect. |
 | Constants are `pub const` pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
 | Request enums carry VO payload fields in their variants and expose a named constructor per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Response enums carry VO payload fields in their variants and expose an `into_*` extractor per outcome. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |

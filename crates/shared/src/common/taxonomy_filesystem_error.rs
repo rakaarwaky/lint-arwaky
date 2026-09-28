@@ -15,6 +15,8 @@ pub struct FileSystemError {
     pub error_code: ErrorCode,
     #[serde(default)]
     pub cause: Cause,
+    #[serde(default)]
+    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
 }
 
 impl FileSystemError {
@@ -25,7 +27,18 @@ impl FileSystemError {
             operation,
             error_code: ErrorCode::default(),
             cause: Cause::default(),
+            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(3),
         }
+    }
+
+    /// Stable numeric id for machine branching.
+    pub fn error_id(&self) -> u16 {
+        self.error_id.value()
+    }
+
+    /// Human-readable description derived from the error id, code, and fields.
+    pub fn message(&self) -> String {
+        format!("{} {}: {}", self.error_id(), self.error_code, self.message)
     }
 }
 

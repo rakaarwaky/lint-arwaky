@@ -1,4 +1,4 @@
-// PURPOSE: ErrorCode — value object for AES error code identification
+// PURPOSE: ErrorCode, ErrorId — value objects for AES error code and numeric id identification
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
 
@@ -29,6 +29,55 @@ impl ErrorCode {
     /// Create a raw ErrorCode without error validation.
     pub fn raw<S: Into<String>>(code: S) -> Self {
         ErrorCode { code: code.into() }
+    }
+}
+
+/// error_id_vo — Stable numeric error identifier.
+///
+/// Block allocation: common errors use `000X`; per-feature errors use `1XXX`
+/// for feature 1, `2XXX` for feature 2, and so on. Ids never change across
+/// releases — reformatting the message is compatible, changing the id is not.
+#[derive(
+    Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Copy, Hash, PartialOrd, Ord,
+)]
+#[serde(transparent)]
+pub struct ErrorId {
+    value: u16,
+}
+
+impl ErrorId {
+    /// Numeric value of the error id.
+    pub fn value(&self) -> u16 {
+        self.value
+    }
+
+    /// Create a new ErrorId.
+    ///
+    /// # Errors
+    /// Returns an error if the id is zero (zero is reserved as "unset").
+    pub fn new(value: u16) -> Result<Self, String> {
+        if value == 0 {
+            return Err("Error id cannot be zero".to_string());
+        }
+        Ok(ErrorId { value })
+    }
+
+    /// Create an ErrorId without validation (for constants).
+    pub const fn raw(value: u16) -> Self {
+        ErrorId { value }
+    }
+}
+
+impl std::ops::Deref for ErrorId {
+    type Target = u16;
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl std::fmt::Display for ErrorId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
     }
 }
 

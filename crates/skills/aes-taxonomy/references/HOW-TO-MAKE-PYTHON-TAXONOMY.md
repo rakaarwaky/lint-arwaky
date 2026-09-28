@@ -224,6 +224,9 @@ Docstrings and comments count. For constants, each constant should have a descri
    Extend Exception.
    Store VO fields only — no raw str, int, float, dict.
    Provide an error_id property (stable numeric id) for fast machine branching.
+     Ids are allocated in per-feature blocks: common errors use 000X; each
+     feature (a folder with an `agent_*_orchestrator` module) gets its own block:
+     feature 1 uses 1000–1999, feature 2 uses 2000–2999, and so on.
    Provide an error_code property (plain string identifier) for human-readable
      error classification.
    Provide a message property that derives a human-readable description
@@ -467,8 +470,10 @@ Every error must expose all four:
 
 Both the error id and the error code stay stable across releases. Renaming or
 reformatting the message is a compatible change; changing the id or the code
-is a breaking one. Allocate ids in blocks per domain (order errors from 1000,
-billing errors from 2000) so two domains cannot collide on the same number.
+is a breaking one. Allocate ids in per-feature blocks: common errors use the
+`000X` block; each feature — a folder that contains an `agent_*_orchestrator`
+module — gets its own block in sequence: feature 1 uses `1000–1999`, feature 2
+uses `2000–2999`, and so on. Surface-only folders never own an error type.
 
 Good:
 
@@ -805,7 +810,7 @@ __all__ = [
 | Events use VO payload fields only. | Convention — not machine-checked reliably. The reader verifies this. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors extend `Exception`. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Errors store VO fields only. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
-| Errors expose an `error_id` property (stable numeric id), an `error_code` property (stable string name), and a `message` property derived from their VOs. | Best practice — not machine-checked. Enables callers to branch on `error_id`/`error_code` and to read the description without parsing `__str__`. | Required by AES best practice; missing it is a defect. |
+| Errors expose an `error_id` property (stable numeric id from the per-feature block: common `000X`, feature 1 `1XXX`, feature 2 `2XXX`, …), an `error_code` property (stable string name), and a `message` property derived from their VOs. | Required on every `_error` file — not yet machine-checked. All three are read-only properties; ids never change across releases. | Required by AES taxonomy convention; missing any of the three is a defect. |
 | Constants are pure literal values. | Convention for literal purity; structural violations may be machine-checked. | Required by AES taxonomy convention; missing it is a defect. |
 | Request files define a closed `Verb` enum plus a dataclass with classmethod factories per verb. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Response files define a dataclass with one field per request verb plus classmethod factories. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |

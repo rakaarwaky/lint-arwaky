@@ -88,6 +88,7 @@ impl ILinterAdapterProtocol for ESLintAdapter {
                 error_code: None,
                 adapter_name: Some(self.name()),
                 cause: None,
+                error_id: shared::common::ErrorId::raw(2),
             })
         })?;
 

@@ -5,7 +5,7 @@ use crate::domain_error_vo;
 /// Uses the `domain_error_vo!` macro from `utility_value_object_generator`.
 pub fn _hook_error_anchor() {}
 
-domain_error_vo!(GitHookError, "Git Hook Error");
+domain_error_vo!(GitHookError, "Git Hook Error", "GIT_HOOK", 3001u16);
 
 #[cfg(test)]
 mod tests {

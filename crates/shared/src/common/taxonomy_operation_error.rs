@@ -17,6 +17,14 @@ pub enum LinterOperationError {
 }
 
 impl LinterOperationError {
+    /// Stable numeric id for machine branching.
+    pub fn error_id(&self) -> u16 {
+        match self {
+            Self::Scan(_) => 4,
+            Self::Adapter(_) => 5,
+        }
+    }
+
     pub fn message(&self) -> ErrorMessage {
         let _ = &LineNumber::default();
         ErrorMessage::new(self.to_string())
