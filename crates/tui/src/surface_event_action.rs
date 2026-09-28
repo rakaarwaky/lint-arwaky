@@ -4,7 +4,7 @@ use shared::tui::{ConfirmState, LintExecutionResult, ScanUpdate};
 
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::tui::TuiEvent;
-use shared::tui::{AppState, PanelFocus, PreviewMode};
+use shared::tui::{ActionFlags, AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
 
 // PURPOSE: Surface-layer action handler — the central state machine for TUI events.
@@ -596,13 +596,7 @@ impl SurfaceActionHandler {
     /// preview panel to the action output.
     fn run_action_bg<F>(&self, state: &mut AppState, label: &'static str, action: F)
     where
-        F: FnOnce(
-            &SurfaceLintExecutor,
-            &str,
-            &shared::tui::taxonomy_tui_vo::ActionFlags,
-        ) -> LintExecutionResult
-            + Send
-            + 'static,
+        F: FnOnce(&SurfaceLintExecutor, &str, &ActionFlags) -> LintExecutionResult + Send + 'static,
     {
         let path = state.selected_path();
         let flags = state.action_flags.clone();

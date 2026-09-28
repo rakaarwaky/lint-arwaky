@@ -43,6 +43,14 @@ impl PathScreen {
             state.path_input.clone()
         };
 
+        // UX-1-02: honest hint — Esc quits only on the first-run prompt;
+        // afterwards it cancels the dialog and keeps the current root.
+        let esc_hint = if state.dialog_is_first_run {
+            "  [Enter] Confirm   [Tab] Use current dir   [Esc] Quit"
+        } else {
+            "  [Enter] Confirm   [Tab] Use current dir   [Esc] Cancel"
+        };
+
         let text = vec![
             Line::from(""),
             Line::from(Span::styled(
@@ -61,16 +69,7 @@ impl PathScreen {
                 Span::styled("_", Style::default().fg(theme::LABEL)),
             ]),
             Line::from(""),
-            Line::from(Span::styled(
-                // UX-1-02: honest hint — Esc quits only on the first-run prompt;
-                // afterwards it cancels the dialog and keeps the current root.
-                if state.dialog_is_first_run {
-                    "  [Enter] Confirm   [Tab] Use current dir   [Esc] Quit"
-                } else {
-                    "  [Enter] Confirm   [Tab] Use current dir   [Esc] Cancel"
-                },
-                Style::default().fg(theme::SEPARATOR),
-            )),
+            Line::from(Span::styled(esc_hint, Style::default().fg(theme::SEPARATOR))),
         ];
 
         let paragraph = Paragraph::new(text).block(block).alignment(Alignment::Left);
