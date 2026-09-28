@@ -199,7 +199,7 @@ When merging a PR to develop:
 
 `main` is protected by the "Protect main - quality gates" ruleset: 6 required status checks (Format, Clippy, Build, Tests, Self-Lint, Codacy) must pass before any commit lands. **Direct pushes to `main` are rejected** — always go through a PR.
 
-**Mergify merge queue** (configured in `.mergify.yml`): every non-draft, conflict-free PR targeting `main` is auto-queued. The queue rebases the PR onto the latest `main`, runs all 6 quality-gate checks on the integration commit, and merges via squash once everything passes. You never need to comment `@mergifyio queue` or click merge manually.
+**Mergify merge queue** (configured in `.mergify.yml`): every non-draft, conflict-free PR targeting `main` is auto-queued. The queue updates the PR branch with the latest `main` (merge commit), runs all 6 quality-gate checks on the integration commit, and squashes to `main` once everything passes. You never need to comment `@mergifyio queue` or click merge manually.
 
 Mergify CLI is installed (`mergify --version`). Useful commands:
 
