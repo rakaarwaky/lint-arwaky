@@ -82,10 +82,17 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
             let Some(cmd) = cmd else {
                 continue;
             };
-            let Ok(response) =
-                self.lint_executor
-                    .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
-            else {
+            // markdownlint-cli2 prints paths relative to its CWD. Running the
+            // tool with the scan root as working directory makes those paths
+            // resolve against `root`, so canonicalization in the parser lands
+            // on the same absolute path the rest of the report uses.
+            let Ok(response) = self.lint_executor.exec_cmd_scan(
+                cmd,
+                abs_path.clone(),
+                60.0,
+                Some(self.name()),
+                path,
+            ) else {
                 continue;
             };
 
@@ -175,14 +182,23 @@ fn parse_json_issues(raw: &str, root: &FilePath) -> LintResultList {
                 .unwrap_or("markdownlint violation"),
             entry.get("errorContext").and_then(|c| c.as_str()),
         );
-        results.push(build_result(file, line, 1, code, message, root));
+        results.push(build_result(
+            canonicalize_against(root, file),
+            line,
+            1,
+            code,
+            message,
+            root,
+        ));
     }
     LintResultList::new(results)
 }
 
 /// markdownlint-cli2 text form:
 /// `bad.md:1:1 error MD018/no-missing-space-atx No space after hash [Context: "#Title"]`
-/// A missing column is legal, so the column segment is optional.
+/// A missing column is legal, so the column segment is optional. Paths reported
+/// by the CLI may be relative to the CWD; they are canonicalized against the
+/// scan root so file paths remain consistent with the rest of the lint output.
 fn parse_text_issues(raw: &str, root: &FilePath) -> LintResultList {
     let mut results = Vec::new();
 
@@ -198,17 +214,18 @@ fn parse_text_issues(raw: &str, root: &FilePath) -> LintResultList {
             continue;
         };
 
-        let mut parts = rest.splitn(2, ' ');
-        let rule = parts.next().unwrap_or_default();
-        let description = parts.next().unwrap_or("markdownlint violation");
-        let rule_id = rule.split('/').next().unwrap_or(rule);
+        let Some((rule, description)) = rest.split_once(' ') else {
+            continue;
+        };
+        let code = rule_code_from_text(rule);
+        let message = strip_trailing_context(description);
 
         results.push(build_result(
-            file,
+            canonicalize_against(root, file),
             line_no,
             column,
-            format!("markdownlint::{}", rule_id),
-            strip_trailing_context(description),
+            code,
+            message,
             root,
         ));
     }
@@ -217,17 +234,14 @@ fn parse_text_issues(raw: &str, root: &FilePath) -> LintResultList {
 }
 
 fn build_result(
-    file: &str,
+    file: FilePath,
     line: i64,
     column: i64,
     code: String,
     message: String,
     root: &FilePath,
 ) -> LintResult {
-    let file_vo = resolve_capabilities_path(
-        FilePath::new(file.to_string()).unwrap_or_else(|_| root.clone()),
-        Some(root.clone()),
-    );
+    let file_vo = resolve_capabilities_path(file, Some(root.clone()));
     LintResult {
         file: file_vo,
         line: LineNumber::new(line),
@@ -282,6 +296,26 @@ fn split_location(loc: &str) -> Option<(&str, i64, i64)> {
     }
 }
 
+/// Turn a tool-reported path into an absolute path rooted at `root`. Both CLI
+/// variants report the file the way they resolved it — `markdownlint-cli` in
+/// JSON mode echoes the argument it was given (already absolute), while
+/// `markdownlint-cli2` prints paths relative to its working directory. Joining
+/// a relative path onto `root` is what makes both land on the same absolute
+/// path the rest of the report uses.
+fn canonicalize_against(root: &FilePath, file: &str) -> FilePath {
+    let candidate = std::path::Path::new(file);
+    if candidate.is_absolute() {
+        return FilePath::new(file.to_string()).unwrap_or_else(|_| root.clone());
+    }
+    FilePath::new(
+        std::path::Path::new(&root.value)
+            .join(candidate)
+            .to_string_lossy()
+            .to_string(),
+    )
+    .unwrap_or_else(|_| root.clone())
+}
+
 /// Build the tool-native rule code from markdownlint's `ruleNames` array. The
 /// first entry is the `MD###` id, which is stable across markdownlint versions.
 fn rule_code(entry: &serde_json::Value) -> String {
@@ -290,6 +324,17 @@ fn rule_code(entry: &serde_json::Value) -> String {
         .and_then(|n| n.as_array())
         .and_then(|names| names.first())
         .and_then(|id| id.as_str())
+        .map(|id| format!("markdownlint::{}", id))
+        .unwrap_or_else(|| "markdownlint::unknown".to_string())
+}
+
+/// Extract the tool-native rule code from a markdownlint-cli2 rule token of
+/// the form `MD018/no-missing-space-atx` (the aliases after the first slash
+/// are ignored): `markdownlint::MD018`.
+fn rule_code_from_text(rule: &str) -> String {
+    rule.split('/')
+        .next()
+        .filter(|id| !id.is_empty())
         .map(|id| format!("markdownlint::{}", id))
         .unwrap_or_else(|| "markdownlint::unknown".to_string())
 }
