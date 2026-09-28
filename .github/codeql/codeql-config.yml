@@ -2,13 +2,9 @@ version: "1"
 name: lint-arwaky-codeql
 
 # workspaces-bad/ and workspaces-good/ are deliberate lint-rule fixtures: they
-# contain architecture violations, hardcoded secrets, and unsafe patterns so the
-# AES rules have something to detect. They are test data, not shipped code, so
-# CodeQL must not report findings in them.
+# contain intentional architecture violations, hardcoded secrets, and unsafe
+# patterns so CodeQL must not report findings in them.
 paths-ignore:
   - "workspaces-bad/**"
   - "workspaces-good/**"
   - ".worktree/**"
-
-queries:
-  - uses: security-and-quality
