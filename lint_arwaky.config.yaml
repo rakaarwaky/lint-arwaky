@@ -496,6 +496,10 @@ architecture:
       enabled: true
       severity: HIGH
 
+    AES607: # FR/protocol parity — protocol_count_mismatch
+      enabled: true
+      severity: HIGH
+
     # ─── AES700: Folder structure ───
     # Audits which layer files sit in which workspace member folder, run by
     # `lint-arwaky-cli scan`. One code per folder kind.
