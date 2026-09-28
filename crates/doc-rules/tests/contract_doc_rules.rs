@@ -107,6 +107,9 @@ fn write_agents_workspace(dir: &Path) {
         "# Sample AGENTS.md\n\n\
 ## Precedence\n\n1. Safety rules.\n\n\
 ## Security\n\n- Explicit approval is required before destructive actions.\n\n\
+## Architecture\n\nSee [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.\n\n\
+## Contributing\n\nSetup and code style live in [CONTRIBUTING.md](CONTRIBUTING.md).\n\n\
+## License\n\nMIT. See [LICENSE](LICENSE).\n\n\
 ## Git Workflow\n\nEvery change must use a worktree or branch.\n\n\
 ## Commands\n\n```bash\ncargo nextest run --workspace\n```\n\n\
 ## Definition of Done\n\nA change is done when tests pass.\n\n\
@@ -494,15 +497,17 @@ fn aes606_allows_extra_and_free_h3_headings() {
 
 - Be safe.
 
-## Custom Flow
+## Architecture
 
-### Sub-step one
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.
 
-Do something.
+## Contributing
 
-### Sub-step two
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Do something else.
+## License
+
+MIT. See [LICENSE](LICENSE).
 
 ## Git Workflow
 
@@ -525,7 +530,239 @@ Tests pass.
     );
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES606", "h2_missing"),
+        !has(&findings, "AES606", "h2_missing") && !has(&findings, "AES606", "h2_unexpected"),
         "extra H2/H3 headings should not trigger h2_missing; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes606_fires_when_architecture_or_contributing_or_license_is_absent() {
+    // Removing any of the three newest required sections must fire h2_missing.
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(
+        tmp.path(),
+        "\
+# Sample AGENTS.md
+
+## Precedence
+
+1. Safety rules.
+
+## Security
+
+- Be safe.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Git Workflow
+
+Use a worktree.
+
+## Commands
+
+```bash
+true
+```
+
+## Definition of Done
+
+Tests pass.
+
+## Related Documents
+
+- [PRD.md](PRD.md).\
+",
+    );
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES606", "h2_missing"),
+        "missing Architecture and Contributing should fire; got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    assert!(
+        message.contains("Architecture") && message.contains("Contributing"),
+        "message must name both missing sections; got: {message}"
+    );
+}
+
+#[test]
+fn aes606_fires_on_an_h2_outside_the_template() {
+    // "Random Notes" is in neither the required nor the allowed set, so it
+    // must be reported for demotion to H3 or removal.
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(
+        tmp.path(),
+        "\
+# Sample AGENTS.md
+
+## Precedence
+
+1. Safety rules.
+
+## Security
+
+- Be safe.
+
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Random Notes
+
+Anything the author wanted to jot down.
+
+## Git Workflow
+
+Use a worktree.
+
+## Commands
+
+```bash
+true
+```
+
+## Definition of Done
+
+Tests pass.
+
+## Related Documents
+
+- [PRD.md](PRD.md).\
+",
+    );
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES606", "h2_unexpected"),
+        "an off-template H2 must fire h2_unexpected; got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES606" && v == "h2_unexpected")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    assert!(
+        message.contains("random notes"),
+        "message must name the off-template heading; got: {message}"
+    );
+}
+
+#[test]
+fn aes606_allows_the_project_specific_h2_set() {
+    // The optional-but-agreed headings this project uses must stay silent.
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(
+        tmp.path(),
+        "\
+# Sample AGENTS.md
+
+## Precedence
+
+1. Safety rules.
+
+## Security
+
+- Be safe.
+
+## Project Overview
+
+What this project is.
+
+## Build & dev
+
+How to build it.
+
+## Format & lint
+
+How to lint it.
+
+## Quality gates
+
+The gate pipeline.
+
+## Self-lint
+
+How the project lints itself.
+
+## Scan test projects
+
+The fixture workspaces.
+
+## MCP server & TUI
+
+The server entry points.
+
+## Architecture: AES 7-Layer System
+
+See [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Naming Convention
+
+The filename rule.
+
+## Workspace Packages Structure
+
+Where each package lives.
+
+## Skills & Roles
+
+The skill catalogue.
+
+## Branch Management
+
+Which branches exist.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Git Workflow
+
+Use a worktree.
+
+## Exit Code Contract
+
+The exit codes.
+
+## Pitfalls
+
+Known traps.
+
+## Commands
+
+```bash
+true
+```
+
+## Definition of Done
+
+Tests pass.
+
+## Related Documents
+
+- [PRD.md](PRD.md).\
+",
+    );
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES606", "h2_unexpected") && !has(&findings, "AES606", "h2_missing"),
+        "the project's own H2 set must be accepted; got: {findings:#?}"
     );
 }

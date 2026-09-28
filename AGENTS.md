@@ -118,7 +118,19 @@ lint-arwaky-tui   # TUI file browser
 Every file in the codebase belongs to one of 7 layers. The layer is identified by the filename prefix and must follow strict naming, dependency, and role rules.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for full details.
+
 ---
+
+## Contributing
+
+Setup, code style, branch and PR conventions, and the review process are documented in [CONTRIBUTING.md](CONTRIBUTING.md). Read it before opening a PR.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for the full text.
+
 
 ## Naming Convention
 

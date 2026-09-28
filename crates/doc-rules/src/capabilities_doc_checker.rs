@@ -688,6 +688,35 @@ impl DocChecker {
                 ),
             ));
         }
+        // The H2 set is closed: a heading at level 2 that is not in the
+        // agreed template must be demoted to a level-3 heading or removed.
+        let unexpected: Vec<&str> = consts::AGENTS_REQUIRED_H2
+            .iter()
+            .copied()
+            .chain(consts::AGENTS_ALLOWED_H2.iter().copied())
+            .collect::<std::collections::BTreeSet<_>>()
+            .iter()
+            .copied()
+            .collect::<Vec<_>>();
+        let allowed: Vec<String> = unexpected
+            .iter()
+            .map(|want| normalize_heading(want))
+            .collect();
+        let unexpected_h2: Vec<String> = h2
+            .into_iter()
+            .filter(|title| !allowed.iter().any(|a| title == a || title.starts_with(a)))
+            .collect();
+        if !unexpected_h2.is_empty() {
+            findings.push(DocFinding::new(
+                "",
+                consts::RULE_CODE_AGENT_DOC_STRUCTURE,
+                consts::AGENT_DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                format!(
+                    "AGENTS.md carries H2 heading(s) outside the template: {}; move each to a level-3 heading or remove it",
+                    unexpected_h2.join(", ")
+                ),
+            ));
+        }
     }
 
     // ── AES605: Feature folder health ────────────────────────────────────
