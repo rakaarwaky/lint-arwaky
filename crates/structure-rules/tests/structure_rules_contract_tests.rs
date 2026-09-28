@@ -1,4 +1,4 @@
-// PURPOSE: structure-rules contract tests — AES701–AES703 must fire on a
+// PURPOSE: structure-rules contract tests — AES701–AES705 must fire on a
 // misplaced folder layout and stay silent on a conforming one.
 use shared::structure_rules::taxonomy_structure_request::StructureRequest;
 use shared::structure_rules::taxonomy_structure_response::StructureResponse;
@@ -346,7 +346,7 @@ fn conforming_workspace_reports_no_findings() {
             .as_path(),
         "pub trait ScanProtocol {}",
     );
-    // a complete feature.
+    // a complete feature, documented.
     write(
         root.join("crates/calculator/src/agent_calc_orchestrator.rs")
             .as_path(),
@@ -357,12 +357,24 @@ fn conforming_workspace_reports_no_findings() {
             .as_path(),
         "pub struct AddAnalyzer;",
     );
-    // a surface crate keeping its barrels and helpers.
+    write(
+        root.join("crates/calculator/FRD.md").as_path(),
+        "# Calculator — FRD",
+    );
+    write(
+        root.join("crates/calculator/BACKLOG.md").as_path(),
+        "# Calculator — BACKLOG",
+    );
+    // a surface crate keeping its barrels and helpers, documented.
     write(
         root.join("crates/cli/surface_scan_command.rs").as_path(),
         "pub fn scan() {}",
     );
     write(root.join("crates/cli/lib.rs").as_path(), "");
+    write(
+        root.join("crates/cli/DESIGN.md").as_path(),
+        "# CLI — DESIGN",
+    );
     write(
         root.join("crates/cli/utility_output_text_formatter.rs")
             .as_path(),
@@ -370,4 +382,139 @@ fn conforming_workspace_reports_no_findings() {
     );
     let findings = audit(root);
     assert!(findings.is_empty(), "expected clean, got: {findings:#?}");
+}
+
+// ─── AES704: feature folder doc pair ───────────────────────────────────────
+
+#[test]
+fn aes704_fires_when_a_feature_folder_lacks_its_doc_pair() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/calculator/src/agent_calc_orchestrator.rs")
+            .as_path(),
+        "pub struct CalcOrchestrator;",
+    );
+    write(
+        root.join("crates/calculator/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    // no FRD.md, no BACKLOG.md.
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES704", "feature_missing_doc_pair"),
+        "expected the missing doc pair, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes704_stays_silent_when_the_doc_pair_is_present() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/calculator/src/agent_calc_orchestrator.rs")
+            .as_path(),
+        "pub struct CalcOrchestrator;",
+    );
+    write(
+        root.join("crates/calculator/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    write(
+        root.join("crates/calculator/FRD.md").as_path(),
+        "# Calculator — FRD",
+    );
+    write(
+        root.join("crates/calculator/BACKLOG.md").as_path(),
+        "# Calculator — BACKLOG",
+    );
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES704", "feature_missing_doc_pair"),
+        "a documented feature must not fire; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes704_stays_silent_for_a_folder_carrying_no_feature_files() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    // utility-only folder: neither capabilities nor agent, so no doc pair needed.
+    write(
+        root.join("crates/helpers/src/utility_path_normalizer.rs")
+            .as_path(),
+        "pub fn norm() {}",
+    );
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES704", "feature_missing_doc_pair"),
+        "a folder with no feature files is not a feature; got: {findings:#?}"
+    );
+}
+
+// ─── AES705: surface folder DESIGN.md ──────────────────────────────────────
+
+#[test]
+fn aes705_fires_when_a_surface_folder_lacks_design_md() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/cli/surface_scan_command.rs").as_path(),
+        "pub fn scan() {}",
+    );
+    // no DESIGN.md.
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES705", "surface_missing_design_md"),
+        "expected the missing DESIGN.md, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes705_stays_silent_when_design_md_is_present() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/cli/surface_scan_command.rs").as_path(),
+        "pub fn scan() {}",
+    );
+    write(
+        root.join("crates/cli/DESIGN.md").as_path(),
+        "# CLI — DESIGN",
+    );
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES705", "surface_missing_design_md"),
+        "a documented surface must not fire; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes705_does_not_fire_on_a_feature_folder_that_holds_a_surface() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    // One surface among two capabilities: the folder is feature-dominated, not
+    // a surface folder, so it owes FRD+BACKLOG rather than DESIGN.md.
+    write(
+        root.join("crates/calculator/src/surface_scan_command.rs")
+            .as_path(),
+        "pub fn scan() {}",
+    );
+    write(
+        root.join("crates/calculator/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    write(
+        root.join("crates/calculator/src/capabilities_sub_checker.rs")
+            .as_path(),
+        "pub struct SubChecker;",
+    );
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES705", "surface_missing_design_md"),
+        "a feature-dominated folder is not a surface folder; got: {findings:#?}"
+    );
 }

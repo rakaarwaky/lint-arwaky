@@ -115,6 +115,54 @@ project-root/                             <- Project workspace root
 └── pyproject.toml
 ```
 
+### Folder structure rules (AES701–AES705)
+
+Each member directory (`crates/`, `modules/`, `packages/`) organizes its code into
+three kinds of folders: `shared`, feature folders, and surface folders. The
+structure-rules group audits that layout.
+
+#### `shared/` — the locked kernel
+
+`shared/` is locked to taxonomy, utility, and contract files. It groups by domain:
+`shared/common/` for generic files, or a domain folder for domain-specific ones. A
+`capabilities_*`, `agent_*`, or `surface_*` file found here is misplaced
+(**AES701**) and must move to a feature folder.
+
+#### Feature folders
+
+A feature folder is named after the feature it serves (`crates/calculator/`). It
+must carry at least one `agent_*_orchestrator` file and at least one
+`capabilities_*` file; a folder with only one side is incomplete (**AES702**). A
+member-level orchestrator coordinates every feature folder beneath it, so a
+capabilities folder under a member that ships an orchestrator is still driven.
+
+A feature folder documents itself with two files beside its source:
+
+- `FRD.md` — what the feature does
+- `BACKLOG.md` — where its work stands
+
+A feature folder carrying neither document fires **AES704**. A folder carrying no
+capabilities and no orchestrator is not a feature and owes no document pair.
+
+#### Surface folders
+
+A surface folder is named for the kind of surface it serves: `api`, `mcp`, `cli`,
+`desktop`, `tui`. It carries surface files only — a `capabilities_*` or `agent_*`
+file inside one is misplaced (**AES703**). Utility files, root wiring, and barrels
+are permitted alongside the surfaces.
+
+A surface folder carries `DESIGN.md`, recording the surface's kind, its entry
+points, and the states a user sees. A surface-dominated folder without one fires
+**AES705**.
+
+#### Summary
+
+| Folder kind  | Carries                                   | Documents                        | Rules   |
+| ------------ | ----------------------------------------- | -------------------------------- | ------- |
+| `shared/`    | `taxonomy_*`, `utility_*`, `contract_*`   | none                             | AES701  |
+| feature      | `capabilities_*` + `agent_*_orchestrator` | `FRD.md` + `BACKLOG.md`          | AES702, AES704 |
+| surface      | `surface_*` (+ utility, root, barrels)    | `DESIGN.md`                      | AES703, AES705 |
+
 ---
 
 ## 5. Taxonomy Layer

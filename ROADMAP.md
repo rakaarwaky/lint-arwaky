@@ -15,6 +15,7 @@ Last Updated: 2026-09-17
 | `crates/quality-rules` | P0 | [FRD](crates/quality-rules/FRD.md) | [BACKLOG](crates/quality-rules/BACKLOG.md) |
 | `crates/role-rules` | P0 | [FRD](crates/role-rules/FRD.md) | [BACKLOG](crates/role-rules/BACKLOG.md) |
 | `crates/orphan-rules` | P0 | [FRD](crates/orphan-rules/FRD.md) | [BACKLOG](crates/orphan-rules/BACKLOG.md) |
+| `crates/structure-rules` | P0 | [FRD](crates/structure-rules/FRD.md) | [BACKLOG](crates/structure-rules/BACKLOG.md) |
 | `crates/external-lint` | P1 | [FRD](crates/external-lint/FRD.md) | [BACKLOG](crates/external-lint/BACKLOG.md) |
 | `crates/auto-fix` | P1 | [FRD](crates/auto-fix/FRD.md) | [BACKLOG](crates/auto-fix/BACKLOG.md) |
 | `crates/report-formatter` | P1 | [FRD](crates/report-formatter/FRD.md) | [BACKLOG](crates/report-formatter/BACKLOG.md) |
@@ -123,7 +124,7 @@ Cross-cutting and workspace-level rows only. Anything that belongs to one crate 
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| WS-01 | § PRD | All 24 AES rules enforced and self-lint clean | P0 | Done | `lint-arwaky-cli check .` → 0 violations at `29c71083` (2026-09-17); CI self-lint job green | @raka | None | 2026-09-17 |
+| WS-01 | § PRD | All 29 AES rules enforced and self-lint clean | P0 | Done | `lint-arwaky-cli check .` → 0 violations at `29c71083` (2026-09-17); AES700 group added in #332 and AES704/AES705 in #333; CI self-lint job green | @raka | None | 2026-09-28 |
 | WS-02 | § PRD | Multi-language scan (Rust, Python, TS) | P0 | Done | `cargo test --workspace --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | WS-03 | § PRD | CLI `check` / `scan` / `fix` / `ci` commands | P0 | Done | `cargo test -p cli_commands --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | WS-04 | § PRD | MCP server with 5 tools, full CLI parity | P1 | Done | `cargo test -p mcp_server --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
@@ -134,6 +135,7 @@ Cross-cutting and workspace-level rows only. Anything that belongs to one crate 
 | WS-09 | § PRD | TUI file browser | P2 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | WS-10 | § PRD | Windows support | P2 | Deferred | Out of scope for v3.x; no Windows CI runner. Recorded in PRD "Out of scope". | Unassigned | None | 2026-09-17 |
 | WS-11 | § PRD | Deeper monorepo performance optimizations | P2 | Deferred | Current 10k-file target met; optimization deferred until real-world bottleneck identified. | Unassigned | None | 2026-09-17 |
+| WS-12 | § PRD | AES700 folder-structure group (AES701–AES705) | P0 | Done | Shared purity, feature health, surface purity, feature doc pair, surface DESIGN.md; `check .` → 0, `workspaces-good` → 0, 29 codes per language (#332, #333) | @raka | None | 2026-09-28 |
 
 ## Blockers
 

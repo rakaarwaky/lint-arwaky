@@ -1,8 +1,9 @@
 // PURPOSE: Parses folder layout into the layer inventory the structure auditor reads
 //
-// AES701–AES703 classify files by their AES filename prefix, so the whole
-// check is a matter of walking a folder and labelling each file. This utility
-// holds that walk; it performs no rule decisions and defines no types.
+// AES701–AES705 classify files by their AES filename prefix and read the
+// documents sitting beside the source, so the whole check is a matter of
+// walking a folder and labelling each entry. This utility holds that walk; it
+// performs no rule decisions and defines no types.
 use std::path::{Path, PathBuf};
 
 use shared::structure_rules::taxonomy_structure_constant::{
@@ -108,4 +109,19 @@ pub fn has_member_orchestrator(member: &Path) -> bool {
                 stem.starts_with(AGENT_PREFIX) && stem.ends_with(ORCHESTRATOR_SUFFIX)
             })
     })
+}
+
+/// Which of *names* sit directly in *folder*. A folder's documents sit beside
+/// its source, not inside `src/`, so this reads one level.
+pub fn docs_present(folder: &Path, names: &[&str]) -> Vec<String> {
+    let Ok(entries) = std::fs::read_dir(folder) else {
+        return Vec::new();
+    };
+    let mut found: Vec<String> = entries
+        .flatten()
+        .map(|entry| entry.file_name().to_string_lossy().to_string())
+        .filter(|name| names.contains(&name.as_str()))
+        .collect();
+    found.sort();
+    found
 }
