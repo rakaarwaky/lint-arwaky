@@ -31,9 +31,9 @@ fn layer_from_path(file_path: &str) -> Option<&'static str> {
 
 /// Resolve the remediation for `code` in `file_path`.
 ///
-/// Resolves the file's layer first, then applies the routing table. The
-/// guidance string is never empty; unknown codes fall back to
-/// `aes-lint-arwaky`.
+/// The file's layer determines the skill — every code routes the same way.
+/// Auto-fixable codes (AES203, AES304) return a fix command instead.
+/// Files outside the AES naming convention fall back to `aes-lint-arwaky`.
 pub fn resolve_skill_hint_for_file(code: &str, file_path: &str) -> SkillHint {
     resolve_skill_hint(code, layer_from_path(file_path))
 }
