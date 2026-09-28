@@ -15,15 +15,15 @@ pub struct StructureOrchestrator {
     auditor: Arc<dyn IStructureAuditProtocol>,
 }
 
+impl IStructureAggregate for StructureOrchestrator {
+    fn execute(&self, request: StructureRequest) -> StructureResponse {
+        self.auditor.audit(request)
+    }
+}
+
 impl StructureOrchestrator {
     /// Wrap a capability seam in a fresh orchestrator.
     pub fn new(auditor: Arc<dyn IStructureAuditProtocol>) -> Self {
         Self { auditor }
-    }
-}
-
-impl IStructureAggregate for StructureOrchestrator {
-    fn execute(&self, request: StructureRequest) -> StructureResponse {
-        self.auditor.audit(request)
     }
 }
