@@ -44,20 +44,44 @@ impl UtilityRoleChecker {
         let path_str = file.path.to_string_lossy();
         match meta {
             ParseMetadata::Rust(rust_meta) => {
-                // Utility must not define structs, enums, traits, or type aliases
-                if !rust_meta.struct_definitions.is_empty()
-                    || !rust_meta.enum_definitions.is_empty()
-                    || !rust_meta.trait_definitions.is_empty()
-                {
-                    let items: Vec<&str> = rust_meta
+                // Utility must not define structs, enums, traits, type aliases, or impl blocks.
+                let mut items: Vec<String> = Vec::new();
+                items.extend(
+                    rust_meta
                         .struct_definitions
                         .iter()
-                        .chain(rust_meta.enum_definitions.iter())
-                        .chain(rust_meta.trait_definitions.iter())
-                        .map(|s| s.as_str())
-                        .collect();
+                        .map(|s| format!("struct '{s}'")),
+                );
+                items.extend(
+                    rust_meta
+                        .enum_definitions
+                        .iter()
+                        .map(|s| format!("enum '{s}'")),
+                );
+                items.extend(
+                    rust_meta
+                        .trait_definitions
+                        .iter()
+                        .map(|s| format!("trait '{s}'")),
+                );
+                items.extend(
+                    rust_meta
+                        .type_definitions
+                        .iter()
+                        .map(|s| format!("type alias '{s}'")),
+                );
+                items.extend(
+                    rust_meta
+                        .impl_blocks
+                        .iter()
+                        .map(|imp| match &imp.trait_name {
+                            Some(t) => format!("impl '{t} for {}'", imp.implementor_type),
+                            None => format!("inherent impl for '{}'", imp.implementor_type),
+                        }),
+                );
+                if !items.is_empty() {
                     let why = format!(
-                        "Utility files must not define structs or enums. Found: [{}]",
+                        "Utility files must not define structs, enums, traits, type aliases, or impl blocks. Found: [{}]",
                         items.join(", ")
                     );
                     violations.push(LintResult::new_arch(
@@ -124,13 +148,14 @@ impl UtilityRoleChecker {
 
         if ext == "rust" || ext == "rs" {
             let stripped = Self::rust_strip_comments_macros(content);
-            if stripped.contains("pub struct ") || stripped.contains("pub enum ") {
+            let has_forbidden = Self::rust_has_forbidden_item(&stripped);
+            if has_forbidden {
                 violations.push(LintResult::new_arch(
                     &path_str,
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define structs or enums.\nFIX: Remove type definitions; use stateless functions only.",
+                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define structs, enums, traits, type aliases, or impl blocks.\nFIX: Remove type definitions; use stateless functions only.",
                 ));
             }
         } else if ext == "typescript" || ext == "ts" || ext == "tsx" {
@@ -150,17 +175,14 @@ impl UtilityRoleChecker {
             }
         } else if ext == "python" || ext == "py" {
             let stripped = Self::python_strip_comments_docstrings(content);
-            let has_forbidden = stripped.lines().any(|l| {
-                let trimmed = l.trim();
-                trimmed.starts_with("class ") || trimmed.starts_with("def ")
-            });
+            let has_forbidden = stripped.lines().any(|l| l.trim().starts_with("class "));
             if has_forbidden {
                 violations.push(LintResult::new_arch(
                     &path_str,
                     0,
                     "AES404",
                     Severity::MEDIUM,
-                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes or functions.\nFIX: Remove type definitions; use stateless functions only.",
+                    "AES404 UTILITY_ROLE: Utility file contains forbidden type definitions.\nWHY? Utility files must not define classes.\nFIX: Remove class definitions; use module-level functions only.",
                 ));
             }
         }
@@ -243,6 +265,26 @@ impl UtilityRoleChecker {
             result.push(c);
         }
         result
+    }
+
+    /// True when the comment-stripped content contains a forbidden top-level item
+    /// keyword at the start of a line. We anchor on line-start to avoid matching
+    /// `macro_rules!` bodies (which have indented impl blocks) or other nested
+    /// contexts. `impl` without leading whitespace is intentionally included:
+    /// utility files may never contain inherent or trait impl blocks.
+    fn rust_has_forbidden_item(stripped: &str) -> bool {
+        stripped.lines().any(|l| {
+            let trimmed = l.trim_start();
+            trimmed.starts_with("pub struct ")
+                || trimmed.starts_with("struct ")
+                || trimmed.starts_with("pub enum ")
+                || trimmed.starts_with("enum ")
+                || trimmed.starts_with("pub trait ")
+                || trimmed.starts_with("trait ")
+                || trimmed.starts_with("pub type ")
+                || trimmed.starts_with("type ")
+                || trimmed.starts_with("impl ")
+        })
     }
 
     fn ts_strip_comments(content: &str) -> String {
