@@ -505,7 +505,9 @@ fn is_stub_body(lines: &[&str], header_idx: usize, header_indent: usize) -> bool
             return true;
         }
         if is_docstring_start(trimmed) {
-            body_idx = docstring_span(lines, body_idx, indent);
+            // `docstring_span` counts the lines the docstring occupies, so
+            // step past it from the current line.
+            body_idx += docstring_span(lines, body_idx, indent);
             continue;
         }
         return trimmed == "..." || trimmed == "pass" || trimmed.starts_with("...");
