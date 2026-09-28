@@ -64,7 +64,7 @@ AES401–403, AES406, AES505–506 → 🟢 **MEDIUM/LOW** AES203–204, AES305,
 | AES304 (Bypass Comment) | `noqa`, `type: ignore`, `#[allow]`, `@ts-ignore`, `eslint-disable` … | Auto-fixable, or fix the root cause and delete the suppression | `fix --filter AES304` or `aes-{layer}` |
 | AES305 (Duplication Code) | Same logic repeated across files | Extract shared logic into a pure utility | `aes-utility` |
 | AES401 (Taxonomy Role) | `_constant` purity; primitives in `_entity`/`_error`/`_event` | Replace primitives with taxonomy VOs | `aes-taxonomy` |
-| AES402 (Contract Role) | Contract trait/method signatures use primitives instead of taxonomy VO/constant | Replace primitives with VO/constant types | `aes-contract` |
+| AES402 (Contract Role) | Contract trait/method signatures use primitives instead of taxonomy VO/constant; or a contract file contains a concrete class with real method bodies | Replace primitives with VO/constant types; or move concrete classes out of the contract file into `utility_*` (as stateless functions) — a contract file must contain only ABC declarations | `aes-contract` |
 | AES403 (Capabilities Role) | >3 type declarations; no implementor of the capability protocol | Implement the protocol; split routing across capabilities | `aes-capabilities` |
 | AES404 (Utility Role) | Utility must be stateless standalone functions and may import taxonomy only | Move stateful logic to capabilities; drop non-taxonomy imports | `aes-utility` |
 | AES405 (Agent Role) | Agent: >3 types, no aggregate implementor, `Any` annotations, direct capabilities import, state outside the constructor | Depend on `contract(*_aggregate)` and delegate to capabilities via protocols | `aes-agent` |
