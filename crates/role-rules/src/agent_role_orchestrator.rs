@@ -37,7 +37,9 @@ pub struct RoleCheckerDeps {
     pub capabilities: Arc<dyn ICapabilitiesRoleProtocol>,
     pub surface: Arc<dyn ISurfaceRoleProtocol>,
     pub agent: Arc<dyn IAgentRoleProtocol>,
-    pub utility: Arc<dyn IUtilityRoleProtocol>,
+    pub utility_rust: Arc<dyn IUtilityRoleProtocol>,
+    pub utility_python: Arc<dyn IUtilityRoleProtocol>,
+    pub utility_typescript: Arc<dyn IUtilityRoleProtocol>,
 }
 
 pub struct RoleOrchestrator {
@@ -212,7 +214,15 @@ impl RoleOrchestrator {
                 "utility"
                     if self.is_rule_enabled("AES404") && !self.is_exception("AES404", filename) =>
                 {
-                    self.deps.utility.check_utility_convention(file, violations);
+                    let language = file.language;
+                    let deps = &self.deps;
+                    let auditor: &dyn IUtilityRoleProtocol = match language {
+                        Language::Rust => &*deps.utility_rust,
+                        Language::Python => &*deps.utility_python,
+                        Language::TypeScript | Language::JavaScript => &*deps.utility_typescript,
+                        _ => continue,
+                    };
+                    auditor.check_utility_convention(file, violations);
                 }
                 "taxonomy"
                     if self.is_rule_enabled("AES401") && !self.is_exception("AES401", filename) =>

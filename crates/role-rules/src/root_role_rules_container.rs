@@ -13,7 +13,9 @@ use crate::capabilities_contract_rust_role_auditor::ContractRustRoleAuditor;
 use crate::capabilities_contract_ts_role_auditor::ContractTypeScriptRoleAuditor;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
+use crate::capabilities_utility_python_role_auditor::UtilityPythonRoleAuditor;
+use crate::capabilities_utility_rust_role_auditor::UtilityRustRoleAuditor;
+use crate::capabilities_utility_ts_role_auditor::UtilityTypeScriptRoleAuditor;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::role_rules::IRoleRunnerAggregate;
 use std::sync::Arc;
@@ -43,7 +45,9 @@ impl RoleContainer {
             capabilities: rust_auditor,
             surface: Arc::new(SurfaceRoleChecker::new()),
             agent: Arc::new(AgentRoleChecker::new()),
-            utility: Arc::new(UtilityRoleChecker::new()),
+            utility_rust: Arc::new(UtilityRustRoleAuditor::new()),
+            utility_python: Arc::new(UtilityPythonRoleAuditor::new()),
+            utility_typescript: Arc::new(UtilityTypeScriptRoleAuditor::new()),
         };
         Self { deps, config }
     }
@@ -60,7 +64,9 @@ impl RoleContainer {
             capabilities: Arc::clone(&self.deps.capabilities),
             surface: Arc::clone(&self.deps.surface),
             agent: Arc::clone(&self.deps.agent),
-            utility: Arc::clone(&self.deps.utility),
+            utility_rust: Arc::clone(&self.deps.utility_rust),
+            utility_python: Arc::clone(&self.deps.utility_python),
+            utility_typescript: Arc::clone(&self.deps.utility_typescript),
         };
         Arc::new(RoleOrchestrator::new(deps, &self.config))
     }

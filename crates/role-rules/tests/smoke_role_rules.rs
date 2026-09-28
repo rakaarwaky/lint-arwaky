@@ -52,7 +52,9 @@ fn smoke_orchestrator_creation() {
         capabilities: rust_auditor,
         surface: Arc::new(role_rules_lint_arwaky::SurfaceRoleChecker::new()),
         agent: Arc::new(role_rules_lint_arwaky::AgentRoleChecker::new()),
-        utility: Arc::new(role_rules_lint_arwaky::UtilityRoleChecker::new()),
+        utility_rust: Arc::new(role_rules_lint_arwaky::UtilityRustRoleAuditor::new()),
+        utility_python: Arc::new(role_rules_lint_arwaky::UtilityPythonRoleAuditor::new()),
+        utility_typescript: Arc::new(role_rules_lint_arwaky::UtilityTypeScriptRoleAuditor::new()),
     };
     let orch = RoleOrchestrator::new(deps, &config);
     assert_eq!(orch.execute(RoleRequest::Name).into_name(), "role-rules");
