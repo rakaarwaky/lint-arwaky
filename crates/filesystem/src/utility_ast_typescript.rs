@@ -72,6 +72,11 @@ pub fn extract_ts_metadata(tree: &tree_sitter::Tree, content: &str) -> TypeScrip
                                 meta.type_alias_declarations.push(name);
                             }
                         }
+                        "enum_declaration" => {
+                            if let Some(name) = child_by_field(child, content, "name") {
+                                meta.enum_declarations.push(name);
+                            }
+                        }
                         "function_declaration" | "function" => {
                             let name = child_by_field(child, content, "name").unwrap_or_default();
                             let has_body = child.child_by_field_name("body").is_some();
@@ -95,6 +100,11 @@ pub fn extract_ts_metadata(tree: &tree_sitter::Tree, content: &str) -> TypeScrip
             "type_alias_declaration" => {
                 if let Some(name) = child_by_field(node, content, "name") {
                     meta.type_alias_declarations.push(name);
+                }
+            }
+            "enum_declaration" => {
+                if let Some(name) = child_by_field(node, content, "name") {
+                    meta.enum_declarations.push(name);
                 }
             }
             "function_declaration" | "function" => {

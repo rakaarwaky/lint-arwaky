@@ -197,6 +197,8 @@ pub struct TypeScriptMetadata {
     pub interface_declarations: Vec<String>,
     /// Type alias declarations.
     pub type_alias_declarations: Vec<String>,
+    /// Enum declarations.
+    pub enum_declarations: Vec<String>,
     /// Function definitions (name, has_body).
     pub function_definitions: Vec<TSFnItem>,
     /// All identifiers used in the file body (tree-sitter extracted).

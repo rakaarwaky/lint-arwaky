@@ -126,6 +126,9 @@ impl UtilityRoleChecker {
                 for name in &ts_meta.type_alias_declarations {
                     forbidden.push(format!("type '{}'", name));
                 }
+                for name in &ts_meta.enum_declarations {
+                    forbidden.push(format!("enum '{}'", name));
+                }
                 if !forbidden.is_empty() {
                     let why = format!(
                         "Utility files must not define classes, interfaces, enums, or types. Found: [{}]",

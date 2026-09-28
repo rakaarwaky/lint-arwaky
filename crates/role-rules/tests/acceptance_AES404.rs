@@ -3,7 +3,7 @@
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{
-    FileEntry, Language, ParseMetadata, RustMetadata,
+    FileEntry, Language, ParseMetadata, RustMetadata, TypeScriptMetadata,
 };
 use shared::role_rules::taxonomy_role_request::RoleRequest;
 use std::path::PathBuf;
@@ -243,6 +243,75 @@ fn aes404_metadata_type_alias_reported() {
         aes404[0].message.value().contains("type alias 'Helper'"),
         "message should label the item as a type alias, got: {}",
         aes404[0].message.value()
+    );
+}
+
+// ── Metadata path: TypeScript enum reported ──
+
+#[test]
+fn aes404_metadata_ts_enum_reported() {
+    let meta = TypeScriptMetadata {
+        enum_declarations: vec!["Mode".into()],
+        ..Default::default()
+    };
+    let file = FileEntry {
+        path: PathBuf::from("src/utility_aes404_meta_enum.ts"),
+        extension: "ts".to_string(),
+        language: Language::TypeScript,
+        size: 1,
+        content: "export enum Mode {}".to_string(),
+        parse_ok: true,
+        parse_metadata: Some(ParseMetadata::TypeScript(meta)),
+    };
+    let results = run_audit(vec![file]);
+    let aes404: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES404")
+        .collect();
+    assert_eq!(
+        aes404.len(),
+        1,
+        "TS enum in metadata should produce exactly one AES404"
+    );
+    assert!(
+        aes404[0].message.value().contains("enum 'Mode'"),
+        "message should label the item as an enum, got: {}",
+        aes404[0].message.value()
+    );
+}
+
+// ── Metadata path: TypeScript interface and type alias reported ──
+
+#[test]
+fn aes404_metadata_ts_interface_and_type_reported() {
+    let meta = TypeScriptMetadata {
+        interface_declarations: vec!["IHelper".into()],
+        type_alias_declarations: vec!["Helper".into()],
+        ..Default::default()
+    };
+    let file = FileEntry {
+        path: PathBuf::from("src/utility_aes404_meta_ts_types.ts"),
+        extension: "ts".to_string(),
+        language: Language::TypeScript,
+        size: 1,
+        content: "export interface IHelper {}".to_string(),
+        parse_ok: true,
+        parse_metadata: Some(ParseMetadata::TypeScript(meta)),
+    };
+    let results = run_audit(vec![file]);
+    let aes404: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES404")
+        .collect();
+    assert_eq!(
+        aes404.len(),
+        1,
+        "TS interface + type alias should produce one AES404"
+    );
+    let msg = aes404[0].message.value();
+    assert!(
+        msg.contains("interface 'IHelper'") && msg.contains("type 'Helper'"),
+        "message should name both items, got: {msg}"
     );
 }
 
