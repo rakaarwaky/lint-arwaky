@@ -7,7 +7,9 @@ use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
 use role_rules_lint_arwaky::capabilities_capabilities_python_role_auditor::CapabilitiesPythonRoleAuditor;
 use role_rules_lint_arwaky::capabilities_capabilities_rust_role_auditor::CapabilitiesRustRoleAuditor;
 use role_rules_lint_arwaky::capabilities_capabilities_ts_role_auditor::CapabilitiesTypeScriptRoleAuditor;
-use role_rules_lint_arwaky::capabilities_contract_role_auditor::ContractRoleChecker;
+use role_rules_lint_arwaky::capabilities_contract_python_role_auditor::ContractPythonRoleAuditor;
+use role_rules_lint_arwaky::capabilities_contract_rust_role_auditor::ContractRustRoleAuditor;
+use role_rules_lint_arwaky::capabilities_contract_ts_role_auditor::ContractTypeScriptRoleAuditor;
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
@@ -45,14 +47,36 @@ fn taxonomy_role_checker_implements_protocol() {
     checker.check_constant(&file, &mut v);
 }
 
-// ── ContractRoleChecker → IContractRoleProtocol ─────────────
+// ── Contract auditors → IContractRoleProtocol ──────────────
 
 #[test]
-fn contract_role_checker_implements_protocol() {
-    let checker: Arc<dyn IContractRoleProtocol> = Arc::new(ContractRoleChecker::new());
+fn contract_rust_role_auditor_implements_protocol() {
+    let checker: Arc<dyn IContractRoleProtocol> = Arc::new(ContractRustRoleAuditor::new());
     let file = dummy_file();
     let _proto: Vec<LintResult> = checker.check_protocol(&file);
     let _agg: Vec<LintResult> = checker.check_aggregate(&file);
+    let mut v: Vec<LintResult> = Vec::new();
+    checker.check_contract_routing(&file, "contract", &mut v);
+}
+
+#[test]
+fn contract_python_role_auditor_implements_protocol() {
+    let checker: Arc<dyn IContractRoleProtocol> = Arc::new(ContractPythonRoleAuditor::new());
+    let file = dummy_file();
+    let _proto: Vec<LintResult> = checker.check_protocol(&file);
+    let _agg: Vec<LintResult> = checker.check_aggregate(&file);
+    let mut v: Vec<LintResult> = Vec::new();
+    checker.check_contract_routing(&file, "contract", &mut v);
+}
+
+#[test]
+fn contract_ts_role_auditor_implements_protocol() {
+    let checker: Arc<dyn IContractRoleProtocol> = Arc::new(ContractTypeScriptRoleAuditor::new());
+    let file = dummy_file();
+    let _proto: Vec<LintResult> = checker.check_protocol(&file);
+    let _agg: Vec<LintResult> = checker.check_aggregate(&file);
+    let mut v: Vec<LintResult> = Vec::new();
+    checker.check_contract_routing(&file, "contract", &mut v);
 }
 
 // ── Capabilities auditors → ICapabilitiesRoleProtocol ──────
@@ -124,7 +148,9 @@ fn role_orchestrator_implements_classification_protocol() {
     let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
         taxonomy: Arc::new(TaxonomyRoleChecker::new()),
-        contract: Arc::new(ContractRoleChecker::new()),
+        contract_rust: Arc::new(ContractRustRoleAuditor::new()),
+        contract_python: Arc::new(ContractPythonRoleAuditor::new()),
+        contract_typescript: Arc::new(ContractTypeScriptRoleAuditor::new()),
         capabilities_rust: rust_auditor.clone(),
         capabilities_python: Arc::new(CapabilitiesPythonRoleAuditor::new()),
         capabilities_typescript: Arc::new(CapabilitiesTypeScriptRoleAuditor::new()),
@@ -144,7 +170,9 @@ fn role_orchestrator_implements_aggregate() {
     let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
         taxonomy: Arc::new(TaxonomyRoleChecker::new()),
-        contract: Arc::new(ContractRoleChecker::new()),
+        contract_rust: Arc::new(ContractRustRoleAuditor::new()),
+        contract_python: Arc::new(ContractPythonRoleAuditor::new()),
+        contract_typescript: Arc::new(ContractTypeScriptRoleAuditor::new()),
         capabilities_rust: rust_auditor.clone(),
         capabilities_python: Arc::new(CapabilitiesPythonRoleAuditor::new()),
         capabilities_typescript: Arc::new(CapabilitiesTypeScriptRoleAuditor::new()),

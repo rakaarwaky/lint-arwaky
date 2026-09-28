@@ -151,3 +151,301 @@ fn aes402_non_contract_file_ignored() {
         "non-contract file should not trigger AES402"
     );
 }
+
+// ── Default body ──
+
+#[test]
+fn aes402_rust_contract_default_body_detected() {
+    let file = make_file(
+        "src/contract_bad_protocol.rs",
+        Language::Rust,
+        "pub trait IBadProtocol {\n    fn broken(&self) { unreachable!() }\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter().any(|r| r.message.value().contains("default body")),
+        "default body in Rust trait should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_python_contract_default_body_detected() {
+    let file = make_file(
+        "src/contract_bad_protocol.py",
+        Language::Python,
+        "class IBadProtocol:\n    def broken(self):\n        raise NotImplementedError()\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter().any(|r| r.message.value().contains("default body")),
+        "default body in Python contract should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_ts_contract_default_body_detected() {
+    let file = make_file(
+        "src/contract_bad_protocol.ts",
+        Language::TypeScript,
+        "export interface IBadProtocol {\n    broken(): void { return; }\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter().any(|r| r.message.value().contains("inline body")),
+        "default body in TS interface should trigger AES402"
+    );
+}
+
+// ── Aggregate method count ──
+
+#[test]
+fn aes402_rust_aggregate_multiple_methods_detected() {
+    let file = make_file(
+        "src/contract_bad_aggregate.rs",
+        Language::Rust,
+        "pub trait IBadAggregate {\n    fn execute(&self);\n    fn extra(&self);\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("more than one method")),
+        "aggregate with >1 method should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_python_aggregate_multiple_methods_detected() {
+    let file = make_file(
+        "src/contract_bad_aggregate.py",
+        Language::Python,
+        "class IBadAggregate:\n    def execute(self): ...\n    def extra(self): ...\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("more than one method")),
+        "aggregate with >1 method should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_ts_aggregate_multiple_methods_detected() {
+    let file = make_file(
+        "src/contract_bad_aggregate.ts",
+        Language::TypeScript,
+        "export interface IBadAggregate {\n    execute(): void;\n    extra(): void;\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("more than one method")),
+        "aggregate with >1 method should trigger AES402"
+    );
+}
+
+// ── Dispatch bag ──
+
+#[test]
+fn aes402_rust_dispatch_bag_detected() {
+    let file = make_file(
+        "src/contract_dispatch_protocol.rs",
+        Language::Rust,
+        "pub trait IDispatchProtocol {\n    fn execute(&self, op: &str, target: u64);\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("dispatch parameter")
+                || r.message.value().contains("operation name")),
+        "dispatch bag should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_python_dispatch_bag_detected() {
+    let file = make_file(
+        "src/contract_dispatch_protocol.py",
+        Language::Python,
+        "class IDispatchProtocol:\n    def execute(self, op: str, target: int) -> None: ...\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("dispatch parameter")
+                || r.message.value().contains("operation name")),
+        "dispatch bag should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_ts_dispatch_bag_detected() {
+    let file = make_file(
+        "src/contract_dispatch_protocol.ts",
+        Language::TypeScript,
+        "export interface IDispatchProtocol {\n    execute(op: string, target: number): void;\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("dispatch parameter")
+                || r.message.value().contains("operation name")),
+        "dispatch bag should trigger AES402"
+    );
+}
+
+// ── Docstring stub is a declaration, not a body ──
+
+#[test]
+fn aes402_python_docstring_then_stub_is_clean() {
+    let file = make_file(
+        "src/contract_docstring_protocol.py",
+        Language::Python,
+        "class IDocProtocol(ABC):\n    def run(self, req: RequestVO) -> ResultVO:\n        \
+         \"\"\"Run the request.\"\"\"\n        ...\n",
+    );
+    let results = run_audit(vec![file]);
+    let aes402: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect();
+    assert!(
+        aes402.is_empty(),
+        "a documented `...` stub is a declaration, not a default body"
+    );
+}
+
+#[test]
+fn aes402_python_multiline_docstring_then_stub_is_clean() {
+    let file = make_file(
+        "src/contract_docstring_multi_protocol.py",
+        Language::Python,
+        "class IDocProtocol(ABC):\n    def run(self, req: RequestVO) -> ResultVO:\n        \
+         \"\"\"Run the request.\n\n        Returns the matching response.\n        \"\"\"\n        ...\n",
+    );
+    let results = run_audit(vec![file]);
+    let aes402: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect();
+    assert!(
+        aes402.is_empty(),
+        "a multi-line documented `...` stub is a declaration, not a default body"
+    );
+}
+
+#[test]
+fn aes402_python_statement_after_docstring_still_a_body() {
+    let file = make_file(
+        "src/contract_docstring_body_protocol.py",
+        Language::Python,
+        "class IDocProtocol(ABC):\n    def run(self, req: RequestVO) -> ResultVO:\n        \
+         \"\"\"Run the request.\"\"\"\n        raise NotImplementedError()\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter().any(|r| r.message.value().contains("default body")),
+        "a docstring followed by a real statement is still a default body"
+    );
+}
+
+// ── Untyped return ──
+
+#[test]
+fn aes402_rust_untyped_return_enum_detected() {
+    let file = make_file(
+        "src/contract_response_protocol.rs",
+        Language::Rust,
+        "pub enum Response {\n    Ok(String),\n    Err(i32),\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("primitive fields")
+                || r.message.value().contains("untyped return")),
+        "enum of primitives should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_python_untyped_return_enum_detected() {
+    let file = make_file(
+        "src/contract_response_protocol.py",
+        Language::Python,
+        "from enum import Enum\n\nclass Response(Enum):\n    OK = 'ok'\n    FAIL = 1\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("primitive fields")
+                || r.message.value().contains("untyped return")),
+        "enum of primitives should trigger AES402"
+    );
+}
+
+#[test]
+fn aes402_ts_untyped_return_enum_detected() {
+    let file = make_file(
+        "src/contract_response_protocol.ts",
+        Language::TypeScript,
+        "export enum Response {\n  Ok = 'ok',\n  Fail = 1,\n}\n",
+    );
+    let results = run_audit(vec![file]);
+    let v = results
+        .iter()
+        .filter(|r| r.code.code() == "AES402")
+        .collect::<Vec<_>>();
+    assert!(
+        v.iter()
+            .any(|r| r.message.value().contains("primitive fields")
+                || r.message.value().contains("untyped return")),
+        "enum of primitives should trigger AES402"
+    );
+}

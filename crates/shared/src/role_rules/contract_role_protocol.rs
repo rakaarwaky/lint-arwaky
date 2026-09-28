@@ -30,7 +30,46 @@ pub trait ITaxonomyRoleProtocol: Send + Sync {
 
 /// FR-RoleRules-003 (AES402): contract primitive restriction.
 pub trait IContractRoleProtocol: Send + Sync {
+    /// Entry point that runs all contract sub-checks in sequence.
+    ///
+    /// This is what the orchestrator calls. Each sub-check appends to
+    /// `violations` independently, so one file can report several defects.
+    fn check_contract_routing(
+        &self,
+        file: &FileEntry,
+        layer: &str,
+        violations: &mut Vec<LintResult>,
+    );
+
+    /// Protocol or aggregate trait method must not have a default body. HIGH.
+    fn check_contract_default_body(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// An aggregate trait must declare exactly one method (execute). HIGH.
+    fn check_contract_aggregate_method_count(
+        &self,
+        file: &FileEntry,
+        violations: &mut Vec<LintResult>,
+    );
+
+    /// An `execute(op: &str, ...)` or param-bag signature in a capability seam
+    /// is a dispatch anti-pattern. MEDIUM.
+    fn check_contract_dispatch_bag(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// A multi-variant response enum where every variant holds only primitives
+    /// (no VO-wrapped fields) is an untyped return. MEDIUM.
+    fn check_contract_untyped_return(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// Every sub-check in sequence, collecting the violations into a fresh list.
+    ///
+    /// A `_protocol` seam uses `layer = "contract"`. This wrapper exists for
+    /// call sites that only need the result list and do not already hold a
+    /// `violations` buffer.
     fn check_protocol(&self, file: &FileEntry) -> Vec<LintResult>;
+
+    /// Same as `check_protocol`, for callers dispatching an `_aggregate` seam.
+    ///
+    /// The sub-checks read the file path themselves, so the aggregate seam is
+    /// covered by the same sequence.
     fn check_aggregate(&self, file: &FileEntry) -> Vec<LintResult>;
 }
 

@@ -7,6 +7,7 @@ use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::ExternalReferenceMap;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared::filesystem::taxonomy_filesystem_vo::Language;
 use shared::filesystem::taxonomy_filesystem_vo::ParseMetadata;
 use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared::role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
@@ -27,7 +28,9 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 
 pub struct RoleCheckerDeps {
     pub taxonomy: Arc<dyn ITaxonomyRoleProtocol>,
-    pub contract: Arc<dyn IContractRoleProtocol>,
+    pub contract_rust: Arc<dyn IContractRoleProtocol>,
+    pub contract_python: Arc<dyn IContractRoleProtocol>,
+    pub contract_typescript: Arc<dyn IContractRoleProtocol>,
     pub capabilities_rust: Arc<dyn ICapabilitiesRoleProtocol>,
     pub capabilities_python: Arc<dyn ICapabilitiesRoleProtocol>,
     pub capabilities_typescript: Arc<dyn ICapabilitiesRoleProtocol>,
@@ -179,11 +182,15 @@ impl RoleOrchestrator {
                 "contract"
                     if self.is_rule_enabled("AES402") && !self.is_exception("AES402", filename) =>
                 {
-                    if filename.contains("_protocol") {
-                        violations.extend(self.deps.contract.check_protocol(file));
-                    } else if filename.contains("_aggregate") {
-                        violations.extend(self.deps.contract.check_aggregate(file));
-                    }
+                    let auditor = match file.language {
+                        Language::Rust => &*self.deps.contract_rust,
+                        Language::Python => &*self.deps.contract_python,
+                        Language::TypeScript | Language::JavaScript => {
+                            &*self.deps.contract_typescript
+                        }
+                        _ => continue,
+                    };
+                    auditor.check_contract_routing(file, "contract", violations);
                 }
                 "capabilities" | "capability"
                     if self.is_rule_enabled("AES403") && !self.is_exception("AES403", filename) =>
@@ -191,14 +198,9 @@ impl RoleOrchestrator {
                     let language = file.language;
                     let deps = &self.deps;
                     let auditor: &dyn ICapabilitiesRoleProtocol = match language {
-                        shared::filesystem::taxonomy_filesystem_vo::Language::Rust => {
-                            &*deps.capabilities_rust
-                        }
-                        shared::filesystem::taxonomy_filesystem_vo::Language::Python => {
-                            &*deps.capabilities_python
-                        }
-                        shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
-                        | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => {
+                        Language::Rust => &*deps.capabilities_rust,
+                        Language::Python => &*deps.capabilities_python,
+                        Language::TypeScript | Language::JavaScript => {
                             &*deps.capabilities_typescript
                         }
                         _ => {

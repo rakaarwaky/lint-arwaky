@@ -8,7 +8,9 @@ use crate::capabilities_agent_role_auditor::AgentRoleChecker;
 use crate::capabilities_capabilities_python_role_auditor::CapabilitiesPythonRoleAuditor;
 use crate::capabilities_capabilities_rust_role_auditor::CapabilitiesRustRoleAuditor;
 use crate::capabilities_capabilities_ts_role_auditor::CapabilitiesTypeScriptRoleAuditor;
-use crate::capabilities_contract_role_auditor::ContractRoleChecker;
+use crate::capabilities_contract_python_role_auditor::ContractPythonRoleAuditor;
+use crate::capabilities_contract_rust_role_auditor::ContractRustRoleAuditor;
+use crate::capabilities_contract_ts_role_auditor::ContractTypeScriptRoleAuditor;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::capabilities_utility_role_auditor::UtilityRoleChecker;
@@ -32,7 +34,9 @@ impl RoleContainer {
         let ts_auditor = Arc::new(CapabilitiesTypeScriptRoleAuditor::new());
         let deps = RoleCheckerDeps {
             taxonomy: Arc::new(TaxonomyRoleChecker::new()),
-            contract: Arc::new(ContractRoleChecker::new()),
+            contract_rust: Arc::new(ContractRustRoleAuditor::new()),
+            contract_python: Arc::new(ContractPythonRoleAuditor::new()),
+            contract_typescript: Arc::new(ContractTypeScriptRoleAuditor::new()),
             capabilities_rust: rust_auditor.clone(),
             capabilities_python: python_auditor.clone(),
             capabilities_typescript: ts_auditor.clone(),
@@ -47,7 +51,9 @@ impl RoleContainer {
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
         let deps = RoleCheckerDeps {
             taxonomy: Arc::clone(&self.deps.taxonomy),
-            contract: Arc::clone(&self.deps.contract),
+            contract_rust: Arc::clone(&self.deps.contract_rust),
+            contract_python: Arc::clone(&self.deps.contract_python),
+            contract_typescript: Arc::clone(&self.deps.contract_typescript),
             capabilities_rust: Arc::clone(&self.deps.capabilities_rust),
             capabilities_python: Arc::clone(&self.deps.capabilities_python),
             capabilities_typescript: Arc::clone(&self.deps.capabilities_typescript),
