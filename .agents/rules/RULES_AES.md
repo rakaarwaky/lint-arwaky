@@ -58,6 +58,7 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
 | AES605 | Feature Folder Health | MEDIUM   | Doc    | Every folder with a doc pair holds an orchestrator; kernel folders carry no docs.                |
 | AES606 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
+| AES607 | FR/Protocol Parity    | HIGH     | Doc    | An FRD's requirement count equals its feature's count of `I*Protocol` capability-seam classes.     |
 
 | Code   | Name               | Severity | Group     | Description                                                                                |
 | -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
@@ -532,6 +533,21 @@ Each document also carries an agreed set of project-specific H2s that are accept
 | `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.         |
 | `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal. |
 
+---
+
+### AES607 — FR/Protocol Parity
+
+**Severity:** HIGH
+
+One protocol class is one capability seam, and one seam is one requirement, so an FRD's `FR-<Feature>-NNN` heading count must equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. The crate folder name is translated to the module name by replacing `-` with `_` (`report-formatter` → `report_formatter`).
+
+Classes are counted, never files: a single protocol file may declare many capability seams, and a module may spread them over many files. `I*Aggregate` traits are composite entry points rather than capability seams and are excluded from the count. A feature with no shared contract module is left alone.
+
+The message states both counts and names both fix directions, because either the code shape or the requirement shape may be the one to change. The four-direction table in `HOW-TO-MAKE-FRD.md` decides which to pick.
+
+| Violation type            | Fires when                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `protocol_count_mismatch` | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts. |
 
 ---
 
