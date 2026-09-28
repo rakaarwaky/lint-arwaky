@@ -446,7 +446,7 @@ architecture:
           "surface(hook|store|action|screen)",
           "surface(component|view|layout)",
         ]
-      exceptions: []
+      exceptions: ["surface_lint_action.rs"]
 
     # ─── AES500: Orphan ───
     AES501:

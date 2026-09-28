@@ -162,21 +162,16 @@ impl RoleOrchestrator {
                     if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
                 {
                     self.deps.surface.check_fn_count_limit(file, violations);
-                    let is_smart = basename.ends_with("_command")
-                        || basename.ends_with("_controller")
-                        || basename.ends_with("_page")
-                        || basename.ends_with("_entry")
-                        || basename.ends_with("_router");
-                    let is_utility = basename.ends_with("_hook")
-                        || basename.ends_with("_store")
-                        || basename.ends_with("_action")
-                        || basename.ends_with("_screen");
-                    if is_smart {
-                        self.deps.surface.check_smart_surface(file, violations);
-                    } else if is_utility {
-                        self.deps.surface.check_utility_surface(file, violations);
-                    } else {
-                        self.deps.surface.check_passive_surface(file, violations);
+                    match shared::role_rules::taxonomy_role_vo::classify_surface_tier(basename) {
+                        shared::role_rules::taxonomy_role_vo::SurfaceTier::Smart => {
+                            self.deps.surface.check_smart_surface(file, violations);
+                        }
+                        shared::role_rules::taxonomy_role_vo::SurfaceTier::Utility => {
+                            self.deps.surface.check_utility_surface(file, violations);
+                        }
+                        shared::role_rules::taxonomy_role_vo::SurfaceTier::Passive => {
+                            self.deps.surface.check_passive_surface(file, violations);
+                        }
                     }
                 }
                 "contract"

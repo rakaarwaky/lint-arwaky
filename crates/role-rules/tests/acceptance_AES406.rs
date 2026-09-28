@@ -79,15 +79,37 @@ fn aes406_smart_surface_exempt() {
     );
 }
 
-// ── Many functions → no longer flagged (fn count limit removed) ──
+// ── Passive surface with 26 functions → AES406 fn-count violation ──
 
 #[test]
-fn aes406_many_functions_no_violation() {
+fn aes406_many_functions_flagged() {
+    // `_layout` is passive; 26 > passive limit 25 → AES406.
+    let content: String = (0..26)
+        .map(|i| format!("fn func_{}() {{}}", i))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let file = make_file("src/surface_helpers_layout.rs", Language::Rust, &content);
+    let results = run_audit(vec![file]);
+    let aes406: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES406")
+        .collect();
+    assert!(
+        !aes406.is_empty(),
+        "passive surface with 26 functions should trigger AES406 (fn count limit)"
+    );
+}
+
+// ── Passive surface with 20 functions (under limit) → no fn-count violation ──
+
+#[test]
+fn aes406_fn_count_under_passive_limit_clean() {
+    // `_layout` is passive; 20 < passive limit 25 → no AES406.
     let content: String = (0..20)
         .map(|i| format!("fn func_{}() {{}}", i))
         .collect::<Vec<_>>()
         .join("\n");
-    let file = make_file("src/surface_helpers.rs", Language::Rust, &content);
+    let file = make_file("src/surface_helpers_layout.rs", Language::Rust, &content);
     let results = run_audit(vec![file]);
     let aes406: Vec<_> = results
         .iter()
@@ -95,7 +117,7 @@ fn aes406_many_functions_no_violation() {
         .collect();
     assert!(
         aes406.is_empty(),
-        "surface with many functions should no longer trigger AES406 (fn count limit removed)"
+        "passive surface with 20 functions should be clean (below passive limit of 25)"
     );
 }
 

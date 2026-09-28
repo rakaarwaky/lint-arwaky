@@ -1,4 +1,4 @@
-// AES022: Surface file >10 functions
+// AES406: surface file over its tier function limit
 pub struct ManyFunctionsHandler;
 
 impl ManyFunctionsHandler {

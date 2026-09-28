@@ -72,6 +72,11 @@ pub fn extract_ts_metadata(tree: &tree_sitter::Tree, content: &str) -> TypeScrip
                                 meta.type_alias_declarations.push(name);
                             }
                         }
+                        "function_declaration" | "function" => {
+                            let name = child_by_field(child, content, "name").unwrap_or_default();
+                            let has_body = child.child_by_field_name("body").is_some();
+                            meta.function_definitions.push(TSFnItem { name, has_body });
+                        }
                         _ => {}
                     }
                 }

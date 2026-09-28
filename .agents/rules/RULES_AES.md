@@ -38,7 +38,7 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, local const, inline test, or public helper. |
 | AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports |
 | AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
-| AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
+| AES406 | Surface Role      | HIGH     | Role  | Surface file exceeds its tier function limit (smart 50 / utility 25 / passive 25); passive surface contains active domain logic. |
 
 
 | Code   | Name                | Severity | Group  | Description                                                                                                                                       |
@@ -347,7 +347,7 @@ Additional checks:
 
 Checks:
 
-- **File > 15 functions** — surface file has too many responsibilities
+- **Function count over tier limit** — a surface file has too many responsibilities. Limits are tier-specific: smart (`_command`/`_controller`/`_page`) 50, utility (`_hook`/`_store`/`_action`/`_screen`/`_router`) 25, passive (`_component`/`_view`/`_layout`) 25.
 - **Active domain logic in passive surface** — passive surfaces (`_component`, `_view`, `_layout`) must not contain business logic
 - **Role boundary violation** — surface enters forbidden territory (e.g. importing capabilities or non-aggregate contracts directly)
 

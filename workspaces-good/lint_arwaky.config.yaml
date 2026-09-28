@@ -433,7 +433,6 @@ architecture:
           "surface(hook|store|action|screen)",
           "surface(component|view|layout)",
         ]
-      max_functions: 15
       exceptions: []
 
     # ─── AES500: Orphan ───

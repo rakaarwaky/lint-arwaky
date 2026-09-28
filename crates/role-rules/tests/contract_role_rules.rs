@@ -107,6 +107,8 @@ fn capabilities_typescript_role_auditor_implements_protocol() {
     checker.check_capability_routing(&file, "capabilities", &mut v);
 }
 
+// ── Surface auditors → ISurfaceRoleProtocol ───────────────
+//
 // ── SurfaceRoleChecker → ISurfaceRoleProtocol ───────────────
 
 #[test]
