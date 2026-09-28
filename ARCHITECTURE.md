@@ -132,9 +132,9 @@ structure-rules group audits that layout.
 
 A feature folder is named after the feature it serves (`crates/calculator/`). It
 must carry at least one `agent_*_orchestrator` file and at least one
-`capabilities_*` file; a folder with only one side is incomplete (**AES702**). A
-member-level orchestrator coordinates every feature folder beneath it, so a
-capabilities folder under a member that ships an orchestrator is still driven.
+`capabilities_*` file; a folder with only one side is incomplete (**AES702**). The
+check is per folder — a member-level orchestrator routes across the features but
+does not answer for them, so a feature folder owes an orchestrator of its own.
 
 A feature folder documents itself with two files beside its source:
 

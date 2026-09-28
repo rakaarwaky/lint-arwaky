@@ -91,37 +91,3 @@ pub fn feature_dirs(member: &Path) -> Vec<PathBuf> {
     dirs.sort();
     dirs
 }
-
-/// Whether *member* directly holds an `agent_*_orchestrator` file. A
-/// member-level orchestrator coordinates every feature folder beneath it, so
-/// a feature folder that ships capabilities without its own agent is still
-/// driven.
-pub fn has_member_orchestrator(member: &Path) -> bool {
-    let Ok(entries) = std::fs::read_dir(member) else {
-        return false;
-    };
-    entries.flatten().any(|entry| {
-        entry
-            .path()
-            .file_stem()
-            .and_then(|n| n.to_str())
-            .is_some_and(|stem| {
-                stem.starts_with(AGENT_PREFIX) && stem.ends_with(ORCHESTRATOR_SUFFIX)
-            })
-    })
-}
-
-/// Which of *names* sit directly in *folder*. A folder's documents sit beside
-/// its source, not inside `src/`, so this reads one level.
-pub fn docs_present(folder: &Path, names: &[&str]) -> Vec<String> {
-    let Ok(entries) = std::fs::read_dir(folder) else {
-        return Vec::new();
-    };
-    let mut found: Vec<String> = entries
-        .flatten()
-        .map(|entry| entry.file_name().to_string_lossy().to_string())
-        .filter(|name| names.contains(&name.as_str()))
-        .collect();
-    found.sort();
-    found
-}

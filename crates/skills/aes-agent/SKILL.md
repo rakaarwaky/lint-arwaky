@@ -97,17 +97,18 @@ packages/<feature_name>/src/agent_<domain>_orchestrator.ts # TypeScript
 ```
 
 A feature folder is defined as a folder holding at least one `agent_*_orchestrator` and one
-`capabilities_*` file. If a folder holds only capabilities without an agent it is an
-**AES702** violation; if the agent sits in a surface-dominated folder it is also **AES702**
+`capabilities_*` file. If a folder holds only capabilities without an agent of its own it is
+an **AES702** violation; if the agent sits in a surface-dominated folder it is also **AES702**
 and the file should be moved out of the surface folder.
 
-The agent orchestrator file may alternatively sit at the **member root** (e.g.
-`modules/agent_<domain>_orchestrator.py` or `packages/agent_<domain>_orchestrator.ts`), in
-which case it coordinates every feature subfolder beneath that member. A capabilities folder
-beneath such a member is considered driven and is not flagged by AES702.
+An orchestrator may sit at the **member root** (e.g. `packages/agent_calculator_orchestrator.ts`)
+when it routes across features rather than serving one. That makes it a routing aggregate
+over the features beneath it — it holds one orchestrator per feature and delegates to them.
+It does **not** satisfy AES702 for those folders: each feature still owes an orchestrator of
+its own, so a capabilities folder under a member-level orchestrator is still a split feature.
 
 `agent_*_orchestrator` files are forbidden in `shared/` — that is an **AES701** violation and
-the file must be moved to a feature folder or the member root.
+the file must be moved to a feature folder.
 
 ### Feature folder documents
 

@@ -571,9 +571,11 @@ A workspace holds a locked `shared` folder that contains only taxonomy, utility,
 
 A feature folder is a member subdirectory (under `crates/`, `modules/`, or `packages/`) that carries business logic. It must hold at least one `agent_*_orchestrator` file AND at least one `capabilities_*` file. A folder with only one side of that pair is incomplete and should be split or merged into the correct home.
 
+The check is per folder. A member-level orchestrator — one sitting directly under `crates/`, `modules/`, or `packages/` rather than inside a feature — does **not** answer for the folders beneath it. Each feature owns its own orchestration, so a member-level orchestrator is a routing aggregate over the features, and a feature folder missing its own agent is still a split feature.
+
 | Violation type                    | Fires when                                                                    |
 | ------------------------------------ | ------------------------------------------------------------------------------- |
-| `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file.           |
+| `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file of its own. |
 | `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.        |
 
 ---
