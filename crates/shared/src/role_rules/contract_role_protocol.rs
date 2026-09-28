@@ -145,10 +145,66 @@ pub trait IUtilityRoleProtocol: Send + Sync {
 
 /// FR-RoleRules-006 (AES405): agent orchestrator composition.
 pub trait IAgentRoleProtocol: Send + Sync {
-    /// AES405: enforce agent type composition.
-    /// Rule 1 — >= 1 struct must implement an aggregate trait.
-    /// Rule 2 — max 3 types (struct + enum).
+    /// AES405: the composition sub-checks, in the order the orchestrator
+    /// calls them.
+    ///
+    /// Runs the implementor, type-budget, and Any-annotation rules only. The
+    /// remaining sub-checks are called individually by the orchestrator, each
+    /// against its own rule code, so a caller can run a specific rule without
+    /// paying for the rest. `check_agent_routing` is the historical entry
+    /// point and keeps its original three rules.
     fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>);
+
+    /// Rule 1 — at least 1 type implements an aggregate trait. MEDIUM.
+    fn check_agent_implementor(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// Rule 2 — at most 3 type declarations. HIGH.
+    fn check_agent_type_budget(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// No `Any` / `any` type annotations. MEDIUM.
+    fn check_agent_any_annotation(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// Block 2 (aggregate impl) must precede Block 3 (inherent impl). HIGH.
+    fn check_agent_block_order(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// No forbidden I/O operations in the agent file. MEDIUM.
+    fn check_agent_io_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// No file-level constants — policy constants belong in taxonomy. MEDIUM.
+    fn check_agent_constant_placement(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// Agent must coordinate at least 2 injected protocol subsystems. LOW.
+    ///
+    /// `feature_protocol_count` is the number of protocol traits the feature's
+    /// shared module declares. A feature that declares exactly one is a
+    /// genuine single-subsystem feature, and the check is skipped for it:
+    /// forcing a second protocol to satisfy a count would add a seam that does
+    /// no distinct job. A feature that declares none (a test fixture with no
+    /// shared module) is not skipped.
+    fn check_agent_subsystem_count(
+        &self,
+        file: &FileEntry,
+        feature_protocol_count: usize,
+        violations: &mut Vec<LintResult>,
+    );
+
+    /// No computation (`.sum()`, `.fold()`, `.reduce()`, arithmetic). MEDIUM.
+    fn check_agent_computation(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// No `@abstractmethod` in the agent file — an agent delegates, it does
+    /// not declare abstract methods. MEDIUM.
+    fn check_agent_abstract_method(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// No state mutation outside the constructor. MEDIUM.
+    ///
+    /// Direct reassignment (`self.x = ...`, `this.x = ...`, `self.x += ...`,
+    /// `&mut self`) is reported. Appending to a collection field that the
+    /// constructor initialised is a results buffer, not stored state, and is
+    /// allowed.
+    fn check_agent_stateless(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// No module-level free functions — they belong in a `*_utility.*` file. LOW.
+    fn check_agent_free_fn(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 }
 
 /// FR-RoleRules-007 (AES406): surface passive role.

@@ -5,6 +5,7 @@ pub mod taxonomy_layer_names_constant;
 pub mod taxonomy_role_limit_constant;
 pub mod taxonomy_role_request;
 pub mod taxonomy_role_response;
+pub mod taxonomy_role_token_constant;
 pub mod taxonomy_role_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -33,6 +34,9 @@ pub use taxonomy_role_limit_constant::MAX_CONTROL_FLOW;
 pub use taxonomy_role_limit_constant::MAX_PUBLIC_METHODS;
 pub use taxonomy_role_request::RoleRequest;
 pub use taxonomy_role_response::RoleResponse;
+pub use taxonomy_role_token_constant::AGENT_FORBIDDEN_IO_PYTHON;
+pub use taxonomy_role_token_constant::AGENT_FORBIDDEN_IO_RUST;
+pub use taxonomy_role_token_constant::AGENT_FORBIDDEN_IO_TYPESCRIPT;
 pub use taxonomy_role_vo::AesRoleViolation;
 pub use taxonomy_role_vo::LayerNames;
 pub use taxonomy_role_vo::all_core_layers;

@@ -16,14 +16,19 @@ pub struct DocOrchestrator {
     checker: Arc<dyn IDocCheckerProtocol>,
 }
 
-impl DocOrchestrator {
-    pub fn new(checker: Arc<dyn IDocCheckerProtocol>) -> Self {
-        Self { checker }
-    }
-}
-
+/// Aggregate trait implementation: the agent delegates to the injected
+/// checker and returns the response. Blocks come in the prescribed order
+/// so the file is a clean AES405 composition (aggregate impl before the
+/// constructor helper).
 impl IDocRunnerAggregate for DocOrchestrator {
     fn execute(&self, request: DocRequest) -> DocResponse {
         self.checker.audit(request)
+    }
+}
+
+/// Block 3: constructor — the only entry point into the orchestrator.
+impl DocOrchestrator {
+    pub fn new(checker: Arc<dyn IDocCheckerProtocol>) -> Self {
+        Self { checker }
     }
 }

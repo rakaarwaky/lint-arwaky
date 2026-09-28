@@ -3,14 +3,14 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-09-17
+Last Updated: 2026-09-28
 
 ## Current Condition
 
-- Done: `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17). Per-scenario evidence below.
+- Done: `cargo nextest run -p role-rules-lint-arwaky` → 222 passed, 0 failed at `72d2d58b` (2026-09-28). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
-- Next Action: Re-run `cargo test -p role_rules --lib --tests` after any code change to this crate
+- Next Action: Re-run `cargo nextest run -p role-rules-lint-arwaky` after any code change to this crate
 
 ## Backlog
 
@@ -20,7 +20,7 @@ Last Updated: 2026-09-17
 | ROLE-02 | FR-ROLERULES-002 | AES402 - Contract Primitive Restriction — 6 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | ROLE-03 | FR-ROLERULES-003 | AES403 - Capability Protocol Implementation — 6 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | ROLE-04 | FR-ROLERULES-004 | AES404 - Utility Purity — 10 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ROLE-05 | FR-ROLERULES-005 | AES405 - Agent Orchestrator Composition — 7 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ROLE-05 | FR-ROLERULES-005 | AES405 - Agent Orchestrator Composition — 17 sub-checks verified across 3 languages | P0 | Done | `cargo nextest run -p role-rules-lint-arwaky` → 222 passed, 0 failed at `72d2d58b` (2026-09-28) | @raka | None | 2026-09-28 |
 | ROLE-06 | FR-ROLERULES-006 | AES406 - Surface Passive Role — 7 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | ROLE-07 | FR-ROLERULES-007 | Classification & Configuration — 9 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 
@@ -67,6 +67,27 @@ Last Updated: 2026-09-17
 | Agent file with implementor + 2 helpers (3 types) | No violation | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Agent file with `Any` type annotation | AES405 — AnyTypeAnnotation | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Agent file with `: Any` in comment | No violation (comment skipped) | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
+| Agent with aggregate impl after inherent impl (Rust) | AES405 — BlockOrder | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with aggregate impl before inherent impl (Rust) | No violation | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with `std::fs::` call (Rust) | AES405 — ForbiddenIo | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with file-level `const` (Rust) | AES405 — ConstantPlacement | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with `vals.iter().sum::<usize>()` | AES405 — Computation | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with a body-less `fn` inside a `trait` (Rust) | AES405 — AbstractMethod | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with `&mut self` method (Rust) | AES405 — NotStateless | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with a file-level `fn` (Rust) | AES405 — FreeFunction | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Python agent with `@abstractmethod` | AES405 — AbstractMethod | Automated | `unit_role_rules_agent_python_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Python agent with `self.x = …` outside `__init__` | AES405 — NotStateless | Automated | `unit_role_rules_agent_python_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| TS agent with `this.x = …` outside the constructor | AES405 — NotStateless | Automated | `unit_role_rules_agent_ts_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with 1 injected protocol, feature declares 2+ | AES405 — SingleExecutionGoal | Automated | `unit_role_rules_agent_{rust,python,ts}_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with 2 injected protocols | No violation | Automated | `unit_role_rules_agent_{rust,python,ts}_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with 1 injected protocol, feature declares 1 | No violation (single-subsystem feature) | Automated | `unit_role_rules_agent_{rust,python,ts}_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Agent with 4 injected protocols of one type, feature declares 1 | No violation (not a single-subsystem feature) | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Python agent with `__init__` params wrapped over lines | Params counted by annotation | Automated | `unit_role_rules_agent_python_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Python agent with a defaulted `dep: IProtocol = None` param | Param counted by annotation | Automated | `unit_role_rules_agent_python_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| TS agent with a `Deps` interface of protocol fields | Interface members counted | Automated | `unit_role_rules_agent_ts_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| TS agent with wrapped `constructor(private readonly …)` | Shorthand params joined and counted | Automated | `unit_role_rules_agent_ts_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Rust agent whose last struct field has no trailing comma | Last field counted | Automated | `unit_role_rules_agent_rust_role_auditor.rs` | cargo nextest -p role-rules-lint-arwaky | `72d2d58b` |
+| Feature declaring a dead protocol trait nothing references | Dead trait excluded from the count | Automated | `crates/doc-rules` self-lint → 0 violations | `lint-arwaky-cli check .` | `72d2d58b` |
 | Passive surface with 51 functions (max=50) | AES406 — TooManyMethods | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Passive surface with 50 functions | No violation | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Smart surface with 100 functions | No violation (exempt) | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
