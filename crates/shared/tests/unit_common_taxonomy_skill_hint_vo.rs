@@ -79,7 +79,7 @@ fn unknown_layer_falls_back_to_lint_skill() {
     assert_eq!(hint.skill, None);
     assert_eq!(
         hint.guidance(),
-        "lint-arwaky-cli skill read aes-lint-arwaky"
+        "[run cli \"lint-arwaky-cli skill read aes-lint-arwaky\"]"
     );
 }
 
@@ -162,7 +162,7 @@ fn guidance_string_for_skill() {
     let hint: SkillHint = resolve_skill_hint("AES403", Some("capabilities"));
     assert_eq!(
         hint.guidance(),
-        "lint-arwaky-cli skill read aes-capabilities"
+        "[run cli \"lint-arwaky-cli skill read aes-capabilities\"]"
     );
 }
 
@@ -171,7 +171,7 @@ fn guidance_string_for_fix_command() {
     let hint: SkillHint = resolve_skill_hint("AES203", Some("agent"));
     assert_eq!(
         hint.guidance(),
-        "lint-arwaky-cli fix <path> --filter AES203"
+        "[run cli \"lint-arwaky-cli fix <path> --filter AES203\"]"
     );
 }
 
