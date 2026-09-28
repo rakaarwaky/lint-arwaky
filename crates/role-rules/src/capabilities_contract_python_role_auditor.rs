@@ -452,8 +452,9 @@ fn carries_operation_name(params: &str) -> bool {
 
 /// True when the lines under a `def` header are the `...` or `pass` stub.
 ///
-/// A docstring between the header and the stub counts as the stub: a contract
-/// method that documents itself and then raises nothing is a declaration.
+/// Handles multi-line signatures: the body starts after the closing `)` of the
+/// parameter list, not on the line immediately following `def`.
+/// A docstring between the header and the stub counts as the stub.
 fn is_stub_body(lines: &[&str], header_idx: usize, header_indent: usize) -> bool {
     // A one-line `def ...: ...` is itself the stub.
     if lines[header_idx].trim_end().ends_with(": ...")
@@ -461,26 +462,52 @@ fn is_stub_body(lines: &[&str], header_idx: usize, header_indent: usize) -> bool
     {
         return true;
     }
-    let mut idx = header_idx + 1;
-    loop {
+    // Walk forward to find the end of the parameter list: the `def` line plus
+    // any continuation lines until parentheses balance.
+    let mut idx = header_idx;
+    let mut paren_depth: i32 = 0;
+    // Count parens on the header line itself
+    for ch in lines[idx].chars() {
+        match ch {
+            '(' => paren_depth += 1,
+            ')' => paren_depth -= 1,
+            _ => {}
+        }
+    }
+    // If parens are still open, consume continuation lines until they close
+    while paren_depth > 0 {
+        idx += 1;
         let Some(line) = lines.get(idx) else {
+            return true; // ran off the end — treat as stub
+        };
+        for ch in line.chars() {
+            match ch {
+                '(' => paren_depth += 1,
+                ')' => paren_depth -= 1,
+                _ => {}
+            }
+        }
+    }
+    // Now `idx` is the last line of the signature (the one with the closing `)`).
+    // The body starts on the next line.
+    let mut body_idx = idx + 1;
+    loop {
+        let Some(line) = lines.get(body_idx) else {
             return true;
         };
         let trimmed = line.trim();
         if trimmed.is_empty() {
-            idx += 1;
+            body_idx += 1;
             continue;
         }
         let indent = line.len() - line.trim_start().len();
         if indent <= header_indent {
-            // Dedented out of the method body — a bare `def ...:` with no
-            // implementation is still a declaration, not a body.
             return true;
         }
-        // A docstring followed (or not) by the stub is documentation, not
-        // behaviour. Skip it, then look for the `...` / `pass` terminator.
         if is_docstring_start(trimmed) {
-            idx += docstring_span(lines, idx, indent);
+            // `docstring_span` counts the lines the docstring occupies, so
+            // step past it from the current line.
+            body_idx += docstring_span(lines, body_idx, indent);
             continue;
         }
         return trimmed == "..." || trimmed == "pass" || trimmed.starts_with("...");
