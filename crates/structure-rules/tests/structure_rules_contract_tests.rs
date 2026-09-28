@@ -201,10 +201,11 @@ fn aes702_fires_when_the_audit_root_is_a_member_directory() {
     );
 }
 
-/// A member-level orchestrator drives every feature folder beneath it, so a
-/// feature folder holding only capabilities is not a split feature.
+/// A member-level orchestrator does not answer for the feature folders beneath
+/// it. Each feature owns its own orchestration, so a capabilities folder with no
+/// agent of its own is still a split feature.
 #[test]
-fn aes702_stays_silent_when_the_member_holds_the_orchestrator() {
+fn aes702_fires_when_the_member_holds_the_orchestrator_instead() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     write(
@@ -219,8 +220,29 @@ fn aes702_stays_silent_when_the_member_holds_the_orchestrator() {
     );
     let findings = audit(root);
     assert!(
+        has(&findings, "AES702", "feature_missing_agent"),
+        "each feature folder owes its own orchestrator; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes702_stays_silent_when_a_feature_folder_owns_both_layers() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("packages/addition/src/agent_addition_orchestrator.ts")
+            .as_path(),
+        "export class AdditionOrchestrator {}",
+    );
+    write(
+        root.join("packages/addition/src/capabilities_add_analyzer.ts")
+            .as_path(),
+        "export class AddAnalyzer {}",
+    );
+    let findings = audit(root);
+    assert!(
         !has(&findings, "AES702", "feature_missing_agent"),
-        "a member-level orchestrator coordinates the feature folders; got: {findings:#?}"
+        "a feature folder owning both layers is complete; got: {findings:#?}"
     );
 }
 

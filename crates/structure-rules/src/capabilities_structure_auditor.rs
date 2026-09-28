@@ -30,7 +30,6 @@ impl IStructureAuditProtocol for StructureAuditor {
         let mut findings = Vec::new();
 
         for member in utility_structure_parsers::member_dirs(&ws_root) {
-            let member_has_agent = utility_structure_parsers::has_member_orchestrator(&member);
             for folder in utility_structure_parsers::feature_dirs(&member) {
                 let inventory = utility_structure_parsers::inventory(&folder);
                 let folder_rel = match folder.strip_prefix(&ws_root) {
@@ -40,7 +39,7 @@ impl IStructureAuditProtocol for StructureAuditor {
                 if folder_name(&folder) == consts::KERNEL_DIR {
                     check_shared_purity(&folder_rel, &ws_root, &inventory, &mut findings);
                 } else {
-                    check_feature_health(&folder_rel, &inventory, member_has_agent, &mut findings);
+                    check_feature_health(&folder_rel, &inventory, &mut findings);
                     check_feature_docs(&folder, &folder_rel, &inventory, &mut findings);
                     check_surface_purity(&folder_rel, &ws_root, &inventory, &mut findings);
                     if inventory.is_surface_dominated() {
@@ -166,16 +165,15 @@ fn missing_docs<'a>(folder: &Path, names: &'a [&'a str]) -> Vec<&'a str> {
 
 /// AES702 — a feature folder carries capabilities and agents. One without the
 /// other is a split feature: the orchestrator has nothing to coordinate, or
-/// the capabilities have no orchestrator driving them. A member-level
-/// orchestrator counts for every feature folder beneath it, since it is what
-/// drives them.
+/// the capabilities have no orchestrator driving them. The check is per
+/// folder — a member-level orchestrator does not answer for the folders
+/// beneath it, because each feature owns its own orchestration.
 fn check_feature_health(
     rel: &str,
     inventory: &FolderInventory,
-    member_has_agent: bool,
     findings: &mut Vec<StructureFinding>,
 ) {
-    match (inventory.has_capabilities, inventory.has_orchestrator || member_has_agent) {
+    match (inventory.has_capabilities, inventory.has_orchestrator) {
         (true, false) => findings.push(StructureFinding::new(
             consts::RULE_CODE_FEATURE_HEALTH,
             consts::FEATURE_HEALTH_VIOLATION_MISSING_AGENT,
@@ -184,7 +182,7 @@ fn check_feature_health(
                 "feature folder '{rel}' holds capabilities but no agent_*_orchestrator file; a feature folder needs at least one agent and one capability"
             ),
         )),
-        (false, true) if inventory.has_orchestrator => findings.push(StructureFinding::new(
+        (false, true) => findings.push(StructureFinding::new(
             consts::RULE_CODE_FEATURE_HEALTH,
             consts::FEATURE_HEALTH_VIOLATION_MISSING_CAPABILITY,
             rel,
