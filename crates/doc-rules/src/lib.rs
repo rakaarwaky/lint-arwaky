@@ -1,4 +1,4 @@
-// doc-rules — structural invariants for the AES document chain (AES601–AES605)
+// doc-rules — structural invariants for the AES document chain (AES601–AES607)
 
 // ── Capability (stateful check logic) ────────────────────────────────────────
 pub mod capabilities_doc_checker;
@@ -6,5 +6,8 @@ pub mod capabilities_doc_checker;
 // ── Agent (orchestration) ─────────────────────────────────────────────────────
 pub mod agent_doc_orchestrator;
 
-// ── Root (composition, wiring) ────────────────────────────────────────────────
+// ── Utility (stateless counters) ─────────────────────────────────────────────
+pub mod utility_protocol_counter;
+
+// ── Root (composition, wiring) ───────────────────────────────────────────────
 pub mod root_doc_rules_container;

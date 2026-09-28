@@ -67,6 +67,13 @@ pub const FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR: &str = "no_orchestrator";
 /// Kernel folders (shared) carry a doc pair when they should be empty.
 pub const FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
 
+/// ─── AES607 — FR/protocol class parity ─────────────────────────────────────
+pub const RULE_CODE_FR_PROTOCOL_PARITY: &str = "AES607";
+
+/// The FRD declares a different number of requirements than the feature's
+/// contract module declares protocol classes.
+pub const FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH: &str = "protocol_count_mismatch";
+
 /// ─── AES606 — Agent doc structure ───────────────────────────────────────────
 pub const RULE_CODE_AGENT_DOC_STRUCTURE: &str = "AES606";
 

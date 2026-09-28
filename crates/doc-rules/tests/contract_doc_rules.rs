@@ -1,6 +1,6 @@
 // PURPOSE: contract tests for doc-rules — each invariant must fire on a bad
 // document and stay silent on a conforming one. Findings carry a code
-// (AES601–AES605) plus a violation_type, and both are asserted.
+// (AES601–AES607) plus a violation_type, and both are asserted.
 use doc_rules_lint_arwaky::root_doc_rules_container::RootDocRulesContainer;
 use shared::doc_rules::taxonomy_doc_request::DocRequest;
 use shared::doc_rules::taxonomy_doc_response::DocResponse;
@@ -1057,5 +1057,144 @@ Entry.
     assert!(
         !has(&findings, "AES606", "h2_missing") && !has(&findings, "AES606", "h2_unexpected"),
         "numbered sections must match after index stripping; got: {findings:#?}"
+    );
+}
+
+// ── AES607: FR/protocol class parity ──────────────────────────────────────
+
+/// Write the shared contract module for the `sample` feature, declaring
+/// *traits* protocol classes. The aggregate trait is never counted. When
+/// there is more than one class, the last one moves to a second file so the
+/// count proves a module spreads its classes over many files.
+fn write_protocol_module(dir: &Path, traits: usize) {
+    let module = dir.join("crates/shared/src/sample");
+    fs::create_dir_all(&module).unwrap();
+    let split = traits > 1;
+    let mut first = String::from("//! sample contract module\n\n");
+    for n in 0..traits {
+        if split && n + 1 == traits {
+            continue;
+        }
+        first.push_str(&format!(
+            "pub trait ISample{n}Protocol: Send + Sync {{}}\n\n"
+        ));
+    }
+    first.push_str("pub trait ISampleAggregate: Send + Sync {}\n");
+    fs::write(module.join("contract_sample_protocol.rs"), first).unwrap();
+    if split {
+        let last = traits - 1;
+        fs::write(
+            module.join("contract_sample_extra_protocol.rs"),
+            format!(
+                "//! second contract file for the sample feature\n\n\
+                 pub trait ISample{last}Protocol: Send + Sync {{}}\n"
+            ),
+        )
+        .unwrap();
+    }
+}
+
+/// A FRD declaring *count* requirements, all structurally conforming.
+fn frd_with_fr_count(count: usize) -> String {
+    let mut frd = conforming_frd();
+    for n in 2..=count {
+        frd.push_str(&format!(
+            "\n### FR-SAMPLE-{n:03}: Do Another Thing\n\n\
+             - **Description**: The feature performs a second responsibility.\n\
+             - **Input**: A request value object.\n\
+             - **Output**: A response value object.\n\
+             - **Business Rules**: The capability is stateless.\n\
+             - **Edge Cases**: An absent input yields a default.\n\
+             - **Error Handling**: Failures surface as a reason-coded outcome.\n"
+        ));
+    }
+    frd
+}
+
+#[test]
+fn aes607_stays_silent_when_fr_count_equals_protocol_class_count() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &frd_with_fr_count(3));
+    write_protocol_module(tmp.path(), 3);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES607", "protocol_count_mismatch"),
+        "3 requirements and 3 protocol classes are aligned; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_fires_when_the_frd_declares_more_requirements_than_protocol_classes() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &frd_with_fr_count(3));
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES607", "protocol_count_mismatch"),
+        "3 requirements against 2 protocol classes must fire; got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES607" && v == "protocol_count_mismatch")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    assert!(
+        message.contains("3 requirements") && message.contains("2 protocol classes"),
+        "the message must state both counts; got: {message}"
+    );
+    assert!(
+        message.contains("split the methods into more classes")
+            && message.contains("merge the requirements down"),
+        "the message must name both fix directions; got: {message}"
+    );
+}
+
+#[test]
+fn aes607_fires_when_the_code_declares_more_protocol_classes_than_requirements() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &frd_with_fr_count(1));
+    write_protocol_module(tmp.path(), 3);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES607", "protocol_count_mismatch"),
+        "1 requirement against 3 protocol classes must fire; got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES607" && v == "protocol_count_mismatch")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    assert!(
+        message.contains("split the requirements up to match")
+            && message.contains("merge the classes down"),
+        "the message must name both fix directions for this direction; got: {message}"
+    );
+}
+
+#[test]
+fn aes607_ignores_aggregate_traits_when_counting_protocol_classes() {
+    let tmp = tempfile::tempdir().unwrap();
+    // One requirement, one protocol class, and one aggregate: the aggregate
+    // is a composite entry point rather than a capability seam, so the
+    // counts are aligned and nothing fires.
+    write_workspace(tmp.path(), &frd_with_fr_count(1));
+    write_protocol_module(tmp.path(), 1);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES607", "protocol_count_mismatch"),
+        "aggregates are not capability seams; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_stays_silent_when_the_feature_has_no_shared_contract_module() {
+    let tmp = tempfile::tempdir().unwrap();
+    // No crates/shared/src/sample/ module, so there is nothing to compare
+    // against and the check stays out of the way.
+    write_workspace(tmp.path(), &frd_with_fr_count(2));
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES607", "protocol_count_mismatch"),
+        "a feature with no shared contract module cannot mismatch; got: {findings:#?}"
     );
 }

@@ -1,12 +1,14 @@
 // PURPOSE: DocChecker — the invariant auditor behind IDocCheckerProtocol
 //
 // Walks a workspace, collects the documents the chain recognizes, and audits
-// each against five document categories (AES601–AES605). Each finding carries
+// each against five document categories (AES601–AES607). Each finding carries
 // a machine-readable violation_type so consumers can route on it.
 use shared::doc_rules::contract_doc_protocol::IDocCheckerProtocol;
 use shared::doc_rules::taxonomy_doc_constant as consts;
 use shared::doc_rules::taxonomy_doc_request::{DocFinding, DocRequest, DocSource};
 use shared::doc_rules::taxonomy_doc_response::DocResponse;
+
+use crate::utility_protocol_counter::{count_fr_headings, count_protocol_traits};
 
 use std::collections::BTreeSet;
 use std::fs;
@@ -238,6 +240,7 @@ impl DocChecker {
         if name == consts::FRD_DOC {
             self.check_fr_id_format(doc, &mut findings);
             self.check_fr_fields(doc, &mut findings);
+            self.check_fr_protocol_parity(doc, root, &mut findings);
         }
 
         // ── AES602: Section structure ──
@@ -333,6 +336,60 @@ impl DocChecker {
                 ),
             ));
         }
+    }
+
+    /// The FRD declares a different number of requirements than the feature's
+    /// contract module declares protocol classes.
+    ///
+    /// One protocol class is one capability seam, and one seam is one
+    /// requirement, so the two counts must be equal. A single protocol file
+    /// may hold many classes — count the classes, never the files. Aggregate
+    /// traits are not capability seams and are excluded.
+    fn check_fr_protocol_parity(
+        &self,
+        doc: &DocSource,
+        root: &Path,
+        findings: &mut Vec<DocFinding>,
+    ) {
+        let Some(fr_count) = count_fr_headings(&doc.text) else {
+            return;
+        };
+        let Some(feature) = doc
+            .path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+        else {
+            return;
+        };
+        // The feature crate uses `-` where the shared module uses `_`.
+        let module = feature.replace('-', "_");
+        let Some(protocol_count) =
+            count_protocol_traits(&root.join("crates/shared/src").join(&module))
+        else {
+            return;
+        };
+        if fr_count == protocol_count {
+            return;
+        }
+        let direction = if protocol_count > fr_count {
+            "the code has more protocol classes than requirements; either split the requirements \
+             up to match, or merge the classes down — see the 4-direction table in \
+             HOW-TO-MAKE-FRD.md"
+        } else {
+            "the code has fewer protocol classes than requirements; either merge the requirements \
+             down to match, or split the methods into more classes — see the 4-direction table in \
+             HOW-TO-MAKE-FRD.md"
+        };
+        findings.push(DocFinding::new(
+            "",
+            consts::RULE_CODE_FR_PROTOCOL_PARITY,
+            consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
+            format!(
+                "FRD declares {fr_count} requirements but the feature's contract module declares \
+                 {protocol_count} protocol classes; {direction}"
+            ),
+        ));
     }
 
     /// Every requirement states all six FR fields.
