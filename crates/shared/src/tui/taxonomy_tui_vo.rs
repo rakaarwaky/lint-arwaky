@@ -288,7 +288,14 @@ pub struct AppState {
     pub search_query: String,
     pub search_mode: bool,
     pub show_help: bool,
+    /// Preview mode saved when the help overlay opens; restored when it closes
+    /// so help never permanently overwrites the panel the user was on.
+    pub preview_mode_before_help: Option<PreviewMode>,
     pub show_path_dialog: bool,
+    /// `true` while the path dialog is the startup prompt (Esc quits the TUI);
+    /// `false` once a root has been confirmed, so Esc on a reopened dialog
+    /// cancels instead of terminating the session.
+    pub dialog_is_first_run: bool,
     pub path_input: String,
     pub should_quit: bool,
     pub violation_count: usize,
@@ -343,7 +350,9 @@ impl AppState {
             search_query: String::new(),
             search_mode: false,
             show_help: false,
+            preview_mode_before_help: None,
             show_path_dialog: true,
+            dialog_is_first_run: true,
             path_input: String::new(),
             should_quit: false,
             violation_count: 0,

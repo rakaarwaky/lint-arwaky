@@ -1,6 +1,7 @@
 // PURPOSE: Module declarations for tui (Surface-only crate)
 // No contract/aggregate/capabilities layers — surfaces call domain aggregates directly.
 pub mod root_tui_container;
+pub mod surface_confirm_screen;
 pub mod surface_event_action;
 pub mod surface_file_list_view;
 pub mod surface_lint_action;
