@@ -15,6 +15,8 @@ pub struct ExternalLintContext {
     pub has_python: bool,
     /// Whether the project contains JavaScript/TypeScript source files.
     pub has_js: bool,
+    /// Whether the project contains Markdown source files.
+    pub has_markdown: bool,
     /// Paths to ignore from config (combined with built-in defaults).
     pub ignored_paths: Vec<String>,
     /// Adapter configuration entries from config (name, weight, timeout, enabled).

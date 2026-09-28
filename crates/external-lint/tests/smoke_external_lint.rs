@@ -88,7 +88,7 @@ const SMOKE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 fn smoke_selector_creation_and_selection() {
     let start = Instant::now();
     let selector = external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true);
+    let selected = selector.select_adapters(true, true, true, false);
     assert_eq!(selected.len(), 9);
     assert!(start.elapsed() < SMOKE_TIMEOUT);
 }
@@ -97,7 +97,7 @@ fn smoke_selector_creation_and_selection() {
 fn smoke_selector_rust_only() {
     let start = Instant::now();
     let selector = external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, false);
+    let selected = selector.select_adapters(true, false, false, false);
     assert_eq!(selected.len(), 3);
     assert!(start.elapsed() < SMOKE_TIMEOUT);
 }
@@ -106,7 +106,7 @@ fn smoke_selector_rust_only() {
 fn smoke_selector_python_only() {
     let start = Instant::now();
     let selector = external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, false);
+    let selected = selector.select_adapters(false, true, false, false);
     assert_eq!(selected.len(), 3);
     assert!(start.elapsed() < SMOKE_TIMEOUT);
 }
@@ -115,7 +115,7 @@ fn smoke_selector_python_only() {
 fn smoke_selector_js_only() {
     let start = Instant::now();
     let selector = external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, true);
+    let selected = selector.select_adapters(false, false, true, false);
     assert_eq!(selected.len(), 3);
     assert!(start.elapsed() < SMOKE_TIMEOUT);
 }

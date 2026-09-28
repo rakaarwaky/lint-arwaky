@@ -49,7 +49,7 @@ fn orchestrator_health_check() {
     let result = orch
         .execute(MaintenanceRequest::health_check())
         .into_health();
-    assert_eq!(result.adapters.len(), 9);
+    assert_eq!(result.adapters.len(), 10, "Should check 10 adapters");
 }
 
 #[test]

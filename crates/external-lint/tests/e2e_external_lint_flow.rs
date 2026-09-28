@@ -20,6 +20,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
@@ -63,12 +64,39 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
     }
 }
 
+/// Minimal `IJsToolResolutionProtocol` so the markdown adapter can be wired
+/// without a real filesystem.
+struct MockJsResolution;
+impl IJsToolResolutionProtocol for MockJsResolution {
+    fn resolve_js_cmd(
+        &self,
+        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: Vec<String>,
+        _: &FilePath,
+    ) -> Option<Vec<String>> {
+        Some(vec!["markdownlint".to_string()])
+    }
+    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
+        path.clone()
+    }
+    fn js_apply_fix(
+        &self,
+        _: &FilePath,
+        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &str,
+    ) -> Result<shared::common::taxonomy_message_vo::ComplianceStatus, LinterOperationError> {
+        Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
+            false,
+        ))
+    }
+}
+
 // ─── E2E: Rust-only project ───────────────────────────────
 
 #[test]
 fn e2e_rust_only_project_selects_clippy_rustfmt_audit() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, false);
+    let selected = selector.select_adapters(true, false, false, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["clippy", "rustfmt", "cargo-audit"]);
 }
@@ -78,7 +106,7 @@ fn e2e_rust_only_project_selects_clippy_rustfmt_audit() {
 #[test]
 fn e2e_python_only_project_selects_ruff_mypy_bandit() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, false);
+    let selected = selector.select_adapters(false, true, false, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["ruff", "mypy", "bandit"]);
 }
@@ -88,18 +116,28 @@ fn e2e_python_only_project_selects_ruff_mypy_bandit() {
 #[test]
 fn e2e_js_only_project_selects_eslint_prettier_tsc() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, true);
+    let selected = selector.select_adapters(false, false, true, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["eslint", "prettier", "tsc"]);
+}
+
+// ─── E2E: Markdown-only project ───────────────────────────
+
+#[test]
+fn e2e_markdown_only_project_selects_markdownlint() {
+    let selector = CapabilitiesExternalLintSelector::with_defaults();
+    let selected = selector.select_adapters(false, false, false, true);
+    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    assert_eq!(names, vec!["markdownlint"]);
 }
 
 // ─── E2E: Mixed project ───────────────────────────────────
 
 #[test]
-fn e2e_mixed_project_selects_all_nine() {
+fn e2e_mixed_project_selects_all_ten() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true);
-    assert_eq!(selected.len(), 9);
+    let selected = selector.select_adapters(true, true, true, true);
+    assert_eq!(selected.len(), 10);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert!(names.contains(&"clippy"));
     assert!(names.contains(&"rustfmt"));
@@ -110,6 +148,7 @@ fn e2e_mixed_project_selects_all_nine() {
     assert!(names.contains(&"eslint"));
     assert!(names.contains(&"prettier"));
     assert!(names.contains(&"tsc"));
+    assert!(names.contains(&"markdownlint"));
 }
 
 // ─── E2E: No languages detected ───────────────────────────
@@ -117,7 +156,7 @@ fn e2e_mixed_project_selects_all_nine() {
 #[test]
 fn e2e_no_languages_detected_selects_nothing() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false);
+    let selected = selector.select_adapters(false, false, false, false);
     assert!(selected.is_empty());
 }
 
@@ -127,7 +166,7 @@ fn e2e_no_languages_detected_selects_nothing() {
 fn e2e_full_pipeline_rust_python() {
     // Step 1: Select adapters (simulating language detection)
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, false);
+    let selected = selector.select_adapters(true, true, false, false);
     let selected_names: Vec<String> = selected.iter().map(|a| a.value().to_string()).collect();
 
     // Step 2: Build orchestrator with matching adapters
@@ -202,4 +241,52 @@ fn e2e_full_pipeline_rust_python() {
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let results = orchestrator.scan_all(&path);
     assert!(results.values.is_empty()); // adapters scan empty dirs → no findings
+}
+
+// ─── E2E: Full pipeline — Markdown project ────────────────
+
+#[test]
+fn e2e_full_pipeline_markdown_only() {
+    let selector = CapabilitiesExternalLintSelector::with_defaults();
+    let selected = selector.select_adapters(false, false, false, true);
+    let selected_names: Vec<String> = selected.iter().map(|a| a.value().to_string()).collect();
+
+    let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
+    let files = vec!["README.md".to_string(), "CHANGELOG.md".to_string()];
+    let fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+        Arc::new(MockFilesystem::with_files(files.clone()));
+    let tr_arc: Arc<dyn shared::filesystem::IToolResolutionProtocol> =
+        Arc::new(MockFilesystem::with_files(files.clone()));
+    let io_arc: Arc<dyn shared::filesystem::IFileSystemIOProtocol> =
+        Arc::new(MockFilesystem::with_files(files.clone()));
+
+    let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
+    for name in &selected_names {
+        if name == "markdownlint" {
+            adapters.insert(
+                name.clone(),
+                Arc::new(external_lint_lint_arwaky::MarkdownLintAdapter::new(
+                    lint_exec.clone(),
+                    Arc::new(MockJsResolution),
+                    io_arc.clone(),
+                    tr_arc.clone(),
+                )),
+            );
+        }
+    }
+
+    let deps = ExternalLintDeps {
+        adapters,
+        filesystem: fs_arc.clone(),
+        filesystem_io: io_arc.clone(),
+        selector: Arc::new(selector),
+    };
+    let orchestrator = ExternalLintOrchestrator::new(deps);
+    let adapter_names = orchestrator.adapter_names();
+    let registered: Vec<&str> = adapter_names.iter().map(|a| a.value()).collect();
+    assert!(registered.contains(&"markdownlint"));
+
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let results = orchestrator.scan_all(&path);
+    assert!(results.values.is_empty()); // mock executor returns no violations
 }

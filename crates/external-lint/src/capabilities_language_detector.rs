@@ -5,7 +5,8 @@ use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 /// FR-ExternalLint-001: lightweight extension walk that classifies which
-/// languages (Rust, Python, JS/TS) are present under `path`.
+/// languages (Rust, Python, JS/TS) and content types (Markdown) are present
+/// under `path`.
 ///
 /// Delegates to the filesystem aggregate's `discover_files` request and inspects
 /// the file extensions of every path returned.
@@ -14,7 +15,7 @@ pub struct LanguageDetector {
 }
 
 impl ILanguageDetectProtocol for LanguageDetector {
-    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool) {
+    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool, bool) {
         let files = self
             .filesystem
             .execute(FilesystemRequest::discover_files(std::path::Path::new(
@@ -26,7 +27,8 @@ impl ILanguageDetectProtocol for LanguageDetector {
         let has_js = files.iter().any(|f| {
             f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
         });
-        (has_rust, has_python, has_js)
+        let has_markdown = files.iter().any(|f| f.ends_with(".md"));
+        (has_rust, has_python, has_js, has_markdown)
     }
 }
 

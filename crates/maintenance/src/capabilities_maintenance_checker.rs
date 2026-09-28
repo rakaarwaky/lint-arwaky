@@ -76,6 +76,12 @@ impl IAdapterHealthProtocol for MaintenanceChecker {
             ("eslint", "eslint", &["--version"] as &[&str], "JS/TS"),
             ("prettier", "prettier", &["--version"] as &[&str], "JS/TS"),
             ("tsc", "tsc", &["--version"] as &[&str], "JS/TS"),
+            (
+                "markdownlint-cli",
+                "markdownlint-cli",
+                &["--version"] as &[&str],
+                "Markdown",
+            ),
         ] {
             let status = self.check_tool(bin, args, false);
             adapters.push(HealthCheckAdapterVO {

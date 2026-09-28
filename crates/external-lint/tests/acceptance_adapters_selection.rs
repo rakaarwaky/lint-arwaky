@@ -12,17 +12,17 @@ use external_lint_lint_arwaky::capabilities_external_lint_selector::Capabilities
 // ─── Acceptance: Default selector configuration ───────────
 
 #[test]
-fn acceptance_selector_has_exactly_nine_default_adapters() {
+fn acceptance_selector_has_exactly_ten_default_adapters() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    // All languages present → all 9 adapters
-    let selected = selector.select_adapters(true, true, true);
-    assert_eq!(selected.len(), 9, "Expected 9 adapters for mixed project");
+    // All languages present → all 10 adapters (3 rust + 3 python + 3 js + 1 markdown)
+    let selected = selector.select_adapters(true, true, true, true);
+    assert_eq!(selected.len(), 10, "Expected 10 adapters for mixed project");
 }
 
 #[test]
 fn acceptance_rust_adapters_are_clippy_rustfmt_cargo_audit() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, false);
+    let selected = selector.select_adapters(true, false, false, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["clippy", "rustfmt", "cargo-audit"]);
 }
@@ -30,7 +30,7 @@ fn acceptance_rust_adapters_are_clippy_rustfmt_cargo_audit() {
 #[test]
 fn acceptance_python_adapters_are_ruff_mypy_bandit() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, false);
+    let selected = selector.select_adapters(false, true, false, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["ruff", "mypy", "bandit"]);
 }
@@ -38,9 +38,17 @@ fn acceptance_python_adapters_are_ruff_mypy_bandit() {
 #[test]
 fn acceptance_js_adapters_are_eslint_prettier_tsc() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, true);
+    let selected = selector.select_adapters(false, false, true, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["eslint", "prettier", "tsc"]);
+}
+
+#[test]
+fn acceptance_markdown_adapters_are_markdownlint() {
+    let selector = CapabilitiesExternalLintSelector::with_defaults();
+    let selected = selector.select_adapters(false, false, false, true);
+    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    assert_eq!(names, vec!["markdownlint"]);
 }
 
 // ─── Acceptance: Two-language combinations ────────────────
@@ -48,7 +56,7 @@ fn acceptance_js_adapters_are_eslint_prettier_tsc() {
 #[test]
 fn acceptance_rust_plus_python() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, false);
+    let selected = selector.select_adapters(true, true, false, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names.len(), 6);
     assert!(names.contains(&"clippy"));
@@ -65,7 +73,7 @@ fn acceptance_rust_plus_python() {
 #[test]
 fn acceptance_rust_plus_js() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, true);
+    let selected = selector.select_adapters(true, false, true, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names.len(), 6);
     assert!(names.contains(&"clippy"));
@@ -80,7 +88,7 @@ fn acceptance_rust_plus_js() {
 #[test]
 fn acceptance_python_plus_js() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, true);
+    let selected = selector.select_adapters(false, true, true, false);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names.len(), 6);
     assert!(names.contains(&"ruff"));
@@ -92,12 +100,24 @@ fn acceptance_python_plus_js() {
     assert!(!names.contains(&"clippy"));
 }
 
+#[test]
+fn acceptance_js_plus_markdown() {
+    let selector = CapabilitiesExternalLintSelector::with_defaults();
+    let selected = selector.select_adapters(false, false, true, true);
+    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    assert_eq!(names.len(), 4);
+    assert!(names.contains(&"eslint"));
+    assert!(names.contains(&"prettier"));
+    assert!(names.contains(&"tsc"));
+    assert!(names.contains(&"markdownlint"));
+}
+
 // ─── Acceptance: No languages ─────────────────────────────
 
 #[test]
 fn acceptance_no_languages_returns_empty() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false);
+    let selected = selector.select_adapters(false, false, false, false);
     assert!(selected.is_empty());
 }
 
@@ -110,8 +130,9 @@ fn acceptance_custom_selector_respects_configuration() {
         vec![AdapterName::raw("clippy")],
         vec![AdapterName::raw("ruff")],
         vec![],
+        vec![],
     );
-    let selected = selector.select_adapters(true, true, true);
+    let selected = selector.select_adapters(true, true, true, true);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["clippy", "ruff"]);
 }
@@ -119,10 +140,27 @@ fn acceptance_custom_selector_respects_configuration() {
 #[test]
 fn acceptance_custom_selector_empty_for_disabled_languages() {
     // A project that only wants JS adapters but has no JS
-    let selector =
-        CapabilitiesExternalLintSelector::new(vec![], vec![], vec![AdapterName::raw("eslint")]);
-    let selected = selector.select_adapters(true, true, false);
+    let selector = CapabilitiesExternalLintSelector::new(
+        vec![],
+        vec![],
+        vec![AdapterName::raw("eslint")],
+        vec![],
+    );
+    let selected = selector.select_adapters(true, true, false, false);
     assert!(selected.is_empty()); // no JS files → no adapters selected
+}
+
+#[test]
+fn acceptance_custom_markdown_selector() {
+    let selector = CapabilitiesExternalLintSelector::new(
+        vec![],
+        vec![],
+        vec![],
+        vec![AdapterName::raw("markdownlint")],
+    );
+    let selected = selector.select_adapters(false, false, false, true);
+    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    assert_eq!(names, vec!["markdownlint"]);
 }
 
 // ─── Acceptance: Adapter names match expected set ─────────
@@ -130,7 +168,7 @@ fn acceptance_custom_selector_empty_for_disabled_languages() {
 #[test]
 fn acceptance_adapter_names_are_lowercase_ascii() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true);
+    let selected = selector.select_adapters(true, true, true, true);
     for name in selected.iter() {
         let val = name.value();
         assert!(
@@ -144,7 +182,7 @@ fn acceptance_adapter_names_are_lowercase_ascii() {
 #[test]
 fn acceptance_no_duplicate_adapters_across_languages() {
     let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true);
+    let selected = selector.select_adapters(true, true, true, true);
     let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
     let mut unique = names.clone();
     unique.sort();

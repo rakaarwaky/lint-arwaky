@@ -331,10 +331,14 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         let has_js = ext_files.iter().any(|f| {
             f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
         });
+        let has_markdown = ext_files
+            .iter()
+            .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
         let context = shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
             has_python,
             has_js,
+            has_markdown,
             ignored_paths: ignored.clone(),
             config_entries: Vec::new(),
         };

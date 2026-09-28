@@ -4,7 +4,8 @@
 //   1. Creates a StdioClient (ICommandExecutorProtocol) for subprocess execution
 //   2. Creates ExternalLintExecutor, which serves the ICommandExecutorProtocol,
 //      IJsToolResolutionProtocol, and ICargoDirProtocol seams
-//   3. Registers all 9 adapters (ruff, bandit, mypy, eslint, prettier, tsc, clippy, rustfmt, cargo-audit)
+//   3. Registers all 10 adapters (ruff, bandit, mypy, eslint, prettier, tsc,
+//      markdownlint, clippy, rustfmt, cargo-audit)
 //
 // Each adapter follows the same pattern: Arc<dyn ILinterAdapterProtocol> in a HashMap keyed by name.
 use std::collections::HashMap;
@@ -100,6 +101,17 @@ impl ExternalLintContainer {
                 io.clone(),
                 tool_resolution.clone(),
             )),
+        );
+        adapters.insert(
+            "markdownlint".to_string(),
+            Arc::new(
+                crate::capabilities_md_markdownlint_adapter::MarkdownLintAdapter::new(
+                    lint_executor.clone(),
+                    js_resolution.clone(),
+                    io.clone(),
+                    tool_resolution.clone(),
+                ),
+            ),
         );
         adapters.insert(
             "clippy".to_string(),

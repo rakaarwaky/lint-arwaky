@@ -10,7 +10,7 @@
 
 ## System Overview
 
-The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, and TSC on Rust, Python, and JS/TS files. It normalizes their JSON/text reports into the unified lint-arwaky violation format using **tool-native rule codes** (e.g., `clippy::needless_return`, `ruff::E501`) and integrates them into the compliance report.
+The external-lint crate is an aggregate bridge to external, industry-standard linters and formatters. It coordinates and executes Cargo Clippy, Rustfmt, cargo-audit, Ruff, Mypy, Bandit, ESLint, Prettier, TSC, and markdownlint-cli on Rust, Python, JS/TS, and Markdown files. It normalizes their JSON/text reports into the unified lint-arwaky violation format using **tool-native rule codes** (e.g., `clippy::needless_return`, `ruff::E501`, `markdownlint::MD041`) and integrates them into the compliance report.
 
 The crate also provides **auto-fix** capabilities — each adapter exposes an `apply_fix` method that runs the tool's native fix command (e.g., `cargo clippy --fix`, `ruff check --fix`, `eslint --fix`).
 
@@ -32,10 +32,12 @@ flowchart TD
     E -->|"Rust adapters\n(ICommandExecutorProtocol\ndirect, 120-180s timeout)"| R["clippy\nrustfmt\ncargo-audit"]
     E -->|"Python adapters\n(StdioClient 60s timeout)"| P["ruff\nmypy\nbandit"]
     E -->|"JS adapters\n(StdioClient 60s timeout)"| J["eslint\nprettier\ntsc"]
+    E -->|"Markdown adapter\n(StdioClient 60s timeout)"| M["markdownlint-cli"]
 
     R -->|"subprocess\n(std::process::Command)"| G["result normalization\n(tool-native codes\n+ severity mapping)"]
     P -->|"subprocess"| G
     J -->|"subprocess"| G
+    M -->|"subprocess"| G
 
     G --> F
     F --> B
@@ -48,15 +50,16 @@ flowchart TD
 
 ### FR-ExternalLint-001: Detect Project Languages
 
-- **Description**: Determine which languages (Rust, Python, JS/TS) are present in the project using a lightweight extension walk via the filesystem aggregate's `discover_files()`.
+- **Description**: Determine which languages (Rust, Python, JS/TS) and content types (Markdown) are present in the project using a lightweight extension walk via the filesystem aggregate's `discover_files()`.
 - **Input**: Filesystem aggregate reference.
-- **Output**: Three booleans: `has_rust`, `has_python`, `has_js`.
+- **Output**: Four booleans: `has_rust`, `has_python`, `has_js`, `has_markdown`.
 - **Business Rules**:
 
   - Language detection based on file extension:
     - Rust: `.rs`
     - Python: `.py`
     - JS/TS: `.js`, `.jsx`, `.ts`, `.tsx`
+    - Markdown: `.md`, `.markdown`
   - Symlink behavior follows filesystem crate convention: follow if target is within workspace root, skip otherwise.
 - **Edge Cases**:
 
@@ -76,12 +79,13 @@ flowchart TD
   - Rust adapters: `clippy`, `rustfmt`, `cargo-audit`.
   - Python adapters: `ruff`, `mypy`, `bandit`.
   - JS/TS adapters: `eslint`, `prettier`, `tsc`.
-  - Adapters are appended in language-group order (Rust → Python → JS).
+  - Markdown adapters: `markdownlint`.
+  - Adapters are appended in language-group order (Rust → Python → JS → Markdown).
   - Hardcoded defaults via `with_defaults()` constructor.
 - **Edge Cases**:
 
   - No languages detected → empty adapter list, no scans run.
-  - All languages detected → up to 9 adapters selected.
+  - All languages detected → up to 10 adapters selected.
 - **Error Handling**: No error; empty list for no matches.
 
 ---
@@ -150,6 +154,7 @@ flowchart TD
     - ESLint: `eslint::<rule-id>` (e.g., `eslint::no-unused-vars`)
     - Prettier: `prettier::diff`
     - tsc: `tsc::<error-code>` (e.g., `tsc::TS2345`)
+    - markdownlint: `markdownlint::<MD-id>` (e.g., `markdownlint::MD041`)
   - File paths are canonicalized to absolute paths.
   - Line numbers extracted from tool-specific JSON fields.
   - Severity mapping per tool (see table below).
@@ -191,6 +196,7 @@ flowchart TD
   |                 | severity 1 (warning)            | MEDIUM               |
   | **Prettier**    | diff found                      | MEDIUM               |
   | **tsc**         | error                           | HIGH                 |
+  | **markdownlint** | any rule violation             | MEDIUM               |
 
   > Note: Ruff severity is determined by the rule **code**, not the tool's severity field.
 - **Edge Cases**:
@@ -279,7 +285,7 @@ flowchart TD
 | `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan. |
 | `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter. |
 | `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix. |
-| `select_adapters` | bool, bool, bool | `AdapterNameList` | — | — | Select adapters. |
+| `select_adapters` | bool, bool, bool, bool | `AdapterNameList` | — | — | Select adapters. |
 
 ### Aggregate API
 
@@ -304,6 +310,7 @@ flowchart TD
 | `eslint` | in | Lint and fix JavaScript and TypeScript | The tool is not installed → the adapter reports it as unavailable and the slice is skipped |
 | `prettier --check` / `--write` | in | Verify or apply JavaScript and TypeScript formatting | Formatting diverges → `--check` lists the files; `--write` rewrites them |
 | `tsc --noEmit` | in | Type-check TypeScript without emitting output | The compiler fails to start → the adapter reports the failure and the type-check slice is skipped |
+| `markdownlint-cli --json` | in | Lint Markdown style and structure | The tool is not installed → the adapter reports it as unavailable and the Markdown slice is skipped |
 
 ## Non-functional Requirements
 | Metric | Target | Measurement method |
@@ -334,9 +341,10 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 1 | Rust-only project | Only clippy, rustfmt, cargo-audit run |
 | 2 | Python-only project | Only ruff, mypy, bandit run |
 | 3 | JS-only project | Only eslint, prettier, tsc run |
-| 4 | Multi-language project | All 9 adapters run |
-| 5 | Empty directory | No adapters run, empty result list |
-| 6 | Single .rs file path | Only Rust adapters run |
+| 4 | Multi-language project | All 10 adapters run |
+| 5 | Markdown-only project | Only markdownlint runs |
+| 6 | Empty directory | No adapters run, empty result list |
+| 7 | Single .rs file path | Only Rust adapters run |
 
 ### Adapter Execution
 
@@ -360,6 +368,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Clippy fix | `cargo clippy --fix` executed |
 | 5 | Rustfmt fix | `cargo fmt` executed |
 | 6 | TSC/MyPy/Bandit/audit fix | No-op (no auto-fix capability) |
+| 7 | markdownlint fix | `markdownlint --fix` executed |
 
 ### Normalization
 
@@ -371,8 +380,9 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Ruff `S105` (hardcoded password) | Severity CRITICAL, code `ruff::S105` |
 | 5 | ESLint severity 2 (error) | Severity HIGH, code `eslint::<rule>` |
 | 6 | cargo-audit critical vulnerability | Severity CRITICAL, code `cargo-audit::RUSTSEC-*` |
-| 7 | Tool produces invalid JSON | Empty results, warning logged |
-| 8 | Relative file path in tool output | Canonicalized to absolute path |
+| 7 | markdownlint `MD041` | Severity MEDIUM, code `markdownlint::MD041` |
+| 8 | Tool produces invalid JSON | Empty results, warning logged |
+| 9 | Relative file path in tool output | Canonicalized to absolute path |
 
 ### Tool Path Resolution
 
