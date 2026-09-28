@@ -59,6 +59,9 @@ pub fn collect_external_direct(
     let has_js = files.iter().any(|f| {
         f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
     });
+    let has_markdown = files
+        .iter()
+        .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
 
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
     let config_entries =
@@ -68,6 +71,7 @@ pub fn collect_external_direct(
         has_rust,
         has_python,
         has_js,
+        has_markdown,
         ignored_paths: ignored_paths.to_vec(),
         config_entries,
     };

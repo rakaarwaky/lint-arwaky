@@ -33,10 +33,10 @@ fn diagnose_toolchain_has_binary_path() {
 }
 
 #[test]
-fn health_check_returns_9_adapters() {
+fn health_check_returns_10_adapters() {
     let checker = make_checker();
     let result = checker.health_check();
-    assert_eq!(result.adapters.len(), 9, "Should check 9 adapters");
+    assert_eq!(result.adapters.len(), 10, "Should check 10 adapters");
 }
 
 #[test]
@@ -54,6 +54,10 @@ fn health_check_has_all_languages() {
         "Should check Python adapters"
     );
     assert!(languages.contains(&"JS/TS"), "Should check JS/TS adapters");
+    assert!(
+        languages.contains(&"Markdown"),
+        "Should check Markdown adapters"
+    );
 }
 
 #[test]

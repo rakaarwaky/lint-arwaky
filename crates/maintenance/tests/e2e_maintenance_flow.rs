@@ -28,7 +28,11 @@ fn e2e_full_maintenance_pipeline() {
     let health = orch
         .execute(MaintenanceRequest::health_check())
         .into_health();
-    assert_eq!(health.adapters.len(), 9, "Step 2: should check 9 adapters");
+    assert_eq!(
+        health.adapters.len(),
+        10,
+        "Step 2: should check 10 adapters"
+    );
 
     // Step 3: Stats on current project
     let path = FilePath::new(".").unwrap();

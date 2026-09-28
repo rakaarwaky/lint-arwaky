@@ -1,9 +1,9 @@
 // PURPOSE: ExternalLintOrchestrator — agent layer, orchestrates external linter adapters
 //
 // The orchestrator dynamically selects which adapters to run based on the
-// languages detected in the project (Rust, Python, JavaScript/TypeScript).
-// It receives a pre-computed `ExternalLintContext` from the surface layer,
-// eliminating all filesystem I/O from the agent layer (orchestration-only).
+// languages detected in the project (Rust, Python, JavaScript/TypeScript,
+// Markdown). It receives a pre-computed `ExternalLintContext` from the surface
+// layer, eliminating all filesystem I/O from the agent layer (orchestration-only).
 //
 // Adapters are run sequentially. If an adapter's binary
 // is not installed, a warning is printed (not an error) — the scan continues
@@ -76,7 +76,12 @@ impl ExternalLintOrchestrator {
         let selected: Vec<String> = self
             .deps
             .selector
-            .select_adapters(context.has_rust, context.has_python, context.has_js)
+            .select_adapters(
+                context.has_rust,
+                context.has_python,
+                context.has_js,
+                context.has_markdown,
+            )
             .iter()
             .map(|a| a.value().to_string())
             .collect();
@@ -156,7 +161,7 @@ impl ExternalLintOrchestrator {
 // ─── Block 4: FR-001 language detection ────────────────────
 
 impl ILanguageDetectProtocol for ExternalLintOrchestrator {
-    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool) {
+    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool, bool) {
         let files = self
             .deps
             .filesystem
@@ -169,7 +174,8 @@ impl ILanguageDetectProtocol for ExternalLintOrchestrator {
         let has_js = files.iter().any(|f| {
             f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
         });
-        (has_rust, has_python, has_js)
+        let has_markdown = files.iter().any(|f| f.ends_with(".md"));
+        (has_rust, has_python, has_js, has_markdown)
     }
 }
 

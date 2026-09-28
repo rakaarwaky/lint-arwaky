@@ -44,6 +44,7 @@ pub fn collect_adapters_detailed(
         ("eslint", "ESLint (JavaScript)"),
         ("prettier", "Prettier (JavaScript)"),
         ("tsc", "TypeScript Compiler"),
+        ("markdownlint-cli", "markdownlint (Markdown)"),
     ] {
         list.push(AdapterDetail {
             name: b.into(),

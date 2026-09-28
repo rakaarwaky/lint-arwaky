@@ -295,8 +295,8 @@ fn external_lint_executor_implements_protocol() {
 fn selector_implements_protocol() {
     let selector = external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults();
     let _dyn_sel: &dyn IExternalLintSelectorProtocol = &selector;
-    let result = _dyn_sel.select_adapters(true, true, true);
-    assert_eq!(result.len(), 9); // 3 rust + 3 python + 3 js
+    let result = _dyn_sel.select_adapters(true, true, true, false);
+    assert_eq!(result.len(), 9); // 3 rust + 3 python + 3 js (markdown off)
 }
 
 // ─── Contract: ExternalLintOrchestrator implements IExternalLintAggregate ──
@@ -353,10 +353,10 @@ fn language_detector_implements_protocol() {
     let detector =
         external_lint_lint_arwaky::LanguageDetector::new(Arc::new(MockFilesystem::new()));
     let _dyn: &dyn ILanguageDetectProtocol = &detector;
-    let (has_rust, has_python, has_js) =
+    let (has_rust, has_python, has_js, has_markdown) =
         _dyn.detect_languages(&FilePath::new("/tmp".to_string()).unwrap());
     // No files were registered on the mock filesystem — all booleans are false.
-    assert!(!has_rust && !has_python && !has_js);
+    assert!(!has_rust && !has_python && !has_js && !has_markdown);
 }
 
 // ─── Contract: OutputNormalizer implements INormalizeProtocol (FR-005) ──

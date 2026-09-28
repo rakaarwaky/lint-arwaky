@@ -19,18 +19,28 @@ use crate::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use crate::quality_rules::taxonomy_analysis_vo::LintResultList;
 use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
 
-/// FR-ExternalLint-001: detect which languages (Rust, Python, JS/TS) are present
-/// in the project using the filesystem aggregate's file extension walk.
+/// FR-ExternalLint-001: detect which languages (Rust, Python, JS/TS) and
+/// content types (Markdown) are present in the project using the filesystem
+/// aggregate's file extension walk.
 pub trait ILanguageDetectProtocol: Send + Sync {
-    /// Returns `(has_rust, has_python, has_js)` from an extension walk over `path`.
-    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool);
+    /// Returns `(has_rust, has_python, has_js, has_markdown)` from an
+    /// extension walk over `path`.
+    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool, bool);
 }
 
 /// FR-ExternalLint-002: select the set of adapters to run given the detected
-/// language booleans. Returns the ordered list of adapter names in language-group
-/// order (Rust → Python → JS).
+/// language booleans and whether Markdown files are present. Returns the ordered
+/// list of adapter names in language-group order (Rust → Python → JS →
+/// markdown). When `has_markdown` is true, `markdownlint` is appended after the
+/// JS group.
 pub trait IExternalLintSelectorProtocol: Send + Sync {
-    fn select_adapters(&self, has_rs: bool, has_py: bool, has_js: bool) -> AdapterNameList;
+    fn select_adapters(
+        &self,
+        has_rs: bool,
+        has_py: bool,
+        has_js: bool,
+        has_md: bool,
+    ) -> AdapterNameList;
 }
 
 /// FR-ExternalLint-003: run every selected adapter sequentially, aggregating
