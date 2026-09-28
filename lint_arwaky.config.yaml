@@ -492,6 +492,6 @@ architecture:
       enabled: true
       severity: MEDIUM
 
-    AES606: # Agent doc structure — h1_count | h2_missing
+    AES606: # Doc heading structure — h1_count | h2_missing | h2_unexpected
       enabled: true
       severity: HIGH

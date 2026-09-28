@@ -57,7 +57,7 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
 | AES605 | Feature Folder Health | MEDIUM   | Doc    | Every folder with a doc pair holds an orchestrator; kernel folders carry no docs.                |
-| AES606 | Agent Doc Structure   | HIGH     | Doc    | AGENTS.md opens with one level-1 heading and carries every mandatory level-2 section.            |
+| AES606 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
 
 ---
 
@@ -495,17 +495,28 @@ A doc pair marks a feature, and only a feature holds one.
 
 ---
 
-### AES606 — Agent Doc Structure
+### AES606 — Doc Heading Structure
 
 **Severity:** HIGH
 
-`AGENTS.md` must open with exactly one level-1 heading and carry every required level-2 section from the [HOW-TO-MAKE-AGENTS](https://github.com/rakaarwaky/lint-arwaky/blob/main/crates/skills/aes-docs/references/HOW-TO-MAKE-AGENTS.md) template. Each of these sections links to its corresponding document. Fenced code-block contents (shell comments starting with `#`) are stripped before scanning so they never read as headings.
+Every root document carries exactly one level-1 heading and a template-derived set of required and allowed level-2 sections. Fenced code-block contents are stripped before scanning so they never read as headings.
 
-The level-2 set is closed. A required H2 is mandatory, and a project-specific H2 is allowed only when it appears in the agreed optional list. Any other level-2 heading is reported so it can be demoted to a level-3 heading or removed. Level-3 headings and deeper are free-form.
+The H2 set is closed per document: a required H2 is mandatory; a project-specific H2 is allowed only when it appears in that document's agreed optional list; any other H2 is reported so it can be demoted to a level-3 heading or removed. Level-3 headings and deeper are free-form.
 
-**Required H2s** (no exceptions): **Precedence**, **Security**, **Architecture**, **Contributing**, **License**, **Commands**, **Git Workflow**, **Definition of Done**, **Related Documents**.
+Matching is by leading words after lowercasing and stripping punctuation, so `## 4. Vertical Slicing Layout` satisfies `Vertical Slicing Layout`.
 
-Matching is by leading words, so `## Architecture: AES 7-Layer System` satisfies `Architecture`.
+**Required and allowed H2s per document:**
+
+| Document | Required H2s |
+| --- | --- |
+| `AGENTS.md` | Precedence, Security, Architecture, Contributing, License, Commands, Git Workflow, Definition of Done, Related Documents |
+| `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer |
+| `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process |
+| `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks |
+| `README.md` | Prerequisites, Quick Start, Architecture, Project Structure, Available Scripts/Commands, Configuration, Testing, Contributing, License |
+| `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register |
+
+Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_constant.rs` for the full per-document lists.
 
 | Violation type     | Fires when                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------- |
