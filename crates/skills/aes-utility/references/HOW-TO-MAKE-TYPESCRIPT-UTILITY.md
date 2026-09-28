@@ -21,7 +21,7 @@
 The last one is a cross-file rule in all three languages, not Rust-specific: a utility
 importing another utility couples two helpers that should be independently extractable.
 
-1. Only exported functions — no `class`.
+1. Only exported functions — no `class`, no `interface`, no `enum`, no `type` alias declarations.
 2. Pure + deterministic — no `Math.random()`, no `Date.now()`, no global mutable state.
 3. Domain-agnostic — no business rules, no layer-name knowledge.
 4. Reusable — used by ≥2 modules; if single consumer → keep as private helper.
@@ -44,7 +44,7 @@ importing another utility couples two helpers that should be independently extra
 ```typescript
 /** <Domain> utility functions — stateless, pure, domain-agnostic.
 
-Exported functions only — no classes, no state.
+Exported functions only — no classes, no interfaces, no enums, no type aliases, no state.
 */
 
 // import type { UserVO } from "./taxonomy_user_vo";  // uncomment if using VOs
@@ -68,7 +68,7 @@ export function <functionName>(<paramName>: string): string {
 
 | Check | Why it belongs here |
 | ----- | ------------------- |
-| Only exported functions — no class. | Required by AES layer rules and the linter; missing it is a defect. |
+| Only exported functions — no class, no interface, no enum, no type alias. | Required by AES layer rules and the linter; missing it is a defect. |
 | No `this`, no instance state. | Required by AES layer rules and the linter; missing it is a defect. |
 | Pure/deterministic (or I/O justified: domain-agnostic + reusable). | Required by AES layer rules and the linter; missing it is a defect. |
 | No business rules or layer-name knowledge. | Required by AES layer rules and the linter; missing it is a defect. |
@@ -85,6 +85,7 @@ export function <functionName>(<paramName>: string): string {
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Manual (not machine-checked): stateless, domain-agnostic, ≥2 consumers; no class/`self`/`this`/struct/impl.
+# Machine-checked: class/interface/type-alias (metadata path), naming, imports, primitives.
+# Manual (not machine-checked): stateless, domain-agnostic, ≥2 consumers; no `this`/instance state.
 # Fallback compile gate: npx tsc --noEmit
 ```

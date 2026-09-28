@@ -19,7 +19,7 @@
 **Allowed imports:** Taxonomy only (`shared::taxonomy_*`).
 **Forbidden:** `use` from Capabilities, Agent, Surface, Contract, or other Utility modules.
 
-1. **Structure:** Only `pub fn` free functions — absolutely no `struct`, no `impl` blocks, no traits.
+1. **Structure:** Only `pub fn` free functions — no `struct`, no `impl` blocks, no `trait` definitions, no `pub type` aliases.
 2. **State & Side Effects:** Stateless & deterministic. Side-effects are strictly limited to domain-agnostic operations
 3. **Domain Awareness:** Domain-agnostic — no business rules, no layer-name knowledge.
 4. **Reusability:** Must be used by ≥2 modules. If it has a single consumer, keep it as a private helper in the consuming module.
@@ -54,7 +54,7 @@
 
 ```rust
 // PURPOSE: <Domain> utility functions — stateless, pure, domain-agnostic
-// Free functions only — no struct, no impl blocks.
+// Free functions only — no struct, no impl blocks, no trait definitions, no type aliases.
 use shared::taxonomy::<domain>_vo::<VO>;
 
 /// <Description of what this function does>
@@ -75,7 +75,7 @@ pub fn <function_name>(<param_name>: &<Type>) -> <ReturnType> {
 
 | Check | Why it belongs here |
 | ----- | ------------------- |
-| Only free functions — no struct, no impl, no traits. | Required by AES layer rules and the linter; missing it is a defect. |
+| Only free functions — no struct, no impl, no traits, no type aliases. | Required by AES layer rules and the linter; missing it is a defect. |
 | No `&self`, no instance state. | Required by AES layer rules and the linter; missing it is a defect. |
 | Pure/deterministic (or I/O strictly limited to domain-agnostic ops like serialization/hashing). | Required by AES layer rules and the linter; missing it is a defect. |
 | No business rules or layer-name knowledge. | Required by AES layer rules and the linter; missing it is a defect. |
@@ -92,6 +92,8 @@ pub fn <function_name>(<param_name>: &<Type>) -> <ReturnType> {
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# Manual (not machine-checked): stateless, domain-agnostic, ≥2 consumers; no class/`self`/`this`/struct/impl.
+# Machine-checked: struct/class (metadata path), naming, imports, primitives.
+# To be machine-checked (pending linter update): impl blocks, trait definitions, type aliases.
+# Manual (not machine-checked): stateless, domain-agnostic, ≥2 consumers; no `&self`/instance state.
 # Fallback compile gate: cargo check -p <crate-name>
 ```
