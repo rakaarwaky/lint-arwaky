@@ -85,7 +85,6 @@ pub fn record(event: &TuiEvent) {
         TuiEvent::PathBackspace => tracing::debug!(target = "tui", "PathBackspace"),
         TuiEvent::PathConfirm => tracing::debug!(target = "tui", "PathConfirm"),
         TuiEvent::PathUseCurrent => tracing::debug!(target = "tui", "PathUseCurrent"),
-        TuiEvent::PathCancel => tracing::debug!(target = "tui", "PathCancel"),
         TuiEvent::ChangeProjectRoot => tracing::info!(target = "tui", "ChangeProjectRoot"),
         TuiEvent::ConfirmAction => tracing::debug!(target = "tui", "ConfirmAction"),
         TuiEvent::CancelConfirm => tracing::debug!(target = "tui", "CancelConfirm"),
