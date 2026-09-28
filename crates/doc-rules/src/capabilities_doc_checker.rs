@@ -381,13 +381,24 @@ impl DocChecker {
              down to match, or split the methods into more classes — see the 4-direction table in \
              HOW-TO-MAKE-FRD.md"
         };
+        // Every doc finding names a line, so the mismatch is anchored to the
+        // requirements section it is about; a document without one falls back
+        // to the first line.
+        let line = doc
+            .text
+            .lines()
+            .position(|l| {
+                let l = l.trim_start();
+                l.starts_with("## ") && l.contains("Requirements")
+            })
+            .map_or(1, |index| index + 1);
         findings.push(DocFinding::new(
             "",
             consts::RULE_CODE_FR_PROTOCOL_PARITY,
             consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
             format!(
-                "FRD declares {fr_count} requirements but the feature's contract module declares \
-                 {protocol_count} protocol classes; {direction}"
+                "line {line} FRD declares {fr_count} requirements but the feature's contract \
+                 module declares {protocol_count} protocol classes; {direction}"
             ),
         ));
     }
