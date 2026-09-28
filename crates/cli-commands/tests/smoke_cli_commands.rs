@@ -22,6 +22,8 @@ fn smoke_all_surface_modules_importable() {
     let _ = cli_commands::surface_scan_command::handle_scan;
     let _ = cli_commands::surface_ci_command::handle_ci;
     let _ = cli_commands::surface_fix_command::handle_fix;
+    let _ = cli_commands::surface_skill_command::handle_skill_list;
+    let _ = cli_commands::surface_skill_command::handle_skill_read;
     let _ = cli_commands::utility_output_text_formatter::group_by_member;
     let elapsed = start.elapsed();
     assert!(

@@ -68,3 +68,6 @@ serviceAccountKey
 
 # AI agent skill packs (embedded at build time; regenerated via tools/regenerate_skills.py)
 .agents/
+
+# Auto-generated packaging staging dir for the shared crate (build.rs copies crates/skills here)
+crates/shared/skills/

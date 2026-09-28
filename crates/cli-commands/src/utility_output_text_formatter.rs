@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 
 use shared::cli_commands::Format;
 use shared::common::ViolationItem;
+use shared::common::resolve_skill_hint_for_file;
 
 /// Format a violation location as "file:line:column".
 pub fn format_location(file: &str, line: i64, column: i64) -> String {
@@ -145,7 +146,9 @@ fn render_text(
             println!();
             for r in results {
                 let loc = format_location(&r.file.value, r.line.value(), r.column.value());
+                let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
                 println!("  {} [{}] {}", loc, r.code.code(), r.message.value);
+                println!("    ↳ {}", hint.guidance());
             }
             println!();
         } else if is_specific_member {
@@ -161,7 +164,9 @@ fn render_text(
                 println!("  {file_path}");
                 for r in file_results {
                     let loc = format_location(&r.file.value, r.line.value(), r.column.value());
+                    let hint = resolve_skill_hint_for_file(r.code.code(), &r.file.value);
                     println!("    {} [{}] {}", loc, r.code.code(), r.message.value);
+                    println!("      ↳ {}", hint.guidance());
                 }
             }
             println!();
@@ -169,11 +174,18 @@ fn render_text(
             let lang = lang_tag(&results[0].file.value);
             println!("[{lang}] {member_name} — {} violations", results.len());
             let mut code_counts: BTreeMap<String, usize> = BTreeMap::new();
+            let mut code_examples: BTreeMap<String, String> = BTreeMap::new();
             for r in results {
-                *code_counts.entry(r.code.code().to_string()).or_insert(0) += 1;
+                let code = r.code.code().to_string();
+                *code_counts.entry(code.clone()).or_insert(0) += 1;
+                code_examples
+                    .entry(code)
+                    .or_insert_with(|| r.file.value.clone());
             }
             for (code, count) in &code_counts {
-                println!("  [{code}] {count}");
+                let example_file = code_examples.get(code).map(|s| s.as_str()).unwrap_or("");
+                let hint = resolve_skill_hint_for_file(code, example_file);
+                println!("  [{code}] {count}  ← {}", hint.guidance());
             }
             println!();
         }
