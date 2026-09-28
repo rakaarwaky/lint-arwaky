@@ -76,6 +76,9 @@ pub const AGENT_DOC_STRUCTURE_VIOLATION_H1_COUNT: &str = "h1_count";
 /// An AGENTS.md is missing one or more required level-2 sections.
 pub const AGENT_DOC_STRUCTURE_VIOLATION_H2_MISSING: &str = "h2_missing";
 
+/// An AGENTS.md carries a level-2 heading outside the agreed template.
+pub const AGENT_DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED: &str = "h2_unexpected";
+
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// Adapter name the doc checker reports under.
 pub const ADAPTER_NAME: &str = "architecture";
@@ -143,13 +146,36 @@ pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
 /// Level-2 sections an AGENTS.md must always carry, per the
-/// HOW-TO-MAKE-AGENTS Section Contract rows marked "Never skip". They apply
-/// with no exception; level-3 headings stay free-form per project.
+/// HOW-TO-MAKE-AGENTS Section Contract. Each of these carries at least
+/// one link to its corresponding document; level-3 headings stay free.
 pub const AGENTS_REQUIRED_H2: &[&str] = &[
     "Precedence",
     "Security",
-    "Git Workflow",
+    "Architecture",
+    "Contributing",
+    "License",
     "Commands",
+    "Git Workflow",
     "Definition of Done",
     "Related Documents",
+];
+
+/// Level-2 sections an AGENTS.md may carry beyond the required set.
+/// Each is recognized by its leading words, so
+/// `## Architecture: AES 7-Layer System` satisfies "Architecture".
+pub const AGENTS_ALLOWED_H2: &[&str] = &[
+    "Project Overview",
+    "Build & dev",
+    "Format & lint",
+    "Quality gates",
+    "Self-lint",
+    "Scan test projects",
+    "MCP server & TUI",
+    "Architecture",
+    "Naming Convention",
+    "Workspace Packages Structure",
+    "Skills & Roles",
+    "Branch Management",
+    "Exit Code Contract",
+    "Pitfalls",
 ];
