@@ -27,10 +27,22 @@ fn confirm_gate_routes_answer_keys_to_decision() {
         label: "Install lint-arwaky binaries into PATH".to_string(),
     });
 
-    assert_eq!(from_key_event(key(KeyCode::Char('y')), &state), TuiEvent::ConfirmAction);
-    assert_eq!(from_key_event(key(KeyCode::Enter), &state), TuiEvent::ConfirmAction);
-    assert_eq!(from_key_event(key(KeyCode::Char('n')), &state), TuiEvent::CancelConfirm);
-    assert_eq!(from_key_event(key(KeyCode::Esc), &state), TuiEvent::CancelConfirm);
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('y')), &state),
+        TuiEvent::ConfirmAction
+    );
+    assert_eq!(
+        from_key_event(key(KeyCode::Enter), &state),
+        TuiEvent::ConfirmAction
+    );
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('n')), &state),
+        TuiEvent::CancelConfirm
+    );
+    assert_eq!(
+        from_key_event(key(KeyCode::Esc), &state),
+        TuiEvent::CancelConfirm
+    );
 }
 
 #[test]
@@ -42,8 +54,14 @@ fn confirm_gate_blocks_all_other_keys() {
     });
 
     // 'c' (check) and 'F' (live fix) must not fire behind a pending confirm.
-    assert_eq!(from_key_event(key(KeyCode::Char('c')), &state), TuiEvent::None);
-    assert_eq!(from_key_event(key(KeyCode::Char('F')), &state), TuiEvent::None);
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('c')), &state),
+        TuiEvent::None
+    );
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('F')), &state),
+        TuiEvent::None
+    );
 }
 
 // ─── UX-1-02: path dialog Esc semantics ───
@@ -58,7 +76,10 @@ fn path_dialog_esc_quits_only_on_first_run() {
 
     // Reopened dialog (via `r`): Esc cancels, keeping the current root.
     state.dialog_is_first_run = false;
-    assert_eq!(from_key_event(key(KeyCode::Esc), &state), TuiEvent::PathCancel);
+    assert_eq!(
+        from_key_event(key(KeyCode::Esc), &state),
+        TuiEvent::PathCancel
+    );
 }
 
 // ─── UX-2-03: help overlay blocks background actions ───
@@ -68,9 +89,18 @@ fn help_overlay_only_accepts_overlay_keys() {
     let mut state = browsing_state();
     state.show_help = true;
 
-    assert_eq!(from_key_event(key(KeyCode::Char('c')), &state), TuiEvent::None);
-    assert_eq!(from_key_event(key(KeyCode::Char('?')), &state), TuiEvent::ToggleHelp);
-    assert_eq!(from_key_event(key(KeyCode::Esc), &state), TuiEvent::ToggleHelp);
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('c')), &state),
+        TuiEvent::None
+    );
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('?')), &state),
+        TuiEvent::ToggleHelp
+    );
+    assert_eq!(
+        from_key_event(key(KeyCode::Esc), &state),
+        TuiEvent::ToggleHelp
+    );
 }
 
 // ─── UX-4-01: shifted letters and terminal-safe bindings ───
@@ -84,12 +114,21 @@ fn capital_f_maps_to_live_fix_regardless_of_shift_modifier() {
         from_key_event(KeyEvent::new(KeyCode::Char('F'), KeyModifiers::SHIFT), &state),
         TuiEvent::ActionFixLive
     );
-    assert_eq!(from_key_event(key(KeyCode::Char('F')), &state), TuiEvent::ActionFixLive);
-    assert_eq!(from_key_event(key(KeyCode::Char('f')), &state), TuiEvent::ActionFix);
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('F')), &state),
+        TuiEvent::ActionFixLive
+    );
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('f')), &state),
+        TuiEvent::ActionFix
+    );
 }
 
 #[test]
 fn x_runs_security_scan_without_xoff_risk() {
     let state = browsing_state();
-    assert_eq!(from_key_event(key(KeyCode::Char('x')), &state), TuiEvent::ActionSecurity);
+    assert_eq!(
+        from_key_event(key(KeyCode::Char('x')), &state),
+        TuiEvent::ActionSecurity
+    );
 }
