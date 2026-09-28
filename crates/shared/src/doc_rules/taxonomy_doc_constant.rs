@@ -67,6 +67,15 @@ pub const FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR: &str = "no_orchestrator";
 /// Kernel folders (shared) carry a doc pair when they should be empty.
 pub const FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
 
+/// ─── AES606 — Agent doc structure ───────────────────────────────────────────
+pub const RULE_CODE_AGENT_DOC_STRUCTURE: &str = "AES606";
+
+/// An AGENTS.md carries other than exactly one level-1 heading.
+pub const AGENT_DOC_STRUCTURE_VIOLATION_H1_COUNT: &str = "h1_count";
+
+/// An AGENTS.md is missing one or more required level-2 sections.
+pub const AGENT_DOC_STRUCTURE_VIOLATION_H2_MISSING: &str = "h2_missing";
+
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// Adapter name the doc checker reports under.
 pub const ADAPTER_NAME: &str = "architecture";
@@ -132,3 +141,15 @@ pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 
 /// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
+
+/// Level-2 sections an AGENTS.md must always carry, per the
+/// HOW-TO-MAKE-AGENTS Section Contract rows marked "Never skip". They apply
+/// with no exception; level-3 headings stay free-form per project.
+pub const AGENTS_REQUIRED_H2: &[&str] = &[
+    "Precedence",
+    "Security",
+    "Git Workflow",
+    "Commands",
+    "Definition of Done",
+    "Related Documents",
+];

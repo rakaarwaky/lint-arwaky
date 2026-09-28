@@ -449,7 +449,7 @@ architecture:
           "surface(hook|store|action|screen)",
           "surface(component|view|layout)",
         ]
-      exceptions: ["surface_lint_action.rs"]
+      exceptions: []
 
     # ─── AES500: Orphan ───
     AES501:
@@ -494,3 +494,7 @@ architecture:
     AES605: # Feature folder health — no_orchestrator | shared_has_docs
       enabled: true
       severity: MEDIUM
+
+    AES606: # Agent doc structure — h1_count | h2_missing
+      enabled: true
+      severity: HIGH

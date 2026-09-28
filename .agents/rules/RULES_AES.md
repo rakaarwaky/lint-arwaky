@@ -38,7 +38,7 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, local const, inline test, or public helper. |
 | AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports |
 | AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
-| AES406 | Surface Role      | HIGH     | Role  | Surface file exceeds its tier function limit (smart 50 / utility 25 / passive 25); passive surface contains active domain logic. |
+| AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
 
 
 | Code   | Name                | Severity | Group  | Description                                                                                                                                       |
@@ -57,6 +57,7 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
 | AES605 | Feature Folder Health | MEDIUM   | Doc    | Every folder with a doc pair holds an orchestrator; kernel folders carry no docs.                |
+| AES606 | Agent Doc Structure   | HIGH     | Doc    | AGENTS.md opens with one level-1 heading and carries every mandatory level-2 section.            |
 
 ---
 
@@ -347,7 +348,7 @@ Additional checks:
 
 Checks:
 
-- **Function count over tier limit** — a surface file has too many responsibilities. Limits are tier-specific: smart (`_command`/`_controller`/`_page`) 50, utility (`_hook`/`_store`/`_action`/`_screen`/`_router`) 25, passive (`_component`/`_view`/`_layout`) 25.
+- **File > 15 functions** — surface file has too many responsibilities
 - **Active domain logic in passive surface** — passive surfaces (`_component`, `_view`, `_layout`) must not contain business logic
 - **Role boundary violation** — surface enters forbidden territory (e.g. importing capabilities or non-aggregate contracts directly)
 
@@ -491,4 +492,19 @@ A doc pair marks a feature, and only a feature holds one.
 | -------------------- | ------------------------------------------------------------------------ |
 | `no_orchestrator`   | A folder carries a doc pair but holds no `*_orchestrator` file.        |
 | `shared_has_docs`   | A kernel folder (`shared`) carries a doc pair.                          |
+
+---
+
+### AES606 — Agent Doc Structure
+
+**Severity:** HIGH
+
+`AGENTS.md` must open with exactly one level-1 heading and carry every required level-2 section from the [HOW-TO-MAKE-AGENTS](https://github.com/rakaarwaky/lint-arwaky/blob/main/crates/skills/aes-docs/references/HOW-TO-MAKE-AGENTS.md) template. Level-3 headings are free-form per project. Fenced code-block contents (shell comments starting with `#`) are stripped before scanning so they never read as headings.
+
+Required H2s (no exceptions): **Precedence**, **Security**, **Commands**, **Git Workflow**, **Definition of Done**, **Related Documents**.
+
+| Violation type    | Fires when                                                            |
+| ------------------- | --------------------------------------------------------------------- |
+| `h1_count`          | The document has zero or more than one level-1 heading.              |
+| `h2_missing`        | One or more of the required H2 sections is absent; the message names them. |
 

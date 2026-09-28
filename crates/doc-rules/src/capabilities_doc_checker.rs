@@ -253,6 +253,11 @@ impl DocChecker {
         // ── AES605: Feature folder health ──
         // (folder-level checks run after all docs are collected in audit())
 
+        // ── AES606: Agent doc heading structure ──
+        if name == consts::AGENTS_DOC {
+            self.check_agents_heading(doc, &mut findings);
+        }
+
         // Stamp every finding with the document it came from.
         for f in &mut findings {
             f.doc = rel.clone();
@@ -625,6 +630,61 @@ impl DocChecker {
                     "line {} feature backlog carries {} section(s); those live once, in the root master",
                     section.line,
                     restated.join(", ")
+                ),
+            ));
+        }
+    }
+
+    /// An AGENTS.md must carry exactly one level-1 heading and every H2
+    /// section from `AGENTS_REQUIRED_H2`. Level-3 headings are free-form,
+    /// so a project may add or rename them freely.
+    fn check_agents_heading(&self, doc: &DocSource, findings: &mut Vec<DocFinding>) {
+        let Some(re) = heading_re() else {
+            return;
+        };
+        // Blank fenced blocks first: a shell comment such as
+        // `# Tests (matches CI "Tests" job)` must not read as a heading.
+        let prose = blank_fenced(&doc.text);
+        let captures: Vec<_> = re.captures_iter(&prose).collect();
+        let h1: Vec<&str> = captures
+            .iter()
+            .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 1))
+            .map(|c| c.get(2).map_or("", |m| m.as_str()))
+            .collect();
+        if h1.len() != 1 {
+            findings.push(DocFinding::new(
+                "",
+                consts::RULE_CODE_AGENT_DOC_STRUCTURE,
+                consts::AGENT_DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                format!(
+                    "AGENTS.md must open with exactly one level-1 heading, found {}; the template names one H1 at the top of the file",
+                    h1.len()
+                ),
+            ));
+        }
+        let h2: Vec<String> = captures
+            .iter()
+            .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 2))
+            .map(|c| normalize_heading(c.get(2).map_or("", |m| m.as_str())))
+            .collect();
+        let missing: Vec<&str> = consts::AGENTS_REQUIRED_H2
+            .iter()
+            .copied()
+            .filter(|want| {
+                let want = normalize_heading(want);
+                !h2.iter()
+                    .any(|title| title == &want || title.starts_with(&want))
+            })
+            .collect();
+        if !missing.is_empty() {
+            findings.push(DocFinding::new(
+                "",
+                consts::RULE_CODE_AGENT_DOC_STRUCTURE,
+                consts::AGENT_DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                format!(
+                    "AGENTS.md has no H2 heading for {}; each of these level-2 sections is mandatory in every project — {}",
+                    missing.join(", "),
+                    consts::AGENTS_REQUIRED_H2.join(", ")
                 ),
             ));
         }
