@@ -97,6 +97,7 @@ pub use taxonomy_definition_vo::OrphanRuleVO;
 pub use taxonomy_display_content_vo::DisplayContent;
 pub use taxonomy_duration_vo::Timeout;
 pub use taxonomy_error_vo::ErrorCode;
+pub use taxonomy_error_vo::ErrorId;
 pub use taxonomy_filesystem_error::FileSystemError;
 pub use taxonomy_git_vo::GitBranchName;
 pub use taxonomy_job_vo::AdapterMetadata;

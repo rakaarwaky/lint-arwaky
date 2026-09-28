@@ -89,6 +89,31 @@ impl fmt::Display for ImportError {
 }
 
 impl ImportError {
+    /// Stable numeric id for machine branching.
+    pub fn error_id(&self) -> u16 {
+        match self {
+            Self::ModuleResolution { .. } => 4001,
+            Self::SymbolNotFound { .. } => 4002,
+            Self::CircularDependency { .. } => 4003,
+            Self::InvalidConfiguration { .. } => 4004,
+        }
+    }
+
+    /// Stable machine-readable name for error classification.
+    pub fn error_code(&self) -> &'static str {
+        match self {
+            Self::ModuleResolution { .. } => "IMPORT_MODULE_UNRESOLVED",
+            Self::SymbolNotFound { .. } => "IMPORT_SYMBOL_NOT_FOUND",
+            Self::CircularDependency { .. } => "IMPORT_CIRCULAR_DEPENDENCY",
+            Self::InvalidConfiguration { .. } => "IMPORT_INVALID_CONFIG",
+        }
+    }
+
+    /// Human-readable description derived from the error id, code, and VOs.
+    pub fn message(&self) -> String {
+        format!("{} {}: {}", self.error_id(), self.error_code(), self)
+    }
+
     /// Create a module resolution error.
     pub fn module_resolution(module: impl Into<SymbolName>, reason: Option<ErrorMessage>) -> Self {
         Self::ModuleResolution {

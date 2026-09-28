@@ -23,6 +23,8 @@ pub struct AdapterError {
     pub stderr: Option<ErrorMessage>,
     #[serde(default)]
     pub exit_code: Option<ExitCode>,
+    #[serde(default)]
+    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
 }
 
 impl AdapterError {
@@ -34,7 +36,13 @@ impl AdapterError {
             command: None,
             stderr: None,
             exit_code: None,
+            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(1),
         }
+    }
+
+    /// Stable numeric id for machine branching.
+    pub fn error_id(&self) -> u16 {
+        self.error_id.value()
     }
 }
 
@@ -58,6 +66,8 @@ pub struct ScanError {
     pub adapter_name: Option<AdapterName>,
     #[serde(default)]
     pub cause: Option<Cause>,
+    #[serde(default)]
+    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
 }
 
 impl ScanError {
@@ -68,7 +78,13 @@ impl ScanError {
             error_code: None,
             adapter_name: None,
             cause: None,
+            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(2),
         }
+    }
+
+    /// Stable numeric id for machine branching.
+    pub fn error_id(&self) -> u16 {
+        self.error_id.value()
     }
 }
 

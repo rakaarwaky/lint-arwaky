@@ -136,8 +136,58 @@ macro_rules! string_value_object {
 ///
 /// Emitted surface: `path`/`message` fields, `new(message)`, `Display` in the
 /// form `"{prefix} on {path}: {message}"`, and `std::error::Error`.
+///
+/// The 3-argument form additionally emits `error_code`/`error_id` fields and
+/// corresponding accessors, plus a `Display` that includes the code:
+/// ```ignore
+/// domain_error_vo!(GitHookError, "Git Hook Error", "GIT_HOOK", 3001u16);
+/// ```
 #[macro_export]
 macro_rules! domain_error_vo {
+    ($name:ident, $prefix:expr, $code:expr, $id:expr) => {
+        #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+        pub struct $name {
+            pub path: $crate::common::taxonomy_path_vo::FilePath,
+            pub message: $crate::common::taxonomy_message_vo::LintMessage,
+            #[serde(default)]
+            pub error_code: $crate::common::taxonomy_error_vo::ErrorCode,
+            #[serde(default)]
+            pub error_id: $crate::common::taxonomy_error_vo::ErrorId,
+        }
+
+        impl $name {
+            pub fn new(message: $crate::common::taxonomy_message_vo::LintMessage) -> Self {
+                Self {
+                    path: $crate::common::taxonomy_path_vo::FilePath::default(),
+                    message,
+                    error_code: $crate::common::taxonomy_error_vo::ErrorCode::raw($code),
+                    error_id: $crate::common::taxonomy_error_vo::ErrorId::raw($id),
+                }
+            }
+
+            /// Stable numeric id. Callers branch on this, never on the message.
+            pub fn error_id(&self) -> u16 {
+                self.error_id.value()
+            }
+
+            /// Stable machine-readable name. Callers branch on this, never on the message.
+            pub fn error_code(&self) -> &str {
+                self.error_code.code()
+            }
+        }
+
+        impl std::fmt::Display for $name {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                write!(
+                    f,
+                    concat!($prefix, " [{}][{}] on {}: {}"),
+                    self.error_id, self.error_code, self.path.value, self.message
+                )
+            }
+        }
+
+        impl std::error::Error for $name {}
+    };
     ($name:ident, $prefix:expr) => {
         #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
         pub struct $name {

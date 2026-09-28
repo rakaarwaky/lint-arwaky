@@ -13,6 +13,8 @@ pub struct ConfigError {
     pub expected: ExpectedValue,
     pub actual: ActualValue,
     pub config_file: FilePath,
+    #[serde(default)]
+    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
 }
 
 impl ConfigError {
@@ -23,7 +25,24 @@ impl ConfigError {
             expected: ExpectedValue::default(),
             actual: ActualValue::default(),
             config_file: FilePath::default(),
+            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(1001),
         }
+    }
+
+    /// Stable numeric id for machine branching.
+    pub fn error_id(&self) -> u16 {
+        self.error_id.value()
+    }
+
+    /// Human-readable description derived from the error id and fields.
+    pub fn message(&self) -> String {
+        format!(
+            "{}: config key '{}': expected '{}' got '{}'",
+            self.error_id(),
+            self.key,
+            self.expected,
+            self.actual
+        )
     }
 }
 

@@ -29,6 +29,7 @@ pub(crate) fn map_scan_error(
         error_code: None,
         adapter_name,
         cause: None,
+        error_id: shared::common::ErrorId::raw(2),
     })
 }
 
