@@ -91,8 +91,5 @@ fn capital_f_maps_to_live_fix_regardless_of_shift_modifier() {
 #[test]
 fn x_runs_security_scan_without_xoff_risk() {
     let state = browsing_state();
-    assert_eq!(
-        from_key_event(key(KeyCode::Char('x')), &state),
-        TuiEvent::ActionSecurity
-    );
+    assert_eq!(from_key_event(key(KeyCode::Char('x')), &state), TuiEvent::ActionSecurity);
 }
