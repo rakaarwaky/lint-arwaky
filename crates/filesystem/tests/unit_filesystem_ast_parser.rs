@@ -85,6 +85,32 @@ fn parse_typescript_file_extracts_metadata() {
 }
 
 #[test]
+fn parse_typescript_captures_enum_declarations() {
+    let parser = ASTParser::new();
+    let mut files = vec![make_entry(
+        "/enum_test.ts",
+        "export enum Mode { Fast, Slow }\nenum Bare { One }\nfunction pick(m: Mode): string { return String(m); }\n",
+        Language::TypeScript,
+    )];
+    parser.parse_all(&mut files);
+    assert!(files[0].parse_ok);
+    let meta = match &files[0].parse_metadata {
+        Some(shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(m)) => m,
+        other => panic!("expected TypeScript metadata, got: {other:?}"),
+    };
+    assert!(
+        meta.enum_declarations.contains(&"Mode".to_string()),
+        "exported enum should be captured, got: {:?}",
+        meta.enum_declarations
+    );
+    assert!(
+        meta.enum_declarations.contains(&"Bare".to_string()),
+        "non-exported enum should be captured, got: {:?}",
+        meta.enum_declarations
+    );
+}
+
+#[test]
 fn parse_unknown_language_sets_parse_ok_false() {
     let parser = ASTParser::new();
     let mut files = vec![make_entry("/test.xyz", "some content", Language::Unknown)];
