@@ -83,6 +83,44 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 ---
 
+## Placement (AES702, AES703)
+
+A `capabilities_*` file belongs in a **feature folder** — a subdirectory of a member
+directory (`crates/`, `modules/`, `packages/`) that is neither `shared/` nor a surface folder.
+The folder name must match the feature it serves:
+
+```
+crates/<feature_name>/src/capabilities_<domain>_<role>.*    # Rust
+modules/<feature_name>/src/capability_<domain>_<role>.py     # Python
+packages/<feature_name>/src/capabilities_<domain>_<role>.ts # TypeScript
+```
+
+Every feature folder needs **at least one `capabilities_*` file and at least one
+`agent_*_orchestrator` file**. A feature folder with only capabilities has nothing
+orchestrating them — an **AES702** violation.
+
+`capabilities_*` files are forbidden in two places:
+
+- **`shared/`** — the shared folder holds taxonomy, utility, and contract files only (**AES701**).
+- **A surface folder** — a folder where surface files outnumber everything else carries surface files only (**AES703**).
+
+Both violations name the misplaced file and direct you to move it into a feature folder.
+
+### Feature folder documents
+
+A feature folder carries two documents at its root, beside the source:
+
+```
+crates/<feature_name>/FRD.md       # what the feature does — requirements
+crates/<feature_name>/BACKLOG.md   # where its work stands
+```
+
+The folder name matches the feature it serves: `crates/calculator/` documents the calculator,
+`modules/naming_violations/` documents naming violations. A folder named after a generic
+word (`utils`, `common`, `core`) describes no feature and cannot carry a meaningful FRD.
+
+---
+
 ## Diagnostic Tree
 
 Ask these questions in order. The first "No" dictates your next action.

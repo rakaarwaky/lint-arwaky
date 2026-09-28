@@ -16,6 +16,7 @@ pub mod naming_rules;
 pub mod orphan_rules;
 pub mod quality_rules;
 pub mod role_rules;
+pub mod structure_rules;
 
 // ── Layer 3: Infrastructure ─────────────────────────────────
 pub mod auto_fix;

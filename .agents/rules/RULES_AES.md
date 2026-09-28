@@ -59,6 +59,12 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES605 | Feature Folder Health | MEDIUM   | Doc    | Every folder with a doc pair holds an orchestrator; kernel folders carry no docs.                |
 | AES606 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
 
+| Code   | Name               | Severity | Group     | Description                                                                                |
+| -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                  |
+| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file.                 |
+| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*` or `agent_*` file.                                |
+
 ---
 
 ## Group 1: Naming
@@ -523,4 +529,44 @@ Each document also carries an agreed set of project-specific H2s that are accept
 | `h1_count`          | The document has zero or more than one level-1 heading.                              |
 | `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.         |
 | `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal. |
+
+
+---
+
+## Group 7: Folder Structure
+
+### AES701 — Shared Folder Purity
+
+**Severity:** HIGH
+
+A workspace holds a locked `shared` folder that contains only taxonomy, utility, and contract files. Any `capabilities_*`, `agent_*`, or `surface_*` file sitting there is misplaced and must be moved to a feature or surface folder.
+
+| Violation type                  | Fires when                                                       |
+| --------------------------------- | ------------------------------------------------------------------ |
+| `shared_has_forbidden_files` | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file. |
+
+---
+
+### AES702 — Feature Folder Health
+
+**Severity:** MEDIUM
+
+A feature folder is a member subdirectory (under `crates/`, `modules/`, or `packages/`) that carries business logic. It must hold at least one `agent_*_orchestrator` file AND at least one `capabilities_*` file. A folder with only one side of that pair is incomplete and should be split or merged into the correct home.
+
+| Violation type                    | Fires when                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file.           |
+| `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.        |
+
+---
+
+### AES703 — Surface Folder Purity
+
+**Severity:** MEDIUM
+
+A surface folder is a folder where surface files dominate — it has more surface files than all other layers combined. Such a folder must contain surface files only. Any `capabilities_*` or `agent_*` file in a surface folder is misplaced and should move to a feature folder. Utility files, barrels, and entry-point wrappers are permitted alongside surfaces.
+
+| Violation type                       | Fires when                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------ |
+| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*` or `agent_*` file. |
 

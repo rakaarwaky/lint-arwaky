@@ -319,6 +319,10 @@ fn main() {
     );
     let maintenance_orchestrator = maintenance_container.orchestrator();
 
+    let structure_orchestrator =
+        structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator(
+        );
+
     let setup_container =
         project_setup::root_project_setup_container::SetupContainer::new(filesystem_io.clone());
     let setup_orchestrator = setup_container.aggregate();
@@ -365,6 +369,7 @@ fn main() {
         external: external_lint.clone(),
         orphan: orphan_orchestrator.clone(),
         config: config_orchestrator.clone(),
+        structure: structure_orchestrator.clone(),
         fs_seam: Arc::new(fs_seam.clone()),
     };
 

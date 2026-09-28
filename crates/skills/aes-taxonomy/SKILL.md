@@ -90,6 +90,23 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 ---
 
+## Placement (AES701)
+
+A `taxonomy_*` file belongs in the workspace's **`shared/` folder**, beside `utility_*` and `contract_*` files:
+
+```
+crates/shared/src/     # Rust
+modules/shared/src/     # Python
+packages/shared/src/    # TypeScript
+```
+
+The `shared` folder is locked. Placing `taxonomy_*` in a feature folder leaves the domain
+types unreachable from every member, and the barrel that should register them does not
+exist there. A `capabilities_*`, `agent_*`, or `surface_*` file found inside `shared/`
+is an **AES701** violation and must be moved out.
+
+---
+
 ## Diagnostic Tree
 
 Ask these questions in order. The first "No" dictates your next action.

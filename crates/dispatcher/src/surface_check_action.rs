@@ -22,6 +22,7 @@ use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::role_rules::IRoleRunnerAggregate;
 use shared::role_rules::taxonomy_role_request::RoleRequest;
+use shared::structure_rules::IStructureAggregate;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -36,7 +37,7 @@ pub struct FilesystemSeam {
     pub aggregate: Arc<dyn IFilesystemAggregate>,
 }
 
-/// Bundles the 6 scan aggregates + config source + filesystem seam so that
+/// Bundles the 7 scan aggregates + config source + filesystem seam so that
 /// `collect_scan` can dispatch all linters in-process (W10).
 #[derive(Clone)]
 pub struct ScanAggregates {
@@ -47,6 +48,7 @@ pub struct ScanAggregates {
     pub external: Arc<dyn IExternalLintAggregate>,
     pub orphan: Arc<dyn IOrphanAggregate>,
     pub config: Arc<dyn IConfigOrchestratorAggregate>,
+    pub structure: Arc<dyn IStructureAggregate>,
     /// Provides raw protocol seams + aggregate per scan run.
     pub fs_seam: Arc<FilesystemSeam>,
 }
@@ -382,7 +384,47 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         )
     });
 
+    // Structure — folder-layout audit (AES701–AES703). Its findings name a
+    // folder or a file inside one, and a folder path is not itself a file, so
+    // these are scoped separately and appended after the file-scope filter.
+    all.extend(structure_violations_in_scope(&target_canon_str, agg));
+
     all
+}
+
+/// Run the structure audit and keep only findings whose folder sits under the
+/// scan target. Structure findings carry workspace-root-relative paths, so they
+/// resolve against the workspace root (the target itself, or its parent when
+/// the target is a member directory).
+fn structure_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
+    let target_path = std::path::Path::new(target);
+    // The audit resolves the workspace root the same way; mirror that here so
+    // a finding path joins onto the right base.
+    let has_members = ["crates", "modules", "packages"]
+        .iter()
+        .any(|m| target_path.join(m).is_dir());
+    let ws_root: std::path::PathBuf = if has_members {
+        target_path.to_path_buf()
+    } else {
+        target_path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| target_path.to_path_buf())
+    };
+
+    crate::surface_structure_action::collect_structure(target, agg.structure.clone())
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|v| {
+            // A finding names a folder (AES702) or a file (AES701/AES703); both
+            // resolve under the workspace root. The audit always walks every
+            // member dir under that root, so a member-dir scan target must
+            // additionally keep only the findings inside itself.
+            let resolved = ws_root.join(&v.file.value);
+            let exists = resolved.is_dir() || agg.fs_seam.io.path_exists(&resolved);
+            exists && resolved.starts_with(target_path)
+        })
+        .collect()
 }
 
 /// Whether an external-lint violation falls inside the scan scope: its file

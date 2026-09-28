@@ -495,3 +495,18 @@ architecture:
     AES606: # Doc heading structure — h1_count | h2_missing | h2_unexpected
       enabled: true
       severity: HIGH
+
+    # ─── AES700: Folder structure ───
+    # Audits which layer files sit in which workspace member folder, run by
+    # `lint-arwaky-cli scan`. One code per folder kind.
+    AES701: # Shared folder purity — shared_has_forbidden_files
+      enabled: true
+      severity: HIGH
+
+    AES702: # Feature folder health — feature_missing_agent | feature_missing_capability
+      enabled: true
+      severity: MEDIUM
+
+    AES703: # Surface folder purity — surface_has_misplaced_files
+      enabled: true
+      severity: MEDIUM

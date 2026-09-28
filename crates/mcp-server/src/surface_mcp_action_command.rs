@@ -42,6 +42,7 @@ pub struct McpServerDependencies {
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub structure_orchestrator: Arc<dyn shared::structure_rules::IStructureAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
     pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
@@ -91,6 +92,7 @@ impl McpActionSurface {
                 external: self.deps.external_lint.clone(),
                 orphan: self.deps.orphan_orchestrator.clone(),
                 config: self.deps.config_orchestrator.clone(),
+                structure: self.deps.structure_orchestrator.clone(),
                 fs_seam: self.deps.fs_seam.clone(),
             }),
         };
