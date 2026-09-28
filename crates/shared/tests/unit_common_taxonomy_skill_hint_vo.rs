@@ -1,4 +1,5 @@
-// Unit tests — skill hint resolution: code + layer → routing.
+// Unit tests — skill hint resolution: file layer → routing.
+// One rule: the file's layer determines the skill for every code.
 use shared_lint_arwaky::common::resolve_skill_hint_for_file;
 use shared_lint_arwaky::common::taxonomy_skill_hint_vo::{
     SkillHint, resolve_skill_hint, skill_of_layer,
@@ -20,6 +21,8 @@ fn skill_of_layer_falls_back_for_unknown() {
     assert_eq!(skill_of_layer("nonexistent"), "aes-lint-arwaky");
 }
 
+// ─── resolve_skill_hint (code + layer) ───────────────────────────────────────
+
 #[test]
 fn aes101_routes_to_layer_skill() {
     let hint = resolve_skill_hint("AES101", Some("contract"));
@@ -27,13 +30,51 @@ fn aes101_routes_to_layer_skill() {
 }
 
 #[test]
-fn aes102_routes_to_layer_skill() {
-    let hint = resolve_skill_hint("AES102", Some("taxonomy"));
+fn aes201_in_agent_layer_routes_to_agent_skill() {
+    // AES201 is a layer-scoped code: the agent file's own skill owns the fix.
+    let hint = resolve_skill_hint("AES201", Some("agent"));
+    assert_eq!(hint.skill, Some("aes-agent"));
+}
+
+#[test]
+fn aes201_in_tax_layer_routes_to_tax_skill() {
+    let hint = resolve_skill_hint("AES201", Some("taxonomy"));
     assert_eq!(hint.skill, Some("aes-taxonomy"));
 }
 
 #[test]
-fn aes101_falls_back_when_layer_none() {
+fn aes203_and_aes304_always_return_fix_command() {
+    for (code, layer) in [
+        ("AES203", Some("agent")),
+        ("AES304", Some("contract")),
+        ("AES203", None),
+    ] {
+        let hint = resolve_skill_hint(code, layer);
+        assert_eq!(hint.skill, None, "code {code}");
+        assert!(
+            hint.fix_command
+                .unwrap()
+                .contains(&format!("--filter {code}")),
+            "code {code}"
+        );
+    }
+}
+
+#[test]
+fn aes403_in_capabilities_layer_routes_to_capabilities_skill() {
+    let hint = resolve_skill_hint("AES403", Some("capabilities"));
+    assert_eq!(hint.skill, Some("aes-capabilities"));
+}
+
+#[test]
+fn aes403_in_agent_layer_routes_to_agent_skill() {
+    // Even AES403 follows the file's layer, not a fixed mapping.
+    let hint = resolve_skill_hint("AES403", Some("agent"));
+    assert_eq!(hint.skill, Some("aes-agent"));
+}
+
+#[test]
+fn unknown_layer_falls_back_to_lint_skill() {
     let hint = resolve_skill_hint("AES101", None);
     assert_eq!(hint.skill, None);
     assert_eq!(
@@ -43,89 +84,77 @@ fn aes101_falls_back_when_layer_none() {
 }
 
 #[test]
-fn aes201_and_aes205_always_route_to_contract() {
-    for code in ["AES201", "AES205"] {
-        let hint = resolve_skill_hint(code, Some("utility"));
-        assert_eq!(hint.skill, Some("aes-contract"), "code {code}");
-    }
+fn external_tool_codes_use_layer_skill_when_layer_known() {
+    let hint = resolve_skill_hint("clippy::needless_return", Some("contract"));
+    assert_eq!(hint.skill, Some("aes-contract"));
 }
 
 #[test]
-fn aes203_and_aes304_route_to_fix_command() {
-    for code in ["AES203", "AES304"] {
-        let hint = resolve_skill_hint(code, Some("agent"));
-        assert_eq!(hint.skill, None, "code {code}");
-        assert!(
-            hint.fix_command
-                .unwrap()
-                .contains(&format!("--filter {code}")),
-            "code {code} filter mismatch"
-        );
-    }
+fn external_tool_codes_fall_back_when_layer_unknown() {
+    let hint = resolve_skill_hint("clippy::needless_return", None);
+    assert_eq!(hint.skill, None);
+}
+
+// ─── resolve_skill_hint_for_file (utility layer) ─────────────────────────────
+
+#[test]
+fn file_paths_resolve_layer_correctly() {
+    assert_eq!(
+        resolve_skill_hint_for_file("AES101", "crates/foo/contract_scan_protocol.rs").skill,
+        Some("aes-contract")
+    );
+    assert_eq!(
+        resolve_skill_hint_for_file("AES101", "modules/taxonomy_setup_vo.py").skill,
+        Some("aes-taxonomy")
+    );
+    assert_eq!(
+        resolve_skill_hint_for_file("AES405", "packages/agent_scan_orchestrator.ts").skill,
+        Some("aes-agent")
+    );
+    assert_eq!(
+        resolve_skill_hint_for_file("AES101", "src/plain_file.rs").skill,
+        None
+    );
 }
 
 #[test]
-fn aes305_routes_to_utility_regardless_of_layer() {
-    let hint = resolve_skill_hint("AES305", Some("agent"));
-    assert_eq!(hint.skill, Some("aes-utility"));
+fn aes201_follows_file_layer_not_fixed_contract() {
+    assert_eq!(
+        resolve_skill_hint_for_file("AES201", "crates/foo/agent_scan_orchestrator.rs").skill,
+        Some("aes-agent")
+    );
+    assert_eq!(
+        resolve_skill_hint_for_file("AES201", "crates/foo/taxonomy_setup_vo.rs").skill,
+        Some("aes-taxonomy")
+    );
 }
 
 #[test]
-fn aes40x_each_maps_to_owning_skill() {
-    let cases = [
-        ("AES401", "aes-taxonomy"),
-        ("AES402", "aes-contract"),
-        ("AES403", "aes-capabilities"),
-        ("AES404", "aes-utility"),
-        ("AES405", "aes-agent"),
-        ("AES406", "aes-surface"),
-    ];
-    for (code, skill) in cases {
-        let hint = resolve_skill_hint(code, Some("agent"));
-        assert_eq!(hint.skill, Some(skill), "code {code}");
-    }
+fn aes403_follows_file_layer_not_fixed_capabilities() {
+    assert_eq!(
+        resolve_skill_hint_for_file("AES403", "crates/foo/agent_scan_orchestrator.rs").skill,
+        Some("aes-agent")
+    );
+    assert_eq!(
+        resolve_skill_hint_for_file("AES403", "crates/foo/capabilities_scan_checker.rs").skill,
+        Some("aes-capabilities")
+    );
 }
 
 #[test]
-fn aes50x_orphans_route_to_the_files_own_layer_skill() {
-    let cases = [
-        ("AES501", "taxonomy", "aes-taxonomy"),
-        ("AES502", "contract", "aes-contract"),
-        ("AES503", "capabilities", "aes-capabilities"),
-        ("AES504", "utility", "aes-utility"),
-        ("AES505", "agent", "aes-agent"),
-        ("AES506", "surfaces", "aes-surface"),
-    ];
-    for (code, layer, skill) in cases {
-        let hint = resolve_skill_hint(code, Some(layer));
-        assert_eq!(hint.skill, Some(skill), "code {code} layer {layer}");
-    }
+fn aes505_orphan_in_agent_file_routes_to_agent_skill() {
+    assert_eq!(
+        resolve_skill_hint_for_file("AES505", "crates/foo/agent_scan_orchestrator.rs").skill,
+        Some("aes-agent")
+    );
 }
 
 #[test]
-fn aes60x_docs_route_to_docs_skill() {
-    for code in ["AES601", "AES602", "AES603", "AES604", "AES605"] {
-        let hint = resolve_skill_hint(code, Some("root"));
-        assert_eq!(hint.skill, Some("aes-docs"), "code {code}");
-    }
-}
-
-#[test]
-fn unknown_code_falls_back_to_lint_skill() {
-    let hint = resolve_skill_hint("AES999", Some("agent"));
-    assert_eq!(hint.skill, Some("aes-lint-arwaky"));
-}
-
-#[test]
-fn external_tool_codes_do_not_panic() {
-    for code in [
-        "clippy::needless_return",
-        "ruff.F401",
-        "eslint.no-unused-vars",
-    ] {
-        let hint = resolve_skill_hint(code, Some("agent"));
-        assert!(!hint.guidance().is_empty(), "code {code}");
-    }
+fn windows_style_paths_resolve_layer() {
+    assert_eq!(
+        resolve_skill_hint_for_file("AES406", "crates\\foo\\surface_scan_command.rs").skill,
+        Some("aes-surface")
+    );
 }
 
 #[test]
@@ -143,36 +172,6 @@ fn guidance_string_for_fix_command() {
     assert_eq!(
         hint.guidance(),
         "lint-arwaky-cli fix <path> --filter AES203"
-    );
-}
-
-// ─── resolve_skill_hint_for_file (utility layer) ─────────────────────────────
-
-#[test]
-fn file_paths_resolve_layer_correctly() {
-    assert_eq!(
-        resolve_skill_hint_for_file("AES101", "crates/foo/contract_scan_protocol.rs").skill,
-        Some("aes-contract")
-    );
-    assert_eq!(
-        resolve_skill_hint_for_file("AES102", "modules/taxonomy_setup_vo.py").skill,
-        Some("aes-taxonomy")
-    );
-    assert_eq!(
-        resolve_skill_hint_for_file("AES405", "packages/agent_scan_orchestrator.ts").skill,
-        Some("aes-agent")
-    );
-    assert_eq!(
-        resolve_skill_hint_for_file("AES101", "src/plain_file.rs").skill,
-        None
-    );
-}
-
-#[test]
-fn windows_style_paths_resolve_layer() {
-    assert_eq!(
-        resolve_skill_hint_for_file("AES406", "crates\\foo\\surface_scan_command.rs").skill,
-        Some("aes-surface")
     );
 }
 

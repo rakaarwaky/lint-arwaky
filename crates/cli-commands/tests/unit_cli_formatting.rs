@@ -101,8 +101,16 @@ fn skill_hint_available_for_every_violation_in_a_scan() {
 }
 
 #[test]
-fn skill_hint_for_contract_violation_points_to_contract_skill() {
+fn skill_hint_follows_file_layer_not_aes_code() {
+    // AES201 in a utility-layer file routes to aes-utility, not aes-contract.
     let hint = resolve_skill_hint_for_file("AES201", "crates/foo/utility_path_resolver.rs");
-    assert_eq!(hint.skill, Some("aes-contract"));
-    assert_eq!(hint.guidance(), "lint-arwaky-cli skill read aes-contract");
+    assert_eq!(hint.skill, Some("aes-utility"));
+    assert_eq!(hint.guidance(), "lint-arwaky-cli skill read aes-utility");
+}
+
+#[test]
+fn aes403_in_agent_file_routes_to_agent_skill() {
+    let hint = resolve_skill_hint_for_file("AES403", "crates/foo/agent_scan_orchestrator.rs");
+    assert_eq!(hint.skill, Some("aes-agent"));
+    assert_eq!(hint.guidance(), "lint-arwaky-cli skill read aes-agent");
 }
