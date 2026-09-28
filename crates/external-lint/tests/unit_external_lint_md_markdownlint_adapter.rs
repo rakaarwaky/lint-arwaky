@@ -323,6 +323,76 @@ fn text_without_error_keywords_yields_empty_results() {
     assert!(results.values.is_empty());
 }
 
+// ─── Path canonicalization ───
+
+/// markdownlint-cli2 prints paths relative to its working directory; the
+/// adapter must re-anchor them onto the scan root so findings land on the
+/// same absolute paths the rest of the report uses.
+#[test]
+fn text_relative_paths_are_canonicalized_onto_the_root() {
+    let relative = "\
+bad.md:1:1 error MD018/no-missing-space-atx No space after hash [Context: \"#Title\"]\n";
+    let (adapter, _, _) = make_adapter(vec![relative], &["markdownlint-cli2"]);
+    let results = adapter.scan(&readme()).unwrap_or_default();
+
+    assert_eq!(results.values.len(), 1);
+    assert_eq!(
+        results.values[0].file.value(),
+        "/tmp/readme.md/bad.md",
+        "relative file path must be joined onto the scan root"
+    );
+}
+
+#[test]
+fn text_absolute_paths_are_kept_verbatim() {
+    let (adapter, _, _) = make_adapter(vec![TEXT_ISSUES], &["markdownlint-cli2"]);
+    let results = adapter.scan(&readme()).unwrap_or_default();
+    for finding in &results.values {
+        assert!(
+            std::path::Path::new(finding.file.value()).is_absolute(),
+            "got {}",
+            finding.file.value()
+        );
+    }
+}
+
+#[test]
+fn json_relative_paths_are_canonicalized_onto_the_root() {
+    let json = r#"[
+      {
+        "fileName": "notes/overview.md",
+        "lineNumber": 2,
+        "ruleNames": ["MD033", "no-inline-html"],
+        "ruleDescription": "Inline HTML",
+        "errorDetail": null,
+        "errorContext": "<div>",
+        "errorRange": null,
+        "fixInfo": null
+      }
+    ]"#;
+    let (adapter, _, _) = make_adapter(vec![json], &["markdownlint-cli"]);
+    let results = adapter.scan(&readme()).unwrap_or_default();
+
+    assert_eq!(results.values.len(), 1);
+    assert_eq!(
+        results.values[0].file.value(),
+        "/tmp/readme.md/notes/overview.md"
+    );
+}
+
+#[test]
+fn json_absolute_paths_are_kept_verbatim() {
+    let (adapter, _, _) = make_adapter(vec![JSON_ISSUES], &["markdownlint-cli"]);
+    let results = adapter.scan(&readme()).unwrap_or_default();
+    for finding in &results.values {
+        assert!(
+            std::path::Path::new(finding.file.value()).is_absolute(),
+            "got {}",
+            finding.file.value()
+        );
+    }
+}
+
 // ─── Findings shape ───
 
 #[test]
