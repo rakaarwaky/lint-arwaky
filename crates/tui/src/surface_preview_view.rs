@@ -103,13 +103,12 @@ Navigation:
 
 Actions (on selected file/folder):
   c       check — AES compliance
-  s       scan — multi-adapter scan (Esc cancels)
-  f       fix — preview fixes (dry-run, writes nothing)
-  F       fix (live) — apply safe fixes to files
+  s       scan — multi-adapter scan
+  f       fix — auto-fix
   t       ci — CI mode (threshold)
   w       watch — not supported (use CLI)
   o       orphan — dead code check
-  x       security — vulnerability scan
+  Ctrl+S  security — vulnerability scan
   Ctrl+P  dependencies — deps scan
 
 Setup:
@@ -124,10 +123,9 @@ Setup:
   v       version — show version
 
 General:
-  r       Change project root
   ?       Toggle this help
   y       Copy preview to clipboard
-  Ctrl+Y  Save preview to lint-results.txt
+  Ctrl+Y  Copy preview to clipboard + save to lint-results.txt
   q       Quit
 "
     .to_string()

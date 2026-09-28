@@ -41,8 +41,6 @@ pub enum TuiEvent {
     PathBackspace,
     PathConfirm,
     PathUseCurrent,
-    /// Esc pressed in a reopened path dialog — close it and keep the current root.
-    PathCancel,
     ChangeProjectRoot,
     ConfirmAction,
     CancelConfirm,
