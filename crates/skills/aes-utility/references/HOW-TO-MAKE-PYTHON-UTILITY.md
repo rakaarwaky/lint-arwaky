@@ -98,6 +98,7 @@ def <second_function_name>(<param_name>: str) -> str:
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
+# Machine-checked: class declarations (metadata path), naming, imports, primitives.
 # Manual (not machine-checked): stateless, domain-agnostic, ≥2 consumers; no class/`self`/`this`/struct/impl.
 # Fallback compile gate: python -c "import <shared_package>.<module>"
 ```
