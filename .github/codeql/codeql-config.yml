@@ -1,0 +1,8 @@
+name: lint-arwaky-codeql
+
+excluders:
+  - name: exclude-test-fixtures
+    paths:
+      - 'workspaces-bad'
+      - 'workspaces-good'
+      - '.worktree'
