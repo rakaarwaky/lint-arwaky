@@ -3,7 +3,9 @@
 
 use role_rules_lint_arwaky::agent_role_orchestrator::RoleCheckerDeps;
 use role_rules_lint_arwaky::agent_role_orchestrator::RoleOrchestrator;
-use role_rules_lint_arwaky::capabilities_agent_role_auditor::AgentRoleChecker;
+use role_rules_lint_arwaky::capabilities_agent_python_role_auditor::AgentPythonRoleAuditor;
+use role_rules_lint_arwaky::capabilities_agent_rust_role_auditor::AgentRustRoleAuditor;
+use role_rules_lint_arwaky::capabilities_agent_ts_role_auditor::AgentTsRoleAuditor;
 use role_rules_lint_arwaky::capabilities_capabilities_python_role_auditor::CapabilitiesPythonRoleAuditor;
 use role_rules_lint_arwaky::capabilities_capabilities_rust_role_auditor::CapabilitiesRustRoleAuditor;
 use role_rules_lint_arwaky::capabilities_capabilities_ts_role_auditor::CapabilitiesTypeScriptRoleAuditor;
@@ -124,11 +126,27 @@ fn surface_role_checker_implements_protocol() {
     checker.check_fn_count_limit(&file, &mut v);
 }
 
-// ── AgentRoleChecker → IAgentRoleProtocol ───────────────────
+// ── Agent auditors → IAgentRoleProtocol ─────────────────────
 
 #[test]
-fn agent_role_checker_implements_protocol() {
-    let checker: Arc<dyn IAgentRoleProtocol> = Arc::new(AgentRoleChecker::new());
+fn agent_rust_auditor_implements_protocol() {
+    let checker: Arc<dyn IAgentRoleProtocol> = Arc::new(AgentRustRoleAuditor::new());
+    let file = dummy_file();
+    let mut v: Vec<LintResult> = Vec::new();
+    checker.check_agent_routing(&file, "agent", &mut v);
+}
+
+#[test]
+fn agent_python_auditor_implements_protocol() {
+    let checker: Arc<dyn IAgentRoleProtocol> = Arc::new(AgentPythonRoleAuditor::new());
+    let file = dummy_file();
+    let mut v: Vec<LintResult> = Vec::new();
+    checker.check_agent_routing(&file, "agent", &mut v);
+}
+
+#[test]
+fn agent_ts_auditor_implements_protocol() {
+    let checker: Arc<dyn IAgentRoleProtocol> = Arc::new(AgentTsRoleAuditor::new());
     let file = dummy_file();
     let mut v: Vec<LintResult> = Vec::new();
     checker.check_agent_routing(&file, "agent", &mut v);
@@ -176,7 +194,9 @@ fn role_orchestrator_implements_classification_protocol() {
         capabilities_typescript: Arc::new(CapabilitiesTypeScriptRoleAuditor::new()),
         capabilities: rust_auditor,
         surface: Arc::new(SurfaceRoleChecker::new()),
-        agent: Arc::new(AgentRoleChecker::new()),
+        agent_rust: Arc::new(AgentRustRoleAuditor::new()),
+        agent_python: Arc::new(AgentPythonRoleAuditor::new()),
+        agent_ts: Arc::new(AgentTsRoleAuditor::new()),
         utility_rust: Arc::new(UtilityRustRoleAuditor::new()),
         utility_python: Arc::new(UtilityPythonRoleAuditor::new()),
         utility_typescript: Arc::new(UtilityTypeScriptRoleAuditor::new()),
@@ -200,7 +220,9 @@ fn role_orchestrator_implements_aggregate() {
         capabilities_typescript: Arc::new(CapabilitiesTypeScriptRoleAuditor::new()),
         capabilities: rust_auditor,
         surface: Arc::new(SurfaceRoleChecker::new()),
-        agent: Arc::new(AgentRoleChecker::new()),
+        agent_rust: Arc::new(AgentRustRoleAuditor::new()),
+        agent_python: Arc::new(AgentPythonRoleAuditor::new()),
+        agent_ts: Arc::new(AgentTsRoleAuditor::new()),
         utility_rust: Arc::new(UtilityRustRoleAuditor::new()),
         utility_python: Arc::new(UtilityPythonRoleAuditor::new()),
         utility_typescript: Arc::new(UtilityTypeScriptRoleAuditor::new()),

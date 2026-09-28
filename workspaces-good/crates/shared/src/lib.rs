@@ -5,4 +5,6 @@ pub mod taxonomy_calculator_response;
 pub mod taxonomy_expression_vo;
 pub mod taxonomy_operation_vo;
 pub mod taxonomy_result_vo;
+pub mod taxonomy_single_request;
+pub mod taxonomy_single_response;
 pub mod utility_expression_parser;

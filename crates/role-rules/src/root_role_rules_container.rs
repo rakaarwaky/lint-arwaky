@@ -4,7 +4,9 @@
 // via the IRoleRunnerAggregate contract. No business logic lives here.
 
 use crate::agent_role_orchestrator::{RoleCheckerDeps, RoleOrchestrator};
-use crate::capabilities_agent_role_auditor::AgentRoleChecker;
+use crate::capabilities_agent_python_role_auditor::AgentPythonRoleAuditor;
+use crate::capabilities_agent_rust_role_auditor::AgentRustRoleAuditor;
+use crate::capabilities_agent_ts_role_auditor::AgentTsRoleAuditor;
 use crate::capabilities_capabilities_python_role_auditor::CapabilitiesPythonRoleAuditor;
 use crate::capabilities_capabilities_rust_role_auditor::CapabilitiesRustRoleAuditor;
 use crate::capabilities_capabilities_ts_role_auditor::CapabilitiesTypeScriptRoleAuditor;
@@ -34,6 +36,9 @@ impl RoleContainer {
         let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
         let python_auditor = Arc::new(CapabilitiesPythonRoleAuditor::new());
         let ts_auditor = Arc::new(CapabilitiesTypeScriptRoleAuditor::new());
+        let agent_rust = Arc::new(AgentRustRoleAuditor::new());
+        let agent_python = Arc::new(AgentPythonRoleAuditor::new());
+        let agent_ts = Arc::new(AgentTsRoleAuditor::new());
         let deps = RoleCheckerDeps {
             taxonomy: Arc::new(TaxonomyRoleChecker::new()),
             contract_rust: Arc::new(ContractRustRoleAuditor::new()),
@@ -44,7 +49,9 @@ impl RoleContainer {
             capabilities_typescript: ts_auditor.clone(),
             capabilities: rust_auditor,
             surface: Arc::new(SurfaceRoleChecker::new()),
-            agent: Arc::new(AgentRoleChecker::new()),
+            agent_rust,
+            agent_python,
+            agent_ts,
             utility_rust: Arc::new(UtilityRustRoleAuditor::new()),
             utility_python: Arc::new(UtilityPythonRoleAuditor::new()),
             utility_typescript: Arc::new(UtilityTypeScriptRoleAuditor::new()),
@@ -63,7 +70,9 @@ impl RoleContainer {
             capabilities_typescript: Arc::clone(&self.deps.capabilities_typescript),
             capabilities: Arc::clone(&self.deps.capabilities),
             surface: Arc::clone(&self.deps.surface),
-            agent: Arc::clone(&self.deps.agent),
+            agent_rust: Arc::clone(&self.deps.agent_rust),
+            agent_python: Arc::clone(&self.deps.agent_python),
+            agent_ts: Arc::clone(&self.deps.agent_ts),
             utility_rust: Arc::clone(&self.deps.utility_rust),
             utility_python: Arc::clone(&self.deps.utility_python),
             utility_typescript: Arc::clone(&self.deps.utility_typescript),

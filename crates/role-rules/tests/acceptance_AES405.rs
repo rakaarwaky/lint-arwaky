@@ -73,14 +73,32 @@ fn aes405_too_many_types_detected() {
 }
 
 // ── Valid agent with implementor → no violation ──
+//
+// A fully valid AES405 agent: aggregate impl first, then the constructor, and
+// it injects the two protocol seams an orchestrator is expected to coordinate.
+
+const VALID_RUST_AGENT: &str = "\
+pub struct Dispatcher {
+    scanner: Arc<dyn IScannerProtocol>,
+    reporter: Arc<dyn IReporterProtocol>,
+}
+
+impl IDispatcherAggregate for Dispatcher {
+    fn execute(&self) {
+        self.scanner.scan();
+    }
+}
+
+impl Dispatcher {
+    pub fn new(scanner: Arc<dyn IScannerProtocol>, reporter: Arc<dyn IReporterProtocol>) -> Self {
+        Self { scanner, reporter }
+    }
+}
+";
 
 #[test]
 fn aes405_valid_agent_no_violation() {
-    let file = make_file(
-        "src/agent_dispatcher.rs",
-        Language::Rust,
-        "pub struct Dispatcher {}\nimpl IDispatcherAggregate for Dispatcher {}\n",
-    );
+    let file = make_file("src/agent_dispatcher.rs", Language::Rust, VALID_RUST_AGENT);
     let results = run_audit(vec![file]);
     let aes405: Vec<_> = results
         .iter()
@@ -88,7 +106,11 @@ fn aes405_valid_agent_no_violation() {
         .collect();
     assert!(
         aes405.is_empty(),
-        "valid agent with implementor should not trigger AES405"
+        "valid agent with implementor should not trigger AES405, got: {:?}",
+        aes405
+            .iter()
+            .map(|r| r.message.value.as_str())
+            .collect::<Vec<_>>()
     );
 }
 
@@ -116,11 +138,18 @@ fn aes405_python_no_parent_detected() {
 
 #[test]
 fn aes405_python_with_parent_no_violation() {
-    let file = make_file(
-        "src/agent_dispatcher.py",
-        Language::Python,
-        "class Dispatcher(IDispatcherAggregate):\n    pass\n",
-    );
+    // A fully valid AES405 Python agent: two injected protocol seams, no I/O,
+    // no free functions, no state outside the constructor, no computation.
+    let content = "\
+class Dispatcher(IDispatcherAggregate):
+    def __init__(self, scanner: IScannerProtocol, reporter: IReporterProtocol):
+        self._scanner = scanner
+        self._reporter = reporter
+
+    def execute(self, request):
+        return self._scanner.scan(request)
+";
+    let file = make_file("src/agent_dispatcher.py", Language::Python, content);
     let results = run_audit(vec![file]);
     let aes405: Vec<_> = results
         .iter()
@@ -128,7 +157,11 @@ fn aes405_python_with_parent_no_violation() {
         .collect();
     assert!(
         aes405.is_empty(),
-        "python agent with parent should not trigger AES405"
+        "python agent with parent should not trigger AES405, got: {:?}",
+        aes405
+            .iter()
+            .map(|r| r.message.value.as_str())
+            .collect::<Vec<_>>()
     );
 }
 

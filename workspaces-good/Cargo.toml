@@ -19,4 +19,5 @@ members = [
     "crates/shared",
     "crates/cli",
     "crates/calculator",
+    "crates/single_orchestrator",
 ]
