@@ -65,6 +65,7 @@ priority_rules:
     conditions:
       - label = hotfix
     priority: high
+    allow_checks_interruption: true
   - name: refactors-last
     conditions:
       - label = refactor
