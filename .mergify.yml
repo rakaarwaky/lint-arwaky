@@ -4,8 +4,9 @@
 # What this gives you as a solo developer:
 #   • Merge queue  —  all 6 quality-gate checks run on an integration commit
 #                      so you never land a PR that breaks main by itself but
-#                      fails in combination. Mergify auto-injects the
-#                      required checks from the GitHub ruleset.
+#                      fails in combination. The 6 checks are declared
+#                      explicitly in defaults.queue_rule.merge_conditions
+#                      because Mergify cannot read GitHub Rulesets.
 #   • Auto-queue   —  any non-draft, conflict-free PR to main is dropped
 #                      straight into the queue; no @mergifyio queue comment
 #                      needed.
@@ -22,24 +23,29 @@
 
 defaults:
   queue_rule:
-    # Rebase PRs onto latest main before running CI on the integration commit.
-    update_method: rebase
+    # Update the PR with latest main before running CI on the integration
+    # commit. `merge` rather than `rebase`: the GitHub ruleset sets
+    # strict_required_status_checks_policy, which rejects a force-push unless
+    # Mergify sets an update_bot_account. The merge commit is squashed away by
+    # merge_method below, so main's history stays linear.
+    update_method: merge
     merge_method: squash
-    # No explicit merge_conditions: the GitHub ruleset "Protect main - quality
-    # gates" (Format, Clippy, Build, Tests, Self-Lint, Codacy Static Code
-    # Analysis) is read by Mergify and injected as conditions on both queueing
-    # and merging. Keeping the list empty also keeps the queue CI single-step,
-    # which is what enables in-place checks below.
+    merge_conditions:
+      - check-success = Format
+      - check-success = Clippy
+      - check-success = Build
+      - check-success = Tests
+      - check-success = Self-Lint
+      - check-success = Codacy Static Code Analysis
 
 merge_queue:
   # Serial mode: PRs tested one at a time against the latest main tip.
   mode: serial
-  # In-place checks: Mergify tests the PR on its own branch (after updating
-  # it against main) instead of creating a temporary draft PR. This is
-  # required because the ruleset sets
-  # strict_required_status_checks_policy ("require branches to be up to date
-  # before merging"), which blocks a draft-PR-based run from ever merging.
-  # It is also one CI run instead of two.
+  # In-place checks: Mergify updates the PR branch with a merge commit (not a
+  # rebase) because the GitHub Ruleset enforces strict_required_status_checks
+  # and rejects force-pushes without an update_bot_account. The merge commit
+  # is squashed away on merge, so main's history stays linear. Also one CI run
+  # instead of two.
   max_parallel_checks: 1
   # Only post comments for terminal outcomes (merged or dequeued).
   status_comments: outcomes
