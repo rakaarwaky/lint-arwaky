@@ -59,7 +59,9 @@ fn write_contract_module(root: &Path, classes: usize) {
         if split && n + 1 == classes {
             continue;
         }
-        first.push_str(&format!("pub trait ISample{n}Protocol: Send + Sync {{}}\n\n"));
+        first.push_str(&format!(
+            "pub trait ISample{n}Protocol: Send + Sync {{}}\n\n"
+        ));
     }
     first.push_str("pub trait ISampleAggregate: Send + Sync {}\n");
     fs::write(module.join("contract_sample_protocol.rs"), first).unwrap();
@@ -67,7 +69,9 @@ fn write_contract_module(root: &Path, classes: usize) {
         let last = classes - 1;
         fs::write(
             module.join("contract_sample_extra_protocol.rs"),
-            format!("//! second contract file\n\npub trait ISample{last}Protocol: Send + Sync {{}}\n"),
+            format!(
+                "//! second contract file\n\npub trait ISample{last}Protocol: Send + Sync {{}}\n"
+            ),
         )
         .unwrap();
     }
@@ -109,7 +113,8 @@ fn fr_doc_004_rejects_more_requirements_than_protocol_classes() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(3));
     write_contract_module(tmp.path(), 2);
-    let message = parity_message(&audit(tmp.path())).expect("3 requirements vs 2 classes must fire");
+    let message =
+        parity_message(&audit(tmp.path())).expect("3 requirements vs 2 classes must fire");
     assert!(
         message.contains("3 requirements") && message.contains("2 protocol classes"),
         "the message states both counts; got: {message}"
