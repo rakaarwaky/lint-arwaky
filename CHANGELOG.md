@@ -1,4 +1,31 @@
 # Changelog
+
+## Unreleased
+
+### Fixes
+
+- **TUI confirm gate dead end** (UX-1-01, #354): install/init/uninstall-hook
+  confirmations render a modal dialog, `y`/Enter executes the action on a
+  worker thread, `n`/Esc cancels, and all other input is gated while a
+  destructive decision is pending. Previously the prompt could never be
+  answered and the actions could never run.
+- **TUI freezes and false cancel state** (UX-5-01, #366): check/fix/ci/orphan/
+  security/dependencies now run on background threads so the 50 ms event loop
+  keeps drawing and accepting input; keys blocked during a scan report
+  feedback; scan cancel discards the late result instead of claiming the
+  in-flight scan stopped.
+- **TUI path dialog trap** (UX-1-02, #355): Esc cancels a reopened
+  project-root dialog instead of quitting the whole TUI (first-run Esc still
+  quits, and the hint line says which applies).
+- **TUI keymap reachability** (UX-4-01, #363): `F` (live fix) now matches
+  `Char('F')` explicitly — the old `Char('f')`+SHIFT check never fired on
+  standard terminals; security moved to `x` since `^S` freezes terminals
+  (XOFF). Shortcut bar and help copy fixed (Ctrl+Y save-only, dry-run labels).
+- **TUI help overlay modal gate** (UX-2-03, #359): while help is open, only
+  `?`/Esc reach the handler; closing help restores the previous preview mode.
+- **TUI stale results** (UX-5-03, #368): navigating directories clears the
+  preview panel so old lint output is never shown under a new path.
+
 ## 3.7.1 (2026-09-27)
 
 ### Fixes

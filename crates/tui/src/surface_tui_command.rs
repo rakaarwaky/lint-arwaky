@@ -1,3 +1,4 @@
+use crate::surface_confirm_screen::ConfirmScreen;
 use crate::surface_event_action::SurfaceActionHandler;
 use crate::surface_file_list_view::FileListView;
 use crate::surface_path_screen::PathScreen;
@@ -27,6 +28,7 @@ struct RenderViews {
     preview: PreviewView,
     tree: TreeView,
     path_screen: PathScreen,
+    confirm_screen: ConfirmScreen,
     shortcuts: ShortcutComponent,
     status: StatusComponent,
 }
@@ -38,6 +40,7 @@ impl RenderViews {
             preview: PreviewView::new(),
             tree: TreeView::new(),
             path_screen: PathScreen::new(),
+            confirm_screen: ConfirmScreen::new(),
             shortcuts: ShortcutComponent::new(),
             status: StatusComponent::new(),
         }
@@ -157,6 +160,12 @@ impl TuiCommandSurface {
 
                 views.shortcuts.render(state, frame, main_layout[2]);
                 views.status.render(state, frame, main_layout[3]);
+
+                // I5 confirm gate (UX-1-01): the modal renders on top of the
+                // panel layout whenever a destructive action awaits confirmation.
+                if state.pending_confirm.is_some() {
+                    views.confirm_screen.render(state, frame, area);
+                }
             })?;
 
             if event::poll(Duration::from_millis(50))? {
@@ -170,8 +179,10 @@ impl TuiCommandSurface {
                         && let Some(rx) = self.action_handler.start_scan(state)
                     {
                         scan_rx = Some(rx);
+                    } else if state.scanning {
+                        // Feedback instead of silence when a second scan is requested.
+                        state.set_status("Scan already running — press Esc to cancel");
                     }
-                    // Ignore if already scanning
                 } else if state.scanning
                     && matches!(
                         tui_event,
@@ -184,7 +195,9 @@ impl TuiCommandSurface {
                             | TuiEvent::ActionDependencies
                     )
                 {
-                    // Block long-running actions while a scan is in progress
+                    // Block long-running actions while a scan is in progress,
+                    // but never silently (UX-5-01: disabled state needs feedback).
+                    state.set_status("Scan in progress — press Esc to cancel");
                 } else {
                     self.action_handler.handle(state, tui_event);
                 }
@@ -207,8 +220,22 @@ fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
     }
 }
 
-fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
+/// Pure keymap: translate a crossterm key event (plus modal state) into a
+/// TuiEvent. Modal gates are evaluated top-down: confirm gate → help overlay →
+/// path dialog → search mode → normal browsing. Public so the gates are
+/// unit-testable from tests/ (see unit_tui_surface_tui_command.rs).
+pub fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+
+    // Confirm gate (UX-1-01): while a destructive action awaits confirmation,
+    // ALL input routes to the pending decision — nothing else may fire.
+    if state.pending_confirm.is_some() {
+        return match key.code {
+            KeyCode::Char('y') | KeyCode::Enter => TuiEvent::ConfirmAction,
+            KeyCode::Char('n') | KeyCode::Esc => TuiEvent::CancelConfirm,
+            _ => TuiEvent::None,
+        };
+    }
 
     if ctrl {
         return match key.code {
@@ -220,6 +247,15 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         };
     }
 
+    // Help overlay gate (UX-2-03): only overlay keys reach the handler while
+    // help is open, so lint actions can't fire behind the overlay.
+    if state.show_help {
+        return match key.code {
+            KeyCode::Char('?') | KeyCode::Esc => TuiEvent::ToggleHelp,
+            _ => TuiEvent::None,
+        };
+    }
+
     // Path dialog: ALL input goes to path editing when dialog is visible
     if state.show_path_dialog {
         return match key.code {
@@ -227,7 +263,15 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
             KeyCode::Backspace => TuiEvent::PathBackspace,
             KeyCode::Enter => TuiEvent::PathConfirm,
             KeyCode::Tab => TuiEvent::PathUseCurrent,
-            KeyCode::Esc => TuiEvent::Quit,
+            // UX-1-02: Esc quits only on the first-run prompt; afterwards it
+            // cancels the dialog and keeps the current project root.
+            KeyCode::Esc => {
+                if state.dialog_is_first_run {
+                    TuiEvent::Quit
+                } else {
+                    TuiEvent::PathCancel
+                }
+            }
             _ => TuiEvent::None,
         };
     }
@@ -258,14 +302,14 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::BackTab => TuiEvent::FocusPrev,
         KeyCode::Char('c') => TuiEvent::ActionCheck,
         KeyCode::Char('s') => TuiEvent::ActionScan,
-        // Plain `f` = dry-run fix; Shift+`F` = live fix (Shift only affects letters).
-        KeyCode::Char('f') => {
-            if key.modifiers.contains(KeyModifiers::SHIFT) {
-                TuiEvent::ActionFixLive
-            } else {
-                TuiEvent::ActionFix
-            }
-        }
+        // UX-4-01: `f` = dry-run fix, `F` = live fix. Crossterm reports a shifted
+        // letter as Char('F') on standard terminals — matching Char('f') plus a
+        // SHIFT check silently drops the key almost everywhere, so match both
+        // spellings explicitly (the SHIFT variant is covered by the 'F' arm too).
+        KeyCode::Char('f') => TuiEvent::ActionFix,
+        KeyCode::Char('F') => TuiEvent::ActionFixLive,
+        // `x` runs the security scan (^S freezes most terminals via XOFF).
+        KeyCode::Char('x') => TuiEvent::ActionSecurity,
         KeyCode::Char('t') => TuiEvent::ActionCi,
         KeyCode::Char('w') => TuiEvent::ActionWatch,
         KeyCode::Char('o') => TuiEvent::ActionOrphan,

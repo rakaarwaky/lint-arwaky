@@ -62,7 +62,13 @@ impl PathScreen {
             ]),
             Line::from(""),
             Line::from(Span::styled(
-                "  [Enter] Confirm   [Tab] Use current dir   [Esc] Quit",
+                // UX-1-02: honest hint — Esc quits only on the first-run prompt;
+                // afterwards it cancels the dialog and keeps the current root.
+                if state.dialog_is_first_run {
+                    "  [Enter] Confirm   [Tab] Use current dir   [Esc] Quit"
+                } else {
+                    "  [Enter] Confirm   [Tab] Use current dir   [Esc] Cancel"
+                },
                 Style::default().fg(theme::SEPARATOR),
             )),
         ];

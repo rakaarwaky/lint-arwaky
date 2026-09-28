@@ -58,6 +58,14 @@ impl SurfaceActionHandler {
                 return;
             }
             let result = lint_port.scan(&path);
+            // UX-5-01: cancellation requested mid-scan. The subprocess-based
+            // pipeline cannot be aborted in flight, so we honour the cancel by
+            // discarding the late result instead of showing it — the status bar
+            // never claims "Cancelled" for a scan whose output was displayed.
+            if cancel.load(std::sync::atomic::Ordering::Relaxed) {
+                let _ = tx.send(ScanUpdate::Cancelled);
+                return;
+            }
             let _ = tx.send(ScanUpdate::Complete {
                 output: result.output,
                 violation_count: result.violation_count,
@@ -115,6 +123,8 @@ impl SurfaceActionHandler {
         action: Box<dyn FnOnce(&SurfaceLintExecutor) -> LintExecutionResult + Send>,
     ) -> bool {
         if state.action_pending {
+            // UX-5-01: a busy surface must say so instead of swallowing the key.
+            state.set_status("Busy — an action is already running");
             return false;
         }
         state.action_pending = true;
@@ -221,10 +231,15 @@ impl SurfaceActionHandler {
             TuiEvent::ToggleHelp => {
                 state.show_help = !state.show_help;
                 if state.show_help {
+                    // UX-2-03: remember what was showing so closing help restores
+                    // it instead of hard-resetting to ActionOutput.
+                    state.preview_mode_before_help = Some(state.preview_mode);
                     state.preview_mode = PreviewMode::HelpOverlay;
                 } else {
-                    // No file content preview — return to action output mode
-                    state.preview_mode = PreviewMode::ActionOutput;
+                    state.preview_mode = state
+                        .preview_mode_before_help
+                        .take()
+                        .unwrap_or(PreviewMode::ActionOutput);
                 }
             }
             // ---- Search mode: incremental file filtering ----
@@ -259,26 +274,34 @@ impl SurfaceActionHandler {
                 state.compute_filtered_indices();
             }
             // ---- Lint actions that operate on the selected file/directory ----
-            TuiEvent::ActionCheck => self.run_action(state, |lp, p, f| lp.check(p, f)),
-            TuiEvent::ActionScan => self.run_action(state, |lp, p, _f| lp.scan(p)),
+            // UX-5-01: every action runs on a worker thread — the 50 ms event
+            // loop must keep pumping (drawing, input, resize) while work runs.
+            TuiEvent::ActionCheck => self.run_action_bg(state, "check", |lp, p, f| lp.check(p, f)),
+            TuiEvent::ActionScan => self.run_action_bg(state, "scan", |lp, p, _f| lp.scan(p)),
             // Plain `f` is always a dry-run fix; `F` (ActionFixLive) applies fixes.
             TuiEvent::ActionFix => {
                 state.action_flags.dry_run = true;
-                self.run_action(state, |lp, p, f| lp.fix(p, f))
+                self.run_action_bg(state, "fix (dry-run)", |lp, p, f| lp.fix(p, f))
             }
             TuiEvent::ActionFixLive => {
                 state.action_flags.dry_run = false;
-                self.run_action(state, |lp, p, f| lp.fix(p, f))
+                self.run_action_bg(state, "fix (live)", |lp, p, f| lp.fix(p, f))
             }
-            TuiEvent::ActionCi => self.run_action(state, |lp, p, f| lp.ci(p, f)),
-            TuiEvent::ActionOrphan => self.run_action(state, |lp, p, _f| lp.orphan(p)),
-            TuiEvent::ActionSecurity => self.run_action(state, |lp, p, _f| lp.security(p)),
-            TuiEvent::ActionDependencies => self.run_action(state, |lp, p, _f| lp.dependencies(p)),
+            TuiEvent::ActionCi => self.run_action_bg(state, "ci", |lp, p, f| lp.ci(p, f)),
+            TuiEvent::ActionOrphan => self.run_action_bg(state, "orphan", |lp, p, _f| lp.orphan(p)),
+            TuiEvent::ActionSecurity => {
+                self.run_action_bg(state, "security", |lp, p, _f| lp.security(p))
+            }
+            TuiEvent::ActionDependencies => {
+                self.run_action_bg(state, "dependencies", |lp, p, _f| lp.dependencies(p))
+            }
             // ---- Cancel an in-flight background scan (Esc while scanning) ----
             TuiEvent::CancelScan => {
                 if let Some(cancel) = state.scan_cancel.as_ref() {
                     cancel.store(true, std::sync::atomic::Ordering::Relaxed);
-                    state.set_status("Cancelling scan...");
+                    // UX-5-01: honest messaging — the in-flight subprocess run
+                    // cannot be killed, its result is discarded when it lands.
+                    state.set_status("Cancelling scan — result will be discarded");
                 }
             }
             // ---- I5 confirm gate: destructive actions require explicit confirmation ----
@@ -308,7 +331,37 @@ impl SurfaceActionHandler {
                     return;
                 };
                 state.preview_mode = PreviewMode::ActionOutput;
-                self.handle(state, confirm.pending);
+                // UX-1-01: execute the gated action directly. Re-dispatching
+                // `confirm.pending` through handle() would re-enter the gated arm
+                // and re-arm the confirm — the action itself would never run.
+                match confirm.pending {
+                    TuiEvent::ActionInstall => {
+                        let flags = state.action_flags.clone();
+                        self.start_background_action(
+                            state,
+                            "install",
+                            Box::new(move |lp: &SurfaceLintExecutor| lp.install(&flags)),
+                        );
+                    }
+                    TuiEvent::ActionInit => {
+                        let flags = state.action_flags.clone();
+                        self.start_background_action(
+                            state,
+                            "init",
+                            Box::new(move |lp: &SurfaceLintExecutor| lp.init(&flags)),
+                        );
+                    }
+                    TuiEvent::ActionUninstallHook => {
+                        self.start_background_action(
+                            state,
+                            "uninstall-hook",
+                            Box::new(|lp: &SurfaceLintExecutor| lp.uninstall_hook()),
+                        );
+                    }
+                    other => {
+                        state.set_status(format!("Nothing to confirm for {other:?}"));
+                    }
+                }
             }
             TuiEvent::CancelConfirm => {
                 let Some(confirm) = state.pending_confirm.take() else {
@@ -353,6 +406,12 @@ impl SurfaceActionHandler {
             TuiEvent::PathBackspace => {
                 state.path_input.pop();
             }
+            // ---- Path dialog: Esc on a reopened dialog closes it, root untouched ----
+            TuiEvent::PathCancel => {
+                state.show_path_dialog = false;
+                state.path_input.clear();
+                state.set_status("Project root unchanged");
+            }
             // ---- Path dialog: confirm typed path (empty input falls back to CWD) ----
             TuiEvent::PathConfirm => {
                 let raw = if state.path_input.trim().is_empty() {
@@ -367,6 +426,7 @@ impl SurfaceActionHandler {
                     state.project_root = raw.clone();
                     state.current_dir = raw.clone();
                     state.show_path_dialog = false;
+                    state.dialog_is_first_run = false;
                     self.load_directory(state, &state.current_dir.clone());
                 } else {
                     state.set_status(
@@ -382,6 +442,7 @@ impl SurfaceActionHandler {
                 state.project_root = cwd.clone();
                 state.current_dir = cwd.clone();
                 state.show_path_dialog = false;
+                state.dialog_is_first_run = false;
                 self.load_directory(state, &state.current_dir.clone());
             }
             // ---- Resize: track terminal height for mouse click mapping ----
@@ -486,7 +547,11 @@ impl SurfaceActionHandler {
         });
         state.selected_index = 0;
         state.scroll_offset = 0;
-        // No file content preview — Preview panel stays empty until action is run
+        // No file content preview — Preview panel stays empty until action is run.
+        // UX-5-03: also clear stale results so output from the previous directory
+        // is never presented under the new one.
+        state.preview_text.clear();
+        state.preview_scroll = 0;
         state.preview_mode = PreviewMode::ActionOutput;
         state.set_status(format!("Dir: {}", path));
         state.compute_filtered_indices();
@@ -527,28 +592,27 @@ impl SurfaceActionHandler {
         }
     }
 
-    /// Run a lint action that requires a selected path.
-    /// Dispatches to the lint hook and stores result output + violation count in state.
-    fn run_action<F>(&self, state: &mut AppState, action: F)
+    /// Run a lint action that requires a selected path on a background worker
+    /// thread (UX-5-01). The event loop keeps pumping while the action runs;
+    /// the result is applied by poll_background_action, which also switches the
+    /// preview panel to the action output.
+    fn run_action_bg<F>(&self, state: &mut AppState, label: &'static str, action: F)
     where
         F: FnOnce(
-            &SurfaceLintExecutor,
-            &str,
-            &shared::tui::taxonomy_tui_vo::ActionFlags,
-        ) -> LintExecutionResult,
+                &SurfaceLintExecutor,
+                &str,
+                &shared::tui::taxonomy_tui_vo::ActionFlags,
+            ) -> LintExecutionResult
+            + Send
+            + 'static,
     {
         let path = state.selected_path();
-        state.set_status(format!("Running action on {}...", path));
-        let result = action(self.lint_port.as_ref(), &path, &state.action_flags);
-        state.preview_text = result.output;
-        state.violation_count = result.violation_count;
-        state.preview_scroll = 0;
-        state.preview_mode = PreviewMode::LintResults;
-        let status = if result.success { "Done" } else { "Error" };
-        state.set_status(format!(
-            "{}: {} | {} violations",
-            status, path, result.violation_count
-        ));
+        let flags = state.action_flags.clone();
+        self.start_background_action(
+            state,
+            label,
+            Box::new(move |lp: &SurfaceLintExecutor| action(lp, &path, &flags)),
+        );
     }
 
     /// Run a global lint action that has no path parameter (e.g. doctor, version).

@@ -88,7 +88,7 @@ fn default_rows() -> ShortcutRows {
             ("v", "version"),
         ],
         vec![
-            ("^S", "security"),
+            ("x", "security"),
             ("^P", "deps"),
             ("y", "copy"),
             ("^Y", "save"),
@@ -117,7 +117,7 @@ fn context_sensitive_rows(_state: &AppState) -> ShortcutRows {
             ("v", "version"),
         ],
         vec![
-            ("^S", "security"),
+            ("x", "security"),
             ("^P", "deps"),
             ("?", "help"),
             ("q", "quit"),
