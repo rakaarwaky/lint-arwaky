@@ -85,7 +85,7 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 ---
 
-## Placement (AES702, AES703)
+## Placement (AES702, AES703, AES704)
 
 An `agent_*_orchestrator` file belongs in a **feature folder** — a subdirectory of a member
 directory (`crates/`, `modules/`, `packages/`) that is neither `shared/` nor a surface folder:
@@ -121,6 +121,9 @@ crates/<feature_name>/BACKLOG.md   # where its work stands
 
 The folder name matches the feature it serves. A folder named after a generic word
 (`utils`, `common`, `core`) describes no feature and cannot carry a meaningful FRD.
+
+A feature folder carrying an agent but neither document is an **AES704** violation — the
+linter names the missing file and you write it.
 
 ---
 

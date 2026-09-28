@@ -80,7 +80,7 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 ---
 
-## Placement (AES703)
+## Placement (AES703, AES705)
 
 A `surface_*` file belongs in a **surface folder** — a subdirectory of a member directory
 (`crates/`, `modules/`, `packages/`) whose name matches the kind of surface it carries:
@@ -107,7 +107,9 @@ and barrels (`lib.rs`, `mod.rs`, `__init__.py`, `index.ts`). Those are allowed.
 **Surface folders carry a `DESIGN.md`.** Every surface folder documents how its surface
 looks and behaves in `DESIGN.md` at the folder root, next to its source. The file records
 the surface kind, the entry points, the user-visible states, and the error states a
-developer needs before changing anything in that folder.
+developer needs before changing anything in that folder. A surface-dominated folder
+carrying no `DESIGN.md` is an **AES705** violation — the linter names the folder and you
+write the file.
 
 Feature folders carry two documents instead — `FRD.md` and `BACKLOG.md` — recording what the
 feature does and where its work stands. `shared/` folders carry neither.

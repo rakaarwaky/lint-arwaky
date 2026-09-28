@@ -1,8 +1,9 @@
 // PURPOSE: StructureAuditor — the folder-layout invariant auditor behind IStructureAuditProtocol
 //
 // Walks the workspace members under a root and audits each folder against
-// AES701 (shared purity), AES702 (feature health), and AES703 (surface
-// purity). Each finding carries a machine-readable violation_type.
+// AES701 (shared purity), AES702 (feature health), AES703 (surface
+// purity), AES704 (feature doc pair), and AES705 (surface DESIGN.md).
+// Each finding carries a machine-readable violation_type.
 use std::path::Path;
 
 use shared::structure_rules::contract_structure_protocol::IStructureAuditProtocol;
@@ -40,7 +41,11 @@ impl IStructureAuditProtocol for StructureAuditor {
                     check_shared_purity(&folder_rel, &ws_root, &inventory, &mut findings);
                 } else {
                     check_feature_health(&folder_rel, &inventory, member_has_agent, &mut findings);
+                    check_feature_docs(&folder, &folder_rel, &inventory, &mut findings);
                     check_surface_purity(&folder_rel, &ws_root, &inventory, &mut findings);
+                    if inventory.is_surface_dominated() {
+                        check_surface_docs(&folder, &folder_rel, &mut findings);
+                    }
                 }
             }
         }
@@ -93,6 +98,70 @@ fn check_shared_purity(
             ),
         ));
     }
+}
+
+/// AES704 — a feature folder documents itself. A folder that carries the
+/// layer files of a feature — capabilities, an orchestrator, or both — also
+/// carries the two documents that say what the feature does and where its work
+/// stands. A folder holding neither document is a feature nobody can read
+/// before changing.
+fn check_feature_docs(
+    folder: &Path,
+    rel: &str,
+    inventory: &FolderInventory,
+    findings: &mut Vec<StructureFinding>,
+) {
+    if !inventory.has_capabilities && !inventory.has_orchestrator {
+        return;
+    }
+    let missing = missing_docs(folder, consts::FEATURE_DOC_PAIR);
+    if missing.is_empty() {
+        return;
+    }
+    findings.push(StructureFinding::new(
+        consts::RULE_CODE_FEATURE_DOCS,
+        consts::FEATURE_DOCS_VIOLATION_NO_DOC_PAIR,
+        rel,
+        format!(
+            "feature folder '{rel}' is missing {}; a feature folder carries {} beside its source",
+            missing.join(" and "),
+            consts::FEATURE_DOC_PAIR.join(" and "),
+        ),
+    ));
+}
+
+/// AES705 — a surface folder documents itself. The source of a surface says
+/// what the surface does; `DESIGN.md` says what it looks like, which entry
+/// points reach it, and which states a user sees. Without it the next reader
+/// has to infer the surface's shape from its handlers.
+fn check_surface_docs(folder: &Path, rel: &str, findings: &mut Vec<StructureFinding>) {
+    let names: [&str; 1] = [consts::SURFACE_DOC];
+    let missing = missing_docs(folder, &names);
+    if missing.is_empty() {
+        return;
+    }
+    findings.push(StructureFinding::new(
+        consts::RULE_CODE_SURFACE_DOCS,
+        consts::SURFACE_DOCS_VIOLATION_NO_DESIGN,
+        rel,
+        format!(
+            "surface folder '{rel}' is missing {}; a surface folder carries a {} recording its kind, entry points, and visible states",
+            missing.join(" and "),
+            consts::SURFACE_DOC,
+        ),
+    ));
+}
+
+/// Which of *names* do not sit directly in *folder*. A folder's documents sit
+/// beside its source, so this reads one level rather than walking.
+fn missing_docs<'a>(folder: &Path, names: &'a [&'a str]) -> Vec<&'a str> {
+    let mut missing: Vec<&'a str> = names
+        .iter()
+        .copied()
+        .filter(|name| !folder.join(name).is_file())
+        .collect();
+    missing.sort_unstable();
+    missing
 }
 
 /// AES702 — a feature folder carries capabilities and agents. One without the

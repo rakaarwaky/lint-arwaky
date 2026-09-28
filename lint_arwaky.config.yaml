@@ -510,3 +510,11 @@ architecture:
     AES703: # Surface folder purity — surface_has_misplaced_files
       enabled: true
       severity: MEDIUM
+
+    AES704: # Feature folder docs — feature_missing_doc_pair
+      enabled: true
+      severity: MEDIUM
+
+    AES705: # Surface folder docs — surface_missing_design_md
+      enabled: true
+      severity: MEDIUM

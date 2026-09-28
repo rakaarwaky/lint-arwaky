@@ -1,4 +1,4 @@
-// PURPOSE: structure invariant rule codes, violation types, and folder vocabulary for AES701–AES703
+// PURPOSE: structure invariant rule codes, violation types, and folder vocabulary for AES701–AES705
 
 /// ─── AES701 — Shared folder purity ──────────────────────────────────────────
 pub const RULE_CODE_SHARED_PURITY: &str = "AES701";
@@ -20,6 +20,18 @@ pub const RULE_CODE_SURFACE_PURITY: &str = "AES703";
 
 /// A surface folder holds a capabilities or agent file that belongs in a feature folder.
 pub const SURFACE_PURITY_VIOLATION_MISPLACED_FILES: &str = "surface_has_misplaced_files";
+
+/// ─── AES704 — Feature folder docs ────────────────────────────────────────────
+pub const RULE_CODE_FEATURE_DOCS: &str = "AES704";
+
+/// A feature folder holds capabilities or agents but carries no doc pair.
+pub const FEATURE_DOCS_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair";
+
+/// ─── AES705 — Surface folder docs ────────────────────────────────────────────
+pub const RULE_CODE_SURFACE_DOCS: &str = "AES705";
+
+/// A surface-dominated folder carries no DESIGN.md.
+pub const SURFACE_DOCS_VIOLATION_NO_DESIGN: &str = "surface_missing_design_md";
 
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// The shared folder name, locked across every language member.
@@ -64,3 +76,7 @@ pub const SURFACE_ALLOWED_FILENAMES: &[&str] = &[
 
 /// Directories a structure audit never descends into.
 pub const SKIPPED_DIRS: &[&str] = &["benches", "tests", "target", "node_modules", "__pycache__"];
+
+/// The document file names that mark a folder's purpose and content.
+pub const FEATURE_DOC_PAIR: &[&str] = &["FRD.md", "BACKLOG.md"];
+pub const SURFACE_DOC: &str = "DESIGN.md";

@@ -83,7 +83,7 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 ---
 
-## Placement (AES702, AES703)
+## Placement (AES702, AES703, AES704)
 
 A `capabilities_*` file belongs in a **feature folder** — a subdirectory of a member
 directory (`crates/`, `modules/`, `packages/`) that is neither `shared/` nor a surface folder.
@@ -91,9 +91,12 @@ The folder name must match the feature it serves:
 
 ```
 crates/<feature_name>/src/capabilities_<domain>_<role>.*    # Rust
-modules/<feature_name>/src/capability_<domain>_<role>.py     # Python
+modules/<feature_name>/src/capabilities_<domain>_<role>.py  # Python
 packages/<feature_name>/src/capabilities_<domain>_<role>.ts # TypeScript
 ```
+
+The prefix is `capabilities_` in every language. A file named `capability_x.py` is not
+a capability file to the linter and is not counted toward a feature folder.
 
 Every feature folder needs **at least one `capabilities_*` file and at least one
 `agent_*_orchestrator` file**. A feature folder with only capabilities has nothing
@@ -118,6 +121,10 @@ crates/<feature_name>/BACKLOG.md   # where its work stands
 The folder name matches the feature it serves: `crates/calculator/` documents the calculator,
 `modules/naming_violations/` documents naming violations. A folder named after a generic
 word (`utils`, `common`, `core`) describes no feature and cannot carry a meaningful FRD.
+
+A feature folder carrying capabilities or an agent but neither document is an
+**AES704** violation — the linter names the missing file and you write it. A folder
+carrying neither capabilities nor an agent is not a feature and owes no document pair.
 
 ---
 
