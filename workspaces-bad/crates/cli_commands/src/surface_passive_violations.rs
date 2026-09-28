@@ -1,6 +1,7 @@
-// PURPOSE: Test AES0306 — surface passive with active logic, hierarchy violation, >15 functions
+// PURPOSE: Test AES406 — surface passive role: function count over tier limit,
+// active domain logic, hierarchy violation
 
-// Passive view component with >15 functions = AES0306
+// Passive view component with a function count over the passive tier limit = AES406
 pub struct SurfacePassiveView;
 
 fn helper_1() {}

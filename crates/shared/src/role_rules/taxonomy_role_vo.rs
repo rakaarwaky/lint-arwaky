@@ -59,6 +59,41 @@ pub fn core_layer_names() -> HashSet<String> {
     all_core_layers().iter().map(|l| l.value.clone()).collect()
 }
 
+// ─── Surface tier helpers (AES406) ─────────────────────────────────────
+
+/// Surface tier, resolved from the filename suffix.
+///
+/// `_router` is utility, matching `crates/skills/aes-surface/SKILL.md` line 72.
+/// `_entry` is not a surface suffix at all — entry points are root, and a
+/// `surface_*_entry` file is caught by AES102 before AES406 ever sees it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SurfaceTier {
+    Smart,
+    Utility,
+    Passive,
+}
+
+/// Smart tier suffixes: `_command` / `_controller` / `_page`.
+const SMART_SUFFIXES: [&str; 3] = ["_command", "_controller", "_page"];
+
+/// Utility tier suffixes: `_hook` / `_store` / `_action` / `_screen` / `_router`.
+const UTILITY_SUFFIXES: [&str; 5] = ["_hook", "_store", "_action", "_screen", "_router"];
+
+/// Resolve the tier from a file stem (filename without extension).
+///
+/// A stem matching no tier suffix is passive: the remaining legal surface
+/// suffixes are `_component` / `_view` / `_layout`, and anything AES102 does not
+/// reject is treated the same way.
+pub fn classify_surface_tier(stem: &str) -> SurfaceTier {
+    if SMART_SUFFIXES.iter().any(|s| stem.ends_with(s)) {
+        SurfaceTier::Smart
+    } else if UTILITY_SUFFIXES.iter().any(|s| stem.ends_with(s)) {
+        SurfaceTier::Utility
+    } else {
+        SurfaceTier::Passive
+    }
+}
+
 // ─── Role violation payloads ─────────────────────────────────────────
 
 #[derive(Debug, Clone)]

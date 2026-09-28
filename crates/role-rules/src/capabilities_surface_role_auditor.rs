@@ -1,20 +1,26 @@
-// PURPOSE: SurfaceRoleChecker — ISurfaceRoleProtocol for AES406: smart/utility/passive surface role checks
+// PURPOSE: SurfaceRoleChecker — ISurfaceRoleProtocol for AES406: tier-aware
+// function-count check plus passive/utility domain logic and method limits.
 //
-// ALGORITHM (uses ParseMetadata when available):
-//   1. Classify surface by suffix: Smart (_command, _controller, _page, _entry, _router),
-//      Utility (_hook, _store, _action, _screen), Passive (all others).
-//   2. Passive + Utility: hierarchy (max_public_methods), method body length, nesting depth,
-//      domain logic (control flow count).
-//   3. Smart surfaces: exempt from Passive + Utility checks.
-//   4. Function count limit removed — surface files may contain any number of functions.
+// ALGORITHM:
+//   1. `classify_surface_tier` resolves smart / utility / passive from the
+//      filename suffix (see utility_surface_role_checker.rs for details).
+//   2. Smart surfaces (`_command`/`_controller`/`_page`) are exempt from
+//      passive/utility limits.
+//   3. Utility surfaces (`_hook`/`_store`/`_action`/`_screen`/`_router`) and
+//      passive surfaces (`_component`/`_view`/`_layout`) are checked for
+//      excessive methods and domain logic.
+//   4. `check_fn_count_limit` enforces a tier-specific function-count ceiling
+//      with an AST-to-lexical fallback.
 
 use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{
-    FileEntry, ParseMetadata, PythonMetadata, RustMetadata, TypeScriptMetadata,
-};
+use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
 use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
-use shared::role_rules::taxonomy_role_limit_constant::{MAX_CONTROL_FLOW, MAX_PUBLIC_METHODS};
+use shared::role_rules::taxonomy_role_limit_constant::{
+    MAX_CONTROL_FLOW, MAX_FN_COUNT_PASSIVE, MAX_FN_COUNT_SMART, MAX_FN_COUNT_UTILITY,
+    MAX_PUBLIC_METHODS,
+};
+use shared::role_rules::taxonomy_role_vo::{SurfaceTier, classify_surface_tier};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct SurfaceRoleChecker {}
@@ -22,28 +28,55 @@ pub struct SurfaceRoleChecker {}
 // ─── Block 2: Protocol Trait Implementation ───────────────
 impl ISurfaceRoleProtocol for SurfaceRoleChecker {
     fn check_smart_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        // Smart surfaces are exempt from passive/utility checks — function count runs in check_fn_count_limit.
+        // Smart surfaces are exempt from the passive/utility method and
+        // control-flow limits; the function-count check runs in
+        // check_fn_count_limit for all tiers.
         let _ = (file, violations);
     }
 
     fn check_utility_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        if let Some(meta) = &file.parse_metadata {
-            self._check_passive_with_metadata(file, meta, violations);
-        } else {
-            self._check_domain_logic(file, violations);
-        }
+        self._check_passive_with_metadata(file, violations);
+        self._check_domain_logic(file, violations);
     }
 
     fn check_passive_surface(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        if let Some(meta) = &file.parse_metadata {
-            self._check_passive_with_metadata(file, meta, violations);
-        } else {
-            self._check_domain_logic(file, violations);
-        }
+        self._check_passive_with_metadata(file, violations);
+        self._check_domain_logic(file, violations);
     }
 
-    fn check_fn_count_limit(&self, _file: &FileEntry, _violations: &mut Vec<LintResult>) {
-        // Function count limit removed — surface files may contain any number of functions.
+    fn check_fn_count_limit(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        let tier = classify_surface_tier(stem_of(file));
+        let limit = match tier {
+            SurfaceTier::Smart => MAX_FN_COUNT_SMART,
+            SurfaceTier::Utility => MAX_FN_COUNT_UTILITY,
+            SurfaceTier::Passive => MAX_FN_COUNT_PASSIVE,
+        };
+        let fn_count =
+            count_functions(file).unwrap_or_else(|| count_functions_lexical(file, &file.language));
+        if fn_count <= limit {
+            return;
+        }
+        let path_str = file.path.to_string_lossy();
+        let tier_name = match tier {
+            SurfaceTier::Smart => "smart",
+            SurfaceTier::Utility => "utility",
+            SurfaceTier::Passive => "passive",
+        };
+        violations.push(LintResult::new_arch(
+            &path_str,
+            0,
+            "AES406",
+            Severity::HIGH,
+            format!(
+                "AES406 SURFACE_ROLE: {} tier surface has {} functions (max {})\n\
+                 WHY? A {}-tier surface with too many functions has too many responsibilities.\n\
+                 FIX: Split into smaller surface files, or move logic down to capabilities or an agent.",
+                tier_name,
+                fn_count,
+                limit,
+                tier_name,
+            ),
+        ));
     }
 }
 
@@ -61,86 +94,21 @@ impl SurfaceRoleChecker {
 
     // ── Passive surface checks using ParseMetadata ──
 
-    fn _check_passive_with_metadata(
-        &self,
-        file: &FileEntry,
-        meta: &ParseMetadata,
-        violations: &mut Vec<LintResult>,
-    ) {
+    fn _check_passive_with_metadata(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
-        match meta {
-            ParseMetadata::Rust(rust_meta) => {
-                self._check_rust_passive_metadata(&path_str, rust_meta, violations);
-            }
-            ParseMetadata::Python(py_meta) => {
-                self._check_python_passive_metadata(&path_str, py_meta, violations);
-            }
-            ParseMetadata::TypeScript(ts_meta) | ParseMetadata::JavaScript(ts_meta) => {
-                self._check_ts_passive_metadata(&path_str, ts_meta, violations);
-            }
-            _ => {} // ParseMetadata::Unknown — skip
-        }
-
-        // Domain logic check runs on all files regardless of ParseMetadata
-        self._check_domain_logic(file, violations);
-    }
-
-    fn _check_rust_passive_metadata(
-        &self,
-        path_str: &str,
-        meta: &RustMetadata,
-        violations: &mut Vec<LintResult>,
-    ) {
-        let pub_fn_count = meta.function_definitions.len();
-        if pub_fn_count > MAX_PUBLIC_METHODS {
-            violations.push(LintResult::new_arch(
-                path_str,
-                0,
-                "AES406",
-                Severity::HIGH,
-
-                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} public methods (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, pub_fn_count, MAX_PUBLIC_METHODS)
-,
-            ));
-        }
-    }
-
-    fn _check_python_passive_metadata(
-        &self,
-        path_str: &str,
-        meta: &PythonMetadata,
-        violations: &mut Vec<LintResult>,
-    ) {
-        let fn_count = meta.function_definitions.len();
+        let fn_count = count_functions(file).unwrap_or(0);
         if fn_count > MAX_PUBLIC_METHODS {
             violations.push(LintResult::new_arch(
-                path_str,
+                &path_str,
                 0,
                 "AES406",
                 Severity::HIGH,
-
-                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
-,
-            ));
-        }
-    }
-
-    fn _check_ts_passive_metadata(
-        &self,
-        path_str: &str,
-        meta: &TypeScriptMetadata,
-        violations: &mut Vec<LintResult>,
-    ) {
-        let fn_count = meta.function_definitions.len();
-        if fn_count > MAX_PUBLIC_METHODS {
-            violations.push(LintResult::new_arch(
-                path_str,
-                0,
-                "AES406",
-                Severity::HIGH,
-
-                format!("AES406 SURFACE_ROLE: Surface role boundary violation.\nWHY? Surface file '{}' has {} functions (max {})\nFIX: Ensure surface only performs its designated responsibilities.", path_str, fn_count, MAX_PUBLIC_METHODS)
-,
+                format!(
+                    "AES406 SURFACE_ROLE: Surface role boundary violation.\n\
+                     WHY? Surface file '{}' has {} functions (max {})\n\
+                     FIX: Ensure surface only performs its designated responsibilities.",
+                    path_str, fn_count, MAX_PUBLIC_METHODS,
+                ),
             ));
         }
     }
@@ -149,8 +117,8 @@ impl SurfaceRoleChecker {
 
     fn _check_domain_logic(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         let path_str = file.path.to_string_lossy();
-        let content = &file.content;
-        let control_flow_count = content
+        let control_flow_count = file
+            .content
             .lines()
             .filter(|line| {
                 let t = line.trim();
@@ -171,10 +139,72 @@ impl SurfaceRoleChecker {
                 0,
                 "AES406",
                 Severity::HIGH,
-
-                format!("AES406 SURFACE_ROLE: Complex domain logic detected in a passive/utility surface.\nWHY? Surface {} has {} control flow statements (max {})\nFIX: Move the complex domain/control logic into capabilities or orchestrator components.", path_str, control_flow_count, MAX_CONTROL_FLOW)
-,
+                format!(
+                    "AES406 SURFACE_ROLE: Complex domain logic detected in a passive/utility surface.\n\
+                     WHY? Surface {} has {} control flow statements (max {})\n\
+                     FIX: Move the complex domain/control logic into capabilities or orchestrator components.",
+                    path_str, control_flow_count, MAX_CONTROL_FLOW,
+                ),
             ));
         }
+    }
+}
+
+// ─── Counting helpers ─────────────────────────────────────
+
+/// The file stem, or an empty string when the path has no filename.
+fn stem_of(file: &FileEntry) -> &str {
+    file.path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or_default()
+}
+
+/// Count functions from `ParseMetadata` when available; `None` otherwise.
+fn count_functions(file: &FileEntry) -> Option<usize> {
+    match &file.parse_metadata {
+        Some(ParseMetadata::Rust(m)) => Some(m.function_definitions.len()),
+        Some(ParseMetadata::Python(m)) => Some(m.function_definitions.len()),
+        Some(ParseMetadata::TypeScript(m)) | Some(ParseMetadata::JavaScript(m)) => {
+            Some(m.function_definitions.len())
+        }
+        _ => None,
+    }
+}
+
+/// Lexical fallback when `ParseMetadata` is absent.
+fn count_functions_lexical(file: &FileEntry, lang: &Language) -> usize {
+    match lang {
+        Language::Rust => file
+            .content
+            .lines()
+            .filter(|l| {
+                let t = l.trim_start();
+                t.starts_with("fn ")
+                    || t.starts_with("pub fn ")
+                    || t.starts_with("async fn ")
+                    || t.starts_with("pub async fn ")
+            })
+            .count(),
+        Language::Python => file
+            .content
+            .lines()
+            .filter(|l| {
+                let t = l.trim_start();
+                t.starts_with("def ") || t.starts_with("async def ")
+            })
+            .count(),
+        Language::TypeScript | Language::JavaScript => file
+            .content
+            .lines()
+            .filter(|l| {
+                let t = l.trim_start();
+                t.starts_with("function ")
+                    || t.starts_with("async function ")
+                    || t.starts_with("export function ")
+                    || (t.starts_with("const ") && t.contains("=>"))
+            })
+            .count(),
+        _ => 0,
     }
 }

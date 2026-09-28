@@ -82,6 +82,8 @@ impl Surface<Name> {
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
+# Machine-checked: suffix allow-list (AES102); function count over tier limit
+# (smart 50 / utility 25 / passive 25, AES406).
 # Manual (not machine-checked): surface tier suffix; zero business logic/computation; no silent error discard; state fields are VOs.
 # Fallback compile gate: cargo check -p <crate-name>
 ```
