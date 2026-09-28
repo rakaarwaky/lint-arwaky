@@ -183,7 +183,7 @@ When merging a PR to develop:
 **Worktree policy (important):**
 - When working on a feature/fix branch, **use a git worktree** under `.worktree/` (e.g. `<repo-root>/.worktree/feature-name`) instead of switching branches in the current checkout with `git checkout`.
 
-### Git Workflow
+## Git Workflow
 
 `main` is protected by the "Protect main - quality gates" ruleset: 6 required status checks (Format, Clippy, Build, Tests, Self-Lint, Codacy) must pass before any commit lands. **Direct pushes to `main` are rejected** — always go through a PR.
 
@@ -247,6 +247,21 @@ See [PRD.md](PRD.md#exit-code-contract) for full details.
 - **`workspaces-good/` must produce 0 violations** — any violation is a false positive that must be fixed.
 - **tree-sitter** is the only AST parser — no regex fallback. All language parsing goes through `filesystem` crate.
 - **No async runtime** — the project uses `std::thread` / `rayon`, not tokio. Do not introduce async.
+
+---
+
+## Definition of Done
+
+A change is done when all of the following hold:
+
+- Work happened inside the correct `.worktree/<branch-name>`, never directly on `main`.
+- `bash scripts/gates.sh` passes: format, clippy, self-lint, and the full test suite.
+- `lint-arwaky-cli check .` reports 0 violations.
+- `lint-arwaky-cli scan workspaces-good/crates` still reports 0 violations.
+- `lint-arwaky-cli docs .` reports 0 document invariant violations.
+- Pass/fail criteria in [TEST.md](TEST.md) hold for the touched paths.
+- A new AES rule adds a trigger file to all 3 test workspaces and a row in the TEST.md per-rule matrix.
+- A PR that fixes behavior updates the invalidated ROADMAP.md backlog rows in the same change.
 
 ---
 

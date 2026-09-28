@@ -89,6 +89,37 @@ fn write_workspace(dir: &Path, frd: &str) {
     fs::write(dir.join("ROADMAP.md"), "# ROADMAP — sample\n").unwrap();
 }
 
+/// Build a workspace with a conforming AGENTS.md so AES606 stays silent.
+fn write_agents_workspace(dir: &Path) {
+    let feature = dir.join("crates/sample");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    fs::write(feature.join("FRD.md"), "# FRD — sample\n").unwrap();
+    fs::write(feature.join("BACKLOG.md"), "# BACKLOG — sample\n").unwrap();
+    fs::write(
+        feature.join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+    fs::write(dir.join("PRD.md"), "# PRD — sample\n").unwrap();
+    fs::write(dir.join("ROADMAP.md"), "# ROADMAP — sample\n").unwrap();
+    fs::write(
+        dir.join("AGENTS.md"),
+        "# Sample AGENTS.md\n\n\
+## Precedence\n\n1. Safety rules.\n\n\
+## Security\n\n- Explicit approval is required before destructive actions.\n\n\
+## Git Workflow\n\nEvery change must use a worktree or branch.\n\n\
+## Commands\n\n```bash\ncargo nextest run --workspace\n```\n\n\
+## Definition of Done\n\nA change is done when tests pass.\n\n\
+## Related Documents\n\n- [PRD.md](PRD.md): Product requirements.\n",
+    )
+    .unwrap();
+}
+
+fn write_bad_agents(dir: &Path, agent_text: &str) {
+    write_agents_workspace(dir);
+    fs::write(dir.join("AGENTS.md"), agent_text).unwrap();
+}
+
 fn audit(root: &Path) -> Vec<(String, String, String)> {
     let orchestrator = RootDocRulesContainer::orchestrator();
     match orchestrator.execute(DocRequest::audit_all(root)) {
@@ -353,4 +384,148 @@ fn findings_are_deduplicated_and_ordered() {
         (a.0.clone(), a.1.clone(), a.2.clone()).cmp(&(b.0.clone(), b.1.clone(), b.2.clone()))
     });
     assert_eq!(first, sorted, "findings must arrive sorted");
+}
+
+// ── AES606: Agent doc heading structure ────────────────────────────────────
+
+#[test]
+fn aes606_conforming_agents_reports_no_findings() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_agents_workspace(tmp.path());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES606", "h1_count") && !has(&findings, "AES606", "h2_missing"),
+        "expected clean AGENTS.md, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes606_fires_when_no_h1() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(
+        tmp.path(),
+        "## Security\n\n- Explicit approval is required.\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(has(&findings, "AES606", "h1_count"));
+}
+
+#[test]
+fn aes606_fires_when_multiple_h1() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(
+        tmp.path(),
+        "# One\n\n# Two\n\n## Security\n\n- Explicit approval.\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(has(&findings, "AES606", "h1_count"));
+}
+
+#[test]
+fn aes606_does_not_falsely_fire_on_sharp_commented_commands() {
+    // A bash comment such as `# Tests (matches CI "Tests" job)` must NOT
+    // count as an extra H1 — fenced code blocks are stripped first.
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(
+        tmp.path(),
+        "\
+# Sample AGENTS.md
+
+## Security
+
+- Be safe.
+
+## Commands
+
+```bash
+# Tests (matches CI \"Tests\" job)
+cargo nextest run
+```
+
+## Related Documents\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES606", "h1_count"),
+        "fenced code block contents must not be treated as headings; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes606_fires_when_required_h2_is_absent() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Precedence and Definition of Done are missing from the required set.
+    write_bad_agents(
+        tmp.path(),
+        "# Sample AGENTS.md\n\n\
+## Security\n\n- Be safe.\n\n\
+## Git Workflow\n\nUse a worktree.\n\n\
+## Commands\n\n```bash\ntrue\n```\n\n\
+## Related Documents\n\n- [PRD.md](PRD.md).\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(has(&findings, "AES606", "h2_missing"));
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    // The message names the absent section(s), not just the rule.
+    assert!(
+        message.contains("Precedence") || message.contains("Definition of Done"),
+        "the message must name the absent section(s); got: {message}"
+    );
+}
+
+#[test]
+fn aes606_allows_extra_and_free_h3_headings() {
+    // Extra H2s and H3 headings are allowed; only required H2s are enforced.
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(
+        tmp.path(),
+        "\
+# Sample AGENTS.md
+
+## Precedence
+
+1. Safety rules.
+
+## Security
+
+- Be safe.
+
+## Custom Flow
+
+### Sub-step one
+
+Do something.
+
+### Sub-step two
+
+Do something else.
+
+## Git Workflow
+
+Use a worktree.
+
+## Commands
+
+```bash
+true
+```
+
+## Definition of Done
+
+Tests pass.
+
+## Related Documents
+
+- [PRD.md](PRD.md).\
+",
+    );
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES606", "h2_missing"),
+        "extra H2/H3 headings should not trigger h2_missing; got: {findings:#?}"
+    );
 }
