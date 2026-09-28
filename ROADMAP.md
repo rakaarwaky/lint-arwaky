@@ -147,18 +147,25 @@ None
 |---|---|---|
 | WS-10 | — | Platform CI runner availability |
 | WS-11 | WS-02 | Performance benchmark baseline |
+| WS-04 | WS-03, shared contracts | CLI/MCP parity matrix |
+| WS-05 | WS-03, dispatcher | Report-format acceptance evidence |
+| WS-06 | filesystem, rule diagnostics | Mechanical-fix safety evidence |
+| WS-07 | git repository state | Hook installation and rollback path |
+| WS-08 | filesystem events | Demo environment watch permissions |
 
 ## Release Readiness
 
-Definition of "deployment ready" (target `v3.7.0`):
+Definition of "deployment ready" (target `v3.7.0`): all implementation evidence is recorded, dependency and demo readiness are reviewed, candidate artifacts are identified, and required role sign-offs are complete.
 
 | Area | Status | Notes |
 |---|---|---|
 | All P0 done | Done | WS-01, WS-02, WS-03 all evidenced at `29c71083` |
 | All P1 done + verified | Done | WS-04–WS-08 evidenced at `29c71083` |
-| Tests pass, lint clean, build works | Done | `cargo test --workspace --lib --tests` → 0 failures; CI self-lint green at `29c71083` |
-| Docs complete | Done | `aa docs check . --strict` → 0 errors, 0 warnings (verified 2026-09-17) |
+| Tests pass, lint clean, build works | Evidence recorded | Workspace evidence at `29c71083`; latest role-rules evidence at `72d2d58b`; candidate snapshot still required |
+| Docs complete | Evidence recorded | PRD, README, TEST, and deployment guidance aligned to 29 rules; final release review remains |
 | Deferred items recorded | Done | WS-10, WS-11 in Deferred state with reasons |
+| Candidate artifact manifest | Pending | Tag, binary inventory, platform coverage, checksums, and provenance are not recorded |
+| Required role sign-offs | Pending | Product, Engineering, QA, Documentation, and Operations approvals are not recorded |
 
 ## Deferred
 

@@ -11,7 +11,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
 | # | Goal | Measurement | Target |
 |---|------|-------------|--------|
 | 1 | Multi-language linting in a single pass | `scan` on mixed-language workspace | violations from all 3 languages |
-| 2 | 24 AES rules enforced across 5 groups | `workspaces-bad` scan | all 24 rule codes produce violations |
+| 2 | 29 AES rules enforced across 6 groups | `workspaces-bad` scan | all 29 rule codes produce violations per supported language |
 | 3 | MCP server with 5 tools, full CLI parity | `execute_command` on every CLI command | all commands reachable |
 | 4 | Self-auditing | `lint-arwaky-cli check .` on this repo | 0 violations |
 
@@ -23,7 +23,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 ## Scope
 
-- **In scope**: CLI binary, MCP server, TUI, 24 AES rules, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
+- **In scope**: CLI binary, MCP server, TUI, 29 AES rules across six groups, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
 - **Out of scope**: IDE plugins, web dashboard, cloud SaaS, non-Rust implementation, structural/multi-file semantic refactors in auto-fix.
 
 ## Product Decisions (locked)
@@ -51,9 +51,9 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 
-## AES Rule Summary (24 Rules)
+## AES Rule Summary (29 Rules)
 
-Five groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6). Full rule definitions: [RULES_AES.md](RULES_AES.md).
+Six groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), and **Folder Structure** (AES701–705, 5). Full rule definitions: [RULES_AES.md](RULES_AES.md).
 
 ## Feature Requirements (Prioritized)
 
@@ -62,7 +62,7 @@ Five groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quali
 ### P0 — Must Have
 
 - Multi-language scanning (Rust, Python, JS/TS). Acceptance: `scan` on mixed-language workspace returns violations from all three.
-- 24 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for all 24 rule codes.
+- 29 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for all 29 rule codes in each supported language.
 - CLI with `check`, `scan`, `fix`, `ci` commands. Acceptance: each exits with the correct code from the contract above.
 - MCP server with 5 tools, full execute parity. Acceptance: every CLI command is reachable via `execute_command`.
 - Self-auditing capability. Acceptance: `lint-arwaky-cli check .` on this repo reports 0 violations.
@@ -80,7 +80,7 @@ Five groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quali
 
 ### P2 — Nice to Have
 
-- Windows support. Acceptance: build + test suite passes on a Windows CI runner.
+- Windows support. Acceptance: build + test suite passes on a Windows CI runner. Until then, Windows builds are experimental and are not a supported runtime target.
 - Deeper monorepo performance optimizations. Acceptance: 10k-file scan completes in < 10s on CI hardware.
 
 ## Open Questions / Risks

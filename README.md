@@ -2,7 +2,7 @@
 
 Architecture linter enforcement for Rust, Python, and TypeScript. Built in Rust, structured by the [Agentic Engineering System](ARCHITECTURE.md), and self-auditing — the project lints itself under its own rules.
 
-Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 24 AES rules across 5 groups in Rust, Python, and TypeScript in a single scan.
+Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 29 AES rules across 6 groups in Rust, Python, and TypeScript in a single scan.
 
 ## Prerequisites
 
@@ -47,9 +47,9 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 
 Exit codes: `0` Ok · `1` policy fail · `2` runtime error · `3` prerequisite missing.
 
-## AES Rules (24)
+## AES Rules (29)
 
-Five groups: **Naming** AES101–102, **Import** AES201–205, **Quality** AES301–305, **Role** AES401–406, **Orphan** AES501–506. Full definitions: [RULES_AES.md](RULES_AES.md). External linter results use tool-native codes (e.g. `clippy::needless_return`) and are reported alongside the 24 AES rules.
+Six groups: **Naming** AES101–102, **Import** AES201–205, **Quality** AES301–305, **Role** AES401–406, **Orphan** AES501–506, and **Folder Structure** AES701–705. Full definitions: [RULES_AES.md](RULES_AES.md). External linter results use tool-native codes (e.g. `clippy::needless_return`) and are reported alongside the 29 AES rules.
 
 ## Configuration
 

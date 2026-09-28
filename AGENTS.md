@@ -43,7 +43,7 @@ CARGO_INCREMENTAL=0 cargo build --release
 
 ## Project Overview
 
-**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 24 rules across 5 groups. The project itself is written in Rust and is self-auditing (it passes its own lint rules).
+**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 29 rules across 6 groups. The project itself is written in Rust and is self-auditing (it passes its own lint rules).
 
 **Key docs:**
 
@@ -53,7 +53,7 @@ CARGO_INCREMENTAL=0 cargo build --release
 | [PRD.md](PRD.md) | Product requirements, feature map, exit codes |
 | [TEST.md](TEST.md) | Test workspaces, pass/fail criteria, expected violation counts |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, code style, PR process |
-| [RULES_AES.md](.agents/rules/RULES_AES.md) | All 24 AES rules with severities and descriptions |
+| [RULES_AES.md](.agents/rules/RULES_AES.md) | All 29 AES rules with severities and descriptions |
 
 ---
 
@@ -199,7 +199,7 @@ When merging a PR to develop:
 
 `main` is protected by the "Protect main - quality gates" ruleset: 6 required status checks (Format, Clippy, Build, Tests, Self-Lint, Codacy) must pass before any commit lands. **Direct pushes to `main` are rejected** — always go through a PR.
 
-**Mergify merge queue** (configured in `.mergify.yml`): every non-draft, conflict-free PR targeting `main` is auto-queued. The queue rebases the PR onto the latest `main`, runs all 6 quality-gate checks on the integration commit, and merges via squash once everything passes. You never need to comment `@mergifyio queue` or click merge manually.
+**Mergify merge queue** (configured in `.mergify.yml`): every non-draft, conflict-free PR targeting `main` is auto-queued. The queue updates the PR branch with the latest `main` (merge commit), runs all 6 quality-gate checks on the integration commit, and squashes to `main` once everything passes. You never need to comment `@mergifyio queue` or click merge manually.
 
 Mergify CLI is installed (`mergify --version`). Useful commands:
 
