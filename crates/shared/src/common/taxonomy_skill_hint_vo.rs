@@ -27,9 +27,9 @@ impl SkillHint {
     /// One-line guidance for text output. Never empty.
     pub fn guidance(&self) -> String {
         match (self.skill, self.fix_command) {
-            (_, Some(command)) => (*command).to_string(),
-            (Some(skill), None) => format!("lint-arwaky-cli skill read {skill}"),
-            (None, None) => "lint-arwaky-cli skill read aes-lint-arwaky".to_string(),
+            (_, Some(command)) => format!("[run cli \"{command}\"]"),
+            (Some(skill), None) => format!("[run cli \"lint-arwaky-cli skill read {skill}\"]"),
+            (None, None) => "[run cli \"lint-arwaky-cli skill read aes-lint-arwaky\"]".to_string(),
         }
     }
 }
