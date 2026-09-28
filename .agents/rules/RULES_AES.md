@@ -499,12 +499,17 @@ A doc pair marks a feature, and only a feature holds one.
 
 **Severity:** HIGH
 
-`AGENTS.md` must open with exactly one level-1 heading and carry every required level-2 section from the [HOW-TO-MAKE-AGENTS](https://github.com/rakaarwaky/lint-arwaky/blob/main/crates/skills/aes-docs/references/HOW-TO-MAKE-AGENTS.md) template. Level-3 headings are free-form per project. Fenced code-block contents (shell comments starting with `#`) are stripped before scanning so they never read as headings.
+`AGENTS.md` must open with exactly one level-1 heading and carry every required level-2 section from the [HOW-TO-MAKE-AGENTS](https://github.com/rakaarwaky/lint-arwaky/blob/main/crates/skills/aes-docs/references/HOW-TO-MAKE-AGENTS.md) template. Each of these sections links to its corresponding document. Fenced code-block contents (shell comments starting with `#`) are stripped before scanning so they never read as headings.
 
-Required H2s (no exceptions): **Precedence**, **Security**, **Commands**, **Git Workflow**, **Definition of Done**, **Related Documents**.
+The level-2 set is closed. A required H2 is mandatory, and a project-specific H2 is allowed only when it appears in the agreed optional list. Any other level-2 heading is reported so it can be demoted to a level-3 heading or removed. Level-3 headings and deeper are free-form.
 
-| Violation type    | Fires when                                                            |
-| ------------------- | --------------------------------------------------------------------- |
-| `h1_count`          | The document has zero or more than one level-1 heading.              |
-| `h2_missing`        | One or more of the required H2 sections is absent; the message names them. |
+**Required H2s** (no exceptions): **Precedence**, **Security**, **Architecture**, **Contributing**, **License**, **Commands**, **Git Workflow**, **Definition of Done**, **Related Documents**.
+
+Matching is by leading words, so `## Architecture: AES 7-Layer System` satisfies `Architecture`.
+
+| Violation type     | Fires when                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| `h1_count`          | The document has zero or more than one level-1 heading.                              |
+| `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.         |
+| `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal. |
 
