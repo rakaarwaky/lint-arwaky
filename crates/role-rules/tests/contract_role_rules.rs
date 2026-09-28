@@ -12,7 +12,9 @@ use role_rules_lint_arwaky::capabilities_contract_rust_role_auditor::ContractRus
 use role_rules_lint_arwaky::capabilities_contract_ts_role_auditor::ContractTypeScriptRoleAuditor;
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
-use role_rules_lint_arwaky::capabilities_utility_role_auditor::UtilityRoleChecker;
+use role_rules_lint_arwaky::capabilities_utility_python_role_auditor::UtilityPythonRoleAuditor;
+use role_rules_lint_arwaky::capabilities_utility_rust_role_auditor::UtilityRustRoleAuditor;
+use role_rules_lint_arwaky::capabilities_utility_ts_role_auditor::UtilityTypeScriptRoleAuditor;
 use shared::common::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::taxonomy_role_request::RoleRequest;
@@ -132,11 +134,27 @@ fn agent_role_checker_implements_protocol() {
     checker.check_agent_routing(&file, "agent", &mut v);
 }
 
-// ── UtilityRoleChecker → IUtilityRoleProtocol ───────────────
+// ── Utility role auditors → IUtilityRoleProtocol ──────────
 
 #[test]
-fn utility_role_checker_implements_protocol() {
-    let checker: Arc<dyn IUtilityRoleProtocol> = Arc::new(UtilityRoleChecker::new());
+fn utility_rust_role_auditor_implements_protocol() {
+    let checker: Arc<dyn IUtilityRoleProtocol> = Arc::new(UtilityRustRoleAuditor::new());
+    let file = dummy_file();
+    let mut v: Vec<LintResult> = Vec::new();
+    checker.check_utility_convention(&file, &mut v);
+}
+
+#[test]
+fn utility_python_role_auditor_implements_protocol() {
+    let checker: Arc<dyn IUtilityRoleProtocol> = Arc::new(UtilityPythonRoleAuditor::new());
+    let file = dummy_file();
+    let mut v: Vec<LintResult> = Vec::new();
+    checker.check_utility_convention(&file, &mut v);
+}
+
+#[test]
+fn utility_typescript_role_auditor_implements_protocol() {
+    let checker: Arc<dyn IUtilityRoleProtocol> = Arc::new(UtilityTypeScriptRoleAuditor::new());
     let file = dummy_file();
     let mut v: Vec<LintResult> = Vec::new();
     checker.check_utility_convention(&file, &mut v);
@@ -159,7 +177,9 @@ fn role_orchestrator_implements_classification_protocol() {
         capabilities: rust_auditor,
         surface: Arc::new(SurfaceRoleChecker::new()),
         agent: Arc::new(AgentRoleChecker::new()),
-        utility: Arc::new(UtilityRoleChecker::new()),
+        utility_rust: Arc::new(UtilityRustRoleAuditor::new()),
+        utility_python: Arc::new(UtilityPythonRoleAuditor::new()),
+        utility_typescript: Arc::new(UtilityTypeScriptRoleAuditor::new()),
     };
     let orch = RoleOrchestrator::new(deps, &config);
     let file = dummy_file();
@@ -181,7 +201,9 @@ fn role_orchestrator_implements_aggregate() {
         capabilities: rust_auditor,
         surface: Arc::new(SurfaceRoleChecker::new()),
         agent: Arc::new(AgentRoleChecker::new()),
-        utility: Arc::new(UtilityRoleChecker::new()),
+        utility_rust: Arc::new(UtilityRustRoleAuditor::new()),
+        utility_python: Arc::new(UtilityPythonRoleAuditor::new()),
+        utility_typescript: Arc::new(UtilityTypeScriptRoleAuditor::new()),
     };
     let orchestrator: Arc<dyn IRoleRunnerAggregate> =
         Arc::new(RoleOrchestrator::new(deps, &config));
