@@ -15,6 +15,7 @@ use shared::orphan_rules::contract_orphan_aggregate::IOrphanAggregate;
 use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
 use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared::structure_rules::contract_structure_aggregate::IStructureAggregate;
 
 /// All shared dependencies constructed once and consumed by entry points.
 pub struct CommonDeps {
@@ -33,6 +34,7 @@ pub struct CommonDeps {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub structure_orchestrator: Arc<dyn IStructureAggregate>,
     pub maintenance_orchestrator: Arc<dyn IMaintenanceAggregate>,
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
@@ -126,6 +128,9 @@ impl CommonDeps {
         );
         let role_orchestrator = role_container.orchestrator();
 
+        let structure_orchestrator =
+            structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator();
+
         let auto_fix_container =
             auto_fix::root_auto_fix_container::AutoFixContainer::new(code_analysis_linter.clone());
         // BF-1: dry_run is now per-request via execute(path, dry_run), not baked into orchestrator.
@@ -191,6 +196,7 @@ impl CommonDeps {
             orphan_orchestrator,
             external_lint,
             role_orchestrator,
+            structure_orchestrator,
             maintenance_orchestrator,
             setup_orchestrator,
             git_hooks_aggregate,

@@ -80,6 +80,40 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 ---
 
+## Placement (AES703)
+
+A `surface_*` file belongs in a **surface folder** — a subdirectory of a member directory
+(`crates/`, `modules/`, `packages/`) whose name matches the kind of surface it carries:
+
+```
+crates/api/src/surface_*_handler.rs        # HTTP API
+crates/mcp/src/surface_*_tool.rs           # MCP server
+crates/cli/src/surface_*_command.rs        # CLI
+crates/desktop/src/surface_*_window.rs      # desktop UI
+crates/tui/src/surface_*_screen.rs         # terminal UI
+```
+
+The folder name says what kind of surface it is. `api`, `mcp`, `cli`, `desktop`, and `tui`
+are the usual names; a surface folder whose name says nothing about the surface it serves
+gives the reader no way to tell which entry point uses it.
+
+A surface folder carries **surface files only**. A `capabilities_*` or `agent_*` file found
+in one is misplaced — the folder is surface-dominated (more surface files than everything
+else combined), and that file must move to a feature folder. This is an **AES703** violation.
+
+Alongside the surface files a surface folder may keep `utility_*` helpers, `root_*` wiring,
+and barrels (`lib.rs`, `mod.rs`, `__init__.py`, `index.ts`). Those are allowed.
+
+**Surface folders carry a `DESIGN.md`.** Every surface folder documents how its surface
+looks and behaves in `DESIGN.md` at the folder root, next to its source. The file records
+the surface kind, the entry points, the user-visible states, and the error states a
+developer needs before changing anything in that folder.
+
+Feature folders carry two documents instead — `FRD.md` and `BACKLOG.md` — recording what the
+feature does and where its work stands. `shared/` folders carry neither.
+
+---
+
 ## Diagnostic Tree
 
 Ask these questions in order. The first "No" dictates your next action.

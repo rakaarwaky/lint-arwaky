@@ -12,6 +12,7 @@ members = [
     "crates/role-rules",
     "crates/external-lint",
     "crates/doc-rules",
+    "crates/structure-rules",
     # Layer 3: Infrastructure
     "crates/auto-fix",
     "crates/git-hooks",
@@ -50,6 +51,7 @@ import-rules = { package = "import-rules-lint-arwaky", path = "crates/import-rul
 quality-rules = { package = "quality-rules-lint-arwaky", path = "crates/quality-rules", version = "3.7.1" }
 orphan-rules = { package = "orphan-rules-lint-arwaky", path = "crates/orphan-rules", version = "3.7.1" }
 doc-rules = { package = "doc-rules-lint-arwaky", path = "crates/doc-rules", version = "3.7.1" }
+structure-rules = { package = "structure-rules-lint-arwaky", path = "crates/structure-rules", version = "3.7.1" }
 role-rules = { package = "role-rules-lint-arwaky", path = "crates/role-rules", version = "3.7.1" }
 external-lint = { package = "external-lint-lint-arwaky", path = "crates/external-lint", version = "3.7.1" }
 auto-fix = { package = "auto-fix-lint-arwaky", path = "crates/auto-fix", version = "3.7.1" }
@@ -143,6 +145,7 @@ quality-rules.workspace = true
 orphan-rules.workspace = true
 role-rules.workspace = true
 doc-rules.workspace = true
+structure-rules.workspace = true
 external-lint.workspace = true
 auto-fix.workspace = true
 git-hooks.workspace = true

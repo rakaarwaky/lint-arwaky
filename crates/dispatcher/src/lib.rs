@@ -17,5 +17,6 @@ pub mod surface_plugin_action;
 pub mod surface_quality_action;
 pub mod surface_role_action;
 pub mod surface_setup_action;
+pub mod surface_structure_action;
 pub mod surface_version_action;
 pub mod surface_watch_action;

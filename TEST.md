@@ -36,9 +36,9 @@ workspaces-good/
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 100+  | 100+       | —              | 24 unique codes    |
-| bad       | Python   | 100+  | 100+       | —              | 24 unique codes    |
-| bad       | JS/TS    | 100+  | 100+       | —              | 24 unique codes    |
+| bad       | Rust     | 100+  | 100+       | —              | 27 unique codes    |
+| bad       | Python   | 100+  | 100+       | —              | 27 unique codes    |
+| bad       | JS/TS    | 100+  | 100+       | —              | 27 unique codes    |
 | good      | Rust     | 29    | 0          | 0               | —                 |
 | good      | Python   | 69    | 0          | 0               | —                 |
 | good      | JS/TS    | 50    | 0          | 0               | —                 |
@@ -106,9 +106,9 @@ Thresholds match the §1 Expected Violation Counts table (100+ violations per la
 | Total violations (Rust scan)   | >= 100 | < 100 or 0 |
 | Total violations (Python scan) | >= 100 | < 100 or 0 |
 | Total violations (JS/TS scan)  | >= 100 | < 100 or 0 |
-| Unique AES codes (Rust)        | >= 24  | < 24       |
-| Unique AES codes (Python)      | >= 24  | < 24       |
-| Unique AES codes (JS/TS)       | >= 24  | < 24       |
+| Unique AES codes (Rust)        | >= 27  | < 27       |
+| Unique AES codes (Python)      | >= 27  | < 27       |
+| Unique AES codes (JS/TS)       | >= 27  | < 27       |
 | Self-lint violations           | 0      | > 0        |
 
 ### 3.2 Per-Rule Detection Matrix
@@ -142,6 +142,9 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES504 | Utility orphan                         | ✓   | ✓     | ✓    |
 | AES505 | Agent orphan                           | ✓   | ✓     | ✓    |
 | AES506 | Surface orphan                         | ✓   | ✓     | ✓    |
+| AES701 | Shared folder purity                   | ✓   | ✓     | ✓    |
+| AES702 | Feature folder health                  | ✓   | ✓     | ✓    |
+| AES703 | Surface folder purity                  | ✓   | ✓     | ✓    |
 
 ### 3.3 Negative Tests (must produce 0 violations)
 
@@ -218,7 +221,7 @@ The base codebase must be clean of internal architecture rule violations.
   ```
 - [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
 - [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ] **Criteria**: All 24 AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All 27 AES codes detected per language (Section 3.2).
 - [ ] **Criteria**: All negative tests pass (Section 3.3).
 - [ ] **Criteria**: All exit code tests pass (Section 3.4).
 
