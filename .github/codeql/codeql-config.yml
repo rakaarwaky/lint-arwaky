@@ -11,4 +11,4 @@ paths-ignore:
   - ".worktree/**"
 
 queries:
-  - security-and-quality
+  - uses: security-and-quality
