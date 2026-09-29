@@ -31,7 +31,7 @@
 4. **Cross-link to BACKLOG.md** in `## Reference`. A reader landing on DATA.md
    must immediately see the tracking claim.
 5. **Keep it minimal.** Only four sections are required: Reference, Data
-   Overview, Value Objects, Assumptions & Constraints.
+   Overview, Data Domain, Assumptions & Constraints.
 
 ---
 
@@ -40,9 +40,9 @@
 1. **Create file** → `DATA.md` in the shared/ directory.
 2. **Section: Reference** — link to BACKLOG.md.
 3. **Section: Data Overview** — one paragraph: what the kernel manages, who reads/writes it.
-4. **Section: Value Objects** — a table with ID, Field, Type, Description columns.
+4. **Section: Data Domain** — a table with ID, Field, Type, Description columns.
 5. **Section: Assumptions & Constraints** — name any implicit data requirements.
-6. **Verify** → `aa check docs` passes; section order is correct.
+6. **Verify** → `lint-arwaky-cli docs` passes; section order is correct.
 
 ## Template
 
@@ -61,7 +61,7 @@ Copy, fill, delete nothing.
 <One paragraph: what data shapes this kernel manages, who reads/writes them,
 what business domain they serve. No code.>
 
-## Value Objects
+## Data Domain
 
 | ID | Field | Type | Description |
 |---|---|---|---|
@@ -83,7 +83,7 @@ Every section is required. Each exists for one reason.
 |---|---|
 | Reference | Separates spec promise from backlog claim. |
 | Data Overview | Orients the reader before details begin. |
-| Value Objects | The conceptual shapes the kernel manages. |
+| Data Domain | The conceptual shapes the kernel manages. |
 | Assumptions & Constraints | Implicit data requirements made explicit. |
 
 ---
@@ -91,8 +91,8 @@ Every section is required. Each exists for one reason.
 ## Verify
 
 ```bash
-aa check docs
-# path form: aa check docs .
+lint-arwaky-cli docs
+# path form: lint-arwaky-cli docs .
 # Checks: IDs, orphan refs, section order, status leak, links.
 ```
 
