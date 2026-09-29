@@ -69,6 +69,8 @@ flowchart TD
 
 ### FR-Filesystem-001: AST Parsing & Import Extraction
 
+**Description**: Parses source files using tree-sitter and extracts import statements, producing structured file entries with parse metadata and import data.
+
 **What it produces**: File entries enriched with parse metadata + flat list of import entries, with barrel import resolution.
 
 | Output | Description |
@@ -77,6 +79,8 @@ flowchart TD
 | Import entries | Source file → target module mapping with resolution status |
 | Resolved imports | Import entries with resolved_path populated via barrel/external resolution |
 | Parse warnings | Diagnostic entries for files that failed to parse |
+
+**Output**: Parsed file entries with metadata, import entry list, and optional parse warnings.
 
 **Input**: File entries with content from FR-Filesystem-003.
 
@@ -103,6 +107,8 @@ flowchart TD
 
 ### FR-Filesystem-002: Dependency Graph Construction
 
+**Description**: Builds a dependency graph from parsed file entries, computing forward/reverse edges, symbol definitions, implementations, reachability, cycles, and orphan detection.
+
 **What it produces**: Structured graph data with forward links, reverse links, definitions, implementations, cycles, and orphan detection.
 
 | Output | Description |
@@ -114,6 +120,8 @@ flowchart TD
 | Reachability | Whether two files are connected via import chain |
 | Cycles | Strongly connected components via Kosaraju algorithm |
 | Orphan files | Nodes with no incoming edges |
+
+**Output**: Dependency graph with forward/reverse edges, symbol maps, implementation maps, reachability queries, cycle detection, and orphan file list.
 
 **Input**: Import entries + parsed file entries from FR-Filesystem-001.
 
@@ -138,6 +146,8 @@ flowchart TD
 
 ### FR-Filesystem-003: File I/O & Directory Operations
 
+**Description**: Performs file system I/O operations including directory walking, file content reading, path metadata queries, and external command execution with caching.
+
 **What it produces**: File content, directory listings, path metadata, process execution results.
 
 | Output | Description |
@@ -149,6 +159,8 @@ flowchart TD
 | Process output | stdout/stderr/success from git and external commands |
 | Scan timing | Duration breakdown of last scan |
 | Cached content | Repeated reads from DashMap-backed cache |
+
+**Output**: File paths, content strings, path metadata, directory listings, process results, timing data, and cached content.
 
 **Input**: File paths, directory paths, command arguments.
 
@@ -174,6 +186,8 @@ flowchart TD
 
 ### FR-Filesystem-004: Tool Resolution
 
+**Description**: Resolves external tool availability and command paths by checking system PATH, local binaries, and project configuration files.
+
 **What it produces**: Tool availability status and resolved command paths.
 
 | Output | Description |
@@ -186,6 +200,8 @@ flowchart TD
 | Cargo manifest | Whether Cargo.toml/Cargo.lock exists in ancestors |
 | Python detection | Whether path contains Python files (recursive) |
 
+**Output**: Tool availability boolean, resolved command vectors, working directory paths, and config detection flags.
+
 **Input**: Tool name, working directory, arguments.
 
 **Business Rules**:
@@ -195,11 +211,19 @@ flowchart TD
 - Config detection: checks for standard config file names.
 - Cargo manifest detection: walks up to find Cargo.toml/Cargo.lock.
 
+**Edge Cases**:
+
+- Binary not found: returns false for all resolution attempts.
+- Multiple matches in PATH: uses first match (standard resolution order).
+- Symlinked binaries: resolves through symlinks to actual path.
+
 **Error Handling**: Non-fatal — return false/None for unavailable tools.
 
 ---
 
 ### FR-Filesystem-005: Workspace Detection
+
+**Description**: Detects workspace root, member status, source directories, and language configuration from file paths and manifest markers.
 
 **What it produces**: Workspace structure metadata.
 
@@ -213,6 +237,8 @@ flowchart TD
 | Container wiring | Whether identifiers are wired in container manifest |
 | Module resolver | Resolved module path relative to base directory |
 
+**Output**: Workspace root path, member status flags, source directory path, language enum, wiring boolean, and resolved module path.
+
 **Input**: Start path (string or Path).
 
 **Business Rules**:
@@ -224,6 +250,12 @@ flowchart TD
 - Language: check manifest markers.
 - Container wiring: check if identifiers are referenced in Cargo.toml.
 - Orphan module: resolve module path relative to base_dir, confined under root.
+
+**Edge Cases**:
+
+- Path outside workspace: returns None for root, false for member checks.
+- Multiple manifests: uses closest ancestor as workspace root.
+- Non-standard layouts: falls back to heuristic detection.
 
 **Error Handling**: Non-fatal — returns None/Err for unresolvable cases.
 
