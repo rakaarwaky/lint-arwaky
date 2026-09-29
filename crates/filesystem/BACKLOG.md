@@ -14,13 +14,13 @@ Last Updated: 2026-09-17
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| FILE-01 | FR-FILESYSTEM-001 | SCEN-001 AST Parsing & Import Extraction — 9 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-02 | FR-FILESYSTEM-002 | SCEN-002 Dependency Graph Construction — 7 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-03 | FR-FILESYSTEM-003 | SCEN-003 File I/O & Directory Operations — 8 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-04 | FR-FILESYSTEM-004 | SCEN-004 Tool Resolution — 4 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| FILE-05 | FR-FILESYSTEM-005 | SCEN-005 Workspace Detection — 4 scenarios verified | P0 | Done | `cargo test -p filesystem --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| FILE-01 | P0 | Done | On Track | None | — | 2026-09-17  |
+| FILE-02 | P0 | Done | On Track | None | — | 2026-09-17  |
+| FILE-03 | P0 | Done | On Track | None | — | 2026-09-17  |
+| FILE-04 | P0 | Done | On Track | None | — | 2026-09-17  |
+| FILE-05 | P0 | Done | On Track | None | — | 2026-09-17  |
 
 ## Scenario Evidence
 

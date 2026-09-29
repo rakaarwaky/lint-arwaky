@@ -14,13 +14,13 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| EXTE-01 | FR-ExternalLint-001 | SCEN-001 - Language Detection — 3 scenarios verified | P0 | Done | `cargo test -p external-lint-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| EXTE-02 | FR-ExternalLint-002 | SCEN-002 - Adapter Selection — 5 scenarios verified | P0 | Done | `cargo test -p external-lint-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| EXTE-03 | FR-ExternalLint-003 | SCEN-003 - Scan Execution — 7 scenarios verified | P0 | Done | `cargo test -p external-lint-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| EXTE-04 | FR-ExternalLint-004 | SCEN-004 - Auto-Fix — 6 scenarios verified | P0 | Done | `cargo test -p external-lint-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| EXTE-05 | FR-ExternalLint-005 | SCEN-005 - Normalization — 9 scenarios verified | P0 | Done | `cargo test -p external-lint-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| EXTE-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| EXTE-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| EXTE-03 | P0 | Done | On Track | None | — | 2026-09-29  |
+| EXTE-04 | P0 | Done | On Track | None | — | 2026-09-29  |
+| EXTE-05 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

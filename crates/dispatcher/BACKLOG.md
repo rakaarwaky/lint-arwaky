@@ -14,9 +14,9 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| DISP-01 | — | Dispatcher (DESIGN-only crate) | P0 | Done | `cargo test -p dispatcher --lib --tests` → 0 failures at `29c71083` | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| DISP-01 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

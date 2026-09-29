@@ -14,13 +14,13 @@ Last Updated: 2026-09-17
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| QUAL-01 | FR-QUALITYRULES-001 | AES302 - Minimum File Line Count — 5 scenarios verified | P0 | Done | `cargo test -p quality_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| QUAL-02 | FR-QUALITYRULES-002 | AES303 - Mandatory Definitions & Dead Inheritance — 13 scenarios verified | P0 | Done | `cargo test -p quality_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| QUAL-03 | FR-QUALITYRULES-003 | AES304 - Bypass Detection — 20 scenarios verified | P0 | Done | `cargo test -p quality_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| QUAL-04 | FR-QUALITYRULES-004 | AES305 - Duplicate Code Detection — 6 scenarios verified | P0 | Done | `cargo test -p quality_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| QUAL-05 | FR-QUALITYRULES-005 | Configuration — 5 scenarios verified | P0 | Done | `cargo test -p quality_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| QUAL-01 | P0 | Done | On Track | None | — | 2026-09-17  |
+| QUAL-02 | P0 | Done | On Track | None | — | 2026-09-17  |
+| QUAL-03 | P0 | Done | On Track | None | — | 2026-09-17  |
+| QUAL-04 | P0 | Done | On Track | None | — | 2026-09-17  |
+| QUAL-05 | P0 | Done | On Track | None | — | 2026-09-17  |
 
 ## Scenario Evidence
 

@@ -14,13 +14,13 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| REPO-01 | FR-ReportFormatter-001 | SCEN-001 - Text Format — 4 scenarios verified | P0 | Done | `cargo nextest run -p report-formatter-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| REPO-02 | FR-ReportFormatter-002 | SCEN-002 - JSON Format — 4 scenarios verified | P0 | Done | `cargo nextest run -p report-formatter-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| REPO-03 | FR-ReportFormatter-003 | SCEN-003 - SARIF Format — 7 scenarios verified | P0 | Done | `cargo nextest run -p report-formatter-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| REPO-04 | FR-ReportFormatter-004 | SCEN-004 - JUnit Format — 6 scenarios verified | P0 | Done | `cargo nextest run -p report-formatter-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
-| REPO-05 | FR-ReportFormatter-001 through 004 | SCEN-005 - Orchestrator Routing — direct dispatch via specific protocol methods | P0 | Done | `cargo nextest run -p report-formatter-lint-arwaky` → 0 failures at `cc63389a` (2026-09-29) | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| REPO-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| REPO-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| REPO-03 | P0 | Done | On Track | None | — | 2026-09-29  |
+| REPO-04 | P0 | Done | On Track | None | — | 2026-09-29  |
+| REPO-05 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 
