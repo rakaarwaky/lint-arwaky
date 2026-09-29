@@ -487,7 +487,7 @@ FRD Ref: FR-ConfigSystem-009
 
 ---
 
-## Appendix A: Top-Level Config Schema
+### Appendix A: Top-Level Config Schema
 
 ### File Naming Convention
 
