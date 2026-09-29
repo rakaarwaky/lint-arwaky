@@ -50,7 +50,7 @@
 5. **Section: Vertical Slicing Folder Structure** — feature layout and shared layout.
 6. **Section per layer** — Taxonomy, Contract, Utility, Capabilities, Agent, Surface,
    Root. Each section: Purpose, Components, Dependencies, Special Rules.
-7. **Verify** → `aa check docs` passes; every dependency table has a line for each
+7. **Verify** → `lint-arwaky-cli docs` passes; every dependency table has a line for each
    named layer.
 
 ## Template
@@ -320,7 +320,7 @@ Every section is required unless marked optional. Each exists for one reason.
 ## Verify
 
 ```bash
-aa check docs .
+lint-arwaky-cli docs .
 # Checks: dead-link, absolute-path, secret-in-docs, doc-length.
 # Manual: every layer states its allowed dependencies; no implementation detail;
 #   file names follow layer_concern_role.ext; no per-file exceptions without a subsection.

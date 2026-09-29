@@ -44,7 +44,7 @@ Four rules. Each one prevents a specific failure mode.
 2. **Section: Current State** — where we are now.
 3. **Section: Roadmap** — phased milestones with dates.
 4. **Section: Status Policy** — how to update progress.
-5. **Verify** → `aa check docs` passes; all phases have status.
+5. **Verify** → `lint-arwaky-cli docs` passes; all phases have status.
 
 ## Template
 
@@ -130,6 +130,6 @@ reason.
 ## Verify
 
 ```bash
-aa check docs .
+lint-arwaky-cli docs .
 # Checks: master root presence, feature pairing, unknown states, missing sections.
 ```
