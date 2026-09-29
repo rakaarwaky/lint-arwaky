@@ -12,7 +12,7 @@ pub struct DocSource {
 }
 
 /// An invariant finding reported by the doc checker.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct DocFinding {
     /// The invariant code that fired, e.g. `AES601`.
     pub code: &'static str,
