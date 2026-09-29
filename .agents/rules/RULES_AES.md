@@ -543,6 +543,8 @@ One protocol class is one capability seam, and one seam is one requirement, so a
 
 Classes are counted, never files: a single protocol file may declare many capability seams, and a module may spread them over many files. `I*Aggregate` traits are composite entry points rather than capability seams and are excluded from the count. A feature with no shared contract module is left alone.
 
+**Language scope (v1):** the rule resolves `crates/shared/src/<module>` and counts Rust `pub trait I*Protocol` declarations only. Python (`modules/`) and TypeScript (`packages/`) features are not audited yet. A feature with no shared contract module is also how surface features (CLI, MCP, TUI, dispatcher) stay exempt, since they own no shared contract module.
+
 The message states both counts and names both fix directions, because either the code shape or the requirement shape may be the one to change. The four-direction table in `HOW-TO-MAKE-FRD.md` decides which to pick.
 
 | Violation type            | Fires when                                                                                          |
