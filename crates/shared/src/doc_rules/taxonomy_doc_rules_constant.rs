@@ -58,24 +58,21 @@ pub const CROSSLINKS_VIOLATION_SCENARIO_NO_EVIDENCE: &str = "scenario_no_evidenc
 /// State vocabulary is restated in a sub-doc instead of living only in the master.
 pub const CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED: &str = "state_vocab_restated";
 
-/// ─── AES607 — FR/protocol class parity ─────────────────────────────────────
-pub const RULE_CODE_FR_PROTOCOL_PARITY: &str = "AES607";
+/// ─── AES605 — Doc heading structure ────────────────────────────────────────
+pub const RULE_CODE_DOC_STRUCTURE: &str = "AES605";
+
+/// A document carries other than exactly one level-1 heading.
+pub const DOC_STRUCTURE_VIOLATION_H1_COUNT: &str = "h1_count";
+
+/// A document is missing one or more required level-2 sections.
+pub const DOC_STRUCTURE_VIOLATION_H2_MISSING: &str = "h2_missing";
+
+/// A document carries a level-2 heading outside the agreed template.
+pub const DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED: &str = "h2_unexpected";
 
 /// The FRD declares a different number of requirements than the feature's
-/// contract module declares protocol classes.
+/// contract module declares protocol classes. (Merged into AES601.)
 pub const FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH: &str = "protocol_count_mismatch";
-
-/// ─── AES606 — Agent doc structure ───────────────────────────────────────────
-pub const RULE_CODE_AGENT_DOC_STRUCTURE: &str = "AES606";
-
-/// An AGENTS.md carries other than exactly one level-1 heading.
-pub const AGENT_DOC_STRUCTURE_VIOLATION_H1_COUNT: &str = "h1_count";
-
-/// An AGENTS.md is missing one or more required level-2 sections.
-pub const AGENT_DOC_STRUCTURE_VIOLATION_H2_MISSING: &str = "h2_missing";
-
-/// An AGENTS.md carries a level-2 heading outside the agreed template.
-pub const AGENT_DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED: &str = "h2_unexpected";
 
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// Adapter name the doc checker reports under.
@@ -170,7 +167,7 @@ pub const NFR_COLUMNS: &[&str] = &["Metric", "Target", "Measurement method"];
 /// File extensions a spec must never name, per HOW-TO-MAKE-FRD Rule 9.
 pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 
-/// ─── AES606 — Document heading structure ──────────────────────────────
+/// ─── AES605 — Document heading structure ──────────────────────────────
 /// Mapping from root-document filename to the H2 contracts derived from
 /// each document's Section Contract table in the corresponding
 /// HOW-TO-MAKE-*.md template. The `required` set is mandatory; the

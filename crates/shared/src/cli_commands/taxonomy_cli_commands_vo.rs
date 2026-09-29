@@ -397,7 +397,7 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
     ),
     (
         "docs",
-        "Doc invariants audit (AES601–AES607) over the document chain",
+        "Doc invariants audit (AES601–AES605) over the document chain",
         "lint-arwaky-cli docs ./",
     ),
     (

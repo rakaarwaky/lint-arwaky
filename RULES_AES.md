@@ -52,13 +52,11 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 
 | Code   | Name                  | Severity | Group  | Description                                                                                     |
 | -------- | --------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------- |
-| AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields.                  |
+| AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields; FRD requirement count equals protocol class count.                  |
 | AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present.                  |
 | AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
-| AES605 | Feature Folder Health | MEDIUM   | Doc    | Every folder with a doc pair holds an orchestrator; kernel folders carry no docs.                |
-| AES606 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
-| AES607 | FR/Protocol Parity    | HIGH     | Doc    | An FRD's requirement count equals its feature's count of `I*Protocol` capability-seam classes.     |
+| AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
 
 | Code   | Name               | Severity | Group     | Description                                                                                |
 | -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
@@ -437,12 +435,15 @@ These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`
 
 **Severity:** HIGH
 
-Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling.
+Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling. The FRD's requirement count must also equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module.
 
-| Violation type        | Fires when                                                              |
-| ----------------------- | ------------------------------------------------------------------------ |
-| `id_missing_feature_prefix` | An ID reads `FR-NNN` with no feature prefix.                        |
-| `field_missing`            | A requirement omits one or more of the six fields; the message names each. |
+| Violation type                  | Fires when                                                              |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| `id_missing_feature_prefix`     | An ID reads `FR-NNN` with no feature prefix.                            |
+| `field_missing`                 | A requirement omits one or more of the six fields; the message names each. |
+| `protocol_count_mismatch`       | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts. |
+
+One protocol class is one capability seam, and one seam is one requirement. Aggregate traits (`I*Aggregate`) are excluded from the count. The crate folder name is translated to the module name by replacing `-` with `_`. A feature with no shared contract module is left alone. The message names both fix directions: either merge/split requirements or merge/split protocol classes — see the four-direction table in `HOW-TO-MAKE-FRD.md`.
 
 ---
 
@@ -490,20 +491,7 @@ Documents reference each other, and the state vocabulary lives in exactly one pl
 
 ---
 
-### AES605 — Feature Folder Health
-
-**Severity:** MEDIUM
-
-A doc pair marks a feature, and only a feature holds one.
-
-| Violation type     | Fires when                                                              |
-| -------------------- | ------------------------------------------------------------------------ |
-| `no_orchestrator`   | A folder carries a doc pair but holds no `*_orchestrator` file.        |
-| `shared_has_docs`   | A kernel folder (`shared`) carries a doc pair.                          |
-
----
-
-### AES606 — Doc Heading Structure
+### AES605 — Doc Heading Structure
 
 **Severity:** HIGH
 
@@ -531,24 +519,6 @@ Each document also carries an agreed set of project-specific H2s that are accept
 | `h1_count`          | The document has zero or more than one level-1 heading.                              |
 | `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.         |
 | `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal. |
-
----
-
-### AES607 — FR/Protocol Parity
-
-**Severity:** HIGH
-
-One protocol class is one capability seam, and one seam is one requirement, so an FRD's `FR-<Feature>-NNN` heading count must equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. The crate folder name is translated to the module name by replacing `-` with `_` (`report-formatter` → `report_formatter`).
-
-Classes are counted, never files: a single protocol file may declare many capability seams, and a module may spread them over many files. `I*Aggregate` traits are composite entry points rather than capability seams and are excluded from the count. A feature with no shared contract module is left alone.
-
-**Language scope (v1):** the rule resolves `crates/shared/src/<module>` and counts Rust `pub trait I*Protocol` declarations only. Python (`modules/`) and TypeScript (`packages/`) features are not audited yet. A feature with no shared contract module is also how surface features (CLI, MCP, TUI, dispatcher) stay exempt, since they own no shared contract module.
-
-The message states both counts and names both fix directions, because either the code shape or the requirement shape may be the one to change. The four-direction table in `HOW-TO-MAKE-FRD.md` decides which to pick.
-
-| Violation type            | Fires when                                                                                          |
-| ------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `protocol_count_mismatch` | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts. |
 
 ---
 

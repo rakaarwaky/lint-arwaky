@@ -146,9 +146,8 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES602 | Section Structure                      | ✓   |       |      |
 | AES603 | Spec Purity                            | ✓   |       |      |
 | AES604 | Crosslinks                             | ✓   |       |      |
-| AES605 | Feature Folder Health                  | ✓   |       |      |
-| AES606 | Doc Heading Structure                  | ✓   |       |      |
-| AES607 | FR/Protocol Parity                     | ✓   |       |      |
+| AES605 | Doc Heading Structure                  | ✓   |       |      |
+| AES601 | FR/Protocol Parity                     | ✓   |       |      |
 | AES701 | Shared folder purity                   | ✓   | ✓     | ✓    |
 | AES702 | Feature folder health                  | ✓   | ✓     | ✓    |
 | AES703 | Surface folder purity                  | ✓   | ✓     | ✓    |
