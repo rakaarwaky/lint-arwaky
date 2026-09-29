@@ -12,6 +12,23 @@
 
 ---
 
+## Capability vs Utility Boundary
+
+A capability file **implements a protocol** — it has state (via DI), business rules, and concrete behaviour.
+A utility file **performs a pure operation** — no state, no business rules, just a narrow task.
+
+| Decision | → Capability | → Utility |
+|---|---|---|
+| Has `&self` / instance state / injected dependencies | Yes | No |
+| Contains business rules or protocol logic | Yes | No |
+| Stateless, domain-agnostic, ≥2 consumers | — | Yes |
+| Implements `_protocol` trait | Yes | No |
+| Pure free function with no business logic | No | Yes |
+
+**Rule**: If a method in Block 3 is stateless (`fn` without `&self`), domain-agnostic, and reusable across modules — extract it to a `utility_*` file. It does not belong in the capability layer.
+
+---
+
 ## Rules
 
 ### Import rules

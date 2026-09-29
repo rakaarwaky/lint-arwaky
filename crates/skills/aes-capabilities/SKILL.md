@@ -47,6 +47,22 @@ metadata:
 > **Audience**: The agent creating or validating a capability file.
 > **Scope**: Python, Rust, and TypeScript `capabilities_<domain>_<role>` files — 3-block structure, ≥1 protocol implementor, ≤3 types.
 
+## Capability vs Utility — Defining the Boundary
+
+A capability and a utility are fundamentally different layers. Confusing them causes misplaced code, wrong imports, and linter violations.
+
+| | **Capability** (`capabilities_*`) | **Utility** (`utility_*`) |
+|---|---|---|
+| **Core question** | What can the system **do**? | How is a small task **done**? |
+| **Nature** | Concrete protocol behaviour — domain rules, external adaptation, DI-wired | Stateless, domain-agnostic, pure free functions |
+| **Responsibility** | Implements a `_protocol` contract; orchestrates inputs into domain outcomes | Performs narrow, reusable operations with no business logic |
+| **State** | Has instance state via injected dependencies (`Arc<dyn Trait>`, DI params) | Absolutely no state — pure functions only |
+| **Location** | Feature folder (`crates/<feature>/`, `modules/<feature>/`, `packages/<feature>/`) | Shared folder (`shared/`) beside taxonomy and contract files |
+| **Consumers** | Consumed by agent orchestrators or root composition | Consumed by capabilities, agents, surfaces, or other utilities |
+| **Examples** | `capabilities_user_auth`, `capabilities_data_persist`, `capabilities_rate_limit` | `utility_string_sanitizer`, `utility_date_formatter`, `utility_hasher` |
+
+**Decision rule**: Ask "Does this code implement a protocol behaviour with business rules?" If yes → capability. Ask "Does this code perform a narrow, stateless, reusable operation with no business logic?" If yes → utility. If it does both, split it: business logic stays in the capability; the stateless helper moves to utility.
+
 The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
@@ -132,8 +148,8 @@ carrying neither capabilities nor an agent is not a feature and owes no document
 
 Ask these questions in order. The first "No" dictates your next action.
 
-1. **Is this protocol behaviour (not orchestration, data, or mechanics)?**
-   - *No* → route to agent / taxonomy / utility instead.
+1. **Is this protocol behaviour (not a stateless helper or pure function)?**
+   - *No* → it is a utility, not a capability. See `aes-utility` skill.
 2. **Does a `_protocol` contract exist for this behaviour?**
    - *No* → create it first with `aes-contract`.
 3. **Block 2 contain only protocol methods? ≥1 implementor? ≤3 types?**
@@ -190,8 +206,8 @@ A machine pass does not mean the file is right. Layer purpose, structural order,
 
 The linter covers naming, imports, and primitives. These need a reader (HOW-TO § Rules):
 
-- **Missing protocol**: flag `CapabilityNoProtocol` and run `aes-contract` first.
-- **Block order wrong or Block 2 polluted**: protocol methods only in Block 2; 1→2→3.
+- **Stateless helper with no protocol behaviour in a capability file**: extract to `utility_*` — it belongs in shared, not the feature folder.
+- **Business logic mixed with a pure helper**: split — business rules stay; stateless logic moves to utility.
 - **Capabilities importing each other**: shared needs go through contract or root, not sibling imports.
 - **Restating HOW-TO rules in SKILL.md**: delegate — this file only routes.
 

@@ -46,6 +46,22 @@ metadata:
 > **Audience**: The agent creating or validating a utility file.
 > **Scope**: Python, Rust, and TypeScript `utility_<domain>_<role>` files — no class/struct/impl/interface/enum/type alias.
 
+## Utility vs Capability — Defining the Boundary
+
+A utility and a capability are fundamentally different layers. Confusing them causes misplaced code, wrong imports, and linter violations.
+
+| | **Utility** (`utility_*`) | **Capability** (`capabilities_*`) |
+|---|---|---|
+| **Core question** | How is a small task **done**? | What can the system **do**? |
+| **Nature** | Stateless, domain-agnostic, pure free functions | Concrete protocol behaviour — domain rules, external adaptation, DI-wired |
+| **Responsibility** | Performs narrow, reusable operations with no business logic | Implements a `_protocol` contract; orchestrates inputs into domain outcomes |
+| **State** | Absolutely no state — pure functions only | Has instance state via injected dependencies (`Arc<dyn Trait>`, DI params) |
+| **Location** | Shared folder (`shared/`) beside taxonomy and contract files | Feature folder (`crates/<feature>/`, `modules/<feature>/`, `packages/<feature>/`) |
+| **Consumers** | Consumed by capabilities, agents, surfaces, or other utilities | Consumed by agent orchestrators or root composition |
+| **Examples** | `utility_string_sanitizer`, `utility_date_formatter`, `utility_hasher` | `capabilities_user_auth`, `capabilities_data_persist`, `capabilities_rate_limit` |
+
+**Decision rule**: Ask "Does this code perform a narrow, stateless, reusable operation with no business logic?" If yes → utility. Ask "Does this code implement a protocol behaviour with business rules?" If yes → capability. If it does both, split it: business logic stays in the capability; the stateless helper moves to utility.
+
 The **layer** decides which suffix, which imports, and which structure apply.
 Rules, templates, section contracts, and Verify blocks live in the language HOW-TUs under [`references/`](references/).
 
@@ -104,9 +120,9 @@ helper inside that feature folder.
 Ask these questions in order. The first "No" dictates your next action.
 
 1. **Is the function stateless, domain-agnostic, and used by ≥2 modules?**
-   - *No* → keep as a private helper where it is used.
-2. **Does it use instance state or contain business rules?**
-   - *Yes* → belongs in capabilities, not utility.
+   - *No* → keep as a private helper where it is used, or move to capabilities if it has business rules.
+2. **Does it implement protocol behaviour with business rules or injected dependencies?**
+   - *Yes* → belongs in capabilities, not utility. See `aes-capabilities` skill.
 3. **Does the file define a class/struct/impl/trait/type alias?**
    - *Yes* → strip to free functions only.
 4. **Does it import above taxonomy?**
