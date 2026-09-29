@@ -18,29 +18,24 @@ impl GitContainer {
         io: Arc<dyn IFileSystemIOProtocol>,
     ) -> Self {
         let hook_installer: Arc<dyn IHookInstallProtocol> = Arc::new(
-            crate::capabilities_hook_adapter::GitHookAdapter::new(root_dir.clone(), io.clone()),
+            crate::capabilities_hook_installer::HookInstaller::new(root_dir.clone(), io.clone()),
         );
-        let hook_uninstaller: Arc<dyn IHookUninstallProtocol> = Arc::new(
-            crate::capabilities_hook_adapter::GitHookAdapter::new(root_dir, io.clone()),
-        );
+        let hook_uninstaller: Arc<dyn IHookUninstallProtocol> =
+            Arc::new(crate::capabilities_hook_uninstaller::HookUninstaller::new(
+                root_dir.value.clone(),
+                io.clone(),
+            ));
         let diff_checker = Arc::new(crate::capabilities_diff_checker::DiffChecker::new(
             io.clone(),
         ));
-        let hook_manager = Arc::new(crate::capabilities_hook_manager::HookManager::new(
-            hook_installer.clone(),
-            hook_uninstaller.clone(),
-            io,
-        ));
+        let config_init = Arc::new(crate::capabilities_config_init::ConfigInit::new(io));
 
         let aggregate: Arc<dyn IGitHooksAggregate> = Arc::new(
             crate::agent_git_hooks_orchestrator::GitHooksOrchestrator::new(
                 diff_checker.clone(),
-                diff_checker.clone(),
                 hook_installer.clone(),
                 hook_uninstaller.clone(),
-                hook_manager.clone(),
-                hook_manager.clone(),
-                hook_manager.clone(),
+                config_init.clone(),
             ),
         );
 

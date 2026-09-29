@@ -1,26 +1,21 @@
 // Contract tests — verify all concrete types implement their declared contract traits.
-// One test per FR-GitHooks-001..007 protocol seam, each with a unique helper name.
+// One test per FR-GitHooks-001..004 protocol seam, each with a unique helper name.
 use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
+use git_hooks_lint_arwaky::capabilities_config_init::ConfigInit;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
-use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
-use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
+use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
+use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IDiffDataProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookCheckProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IIgnoreRuleProtocol;
 
 // ── Per-trait bound helpers (one unique name per seam) ────
 
 fn assert_diff_detection_trait<T: IDiffDetectionProtocol>() {}
 fn assert_hook_install_trait<T: IHookInstallProtocol>() {}
 fn assert_hook_uninstall_trait<T: IHookUninstallProtocol>() {}
-fn assert_hook_check_trait<T: IHookCheckProtocol>() {}
-fn assert_diff_data_trait<T: IDiffDataProtocol>() {}
-fn assert_ignore_rule_trait<T: IIgnoreRuleProtocol>() {}
 fn assert_config_init_trait<T: IConfigInitProtocol>() {}
 fn assert_aggregate_trait<T: IGitHooksAggregate>() {}
 
@@ -34,43 +29,22 @@ fn fr001_diff_checker_implements_diff_detection_protocol() {
 // ── FR-GitHooks-002: Pre-Commit Hook Installation ─────────
 
 #[test]
-fn fr002_hook_adapter_implements_hook_install_protocol() {
-    assert_hook_install_trait::<GitHookAdapter>();
+fn fr002_hook_installer_implements_hook_install_protocol() {
+    assert_hook_install_trait::<HookInstaller>();
 }
 
 // ── FR-GitHooks-003: Pre-Commit Hook Uninstallation ───────
 
 #[test]
-fn fr003_hook_adapter_implements_hook_uninstall_protocol() {
-    assert_hook_uninstall_trait::<GitHookAdapter>();
+fn fr003_hook_uninstaller_implements_hook_uninstall_protocol() {
+    assert_hook_uninstall_trait::<HookUninstaller>();
 }
 
-// ── FR-GitHooks-004: Git Hooks Check Execution ────────────
+// ── FR-GitHooks-004: Project Config Initialization ────────
 
 #[test]
-fn fr004_diff_checker_implements_hook_check_protocol() {
-    assert_hook_check_trait::<DiffChecker>();
-}
-
-// ── FR-GitHooks-005: Diff Data Comparison ─────────────────
-
-#[test]
-fn fr005_hook_manager_implements_diff_data_protocol() {
-    assert_diff_data_trait::<HookManager>();
-}
-
-// ── FR-GitHooks-006: Ignore Rule Management ───────────────
-
-#[test]
-fn fr006_hook_manager_implements_ignore_rule_protocol() {
-    assert_ignore_rule_trait::<HookManager>();
-}
-
-// ── FR-GitHooks-007: Config Initialization ────────────────
-
-#[test]
-fn fr007_hook_manager_implements_config_init_protocol() {
-    assert_config_init_trait::<HookManager>();
+fn fr004_config_init_implements_config_init_protocol() {
+    assert_config_init_trait::<ConfigInit>();
 }
 
 // ── Cross-cutting trait obligations ───────────────────────
@@ -84,8 +58,9 @@ fn orchestrator_implements_git_hooks_aggregate() {
 fn all_capabilities_are_send_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<DiffChecker>();
-    assert_send_sync::<GitHookAdapter>();
-    assert_send_sync::<HookManager>();
+    assert_send_sync::<HookInstaller>();
+    assert_send_sync::<HookUninstaller>();
+    assert_send_sync::<ConfigInit>();
     assert_send_sync::<GitHooksOrchestrator>();
 }
 
@@ -95,23 +70,17 @@ fn every_protocol_seam_is_object_safe() {
     assert_object_safe::<dyn IDiffDetectionProtocol>();
     assert_object_safe::<dyn IHookInstallProtocol>();
     assert_object_safe::<dyn IHookUninstallProtocol>();
-    assert_object_safe::<dyn IHookCheckProtocol>();
-    assert_object_safe::<dyn IDiffDataProtocol>();
-    assert_object_safe::<dyn IIgnoreRuleProtocol>();
     assert_object_safe::<dyn IConfigInitProtocol>();
     assert_object_safe::<dyn IGitHooksAggregate>();
 }
 
 #[test]
 fn one_concrete_type_may_satisfy_several_seams() {
-    // DiffChecker backs both FR-001 and FR-004; HookManager backs FR-005..007.
+    // Each capability backs exactly one FR seam.
     assert_diff_detection_trait::<DiffChecker>();
-    assert_hook_check_trait::<DiffChecker>();
-    assert_hook_install_trait::<HookManager>();
-    assert_hook_uninstall_trait::<HookManager>();
-    assert_diff_data_trait::<HookManager>();
-    assert_ignore_rule_trait::<HookManager>();
-    assert_config_init_trait::<HookManager>();
+    assert_hook_install_trait::<HookInstaller>();
+    assert_hook_uninstall_trait::<HookUninstaller>();
+    assert_config_init_trait::<ConfigInit>();
 }
 
 // ─── Aggregate contract tests ──────────────────────────────

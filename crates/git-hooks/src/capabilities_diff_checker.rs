@@ -1,7 +1,8 @@
-// PURPOSE: DiffChecker — FR-001/FR-004 protocol implementations (capabilities layer)
+// PURPOSE: DiffChecker — FR-001 protocol implementation (capabilities layer)
 //
-// IDiffDetectionProtocol covers git diff detection; IHookCheckProtocol covers
-// the check that runs the lint pipeline over the changed files.
+// IDiffDetectionProtocol covers both git diff detection AND the check that
+// runs the lint pipeline over changed files. Two capabilities collapsed into
+// one seam because they always execute together in the pre-commit flow.
 
 use std::collections::HashSet;
 
@@ -13,7 +14,6 @@ use shared::common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileLi
 use shared::file_watch::GitDiffResultVO;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookCheckProtocol;
 use shared::git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
 
 use std::sync::Arc;
@@ -88,9 +88,7 @@ impl IDiffDetectionProtocol for DiffChecker {
     fn get_default_branch(&self, path: &FilePath) -> GitBranchName {
         GitBranchName::new(self.get_default_branch_sync(path))
     }
-}
 
-impl IHookCheckProtocol for DiffChecker {
     fn run_git_diff_check(&self, path: &FilePath) -> LintResultList {
         let default_branch = self.get_default_branch_sync(path);
         let changed_files = self.collect_changed_files_sync(path, &default_branch);

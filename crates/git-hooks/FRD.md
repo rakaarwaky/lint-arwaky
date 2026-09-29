@@ -17,11 +17,11 @@ compliance before code enters the repository. It detects changed files via
 git diff, runs linting only on modified files, and blocks commits that
 violate AES rules.
 
-The crate follows the AES 7-layer architecture: the diff checker and hook
-manager (capabilities) implement the diff protocol and hook protocol, the
-git hook adapter (capabilities) implements the hook manager protocol for
-low-level hook file operations, the git hooks orchestrator (agent) composes
-the three protocols, and the git container (root) wires dependencies.
+The crate follows the AES 7-layer architecture: the diff checker (capability)
+implements the diff protocol, the git hook adapter (capability) implements
+both the install and uninstall protocols, the hook manager (capability)
+implements the config protocol, the git hooks orchestrator (agent) composes
+the four protocols, and the git container (root) wires dependencies.
 
 ### Architecture & Data Flow
 
@@ -31,24 +31,26 @@ flowchart TD
     B --> C{"action"}
 
     C -->|"check / git-diff"| D["diff checker"]
-    C -->|"install-hook"| E["hook manager"]
-    C -->|"uninstall-hook"| E
-    C -->|"ignore-rule"| E
+    C -->|"install-hook"| E["hook adapter"]
+    C -->|"uninstall-hook"| F["hook adapter"]
+    C -->|"init-config / ignore-rule"| G["hook manager"]
 
-    D --> G["filesystem\n(run git commands)"]
-    G --> H["changed files\n(lintable filter)"]
-    H --> I["lint pipeline\n(via linter aggregates)"]
-    I --> J["Lint Results"]
+    D --> H["filesystem\n(run git commands)"]
+    H --> I["changed files\n(lintable filter)"]
+    I --> J["lint pipeline\n(via linter aggregates)"]
+    J --> K["Lint Results"]
 
-    E --> K[".git/hooks/pre-commit"]
-    K --> L["Success / Error"]
-    E --> M["Config Update"]
+    E --> L[".git/hooks/pre-commit"]
+    L --> M["Success / Error"]
 
-    J --> B
-    L --> B
+    F --> M
+    G --> N["Config Update"]
+
+    K --> B
     M --> B
-    B -->|output| A
+    N --> B
 
+    B -->|output| A
 ```
 
 ---
@@ -58,10 +60,11 @@ flowchart TD
 ### FR-GitHooks-001: Git Diff Detection
 
 - **Description**: Identify files changed between the current HEAD and the
-  default branch using git diff commands.
+  default branch using git diff commands, then run the lint pipeline over
+  the lintable subset.
 - **Input**: `FilePath` (project root directory).
-- **Output**: `GitDiffResultVO` containing lists of added, modified, deleted,
-  renamed files; a filtered `lintable_files` list; and total change count.
+- **Output**: `GitDiffResultVO` (from `get_diff`) or `LintResultList` (from
+  `run_git_diff_check`).
 - **Business Rules**:
 
   - Default branch detection: runs
@@ -157,106 +160,30 @@ flowchart TD
 
 ---
 
-### FR-GitHooks-004: Git Hooks Check Execution
+### FR-GitHooks-004: Project Config Initialization
 
-- **Description**: Run the git diff check and lint pipeline on changed files.
-- **Input**: `FilePath` (project root).
-- **Output**: `LintResultList` containing lint results for changed files.
-- **Business Rules**:
-
-  - Collects changed files via FR-GitHooks-001 (git diff detection).
-  - Filters to lintable source files only.
-  - Delegates to linter aggregates for AES analysis on changed files.
-  - Files that fail to parse are skipped by the linter aggregates; no separate
-    parse-warning diagnostic is included in output.
-  - Only lintable file types (per FR-GitHooks-001 filter) are included.
-- **Edge Cases**:
-
-  - No changed files → returns empty `LintResultList`.
-  - All changed files are non-lintable → returns empty list.
-  - Changed file with parse failure → skipped by the linter aggregates for
-    AES checks.
-- **Error Handling**: Git command failure → treated as no changes.
-
----
-
-### FR-GitHooks-005: Diff Data Comparison
-
-- **Description**: Compare two file paths to determine their diff status
-  and content difference score.
-- **Input**: Two file path strings.
-- **Output**: `GitDiffDataVO` with version info, difference score, and
-  status.
-- **Business Rules**:
-
-  - Status is determined by file existence:
-    - Both paths missing → `BothMissing`.
-    - First missing → `MissingFirst`.
-    - Second missing → `MissingSecond`.
-    - Either path not a file (directory) → `NotAFile`.
-    - Both exist and are files → content comparison performed.
-  - Difference score calculation:
-    - Read both files as bytes.
-    - Score = 1.0 − (matching bytes / max file size).
-    - Identical files → score `0.0`.
-    - Completely different files → score `1.0`.
-    - One file empty → score `1.0`.
-  - Status for existing files:
-    - Score `0.0` → `Unchanged`.
-    - Score > `0.0` → `Modified`.
-- **Edge Cases**:
-
-  - Both paths are the same file → status `Unchanged`, score `0.0`.
-  - Both paths are directories → `NotAFile`.
-  - Both paths missing → `BothMissing`.
-  - File read failure → score `1.0`, status `Modified` (assume changed).
-- **Error Handling**: File read errors result in score `1.0` (assume
-  modified). No crash.
-
----
-
-### FR-GitHooks-006: Ignore Rule Management
-
-- **Description**: Manage ignore rules in the lint-arwaky config file for
-  git-hooks specific exclusions.
-- **Input**: `HookIgnoreUpdateVO` (rule path, add/remove action).
+- **Description**: Create the default lint-arwaky config file and manage
+  per-path ignore rules within it.
+- **Input**: Path string (for init); `HookIgnoreUpdateVO` (for rule update).
 - **Output**: `DescriptionVO` with status message.
-- **Business Rules**:
-
-  - Locates config file using config-system resolution
-    (`lint_arwaky.config.yaml`).
-  - Adds or removes a path from the `ignored_paths` list in the config file.
-  - If config file not found → returns error message suggesting
-    `lint-arwaky-cli init`.
-  - Config initialization is handled by FR-GitHooks-007, not here.
-- **Edge Cases**:
-
-  - Config file not found → returns descriptive error.
-  - Rule already exists (add) → no-op, returns "already present".
-  - Rule not found (remove) → no-op, returns "not found".
-- **Error Handling**: Config file not found → returns error description.
-  Config parse failure → returns error description.
-
----
-
-### FR-GitHooks-007: Config Initialization
-
-- **Description**: Create a default lint-arwaky config file if one does not
-  already exist.
-- **Input**: Path string (project root directory).
-- **Output**: `DescriptionVO` with status message indicating whether the
-  config was created or already existed.
 - **Business Rules**:
 
   - Target file: `lint_arwaky.config.yaml` in the given path.
   - Default content includes `ignored_paths: []` structure.
   - If config file already exists → returns "ALREADY_EXISTS" status
     (no-op, idempotent).
+  - Ignore rules are path patterns stored in `ignored_paths`.
+  - Adding a rule that already exists → no-op, returns "already present".
+  - Removing a rule that does not exist → no-op, returns "not found".
+  - Config file not found on update → descriptive error suggesting
+    `lint-arwaky-cli init`.
 - **Edge Cases**:
 
   - Config file already present → no-op, descriptive status message.
   - File write failure → error description returned.
-- **Error Handling**: Write failures return descriptive error messages.
+  - Config parse failure → error description returned.
+- **Error Handling**: Write and parse failures return descriptive error
+  messages.
 
 ---
 
@@ -266,15 +193,14 @@ flowchart TD
 
 | Method | Input | Output | Error | Event | Description |
 |---|---|---|---|---|---|
-| `run_git_diff_check` | &FilePath | `LintResultList` | — | — | Run git diff check. |
-| `get_diff` | &FilePath | `GitDiffResultVO` | — | — | Get diff. |
+| `get_diff` | &FilePath | `GitDiffResultVO` | — | — | Get diff result. |
 | `get_changed_files` | &FilePath, &GitBranchName | `FilePathList` | — | — | Get changed files. |
 | `get_default_branch` | &FilePath | `GitBranchName` | — | — | Get default branch. |
-| `install_pre_commit` | &FilePath) -> Result<SuccessStatus, GitHookError>; /// Uninstall pre-commit hook. fn uninstall_pre_commit(&self | `SuccessStatus` | `GitHookError` | — | Install pre commit. |
-| `get_hook_manager_identity` | — | `Identity` | — | — | Get hook manager identity. |
+| `run_git_diff_check` | &FilePath | `LintResultList` | — | — | Run lint on changed files. |
+| `install_pre_commit` | &FilePath | `SuccessStatus` | `GitHookError` | — | Install pre-commit hook. |
+| `uninstall_pre_commit` | — | `SuccessStatus` | `GitHookError` | — | Uninstall pre-commit hook. |
 | `initialize_config` | &str | `DescriptionVO` | — | — | Initialize config. |
 | `update_ignore_rule` | HookIgnoreUpdateVO | `DescriptionVO` | — | — | Update ignore rule. |
-| `get_diff_data` | &str, &str | `GitDiffDataVO` | — | — | Get diff data. |
 
 ### Aggregate API
 
@@ -283,6 +209,7 @@ flowchart TD
 | `execute` | GitHooksRequest | `GitHooksResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | `shared` crate | in | Supply value objects plus the diff, hook, hook-manager, and aggregate contracts | A contract is missing at compile time → the build fails before any hook is installed |
@@ -293,6 +220,7 @@ flowchart TD
 | Standard library file operations | in | Set the executable bit and remove the previous script | Permission setting is unsupported on the platform → the hook is installed without the executable bit and reports which platform it is on |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | Diff detection | Early termination once changes are found; git subprocess spawn dominates the cost | Time the hook on a workspace with and without staged changes and compare |
@@ -308,13 +236,10 @@ flowchart TD
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
-- **SCEN-001 — Git Diff Detection** — e.g. Default branch from`origin/HEAD` → Correct branch detected
+- **SCEN-001 — Git Diff Detection** — e.g. Default branch from `origin/HEAD` → Correct branch detected
 - **SCEN-002 — Hook Installation** — e.g. Normal install → Hook script created with correct executable
 - **SCEN-003 — Hook Uninstallation** — e.g. Hook exists → Removed, SuccessStatus(true)
-- **SCEN-004 — Check Execution** — e.g. Changed files with violations → Lint results returned
-- **SCEN-005 — Diff Data Comparison** — e.g. Both files identical → Score 0.0, status Unchanged
-- **SCEN-006 — Ignore Rule Management** — e.g. Add ignore rule → Rule added to config
-- **SCEN-007 — Config Initialization** — e.g. Config not present → Default config created, success
+- **SCEN-004 — Project Config Initialization** — e.g. Config not present → Default config created, success
 
 ### SCEN-001 — Git Diff Detection
 
@@ -322,16 +247,20 @@ FRD Ref: FR-GitHooks-001
 
 | # | Scenario | Expected |
 | - | - | - |
-| 1 | Default branch from`origin/HEAD` | Correct branch detected |
+| 1 | Default branch from `origin/HEAD` | Correct branch detected |
 | 2 | `symbolic-ref` fails | Defaults to "main" |
-| 3 | Changed files via`origin/main...HEAD` | Correct file list |
-| 4 | All branch variants empty | Fallback to`HEAD` diff |
-| 5 | All diff strategies fail | Fallback to`ls-files` |
+| 3 | Changed files via `origin/main...HEAD` | Correct file list |
+| 4 | All branch variants empty | Fallback to `HEAD` diff |
+| 5 | All diff strategies fail | Fallback to `ls-files` |
 | 6 | Lintable filter: .rs, .py, .ts, .js, .jsx, .tsx | Included |
 | 7 | Non-lintable: .md, .toml, .json, .png, .lock | Excluded |
 | 8 | Empty diff | total_changed: 0 |
 | 9 | Detached HEAD | Fallback strategies handle |
 | 10 | Renamed files classified via `--diff-filter=R` | Old/new paths parsed |
+| 11 | Changed files with violations | Lint results returned |
+| 12 | No changed files | Empty result list |
+| 13 | Changed file with parse failure | Skipped by linters, no warning |
+| 14 | All changed files non-lintable | Empty result list |
 
 ### SCEN-002 — Hook Installation
 
@@ -357,51 +286,19 @@ FRD Ref: FR-GitHooks-003
 | 2 | Hook doesn't exist | SuccessStatus(true), idempotent |
 | 3 | Not a git repo | SuccessStatus(false) |
 
-### SCEN-004 — Check Execution
+### SCEN-004 — Project Config Initialization
 
 FRD Ref: FR-GitHooks-004
 
 | # | Scenario | Expected |
 | - | - | - |
-| 1 | Changed files with violations | Lint results returned |
-| 2 | No changed files | Empty result list |
-| 3 | Changed file with parse failure | Skipped by linters, no warning |
-| 4 | All changed files non-lintable | Empty result list |
-
-### SCEN-005 — Diff Data Comparison
-
-FRD Ref: FR-GitHooks-005
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Both files identical | Score 0.0, status Unchanged |
-| 2 | Files partially different | Score between 0.0 and 1.0, Modified |
-| 3 | First file missing | MissingFirst |
-| 4 | Second file missing | MissingSecond |
-| 5 | Both paths are directories | NotAFile |
-| 6 | Both paths missing | BothMissing |
-| 7 | Same file path twice | Score 0.0, Unchanged |
-
-### SCEN-006 — Ignore Rule Management
-
-FRD Ref: FR-GitHooks-006
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Add ignore rule | Rule added to config |
-| 2 | Remove ignore rule | Rule removed from config |
-| 3 | Config file not found | Error suggesting`lint-arwaky-cli init` |
-| 4 | Rule already exists (add) | No-op, "already present" |
-
-### SCEN-007 — Config Initialization
-
-FRD Ref: FR-GitHooks-007
-
-| # | Scenario | Expected |
-| - | - | - |
 | 1 | Config not present | Default config created, success |
 | 2 | Config already exists | Idempotent, "ALREADY_EXISTS" status |
-| 3 | Write failure | Error description returned |
+| 3 | Add ignore rule | Rule added to config |
+| 4 | Remove ignore rule | Rule removed from config |
+| 5 | Config file not found | Error suggesting `lint-arwaky-cli init` |
+| 6 | Rule already exists (add) | No-op, "already present" |
+| 7 | Write failure | Error description returned |
 
 ---
 
@@ -427,9 +324,9 @@ FRD Ref: FR-GitHooks-007
 - **AES**: Agentic Engineering System — the 7-layer coding convention
 - **Pre-commit hook**: A git hook that runs before a commit is finalized; can block the commit by exiting non-zero
 - **Lintable file**: A source code file that can be analyzed by lint-arwaky (.rs, .py, .ts, .js, .jsx, .tsx)
-- **Default branch**: The main development branch (typically`main` or `master`) used as the diff base
+- **Default branch**: The main development branch (typically `main` or `master`) used as the diff base
 - **Diff variant**: A git diff command string tried against the repository to find changed files
-- **Hook manager**: Low-level component that handles`.git/hooks/` file operations
+- **Hook manager**: Low-level component that handles `.git/hooks/` file operations
 - **Diff checker**: Component that runs git commands to identify changed files
 - **Parse skip**: Files that fail to parse are skipped by the linter aggregates; no separate warning diagnostic is included in output.
 
