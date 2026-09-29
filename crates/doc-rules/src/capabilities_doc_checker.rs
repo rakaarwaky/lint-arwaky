@@ -298,7 +298,10 @@ impl DocChecker {
         // Collect all headings (any level) with their offsets in one pass.
         let mut all: Vec<(usize, usize, String, usize, usize)> = Vec::new();
         for caps in re.captures_iter(text) {
-            let full = match caps.get(0) { Some(f) => f, None => continue };
+            let full = match caps.get(0) {
+                Some(f) => f,
+                None => continue,
+            };
             // Level is the number of `#` characters (capture group 1), NOT
             // the full match length.
             let level = caps.get(1).map_or(0, |m| m.as_str().len());
@@ -329,9 +332,7 @@ impl DocChecker {
             .enumerate()
             .filter(|(_, (level, _, _, _, _))| *level <= 2)
             .map(|(orig_idx, (level, _start, title, line, body_start))| {
-                let body_end = boundary[orig_idx]
-                    .map(|j| all[j].1)
-                    .unwrap_or(text.len());
+                let body_end = boundary[orig_idx].map(|j| all[j].1).unwrap_or(text.len());
                 Section {
                     level: *level,
                     title: title.clone(),
