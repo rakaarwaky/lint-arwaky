@@ -8,10 +8,10 @@ use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_lint_result_vo::LintResultList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
-use shared::naming_rules::taxonomy_naming_request::NamingRequest;
-use shared::naming_rules::taxonomy_naming_response::NamingResponse;
+use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared::naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::collections::HashMap;
 use std::sync::Arc;
 

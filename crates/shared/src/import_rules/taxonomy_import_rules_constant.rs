@@ -1,4 +1,4 @@
-// PURPOSE: taxonomy_import_constant — compile-time constants for import-rules layer.
+// PURPOSE: taxonomy_import_rules_constant — compile-time constants for import-rules layer.
 // DERIVE_MACROS removed — AST attribute parsing handles derive detection natively.
 
 /// Layer prefixes used for filename-based layer detection.

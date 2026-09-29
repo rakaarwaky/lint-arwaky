@@ -8,7 +8,7 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
-use shared::import_rules::taxonomy_import_vo::DependencyEdge;
+use shared::import_rules::taxonomy_import_rules_vo::DependencyEdge;
 use std::collections::HashMap;
 
 fn analyzer() -> DependencyCycleAnalyzer {

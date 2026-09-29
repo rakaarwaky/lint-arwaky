@@ -19,7 +19,7 @@ use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
 use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::taxonomy_import_request::ImportRequest;
+use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
 fn minimal_config() -> ArchitectureConfig {

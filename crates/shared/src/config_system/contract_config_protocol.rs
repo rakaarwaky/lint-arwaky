@@ -10,14 +10,14 @@ use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::common::taxonomy_cache_key_vo::CacheKey;
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::config_system::taxonomy_config_error::ConfigError;
 use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use crate::config_system::taxonomy_config_vo::AdapterEntry;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::config_system::taxonomy_config_vo::ConfigSource;
-use crate::config_system::taxonomy_config_vo::ProjectConfig;
-use crate::config_system::taxonomy_config_vo::ValidationResult;
-pub use crate::config_system::taxonomy_config_vo::WorkspaceType;
+use crate::config_system::taxonomy_config_system_error::ConfigError;
+use crate::config_system::taxonomy_config_system_vo::AdapterEntry;
+use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use crate::config_system::taxonomy_config_system_vo::ConfigSource;
+use crate::config_system::taxonomy_config_system_vo::ProjectConfig;
+use crate::config_system::taxonomy_config_system_vo::ValidationResult;
+pub use crate::config_system::taxonomy_config_system_vo::WorkspaceType;
 
 /// FR-ConfigSystem-001: locate and load the first matching YAML config for a
 /// project root and language, following the 5-level priority chain.

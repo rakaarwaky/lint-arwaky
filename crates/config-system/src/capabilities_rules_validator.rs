@@ -1,8 +1,8 @@
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::config_system::contract_config_protocol::IConfigValidateProtocol;
-use shared::config_system::taxonomy_config_vo::AdapterStatus;
-use shared::config_system::taxonomy_config_vo::ProjectConfig;
-use shared::config_system::taxonomy_config_vo::ValidationResult;
+use shared::config_system::taxonomy_config_system_vo::AdapterStatus;
+use shared::config_system::taxonomy_config_system_vo::ProjectConfig;
+use shared::config_system::taxonomy_config_system_vo::ValidationResult;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

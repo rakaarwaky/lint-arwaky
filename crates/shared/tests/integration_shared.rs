@@ -19,7 +19,7 @@ use shared_lint_arwaky::common::taxonomy_paths_vo::FilePathList;
 use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
 use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
 use shared_lint_arwaky::common::utility_compliance_score::compute_score;
-use shared_lint_arwaky::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared_lint_arwaky::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 /// Build a full lint result chain: Config → LayerMap → LintResult.
 #[test]

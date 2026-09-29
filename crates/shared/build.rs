@@ -57,7 +57,7 @@ fn stage_config(manifest_dir: &Path, out_dir: &Path) {
 }
 
 /// Recursively copy skills source into `OUT_DIR/skills/` so the
-/// `include_str!` sites in `taxonomy_skills_constant.rs` resolve at compile
+/// `include_str!` sites in `taxonomy_project_setup_constant.rs` resolve at compile
 /// time.
 ///
 /// In a workspace build the source of truth is

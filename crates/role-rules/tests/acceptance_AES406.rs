@@ -1,9 +1,9 @@
 // Acceptance test AES406 — Surface passive role.
 // Passive surfaces must not contain domain logic or orchestration.
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::role_rules::taxonomy_role_request::RoleRequest;
+use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {

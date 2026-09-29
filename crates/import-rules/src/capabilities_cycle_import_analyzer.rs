@@ -11,8 +11,8 @@ use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
-use shared::import_rules::taxonomy_import_error::ImportError;
-use shared::import_rules::taxonomy_import_vo::DependencyEdge;
+use shared::import_rules::taxonomy_import_rules_error::ImportError;
+use shared::import_rules::taxonomy_import_rules_vo::DependencyEdge;
 use shared::import_rules::utility_cycle_detector;
 use shared::import_rules::utility_import_module_parser;
 

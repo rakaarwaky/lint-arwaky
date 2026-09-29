@@ -1,7 +1,7 @@
 // PURPOSE: GitHooksRequest — request payload for the git_hooks aggregate
 
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO;
+use crate::git_hooks::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
 
 pub enum GitHooksRequest {
     /// Run the full staged-file check on a path.

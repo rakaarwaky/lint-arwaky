@@ -19,7 +19,7 @@ mod di_aware_orphan_tests {
     use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
     use shared::orphan_rules::contract_orphan_protocol::IContractOrphanProtocol;
     use shared::orphan_rules::utility_orphan_graph::trace_reachability;
-    use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
+    use shared::quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
     use std::collections::HashMap;
     use std::sync::Arc;
 

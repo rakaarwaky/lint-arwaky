@@ -6,9 +6,9 @@
 // and never carries unimplemented stubs.
 
 use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::file_watch::taxonomy_service_error::WatchServiceError;
-use crate::file_watch::taxonomy_watch_config_vo::WatchConfig;
-use crate::file_watch::taxonomy_watch_config_vo::WatchEvent;
+use crate::file_watch::taxonomy_file_watch_error::WatchServiceError;
+use crate::file_watch::taxonomy_file_watch_vo::WatchConfig;
+use crate::file_watch::taxonomy_file_watch_vo::WatchEvent;
 
 /// FR-FileWatch-001: Start Filesystem Watcher.
 #[async_trait::async_trait]

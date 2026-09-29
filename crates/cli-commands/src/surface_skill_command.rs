@@ -2,7 +2,7 @@
 // Surface layer: formats EMBEDDED_SKILLS for the terminal, no business logic.
 use shared::common::ExitCode;
 use shared::project_setup::EmbeddedSkillVO;
-use shared::project_setup::taxonomy_skills_constant::EMBEDDED_SKILLS;
+use shared::project_setup::taxonomy_project_setup_constant::EMBEDDED_SKILLS;
 use std::collections::BTreeMap;
 
 /// One row of the `skill list` table.

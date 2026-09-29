@@ -1,10 +1,10 @@
 // file-watch — taxonomy and contract types
 pub mod contract_watch_aggregate;
 pub mod contract_watch_protocol;
-pub mod taxonomy_service_error;
-pub mod taxonomy_watch_config_vo;
-pub mod taxonomy_watch_request;
-pub mod taxonomy_watch_response;
+pub mod taxonomy_file_watch_error;
+pub mod taxonomy_file_watch_request;
+pub mod taxonomy_file_watch_response;
+pub mod taxonomy_file_watch_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -19,10 +19,10 @@ pub use contract_watch_protocol::IWatchShutdownProtocol;
 pub use contract_watch_protocol::IWatchStartProtocol;
 
 // ── Taxonomy types ──
-pub use taxonomy_service_error::WatchServiceError;
-pub use taxonomy_watch_config_vo::GitDiffResultVO;
-pub use taxonomy_watch_config_vo::WatchConfig;
-pub use taxonomy_watch_config_vo::WatchEvent;
-pub use taxonomy_watch_config_vo::WatchEventKind;
-pub use taxonomy_watch_request::WatchRequest;
-pub use taxonomy_watch_response::WatchResponse;
+pub use taxonomy_file_watch_error::WatchServiceError;
+pub use taxonomy_file_watch_request::WatchRequest;
+pub use taxonomy_file_watch_response::WatchResponse;
+pub use taxonomy_file_watch_vo::GitDiffResultVO;
+pub use taxonomy_file_watch_vo::WatchConfig;
+pub use taxonomy_file_watch_vo::WatchEvent;
+pub use taxonomy_file_watch_vo::WatchEventKind;

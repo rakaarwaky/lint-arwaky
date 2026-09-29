@@ -4,7 +4,7 @@ use shared::common::{ContentString, FilePath, Identity, LanguageVO, LineNumber, 
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_import_rules_error::ImportError;
 use shared::import_rules::utility_dummy_detector;
 use shared::import_rules::utility_import_resolver;
 

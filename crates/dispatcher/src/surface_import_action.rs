@@ -7,7 +7,7 @@ use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_request::ImportRequest;
+use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
 
 use shared::common::ViolationItem;
 

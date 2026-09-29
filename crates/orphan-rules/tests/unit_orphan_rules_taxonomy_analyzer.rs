@@ -3,7 +3,7 @@ use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrp
 use shared::orphan_rules::ITaxonomyOrphanProtocol;
 
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, ReachabilityResult};
+use shared::quality_rules::taxonomy_quality_rules_vo::{InboundLinkMap, ReachabilityResult};
 use std::collections::HashSet;
 
 fn empty_reachability() -> ReachabilityResult {

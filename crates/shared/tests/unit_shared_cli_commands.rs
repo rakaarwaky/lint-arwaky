@@ -1,15 +1,19 @@
 // Unit tests — shared/cli_commands taxonomy types.
 use clap::Parser;
 use shared_lint_arwaky::cli_commands::Format;
-use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{COMMAND_CATALOG, command_catalog};
-use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{Cli, Commands};
-use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{
+use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_request::{
+    ScanMode, ScanRequest, ScanTarget,
+};
+use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{
+    COMMAND_CATALOG, command_catalog,
+};
+use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{Cli, Commands};
+use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{
     DiagnosticSeverity, PipelineDiagnostic, PipelineError, ScanReport,
 };
-use shared_lint_arwaky::cli_commands::taxonomy_command_vo::{
+use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{
     TransportEndpoint, TransportProtocol, TransportUrlVO,
 };
-use shared_lint_arwaky::cli_commands::taxonomy_scan_request::{ScanMode, ScanRequest, ScanTarget};
 use shared_lint_arwaky::common::Score;
 use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
 

@@ -2,10 +2,10 @@
 
 pub mod contract_structure_aggregate;
 pub mod contract_structure_protocol;
-pub mod taxonomy_structure_constant;
-pub mod taxonomy_structure_request;
-pub mod taxonomy_structure_response;
-pub mod taxonomy_structure_vo;
+pub mod taxonomy_structure_rules_constant;
+pub mod taxonomy_structure_rules_request;
+pub mod taxonomy_structure_rules_response;
+pub mod taxonomy_structure_rules_vo;
 pub mod utility_structure_parsers;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -14,7 +14,7 @@ pub use contract_structure_protocol::{
     IStructureFeatureHealthProtocol, IStructureSharedPurityProtocol,
     IStructureSurfacePurityProtocol,
 };
-pub use taxonomy_structure_constant::*;
-pub use taxonomy_structure_request::{StructureFinding, StructureRequest};
-pub use taxonomy_structure_response::StructureResponse;
-pub use taxonomy_structure_vo::{FolderInventory, LayerFile};
+pub use taxonomy_structure_rules_constant::*;
+pub use taxonomy_structure_rules_request::{StructureFinding, StructureRequest};
+pub use taxonomy_structure_rules_response::StructureResponse;
+pub use taxonomy_structure_rules_vo::{FolderInventory, LayerFile};

@@ -2,7 +2,7 @@
 use crate::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS;
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
+use crate::config_system::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
 use std::collections::{HashMap, HashSet};
 
 /// Merge all rules into layer definitions.

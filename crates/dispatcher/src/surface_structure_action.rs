@@ -11,8 +11,8 @@ use std::sync::Arc;
 
 use shared::common::ViolationItem;
 use shared::structure_rules::IStructureAggregate;
-use shared::structure_rules::taxonomy_structure_request::StructureRequest;
-use shared::structure_rules::taxonomy_structure_response::StructureResponse;
+use shared::structure_rules::taxonomy_structure_rules_request::StructureRequest;
+use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
 /// Run the folder-layout audit over *root*, returning the violations.
 pub fn collect_structure(

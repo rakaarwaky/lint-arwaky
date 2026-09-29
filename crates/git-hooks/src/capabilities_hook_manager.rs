@@ -15,10 +15,10 @@ use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IIgnoreRuleProtocol;
 
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::git_hooks::taxonomy_git_diff_data_vo::{
+use shared::git_hooks::taxonomy_git_hooks_error::GitHookError;
+use shared::git_hooks::taxonomy_git_hooks_vo::{
     GitDiffDataVO, GitDiffSideVO, GitDiffStatus, HookIgnoreUpdateVO,
 };
-use shared::git_hooks::taxonomy_hook_error::GitHookError;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

@@ -4,7 +4,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::contract_orphan_protocol::ITaxonomyOrphanProtocol;
 use shared::orphan_rules::utility_orphan_filename::file_stem;
-use shared::quality_rules::taxonomy_analysis_vo::{
+use shared::quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;

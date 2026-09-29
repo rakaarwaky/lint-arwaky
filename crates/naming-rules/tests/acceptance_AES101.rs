@@ -211,7 +211,7 @@ fn excepted_filename_passes() {
 fn check_file_naming_via_trait_api() {
     use shared::naming_rules::INamingConventionProtocol;
 
-    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let layer_map = layer_map();
     let files = FilePathList::new(vec![
         FilePath::new("src/capabilities_BadFile.rs".to_string()).unwrap(),

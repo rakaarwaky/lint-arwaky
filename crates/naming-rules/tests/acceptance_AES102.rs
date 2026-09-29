@@ -243,7 +243,7 @@ fn excepted_file_bypasses_suffix_check() {
 fn check_domain_suffixes_via_trait_api() {
     use shared::naming_rules::ISuffixPolicyProtocol;
 
-    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let map = strict_capabilities_layer_map();
     let files = FilePathList::new(vec![
         FilePath::new("src/capabilities_user_vo.rs".to_string()).unwrap(),

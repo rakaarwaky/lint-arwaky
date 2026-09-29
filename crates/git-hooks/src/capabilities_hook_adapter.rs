@@ -13,7 +13,7 @@ use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::FileMode;
 use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
-use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use shared::git_hooks::taxonomy_git_hooks_error::GitHookError;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
