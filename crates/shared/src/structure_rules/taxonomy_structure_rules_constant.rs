@@ -93,6 +93,11 @@ pub const SURFACE_ALLOWED_FILENAMES: &[&str] = &[
 /// Directories a structure audit never descends into.
 pub const SKIPPED_DIRS: &[&str] = &["benches", "tests", "target", "node_modules", "__pycache__"];
 
+/// Maximum recursion depth for the AES702 orchestrator walk. Feature folders
+/// never nest deeper than this in practice; the cap guards against
+/// pathologically deep layouts and symlink cycles.
+pub const MAX_ORCHESTRATOR_WALK_DEPTH: u32 = 10;
+
 /// The document file names that mark a folder's purpose and content.
 pub const FEATURE_DOC_PAIR: &[&str] = &["FRD.md", "BACKLOG.md"];
 pub const SURFACE_DOC: &str = "DESIGN.md";

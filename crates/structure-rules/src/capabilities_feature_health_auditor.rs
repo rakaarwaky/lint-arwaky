@@ -183,18 +183,31 @@ fn missing_docs<'a>(folder: &std::path::Path, names: &'a [&'a str]) -> Vec<&'a s
 
 /// Recursively check whether *dir* (or a subdirectory) holds a file whose stem
 /// ends with the orchestrator suffix.
+///
+/// Symlinks are never followed (`DirEntry::file_type` inspects the entry
+/// itself), and the walk stops at [`consts::MAX_ORCHESTRATOR_WALK_DEPTH`], so
+/// a symlink cycle or a pathologically deep layout cannot hang the audit.
 fn has_orchestrator_in_folder(dir: &std::path::Path) -> bool {
+    has_orchestrator_at_depth(dir, 0)
+}
+
+fn has_orchestrator_at_depth(dir: &std::path::Path, depth: u32) -> bool {
+    if depth >= consts::MAX_ORCHESTRATOR_WALK_DEPTH {
+        return false;
+    }
     use std::fs;
     let Ok(entries) = fs::read_dir(dir) else {
         return false;
     };
     for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            if has_orchestrator_in_folder(&path) {
+        // `file_type` does not follow symlinks, so a link to a directory is
+        // skipped instead of re-entering an already-walked tree.
+        if entry.file_type().is_ok_and(|t| t.is_dir()) {
+            if has_orchestrator_at_depth(&entry.path(), depth + 1) {
                 return true;
             }
-        } else if path
+        } else if entry
+            .path()
             .file_stem()
             .and_then(|n| n.to_str())
             .is_some_and(|n| n.ends_with(consts::ORCHESTRATOR_SUFFIX))
