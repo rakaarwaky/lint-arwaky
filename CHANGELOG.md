@@ -1,6 +1,10 @@
 # Changelog
 ## 3.7.1 (2026-09-27)
 
+### Features
+
+- **AES607 — FR/Protocol Parity** (#335): An FRD's requirement heading count must equal the count of `I*Protocol` capability-seam classes in the feature's shared contract module. Ensures the requirement spec stays in sync with the implemented contract surface.
+
 ### Fixes
 
 - Fixed `include_str!` resolution for the embedded skill markdown when building
