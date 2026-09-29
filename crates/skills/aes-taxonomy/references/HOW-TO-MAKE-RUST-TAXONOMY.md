@@ -4,7 +4,7 @@
 >
 > **Audience**: Agents and engineers scaffolding AES taxonomy files in the shared domain.
 >
-> **Scope**: Rust taxonomy files named `taxonomy_<domain>_<concept>_<suffix>.rs` using suffixes `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response` only.
+> **Scope**: Rust taxonomy files named `taxonomy_<domain>_<suffix>.rs` using suffixes `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response` only.
 >
 > **Location**: Rust shared domain source root next to contracts:
 >
@@ -14,7 +14,7 @@
 >
 > Rust taxonomy files must be registered in the domain `mod.rs`, which is the Rust shared barrel.
 >
-> **Length**: One taxonomy type per file. Constants files must be at least 5 lines per AES302. No I/O, no upward imports, no primitives for public/domain fields.
+> **Length**: A single file holds all types of one role for a domain — one `_vo` file may contain several VOs, one `_error` file may contain several errors, and so on. Constants files must be at least 5 lines per AES302. No I/O, no upward imports, no primitives for public/domain fields.
 
 ---
 
@@ -61,30 +61,28 @@ Taxonomy files must not perform I/O, network access, database access, filesystem
 Use:
 
 ```text
-taxonomy_<domain>_<concept>_<suffix>.rs
+taxonomy_<domain>_<suffix>.rs
 ```
 
 Where:
 
 ```text
 <domain>  = snake_case domain name
-<concept> = snake_case concept name; may contain multiple underscores
 <suffix>  = one of the allowed taxonomy suffixes
 ```
 
-The pattern has three placeholders after `taxonomy`, but because `<concept>` may itself be multi-word, the final filename may contain more than three underscore-separated segments.
+The pattern has two placeholders after `taxonomy`. A file holds all types of one role for a domain.
 
 Examples:
 
 ```text
-taxonomy_order_order_id_vo.rs
-taxonomy_order_money_vo.rs
-taxonomy_order_order_entity.rs
-taxonomy_order_order_not_found_error.rs
-taxonomy_order_order_created_event.rs
-taxonomy_order_order_constant.rs
-taxonomy_order_order_request.rs
-taxonomy_order_order_response.rs
+taxonomy_order_vo.rs
+taxonomy_order_entity.rs
+taxonomy_order_error.rs
+taxonomy_order_event.rs
+taxonomy_order_constant.rs
+taxonomy_order_request.rs
+taxonomy_order_response.rs
 ```
 
 The filename must match the taxonomy type it contains.
@@ -92,13 +90,13 @@ The filename must match the taxonomy type it contains.
 Example mapping:
 
 ```text
-taxonomy_order_order_id_vo.rs           -> OrderId
-taxonomy_order_order_entity.rs          -> Order
-taxonomy_order_order_not_found_error.rs -> OrderError
-taxonomy_order_order_created_event.rs   -> OrderCreated
-taxonomy_order_order_constant.rs        -> ORDER_* constants
-taxonomy_order_order_request.rs         -> OrderRequest
-taxonomy_order_order_response.rs        -> OrderResponse
+taxonomy_order_vo.rs       -> OrderId, Money, CustomerId, OrderStatus
+taxonomy_order_entity.rs   -> Order
+taxonomy_order_error.rs    -> OrderError, OrderInvalidError
+taxonomy_order_event.rs    -> OrderCreated, OrderCompleted
+taxonomy_order_constant.rs -> ORDER_* constants
+taxonomy_order_request.rs  -> OrderRequest
+taxonomy_order_response.rs -> OrderResponse
 ```
 
 Allowed suffixes are exactly:
@@ -202,7 +200,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
 
 2. Create the file:
    ```text
-   taxonomy_<domain>_<concept>_<suffix>.rs
+   taxonomy_<domain>_<suffix>.rs
    ```
    inside:
    ```text
@@ -343,7 +341,7 @@ impl std::fmt::Display for OrderId {
 ### Entity
 
 ```rust
-use crate::<domain>::taxonomy_<domain>_<concept>_id_vo::<Name>Id;
+use crate::<domain>::taxonomy_<domain>_vo::<Name>Id;
 // import other VOs
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -362,8 +360,7 @@ impl <Name> {
 Concrete example:
 
 ```rust
-use crate::order::taxonomy_order_order_id_vo::OrderId;
-use crate::order::taxonomy_order_money_vo::Money;
+use crate::order::taxonomy_order_vo::{Money, OrderId};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Order {
@@ -396,7 +393,7 @@ Entity fields must be taxonomy VOs.
 ```rust
 use thiserror::Error;
 use crate::common::taxonomy_error_vo::{ErrorCode, ErrorId};
-use crate::<domain>::taxonomy_<domain>_<concept>_vo::<VO>;
+use crate::<domain>::taxonomy_<domain>_vo::<VO>;
 
 #[derive(Debug, Error)]
 pub enum <Name>Error {
@@ -440,7 +437,7 @@ Concrete example:
 ```rust
 use thiserror::Error;
 use crate::common::taxonomy_error_vo::{ErrorCode, ErrorId};
-use crate::order::taxonomy_order_order_id_vo::OrderId;
+use crate::order::taxonomy_order_vo::OrderId;
 
 #[derive(Debug, Error)]
 pub enum OrderError {
@@ -530,7 +527,7 @@ Variant(String)                     // raw message payload — no stable error i
 ### Event
 
 ```rust
-use crate::<domain>::taxonomy_<domain>_<concept>_vo::<VO>;
+use crate::<domain>::taxonomy_<domain>_vo::<VO>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct <Name> {
@@ -547,7 +544,7 @@ impl <Name> {
 Concrete example:
 
 ```rust
-use crate::order::taxonomy_order_order_id_vo::OrderId;
+use crate::order::taxonomy_order_vo::OrderId;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrderCreated {
@@ -574,7 +571,7 @@ build the enum by hand.
 Template:
 
 ```rust
-use crate::<domain>::taxonomy_<domain>_<concept>_vo::<VO>;
+use crate::<domain>::taxonomy_<domain>_vo::<VO>;
 
 pub enum <Name>Request {
     /// <Verb description>.
@@ -620,7 +617,7 @@ impl FixRequest {
 ```
 
 Request rules:
-- The enum name matches the filename: `taxonomy_<domain>_<concept>_request.rs` holds `<Name>Request`.
+- The enum name matches the filename: `taxonomy_<domain>_<suffix>_request.rs` holds `<Name>Request`.
 - Every variant names one consumer verb. Doc comment the verb so the contract layer can route on it.
 - Constructor methods take references or slices and clone internally, so the enum is always fully owned.
 - `bool` and collection fields such as `dry_run` or `Vec<LintResult>` are allowed here. AES401 does not gate on the `_request` suffix, and a request boundary legitimately carries flags and lists.
@@ -636,7 +633,7 @@ outcome without matching on the enum themselves.
 Template:
 
 ```rust
-use crate::<domain>::taxonomy_<domain>_<concept>_vo::<VO>;
+use crate::<domain>::taxonomy_<domain>_vo::<VO>;
 
 pub enum <Name>Response {
     <Variant> { <field>: <VO> },
@@ -683,7 +680,7 @@ impl FixResponse {
 ```
 
 Response rules:
-- The enum name matches the filename: `taxonomy_<domain>_<concept>_response.rs` holds `<Name>Response`.
+- The enum name matches the filename: `taxonomy_<domain>_<suffix>_response.rs` holds `<Name>Response`.
 - Variants mirror the request verbs one to one, so each verb has exactly one response shape.
 - Extractor methods consume `self` (`into_*`), keeping the response single-use and the call site free of destructuring.
 - Every match arm must be exhaustive. A wrong-verb arm returns an empty or default payload rather than panicking.
@@ -695,7 +692,7 @@ Response rules:
 Use the singular `_constant` suffix:
 
 ```text
-taxonomy_<domain>_<concept>_constant.rs
+taxonomy_<domain>_<suffix>_constant.rs
 ```
 
 Template:
@@ -747,20 +744,20 @@ Example:
 ```rust
 // crates/shared/src/order/mod.rs
 
-pub mod taxonomy_order_order_id_vo;
-pub mod taxonomy_order_order_entity;
-pub mod taxonomy_order_order_not_found_error;
-pub mod taxonomy_order_order_created_event;
-pub mod taxonomy_order_order_constant;
-pub mod taxonomy_order_order_request;
-pub mod taxonomy_order_order_response;
+pub mod taxonomy_order_vo;
+pub mod taxonomy_order_entity;
+pub mod taxonomy_order_error;
+pub mod taxonomy_order_event;
+pub mod taxonomy_order_constant;
+pub mod taxonomy_order_request;
+pub mod taxonomy_order_response;
 
-pub use taxonomy_order_order_id_vo::OrderId;
-pub use taxonomy_order_order_entity::Order;
-pub use taxonomy_order_order_not_found_error::OrderError;
-pub use taxonomy_order_order_created_event::OrderCreated;
-pub use taxonomy_order_order_request::OrderRequest;
-pub use taxonomy_order_order_response::OrderResponse;
+pub use taxonomy_order_vo::OrderId;
+pub use taxonomy_order_entity::Order;
+pub use taxonomy_order_error::OrderError;
+pub use taxonomy_order_event::OrderCreated;
+pub use taxonomy_order_request::OrderRequest;
+pub use taxonomy_order_response::OrderResponse;
 ```
 
 ---
@@ -769,13 +766,13 @@ pub use taxonomy_order_order_response::OrderResponse;
 
 | Check | Enforcement | Why it belongs here |
 |---|---|---|
-| Correct file pattern: `taxonomy_<domain>_<concept>_<suffix>.rs`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
+| Correct file pattern: `taxonomy_<domain>_<suffix>.rs`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
 | Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect. |
 | File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect. |
 | No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect. |
 | Registered in shared `mod.rs`. | Machine-checked: AES501 orphan check. | Required by AES layer rules and the linter; missing it is a defect. |
 | Constant file contains only constant material, not structs/enums/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect. |
-| One taxonomy type per file. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | VOs are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
@@ -837,9 +834,9 @@ A taxonomy file that is only referenced by barrels and other taxonomy files
 is reported as an orphan:
 
 ```
-[AES501] 'taxonomy_order_order_id_vo' is not reachable and not imported by higher layers.
+[AES501] 'taxonomy_order_vo' is not reachable and not imported by higher layers.
 WHY? only imported by lower-layer files (mod.rs, taxonomy_order_entity.rs)
-FIX: Import 'taxonomy_order_order_id_vo' from a contract_* or higher-layer file.
+FIX: Import 'taxonomy_order_vo' from a contract_* or higher-layer file.
 ```
 
 Barrel registration alone does **not** clear this. The shared barrel satisfies

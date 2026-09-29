@@ -4,7 +4,7 @@
 >
 > **Audience**: Agents and engineers scaffolding AES taxonomy files in the shared domain.
 >
-> **Scope**: Python taxonomy files named `taxonomy_<domain>_<concept>_<suffix>.py` using suffixes `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response` only.
+> **Scope**: Python taxonomy files named `taxonomy_<domain>_<suffix>.py` using suffixes `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response` only.
 >
 > **Location**: Python shared domain source root next to contracts:
 >
@@ -14,7 +14,7 @@
 >
 > Python taxonomy files must be registered in the domain `__init__.py`, which is the Python shared barrel.
 >
-> **Length**: One taxonomy type per file. Constants files must be at least 5 lines per AES302. No I/O, no upward imports, no raw primitives for public/domain fields.
+> **Length**: A single file holds all types of one role for a domain — one `_vo` file may contain several VOs, one `_error` file may contain several errors, and so on. Constants files must be at least 5 lines per AES302. No I/O, no upward imports, no raw primitives for public/domain fields.
 
 ---
 
@@ -55,30 +55,28 @@ Taxonomy files must not perform I/O, network access, database access, filesystem
 Use:
 
 ```text
-taxonomy_<domain>_<concept>_<suffix>.py
+taxonomy_<domain>_<suffix>.py
 ```
 
 Where:
 
 ```text
 <domain>  = snake_case domain name
-<concept> = snake_case concept name; may contain multiple underscores
 <suffix>  = one of the allowed taxonomy suffixes
 ```
 
-The pattern has three placeholders after `taxonomy`, but because `<concept>` may itself be multi-word, the final filename may contain more than three underscore-separated segments.
+The pattern has two placeholders after `taxonomy`. A file holds all types of one role for a domain.
 
 Examples:
 
 ```text
-taxonomy_order_order_id_vo.py
-taxonomy_order_money_vo.py
-taxonomy_order_order_entity.py
-taxonomy_order_order_not_found_error.py
-taxonomy_order_order_created_event.py
-taxonomy_order_order_constant.py
-taxonomy_order_order_request.py
-taxonomy_order_order_response.py
+taxonomy_order_vo.py
+taxonomy_order_entity.py
+taxonomy_order_error.py
+taxonomy_order_event.py
+taxonomy_order_constant.py
+taxonomy_order_request.py
+taxonomy_order_response.py
 ```
 
 The filename must match the taxonomy type it contains.
@@ -86,13 +84,13 @@ The filename must match the taxonomy type it contains.
 Example mapping:
 
 ```text
-taxonomy_order_order_id_vo.py           -> OrderId
-taxonomy_order_order_entity.py          -> Order
-taxonomy_order_order_not_found_error.py -> OrderNotFoundError
-taxonomy_order_order_created_event.py   -> OrderCreated
-taxonomy_order_order_constant.py        -> ORDER_* constants
-taxonomy_order_order_request.py         -> OrderRequest + OrderVerb
-taxonomy_order_order_response.py        -> OrderResponse
+taxonomy_order_vo.py       -> OrderId, Money, CustomerId, OrderStatus
+taxonomy_order_entity.py   -> Order
+taxonomy_order_error.py    -> OrderNotFoundError, OrderInvalidError
+taxonomy_order_event.py    -> OrderCreated, OrderCompleted
+taxonomy_order_constant.py -> ORDER_* constants
+taxonomy_order_request.py  -> OrderRequest + OrderVerb
+taxonomy_order_response.py -> OrderResponse
 ```
 
 Allowed suffixes are exactly:
@@ -197,7 +195,7 @@ Docstrings and comments count. For constants, each constant should have a descri
 
 2. Create the file:
    ```text
-   taxonomy_<domain>_<concept>_<suffix>.py
+   taxonomy_<domain>_<suffix>.py
    ```
    inside:
    ```text
@@ -272,13 +270,13 @@ Docstrings and comments count. For constants, each constant should have a descri
 
 11. Verify the module imports:
    ```bash
-   python -c "import modules.shared.src.<domain>.taxonomy_<domain>_<concept>_<suffix>"
+   python -c "import modules.shared.src.<domain>.taxonomy_<domain>_<suffix>"
    ```
 
 Example:
 
 ```bash
-python -c "import modules.shared.src.order.taxonomy_order_order_id_vo"
+python -c "import modules.shared.src.order.taxonomy_order_vo"
 ```
 
 If your Python package root differs from `modules.shared`, substitute the correct package root while preserving the actual source path layout.
@@ -339,7 +337,7 @@ class OrderId:
 ```python
 from dataclasses import dataclass
 
-from .taxonomy_<domain>_<concept>_id_vo import <Name>Id
+from .taxonomy_<domain>_vo import <Name>Id
 
 
 @dataclass(frozen=True)
@@ -352,7 +350,7 @@ Concrete example:
 ```python
 from dataclasses import dataclass
 
-from .taxonomy_order_order_id_vo import OrderId
+from .taxonomy_order_vo import OrderId
 
 
 @dataclass(frozen=True)
@@ -367,10 +365,7 @@ Example with additional VO fields:
 ```python
 from dataclasses import dataclass
 
-from .taxonomy_order_customer_id_vo import CustomerId
-from .taxonomy_order_money_vo import Money
-from .taxonomy_order_order_id_vo import OrderId
-from .taxonomy_order_order_status_vo import OrderStatus
+from .taxonomy_order_vo import CustomerId, Money, OrderId, OrderStatus
 
 
 @dataclass(frozen=True)
@@ -429,7 +424,7 @@ class <Name>Error(Exception):
 Concrete example:
 
 ```python
-from .taxonomy_order_order_id_vo import OrderId
+from .taxonomy_order_vo import OrderId
 
 
 class OrderNotFoundError(Exception):
@@ -510,7 +505,7 @@ Concrete example:
 ```python
 from dataclasses import dataclass
 
-from .taxonomy_order_order_id_vo import OrderId
+from .taxonomy_order_vo import OrderId
 
 
 @dataclass(frozen=True)
@@ -551,7 +546,7 @@ Template:
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from .taxonomy_<domain>_<concept>_vo import <VO>
+from .taxonomy_<domain>_vo import <VO>
 
 
 class <Name>Verb(Enum):
@@ -613,7 +608,7 @@ __all__ = ["CalculatorVerb", "CalculatorRequest"]
 ```
 
 Request rules:
-- The file name is `taxonomy_<domain>_<concept>_request.py` and it holds the `<Name>Verb` enum plus the `<Name>Request` dataclass. Both are exported in `__all__`.
+- The file name is `taxonomy_<domain>_<suffix>_request.py` and it holds the `<Name>Verb` enum plus the `<Name>Request` dataclass. Both are exported in `__all__`.
 - The verb enum is a closed set — one member per consumer verb. Add a member when you add a verb; never widen the set at runtime.
 - Operand fields are `| None` with a default, because not every verb needs an operand. A verb that needs no operand gets a factory that takes no argument.
 - Factory return type is a string literal (`"CalculatorRequest"`) because the class is still being defined inside the classmethod body.
@@ -631,7 +626,7 @@ Template:
 ```python
 from dataclasses import dataclass, field
 
-from .taxonomy_<domain>_<concept>_vo import <VO>
+from .taxonomy_<domain>_vo import <VO>
 
 
 @dataclass
@@ -687,7 +682,7 @@ __all__ = ["CalculatorResponse"]
 ```
 
 Response rules:
-- The file name is `taxonomy_<domain>_<concept>_response.py` and it holds the `<Name>Response` dataclass.
+- The file name is `taxonomy_<domain>_<suffix>_response.py` and it holds the `<Name>Response` dataclass.
 - Each request verb has a matching factory. Fields default to `None` or an empty list, so an unserved verb leaves its field empty rather than raising.
 - Collection fields use `field(default_factory=list)` — a mutable default is not allowed in a dataclass.
 - A list argument is copied with `list(...)` so the response does not alias the caller's list.
@@ -700,13 +695,13 @@ Response rules:
 Use the singular `_constant` suffix:
 
 ```text
-taxonomy_<domain>_<concept>_constant.py
+taxonomy_<domain>_<suffix>_constant.py
 ```
 
 Example:
 
 ```text
-taxonomy_order_order_constant.py
+taxonomy_order_constant.py
 ```
 
 Template:
@@ -768,15 +763,17 @@ Example:
 ```python
 # modules/shared/src/order/__init__.py
 
-from .taxonomy_order_order_id_vo import OrderId
-from .taxonomy_order_order_entity import Order
-from .taxonomy_order_order_not_found_error import OrderNotFoundError
-from .taxonomy_order_order_created_event import OrderCreated
-from .taxonomy_order_order_request import OrderRequest, OrderVerb
-from .taxonomy_order_order_response import OrderResponse
+from .taxonomy_order_vo import OrderId, Money, OrderStatus
+from .taxonomy_order_entity import Order
+from .taxonomy_order_error import OrderNotFoundError
+from .taxonomy_order_event import OrderCreated
+from .taxonomy_order_request import OrderRequest, OrderVerb
+from .taxonomy_order_response import OrderResponse
 
 __all__ = [
     "OrderId",
+    "Money",
+    "OrderStatus",
     "Order",
     "OrderNotFoundError",
     "OrderCreated",
@@ -792,13 +789,13 @@ __all__ = [
 
 | Check | Enforcement | Why it belongs here |
 |---|---|---|
-| Correct file pattern: `taxonomy_<domain>_<concept>_<suffix>.py`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
+| Correct file pattern: `taxonomy_<domain>_<suffix>.py`. | Machine-checked: AES101. | Required by AES layer rules and the linter; missing it is a defect. |
 | Correct suffix: `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_request`, `_response`. | Machine-checked: AES102. | Required by AES layer rules and the linter; missing it is a defect. |
 | File is at least 5 lines. | Machine-checked: AES302. | Required by AES layer rules and the linter; missing it is a defect. |
 | No forbidden layer imports from capabilities, agents, surface, root, contracts. | Partially machine-checked: AES201–AES205. See Verify. | Required by AES layer rules; missing it is a defect. |
 | Registered in shared `__init__.py`. | Machine-checked: AES501 orphan check. See orphan note in Verify. | Required by AES layer rules and the linter; missing it is a defect. |
 | Constant file contains only constant material, not classes/functions. | Machine-checked: AES401 on constant files. | Required by AES layer rules and the linter; missing it is a defect. |
-| One taxonomy type per file. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
+| Same-role types share one file. One `_vo` file may hold several VOs, one `_error` file may hold several errors. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | VOs validate on construction. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | VOs are immutable. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
 | Leaf VOs encapsulate only the primitive needed for validation. | Convention — not machine-checked. The reader verifies this; the linter does not. | Required by AES taxonomy convention; missing it is a defect. |
@@ -864,9 +861,9 @@ A taxonomy file that is only referenced by barrels and other taxonomy files
 is reported as an orphan:
 
 ```
-[AES501] 'taxonomy_user_vo' is not reachable and not imported by higher layers.
-WHY? only imported by lower-layer files (__init__.py, taxonomy_user_error.py)
-FIX: Import 'taxonomy_user_vo' from a _entry file AND a contract_* or higher-layer file.
+[AES501] 'taxonomy_order_vo' is not reachable and not imported by higher layers.
+WHY? only imported by lower-layer files (__init__.py, taxonomy_order_entity.py)
+FIX: Import 'taxonomy_order_vo' from a _entry file AND a contract_* or higher-layer file.
 ```
 
 Barrel registration alone does **not** clear this. The shared barrel satisfies
@@ -879,13 +876,13 @@ treat an isolated taxonomy scan as the final gate.
 Fallback compile gate:
 
 ```bash
-python -c "import modules.shared.src.<domain>.taxonomy_<domain>_<concept>_<suffix>"
+python -c "import modules.shared.src.<domain>.taxonomy_<domain>_<suffix>"
 ```
 
 Example:
 
 ```bash
-python -c "import modules.shared.src.order.taxonomy_order_order_id_vo"
+python -c "import modules.shared.src.order.taxonomy_order_vo"
 ```
 
 Related: [HOW-TO-MAKE-RUST-TAXONOMY.md](HOW-TO-MAKE-RUST-TAXONOMY.md), [HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md](HOW-TO-MAKE-TYPESCRIPT-TAXONOMY.md)
