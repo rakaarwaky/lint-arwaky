@@ -55,12 +55,14 @@ fn fr002_env_empty_home_path_rejected() {
 fn fr002_env_writable_to_disk() {
     let container = make_container();
     let env_gen = container.env_generation();
-    let config_writing = container.config_writing();
     let tmp = TempDir::new().unwrap();
     let home = DirectoryPath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let env = env_gen.generate_env(&home);
     let path = tmp.path().join(".env");
-    let result = config_writing.write_config_file(&path.to_string_lossy(), env.value());
+    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+        &path.to_string_lossy(),
+        env.value(),
+    );
     assert!(result.is_ok(), "FR-002: .env should be writable");
     let content = std::fs::read_to_string(&path).unwrap();
     assert!(content.contains("PHANTOM_ROOT="));

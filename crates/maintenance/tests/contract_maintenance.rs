@@ -1,11 +1,14 @@
 // Verify that all concrete types implement their declared contract traits.
 use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommandsOrchestrator;
-use maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker;
-use maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
+use maintenance_lint_arwaky::{
+    AdapterHealthChecker, CacheCleanupChecker, DependencyReportChecker, DoctorChecker,
+    ProjectStatsChecker, SecurityScanChecker, SelfUpdateChecker, ToolUpdateChecker,
+    ToolchainDiagnosticChecker,
+};
 use shared::maintenance::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IMaintenanceAggregate, IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol,
-    IToolExecutorProtocol, IToolUpdateProtocol, IToolchainDiagnosticProtocol,
+    IToolUpdateProtocol, IToolchainDiagnosticProtocol,
 };
 
 #[test]
@@ -15,71 +18,72 @@ fn orchestrator_implements_commands_aggregate() {
 }
 
 #[test]
-fn maintenance_checker_implements_toolchain_diagnostic_protocol() {
+fn toolchain_diagnostic_checker_implements_toolchain_diagnostic_protocol() {
     fn assert_trait<T: IToolchainDiagnosticProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<ToolchainDiagnosticChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_doctor_protocol() {
+fn doctor_checker_implements_doctor_protocol() {
     fn assert_trait<T: IDoctorProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<DoctorChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_project_stats_protocol() {
+fn project_stats_checker_implements_project_stats_protocol() {
     fn assert_trait<T: IProjectStatsProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<ProjectStatsChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_cache_cleanup_protocol() {
+fn cache_cleanup_checker_implements_cache_cleanup_protocol() {
     fn assert_trait<T: ICacheCleanupProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<CacheCleanupChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_tool_update_protocol() {
+fn tool_update_checker_implements_tool_update_protocol() {
     fn assert_trait<T: IToolUpdateProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<ToolUpdateChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_security_scan_protocol() {
+fn security_scan_checker_implements_security_scan_protocol() {
     fn assert_trait<T: ISecurityScanProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<SecurityScanChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_dependency_report_protocol() {
+fn dependency_report_checker_implements_dependency_report_protocol() {
     fn assert_trait<T: IDependencyReportProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<DependencyReportChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_adapter_health_protocol() {
+fn adapter_health_checker_implements_adapter_health_protocol() {
     fn assert_trait<T: IAdapterHealthProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
+    assert_trait::<AdapterHealthChecker>();
 }
 
 #[test]
-fn maintenance_checker_implements_self_update_protocol() {
+fn self_update_checker_implements_self_update_protocol() {
     fn assert_trait<T: ISelfUpdateProtocol>() {}
-    assert_trait::<MaintenanceChecker>();
-}
-
-#[test]
-fn tool_executor_adapter_implements_executor_protocol() {
-    fn assert_trait<T: IToolExecutorProtocol>() {}
-    assert_trait::<ToolExecutorAdapter>();
+    assert_trait::<SelfUpdateChecker>();
 }
 
 #[test]
 fn all_contracts_are_send_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
     assert_send_sync::<MaintenanceCommandsOrchestrator>();
-    assert_send_sync::<MaintenanceChecker>();
-    assert_send_sync::<ToolExecutorAdapter>();
+    assert_send_sync::<DoctorChecker>();
+    assert_send_sync::<ProjectStatsChecker>();
+    assert_send_sync::<CacheCleanupChecker>();
+    assert_send_sync::<ToolUpdateChecker>();
+    assert_send_sync::<ToolchainDiagnosticChecker>();
+    assert_send_sync::<SecurityScanChecker>();
+    assert_send_sync::<DependencyReportChecker>();
+    assert_send_sync::<AdapterHealthChecker>();
+    assert_send_sync::<SelfUpdateChecker>();
 }
 
 #[test]

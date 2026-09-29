@@ -1,13 +1,10 @@
-// PURPOSE: JsonFormatter — implements IJsonFormatProtocol and IFormatDelegationProtocol
-// for JSON output (FR-002, FR-005)
+// PURPOSE: JsonFormatter — implements IJsonFormatProtocol for JSON output (FR-002).
 use shared::cli_commands::{Format, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::IJsonFormatProtocol;
 use shared::report_formatter::taxonomy_report_formatter_vo::{
     JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,
 };
-use shared::report_formatter::utility_report_format::format_report_default;
 
 /// JsonFormatter — produces structured pretty-printed JSON output from ScanReport.
 pub struct JsonFormatter;
@@ -19,17 +16,6 @@ impl IJsonFormatProtocol for JsonFormatter {
 
     fn supported_format(&self) -> Format {
         Format::Json
-    }
-}
-
-/// FR-005: the registered dispatch verb for this formatter.
-impl IFormatDelegationProtocol for JsonFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
-        if format == Format::Json {
-            self.format_json(report)
-        } else {
-            DisplayContent::new(format_report_default(report))
-        }
     }
 }
 

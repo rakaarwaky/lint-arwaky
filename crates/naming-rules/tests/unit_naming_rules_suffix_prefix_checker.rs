@@ -1,11 +1,11 @@
-// Unit tests for NamingChecker — AES102 suffix/prefix rules.
-use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
+// Unit tests for SuffixPolicyChecker — AES102 suffix/prefix rules.
+use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
 use shared::common::{LayerDefinition, LayerMapVO, LayerNameVO, PatternList, SuffixPolicyVO};
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
 
-fn checker() -> NamingChecker {
-    NamingChecker::new()
+fn checker() -> SuffixPolicyChecker {
+    SuffixPolicyChecker::new()
 }
 
 fn layer_map_with_strict_capabilities() -> LayerMapVO {
@@ -31,7 +31,7 @@ fn construction_succeeds() {
 #[test]
 fn allowed_suffix_no_violation() {
     let map = layer_map_with_strict_capabilities();
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_checker.rs",
         "capabilities_user_checker.rs",
@@ -45,7 +45,7 @@ fn allowed_suffix_no_violation() {
 #[test]
 fn forbidden_suffix_produces_violation() {
     let map = layer_map_with_strict_capabilities();
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_vo.rs",
         "capabilities_user_vo.rs",
@@ -62,7 +62,7 @@ fn forbidden_suffix_produces_violation() {
 #[test]
 fn strict_policy_wrong_suffix_produces_violation() {
     let map = layer_map_with_strict_capabilities();
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_handler.rs",
         "capabilities_user_handler.rs",
@@ -79,7 +79,7 @@ fn strict_policy_wrong_suffix_produces_violation() {
 #[test]
 fn barrel_file_skipped() {
     let map = layer_map_with_strict_capabilities();
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities/mod.rs",
         "mod.rs",
@@ -93,7 +93,7 @@ fn barrel_file_skipped() {
 #[test]
 fn unknown_suffix_strict_produces_violation() {
     let map = layer_map_with_strict_capabilities();
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_foo.rs",
         "capabilities_user_foo.rs",
@@ -115,7 +115,7 @@ fn unknown_suffix_flexible_no_violation() {
     let mut layers = HashMap::new();
     layers.insert(LayerNameVO::new("capabilities"), def);
     let map = LayerMapVO::new(layers);
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user_foo.rs",
         "capabilities_user_foo.rs",
@@ -146,7 +146,7 @@ fn cross_layer_taxonomy_with_protocol_suffix() {
     layers.insert(LayerNameVO::new("contract"), contract_def);
 
     let map = LayerMapVO::new(layers);
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let tax_def = map.values.get(&LayerNameVO::new("taxonomy")).unwrap();
     let result = checker().check_domain_suffixes_internal(
         "src/taxonomy_user_protocol.rs",
@@ -164,7 +164,7 @@ fn cross_layer_taxonomy_with_protocol_suffix() {
 #[test]
 fn single_word_no_suffix_fails_strict_policy() {
     let map = layer_map_with_strict_capabilities();
-    let suffix_map = NamingChecker::build_suffix_to_layer_map(&map);
+    let suffix_map = SuffixPolicyChecker::build_suffix_to_layer_map(&map);
     let result = checker().check_domain_suffixes_internal(
         "src/capabilities_user.rs",
         "capabilities_user.rs",

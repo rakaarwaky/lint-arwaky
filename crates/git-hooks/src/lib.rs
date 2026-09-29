@@ -1,9 +1,10 @@
 // PURPOSE: git_hooks — feature crate for Git hook management and diff analysis
 
 // ── Capabilities (concrete implementations) ──
+pub mod capabilities_config_init;
 pub mod capabilities_diff_checker;
-pub mod capabilities_hook_adapter;
-pub mod capabilities_hook_manager;
+pub mod capabilities_hook_installer;
+pub mod capabilities_hook_uninstaller;
 
 // ── Agent (orchestration) ──
 pub mod agent_git_hooks_orchestrator;
