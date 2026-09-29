@@ -4,7 +4,7 @@
 // without needing McpServerDependencies or mock aggregates.
 // Tests cover: full catalog, domain filter, no-match filter.
 
-use shared::cli_commands::taxonomy_command_vo::COMMAND_CATALOG;
+use shared::cli_commands::taxonomy_cli_commands_vo::COMMAND_CATALOG;
 
 // ─── W5: list_commands catalog behavior ───────────────────────
 

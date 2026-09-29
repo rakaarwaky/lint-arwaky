@@ -19,7 +19,7 @@ use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::orphan_rules::ICapabilitiesOrphanProtocol;
 use shared::orphan_rules::utility_orphan_graph::trace_reachability;
-use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
+use shared::quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 

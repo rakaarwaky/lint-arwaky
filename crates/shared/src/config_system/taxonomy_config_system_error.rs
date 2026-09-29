@@ -1,9 +1,9 @@
 // PURPOSE: ConfigError, ConfigErrorKind — structured error types for configuration loading failures
 use crate::common::taxonomy_common_error::ErrorMessage;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::config_system::taxonomy_config_vo::ActualValue;
-use crate::config_system::taxonomy_config_vo::ConfigKey;
-use crate::config_system::taxonomy_config_vo::ExpectedValue;
+use crate::config_system::taxonomy_config_system_vo::ActualValue;
+use crate::config_system::taxonomy_config_system_vo::ConfigKey;
+use crate::config_system::taxonomy_config_system_vo::ExpectedValue;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]

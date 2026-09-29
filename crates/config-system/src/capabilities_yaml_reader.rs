@@ -2,9 +2,9 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_protocol::IConfigLanguageProtocol;
 use shared::config_system::contract_config_protocol::IConfigListProtocol;
 use shared::config_system::contract_config_protocol::IConfigReadProtocol;
-use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_vo::ConfigSource;
+use shared::config_system::taxonomy_config_system_error::ConfigError;
+use shared::config_system::taxonomy_config_system_vo::ConfigSource;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
 use tracing::warn;
@@ -102,7 +102,7 @@ impl IConfigListProtocol for ConfigYamlReader {
                         let path = FilePath::new(candidate.to_string_lossy().to_string()).map_err(
                             |e| {
                                 ConfigError::new(
-                                    shared::config_system::taxonomy_config_vo::ConfigKey::new(
+                                    shared::config_system::taxonomy_config_system_vo::ConfigKey::new(
                                         "config.list",
                                     ),
                                     shared::common::ErrorMessage::new(format!(

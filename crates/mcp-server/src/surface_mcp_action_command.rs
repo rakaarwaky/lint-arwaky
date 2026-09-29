@@ -9,7 +9,7 @@ use dispatcher::surface_orphan_action::OrphanFactory;
 use shared::auto_fix::IFixAggregate;
 use shared::common::Threshold;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::config_system::{
     IConfigListProtocol, IConfigOrchestratorAggregate, IConfigParseProtocol,
 };
@@ -536,7 +536,7 @@ impl McpActionSurface {
 
     /// List CLI commands filtered by domain.
     pub fn handle_list_commands(&self, domain: Option<String>) -> serde_json::Value {
-        let catalog = shared::cli_commands::taxonomy_command_vo::COMMAND_CATALOG;
+        let catalog = shared::cli_commands::taxonomy_cli_commands_vo::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
             .filter(|(name, _desc, _ex)| match domain.as_deref() {

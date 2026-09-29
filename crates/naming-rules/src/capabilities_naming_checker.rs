@@ -7,11 +7,11 @@ use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::naming_rules::contract_naming_checker_protocol::{
     INamingConventionProtocol, ISuffixPolicyProtocol,
 };
-use shared::naming_rules::taxonomy_naming_constant::{
+use shared::naming_rules::taxonomy_naming_rules_constant::{
     MIN_WORDS_DEFAULT, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
     SPECIALIZED_LAYER_MARKER, SUFFIX_POLICY_STRICT,
 };

@@ -1,7 +1,7 @@
 // PURPOSE: NamingContainer — wiring for naming-rules feature (root layer, wiring only)
 use crate::agent_naming_orchestrator::{NamingOrchestrator, NamingOrchestratorDeps};
 use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::naming_rules::INamingConventionProtocol;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::ISuffixPolicyProtocol;

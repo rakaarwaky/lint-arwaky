@@ -7,7 +7,7 @@ use shared::cli_commands::LintResult;
 use shared::common::{FilePath, LintMessage, Severity, SymbolName};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_import_rules_error::ImportError;
 use shared::import_rules::utility_import_resolver;
 use shared::import_rules::utility_import_symbol_extractor;
 use std::collections::HashMap;

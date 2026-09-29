@@ -3,7 +3,7 @@ use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrp
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::ITaxonomyOrphanProtocol;
-use shared::quality_rules::taxonomy_analysis_vo::{InboundLinkMap, ReachabilityResult};
+use shared::quality_rules::taxonomy_quality_rules_vo::{InboundLinkMap, ReachabilityResult};
 use std::collections::{HashMap, HashSet};
 
 fn empty_reachability() -> ReachabilityResult {
@@ -78,7 +78,7 @@ fn aes501_taxonomy_file_imported_by_capabilities_is_not_orphan() {
 #[test]
 fn aes501_taxonomy_file_imported_by_agent_is_not_orphan() {
     let analyzer = taxonomy_analyzer();
-    let target = "crates/shared/src/taxonomy_config_vo.rs";
+    let target = "crates/shared/src/taxonomy_config_system_vo.rs";
     let fp = FilePath::new(target.to_string()).unwrap();
     let root = FilePath::new(".".to_string()).unwrap();
 

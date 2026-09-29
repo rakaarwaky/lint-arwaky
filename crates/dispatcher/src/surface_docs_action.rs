@@ -9,8 +9,8 @@
 use std::sync::Arc;
 
 use shared::doc_rules::IDocRunnerAggregate;
-use shared::doc_rules::taxonomy_doc_request::DocRequest;
-use shared::doc_rules::taxonomy_doc_response::DocResponse;
+use shared::doc_rules::taxonomy_doc_rules_request::DocRequest;
+use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
 
 /// Run the doc invariant audit over *root*, returning the findings.
 pub fn collect_docs(

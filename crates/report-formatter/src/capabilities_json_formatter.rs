@@ -4,7 +4,7 @@ use shared::cli_commands::{Format, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::IJsonFormatProtocol;
-use shared::report_formatter::taxonomy_report_vo::{
+use shared::report_formatter::taxonomy_report_formatter_vo::{
     JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,
 };
 use shared::report_formatter::utility_report_format::format_report_default;

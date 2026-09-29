@@ -10,8 +10,8 @@ use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
-use shared::import_rules::taxonomy_import_constant::AES202_RULE_CODE;
-use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::taxonomy_import_rules_constant::AES202_RULE_CODE;
+use shared::import_rules::taxonomy_import_rules_error::ImportError;
 use shared::import_rules::utility_import_resolver;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;

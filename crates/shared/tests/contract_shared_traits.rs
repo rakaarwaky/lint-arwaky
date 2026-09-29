@@ -18,7 +18,7 @@ use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
 use shared_lint_arwaky::common::taxonomy_path_vo::{DirectoryPath, FilePath};
 use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
 use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared_lint_arwaky::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared_lint_arwaky::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 // ── FilePath ────────────────────────────────────────────────
 

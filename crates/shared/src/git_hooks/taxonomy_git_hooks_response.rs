@@ -5,8 +5,8 @@ use crate::common::taxonomy_layer_vo::Identity;
 use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO;
-use crate::git_hooks::taxonomy_hook_error::GitHookError;
+use crate::git_hooks::taxonomy_git_hooks_error::GitHookError;
+use crate::git_hooks::taxonomy_git_hooks_vo::GitDiffDataVO;
 
 pub enum GitHooksResponse {
     RunCheck {

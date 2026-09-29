@@ -15,10 +15,10 @@ use crate::common::taxonomy_name_vo::SymbolName;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_source_vo::ContentString;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
-use crate::import_rules::taxonomy_import_error::ImportError;
-use crate::import_rules::taxonomy_import_vo::DependencyEdge;
+use crate::import_rules::taxonomy_import_rules_error::ImportError;
+use crate::import_rules::taxonomy_import_rules_vo::DependencyEdge;
 use std::collections::HashMap;
 
 pub trait ICycleImportProtocol: Send + Sync {

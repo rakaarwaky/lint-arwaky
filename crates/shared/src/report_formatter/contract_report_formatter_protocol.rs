@@ -7,7 +7,7 @@
 // capability seam mapped to exactly one `FR-ReportFormatter-NNN` heading in
 // `crates/report-formatter/FRD.md`, so no trait covers a requirement that
 // does not exist and no requirement lacks a trait.
-use crate::cli_commands::taxonomy_command_vo::ScanReport;
+use crate::cli_commands::taxonomy_cli_commands_vo::ScanReport;
 use crate::cli_commands::taxonomy_format_vo::Format;
 use crate::common::taxonomy_display_content_vo::DisplayContent;
 

@@ -3,10 +3,10 @@ use shared::common::taxonomy_common_vo::ErrorMessage;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_protocol::IConfigParseProtocol;
 use shared::config_system::contract_config_protocol::IConfigTomlProtocol;
-use shared::config_system::taxonomy_config_error::ConfigError;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_vo::ConfigKey;
-use shared::config_system::taxonomy_config_vo::ProjectConfig;
+use shared::config_system::taxonomy_config_system_error::ConfigError;
+use shared::config_system::taxonomy_config_system_vo::ConfigKey;
+use shared::config_system::taxonomy_config_system_vo::ProjectConfig;
 use shared::config_system::utility_config_parser::default_config_for_language;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
@@ -53,7 +53,7 @@ impl IConfigParseProtocol for ConfigParserProvider {
         &self,
         yaml_str: &str,
     ) -> (
-        shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        shared::config_system::taxonomy_config_system_vo::ArchitectureConfig,
         Vec<String>,
     ) {
         shared::config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
@@ -62,7 +62,7 @@ impl IConfigParseProtocol for ConfigParserProvider {
     fn parse_adapter_entries_from_yaml(
         &self,
         yaml_str: &str,
-    ) -> Vec<shared::config_system::taxonomy_config_vo::AdapterEntry> {
+    ) -> Vec<shared::config_system::taxonomy_config_system_vo::AdapterEntry> {
         shared::config_system::utility_config_parser::parse_adapter_entries_from_yaml(yaml_str)
     }
 
@@ -70,10 +70,10 @@ impl IConfigParseProtocol for ConfigParserProvider {
     /// defaults when the config declares no layers.
     fn merge_config_with_defaults(
         &self,
-        config: &shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        config: &shared::config_system::taxonomy_config_system_vo::ArchitectureConfig,
         language: ConfigLanguage,
     ) -> (
-        shared::config_system::taxonomy_config_vo::ArchitectureConfig,
+        shared::config_system::taxonomy_config_system_vo::ArchitectureConfig,
         Vec<String>,
     ) {
         let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(config);

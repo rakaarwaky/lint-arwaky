@@ -1,4 +1,41 @@
-// PURPOSE: role-rules token tables — shared constants for AES405 agent role checks
+// PURPOSE: role-rules shared constants — layer names, numeric limits, and token tables
+// Consolidated from former taxonomy_role_rules_constant, taxonomy_role_rules_constant,
+// and taxonomy_role_rules_constant into a single taxonomy_role_rules_constant.
+
+// ── Layer name constants (formerly taxonomy_role_rules_constant) ──
+
+pub const LAYER_AGENT: &str = "agent";
+pub const LAYER_CAPABILITIES: &str = "capabilities";
+pub const LAYER_CONTRACT: &str = "contract";
+pub const LAYER_UTILITY: &str = "utility";
+pub const LAYER_SURFACES: &str = "surfaces";
+pub const LAYER_TAXONOMY: &str = "taxonomy";
+pub const LAYER_ROOT: &str = "root";
+pub const LAYER_GLOBAL: &str = "global";
+
+// ── Role thresholds (formerly taxonomy_role_rules_constant) ──
+// Used by: role-rules (SurfaceRustRoleAuditor, SurfacePythonRoleAuditor,
+//          SurfaceTypeScriptRoleAuditor, utility_surface_role_checker)
+
+/// Maximum public methods a passive/utility surface may expose.
+pub const MAX_PUBLIC_METHODS: usize = 50;
+
+/// Maximum control flow statements tolerated in a passive/utility surface.
+pub const MAX_CONTROL_FLOW: usize = 50;
+
+/// Maximum functions in a smart surface (`_command` / `_controller` / `_page`).
+/// Smart surfaces orchestrate sub-commands, so this is generous.
+pub const MAX_FN_COUNT_SMART: usize = 50;
+
+/// Maximum functions in a utility surface (`_action` / `_store` / `_hook` /
+/// `_screen` / `_router`). Utility surfaces are thin adapters.
+pub const MAX_FN_COUNT_UTILITY: usize = 25;
+
+/// Maximum functions in a passive surface (`_component` / `_view` / `_layout`).
+/// Passive surfaces only render.
+pub const MAX_FN_COUNT_PASSIVE: usize = 25;
+
+// ── Token tables (formerly taxonomy_role_rules_constant) ──
 // Used by: role-rules (AgentRustRoleAuditor, AgentPythonRoleAuditor, AgentTsRoleAuditor)
 //
 // The token tables live here rather than inline in each auditor because

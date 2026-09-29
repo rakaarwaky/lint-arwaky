@@ -8,12 +8,12 @@ use shared::common::PatternList;
 use shared::common::SuffixPolicyVO;
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
-use shared::naming_rules::taxonomy_naming_request::NamingRequest;
-use shared::naming_rules::taxonomy_naming_response::NamingResponse;
+use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared::naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -205,7 +205,7 @@ fn e2e_container_wiring_produces_same_results() {
 fn make_config_with_disabled_aes101() -> ArchitectureConfig {
     use shared::common::taxonomy_common_vo::BooleanVO;
     use shared::common::taxonomy_error_vo::ErrorCode;
-    use shared::config_system::taxonomy_config_vo::ArchitectureRule;
+    use shared::config_system::taxonomy_config_system_vo::ArchitectureRule;
 
     ArchitectureConfig {
         rules: vec![ArchitectureRule {

@@ -223,7 +223,7 @@ fn fn_count_typescript_smart_limit_50_no_violation_at_30() {
 
 #[test]
 fn tier_classification_for_router_is_utility() {
-    use shared::role_rules::taxonomy_role_vo::{SurfaceTier, classify_surface_tier};
+    use shared::role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
     assert_eq!(
         classify_surface_tier("surface_x_router"),
         SurfaceTier::Utility
@@ -235,7 +235,7 @@ fn tier_classification_for_entry_is_not_smart() {
     // `_entry` is not a surface suffix — it classifies as passive by fallback.
     // It is still legal only via AES102 (root layer); no tier limit applies here
     // because an AES102 violation would have already been reported.
-    use shared::role_rules::taxonomy_role_vo::{SurfaceTier, classify_surface_tier};
+    use shared::role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
     assert_eq!(
         classify_surface_tier("surface_x_entry"),
         SurfaceTier::Passive
