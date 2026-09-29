@@ -1289,3 +1289,104 @@ fn aes607_stays_silent_when_the_feature_has_no_shared_contract_module() {
         "a feature with no shared contract module cannot mismatch; got: {findings:#?}"
     );
 }
+
+// ── Issue #341: DocFinding carries line and severity ─────────────────
+
+/// Run the audit and keep the raw findings so schema fields are inspectable.
+fn audit_findings(root: &Path) -> Vec<shared::doc_rules::DocFinding> {
+    let orchestrator = RootDocRulesContainer::orchestrator();
+    match orchestrator.execute(DocRequest::audit_all(root)) {
+        DocResponse::Findings { findings } => findings,
+    }
+}
+
+#[test]
+fn findings_carry_a_1_based_line_and_high_severity() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace("### FR-SAMPLE-001:", "### FR-001:");
+    write_workspace(tmp.path(), &frd);
+    let findings = audit_findings(tmp.path());
+    let finding = findings
+        .iter()
+        .find(|f| f.violation_type == "id_missing_feature_prefix")
+        .expect("the bare FR id must fire");
+    assert!(
+        finding.line > 0,
+        "line-anchored findings must carry a 1-based line; got {}",
+        finding.line
+    );
+    assert!(
+        finding.message.contains(&format!("line {}", finding.line)),
+        "the message must name the anchored line; got: {}",
+        finding.message
+    );
+    assert_eq!(
+        finding.severity,
+        shared::common::Severity::HIGH,
+        "AES6xx rules are HIGH per RULES_AES"
+    );
+}
+
+#[test]
+fn document_level_findings_use_line_zero() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(tmp.path(), "## Security\n\n- Be safe.\n");
+    let findings = audit_findings(tmp.path());
+    let h1 = findings
+        .iter()
+        .find(|f| f.violation_type == "h1_count")
+        .expect("a document without an H1 must fire h1_count");
+    assert!(
+        h1.line == 0,
+        "document-level findings use line 0; got {}",
+        h1.line
+    );
+    assert_eq!(h1.severity, shared::common::Severity::HIGH);
+}
+
+#[test]
+fn findings_map_to_violation_items() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace("### FR-SAMPLE-001:", "### FR-001:");
+    write_workspace(tmp.path(), &frd);
+    let findings = audit_findings(tmp.path());
+    let finding = findings
+        .iter()
+        .find(|f| f.violation_type == "id_missing_feature_prefix")
+        .expect("the bare FR id must fire");
+    let item = finding.to_violation_item(tmp.path());
+    assert_eq!(item.code.code(), "AES601");
+    assert_eq!(item.line.value(), finding.line as i64);
+    assert_eq!(item.severity, finding.severity);
+    assert!(
+        item.message
+            .value()
+            .contains(&format!("line {}", finding.line))
+    );
+}
+
+#[test]
+fn violation_items_reach_the_sarif_path() {
+    // Two findings: a line-anchored one and a document-level one. Both must
+    // survive the DocFinding -> ViolationItem -> JSON-object round trip that
+    // the SARIF/JSON renderers consume via `ViolationItem::from_json_obj`.
+    let tmp = tempfile::tempdir().unwrap();
+    write_bad_agents(tmp.path(), "## Security\n\n- Be safe.\n");
+    let findings = audit_findings(tmp.path());
+    assert!(!findings.is_empty());
+    for finding in &findings {
+        let item = finding.to_violation_item(tmp.path());
+        let json = serde_json::json!({
+            "code": item.code.code(),
+            "file": item.file.value(),
+            "line": item.line.value(),
+            "column": item.column.value(),
+            "message": item.message.value(),
+            "severity": item.severity.to_string(),
+        });
+        let restored = shared::common::ViolationItem::from_json_obj(&json)
+            .expect("the mapped item must round-trip through the JSON renderer shape");
+        assert_eq!(restored.line, item.line);
+        assert_eq!(restored.severity, item.severity);
+    }
+}
