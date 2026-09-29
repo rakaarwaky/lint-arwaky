@@ -1,16 +1,13 @@
-// Unit tests — ToolExecutorAdapter methods.
+// Unit tests — tool-executor utility functions.
 use shared::common::FilePath;
 use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::maintenance::IToolExecutorProtocol;
-
-fn make_executor() -> impl IToolExecutorProtocol {
-    maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter::new()
-}
+use shared::maintenance::utility_tool_executor::{
+    get_binary_path, run_tool, run_tool_in_dir, tool_exists,
+};
 
 #[test]
 fn run_tool_echo_succeeds() {
-    let executor = make_executor();
-    let output = executor.run_tool(&ToolName::new("echo"), &["hello"]);
+    let output = run_tool(&ToolName::new("echo"), &["hello"]);
     assert!(output.success, "echo should succeed");
     assert!(
         output.stdout.contains("hello"),
@@ -20,47 +17,38 @@ fn run_tool_echo_succeeds() {
 
 #[test]
 fn run_tool_nonexistent_fails() {
-    let executor = make_executor();
-    let output = executor.run_tool(&ToolName::new("nonexistent_tool_12345"), &[]);
+    let output = run_tool(&ToolName::new("nonexistent_tool_12345"), &[]);
     assert!(!output.success, "Nonexistent tool should fail");
 }
 
 #[test]
-fn run_tool_in_dir() {
-    let executor = make_executor();
+fn run_tool_in_dir_succeeds() {
     let dir = FilePath::new("/tmp".to_string()).unwrap();
-    let output = executor.run_tool_in_dir(&ToolName::new("pwd"), &[], &dir);
+    let output = run_tool_in_dir(&ToolName::new("pwd"), &[], &dir);
     assert!(output.success, "pwd should succeed");
 }
 
 #[test]
 fn tool_exists_echo() {
-    let executor = make_executor();
-    assert!(
-        executor.tool_exists(&ToolName::new("echo")),
-        "echo should exist"
-    );
+    assert!(tool_exists(&ToolName::new("echo")), "echo should exist");
 }
 
 #[test]
 fn tool_exists_nonexistent() {
-    let executor = make_executor();
     assert!(
-        !executor.tool_exists(&ToolName::new("nonexistent_tool_12345")),
+        !tool_exists(&ToolName::new("nonexistent_tool_12345")),
         "Nonexistent tool should not exist"
     );
 }
 
 #[test]
 fn get_binary_path_non_empty() {
-    let executor = make_executor();
-    let path = executor.get_binary_path();
+    let path = get_binary_path();
     assert!(!path.value.is_empty(), "Binary path should not be empty");
 }
 
 #[test]
-fn executor_is_default_constructible() {
-    let executor = maintenance_lint_arwaky::capabilities_tool_executor_adapter::ToolExecutorAdapter;
-    let output = executor.run_tool(&ToolName::new("echo"), &["test"]);
+fn run_tool_direct_call() {
+    let output = run_tool(&ToolName::new("echo"), &["test"]);
     assert!(output.success);
 }

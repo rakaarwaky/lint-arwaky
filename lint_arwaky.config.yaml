@@ -407,7 +407,10 @@ architecture:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
-      exceptions: []
+      exceptions:
+        - "capabilities_toolchain_diagnostic_checker"
+        - "capabilities_doctor_checker"
+        - "capabilities_adapter_health_checker"
 
     # ─── AES400: Role ───
     AES401:
