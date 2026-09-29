@@ -1,9 +1,8 @@
 // E2E tests — full pipeline: create container → dry-run fix → verify result.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
 use shared::auto_fix::FixRequest;
-use shared::auto_fix::IFileAdapterProtocol;
 use shared::auto_fix::IFixAggregate;
-use shared::common::{ContentString, FilePath};
+use shared::common::FilePath;
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -70,31 +69,6 @@ fn e2e_dry_run_file_with_bypass_comment() {
         .execute(FixRequest::execute(&fp, true))
         .into_fix_result(); // per-request dry_run
     assert!(result.is_success(), "Dry-run should succeed: {}", result);
-}
-
-#[test]
-fn e2e_file_adapter_round_trip() {
-    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
-    let filesystem = fs_container.orchestrator();
-    let adapter = auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter::new(
-        filesystem,
-        fs_container.io(),
-    );
-
-    let tmp = TempDir::new().unwrap();
-    let file = tmp.path().join("round_trip.txt");
-    let fp = FilePath::new(file.to_string_lossy().to_string()).unwrap();
-
-    // Write, read, verify
-    let content = ContentString::new("round trip content".to_string());
-    assert!(adapter.write_file(&fp, &content));
-    let read = adapter.read_file(&fp).unwrap();
-    assert_eq!(read.value(), "round trip content");
-
-    // Overwrite
-    let new_content = ContentString::new("overwritten".to_string());
-    assert!(adapter.write_file(&fp, &new_content));
-    assert_eq!(adapter.read_file(&fp).unwrap().value(), "overwritten");
 }
 
 #[test]

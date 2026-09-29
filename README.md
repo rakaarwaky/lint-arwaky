@@ -37,6 +37,7 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 | `external` [path] | External linters (Clippy, Ruff, ESLint, tool-native codes) |
 | `fix` [path] | Apply safe fixes (`--dry-run` previews) |
 | `ci` [path] | CI mode with exit codes (`--threshold <n>`) |
+| `docs` [path] | Audit document invariants (AES601–AES605) |
 | `watch` [path] | Continuous linting on file changes |
 | `doctor` / `security` / `dependencies` [path] | Toolchain diagnostics, cargo-audit scan, dependency report |
 | `install-hook` / `uninstall-hook` | Git pre-commit hook |

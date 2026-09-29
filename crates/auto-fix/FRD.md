@@ -1,4 +1,4 @@
-# FRD — auto-fix (v2.0.0)
+# FRD — auto-fix (v3.0.0)
 
 ---
 
@@ -29,24 +29,20 @@ Every fix attempt MUST return a **reason-coded outcome** (`Applied` / `Skipped(r
 
 ```mermaid
 flowchart TD
-    A["Surface"] -->|input| B["fix orchestrator"]
-    B --> C["fix processor\n(IFixProtocol)"]
-    C --> D{"fixable?"}
-
-    D -->|"AES203 unused import"| E["unused import remover"]
-    D -->|"AES304 bypass"| F["bypass fixer"]
-    D -->|"AES101 naming"| G["symbol renamer"]
-    D -->|"other"| H["manual report"]
-
-    E --> I["Fix Outcome\n(reason-coded)"]
-    F --> I
-    G --> I
-    H --> J["Non-fixable list"]
-
+    A["Surface"] -->|input| B["FixOrchestrator"]
+    B --> C1["UnusedImportFix"]
+    B --> C2["BypassFix"]
+    B --> C3["SymbolRename"]
+    B --> C4["ViolationReport"]
+    C1 --> I["FixOutcome"]
+    C2 --> I
+    C3 --> I
+    C4 --> I
     I --> B
-    J --> B
     B -->|output| A
 ```
+
+Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability struct.
 
 ---
 
@@ -142,64 +138,23 @@ flowchart TD
 
 ---
 
-### FR-AutoFix-004: Dry-Run Mode
+### FR-AutoFix-004: Violation Reporting (Dry-Run + Non-Fixable)
 
-- **Description**: Run the entire fix pipeline without writing any changes to disk, returning a report of what would be fixed.
-- **Input**: A file path and `dry_run = true` flag (selectable per request).
-- **Output**: A summary string listing fixable violations by category (AES101, AES304, AES203) and non-fixable manual violations.
-- **Business Rules**:
-
-  - No files are modified.
-  - Fixable and non-fixable violations are counted and reported.
-  - Reason-coded outcomes are identical to non-dry-run mode.
-  - The `dry_run` flag is a per-request parameter, not a process-level setting.
-- **Edge Cases**:
-
-  - No violations found → reports "No automatic fixes applied".
-- **Error Handling**: Linter pipeline failure → propagated as error in `FixResult`.
-
----
-
-### FR-AutoFix-005: Non-Fixable Violation Reporting
-
-- **Description**: Generate a report of violations that cannot be automatically fixed and require manual intervention.
-- **Input**: A list of `LintResult` items from the linter.
-- **Output**: A list of `LintMessage` strings describing each non-fixable violation.
+- **Description**: Run the fix pipeline over a file, apply all fixable violations (AES101, AES203, AES304), and produce a report containing both applied fix summaries and any non-fixable violations requiring manual attention.
+- **Input**: A file path and a `dry_run` flag (selectable per request).
+- **Output**: A `FixResult` summarizing what was fixed and listing non-fixable violations.
 - **Business Rules**:
 
   - Fixable codes: `AES101`, `AES203`, `AES304` (subset — see FR-AutoFix-002 table for which AES304 patterns are fixable).
   - All other error codes are reported as requiring manual attention.
-  - AES304 violations with `Skipped(unsafe_removal)` or `Skipped(already_has_context)` outcome during `execute()` are included in the manual report as skipped items.
+  - AES304 violations with `Skipped(unsafe_removal)` or `Skipped(already_has_context)` outcome during fix are included in the manual report as skipped items.
+  - In dry-run mode, no files are modified; outcomes mirror a real run.
+  - The `dry_run` flag is a per-request parameter, not a process-level setting.
 - **Edge Cases**:
 
+  - No violations found → reports "No automatic fixes applied".
   - Empty violation list → returns empty report.
-- **Error Handling**: None (pure data transformation).
-
----
-
-### FR-AutoFix-006: File I/O Adapter
-
-- **Description**: Read, write, and query file-system paths on behalf of the fix
-  operations. This seam carries no lint logic, but it can fail independently
-  (missing file, permission error, partial write) and therefore carries its own
-  requirement.
-- **Input**: A `FilePath` and, for write, a `ContentString`.
-- **Output**: `Option<ContentString>` for read, `bool` for write and exists.
-- **Business Rules**:
-  - `read_file` returns `None` when the path does not exist or cannot be read.
-  - `write_file` returns `false` on any I/O failure; callers must not assume
-    atomicity.
-  - `path_exists` returns `true` only for paths that are reachable and readable.
-  - All operations are synchronous; no async runtime dependency.
-- **Edge Cases**:
-  - Path is a directory on read → returns `None`.
-  - Parent directory missing on write → write fails; the caller decides whether
-    to create parents.
-  - File locked by another process → platform-dependent access error, surfaced
-    as `None` or `false`.
-- **Error Handling**: All errors are returned through the `bool` / `None` result;
-  the caller inspects the return to decide retry, skip, or report.
-
+- **Error Handling**: Linter pipeline failure → propagated as error in `FixResult`.
 
 ---
 
@@ -207,16 +162,12 @@ flowchart TD
 
 ### Protocol API
 
-| Method | Input | Output | Error | Event | Description |
-|---|---|---|---|---|---|
-| `read_file` | &FilePath | `Option<ContentString>` | — | — | Read file. |
-| `write_file` | &FilePath, &ContentString | `bool` | — | — | Write file. |
-| `path_exists` | &FilePath | `bool` | — | — | Path exists. |
-| `execute` | &FilePath, bool | `FixResult` | — | — | Execute. |
-| `fix_bypass_comments` | &str, LineNumber | `FixOutcome` | — | — | Fix bypass comments. |
-| `fix_unused_import` | &str, LineNumber | `FixOutcome` | — | — | Fix unused import. |
-| `rename_symbol` | &str, &str, &str | `FixOutcome` | — | — | Rename symbol. |
-| `report_non_fixable` | &[LintResult] | `Vec<LintMessage>` | — | — | Report non fixable. |
+| Protocol Trait | Method | Input | Output | Description |
+|---|---|---|---|---|
+| `IUnusedImportFixProtocol` (FR-001) | `fix_unused_import` | &str, LineNumber | `FixOutcome` | Remove unused import at line. |
+| `IBypassFixProtocol` (FR-002) | `fix_bypass_comments` | &str, LineNumber | `FixOutcome` | Fix bypass comments at line. |
+| `ISymbolRenameProtocol` (FR-003) | `rename_symbol` | &str, &str, &str | `FixOutcome` | Rename symbol across file. |
+| `IViolationReportProtocol` (FR-004) | `report_violations` | &FilePath, bool | `FixResult` | Execute pipeline + report non-fixable. |
 
 ### Aggregate API
 
@@ -231,7 +182,7 @@ flowchart TD
 | `quality-rules` aggregate | in | Supply lint violations, including the rule code and line number of each finding | No violations supplied → the response carries an empty manual report and no files change |
 | Fix processor protocol | out (internal) | Apply one mechanical correction class to a single target line | The line does not match the class → `Skipped` with the specific reason, never a silent write |
 | Fix orchestrator aggregate | out (internal) | Expose the single composite entry point the surface calls | A request names an unknown violation code → it is reported as non-fixable, not retried |
-| Container composition root | out (internal) | Wire processor, orchestrator, and file adapter together | A dependency is missing at wiring time → startup fails before any file is opened |
+| Container composition root | out (internal) | Wire capabilities and orchestrator together | A dependency is missing at wiring time → startup fails before any file is opened |
 
 ## Non-functional Requirements
 | Metric | Target | Measurement method |
@@ -247,13 +198,10 @@ flowchart TD
 
 ## Test Scenarios / QA Checklist
 
-Each scenario is stated below as a table of cases: the input condition and the expected result.
-
 - **SCEN-001 — Unused Import Removal** — e.g. Unused import at valid line → Removed, `Applied`
 - **SCEN-002 — Bypass Fix** — e.g. `unwrap()` on target line → Replaced with `expect("safe")`, `Applied`
 - **SCEN-003 — Symbol Renaming** — e.g. Symbol rename, 3 occurrences → All replaced, `Applied` + count
-- **SCEN-004–FR-AutoFix-005 — Dry-Run & Non-Fixable** — e.g. Dry-run with fixable violations → Outcomes reported, no files modified
-- **SCEN-006 — File I/O Adapter** — e.g. Read an existing file → `Some(content)`; read non-existent → `None`; write success → `true`
+- **SCEN-004 — Violation Reporting** — e.g. Dry-run with fixable violations → Outcomes reported, no files modified
 - **Idempotency & Error Handling** — e.g. Second run after fix → No further `Applied` outcomes
 
 ### SCEN-001 — Unused Import Removal
@@ -282,8 +230,8 @@ FRD Ref: FR-AutoFix-002
 | 5 | `panic!("error")` | `Skipped(unsafe_removal)` |
 | 6 | `todo!()` | `Skipped(unsafe_removal)` |
 | 7 | `unimplemented!()` | `Skipped(unsafe_removal)` |
-| 9 | Missing file | `Failed(file_not_found)` |
-| 10 | No bypass on target line | `Skipped(no_bypass_pattern)` |
+| 8 | Missing file | `Failed(file_not_found)` |
+| 9 | No bypass on target line | `Skipped(no_bypass_pattern)` |
 
 ### SCEN-003 — Symbol Renaming
 
@@ -297,9 +245,9 @@ FRD Ref: FR-AutoFix-003
 | 4 | Missing file | `Failed(file_not_found)` |
 | 5 | New name is a Rust keyword | `Skipped(keyword_conflict)` |
 
-### SCEN-004–FR-AutoFix-005 — Dry-Run & Non-Fixable
+### SCEN-004 — Violation Reporting
 
-FRD Ref: FR-AutoFix-004, FR-AutoFix-005
+FRD Ref: FR-AutoFix-004
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -308,28 +256,6 @@ FRD Ref: FR-AutoFix-004, FR-AutoFix-005
 | 3 | Non-fixable violations (AES401) | In manual report |
 | 4 | AES304 `panic!` skipped | In manual report as unsafe_removal |
 | 5 | Empty violation list | Empty manual report |
-
-### Idempotency & Error Handling
-
-| #  | Scenario             | Expected                     |
-| -- | -------------------- | ---------------------------- |
-| 1  | Second run after fix | No further `Applied` outcomes |
-| 2  | Write failure        | `Failed(write_error)`        |
-
----
-
-### SCEN-006 — File I/O Adapter
-
-FRD Ref: FR-AutoFix-006
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Read an existing file | `Some(content)` |
-| 2 | Read a non-existent file | `None` |
-| 3 | Write to a valid path | `true` |
-| 4 | Write to a read-only path | `false` |
-| 5 | `path_exists` for a directory | `true` |
-
 
 ---
 
@@ -343,7 +269,7 @@ FRD Ref: FR-AutoFix-006
 - AES304 patterns requiring semantic understanding (`panic!`, `todo!`, `unimplemented!`, `unreachable!`) are **not auto-fixed** — they are skipped and reported as requiring manual intervention.
 - Multi-line import blocks are **not auto-fixed** — removing a single line would break syntax.
 - Symbol renaming is mechanical (`renamed_` prefix) — it does not produce semantically correct names. Correct renaming requires developer judgment.
-- The filesystem crate provides read/write I/O via `IFilesystemAggregate`; auto-fix delegates all I/O through `FileAdapter`.
+- The filesystem crate provides read/write I/O via `IFileSystemIOProtocol`; capabilities in auto-fix depend on it directly.
 - No async runtime dependency.
 
 ---
@@ -359,5 +285,5 @@ FRD Ref: FR-AutoFix-006
 - **Reason-coded outcome**: `Applied` / `Skipped(reason)` / `Failed(reason)` for every fix attempt
 - **Operation class**: Remove, replace, or rename — the only auto-fix mutation classes allowed
 - **Unsafe removal**: A bypass pattern (`panic!`, `todo!`) that cannot be safely removed without semantic understanding
-
----
+- **Capability**: One struct implementing exactly one FR protocol trait
+- **Utility**: Stateless pure helper functions in `shared/` used by capabilities
