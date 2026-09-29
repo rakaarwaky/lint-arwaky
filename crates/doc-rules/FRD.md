@@ -12,28 +12,21 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 
 ## Functional Requirements
 
-### FR-DOC-001: Document Invariant Enforcement
+### FR-DOC-001: Document Invariant Enforcement and Audit Orchestration
 
-- **Description**: Every `.md` document satisfies the AES heading and section contract.
-- **Input**: A workspace root and the list of recognized document paths (`FRD.md`, `BACKLOG.md`, `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`).
-- **Output**: `Vec<LintResult>` carrying one finding per invariant violation.
+- **Description**: Every `.md` document satisfies the AES heading and section contract, the FR/protocol class parity check holds, and the audit is reachable through a single aggregate entry point that dispatches to the invariant checker.
+- **Input**: A `DocRequest` carrying a workspace root and the list of recognized document paths (`FRD.md`, `BACKLOG.md`, `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`).
+- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted `Vec<LintResult>` with one finding per invariant violation.
 - **Business Rules**:
-  - AES601 validates FR-ID format and required fields in every FRD requirement block, and verifies FRD requirement count equals protocol class count in the shared contract module.
+  - AES601 validates FR-ID format, required fields, and FR/protocol class parity in every FRD requirement block.
   - AES602 validates API Contract subsections, Integration Points table shape, NFR table shape, Test Scenarios bullets, and Glossary bullets.
   - AES603 prevents status leaks and source-file names in spec documents.
   - AES604 enforces Reference crosslinks and state-vocab restatement rules.
   - AES605 checks H1/H2 heading structure against per-document contracts.
+  - The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
+  - A request with an empty root produces no findings rather than an error.
 - **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted as a master document during migration. Feature backlogs are forbidden from restating root-state sections.
-- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently rather than flagged.
-
-### FR-DOC-002: Audit Orchestration
-
-- **Description**: The doc auditor is reachable through a single aggregate entry point that dispatches to the invariant checker.
-- **Input**: A `DocRequest` describing the workspace root to audit.
-- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
-- **Business Rules**: The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
-- **Edge Cases**: A request with an empty root produces no findings rather than an error.
-- **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
+- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently rather than flagged. Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
 
 ## API Contract
 

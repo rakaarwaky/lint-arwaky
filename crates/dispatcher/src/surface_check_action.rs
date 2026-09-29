@@ -1,11 +1,14 @@
 // PURPOSE: SurfaceCheckAction — check/scan business logic, no formatting.
 //
-// In-process mode (W10): when `scan_aggregates` is provided, all 6 linters run
+// In-process mode (W10): when `scan_aggregates` is provided, all 7 linters run
 // in-process through their aggregate entry points. Subprocess self-invocation
 // remains the fallback when aggregates are absent (`scan_aggregates: None`).
 use shared::common::FilePath;
 use shared::common::ViolationItem;
 use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
+use shared::doc_rules::IDocRunnerAggregate;
+use shared::doc_rules::taxonomy_doc_rules_request::DocRequest;
+use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -37,7 +40,7 @@ pub struct FilesystemSeam {
     pub aggregate: Arc<dyn IFilesystemAggregate>,
 }
 
-/// Bundles the 7 scan aggregates + config source + filesystem seam so that
+/// Bundles the 8 scan aggregates + config source + filesystem seam so that
 /// `collect_scan` can dispatch all linters in-process (W10).
 #[derive(Clone)]
 pub struct ScanAggregates {
@@ -49,6 +52,7 @@ pub struct ScanAggregates {
     pub orphan: Arc<dyn IOrphanAggregate>,
     pub config: Arc<dyn IConfigOrchestratorAggregate>,
     pub structure: Arc<dyn IStructureAggregate>,
+    pub doc: Arc<dyn IDocRunnerAggregate>,
     /// Provides raw protocol seams + aggregate per scan run.
     pub fs_seam: Arc<FilesystemSeam>,
 }
@@ -389,6 +393,12 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     // these are scoped separately and appended after the file-scope filter.
     all.extend(structure_violations_in_scope(&target_canon_str, agg));
 
+    // Doc invariants (AES601–AES605) audit the workspace document chain
+    // (FRD/BACKLOG pairs, PRD, AGENTS, ...) which is not part of the
+    // source-file index, so it runs against the scan target directly and its
+    // findings are appended after the file-scope filter like structure does.
+    all.extend(doc_violations_in_scope(&target_canon_str, agg));
+
     all
 }
 
@@ -423,6 +433,45 @@ fn structure_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<Viol
             let resolved = ws_root.join(&v.file.value);
             let exists = resolved.is_dir() || agg.fs_seam.io.path_exists(&resolved);
             exists && resolved.starts_with(target_path)
+        })
+        .collect()
+}
+
+/// Run the doc-invariant audit (AES601–AES605) and convert its findings into
+/// violation items. Findings carry relative doc paths and resolve against the
+/// scan target; a finding names a document that must exist inside the target,
+/// so out-of-scope or stale findings are dropped like structure findings.
+/// All doc rules are HIGH-severity invariant failures → `Severity::HIGH`.
+fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
+    let target_path = std::path::Path::new(target);
+    let target_canon = agg
+        .fs_seam
+        .io
+        .canonicalize(target_path)
+        .unwrap_or_else(|_| target_path.to_path_buf());
+
+    let DocResponse::Findings { findings } = agg.doc.execute(DocRequest::audit_all(&target_canon));
+    findings
+        .into_iter()
+        .filter_map(|finding| {
+            let file = shared::common::FilePath::new(finding.doc.clone()).ok()?;
+            let doc_path = target_canon.join(&finding.doc);
+            let exists = doc_path.is_file() || agg.fs_seam.io.path_exists(&doc_path);
+            if !exists {
+                return None;
+            }
+            let message = shared::common::LintMessage::new(format!(
+                "[{}] {}",
+                finding.violation_type, finding.message
+            ));
+            Some(ViolationItem {
+                code: shared::common::ErrorCode::raw(finding.code),
+                file,
+                line: shared::common::LineNumber::new(1),
+                column: shared::common::ColumnNumber::new(1),
+                message,
+                severity: shared::common::Severity::HIGH,
+            })
         })
         .collect()
 }

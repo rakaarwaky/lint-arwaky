@@ -48,6 +48,7 @@ pub struct SurfaceLintExecutor {
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
     structure_orchestrator: Option<Arc<dyn shared::structure_rules::IStructureAggregate>>,
+    doc_orchestrator: Option<Arc<dyn shared::doc_rules::IDocRunnerAggregate>>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
     filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
@@ -486,6 +487,7 @@ impl SurfaceLintExecutor {
             naming_orchestrator: None,
             role_orchestrator: None,
             structure_orchestrator: None,
+            doc_orchestrator: None,
         }
     }
 
@@ -559,6 +561,14 @@ impl SurfaceLintExecutor {
         self
     }
 
+    pub fn with_doc_orchestrator(
+        mut self,
+        doc_orchestrator: Arc<dyn shared::doc_rules::IDocRunnerAggregate>,
+    ) -> Self {
+        self.doc_orchestrator = Some(doc_orchestrator);
+        self
+    }
+
     fn build_scan_aggregates(&self) -> Option<dispatcher::surface_check_action::ScanAggregates> {
         Some(dispatcher::surface_check_action::ScanAggregates {
             quality: self.code_analysis.clone(),
@@ -569,6 +579,7 @@ impl SurfaceLintExecutor {
             orphan: self.orphan_aggregate.clone()?,
             config: self.config_orchestrator.clone()?,
             structure: self.structure_orchestrator.clone()?,
+            doc: self.doc_orchestrator.clone()?,
             fs_seam: self.fs_seam.clone(),
         })
     }

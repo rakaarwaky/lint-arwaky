@@ -95,6 +95,7 @@ impl McpActionSurface {
                 orphan: self.deps.orphan_orchestrator.clone(),
                 config: self.deps.config_orchestrator.clone(),
                 structure: self.deps.structure_orchestrator.clone(),
+                doc: self.deps.doc_orchestrator.clone(),
                 fs_seam: self.deps.fs_seam.clone(),
             }),
         };

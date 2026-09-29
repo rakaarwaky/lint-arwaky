@@ -155,25 +155,6 @@ flowchart TD
 
 ---
 
-## Utility Layer
-
-The only utility in this feature is `xml_escape`, embedded directly in the JUnit formatter capability.
-
-### Utility: XML Escape
-
-- **File**: `capabilities_junit_formatter.rs` (free function `xml_escape`)
-- **Responsibility**: Escapes special XML characters for safe inclusion in JUnit XML output.
-- **Mapping**:
-  - `&` → `&amp;`
-  - `<` → `&lt;`
-  - `>` → `&gt;`
-  - `"` → `&quot;`
-  - `'` → `&apos;`
-- **Called by**: `JunitFormatter` (FR-004) for all text content in `<failure>`, `<testcase>`, and `<skipped>` elements.
-- **Edge Cases**:
-  - Empty string → empty output.
-  - No special characters → string unchanged.
-
 ## API Contract
 
 ### Protocol API
