@@ -1515,3 +1515,74 @@ fn aes601_root_level_frd_is_audited() {
         "a root-level FRD with no contract module must stay silent; got: {findings:#?}"
     );
 }
+
+// ── AES605: DESIGN.md heading structure ─────────────────────────────────
+
+fn write_design_md(dir: &Path, text: &str) {
+    write_agents_workspace(dir);
+    let surface = dir.join("crates/ui");
+    fs::create_dir_all(&surface).unwrap();
+    fs::write(surface.join("DESIGN.md"), text).unwrap();
+    fs::write(surface.join("BACKLOG.md"), conforming_backlog()).unwrap();
+}
+
+#[test]
+fn aes605_conforming_design_reports_no_findings() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_design_md(
+        tmp.path(),
+        "# UI — DESIGN\n\n\
+         ## Kind\n\n`ui` — a surface component.\n\n\
+         ## Entry Points\n\n| File | Role |\n|---|---|\n| `x.rs` | entry |\n\n\
+         ## States\n\n| State | Condition |\n|---|---|\n| `ready` | idle |\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES605", "h2_missing") && !has(&findings, "AES605", "h2_unexpected"),
+        "conforming DESIGN.md must be accepted; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes605_fires_when_required_design_headings_are_absent() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_design_md(
+        tmp.path(),
+        "# UI — DESIGN\n\n## Reference\n\n- Backlog: [BACKLOG.md](BACKLOG.md)\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(has(&findings, "AES605", "h2_missing"));
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    assert!(
+        message.contains("Kind") && message.contains("Entry Points") && message.contains("States"),
+        "message must name all three missing DESIGN sections; got: {message}"
+    );
+}
+
+#[test]
+fn aes605_fires_when_design_carries_off_template_h2() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_design_md(
+        tmp.path(),
+        "# UI — DESIGN\n\n\
+         ## Kind\n\n`ui` — a surface component.\n\n\
+         ## Entry Points\n\n| File | Role |\n|---|---|\n| `x.rs` | entry |\n\n\
+         ## States\n\n| State | Condition |\n|---|---|\n| `ready` | idle |\n\n\
+         ## History\n\nOld stuff.\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(has(&findings, "AES605", "h2_unexpected"));
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES605" && v == "h2_unexpected")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    assert!(
+        message.contains("history"),
+        "must name the unexpected section; got: {message}"
+    );
+}
