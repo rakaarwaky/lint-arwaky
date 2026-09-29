@@ -1,5 +1,4 @@
 use crate::agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
-use crate::capabilities_maintenance_checker::MaintenanceChecker;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
@@ -20,16 +19,23 @@ impl MaintenanceContainer {
         io: Arc<dyn IFileSystemIOProtocol>,
     ) -> Self {
         let _ = filesystem;
-        let checker = Arc::new(MaintenanceChecker::new(io));
-        let doctor: Arc<dyn IDoctorProtocol> = checker.clone();
-        let stats: Arc<dyn IProjectStatsProtocol> = checker.clone();
-        let clean: Arc<dyn ICacheCleanupProtocol> = checker.clone();
-        let update: Arc<dyn IToolUpdateProtocol> = checker.clone();
-        let toolchain: Arc<dyn IToolchainDiagnosticProtocol> = checker.clone();
-        let security: Arc<dyn ISecurityScanProtocol> = checker.clone();
-        let deps_report: Arc<dyn IDependencyReportProtocol> = checker.clone();
-        let health: Arc<dyn IAdapterHealthProtocol> = checker.clone();
-        let self_update: Arc<dyn ISelfUpdateProtocol> = checker.clone();
+        let doctor: Arc<dyn IDoctorProtocol> = Arc::new(crate::DoctorChecker::new(io.clone()));
+        let stats: Arc<dyn IProjectStatsProtocol> =
+            Arc::new(crate::ProjectStatsChecker::new(io.clone()));
+        let clean: Arc<dyn ICacheCleanupProtocol> =
+            Arc::new(crate::CacheCleanupChecker::new(io.clone()));
+        let update: Arc<dyn IToolUpdateProtocol> =
+            Arc::new(crate::ToolUpdateChecker::new(io.clone()));
+        let toolchain: Arc<dyn IToolchainDiagnosticProtocol> =
+            Arc::new(crate::ToolchainDiagnosticChecker::new(io.clone()));
+        let security: Arc<dyn ISecurityScanProtocol> =
+            Arc::new(crate::SecurityScanChecker::new(io.clone()));
+        let deps_report: Arc<dyn IDependencyReportProtocol> =
+            Arc::new(crate::DependencyReportChecker::new(io.clone()));
+        let health: Arc<dyn IAdapterHealthProtocol> =
+            Arc::new(crate::AdapterHealthChecker::new(io.clone()));
+        let self_update: Arc<dyn ISelfUpdateProtocol> =
+            Arc::new(crate::SelfUpdateChecker::new(io.clone()));
         let orchestrator: Arc<dyn IMaintenanceAggregate> =
             Arc::new(MaintenanceCommandsOrchestrator::new(MaintenanceDeps {
                 toolchain,
