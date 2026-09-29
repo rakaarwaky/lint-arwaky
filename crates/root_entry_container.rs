@@ -5,6 +5,7 @@ use std::sync::Arc;
 use dispatcher::surface_orphan_action::OrphanFactory;
 use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared::doc_rules::IDocRunnerAggregate;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
@@ -34,6 +35,7 @@ pub struct CommonDeps {
     pub orphan_orchestrator: Arc<dyn IOrphanAggregate>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub doc_orchestrator: Arc<dyn IDocRunnerAggregate>,
     pub structure_orchestrator: Arc<dyn IStructureAggregate>,
     pub maintenance_orchestrator: Arc<dyn IMaintenanceAggregate>,
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
@@ -127,6 +129,8 @@ impl CommonDeps {
                 .into_sync_config(),
         );
         let role_orchestrator = role_container.orchestrator();
+        let doc_orchestrator =
+            doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator();
 
         let structure_orchestrator =
             structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator();
@@ -196,6 +200,7 @@ impl CommonDeps {
             orphan_orchestrator,
             external_lint,
             role_orchestrator,
+            doc_orchestrator,
             structure_orchestrator,
             maintenance_orchestrator,
             setup_orchestrator,

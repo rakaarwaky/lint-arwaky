@@ -13,6 +13,7 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::config_system::{
     IConfigListProtocol, IConfigOrchestratorAggregate, IConfigParseProtocol,
 };
+use shared::doc_rules::IDocRunnerAggregate;
 use shared::external_lint::IExternalLintAggregate;
 use shared::filesystem::FilesystemRequest;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -42,6 +43,7 @@ pub struct McpServerDependencies {
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
+    pub doc_orchestrator: Arc<dyn IDocRunnerAggregate>,
     pub structure_orchestrator: Arc<dyn shared::structure_rules::IStructureAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
@@ -410,6 +412,25 @@ impl McpActionSurface {
         serde_json::json!({"error": "watch is not supported via MCP", "exit_code": 2})
     }
 
+    /// Run docs audit via dispatcher.
+    pub fn execute_docs(&self, path: &str) -> serde_json::Value {
+        let result =
+            dispatcher::surface_docs_action::collect_docs(path, self.deps.doc_orchestrator.clone());
+        match result {
+            Ok(findings) => {
+                let exit_code = if findings.is_empty() { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "action": "docs",
+                    "exit_code": exit_code,
+                    "finding_count": findings.len(),
+                    "results": findings,
+                })
+            }
+            Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
+        }
+    }
+
     /// Dispatch execute_command actions.
     pub fn execute_command(
         &self,
@@ -429,6 +450,7 @@ impl McpActionSurface {
             "import" => self.execute_import(path),
             "naming" => self.execute_naming(path),
             "role" => self.execute_role(path),
+            "docs" => self.execute_docs(path),
             "external" => self.execute_external(path),
             "dependencies" => self.execute_dependencies(path),
             "version" => self.execute_version(),
