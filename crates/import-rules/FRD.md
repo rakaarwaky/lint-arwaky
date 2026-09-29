@@ -56,6 +56,8 @@ flowchart TD
 
 ```
 
+## Functional Requirements
+
 ### FR-ImportRules-001: Layer Dependency Violation (AES201)
 
 - **Description**: Validates imports against the AES config-driven dependency matrix. Each layer/sub-layer has explicit `allowed`, `forbidden`, and `mandatory` rules defined in YAML configuration via a `conditions` array. All rules are per-scope, config-driven.
@@ -414,7 +416,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Grey area**: Import target that is neither in`allowed` nor `forbidden` list — produces WARNING, not CRITICAL
 - **AES-DI**: AES Dependency Injection model — layers import from contract, receive dependencies via trait objects
 
-## Appendix A: YAML Configuration Schema
+### Appendix A: YAML Configuration Schema
 
 ### Top-Level Structure
 
@@ -462,7 +464,7 @@ architecture:
 
 Files without a recognized prefix are skipped by layer rules
 
-## Appendix B: File Discovery Algorithm
+### Appendix B: File Discovery Algorithm
 
 File discovery is handled by the **filesystem crate** (external). The import-rules crate requests file discovery via `filesystem_aggregate` (`discover_source_files`) and receives raw file paths; file contents are read via `read_file` and parsed internally by import-rules. The algorithm below documents the behavior of the filesystem crate's file walker for reference.
 

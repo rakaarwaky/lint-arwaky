@@ -23,14 +23,23 @@ The feature does the work a surface delegates to.
 
 ## Functional Requirements
 
-### FR-SAMPLE-001: Do The Thing
+### FR-SAMPLE-001: Document Invariant Enforcement
 
-- **Description**: The feature performs its single responsibility.
-- **Input**: A request value object.
-- **Output**: A response value object.
-- **Business Rules**: The capability is stateless.
-- **Edge Cases**: An absent input yields a default.
-- **Error Handling**: Failures surface as a reason-coded outcome.
+- **Description**: Every `.md` document satisfies the AES heading and section contract.
+- **Input**: A workspace root and the list of recognized document paths.
+- **Output**: `Vec<LintResult>` carrying one finding per invariant violation.
+- **Business Rules**: Validates FR-ID format, section structure, spec purity, crosslinks, heading structure, and parity.
+- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.
+- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.
+
+### FR-SAMPLE-002: Audit Orchestration
+
+- **Description**: The doc auditor is reachable through a single aggregate entry point dispatching to the invariant checker.
+- **Input**: A `DocRequest` describing the workspace root to audit.
+- **Output**: A `DocResponse` carrying a deduplicated, stable-sorted list of findings.
+- **Business Rules**: The aggregate orchestrates all invariants under one seam so consumers need only invoke `execute`.
+- **Edge Cases**: A request with an empty root produces no findings rather than an error.
+- **Error Handling**: Failures inside the checker are propagated as `DocResponse::Findings` with no partial results.
 
 ## API Contract
 
@@ -147,13 +156,69 @@ A row is Done with a command.
 "
 }
 
+/// A conforming BACKLOG.md that satisfies the AES606 H2 contract.
+fn conforming_backlog() -> &'static str {
+    r"# Feature Backlog: Sample
+
+FRD: [FRD.md](FRD.md)
+Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+State / Health: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
+Last Updated: 2026-09-29
+
+## Current Condition
+
+- Done: nothing yet
+- In Progress: None
+- Blocked: None
+- Next Action: get started
+
+## Backlog
+
+| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
+|---|---|---|---:|---|---|---|---|---|
+| SAM-01 | FR-SAMPLE-001 | nothing yet | P0 | Ready | nothing yet | @raka | None | 2026-09-29 |
+
+## Scenario Evidence
+
+| Scenario | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|
+| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |
+
+## Blockers
+
+None
+
+## Dependencies
+
+None
+
+## Release Readiness
+
+| Area | Status | Notes |
+|---|---|---|
+| Tests | Done | nothing |
+| Scenario evidence | Done | nothing |
+| Docs | Done | [FRD.md](FRD.md) is specification-only. |
+
+## Deferred
+
+None
+
+## Change Log
+
+| Date | Change | By |
+|---|---|---|
+| 2026-09-29 | init | @raka |
+"
+}
+
 /// Build a workspace whose only feature folder is a real feature, so AES605
 /// (folder health) does not fire on a conforming document set.
 fn write_workspace(dir: &Path, frd: &str) {
     let feature = dir.join("crates/sample");
     fs::create_dir_all(feature.join("src")).unwrap();
     fs::write(feature.join("FRD.md"), frd).unwrap();
-    fs::write(feature.join("BACKLOG.md"), "# BACKLOG — sample\n").unwrap();
+    fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
     fs::write(
         feature.join("src/agent_sample_orchestrator.rs"),
         "//! sample orchestrator\n",
@@ -167,8 +232,8 @@ fn write_workspace(dir: &Path, frd: &str) {
 fn write_agents_workspace(dir: &Path) {
     let feature = dir.join("crates/sample");
     fs::create_dir_all(feature.join("src")).unwrap();
-    fs::write(feature.join("FRD.md"), "# FRD — sample\n").unwrap();
-    fs::write(feature.join("BACKLOG.md"), "# BACKLOG — sample\n").unwrap();
+    fs::write(feature.join("FRD.md"), conforming_frd()).unwrap();
+    fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
     fs::write(
         feature.join("src/agent_sample_orchestrator.rs"),
         "//! sample orchestrator\n",
@@ -405,7 +470,35 @@ fn aes604_fires_when_a_feature_backlog_restates_master_sections() {
     write_workspace(tmp.path(), &conforming_frd());
     fs::write(
         tmp.path().join("crates/sample/BACKLOG.md"),
-        "# BACKLOG — sample\n\n## Current Condition\n\n## Risk Register\n\n- A risk.\n",
+        "# BACKLOG — sample\n\n\
+## Current Condition\n\n\
+- Done: nothing\n\n\
+## Backlog\n\n\
+| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |\n\
+|---|---|---|---:|---|---|---|---|---|\n\
+| SAM-01 | FR-SAMPLE-001 | nothing | P0 | Ready | nothing | @raka | None | 2026-09-29 |\n\n\
+## Scenario Evidence\n\n\
+| Scenario | Kind | Test file | Test name | Last verified |\n\
+|---|---|---|---|---|\n\
+| nothing | Automated | tests/ | test_nothing | 2026-09-29 |\n\n\
+## Blockers\n\n\
+None\n\n\
+## Dependencies\n\n\
+None\n\n\
+## Release Readiness\n\n\
+| Area | Status | Notes |\n\
+|---|---|---|\n\
+| Tests | Done | nothing |\n\
+| Scenario evidence | Done | nothing |\n\
+| Docs | Done | [FRD.md](FRD.md) is specification-only. |\n\n\
+## Deferred\n\n\
+None\n\n\
+## Change Log\n\n\
+| Date | Change | By |\n\
+|---|---|---|\n\
+| 2026-09-29 | init | @raka |\n\n\
+## Risk Register\n\n\
+- A risk.\n",
     )
     .unwrap();
     assert!(has(&audit(tmp.path()), "AES604", "state_vocab_restated"));
