@@ -1,8 +1,4 @@
 // PURPOSE: NamingChecker — combined AES101 + AES102 naming checker capability
-use crate::utility_naming_checker::{
-    basename_of, detect_layer, get_stem, get_suffix, parse_path, rule_exception_set,
-    string_filename_result,
-};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
@@ -18,6 +14,10 @@ use shared::naming_rules::contract_naming_checker_protocol::{
 use shared::naming_rules::taxonomy_naming_constant::{
     MIN_WORDS_DEFAULT, RULE_CODE_NAMING_CONVENTION, RULE_CODE_SUFFIX_PREFIX,
     SPECIALIZED_LAYER_MARKER, SUFFIX_POLICY_STRICT,
+};
+use shared::naming_rules::utility_naming_checker::{
+    basename_of, detect_layer, get_stem, get_suffix, parse_path, rule_exception_set,
+    string_filename_result,
 };
 
 use std::collections::HashMap;

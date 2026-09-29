@@ -157,9 +157,11 @@ impl IConfigValidateProtocol for ConfigOrchestrator {
 
 impl IConfigIgnoredPathsProtocol for ConfigOrchestrator {
     fn build_ignored_paths(&self, config: &ArchitectureConfig) -> PatternList {
-        PatternList::new(crate::utility_config_merger::merge_default_ignored_paths(
-            crate::utility_config_merger::ignored_paths_from_config(config),
-        ))
+        PatternList::new(
+            shared::config_system::utility_config_merger::merge_default_ignored_paths(
+                shared::config_system::utility_config_merger::ignored_paths_from_config(config),
+            ),
+        )
     }
 }
 
@@ -314,9 +316,13 @@ impl ConfigOrchestrator {
         let ws_type = self.deps.workspace_detector.detect(project_root);
         let language = ConfigLanguage::from(ws_type);
         let result = self.load_config_for_language(project_root, language);
-        PatternList::new(crate::utility_config_merger::merge_default_ignored_paths(
-            crate::utility_config_merger::ignored_paths_from_config(&result.config),
-        ))
+        PatternList::new(
+            shared::config_system::utility_config_merger::merge_default_ignored_paths(
+                shared::config_system::utility_config_merger::ignored_paths_from_config(
+                    &result.config,
+                ),
+            ),
+        )
     }
 
     pub fn ignored_paths_for_language(
@@ -325,9 +331,13 @@ impl ConfigOrchestrator {
         language: ConfigLanguage,
     ) -> PatternList {
         let result = self.load_config_for_language(project_root, language);
-        PatternList::new(crate::utility_config_merger::merge_default_ignored_paths(
-            crate::utility_config_merger::ignored_paths_from_config(&result.config),
-        ))
+        PatternList::new(
+            shared::config_system::utility_config_merger::merge_default_ignored_paths(
+                shared::config_system::utility_config_merger::ignored_paths_from_config(
+                    &result.config,
+                ),
+            ),
+        )
     }
 
     /// Create a new config orchestrator with all required protocol dependencies.

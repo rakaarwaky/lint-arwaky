@@ -12,7 +12,7 @@
 use std::collections::HashSet;
 use std::path::Path;
 
-use shared::filesystem::taxonomy_filesystem_vo::{ExternalReferenceMap, FileEntry, ParseMetadata};
+use crate::filesystem::taxonomy_filesystem_vo::{ExternalReferenceMap, FileEntry, ParseMetadata};
 
 /// True when a path lies inside a test or bench directory.
 pub fn is_test_or_bench_path(path: &str) -> bool {

@@ -181,7 +181,7 @@ fn every_aes_code_resolves_to_non_empty_guidance() {
         "AES101", "AES102", "AES201", "AES202", "AES203", "AES204", "AES205", "AES301", "AES302",
         "AES303", "AES304", "AES305", "AES401", "AES402", "AES403", "AES404", "AES405", "AES406",
         "AES501", "AES502", "AES503", "AES504", "AES505", "AES506", "AES601", "AES602", "AES603",
-        "AES604", "AES704", "AES705",
+        "AES604", "AES701", "AES702", "AES703",
     ];
     for code in codes {
         let hint = resolve_skill_hint_for_file(code, "crates/foo/contract_scan_protocol.rs");

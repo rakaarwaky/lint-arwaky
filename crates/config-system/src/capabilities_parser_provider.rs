@@ -63,7 +63,7 @@ impl IConfigParseProtocol for ConfigParserProvider {
         &self,
         yaml_str: &str,
     ) -> Vec<shared::config_system::taxonomy_config_vo::AdapterEntry> {
-        crate::utility_config_parser::parse_adapter_entries_from_yaml(yaml_str)
+        shared::config_system::utility_config_parser::parse_adapter_entries_from_yaml(yaml_str)
     }
 
     /// FR-005: merge rules into layer definitions, injecting the embedded
@@ -76,7 +76,7 @@ impl IConfigParseProtocol for ConfigParserProvider {
         shared::config_system::taxonomy_config_vo::ArchitectureConfig,
         Vec<String>,
     ) {
-        let (merged_layers, _) = crate::utility_config_merger::merge_config(config);
+        let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(config);
         let mut merged = config.clone();
         merged.layers = merged_layers;
         let mut warnings = Vec::new();

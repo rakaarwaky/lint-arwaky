@@ -194,7 +194,7 @@ fn parse_parallel_multiple_files() {
 
 #[test]
 fn test_extract_rust_metadata_used_identifiers() {
-    use filesystem_lint_arwaky::utility_ast_rust::extract_rust_metadata;
+    use shared::filesystem::utility_ast_rust::extract_rust_metadata;
 
     let content = r#"
 use taxonomy::vo::UserVO;

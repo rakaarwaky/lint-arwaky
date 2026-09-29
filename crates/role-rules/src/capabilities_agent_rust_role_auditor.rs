@@ -12,7 +12,7 @@ use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared::role_rules::taxonomy_role_token_constant::AGENT_FORBIDDEN_IO_RUST;
 
-use super::utility_agent_role_checker;
+use shared::role_rules::utility_agent_role_checker;
 
 // === Block 1: Type Definition ===
 

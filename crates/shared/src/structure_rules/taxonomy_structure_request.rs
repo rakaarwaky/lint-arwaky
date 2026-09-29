@@ -32,7 +32,7 @@ impl StructureFinding {
 }
 
 /// The verb set the structure auditor supports today.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum StructureRequest {
     /// Audit every folder under *root* that the structure rules recognize.
     AuditAll { root: PathBuf },

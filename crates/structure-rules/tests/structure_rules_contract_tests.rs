@@ -1,4 +1,4 @@
-// PURPOSE: structure-rules contract tests — AES701–AES705 must fire on a
+// PURPOSE: structure-rules contract tests — AES701–AES703 must fire on a
 // misplaced folder layout and stay silent on a conforming one.
 use shared::structure_rules::taxonomy_structure_request::StructureRequest;
 use shared::structure_rules::taxonomy_structure_response::StructureResponse;
@@ -406,10 +406,10 @@ fn conforming_workspace_reports_no_findings() {
     assert!(findings.is_empty(), "expected clean, got: {findings:#?}");
 }
 
-// ─── AES704: feature folder doc pair ───────────────────────────────────────
+// ─── AES702: feature folder doc pair ──────────────────────────────────────
 
 #[test]
-fn aes704_fires_when_a_feature_folder_lacks_its_doc_pair() {
+fn aes702_fires_when_a_feature_folder_lacks_its_doc_pair() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     write(
@@ -425,13 +425,13 @@ fn aes704_fires_when_a_feature_folder_lacks_its_doc_pair() {
     // no FRD.md, no BACKLOG.md.
     let findings = audit(root);
     assert!(
-        has(&findings, "AES704", "feature_missing_doc_pair"),
+        has(&findings, "AES702", "feature_missing_doc_pair"),
         "expected the missing doc pair, got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes704_stays_silent_when_the_doc_pair_is_present() {
+fn aes702_stays_silent_when_the_doc_pair_is_present() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     write(
@@ -454,13 +454,13 @@ fn aes704_stays_silent_when_the_doc_pair_is_present() {
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES704", "feature_missing_doc_pair"),
+        !has(&findings, "AES702", "feature_missing_doc_pair"),
         "a documented feature must not fire; got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes704_stays_silent_for_a_folder_carrying_no_feature_files() {
+fn aes702_stays_silent_for_a_folder_carrying_no_feature_files() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     // utility-only folder: neither capabilities nor agent, so no doc pair needed.
@@ -471,15 +471,15 @@ fn aes704_stays_silent_for_a_folder_carrying_no_feature_files() {
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES704", "feature_missing_doc_pair"),
+        !has(&findings, "AES702", "feature_missing_doc_pair"),
         "a folder with no feature files is not a feature; got: {findings:#?}"
     );
 }
 
-// ─── AES705: surface folder DESIGN.md ──────────────────────────────────────
+// ─── AES703: surface folder DESIGN.md ──────────────────────────────────────
 
 #[test]
-fn aes705_fires_when_a_surface_folder_lacks_design_md() {
+fn aes703_fires_when_a_surface_folder_lacks_design_md() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     write(
@@ -489,13 +489,13 @@ fn aes705_fires_when_a_surface_folder_lacks_design_md() {
     // no DESIGN.md.
     let findings = audit(root);
     assert!(
-        has(&findings, "AES705", "surface_missing_design_md"),
+        has(&findings, "AES703", "surface_missing_design_md"),
         "expected the missing DESIGN.md, got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes705_stays_silent_when_design_md_is_present() {
+fn aes703_stays_silent_when_design_md_is_present() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     write(
@@ -508,13 +508,13 @@ fn aes705_stays_silent_when_design_md_is_present() {
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES705", "surface_missing_design_md"),
+        !has(&findings, "AES703", "surface_missing_design_md"),
         "a documented surface must not fire; got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes705_does_not_fire_on_a_feature_folder_that_holds_a_surface() {
+fn aes703_does_not_fire_on_a_feature_folder_that_holds_a_surface() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     // One surface among two capabilities: the folder is feature-dominated, not
@@ -536,15 +536,15 @@ fn aes705_does_not_fire_on_a_feature_folder_that_holds_a_surface() {
     );
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES705", "surface_missing_design_md"),
+        !has(&findings, "AES703", "surface_missing_design_md"),
         "a feature-dominated folder is not a surface folder; got: {findings:#?}"
     );
 }
 
-// ─── AES704: feature folder / kernel doc pair ──────────────────────────────
+// ─── AES702: feature folder health + docs ─────────────────────────────────
 
 #[test]
-fn aes704_fires_when_a_doc_pair_folder_has_no_orchestrator() {
+fn aes702_fires_when_a_doc_pair_folder_has_no_orchestrator() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     let feature = root.join("crates/sample");
@@ -554,13 +554,13 @@ fn aes704_fires_when_a_doc_pair_folder_has_no_orchestrator() {
     // deliberately omit the orchestrator file
     let findings = audit(root);
     assert!(
-        has(&findings, "AES704", "doc_pair_without_orchestrator"),
+        has(&findings, "AES702", "doc_pair_without_orchestrator"),
         "expected doc_pair_without_orchestrator, got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes704_silent_when_doc_pair_folder_has_orchestrator() {
+fn aes702_silent_when_doc_pair_folder_has_orchestrator() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     let feature = root.join("crates/sample");
@@ -574,13 +574,13 @@ fn aes704_silent_when_doc_pair_folder_has_orchestrator() {
     .unwrap();
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES704", "doc_pair_without_orchestrator"),
+        !has(&findings, "AES702", "doc_pair_without_orchestrator"),
         "should be silent when orchestrator is present; got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes704_fires_when_a_kernel_folder_carries_a_doc_pair() {
+fn aes702_fires_when_a_kernel_folder_carries_a_doc_pair() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     fs::create_dir_all(root.join("crates/shared/src")).unwrap();
@@ -593,7 +593,58 @@ fn aes704_fires_when_a_kernel_folder_carries_a_doc_pair() {
     .unwrap();
     let findings = audit(root);
     assert!(
-        has(&findings, "AES704", "shared_has_docs"),
+        has(&findings, "AES701", "shared_has_docs"),
         "expected shared_has_docs, got: {findings:#?}"
+    );
+}
+
+// ─── AES702: feature folder forbidden files ──────────────────────────────────
+
+#[test]
+fn aes702_fires_when_a_feature_folder_holds_forbidden_files() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    // A feature folder that also holds a taxonomy file — taxonomy belongs in
+    // shared, not in a feature folder.
+    write(
+        root.join("crates/calculator/src/agent_calc_orchestrator.rs")
+            .as_path(),
+        "pub struct CalcOrchestrator;",
+    );
+    write(
+        root.join("crates/calculator/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    write(
+        root.join("crates/calculator/src/taxonomy_domain_vo.rs")
+            .as_path(),
+        "pub struct Domain;",
+    );
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES702", "feature_has_forbidden_files"),
+        "expected feature_has_forbidden_files, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes702_stays_silent_when_only_capabilities_and_agents_are_present() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    write(
+        root.join("crates/calculator/src/agent_calc_orchestrator.rs")
+            .as_path(),
+        "pub struct CalcOrchestrator;",
+    );
+    write(
+        root.join("crates/calculator/src/capabilities_add_analyzer.rs")
+            .as_path(),
+        "pub struct AddAnalyzer;",
+    );
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES702", "feature_has_forbidden_files"),
+        "a clean feature folder must not fire; got: {findings:#?}"
     );
 }

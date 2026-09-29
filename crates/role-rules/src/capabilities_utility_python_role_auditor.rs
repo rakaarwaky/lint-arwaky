@@ -12,7 +12,7 @@ use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
 use shared::role_rules::contract_role_protocol::IUtilityRoleProtocol;
 
-use super::utility_utility_role_checker as utility;
+use shared::role_rules::utility_utility_role_checker as utility;
 
 // === Block 1: Type Definition ===
 

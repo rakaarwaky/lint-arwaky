@@ -42,7 +42,7 @@ use shared::common::{LayerMapVO, LayerNameVO};
 use shared::config_system::ArchitectureConfig;
 use shared::quality_rules::CodeAnalysisRuleVO;
 
-use crate::utility_violation_formatter::format_code_analysis_violation;
+use shared::quality_rules::utility_violation_formatter::format_code_analysis_violation;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -239,7 +239,9 @@ impl CodeAnalysisOrchestrator {
     }
 
     pub fn check_critical(&self, results: &[LintResult]) -> BooleanVO {
-        BooleanVO::new(crate::utility_compliance_checker::contains_critical_severity(results))
+        BooleanVO::new(
+            shared::quality_rules::utility_compliance_checker::contains_critical_severity(results),
+        )
     }
 
     pub fn format_report(

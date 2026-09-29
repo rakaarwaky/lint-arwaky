@@ -5,12 +5,12 @@
 // to other crates. Produces human-readable output with severity badges,
 // violation counts grouped by rule code (descending), severity breakdown,
 // external lint results section, diagnostics section, and compliance score.
-use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::report_formatter::contract_report_formatter_protocol::IDefaultReportFallbackProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::ITextFormatProtocol;
+use shared::report_formatter::utility_report_format::format_report_default;
 use std::collections::BTreeMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────

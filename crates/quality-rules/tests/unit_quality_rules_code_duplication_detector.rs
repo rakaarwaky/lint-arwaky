@@ -1,7 +1,5 @@
 // Unit tests for code duplication normalization utilities.
-use quality_rules_lint_arwaky::utility_code_duplication_detector::{
-    normalize_line, normalize_window,
-};
+use shared::quality_rules::utility_code_duplication_detector::{normalize_line, normalize_window};
 
 #[test]
 fn normalize_line_trims_and_filters() {

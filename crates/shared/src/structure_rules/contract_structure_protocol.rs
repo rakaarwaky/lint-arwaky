@@ -1,17 +1,23 @@
-// PURPOSE: IStructureAuditProtocol — structural auditor contract for AES701–AES703
+// PURPOSE: structure-rules capability contracts — three seams, one per rule group
 ///
-/// One trait for the single capability seam: audit folder layout against the
-/// invariants that define AES folder structure. Each method reports a list of
-/// findings; the agent behind the aggregate invokes them all and returns a
-/// combined list.
+/// IStructureSharedPurityProtocol  → AES701 (shared/kernel folder rules)
+/// IStructureFeatureHealthProtocol → AES702 (feature folder health + docs)
+/// IStructureSurfacePurityProtocol → AES703 (surface folder purity + docs)
 use crate::structure_rules::taxonomy_structure_request::StructureRequest;
 use crate::structure_rules::taxonomy_structure_response::StructureResponse;
 
-/// Capability contract for structure-rules: folder-layout audit.
-pub trait IStructureAuditProtocol: Send + Sync {
-    /// Run every structural invariant over the folders under *request*,
-    /// returning an ordered list of findings.
-    ///
-    /// The list is sorted by (path, code, message) so the output is stable.
-    fn audit(&self, request: StructureRequest) -> StructureResponse;
+/// Shared (kernel) folder purity: no forbidden layers, no doc pair.
+pub trait IStructureSharedPurityProtocol: Send + Sync {
+    fn audit_shared(&self, request: StructureRequest) -> StructureResponse;
+}
+
+/// Feature folder health: capabilities + orchestrator required; no foreign files;
+/// FRD.md + BACKLOG.md required; reverse check: doc pair implies orchestrator.
+pub trait IStructureFeatureHealthProtocol: Send + Sync {
+    fn audit_feature(&self, request: StructureRequest) -> StructureResponse;
+}
+
+/// Surface folder purity: no misplaced capabilities or agents; DESIGN.md required.
+pub trait IStructureSurfacePurityProtocol: Send + Sync {
+    fn audit_surface(&self, request: StructureRequest) -> StructureResponse;
 }

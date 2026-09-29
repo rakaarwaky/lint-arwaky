@@ -11,7 +11,7 @@ use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
 use shared::role_rules::taxonomy_role_token_constant::AGENT_FORBIDDEN_IO_PYTHON;
 
-use super::utility_agent_role_checker;
+use shared::role_rules::utility_agent_role_checker;
 
 pub struct AgentPythonRoleAuditor {}
 

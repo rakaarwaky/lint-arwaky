@@ -1,6 +1,6 @@
 // PURPOSE: Stateless utility functions for mapping language detection results
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_language_vo::Language;
+use crate::common::taxonomy_path_vo::FilePath;
 
 /// Map a file path to the Language enum by extension.
 pub fn code_analysis_language_from_file(file: &str) -> Language {

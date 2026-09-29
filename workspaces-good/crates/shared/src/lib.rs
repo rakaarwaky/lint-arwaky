@@ -1,5 +1,6 @@
 pub mod contract_calculator_aggregate;
 pub mod contract_calculator_protocol;
+pub mod single_orchestrator;
 pub mod taxonomy_calculator_request;
 pub mod taxonomy_calculator_response;
 pub mod taxonomy_expression_vo;

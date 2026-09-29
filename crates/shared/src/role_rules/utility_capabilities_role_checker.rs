@@ -3,9 +3,9 @@
 //          and fall back to line scanning. Per-language files delegate here
 //          so one implementation is shared across Rust / Python / TypeScript.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
+use crate::common::taxonomy_lint_result_vo::LintResult;
+use crate::common::taxonomy_severity_vo::Severity;
+use crate::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
 
 /// True when `trait_name` names a contract protocol trait.
 ///

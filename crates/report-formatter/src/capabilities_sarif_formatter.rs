@@ -2,7 +2,6 @@
 // for SARIF 2.1.0 output (FR-003, FR-005)
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
@@ -13,6 +12,7 @@ use shared::report_formatter::taxonomy_report_vo::{
 use shared::report_formatter::taxonomy_report_vo::{SarifDriver, SarifRule};
 use shared::report_formatter::taxonomy_report_vo::{SarifLog, SarifRun, SarifTool};
 use shared::report_formatter::taxonomy_report_vo::{SarifMessage, SarifResult};
+use shared::report_formatter::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.

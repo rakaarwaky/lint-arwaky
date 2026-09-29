@@ -1,15 +1,16 @@
 // PURPOSE: Parses folder layout into the layer inventory the structure auditor reads
 //
-// AES701–AES705 classify files by their AES filename prefix and read the
+// AES701–AES703 classify files by their AES filename prefix and read the
 // documents sitting beside the source, so the whole check is a matter of
 // walking a folder and labelling each entry. This utility holds that walk; it
 // performs no rule decisions and defines no types.
 use std::path::{Path, PathBuf};
 
-use shared::structure_rules::taxonomy_structure_constant::{
+use super::taxonomy_structure_constant::{
     AGENT_PREFIX, CAPABILITIES_PREFIX, ORCHESTRATOR_SUFFIX, SKIPPED_DIRS, SURFACE_PREFIX,
 };
-use shared::structure_rules::taxonomy_structure_vo::{FolderInventory, LayerFile};
+use super::taxonomy_structure_request::StructureFinding;
+use super::taxonomy_structure_vo::{FolderInventory, LayerFile};
 
 /// How deep the walk descends. Feature folders nest one level under `src/`.
 const MAX_DEPTH: usize = 3;
@@ -90,4 +91,29 @@ pub fn feature_dirs(member: &Path) -> Vec<PathBuf> {
         .collect();
     dirs.sort();
     dirs
+}
+
+/// Collect unique findings, sorted for stable output.
+pub fn sorted(findings: Vec<StructureFinding>) -> Vec<StructureFinding> {
+    let mut seen = std::collections::BTreeSet::new();
+    let mut out: Vec<StructureFinding> = findings
+        .into_iter()
+        .filter(|f| {
+            seen.insert((
+                f.code.clone(),
+                f.violation_type.clone(),
+                f.file.clone(),
+                f.message.clone(),
+            ))
+        })
+        .collect();
+    out.sort_by(|a, b| {
+        (&a.file, &a.code, &a.violation_type, &a.message).cmp(&(
+            &b.file,
+            &b.code,
+            &b.violation_type,
+            &b.message,
+        ))
+    });
+    out
 }

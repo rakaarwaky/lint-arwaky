@@ -22,8 +22,8 @@ use std::sync::Arc;
 use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::Language;
 
-use crate::utility_agent_role_checker::resolve_feature_protocol_count;
-use crate::utility_role_reference_scanner::build_external_reference_map;
+use shared::role_rules::utility_agent_role_checker::resolve_feature_protocol_count;
+use shared::role_rules::utility_role_reference_scanner::build_external_reference_map;
 
 // ─── Block 1: Struct Definitions ──────────────────────────
 

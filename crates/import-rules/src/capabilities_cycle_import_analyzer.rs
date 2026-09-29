@@ -9,12 +9,12 @@ use shared::common::utility_layer_detector;
 use shared::common::{FilePath, FilePathList, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
-use crate::utility_cycle_detector;
-use crate::utility_import_module_parser;
 use shared::config_system::ArchitectureConfig;
 use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
 use shared::import_rules::taxonomy_import_vo::DependencyEdge;
+use shared::import_rules::utility_cycle_detector;
+use shared::import_rules::utility_import_module_parser;
 
 use std::collections::HashMap;
 
