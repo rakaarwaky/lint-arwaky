@@ -1,8 +1,4 @@
-// PURPOSE: DocChecker — the invariant auditor behind IDocCheckerProtocol
-//
-// Walks a workspace, collects the documents the chain recognizes, and audits
-// each against five document categories (AES601–AES605). Each finding carries
-// a machine-readable violation_type so consumers can route on it.
+// PURPOSE: DocChecker — the invariant auditor behind IDocCheckerProtocol.
 use shared::doc_rules::contract_doc_protocol::IDocCheckerProtocol;
 use shared::doc_rules::taxonomy_doc_rules_constant as consts;
 use shared::doc_rules::taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
@@ -27,7 +23,6 @@ struct Section {
 
 /// The invariant auditor behind the doc checker protocol.
 pub struct DocChecker {}
-
 /// Status-leak patterns, mirroring the Python checker's `_STATUS_LEAKS`.
 fn status_leak_patterns() -> Option<&'static [(regex::Regex, &'static str)]> {
     static PATTERNS: OnceLock<Option<Vec<(regex::Regex, &'static str)>>> = OnceLock::new();
@@ -203,6 +198,7 @@ impl DocChecker {
         for sub in ["crates", "modules", "packages"] {
             collect_feature_docs(&root.join(sub), &mut out);
             collect_shared_docs(&root.join(sub), &mut out);
+            collect_surface_docs(&root.join(sub), &mut out);
         }
         out
     }
@@ -296,9 +292,7 @@ impl DocChecker {
 
     /// Parse the document into level-1 and level-2 sections.
     ///
-    /// Headings are collected in a single pass; boundaries are computed with
-    /// a stack-based O(H) sweep so the text is never rescanned per heading
-    /// (eliminating the O(H^2) behaviour of `next_heading_start`).
+    /// Headings are collected in a single O(H) pass with a stack-based sweep.
     fn sections(&self, text: &str) -> Vec<Section> {
         let Some(re) = heading_re() else {
             return Vec::new();
@@ -788,9 +782,8 @@ impl DocChecker {
         }
     }
 
-    /// A document must carry exactly one level-1 heading, every required H2
-    /// from its template, and no H2 outside the agreed set. Level-3
-    /// headings are free-form per project.
+    /// A document must carry exactly one H1, every required H2 from its
+    /// template, and no H2 outside the agreed set. Level-3 headings are free.
     fn check_doc_heading(
         &self,
         prose: &str,
@@ -961,12 +954,26 @@ fn collect_shared_docs(dir: &Path, out: &mut Vec<DocSource>) {
     }
 }
 
+/// Collect DESIGN.md (and its paired BACKLOG.md) from every surface folder.
+fn collect_surface_docs(dir: &Path, out: &mut Vec<DocSource>) {
+    let Ok(entries) = dir.read_dir() else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let folder = entry.path();
+        if !folder.is_dir() || !folder.join(consts::DESIGN_DOC).is_file() {
+            continue;
+        }
+        if let Some(source) = read_source(&folder.join(consts::DESIGN_DOC)) {
+            out.push(source);
+        }
+        if let Some(source) = read_source(&folder.join(consts::BACKLOG_DOC)) {
+            out.push(source);
+        }
+    }
+}
+
 /// Is this document a spec (promise-bearing) rather than a status report?
-///
-/// ARCHITECTURE.md and CONTRIBUTING.md are excluded on purpose: AES603 bans
-/// source-file names, and both documents exist to teach the file-naming rule
-/// and the pre-merge checklist, so the patterns they must carry are part of
-/// their contract. Their own templates hold those same lines.
 fn is_spec(name: &str) -> bool {
     matches!(
         name,

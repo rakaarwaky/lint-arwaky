@@ -84,6 +84,7 @@ pub const ROADMAP_DOC: &str = "ROADMAP.md";
 pub const FRD_DOC: &str = "FRD.md";
 pub const BACKLOG_DOC: &str = "BACKLOG.md";
 pub const DATA_DOC: &str = "DATA.md";
+pub const DESIGN_DOC: &str = "DESIGN.md";
 pub const README_DOC: &str = "README.md";
 pub const AGENTS_DOC: &str = "AGENTS.md";
 pub const ARCHITECTURE_DOC: &str = "ARCHITECTURE.md";
@@ -333,5 +334,18 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Assumptions & Constraints",
         ],
         &[],
+    ),
+    (
+        DESIGN_DOC,
+        &["Kind", "Entry Points", "States"],
+        &[
+            "Request Shape",
+            "Error States",
+            "Invariants",
+            "Change Checklist",
+            "Brand & Style",
+            "Components",
+            "Reference",
+        ],
     ),
 ];
