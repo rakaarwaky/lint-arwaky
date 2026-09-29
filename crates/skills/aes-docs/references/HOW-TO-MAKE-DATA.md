@@ -10,7 +10,7 @@
 >
 > **Location**: Inside the shared/ directory of each crate/member.
 >
-> **Length**: 50–300 lines.
+> **Length**: 50–200 lines.
 >
 > **Not a feature → no DATA.md.** Only `shared/` folders carry DATA.md.
 > Feature folders carry FRD.md; surface folders carry DESIGN.md.
@@ -20,18 +20,18 @@
 ## Rules
 
 1. **Data contracts, not code.** State the shape, invariants, and relationships
-   of every value object, enum, and constant the kernel exposes. Never name a
-   source file, class, type signature, or programming-language syntax.
-2. **One contract per section.** Each `### DO-XXX:` block describes one data
-   concept — a value object, an enum, a constant group. Give it an ID, a name,
-   its fields/constraints, and its relationship to other contracts.
+   of every value object the kernel exposes. Never name a source file, class,
+   type signature, or programming-language syntax.
+2. **One contract per row.** Each table row describes one data concept — a value
+   object, entity, event, request, or response. Give it an ID, a field name, a
+   type label, and what it represents.
 3. **No implementation state.** The document must survive every refactor. If
    renaming a struct or moving a module would require updating DATA.md, the
    document is too implementation-bound.
 4. **Cross-link to BACKLOG.md** in `## Reference`. A reader landing on DATA.md
    must immediately see the tracking claim.
-5. **Integration points are data flows.** Name every system that receives or
-   sends kernel data, the direction, purpose, and failure mode.
+5. **Keep it minimal.** Only four sections are required: Reference, Data
+   Overview, Value Objects, Assumptions & Constraints.
 
 ---
 
@@ -40,10 +40,9 @@
 1. **Create file** → `DATA.md` in the shared/ directory.
 2. **Section: Reference** — link to BACKLOG.md.
 3. **Section: Data Overview** — one paragraph: what the kernel manages, who reads/writes it.
-4. **Section: Value Objects** — conceptual descriptions of types (no code).
-5. **Section: Constants & Config** — named constants and their semantics.
-6. **Section: Integration Points** — data flows to/from outside systems.
-7. **Verify** → `aa check docs` passes; section order is correct.
+4. **Section: Value Objects** — a table with ID, Field, Type, Description columns.
+5. **Section: Assumptions & Constraints** — name any implicit data requirements.
+6. **Verify** → `aa check docs` passes; section order is correct.
 
 ## Template
 
@@ -69,18 +68,6 @@ what business domain they serve. No code.>
 | DO-001 | <field-name> | vo/event/entity/request/response | <what this shape represents> |
 | DO-002 | <field-name> | vo/event/entity/request/response | <what this shape represents> |
 
-## Constants & Config
-
-| Name | Meaning | Scope |
-|---|---|---|
-| <CONST_NAME> | <what it means> | <global / per-feature / per-request> |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| <name> | <in / out> | <one sentence> | <condition> -> <fallback> |
-
 ## Assumptions & Constraints
 
 - <Assumption or constraint — name it, scope it, date it if it expires.>
@@ -90,15 +77,13 @@ what business domain they serve. No code.>
 
 ## Section Contract
 
-Every section is required unless marked optional. Each exists for one reason.
+Every section is required. Each exists for one reason.
 
 | Section | Why it belongs here |
 |---|---|
 | Reference | Separates spec promise from backlog claim. |
 | Data Overview | Orients the reader before details begin. |
 | Value Objects | The conceptual shapes the kernel manages. |
-| Constants & Config | Named values and their semantics. |
-| Integration Points | Names every outside system that exchanges kernel data. |
 | Assumptions & Constraints | Implicit data requirements made explicit. |
 
 ---

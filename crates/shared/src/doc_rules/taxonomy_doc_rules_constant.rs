@@ -341,8 +341,6 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Reference",
             "Data Overview",
             "Value Objects",
-            "Constants & Config",
-            "Integration Points",
             "Assumptions & Constraints",
         ],
         &[],

@@ -20,22 +20,6 @@ types, utilities, and interface definitions that other layers depend on.
 | DO-003 | StructureFinding | vo | Structural violation found during folder layout audit |
 | DO-004 | DocFinding | vo | Documentation invariant violation |
 
-## Constants & Config
-
-| Name | Meaning | Scope |
-|---|---|---|
-| AES100–AES700 | Architecture rule codes by layer | Global |
-| SEVERITY_ERROR | High-severity — blocks merge | Global |
-| SEVERITY_WARNING | Medium-severity — should fix | Global |
-| SEVERITY_INFO | Low-severity — informational | Global |
-
-## Integration Points
-
-| System | Direction | Purpose | Failure mode |
-|--------|-----------|---------|--------------|
-| All rule crates | Outbound | Report findings up the call stack | Serialization error → finding dropped |
-| CLI commands | Inbound | Render findings to terminal/JSON/SARIF | Formatting error → degraded output |
-
 ## Assumptions & Constraints
 
 - The shared folder is a dependency sink — no other layer may import from features or surfaces.

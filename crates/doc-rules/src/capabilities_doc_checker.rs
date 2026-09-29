@@ -258,7 +258,6 @@ impl DocChecker {
         }
         if name == consts::DATA_DOC {
             self.check_section_order(&sections, &mut findings);
-            self.check_integration_shape(&sections, &mut findings);
         }
 
         // ── AES603: Spec purity ──
