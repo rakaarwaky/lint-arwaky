@@ -452,3 +452,133 @@ fn aes403_valid_typescript_capability_no_violation() {
         "a valid TypeScript capability should not trigger AES403"
     );
 }
+
+// ──────────────────────────────────────────────────────────
+// CapabilityMultiProtocol — one protocol per capability file
+// ──────────────────────────────────────────────────────────
+
+#[test]
+fn aes403_multi_protocol_rust_detected() {
+    // Two distinct protocol impls on the same struct → MEDIUM violation.
+    let file = make_file(
+        "src/capabilities_dual_protocol.rs",
+        Language::Rust,
+        "pub struct DualService {}\n\
+         impl IFooProtocol for DualService {}\n\
+         impl IBarProtocol for DualService {}\n",
+    );
+    let results = run_audit(vec![file]);
+    let aes403: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES403")
+        .collect();
+    assert!(
+        !aes403.is_empty(),
+        "capability implementing 2 protocols should trigger AES403"
+    );
+    assert!(
+        aes403
+            .iter()
+            .any(|r| r.message.to_string().contains("multiple protocols")),
+        "message should mention splitting multiple protocols"
+    );
+    assert_eq!(
+        aes403
+            .iter()
+            .filter(|r| r.severity == shared::common::Severity::MEDIUM)
+            .count(),
+        1,
+        "multi-protocol violation should be MEDIUM"
+    );
+}
+
+#[test]
+fn aes403_multi_protocol_rust_single_no_violation() {
+    let file = make_file(
+        "src/capabilities_foo_service.rs",
+        Language::Rust,
+        "pub struct FooService {}\nimpl IFooProtocol for FooService {}\n",
+    );
+    let results = run_audit(vec![file]);
+    let multi: Vec<_> = results
+        .iter()
+        .filter(|r| {
+            r.code.code() == "AES403" && r.message.to_string().contains("multiple protocols")
+        })
+        .collect();
+    assert!(
+        multi.is_empty(),
+        "single-protocol capability should not trigger multi-protocol"
+    );
+}
+
+#[test]
+fn aes403_multi_protocol_python_detected() {
+    let file = make_file(
+        "src/capabilities_dual_protocol.py",
+        Language::Python,
+        "class DualService(IFooProtocol, IBarProtocol):\n    pass\n",
+    );
+    let results = run_audit(vec![file]);
+    let aes403: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES403")
+        .collect();
+    assert!(
+        !aes403.is_empty(),
+        "python capability with 2 protocol bases should trigger AES403"
+    );
+    assert!(
+        aes403
+            .iter()
+            .any(|r| r.message.to_string().contains("multiple protocols")),
+        "message should mention splitting multiple protocols"
+    );
+}
+
+#[test]
+fn aes403_multi_protocol_ts_detected() {
+    let file = make_file(
+        "src/capabilities_dual_protocol.ts",
+        Language::TypeScript,
+        "export class DualService implements IFooProtocol, IBarProtocol {}",
+    );
+    let results = run_audit(vec![file]);
+    let aes403: Vec<_> = results
+        .iter()
+        .filter(|r| r.code.code() == "AES403")
+        .collect();
+    assert!(
+        !aes403.is_empty(),
+        "typescript capability with 2 protocol implements should trigger AES403"
+    );
+    assert!(
+        aes403
+            .iter()
+            .any(|r| r.message.to_string().contains("multiple protocols")),
+        "message should mention splitting multiple protocols"
+    );
+}
+
+#[test]
+fn aes403_multi_protocol_aggregate_and_protocol_accepted() {
+    // Aggregate + protocol on the same type is fine — only count *protocols*.
+    let file = make_file(
+        "src/capabilities_foo_service.rs",
+        Language::Rust,
+        "pub struct FooService {}\n\
+         impl IFooAggregate for FooService {}\n\
+         impl IFooProtocol for FooService {}\n",
+    );
+    let results = run_audit(vec![file]);
+    let multi: Vec<_> = results
+        .iter()
+        .filter(|r| {
+            r.code.code() == "AES403" && r.message.to_string().contains("multiple protocols")
+        })
+        .collect();
+    assert!(
+        multi.is_empty(),
+        "aggregate + protocol is a single protocol; should not trigger multi-protocol"
+    );
+}

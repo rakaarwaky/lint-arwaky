@@ -301,6 +301,7 @@ Capability routing, protocol enforcement, and 3-block structure. Six sub-checks 
 | -------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
 | **CapabilityTooManyTypes**       | **HIGH**   | File exceeds max 3 type declarations.                                                                 |
 | **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait.                        |
+| **CapabilityMultiProtocol**      | **MEDIUM** | File implements more than one protocol trait — should be split into separate capability files; shared helpers belong in `utility_*`. |
 | **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).    |
 | **CapabilityLocalConstant**      | **MEDIUM** | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs`.                        |
 | **CapabilityEmbeddedTest**       | **LOW**    | `#[cfg(test)]` or `mod tests` declared inline; test code belongs in `tests/`.                          |

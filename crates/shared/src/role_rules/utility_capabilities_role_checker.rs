@@ -144,6 +144,84 @@ pub fn check_implementor(file: &FileEntry, violations: &mut Vec<LintResult>) {
     ));
 }
 
+/// Count distinct protocol traits implemented in a capability file.
+///
+/// Returns `(count, Vec<trait_name>)` — `count == 1` means single-protocol
+/// (no violation); `count == 0` is handled by `check_implementor`;
+/// `count > 1` triggers `CapabilityMultiProtocol` (AES403 MEDIUM).
+pub fn count_protocol_traits(file: &FileEntry) -> (usize, Vec<String>) {
+    if let Some(meta) = &file.parse_metadata {
+        return match meta {
+            ParseMetadata::Rust(r) => {
+                let structs: Vec<&str> = r.struct_definitions.iter().map(|s| s.as_str()).collect();
+                let mut protocols: Vec<String> = Vec::new();
+                for imp in &r.impl_blocks {
+                    if let Some(trait_name) = &imp.trait_name {
+                        if is_protocol_trait(trait_name)
+                            && structs.contains(&imp.implementor_type.as_str())
+                            && !protocols.contains(&trait_name.to_lowercase())
+                        {
+                            protocols.push(trait_name.clone());
+                        }
+                    }
+                }
+                (protocols.len(), protocols)
+            }
+            ParseMetadata::Python(py) => {
+                let mut protocols: Vec<String> = Vec::new();
+                for c in &py.class_declarations {
+                    for base in &c.bases {
+                        if is_protocol_base(base) && !protocols.contains(&base.to_lowercase()) {
+                            protocols.push(base.clone());
+                        }
+                    }
+                }
+                (protocols.len(), protocols)
+            }
+            ParseMetadata::TypeScript(ts) | ParseMetadata::JavaScript(ts) => {
+                let mut protocols: Vec<String> = Vec::new();
+                for c in &ts.class_declarations {
+                    for iface in &c.implements {
+                        if is_protocol_trait(iface) && !protocols.contains(&iface.to_lowercase()) {
+                            protocols.push(iface.clone());
+                        }
+                    }
+                }
+                (protocols.len(), protocols)
+            }
+            _ => (0, Vec::new()),
+        };
+    }
+    // Fallback line-scan when parse metadata is unavailable.
+    let protocols = scan_protocol_names(&file.content);
+    (protocols.len(), protocols)
+}
+
+/// Rule 3 — exactly one contract protocol per capability file. MEDIUM.
+pub fn check_single_protocol(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let (count, protocols) = count_protocol_traits(file);
+    if count <= 1 {
+        return;
+    }
+    let trait_names: Vec<&str> = protocols.iter().map(|s| s.as_str()).collect();
+    violations.push(LintResult::new_arch(
+        &path,
+        0,
+        "AES403",
+        Severity::MEDIUM,
+        format!(
+            "AES403 CAPABILITY_ROLE: Capability file implements multiple protocols.\n\
+             WHY? {count} protocol traits found: {names}.\n\
+             HOW TO FIX? Split this file into separate capability files, one per protocol \
+             (e.g. `capabilities_foo_handler.rs`, `capabilities_bar_handler.rs`). \
+             If the capabilities share common helper functions, move those shared functions \
+             to a `utility_<shared>_resolver.*` file and import it from both capabilities.",
+            names = trait_names.join(", ")
+        ),
+    ));
+}
+
 /// Count type declarations by line scan, for files with no parse metadata.
 fn scan_type_declarations(content: &str) -> usize {
     let mut count = 0;
@@ -189,4 +267,68 @@ fn scan_protocol_impl(content: &str) -> bool {
         }
         t.contains("implements I") && t.contains("Protocol")
     })
+}
+
+/// Collect distinct protocol trait names by line scan, for files with no parse metadata.
+///
+/// Supports Rust (`impl IXxxProtocol for Yyy`), Python
+/// (`class X(IAProtocol, IBProtocol)`), and TypeScript
+/// (`class X implements IAProtocol, IBProtocol`).
+fn scan_protocol_names(content: &str) -> Vec<String> {
+    let mut protocols: Vec<String> = Vec::new();
+
+    for line in content.lines() {
+        let t = line.trim();
+
+        // Rust: `impl IXxxProtocol for Yyy`
+        if let Some(rest) = t.strip_prefix("impl ") {
+            if let Some(trait_part) = rest.split(" for ").next() {
+                let name = trait_part.trim();
+                if is_protocol_trait(name) && !protocols.iter().any(|p| p == name) {
+                    protocols.push(name.to_string());
+                }
+            }
+        }
+
+        // Python: `class X(IAProtocol, IBProtocol):`
+        // TypeScript: `class X implements IAProtocol, IBProtocol {`
+        // Both may be prefixed with `export `.
+        let class_body = t
+            .strip_prefix("export class ")
+            .or_else(|| t.strip_prefix("class "))
+            .unwrap_or("");
+        if !class_body.is_empty() {
+            // `class DualService(IFoo, IBar):` → split at '(' to get name and bases.
+            // `class DualService implements IFoo, IBar {` → split at '(' gives no '(',
+            // so fall through to the `implements` path.
+            let (type_part, rest) = class_body.split_once('(').unwrap_or((class_body, ""));
+            let type_part = type_part.trim();
+
+            if !rest.is_empty() {
+                // Python-style bases: everything inside `(` ... `)`.
+                // Strip trailing `)` and `:` in order; `trim_end_matches`
+                // consumes chars from the right one at a time.
+                let bases_str = rest.trim_end_matches(&[')', ':', ' '] as &[char]).trim();
+                for base in bases_str.split(',') {
+                    let b = base.trim();
+                    if is_protocol_base(b) && !protocols.iter().any(|p| p == b) {
+                        protocols.push(b.to_string());
+                    }
+                }
+            } else if let Some((_, after)) = type_part.split_once(" implements ") {
+                // TypeScript-style: `class Foo implements IFoo, IBar {`
+                // `after` is `IFoo, IBar {` or `IFoo, IBar`; strip braces from both sides.
+                let iface_list =
+                    after.trim_matches(|c: char| c == '{' || c == '}' || c.is_whitespace());
+                for iface in iface_list.split(',') {
+                    let i = iface.trim();
+                    if is_protocol_trait(i) && !protocols.iter().any(|p| p == i) {
+                        protocols.push(i.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    protocols
 }

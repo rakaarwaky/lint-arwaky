@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 /// error_code_vo — Error code value object.
 ///
 /// Linter error code.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Default)]
 pub struct ErrorCode {
     code: String,
 }
@@ -29,6 +29,52 @@ impl ErrorCode {
     /// Create a raw ErrorCode without error validation.
     pub fn raw<S: Into<String>>(code: S) -> Self {
         ErrorCode { code: code.into() }
+    }
+}
+
+impl<'de> Deserialize<'de> for ErrorCode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::{self, MapAccess, Visitor};
+        struct E {}
+        impl<'de> Visitor<'de> for E {
+            type Value = ErrorCode;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a string or map with a 'code' key")
+            }
+            fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(ErrorCode {
+                    code: v.to_string(),
+                })
+            }
+            fn visit_string<E>(self, v: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(ErrorCode { code: v })
+            }
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'de>,
+            {
+                let mut code = None;
+                while let Some(k) = map.next_key::<String>()? {
+                    if k == "code" {
+                        code = Some(map.next_value::<String>()?);
+                    } else {
+                        let _: serde::de::IgnoredAny = map.next_value()?;
+                    }
+                }
+                let val = code.ok_or_else(|| de::Error::missing_field("code"))?;
+                Ok(ErrorCode { code: val })
+            }
+        }
+        deserializer.deserialize_any(E {})
     }
 }
 
