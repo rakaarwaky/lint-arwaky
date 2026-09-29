@@ -3,7 +3,8 @@ use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use naming_rules_lint_arwaky::agent_naming_orchestrator::{
     NamingOrchestrator, NamingOrchestratorDeps,
 };
-use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
+use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
+use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
 use shared::common::PatternList;
 use shared::common::SuffixPolicyVO;
 use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
@@ -67,7 +68,8 @@ fn bench_naming_checker(c: &mut Criterion) {
     group.significance_level(0.05).confidence_level(0.95);
     group.sample_size(30);
 
-    let checker = NamingChecker::new();
+    let convention_checker = NamingConventionChecker::new();
+    let suffix_checker = SuffixPolicyChecker::new();
     let config = ArchitectureConfig::default();
     let layer_map = make_layer_map();
     let root = FilePath::new(".".to_string()).unwrap();
@@ -77,7 +79,13 @@ fn bench_naming_checker(c: &mut Criterion) {
             let files = generate_file_paths(n, "capabilities_user_checker");
             b.iter(|| {
                 let mut results = LintResultList::new(Vec::new());
-                checker.check_file_naming(&config, &layer_map, &files, &root, &mut results);
+                convention_checker.check_file_naming(
+                    &config,
+                    &layer_map,
+                    &files,
+                    &root,
+                    &mut results,
+                );
                 std::hint::black_box(&results);
             });
         });
@@ -97,7 +105,13 @@ fn bench_naming_checker(c: &mut Criterion) {
             let files = FilePathList::new(paths);
             b.iter(|| {
                 let mut results = LintResultList::new(Vec::new());
-                checker.check_file_naming(&config, &layer_map, &files, &root, &mut results);
+                convention_checker.check_file_naming(
+                    &config,
+                    &layer_map,
+                    &files,
+                    &root,
+                    &mut results,
+                );
                 std::hint::black_box(&results);
             });
         });
@@ -108,7 +122,13 @@ fn bench_naming_checker(c: &mut Criterion) {
             let files = generate_file_paths(n, "capabilities_user_checker");
             b.iter(|| {
                 let mut results = LintResultList::new(Vec::new());
-                checker.check_domain_suffixes(&config, &layer_map, &files, &root, &mut results);
+                suffix_checker.check_domain_suffixes(
+                    &config,
+                    &layer_map,
+                    &files,
+                    &root,
+                    &mut results,
+                );
                 std::hint::black_box(&results);
             });
         });
@@ -126,7 +146,13 @@ fn bench_naming_checker(c: &mut Criterion) {
             let files = FilePathList::new(paths);
             b.iter(|| {
                 let mut results = LintResultList::new(Vec::new());
-                checker.check_domain_suffixes(&config, &layer_map, &files, &root, &mut results);
+                suffix_checker.check_domain_suffixes(
+                    &config,
+                    &layer_map,
+                    &files,
+                    &root,
+                    &mut results,
+                );
                 std::hint::black_box(&results);
             });
         });
@@ -143,8 +169,8 @@ fn bench_orchestrator_full_audit(c: &mut Criterion) {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(make_layer_map());
     let deps = NamingOrchestratorDeps {
-        naming_convention: Arc::new(NamingChecker::new()),
-        suffix_policy: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingConventionChecker::new()),
+        suffix_policy: Arc::new(SuffixPolicyChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
