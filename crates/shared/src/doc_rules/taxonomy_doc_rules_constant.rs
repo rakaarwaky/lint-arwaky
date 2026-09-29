@@ -97,7 +97,6 @@ pub const MASTER_ONLY_SECTIONS: &[&str] = &[
     "State Definitions",
     "Status Policy",
     "Feature Roll-up",
-    "Branches in Flight",
     "Risk Register",
 ];
 
@@ -294,11 +293,9 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "State Definitions",
             "Status Policy",
             "Feature Roll-up",
-            "Branches in Flight",
             "Risk Register",
         ],
         &[
-            "Feature Index",
             "Health Definitions",
             "Backlog",
             "Blockers",
