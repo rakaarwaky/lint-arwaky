@@ -1,6 +1,6 @@
 ---
 name: aes-docs
-description: Adds docstrings, doc comments, JSDoc, types and PRD/ROADMAP/FRD/README/BACKLOG/AGENTS docs. Use when documenting Python, Rust, TS modules, or splitting spec from status backlog.
+description: Adds docstrings, doc comments, JSDoc, types and PRD/ROADMAP/FRD/README/BACKLOG/DESIGN/AGENTS docs. Use when documenting Python, Rust, TS modules, or splitting spec from status backlog.
 metadata:
   tags:
     - python
@@ -50,12 +50,15 @@ metadata:
     - split spec from status
     - move status out of frd
     - audit document invariants
+    - add design md
+    - design md template
+    - brand and style template
 ---
 # aes-docs
 
 > **Purpose**: Route every claim to the correct document, and ensure every public code item is documented.
 > **Audience**: The AI agent executing documentation tasks.
-> **Scope**: Python, Rust, and TypeScript modules; PRD, ROADMAP, FRD, README, BACKLOG, and AGENTS files.
+> **Scope**: Python, Rust, and TypeScript modules; PRD, ROADMAP, FRD, README, BACKLOG, DESIGN, and AGENTS files.
 
 The **aggregate** defines which document exists, where it lives, who reads it, and which claim belongs where.
 Templates, section contracts, exemplars, and per-document craft rules live in [`references/`](references/).
@@ -70,6 +73,7 @@ Templates, section contracts, exemplars, and per-document craft rules live in [`
 | `AGENTS.md`  | Root workspace                    | The agent, every session     | *How to work here safely*            | 50–500 lines | [references/HOW-TO-MAKE-AGENTS.md](references/HOW-TO-MAKE-AGENTS.md)   |
 | `ARCHITECTURE.md` | Root workspace                | Engineer, Tech Lead, agent   | *Layer boundaries and allowed dependencies* | 50–500 lines | [references/HOW-TO-MAKE-ARCHITECTURE.md](references/HOW-TO-MAKE-ARCHITECTURE.md) |
 | `CONTRIBUTING.md` | Root workspace                | New and existing contributor | *How to set up and ship a change*   | 50–500 lines | [references/HOW-TO-MAKE-CONTRIBUTING.md](references/HOW-TO-MAKE-CONTRIBUTING.md) |
+| `DESIGN.md`       | Root workspace (optional theme) | Design, Surface Engineer, TUI dev | *Visual & interaction contract*     | 50–500 lines | [references/HOW-TO-MAKE-DESIGN.md](references/HOW-TO-MAKE-DESIGN.md)         |
 
 **Code surface (doc comments)** — same Rules / Template / Section Contract / Verify shape:
 
@@ -159,6 +163,7 @@ project-root/
 ├── AGENTS.md       # operational guide (how the agent works here) — 1 per project
 ├── ARCHITECTURE.md # layer boundaries and allowed dependencies — 1 per project
 ├── CONTRIBUTING.md # contributor setup, contribution paths, PR gates — 1 per project
+├── DESIGN.md       # visual & interaction contract (optional theme) — 1 per project
 ├── crates|modules|packages/
 │   ├── feature-a/
 │   │   ├── src/
@@ -189,12 +194,13 @@ Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md
 8. **Draft AGENTS**: Write root `AGENTS.md` per [references/HOW-TO-MAKE-AGENTS.md](references/HOW-TO-MAKE-AGENTS.md).
 9. **Draft ARCHITECTURE**: Write root `ARCHITECTURE.md` per [references/HOW-TO-MAKE-ARCHITECTURE.md](references/HOW-TO-MAKE-ARCHITECTURE.md) — required when the workspace has more than one layer beyond shared.
 10. **Draft CONTRIBUTING**: Write root `CONTRIBUTING.md` per [references/HOW-TO-MAKE-CONTRIBUTING.md](references/HOW-TO-MAKE-CONTRIBUTING.md) — required when the repo accepts external contributions. One section per contribution path the project actually supports; delete the rest.
-11. **Document Code**: Add doc comments to all public items per language —
+11. **Draft DESIGN**: Write root `DESIGN.md` per [references/HOW-TO-MAKE-DESIGN.md](references/HOW-TO-MAKE-DESIGN.md) — optional; create it when the surface exposes visual tokens (colors, type scale, component anatomy).
+12. **Document Code**: Add doc comments to all public items per language —
    [references/HOW-TO-MAKE-PYTHON-DOC.md](references/HOW-TO-MAKE-PYTHON-DOC.md),
    [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md),
    [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md) —
    then add type annotations to all signatures.
-12. **Verify**: Run `aa check docs <path>`. Then each touched reference's `Verify` block (including the language doc ref).
+13. **Verify**: Run `aa check docs <path>`. Then each touched reference's `Verify` block (including the language doc ref).
 
 ---
 
