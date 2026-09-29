@@ -217,7 +217,13 @@ None
 /// Build a workspace whose only feature folder is a real feature, so AES702
 /// (folder health + docs, moved to structure-rules) does not fire.
 fn write_workspace(dir: &Path, frd: &str) {
-    let feature = dir.join("crates/sample");
+    write_workspace_in_layout("crates", dir, frd);
+}
+
+/// Build a workspace whose feature folder lives under *layout*
+/// (`crates` | `modules` | `packages`).
+fn write_workspace_in_layout(layout: &str, dir: &Path, frd: &str) {
+    let feature = dir.join(layout).join("sample");
     fs::create_dir_all(feature.join("src")).unwrap();
     fs::write(feature.join("FRD.md"), frd).unwrap();
     fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
@@ -1148,7 +1154,13 @@ Entry.
 /// there is more than one class, the last one moves to a second file so the
 /// count proves a module spreads its classes over many files.
 fn write_protocol_module(dir: &Path, traits: usize) {
-    let module = dir.join("crates/shared/src/sample");
+    write_protocol_module_in_layout("crates", dir, traits);
+}
+
+/// Write the shared contract module for the `sample` feature under *layout*
+/// (`crates` | `modules` | `packages`).
+fn write_protocol_module_in_layout(layout: &str, dir: &Path, traits: usize) {
+    let module = dir.join(layout).join("shared/src/sample");
     fs::create_dir_all(&module).unwrap();
     let split = traits > 1;
     let mut first = String::from("//! sample contract module\n\n");
@@ -1173,6 +1185,24 @@ fn write_protocol_module(dir: &Path, traits: usize) {
         )
         .unwrap();
     }
+}
+
+/// Write the shared contract module with one protocol class in the top file
+/// and one in a nested subdirectory, proving the counter walks
+/// subdirectories.
+fn write_nested_protocol_module(dir: &Path) {
+    let module = dir.join("crates/shared/src/sample");
+    fs::create_dir_all(module.join("nested")).unwrap();
+    fs::write(
+        module.join("contract_sample_protocol.rs"),
+        "//! sample contract module\n\npub trait ISample0Protocol: Send + Sync {}\n\npub trait ISampleAggregate: Send + Sync {}\n",
+    )
+    .unwrap();
+    fs::write(
+        module.join("nested/sub.rs"),
+        "//! nested sub-module\n\npub trait ISample1Protocol: Send + Sync {}\n",
+    )
+    .unwrap();
 }
 
 /// A FRD declaring *count* requirements, all structurally conforming.
@@ -1289,8 +1319,6 @@ fn aes607_stays_silent_when_the_feature_has_no_shared_contract_module() {
     assert!(
         !has(&findings, "AES601", "protocol_count_mismatch"),
         "a feature with no shared contract module cannot mismatch; got: {findings:#?}"
-    );
-}
 
 // ── Issue #341: DocFinding carries line and severity ─────────────────
 
@@ -1391,4 +1419,124 @@ fn violation_items_reach_the_sarif_path() {
         assert_eq!(restored.line, item.line);
         assert_eq!(restored.severity, item.severity);
     }
+}
+
+// ── AES601: alternate layouts, nested modules, and FR-ID casing ─────────
+
+#[test]
+fn aes607_fires_for_a_modules_layout_feature() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace_in_layout("modules", tmp.path(), &frd_with_fr_count(3));
+    write_protocol_module_in_layout("modules", tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "protocol_count_mismatch"),
+        "3 requirements against 2 protocol classes under modules/ must fire; \
+         got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_fires_for_a_packages_layout_feature() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace_in_layout("packages", tmp.path(), &frd_with_fr_count(3));
+    write_protocol_module_in_layout("packages", tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "protocol_count_mismatch"),
+        "3 requirements against 2 protocol classes under packages/ must fire; \
+         got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_stays_silent_for_aligned_counts_in_modules_layout() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace_in_layout("modules", tmp.path(), &frd_with_fr_count(2));
+    write_protocol_module_in_layout("modules", tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "protocol_count_mismatch"),
+        "aligned counts under modules/ must stay silent; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_counts_protocol_traits_in_nested_subdirectories() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Two requirements, two protocol classes — but one class sits in a
+    // nested subdirectory of the shared module. The recursive walk must
+    // count both, so the check stays silent.
+    write_workspace(tmp.path(), &frd_with_fr_count(2));
+    write_nested_protocol_module(tmp.path());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "protocol_count_mismatch"),
+        "nested protocol classes must be counted like top-level ones; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_fires_when_nested_traits_are_undercounted_by_the_doc() {
+    let tmp = tempfile::tempdir().unwrap();
+    // One requirement against two nested classes: the doc is the smaller
+    // side, so the mismatch fires in the "code has more" direction.
+    write_workspace(tmp.path(), &frd_with_fr_count(1));
+    write_nested_protocol_module(tmp.path());
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "protocol_count_mismatch"),
+        "1 requirement against 2 nested classes must fire; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_accepts_lower_case_feature_ids() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The shared FR-ID pattern accepts mixed case; a lowercase feature
+    // prefix must not fire `id_missing_feature_prefix` and must still be
+    // counted for parity.
+    let frd = conforming_frd().replace("FR-SAMPLE-", "fr-sample-");
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "id_missing_feature_prefix"),
+        "lowercase FR IDs are accepted by the shared pattern; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_counts_mixed_case_feature_ids_for_parity() {
+    let tmp = tempfile::tempdir().unwrap();
+    // `FrSample` is mixed case: the shared pattern accepts it, so the two
+    // headings are counted and 2 requirements against 2 classes stay
+    // aligned. If the pattern ever regressed to `[A-Z0-9]` only, the
+    // counter would report 0 requirements and this test would fire.
+    let frd = conforming_frd().replace("FR-SAMPLE-", "FR-FrSample-");
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "protocol_count_mismatch")
+            && !has(&findings, "AES601", "id_missing_feature_prefix"),
+        "mixed-case FR IDs are accepted and counted; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_root_level_frd_is_audited() {
+    let tmp = tempfile::tempdir().unwrap();
+    // A FRD at the workspace root is a valid feature (the repo dir is the
+    // feature name), so the parity check must still run. It has no shared
+    // contract module under any layout, so it stays silent.
+    write_workspace(tmp.path(), &frd_with_fr_count(1));
+    // Move the FRD to the root to simulate a root-level feature.
+    let root_frd = tmp.path().join("FRD.md");
+    fs::rename(tmp.path().join("crates/sample/FRD.md"), &root_frd).unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "protocol_count_mismatch"),
+        "a root-level FRD with no contract module must stay silent; got: {findings:#?}"
+    );
 }
