@@ -13,7 +13,7 @@ use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
 /// published tarball via `[package] include` in Cargo.toml.
 /// Regenerate this constant with `python3 tools/regenerate_skills.py` after
 /// adding, removing, or renaming a skill file.
-pub const EMBEDDED_SKILLS_COUNT: usize = 55;
+pub const EMBEDDED_SKILLS_COUNT: usize = 56;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
@@ -163,6 +163,15 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
         include_str!(concat!(
             env!("OUT_DIR"),
             "/skills/aes-docs/references/HOW-TO-MAKE-CONTRIBUTING.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/HOW-TO-MAKE-DESIGN.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md"
         )),
         None,
     ),
