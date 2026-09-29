@@ -1,4 +1,4 @@
-// PURPOSE: NotifyWatchProvider — IWatchStartProtocol + IWatchBroadcastProtocol + IWatchShutdownProtocol implementation using notify crate (inotify on Linux)
+// PURPOSE: NotifyWatchProvider — IWatchLifecycleProtocol implementation using notify crate (inotify on Linux)
 
 use std::sync::Mutex;
 use std::time::Duration;
@@ -7,9 +7,7 @@ use notify::{RecommendedWatcher, RecursiveMode};
 use notify_debouncer_mini::{DebouncedEventKind, new_debouncer};
 use shared::common::taxonomy_common_vo::BooleanVO;
 use shared::common::taxonomy_message_vo::LintMessage;
-use shared::file_watch::contract_watch_protocol::{
-    IWatchBroadcastProtocol, IWatchShutdownProtocol, IWatchStartProtocol,
-};
+use shared::file_watch::contract_watch_protocol::IWatchLifecycleProtocol;
 use shared::file_watch::taxonomy_file_watch_error::WatchServiceError;
 use shared::file_watch::taxonomy_file_watch_vo::WatchConfig;
 use shared::file_watch::taxonomy_file_watch_vo::WatchEvent;
@@ -29,7 +27,7 @@ pub struct NotifyWatchProvider {
 // Remove when protocol traits switch to native async fn in traits.
 
 #[async_trait::async_trait]
-impl IWatchStartProtocol for NotifyWatchProvider {
+impl IWatchLifecycleProtocol for NotifyWatchProvider {
     async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError> {
         let path_str = config.path.value();
         let path = std::path::Path::new(path_str);
@@ -99,17 +97,11 @@ impl IWatchStartProtocol for NotifyWatchProvider {
     async fn is_available(&self) -> BooleanVO {
         BooleanVO::new(cfg!(feature = "watch"))
     }
-}
 
-#[async_trait::async_trait]
-impl IWatchBroadcastProtocol for NotifyWatchProvider {
     fn subscribe(&self) -> broadcast::Receiver<WatchEvent> {
         self.tx.subscribe()
     }
-}
 
-#[async_trait::async_trait]
-impl IWatchShutdownProtocol for NotifyWatchProvider {
     async fn stop(&self) -> Result<(), WatchServiceError> {
         let mut guard = match self.watcher.lock() {
             Ok(guard) => guard,

@@ -1,4 +1,4 @@
-# FRD — external-lint (v1.12.0)
+# FRD — external-lint (v1.13.0)
 
 ---
 
@@ -72,7 +72,7 @@ flowchart TD
 ### FR-ExternalLint-002: Select Adapters by Language
 
 - **Description**: Based on detected languages, select the appropriate set of linter adapters to run.
-- **Input**: Booleans `has_rust`, `has_python`, `has_js`.
+- **Input**: Booleans `has_rust`, `has_python`, `has_js`, `has_markdown`.
 - **Output**: Ordered list of adapter names.
 - **Business Rules**:
 
@@ -210,65 +210,43 @@ flowchart TD
 
 ---
 
-### FR-ExternalLint-006: Execute Subprocess Commands
+## Utility Layer
 
-- **Description**: Run external linter tools as subprocesses with timeout, stdout/stderr capture, and error mapping.
-- **Input**: Command args, working directory (optional), timeout, adapter name.
-- **Output**: Subprocess result containing stdout, stderr, and return code.
-- **Business Rules**:
+The following utilities support the capabilities above. They are not business capabilities — they are standalone technical functions that capabilities depend on through protocol injection.
 
-  - Uses `std::process::Command` (blocking, thread-safe).
-  - Sets `PYTHONUNBUFFERED=1` environment variable for all subprocesses.
-  - Default timeout: 60 seconds per adapter for Python and JS tools.
-  - Rust adapters (Clippy, Rustfmt, cargo-audit) bypass the standard executor and use the command executor directly with longer timeouts: 180s for Clippy, 120s for Rustfmt and cargo-audit.
-  - Working directory set to the resolved project root for each adapter.
-  - Timeout exceeded → process killed, error returned.
-  - Command not found → error returned.
-  - Working directory is optional — if `None`, adapter is skipped with warning.
-- **Edge Cases**:
+### Utility: StdioClient (Subprocess Execution)
 
-  - Subprocess hangs beyond timeout → process terminated.
-  - Working directory doesn't exist → command fails with OS error.
-- **Error Handling**: Missing binary mapped to "tool not found" warning. Timeout mapped to error. Other OS errors mapped to generic adapter failure. All errors are per-adapter.
+- **Protocol**: `ICommandExecutorProtocol`
+- **File**: `capabilities_stdio_client.rs`
+- **Responsibility**: Spawns external linter tools as blocking subprocesses via `std::process::Command`, captures stdout/stderr, enforces timeouts, and maps errors.
+- **Timeouts**:
+  - Python/JS adapters: 60 seconds
+  - Rust adapters (Clippy): 180 seconds
+  - Rust adapters (Rustfmt, cargo-audit): 120 seconds
+- **Environment**: Sets `PYTHONUNBUFFERED=1` on all subprocesses.
+- **Called by**: All adapter implementations (`ESLintAdapter`, `RustLinterAdapter`, `RuffAdapter`, etc.) via the injected `ICommandExecutorProtocol` dependency.
 
----
+### Utility: JS Tool Path Resolver
 
-### FR-ExternalLint-007: Resolve JS Tool Paths
+- **Protocol**: `IJsToolResolutionProtocol`
+- **File**: `capabilities_external_lint_executor.rs` (delegates to `IToolResolutionProtocol`)
+- **Responsibility**: Resolves JS/TS tool binaries, preferring local `node_modules/.bin/<tool>` over global PATH installations.
+- **Workflow**:
+  1. Check `node_modules/.bin/<tool>` in the resolved working directory.
+  2. If local binary exists, use its absolute path.
+  3. Otherwise fall back to global PATH resolution.
+  4. Resolve working directory by walking up to 10 parent directories looking for config files (`.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, `package.json`).
+- **Called by**: `ESLintAdapter`, `PrettierAdapter`, `TSCAdapter` via injected `IJsToolResolutionProtocol`.
 
-- **Description**: For JS/TS tools, prefer local `node_modules/.bin/` binaries over global installations.
-- **Input**: Tool name, arguments, working directory.
-- **Output**: Resolved command with full path.
-- **Business Rules**:
+### Utility: Cargo Working Directory Resolver
 
-  - Check `node_modules/.bin/<tool>` in working directory first.
-  - If local binary exists, use its absolute path.
-  - If not, fall back to global PATH resolution.
-  - Working directory resolved by walking up to 10 parent directories looking for config files (`.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, `package.json`).
-  - Nearest config file wins.
-- **Edge Cases**:
-
-  - Local `node_modules/.bin/` doesn't exist → falls back to global.
-  - Multiple config files in parent hierarchy → nearest one wins.
-  - No config file found in 10 levels → use original working directory.
-- **Error Handling**: Missing tools result in error at execution time.
-
----
-
-### FR-ExternalLint-008: Resolve Cargo Working Directory
-
-- **Description**: For Rust tools (clippy, rustfmt, cargo-audit), find the directory containing `Cargo.toml` or `Cargo.lock`.
-- **Input**: Target path.
-- **Output**: Resolved working directory, or none if not found.
-- **Business Rules**:
-
-  - Walk up directory tree looking for `Cargo.toml` (for clippy/rustfmt) or `Cargo.lock` (for cargo-audit).
-  - If found → return the directory.
-  - If not found → return none. Caller skips adapter with warning.
-- **Edge Cases**:
-
-  - Monorepo with multiple `Cargo.toml` → nearest ancestor wins.
-  - Path is a file → check parent directory first.
-- **Error Handling**: None return causes caller to skip adapter with warning.
+- **Protocol**: `ICargoDirProtocol`
+- **File**: `capabilities_external_lint_executor.rs` (delegates to `IToolResolutionProtocol`)
+- **Responsibility**: Finds the directory containing `Cargo.toml` or `Cargo.lock` for Rust tool execution.
+- **Workflow**:
+  1. Walk up directory tree looking for `Cargo.toml` (for clippy/rustfmt) or `Cargo.lock` (for cargo-audit).
+  2. Return the directory if found; caller skips adapter with a warning if not found.
+- **Called by**: `RustLinterAdapter` (clippy), `RustFmtAdapter` (rustfmt), `CargoAuditAdapter` via injected `ICargoDirProtocol`.
 
 ---
 
@@ -280,8 +258,6 @@ flowchart TD
 |---|---|---|---|---|---|
 | `scan` | &FilePath | `LintResultList` | `LinterOperationError` | — | Scan. |
 | `apply_fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
-| `execute_command` | PatternList, FilePath, Option<Timeout> | `anyhow::Result<ResponseData>` | — | — | Execute command. |
-| `health_check` | — | `anyhow::Result<ResponseData>` | — | — | Health check. |
 | `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan. |
 | `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter. |
 | `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix. |
@@ -328,13 +304,13 @@ flowchart TD
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
-- **Language Detection & Adapter Selection** — e.g. Rust-only project → Only clippy, rustfmt, cargo-audit run
-- **Adapter Execution** — e.g. Adapter binary not installed → Warning printed, other adapters continue
-- **Auto-Fix** — e.g. ESLint fix → `eslint --fix` executed
-- **Normalization** — e.g. Clippy `correctness` lint → Severity CRITICAL, code `clippy::<name>`
-- **Tool Path Resolution** — e.g. JS tool found in node_modules/.bin → Local binary used
+- **SCEN-001 — Language Detection** — e.g. Rust-only project → Only clippy, rustfmt, cargo-audit run
+- **SCEN-002 — Adapter Selection** — e.g. Multi-language project → All 10 adapters selected
+- **SCEN-003 — Scan Execution** — e.g. One adapter fails → Other adapters still run
+- **SCEN-004 — Auto-Fix** — e.g. ESLint fix → `eslint --fix` executed
+- **SCEN-005 — Normalization** — e.g. Clippy `correctness` lint → Severity CRITICAL, code `clippy::<name>`
 
-### Language Detection & Adapter Selection
+### SCEN-001 — Language Detection
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -346,7 +322,14 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | Empty directory | No adapters run, empty result list |
 | 7 | Single .rs file path | Only Rust adapters run |
 
-### Adapter Execution
+### SCEN-002 — Adapter Selection
+
+| # | Scenario | Expected |
+| - | - | - |
+| 1 | No languages detected | Empty adapter list |
+| 2 | All languages detected | 10 adapters selected |
+
+### SCEN-003 — Scan Execution
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -358,7 +341,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | Timeout exceeded | Adapter returns error, others continue |
 | 7 | Sequential execution | Adapters run one after another |
 
-### Auto-Fix
+### SCEN-004 — Auto-Fix
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -370,7 +353,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | TSC/MyPy/Bandit/audit fix | No-op (no auto-fix capability) |
 | 7 | markdownlint fix | `markdownlint --fix` executed |
 
-### Normalization
+### SCEN-005 — Normalization
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -383,16 +366,6 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 7 | markdownlint `MD041` | Severity MEDIUM, code `markdownlint::MD041` |
 | 8 | Tool produces invalid JSON | Empty results, warning logged |
 | 9 | Relative file path in tool output | Canonicalized to absolute path |
-
-### Tool Path Resolution
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | JS tool found in node_modules/.bin | Local binary used |
-| 2 | JS tool not found locally | Global PATH fallback used |
-| 3 | JS tool not found anywhere | Error at execution |
-| 4 | Cargo.toml found in parent directory | Cargo tools use that directory |
-| 5 | No Cargo.toml in hierarchy | Adapter skipped with warning |
 
 ---
 
@@ -419,5 +392,6 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Tool-native code**: Rule identifier using the original tool's naming (e.g., `clippy::needless_return`, `ruff::E501`)
 - **Subprocess**: External process spawned via `std::process::Command` to run a linter tool
 - **Auto-fix**: Running an external tool's native fix command to automatically correct violations
+- **Utility**: A stateless, reusable technical function (e.g., subprocess execution, path resolution) that capabilities depend on but is not itself a business capability
 
 ---

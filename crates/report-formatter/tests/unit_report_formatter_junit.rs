@@ -4,7 +4,7 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::xml_escape;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IFormatDelegationProtocol;
+
 use shared::report_formatter::IJUnitFormatProtocol;
 
 fn result(code: &str, sev: Severity, message: &str) -> LintResult {
@@ -139,10 +139,15 @@ fn direct_format_junit_slice_works() {
 }
 
 #[test]
-fn mismatched_format_falls_back_to_default() {
+fn junit_formatter_returns_valid_xml() {
     let report = ScanReport::new(vec![], vec![]);
-    let out = JunitFormatter::new().format(&report, Format::Json);
-    assert!(out.value().contains("Violations: 0"));
+    let out = JunitFormatter::new().format_junit(&report);
+    // JUnit formatter always outputs XML, never plain text
+    assert!(
+        out.value()
+            .starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+    );
+    assert!(out.value().contains("</testsuites>"));
 }
 
 #[test]

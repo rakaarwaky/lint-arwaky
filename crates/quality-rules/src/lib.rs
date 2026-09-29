@@ -2,6 +2,8 @@
 
 pub mod capabilities_mandatory_definition_checker;
 pub use capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
+pub mod capabilities_dead_inheritance_checker;
+pub use capabilities_dead_inheritance_checker::DeadInheritanceChecker;
 pub mod capabilities_line_checker;
 pub use capabilities_line_checker::ArchLineChecker;
 pub mod capabilities_check_bypass_checker;

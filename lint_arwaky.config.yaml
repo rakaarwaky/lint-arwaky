@@ -444,7 +444,6 @@ architecture:
         - capabilities_hook_adapter
         - capabilities_hook_manager
         - capabilities_maintenance_checker
-        - capabilities_naming_checker
         - capabilities_setup_processor
         - capabilities_mandatory_definition_checker
         - capabilities_json_formatter

@@ -76,7 +76,7 @@ impl GitDiffDataVO {
     }
 }
 
-/// One ignore-rule update request passed to `IIgnoreRuleProtocol::update_ignore_rule`.
+/// One ignore-rule update request passed to `IConfigInitProtocol::update_ignore_rule`.
 /// Mirrors the previous `(rule: &str, remove: bool, config_path: &str)`
 /// positional signature but uses VOs.
 #[derive(Debug, Clone)]

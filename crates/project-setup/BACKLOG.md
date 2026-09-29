@@ -3,14 +3,14 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-09-17
+Last Updated: 2026-09-29
 
 ## Current Condition
 
-- Done: `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17). Per-scenario evidence below.
+- Done: `cargo nextest run --workspace --lib --tests` → 2035 passed at `72d98f50` (2026-09-29). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
-- Next Action: Re-run `cargo test -p project_setup --lib --tests` after any code change to this crate
+- Next Action: Re-run `cargo nextest run --workspace --lib --tests` after any code change to this crate
 
 ## Backlog
 
@@ -75,8 +75,8 @@ None
 
 | Area | Status | Notes |
 |---|---|---|
-| Tests | Done | `cargo test -p project_setup --lib --tests` → 0 failures at `29c71083` (2026-09-17) |
-| Scenario evidence | Done | 34 scenarios mapped; all Automated via `cargo test -p project_setup` |
+| Tests | Done | `cargo nextest run --workspace --lib --tests` → 2035 passed at `72d98f50` (2026-09-29) |
+| Scenario evidence | Done | 34 scenarios mapped; all Automated via `cargo nextest run --workspace` |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
@@ -87,4 +87,5 @@ None
 
 | Date | Change | By |
 |---|---|---|
+| 2026-09-29 | Split multi-protocol SetupManagementProcessor into 3 single-protocol capability structs (AES403); moved utility_project_setup_file_helpers to shared crate (AES404); updated FRD to 4 capability FRs only | @raka |
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |

@@ -77,18 +77,13 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::auto_fix::ISymbolRenameProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixPipelineProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IManualReportProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchStartProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchBroadcastProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchShutdownProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::ILintableFilterProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IEventDedupProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchLifecycleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeFilterProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffDetectionProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookInstallProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookUninstallProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookCheckProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffDataProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IIgnoreRuleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IConfigInitProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IDoctorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
@@ -112,9 +107,7 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IJsonFormatProtocol>();
     assert_trait::<dyn shared_lint_arwaky::report_formatter::ISarifFormatProtocol>();
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IJUnitFormatProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::report_formatter::IFormatDelegationProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::report_formatter::IDefaultReportFallbackProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::report_formatter::IXmlEscapeProtocol>();
+    // removed — routing in agent layer
     assert_trait::<dyn shared_lint_arwaky::project_setup::IAdapterInstallationProtocol>();
     assert_trait::<dyn shared_lint_arwaky::project_setup::IConfigTemplateProtocol>();
     assert_trait::<dyn shared_lint_arwaky::project_setup::IConfigWritingProtocol>();

@@ -13,10 +13,10 @@ use std::sync::Arc;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
+use shared::external_lint::ICommandExecutorProtocol;
+use shared::external_lint::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
@@ -256,7 +256,7 @@ fn all_adapters_coerce_to_dyn_protocol() {
         ));
 }
 
-// ─── Contract: StdioClient implements ICommandExecutorProtocol ──
+// ─── Contract: StdioClient implements ICommandExecutorProtocol (utility) ──
 
 #[test]
 fn stdio_client_implements_command_executor_protocol() {
@@ -330,7 +330,7 @@ fn orchestrator_implements_aggregate_protocol() {
     assert!(names.is_empty());
 }
 
-// ─── Contract: ExternalLintExecutor implements ICargoDirProtocol (FR-008) ──
+// ─── Contract: ExternalLintExecutor implements ICargoDirProtocol (utility) ──
 
 #[test]
 fn external_lint_executor_implements_cargo_dir_protocol() {
@@ -387,7 +387,7 @@ fn output_normalizer_implements_protocol() {
     assert_eq!(warns.len(), 1);
 }
 
-// ─── Contract: ExternalLintExecutor implements IJsToolResolutionProtocol (FR-007) ──
+// ─── Contract: ExternalLintExecutor implements IJsToolResolutionProtocol (utility) ──
 
 #[test]
 fn external_lint_executor_implements_js_resolution_protocol() {

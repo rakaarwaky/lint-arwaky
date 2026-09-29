@@ -1,6 +1,7 @@
 use crate::agent_quality_orchestrator::{CodeAnalysisDeps, CodeAnalysisOrchestrator};
 use crate::capabilities_check_bypass_checker::BypassChecker;
 use crate::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
+use crate::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
 use crate::capabilities_line_checker::ArchLineChecker;
 use crate::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 use shared::quality_rules::{
@@ -33,6 +34,7 @@ impl CodeAnalysisContainer {
 
     pub fn new_with_config(config: ArchitectureConfig, layer_map: LayerMapVO) -> Self {
         let mandatory = Arc::new(MandatoryDefinitionChecker::new());
+        let dead_inheritance = Arc::new(DeadInheritanceChecker::new());
         let bypass = config
             .rules
             .iter()
@@ -44,7 +46,7 @@ impl CodeAnalysisContainer {
         )));
         let deps = CodeAnalysisDeps {
             bypass_checker: Arc::new(bypass) as Arc<dyn IBypassCheckerProtocol>,
-            dead_inheritance_checker: mandatory.clone() as Arc<dyn IDeadInheritanceProtocol>,
+            dead_inheritance_checker: dead_inheritance as Arc<dyn IDeadInheritanceProtocol>,
             line_checker: Arc::new(ArchLineChecker {}) as Arc<dyn ILineCheckerProtocol>,
             class_checker: mandatory as Arc<dyn IMandatoryClassProtocol>,
             duplication_checker: dup_checker as Arc<dyn ICodeMetricAnalyzerProtocol>,
