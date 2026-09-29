@@ -124,34 +124,36 @@ fn conforming_roadmap() -> &'static str {
 
 ## Current Condition
 
-Everything is green.
+- Todo: none
+- In Progress: None
+- Blocked: None
 
-## State Definitions
+## Feature Roll-up
 
-| State | Meaning |
-| --- | --- |
-| Done | Shipped. |
+| ID | Item |
+|---|---|
+| WS-1 | Docs. |
 
 ## Status Policy
 
 A row is Done with a command.
 
-## Feature Roll-up
+## State Definitions
 
-| ID | Item |
-| --- | --- |
-| WS-1 | Docs. |
+| State | Meaning |
+|---|---|
+| Done | Shipped. |
 
-## Branches in Flight
+## Health Definitions
 
-| Branch | State |
-| --- | --- |
-| none | — |
+| Health | Meaning |
+|---|---|
+| On Track | No threat. |
 
 ## Risk Register
 
 | Risk | Mitigation |
-| --- | --- |
+|---|---|
 | None | — |
 "
 }
