@@ -252,15 +252,17 @@ fn write_agents_workspace(dir: &Path) {
     fs::write(
         dir.join("AGENTS.md"),
         "# Sample AGENTS.md\n\n\
+## Project Overview\n\nLint Arwaky.\n\n\
 ## Precedence\n\n1. Safety rules.\n\n\
+## Build & dev\n\n```bash\ncargo build\n```\n\n\
 ## Security\n\n- Explicit approval is required before destructive actions.\n\n\
 ## Architecture\n\nSee [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.\n\n\
-## Contributing\n\nSetup and code style live in [CONTRIBUTING.md](CONTRIBUTING.md).\n\n\
-## License\n\nMIT. See [LICENSE](LICENSE).\n\n\
-## Git Workflow\n\nEvery change must use a worktree or branch.\n\n\
 ## Commands\n\n```bash\ncargo nextest run --workspace\n```\n\n\
-## Definition of Done\n\nA change is done when tests pass.\n\n\
-## Related Documents\n\n- [PRD.md](PRD.md): Product requirements.\n",
+## Git Workflow\n\nEvery change must use a worktree or branch.\n\n\
+## Branch Management\n\nUse `main` and `develop`.\n\n\
+## Skills\n\n`.agents/skills/` holds skill definitions.\n\n\
+## Quality gates\n\nRun `bash scripts/gates.sh`.\n\n\
+## Definition of Done\n\nA change is done when tests pass.\n",
     )
     .unwrap();
 }
@@ -625,7 +627,7 @@ fn aes605_fires_when_required_h2_is_absent() {
 ## Security\n\n- Be safe.\n\n\
 ## Git Workflow\n\nUse a worktree.\n\n\
 ## Commands\n\n```bash\ntrue\n```\n\n\
-## Related Documents\n\n- [PRD.md](PRD.md).\n",
+",
     );
     let findings = audit(tmp.path());
     assert!(has(&findings, "AES605", "h2_missing"));
@@ -697,8 +699,8 @@ Tests pass.
 }
 
 #[test]
-fn aes605_fires_when_architecture_or_contributing_or_license_is_absent() {
-    // Removing any of the three newest required sections must fire h2_missing.
+fn aes605_fires_when_architecture_or_project_overview_is_absent() {
+    // Removing any of the newest required sections must fire h2_missing.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -713,9 +715,9 @@ fn aes605_fires_when_architecture_or_contributing_or_license_is_absent() {
 
 - Be safe.
 
-## License
+## Project Overview
 
-MIT. See [LICENSE](LICENSE).
+Lint Arwaky.
 
 ## Git Workflow
 
@@ -730,16 +732,12 @@ true
 ## Definition of Done
 
 Tests pass.
-
-## Related Documents
-
-- [PRD.md](PRD.md).\
 ",
     );
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES605", "h2_missing"),
-        "missing Architecture and Contributing should fire; got: {findings:#?}"
+        "missing Architecture and Build & dev should fire; got: {findings:#?}"
     );
     let message = findings
         .iter()
@@ -747,7 +745,7 @@ Tests pass.
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("Architecture") && message.contains("Contributing"),
+        message.contains("Architecture") && message.contains("Build"),
         "message must name both missing sections; got: {message}"
     );
 }
