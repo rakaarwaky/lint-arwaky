@@ -11,6 +11,7 @@ pub mod surface_shortcut_component;
 pub mod surface_status_component;
 pub mod surface_tree_view;
 pub mod surface_tui_command;
+pub mod surface_tui_orchestrator;
 pub mod utility_file_system;
 pub mod utility_report_formatter;
 pub mod utility_tui_theme;

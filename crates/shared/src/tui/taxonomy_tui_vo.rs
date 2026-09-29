@@ -316,6 +316,8 @@ pub struct AppState {
     pub scan_cancel: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
     /// Destructive action awaiting user confirmation (I5 confirm gate).
     pub pending_confirm: Option<ConfirmState>,
+    /// Preview mode that was active before opening the help overlay (restored on close).
+    pub last_preview_mode: Option<PreviewMode>,
     /// Current phase description shown during scanning (e.g. "AES checks").
     pub scan_phase: String,
     /// Number of files processed so far.
@@ -361,6 +363,7 @@ impl AppState {
             action_result_rx: None,
             scan_cancel: None,
             pending_confirm: None,
+            last_preview_mode: None,
             scan_phase: String::new(),
             scan_files_done: 0,
             scan_files_total: 0,

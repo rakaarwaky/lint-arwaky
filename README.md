@@ -47,6 +47,17 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 
 Exit codes: `0` Ok · `1` policy fail · `2` runtime error · `3` prerequisite missing.
 
+### TUI
+
+An interactive terminal UI with file browser, lint results preview, search, and keyboard-driven lint actions.
+
+```bash
+lint-arwaky-tui              # start TUI
+NO_COLOR=1 lint-arwaky-tui   # ASCII fallback for light terminals
+```
+
+Key bindings: `c` check, `s` scan, `f` fix dry-run, `F` fix live (gated), `/` search, `?` help overlay. Press `r` to change project root. Destructive actions (`F`, `H`, `U`) require explicit confirmation.
+
 ## AES Rules (29)
 
 Six groups: **Naming** AES101–102, **Import** AES201–205, **Quality** AES301–305, **Role** AES401–406, **Orphan** AES501–506, and **Folder Structure** AES701–705. Full definitions: [RULES_AES.md](RULES_AES.md). External linter results use tool-native codes (e.g. `clippy::needless_return`) and are reported alongside the 29 AES rules.
