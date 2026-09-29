@@ -11,6 +11,7 @@ use shared::common::FilePath;
 use shared::config_system::IConfigOrchestratorAggregate;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
+use shared::structure_rules::IStructureAggregate;
 
 use crate::utility_output_text_formatter::output_violations;
 
@@ -96,6 +97,18 @@ pub struct DocsCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
     pub doc_orchestrator: Arc<dyn shared::doc_rules::IDocRunnerAggregate>,
+}
+
+/// Parameters for the `structure` command.
+pub struct StructureCommandParams {
+    pub path: Option<FilePath>,
+    pub format: Format,
+    pub structure_orchestrator: Arc<dyn IStructureAggregate>,
+    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub filesystem: Arc<dyn IFilesystemAggregate>,
+    pub filesystem_seam: FilesystemSeam,
+    pub filter: Option<String>,
+    pub ignored_paths: Vec<String>,
 }
 
 fn resolve_root(path: &Option<FilePath>) -> String {
@@ -329,6 +342,28 @@ pub fn handle_external(params: ExternalCommandParams) -> ExitCode {
         &params.ignored_paths,
     ) {
         Ok(violations) => {
+            output_violations(&violations, &root, params.format, false);
+            exit_for(violations.len())
+        }
+        Err(e) => {
+            error!(error = %e, "operation failed");
+            ExitCode::RUNTIME_ERROR
+        }
+    }
+}
+
+/// `structure` — folder-layout audit (AES701–AES703).
+pub fn handle_structure(params: StructureCommandParams) -> ExitCode {
+    let root = resolve_root(&params.path);
+    match dispatcher::surface_structure_action::collect_structure(
+        &root,
+        params.structure_orchestrator,
+    ) {
+        Ok(mut violations) => {
+            if let Some(ref filter_str) = params.filter {
+                let filter_upper = filter_str.to_uppercase();
+                violations.retain(|v| v.code.code().contains(&filter_upper));
+            }
             output_violations(&violations, &root, params.format, false);
             exit_for(violations.len())
         }
