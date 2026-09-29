@@ -1,0 +1,27 @@
+# DATA — Shared
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md)
+
+## Data Overview
+
+The shared kernel manages cross-cutting value objects, constants, and contracts
+used by all feature and surface folders. It holds no business logic — only
+types, utilities, and interface definitions that other layers depend on.
+
+## Value Objects
+
+| ID | Field | Type | Description |
+|---|---|---|---|
+| DO-001 | Severity | vo | Lint finding severity level (error/warning/info) |
+| DO-002 | ViolationItem | entity | Canonical representation of a single architecture violation |
+| DO-003 | StructureFinding | vo | Structural violation found during folder layout audit |
+| DO-004 | DocFinding | vo | Documentation invariant violation |
+
+## Assumptions & Constraints
+
+- The shared folder is a dependency sink — no other layer may import from features or surfaces.
+- Value object field names are stable; renaming requires updating all consumers.
+- Severity ranks must remain contiguous integers starting from zero.

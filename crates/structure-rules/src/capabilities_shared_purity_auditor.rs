@@ -85,26 +85,40 @@ fn check_shared_purity(
     }
 }
 
-/// AES701 kernel check: a shared/kernel folder must not carry a doc pair at all.
+/// AES701 kernel check: a shared/kernel folder must carry DATA.md + BACKLOG.md.
 fn check_shared_has_docs(
     folder: &std::path::Path,
     rel: &str,
     findings: &mut Vec<StructureFinding>,
 ) {
-    let has_frd = folder.join(consts::FRD_DOC).is_file();
-    let has_backlog = folder.join(consts::BACKLOG_DOC).is_file();
-    if !has_frd && !has_backlog {
-        return;
+    let missing = missing_docs(folder, consts::SHARED_DOC_PAIR);
+    if !missing.is_empty() {
+        findings.push(StructureFinding::new(
+            consts::RULE_CODE_SHARED_PURITY,
+            consts::SHARED_PURITY_VIOLATION_NO_DOC_PAIR,
+            rel.to_string(),
+            format!(
+                "shared folder '{rel}' is missing {}; a shared folder carries {} beside its source",
+                missing.join(" and "),
+                consts::SHARED_DOC_PAIR.join(" and "),
+            ),
+        ));
     }
-    findings.push(StructureFinding::new(
-        consts::RULE_CODE_SHARED_PURITY,
-        consts::SHARED_PURITY_VIOLATION_HAS_DOCS,
-        rel,
-        format!("kernel folder '{rel}' must not carry a doc pair; move it to a feature folder"),
-    ));
 }
 
 /// Strip the trailing underscore from a layer prefix for prose.
 fn layer_label(prefix: &str) -> String {
     prefix.trim_end_matches('_').to_string()
+}
+
+/// Which of *names* do not sit directly in *folder*. A folder's documents sit
+/// beside its source, so this reads one level rather than walking.
+fn missing_docs<'a>(folder: &std::path::Path, names: &'a [&'a str]) -> Vec<&'a str> {
+    let mut missing: Vec<&'a str> = names
+        .iter()
+        .copied()
+        .filter(|name| !folder.join(name).is_file())
+        .collect();
+    missing.sort_unstable();
+    missing
 }

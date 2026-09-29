@@ -95,18 +95,22 @@ fn check_surface_folder(
         ));
     }
 
-    // Docs: DESIGN.md required.
-    let names: [&str; 1] = [consts::SURFACE_DOC];
-    let missing = missing_docs(folder, &names);
+    // Docs: DESIGN.md + BACKLOG.md required.
+    let names = consts::SURFACE_DOC_PAIR;
+    let missing = missing_docs(folder, names);
     if !missing.is_empty() {
         findings.push(StructureFinding::new(
             consts::RULE_CODE_SURFACE_PURITY,
-            consts::SURFACE_PURITY_VIOLATION_NO_DESIGN,
+            if names.contains(&consts::DESIGN_DOC) && missing.contains(&consts::DESIGN_DOC) {
+                consts::SURFACE_PURITY_VIOLATION_NO_DESIGN
+            } else {
+                consts::SURFACE_PURITY_VIOLATION_NO_BACKLOG
+            },
             folder_rel.to_string(),
             format!(
-                "surface folder '{folder_rel}' is missing {}; a surface folder carries a {} recording its kind, entry points, and visible states",
+                "surface folder '{folder_rel}' is missing {}; a surface folder carries {} recording its kind, entry points, and visible states",
                 missing.join(" and "),
-                consts::SURFACE_DOC,
+                names.join(" and "),
             ),
         ));
     }

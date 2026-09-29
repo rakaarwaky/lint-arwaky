@@ -83,6 +83,7 @@ pub const PRD_DOC: &str = "PRD.md";
 pub const ROADMAP_DOC: &str = "ROADMAP.md";
 pub const FRD_DOC: &str = "FRD.md";
 pub const BACKLOG_DOC: &str = "BACKLOG.md";
+pub const DATA_DOC: &str = "DATA.md";
 pub const README_DOC: &str = "README.md";
 pub const AGENTS_DOC: &str = "AGENTS.md";
 pub const ARCHITECTURE_DOC: &str = "ARCHITECTURE.md";
@@ -103,7 +104,7 @@ pub const MASTER_ONLY_SECTIONS: &[&str] = &[
 /// A folder is a feature folder only when it holds an orchestrator.
 pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";
 
-/// Kernel folders are not features and carry no doc pair.
+/// Kernel folders are not features and carry DATA.md + BACKLOG.md.
 pub const KERNEL_DIR: &str = "shared";
 
 /// Per-crate section order for `##` headings, per HOW-TO-MAKE-FRD.
@@ -331,6 +332,16 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Release Readiness",
             "Deferred",
             "Change Log",
+        ],
+        &[],
+    ),
+    (
+        DATA_DOC,
+        &[
+            "Reference",
+            "Data Overview",
+            "Value Objects",
+            "Assumptions & Constraints",
         ],
         &[],
     ),
