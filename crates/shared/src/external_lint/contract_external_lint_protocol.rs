@@ -93,10 +93,17 @@ pub trait INormalizeProtocol: Send + Sync {
     ) -> Severity;
 }
 
-/// FR-ExternalLint-006: execute an external linter tool as a subprocess with
-/// timeout, stdout/stderr capture, and error mapping. Raw execution returns
-/// `anyhow` errors; the `exec_cmd_*` forms map a failure onto the scan or
-/// adapter error the caller expects.
+// ─── Utility Protocols ──────────────────────────────────────
+// These protocol traits define the technical seams for utility implementations
+// (StdioClient, JS/Cargo path resolvers). They live in the contract module
+// because AES404 forbids trait definitions in the utility layer, and the
+// `_protocol` suffix is contract-layer-only (AES102). Capability adapters
+// depend on them via dependency injection.
+
+/// Utility: execute an external linter tool as a subprocess with timeout,
+/// stdout/stderr capture, and error mapping.
+///
+/// Implemented by StdioClient (utility layer).
 pub trait ICommandExecutorProtocol: Send + Sync {
     /// Run a command and return stdout, stderr, and return code.
     fn execute_command(
@@ -129,7 +136,7 @@ pub trait ICommandExecutorProtocol: Send + Sync {
     ) -> Result<ResponseData, LinterOperationError>;
 }
 
-/// FR-ExternalLint-007: resolve JS/TS tool paths, preferring local
+/// Utility: resolve JS/TS tool paths, preferring local
 /// `node_modules/.bin/<tool>` binaries over global PATH installations. Also
 /// resolves the working directory by walking up for the nearest config file,
 /// and runs a JS tool's native fix command over the resolved path.
@@ -157,7 +164,7 @@ pub trait IJsToolResolutionProtocol: Send + Sync {
     ) -> Result<ComplianceStatus, LinterOperationError>;
 }
 
-/// FR-ExternalLint-008: find the directory containing `Cargo.toml` or
+/// Utility: find the directory containing `Cargo.toml` or
 /// `Cargo.lock` for a given target path, used by Rust adapters.
 pub trait ICargoDirProtocol: Send + Sync {
     /// Resolve the directory containing the nearest `Cargo.toml` (or

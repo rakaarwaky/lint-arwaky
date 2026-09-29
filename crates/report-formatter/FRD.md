@@ -1,4 +1,4 @@
-# FRD — report-formatter (v1.12.0)
+# FRD — report-formatter (v1.14.0)
 
 ---
 
@@ -11,7 +11,7 @@
 
 ## System Overview
 
-The report-formatter crate provides formatting capabilities for scan report output. It implements the report formatter protocol for each output format (text, JSON, SARIF, JUnit) and exposes the report formatter aggregate via the orchestrator for the surface layer to consume. The surface layer never formats output directly — it always delegates through the aggregate trait.
+The report-formatter crate provides formatting capabilities for scan report output. It has exactly four capabilities, one per output format (text, JSON, SARIF, JUnit), each implementing a dedicated protocol trait. The agent orchestrator routes requests through the aggregate by matching on `Format` and calling the specific protocol method directly — no delegation seam exists.
 
 All formatters are **self-contained** — they operate solely on `ScanReport` data and do not depend on other rule crates.
 
@@ -22,10 +22,10 @@ flowchart TD
     A["Surface"] -->|input| B["ReportFormatterOrchestrator\n(IReportFormatterAggregate)"]
     B --> C{"format type"}
 
-    C -->|"Text"| D["TextFormatter"]
-    C -->|"JSON"| E["JsonFormatter"]
-    C -->|"SARIF"| F["SarifFormatter"]
-    C -->|"JUnit"| G["JunitFormatter"]
+    C -->|"Text"| D["TextFormatter\n(ITextFormatProtocol)"]
+    C -->|"JSON"| E["JsonFormatter\n(IJsonFormatProtocol)"]
+    C -->|"SARIF"| F["SarifFormatter\n(ISarifFormatProtocol)"]
+    C -->|"JUnit"| G["JunitFormatter\n(IJUnitFormatProtocol)"]
 
     D --> H["DisplayContent"]
     E --> H
@@ -58,7 +58,7 @@ flowchart TD
 ### FR-ReportFormatter-001: Text Format Output
 
 - **Description**: Produce human-readable text output with severity badges and violation details.
-- **Input**: `ScanReport`, `Format::Text`.
+- **Input**: `ScanReport`.
 - **Output**: `DisplayContent` containing formatted text string.
 - **Business Rules**:
 
@@ -83,7 +83,7 @@ flowchart TD
 ### FR-ReportFormatter-002: JSON Format Output
 
 - **Description**: Produce pretty-printed JSON output for CI/CD integration.
-- **Input**: `ScanReport`, `Format::Json`.
+- **Input**: `ScanReport`.
 - **Output**: `DisplayContent` containing pretty-printed JSON string.
 - **Business Rules**:
 
@@ -102,7 +102,7 @@ flowchart TD
 ### FR-ReportFormatter-003: SARIF 2.1.0 Format Output
 
 - **Description**: Produce SARIF 2.1.0 JSON format for IDE integration and GitHub Code Scanning.
-- **Input**: `ScanReport`, `Format::Sarif`.
+- **Input**: `ScanReport`.
 - **Output**: `DisplayContent` containing SARIF 2.1.0 JSON string.
 - **Business Rules**:
 
@@ -134,7 +134,7 @@ flowchart TD
 ### FR-ReportFormatter-004: JUnit XML Format Output
 
 - **Description**: Produce JUnit XML format for CI/CD test report integration.
-- **Input**: `ScanReport`, `Format::Junit`.
+- **Input**: `ScanReport`.
 - **Output**: `DisplayContent` containing JUnit XML string.
 - **Business Rules**:
 
@@ -155,67 +155,24 @@ flowchart TD
 
 ---
 
-### FR-ReportFormatter-005: Format Delegation (Orchestrator)
+## Utility Layer
 
-- **Description**: Route formatting request to the appropriate capabilities formatter based on `Format` enum.
-- **Input**: `ScanReport`, `Format`.
-- **Output**: `DisplayContent`.
-- **Business Rules**:
+The only utility in this feature is `xml_escape`, embedded directly in the JUnit formatter capability.
 
-  - Text format → text formatter.
-  - JSON format → JSON formatter.
-  - SARIF format → SARIF formatter.
-  - JUnit format → JUnit formatter.
-  - Each formatter implements the report formatter protocol.
-  - Orchestrator holds an `Arc<dyn IReportFormatterProtocol>` for each format.
-  - All formatters are self-contained — no dependency on other rule crates.
-- **Edge Cases**:
+### Utility: XML Escape
 
-  - Unknown format variant → exhaustive match ensures compile-time safety.
-- **Error Handling**: None — dispatch is infallible.
-
----
-
-### FR-ReportFormatter-006: Default Report Fallback
-
-- **Description**: Produce a simple text summary when the requested format doesn't match the formatter's supported format.
-- **Input**: `ScanReport`.
-- **Output**: `String` containing summary text.
-- **Business Rules**:
-
-  - Header: "Lint Arwaky Report".
-  - Shows violation count, diagnostic count, and score (if available).
-  - Groups violations by code, sorted by count (descending).
-  - Shows diagnostics with source, severity, and message.
-- **Edge Cases**:
-
-  - Empty results → "Violations: 0".
-  - No score in report → score line omitted.
-  - No diagnostics → diagnostics section omitted.
-- **Error Handling**: None — pure function.
-
----
-
-### FR-ReportFormatter-007: XML Escape Utility
-
-- **Description**: Escape special XML characters for safe inclusion in JUnit XML output.
-- **Input**: `&str`.
-- **Output**: `String` with escaped characters.
-- **Business Rules**:
-
+- **File**: `capabilities_junit_formatter.rs` (free function `xml_escape`)
+- **Responsibility**: Escapes special XML characters for safe inclusion in JUnit XML output.
+- **Mapping**:
   - `&` → `&amp;`
   - `<` → `&lt;`
   - `>` → `&gt;`
   - `"` → `&quot;`
   - `'` → `&apos;`
-  - All other characters passed through unchanged.
+- **Called by**: `JunitFormatter` (FR-004) for all text content in `<failure>`, `<testcase>`, and `<skipped>` elements.
 - **Edge Cases**:
-
   - Empty string → empty output.
   - No special characters → string unchanged.
-- **Error Handling**: None — pure function.
-
----
 
 ## API Contract
 
@@ -223,8 +180,11 @@ flowchart TD
 
 | Method | Input | Output | Error | Event | Description |
 |---|---|---|---|---|---|
-| `format` | &ScanReport, Format | `DisplayContent` | — | — | Format. |
-| `supported_format` | — | `Format` | — | — | Supported format. |
+| `format_text` | &ScanReport | `DisplayContent` | — | — | FR-001: Text output. |
+| `format_json` | &ScanReport | `DisplayContent` | — | — | FR-002: JSON output. |
+| `format_sarif` | &ScanReport | `DisplayContent` | — | — | FR-003: SARIF output. |
+| `format_junit` | &ScanReport | `DisplayContent` | — | — | FR-004: JUnit output. |
+| `supported_format` | — | `Format` | — | — | The single format each formatter serves. |
 
 ### Aggregate API
 
@@ -238,8 +198,8 @@ flowchart TD
 | `shared` crate | in | Supply the taxonomy value objects, the formatter protocol and aggregate contracts, and the JSON and SARIF value objects | A value object is missing at compile time → the build fails before any format is produced |
 | JSON serialization library | in | Serialize the JSON and SARIF outputs | Serialization fails on a value → the failure is reported and no partial document is emitted |
 | Report formatter protocol | out (internal) | Define the shape each format implementation satisfies | A formatter does not satisfy the protocol → it is not registered and the format is reported as unavailable |
-| Report formatter aggregate | out (internal) | Route a report to the formatter for the requested format | An unknown format is requested → an invalid-argument error is returned instead of a default rendering |
-| `Format` enum | out (internal) | Name the supported output formats | A format is added to the enum without a registered implementation → the format is rejected at selection time |
+| Report formatter aggregate | out (internal) | Route a report to the formatter for the requested format | An unknown format variant is impossible at compile time — exhaustive match on `Format` enum |
+| `Format` enum | out (internal) | Name the supported output formats | A format is added to the enum without a registered implementation → the build fails |
 
 ## Non-functional Requirements
 | Metric | Target | Measurement method |
@@ -251,7 +211,6 @@ flowchart TD
 | JSON conformance | Output is valid and pretty-printed | Parse generated JSON and assert it round-trips and is indented |
 | Thread safety | Every formatter is `Send + Sync` | Assert the bound at compile time and share one formatter across threads in a test |
 | Extensibility | A new format is added by implementing the protocol and adding an enum variant | Add a format in a test branch and assert selection routes to it without touching the orchestrator |
-| Format selection | An unknown format is rejected at selection time | Request an unregistered format and assert an invalid-argument error rather than a default rendering |
 
 ## Test Scenarios / QA Checklist
 
@@ -261,7 +220,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-002 — JSON Format** — e.g. Normal report → Valid pretty-printed JSON
 - **SCEN-003 — SARIF Format** — e.g. Normal report → Valid SARIF 2.1.0 with tool metadata
 - **SCEN-004 — JUnit Format** — e.g. Normal violations → `<failure>` elements present
-- **SCEN-005–FR-ReportFormatter-007 — Orchestrator, Fallback, XML Escape** — e.g. Orchestrator routes Text → Text formatter invoked
+- **SCEN-005 — Orchestrator Routing** — e.g. Orchestrator routes Text → Text formatter invoked directly
 
 ### SCEN-001 — Text Format
 
@@ -312,20 +271,16 @@ FRD Ref: FR-ReportFormatter-004
 | 5 | Test/failure counts | Match actual results |
 | 6 | Empty results | Valid XML with 0 tests, 0 failures |
 
-### SCEN-005–FR-ReportFormatter-007 — Orchestrator, Fallback, XML Escape
+### SCEN-005 — Orchestrator Routing
 
-FRD Ref: FR-ReportFormatter-005, FR-ReportFormatter-006, FR-ReportFormatter-007
+FRD Ref: FR-001 through FR-004 via `IReportFormatterAggregate`
 
 | # | Scenario | Expected |
 | - | - | - |
-| 1 | Orchestrator routes Text | Text formatter invoked |
-| 2 | Orchestrator routes JSON | JSON formatter invoked |
-| 3 | Orchestrator routes SARIF | SARIF formatter invoked |
-| 4 | Orchestrator routes JUnit | JUnit formatter invoked |
-| 5 | Default fallback with violations | Counts by code, sorted descending |
-| 6 | Default fallback empty | "Violations: 0" |
-| 7 | XML escape all 5 characters | All escaped correctly |
-| 8 | XML escape normal text | Unchanged |
+| 1 | Orchestrator routes Text | `format_text` called on TextFormatter |
+| 2 | Orchestrator routes JSON | `format_json` called on JsonFormatter |
+| 3 | Orchestrator routes SARIF | `format_sarif` called on SarifFormatter |
+| 4 | Orchestrator routes JUnit | `format_junit` called on JunitFormatter |
 
 ---
 
@@ -333,12 +288,13 @@ FRD Ref: FR-ReportFormatter-005, FR-ReportFormatter-006, FR-ReportFormatter-007
 
 - All formatters are infallible — they cannot return errors (only display content).
 - `ScanReport` is the single input type for all formatters.
-- Format routing is determined at compile time via exhaustive match on `Format` enum.
+- Format routing is determined at compile time via exhaustive match on `Format` enum inside the agent orchestrator.
 - All formatters are self-contained — no dependency on other rule crates.
 - SARIF output uses the OASIS SARIF 2.1.0 schema.
 - JUnit XML follows the standard JUnit schema compatible with CI/CD parsers.
 - `ScanReport` contains AES violations, external lint results (tool-native codes), and diagnostics (PARSE_WARN). All formatters handle all three categories.
 - No async runtime dependency.
+- Exactly 4 capability FRs → 4 protocol traits → 4 capability structs. No delegation protocol exists.
 
 ---
 
@@ -354,5 +310,6 @@ FRD Ref: FR-ReportFormatter-005, FR-ReportFormatter-006, FR-ReportFormatter-007
 - **Report Formatter Aggregate**: Interface for the orchestrator that routes to the correct formatter
 - **PARSE_WARN**: Non-AES warning for files that failed to parse. May appear as `LintResult` (code `PARSE_*`) in `report.results` or as `PipelineDiagnostic` in `report.diagnostics`.
 - **Tool-native code**: External linter rule identifier (e.g., `clippy::needless_return`, `ruff::E501`)
+- **Utility**: A stateless, reusable technical function (e.g., XML escaping, default formatting) that capabilities depend on but is not itself a business capability
 
 ---

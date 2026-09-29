@@ -35,7 +35,7 @@ use std::path::Path;
 use std::sync::Arc;
 use tracing::debug;
 
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

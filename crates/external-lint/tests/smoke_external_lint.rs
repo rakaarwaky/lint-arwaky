@@ -16,9 +16,9 @@ use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::ICommandExecutorProtocol;
+use shared::external_lint::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
@@ -138,9 +138,8 @@ fn smoke_all_adapters_created_quickly() {
     let start = Instant::now();
 
     let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
-    let cmd_exec: Arc<
-        dyn shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol,
-    > = Arc::new(MockCmdExecutor);
+    let cmd_exec: Arc<dyn shared::external_lint::ICommandExecutorProtocol> =
+        Arc::new(MockCmdExecutor);
     let _fs: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::new());
     let tr: Arc<dyn shared::filesystem::IToolResolutionProtocol> = Arc::new(MockFilesystem::new());
