@@ -3,6 +3,7 @@ pub mod contract_naming_runner_aggregate;
 pub mod taxonomy_naming_constant;
 pub mod taxonomy_naming_request;
 pub mod taxonomy_naming_response;
+pub mod utility_naming_checker;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

@@ -1,8 +1,8 @@
 // Unit tests — format_report_default utility (FR-006): simple text summary fallback.
-use report_formatter_lint_arwaky::utility_report_format::format_report_default;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{ErrorCode, Severity};
+use shared::report_formatter::utility_report_format::format_report_default;
 
 #[test]
 fn empty_report_shows_zero_counts() {

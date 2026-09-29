@@ -63,10 +63,8 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | Code   | Name               | Severity | Group     | Description                                                                                |
 | -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
 | AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                  |
-| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file.                 |
-| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*` or `agent_*` file.                                |
-| AES704 | Feature Folder Docs  | MEDIUM   | Structure | A feature folder lacks its `FRD.md` + `BACKLOG.md` doc pair.                               |
-| AES705 | Surface Folder Docs  | MEDIUM   | Structure | A surface folder lacks its `DESIGN.md`.                                                    |
+| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, or lacks its doc pair.                                  |
+| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*` or `agent_*` file, or lacks DESIGN.md.                               |
 
 ---
 
@@ -595,24 +593,3 @@ A surface folder is a folder where surface files dominate — it has more surfac
 
 ---
 
-### AES704 — Feature Folder Docs
-
-**Severity:** MEDIUM
-
-A feature folder documents itself. A folder carrying the layer files of a feature — capabilities, an orchestrator, or both — also carries the two documents beside its source: `FRD.md` saying what the feature does, and `BACKLOG.md` saying where its work stands. A folder holding neither is a feature nobody can read before changing. A folder carrying no capabilities and no orchestrator is not a feature and owes no doc pair.
-
-| Violation type            | Fires when                                                                       |
-| --------------------------- | ---------------------------------------------------------------------------------- |
-| `feature_missing_doc_pair` | A feature folder holds capabilities or an orchestrator but lacks `FRD.md` or `BACKLOG.md`. |
-
----
-
-### AES705 — Surface Folder Docs
-
-**Severity:** MEDIUM
-
-A surface folder documents itself. The source of a surface says what the surface does; `DESIGN.md` says what it looks like, which entry points reach it, and which states a user sees. A folder that is surface-dominated but carries no `DESIGN.md` leaves the next reader inferring the surface's shape from its handlers.
-
-| Violation type            | Fires when                                                              |
-| --------------------------- | ------------------------------------------------------------------------- |
-| `surface_missing_design_md` | A surface-dominated folder carries no `DESIGN.md`.                      |

@@ -1,9 +1,9 @@
-use crate::utility_orphan_filename::file_stem;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_layer_detector;
 use shared::orphan_rules::contract_orphan_protocol::ITaxonomyOrphanProtocol;
+use shared::orphan_rules::utility_orphan_filename::file_stem;
 use shared::quality_rules::taxonomy_analysis_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };

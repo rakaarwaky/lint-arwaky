@@ -8,7 +8,7 @@ use shared::doc_rules::taxonomy_doc_constant as consts;
 use shared::doc_rules::taxonomy_doc_request::{DocFinding, DocRequest, DocSource};
 use shared::doc_rules::taxonomy_doc_response::DocResponse;
 
-use crate::utility_protocol_counter::{count_fr_headings, count_protocol_traits};
+use shared::doc_rules::utility_protocol_counter::{count_fr_headings, count_protocol_traits};
 
 use std::collections::BTreeSet;
 use std::fs;

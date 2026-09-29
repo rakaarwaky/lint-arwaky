@@ -177,7 +177,11 @@ impl FilesystemOrchestrator {
             .map(|entries| {
                 entries
                     .iter()
-                    .map(|e| crate::utility_container_wiring::path_to_relative(&e.path, &top_root))
+                    .map(|e| {
+                        shared::filesystem::utility_container_wiring::path_to_relative(
+                            &e.path, &top_root,
+                        )
+                    })
                     .collect()
             })
             .unwrap_or_default();
@@ -187,8 +191,10 @@ impl FilesystemOrchestrator {
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
         for imp in &imports {
-            let src_rel =
-                crate::utility_container_wiring::path_to_relative(&imp.source_file, &top_root);
+            let src_rel = shared::filesystem::utility_container_wiring::path_to_relative(
+                &imp.source_file,
+                &top_root,
+            );
             let target_file =
                 self.resolve_import_target(imp, &src_rel, &top_root, &all_files_set, &stem_index);
             let mut entry = imp.clone();
@@ -201,7 +207,9 @@ impl FilesystemOrchestrator {
                         .push(tgt_rel.clone());
                     if tgt_rel.ends_with(".rs") {
                         if let Some(lib_path) =
-                            crate::utility_import_resolution::derive_crate_lib_rs(tgt_rel)
+                            shared::filesystem::utility_import_resolution::derive_crate_lib_rs(
+                                tgt_rel,
+                            )
                         {
                             if all_files_set.contains(lib_path.as_str()) && lib_path != src_rel {
                                 forward.entry(src_rel.clone()).or_default().push(lib_path);
@@ -222,7 +230,11 @@ impl FilesystemOrchestrator {
                 (
                     k.clone(),
                     v.iter()
-                        .map(|p| crate::utility_container_wiring::path_to_relative(p, &top_root))
+                        .map(|p| {
+                            shared::filesystem::utility_container_wiring::path_to_relative(
+                                p, &top_root,
+                            )
+                        })
                         .collect(),
                 )
             })
@@ -231,7 +243,7 @@ impl FilesystemOrchestrator {
         // P2: contract → capabilities bridge (reverse index, issue #193).
         // For every trait/interface/base, wire its defining (contract) file to each
         // implementor so BFS that reaches a contract also reaches its capabilities.
-        crate::utility_container_wiring::add_impl_bridge_edges(
+        shared::filesystem::utility_container_wiring::add_impl_bridge_edges(
             &top_root,
             self.deps.graph.symbol_definitions(),
             self.deps.graph.implementations(),
@@ -241,7 +253,7 @@ impl FilesystemOrchestrator {
         // P1: Container-aware wiring — resolve each *_container.* file's used identifiers
         // against the workspace symbol table and add synthetic edges container →
         // referenced file, so BFS that reaches the container reaches its DI services.
-        crate::utility_container_wiring::add_container_wiring_edges(
+        shared::filesystem::utility_container_wiring::add_container_wiring_edges(
             &all_files,
             &top_root,
             self.deps.graph.symbol_definitions(),
@@ -249,12 +261,12 @@ impl FilesystemOrchestrator {
             &mut forward,
         );
 
-        crate::utility_container_wiring::add_lib_rs_edges(&all_files, &mut forward);
+        shared::filesystem::utility_container_wiring::add_lib_rs_edges(&all_files, &mut forward);
 
         // Build the reverse (inbound) link map only after all synthetic edges
         // (impl bridges, container wiring, lib.rs) have been added, so taxonomy
         // and utility analyzers see the same inbound links the surfaces analyzer does.
-        let reverse = crate::utility_container_wiring::build_reverse_index(&forward);
+        let reverse = shared::filesystem::utility_container_wiring::build_reverse_index(&forward);
         GraphAnalysisContext::new(
             ImportGraph::new(forward),
             InboundLinkMap::new(reverse),
@@ -507,9 +519,9 @@ impl FilesystemOrchestrator {
                 None
             }
         } else if imp.resolved_path.is_some() {
-            imp.resolved_path
-                .as_ref()
-                .map(|p| crate::utility_container_wiring::path_to_relative(p, top_root))
+            imp.resolved_path.as_ref().map(|p| {
+                shared::filesystem::utility_container_wiring::path_to_relative(p, top_root)
+            })
         } else {
             let raw = &imp.raw_path;
             let src_dir = Path::new(src_rel)
@@ -536,7 +548,7 @@ impl FilesystemOrchestrator {
                     None
                 }
             } else {
-                crate::utility_import_resolution::resolve_by_language(
+                shared::filesystem::utility_import_resolution::resolve_by_language(
                     imp,
                     &src_dir,
                     src_rel,
@@ -586,23 +598,25 @@ impl FilesystemOrchestrator {
             .copied()
             .collect();
         let scanned: Vec<PathBuf> =
-            crate::utility_workspace_detection::discover_source_files(&abs_root, &ignored)
-                .into_iter()
-                .map(PathBuf::from)
-                .filter(|p| {
-                    if member_dirs.is_empty() {
-                        return true;
-                    }
-                    if let Ok(rel) = p.strip_prefix(&abs_root) {
-                        let rel_str = rel.to_string_lossy();
-                        member_dirs
-                            .iter()
-                            .any(|d| rel_str.starts_with(&format!("{}/", d)))
-                    } else {
-                        true
-                    }
-                })
-                .collect();
+            shared::filesystem::utility_workspace_detection::discover_source_files(
+                &abs_root, &ignored,
+            )
+            .into_iter()
+            .map(PathBuf::from)
+            .filter(|p| {
+                if member_dirs.is_empty() {
+                    return true;
+                }
+                if let Ok(rel) = p.strip_prefix(&abs_root) {
+                    let rel_str = rel.to_string_lossy();
+                    member_dirs
+                        .iter()
+                        .any(|d| rel_str.starts_with(&format!("{}/", d)))
+                } else {
+                    true
+                }
+            })
+            .collect();
         let mut entries = Vec::new();
         let mut all_imports = Vec::new();
         for path in &scanned {

@@ -7,12 +7,12 @@
 // and the comment strippers that keep the fallback scan from reading prose —
 // live here and are shared by all three.
 
-use shared::common::taxonomy_language_info_vo::LanguageInfo;
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use crate::common::taxonomy_language_info_vo::LanguageInfo;
+use crate::common::taxonomy_language_vo::Language;
+use crate::common::taxonomy_lint_result_vo::LintResult;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_severity_vo::Severity;
+use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
 
 /// The rule code every AES404 utility finding carries.
 ///

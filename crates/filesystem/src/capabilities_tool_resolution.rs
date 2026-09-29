@@ -2,10 +2,10 @@
 // Implements IToolResolutionProtocol by delegating to utility_tool_resolution stateless functions.
 // 3-block structure per AES skill.
 
-use crate::utility_tool_resolution;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_tool_resolution;
 use std::path::Path;
 
 // ─── Block 1: Struct Definition ───────────────────────────

@@ -152,8 +152,6 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES701 | Shared folder purity                   | ✓   | ✓     | ✓    |
 | AES702 | Feature folder health                  | ✓   | ✓     | ✓    |
 | AES703 | Surface folder purity                  | ✓   | ✓     | ✓    |
-| AES704 | Feature folder docs                    | ✓   | ✓     | ✓    |
-| AES705 | Surface folder docs                    | ✓   | ✓     | ✓    |
 
 ### 3.3 Negative Tests (must produce 0 violations)
 

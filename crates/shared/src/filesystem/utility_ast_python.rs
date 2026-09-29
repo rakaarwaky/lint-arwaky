@@ -3,7 +3,7 @@
 //
 // Utility: pure functions, no struct, no trait impl
 
-use shared::filesystem::taxonomy_filesystem_vo::{PythonClassItem, PythonFnItem, PythonMetadata};
+use crate::filesystem::taxonomy_filesystem_vo::{PythonClassItem, PythonFnItem, PythonMetadata};
 
 fn text_of(node: tree_sitter::Node, content: &str) -> String {
     content[node.byte_range()].to_string()
@@ -102,7 +102,7 @@ pub fn extract_python_metadata(tree: &tree_sitter::Tree, content: &str) -> Pytho
 /// let tree = parser.parse(source, None).unwrap();
 /// ```
 ///
-/// See `shared::filesystem::taxonomy_filesystem_vo::PythonMetadata` for the
+/// See `crate::filesystem::taxonomy_filesystem_vo::PythonMetadata` for the
 /// shape of the returned metadata.
 fn collect_python_class(node: tree_sitter::Node, content: &str, meta: &mut PythonMetadata) {
     let name = child_by_field(node, content, "name").unwrap_or_default();

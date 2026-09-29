@@ -120,12 +120,12 @@ run_gate "Self-Lint (check .)" bash -c '
 ' &
 SELF_LINT_PID=$!
 
-run_gate "False Negatives (workspaces-bad >= 29)" bash -c '
+run_gate "False Negatives (workspaces-bad >= 27)" bash -c '
     codes_rust=$($CLI scan workspaces-bad/crates 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     codes_python=$($CLI scan workspaces-bad/modules 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     codes_ts=$($CLI scan workspaces-bad/packages 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     echo "  Rust: ${codes_rust:-0} codes, Python: ${codes_python:-0} codes, TS: ${codes_ts:-0} codes"
-    [ "${codes_rust:-0}" -ge 29 ] && [ "${codes_python:-0}" -ge 29 ] && [ "${codes_ts:-0}" -ge 29 ]
+    [ "${codes_rust:-0}" -ge 27 ] && [ "${codes_python:-0}" -ge 27 ] && [ "${codes_ts:-0}" -ge 27 ]
 ' &
 FN_PID=$!
 

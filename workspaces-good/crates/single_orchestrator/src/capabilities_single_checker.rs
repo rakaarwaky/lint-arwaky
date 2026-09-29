@@ -1,4 +1,4 @@
-use crate::contract_single_protocol::ISingleCheckerProtocol;
+use calculator_shared::single_orchestrator::contract_single_protocol::ISingleCheckerProtocol;
 use calculator_shared::taxonomy_single_request::SingleRequest;
 use calculator_shared::taxonomy_single_response::SingleResponse;
 

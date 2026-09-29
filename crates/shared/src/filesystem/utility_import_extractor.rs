@@ -6,7 +6,7 @@
 // Language-specific extraction: Rust, Python, TypeScript, JavaScript
 // Accepts optional pre-parsed Tree to avoid double parsing (P2.2)
 
-use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
+use crate::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
 use std::path::Path;
 
 fn text_of(node: tree_sitter::Node, content: &str) -> String {

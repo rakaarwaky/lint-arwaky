@@ -212,8 +212,8 @@ None
 "
 }
 
-/// Build a workspace whose only feature folder is a real feature, so AES704
-/// (folder doc-pair check, moved to structure-rules) does not fire.
+/// Build a workspace whose only feature folder is a real feature, so AES702
+/// (folder health + docs, moved to structure-rules) does not fire.
 fn write_workspace(dir: &Path, frd: &str) {
     let feature = dir.join("crates/sample");
     fs::create_dir_all(feature.join("src")).unwrap();
@@ -512,6 +512,7 @@ None\n\n\
     assert!(has(&audit(tmp.path()), "AES604", "state_vocab_restated"));
 }
 
+#[test]
 fn prose_only_documents_are_audited_for_purity() {
     let tmp = tempfile::tempdir().unwrap();
     write_workspace(tmp.path(), &conforming_frd());

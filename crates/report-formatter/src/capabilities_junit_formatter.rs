@@ -1,11 +1,11 @@
 // PURPOSE: JunitFormatter — implements IJUnitFormatProtocol, IFormatDelegationProtocol
 // and IXmlEscapeProtocol for JUnit XML output (FR-004, FR-005, FR-007)
-use crate::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::IJUnitFormatProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::IXmlEscapeProtocol;
+use shared::report_formatter::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.

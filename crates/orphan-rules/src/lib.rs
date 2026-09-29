@@ -6,5 +6,3 @@ pub mod capabilities_orphan_surfaces_analyzer;
 pub mod capabilities_orphan_taxonomy_analyzer;
 pub mod capabilities_orphan_utility_analyzer;
 pub mod root_orphan_detector_container;
-pub mod utility_orphan_filename;
-pub mod utility_orphan_graph;

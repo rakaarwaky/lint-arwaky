@@ -50,8 +50,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         fs_factory: deps.fs_factory,
         orphan_factory: deps.orphan_factory,
         parse_config_yaml,
-        parse_adapter_names: config_system::utility_config_parser::parse_adapter_names_from_yaml,
-        parse_score_threshold: config_system::utility_config_parser::parse_score_threshold,
+        parse_adapter_names:
+            shared::config_system::utility_config_parser::parse_adapter_names_from_yaml,
+        parse_score_threshold: shared::config_system::utility_config_parser::parse_score_threshold,
         server_version: dispatcher::surface_version_action::collect_version().version,
     };
 

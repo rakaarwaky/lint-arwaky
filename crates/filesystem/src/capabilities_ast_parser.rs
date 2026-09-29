@@ -73,7 +73,9 @@ impl IParserProtocol for ASTParser {
                     .map(|symbol| {
                         let mut single = entry.clone();
                         single.symbols = vec![symbol.clone()];
-                        crate::utility_barrel_resolution::resolve_single_import(single, root_dir)
+                        shared::filesystem::utility_barrel_resolution::resolve_single_import(
+                            single, root_dir,
+                        )
                     })
                     .collect();
 
@@ -83,9 +85,11 @@ impl IParserProtocol for ASTParser {
                     resolved.push(entry);
                 }
             } else {
-                resolved.push(crate::utility_barrel_resolution::resolve_single_import(
-                    entry, root_dir,
-                ));
+                resolved.push(
+                    shared::filesystem::utility_barrel_resolution::resolve_single_import(
+                        entry, root_dir,
+                    ),
+                );
             }
         }
 
@@ -154,7 +158,7 @@ impl ASTParser {
                         let has_errors = tree.root_node().has_error();
 
                         // Extract imports using the tree directly — no clone needed.
-                        let imports = crate::utility_import_extractor::extract_imports(
+                        let imports = shared::filesystem::utility_import_extractor::extract_imports(
                             &entry.path,
                             &entry.content,
                             entry.language,
@@ -232,25 +236,28 @@ fn extract_metadata_from_tree(
     language: Language,
 ) -> ParseMetadata {
     match language {
-        Language::Rust => ParseMetadata::Rust(crate::utility_ast_rust::extract_rust_metadata(
-            tree, content,
-        )),
+        Language::Rust => ParseMetadata::Rust(
+            shared::filesystem::utility_ast_rust::extract_rust_metadata(tree, content),
+        ),
         Language::Python => {
-            let mut meta = crate::utility_ast_python::extract_python_metadata(tree, content);
+            let mut meta =
+                shared::filesystem::utility_ast_python::extract_python_metadata(tree, content);
             meta.used_identifiers =
-                crate::utility_ast_python::extract_python_identifiers(tree, content);
+                shared::filesystem::utility_ast_python::extract_python_identifiers(tree, content);
             ParseMetadata::Python(meta)
         }
         Language::TypeScript => {
-            let mut meta = crate::utility_ast_typescript::extract_ts_metadata(tree, content);
+            let mut meta =
+                shared::filesystem::utility_ast_typescript::extract_ts_metadata(tree, content);
             meta.used_identifiers =
-                crate::utility_ast_typescript::extract_ts_identifiers(tree, content);
+                shared::filesystem::utility_ast_typescript::extract_ts_identifiers(tree, content);
             ParseMetadata::TypeScript(meta)
         }
         Language::JavaScript => {
-            let mut meta = crate::utility_ast_typescript::extract_ts_metadata(tree, content);
+            let mut meta =
+                shared::filesystem::utility_ast_typescript::extract_ts_metadata(tree, content);
             meta.used_identifiers =
-                crate::utility_ast_typescript::extract_ts_identifiers(tree, content);
+                shared::filesystem::utility_ast_typescript::extract_ts_identifiers(tree, content);
             ParseMetadata::JavaScript(meta)
         }
         Language::Unknown => ParseMetadata::Unknown,
@@ -262,7 +269,7 @@ impl ASTParser {
     /// Uses Arc clone (refcount bump) instead of deep-copying the tree.
     fn extract_imports(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
         let tree = self.asts.get(path).map(|r| Arc::clone(r.value()));
-        crate::utility_import_extractor::extract_imports(
+        shared::filesystem::utility_import_extractor::extract_imports(
             path,
             content,
             language,

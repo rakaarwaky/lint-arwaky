@@ -3,9 +3,6 @@
 // ── Capabilities (stateful check logic) ──
 pub mod capabilities_naming_checker;
 
-// ── Utility (stateless helpers) ──
-pub mod utility_naming_checker;
-
 // ── Agent (orchestration) ──
 pub mod agent_naming_orchestrator;
 

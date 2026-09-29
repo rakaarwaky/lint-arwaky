@@ -1,12 +1,20 @@
-// PURPOSE: structure invariant rule codes, violation types, and folder vocabulary for AES701–AES705
+// PURPOSE: structure invariant rule codes, violation types, and folder vocabulary for AES701–AES703
 
-/// ─── AES701 — Shared folder purity ──────────────────────────────────────────
+/// ─── AES701 — Shared folder rules ───────────────────────────────────────────
+/// `shared/` is the kernel: taxonomy, utility, and contract files only.
+/// A doc pair (FRD+BACKLOG) in shared fires this rule.
 pub const RULE_CODE_SHARED_PURITY: &str = "AES701";
 
 /// A shared folder holds a file whose layer does not belong there.
 pub const SHARED_PURITY_VIOLATION_FORBIDDEN_FILES: &str = "shared_has_forbidden_files";
 
-/// ─── AES702 — Feature folder health ─────────────────────────────────────────
+/// A shared (kernel) folder carries a doc pair; it must be empty of docs.
+pub const SHARED_PURITY_VIOLATION_HAS_DOCS: &str = "shared_has_docs";
+
+/// ─── AES702 — Feature folder rules ──────────────────────────────────────────
+/// A feature folder holds capabilities + agent orchestrator, carries no
+/// foreign layer files (utility, surface, taxonomy, contract), and
+/// documents itself with FRD.md + BACKLOG.md beside its source.
 pub const RULE_CODE_FEATURE_HEALTH: &str = "AES702";
 
 /// A feature folder holds capabilities but no agent orchestrator.
@@ -15,33 +23,31 @@ pub const FEATURE_HEALTH_VIOLATION_MISSING_AGENT: &str = "feature_missing_agent"
 /// A feature folder holds an agent orchestrator but no capability.
 pub const FEATURE_HEALTH_VIOLATION_MISSING_CAPABILITY: &str = "feature_missing_capability";
 
-/// ─── AES703 — Surface folder purity ─────────────────────────────────────────
+/// A feature folder holds a file from a foreign layer (utility, surface, taxonomy, contract).
+pub const FEATURE_HEALTH_VIOLATION_FORBIDDEN_FILES: &str = "feature_has_forbidden_files";
+
+/// A feature folder lacks its FRD.md + BACKLOG.md doc pair.
+pub const FEATURE_HEALTH_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair";
+
+/// A folder carries a doc pair but holds no orchestrator; reverse-direction check.
+pub const FEATURE_HEALTH_VIOLATION_REVERSE_MISSING_ORCHESTRATOR: &str =
+    "doc_pair_without_orchestrator";
+
+/// ─── AES703 — Surface folder rules ─────────────────────────────────────────
+/// A surface-dominated folder carries surface files only (plus permitted
+/// utility/root/barrel support) and records its shape in DESIGN.md.
 pub const RULE_CODE_SURFACE_PURITY: &str = "AES703";
 
 /// A surface folder holds a capabilities or agent file that belongs in a feature folder.
 pub const SURFACE_PURITY_VIOLATION_MISPLACED_FILES: &str = "surface_has_misplaced_files";
 
-/// ─── AES704 — Feature folder docs (forward + reverse) ──────────────────────
-/// Forward: a folder with capabilities or an orchestrator must carry FRD.md + BACKLOG.md.
-/// Reverse: a folder that carries FRD.md + BACKLOG.md must also carry at least one
-/// *_orchestrator file. Applied to every folder under crates/modules/packages.
-/// Kernel (shared/) is rejected: it must not carry a doc pair at all.
-pub const RULE_CODE_FEATURE_DOCS: &str = "AES704";
+/// A surface-dominated folder carries no DESIGN.md.
+pub const SURFACE_PURITY_VIOLATION_NO_DESIGN: &str = "surface_missing_design_md";
 
-pub const FEATURE_DOCS_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair";
-pub const FEATURE_DOCS_REVERSE_ORCHESTRATOR_MISSING: &str = "doc_pair_without_orchestrator";
-pub const FEATURE_DOCS_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
-
-/// Doc filenames referenced by AES704, so structure-rules can check their
+/// Doc filenames referenced by AES702, so structure-rules can check their
 /// presence without importing the doc-rules constants.
 pub const FRD_DOC: &str = "FRD.md";
 pub const BACKLOG_DOC: &str = "BACKLOG.md";
-
-/// ─── AES705 — Surface folder docs ────────────────────────────────────────────
-pub const RULE_CODE_SURFACE_DOCS: &str = "AES705";
-
-/// A surface-dominated folder carries no DESIGN.md.
-pub const SURFACE_DOCS_VIOLATION_NO_DESIGN: &str = "surface_missing_design_md";
 
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// The shared folder name, locked across every language member.
@@ -50,11 +56,11 @@ pub const KERNEL_DIR: &str = "shared";
 /// The workspace member directories that hold feature folders.
 pub const MEMBER_DIRS: &[&str] = &["crates", "modules", "packages"];
 
-/// Layer prefixes a shared folder accepts.
-pub const SHARED_ALLOWED_PREFIXES: &[&str] = &["taxonomy_", "utility_", "contract_"];
-
 /// Layer prefixes a shared folder rejects.
 pub const SHARED_FORBIDDEN_PREFIXES: &[&str] = &["capabilities_", "agent_", "surface_"];
+
+/// Layer prefixes forbidden in a feature folder: they belong in shared or a surface folder.
+pub const FEATURE_FORBIDDEN_PREFIXES: &[&str] = &["utility_", "surface_", "taxonomy_", "contract_"];
 
 /// The agent orchestrator suffix that marks a feature folder.
 pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";

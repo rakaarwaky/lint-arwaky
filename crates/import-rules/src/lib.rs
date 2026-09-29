@@ -16,8 +16,3 @@ pub mod capabilities_import_forbidden_checker;
 pub mod capabilities_import_mandatory_checker;
 pub mod capabilities_import_unused_checker;
 pub mod root_import_rules_container;
-pub mod utility_cycle_detector;
-pub mod utility_dummy_detector;
-pub mod utility_import_module_parser;
-pub mod utility_import_resolver;
-pub mod utility_import_symbol_extractor;

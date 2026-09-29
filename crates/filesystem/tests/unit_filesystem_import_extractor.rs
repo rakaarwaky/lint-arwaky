@@ -3,8 +3,8 @@
 // The module-scope binding must be the alias (`z` in `from x import y as z`),
 // not the original name, so usage analysis can resolve it.
 
-use filesystem_lint_arwaky::utility_import_extractor::extract_imports;
 use shared::filesystem::taxonomy_filesystem_vo::Language;
+use shared::filesystem::utility_import_extractor::extract_imports;
 use std::path::PathBuf;
 
 fn symbols_of(content: &str, language: Language) -> Vec<String> {

@@ -5,7 +5,7 @@
 //   - add_impl_bridge_edges      (contract → capabilities synthetic edges)
 //   - add_container_wiring_edges (container → wired-service synthetic edges)
 
-use filesystem_lint_arwaky::utility_container_wiring::{
+use shared::filesystem::utility_container_wiring::{
     add_container_wiring_edges, add_impl_bridge_edges, path_to_relative,
 };
 use std::collections::HashMap;

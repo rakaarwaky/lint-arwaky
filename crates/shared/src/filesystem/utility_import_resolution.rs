@@ -1,7 +1,7 @@
 // PURPOSE: Resolve external crate/package imports to file paths within a workspace.
 // Pure functions — no state, no I/O side effects beyond filesystem reads.
 
-use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, Language};
+use crate::filesystem::taxonomy_filesystem_vo::{ImportEntry, Language};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 

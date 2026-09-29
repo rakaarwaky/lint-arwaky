@@ -115,7 +115,7 @@ project-root/                             <- Project workspace root
 └── pyproject.toml
 ```
 
-### Folder structure rules (AES701–AES705)
+### Folder structure rules (AES701–AES703)
 
 Each member directory (`crates/`, `modules/`, `packages/`) organizes its code into
 three kinds of folders: `shared`, feature folders, and surface folders. The
@@ -141,7 +141,7 @@ A feature folder documents itself with two files beside its source:
 - `FRD.md` — what the feature does
 - `BACKLOG.md` — where its work stands
 
-A feature folder carrying neither document fires **AES704**. A folder carrying no
+A feature folder carrying neither document fires **AES702**. A folder carrying no
 capabilities and no orchestrator is not a feature and owes no document pair.
 
 #### Surface folders
@@ -153,15 +153,15 @@ are permitted alongside the surfaces.
 
 A surface folder carries `DESIGN.md`, recording the surface's kind, its entry
 points, and the states a user sees. A surface-dominated folder without one fires
-**AES705**.
+**AES703**.
 
 #### Summary
 
 | Folder kind  | Carries                                   | Documents                        | Rules   |
 | ------------ | ----------------------------------------- | -------------------------------- | ------- |
 | `shared/`    | `taxonomy_*`, `utility_*`, `contract_*`   | none                             | AES701  |
-| feature      | `capabilities_*` + `agent_*_orchestrator` | `FRD.md` + `BACKLOG.md`          | AES702, AES704 |
-| surface      | `surface_*` (+ utility, root, barrels)    | `DESIGN.md`                      | AES703, AES705 |
+| feature      | `capabilities_*` + `agent_*_orchestrator` | `FRD.md` + `BACKLOG.md`          | AES702  |
+| surface      | `surface_*` (+ utility, root, barrels)    | `DESIGN.md`                      | AES703  |
 
 ---
 

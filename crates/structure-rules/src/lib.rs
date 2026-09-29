@@ -3,4 +3,3 @@
 pub mod agent_structure_orchestrator;
 pub mod capabilities_structure_auditor;
 pub mod root_structure_rules_container;
-pub mod utility_structure_parsers;

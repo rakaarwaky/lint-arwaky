@@ -9,7 +9,7 @@ use std::sync::Arc;
 use calculator_shared::taxonomy_single_request::SingleRequest;
 use calculator_shared::taxonomy_single_response::SingleResponse;
 
-use crate::contract_single_protocol::{ISingleCheckerProtocol, ISingleRunnerAggregate};
+use calculator_shared::single_orchestrator::contract_single_protocol::{ISingleCheckerProtocol, ISingleRunnerAggregate};
 
 pub struct SingleGoalOrchestrator {
     checker: Arc<dyn ISingleCheckerProtocol>,
