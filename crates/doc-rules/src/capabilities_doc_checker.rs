@@ -231,6 +231,10 @@ impl DocChecker {
             .unwrap_or(&doc.path)
             .to_string_lossy()
             .replace('\\', "/");
+        // Hoist blank_fenced to run once per document instead of once per
+        // check that needs it (check_scenarios, check_glossary,
+        // check_doc_heading each used to invoke it independently).
+        let prose = blank_fenced(&doc.text);
         let sections = self.sections(&doc.text);
         let mut findings = Vec::new();
 
@@ -272,7 +276,7 @@ impl DocChecker {
         // ── AES605: Document heading structure ──
         // Applied to every document that has a registered H2 contract.
         if let Some((required, allowed)) = doc_h2_contract(&name) {
-            self.check_doc_heading(doc, &name, required, allowed, &mut findings);
+            self.check_doc_heading(&prose, &name, required, allowed, &mut findings);
         }
 
         // Stamp every finding with the document it came from.
@@ -283,29 +287,59 @@ impl DocChecker {
     }
 
     /// Parse the document into level-1 and level-2 sections.
+    ///
+    /// Headings are collected in a single pass; boundaries are computed with
+    /// a stack-based O(H) sweep so the text is never rescanned per heading
+    /// (eliminating the O(H^2) behaviour of `next_heading_start`).
     fn sections(&self, text: &str) -> Vec<Section> {
         let Some(re) = heading_re() else {
             return Vec::new();
         };
-        let mut found = Vec::new();
-        for (index, caps) in re.captures_iter(text).enumerate() {
+        // Collect all headings (any level) with their offsets in one pass.
+        let mut all: Vec<(usize, usize, String, usize, usize)> = Vec::new();
+        for caps in re.captures_iter(text) {
+            let full = match caps.get(0) { Some(f) => f, None => continue };
+            // Level is the number of `#` characters (capture group 1), NOT
+            // the full match length.
             let level = caps.get(1).map_or(0, |m| m.as_str().len());
-            if level > 2 {
-                continue;
-            }
-            let start = caps.get(0).map_or(0, |m| m.start());
+            let start = full.start();
             let line = text[..start].lines().count().max(1);
             let title = caps.get(2).map_or("", |m| m.as_str()).to_string();
-            let body_start = caps.get(0).map_or(0, |m| m.end());
-            let body_end = next_heading_start(text, index);
-            found.push(Section {
-                level,
-                title,
-                body: text[body_start.min(text.len())..body_end].to_string(),
-                line,
-            });
+            let body_start = full.end();
+            all.push((level, start, title, line, body_start));
         }
-        found
+        // Compute next-same-or-higher-rank boundary for each heading.
+        let n = all.len();
+        let mut boundary: Vec<Option<usize>> = vec![None; n];
+        let mut stack: Vec<usize> = Vec::new();
+        for i in 0..n {
+            let (level, _, _, _, _) = &all[i];
+            while let Some(&top) = stack.last() {
+                if all[top].0 >= *level {
+                    boundary[top] = Some(i);
+                    stack.pop();
+                } else {
+                    break;
+                }
+            }
+            stack.push(i);
+        }
+        // Build sections for H1 and H2 headings only.
+        all.iter()
+            .enumerate()
+            .filter(|(_, (level, _, _, _, _))| *level <= 2)
+            .map(|(orig_idx, (level, _start, title, line, body_start))| {
+                let body_end = boundary[orig_idx]
+                    .map(|j| all[j].1)
+                    .unwrap_or(text.len());
+                Section {
+                    level: *level,
+                    title: title.clone(),
+                    body: text[*body_start.min(&text.len())..body_end].to_string(),
+                    line: *line,
+                }
+            })
+            .collect()
     }
 
     // ── AES601: FR format ────────────────────────────────────────────────
@@ -557,7 +591,7 @@ impl DocChecker {
         else {
             return;
         };
-        if !has_bullet(&blank_fenced(&section.body)) {
+        if !has_bullet(&section.body) {
             findings.push(DocFinding::new_with_line(
                 "",
                 section.line,
@@ -579,7 +613,7 @@ impl DocChecker {
         else {
             return;
         };
-        if !has_bullet(&blank_fenced(&section.body)) {
+        if !has_bullet(&section.body) {
             findings.push(DocFinding::new_with_line(
                 "",
                 section.line,
@@ -736,7 +770,7 @@ impl DocChecker {
     /// headings are free-form per project.
     fn check_doc_heading(
         &self,
-        doc: &DocSource,
+        prose: &str,
         name: &str,
         required: &[&str],
         allowed: &[&str],
@@ -745,10 +779,9 @@ impl DocChecker {
         let Some(re) = heading_re() else {
             return;
         };
-        // Blank fenced blocks first: a shell comment such as
-        // `# Tests (matches CI "Tests" job)` must not read as a heading.
-        let prose = blank_fenced(&doc.text);
-        let captures: Vec<_> = re.captures_iter(&prose).collect();
+        // Headings inside fenced code blocks are ignored: a shell comment
+        // such as `# Tests (matches CI "Tests" job)` must not read as a heading.
+        let captures: Vec<_> = re.captures_iter(prose).collect();
         let h1_count: usize = captures
             .iter()
             .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 1))
@@ -847,10 +880,22 @@ fn has_table_with_columns(body: &str, columns: &[&str]) -> bool {
     false
 }
 
-/// Does the body carry a bullet item?
+/// Does the body carry a bullet item outside any fenced code block?
+/// Fenced lines are skipped so a bullet inside a fence is not counted as a
+/// meaningful prose bullet.
 fn has_bullet(body: &str) -> bool {
-    body.lines()
-        .any(|line| bullet_re().is_some_and(|re| re.is_match(line)))
+    let mut inside_fence = false;
+    for line in body.lines() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
+            inside_fence = !inside_fence;
+            continue;
+        }
+        if !inside_fence && bullet_re().is_some_and(|re| re.is_match(line)) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Read a document, returning `None` when it is absent or unreadable.
@@ -878,25 +923,6 @@ fn collect_feature_docs(dir: &Path, out: &mut Vec<DocSource>) {
             }
         }
     }
-}
-
-/// Byte offset of the next heading at the same or higher rank, or text length.
-fn next_heading_start(text: &str, from_index: usize) -> usize {
-    let Some(re) = heading_re() else {
-        return text.len();
-    };
-    let all: Vec<_> = re.captures_iter(text).collect();
-    let Some(current) = all.get(from_index) else {
-        return text.len();
-    };
-    let rank = current.get(1).map_or(0, |m| m.as_str().len());
-    for candidate in all.iter().skip(from_index + 1) {
-        let candidate_rank = candidate.get(1).map_or(0, |m| m.as_str().len());
-        if candidate_rank <= rank {
-            return candidate.get(0).map_or(text.len(), |m| m.start());
-        }
-    }
-    text.len()
 }
 
 /// Is this document a spec (promise-bearing) rather than a status report?
