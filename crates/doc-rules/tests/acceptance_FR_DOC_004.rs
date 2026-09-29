@@ -34,12 +34,68 @@ fn frd_with_requirements(count: usize) -> String {
     frd
 }
 
+/// A conforming BACKLOG.md for test fixtures.
+fn conforming_backlog() -> &'static str {
+    r"# Feature Backlog: Sample
+
+FRD: [FRD.md](FRD.md)
+Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+State / Health: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
+Last Updated: 2026-09-29
+
+## Current Condition
+
+- Done: nothing yet
+- In Progress: None
+- Blocked: None
+- Next Action: get started
+
+## Backlog
+
+| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
+|---|---|---|---:|---|---|---|---|---|
+| SAM-01 | FR-SAMPLE-001 | nothing yet | P0 | Ready | nothing yet | @raka | None | 2026-09-29 |
+
+## Scenario Evidence
+
+| Scenario | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|
+| nothing yet | Automated | tests/ | test_nothing | 2026-09-29 |
+
+## Blockers
+
+None
+
+## Dependencies
+
+None
+
+## Release Readiness
+
+| Area | Status | Notes |
+|---|---|---|
+| Tests | Done | nothing |
+| Scenario evidence | Done | nothing |
+| Docs | Done | [FRD.md](FRD.md) is specification-only. |
+
+## Deferred
+
+None
+
+## Change Log
+
+| Date | Change | By |
+|---|---|---|
+| 2026-09-29 | init | @raka |
+"
+}
+
 /// Lay down the feature folder and the documents the audit expects to find.
 fn write_feature(root: &Path, frd: &str) {
     let feature = root.join("crates/sample");
     fs::create_dir_all(feature.join("src")).unwrap();
     fs::write(feature.join("FRD.md"), frd).unwrap();
-    fs::write(feature.join("BACKLOG.md"), "# BACKLOG — sample\n").unwrap();
+    fs::write(feature.join("BACKLOG.md"), conforming_backlog()).unwrap();
     fs::write(
         feature.join("src/agent_sample_orchestrator.rs"),
         "//! sample orchestrator\n",
