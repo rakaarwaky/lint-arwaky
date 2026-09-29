@@ -1055,6 +1055,7 @@ name = "doc-rules-lint-arwaky"
 version = "3.7.1"
 dependencies = [
  "regex",
+ "serde_json",
  "shared-lint-arwaky",
  "tempfile",
 ]
