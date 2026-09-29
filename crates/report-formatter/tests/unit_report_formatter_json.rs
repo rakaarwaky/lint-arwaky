@@ -3,7 +3,7 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IFormatDelegationProtocol;
+
 use shared::report_formatter::IJsonFormatProtocol;
 
 fn report_with_mixed_results() -> ScanReport {
@@ -104,11 +104,13 @@ fn score_is_embedded_when_present() {
 }
 
 #[test]
-fn mismatched_format_falls_back_to_default_text() {
+fn json_formatter_returns_valid_json() {
     let report = ScanReport::new(vec![], vec![]);
-    let out = JsonFormatter::new().format(&report, Format::Text);
-    assert!(out.value().contains("Lint Arwaky Report"));
-    assert!(out.value().contains("Violations: 0"));
+    let out = JsonFormatter::new().format_json(&report);
+    // JSON formatter always outputs JSON, never plain text
+    assert!(out.value().starts_with("{"));
+    // serde_json pretty-print ends with } (possibly with trailing newline)
+    assert!(out.value().trim_end().ends_with("}"));
 }
 
 #[test]

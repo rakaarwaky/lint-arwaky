@@ -1,4 +1,4 @@
-// FR-005 — Format Delegation (orchestrator), FR-006 — Default Fallback, FR-007 — XML Escape.
+// Acceptance tests — orchestrator routing and xml_escape utility.
 use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{
     ReportFormatterDeps, ReportFormatterOrchestrator,
 };
@@ -10,7 +10,6 @@ use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 use shared::report_formatter::IReportFormatterAggregate;
-use shared::report_formatter::utility_report_format::format_report_default;
 use std::sync::Arc;
 
 fn make_orchestrator() -> ReportFormatterOrchestrator {
@@ -65,51 +64,11 @@ fn us4_orchestrator_routes_junit() {
 }
 
 #[test]
-fn us5_default_fallback_counts_by_code_descending() {
-    let r = ScanReport {
-        results: vec![
-            LintResult {
-                code: ErrorCode::raw("AES101"),
-                ..Default::default()
-            },
-            LintResult {
-                code: ErrorCode::raw("AES201"),
-                ..Default::default()
-            },
-            LintResult {
-                code: ErrorCode::raw("AES201"),
-                ..Default::default()
-            },
-        ],
-        diagnostics: vec![],
-        score: None,
-    };
-    let out = format_report_default(&r);
-    let section = &out[out.find("Violations by code:").expect("section present")..];
-    let aes201 = section.find("AES201: 2").expect("AES201 first");
-    let aes101 = section.find("AES101: 1").expect("AES101 present");
-    assert!(aes201 < aes101, "sorted by count descending");
-}
-
-#[test]
-fn us6_default_fallback_includes_score_line() {
-    let r = ScanReport::new(vec![], vec![]).with_score(shared::common::Score::new(88.0));
-    let out = format_report_default(&r);
-    assert!(out.contains("Score: 88.0/100"));
-}
-
-#[test]
-fn us7_default_fallback_empty_shows_violations_zero() {
-    let out = format_report_default(&ScanReport::new(vec![], vec![]));
-    assert!(out.contains("Violations: 0"));
-}
-
-#[test]
-fn us8_xml_escape_all_five_characters() {
+fn us5_xml_escape_all_five_characters() {
     assert_eq!(xml_escape("&<>\"'"), "&amp;&lt;&gt;&quot;&apos;");
 }
 
 #[test]
-fn us9_xml_escape_normal_text_unchanged() {
+fn us6_xml_escape_normal_text_unchanged() {
     assert_eq!(xml_escape("normal text 123"), "normal text 123");
 }

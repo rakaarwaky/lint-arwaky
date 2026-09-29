@@ -3,7 +3,7 @@ use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use shared::cli_commands::DiagnosticSeverity;
 use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IFormatDelegationProtocol;
+
 use shared::report_formatter::ISarifFormatProtocol;
 
 fn result(code: &str, sev: Severity, line: i64) -> LintResult {
@@ -167,10 +167,13 @@ fn direct_format_sarif_slice_works() {
 }
 
 #[test]
-fn mismatched_format_falls_back_to_default() {
+fn sarif_formatter_returns_valid_sarif() {
     let report = ScanReport::new(vec![], vec![]);
-    let out = SarifFormatter::new().format(&report, Format::Text);
-    assert!(out.value().contains("Violations: 0"));
+    let out = SarifFormatter::new().format_sarif(&report);
+    // SARIF formatter always outputs SARIF JSON, never plain text
+    let v: serde_json::Value = serde_json::from_str(out.value()).expect("must be valid JSON");
+    assert_eq!(v["version"], "2.1.0");
+    assert!(v["runs"].as_array().unwrap().len() == 1);
 }
 
 #[test]

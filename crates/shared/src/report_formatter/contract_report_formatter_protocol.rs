@@ -3,10 +3,9 @@
 // AES402: All primitive types replaced with taxonomy VOs.
 //   * `String` return → `DisplayContent` (semantic formatted output)
 //
-// One file for the report-formatter feature. Each trait below is one
-// capability seam mapped to exactly one `FR-ReportFormatter-NNN` heading in
-// `crates/report-formatter/FRD.md`, so no trait covers a requirement that
-// does not exist and no requirement lacks a trait.
+// One file for the report-formatter feature. Four traits, one per capability
+// (FR-001 through FR-004). No delegation trait — the orchestrator routes
+// directly through the specific protocol of the selected formatter.
 use crate::cli_commands::taxonomy_cli_commands_vo::ScanReport;
 use crate::cli_commands::taxonomy_format_vo::Format;
 use crate::common::taxonomy_display_content_vo::DisplayContent;
@@ -53,34 +52,4 @@ pub trait IJUnitFormatProtocol: Send + Sync {
 
     /// The single `Format` this formatter is registered for.
     fn supported_format(&self) -> Format;
-
-    /// Escape the five XML entities required by the JUnit schema.
-    fn xml_escape(&self, text: &str) -> DisplayContent;
-}
-
-/// FR-ReportFormatter-005: route a request to the formatter for its `Format`.
-///
-/// Implemented by every formatter, and by the orchestrator over the whole
-/// registered set. The orchestrator holds one `Arc<dyn IFormatDelegationProtocol>`
-/// per format and dispatches through this verb.
-pub trait IFormatDelegationProtocol: Send + Sync {
-    /// Render the scan report in `format`, falling back to the default
-    /// summary when this formatter is not registered for that format.
-    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent;
-}
-
-/// FR-ReportFormatter-006: simple text summary used when no format matches.
-///
-/// Implemented by TextFormatter.
-pub trait IDefaultReportFallbackProtocol: Send + Sync {
-    /// Render the plain-text summary with counts by code and diagnostics.
-    fn format_default(&self, report: &ScanReport) -> DisplayContent;
-}
-
-/// FR-ReportFormatter-007: XML entity escaping utility.
-///
-/// Implemented by JunitFormatter, the only JUnit XML producer.
-pub trait IXmlEscapeProtocol: Send + Sync {
-    /// `&`, `<`, `>`, `"`, `'` → named entities; every other char passes through.
-    fn xml_escape(&self, text: &str) -> DisplayContent;
 }

@@ -15,8 +15,8 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
+use shared::external_lint::ICommandExecutorProtocol;
+use shared::external_lint::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use std::sync::{Arc, Mutex};
 
