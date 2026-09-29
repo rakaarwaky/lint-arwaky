@@ -14,12 +14,12 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| AUTO-01 | FR-AutoFix-001 | SCEN-001 — Unused Import Removal — 6 scenarios verified | P0 | Done | `cargo nextest run -p auto-fix-lint-arwaky` → 47 passed at `a09244f1` (2026-09-29) | @raka | None | 2026-09-29 |
-| AUTO-02 | FR-AutoFix-002 | SCEN-002 — Bypass Fix — 9 scenarios verified | P0 | Done | `cargo nextest run -p auto-fix-lint-arwaky` → 47 passed at `a09244f1` (2026-09-29) | @raka | None | 2026-09-29 |
-| AUTO-03 | FR-AutoFix-003 | SCEN-003 — Symbol Renaming — 5 scenarios verified | P0 | Done | `cargo nextest run -p auto-fix-lint-arwaky` → 47 passed at `a09244f1` (2026-09-29) | @raka | None | 2026-09-29 |
-| AUTO-04 | FR-AutoFix-004 | SCEN-004 — Violation Reporting (dry-run + non-fixable) — 5 scenarios verified | P0 | Done | `cargo nextest run -p auto-fix-lint-arwaky` → 47 passed at `a09244f1` (2026-09-29) | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| AUTO-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| AUTO-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| AUTO-03 | P0 | Done | On Track | None | — | 2026-09-29  |
+| AUTO-04 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

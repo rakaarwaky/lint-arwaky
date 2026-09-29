@@ -1,17 +1,20 @@
 # HOW TO MAKE BACKLOG.md
 
-> **Purpose**: Record what is true right now for one feature, and on what
-> evidence.
+> **Purpose**: Record what is true right now for one feature or shared folder,
+> and on what evidence.
 >
 > **Audience**: Engineers, QA, Tech Lead.
 >
-> **Scope**: One BACKLOG.md per feature folder.
+> **Scope**: One BACKLOG.md per feature folder and per shared folder.
 >
-> **Location**: Inside the feature's directory
+> **Location**: Inside the feature's directory or inside `shared/`.
 >
 > **Length**: 50–500 lines
 >
-> **Not a feature → no BACKLOG.** A folder is only a valid feature folder when it contains an `agent_*_orchestrator` file. Folders without an orchestrator are not features and must not carry `FRD.md` or `BACKLOG.md`. Kernel / shared layers (e.g. `modules/shared`) have no orchestrator and therefore have **no `FRD.md` and no `BACKLOG.md`**. Creating either under `shared/` fails the gate with `feature-doc-in-shared`.
+> **Not a feature → still needs BACKLOG.** Feature folders (with an
+> `agent_*_orchestrator`) carry `FRD.md` + `BACKLOG.md`. Shared/kernel folders
+> carry `DATA.md` + `BACKLOG.md`. Surface folders (DESIGN-only) carry
+> `DESIGN.md` + `BACKLOG.md`. Every folder type has a BACKLOG.
 
 ---
 
@@ -24,15 +27,11 @@ the root file (ROADMAP.md). Feature backlogs cite them; they never repeat
 them (`state-vocab-restated`, `undefined-state-vocab`).
 2. **Feature backlogs carry file-specific content only.** No policy prose, no
 state tables, no copied paragraphs from the root.
-3. **Every feature has both.** An `FRD.md` and a `BACKLOG.md` must exist beside
-each other (`spec-without-backlog`, `backlog-without-spec`). A folder is only
-considered a valid **feature folder** if it contains an
-`agent_*_orchestrator` file — without an orchestrator, it is not a feature and
-must not carry either document. The root `PRD.md` pairs with root
-`ROADMAP.md`, not a sibling `BACKLOG.md`. Non-feature folders (those without
-an `agent_*_orchestrator`, e.g. `modules/shared`) are exempt — neither file
-exists there; either file under such a folder fails with `feature-doc-in-shared`.
-4. **ID scopes are explicit.** Each feature uses its own prefix
+3. **Every folder has a BACKLOG.** An `FRD.md` pairs with `BACKLOG.md` in
+feature folders; `DATA.md` pairs with `BACKLOG.md` in shared folders;
+`DESIGN.md` pairs with `BACKLOG.md` in surface folders. The root
+`PRD.md` pairs with root `ROADMAP.md`, not a sibling `BACKLOG.md`.
+4. **ID scopes are explicit.** Each folder uses its own prefix
 (`RENDER-01`, `SCRIPT-01`). A row citing `FR-006` is checked against the
 spec (`orphan-fr-id`).
 5. **Status is verified, not self-reported.** A Done or Released row must
@@ -73,9 +72,9 @@ Last Updated: <YYYY-MM-DD>
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| <SCOPE>-01 | <FR-001> | <one work item> | P0 | Ready | <what is true, with the command or commit> | @<owner> | None | <YYYY-MM-DD> |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| <SCOPE>-01 | P0 | Done | On Track | — | — | <YYYY-MM-DD> |
 
 ## Scenario Evidence
 
@@ -121,13 +120,13 @@ reason.
 
 | Section           | Why it belongs here                                     |
 | ----------------- | ------------------------------------------------------- |
-| Header links      | Connects the backlog to its FRD and shared root policy. |
+| Header links      | Connects the backlog to its spec and shared root policy.|
 | Current Condition | Gives the truth before the table, not after it.         |
-| Backlog           | The work rows for this feature only.                    |
+| Backlog           | The work rows for this folder only.                     |
 | Scenario Evidence | Maps FRD scenarios to real tests or honest gaps.        |
 | Blockers          | Names what stops work and what clears it.               |
-| Dependencies      | Names rows owned elsewhere that this feature waits on.  |
-| Release Readiness | Shows whether the feature can ship, with evidence.      |
+| Dependencies      | Names rows owned elsewhere that this folder waits on.   |
+| Release Readiness | Shows whether the folder can ship, with evidence.       |
 | Deferred          | Records intentional non-work so it is not re-litigated. |
 | Change Log        | Records when and why the condition changed.             |
 

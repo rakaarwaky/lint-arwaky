@@ -14,13 +14,13 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| CONF-01 | FR-ConfigSystem-001 | SCEN-001 — Config Discovery and Loading (15 scenarios) | P0 | Done | Verified via acceptance_FR_001..003, unit tests | @raka | None | 2026-09-29 |
-| CONF-02 | FR-ConfigSystem-002 | SCEN-002 — Workspace Type Detection (9 scenarios) | P0 | Done | Verified via acceptance_FR_002, unit tests | @raka | None | 2026-09-29 |
-| CONF-03 | FR-ConfigSystem-003 | SCEN-003 — Workspace Member Discovery (4 scenarios) | P0 | Done | Verified via acceptance_FR_004, unit tests | @raka | None | 2026-09-29 |
-| CONF-04 | FR-ConfigSystem-004 | SCEN-004 (Config Merging) + SCEN-005 (Validation) — 11 scenarios total | P0 | Done | Verified via acceptance_FR_005,006, unit tests | @raka | None | 2026-09-29 |
-| CONF-05 | FR-ConfigSystem-005 | SCEN-006 — Ignored Paths Resolution (4 scenarios) | P0 | Done | Verified via acceptance_FR_008, utility tests | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| CONF-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| CONF-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| CONF-03 | P0 | Done | On Track | None | — | 2026-09-29  |
+| CONF-04 | P0 | Done | On Track | None | — | 2026-09-29  |
+| CONF-05 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

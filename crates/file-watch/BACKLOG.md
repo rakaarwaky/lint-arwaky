@@ -14,11 +14,11 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| FILE-01 | FR-FileWatch-001 | Watch lifecycle — start, subscribe, stop, is_available | P0 | Done | `cargo test -p file_watch --lib --tests` → 0 failures | @raka | None | 2026-09-29 |
-| FILE-02 | FR-FileWatch-002 | Filter and deduplicate events — dedup by path, filter lintable extensions | P0 | Done | `cargo test -p file_watch --lib --tests` → 0 failures | @raka | None | 2026-09-29 |
-| FILE-03 | FR-FileWatch-003 | Run lint on changed files via injected aggregate | P0 | Done | `cargo test -p file_watch --lib --tests` → 0 failures | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| FILE-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| FILE-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| FILE-03 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

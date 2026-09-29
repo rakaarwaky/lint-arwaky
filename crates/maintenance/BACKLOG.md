@@ -14,17 +14,17 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| MAIN-01 | FR-MAINTENANCE-001 | SCEN-001 - Doctor — 5 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-02 | FR-MAINTENANCE-002 | SCEN-002 - Stats — 4 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-03 | FR-MAINTENANCE-003 | SCEN-003 - Clean — 3 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-04 | FR-MAINTENANCE-004 | SCEN-004 - Update — 2 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-05 | FR-MAINTENANCE-005 | SCEN-005 - Diagnose — 4 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-06 | FR-MAINTENANCE-006 | SCEN-006 - Security — 4 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-07 | FR-MAINTENANCE-007 | SCEN-007 - Dependencies — 3 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-08 | FR-MAINTENANCE-008 | SCEN-008 - Adapter Health Check — 3 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
-| MAIN-09 | FR-MAINTENANCE-009 | Self-update: query GitHub release, install binary when newer | P1 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29); `update` subcommand with `--check-only` flag | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| MAIN-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-03 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-04 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-05 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-06 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-07 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-08 | P0 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-09 | P1 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

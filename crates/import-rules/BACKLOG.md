@@ -14,12 +14,12 @@ Last Updated: 2026-09-17
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| IMPO-01 | FR-IMPORTRULES-001 | AES203 - Unused Import — 5 scenarios verified | P0 | Done | `cargo test -p import_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| IMPO-02 | FR-IMPORTRULES-002 | AES204 - Dummy Import — 10 scenarios verified | P0 | Done | `cargo test -p import_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| IMPO-03 | FR-IMPORTRULES-003 | AES205 - Circular Dependency — 4 scenarios verified | P0 | Done | `cargo test -p import_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| IMPO-04 | FR-IMPORTRULES-004 | Configuration — 3 scenarios verified | P0 | Done | `cargo test -p import_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| IMPO-01 | P0 | Done | On Track | None | — | 2026-09-17  |
+| IMPO-02 | P0 | Done | On Track | None | — | 2026-09-17  |
+| IMPO-03 | P0 | Done | On Track | None | — | 2026-09-17  |
+| IMPO-04 | P0 | Done | On Track | None | — | 2026-09-17  |
 
 ## Scenario Evidence
 
