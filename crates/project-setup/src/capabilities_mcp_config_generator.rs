@@ -122,23 +122,14 @@ impl IMcpConfigGenerationProtocol for SetupMcpConfigGenerator {
             // Non-file path or empty → fall through to priority 2
         }
 
-        // Priority 2: Sibling of current executable
-        let exe_candidate = std::env::current_exe()
-            .ok()
-            .and_then(|p| {
-                p.parent()
-                    .map(|d| d.join("lint-arwaky-mcp").to_string_lossy().to_string())
-            })
-            .unwrap_or_default();
-
-        // Priority 3: CARGO_HOME/bin/lint-arwaky-mcp
+        // Priority 2: CARGO_HOME/bin/lint-arwaky-mcp
         let cargo_home = std::env::var("CARGO_HOME").unwrap_or_else(|_| "~/.cargo".to_string());
         let cargo_home_candidate = format!("{}/bin/lint-arwaky-mcp", cargo_home);
 
-        // Priority 4: Bare name (relies on OS PATH resolution at runtime)
+        // Priority 3: Bare name (relies on OS PATH resolution at runtime)
         let bare_name = "lint-arwaky-mcp".to_string();
 
-        let candidates = [exe_candidate, cargo_home_candidate, bare_name];
+        let candidates = [cargo_home_candidate, bare_name];
         for c in &candidates {
             if !c.is_empty() && std::path::Path::new(c).exists() {
                 return McpBinaryNameVO::new(c.clone());

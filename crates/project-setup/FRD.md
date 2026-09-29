@@ -93,9 +93,8 @@ flowchart TD
   - Binary resolution priority (aligned with cli-commands binary lookup):
 
     1. `LINT_ARWAKY_MCP_BIN` environment variable (must point to existing file).
-    2. Sibling of current executable (`lint-arwaky-mcp` next to `lint-arwaky-cli`).
-    3. `CARGO_HOME/bin/lint-arwaky-mcp` (`CARGO_HOME` defaults to `~/.cargo`).
-    4. Bare name `lint-arwaky-mcp` (relies on OS PATH resolution at runtime).
+    2. `CARGO_HOME/bin/lint-arwaky-mcp` (`CARGO_HOME` defaults to `~/.cargo`).
+    3. Bare name `lint-arwaky-mcp` (relies on OS PATH resolution at runtime).
 
 - **Edge Cases**:
 
@@ -106,7 +105,6 @@ flowchart TD
 
 - **Error Handling**:
 
-  - `current_exe()` failure → skips sibling candidate.
   - `CARGO_HOME` env read failure → falls back to `~/.cargo`.
 
 ---
