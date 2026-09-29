@@ -112,6 +112,8 @@ enum Command {
     Docs {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
     },
     /// CI threshold validation
     Ci {
@@ -519,9 +521,10 @@ fn main() {
                 ignored_paths: ignored_paths.clone(),
             },
         ),
-        Command::Docs { path } => cli_commands::surface_scan_command::handle_docs(
+        Command::Docs { path, format } => cli_commands::surface_scan_command::handle_docs(
             cli_commands::surface_scan_command::DocsCommandParams {
                 path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
                 doc_orchestrator:
                     doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
             },
