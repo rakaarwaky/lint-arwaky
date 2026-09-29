@@ -70,4 +70,4 @@ None
 | Date | Change | By |
 |---|---|---|
 | 2026-09-29 | Consolidated AES704 into AES702 and AES705 into AES703; added feature forbidden-files check; rewrote FRD with 3 FRs | @raka |
-| 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES606 H2 contracts) | @raka |
+| 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts) | @raka |

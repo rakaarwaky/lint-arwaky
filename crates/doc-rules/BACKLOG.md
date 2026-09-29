@@ -16,7 +16,7 @@ Last Updated: 2026-09-29
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| DOC-01 | FR-DOC-001 | AES601–AES607 document invariant enforcement — 24 scenarios verified | P0 | Done | `cargo test -p lint_arwaky_doc_rules --lib --tests` → 0 failures at `926bd34a` (2026-09-29) | @raka | None | 2026-09-29 |
+| DOC-01 | FR-DOC-001 | AES601–AES605 document invariant enforcement — 24 scenarios verified | P0 | Done | `cargo test -p lint_arwaky_doc_rules --lib --tests` → 0 failures at `926bd34a` (2026-09-29) | @raka | None | 2026-09-29 |
 | DOC-02 | FR-DOC-002 | Audit orchestration via single aggregate entry point — verified by `contract_doc_rules.rs` and `acceptance_FR_DOC_004.rs` tests | P0 | Done | `cargo test -p lint_arwaky_doc_rules --lib --tests` → 0 failures at `926bd34a` (2026-09-29) | @raka | None | 2026-09-29 |
 
 ## Scenario Evidence
@@ -36,13 +36,13 @@ Last Updated: 2026-09-29
 | FRD omits BACKLOG.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD omits PRD.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Feature backlog restates root state section | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md has no H1 | AES606 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md has multiple H1s | AES606 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md missing required H2 | AES606 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| AGENTS.md has off-template H2 | AES606 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD has 3 requirements, contract has 2 classes | AES607 CRITICAL | Automated | `tests/acceptance_FR_DOC_004.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| FRD has 1 requirement, contract has 3 classes | AES607 CRITICAL | Automated | `tests/acceptance_FR_DOC_004.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Aggregate trait excluded from seam count | AES607 accepts | Automated | `tests/acceptance_FR_DOC_004.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| AGENTS.md has no H1 | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| AGENTS.md has multiple H1s | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| AGENTS.md missing required H2 | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| AGENTS.md has off-template H2 | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| FRD has 3 requirements, contract has 2 classes | AES601 CRITICAL | Automated | `tests/acceptance_FR_DOC_004.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| FRD has 1 requirement, contract has 3 classes | AES601 CRITICAL | Automated | `tests/acceptance_FR_DOC_004.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| Aggregate trait excluded from seam count | AES601 accepts | Automated | `tests/acceptance_FR_DOC_004.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Fenced code block `#` comment not counted as H1 | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Conforming workspace reports 0 doc findings on `docs .` | No violation | Automated | Self-lint | `lint-arwaky-cli docs .` | `926bd34a` |
 
@@ -70,4 +70,4 @@ None
 
 | Date | Change | By |
 |---|---|---|
-| 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES606 H2 contracts); expanded scenario evidence table | @raka |
+| 2026-09-29 | Aligned BACKLOG.md and FRD.md to HOW-TO templates (AES605 H2 contracts); expanded scenario evidence table; merged AES607 into AES601; removed AES605 | @raka |

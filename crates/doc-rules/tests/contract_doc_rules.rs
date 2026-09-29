@@ -1,6 +1,6 @@
 // PURPOSE: contract tests for doc-rules — each invariant must fire on a bad
 // document and stay silent on a conforming one. Findings carry a code
-// (AES601–AES607) plus a violation_type, and both are asserted.
+// (AES601–AES605) plus a violation_type, and both are asserted.
 use doc_rules_lint_arwaky::root_doc_rules_container::RootDocRulesContainer;
 use shared::doc_rules::taxonomy_doc_rules_request::DocRequest;
 use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
@@ -82,7 +82,7 @@ The feature does the work a surface delegates to.
     .to_string()
 }
 
-/// A PRD.md that satisfies its own AES606 H2 contract.
+/// A PRD.md that satisfies its own AES605 H2 contract.
 fn conforming_prd() -> &'static str {
     r"# PRD — sample
 
@@ -118,7 +118,7 @@ In scope: the checker.
 "
 }
 
-/// A ROADMAP.md that satisfies its own AES606 H2 contract.
+/// A ROADMAP.md that satisfies its own AES605 H2 contract.
 fn conforming_roadmap() -> &'static str {
     r"# ROADMAP — sample
 
@@ -156,7 +156,7 @@ A row is Done with a command.
 "
 }
 
-/// A conforming BACKLOG.md that satisfies the AES606 H2 contract.
+/// A conforming BACKLOG.md that satisfies the AES605 H2 contract.
 fn conforming_backlog() -> &'static str {
     r"# Feature Backlog: Sample
 
@@ -228,7 +228,7 @@ fn write_workspace(dir: &Path, frd: &str) {
     fs::write(dir.join("ROADMAP.md"), conforming_roadmap()).unwrap();
 }
 
-/// Build a workspace with a conforming AGENTS.md so AES606 stays silent.
+/// Build a workspace with a conforming AGENTS.md so AES605 stays silent.
 fn write_agents_workspace(dir: &Path) {
     let feature = dir.join("crates/sample");
     fs::create_dir_all(feature.join("src")).unwrap();
@@ -542,43 +542,43 @@ fn findings_are_deduplicated_and_ordered() {
     assert_eq!(first, sorted, "findings must arrive sorted");
 }
 
-// ── AES606: Agent doc heading structure ────────────────────────────────────
+// ── AES605: Doc heading structure ────────────────────────────────────
 
 #[test]
-fn aes606_conforming_agents_reports_no_findings() {
+fn aes605_conforming_agents_reports_no_findings() {
     let tmp = tempfile::tempdir().unwrap();
     write_agents_workspace(tmp.path());
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES606", "h1_count") && !has(&findings, "AES606", "h2_missing"),
+        !has(&findings, "AES605", "h1_count") && !has(&findings, "AES605", "h2_missing"),
         "expected clean AGENTS.md, got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes606_fires_when_no_h1() {
+fn aes605_fires_when_no_h1() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
         "## Security\n\n- Explicit approval is required.\n",
     );
     let findings = audit(tmp.path());
-    assert!(has(&findings, "AES606", "h1_count"));
+    assert!(has(&findings, "AES605", "h1_count"));
 }
 
 #[test]
-fn aes606_fires_when_multiple_h1() {
+fn aes605_fires_when_multiple_h1() {
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
         "# One\n\n# Two\n\n## Security\n\n- Explicit approval.\n",
     );
     let findings = audit(tmp.path());
-    assert!(has(&findings, "AES606", "h1_count"));
+    assert!(has(&findings, "AES605", "h1_count"));
 }
 
 #[test]
-fn aes606_does_not_falsely_fire_on_sharp_commented_commands() {
+fn aes605_does_not_falsely_fire_on_sharp_commented_commands() {
     // A bash comment such as `# Tests (matches CI "Tests" job)` must NOT
     // count as an extra H1 — fenced code blocks are stripped first.
     let tmp = tempfile::tempdir().unwrap();
@@ -602,13 +602,13 @@ cargo nextest run
     );
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES606", "h1_count"),
+        !has(&findings, "AES605", "h1_count"),
         "fenced code block contents must not be treated as headings; got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes606_fires_when_required_h2_is_absent() {
+fn aes605_fires_when_required_h2_is_absent() {
     let tmp = tempfile::tempdir().unwrap();
     // Precedence and Definition of Done are missing from the required set.
     write_bad_agents(
@@ -620,10 +620,10 @@ fn aes606_fires_when_required_h2_is_absent() {
 ## Related Documents\n\n- [PRD.md](PRD.md).\n",
     );
     let findings = audit(tmp.path());
-    assert!(has(&findings, "AES606", "h2_missing"));
+    assert!(has(&findings, "AES605", "h2_missing"));
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     // The message names the absent section(s), not just the rule.
@@ -634,7 +634,7 @@ fn aes606_fires_when_required_h2_is_absent() {
 }
 
 #[test]
-fn aes606_allows_extra_and_free_h3_headings() {
+fn aes605_allows_extra_and_free_h3_headings() {
     // Extra H2s and H3 headings are allowed; only required H2s are enforced.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
@@ -683,13 +683,13 @@ Tests pass.
     );
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES606", "h2_missing") && !has(&findings, "AES606", "h2_unexpected"),
+        !has(&findings, "AES605", "h2_missing") && !has(&findings, "AES605", "h2_unexpected"),
         "extra H2/H3 headings should not trigger h2_missing; got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes606_fires_when_architecture_or_contributing_or_license_is_absent() {
+fn aes605_fires_when_architecture_or_contributing_or_license_is_absent() {
     // Removing any of the three newest required sections must fire h2_missing.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
@@ -730,12 +730,12 @@ Tests pass.
     );
     let findings = audit(tmp.path());
     assert!(
-        has(&findings, "AES606", "h2_missing"),
+        has(&findings, "AES605", "h2_missing"),
         "missing Architecture and Contributing should fire; got: {findings:#?}"
     );
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
@@ -745,7 +745,7 @@ Tests pass.
 }
 
 #[test]
-fn aes606_fires_on_an_h2_outside_the_template() {
+fn aes605_fires_on_an_h2_outside_the_template() {
     // "Random Notes" is in neither the required nor the allowed set, so it
     // must be reported for demotion to H3 or removal.
     let tmp = tempfile::tempdir().unwrap();
@@ -799,12 +799,12 @@ Tests pass.
     );
     let findings = audit(tmp.path());
     assert!(
-        has(&findings, "AES606", "h2_unexpected"),
+        has(&findings, "AES605", "h2_unexpected"),
         "an off-template H2 must fire h2_unexpected; got: {findings:#?}"
     );
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES606" && v == "h2_unexpected")
+        .find(|(c, v, _)| c == "AES605" && v == "h2_unexpected")
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
@@ -814,7 +814,7 @@ Tests pass.
 }
 
 #[test]
-fn aes606_allows_the_project_specific_h2_set() {
+fn aes605_allows_the_project_specific_h2_set() {
     // The optional-but-agreed headings this project uses must stay silent.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
@@ -915,7 +915,7 @@ Tests pass.
     );
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES606", "h2_unexpected") && !has(&findings, "AES606", "h2_missing"),
+        !has(&findings, "AES605", "h2_unexpected") && !has(&findings, "AES605", "h2_missing"),
         "the project's own H2 set must be accepted; got: {findings:#?}"
     );
 }
@@ -930,14 +930,14 @@ fn audit_root_doc(name: &str, text: &str) -> Vec<(String, String, String)> {
 }
 
 #[test]
-fn aes606_reports_a_missing_h2_naming_the_document() {
+fn aes605_reports_a_missing_h2_naming_the_document() {
     // A ROADMAP.md without Risk Register must name the document and section.
     let text = conforming_roadmap().replace("## Risk Register", "## Risks");
     let findings = audit_root_doc("ROADMAP.md", &text);
-    assert!(has(&findings, "AES606", "h2_missing"));
+    assert!(has(&findings, "AES605", "h2_missing"));
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
         .map(|(_, _, m)| m.as_str())
         .unwrap_or_default();
     assert!(
@@ -947,7 +947,7 @@ fn aes606_reports_a_missing_h2_naming_the_document() {
 }
 
 #[test]
-fn aes606_reports_an_off_template_h2_with_a_remedy() {
+fn aes605_reports_an_off_template_h2_with_a_remedy() {
     let text = r#"# Sample README
 
 ## Prerequisites
@@ -991,10 +991,10 @@ MIT.
 Off-template.
 "#;
     let findings = audit_root_doc("README.md", text);
-    assert!(has(&findings, "AES606", "h2_unexpected"));
+    assert!(has(&findings, "AES605", "h2_unexpected"));
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES606" && v == "h2_unexpected")
+        .find(|(c, v, _)| c == "AES605" && v == "h2_unexpected")
         .map(|(_, _, m)| m.as_str())
         .unwrap_or_default();
     assert!(
@@ -1004,16 +1004,16 @@ Off-template.
 }
 
 #[test]
-fn aes606_accepts_a_conforming_prd() {
+fn aes605_accepts_a_conforming_prd() {
     let findings = audit_root_doc("PRD.md", conforming_prd());
     assert!(
-        !has(&findings, "AES606", "h2_missing") && !has(&findings, "AES606", "h2_unexpected"),
+        !has(&findings, "AES605", "h2_missing") && !has(&findings, "AES605", "h2_unexpected"),
         "a conforming PRD must be accepted; got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes606_fires_h1_count_when_a_document_has_no_h1() {
+fn aes605_fires_h1_count_when_a_document_has_no_h1() {
     let findings = audit_root_doc(
         "CONTRIBUTING.md",
         "## Principles
@@ -1021,11 +1021,11 @@ fn aes606_fires_h1_count_when_a_document_has_no_h1() {
 - No bypasses.
 ",
     );
-    assert!(has(&findings, "AES606", "h1_count"));
+    assert!(has(&findings, "AES605", "h1_count"));
 }
 
 #[test]
-fn aes606_fires_when_an_architecture_layer_section_is_absent() {
+fn aes605_fires_when_an_architecture_layer_section_is_absent() {
     // Strip Root Layer from an otherwise-conforming ARCHITECTURE.md.
     let text = r#"# Architecture
 
@@ -1070,10 +1070,10 @@ Sequence.
 Outer.
 "#;
     let findings = audit_root_doc("ARCHITECTURE.md", text);
-    assert!(has(&findings, "AES606", "h2_missing"), "{findings:#?}");
+    assert!(has(&findings, "AES605", "h2_missing"), "{findings:#?}");
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES606" && v == "h2_missing")
+        .find(|(c, v, _)| c == "AES605" && v == "h2_missing")
         .map(|(_, _, m)| m.as_str())
         .unwrap_or_default();
     assert!(
@@ -1083,7 +1083,7 @@ Outer.
 }
 
 #[test]
-fn aes606_strips_a_leading_list_index_before_matching() {
+fn aes605_strips_a_leading_list_index_before_matching() {
     // Numbered sections like `## 11. Root Layer` must match the
     // template entry "Root Layer" instead of firing h2_unexpected.
     let text = r#"# Architecture
@@ -1134,12 +1134,12 @@ Entry.
 "#;
     let findings = audit_root_doc("ARCHITECTURE.md", text);
     assert!(
-        !has(&findings, "AES606", "h2_missing") && !has(&findings, "AES606", "h2_unexpected"),
+        !has(&findings, "AES605", "h2_missing") && !has(&findings, "AES605", "h2_unexpected"),
         "numbered sections must match after index stripping; got: {findings:#?}"
     );
 }
 
-// ── AES607: FR/protocol class parity ──────────────────────────────────────
+// ── AES601: FR/protocol class parity ──────────────────────────────────────
 
 /// Write the shared contract module for the `sample` feature, declaring
 /// *traits* protocol classes. The aggregate trait is never counted. When
@@ -1209,7 +1209,7 @@ fn aes607_stays_silent_when_fr_count_equals_protocol_class_count() {
     write_protocol_module(tmp.path(), 3);
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES607", "protocol_count_mismatch"),
+        !has(&findings, "AES601", "protocol_count_mismatch"),
         "3 requirements and 3 protocol classes are aligned; got: {findings:#?}"
     );
 }
@@ -1221,12 +1221,12 @@ fn aes607_fires_when_the_frd_declares_more_requirements_than_protocol_classes() 
     write_protocol_module(tmp.path(), 2);
     let findings = audit(tmp.path());
     assert!(
-        has(&findings, "AES607", "protocol_count_mismatch"),
+        has(&findings, "AES601", "protocol_count_mismatch"),
         "3 requirements against 2 protocol classes must fire; got: {findings:#?}"
     );
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES607" && v == "protocol_count_mismatch")
+        .find(|(c, v, _)| c == "AES601" && v == "protocol_count_mismatch")
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
@@ -1247,12 +1247,12 @@ fn aes607_fires_when_the_code_declares_more_protocol_classes_than_requirements()
     write_protocol_module(tmp.path(), 3);
     let findings = audit(tmp.path());
     assert!(
-        has(&findings, "AES607", "protocol_count_mismatch"),
+        has(&findings, "AES601", "protocol_count_mismatch"),
         "1 requirement against 3 protocol classes must fire; got: {findings:#?}"
     );
     let message = findings
         .iter()
-        .find(|(c, v, _)| c == "AES607" && v == "protocol_count_mismatch")
+        .find(|(c, v, _)| c == "AES601" && v == "protocol_count_mismatch")
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
@@ -1272,7 +1272,7 @@ fn aes607_ignores_aggregate_traits_when_counting_protocol_classes() {
     write_protocol_module(tmp.path(), 1);
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES607", "protocol_count_mismatch"),
+        !has(&findings, "AES601", "protocol_count_mismatch"),
         "aggregates are not capability seams; got: {findings:#?}"
     );
 }
@@ -1285,7 +1285,7 @@ fn aes607_stays_silent_when_the_feature_has_no_shared_contract_module() {
     write_workspace(tmp.path(), &frd_with_fr_count(2));
     let findings = audit(tmp.path());
     assert!(
-        !has(&findings, "AES607", "protocol_count_mismatch"),
+        !has(&findings, "AES601", "protocol_count_mismatch"),
         "a feature with no shared contract module cannot mismatch; got: {findings:#?}"
     );
 }
