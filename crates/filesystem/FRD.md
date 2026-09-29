@@ -529,7 +529,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 
 ---
 
-## Consumer Access Pattern
+### Consumer Access Pattern
 
 All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **80 methods** (6 + 7 + 29 + 12 + 8 + 18).
 

@@ -37,6 +37,9 @@ defaults:
       - check-success = Tests
       - check-success = Self-Lint
       - check-success = Codacy Static Code Analysis
+    # Self-Lint runs ~1m6s and Tests run ~2m32s. Derive timeout from the
+    # slowest gate; 5min gives headroom without leaving stale queue entries.
+    checks_timeout: 5min
 
 merge_queue:
   # Serial mode: PRs tested one at a time against the latest main tip.
