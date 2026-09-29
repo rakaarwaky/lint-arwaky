@@ -53,6 +53,11 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
         }
 
+        tracing::debug!(
+            trait_names = ?trait_names,
+            "is_contract_orphan: extracted trait names"
+        );
+
         // Condition 1: not reachable from any _entry file.
         // P3 (symmetric contract wiring): a contract is also considered reachable
         // when it has an alive implementor — the contract is consumed purely via DI
@@ -77,17 +82,26 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         // Use all_files directly — orchestrator already provides full workspace file list
         let search_files: Vec<String> = all_files.to_vec();
 
-        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
-            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
-        }
-
-        // Condition 2: protocol not implemented by capabilities
+        // Condition 2: protocol not implemented by capabilities.
+        // Skip traits re-exported in a barrel file — those are intentionally
+        // public API and may have their implementors in dependent crates.
         if suffix == "protocol" {
             let unimplemented: Vec<String> = trait_names
                 .iter()
-                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .filter(|tn| {
+                    !self.has_trait_implementation(&search_files, tn, content_map)
+                        && !Self::is_trait_re_exported_in_barrel(
+                            std::slice::from_ref(tn),
+                            &search_files,
+                            content_map,
+                        )
+                })
                 .cloned()
                 .collect();
+            tracing::debug!(
+                unimplemented = ?unimplemented,
+                "is_contract_orphan: unimplemented protocols"
+            );
             if !unimplemented.is_empty() {
                 return OrphanIndicatorResult::new(
                     true,
@@ -102,11 +116,26 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
             }
         }
 
-        // Condition 3: aggregate not implemented by agent
+        // Whole-contract barrel re-export safety net: if every trait in the
+        // file is re-exported in a configured barrel file, the contract is
+        // intentionally public and not an orphan.
+        if Self::is_trait_re_exported_in_barrel(&trait_names, &search_files, content_map) {
+            return OrphanIndicatorResult::new(false, String::new(), Severity::LOW);
+        }
+
+        // Condition 3: aggregate not implemented by agent.
+        // Skip traits re-exported in a barrel file — intentionally public API.
         if suffix == "aggregate" {
             let unimplemented: Vec<String> = trait_names
                 .iter()
-                .filter(|tn| !self.has_trait_implementation(&search_files, tn, content_map))
+                .filter(|tn| {
+                    !self.has_trait_implementation(&search_files, tn, content_map)
+                        && !Self::is_trait_re_exported_in_barrel(
+                            std::slice::from_ref(tn),
+                            &search_files,
+                            content_map,
+                        )
+                })
                 .cloned()
                 .collect();
             if !unimplemented.is_empty() {
@@ -217,7 +246,14 @@ impl ContractOrphanAnalyzer {
             }
             match shared::common::parse_file_content(cf, &content) {
                 FileParseResultVO::Rust(result) => {
-                    if result.has_trait_impl(trait_name) {
+                    let has_impl = result.has_trait_impl(trait_name);
+                    tracing::debug!(
+                        trait_name = trait_name,
+                        has_impl = has_impl,
+                        impl_count = result.trait_impls.len(),
+                        "has_trait_implementation check"
+                    );
+                    if has_impl {
                         return true;
                     }
                 }
