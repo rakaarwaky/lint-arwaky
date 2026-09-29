@@ -36,8 +36,6 @@ Last Updated: 2026-09-29
 | FRD omits BACKLOG.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD omits PRD.md crosslink | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Feature backlog restates root state section | AES604 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Feature folder has doc pair but no orchestrator | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
-| Kernel folder carries a doc pair | AES605 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | AGENTS.md has no H1 | AES606 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | AGENTS.md has multiple H1s | AES606 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | AGENTS.md missing required H2 | AES606 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |

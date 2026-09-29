@@ -212,8 +212,8 @@ None
 "
 }
 
-/// Build a workspace whose only feature folder is a real feature, so AES605
-/// (folder health) does not fire on a conforming document set.
+/// Build a workspace whose only feature folder is a real feature, so AES704
+/// (folder doc-pair check, moved to structure-rules) does not fire.
 fn write_workspace(dir: &Path, frd: &str) {
     let feature = dir.join("crates/sample");
     fs::create_dir_all(feature.join("src")).unwrap();
