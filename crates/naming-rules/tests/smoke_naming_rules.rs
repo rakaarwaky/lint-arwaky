@@ -1,5 +1,5 @@
 // Smoke tests — quick boot + respond within 5s.
-use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
+use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 use shared::common::PatternList;
 use shared::common::SuffixPolicyVO;
@@ -82,5 +82,5 @@ fn get_suffix_smoke() {
 
 #[test]
 fn naming_checker_construction_smoke() {
-    let _ = NamingChecker::new();
+    let _ = NamingConventionChecker::new();
 }
