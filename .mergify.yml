@@ -30,6 +30,10 @@ defaults:
     # merge_method below, so main's history stays linear.
     update_method: merge
     merge_method: squash
+    # Tests take ~2m30s and Self-Lint ~1m4s; the auto-derived timeout
+    # (derived from the fastest recent CI run) falls short and triggers
+    # false CHECKS_TIMEOUT dequeues. 5min gives headroom.
+    checks_timeout: 5min
     merge_conditions:
       - check-success = Format
       - check-success = Clippy
