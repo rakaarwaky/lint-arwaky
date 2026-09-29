@@ -35,8 +35,8 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
 | AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.        |
 | AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.            |
-| AES403 | Capabilities Role | HIGH     | Role  | Capability exceeds max 3 type declarations or has no protocol implementation.                   |
-| AES404 | Utility Role      | MEDIUM   | Role  | Utility violates stateless function rules, contains trait impls                                 |
+| AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, local const, inline test, or public helper. |
+| AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports |
 | AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
 | AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
 
@@ -49,6 +49,24 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
 | AES504 | Utility Orphan      | MEDIUM   | Orphan | Utility file not imported or consumed by any capability, agent, or surface layer.                                                                 |
 | AES505 | Agent Orphan        | HIGH     | Orphan | Agent orchestrator not called by any surface file or entry point.                                                                                 |
 | AES506 | Surface Orphan      | HIGH     | Orphan | Smart surface not imported by entry/router; utility surface not imported by smart surface; passive surface not imported by smart/utility surface. |
+
+| Code   | Name                  | Severity | Group  | Description                                                                                     |
+| -------- | --------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------- |
+| AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields.                  |
+| AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present.                  |
+| AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
+| AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
+| AES605 | Feature Folder Health | MEDIUM   | Doc    | Every folder with a doc pair holds an orchestrator; kernel folders carry no docs.                |
+| AES606 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
+| AES607 | FR/Protocol Parity    | HIGH     | Doc    | An FRD's requirement count equals its feature's count of `I*Protocol` capability-seam classes.     |
+
+| Code   | Name               | Severity | Group     | Description                                                                                |
+| -------- | -------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                  |
+| AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file.                 |
+| AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*` or `agent_*` file.                                |
+| AES704 | Feature Folder Docs  | MEDIUM   | Structure | A feature folder lacks its `FRD.md` + `BACKLOG.md` doc pair.                               |
+| AES705 | Surface Folder Docs  | MEDIUM   | Structure | A surface folder lacks its `DESIGN.md`.                                                    |
 
 ---
 
@@ -277,17 +295,24 @@ Checks for primitive types (`String`, `i32`, `bool`, `int`, `float`, etc.) in co
 
 ### AES403 — Capabilities Role
 
-**Severity:** HIGH / MEDIUM
+**Severity:** HIGH / MEDIUM / LOW
 
-Capability routing and protocol enforcement. Two sub-checks — each with its own severity:
+Capability routing, protocol enforcement, and 3-block structure. Six sub-checks — each with its own severity:
 
+| Sub-check                        | Severity   | Description                                                                                          |
+| -------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| **CapabilityTooManyTypes**       | **HIGH**   | File exceeds max 3 type declarations.                                                                 |
+| **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait.                        |
+| **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).    |
+| **CapabilityLocalConstant**      | **MEDIUM** | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs`.                        |
+| **CapabilityEmbeddedTest**       | **LOW**    | `#[cfg(test)]` or `mod tests` declared inline; test code belongs in `tests/`.                          |
+| **CapabilityPublicHelper**       | **MEDIUM** | Block 3 helper with no production caller (own-module or external) is `pub`; change to `fn` or `pub(crate)` (tests in `tests/` compile as separate crate and require `pub`). |
 
-| Sub-check                   | Severity   | Description                                                                    |
-| ----------------------------- | ------------ | -------------------------------------------------------------------------------- |
-| **CapabilityTooManyTypes**  | **HIGH**   | File exceeds max 3 type declarations                                          |
-| **CapabilityNoImplementor** | **MEDIUM** | No struct/class in the capability file implements a`_protocol` contract trait. |
+**Structure rule (3-block):** a capability file reads Block 1 (type + constructor) → Block 2 (protocol methods only) → Block 3 (factories, std traits, helpers). The `CapabilityBlockOrder` sub-check enforces the 2-before-3 half of that order.
 
-**FIX:** Ensure capability implements its protocol; split routing across multiple capabilities.
+**Language coverage:** all six sub-checks run for Rust, Python, and TypeScript/JavaScript. Each language has its own implementation of the block-order, constant-placement, test-placement, and helper-visibility sub-checks, since the syntactic markers differ (`impl X for` vs `class X(Base)` vs `class X implements I`).
+
+**FIX:** Ensure capability implements its protocol; split routing across multiple capabilities; reorder impl blocks so the protocol implementation comes first.
 
 ---
 
@@ -295,7 +320,7 @@ Capability routing and protocol enforcement. Two sub-checks — each with its ow
 
 **Severity:** MEDIUM
 
-Utility role boundary violation. Utility files must contain stateless standalone functions only. They must not contain stateful objects, struct/class state, trait implementations, or contract implementations. Furthermore, Utility files may only depend on Taxonomy, and must not import any other layer (`contract`, `capabilities`, `agent`, `surface`, `root`).
+Utility role boundary violation. Utility files must contain stateless standalone functions only. They must not contain stateful objects, struct/class state, trait definitions, impl blocks, type aliases (Rust `pub type`), interface definitions (TS), or enum definitions. Furthermore, Utility files may only depend on Taxonomy, and must not import any other layer (`contract`, `capabilities`, `agent`, `surface`, `root`) or other `utility_*` files.
 
 **FIX:** Refactor Utility to stateless functions and remove non-taxonomy imports or move stateful logic into Capabilities.
 
@@ -394,3 +419,200 @@ Orphan detection per category:
 - **Smart** (`_command` / `_controller` / `_page` / `_entry`) — must be imported by entry
 - **Utility** (`_hook` / `_store` / `_action` / `_screen` / `_router`) — must be imported by smart surface
 - **Passive** (`_component` / `_view` / `_layout`) — must be imported by smart or utility surface
+
+---
+
+## Group 6: Document Invariants
+
+These rules audit the AES document chain — `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md` at the workspace root, plus the `FRD.md` / `BACKLOG.md` pair in each feature folder. Unlike groups 1–5 they read Markdown, not source code, so they run through the `docs` command rather than `scan`.
+
+**Run:** `lint-arwaky-cli docs .`
+
+**Finding shape:** each code groups one category. A finding carries `code`, a `violation_type` naming the exact sub-invariant that failed, and a `message` giving the line and the concrete drift. The `violation_type` is stable and machine-readable; the message is for a human.
+
+**Documented by:** the HOW-TO-MAKE-FRD / HOW-TO-MAKE-ROADMAP templates in the `aes-docs` skill.
+
+---
+
+### AES601 — FR Format
+
+**Severity:** HIGH
+
+Requirement IDs follow `FR-<FEATURE>-NNN: <imperative name>`, and every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling.
+
+| Violation type        | Fires when                                                              |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `id_missing_feature_prefix` | An ID reads `FR-NNN` with no feature prefix.                        |
+| `field_missing`            | A requirement omits one or more of the six fields; the message names each. |
+
+---
+
+### AES602 — Section Structure
+
+**Severity:** HIGH
+
+Sections follow the template order (Reference, System Overview, Functional Requirements, API Contract, Integration Points, Non-functional, Test Scenarios, Assumptions, Glossary), and each carries the shape its type requires.
+
+| Violation type               | Fires when                                                            |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `order_violation`             | The level-2 sections appear out of template order.                    |
+| `api_no_subsection`           | API Contract is missing its Protocol API or Aggregate API subsection.  |
+| `integration_not_table`       | Integration Points is not a table with System, Direction, Purpose, Failure mode. |
+| `nfr_not_table`               | Non-functional Requirements is not a table with Metric, Target, Measurement method. |
+| `scenarios_empty`             | Test Scenarios carries no bullet items.                               |
+| `glossary_empty`              | Glossary carries no `- **Term**: definition` bullets.                  |
+
+---
+
+### AES603 — Spec Purity
+
+**Severity:** HIGH
+
+A spec promises; it never reports state. Applies to every promise-bearing document: PRD, FRD, ROADMAP, ARCHITECTURE, CONTRIBUTING.
+
+| Violation type         | Fires when                                                              |
+| ------------------------ | ------------------------------------------------------------------------ |
+| `source_file_named`     | The spec names a concrete source file (`.py`, `.rs`, `.ts`, `.tsx`); the message names the file. |
+| `status_leak`           | The spec carries checkboxes, a Status field, implementation state, release state, a status marker, or a progress percentage. |
+
+---
+
+### AES604 — Crosslinks
+
+**Severity:** HIGH
+
+Documents reference each other, and the state vocabulary lives in exactly one place.
+
+| Violation type             | Fires when                                                              |
+| --------------------------- | ------------------------------------------------------------------------ |
+| `no_backlog_link`           | An FRD's Reference section does not link its BACKLOG.md.                |
+| `no_prd_link`               | An FRD's Reference section does not link its PRD.md.                    |
+| `state_vocab_restated`      | A feature backlog restates a root-master section (State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register). |
+
+---
+
+### AES605 — Feature Folder Health
+
+**Severity:** MEDIUM
+
+A doc pair marks a feature, and only a feature holds one.
+
+| Violation type     | Fires when                                                              |
+| -------------------- | ------------------------------------------------------------------------ |
+| `no_orchestrator`   | A folder carries a doc pair but holds no `*_orchestrator` file.        |
+| `shared_has_docs`   | A kernel folder (`shared`) carries a doc pair.                          |
+
+---
+
+### AES606 — Doc Heading Structure
+
+**Severity:** HIGH
+
+Every root document carries exactly one level-1 heading and a template-derived set of required and allowed level-2 sections. Fenced code-block contents are stripped before scanning so they never read as headings.
+
+The H2 set is closed per document: a required H2 is mandatory; a project-specific H2 is allowed only when it appears in that document's agreed optional list; any other H2 is reported so it can be demoted to a level-3 heading or removed. Level-3 headings and deeper are free-form.
+
+Matching is by leading words after lowercasing and stripping punctuation, so `## 4. Vertical Slicing Layout` satisfies `Vertical Slicing Layout`.
+
+**Required and allowed H2s per document:**
+
+| Document | Required H2s |
+| --- | --- |
+| `AGENTS.md` | Precedence, Security, Architecture, Contributing, License, Commands, Git Workflow, Definition of Done, Related Documents |
+| `ARCHITECTURE.md` | Purpose, Workspace Organization, Naming Convention, Vertical Slicing Layout, Taxonomy Layer, Contract Layer, Utility Layer, Capabilities Layer, Agent Layer, Surface Layer, Root Layer |
+| `CONTRIBUTING.md` | Principles, Development Setup, Feature Change, Documentation Change, Quality Verification & PR Process |
+| `PRD.md` | Problem Statement, Goals & Success Metrics, User Personas, Scope, Feature Requirements, Non-functional Requirements, Open Questions / Risks |
+| `README.md` | Prerequisites, Quick Start, Architecture, Project Structure, Available Scripts/Commands, Configuration, Testing, Contributing, License |
+| `ROADMAP.md` | Current Condition, State Definitions, Status Policy, Feature Roll-up, Branches in Flight, Risk Register |
+
+Each document also carries an agreed set of project-specific H2s that are accepted without violation; see the constants in `taxonomy_doc_constant.rs` for the full per-document lists.
+
+| Violation type     | Fires when                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| `h1_count`          | The document has zero or more than one level-1 heading.                              |
+| `h2_missing`        | One or more of the required H2 sections is absent; the message names each one.         |
+| `h2_unexpected`     | A level-2 heading is outside the required and allowed sets; the message asks for demotion to H3 or removal. |
+
+---
+
+### AES607 — FR/Protocol Parity
+
+**Severity:** HIGH
+
+One protocol class is one capability seam, and one seam is one requirement, so an FRD's `FR-<Feature>-NNN` heading count must equal the count of `pub trait I*Protocol` declarations in the feature's shared contract module. The crate folder name is translated to the module name by replacing `-` with `_` (`report-formatter` → `report_formatter`).
+
+Classes are counted, never files: a single protocol file may declare many capability seams, and a module may spread them over many files. `I*Aggregate` traits are composite entry points rather than capability seams and are excluded from the count. A feature with no shared contract module is left alone.
+
+**Language scope (v1):** the rule resolves `crates/shared/src/<module>` and counts Rust `pub trait I*Protocol` declarations only. Python (`modules/`) and TypeScript (`packages/`) features are not audited yet. A feature with no shared contract module is also how surface features (CLI, MCP, TUI, dispatcher) stay exempt, since they own no shared contract module.
+
+The message states both counts and names both fix directions, because either the code shape or the requirement shape may be the one to change. The four-direction table in `HOW-TO-MAKE-FRD.md` decides which to pick.
+
+| Violation type            | Fires when                                                                                          |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `protocol_count_mismatch` | The FRD heading count and the module's `I*Protocol` class count differ; the message states both counts. |
+
+---
+
+## Group 7: Folder Structure
+
+### AES701 — Shared Folder Purity
+
+**Severity:** HIGH
+
+A workspace holds a locked `shared` folder that contains only taxonomy, utility, and contract files. Any `capabilities_*`, `agent_*`, or `surface_*` file sitting there is misplaced and must be moved to a feature or surface folder.
+
+| Violation type                  | Fires when                                                       |
+| --------------------------------- | ------------------------------------------------------------------ |
+| `shared_has_forbidden_files` | A shared folder holds a `capabilities_*`, `agent_*`, or `surface_*` file. |
+
+---
+
+### AES702 — Feature Folder Health
+
+**Severity:** MEDIUM
+
+A feature folder is a member subdirectory (under `crates/`, `modules/`, or `packages/`) that carries business logic. It must hold at least one `agent_*_orchestrator` file AND at least one `capabilities_*` file. A folder with only one side of that pair is incomplete and should be split or merged into the correct home.
+
+The check is per folder. A member-level orchestrator — one sitting directly under `crates/`, `modules/`, or `packages/` rather than inside a feature — does **not** answer for the folders beneath it. Each feature owns its own orchestration, so a member-level orchestrator is a routing aggregate over the features, and a feature folder missing its own agent is still a split feature.
+
+| Violation type                    | Fires when                                                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| `feature_missing_agent`       | The folder holds capabilities but no `agent_*_orchestrator` file of its own. |
+| `feature_missing_capability` | The folder holds an agent orchestrator but no `capabilities_*` file.        |
+
+---
+
+### AES703 — Surface Folder Purity
+
+**Severity:** MEDIUM
+
+A surface folder is a folder where surface files dominate — it has more surface files than all other layers combined. Such a folder must contain surface files only. Any `capabilities_*` or `agent_*` file in a surface folder is misplaced and should move to a feature folder. Utility files, barrels, and entry-point wrappers are permitted alongside surfaces.
+
+| Violation type                       | Fires when                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------ |
+| `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*` or `agent_*` file. |
+
+
+---
+
+### AES704 — Feature Folder Docs
+
+**Severity:** MEDIUM
+
+A feature folder documents itself. A folder carrying the layer files of a feature — capabilities, an orchestrator, or both — also carries the two documents beside its source: `FRD.md` saying what the feature does, and `BACKLOG.md` saying where its work stands. A folder holding neither is a feature nobody can read before changing. A folder carrying no capabilities and no orchestrator is not a feature and owes no doc pair.
+
+| Violation type            | Fires when                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `feature_missing_doc_pair` | A feature folder holds capabilities or an orchestrator but lacks `FRD.md` or `BACKLOG.md`. |
+
+---
+
+### AES705 — Surface Folder Docs
+
+**Severity:** MEDIUM
+
+A surface folder documents itself. The source of a surface says what the surface does; `DESIGN.md` says what it looks like, which entry points reach it, and which states a user sees. A folder that is surface-dominated but carries no `DESIGN.md` leaves the next reader inferring the surface's shape from its handlers.
+
+| Violation type            | Fires when                                                              |
+| --------------------------- | ------------------------------------------------------------------------- |
+| `surface_missing_design_md` | A surface-dominated folder carries no `DESIGN.md`.                      |
