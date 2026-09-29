@@ -46,6 +46,7 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
         }
         utility_capabilities_role_checker::check_type_budget(file, violations);
         utility_capabilities_role_checker::check_implementor(file, violations);
+        utility_capabilities_role_checker::check_single_protocol(file, violations);
         self.check_capability_block_order(file, violations);
         self.check_capability_constant_placement(file, violations);
         self.check_capability_test_placement(file, violations);
@@ -58,6 +59,10 @@ impl ICapabilitiesRoleProtocol for CapabilitiesRustRoleAuditor {
 
     fn check_capability_implementor(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         utility_capabilities_role_checker::check_implementor(file, violations);
+    }
+
+    fn check_capability_single_protocol(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_capabilities_role_checker::check_single_protocol(file, violations);
     }
 
     fn check_capability_block_order(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
