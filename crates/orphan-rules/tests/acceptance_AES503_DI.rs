@@ -14,11 +14,11 @@ mod di_aware_orphan_tests {
     use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
     use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
     use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
-    use orphan_rules_lint_arwaky::utility_orphan_graph::trace_reachability;
     use shared::common::taxonomy_path_vo::FilePath;
     use shared::filesystem::FilesystemRequest;
     use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
     use shared::orphan_rules::contract_orphan_protocol::IContractOrphanProtocol;
+    use shared::orphan_rules::utility_orphan_graph::trace_reachability;
     use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
     use std::collections::HashMap;
     use std::sync::Arc;

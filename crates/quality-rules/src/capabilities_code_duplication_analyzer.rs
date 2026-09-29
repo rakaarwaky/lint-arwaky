@@ -105,7 +105,8 @@ impl CodeDuplicationAnalyzer {
             let mut file_hashes: HashSet<u64> = HashSet::new();
             for w in lines.windows(min_dup_lines) {
                 // P2.1: normalize once — cache hash for second pass
-                let key = crate::utility_code_duplication_detector::normalize_window(w);
+                let key =
+                    shared::quality_rules::utility_code_duplication_detector::normalize_window(w);
                 let id = hash_key(&key);
                 global.entry(id).or_default().insert(fi);
                 file_hashes.insert(id);

@@ -2,7 +2,6 @@
 // Implements IFileSystemIOProtocol by delegating to utility_filesystem_io stateless functions.
 // 3-block structure per AES skill.
 
-use crate::utility_filesystem_io;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_source_vo::ContentString;
@@ -11,6 +10,7 @@ use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{
     ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
 };
+use shared::filesystem::utility_filesystem_io;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 

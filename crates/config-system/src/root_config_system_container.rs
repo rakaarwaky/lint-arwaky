@@ -4,7 +4,7 @@ use crate::capabilities_rules_validator::ConfigRulesValidator;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
 // Utility module wired into entry for orphan reachability (AES504)
-use crate::utility_config_parser;
+use shared::config_system::utility_config_parser;
 use shared::config_system::{
     IConfigLanguageProtocol, IConfigListProtocol, IConfigOrchestratorAggregate,
     IConfigParseProtocol, IConfigReadProtocol, IConfigTomlProtocol, IConfigValidateProtocol,

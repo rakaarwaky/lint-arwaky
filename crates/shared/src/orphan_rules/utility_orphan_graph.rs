@@ -1,7 +1,7 @@
 // PURPOSE: Pure graph traversal utility for orphan detection
 // Stateless, domain-agnostic BFS over ImportGraph — reusable across modules.
 
-use shared::quality_rules::taxonomy_analysis_vo::ImportGraph;
+use crate::quality_rules::taxonomy_analysis_vo::ImportGraph;
 use std::collections::{HashSet, VecDeque};
 use tracing::debug;
 

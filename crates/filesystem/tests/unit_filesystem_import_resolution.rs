@@ -9,14 +9,14 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use filesystem_lint_arwaky::utility_barrel_resolution::{
-    parse_barrel_reexports, resolve_single_import,
-};
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ImportType, Language};
+use shared::filesystem::utility_barrel_resolution::{
+    parse_barrel_reexports, resolve_single_import,
+};
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;

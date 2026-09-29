@@ -18,7 +18,7 @@ use shared::common::utility_signature_parser::{
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
 
-use super::utility_contract_role_checker as utility;
+use shared::role_rules::utility_contract_role_checker as utility;
 
 // === Block 1: Type Definition ===
 

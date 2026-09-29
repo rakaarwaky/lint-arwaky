@@ -135,7 +135,7 @@ Cross-cutting and workspace-level rows only. Anything that belongs to one crate 
 | WS-09 | § PRD | TUI file browser | P2 | Done | `cargo test -p tui --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
 | WS-10 | § PRD | Windows support | P2 | Deferred | Out of scope for v3.x; no Windows CI runner. Recorded in PRD "Out of scope". | Unassigned | None | 2026-09-17 |
 | WS-11 | § PRD | Deeper monorepo performance optimizations | P2 | Deferred | Current 10k-file target met; optimization deferred until real-world bottleneck identified. | Unassigned | None | 2026-09-17 |
-| WS-12 | § PRD | AES700 folder-structure group (AES701–AES705) | P0 | Done | Shared purity, feature health, surface purity, feature doc pair, surface DESIGN.md; `check .` → 0, `workspaces-good` → 0, 29 codes per language (#332, #333) | @raka | None | 2026-09-28 |
+| WS-12 | § PRD | AES700 folder-structure group (AES701–AES703) | P0 | Done | Shared purity, feature health, surface purity; `check .` → 0, `workspaces-good` → 0, 27 codes per language (#332, #411) | @raka | None | 2026-09-29 |
 
 ## Blockers
 
@@ -162,7 +162,7 @@ Definition of "deployment ready" (target `v3.7.0`): all implementation evidence 
 | All P0 done | Done | WS-01, WS-02, WS-03 all evidenced at `29c71083` |
 | All P1 done + verified | Done | WS-04–WS-08 evidenced at `29c71083` |
 | Tests pass, lint clean, build works | Evidence recorded | Workspace evidence at `29c71083`; latest role-rules evidence at `72d2d58b`; candidate snapshot still required |
-| Docs complete | Evidence recorded | PRD, README, TEST, and deployment guidance aligned to 29 rules; final release review remains |
+| Docs complete | Evidence recorded | PRD, README, TEST, and deployment guidance aligned to 27 rules; final release review remains |
 | Deferred items recorded | Done | WS-10, WS-11 in Deferred state with reasons |
 | Candidate artifact manifest | Pending | Tag, binary inventory, platform coverage, checksums, and provenance are not recorded |
 | Required role sign-offs | Pending | Product, Engineering, QA, Documentation, and Operations approvals are not recorded |

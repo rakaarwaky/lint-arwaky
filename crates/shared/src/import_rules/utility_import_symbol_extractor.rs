@@ -1,7 +1,7 @@
 // PURPOSE: utility_import_symbol_extractor — AST-based unused import detection.
-use shared::common::taxonomy_layer_vo::Identity;
-use shared::common::taxonomy_name_vo::SymbolName;
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use crate::common::taxonomy_layer_vo::Identity;
+use crate::common::taxonomy_name_vo::SymbolName;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::{HashMap, HashSet};
 
 // ─── Block 2: Usage Detection (AST-based) ─────────────────

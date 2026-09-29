@@ -3,7 +3,7 @@
 //
 // Utility: pure functions, no struct, no trait impl
 
-use shared::filesystem::taxonomy_filesystem_vo::{
+use crate::filesystem::taxonomy_filesystem_vo::{
     RustFnItem, RustImplItem, RustMetadata, RustModItem, RustUseItem,
 };
 

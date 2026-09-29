@@ -7,10 +7,10 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::xml_escape;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use report_formatter_lint_arwaky::utility_report_format::format_report_default;
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 use shared::report_formatter::IReportFormatterAggregate;
+use shared::report_formatter::utility_report_format::format_report_default;
 use std::sync::Arc;
 
 fn make_orchestrator() -> ReportFormatterOrchestrator {

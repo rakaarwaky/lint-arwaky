@@ -6,6 +6,11 @@ pub mod taxonomy_import_error;
 pub mod taxonomy_import_request;
 pub mod taxonomy_import_response;
 pub mod taxonomy_import_vo;
+pub mod utility_cycle_detector;
+pub mod utility_dummy_detector;
+pub mod utility_import_module_parser;
+pub mod utility_import_resolver;
+pub mod utility_import_symbol_extractor;
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_import_protocol::ICycleImportProtocol;

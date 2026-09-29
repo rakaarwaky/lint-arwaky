@@ -1,7 +1,7 @@
 // PURPOSE: taxonomy_parser_helper — pure utility functions for import parsing
 // Uses resolved_path from filesystem's barrel resolution — no local barrel logic.
-use shared::common::taxonomy_name_vo::SymbolName;
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use crate::common::taxonomy_name_vo::SymbolName;
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 // ═══════════════════════════════════════════════════════════════
 // ImportEntry-based functions (consume filesystem crate's parsed data)

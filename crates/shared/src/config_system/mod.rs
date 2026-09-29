@@ -6,6 +6,7 @@ pub mod taxonomy_config_request;
 pub use crate::common::taxonomy_config_language_vo;
 pub mod taxonomy_config_response;
 pub mod taxonomy_config_vo;
+pub mod utility_config_merger;
 pub mod utility_config_parser;
 
 // ─── Re-exports ────────────────────────────────────────────

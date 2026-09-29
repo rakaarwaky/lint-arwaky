@@ -1,7 +1,6 @@
 // Smoke tests — quick boot + respond within 5s.
 use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use naming_rules_lint_arwaky::utility_naming_checker::{get_stem, get_suffix};
 use shared::common::PatternList;
 use shared::common::SuffixPolicyVO;
 use shared::common::taxonomy_definition_vo::LayerDefinition;
@@ -14,6 +13,7 @@ use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
 use shared::naming_rules::SUFFIX_POLICY_STRICT;
 use shared::naming_rules::taxonomy_naming_request::NamingRequest;
 use shared::naming_rules::taxonomy_naming_response::NamingResponse;
+use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
 use std::collections::HashMap;
 use std::sync::Arc;
 

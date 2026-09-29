@@ -2,6 +2,7 @@
 pub mod contract_report_formatter_aggregate;
 pub mod contract_report_formatter_protocol;
 pub mod taxonomy_report_vo;
+pub mod utility_report_format;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

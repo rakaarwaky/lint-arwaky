@@ -8,9 +8,9 @@
 
 use std::path::Path;
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
+use crate::common::taxonomy_lint_result_vo::LintResult;
+use crate::common::taxonomy_severity_vo::Severity;
+use crate::filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
 
 /// Rule 2 — at most 3 type declarations per agent file. HIGH.
 pub fn check_type_budget(file: &FileEntry, violations: &mut Vec<LintResult>) {

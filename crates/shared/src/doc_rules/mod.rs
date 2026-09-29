@@ -4,6 +4,7 @@ pub mod contract_doc_protocol;
 pub mod taxonomy_doc_constant;
 pub mod taxonomy_doc_request;
 pub mod taxonomy_doc_response;
+pub mod utility_protocol_counter;
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_doc_aggregate::IDocRunnerAggregate;

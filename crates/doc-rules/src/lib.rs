@@ -6,8 +6,5 @@ pub mod capabilities_doc_checker;
 // ── Agent (orchestration) ─────────────────────────────────────────────────────
 pub mod agent_doc_orchestrator;
 
-// ── Utility (stateless counters) ─────────────────────────────────────────────
-pub mod utility_protocol_counter;
-
 // ── Root (composition, wiring) ───────────────────────────────────────────────
 pub mod root_doc_rules_container;

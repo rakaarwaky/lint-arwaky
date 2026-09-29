@@ -12,7 +12,7 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{ExternalReferenceMap, FileEntry};
 use shared::role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 
-use super::utility_capabilities_role_checker;
+use shared::role_rules::utility_capabilities_role_checker;
 
 // === Block 1: Type Definition ===
 

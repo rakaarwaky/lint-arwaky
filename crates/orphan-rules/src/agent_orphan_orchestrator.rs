@@ -106,7 +106,10 @@ impl IGraphContextProtocol for ArchOrphanAnalyzer {
 
 impl IEntryPointProtocol for ArchOrphanAnalyzer {
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
-        crate::utility_orphan_filename::identify_entry_points(std::slice::from_ref(files), &[])
+        shared::orphan_rules::utility_orphan_filename::identify_entry_points(
+            std::slice::from_ref(files),
+            &[],
+        )
     }
 }
 
@@ -116,7 +119,7 @@ impl IReachabilityProtocol for ArchOrphanAnalyzer {
         entry_points: &OrphanFileListVO,
         context: &GraphAnalysisContext,
     ) -> ReachabilityResult {
-        let alive_set = crate::utility_orphan_graph::trace_reachability(
+        let alive_set = shared::orphan_rules::utility_orphan_graph::trace_reachability(
             &entry_points.values,
             &context.import_graph,
         );
@@ -271,14 +274,14 @@ impl ArchOrphanAnalyzer {
             .collect();
 
         let entry_points_vo = OrphanFileListVO::new(all_files_rel);
-        let entry_points = crate::utility_orphan_filename::identify_entry_points(
+        let entry_points = shared::orphan_rules::utility_orphan_filename::identify_entry_points(
             std::slice::from_ref(&entry_points_vo),
             &[configured_vo],
         );
         // BFS reachability through the import graph. The graph already carries
         // synthetic DI edges (contract→capabilities bridge and container→wired
         // services), so a single linear BFS follows both import and DI paths.
-        let alive_set = crate::utility_orphan_graph::trace_reachability(
+        let alive_set = shared::orphan_rules::utility_orphan_graph::trace_reachability(
             &entry_points.values,
             &context.import_graph,
         );

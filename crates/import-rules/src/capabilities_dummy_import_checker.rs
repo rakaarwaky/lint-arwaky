@@ -3,10 +3,10 @@ use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::common::{ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity};
 use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
-use crate::utility_dummy_detector;
-use crate::utility_import_resolver;
 use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
 use shared::import_rules::taxonomy_import_error::ImportError;
+use shared::import_rules::utility_dummy_detector;
+use shared::import_rules::utility_import_resolver;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 

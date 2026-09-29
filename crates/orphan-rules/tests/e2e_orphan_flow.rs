@@ -1,8 +1,8 @@
 // E2E tests — full pipeline: temp dir with orphaned files → scan → verify orphans detected.
-use orphan_rules_lint_arwaky::utility_orphan_filename::{
+use shared::orphan_rules::taxonomy_orphan_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
+use shared::orphan_rules::utility_orphan_filename::{
     file_basename, file_stem, file_suffix, identify_entry_points,
 };
-use shared::orphan_rules::taxonomy_orphan_vo::{OrphanEntryPatternListVO, OrphanFileListVO};
 
 // ── utility_orphan_filename e2e ────────────────────────────
 

@@ -5,6 +5,8 @@ pub mod taxonomy_orphan_constant;
 pub mod taxonomy_orphan_request;
 pub mod taxonomy_orphan_response;
 pub mod taxonomy_orphan_vo;
+pub mod utility_orphan_filename;
+pub mod utility_orphan_graph;
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_orphan_aggregate::IOrphanAggregate;

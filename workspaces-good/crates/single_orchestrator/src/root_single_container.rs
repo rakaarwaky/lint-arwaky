@@ -1,6 +1,6 @@
 use crate::agent_single_orchestrator::SingleGoalOrchestrator;
 use crate::capabilities_single_checker::SingleChecker;
-use crate::contract_single_protocol::ISingleRunnerAggregate;
+use calculator_shared::single_orchestrator::contract_single_protocol::ISingleRunnerAggregate;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

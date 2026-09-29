@@ -1,6 +1,6 @@
-use shared::common::taxonomy_common_vo::LineNumber;
-use shared::common::taxonomy_layer_vo::{Identity, LayerNameVO};
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_layer_vo::{Identity, LayerNameVO};
+use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
 
 // ═══════════════════════════════════════════════════════════════
 // ImportEntry-based functions (direct field access)
@@ -145,7 +145,7 @@ pub fn resolve_scope(scope: &Identity) -> (LayerNameVO, Vec<Identity>) {
 pub fn extract_layer_from_import(segment: &Identity) -> Option<LayerNameVO> {
     let segment_str = segment.value();
     if let Some(layer) =
-        shared::common::utility_layer_detector::detect_layer_from_prefix(segment_str)
+        crate::common::utility_layer_detector::detect_layer_from_prefix(segment_str)
     {
         return Some(LayerNameVO::new(layer));
     }
@@ -181,9 +181,9 @@ pub fn find_import_line_number(content: &str, alias: &str) -> LineNumber {
 }
 
 /// Check if a filename is a barrel/re-export file.
-/// Uses shared::common::DEFAULT_RULE_EXCEPTIONS as single source of truth.
+/// Uses crate::common::DEFAULT_RULE_EXCEPTIONS as single source of truth.
 pub fn is_barrel_file(filename: &str) -> bool {
-    shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename)
+    crate::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename)
 }
 
 /// Check if a symbol is a Python `__future__` import.

@@ -1,15 +1,15 @@
 // PURPOSE: Shared helpers for naming checkers — stem/suffix extraction, result construction.
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::ColumnNumber;
-use shared::common::taxonomy_common_vo::LineNumber;
-use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_lint_vo::LocationList;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
-use shared::naming_rules::taxonomy_naming_constant::ADAPTER_NAME;
+use crate::common::taxonomy_adapter_name_vo::AdapterName;
+use crate::common::taxonomy_common_vo::ColumnNumber;
+use crate::common::taxonomy_common_vo::LineNumber;
+use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::common::taxonomy_lint_result_vo::LintResult;
+use crate::common::taxonomy_lint_vo::LocationList;
+use crate::common::taxonomy_message_vo::LintMessage;
+use crate::common::taxonomy_path_vo::FilePath;
+use crate::common::taxonomy_severity_vo::Severity;
+use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::naming_rules::taxonomy_naming_constant::ADAPTER_NAME;
 
 /// Extract the file stem using the last dot (rfind), consistent across all checkers.
 ///
