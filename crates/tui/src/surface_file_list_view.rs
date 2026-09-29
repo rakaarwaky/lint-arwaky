@@ -7,10 +7,10 @@
 //   - Focus indicator on the panel border (cyan when focused, gray when not)
 use crate::utility_tui_theme as theme;
 use ratatui::Frame;
-use ratatui::layout::Rect;
+use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Borders, List, ListItem, ListState};
+use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
 use shared::tui::AesLayer;
 use shared::tui::{AppState, PanelFocus};
 
@@ -42,6 +42,17 @@ impl FileListView {
         } else {
             (0..state.entries.len()).collect()
         };
+
+        // In search mode with zero matches, show empty-state guidance instead of the full list (#367).
+        let empty_hint =
+            if state.search_mode && !state.search_query.is_empty() && display_indices.is_empty() {
+                Some(format!(
+                    "No matches for '{}' — press Esc to clear filter",
+                    state.search_query
+                ))
+            } else {
+                None
+            };
 
         // In search mode, filter_pos is the highlight position in the displayed list.
         // In normal mode, selected_index is the highlight position.
@@ -98,13 +109,18 @@ impl FileListView {
             block
         };
 
-        let list = List::new(items).block(block).highlight_style(
-            Style::default()
-                .bg(theme::HIGHLIGHT)
-                .add_modifier(Modifier::BOLD),
-        );
-
-        frame.render_stateful_widget(list, area, &mut list_state);
+        if let Some(hint) = empty_hint {
+            let hint_line = Line::from(Span::styled(hint, Style::default().fg(theme::SEPARATOR)));
+            let paragraph = Paragraph::new(hint_line).alignment(Alignment::Center);
+            frame.render_widget(paragraph, area);
+        } else {
+            let list = List::new(items).block(block).highlight_style(
+                Style::default()
+                    .bg(theme::HIGHLIGHT)
+                    .add_modifier(Modifier::BOLD),
+            );
+            frame.render_stateful_widget(list, area, &mut list_state);
+        }
     }
 }
 

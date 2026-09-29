@@ -110,8 +110,13 @@ impl TuiCommandSurface {
                 let area = frame.area();
 
                 // W5: guard — refuse to draw the full layout on a too-small terminal.
-                if area.height < 15 || area.width < 40 {
-                    let message = "Terminal too small — resize to at least 40x15";
+                let min_h = crate::utility_tui_theme::MIN_TERMINAL_HEIGHT;
+                let min_w = crate::utility_tui_theme::MIN_TERMINAL_WIDTH;
+                if area.height < min_h || area.width < min_w {
+                    let message = format!(
+                        "Terminal too small — resize to at least {}x{}",
+                        min_w, min_h
+                    );
                     let line = Line::from(vec![Span::styled(
                         message,
                         Style::default()
@@ -210,11 +215,42 @@ fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
 fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
     let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
+    // --- Pending confirmation: only y/Enter = confirm, n/Esc = cancel (#354) ---
+    if state.pending_confirm.is_some() {
+        return match key.code {
+            KeyCode::Enter | KeyCode::Char('y') | KeyCode::Char('Y') => TuiEvent::ConfirmAction,
+            KeyCode::Esc | KeyCode::Char('n') | KeyCode::Char('N') => TuiEvent::CancelConfirm,
+            _ => TuiEvent::None,
+        };
+    }
+
+    // --- Help overlay: only ? (toggle), q/Esc (quit), navigation allowed (#359) ---
+    if state.show_help {
+        return match key.code {
+            KeyCode::Char('?') => TuiEvent::ToggleHelp,
+            KeyCode::Char('q') | KeyCode::Esc => TuiEvent::Quit,
+            KeyCode::Char('j')
+            | KeyCode::Down
+            | KeyCode::Char('k')
+            | KeyCode::Up
+            | KeyCode::Char('h')
+            | KeyCode::Left
+            | KeyCode::Char('l')
+            | KeyCode::Right
+            | KeyCode::Home
+            | KeyCode::End
+            | KeyCode::PageUp
+            | KeyCode::PageDown => TuiEvent::MoveDown,
+            _ => TuiEvent::None,
+        };
+    }
+
     if ctrl {
         return match key.code {
             KeyCode::Char('q') => TuiEvent::Quit,
-            KeyCode::Char('s') => TuiEvent::ActionSecurity,
-            KeyCode::Char('p') => TuiEvent::ActionDependencies,
+            // Ctrl+S triggers XOFF flow control on most terminals — remap to Ctrl+Shift+S (#363).
+            KeyCode::Char('s') => TuiEvent::ActionDependencies,
+            KeyCode::Char('p') => TuiEvent::ActionSecurity,
             KeyCode::Char('y') => TuiEvent::CopyToFile,
             _ => TuiEvent::None,
         };
@@ -227,7 +263,8 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
             KeyCode::Backspace => TuiEvent::PathBackspace,
             KeyCode::Enter => TuiEvent::PathConfirm,
             KeyCode::Tab => TuiEvent::PathUseCurrent,
-            KeyCode::Esc => TuiEvent::Quit,
+            // I4: Esc dismisses the dialog and returns to the tree (not quit) (#355).
+            KeyCode::Esc => TuiEvent::PathCancel,
             _ => TuiEvent::None,
         };
     }
@@ -258,9 +295,10 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::BackTab => TuiEvent::FocusPrev,
         KeyCode::Char('c') => TuiEvent::ActionCheck,
         KeyCode::Char('s') => TuiEvent::ActionScan,
-        // Plain `f` = dry-run fix; Shift+`F` = live fix (Shift only affects letters).
-        KeyCode::Char('f') => {
-            if key.modifiers.contains(KeyModifiers::SHIFT) {
+        // Plain `f` = dry-run fix; `F` (uppercase or Shift+F) = live fix (#363).
+        KeyCode::Char('f') | KeyCode::Char('F') => {
+            if matches!(key.code, KeyCode::Char('F')) || key.modifiers.contains(KeyModifiers::SHIFT)
+            {
                 TuiEvent::ActionFixLive
             } else {
                 TuiEvent::ActionFix
