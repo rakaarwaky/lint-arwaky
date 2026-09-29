@@ -252,13 +252,16 @@ fn write_agents_workspace(dir: &Path) {
     fs::write(
         dir.join("AGENTS.md"),
         "# Sample AGENTS.md\n\n\
+## Project Overview\n\nSample project.\n\n\
 ## Precedence\n\n1. Safety rules.\n\n\
+## Build & dev\n\n```bash\ncargo build\n```\n\n\
 ## Security\n\n- Explicit approval is required before destructive actions.\n\n\
 ## Architecture\n\nSee [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.\n\n\
-## Contributing\n\nSetup and code style live in [CONTRIBUTING.md](CONTRIBUTING.md).\n\n\
-## License\n\nMIT. See [LICENSE](LICENSE).\n\n\
-## Git Workflow\n\nEvery change must use a worktree or branch.\n\n\
 ## Commands\n\n```bash\ncargo nextest run --workspace\n```\n\n\
+## Git Workflow\n\nEvery change must use a worktree or branch.\n\n\
+## Branch Management\n\nUse `main` and `develop`.\n\n\
+## Skills\n\n`.agents/skills/` holds skill definitions.\n\n\
+## Quality gates\n\nRun `bash scripts/gates.sh`.\n\n\
 ## Definition of Done\n\nA change is done when tests pass.\n\n\
 ## Related Documents\n\n- [PRD.md](PRD.md): Product requirements.\n",
     )
@@ -625,7 +628,7 @@ fn aes605_fires_when_required_h2_is_absent() {
 ## Security\n\n- Be safe.\n\n\
 ## Git Workflow\n\nUse a worktree.\n\n\
 ## Commands\n\n```bash\ntrue\n```\n\n\
-## Related Documents\n\n- [PRD.md](PRD.md).\n",
+",
     );
     let findings = audit(tmp.path());
     assert!(has(&findings, "AES605", "h2_missing"));
@@ -643,16 +646,26 @@ fn aes605_fires_when_required_h2_is_absent() {
 
 #[test]
 fn aes605_allows_extra_and_free_h3_headings() {
-    // Extra H2s and H3 headings are allowed; only required H2s are enforced.
+    // Extra H3 headings are allowed; only required H2s are enforced.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
         "\
 # Sample AGENTS.md
 
+## Project Overview
+
+Sample project.
+
 ## Precedence
 
 1. Safety rules.
+
+## Build & dev
+
+```bash
+cargo build
+```
 
 ## Security
 
@@ -662,13 +675,17 @@ fn aes605_allows_extra_and_free_h3_headings() {
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.
 
-## Contributing
+## Branch Management
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Use `main` and `develop`.
 
-## License
+## Skills
 
-MIT. See [LICENSE](LICENSE).
+`.agents/skills/` holds skill definitions.
+
+## Quality gates
+
+Run `bash scripts/gates.sh`.
 
 ## Git Workflow
 
@@ -697,8 +714,8 @@ Tests pass.
 }
 
 #[test]
-fn aes605_fires_when_architecture_or_contributing_or_license_is_absent() {
-    // Removing any of the three newest required sections must fire h2_missing.
+fn aes605_fires_when_project_overview_or_build_dev_is_absent() {
+    // Removing any of the newest required sections must fire h2_missing.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -712,10 +729,6 @@ fn aes605_fires_when_architecture_or_contributing_or_license_is_absent() {
 ## Security
 
 - Be safe.
-
-## License
-
-MIT. See [LICENSE](LICENSE).
 
 ## Git Workflow
 
@@ -733,13 +746,13 @@ Tests pass.
 
 ## Related Documents
 
-- [PRD.md](PRD.md).\
+- [PRD.md](PRD.md).
 ",
     );
     let findings = audit(tmp.path());
     assert!(
         has(&findings, "AES605", "h2_missing"),
-        "missing Architecture and Contributing should fire; got: {findings:#?}"
+        "missing Project Overview and Build & dev should fire; got: {findings:#?}"
     );
     let message = findings
         .iter()
@@ -747,7 +760,7 @@ Tests pass.
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("Architecture") && message.contains("Contributing"),
+        message.contains("Project Overview") && message.contains("Build"),
         "message must name both missing sections; got: {message}"
     );
 }
@@ -823,7 +836,7 @@ Tests pass.
 
 #[test]
 fn aes605_allows_the_project_specific_h2_set() {
-    // The optional-but-agreed headings this project uses must stay silent.
+    // Only the 12 required H2 sections are enforced; no optional headings exist.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -846,65 +859,25 @@ What this project is.
 
 How to build it.
 
-## Format & lint
+## Branch Management
 
-How to lint it.
+Which branches exist.
+
+## Skills
+
+The skill catalogue.
 
 ## Quality gates
 
 The gate pipeline.
 
-## Self-lint
-
-How the project lints itself.
-
-## Scan test projects
-
-The fixture workspaces.
-
-## MCP server & TUI
-
-The server entry points.
-
-## Architecture: AES 7-Layer System
+## Architecture
 
 See [ARCHITECTURE.md](ARCHITECTURE.md).
-
-## Naming Convention
-
-The filename rule.
-
-## Workspace Packages Structure
-
-Where each package lives.
-
-## Skills & Roles
-
-The skill catalogue.
-
-## Branch Management
-
-Which branches exist.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-MIT. See [LICENSE](LICENSE).
 
 ## Git Workflow
 
 Use a worktree.
-
-## Exit Code Contract
-
-The exit codes.
-
-## Pitfalls
-
-Known traps.
 
 ## Commands
 
