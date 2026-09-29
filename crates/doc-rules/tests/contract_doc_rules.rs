@@ -646,16 +646,26 @@ fn aes605_fires_when_required_h2_is_absent() {
 
 #[test]
 fn aes605_allows_extra_and_free_h3_headings() {
-    // Extra H2s and H3 headings are allowed; only required H2s are enforced.
+    // Extra H3 headings are allowed; only required H2s are enforced.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
         "\
 # Sample AGENTS.md
 
+## Project Overview
+
+Sample project.
+
 ## Precedence
 
 1. Safety rules.
+
+## Build & dev
+
+```bash
+cargo build
+```
 
 ## Security
 
@@ -665,13 +675,17 @@ fn aes605_allows_extra_and_free_h3_headings() {
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the layer specification.
 
-## Contributing
+## Branch Management
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Use `main` and `develop`.
 
-## License
+## Skills
 
-MIT. See [LICENSE](LICENSE).
+`.agents/skills/` holds skill definitions.
+
+## Quality gates
+
+Run `bash scripts/gates.sh`.
 
 ## Git Workflow
 
@@ -822,7 +836,7 @@ Tests pass.
 
 #[test]
 fn aes605_allows_the_project_specific_h2_set() {
-    // The optional-but-agreed headings this project uses must stay silent.
+    // Only the 12 required H2 sections are enforced; no optional headings exist.
     let tmp = tempfile::tempdir().unwrap();
     write_bad_agents(
         tmp.path(),
@@ -845,65 +859,25 @@ What this project is.
 
 How to build it.
 
-## Format & lint
+## Branch Management
 
-How to lint it.
+Which branches exist.
+
+## Skills
+
+The skill catalogue.
 
 ## Quality gates
 
 The gate pipeline.
 
-## Self-lint
-
-How the project lints itself.
-
-## Scan test projects
-
-The fixture workspaces.
-
-## MCP server & TUI
-
-The server entry points.
-
-## Architecture: AES 7-Layer System
+## Architecture
 
 See [ARCHITECTURE.md](ARCHITECTURE.md).
-
-## Naming Convention
-
-The filename rule.
-
-## Workspace Packages Structure
-
-Where each package lives.
-
-## Skills & Roles
-
-The skill catalogue.
-
-## Branch Management
-
-Which branches exist.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-MIT. See [LICENSE](LICENSE).
 
 ## Git Workflow
 
 Use a worktree.
-
-## Exit Code Contract
-
-The exit codes.
-
-## Pitfalls
-
-Known traps.
 
 ## Commands
 
