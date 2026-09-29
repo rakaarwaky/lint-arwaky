@@ -71,12 +71,9 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::role_rules::IClassificationProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     // Infrastructure
-    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IUnusedImportFixProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IBypassFixProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::auto_fix::ISymbolRenameProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IFixPipelineProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::auto_fix::IManualReportProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::file_watch::IWatchLifecycleProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::file_watch::IChangeFilterProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
@@ -202,12 +199,9 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::role_rules::IRoleRunnerAggregate>();
     // Infrastructure
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IUnusedImportFixProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IBypassFixProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::ISymbolRenameProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixPipelineProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::IManualReportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixAggregate>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchLifecycleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeFilterProtocol>();
