@@ -268,6 +268,7 @@ fn flatten_rules(rules_val: &mut serde_json::Value) {
 
         let mut base = rule_obj.clone();
         base.insert("name".to_string(), serde_json::json!(code));
+        base.insert("rule_type".to_string(), serde_json::json!(code));
         push_expanded_rule(&mut flat, serde_json::Value::Object(base));
     }
 

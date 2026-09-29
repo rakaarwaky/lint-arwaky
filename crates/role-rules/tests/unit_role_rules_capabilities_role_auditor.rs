@@ -907,3 +907,61 @@ fn routing_valid_ts_capability_no_violation() {
         "a valid TypeScript capability should pass every sub-check"
     );
 }
+
+// ──────────────────────────────────────────────────────────
+// check_capability_single_protocol — one protocol per file
+// ──────────────────────────────────────────────────────────
+
+#[test]
+fn single_protocol_rust_multi_flagged() {
+    let content = "pub struct DualService {}\nimpl IFooProtocol for DualService {}\nimpl IBarProtocol for DualService {}\n";
+    let f = make_file("src/capabilities_dual.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_capability_single_protocol(&f, &mut v);
+    assert_eq!(
+        v.len(),
+        1,
+        "two Rust protocol impls should trigger one AES403"
+    );
+    assert_eq!(v[0].severity, Severity::MEDIUM);
+    assert!(v[0].message.to_string().contains("multiple protocols"));
+}
+
+#[test]
+fn single_protocol_rust_single_no_violation() {
+    let content = "pub struct FooService {}\nimpl IFooProtocol for FooService {}\n";
+    let f = make_file("src/capabilities_foo.rs", Language::Rust, content);
+    let mut v = Vec::new();
+    checker().check_capability_single_protocol(&f, &mut v);
+    assert!(v.is_empty(), "single protocol should not trigger");
+}
+
+#[test]
+fn single_protocol_python_multi_flagged() {
+    let content = "class DualService(IFooProtocol, IBarProtocol):\n    pass\n";
+    let f = make_file("src/capabilities_dual.py", Language::Python, content);
+    let mut v = Vec::new();
+    checker_for(f.language).check_capability_single_protocol(&f, &mut v);
+    assert_eq!(
+        v.len(),
+        1,
+        "two Python protocol bases should trigger one AES403"
+    );
+    assert_eq!(v[0].severity, Severity::MEDIUM);
+    assert!(v[0].message.to_string().contains("multiple protocols"));
+}
+
+#[test]
+fn single_protocol_ts_multi_flagged() {
+    let content = "export class DualService implements IFooProtocol, IBarProtocol {}";
+    let f = make_file("src/capabilities_dual.ts", Language::TypeScript, content);
+    let mut v = Vec::new();
+    checker_for(f.language).check_capability_single_protocol(&f, &mut v);
+    assert_eq!(
+        v.len(),
+        1,
+        "two TS protocol implements should trigger one AES403"
+    );
+    assert_eq!(v[0].severity, Severity::MEDIUM);
+    assert!(v[0].message.to_string().contains("multiple protocols"));
+}

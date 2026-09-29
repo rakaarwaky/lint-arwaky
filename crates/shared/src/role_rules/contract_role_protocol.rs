@@ -109,6 +109,13 @@ pub trait ICapabilitiesRoleProtocol: Send + Sync {
     /// agent layer (AES405).
     fn check_capability_implementor(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
+    /// Exactly one contract protocol per capability file. MEDIUM.
+    ///
+    /// A capability file that implements two or more protocols should be
+    /// split into separate files, one per capability. Shared helper functions
+    /// that belong to more than one capability belong in a `utility_*` file.
+    fn check_capability_single_protocol(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
     /// Block 2 (protocol trait impl) must precede Block 3 (inherent impl).
     /// Severity HIGH.
     fn check_capability_block_order(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
