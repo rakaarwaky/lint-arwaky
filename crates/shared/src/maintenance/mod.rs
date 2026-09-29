@@ -5,6 +5,8 @@ pub mod taxonomy_maintenance_constant;
 pub mod taxonomy_maintenance_request;
 pub mod taxonomy_maintenance_response;
 pub mod taxonomy_maintenance_vo;
+pub mod utility_maintenance_helpers;
+pub mod utility_tool_executor;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -18,7 +20,6 @@ pub use contract_maintenance_protocol::IDoctorProtocol;
 pub use contract_maintenance_protocol::IProjectStatsProtocol;
 pub use contract_maintenance_protocol::ISecurityScanProtocol;
 pub use contract_maintenance_protocol::ISelfUpdateProtocol;
-pub use contract_maintenance_protocol::IToolExecutorProtocol;
 pub use contract_maintenance_protocol::IToolUpdateProtocol;
 pub use contract_maintenance_protocol::IToolchainDiagnosticProtocol;
 pub use taxonomy_maintenance_constant::GITHUB_REPO;

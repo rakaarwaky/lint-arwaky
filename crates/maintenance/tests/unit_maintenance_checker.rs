@@ -1,20 +1,20 @@
-// Unit tests — MaintenanceChecker methods.
+// Unit tests — MaintenanceChecker methods (split into individual capability checkers).
 use maintenance_lint_arwaky::{
     IAdapterHealthProtocol, IDependencyReportProtocol, IDoctorProtocol, IProjectStatsProtocol,
     ISecurityScanProtocol, ISelfUpdateProtocol, IToolchainDiagnosticProtocol,
 };
 use shared::common::FilePath;
 
-fn make_checker() -> maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker {
+fn make_io()
+-> std::sync::Arc<dyn shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol> {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _fs = fc.orchestrator();
-    let io = fc.io();
-    maintenance_lint_arwaky::capabilities_maintenance_checker::MaintenanceChecker::new(io)
+    fc.io()
 }
 
 #[test]
 fn diagnose_toolchain_returns_non_empty_lists() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::ToolchainDiagnosticChecker::new(make_io());
     let diag = checker.diagnose_toolchain();
     assert!(!diag.rust_tools.is_empty(), "Should have rust tools");
     assert!(!diag.python_tools.is_empty(), "Should have python tools");
@@ -24,7 +24,7 @@ fn diagnose_toolchain_returns_non_empty_lists() {
 
 #[test]
 fn diagnose_toolchain_has_binary_path() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::ToolchainDiagnosticChecker::new(make_io());
     let diag = checker.diagnose_toolchain();
     assert!(
         !diag.binary_path.is_empty(),
@@ -34,14 +34,14 @@ fn diagnose_toolchain_has_binary_path() {
 
 #[test]
 fn health_check_returns_10_adapters() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::AdapterHealthChecker::new(make_io());
     let result = checker.health_check();
     assert_eq!(result.adapters.len(), 10, "Should check 10 adapters");
 }
 
 #[test]
 fn health_check_has_all_languages() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::AdapterHealthChecker::new(make_io());
     let result = checker.health_check();
     let languages: Vec<&str> = result
         .adapters
@@ -62,7 +62,7 @@ fn health_check_has_all_languages() {
 
 #[test]
 fn stats_returns_non_negative_counts() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::ProjectStatsChecker::new(make_io());
     let path = FilePath::new(".").unwrap();
     let stats = checker.stats(&path);
     assert!(
@@ -86,7 +86,7 @@ fn stats_returns_non_negative_counts() {
 
 #[test]
 fn stats_test_ratio_between_0_and_1() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::ProjectStatsChecker::new(make_io());
     let path = FilePath::new(".").unwrap();
     let stats = checker.stats(&path);
     assert!(
@@ -98,7 +98,7 @@ fn stats_test_ratio_between_0_and_1() {
 
 #[test]
 fn run_security_scan_without_cargo_lock() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::SecurityScanChecker::new(make_io());
     let path = FilePath::new("/tmp").unwrap();
     let report = checker.run_security_scan(&path);
     assert!(!report.tool_installed || !report.findings.is_empty());
@@ -106,7 +106,7 @@ fn run_security_scan_without_cargo_lock() {
 
 #[test]
 fn run_dependency_report_without_cargo_lock() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::DependencyReportChecker::new(make_io());
     let path = FilePath::new("/tmp").unwrap();
     let result = checker.run_dependency_report(&path);
     assert!(result.is_err(), "Should fail without Cargo.lock");
@@ -114,7 +114,7 @@ fn run_dependency_report_without_cargo_lock() {
 
 #[test]
 fn run_dependency_report_with_cargo_lock() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::DependencyReportChecker::new(make_io());
     let path = FilePath::new(".").unwrap();
     let result = checker.run_dependency_report(&path);
     if let Ok(report) = result {
@@ -125,7 +125,7 @@ fn run_dependency_report_with_cargo_lock() {
 
 #[test]
 fn doctor_returns_result() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::DoctorChecker::new(make_io());
     let result = checker.doctor();
     assert!(!result.rust_version.value.is_empty() || !result.python_version.value.is_empty());
 }
@@ -134,7 +134,7 @@ fn doctor_returns_result() {
 
 #[test]
 fn self_update_check_only_returns_valid_vo() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::SelfUpdateChecker::new(make_io());
     let result = checker.self_update(true);
     // current_version is always the CARGO_PKG_VERSION normalised, so it must not be empty.
     assert!(
@@ -159,7 +159,7 @@ fn self_update_check_only_returns_valid_vo() {
 
 #[test]
 fn self_update_success_or_already_up_to_date() {
-    let checker = make_checker();
+    let checker = maintenance_lint_arwaky::SelfUpdateChecker::new(make_io());
     let result = checker.self_update(false);
     let is_failure = result.status.starts_with("Error:");
     // When GitHub is reachable, the result must have a non-empty latest_version.

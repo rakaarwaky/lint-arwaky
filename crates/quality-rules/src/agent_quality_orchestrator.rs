@@ -214,9 +214,19 @@ impl CodeAnalysisOrchestrator {
                     .file_name()
                     .and_then(|s| s.to_str())
                     .unwrap_or("");
-                if let Some(rule) = aes305_rule
-                    && rule.exceptions.values.contains(&file_name.to_string())
+                let file_stem = std::path::Path::new(&file_path)
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("");
+                let excluded = if let Some(rule) = aes305_rule
+                    && (rule.exceptions.values.contains(&file_name.to_string())
+                        || rule.exceptions.values.contains(&file_stem.to_string()))
                 {
+                    true
+                } else {
+                    false
+                };
+                if excluded {
                     continue;
                 }
                 let msg = format_code_analysis_violation(&aes_violation);

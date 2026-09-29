@@ -17,10 +17,9 @@ GitHub releases, security scanning, dependency reporting, and project
 statistics. It is the ops-focused crate — it handles environment health,
 not code quality analysis.
 
-The crate follows the AES 7-layer architecture: the maintenance checker
-(capabilities) implements the maintenance checker protocol, the maintenance
-orchestrator (agent) delegates to the protocol, and the maintenance container
-(root) wires dependencies.
+The crate follows the AES 7-layer architecture. Each of the nine business
+capabilities below corresponds to one `_protocol` trait in `shared/maintenance`
+and one implementation in `capabilities_maintenance_checker`.
 
 ### Architecture & Data Flow
 
@@ -29,19 +28,18 @@ flowchart TD
     A["Surface"] -->|input| B["maintenance aggregate"]
     B --> C{"action"}
 
-    C -->|"doctor / diagnose / health"| D["maintenance checker"]
+    C -->|"doctor / diagnose / health"| D["MaintenanceChecker"]
     C -->|"security / dependencies"| D
     C -->|"stats / clean / update"| D
     C -->|"self-update"| D
 
-    D --> F["filesystem / tool executor"]
+    D --> F["filesystem IO protocol"]
     F -->|subprocess| G["Tool Output"]
     G --> D
     D --> H["Maintenance Result"]
 
     H --> B
     B -->|output| A
-
 ```
 
 ---
@@ -281,35 +279,6 @@ flowchart TD
 
 ---
 
-### FR-Maintenance-010: Subprocess Tool Executor
-
-- **Description**: Run an external command-line tool as a subprocess and report
-  its outcome. Every diagnostic FR (001, 004, 005, 006, 007, 009) reaches an
-  external binary through this one seam, so tool invocation and exit-code
-  handling live in exactly one place.
-- **Input**: A tool `name`, a slice of `args`, and — for `run_tool_in_dir` — the
-  working directory.
-- **Output**: `ToolOutput` carrying exit status, stdout, and stderr.
-- **Business Rules**:
-  - `run_tool` inherits the process working directory; `run_tool_in_dir` runs the
-    tool in the caller-supplied directory.
-  - The tool is resolved through `tool_exists` / `get_binary_path` before
-    execution; a missing binary is an error, not an empty success.
-  - stdout and stderr are captured separately; neither is streamed to the parent
-    process.
-  - All execution is synchronous via `std::process::Command`. No async runtime
-    dependency.
-- **Edge Cases**:
-  - Binary not on PATH → `tool_exists` false; the calling FR reports its own
-    missing-tool outcome.
-  - Non-zero exit code → returned in `ToolOutput`, not raised as a panic.
-  - Tool writes to stderr while succeeding → stderr is captured, exit status
-    still zero.
-- **Error Handling**: A failed spawn (binary missing, permission denied, cwd
-  removed) produces an error `ToolOutput` with empty stdout/stderr and a
-  descriptive message; callers translate it into their own reason-coded outcome.
-
-
 ---
 
 ## API Contract
@@ -327,10 +296,6 @@ flowchart TD
 | `update` | — | `` | — | — | Update. |
 | `doctor` | — | `DoctorResultVO` | — | — | Doctor. |
 | `self_update` | bool | `SelfUpdateResultVO` | — | — | Self update. |
-| `run_tool` | &str, &[&str] | `ToolOutput` | — | — | Run tool. |
-| `run_tool_in_dir` | &str, &[&str], &FilePath | `ToolOutput` | — | — | Run tool in dir. |
-| `tool_exists` | &str | `bool` | — | — | Tool exists. |
-| `get_binary_path` | — | `FilePath` | — | — | Get binary path. |
 
 ### Aggregate API
 
@@ -343,7 +308,6 @@ flowchart TD
 | --- | --- | --- | --- |
 | `shared` crate | in | Supply value objects plus the checker, installer, and aggregate contracts | A contract is missing at compile time → the build fails before any command runs |
 | `filesystem` aggregate | in | Read, write, and delete files, list directories, and run external commands | A file operation fails → the command reports the failing path and stops rather than continuing on a partial state |
-| Tool executor protocol | out (internal) | Wrap synchronous subprocess execution behind a protocol | The subprocess cannot be spawned → the tool is reported as unavailable, which is the same result as a missing tool |
 | Maintenance checker protocol | out (internal) | Define the shape every individual check implements | A check fails mid-run → the diagnostic reports that specific check as failed and the rest still run |
 | Maintenance commands aggregate | out (internal) | Expose the single composite entry point the surface calls | An unknown subcommand is requested → an invalid-argument error is returned |
 | `cargo audit --json` | in | Audit Rust dependencies for vulnerabilities | The advisory database is unreachable → the audit reports that it could not run, never that no vulnerabilities exist |
@@ -378,7 +342,6 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-007 — Dependencies** — e.g. Rust project with Cargo.lock → Parses all packages
 - **SCEN-008 — Adapter Health Check** — e.g. All 9 adapters installed → All available: true
 - **SCEN-009 — Self-Update** — e.g. GitHub reachable, same version → already_up_to_date=true, upgraded=false
-- **SCEN-010 — Subprocess Tool Executor** — e.g. Run an installed tool → stdout captured, exit code in `ToolOutput`
 
 ### SCEN-001 — Doctor
 
@@ -475,21 +438,6 @@ FRD Ref: FR-Maintenance-009
 | 3 | check_only=true | No download performed; status reports current tag |
 | 4 | Network unavailable | latest_version empty, status starts with "Error:" |
 | 5 | Local version ahead of release | already_up_to_date=true (local > released) |
-
----
-
-### SCEN-010 — Subprocess Tool Executor
-
-FRD Ref: FR-Maintenance-010
-
-| # | Scenario | Expected |
-| - | - | - |
-| 1 | Run an installed tool | stdout captured, exit code in `ToolOutput` |
-| 2 | Run with a non-existent tool name | Error `ToolOutput`, empty stdout/stderr |
-| 3 | Tool exits non-zero | Non-zero status returned, not a panic |
-| 4 | Run in a caller-supplied directory | Tool's working directory matches the supplied path |
-| 5 | `tool_exists` for an absent binary | `false` |
-
 
 ---
 

@@ -19,7 +19,8 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-/// One injected seam per maintenance FR; `MaintenanceChecker` supplies all nine.
+/// One injected seam per maintenance FR; each of the nine capability checkers
+/// supplies its own protocol implementation.
 pub struct MaintenanceDeps {
     pub toolchain: Arc<dyn IToolchainDiagnosticProtocol>,
     pub doctor: Arc<dyn IDoctorProtocol>,

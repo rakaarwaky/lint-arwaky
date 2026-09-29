@@ -3,65 +3,65 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-09-27
+Last Updated: 2026-09-29
 
 ## Current Condition
 
-- Done: `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17). Per-scenario evidence below.
+- Done: `cargo test -p maintenance-lint-arwaky --lib --tests` → 45 passed, 0 failures at `ca070e66` (2026-09-29). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
-- Next Action: Re-run `cargo test -p maintenance --lib --tests` after any code change to this crate
+- Next Action: Re-run `cargo test -p maintenance-lint-arwaky --lib --tests` after any code change to this crate
 
 ## Backlog
 
 | ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
 |---|---|---|---:|---|---|---|---|---|
-| MAIN-01 | FR-MAINTENANCE-001 | SCEN-001 - Doctor — 5 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-02 | FR-MAINTENANCE-002 | SCEN-002 - Stats — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-03 | FR-MAINTENANCE-003 | SCEN-003 - Clean — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-04 | FR-MAINTENANCE-004 | SCEN-004 - Update — 2 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-05 | FR-MAINTENANCE-005 | SCEN-005 - Diagnose — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-06 | FR-MAINTENANCE-006 | SCEN-006 - Security — 4 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-07 | FR-MAINTENANCE-007 | SCEN-007 - Dependencies — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-08 | FR-MAINTENANCE-008 | SCEN-008 - Adapter Health Check — 3 scenarios verified | P0 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| MAIN-09 | FR-MAINTENANCE-009 | Self-update: query GitHub release, install binary when newer | P1 | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17); `update` subcommand with `--check-only` flag | @raka | None | 2026-09-17 |
+| MAIN-01 | FR-MAINTENANCE-001 | SCEN-001 - Doctor — 5 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-02 | FR-MAINTENANCE-002 | SCEN-002 - Stats — 4 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-03 | FR-MAINTENANCE-003 | SCEN-003 - Clean — 3 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-04 | FR-MAINTENANCE-004 | SCEN-004 - Update — 2 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-05 | FR-MAINTENANCE-005 | SCEN-005 - Diagnose — 4 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-06 | FR-MAINTENANCE-006 | SCEN-006 - Security — 4 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-07 | FR-MAINTENANCE-007 | SCEN-007 - Dependencies — 3 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-08 | FR-MAINTENANCE-008 | SCEN-008 - Adapter Health Check — 3 scenarios verified | P0 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29) | @raka | None | 2026-09-29 |
+| MAIN-09 | FR-MAINTENANCE-009 | Self-update: query GitHub release, install binary when newer | P1 | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 0 failures at `ca070e66` (2026-09-29); `update` subcommand with `--check-only` flag | @raka | None | 2026-09-29 |
 
 ## Scenario Evidence
 
 | Scenario | Kind | Test file | Test name | Last verified |
 |---|---|---|---|---|
-| All required tools OK | healthy: true, all statuses "OK" | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Missing rustc (required) | healthy: false | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Missing ruff (optional) | Status "WARN" in adapter_statuses | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Language runtimes installed | Versions reported (rustc, python3, node) | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Language runtime missing | Version "NOT FOUND" | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Directory with mixed files | Per-language counts + overall totals | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Python project with test files | Correct test ratio | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Directory with no source files | All zeros, ratio 0.0 | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Empty directory | All zeros, ratio 0.0 | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Project with .pytest_cache, __pycache__ | Directories removed | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Project with target/ | Directory removed | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| No cache directories | No-op | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Python tools upgrade | pip install --upgrade per tool | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| pip not installed | Warning, no crash | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| cargo + rustc installed | Status "OK" | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Missing clippy (required) | Status "FAIL" | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Missing mypy (optional) | Status "WARN" | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Missing eslint (optional) | Status "WARN" | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Rust project with Cargo.lock | Runs cargo-audit | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| No Cargo.lock | tool_installed: false, empty findings | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| cargo-audit not installed | tool_installed: false, empty findings | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| No vulnerabilities | Empty findings, success | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Rust project with Cargo.lock | Parses all packages | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| No Cargo.lock | Returns error | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Empty Cargo.lock | Empty dependency list | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| All 9 adapters installed | All available: true | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Missing ruff | ruff available: false | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| No adapters installed | All available: false | Automated | `tests/maintenance/` | cargo test -p maintenance | `29c71083` |
-| Latest release is newer | `latest_version` = tag, `upgraded` = true | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance | `2026-09-27` |
-| Latest release equals current | `already_up_to_date` = true, no install | Automated | `tests/unit_shared_maintenance.rs` | cargo test -p shared | `2026-09-27` |
-| API unreachable | `latest_version` empty, status starts with `Error:` | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance | `2026-09-27` |
-| `check_only` flag set | No download performed | Manual | `./lint-arwaky-cli update --check-only` | CLI smoke test | `2026-09-27` |
+| All required tools OK | healthy: true, all statuses "OK" | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Missing rustc (required) | healthy: false | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Missing ruff (optional) | Status "WARN" in adapter_statuses | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Language runtimes installed | Versions reported (rustc, python3, node) | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Language runtime missing | Version "NOT FOUND" | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Directory with mixed files | Per-language counts + overall totals | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Python project with test files | Correct test ratio | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Directory with no source files | All zeros, ratio 0.0 | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Empty directory | All zeros, ratio 0.0 | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Project with .pytest_cache, __pycache__ | Directories removed | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Project with target/ | Directory removed | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| No cache directories | No-op | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Python tools upgrade | pip install --upgrade per tool | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| pip not installed | Warning, no crash | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| cargo + rustc installed | Status "OK" | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Missing clippy (required) | Status "FAIL" | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Missing mypy (optional) | Status "WARN" | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Missing eslint (optional) | Status "WARN" | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Rust project with Cargo.lock | Runs cargo-audit | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| No Cargo.lock | tool_installed: false, empty findings | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| cargo-audit not installed | tool_installed: false, empty findings | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| No vulnerabilities | Empty findings, success | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Rust project with Cargo.lock | Parses all packages | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| No Cargo.lock | Returns error | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Empty Cargo.lock | Empty dependency list | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| All 9 adapters installed | All available: true | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Missing ruff | ruff available: false | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| No adapters installed | All available: false | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Latest release is newer | `latest_version` = tag, `upgraded` = true | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| Latest release equals current | `already_up_to_date` = true, no install | Automated | `tests/unit_maintenance_version_helpers.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| API unreachable | `latest_version` empty, status starts with `Error:` | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
+| `check_only` flag set | No download performed | Manual | `./lint-arwaky-cli update --check-only` | CLI smoke test | `2026-09-29` |
 | Local version ahead of release | `already_up_to_date` = true, no install | Gap | — | — | — |
 
 ## Blockers
@@ -76,8 +76,8 @@ None
 
 | Area | Status | Notes |
 |---|---|---|
-| Tests | Done | `cargo test -p maintenance --lib --tests` → 0 failures at `29c71083` (2026-09-17) |
-| Scenario evidence | Done | 28 scenarios mapped; all Automated via `cargo test -p maintenance` |
+| Tests | Done | `cargo test -p maintenance-lint-arwaky --lib --tests` → 45 passed, 0 failures at `ca070e66` (2026-09-29) |
+| Scenario evidence | Done | 28 scenarios mapped; all Automated via `cargo test -p maintenance-lint-arwaky` |
 | Docs | Done | [FRD.md](FRD.md) is specification-only; status lives in this file |
 
 ## Deferred
@@ -90,3 +90,4 @@ None
 |---|---|---|
 | 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
 | 2026-09-27 | Added FR-MAINTENANCE-009: self-update — GitHub release query + binary install | @raka |
+| 2026-09-29 | Removed IToolExecutorProtocol (moved to utility); split capabilities; verified 45 tests at ca070e66 | @raka |
