@@ -188,6 +188,7 @@ impl DocChecker {
             consts::PRD_DOC,
             consts::ROADMAP_DOC,
             consts::FRD_DOC,
+            consts::DATA_DOC,
             consts::BACKLOG_DOC,
             consts::README_DOC,
             consts::AGENTS_DOC,
@@ -201,6 +202,7 @@ impl DocChecker {
         }
         for sub in ["crates", "modules", "packages"] {
             collect_feature_docs(&root.join(sub), &mut out);
+            collect_shared_docs(&root.join(sub), &mut out);
         }
         out
     }
@@ -239,6 +241,11 @@ impl DocChecker {
             self.check_fr_fields(doc, &mut findings);
             self.check_fr_protocol_parity(doc, root, &mut findings);
         }
+        // ── AES601: DATA format (same ID rules as FRD) ──
+        if name == consts::DATA_DOC {
+            self.check_fr_id_format(doc, &mut findings);
+            self.check_fr_fields(doc, &mut findings);
+        }
 
         // ── AES602: Section structure ──
         if name == consts::FRD_DOC {
@@ -249,6 +256,10 @@ impl DocChecker {
             self.check_scenarios(&sections, &mut findings);
             self.check_glossary(&sections, &mut findings);
         }
+        if name == consts::DATA_DOC {
+            self.check_section_order(&sections, &mut findings);
+            self.check_integration_shape(&sections, &mut findings);
+        }
 
         // ── AES603: Spec purity ──
         if is_spec(&name) {
@@ -258,6 +269,9 @@ impl DocChecker {
 
         // ── AES604: Crosslinks ──
         if name == consts::FRD_DOC {
+            self.check_reference_crosslink(&sections, &mut findings);
+        }
+        if name == consts::DATA_DOC {
             self.check_reference_crosslink(&sections, &mut findings);
         }
         // The master owns the state vocabulary, so it is the one document
@@ -935,6 +949,19 @@ fn collect_feature_docs(dir: &Path, out: &mut Vec<DocSource>) {
     }
 }
 
+/// Collect the DATA.md/BACKLOG.md pair from every shared folder under *dir*.
+fn collect_shared_docs(dir: &Path, out: &mut Vec<DocSource>) {
+    let shared = dir.join("shared");
+    if !shared.is_dir() {
+        return;
+    }
+    for doc in [consts::DATA_DOC, consts::BACKLOG_DOC] {
+        if let Some(source) = read_source(&shared.join(doc)) {
+            out.push(source);
+        }
+    }
+}
+
 /// Is this document a spec (promise-bearing) rather than a status report?
 ///
 /// ARCHITECTURE.md and CONTRIBUTING.md are excluded on purpose: AES603 bans
@@ -944,7 +971,7 @@ fn collect_feature_docs(dir: &Path, out: &mut Vec<DocSource>) {
 fn is_spec(name: &str) -> bool {
     matches!(
         name,
-        consts::FRD_DOC | consts::PRD_DOC | consts::ROADMAP_DOC
+        consts::FRD_DOC | consts::DATA_DOC | consts::PRD_DOC | consts::ROADMAP_DOC
     )
 }
 

@@ -76,10 +76,16 @@ fn aes701_stays_silent_when_shared_holds_only_permitted_layers() {
             .as_path(),
         "pub trait ScanProtocol {}",
     );
+    fs::write(root.join("crates/shared/DATA.md"), "# DATA\n").unwrap();
+    fs::write(root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n").unwrap();
     let findings = audit(root);
     assert!(
         !has(&findings, "AES701", "shared_has_forbidden_files"),
         "shared holding only taxonomy/utility/contract must be clean; got: {findings:#?}"
+    );
+    assert!(
+        !has(&findings, "AES701", "shared_missing_doc_pair"),
+        "shared must have DATA.md + BACKLOG.md; got: {findings:#?}"
     );
 }
 
@@ -288,10 +294,20 @@ fn aes703_stays_silent_when_surface_folder_keeps_utilities() {
         "pub fn fmt() {}",
     );
     write(root.join("crates/cli/lib.rs").as_path(), "");
+    fs::write(root.join("crates/cli/DESIGN.md"), "# CLI DESIGN\n").unwrap();
+    fs::write(root.join("crates/cli/BACKLOG.md"), "# CLI BACKLOG\n").unwrap();
     let findings = audit(root);
     assert!(
         !has(&findings, "AES703", "surface_has_misplaced_files"),
         "utility and barrel files inside a surface folder are allowed; got: {findings:#?}"
+    );
+    assert!(
+        !has(&findings, "AES703", "surface_missing_design_md"),
+        "surface with DESIGN.md must be clean; got: {findings:#?}"
+    );
+    assert!(
+        !has(&findings, "AES703", "surface_missing_backlog_md"),
+        "surface with BACKLOG.md must be clean; got: {findings:#?}"
     );
 }
 
@@ -311,10 +327,20 @@ fn aes703_stays_silent_when_a_surface_crate_holds_a_container() {
         root.join("crates/tui/utility_file_system.rs").as_path(),
         "pub fn fs() {}",
     );
+    fs::write(root.join("crates/tui/DESIGN.md"), "# TUI DESIGN\n").unwrap();
+    fs::write(root.join("crates/tui/BACKLOG.md"), "# TUI BACKLOG\n").unwrap();
     let findings = audit(root);
     assert!(
         !has(&findings, "AES703", "surface_has_misplaced_files"),
         "root and utility files inside a surface crate are allowed; got: {findings:#?}"
+    );
+    assert!(
+        !has(&findings, "AES703", "surface_missing_design_md"),
+        "surface with DESIGN.md must be clean; got: {findings:#?}"
+    );
+    assert!(
+        !has(&findings, "AES703", "surface_missing_backlog_md"),
+        "surface with BACKLOG.md must be clean; got: {findings:#?}"
     );
 }
 
@@ -352,7 +378,7 @@ fn findings_are_deduplicated_and_ordered() {
 fn conforming_workspace_reports_no_findings() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
-    // shared — permitted layers only.
+    // shared — permitted layers only, with required docs.
     write(
         root.join("crates/shared/src/taxonomy_domain_vo.rs")
             .as_path(),
@@ -368,6 +394,8 @@ fn conforming_workspace_reports_no_findings() {
             .as_path(),
         "pub trait ScanProtocol {}",
     );
+    fs::write(root.join("crates/shared/DATA.md"), "# Shared DATA\n").unwrap();
+    fs::write(root.join("crates/shared/BACKLOG.md"), "# Shared BACKLOG\n").unwrap();
     // a complete feature, documented.
     write(
         root.join("crates/calculator/src/agent_calc_orchestrator.rs")
@@ -396,6 +424,10 @@ fn conforming_workspace_reports_no_findings() {
     write(
         root.join("crates/cli/DESIGN.md").as_path(),
         "# CLI — DESIGN",
+    );
+    write(
+        root.join("crates/cli/BACKLOG.md").as_path(),
+        "# CLI — BACKLOG",
     );
     write(
         root.join("crates/cli/utility_output_text_formatter.rs")
@@ -486,7 +518,7 @@ fn aes703_fires_when_a_surface_folder_lacks_design_md() {
         root.join("crates/cli/surface_scan_command.rs").as_path(),
         "pub fn scan() {}",
     );
-    // no DESIGN.md.
+    // no DESIGN.md, no BACKLOG.md.
     let findings = audit(root);
     assert!(
         has(&findings, "AES703", "surface_missing_design_md"),
@@ -506,9 +538,17 @@ fn aes703_stays_silent_when_design_md_is_present() {
         root.join("crates/cli/DESIGN.md").as_path(),
         "# CLI — DESIGN",
     );
+    write(
+        root.join("crates/cli/BACKLOG.md").as_path(),
+        "# CLI — BACKLOG",
+    );
     let findings = audit(root);
     assert!(
         !has(&findings, "AES703", "surface_missing_design_md"),
+        "a documented surface must not fire; got: {findings:#?}"
+    );
+    assert!(
+        !has(&findings, "AES703", "surface_missing_backlog_md"),
         "a documented surface must not fire; got: {findings:#?}"
     );
 }
@@ -580,21 +620,20 @@ fn aes702_silent_when_doc_pair_folder_has_orchestrator() {
 }
 
 #[test]
-fn aes702_fires_when_a_kernel_folder_carries_a_doc_pair() {
+fn aes701_fires_when_shared_lacks_doc_pair() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     fs::create_dir_all(root.join("crates/shared/src")).unwrap();
-    fs::write(root.join("crates/shared/FRD.md"), "# FRD\n").unwrap();
-    fs::write(root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n").unwrap();
     fs::write(
         root.join("crates/shared/src/taxonomy_domain_vo.rs"),
         "pub struct Domain;",
     )
     .unwrap();
+    // No DATA.md or BACKLOG.md.
     let findings = audit(root);
     assert!(
-        has(&findings, "AES701", "shared_has_docs"),
-        "expected shared_has_docs, got: {findings:#?}"
+        has(&findings, "AES701", "shared_missing_doc_pair"),
+        "expected shared_missing_doc_pair, got: {findings:#?}"
     );
 }
 
