@@ -263,7 +263,7 @@ reason.
 ## Verify
 
 ```bash
-aa check docs .
+lint-arwaky-cli docs .
 # Checks: agents-section-missing, ci-command-drift, absolute-path, secret-in-docs, dead-link, doc-length.
 
 git check-ignore -v <state-dir>/session-notes.md   # must match an ignore rule

@@ -83,7 +83,7 @@ the document survives every refactor (`spec-source-path`).
 3. **Section: Functional Requirements** — numbered FRs with scenario tables.
 4. **Section: API Contract** — request/response shapes.
 5. **Section: Test Scenarios** — scenarios with acceptance criteria.
-6. **Verify** → `aa check docs` passes; FR table has all required columns.
+6. **Verify** → `lint-arwaky-cli docs` passes; FR table has all required columns.
 
 ## Template
 
@@ -186,8 +186,8 @@ reason.
 ## Verify
 
 ```bash
-aa check docs
-# path form: aa check docs .
+lint-arwaky-cli docs
+# path form: lint-arwaky-cli docs .
 # Checks: IDs, orphan refs, scenario coverage, status leak, sections, links.
 ```
 
