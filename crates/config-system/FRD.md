@@ -107,7 +107,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
   - Single-pass directory scan for marker files (single syscall per directory).
   - Marker files:
     - Rust: `Cargo.toml`
-    - Python: `pyproject.toml`, `setup.py`, `requirements.txt`, `__init__.py`
+    - Python: `pyproject.toml`, packaging manifests, dependency files, package markers
     - TypeScript: `package.json`, `tsconfig.json`
   - Walks up to 10 parent directories if no marker found at the target path.
   - Stops at workspace directory names (`crates/`, `packages/`, `modules/`).
@@ -171,31 +171,112 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ---
 
-### FR-ConfigSystem-005: Ignored Paths Resolution
+### FR-ConfigSystem-005: Config Parsing
 
-- **Description**: Build the complete list of ignored paths by combining hardcoded universal defaults with config-specified paths.
-- **Input**: Architecture config.
-- **Output**: Deduplicated list of ignored path patterns.
+- **Description**: Parse YAML and TOML configuration bodies into a typed `ProjectConfig`, and merge config entries with embedded defaults.
+- **Input**: YAML or TOML source text, or a parsed `ProjectConfig`.
+- **Output**: `ProjectConfig` or `(ArchitectureConfig, Vec<String>)` of merge warnings.
 - **Business Rules**:
 
-  - Default ignored paths (hardcoded, universal):
-    - `.git`
-    - `node_modules`
-    - `target`
-    - `dist`
-    - `build`
-    - `coverage`
-    - `.venv`
-    - `__pycache__`
-  - Config-specified ignored paths appended with deduplication.
-  - Path separators normalized to platform-specific separator.
-  - Pre-allocated capacity: 8 defaults + config count.
-  - No project-specific paths hardcoded — project-specific ignores must come from YAML config.
+  - YAML config is deserialized into `ProjectConfig`; TOML reads only the `[tool.lint-arwaky]` section.
+  - YAML parse failure → error, no partial config is loaded.
+  - TOML section absent or malformed → the section is ignored, the rest of the manifest still applies.
+  - Adapter enabled check: defaults to `true` if the adapter is not found in config.
+  - Merge with embedded defaults via rule-based layer merging (FR-ConfigSystem-004).
 - **Edge Cases**:
 
-  - Config specifies a path already in defaults → deduplicated, not added twice.
-  - Config specifies empty string path → filtered out.
-- **Error Handling**: None — pure function.
+  - Empty YAML body → `None`, caller falls back to embedded defaults.
+  - Invalid TOML → error, caller falls back to embedded defaults.
+- **Error Handling**: `ConfigError` from YAML/TOML parse or conversion failures.
+
+---
+
+### FR-ConfigSystem-006: Config Language Naming
+
+- **Description**: Return the canonical config filename for each language and resolve config-language markers.
+- **Input**: `ConfigLanguage` value.
+- **Output**: `Vec<String>` of config filenames applicable to that language.
+- **Business Rules**:
+
+  - The language input is restricted to the typed enum — no arbitrary strings.
+  - Each language maps to a fixed set of candidate filenames.
+  - The name set is stable; adding a language is a compile-time change.
+- **Edge Cases**:
+
+  - Unknown language variants are impossible at compile time.
+- **Error Handling**: None — pure lookup.
+
+---
+
+### FR-ConfigSystem-007: Threshold Validation
+
+- **Description**: Validate threshold values and adapter settings in a parsed `ProjectConfig` against schema constraints.
+- **Input**: Parsed `ProjectConfig`.
+- **Output**: `ValidationResult` — ok or fail with joined error messages.
+- **Business Rules**:
+
+  - **Score threshold** must be between 0.0 and 100.0 (inclusive).
+  - **Complexity threshold** must be positive (> 0).
+  - **max_file_lines threshold** must be positive (> 0).
+  - Unknown adapter names are enabled by default.
+- **Edge Cases**:
+
+  - Score threshold at exactly 0 or 100 → valid.
+  - Score threshold of -1.0 or 101.0 → invalid.
+- **Error Handling**: Multiple validation errors joined with `|` separator; `ConfigError` logged as a warning string and defaults used as fallback.
+
+---
+
+### FR-ConfigSystem-008: Config Caching
+
+- **Description**: Cache the last-loaded configuration so repeated reads against the same project root do not re-parse the config file.
+- **Input**: Project root path.
+- **Output**: Cached `ProjectConfig` when a previous load succeeded for the same root, otherwise re-parses.
+- **Business Rules**:
+
+  - The cache is keyed by project root; a root change invalidates the entry.
+  - Caching is thread-safe and never holds a lock across I/O.
+  - Cache is advisory — a cache miss re-reads from the priority chain (FR-ConfigSystem-001).
+- **Edge Cases**:
+
+  - Two threads reading the same root concurrently → both observe the same config.
+  - Stale cache after config file changes on disk → refresh on a new read.
+- **Error Handling**: Cache read failure is silently ignored; the read falls through to the priority chain.
+
+---
+
+### FR-ConfigSystem-009: Config File Listing
+
+- **Description**: List the config files visible at a project root, one per known language.
+- **Input**: Project root path.
+- **Output**: `Vec<(ConfigLanguage, FilePath)>` of found config files.
+- **Business Rules**:
+
+  - One config filename per language (`lint_arwaky.config.yaml`).
+  - Languages whose config file is absent are omitted from the result.
+  - The listing never creates or writes config files.
+- **Edge Cases**:
+
+  - No config files at the root → empty list.
+  - Root path unreadable → `ConfigError`.
+- **Error Handling**: `ConfigError` on I/O failure during listing.
+
+---
+
+### FR-ConfigSystem-010: Language Naming
+
+- **Description**: Return the canonical config filename for each language and resolve config-language markers.
+- **Input**: `ConfigLanguage` value.
+- **Output**: `Vec<String>` of config filenames applicable to that language.
+- **Business Rules**:
+
+  - The language input is restricted to the typed enum — no arbitrary strings.
+  - Each language maps to a fixed set of candidate filenames.
+  - The name set is stable; adding a language is a compile-time change.
+- **Edge Cases**:
+
+  - Unknown language variants are impossible at compile time.
+- **Error Handling**: None — pure lookup.
 
 ---
 
@@ -297,7 +378,7 @@ FRD Ref: FR-ConfigSystem-002
 | 6 | Parent dir is `modules/` | Python |
 | 7 | No markers anywhere | Unknown |
 | 8 | Both Cargo.toml and package.json | First match wins |
-| 9 | Directory with `__init__.py` only | Python |
+| 9 | Directory with Python package markers only | Python |
 
 ### SCEN-003 — Workspace Member Discovery
 

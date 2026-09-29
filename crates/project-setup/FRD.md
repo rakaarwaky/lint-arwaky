@@ -19,8 +19,8 @@ config directories.
 
 The crate follows the AES 7-layer architecture. Four capability seams provide
 MCP config generation, environment file creation, language detection, and adapter
-installation. Auxiliary technical operations are implemented at the utility layer
-and delegated through the aggregate contract.
+installation. Auxiliary technical operations are delegated through the aggregate
+contract and the injected utility protocols.
 
 > **Note**: Environment diagnostics (`doctor`, `diagnose`) are handled by the
 > **maintenance** crate, not project-setup. This crate focuses on scaffolding
@@ -204,6 +204,79 @@ flowchart TD
 
   - Command spawn failure → returns an IO setup error.
   - Command exits with non-zero status → returns an other setup error.
+
+---
+
+### FR-ProjectSetup-005: Config Template Loading
+
+- **Description**: Load the embedded YAML config template for a language and the embedded skill files compiled into the binary.
+- **Input**: Language name.
+- **Output**: The template source text, or an error when the language has no embedded template.
+- **Business Rules**:
+
+  - Templates are compiled in at build time — nothing is downloaded at run time.
+  - The skill file set is fixed at build time; a skill is present or absent by language match.
+  - An unsupported language is reported as an error, not a silent default.
+- **Edge Cases**:
+
+  - Unsupported language → `UnknownLanguage` error.
+  - No skills match the language → empty skill list, no error.
+- **Error Handling**: `SetupError::UnknownLanguage` for unsupported languages; read failures are reported as setup errors.
+
+---
+
+### FR-ProjectSetup-006: Config File Writing
+
+- **Description**: Write a configuration file to disk and create the global config directory when it does not exist.
+- **Input**: Filename, file content, or no argument for directory creation.
+- **Output**: A structured result describing the write outcome, or a `SetupError`.
+- **Business Rules**:
+
+  - Writes are atomic — the file is written to a temp path and renamed into place.
+  - The global config directory is created with owner read/write/execute permissions when absent.
+  - The target path is never created by the installer unless it is the config directory itself.
+- **Edge Cases**:
+
+  - Target path already exists with different content → overwritten only on explicit caller intent.
+  - Parent directory does not exist → creation failure is reported as a setup error.
+- **Error Handling**: I/O failures surface as `SetupError` with the underlying OS error.
+
+---
+
+### FR-ProjectSetup-007: Pre-flight Check
+
+- **Description**: Verify the package managers required by adapter installation are available before any install attempt.
+- **Input**: None.
+- **Output**: A status report naming each manager and whether it is available.
+- **Business Rules**:
+
+  - Python installation requires `pip` to be reachable via `python3 -m pip`.
+  - JavaScript installation requires `npm` to be on the PATH.
+  - A missing manager is reported as unavailable — the install is not attempted.
+  - The check is read-only: it never installs or modifies anything.
+- **Edge Cases**:
+
+  - Both managers present → the check reports all available.
+  - Both managers absent → the check reports both unavailable; the caller decides next step.
+- **Error Handling**: None — the check is a pure probe.
+
+---
+
+### FR-ProjectSetup-008: File Existence Probe
+
+- **Description**: Probe whether a file path exists so callers can short-circuit before writing.
+- **Input**: A file path.
+- **Output**: A boolean existence flag.
+- **Business Rules**:
+
+  - The probe is a single filesystem `stat` — no directory walk.
+  - A broken symlink is reported as absent.
+  - The probe never follows a symlink target outside the workspace root.
+- **Edge Cases**:
+
+  - Path does not exist → false.
+  - Path is a directory → false (the probe is for files).
+- **Error Handling**: None — a `stat` failure is reported as false.
 
 ---
 
