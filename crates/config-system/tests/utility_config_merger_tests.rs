@@ -4,7 +4,7 @@ use shared::common::taxonomy_common_vo::{BooleanVO, Count};
 use shared::common::taxonomy_definition_vo::{LayerDefinition, NamingConfig};
 use shared::common::taxonomy_layer_vo::LayerNameVO;
 use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_vo::{ArchitectureConfig, ArchitectureRule};
+use shared::config_system::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
 use shared::config_system::utility_config_merger::merge_config;
 
 fn make_config(

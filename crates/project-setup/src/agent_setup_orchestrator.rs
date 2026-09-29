@@ -12,15 +12,15 @@
 //   - Config file writing and XDG config dir creation
 //   - Pre-flight checks for package manager availability
 
-use shared::cli_commands::taxonomy_command_vo::TransportUrlVO;
+use shared::cli_commands::taxonomy_cli_commands_vo::TransportUrlVO;
 use shared::common::taxonomy_job_vo::EnvContentVO;
 use shared::common::taxonomy_job_vo::McpConfigVO;
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_path_vo::DirectoryPath;
 use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
 use shared::project_setup::contract_setup_protocol::PreFlightResult;
-use shared::project_setup::taxonomy_setup_request::SetupRequest;
-use shared::project_setup::taxonomy_setup_response::SetupResponse;
+use shared::project_setup::taxonomy_project_setup_request::SetupRequest;
+use shared::project_setup::taxonomy_project_setup_response::SetupResponse;
 use shared::project_setup::{
     EmbeddedSkillVO, IAdapterInstallationProtocol, IConfigTemplateProtocol, IConfigWritingProtocol,
     IEnvGenerationProtocol, IFilePathExistenceProtocol, ILanguageDetectionProtocol,
@@ -202,7 +202,7 @@ impl SetupManagementOrchestrator {
         &self,
         filename: &str,
         content: &str,
-    ) -> shared::project_setup::taxonomy_setup_vo::WriteConfigResult {
+    ) -> shared::project_setup::taxonomy_project_setup_vo::WriteConfigResult {
         self.protocols
             .config_writing
             .write_config_file(filename, content)
@@ -210,7 +210,7 @@ impl SetupManagementOrchestrator {
 
     pub fn create_global_config_dir(
         &self,
-    ) -> shared::project_setup::taxonomy_setup_vo::CreateConfigDirResult {
+    ) -> shared::project_setup::taxonomy_project_setup_vo::CreateConfigDirResult {
         self.protocols.config_writing.create_global_config_dir()
     }
 

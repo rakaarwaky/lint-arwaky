@@ -104,7 +104,7 @@ fn file_paths_resolve_layer_correctly() {
         Some("aes-contract")
     );
     assert_eq!(
-        resolve_skill_hint_for_file("AES101", "modules/taxonomy_setup_vo.py").skill,
+        resolve_skill_hint_for_file("AES101", "modules/taxonomy_project_setup_vo.py").skill,
         Some("aes-taxonomy")
     );
     assert_eq!(
@@ -124,7 +124,7 @@ fn aes201_follows_file_layer_not_fixed_contract() {
         Some("aes-agent")
     );
     assert_eq!(
-        resolve_skill_hint_for_file("AES201", "crates/foo/taxonomy_setup_vo.rs").skill,
+        resolve_skill_hint_for_file("AES201", "crates/foo/taxonomy_project_setup_vo.rs").skill,
         Some("aes-taxonomy")
     );
 }

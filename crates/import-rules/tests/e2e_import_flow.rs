@@ -9,7 +9,7 @@ use shared::common::taxonomy_paths_vo::FilePathList;
 use shared::config_system::ArchitectureConfig;
 use shared::filesystem::FilesystemRequest;
 use shared::import_rules::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_request::ImportRequest;
+use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;

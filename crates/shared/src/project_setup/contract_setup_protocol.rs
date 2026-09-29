@@ -9,9 +9,9 @@ use crate::common::taxonomy_job_vo::EnvContentVO;
 use crate::common::taxonomy_job_vo::McpConfigVO;
 use crate::common::taxonomy_job_vo::SuccessStatus;
 use crate::common::taxonomy_path_vo::DirectoryPath;
-use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
-use crate::project_setup::taxonomy_setup_vo::SetupError;
-pub use crate::project_setup::taxonomy_setup_vo::{
+use crate::project_setup::taxonomy_project_setup_vo::EmbeddedSkillVO;
+use crate::project_setup::taxonomy_project_setup_vo::SetupError;
+pub use crate::project_setup::taxonomy_project_setup_vo::{
     CreateConfigDirResult, McpBinaryNameVO, PackageManagerStatus, PreFlightResult,
     ProjectLanguageVO, ProjectLanguagesVO, WriteConfigResult,
 };

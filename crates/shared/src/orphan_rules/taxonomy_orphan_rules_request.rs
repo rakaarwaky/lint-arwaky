@@ -3,8 +3,8 @@
 use crate::common::taxonomy_common_vo::PatternList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
-use crate::orphan_rules::taxonomy_orphan_vo::OrphanFileListVO;
-use crate::quality_rules::taxonomy_analysis_vo::GraphAnalysisContext;
+use crate::orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO;
+use crate::quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext;
 
 pub enum OrphanRequest {
     /// Build the import/reachability graph for a set of files.

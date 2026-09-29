@@ -22,8 +22,8 @@ use shared::project_setup::contract_setup_protocol::ILanguageDetectionProtocol;
 use shared::project_setup::contract_setup_protocol::IMcpConfigGenerationProtocol;
 use shared::project_setup::contract_setup_protocol::IPreFlightProtocol;
 use shared::project_setup::contract_setup_protocol::{PackageManagerStatus, PreFlightResult};
-use shared::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;
-use shared::project_setup::taxonomy_setup_vo::{
+use shared::project_setup::taxonomy_project_setup_vo::EmbeddedSkillVO;
+use shared::project_setup::taxonomy_project_setup_vo::{
     CreateConfigDirResult, McpBinaryNameVO, ProjectLanguageVO, ProjectLanguagesVO, SetupError,
     WriteConfigResult,
 };

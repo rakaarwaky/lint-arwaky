@@ -19,11 +19,11 @@ use shared::git_hooks::contract_git_hooks_protocol::IHookCheckProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IIgnoreRuleProtocol;
-use shared::git_hooks::taxonomy_git_diff_data_vo::GitDiffDataVO;
-use shared::git_hooks::taxonomy_git_diff_data_vo::HookIgnoreUpdateVO;
+use shared::git_hooks::taxonomy_git_hooks_error::GitHookError;
 use shared::git_hooks::taxonomy_git_hooks_request::GitHooksRequest;
 use shared::git_hooks::taxonomy_git_hooks_response::GitHooksResponse;
-use shared::git_hooks::taxonomy_hook_error::GitHookError;
+use shared::git_hooks::taxonomy_git_hooks_vo::GitDiffDataVO;
+use shared::git_hooks::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
 
 use std::sync::Arc;
 

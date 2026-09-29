@@ -14,12 +14,12 @@ use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
 use shared::role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
 use shared::role_rules::contract_role_protocol::IUtilityRoleProtocol;
 use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::role_rules::taxonomy_role_request::RoleRequest;
-use shared::role_rules::taxonomy_role_response::RoleResponse;
+use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared::role_rules::taxonomy_role_rules_response::RoleResponse;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::Language;
 
 use shared::role_rules::utility_agent_role_checker::resolve_feature_protocol_count;
@@ -189,14 +189,16 @@ impl RoleOrchestrator {
                     if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
                 {
                     self.deps.surface.check_fn_count_limit(file, violations);
-                    match shared::role_rules::taxonomy_role_vo::classify_surface_tier(basename) {
-                        shared::role_rules::taxonomy_role_vo::SurfaceTier::Smart => {
+                    match shared::role_rules::taxonomy_role_rules_vo::classify_surface_tier(
+                        basename,
+                    ) {
+                        shared::role_rules::taxonomy_role_rules_vo::SurfaceTier::Smart => {
                             self.deps.surface.check_smart_surface(file, violations);
                         }
-                        shared::role_rules::taxonomy_role_vo::SurfaceTier::Utility => {
+                        shared::role_rules::taxonomy_role_rules_vo::SurfaceTier::Utility => {
                             self.deps.surface.check_utility_surface(file, violations);
                         }
-                        shared::role_rules::taxonomy_role_vo::SurfaceTier::Passive => {
+                        shared::role_rules::taxonomy_role_rules_vo::SurfaceTier::Passive => {
                             self.deps.surface.check_passive_surface(file, violations);
                         }
                     }

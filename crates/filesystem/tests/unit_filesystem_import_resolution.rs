@@ -335,7 +335,7 @@ from .contract_core_protocol import (
     IUploadProtocol,
     ISendProtocol,
 )
-from .taxonomy_config_vo import (
+from .taxonomy_config_system_vo import (
     AppConfig,
 )
 from .utility_core_events import (
@@ -353,7 +353,7 @@ from .taxonomy_core_error import (
     );
     assert_eq!(
         reexports.get("AppConfig"),
-        Some(&"taxonomy_config_vo".to_string())
+        Some(&"taxonomy_config_system_vo".to_string())
     );
     assert_eq!(
         reexports.get("EVENT_WEB_LOADED"),
@@ -369,7 +369,7 @@ from .taxonomy_core_error import (
     std::fs::create_dir_all(&shared_src).unwrap();
     std::fs::write(shared_src.join("__init__.py"), barrel).unwrap();
     std::fs::write(shared_src.join("contract_core_protocol.py"), "").unwrap();
-    std::fs::write(shared_src.join("taxonomy_config_vo.py"), "").unwrap();
+    std::fs::write(shared_src.join("taxonomy_config_system_vo.py"), "").unwrap();
     std::fs::write(shared_src.join("utility_core_events.py"), "").unwrap();
     std::fs::write(shared_src.join("taxonomy_core_error.py"), "").unwrap();
 
@@ -378,7 +378,10 @@ from .taxonomy_core_error import (
             "IUploadProtocol",
             "modules/shared/src/contract_core_protocol.py",
         ),
-        ("AppConfig", "modules/shared/src/taxonomy_config_vo.py"),
+        (
+            "AppConfig",
+            "modules/shared/src/taxonomy_config_system_vo.py",
+        ),
         (
             "EVENT_WEB_LOADED",
             "modules/shared/src/utility_core_events.py",
@@ -410,7 +413,7 @@ from .taxonomy_core_error import (
 #[test]
 fn test_python_grouped_reexports_ignore_inline_comments() {
     let barrel = r#"
-from .taxonomy_config_vo import (  # public config exports
+from .taxonomy_config_system_vo import (  # public config exports
     AppConfig,  # application configuration
     BrowserConfig,  # browser configuration
 )
@@ -419,11 +422,11 @@ from .taxonomy_config_vo import (  # public config exports
 
     assert_eq!(
         reexports.get("AppConfig"),
-        Some(&"taxonomy_config_vo".to_string())
+        Some(&"taxonomy_config_system_vo".to_string())
     );
     assert_eq!(
         reexports.get("BrowserConfig"),
-        Some(&"taxonomy_config_vo".to_string())
+        Some(&"taxonomy_config_system_vo".to_string())
     );
 }
 

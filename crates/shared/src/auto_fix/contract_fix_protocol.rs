@@ -6,8 +6,8 @@
 // and never carries unimplemented stubs. Each FR-backed trait maps to exactly
 // one `FR-AutoFix-NNN` heading in `crates/auto-fix/FRD.md`.
 
-use crate::auto_fix::taxonomy_fix_vo::FixOutcome;
-use crate::auto_fix::taxonomy_fix_vo::FixResult;
+use crate::auto_fix::taxonomy_auto_fix_vo::FixOutcome;
+use crate::auto_fix::taxonomy_auto_fix_vo::FixResult;
 use crate::common::taxonomy_common_vo::LineNumber;
 use crate::common::taxonomy_lint_result_vo::LintResult;
 use crate::common::taxonomy_message_vo::LintMessage;

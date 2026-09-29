@@ -88,7 +88,9 @@ impl ConfigContainer {
     }
 
     /// Get default AES configuration (from shared parser).
-    pub fn default_config(&self) -> shared::config_system::taxonomy_config_vo::ArchitectureConfig {
+    pub fn default_config(
+        &self,
+    ) -> shared::config_system::taxonomy_config_system_vo::ArchitectureConfig {
         shared::config_system::utility_config_parser::default_aes_config()
     }
 

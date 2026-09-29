@@ -1,11 +1,11 @@
 // Acceptance test AES404 — Utility purity.
 // Utility files must not define structs, enums, classes, impl blocks, or type aliases.
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::filesystem::taxonomy_filesystem_vo::{
     FileEntry, Language, ParseMetadata, RustMetadata, TypeScriptMetadata,
 };
-use shared::role_rules::taxonomy_role_request::RoleRequest;
+use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {

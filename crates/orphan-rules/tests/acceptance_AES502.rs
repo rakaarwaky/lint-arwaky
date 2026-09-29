@@ -3,7 +3,7 @@ use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrp
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::IContractOrphanProtocol;
-use shared::quality_rules::taxonomy_analysis_vo::{InheritanceMap, ReachabilityResult};
+use shared::quality_rules::taxonomy_quality_rules_vo::{InheritanceMap, ReachabilityResult};
 use std::collections::{HashMap, HashSet};
 
 fn empty_reachability() -> ReachabilityResult {

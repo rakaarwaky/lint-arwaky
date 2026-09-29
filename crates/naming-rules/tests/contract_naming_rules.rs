@@ -4,12 +4,12 @@ use naming_rules_lint_arwaky::agent_naming_orchestrator::{
 };
 use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::config_system::taxonomy_config_vo::ArchitectureConfig;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::naming_rules::INamingConventionProtocol;
 use shared::naming_rules::INamingRunnerAggregate;
 use shared::naming_rules::ISuffixPolicyProtocol;
-use shared::naming_rules::taxonomy_naming_request::NamingRequest;
-use shared::naming_rules::taxonomy_naming_response::NamingResponse;
+use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared::naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::sync::Arc;
 
 /// Compile-time trait bound assertion.

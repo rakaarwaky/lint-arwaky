@@ -19,7 +19,7 @@ use role_rules_lint_arwaky::capabilities_utility_rust_role_auditor::UtilityRustR
 use role_rules_lint_arwaky::capabilities_utility_ts_role_auditor::UtilityTypeScriptRoleAuditor;
 use shared::common::LintResult;
 use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::taxonomy_role_request::RoleRequest;
+use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared::role_rules::{
     IAgentRoleProtocol, ICapabilitiesRoleProtocol, IClassificationProtocol, IContractRoleProtocol,
     IRoleRunnerAggregate, ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
@@ -182,7 +182,7 @@ fn utility_typescript_role_auditor_implements_protocol() {
 
 #[test]
 fn role_orchestrator_implements_classification_protocol() {
-    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
         taxonomy: Arc::new(TaxonomyRoleChecker::new()),
@@ -208,7 +208,7 @@ fn role_orchestrator_implements_classification_protocol() {
 
 #[test]
 fn role_orchestrator_implements_aggregate() {
-    let config = shared::config_system::taxonomy_config_vo::ArchitectureConfig::default();
+    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
         taxonomy: Arc::new(TaxonomyRoleChecker::new()),

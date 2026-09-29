@@ -6,8 +6,10 @@ use shared::structure_rules::contract_structure_protocol::{
     IStructureFeatureHealthProtocol, IStructureSharedPurityProtocol,
     IStructureSurfacePurityProtocol,
 };
-use shared::structure_rules::taxonomy_structure_request::{StructureFinding, StructureRequest};
-use shared::structure_rules::taxonomy_structure_response::StructureResponse;
+use shared::structure_rules::taxonomy_structure_rules_request::{
+    StructureFinding, StructureRequest,
+};
+use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
 use shared::structure_rules::utility_structure_parsers::sorted;
 use std::sync::Arc;
 

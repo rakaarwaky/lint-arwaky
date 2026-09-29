@@ -8,8 +8,8 @@ use crate::common::taxonomy_lint_vo::LocationList;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_severity_vo::Severity;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
-use crate::naming_rules::taxonomy_naming_constant::ADAPTER_NAME;
+use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use crate::naming_rules::taxonomy_naming_rules_constant::ADAPTER_NAME;
 
 /// Extract the file stem using the last dot (rfind), consistent across all checkers.
 ///

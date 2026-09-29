@@ -1,5 +1,5 @@
 use shared::quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
-use shared::quality_rules::taxonomy_analysis_vo::AesCodeAnalysisViolation;
+use shared::quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
 
 use shared::common::LintMessage;
 use shared::config_system::ArchitectureConfig;

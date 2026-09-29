@@ -22,8 +22,8 @@
 // - SPLIT: one fat `IFixProtocol` dependency replaced by one seam per FR
 
 use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
-use shared::auto_fix::taxonomy_fix_request::FixRequest;
-use shared::auto_fix::taxonomy_fix_response::FixResponse;
+use shared::auto_fix::taxonomy_auto_fix_request::FixRequest;
+use shared::auto_fix::taxonomy_auto_fix_response::FixResponse;
 use shared::auto_fix::{
     FixOutcome, FixResult, IBypassFixProtocol, IFileAdapterProtocol, IFixPipelineProtocol,
     IManualReportProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,

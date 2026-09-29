@@ -16,8 +16,8 @@ use crate::common::taxonomy_response_data_vo::ResponseData;
 use crate::common::taxonomy_severity_vo::Severity;
 use crate::common::taxonomy_tool_name_vo::ToolName;
 use crate::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
-use crate::quality_rules::taxonomy_analysis_vo::LintResultList;
 use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
+use crate::quality_rules::taxonomy_quality_rules_vo::LintResultList;
 
 /// FR-ExternalLint-001: detect which languages (Rust, Python, JS/TS) and
 /// content types (Markdown) are present in the project using the filesystem

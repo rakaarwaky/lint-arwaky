@@ -24,11 +24,11 @@ use shared::file_watch::contract_watch_protocol::{
     IChangeLintProtocol, IEventDedupProtocol, ILintableFilterProtocol, IWatchBroadcastProtocol,
     IWatchShutdownProtocol, IWatchStartProtocol,
 };
-use shared::file_watch::taxonomy_service_error::WatchServiceError;
-use shared::file_watch::taxonomy_watch_config_vo::WatchConfig;
-use shared::file_watch::taxonomy_watch_config_vo::WatchEvent;
-use shared::file_watch::taxonomy_watch_request::WatchRequest;
-use shared::file_watch::taxonomy_watch_response::WatchResponse;
+use shared::file_watch::taxonomy_file_watch_error::WatchServiceError;
+use shared::file_watch::taxonomy_file_watch_request::WatchRequest;
+use shared::file_watch::taxonomy_file_watch_response::WatchResponse;
+use shared::file_watch::taxonomy_file_watch_vo::WatchConfig;
+use shared::file_watch::taxonomy_file_watch_vo::WatchEvent;
 use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 

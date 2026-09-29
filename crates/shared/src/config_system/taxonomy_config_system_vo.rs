@@ -1,7 +1,7 @@
 // PURPOSE: Config value objects — architecture config, rule groups, project settings,
 //          config source/result, workspace info, config keys, and validation results.
 //
-// Merged from the former taxonomy_config_vo, taxonomy_identifier_vo,
+// Merged from the former taxonomy_config_system_vo, taxonomy_identifier_vo,
 // taxonomy_multi_project_workspace_info_vo, taxonomy_setting_vo,
 // taxonomy_source_vo, and taxonomy_validation_vo modules.
 use crate::common::taxonomy_adapter_name_vo::AdapterName;

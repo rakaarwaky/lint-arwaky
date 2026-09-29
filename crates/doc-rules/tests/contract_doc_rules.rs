@@ -2,8 +2,8 @@
 // document and stay silent on a conforming one. Findings carry a code
 // (AES601–AES607) plus a violation_type, and both are asserted.
 use doc_rules_lint_arwaky::root_doc_rules_container::RootDocRulesContainer;
-use shared::doc_rules::taxonomy_doc_request::DocRequest;
-use shared::doc_rules::taxonomy_doc_response::DocResponse;
+use shared::doc_rules::taxonomy_doc_rules_request::DocRequest;
+use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
 
 use std::fs;
 use std::path::Path;

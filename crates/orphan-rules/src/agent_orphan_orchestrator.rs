@@ -1,5 +1,5 @@
 use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::quality_rules::taxonomy_analysis_vo::{
+use shared::quality_rules::taxonomy_quality_rules_vo::{
     GraphAnalysisContext, OrphanIndicatorResult, ReachabilityResult,
 };
 
@@ -26,7 +26,7 @@ use shared::common::{
     AdapterName, ColumnNumber, DescriptionVO, ErrorCode, LayerNameVO, LineNumber, LintMessage,
     LocationList, ScopeRef,
 };
-use shared::role_rules::taxonomy_layer_names_constant::{
+use shared::role_rules::taxonomy_role_rules_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
 
@@ -247,7 +247,9 @@ impl ArchOrphanAnalyzer {
         );
         let configured = self.get_orphan_entry_points();
         let configured_vo =
-            shared::orphan_rules::taxonomy_orphan_vo::OrphanEntryPatternListVO::new(configured);
+            shared::orphan_rules::taxonomy_orphan_rules_vo::OrphanEntryPatternListVO::new(
+                configured,
+            );
 
         // FR-001: Orphan detection must always identify entry points from ALL workspace files
         // (not just the scanned module). This ensures cross-module imports are resolved correctly.

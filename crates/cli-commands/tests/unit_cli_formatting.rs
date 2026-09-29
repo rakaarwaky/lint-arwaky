@@ -87,7 +87,7 @@ fn skill_hint_available_for_every_violation_in_a_scan() {
         violation("crates/foo/contract_scan_protocol.rs", "AES201", 1),
         violation("crates/foo/agent_scan_orchestrator.rs", "AES403", 2),
         violation("crates/foo/utility_path_resolver.rs", "AES304", 3),
-        violation("crates/foo/taxonomy_setup_vo.rs", "AES101", 4),
+        violation("crates/foo/taxonomy_project_setup_vo.rs", "AES101", 4),
     ];
 
     for v in &violations {

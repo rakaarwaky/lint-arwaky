@@ -1,6 +1,6 @@
 // PURPOSE: FixResponse — response payload for the fix aggregate
 
-use crate::auto_fix::taxonomy_fix_vo::FixResult;
+use crate::auto_fix::taxonomy_auto_fix_vo::FixResult;
 use crate::common::taxonomy_message_vo::LintMessage;
 
 pub enum FixResponse {

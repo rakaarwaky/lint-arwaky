@@ -6,11 +6,11 @@
 // performs no rule decisions and defines no types.
 use std::path::{Path, PathBuf};
 
-use super::taxonomy_structure_constant::{
+use super::taxonomy_structure_rules_constant::{
     AGENT_PREFIX, CAPABILITIES_PREFIX, ORCHESTRATOR_SUFFIX, SKIPPED_DIRS, SURFACE_PREFIX,
 };
-use super::taxonomy_structure_request::StructureFinding;
-use super::taxonomy_structure_vo::{FolderInventory, LayerFile};
+use super::taxonomy_structure_rules_request::StructureFinding;
+use super::taxonomy_structure_rules_vo::{FolderInventory, LayerFile};
 
 /// How deep the walk descends. Feature folders nest one level under `src/`.
 const MAX_DEPTH: usize = 3;

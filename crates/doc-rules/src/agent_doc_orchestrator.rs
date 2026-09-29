@@ -6,8 +6,8 @@
 // capability imports.
 use shared::doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
 use shared::doc_rules::contract_doc_protocol::IDocCheckerProtocol;
-use shared::doc_rules::taxonomy_doc_request::DocRequest;
-use shared::doc_rules::taxonomy_doc_response::DocResponse;
+use shared::doc_rules::taxonomy_doc_rules_request::DocRequest;
+use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
 use std::sync::Arc;
 
 /// Stateless orchestrator: the capability it holds has no state, so the

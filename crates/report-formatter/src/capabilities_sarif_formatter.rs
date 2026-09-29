@@ -6,12 +6,12 @@ use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
 use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::ISarifFormatProtocol;
-use shared::report_formatter::taxonomy_report_vo::{
+use shared::report_formatter::taxonomy_report_formatter_vo::{
     SarifArtifactLocation, SarifLocation, SarifPhysicalLocation, SarifRegion,
 };
-use shared::report_formatter::taxonomy_report_vo::{SarifDriver, SarifRule};
-use shared::report_formatter::taxonomy_report_vo::{SarifLog, SarifRun, SarifTool};
-use shared::report_formatter::taxonomy_report_vo::{SarifMessage, SarifResult};
+use shared::report_formatter::taxonomy_report_formatter_vo::{SarifDriver, SarifRule};
+use shared::report_formatter::taxonomy_report_formatter_vo::{SarifLog, SarifRun, SarifTool};
+use shared::report_formatter::taxonomy_report_formatter_vo::{SarifMessage, SarifResult};
 use shared::report_formatter::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────

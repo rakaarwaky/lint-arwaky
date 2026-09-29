@@ -1,9 +1,9 @@
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::contract_orphan_protocol::IAgentOrphanProtocol;
-use shared::orphan_rules::taxonomy_orphan_vo::FileParseResultVO;
+use shared::orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
 use shared::orphan_rules::utility_orphan_filename::content_contains_whole_word;
-use shared::quality_rules::taxonomy_analysis_vo::{OrphanIndicatorResult, ReachabilityResult};
+use shared::quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 
 pub struct AgentOrphanAnalyzer;

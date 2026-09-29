@@ -4,14 +4,14 @@ use std::collections::HashSet;
 use crate::common::taxonomy_layer_vo::LayerNameVO;
 use crate::common::taxonomy_message_vo::LintMessage;
 use crate::common::taxonomy_name_vo::SymbolName;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_AGENT;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_CAPABILITIES;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_CONTRACT;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_GLOBAL;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_ROOT;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_SURFACES;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_TAXONOMY;
-use crate::role_rules::taxonomy_layer_names_constant::LAYER_UTILITY;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_AGENT;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_CAPABILITIES;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_CONTRACT;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_GLOBAL;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_ROOT;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_SURFACES;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_TAXONOMY;
+use crate::role_rules::taxonomy_role_rules_constant::LAYER_UTILITY;
 
 // ─── Layer name helpers ──────────────────────────────────────────────
 

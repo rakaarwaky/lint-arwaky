@@ -3,7 +3,7 @@
 use crate::common::taxonomy_common_vo::BooleanVO;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_vo::ArchitectureConfig;
+use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use std::sync::OnceLock;
 
 static DEFAULT_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
@@ -500,9 +500,9 @@ pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
 /// ```
 pub fn parse_adapter_entries_from_yaml(
     yaml_str: &str,
-) -> Vec<crate::config_system::taxonomy_config_vo::AdapterEntry> {
+) -> Vec<crate::config_system::taxonomy_config_system_vo::AdapterEntry> {
     use crate::common::taxonomy_adapter_name_vo::AdapterName;
-    use crate::config_system::taxonomy_config_vo::{AdapterEntry, AdapterStatus};
+    use crate::config_system::taxonomy_config_system_vo::{AdapterEntry, AdapterStatus};
     let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
         Ok(v) => v,
         Err(_) => return Vec::new(),

@@ -7,11 +7,11 @@
 
 use crate::common::taxonomy_definition_vo::LayerDefinition;
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::orphan_rules::taxonomy_orphan_vo::FileParseResultVO;
-use crate::orphan_rules::taxonomy_orphan_vo::OrphanFileListVO;
-use crate::quality_rules::taxonomy_analysis_vo::GraphAnalysisContext;
-use crate::quality_rules::taxonomy_analysis_vo::InheritanceMap;
-use crate::quality_rules::taxonomy_analysis_vo::{
+use crate::orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
+use crate::orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO;
+use crate::quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext;
+use crate::quality_rules::taxonomy_quality_rules_vo::InheritanceMap;
+use crate::quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;

@@ -8,7 +8,7 @@ use shared::common::taxonomy_lint_result_vo::LintResult;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
-use shared::role_rules::taxonomy_role_token_constant::AGENT_FORBIDDEN_IO_TYPESCRIPT;
+use shared::role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_TYPESCRIPT;
 
 use shared::role_rules::utility_agent_role_checker;
 

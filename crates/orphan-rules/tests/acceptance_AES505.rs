@@ -3,7 +3,7 @@ use orphan_rules_lint_arwaky::capabilities_orphan_agent_analyzer::AgentOrphanAna
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::orphan_rules::IAgentOrphanProtocol;
-use shared::quality_rules::taxonomy_analysis_vo::ReachabilityResult;
+use shared::quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
 use std::collections::HashMap;
 
 fn agent_analyzer() -> AgentOrphanAnalyzer {

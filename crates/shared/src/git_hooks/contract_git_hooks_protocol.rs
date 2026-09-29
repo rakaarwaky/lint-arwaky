@@ -12,9 +12,9 @@ use crate::common::taxonomy_lint_result_vo::LintResultList;
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::common::taxonomy_paths_vo::FilePathList;
 use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::file_watch::taxonomy_watch_config_vo::GitDiffResultVO;
-use crate::git_hooks::taxonomy_git_diff_data_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
-use crate::git_hooks::taxonomy_hook_error::GitHookError;
+use crate::file_watch::taxonomy_file_watch_vo::GitDiffResultVO;
+use crate::git_hooks::taxonomy_git_hooks_error::GitHookError;
+use crate::git_hooks::taxonomy_git_hooks_vo::{GitDiffDataVO, HookIgnoreUpdateVO};
 
 /// FR-GitHooks-001: identify files changed between HEAD and the default branch
 /// using git diff, keeping only lintable source files.
