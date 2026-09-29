@@ -1,0 +1,51 @@
+name: Close stale issues
+
+# Automatically marks issues stale after 30 days of inactivity, then closes
+# them after 7 additional days unless there is new activity or a "no-stale"
+# label. Keeps the issue tracker tidy without manual intervention.
+
+on:
+  schedule:
+    # Run once per day so stale checks do not fire on every push.
+    - cron: '0 2 * * *'
+
+permissions:
+  issues: write
+  issue-comment: write
+  actions: read
+
+jobs:
+  close-stale:
+    name: Close stale issues
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark stale issues
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # Only manage issues, not PRs (PRs are handled by .mergify.yml).
+          only-issue-labels: stale
+
+          # Days without any activity before labeling an issue stale.
+          days-before-stale: 30
+
+          # Days after marking stale before closing the issue.
+          days-before-close: 7
+
+          # Comment posted when an issue is marked stale.
+          stale-issue-message: |
+            This issue has been automatically marked as stale because it has not
+            had recent activity. It will be closed if no further activity occurs.
+            Add a comment to keep it open.
+
+          # Comment posted when a stale issue is closed.
+          close-issue-message: |
+            This issue was closed because it has been stalled for over 30 days
+            with no activity. Feel free to reopen if this is still relevant.
+
+          # Labels that exempt an issue from being marked stale.
+          exempt-issue-labels: enhancement, bug, priority
+
+          # Prevent re-staling already-stale issues that were re-opened.
+          remove-stale-when-updated: true
