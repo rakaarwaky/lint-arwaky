@@ -1,5 +1,6 @@
 // PURPOSE: DocRequest — request payload for the doc-rules aggregate
 
+use crate::common::taxonomy_severity_vo::Severity;
 use std::path::{Path, PathBuf};
 
 /// A Markdown document the checker inspects.
@@ -23,11 +24,19 @@ pub struct DocFinding {
     pub doc: String,
     /// Human-readable detail about what drifted.
     pub message: String,
+    /// 1-based line in the document the finding anchors to.
+    /// Document-level findings that have no concrete line use `0` or `1`.
+    pub line: usize,
+    /// Severity of the finding. All AES6xx rules are HIGH per RULES_AES.
+    pub severity: Severity,
 }
 
 impl DocFinding {
-    pub fn new(
+    /// Create a new finding anchored to a specific 1-based line.
+    /// Document-level findings that have no concrete line pass `0` or `1`.
+    pub fn new_with_line(
         doc: impl Into<String>,
+        line: usize,
         code: &'static str,
         violation_type: &'static str,
         message: impl Into<String>,
@@ -37,6 +46,36 @@ impl DocFinding {
             violation_type,
             doc: doc.into(),
             message: message.into(),
+            line,
+            severity: Severity::HIGH,
+        }
+    }
+
+    /// Convert this finding to a shared `ViolationItem` for SARIF/JSON output.
+    ///
+    /// The finding's `doc` field is stored relative to the audit root; joining
+    /// it to *root* yields the absolute path the SARIF renderer expects.
+    /// When the path cannot be constructed the item falls back to a default
+    /// file path so the mapping is total.
+    pub fn to_violation_item(&self, root: &Path) -> crate::common::ViolationItem {
+        use crate::common::{ErrorCode, FilePath, LintMessage, ViolationItem};
+        let file = if self.doc.is_empty() {
+            FilePath::default()
+        } else {
+            let candidate = if root == Path::new("") {
+                self.doc.clone()
+            } else {
+                root.join(&self.doc).to_string_lossy().into_owned()
+            };
+            FilePath::new(candidate).unwrap_or_default()
+        };
+        ViolationItem {
+            code: ErrorCode::raw(self.code),
+            file,
+            line: crate::common::LineNumber::new(self.line as i64),
+            column: crate::common::ColumnNumber::new(1),
+            message: LintMessage::new(self.message.clone()),
+            severity: self.severity.clone(),
         }
     }
 }
