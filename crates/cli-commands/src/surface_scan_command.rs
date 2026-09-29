@@ -94,6 +94,7 @@ pub struct ExternalCommandParams {
 /// Parameters for the `docs` command.
 pub struct DocsCommandParams {
     pub path: Option<FilePath>,
+    pub format: Format,
     pub doc_orchestrator: Arc<dyn shared::doc_rules::IDocRunnerAggregate>,
 }
 
@@ -244,15 +245,10 @@ pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
     let root = resolve_root(&params.path);
     match dispatcher::surface_docs_action::collect_docs(&root, params.doc_orchestrator) {
         Ok(findings) => {
-            if findings.is_empty() {
-                tracing::info!("no document invariants violated");
-                ExitCode::OK
-            } else {
-                for finding in &findings {
-                    tracing::warn!(finding, "document invariant violated");
-                }
-                ExitCode::POLICY_FAIL
-            }
+            let violations =
+                dispatcher::surface_docs_action::docs_findings_to_violations(&findings);
+            output_violations(&violations, &root, params.format, false);
+            exit_for(violations.len())
         }
         Err(e) => {
             error!(error = %e, "operation failed");
