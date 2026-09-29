@@ -210,43 +210,59 @@ flowchart TD
 
 ---
 
-## Utility Layer
+### FR-ExternalLint-006: Subprocess Execution
 
-The following utilities support the capabilities above. They are not business capabilities — they are standalone technical functions that capabilities depend on through protocol injection.
+- **Description**: Spawn external linter tools as blocking subprocesses, capturing stdout/stderr, enforcing per-adapter timeouts, and mapping spawn/timeout errors.
+- **Input**: Tool name, argument list, target path, and timeout in seconds.
+- **Output**: Captured stdout/stderr text plus a completion status (ok, timed out, spawn failure).
+- **Business Rules**:
 
-### Utility: StdioClient (Subprocess Execution)
+  - Python/JS adapters run with a 60-second timeout.
+  - Rust adapters (Clippy) run with a 180-second timeout.
+  - Rust adapters (Rustfmt, cargo-audit) run with a 120-second timeout.
+  - The environment variable `PYTHONUNBUFFERED=1` is set on all subprocesses.
+  - A spawn failure or timeout is reported as an adapter error; the scan continues with the next adapter.
+- **Edge Cases**:
 
-- **Protocol**: `ICommandExecutorProtocol`
-- **File**: `capabilities_stdio_client.rs`
-- **Responsibility**: Spawns external linter tools as blocking subprocesses via `std::process::Command`, captures stdout/stderr, enforces timeouts, and maps errors.
-- **Timeouts**:
-  - Python/JS adapters: 60 seconds
-  - Rust adapters (Clippy): 180 seconds
-  - Rust adapters (Rustfmt, cargo-audit): 120 seconds
-- **Environment**: Sets `PYTHONUNBUFFERED=1` on all subprocesses.
-- **Called by**: All adapter implementations (`ESLintAdapter`, `RustLinterAdapter`, `RuffAdapter`, etc.) via the injected `ICommandExecutorProtocol` dependency.
+  - Executable absent from PATH → the adapter is reported unavailable, scan continues.
+  - Timeout exceeded → error logged, other adapters continue.
+- **Error Handling**: Spawn and timeout errors are surfaced as `LinterOperationError`.
 
-### Utility: JS Tool Path Resolver
+---
 
-- **Protocol**: `IJsToolResolutionProtocol`
-- **File**: `capabilities_external_lint_executor.rs` (delegates to `IToolResolutionProtocol`)
-- **Responsibility**: Resolves JS/TS tool binaries, preferring local `node_modules/.bin/<tool>` over global PATH installations.
-- **Workflow**:
+### FR-ExternalLint-007: JS Tool Path Resolution
+
+- **Description**: Resolve the binary path for a JS/TS tool, preferring a local `node_modules/.bin/<tool>` installation over a global PATH lookup, and locate the working directory by walking up to 10 parent directories.
+- **Input**: Tool name and a starting path.
+- **Output**: Absolute path to the resolved binary and the working directory to run it from.
+- **Business Rules**:
+
   1. Check `node_modules/.bin/<tool>` in the resolved working directory.
-  2. If local binary exists, use its absolute path.
+  2. If the local binary exists, use its absolute path.
   3. Otherwise fall back to global PATH resolution.
-  4. Resolve working directory by walking up to 10 parent directories looking for config files (`.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, `package.json`).
-- **Called by**: `ESLintAdapter`, `PrettierAdapter`, `TSCAdapter` via injected `IJsToolResolutionProtocol`.
+  4. Resolve the working directory by walking up to 10 parent directories looking for config files (`.eslintrc.*`, `prettier.config.*`, `tsconfig.json`, `package.json`).
+- **Edge Cases**:
 
-### Utility: Cargo Working Directory Resolver
+  - No local binary and no global PATH entry → tool is reported unavailable.
+  - Working directory not found within 10 levels → the scan is skipped for that file.
+- **Error Handling**: Resolution failures are reported as adapter errors; other adapters continue.
 
-- **Protocol**: `ICargoDirProtocol`
-- **File**: `capabilities_external_lint_executor.rs` (delegates to `IToolResolutionProtocol`)
-- **Responsibility**: Finds the directory containing `Cargo.toml` or `Cargo.lock` for Rust tool execution.
-- **Workflow**:
-  1. Walk up directory tree looking for `Cargo.toml` (for clippy/rustfmt) or `Cargo.lock` (for cargo-audit).
-  2. Return the directory if found; caller skips adapter with a warning if not found.
-- **Called by**: `RustLinterAdapter` (clippy), `RustFmtAdapter` (rustfmt), `CargoAuditAdapter` via injected `ICargoDirProtocol`.
+---
+
+### FR-ExternalLint-008: Rust Working Directory Resolution
+
+- **Description**: Find the directory containing `Cargo.toml` or `Cargo.lock` for Rust tool execution, walking up the directory tree.
+- **Input**: Starting path.
+- **Output**: Absolute path to the resolved cargo working directory, or none.
+- **Business Rules**:
+
+  1. Walk up the directory tree looking for `Cargo.toml` (for Clippy/Rustfmt) or `Cargo.lock` (for cargo-audit).
+  2. Return the directory if found; the caller skips the adapter with a warning if not found.
+  3. No directory is created or modified — resolution is read-only.
+- **Edge Cases**:
+
+  - No `Cargo.toml` or `Cargo.lock` anywhere in the parent chain → the adapter is skipped with a warning.
+- **Error Handling**: Resolution failure is reported as an adapter error; other adapters continue.
 
 ---
 

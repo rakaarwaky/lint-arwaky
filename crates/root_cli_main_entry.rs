@@ -113,6 +113,15 @@ enum Command {
         #[arg(value_name = "PATH", default_value = ".")]
         path: String,
     },
+    /// Structure rules scan (AES701–AES703)
+    Structure {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        filter: Option<String>,
+    },
     /// CI threshold validation
     Ci {
         #[arg(value_name = "PATH", default_value = ".")]
@@ -323,6 +332,9 @@ fn main() {
         structure_rules::root_structure_rules_container::RootStructureRulesContainer::orchestrator(
         );
 
+    let doc_orchestrator =
+        doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator();
+
     let setup_container =
         project_setup::root_project_setup_container::SetupContainer::new(filesystem_io.clone());
     let setup_orchestrator = setup_container.aggregate();
@@ -370,6 +382,7 @@ fn main() {
         orphan: orphan_orchestrator.clone(),
         config: config_orchestrator.clone(),
         structure: structure_orchestrator.clone(),
+        doc: doc_orchestrator.clone(),
         fs_seam: Arc::new(fs_seam.clone()),
     };
 
@@ -524,6 +537,22 @@ fn main() {
                 path: Some(FilePath::new(path).unwrap_or_default()),
                 doc_orchestrator:
                     doc_rules::root_doc_rules_container::RootDocRulesContainer::orchestrator(),
+            },
+        ),
+        Command::Structure {
+            path,
+            format,
+            filter,
+        } => cli_commands::surface_scan_command::handle_structure(
+            cli_commands::surface_scan_command::StructureCommandParams {
+                path: Some(FilePath::new(path).unwrap_or_default()),
+                format: parse_format(&format),
+                structure_orchestrator: structure_orchestrator.clone(),
+                report_formatter: report_formatter.clone(),
+                filesystem: filesystem.clone(),
+                filesystem_seam: fs_seam.clone(),
+                filter,
+                ignored_paths: ignored_paths.clone(),
             },
         ),
         Command::Ci { path, threshold } => cli_commands::surface_ci_command::handle_ci(

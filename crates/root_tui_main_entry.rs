@@ -51,7 +51,8 @@ fn main() -> anyhow::Result<()> {
         .with_import_orchestrator(deps.import_orchestrator)
         .with_naming_orchestrator(deps.naming_orchestrator)
         .with_role_orchestrator(deps.role_orchestrator)
-        .with_structure_orchestrator(deps.structure_orchestrator),
+        .with_structure_orchestrator(deps.structure_orchestrator)
+        .with_doc_orchestrator(deps.doc_orchestrator),
     );
 
     tui::root_tui_container::TuiContainer::run(lint_executor, deps.filesystem_io)
