@@ -10,39 +10,30 @@ use crate::file_watch::taxonomy_file_watch_error::WatchServiceError;
 use crate::file_watch::taxonomy_file_watch_vo::WatchConfig;
 use crate::file_watch::taxonomy_file_watch_vo::WatchEvent;
 
-/// FR-FileWatch-001: Start Filesystem Watcher.
+/// FR-FileWatch-001: Watch Filesystem Lifecycle.
+///
+/// Combines start, subscribe, stop, and is_available into a single capability
+/// seam: the filesystem watcher lifecycle.
 #[async_trait::async_trait]
-pub trait IWatchStartProtocol: Send + Sync {
+pub trait IWatchLifecycleProtocol: Send + Sync {
     async fn start(&self, config: &WatchConfig) -> Result<(), WatchServiceError>;
     /// Returns true when the watch feature is compiled in for this platform.
     async fn is_available(&self) -> BooleanVO;
-}
-
-/// FR-FileWatch-002: Receive and Broadcast File Change Events.
-#[async_trait::async_trait]
-pub trait IWatchBroadcastProtocol: Send + Sync {
-    /// Subscribe to the broadcast channel of file-change events.
     fn subscribe(&self) -> tokio::sync::broadcast::Receiver<WatchEvent>;
-}
-
-/// FR-FileWatch-006: Graceful Shutdown.
-#[async_trait::async_trait]
-pub trait IWatchShutdownProtocol: Send + Sync {
     async fn stop(&self) -> Result<(), WatchServiceError>;
 }
 
-/// FR-FileWatch-003: Filter Lintable Files.
-pub trait ILintableFilterProtocol: Send + Sync {
+/// FR-FileWatch-002: Filter and Deduplicate Change Events.
+///
+/// Deduplicates a batch of events by path (last-write-wins) and then filters
+/// to lintable extensions only.
+pub trait IChangeFilterProtocol: Send + Sync {
+    /// Returns true if the path has a lintable source extension.
     fn is_lintable(&self, path: &str) -> bool;
-    fn filter_lintable(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent>;
+    fn filter_events(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent>;
 }
 
-/// FR-FileWatch-004: Deduplicate Watch Events.
-pub trait IEventDedupProtocol: Send + Sync {
-    fn dedup_events(&self, events: Vec<WatchEvent>) -> Vec<WatchEvent>;
-}
-
-/// FR-FileWatch-005: Run Lint on Changed Files.
+/// FR-FileWatch-003: Run Lint on Changed Files.
 pub trait IChangeLintProtocol: Send + Sync {
     fn lint_changed(&self, event: &WatchEvent) -> Result<(), WatchServiceError>;
 }

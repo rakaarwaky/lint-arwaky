@@ -77,11 +77,9 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::auto_fix::ISymbolRenameProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixPipelineProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IManualReportProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchStartProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchBroadcastProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchShutdownProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::ILintableFilterProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::file_watch::IEventDedupProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchLifecycleProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeFilterProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffDetectionProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookInstallProtocol>();

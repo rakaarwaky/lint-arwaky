@@ -1,14 +1,4 @@
-// PURPOSE: WatchOrchestrator — coordinates watch → analyze → lint pipeline
-//
-// The watch mode provides real-time feedback: when a file changes on disk,
-// the watcher triggers a lint scan on that specific file and prints results.
-//
-// Architecture:
-//   1. Performs an initial full lint on startup (gives baseline)
-//   2. Starts the filesystem watcher (inotify on Linux, via `notify` crate)
-//   3. Event loop: receives file-change events, batches + deduplicates via
-//      IEventDedupProtocol, filters to lintable files, runs lint, prints results
-//   4. Graceful shutdown: Ctrl+C triggers AtomicBool flag, stops watcher
+// PURPOSE: WatchOrchestrator — coordinates watch → filter → lint pipeline
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -18,29 +8,22 @@ use std::time::Duration;
 use tracing::{error, info, warn};
 
 use shared::common::ExitCode;
-use shared::common::taxonomy_path_vo::FilePath;
 use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
 use shared::file_watch::contract_watch_protocol::{
-    IChangeLintProtocol, IEventDedupProtocol, ILintableFilterProtocol, IWatchBroadcastProtocol,
-    IWatchShutdownProtocol, IWatchStartProtocol,
+    IChangeFilterProtocol, IChangeLintProtocol, IWatchLifecycleProtocol,
 };
-use shared::file_watch::taxonomy_file_watch_error::WatchServiceError;
 use shared::file_watch::taxonomy_file_watch_request::WatchRequest;
 use shared::file_watch::taxonomy_file_watch_response::WatchResponse;
 use shared::file_watch::taxonomy_file_watch_vo::WatchConfig;
-use shared::file_watch::taxonomy_file_watch_vo::WatchEvent;
 use shared::quality_rules::CodeAnalysisRequest;
 use shared::quality_rules::ICodeAnalysisAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct WatchOrchestrator {
-    start: Arc<dyn IWatchStartProtocol>,
-    broadcast: Arc<dyn IWatchBroadcastProtocol>,
-    shutdown: Arc<dyn IWatchShutdownProtocol>,
-    filter: Arc<dyn ILintableFilterProtocol>,
-    dedup: Arc<dyn IEventDedupProtocol>,
-    change_lint: Arc<dyn IChangeLintProtocol>,
+    lifecycle: Arc<dyn IWatchLifecycleProtocol>,
+    filter: Arc<dyn IChangeFilterProtocol>,
+    lint: Arc<dyn IChangeLintProtocol>,
     linter: Arc<dyn ICodeAnalysisAggregate>,
 }
 
@@ -59,56 +42,19 @@ impl IWatchAggregate for WatchOrchestrator {
     }
 }
 
-// ─── Block 2b: Change-Lint Capability (FR-FileWatch-005) ───
-
-struct ChangeLintHandler {
-    linter: Arc<dyn ICodeAnalysisAggregate>,
-}
-
-impl IChangeLintProtocol for ChangeLintHandler {
-    fn lint_changed(&self, event: &WatchEvent) -> Result<(), WatchServiceError> {
-        if FilePath::new(&event.path).is_err() {
-            return Ok(());
-        }
-        let results = self
-            .linter
-            .execute(CodeAnalysisRequest::run_analysis(&[]))
-            .into_violations();
-        let score = self
-            .linter
-            .execute(CodeAnalysisRequest::calc_score(&results))
-            .into_score();
-        info!(
-            file = %event.path,
-            violations = results.len(),
-            score = score.value(),
-            "File change linted"
-        );
-        Ok(())
-    }
-}
-
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl WatchOrchestrator {
     pub fn new(
-        start: Arc<dyn IWatchStartProtocol>,
-        broadcast: Arc<dyn IWatchBroadcastProtocol>,
-        shutdown: Arc<dyn IWatchShutdownProtocol>,
-        filter: Arc<dyn ILintableFilterProtocol>,
-        dedup: Arc<dyn IEventDedupProtocol>,
+        lifecycle: Arc<dyn IWatchLifecycleProtocol>,
+        filter: Arc<dyn IChangeFilterProtocol>,
+        lint: Arc<dyn IChangeLintProtocol>,
         linter: Arc<dyn ICodeAnalysisAggregate>,
     ) -> Self {
-        let change_lint: Arc<dyn IChangeLintProtocol> = Arc::new(ChangeLintHandler {
-            linter: linter.clone(),
-        });
         Self {
-            start,
-            broadcast,
-            shutdown,
+            lifecycle,
             filter,
-            dedup,
-            change_lint,
+            lint,
             linter,
         }
     }
@@ -150,13 +96,13 @@ impl WatchOrchestrator {
                 return ExitCode::RUNTIME_ERROR;
             }
         };
-        if let Err(e) = rt.block_on(self.start.start(config)) {
+        if let Err(e) = rt.block_on(self.lifecycle.start(config)) {
             error!(error = %e, "failed to start watcher");
             return ExitCode::RUNTIME_ERROR;
         }
 
         // Subscribe to file-change events
-        let mut rx = self.broadcast.subscribe();
+        let mut rx = self.lifecycle.subscribe();
 
         // Sync event loop — poll every 100ms, check running flag each iteration
         while running.load(Ordering::SeqCst) {
@@ -168,13 +114,12 @@ impl WatchOrchestrator {
                         batch.push(ev);
                     }
 
-                    // FR-004: deduplicate by path, FR-003: filter to lintable files
-                    let deduped = self.dedup.dedup_events(batch);
-                    let lintable = self.filter.filter_lintable(deduped);
+                    // FR-002: deduplicate and filter to lintable files
+                    let filtered = self.filter.filter_events(batch);
 
-                    for event in lintable {
-                        // FR-005: lint the changed file; failures are non-fatal
-                        let _ = self.change_lint.lint_changed(&event);
+                    for event in filtered {
+                        // FR-003: lint the changed file; failures are non-fatal
+                        let _ = self.lint.lint_changed(&event);
                     }
                 }
                 Err(tokio::sync::broadcast::error::TryRecvError::Empty) => {}
@@ -185,7 +130,7 @@ impl WatchOrchestrator {
         }
 
         // Stop watcher — log error on failure
-        if let Err(e) = rt.block_on(self.shutdown.stop()) {
+        if let Err(e) = rt.block_on(self.lifecycle.stop()) {
             warn!(error = %e, "failed to stop watcher cleanly");
         }
         info!("Watcher stopped");
