@@ -88,7 +88,7 @@ fn test_empty_detected_languages_installs_all_by_default() {
 
 #[test]
 fn test_embedded_skills_constants_catalog() {
-    assert_eq!(EMBEDDED_SKILLS.len(), 55);
+    assert_eq!(EMBEDDED_SKILLS.len(), 56);
 
     let mut py_count = 0;
     let mut rs_count = 0;
@@ -132,7 +132,7 @@ fn test_embedded_skills_constants_catalog() {
     assert_eq!(py_count, 11);
     assert_eq!(rs_count, 11);
     assert_eq!(ts_count, 11);
-    assert_eq!(generic_count, 22);
+    assert_eq!(generic_count, 23);
 }
 
 // ── Mock for collect_init integration test ─────────────────
@@ -394,12 +394,12 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
         "typescript references must NOT be installed in a python-only project"
     );
 
-    // Total skill files written for python-only project: 22 (language-agnostic) + 11 (python refs) = 33
+    // Total skill files written for python-only project: 23 (language-agnostic) + 11 (python refs) = 34
     let skill_files_count = written
         .keys()
         .filter(|k| k.contains(".agents/skills/"))
         .count();
-    assert_eq!(skill_files_count, 33);
+    assert_eq!(skill_files_count, 34);
 }
 
 #[test]
@@ -434,10 +434,10 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
             .any(|k| k.contains("HOW-TO-MAKE-TYPESCRIPT-"))
     );
 
-    // Total skill files written for rust-only project: 22 (language-agnostic) + 11 (rust refs) = 33
+    // Total skill files written for rust-only project: 23 (language-agnostic) + 11 (rust refs) = 34
     let skill_files_count = written
         .keys()
         .filter(|k| k.contains(".agents/skills/"))
         .count();
-    assert_eq!(skill_files_count, 33);
+    assert_eq!(skill_files_count, 34);
 }

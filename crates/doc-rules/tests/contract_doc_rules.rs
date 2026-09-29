@@ -303,9 +303,12 @@ fn aes601_fires_on_bare_fr_id() {
 fn aes601_reports_each_missing_field_with_its_own_type() {
     let tmp = tempfile::tempdir().unwrap();
     let frd = conforming_frd()
-        .replace("- **Edge Cases**: An absent input yields a default.\n", "")
         .replace(
-            "- **Error Handling**: Failures surface as a reason-coded outcome.\n",
+            "- **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted during migration.\n",
+            "",
+        )
+        .replace(
+            "- **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently.\n",
             "",
         );
     write_workspace(tmp.path(), &frd);
@@ -315,8 +318,13 @@ fn aes601_reports_each_missing_field_with_its_own_type() {
         .filter(|(c, v, _)| c == "AES601" && v == "field_missing")
         .map(|(_, _, m)| m.as_str())
         .collect();
-    assert_eq!(field_findings.len(), 1, "one finding per FR: {findings:#?}");
-    let message = field_findings[0];
+    // Only FR-SAMPLE-001 loses its fields (FR-SAMPLE-002's text differs); expect 1 finding.
+    assert_eq!(
+        field_findings.len(),
+        1,
+        "one finding per FR with missing fields: {findings:#?}"
+    );
+    let message = &field_findings[0];
     assert!(
         message.contains("Edge Cases") && message.contains("Error Handling"),
         "the message must name each missing field, got: {message}"
@@ -1188,9 +1196,21 @@ fn write_protocol_module(dir: &Path, traits: usize) {
 }
 
 /// A FRD declaring *count* requirements, all structurally conforming.
+/// Note: `conforming_frd()` already contains 2 FRs (FR-SAMPLE-001 and FR-SAMPLE-002),
+/// so we build from a minimal base when count < 2 to avoid generating extra FRs.
 fn frd_with_fr_count(count: usize) -> String {
+    if count == 0 {
+        return "# FRD\n".to_string();
+    }
     let mut frd = conforming_frd();
-    for n in 2..=count {
+    // conforming_frd() has 2 FRs. If count <= 2, strip FR-SAMPLE-002.
+    if count <= 2 {
+        let idx = frd.find("### FR-SAMPLE-002:").unwrap_or(frd.len());
+        frd.truncate(idx);
+    }
+    // Add enough FRs to reach the target count.
+    let existing = frd.matches("### FR-SAMPLE-").count();
+    for n in (existing + 1)..=count {
         frd.push_str(&format!(
             "\n### FR-SAMPLE-{n:03}: Do Another Thing\n\n\
              - **Description**: The feature performs a second responsibility.\n\
