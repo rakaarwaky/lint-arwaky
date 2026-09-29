@@ -92,10 +92,10 @@ impl Default for PreviewView {
 fn help_text() -> String {
     "\
 Navigation:
-  j/\u{2193}     Move down
-  k/\u{2191}     Move up
-  h/\u{2190}     Back (parent dir)
-  l/\u{2192}/\u{23ce}   Open folder / preview file
+  j/↓     Move down
+  k/↑     Move up
+  h/←     Back (parent dir)
+  l/→/⏎   Open folder / preview file
   Home    Jump to top
   End     Jump to bottom
   Tab     Cycle panel focus
@@ -104,12 +104,13 @@ Navigation:
 Actions (on selected file/folder):
   c       check — AES compliance
   s       scan — multi-adapter scan
-  f       fix — auto-fix
+  f       fix — auto-fix (dry-run)
+  F       fix live — apply fixes to files (requires confirm)
   t       ci — CI mode (threshold)
   w       watch — not supported (use CLI)
   o       orphan — dead code check
-  Ctrl+S  security — vulnerability scan
-  Ctrl+P  dependencies — deps scan
+  ^S      dependencies — scan deps
+  ^P      security — vulnerability scan
 
 Setup:
   d       doctor — environment diag
@@ -117,7 +118,7 @@ Setup:
   I       install — adapter deps
   m       mcp-config — MCP config
   C       config-show — show config
-  H       install-hook — git hook
+  H       install-hook — git hook (requires confirm)
   U       uninstall-hook — remove hook
   a       adapters — list adapters
   v       version — show version
@@ -125,7 +126,7 @@ Setup:
 General:
   ?       Toggle this help
   y       Copy preview to clipboard
-  Ctrl+Y  Copy preview to clipboard + save to lint-results.txt
+  ^Y      Save preview to lint-results.txt
   q       Quit
 "
     .to_string()
