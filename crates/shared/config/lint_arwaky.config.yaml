@@ -475,3 +475,45 @@ architecture:
     AES506:
       enabled: true
       scope: ["surface"]
+
+    # ─── AES600: Document invariants ───
+    # Audits the Markdown document chain, run by `lint-arwaky-cli docs`.
+    # One code per category; each carries a violation_type for finer routing.
+    AES601: # FR format — id_missing_feature_prefix | field_missing | protocol_count_mismatch
+      enabled: true
+
+    AES602: # Section structure — order | api_subsection | table shape | empty body
+      enabled: true
+
+    AES603: # Spec purity — source_file_named | status_leak
+      enabled: true
+
+    AES604: # Crosslinks — no_backlog_link | no_prd_link | state_vocab_restated
+      enabled: true
+
+    AES605: # Doc heading structure — h1_count | h2_missing | h2_unexpected
+      enabled: true
+      severity: HIGH
+
+    # ─── AES700: Folder structure ───
+    # Audits which layer files sit in which workspace member folder, run by
+    # `lint-arwaky-cli scan`. One code per folder kind.
+    AES701: # Shared folder purity — shared_has_forbidden_files
+      enabled: true
+      severity: HIGH
+
+    AES702: # Feature folder health — feature_missing_agent | feature_missing_capability
+      enabled: true
+      severity: MEDIUM
+
+    AES703: # Surface folder purity — surface_has_misplaced_files
+      enabled: true
+      severity: MEDIUM
+
+    AES704: # Feature folder docs — feature_missing_doc_pair
+      enabled: true
+      severity: MEDIUM
+
+    AES705: # Surface folder docs — surface_missing_design_md
+      enabled: true
+      severity: MEDIUM

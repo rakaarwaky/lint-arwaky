@@ -419,12 +419,13 @@ impl McpActionSurface {
         match result {
             Ok(findings) => {
                 let exit_code = if findings.is_empty() { 0 } else { 1 };
+                let results: Vec<String> = findings.iter().map(|f| f.summary()).collect();
                 serde_json::json!({
                     "status": if exit_code == 0 { "success" } else { "violations" },
                     "action": "docs",
                     "exit_code": exit_code,
                     "finding_count": findings.len(),
-                    "results": findings,
+                    "results": results,
                 })
             }
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
