@@ -55,7 +55,7 @@
 3. **Section: Components** — add the sub-sections in the order below;
    create a sub-section only when that component family exists on the
    surface.
-4. **Verify** → `aa check docs` passes; required sections exist.
+4. **Verify** → `lint-arwaky-cli docs` passes; required sections exist.
 
 ## Template
 
@@ -250,7 +250,7 @@ a zero-row table is a silent violation of the contract.
 ## Verify
 
 ```bash
-aa check docs .
+lint-arwaky-cli docs .
 # Checks: dead-link, root-relative-link, absolute-path, secret-in-docs,
 # doc-length, unreferenced-file (when checked against skill references).
 ```

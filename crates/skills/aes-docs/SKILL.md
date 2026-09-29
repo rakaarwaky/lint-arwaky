@@ -93,7 +93,7 @@ Doc comments on every public item are the sixth deliverable, in the language's n
 
 ## Invariants
 
-Every rule is machine-checked by `aa check docs` (capability: `modules/check/src/capabilities_check_docs.py`, shared engine in `modules/shared/src/utility_doc_pack.py`).
+Every rule is machine-checked by `lint-arwaky-cli docs` (crate `doc-rules`, AES601–AES605).
 A rule cannot drift from the gate. Cite the code, not this file, when pointing at a rule.
 Each document's required section set is cross-checked against its reference's contract table, so a
 row that stops being enforced is a test failure rather than a silent edit.
@@ -184,8 +184,8 @@ Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md
 
 ## Workflow
 
-1. **Resolve the repo-root anchor first.** `aa check docs` 
-2. **Analyze**: List feature modules and public items. Run `aa check docs <path>`. The findings are your work list.
+1. **Resolve the repo-root anchor first.** `lint-arwaky-cli docs` 
+2. **Analyze**: List feature modules and public items. Run `lint-arwaky-cli docs <path>`. The findings are your work list.
 3. **Draft PRD**: Write root `PRD.md` per [references/HOW-TO-MAKE-PRD.md](references/HOW-TO-MAKE-PRD.md).
 4. **Draft Roadmap**: Write root `ROADMAP.md` per [references/HOW-TO-MAKE-ROADMAP.md](references/HOW-TO-MAKE-ROADMAP.md)
 5. **Draft FRDs**: Write `FRD.md` in each feature dir per [references/HOW-TO-MAKE-FRD.md](references/HOW-TO-MAKE-FRD.md).
@@ -200,7 +200,7 @@ Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md
    [references/HOW-TO-MAKE-RUST-DOC.md](references/HOW-TO-MAKE-RUST-DOC.md),
    [references/HOW-TO-MAKE-TYPESCRIPT-DOC.md](references/HOW-TO-MAKE-TYPESCRIPT-DOC.md) —
    then add type annotations to all signatures.
-13. **Verify**: Run `aa check docs <path>`. Then each touched reference's `Verify` block (including the language doc ref).
+13. **Verify**: Run `lint-arwaky-cli docs <path>`. Then each touched reference's `Verify` block (including the language doc ref).
 
 ---
 
@@ -209,10 +209,8 @@ Cross-cutting rows live in the root master `ROADMAP.md` (legacy root `BACKLOG.md
 ### Machine Checks
 
 ```bash
-aa check docs .                 # invariant audit of every document (strict; every finding gates)
-aa check docs . --include-subtrees   # also audit vendor/ and internal/ submodules
-
-```text
+lint-arwaky-cli docs .                 # invariant audit of every document (strict; every finding gates)
+```
 
 A pass means no claim sits in the wrong file, no pointer is broken, and no `Done` row is unevidenced.
 
@@ -234,7 +232,7 @@ Per-language rules, templates, section contracts, and Verify blocks:
 
 ## Pre-flight Checklist
 
-- [ ] `aa check docs <path>` exits 0.
+- [ ] `lint-arwaky-cli docs <path>` exits 0.
 - [ ] Every required document exists in the correct directory.
 - [ ] Every `Done` backlog row cites a re-run command, a commit hash, and its exclusions.
 - [ ] Documents serve their exact audience (no cross-contamination).
@@ -256,7 +254,7 @@ The invariant codes above cover the machine-checkable ones. These need a reader:
 
 **Cadence and code surface**
 
-- **Documents "write &amp; forget"**: Re-run `aa check docs` each sprint. Drift is silent.
+- **Documents "write &amp; forget"**: Re-run `lint-arwaky-cli docs` each sprint. Drift is silent.
 - **`//` instead of `///` in Rust**: Plain comments are invisible to the doc generator.
 - **Missing module docstrings or undocumented parameters**: The generated API surface stays incomplete.
 

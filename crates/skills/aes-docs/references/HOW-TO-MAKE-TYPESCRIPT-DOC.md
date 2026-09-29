@@ -43,7 +43,7 @@ Six rules. Each one prevents a specific failure mode.
 2. **Write Purpose** — one-line module job.
 3. **Write Audience** — who reads this.
 4. **Write Scope** — what the module covers.
-5. **Verify** → `aa check docs` passes; doc present.
+5. **Verify** → `lint-arwaky-cli docs` passes; doc present.
 
 ## Template
 

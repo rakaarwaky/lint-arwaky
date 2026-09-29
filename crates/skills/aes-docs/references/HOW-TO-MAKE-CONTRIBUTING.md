@@ -58,7 +58,7 @@
    step pipeline.
 6. **Section: Quality Verification & PR Process** — local gates, CI, PR
    checklist.
-7. **Verify** → `aa check docs` passes; every command block runs without
+7. **Verify** → `lint-arwaky-cli docs` passes; every command block runs without
    absolute personal paths; templates use placeholders.
 
 ## Template
@@ -185,7 +185,7 @@ Every section is required unless marked optional. Each exists for one reason.
 ## Verify
 
 ```bash
-aa check docs .
+lint-arwaky-cli docs .
 # Checks: dead-link, absolute-path, secret-in-docs, doc-length.
 # Manual: every command runs; templates use placeholders; no absolute personal paths.
 ```

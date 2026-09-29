@@ -77,7 +77,7 @@ a feature's `## Test Scenarios` that proves it.
 3. **Section: Goals & Success Metrics** — measurable outcomes.
 4. **Section: Scope** — in-scope vs out-of-scope.
 5. **Section: Feature Requirements** — high-level capabilities.
-6. **Verify** → `aa check docs` passes; goals are measurable.
+6. **Verify** → `lint-arwaky-cli docs` passes; goals are measurable.
 
 ## Template
 
@@ -165,7 +165,7 @@ reason.
 ## Verify
 
 ```bash
-aa check docs .
+lint-arwaky-cli docs .
 # Checks: placement, sections, links, length, hygiene.
 # Manual: every Goal has a number; no impl detail (grep CREATE TABLE|POST /|fn |interface);
 # out-of-scope non-empty; every P0 has acceptance criteria.
