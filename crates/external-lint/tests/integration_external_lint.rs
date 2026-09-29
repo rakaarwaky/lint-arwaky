@@ -205,6 +205,15 @@ fn tsc_apply_fix_always_returns_false() {
 
 #[test]
 fn ruff_apply_fix_returns_true() {
+    // Skip if ruff is not installed (e.g., in CI environments)
+    if std::process::Command::new("ruff")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
+        eprintln!("Skipping ruff_apply_fix_returns_true: ruff not installed");
+        return;
+    }
     let adapter = external_lint_lint_arwaky::RuffAdapter::new(
         None,
         Arc::new(MockFilesystem::new()),
