@@ -540,3 +540,60 @@ fn aes705_does_not_fire_on_a_feature_folder_that_holds_a_surface() {
         "a feature-dominated folder is not a surface folder; got: {findings:#?}"
     );
 }
+
+// ─── AES605: feature folder / kernel doc pair ──────────────────────────────
+
+#[test]
+fn aes605_fires_when_a_doc_pair_folder_has_no_orchestrator() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    let feature = root.join("crates/sample");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    fs::write(feature.join("FRD.md"), "# FRD\n").unwrap();
+    fs::write(feature.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
+    // deliberately omit the orchestrator file
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES605", "no_orchestrator"),
+        "expected no_orchestrator, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes605_silent_when_doc_pair_folder_has_orchestrator() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    let feature = root.join("crates/sample");
+    fs::create_dir_all(feature.join("src")).unwrap();
+    fs::write(feature.join("FRD.md"), "# FRD\n").unwrap();
+    fs::write(feature.join("BACKLOG.md"), "# BACKLOG\n").unwrap();
+    fs::write(
+        feature.join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+    let findings = audit(root);
+    assert!(
+        !has(&findings, "AES605", "no_orchestrator"),
+        "should be silent when orchestrator is present; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes605_fires_when_a_kernel_folder_carries_a_doc_pair() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    fs::create_dir_all(root.join("crates/shared/src")).unwrap();
+    fs::write(root.join("crates/shared/FRD.md"), "# FRD\n").unwrap();
+    fs::write(root.join("crates/shared/BACKLOG.md"), "# BACKLOG\n").unwrap();
+    fs::write(
+        root.join("crates/shared/src/taxonomy_domain_vo.rs"),
+        "pub struct Domain;",
+    )
+    .unwrap();
+    let findings = audit(root);
+    assert!(
+        has(&findings, "AES605", "shared_has_docs"),
+        "expected shared_has_docs, got: {findings:#?}"
+    );
+}

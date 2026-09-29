@@ -1,9 +1,10 @@
 // PURPOSE: StructureAuditor — the folder-layout invariant auditor behind IStructureAuditProtocol
 //
 // Walks the workspace members under a root and audits each folder against
-// AES701 (shared purity), AES702 (feature health), AES703 (surface
-// purity), AES704 (feature doc pair), and AES705 (surface DESIGN.md).
-// Each finding carries a machine-readable violation_type.
+// AES605 (feature doc pair / orchestrator), AES701 (shared purity), AES702
+// (feature health), AES703 (surface purity), AES704 (feature doc pair), and
+// AES705 (surface DESIGN.md). Each finding carries a machine-readable
+// violation_type.
 use std::path::Path;
 
 use shared::structure_rules::contract_structure_protocol::IStructureAuditProtocol;
@@ -48,6 +49,9 @@ impl IStructureAuditProtocol for StructureAuditor {
                 }
             }
         }
+        // AES605: folder-level — doc pair present but no orchestrator, or
+        // kernel folder carrying a doc pair. Needs the workspace root directly.
+        check_feature_folder(&ws_root, &mut findings);
 
         StructureResponse::Findings {
             findings: sorted(findings),
@@ -236,6 +240,80 @@ fn folder_name(folder: &Path) -> String {
         .and_then(|n| n.to_str())
         .unwrap_or_default()
         .to_string()
+}
+
+/// AES605 — a folder that carries a FRD+BACKLOG doc pair must hold at least
+/// one `*_orchestrator` file. A kernel (shared/) folder must not carry a doc
+/// pair at all. This check is structural: it validates the presence of source
+/// files in a folder, not the quality of the doc content itself.
+fn check_feature_folder(root: &Path, findings: &mut Vec<StructureFinding>) {
+    use std::fs;
+    for sub in ["crates", "modules", "packages"] {
+        let dir = root.join(sub);
+        let Ok(entries) = fs::read_dir(&dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let feature = entry.path();
+            if !feature.is_dir() {
+                continue;
+            }
+            let has_frd = feature.join(consts::FRD_DOC).is_file();
+            let has_backlog = feature.join(consts::BACKLOG_DOC).is_file();
+            if !has_frd && !has_backlog {
+                continue;
+            }
+            let is_shared = feature.file_name().is_some_and(|n| n == consts::KERNEL_DIR);
+            if is_shared {
+                let rel = format!("{sub}/shared");
+                findings.push(StructureFinding::new(
+                    consts::RULE_CODE_FEATURE_FOLDER,
+                    consts::FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS,
+                    &rel,
+                    format!(
+                        "kernel folder '{rel}' must not carry a doc pair; move it to a feature folder"
+                    ),
+                ));
+                continue;
+            }
+            if !has_orchestrator_in_folder(&feature) {
+                let name = entry.file_name().to_string_lossy().to_string();
+                let rel = format!("{sub}/{name}");
+                findings.push(StructureFinding::new(
+                    consts::RULE_CODE_FEATURE_FOLDER,
+                    consts::FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR,
+                    &rel,
+                    format!(
+                        "feature folder '{rel}' carries a doc pair but holds no orchestrator; a feature folder must hold a *_orchestrator file"
+                    ),
+                ));
+            }
+        }
+    }
+}
+
+/// Recursively check whether *dir* (or a subdirectory) holds a file whose stem
+/// ends with the orchestrator suffix.
+fn has_orchestrator_in_folder(dir: &Path) -> bool {
+    use std::fs;
+    let Ok(entries) = fs::read_dir(dir) else {
+        return false;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            if has_orchestrator_in_folder(&path) {
+                return true;
+            }
+        } else if path
+            .file_stem()
+            .and_then(|n| n.to_str())
+            .is_some_and(|n| n.ends_with(consts::ORCHESTRATOR_SUFFIX))
+        {
+            return true;
+        }
+    }
+    false
 }
 
 /// Collect unique findings, sorted for stable output.
