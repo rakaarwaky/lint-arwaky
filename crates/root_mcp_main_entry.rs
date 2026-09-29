@@ -39,6 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         import_orchestrator: deps.import_orchestrator,
         naming_orchestrator: deps.naming_orchestrator,
         role_orchestrator: deps.role_orchestrator,
+        doc_orchestrator: deps.doc_orchestrator,
         structure_orchestrator: deps.structure_orchestrator,
         filesystem: deps.filesystem,
         filesystem_io: deps.filesystem_io,
