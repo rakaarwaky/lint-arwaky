@@ -19,9 +19,10 @@ pub struct NamingContainer {
 
 impl NamingContainer {
     pub fn new(config: Arc<ArchitectureConfig>, layer_map: Arc<LayerMapVO>) -> Self {
-        let checker = Arc::new(crate::capabilities_naming_checker::NamingChecker::new());
-        let naming_convention: Arc<dyn INamingConventionProtocol> = checker.clone();
-        let suffix_policy: Arc<dyn ISuffixPolicyProtocol> = checker.clone();
+        let naming_convention =
+            Arc::new(crate::capabilities_naming_convention_checker::NamingConventionChecker::new());
+        let suffix_policy =
+            Arc::new(crate::capabilities_suffix_policy_checker::SuffixPolicyChecker::new());
 
         let orchestrator = Arc::new(NamingOrchestrator::new(NamingOrchestratorDeps {
             naming_convention: naming_convention.clone(),

@@ -18,8 +18,7 @@ use shared_lint_arwaky::external_lint::{
     ILinterAdapterProtocol, INormalizeProtocol,
 };
 use shared_lint_arwaky::file_watch::{
-    IChangeLintProtocol, IEventDedupProtocol, ILintableFilterProtocol, IWatchAggregate,
-    IWatchBroadcastProtocol, IWatchShutdownProtocol, IWatchStartProtocol,
+    IChangeFilterProtocol, IChangeLintProtocol, IWatchAggregate, IWatchLifecycleProtocol,
 };
 use shared_lint_arwaky::filesystem::{
     IFileSystemIOProtocol, IFilesystemAggregate, IGraphProtocol, IParserProtocol,
@@ -311,22 +310,16 @@ fn auto_fix_contracts_are_send_sync() {
 
 #[test]
 fn file_watch_contracts_are_traits() {
-    assert_trait::<dyn IWatchStartProtocol>();
-    assert_trait::<dyn IWatchBroadcastProtocol>();
-    assert_trait::<dyn IWatchShutdownProtocol>();
-    assert_trait::<dyn ILintableFilterProtocol>();
-    assert_trait::<dyn IEventDedupProtocol>();
+    assert_trait::<dyn IWatchLifecycleProtocol>();
+    assert_trait::<dyn IChangeFilterProtocol>();
     assert_trait::<dyn IChangeLintProtocol>();
     assert_trait::<dyn IWatchAggregate>();
 }
 
 #[test]
 fn file_watch_contracts_are_send_sync() {
-    assert_send_sync::<dyn IWatchStartProtocol>();
-    assert_send_sync::<dyn IWatchBroadcastProtocol>();
-    assert_send_sync::<dyn IWatchShutdownProtocol>();
-    assert_send_sync::<dyn ILintableFilterProtocol>();
-    assert_send_sync::<dyn IEventDedupProtocol>();
+    assert_send_sync::<dyn IWatchLifecycleProtocol>();
+    assert_send_sync::<dyn IChangeFilterProtocol>();
     assert_send_sync::<dyn IChangeLintProtocol>();
     assert_send_sync::<dyn IWatchAggregate>();
 }
