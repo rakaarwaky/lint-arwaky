@@ -117,12 +117,6 @@ copy_docs_to_config() {
             echo "  $DOC -> $config_dir/$DOC"
         fi
     done
-
-    RULES_SRC="$project_root/.agents/rules/RULES_AES.md"
-    if [ -f "$RULES_SRC" ]; then
-        cp "$RULES_SRC" "$config_dir/RULES_AES.md"
-        echo "  RULES_AES.md -> $config_dir/RULES_AES.md"
-    fi
 }
 
 copy_agents_to_config() {
@@ -139,14 +133,6 @@ copy_agents_to_config() {
                 SKILL_NAME=$(basename "$SKILL_DIR")
                 cp -r "$SKILL_DIR" "$agents_dst/skills/$SKILL_NAME"
                 echo "  .agents/skills/$SKILL_NAME -> $config_dir/.agents/skills/$SKILL_NAME"
-            fi
-        done
-
-        for RULE_FILE in "$agents_src"/rules/*; do
-            if [ -f "$RULE_FILE" ]; then
-                RULE_NAME=$(basename "$RULE_FILE")
-                cp "$RULE_FILE" "$agents_dst/rules/$RULE_NAME"
-                echo "  .agents/rules/$RULE_NAME -> $config_dir/.agents/rules/$RULE_NAME"
             fi
         done
 

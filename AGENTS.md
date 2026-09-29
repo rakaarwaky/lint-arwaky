@@ -53,7 +53,7 @@ CARGO_INCREMENTAL=0 cargo build --release
 | [PRD.md](PRD.md) | Product requirements, feature map, exit codes |
 | [TEST.md](TEST.md) | Test workspaces, pass/fail criteria, expected violation counts |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, code style, PR process |
-| [RULES_AES.md](.agents/rules/RULES_AES.md) | All 29 AES rules with severities and descriptions |
+| [RULES_AES.md](RULES_AES.md) | All 29 AES rules with severities and descriptions |
 
 ---
 
@@ -138,7 +138,7 @@ Every file must follow: `layer_concern_role.<ext>`
 
 Examples: `capabilities_user_checker.rs`, `utility_path_resolver.py`, `contract_scan_protocol.ts`
 
-Full suffix rules per layer are in [RULES_AES.md](.agents/rules/RULES_AES.md) (AES101–AES102).
+Full suffix rules per layer are in [RULES_AES.md](RULES_AES.md) (AES101–AES102).
 
 ---
 

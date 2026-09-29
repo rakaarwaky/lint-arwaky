@@ -9,7 +9,7 @@
 > (AES201).
 >
 > **Location**: Decision table consulted after a scan; rule semantics ultimately come from
-> the project's `.agents/rules/RULES_AES.md` and `lint_arwaky.config.yaml` —
+> the project's `RULES_AES.md` and `lint_arwaky.config.yaml` —
 > those files win if this table and the code disagree.
 >
 > **Length**: Triage order + one row per AES code + two reference matrices (suffix, imports).

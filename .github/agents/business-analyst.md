@@ -25,7 +25,7 @@ Expert Business Analyst specializing in business logic engineering and requireme
 
 Before starting any analysis, read these files:
 
-1. **`.agents/rules/RULES_AES.md`** — All AES rules to understand architectural constraints
+1. **`RULES_AES.md`** — All AES rules to understand architectural constraints
 2. **`ARCHITECTURE.md`** — 7-layer specification for context
 3. **`PRD.md`** — Product Requirements Document
 4. **`.agents/skills/`** — Use skill driven development
