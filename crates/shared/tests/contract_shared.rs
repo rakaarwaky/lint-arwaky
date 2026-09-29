@@ -3,8 +3,7 @@
 // shared is the foundation crate: it declares contracts but implements none.
 
 use shared_lint_arwaky::auto_fix::{
-    IBypassFixProtocol, IFileAdapterProtocol, IFixAggregate, IFixPipelineProtocol,
-    IManualReportProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+    IBypassFixProtocol, IFixAggregate, ISymbolRenameProtocol, IUnusedImportFixProtocol,
 };
 use shared_lint_arwaky::config_system::{
     IConfigCacheProtocol, IConfigIgnoredPathsProtocol, IConfigLanguageProtocol,
@@ -288,23 +287,17 @@ fn role_rule_contracts_are_send_sync() {
 // ── Infrastructure contracts ────────────────────────────────
 #[test]
 fn auto_fix_contracts_are_traits() {
-    assert_trait::<dyn IFileAdapterProtocol>();
     assert_trait::<dyn IUnusedImportFixProtocol>();
     assert_trait::<dyn IBypassFixProtocol>();
     assert_trait::<dyn ISymbolRenameProtocol>();
-    assert_trait::<dyn IFixPipelineProtocol>();
-    assert_trait::<dyn IManualReportProtocol>();
     assert_trait::<dyn IFixAggregate>();
 }
 
 #[test]
 fn auto_fix_contracts_are_send_sync() {
-    assert_send_sync::<dyn IFileAdapterProtocol>();
     assert_send_sync::<dyn IUnusedImportFixProtocol>();
     assert_send_sync::<dyn IBypassFixProtocol>();
     assert_send_sync::<dyn ISymbolRenameProtocol>();
-    assert_send_sync::<dyn IFixPipelineProtocol>();
-    assert_send_sync::<dyn IManualReportProtocol>();
     assert_send_sync::<dyn IFixAggregate>();
 }
 

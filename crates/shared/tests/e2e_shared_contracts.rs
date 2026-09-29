@@ -71,12 +71,9 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::role_rules::IClassificationProtocol>();
     assert_trait::<dyn shared_lint_arwaky::role_rules::ISurfaceRoleProtocol>();
     // Infrastructure
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::IFileAdapterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IUnusedImportFixProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::IBypassFixProtocol>();
     assert_trait::<dyn shared_lint_arwaky::auto_fix::ISymbolRenameProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::IFixPipelineProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::auto_fix::IManualReportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IWatchLifecycleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeFilterProtocol>();
     assert_trait::<dyn shared_lint_arwaky::file_watch::IChangeLintProtocol>();
