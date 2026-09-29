@@ -145,8 +145,9 @@ fn check_feature_docs(folder: &std::path::Path, rel: &str, findings: &mut Vec<St
     }
 }
 
-/// Reverse direction of AES702: any non-shared folder holding a doc pair must
-/// hold an orchestrator.
+/// Reverse direction of AES702: any non-shared folder holding a feature doc pair
+/// must hold an orchestrator. A surface folder carrying DESIGN.md + BACKLOG.md
+/// is not subject to this check.
 fn check_reverse_doc_orchestrator(
     folder: &std::path::Path,
     rel: &str,
@@ -154,7 +155,9 @@ fn check_reverse_doc_orchestrator(
 ) {
     let has_frd = folder.join(consts::FRD_DOC).is_file();
     let has_backlog = folder.join(consts::BACKLOG_DOC).is_file();
-    if !has_frd && !has_backlog {
+    // Only fire if the folder carries a feature doc pair (FRD + BACKLOG).
+    // Surface folders with DESIGN.md + BACKLOG.md are exempt.
+    if !has_frd || !has_backlog {
         return;
     }
     if !has_orchestrator_in_folder(folder) {

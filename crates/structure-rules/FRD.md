@@ -7,20 +7,20 @@
 
 ## System Overview
 
-The structure-rules crate enforces the 7-layer AES folder discipline by auditing the layout of every workspace. It checks that shared, feature, and surface folders obey their shape contracts — purity invariants on shared and surface, health checks on features, doc-pair requirements on feature folders, and DESIGN.md presence on surface folders — and returns findings as workspace-root-relative paths so a member-directory scan resolves them correctly.
+The structure-rules crate enforces the 7-layer AES folder discipline by auditing the layout of every workspace. It checks that shared, feature, and surface folders obey their shape contracts — shared folders carry DATA.md + BACKLOG.md, feature folders carry FRD.md + BACKLOG.md, and surface folders carry DESIGN.md + BACKLOG.md — and returns findings as workspace-root-relative paths so a member-directory scan resolves them correctly.
 
 ## Functional Requirements
 
-### FR-STR-001: Shared Folder Purity Check (AES701)
+### FR-STR-001: Shared Folder Purity and Documentation (AES701)
 
-- **Description**: Audit shared/kernel folders for forbidden file types and reject doc pairs.
+- **Description**: Audit shared/kernel folders for forbidden file types and require the doc pair.
 - **Input**: An audit root path and the filesystem inventory of each shared folder.
 - **Output**: `Vec<LintResult>` carrying one finding per structural defect found in shared.
 - **Business Rules**:
   - `capabilities_*`, `agent_*`, and `surface_*` files are forbidden in shared — they belong in feature folders. Each forbidden file produces one `shared_has_forbidden_files` finding.
-  - A shared (kernel) folder must not carry a doc pair (`FRD.md` + `BACKLOG.md`). A doc pair in shared produces one `shared_has_docs` finding.
+  - A shared (kernel) folder must carry `DATA.md` and `BACKLOG.md`. Missing either produces one `shared_missing_doc_pair` finding listing the missing files.
   - Taxonomy, utility, and contract files are the only allowed layer prefixes in shared.
-- **Edge Cases**: A shared folder with mixed permitted and forbidden files reports one finding per forbidden file. A shared folder with only taxonomy/utility/contract files and no docs is clean.
+- **Edge Cases**: A shared folder with mixed permitted and forbidden files reports one finding per forbidden file. A shared folder with only taxonomy/utility/contract files and both DATA.md and BACKLOG.md is clean.
 - **Error Handling**: If the shared folder path cannot be read, the auditor skips it silently.
 
 ### FR-STR-002: Feature Folder Health and Documentation (AES702)
@@ -39,15 +39,15 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 ### FR-STR-003: Surface Folder Purity and Documentation (AES703)
 
-- **Description**: Audit surface-dominated folders for misplaced files and require DESIGN.md.
+- **Description**: Audit surface-dominated folders for misplaced files and require DESIGN.md + BACKLOG.md.
 - **Input**: An audit root path and the filesystem inventory of each surface-dominated folder.
 - **Output**: `Vec<LintResult>` carrying one finding per structural defect found in a surface folder.
 - **Business Rules**:
   - A surface-dominated folder (where `surface_*` files outnumber all other classified files combined) must not hold `capabilities_*` or `agent_*` files. Each misplaced file produces one `surface_has_misplaced_files` finding.
   - Utility files, root wiring files, and barrel files are permitted alongside surface files.
-  - A surface-dominated folder must carry `DESIGN.md` at its root. Missing produces one `surface_missing_design_md` finding.
+  - A surface-dominated folder must carry `DESIGN.md` and `BACKLOG.md` at its root. Missing DESIGN.md produces `surface_missing_design_md`; missing BACKLOG.md produces `surface_missing_backlog_md`.
   - A folder that is not surface-dominated is not checked for AES703.
-- **Edge Cases**: A feature-dominated folder that happens to contain one surface file is NOT surface-dominated and is checked under AES702 instead. A surface folder with only permitted support files and DESIGN.md is clean.
+- **Edge Cases**: A feature-dominated folder that happens to contain one surface file is NOT surface-dominated and is checked under AES702 instead. A surface folder with only permitted support files, DESIGN.md, and BACKLOG.md is clean.
 - **Error Handling**: If the folder path cannot be read, the auditor skips it silently.
 
 ## API Contract
@@ -84,8 +84,9 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 - A shared folder holds a `capabilities_*` file → AES701 fires `shared_has_forbidden_files`.
 - A shared folder holds both `capabilities_*` and `agent_*` files → AES701 fires once per forbidden file.
-- A shared folder holds only `taxonomy_*`, `utility_*`, `contract_*` → AES701 silent.
-- A shared folder carries `FRD.md` and `BACKLOG.md` → AES701 fires `shared_has_docs`.
+- A shared folder holds only `taxonomy_*`, `utility_*`, `contract_*` → AES701 silent on purity.
+- A shared folder lacks `DATA.md` or `BACKLOG.md` → AES701 fires `shared_missing_doc_pair`.
+- A shared folder carries `DATA.md` and `BACKLOG.md` → AES701 silent.
 - A feature folder holds capabilities but no orchestrator → AES702 fires `feature_missing_agent`.
 - A feature folder holds an orchestrator but no capabilities → AES702 fires `feature_missing_capability`.
 - A feature folder holds both capabilities and orchestrator but no docs → AES702 fires `feature_missing_doc_pair`.
@@ -97,10 +98,11 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - A utility-only folder (no capabilities, no orchestrator) → AES702 silent.
 - A surface-dominated folder holds a `capabilities_*` file → AES703 fires `surface_has_misplaced_files`.
 - A surface-dominated folder holds an `agent_*` file → AES703 fires `surface_has_misplaced_files`.
-- A surface-dominated folder holds utilities, barrels, and `DESIGN.md` → AES703 silent.
 - A surface-dominated folder lacks `DESIGN.md` → AES703 fires `surface_missing_design_md`.
+- A surface-dominated folder lacks `BACKLOG.md` → AES703 fires `surface_missing_backlog_md`.
+- A surface-dominated folder holds utilities, barrels, `DESIGN.md`, and `BACKLOG.md` → AES703 silent.
 - A feature-dominated folder that also holds one surface file is checked under AES702, not AES703.
-- A conforming workspace (shared clean, features complete, surfaces documented) → 0 structure violations on `lint-arwaky-cli check .`.
+- A conforming workspace (shared has DATA+BACKLOG, features have FRD+BACKLOG, surfaces have DESIGN+BACKLOG) → 0 structure violations on `lint-arwaky-cli check .`.
 
 ## Assumptions & Constraints
 
@@ -110,11 +112,12 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - A folder is classified as "surface-dominated" when `surface_count * 2 >= total_count`.
 - The reverse doc-pair check applies to all non-shared folders, not only feature-dominated ones.
 - Findings are deduplicated by `(code, violation_type, file, message)` and sorted stably.
+- Shared folders require `DATA.md` (spec) + `BACKLOG.md` (tracking) — not `FRD.md`.
 
 ## Glossary
 
-- **Shared / kernel**: The cross-cutting folder (`shared/`) holding taxonomy, utility, and contract files only; never a feature folder.
-- **Feature folder**: A subdirectory of a member dir that holds at least one `capabilities_*` or `agent_*_orchestrator` file.
-- **Surface-dominated folder**: A folder where `surface_*` files constitute more than half of all classified files.
-- **Doc pair**: The `FRD.md` + `BACKLOG.md` file pair that marks a feature folder's documentation.
+- **Shared / kernel**: The cross-cutting folder (`shared/`) holding taxonomy, utility, and contract files; carries `DATA.md` + `BACKLOG.md`.
+- **Feature folder**: A subdirectory of a member dir that holds at least one `capabilities_*` or `agent_*_orchestrator` file; carries `FRD.md` + `BACKLOG.md`.
+- **Surface-dominated folder**: A folder where `surface_*` files constitute more than half of all classified files; carries `DESIGN.md` + `BACKLOG.md`.
+- **Doc pair**: The two-doc file pair required by each folder kind (FRD+BACKLOG for features, DESIGN+BACKLOG for surfaces, DATA+BACKLOG for shared).
 - **Foreign file**: A file whose layer prefix does not belong in the current folder's allowed set.

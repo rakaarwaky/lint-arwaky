@@ -2,14 +2,14 @@
 
 /// ─── AES701 — Shared folder rules ───────────────────────────────────────────
 /// `shared/` is the kernel: taxonomy, utility, and contract files only.
-/// A doc pair (FRD+BACKLOG) in shared fires this rule.
+/// Shared folders carry DATA.md (spec) and BACKLOG.md (tracking).
 pub const RULE_CODE_SHARED_PURITY: &str = "AES701";
 
 /// A shared folder holds a file whose layer does not belong there.
 pub const SHARED_PURITY_VIOLATION_FORBIDDEN_FILES: &str = "shared_has_forbidden_files";
 
-/// A shared (kernel) folder carries a doc pair; it must be empty of docs.
-pub const SHARED_PURITY_VIOLATION_HAS_DOCS: &str = "shared_has_docs";
+/// A shared (kernel) folder is missing its required DATA.md + BACKLOG.md pair.
+pub const SHARED_PURITY_VIOLATION_NO_DOC_PAIR: &str = "shared_missing_doc_pair";
 
 /// ─── AES702 — Feature folder rules ──────────────────────────────────────────
 /// A feature folder holds capabilities + agent orchestrator, carries no
@@ -44,10 +44,20 @@ pub const SURFACE_PURITY_VIOLATION_MISPLACED_FILES: &str = "surface_has_misplace
 /// A surface-dominated folder carries no DESIGN.md.
 pub const SURFACE_PURITY_VIOLATION_NO_DESIGN: &str = "surface_missing_design_md";
 
+/// A surface-dominated folder carries no BACKLOG.md.
+pub const SURFACE_PURITY_VIOLATION_NO_BACKLOG: &str = "surface_missing_backlog_md";
+
 /// Doc filenames referenced by AES702, so structure-rules can check their
 /// presence without importing the doc-rules constants.
 pub const FRD_DOC: &str = "FRD.md";
 pub const BACKLOG_DOC: &str = "BACKLOG.md";
+pub const DATA_DOC: &str = "DATA.md";
+pub const DESIGN_DOC: &str = "DESIGN.md";
+
+/// The document file names required by each folder kind.
+pub const FEATURE_DOC_PAIR: &[&str] = &[FRD_DOC, BACKLOG_DOC];
+pub const SURFACE_DOC_PAIR: &[&str] = &[DESIGN_DOC, BACKLOG_DOC];
+pub const SHARED_DOC_PAIR: &[&str] = &[DATA_DOC, BACKLOG_DOC];
 
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// The shared folder name, locked across every language member.
@@ -99,5 +109,4 @@ pub const SKIPPED_DIRS: &[&str] = &["benches", "tests", "target", "node_modules"
 pub const MAX_ORCHESTRATOR_WALK_DEPTH: u32 = 10;
 
 /// The document file names that mark a folder's purpose and content.
-pub const FEATURE_DOC_PAIR: &[&str] = &["FRD.md", "BACKLOG.md"];
 pub const SURFACE_DOC: &str = "DESIGN.md";
