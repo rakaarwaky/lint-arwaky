@@ -1,10 +1,10 @@
 // PURPOSE: StructureAuditor — the folder-layout invariant auditor behind IStructureAuditProtocol
 //
 // Walks the workspace members under a root and audits each folder against
-// AES605 (feature doc pair / orchestrator), AES701 (shared purity), AES702
-// (feature health), AES703 (surface purity), AES704 (feature doc pair), and
-// AES705 (surface DESIGN.md). Each finding carries a machine-readable
-// violation_type.
+// AES701 (shared purity), AES702 (feature health), AES703 (surface
+// purity), AES704 (feature doc pair — forward: source → docs, reverse: docs →
+// orchestrator; kernel folders must not carry docs), and AES705 (surface
+// DESIGN.md). Each finding carries a machine-readable violation_type.
 use std::path::Path;
 
 use shared::structure_rules::contract_structure_protocol::IStructureAuditProtocol;
@@ -39,6 +39,8 @@ impl IStructureAuditProtocol for StructureAuditor {
                 };
                 if folder_name(&folder) == consts::KERNEL_DIR {
                     check_shared_purity(&folder_rel, &ws_root, &inventory, &mut findings);
+                    // AES704 also rejects doc pairs in the kernel — shared is not a feature folder.
+                    check_feature_docs_kernel(&folder, &folder_rel, &mut findings);
                 } else {
                     check_feature_health(&folder_rel, &inventory, &mut findings);
                     check_feature_docs(&folder, &folder_rel, &inventory, &mut findings);
@@ -49,9 +51,6 @@ impl IStructureAuditProtocol for StructureAuditor {
                 }
             }
         }
-        // AES605: folder-level — doc pair present but no orchestrator, or
-        // kernel folder carrying a doc pair. Needs the workspace root directly.
-        check_feature_folder(&ws_root, &mut findings);
 
         StructureResponse::Findings {
             findings: sorted(findings),
@@ -103,33 +102,78 @@ fn check_shared_purity(
     }
 }
 
-/// AES704 — a feature folder documents itself. A folder that carries the
-/// layer files of a feature — capabilities, an orchestrator, or both — also
-/// carries the two documents that say what the feature does and where its work
-/// stands. A folder holding neither document is a feature nobody can read
-/// before changing.
+/// AES704 — a feature folder documents itself. Two directions are checked:
+///
+///   Forward: a folder that carries source files (capabilities and/or orchestrator)
+///   must carry the FRD.md + BACKLOG.md doc pair. Without the docs there is no
+///   readable contract for what the feature does or where its work stands.
+///
+///   Reverse: a folder that carries the doc pair must also carry at least one
+///   `*_orchestrator` file. Without the orchestrator the doc pair describes a
+///   feature nobody can run. This reverse check applies to every folder under
+///   crates/modules/packages, not only feature-dominated folders.
 fn check_feature_docs(
     folder: &Path,
     rel: &str,
     inventory: &FolderInventory,
     findings: &mut Vec<StructureFinding>,
 ) {
+    // Forward: source present → docs required.
     if !inventory.has_capabilities && !inventory.has_orchestrator {
+        // No source files; nothing to enforce forward direction.
+        // Still check reverse: docs without orchestrator is a violation too.
+        check_docs_have_orchestrator(folder, rel, findings);
         return;
     }
     let missing = missing_docs(folder, consts::FEATURE_DOC_PAIR);
-    if missing.is_empty() {
+    if !missing.is_empty() {
+        findings.push(StructureFinding::new(
+            consts::RULE_CODE_FEATURE_DOCS,
+            consts::FEATURE_DOCS_VIOLATION_NO_DOC_PAIR,
+            rel,
+            format!(
+                "feature folder '{rel}' is missing {}; a feature folder carries {} beside its source",
+                missing.join(" and "),
+                consts::FEATURE_DOC_PAIR.join(" and "),
+            ),
+        ));
+    }
+    // Reverse: docs present → orchestrator required.
+    check_docs_have_orchestrator(folder, rel, findings);
+}
+
+/// Reverse direction of AES704: a folder holding a doc pair must hold an
+/// orchestrator. Called for both feature folders and the shared/kernel folder.
+fn check_docs_have_orchestrator(folder: &Path, rel: &str, findings: &mut Vec<StructureFinding>) {
+    let has_frd = folder.join(consts::FRD_DOC).is_file();
+    let has_backlog = folder.join(consts::BACKLOG_DOC).is_file();
+    if !has_frd && !has_backlog {
+        return;
+    }
+    if !has_orchestrator_in_folder(folder) {
+        findings.push(StructureFinding::new(
+            consts::RULE_CODE_FEATURE_DOCS,
+            consts::FEATURE_DOCS_REVERSE_ORCHESTRATOR_MISSING,
+            rel,
+            format!(
+                "folder '{rel}' carries a doc pair but holds no *_orchestrator; a doc pair implies an orchestrator"
+            ),
+        ));
+    }
+}
+
+/// AES704 kernel check: a shared/kernel folder must not carry a doc pair at all.
+fn check_feature_docs_kernel(folder: &Path, rel: &str, findings: &mut Vec<StructureFinding>) {
+    let has_frd = folder.join(consts::FRD_DOC).is_file();
+    let has_backlog = folder.join(consts::BACKLOG_DOC).is_file();
+    if !has_frd && !has_backlog {
         return;
     }
     findings.push(StructureFinding::new(
         consts::RULE_CODE_FEATURE_DOCS,
-        consts::FEATURE_DOCS_VIOLATION_NO_DOC_PAIR,
+        consts::FEATURE_DOCS_VIOLATION_SHARED_HAS_DOCS,
         rel,
-        format!(
-            "feature folder '{rel}' is missing {}; a feature folder carries {} beside its source",
-            missing.join(" and "),
-            consts::FEATURE_DOC_PAIR.join(" and "),
-        ),
+        format!("kernel folder '{rel}' must not carry a doc pair; move it to a feature folder"),
     ));
 }
 
@@ -240,56 +284,6 @@ fn folder_name(folder: &Path) -> String {
         .and_then(|n| n.to_str())
         .unwrap_or_default()
         .to_string()
-}
-
-/// AES605 — a folder that carries a FRD+BACKLOG doc pair must hold at least
-/// one `*_orchestrator` file. A kernel (shared/) folder must not carry a doc
-/// pair at all. This check is structural: it validates the presence of source
-/// files in a folder, not the quality of the doc content itself.
-fn check_feature_folder(root: &Path, findings: &mut Vec<StructureFinding>) {
-    use std::fs;
-    for sub in ["crates", "modules", "packages"] {
-        let dir = root.join(sub);
-        let Ok(entries) = fs::read_dir(&dir) else {
-            continue;
-        };
-        for entry in entries.flatten() {
-            let feature = entry.path();
-            if !feature.is_dir() {
-                continue;
-            }
-            let has_frd = feature.join(consts::FRD_DOC).is_file();
-            let has_backlog = feature.join(consts::BACKLOG_DOC).is_file();
-            if !has_frd && !has_backlog {
-                continue;
-            }
-            let is_shared = feature.file_name().is_some_and(|n| n == consts::KERNEL_DIR);
-            if is_shared {
-                let rel = format!("{sub}/shared");
-                findings.push(StructureFinding::new(
-                    consts::RULE_CODE_FEATURE_FOLDER,
-                    consts::FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS,
-                    &rel,
-                    format!(
-                        "kernel folder '{rel}' must not carry a doc pair; move it to a feature folder"
-                    ),
-                ));
-                continue;
-            }
-            if !has_orchestrator_in_folder(&feature) {
-                let name = entry.file_name().to_string_lossy().to_string();
-                let rel = format!("{sub}/{name}");
-                findings.push(StructureFinding::new(
-                    consts::RULE_CODE_FEATURE_FOLDER,
-                    consts::FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR,
-                    &rel,
-                    format!(
-                        "feature folder '{rel}' carries a doc pair but holds no orchestrator; a feature folder must hold a *_orchestrator file"
-                    ),
-                ));
-            }
-        }
-    }
 }
 
 /// Recursively check whether *dir* (or a subdirectory) holds a file whose stem

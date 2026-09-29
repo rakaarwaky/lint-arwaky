@@ -58,15 +58,6 @@ pub const CROSSLINKS_VIOLATION_SCENARIO_NO_EVIDENCE: &str = "scenario_no_evidenc
 /// State vocabulary is restated in a sub-doc instead of living only in the master.
 pub const CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED: &str = "state_vocab_restated";
 
-/// ─── AES605 — Feature folder health ─────────────────────────────────────────
-pub const RULE_CODE_FEATURE_FOLDER: &str = "AES605";
-
-/// A folder carrying a doc pair is not a feature folder (no orchestrator present).
-pub const FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR: &str = "no_orchestrator";
-
-/// Kernel folders (shared) carry a doc pair when they should be empty.
-pub const FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
-
 /// ─── AES607 — FR/protocol class parity ─────────────────────────────────────
 pub const RULE_CODE_FR_PROTOCOL_PARITY: &str = "AES607";
 

@@ -237,7 +237,7 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
     }
 }
 
-/// `docs` — doc invariant audit (AES601–AES605) over the workspace document
+/// `docs` — doc invariant audit (AES601–AES604, AES607) over the workspace document
 /// chain. This is a markdown-only check, so it bypasses the filesystem index
 /// and calls the doc orchestrator directly on the target path.
 pub fn handle_docs(params: DocsCommandParams) -> ExitCode {
