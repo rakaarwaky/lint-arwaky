@@ -7,39 +7,36 @@
 //
 // This orchestrator bridges the auto-fix capability protocols (capabilities
 // layer) to the IFixAggregate contract (surface layer). It's intentionally
-// thin — all fix logic lives in LintFixProcessor.
+// thin — all fix logic lives in the individual capability structs.
 //
 // Safety policy:
-//   - AES201 (forbidden import): YES — safe to remove the import line
-//   - AES203 (unused import):    YES — safe to remove the import line
-//   - AES304 (bypass comment):   YES — safe to remove the bypass comment
-//   - All others:               NO  — require manual review
+//   - AES101 (naming):     YES — mechanical rename with `renamed_` prefix
+//   - AES203 (unused import): YES — safe to remove the import line
+//   - AES304 (bypass comment): YES — safe to remove the bypass comment
+//   - All others:         NO  — require manual review
 //
 // Changes from previous version:
-// - BF-2: `manual_report` now on aggregate trait (not just concrete struct)
-// - BF-5: Removed duplicate `run_fix` — consolidated with aggregate `execute`
-// - TR-2: Aggregate trait includes `manual_report` for FR-005
-// - SPLIT: one fat `IFixProtocol` dependency replaced by one seam per FR
+// - V3: Split LintFixProcessor into 4 focused capabilities, one per FR.
+// - V3: Replaced IFixPipelineProtocol + IManualReportProtocol with
+//       IViolationReportProtocol (FR-004 combines dry-run + reporting).
+// - V3: Removed FixRequest::ManualReport variant — all work flows through
+//       FixRequest::Execute.
 
 use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
 use shared::auto_fix::taxonomy_auto_fix_request::FixRequest;
 use shared::auto_fix::taxonomy_auto_fix_response::FixResponse;
 use shared::auto_fix::{
-    FixOutcome, FixResult, IBypassFixProtocol, IFileAdapterProtocol, IFixPipelineProtocol,
-    IManualReportProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+    FixOutcome, IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+    IViolationReportProtocol,
 };
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_message_vo::LintMessage;
 use shared::common::taxonomy_name_vo::SymbolName;
-use shared::common::taxonomy_path_vo::FilePath;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 /// FixOrchestratorDeps — one capability seam per FR-AutoFix requirement.
 pub struct FixOrchestratorDeps {
-    pub pipeline: Arc<dyn IFixPipelineProtocol>,
-    pub manual_report: Arc<dyn IManualReportProtocol>,
+    pub violation_report: Arc<dyn IViolationReportProtocol>,
     pub bypass_fix: Arc<dyn IBypassFixProtocol>,
     pub unused_import_fix: Arc<dyn IUnusedImportFixProtocol>,
     pub symbol_rename: Arc<dyn ISymbolRenameProtocol>,
@@ -50,7 +47,6 @@ pub struct FixOrchestratorDeps {
 /// No business logic — just wires the aggregate contract to the fix processor.
 pub struct FixOrchestrator {
     deps: FixOrchestratorDeps,
-    file_adapter: Arc<dyn IFileAdapterProtocol>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -59,10 +55,7 @@ impl IFixAggregate for FixOrchestrator {
     fn execute(&self, request: FixRequest) -> FixResponse {
         match request {
             FixRequest::Execute { path, dry_run } => FixResponse::Execute {
-                result: self.execute_impl(&path, dry_run),
-            },
-            FixRequest::ManualReport { violations } => FixResponse::ManualReport {
-                reports: self.manual_report_impl(&violations),
+                result: self.deps.violation_report.report_violations(&path, dry_run),
             },
         }
     }
@@ -71,17 +64,8 @@ impl IFixAggregate for FixOrchestrator {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl FixOrchestrator {
-    pub fn execute_impl(&self, path: &FilePath, dry_run: bool) -> FixResult {
-        self.deps.pipeline.execute(path, dry_run)
-    }
-    pub fn manual_report_impl(&self, violations: &[LintResult]) -> Vec<LintMessage> {
-        self.deps.manual_report.report_non_fixable(violations)
-    }
-    pub fn file_adapter(&self) -> Arc<dyn IFileAdapterProtocol> {
-        self.file_adapter.clone()
-    }
-    pub fn new(deps: FixOrchestratorDeps, file_adapter: Arc<dyn IFileAdapterProtocol>) -> Self {
-        Self { deps, file_adapter }
+    pub fn new(deps: FixOrchestratorDeps) -> Self {
+        Self { deps }
     }
 
     /// Convenience: apply a single bypass fix at the given line.
