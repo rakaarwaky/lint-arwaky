@@ -1319,6 +1319,8 @@ fn aes607_stays_silent_when_the_feature_has_no_shared_contract_module() {
     assert!(
         !has(&findings, "AES601", "protocol_count_mismatch"),
         "a feature with no shared contract module cannot mismatch; got: {findings:#?}"
+    );
+}
 
 // ── Issue #341: DocFinding carries line and severity ─────────────────
 

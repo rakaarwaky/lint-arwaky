@@ -66,6 +66,13 @@ flowchart TD
 
   - `allowed` match → pass (no diagnostic).
   - `forbidden` match → AES201 **CRITICAL** diagnostic with file path, line number, source scope, forbidden layer, and allowed layers.
+- **Business Rules**:
+
+  - Each layer/sub-layer has explicit `allowed`, `forbidden`, and `mandatory` rules defined in YAML configuration.
+  - Rules are per-scope, config-driven via a `conditions` array.
+  - Target in `allowed` → pass.
+  - Target in `forbidden` → AES201 CRITICAL.
+  - Target in neither → AES201 WARNING (grey area).
 - **Dependency Model (AES-DI)**:
 
   AES uses **dependency injection** as the inter-layer wiring mechanism. Layers do not import each other directly; they import from **contract** (protocol/aggregate) and receive dependencies

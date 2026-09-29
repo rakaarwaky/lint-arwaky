@@ -16,7 +16,7 @@ use std::sync::OnceLock;
 /// `FR-AutoFix-001` exactly as `frautoFix` and `fr_auto_fix`; the documented
 /// form is CamelCase, but case is never a violation. Feature crates use
 /// `-` where the shared module uses `_`.
-const FR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+FR-[A-Za-z0-9_]+-\d+:";
+const FR_ID_HEADING_PATTERN: &str = r"(?m)^#{2,4}\s+(?P<id>FR-[A-Za-z0-9_]+-\d+):";
 
 /// The shared FR-ID heading pattern, compiled once.
 ///
