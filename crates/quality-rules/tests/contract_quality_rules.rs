@@ -6,6 +6,7 @@ use quality_rules_lint_arwaky::agent_quality_orchestrator::CodeAnalysisDeps;
 use quality_rules_lint_arwaky::agent_quality_orchestrator::CodeAnalysisOrchestrator;
 use quality_rules_lint_arwaky::capabilities_check_bypass_checker::BypassChecker;
 use quality_rules_lint_arwaky::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
+use quality_rules_lint_arwaky::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
 use quality_rules_lint_arwaky::capabilities_line_checker::ArchLineChecker;
 use quality_rules_lint_arwaky::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 
@@ -29,14 +30,14 @@ fn arch_line_checker_implements_iline_checker_protocol() {
     assert_line_checker(&checker);
 }
 
-// ── MandatoryDefinitionChecker → IDeadInheritanceProtocol + IMandatoryClassProtocol ──
+// ── MandatoryDefinitionChecker → IMandatoryClassProtocol ───────────────────
 
 fn assert_dead_inheritance_checker(_: &dyn IDeadInheritanceProtocol) {}
 fn assert_mandatory_class_checker(_: &dyn IMandatoryClassProtocol) {}
 
 #[test]
-fn mandatory_definition_checker_implements_idead_inheritance_protocol() {
-    let checker = MandatoryDefinitionChecker::new();
+fn dead_inheritance_checker_implements_idead_inheritance_protocol() {
+    let checker = DeadInheritanceChecker::new();
     assert_dead_inheritance_checker(&checker);
 }
 
@@ -76,9 +77,10 @@ fn code_analysis_orchestrator_implements_icode_analysis_aggregate() {
     let config = ArchitectureConfig::default();
     let layer_map = LayerMapVO::new(std::collections::HashMap::new());
     let mandatory = Arc::new(MandatoryDefinitionChecker::new());
+    let dead_inheritance = Arc::new(DeadInheritanceChecker::new());
     let deps = CodeAnalysisDeps {
         bypass_checker: Arc::new(BypassChecker::new()),
-        dead_inheritance_checker: mandatory.clone(),
+        dead_inheritance_checker: dead_inheritance,
         line_checker: Arc::new(ArchLineChecker::new()),
         class_checker: mandatory,
         duplication_checker: Arc::new(CodeDuplicationAnalyzer::from_config(Arc::new(

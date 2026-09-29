@@ -2,7 +2,8 @@
 use naming_rules_lint_arwaky::agent_naming_orchestrator::{
     NamingOrchestrator, NamingOrchestratorDeps,
 };
-use naming_rules_lint_arwaky::capabilities_naming_checker::NamingChecker;
+use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
+use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
 use shared::common::taxonomy_definition_vo::LayerMapVO;
 use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::naming_rules::INamingConventionProtocol;
@@ -19,8 +20,8 @@ fn assert_naming_runner_aggregate_trait<T: INamingRunnerAggregate>() {}
 
 #[test]
 fn naming_checker_implements_protocol() {
-    assert_naming_convention_trait::<NamingChecker>();
-    assert_suffix_policy_trait::<NamingChecker>();
+    assert_naming_convention_trait::<NamingConventionChecker>();
+    assert_suffix_policy_trait::<SuffixPolicyChecker>();
 }
 
 #[test]
@@ -33,8 +34,8 @@ fn naming_orchestrator_name_returns_expected() {
     let config = Arc::new(ArchitectureConfig::default());
     let layer_map = Arc::new(LayerMapVO::new(std::collections::HashMap::new()));
     let deps = NamingOrchestratorDeps {
-        naming_convention: Arc::new(NamingChecker::new()),
-        suffix_policy: Arc::new(NamingChecker::new()),
+        naming_convention: Arc::new(NamingConventionChecker::new()),
+        suffix_policy: Arc::new(SuffixPolicyChecker::new()),
         config,
         layer_map,
     };
