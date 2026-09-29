@@ -102,6 +102,7 @@ impl DoctorChecker {
             &["--version"],
             true,
         )];
+        // nosemgrep: rust.lang.security.current-exe.current-exe
         let binary_path = std::env::current_exe()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_default();

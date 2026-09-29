@@ -54,6 +54,7 @@ pub fn tool_exists(name: &ToolName) -> bool {
 
 /// Return the path of the running binary.
 pub fn get_binary_path() -> FilePath {
+    // nosemgrep: rust.lang.security.current-exe.current-exe
     let path = std::env::current_exe()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
