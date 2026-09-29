@@ -119,6 +119,31 @@ pub const ORCHESTRATOR_SUFFIX: &str = "_orchestrator";
 /// Kernel folders are not features and carry no doc pair.
 pub const KERNEL_DIR: &str = "shared";
 
+/// Per-crate section order for `##` headings, per HOW-TO-MAKE-FRD.
+pub const FRD_REQUIRED_H2S: &[&str] = &[
+    "Reference",
+    "System Overview",
+    "Functional Requirements",
+    "API Contract",
+    "Integration Points",
+    "Non-functional Requirements",
+    "Test Scenarios",
+    "Assumptions & Constraints",
+    "Glossary",
+];
+
+/// Per-crate BACKLOG section order, per HOW-TO-MAKE-BACKLOG.
+pub const BACKLOG_REQUIRED_H2S: &[&str] = &[
+    "Current Condition",
+    "Backlog",
+    "Scenario Evidence",
+    "Blockers",
+    "Dependencies",
+    "Release Readiness",
+    "Deferred",
+    "Change Log",
+];
+
 /// Template section order, per HOW-TO-MAKE-FRD.
 pub const FRD_SECTION_ORDER: &[&str] = &[
     "Reference",
@@ -294,5 +319,34 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Deferred",
             "Change Log",
         ],
+    ),
+    (
+        FRD_DOC,
+        &[
+            "Reference",
+            "System Overview",
+            "Functional Requirements",
+            "API Contract",
+            "Integration Points",
+            "Non-functional Requirements",
+            "Test Scenarios",
+            "Assumptions & Constraints",
+            "Glossary",
+        ],
+        &[],
+    ),
+    (
+        BACKLOG_DOC,
+        &[
+            "Current Condition",
+            "Backlog",
+            "Scenario Evidence",
+            "Blockers",
+            "Dependencies",
+            "Release Readiness",
+            "Deferred",
+            "Change Log",
+        ],
+        &[],
     ),
 ];

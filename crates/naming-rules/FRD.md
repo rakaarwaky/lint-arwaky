@@ -251,7 +251,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 
 ---
 
-## Appendix A: YAML Configuration Schema
+### Appendix A: YAML Configuration Schema
 
 ### Top-Level Structure
 
