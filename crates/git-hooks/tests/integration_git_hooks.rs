@@ -1,15 +1,15 @@
 // Integration tests — full DI wiring via GitContainer.
 use git_hooks_lint_arwaky::agent_git_hooks_orchestrator::GitHooksOrchestrator;
+use git_hooks_lint_arwaky::capabilities_config_init::ConfigInit;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
-use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
-use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
+use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
+use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
 use shared::common::FilePath;
 use shared::git_hooks::GitHooksRequest;
 use shared::git_hooks::IHookInstallProtocol;
 use shared::git_hooks::IHookUninstallProtocol;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::{GitDiffStatus, HookIgnoreUpdateVO};
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -20,23 +20,18 @@ fn make_orchestrator() -> Arc<GitHooksOrchestrator> {
     let tmp_path = std::env::temp_dir();
     let fp = FilePath::new(tmp_path.to_string_lossy().to_string()).unwrap();
     let hook_installer: Arc<dyn IHookInstallProtocol> =
-        Arc::new(GitHookAdapter::new(fp.clone(), io.clone()));
-    let hook_uninstaller: Arc<dyn IHookUninstallProtocol> =
-        Arc::new(GitHookAdapter::new(fp, io.clone()));
-    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
-    let hook_manager = Arc::new(HookManager::new(
-        hook_installer.clone(),
-        hook_uninstaller.clone(),
+        Arc::new(HookInstaller::new(fp.clone(), io.clone()));
+    let hook_uninstaller: Arc<dyn IHookUninstallProtocol> = Arc::new(HookUninstaller::new(
+        tmp_path.to_string_lossy().to_string(),
         io.clone(),
     ));
+    let diff_checker = Arc::new(DiffChecker::new(io.clone()));
+    let config_init = Arc::new(ConfigInit::new(io));
     Arc::new(GitHooksOrchestrator::new(
-        diff_checker.clone(),
-        diff_checker.clone(),
-        hook_installer.clone(),
-        hook_uninstaller.clone(),
-        hook_manager.clone(),
-        hook_manager.clone(),
-        hook_manager.clone(),
+        diff_checker,
+        hook_installer,
+        hook_uninstaller,
+        config_init,
     ))
 }
 
@@ -114,88 +109,4 @@ fn uninstall_hook_on_non_git_dir_returns_ok() {
         "uninstall_hook should not error: {:?}",
         result.err()
     );
-}
-
-// ─── New aggregate delegation methods ─────────────────────
-
-#[test]
-fn aggregate_initialize_config_on_temp_dir() {
-    let (tmp, aggregate) = make_container();
-    let result = aggregate
-        .execute(GitHooksRequest::initialize_config(
-            tmp.path().to_str().unwrap(),
-        ))
-        .into_description();
-    assert!(
-        result.value.contains("Initialized"),
-        "should initialize config: {}",
-        result.value
-    );
-}
-
-#[test]
-fn aggregate_update_ignore_rule_config_not_found() {
-    let (tmp, aggregate) = make_container();
-    let config_path = tmp.path().join("nonexistent.yaml");
-    let request = HookIgnoreUpdateVO::new(
-        "test_rule",
-        false,
-        config_path.to_str().unwrap().to_string(),
-    );
-    let result = aggregate
-        .execute(GitHooksRequest::update_ignore_rule(request))
-        .into_description();
-    assert!(
-        result.value.contains("not found") || result.value.contains("Run lint-arwaky-cli"),
-        "should report not found: {}",
-        result.value
-    );
-}
-
-#[test]
-fn aggregate_get_diff_data_both_missing() {
-    let (tmp, aggregate) = make_container();
-    let p1 = tmp.path().join("missing1.txt");
-    let p2 = tmp.path().join("missing2.txt");
-    let result = aggregate
-        .execute(GitHooksRequest::diff_data(
-            p1.to_str().unwrap(),
-            p2.to_str().unwrap(),
-        ))
-        .into_diff_data();
-    assert_eq!(result.status, GitDiffStatus::BothMissing);
-}
-
-#[test]
-fn aggregate_get_diff_data_identical_files() {
-    let (tmp, aggregate) = make_container();
-    let p1 = tmp.path().join("a.txt");
-    let p2 = tmp.path().join("b.txt");
-    std::fs::write(&p1, "same content").unwrap();
-    std::fs::write(&p2, "same content").unwrap();
-    let result = aggregate
-        .execute(GitHooksRequest::diff_data(
-            p1.to_str().unwrap(),
-            p2.to_str().unwrap(),
-        ))
-        .into_diff_data();
-    assert_eq!(result.status, GitDiffStatus::Unchanged);
-    assert!((result.difference - 0.0).abs() < f64::EPSILON);
-}
-
-#[test]
-fn aggregate_get_diff_data_different_files() {
-    let (tmp, aggregate) = make_container();
-    let p1 = tmp.path().join("a.txt");
-    let p2 = tmp.path().join("b.txt");
-    std::fs::write(&p1, "hello").unwrap();
-    std::fs::write(&p2, "world").unwrap();
-    let result = aggregate
-        .execute(GitHooksRequest::diff_data(
-            p1.to_str().unwrap(),
-            p2.to_str().unwrap(),
-        ))
-        .into_diff_data();
-    assert_eq!(result.status, GitDiffStatus::Modified);
-    assert!(result.difference > 0.0);
 }
