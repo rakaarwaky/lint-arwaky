@@ -18,7 +18,7 @@ fn bench_stats_collection(c: &mut Criterion) {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _filesystem = fc.orchestrator();
     let io = fc.io();
-    let checker = maintenance_lint_arwaky::MaintenanceChecker::new(io);
+    let checker = maintenance_lint_arwaky::ProjectStatsChecker::new(io);
 
     group.bench_function("stats_50_files", |b| {
         b.iter(|| {
@@ -39,7 +39,7 @@ fn bench_doctor_output(c: &mut Criterion) {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _filesystem = fc.orchestrator();
     let io = fc.io();
-    let checker = maintenance_lint_arwaky::MaintenanceChecker::new(io);
+    let checker = maintenance_lint_arwaky::DoctorChecker::new(io);
 
     group.bench_function("doctor_check", |b| {
         b.iter(|| {

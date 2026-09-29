@@ -4,11 +4,12 @@
 // seam: a trait carries every method that capability implements, with one
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
+//
+// FR count is 9 (FR-Maintenance-001 through FR-Maintenance-009), one per
+// business capability.
 
 use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_tool_name_vo::ToolName;
 use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
-pub use crate::maintenance::taxonomy_maintenance_vo::ToolOutput;
 use crate::maintenance::taxonomy_maintenance_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, SelfUpdateResultVO,
     ToolchainDiagnostics,
@@ -57,12 +58,4 @@ pub trait IAdapterHealthProtocol: Send + Sync {
 /// FR-Maintenance-009: Self-Update (binary).
 pub trait ISelfUpdateProtocol: Send + Sync {
     fn self_update(&self, check_only: bool) -> SelfUpdateResultVO;
-}
-
-/// IToolExecutorProtocol — internal tool-execution infra seam (no FR).
-pub trait IToolExecutorProtocol: Send + Sync {
-    fn run_tool(&self, name: &ToolName, args: &[&str]) -> ToolOutput;
-    fn run_tool_in_dir(&self, name: &ToolName, args: &[&str], dir: &FilePath) -> ToolOutput;
-    fn tool_exists(&self, name: &ToolName) -> bool;
-    fn get_binary_path(&self) -> FilePath;
 }
