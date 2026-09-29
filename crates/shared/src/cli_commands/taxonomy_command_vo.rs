@@ -396,6 +396,11 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "lint-arwaky-cli uninstall-hook",
     ),
     (
+        "docs",
+        "Doc invariants audit (AES601–AES607) over the document chain",
+        "lint-arwaky-cli docs ./",
+    ),
+    (
         "watch",
         "Watch for file changes and lint",
         "lint-arwaky-cli watch ./src/",
