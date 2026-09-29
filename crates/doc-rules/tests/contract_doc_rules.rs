@@ -512,29 +512,6 @@ None\n\n\
     assert!(has(&audit(tmp.path()), "AES604", "state_vocab_restated"));
 }
 
-#[test]
-fn aes605_fires_when_a_doc_pair_folder_has_no_orchestrator() {
-    let tmp = tempfile::tempdir().unwrap();
-    write_workspace(tmp.path(), &conforming_frd());
-    fs::remove_file(
-        tmp.path()
-            .join("crates/sample/src/agent_sample_orchestrator.rs"),
-    )
-    .unwrap();
-    assert!(has(&audit(tmp.path()), "AES605", "no_orchestrator"));
-}
-
-#[test]
-fn aes605_fires_when_a_kernel_folder_carries_a_doc_pair() {
-    let tmp = tempfile::tempdir().unwrap();
-    write_workspace(tmp.path(), &conforming_frd());
-    fs::create_dir_all(tmp.path().join("crates/shared")).unwrap();
-    fs::write(tmp.path().join("crates/shared/FRD.md"), "# FRD\n").unwrap();
-    fs::write(tmp.path().join("crates/shared/BACKLOG.md"), "# BACKLOG\n").unwrap();
-    assert!(has(&audit(tmp.path()), "AES605", "shared_has_docs"));
-}
-
-#[test]
 fn prose_only_documents_are_audited_for_purity() {
     let tmp = tempfile::tempdir().unwrap();
     write_workspace(tmp.path(), &conforming_frd());

@@ -178,8 +178,7 @@ impl IDocCheckerProtocol for DocChecker {
         for doc in &documents {
             findings.extend(self.audit_document(doc, master, &root));
         }
-        // Folder-level checks (AES605) need the workspace root directly.
-        self.check_feature_folder(&root, &mut findings);
+        // Folder-level doc-pair checks moved to structure-rules (AES605).
 
         DocResponse::Findings {
             findings: sorted(findings),
@@ -813,75 +812,6 @@ impl DocChecker {
     }
 
     // ── AES605: Feature folder health ────────────────────────────────────
-
-    /// A folder carrying a doc pair must hold an orchestrator (feature folder).
-    fn check_feature_folder(&self, root: &Path, findings: &mut Vec<DocFinding>) {
-        for sub in ["crates", "modules", "packages"] {
-            let dir = root.join(sub);
-            let Ok(entries) = fs::read_dir(&dir) else {
-                continue;
-            };
-            for entry in entries.flatten() {
-                let feature = entry.path();
-                if !feature.is_dir() {
-                    continue;
-                }
-                let has_frd = feature.join(consts::FRD_DOC).is_file();
-                let has_backlog = feature.join(consts::BACKLOG_DOC).is_file();
-                if !has_frd && !has_backlog {
-                    continue;
-                }
-                let is_shared = feature.file_name().is_some_and(|n| n == consts::KERNEL_DIR);
-                if is_shared {
-                    let rel = format!("{}/shared", sub);
-                    findings.push(DocFinding::new(
-                        rel.clone(),
-                        consts::RULE_CODE_FEATURE_FOLDER,
-                        consts::FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS,
-                        format!(
-                            "kernel folder '{}' must not carry a doc pair; move it to a feature folder",
-                            rel
-                        ),
-                    ));
-                    continue;
-                }
-                let has_orchestrator = has_orchestrator(&feature);
-                if !has_orchestrator {
-                    let rel = format!("{}/{}", sub, entry.file_name().to_string_lossy());
-                    findings.push(DocFinding::new(
-                        rel.clone(),
-                        consts::RULE_CODE_FEATURE_FOLDER,
-                        consts::FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR,
-                        format!(
-                            "feature folder '{rel}' carries a doc pair but holds no orchestrator; a feature folder must hold a *_orchestrator file",
-                        ),
-                    ));
-                }
-            }
-        }
-    }
-}
-
-/// Does the folder hold an orchestrator file, directly or under *src*?
-fn has_orchestrator(dir: &Path) -> bool {
-    let Ok(entries) = fs::read_dir(dir) else {
-        return false;
-    };
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.is_dir() {
-            if has_orchestrator(&path) {
-                return true;
-            }
-        } else if path
-            .file_stem()
-            .and_then(|n| n.to_str())
-            .is_some_and(|n| n.ends_with(consts::ORCHESTRATOR_SUFFIX))
-        {
-            return true;
-        }
-    }
-    false
 }
 
 /// Does the body hold a table whose header carries every *columns* entry?
