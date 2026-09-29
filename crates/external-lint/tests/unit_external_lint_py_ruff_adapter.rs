@@ -13,7 +13,7 @@ use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::common::taxonomy_severity_vo::Severity;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared::external_lint::ICommandExecutorProtocol;
 use std::sync::Arc;
 
 /// Backs the FR-006 `ICommandExecutorProtocol` seam: raw execution plus the

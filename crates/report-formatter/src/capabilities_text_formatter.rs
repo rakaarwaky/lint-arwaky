@@ -1,5 +1,4 @@
-// PURPOSE: TextFormatter — implements ITextFormatProtocol, IFormatDelegationProtocol
-// and IDefaultReportFallbackProtocol for text output (FR-001, FR-005, FR-006)
+// PURPOSE: TextFormatter — implements ITextFormatProtocol for text output (FR-001).
 //
 // Self-contained: operates solely on ScanReport data without delegating
 // to other crates. Produces human-readable output with severity badges,
@@ -7,10 +6,7 @@
 // external lint results section, diagnostics section, and compliance score.
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::IDefaultReportFallbackProtocol;
-use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::ITextFormatProtocol;
-use shared::report_formatter::utility_report_format::format_report_default;
 use std::collections::BTreeMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -26,24 +22,6 @@ impl ITextFormatProtocol for TextFormatter {
 
     fn supported_format(&self) -> Format {
         Format::Text
-    }
-}
-
-/// FR-005: the registered dispatch verb for this formatter.
-impl IFormatDelegationProtocol for TextFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
-        if format == Format::Text {
-            self.format_text(report)
-        } else {
-            DisplayContent::new(format_report_default(report))
-        }
-    }
-}
-
-/// FR-006: the plain-text summary used when no format matches.
-impl IDefaultReportFallbackProtocol for TextFormatter {
-    fn format_default(&self, report: &ScanReport) -> DisplayContent {
-        DisplayContent::new(format_report_default(report))
     }
 }
 

@@ -1,4 +1,4 @@
-// Integration tests — DI wiring of ReportFormatterDeps into the orchestrator (FR-005).
+// Integration tests — DI wiring of ReportFormatterDeps into the orchestrator.
 use report_formatter_lint_arwaky::agent_report_formatter_orchestrator::{
     ReportFormatterDeps, ReportFormatterOrchestrator,
 };

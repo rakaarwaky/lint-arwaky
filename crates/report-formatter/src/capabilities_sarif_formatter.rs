@@ -1,10 +1,8 @@
-// PURPOSE: SarifFormatter — implements ISarifFormatProtocol and IFormatDelegationProtocol
-// for SARIF 2.1.0 output (FR-003, FR-005)
+// PURPOSE: SarifFormatter — implements ISarifFormatProtocol for SARIF output (FR-003).
 use std::collections::{BTreeMap, BTreeSet};
 
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::ISarifFormatProtocol;
 use shared::report_formatter::taxonomy_report_formatter_vo::{
     SarifArtifactLocation, SarifLocation, SarifPhysicalLocation, SarifRegion,
@@ -12,7 +10,6 @@ use shared::report_formatter::taxonomy_report_formatter_vo::{
 use shared::report_formatter::taxonomy_report_formatter_vo::{SarifDriver, SarifRule};
 use shared::report_formatter::taxonomy_report_formatter_vo::{SarifLog, SarifRun, SarifTool};
 use shared::report_formatter::taxonomy_report_formatter_vo::{SarifMessage, SarifResult};
-use shared::report_formatter::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
@@ -27,17 +24,6 @@ impl ISarifFormatProtocol for SarifFormatter {
 
     fn supported_format(&self) -> Format {
         Format::Sarif
-    }
-}
-
-/// FR-005: the registered dispatch verb for this formatter.
-impl IFormatDelegationProtocol for SarifFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
-        if format == Format::Sarif {
-            self.format_sarif(report)
-        } else {
-            DisplayContent::new(format_report_default(report))
-        }
     }
 }
 

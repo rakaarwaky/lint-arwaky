@@ -113,9 +113,7 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IJsonFormatProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::report_formatter::ISarifFormatProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IJUnitFormatProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IFormatDelegationProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IDefaultReportFallbackProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IXmlEscapeProtocol>();
+    // removed — routing in agent layer
     assert_send_sync::<dyn shared_lint_arwaky::project_setup::IAdapterInstallationProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::project_setup::IConfigTemplateProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::project_setup::IConfigWritingProtocol>();
@@ -257,9 +255,7 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IJsonFormatProtocol>();
     assert_trait::<dyn shared_lint_arwaky::report_formatter::ISarifFormatProtocol>();
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IJUnitFormatProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::report_formatter::IFormatDelegationProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::report_formatter::IDefaultReportFallbackProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::report_formatter::IXmlEscapeProtocol>();
+    // removed — routing in agent layer
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IReportFormatterAggregate>();
     assert_trait::<dyn shared_lint_arwaky::project_setup::IAdapterInstallationProtocol>();
     assert_trait::<dyn shared_lint_arwaky::project_setup::IConfigTemplateProtocol>();

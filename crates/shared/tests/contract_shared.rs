@@ -56,9 +56,8 @@ use shared_lint_arwaky::quality_rules::{
     IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
 };
 use shared_lint_arwaky::report_formatter::{
-    IDefaultReportFallbackProtocol, IFormatDelegationProtocol, IJUnitFormatProtocol,
-    IJsonFormatProtocol, IReportFormatterAggregate, ISarifFormatProtocol, ITextFormatProtocol,
-    IXmlEscapeProtocol,
+    IJUnitFormatProtocol, IJsonFormatProtocol, IReportFormatterAggregate, ISarifFormatProtocol,
+    ITextFormatProtocol,
 };
 use shared_lint_arwaky::role_rules::{
     IAgentRoleProtocol, ICapabilitiesRoleProtocol, IClassificationProtocol, IContractRoleProtocol,
@@ -471,9 +470,7 @@ fn report_formatter_contracts_are_traits() {
     assert_trait::<dyn IJsonFormatProtocol>();
     assert_trait::<dyn ISarifFormatProtocol>();
     assert_trait::<dyn IJUnitFormatProtocol>();
-    assert_trait::<dyn IFormatDelegationProtocol>();
-    assert_trait::<dyn IDefaultReportFallbackProtocol>();
-    assert_trait::<dyn IXmlEscapeProtocol>();
+    // IFormatDelegationProtocol removed — routing is in agent layer
     assert_trait::<dyn IReportFormatterAggregate>();
 }
 
@@ -483,9 +480,7 @@ fn report_formatter_contracts_are_send_sync() {
     assert_send_sync::<dyn IJsonFormatProtocol>();
     assert_send_sync::<dyn ISarifFormatProtocol>();
     assert_send_sync::<dyn IJUnitFormatProtocol>();
-    assert_send_sync::<dyn IFormatDelegationProtocol>();
-    assert_send_sync::<dyn IDefaultReportFallbackProtocol>();
-    assert_send_sync::<dyn IXmlEscapeProtocol>();
+    // removed
     assert_send_sync::<dyn IReportFormatterAggregate>();
 }
 

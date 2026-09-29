@@ -1,11 +1,7 @@
-// PURPOSE: JunitFormatter — implements IJUnitFormatProtocol, IFormatDelegationProtocol
-// and IXmlEscapeProtocol for JUnit XML output (FR-004, FR-005, FR-007)
+// PURPOSE: JunitFormatter — implements IJUnitFormatProtocol for JUnit XML output (FR-004).
 use shared::cli_commands::{Format, LintResult, ScanReport};
 use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::IFormatDelegationProtocol;
 use shared::report_formatter::contract_report_formatter_protocol::IJUnitFormatProtocol;
-use shared::report_formatter::contract_report_formatter_protocol::IXmlEscapeProtocol;
-use shared::report_formatter::utility_report_format::format_report_default;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.
@@ -20,28 +16,6 @@ impl IJUnitFormatProtocol for JunitFormatter {
 
     fn supported_format(&self) -> Format {
         Format::Junit
-    }
-
-    fn xml_escape(&self, text: &str) -> DisplayContent {
-        DisplayContent::new(xml_escape(text))
-    }
-}
-
-/// FR-005: the registered dispatch verb for this formatter.
-impl IFormatDelegationProtocol for JunitFormatter {
-    fn format(&self, report: &ScanReport, format: Format) -> DisplayContent {
-        if format == Format::Junit {
-            self.format_junit(report)
-        } else {
-            DisplayContent::new(format_report_default(report))
-        }
-    }
-}
-
-/// FR-007: XML entity-escape utility.
-impl IXmlEscapeProtocol for JunitFormatter {
-    fn xml_escape(&self, text: &str) -> DisplayContent {
-        DisplayContent::new(xml_escape(text))
     }
 }
 
@@ -143,7 +117,7 @@ fn append_lint_result_testcase(xml: &mut String, r: &LintResult) {
     xml.push_str("    </testcase>\n");
 }
 
-/// FR-007: XML-escape a string for safe inclusion in JUnit XML output.
+/// XML-escape a string for safe inclusion in JUnit XML output.
 pub fn xml_escape(s: &str) -> String {
     let mut escaped = String::with_capacity(s.len());
     for c in s.chars() {
