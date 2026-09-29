@@ -217,14 +217,17 @@ impl SurfaceActionHandler {
             // ---- Directory navigation ----
             TuiEvent::NavigateBack => self.navigate_back(state),
             TuiEvent::NavigateForward => self.navigate_forward(state),
-            // ---- Help overlay toggle ----
+            // ---- Help overlay toggle (I9): save current preview mode, restore on close ----
             TuiEvent::ToggleHelp => {
                 state.show_help = !state.show_help;
                 if state.show_help {
+                    // Save the active preview mode so we can restore it when help closes
+                    state.last_preview_mode = Some(state.preview_mode);
                     state.preview_mode = PreviewMode::HelpOverlay;
                 } else {
-                    // No file content preview — return to action output mode
-                    state.preview_mode = PreviewMode::ActionOutput;
+                    // Restore the previous preview mode, or fall back to ActionOutput
+                    state.preview_mode =
+                        state.last_preview_mode.unwrap_or(PreviewMode::ActionOutput);
                 }
             }
             // ---- Search mode: incremental file filtering ----
@@ -266,7 +269,25 @@ impl SurfaceActionHandler {
                 state.action_flags.dry_run = true;
                 self.run_action(state, |lp, p, f| lp.fix(p, f))
             }
+            // Live fix is destructive — gate it with a confirm prompt (#364).
             TuiEvent::ActionFixLive => {
+                if state.pending_confirm.is_some() {
+                    // Already in a confirm flow — fall through to the ConfirmAction handler
+                } else {
+                    state.pending_confirm = Some(ConfirmState {
+                        pending: TuiEvent::ActionFixLive,
+                        label: "Apply live fixes to files".to_string(),
+                    });
+                    state.set_status("Confirm: apply live fixes?");
+                }
+                // If we set up the confirm, stop here — ConfirmAction/CANCEL will handle it
+                if state
+                    .pending_confirm
+                    .as_ref()
+                    .is_some_and(|c| c.pending == TuiEvent::ActionFixLive)
+                {
+                    return;
+                }
                 state.action_flags.dry_run = false;
                 self.run_action(state, |lp, p, f| lp.fix(p, f))
             }
@@ -339,7 +360,17 @@ impl SurfaceActionHandler {
                 );
             }
             TuiEvent::ActionConfigShow => self.run_action_no_path(state, |lp| lp.config_show()),
-            TuiEvent::ActionInstallHook => self.run_action_no_path(state, |lp| lp.install_hook()),
+            // Install hook is destructive — gate it with a confirm prompt (#364).
+            TuiEvent::ActionInstallHook => {
+                if state.pending_confirm.is_some() {
+                    return;
+                }
+                state.pending_confirm = Some(ConfirmState {
+                    pending: TuiEvent::ActionInstallHook,
+                    label: "Install git pre-commit hook".to_string(),
+                });
+                state.set_status("Confirm: install pre-commit hook?");
+            }
             TuiEvent::ActionAdapters => self.run_action_no_path(state, |lp| lp.adapters()),
             TuiEvent::ActionVersion => self.run_action_no_path(state, |lp| lp.version()),
             // ---- Watch: FR-006 says watch is NOT supported in TUI ----
@@ -382,6 +413,13 @@ impl SurfaceActionHandler {
                 state.project_root = cwd.clone();
                 state.current_dir = cwd.clone();
                 state.show_path_dialog = false;
+                self.load_directory(state, &state.current_dir.clone());
+            }
+            // ---- Path dialog: dismiss without changing project root (#355) ----
+            TuiEvent::PathCancel => {
+                state.show_path_dialog = false;
+                state.path_input.clear();
+                state.set_status("Path dialog cancelled — press 'r' to re-open");
                 self.load_directory(state, &state.current_dir.clone());
             }
             // ---- Resize: track terminal height for mouse click mapping ----
@@ -486,6 +524,8 @@ impl SurfaceActionHandler {
         });
         state.selected_index = 0;
         state.scroll_offset = 0;
+        // Clear stale preview when directory changes (#368)
+        state.preview_text.clear();
         // No file content preview — Preview panel stays empty until action is run
         state.preview_mode = PreviewMode::ActionOutput;
         state.set_status(format!("Dir: {}", path));

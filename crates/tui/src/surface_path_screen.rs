@@ -62,7 +62,7 @@ impl PathScreen {
             ]),
             Line::from(""),
             Line::from(Span::styled(
-                "  [Enter] Confirm   [Tab] Use current dir   [Esc] Quit",
+                "  [Enter] Confirm   [Tab] Use current dir   [Esc] Cancel",
                 Style::default().fg(theme::SEPARATOR),
             )),
         ];
