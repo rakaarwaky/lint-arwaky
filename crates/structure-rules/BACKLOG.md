@@ -14,11 +14,11 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| STRUC-01 | FR-STR-001 | AES701 shared folder purity — forbidden files + kernel docs | P0 | Done | `cargo test -p structure-rules-lint-arwaky --lib --tests` → 0 failures at `d3366d3b` (2026-09-29) | @raka | None | 2026-09-29 |
-| STRUC-02 | FR-STR-002 | AES702 feature folder health + docs + forbidden files | P0 | Done | `cargo test -p structure-rules-lint-arwaky --lib --tests` → 0 failures at `d3366d3b` (2026-09-29) | @raka | None | 2026-09-29 |
-| STRUC-03 | FR-STR-003 | AES703 surface folder purity + DESIGN.md | P0 | Done | `cargo test -p structure-rules-lint-arwaky --lib --tests` → 0 failures at `d3366d3b` (2026-09-29) | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| STRUC-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| STRUC-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| STRUC-03 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

@@ -15,12 +15,12 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| GITH-01 | FR-GitHooks-001 | SCEN-001 - Git Diff Detection — 14 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures | @raka | None | 2026-09-29 |
-| GITH-02 | FR-GitHooks-002 | SCEN-002 - Hook Installation — 7 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures | @raka | None | 2026-09-29 |
-| GITH-03 | FR-GitHooks-003 | SCEN-003 - Hook Uninstallation — 3 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures | @raka | None | 2026-09-29 |
-| GITH-04 | FR-GitHooks-004 | SCEN-004 - Project Config Initialization — 7 scenarios verified | P0 | Done | `cargo test -p git_hooks --lib --tests` → 0 failures | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| GITH-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| GITH-02 | P0 | Done | On Track | None | — | 2026-09-29  |
+| GITH-03 | P0 | Done | On Track | None | — | 2026-09-29  |
+| GITH-04 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

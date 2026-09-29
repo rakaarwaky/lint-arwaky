@@ -52,9 +52,9 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| SAM-01 | FR-SAMPLE-001 | nothing yet | P0 | Ready | nothing yet | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| SAM-01 | P0 | Ready | On Track | — | — | 2026-09-29 |
 
 ## Scenario Evidence
 

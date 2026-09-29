@@ -14,15 +14,15 @@ Last Updated: 2026-09-28
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| ROLE-01 | FR-ROLERULES-001 | AES401 - Taxonomy Purity — 10 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ROLE-02 | FR-ROLERULES-002 | AES402 - Contract Primitive Restriction — 6 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ROLE-03 | FR-ROLERULES-003 | AES403 - Capability Protocol Implementation — 6 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ROLE-04 | FR-ROLERULES-004 | AES404 - Utility Purity — 10 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ROLE-05 | FR-ROLERULES-005 | AES405 - Agent Orchestrator Composition — 17 sub-checks verified across 3 languages | P0 | Done | `cargo nextest run -p role-rules-lint-arwaky` → 222 passed, 0 failed at `72d2d58b` (2026-09-28) | @raka | None | 2026-09-28 |
-| ROLE-06 | FR-ROLERULES-006 | AES406 - Surface Passive Role — 7 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
-| ROLE-07 | FR-ROLERULES-007 | Classification & Configuration — 9 scenarios verified | P0 | Done | `cargo test -p role_rules --lib --tests` → 0 failures at `29c71083` (2026-09-17) | @raka | None | 2026-09-17 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| ROLE-01 | P0 | Done | On Track | None | — | 2026-09-17  |
+| ROLE-02 | P0 | Done | On Track | None | — | 2026-09-17  |
+| ROLE-03 | P0 | Done | On Track | None | — | 2026-09-17  |
+| ROLE-04 | P0 | Done | On Track | None | — | 2026-09-17  |
+| ROLE-05 | P0 | Done | On Track | None | — | 2026-09-28  |
+| ROLE-06 | P0 | Done | On Track | None | — | 2026-09-17  |
+| ROLE-07 | P0 | Done | On Track | None | — | 2026-09-17  |
 
 ## Scenario Evidence
 

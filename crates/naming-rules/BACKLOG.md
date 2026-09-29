@@ -14,10 +14,10 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| NAMI-01 | FR-NAMINGRULES-001 | AES101 naming convention — 17 scenarios verified | P0 | Done | `cargo test -p naming-rules-lint-arwaky` → 65 passed, 0 failed at `1b580e3d` (2026-09-29). Capability: `capabilities_naming_convention_checker` (AES101 stem validation) | @raka | None | 2026-09-29 |
-| NAMI-02 | FR-NAMINGRULES-002 | AES102 suffix/prefix validation — 12 scenarios verified | P0 | Done | `cargo test -p naming-rules-lint-arwaky` → 65 passed, 0 failed at `1b580e3d` (2026-09-29). Capability: `capabilities_suffix_policy_checker` (AES102 suffix enforcement); AES403 exception removed | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| NAMI-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| NAMI-02 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 

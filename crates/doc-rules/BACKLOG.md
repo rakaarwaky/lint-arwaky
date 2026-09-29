@@ -14,10 +14,10 @@ Last Updated: 2026-09-29
 
 ## Backlog
 
-| ID | FRD Ref | Work Item | Priority | State | Actual Condition | Owner | Dependencies | Updated |
-|---|---|---|---:|---|---|---|---|---|
-| DOC-01 | FR-DOC-001 | AES601–AES605 document invariant enforcement — 24 scenarios verified | P0 | Done | `cargo test -p lint_arwaky_doc_rules --lib --tests` → 0 failures at `926bd34a` (2026-09-29) | @raka | None | 2026-09-29 |
-| DOC-02 | FR-DOC-002 | Audit orchestration via single aggregate entry point — verified by `contract_doc_rules.rs` and `acceptance_FR_DOC_004.rs` tests | P0 | Done | `cargo test -p lint_arwaky_doc_rules --lib --tests` → 0 failures at `926bd34a` (2026-09-29) | @raka | None | 2026-09-29 |
+| ID | Priority | State | Health | Dependencies | Next Action | Updated |
+|---|---:|---|---|---|---|---|
+| DOC-01 | P0 | Done | On Track | None | — | 2026-09-29  |
+| DOC-02 | P0 | Done | On Track | None | — | 2026-09-29  |
 
 ## Scenario Evidence
 
