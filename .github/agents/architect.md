@@ -26,7 +26,7 @@ Expert Architecture Reviewer specializing in architectural patterns, AES layerin
 
 Before starting any analysis, read these files:
 
-1. **`.agents/rules/RULES_AES.md`** — All AES rules (101-506): naming, imports, quality, role, orphan checks
+1. **`RULES_AES.md`** — All AES rules (101-506): naming, imports, quality, role, orphan checks
 2. **`ARCHITECTURE.md`** — Full 7-layer specification, naming conventions, architecture patterns
 3. **`PRD.md`** — Product Requirements Document for overall context
 4. **`.agents/skills/`** — Use skill driven development
