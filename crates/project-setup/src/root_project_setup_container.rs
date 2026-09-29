@@ -2,9 +2,8 @@
 
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::project_setup::{
-    IAdapterInstallationProtocol, IConfigTemplateProtocol, IConfigWritingProtocol,
-    IEnvGenerationProtocol, IFilePathExistenceProtocol, ILanguageDetectionProtocol,
-    IMcpConfigGenerationProtocol, IPreFlightProtocol, ISetupAggregate,
+    IAdapterInstallationProtocol, IEnvGenerationProtocol, ILanguageDetectionProtocol,
+    IMcpConfigGenerationProtocol, ISetupAggregate,
 };
 
 use std::sync::Arc;
@@ -17,10 +16,6 @@ pub struct SetupContainer {
     env_generation: Arc<dyn IEnvGenerationProtocol>,
     language_detection: Arc<dyn ILanguageDetectionProtocol>,
     adapter_installation: Arc<dyn IAdapterInstallationProtocol>,
-    config_template: Arc<dyn IConfigTemplateProtocol>,
-    config_writing: Arc<dyn IConfigWritingProtocol>,
-    pre_flight: Arc<dyn IPreFlightProtocol>,
-    path_existence: Arc<dyn IFilePathExistenceProtocol>,
 }
 
 // ─── Block 2: Container Construction ──────────────────────
@@ -29,30 +24,27 @@ impl SetupContainer {
     pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
         let installer =
             Arc::new(crate::capabilities_setup_installer_adapter::SetupInstallerAdapter::new());
-        let processor =
-            Arc::new(crate::capabilities_setup_processor::SetupManagementProcessor::new(io));
+        let mcp_config =
+            Arc::new(crate::capabilities_mcp_config_generator::SetupMcpConfigGenerator::new());
+        let env_generation = Arc::new(crate::capabilities_env_generator::SetupEnvGenerator::new(
+            io.clone(),
+        ));
+        let language_detection =
+            Arc::new(crate::capabilities_language_detector::SetupLanguageDetector::new(io));
         let protocols = crate::agent_setup_orchestrator::SetupProtocols {
-            mcp_config: processor.clone(),
-            env_generation: processor.clone(),
-            language_detection: processor.clone(),
+            mcp_config: mcp_config.clone(),
+            env_generation: env_generation.clone(),
+            language_detection: language_detection.clone(),
             adapter_installation: installer.clone(),
-            config_template: processor.clone(),
-            config_writing: processor.clone(),
-            pre_flight: processor.clone(),
-            path_existence: processor.clone(),
         };
         let aggregate =
             Arc::new(crate::agent_setup_orchestrator::SetupManagementOrchestrator::new(protocols));
         Self {
             aggregate,
-            mcp_config: processor.clone(),
-            env_generation: processor.clone(),
-            language_detection: processor.clone(),
+            mcp_config: mcp_config.clone(),
+            env_generation: env_generation.clone(),
+            language_detection: language_detection.clone(),
             adapter_installation: installer.clone(),
-            config_template: processor.clone(),
-            config_writing: processor.clone(),
-            pre_flight: processor.clone(),
-            path_existence: processor,
         }
     }
 
@@ -74,22 +66,6 @@ impl SetupContainer {
 
     pub fn adapter_installation(&self) -> &Arc<dyn IAdapterInstallationProtocol> {
         &self.adapter_installation
-    }
-
-    pub fn config_template(&self) -> &Arc<dyn IConfigTemplateProtocol> {
-        &self.config_template
-    }
-
-    pub fn config_writing(&self) -> &Arc<dyn IConfigWritingProtocol> {
-        &self.config_writing
-    }
-
-    pub fn pre_flight(&self) -> &Arc<dyn IPreFlightProtocol> {
-        &self.pre_flight
-    }
-
-    pub fn path_existence(&self) -> &Arc<dyn IFilePathExistenceProtocol> {
-        &self.path_existence
     }
 }
 

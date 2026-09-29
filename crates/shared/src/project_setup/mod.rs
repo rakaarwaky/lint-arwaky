@@ -5,6 +5,7 @@ pub mod taxonomy_project_setup_constant;
 pub mod taxonomy_project_setup_request;
 pub mod taxonomy_project_setup_response;
 pub mod taxonomy_project_setup_vo;
+pub mod utility_project_setup_helpers;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly

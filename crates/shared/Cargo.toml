@@ -33,6 +33,7 @@ schemars.workspace = true
 syn = { version = "3", features = ["full", "visit", "parsing"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
 tracing.workspace = true
+dirs.workspace = true
 
 # AST parsing
 tree-sitter = "0.27.0"
