@@ -26,7 +26,7 @@ Last Updated: 2026-09-17
 | `crates/file-watch` | P1 | [FRD](crates/file-watch/FRD.md) | [BACKLOG](crates/file-watch/BACKLOG.md) |
 | `crates/project-setup` | P1 | [FRD](crates/project-setup/FRD.md) | [BACKLOG](crates/project-setup/BACKLOG.md) |
 | `crates/maintenance` | P1 | [FRD](crates/maintenance/FRD.md) | [BACKLOG](crates/maintenance/BACKLOG.md) |
-| `crates/tui` | P2 | [FRD](crates/tui/FRD.md) | [BACKLOG](crates/tui/BACKLOG.md) |
+| `crates/tui` | P2 | — | — |
 | Root (PRD) | P0 | [PRD.md](PRD.md) | this file |
 
 ## Current Condition

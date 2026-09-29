@@ -54,5 +54,5 @@ fn main() -> anyhow::Result<()> {
         .with_structure_orchestrator(deps.structure_orchestrator),
     );
 
-    tui::surface_tui_orchestrator::TuiOrchestrator::new(lint_executor, deps.filesystem_io).run()
+    tui::root_tui_container::TuiContainer::run(lint_executor, deps.filesystem_io)
 }

@@ -33,6 +33,20 @@ pub const RULE_CODE_SURFACE_DOCS: &str = "AES705";
 /// A surface-dominated folder carries no DESIGN.md.
 pub const SURFACE_DOCS_VIOLATION_NO_DESIGN: &str = "surface_missing_design_md";
 
+/// ─── AES605 — Feature folder doc/structure invariant ─────────────────────────
+/// Moved from doc-rules: a folder that carries a FRD+BACKLOG doc pair must also
+/// carry at least one *_orchestrator file. Kernel (shared/) folders must not
+/// carry a doc pair at all.
+pub const RULE_CODE_FEATURE_FOLDER: &str = "AES605";
+
+pub const FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR: &str = "no_orchestrator";
+pub const FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
+
+/// Doc filenames this rule looks for, so structure-rules can check their
+/// presence without importing the doc-rules constants.
+pub const FRD_DOC: &str = "FRD.md";
+pub const BACKLOG_DOC: &str = "BACKLOG.md";
+
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// The shared folder name, locked across every language member.
 pub const KERNEL_DIR: &str = "shared";
