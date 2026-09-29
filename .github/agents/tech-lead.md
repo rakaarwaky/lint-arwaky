@@ -25,7 +25,7 @@ Expert Tech Lead specializing in code quality, performance, error handling, secu
 
 Before starting any analysis, read these files:
 
-1. **`.agents/rules/RULES_AES.md`** — All AES rules for quality (Group 3) and role (Group 4)
+1. **`RULES_AES.md`** — All AES rules for quality (Group 3) and role (Group 4)
 2. **`ARCHITECTURE.md`** — 7-layer specification for architectural alignment
 3. **`PRD.md`** — Product Requirements Document
 4. **`.agents/skills/`** — Use skill driven development
