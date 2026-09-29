@@ -8,7 +8,9 @@ use shared::doc_rules::taxonomy_doc_rules_constant as consts;
 use shared::doc_rules::taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
 use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
 
-use shared::doc_rules::utility_protocol_counter::{count_fr_headings, count_protocol_traits};
+use shared::doc_rules::utility_protocol_counter::{
+    count_fr_headings, count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
+};
 
 use std::collections::BTreeSet;
 use std::fs;
@@ -107,13 +109,6 @@ fn bullet_re() -> Option<&'static regex::Regex> {
 fn fr_id_bare_re() -> Option<&'static regex::Regex> {
     static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
     PAT.get_or_init(|| regex::Regex::new(r"(?m)^(#{2,4})\s+FR-(\d+)\s*:\s*(.*)$").ok())
-        .as_ref()
-}
-
-/// Well-formed FR-ID matcher (FR-FEATURE-NNN: <name>).
-fn fr_id_wellformed_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"(?m)^#{2,4}\s+(FR-[A-Z0-9]+-\d+):").ok())
         .as_ref()
 }
 
@@ -395,9 +390,19 @@ impl DocChecker {
         };
         // The feature crate uses `-` where the shared module uses `_`.
         let module = feature.replace('-', "_");
-        let Some(protocol_count) =
-            count_protocol_traits(&root.join("crates/shared/src").join(&module))
-        else {
+        // A contract module can live in any documented layout — crates/,
+        // modules/, or packages/ — so try each kernel root until one
+        // holds the feature's module instead of skipping non-crates
+        // layouts. A layout that carries no shared kernel at all keeps the
+        // check out of the way.
+        let mut protocol_count = None;
+        for kernel_src in locate_kernel_srcs(root) {
+            if let Some(count) = count_protocol_traits(&kernel_src.join(&module)) {
+                protocol_count = Some(count);
+                break;
+            }
+        }
+        let Some(protocol_count) = protocol_count else {
             return;
         };
         if fr_count == protocol_count {
@@ -436,13 +441,17 @@ impl DocChecker {
     }
 
     /// Every requirement states all six FR fields.
+    ///
+    /// Uses the shared FR-ID pattern so the field check and the parity
+    /// counter anchor on the same accepted ID set; a heading the counter
+    /// skips can never produce a missing-field finding.
     fn check_fr_fields(&self, doc: &DocSource, findings: &mut Vec<DocFinding>) {
-        let Some(re) = fr_id_wellformed_re() else {
+        let Some(re) = fr_id_heading_re() else {
             return;
         };
         let matches: Vec<_> = re.captures_iter(&doc.text).collect();
         for (index, caps) in matches.iter().enumerate() {
-            let id = caps.get(1).map_or("", |m| m.as_str()).to_string();
+            let id = caps.name("id").map_or("", |m| m.as_str()).to_string();
             let start = caps.get(0).map_or(0, |m| m.end());
             let end = matches
                 .get(index + 1)
