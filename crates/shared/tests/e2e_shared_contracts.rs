@@ -86,9 +86,6 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffDetectionProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookInstallProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookUninstallProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IHookCheckProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IDiffDataProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::git_hooks::IIgnoreRuleProtocol>();
     assert_trait::<dyn shared_lint_arwaky::git_hooks::IConfigInitProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IDoctorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();

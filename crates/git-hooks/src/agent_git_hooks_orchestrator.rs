@@ -4,26 +4,20 @@
 // lint-arwaky runs `check` on staged files. If violations are found, the
 // commit is blocked.
 //
-// The orchestrator composes one seam per FR (seven capability protocols) and
-// holds no git logic of its own — it is pure composition.
+// The orchestrator composes four protocol seams (one per FR) and holds no
+// logic of its own — it is pure composition.
 
-use shared::cli_commands::LintResultList;
 use shared::common::taxonomy_job_vo::SuccessStatus;
 use shared::common::taxonomy_layer_vo::Identity;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use shared::git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IDiffDataProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookCheckProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
 use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IIgnoreRuleProtocol;
 use shared::git_hooks::taxonomy_git_hooks_error::GitHookError;
 use shared::git_hooks::taxonomy_git_hooks_request::GitHooksRequest;
 use shared::git_hooks::taxonomy_git_hooks_response::GitHooksResponse;
-use shared::git_hooks::taxonomy_git_hooks_vo::GitDiffDataVO;
-use shared::git_hooks::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
 
 use std::sync::Arc;
 
@@ -31,11 +25,8 @@ use std::sync::Arc;
 
 pub struct GitHooksOrchestrator {
     diff_detection: Arc<dyn IDiffDetectionProtocol>,
-    hook_check: Arc<dyn IHookCheckProtocol>,
     hook_install: Arc<dyn IHookInstallProtocol>,
     hook_uninstall: Arc<dyn IHookUninstallProtocol>,
-    diff_data: Arc<dyn IDiffDataProtocol>,
-    ignore_rules: Arc<dyn IIgnoreRuleProtocol>,
     config_init: Arc<dyn IConfigInitProtocol>,
 }
 
@@ -52,15 +43,6 @@ impl IGitHooksAggregate for GitHooksOrchestrator {
             },
             GitHooksRequest::Uninstall => GitHooksResponse::Uninstall {
                 status: self.uninstall_hook(),
-            },
-            GitHooksRequest::InitializeConfig { path } => GitHooksResponse::InitializeConfig {
-                description: self.initialize_config(&path),
-            },
-            GitHooksRequest::UpdateIgnoreRule { request } => GitHooksResponse::UpdateIgnoreRule {
-                description: self.update_ignore_rule(request),
-            },
-            GitHooksRequest::DiffData { path1, path2 } => GitHooksResponse::DiffData {
-                data: self.get_diff_data(&path1, &path2),
             },
             GitHooksRequest::GetManagerIdentity => GitHooksResponse::GetManagerIdentity {
                 identity: self.get_hook_manager_identity(),
@@ -80,8 +62,8 @@ impl GitHooksOrchestrator {
         self.hook_install.as_ref()
     }
 
-    pub fn run_git_hooks_check(&self, path: &FilePath) -> LintResultList {
-        self.hook_check.run_git_diff_check(path)
+    pub fn run_git_hooks_check(&self, path: &FilePath) -> shared::cli_commands::LintResultList {
+        self.diff_detection.run_git_diff_check(path)
     }
 
     pub fn install_hook(&self, executable_path: &FilePath) -> Result<SuccessStatus, GitHookError> {
@@ -101,13 +83,9 @@ impl GitHooksOrchestrator {
 
     pub fn update_ignore_rule(
         &self,
-        request: HookIgnoreUpdateVO,
+        request: shared::git_hooks::HookIgnoreUpdateVO,
     ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
-        self.ignore_rules.update_ignore_rule(request)
-    }
-
-    pub fn get_diff_data(&self, path1: &str, path2: &str) -> GitDiffDataVO {
-        self.diff_data.get_diff_data(path1, path2)
+        self.config_init.update_ignore_rule(request)
     }
 
     pub fn get_hook_manager_identity(&self) -> Identity {
@@ -116,20 +94,14 @@ impl GitHooksOrchestrator {
 
     pub fn new(
         diff_detection: Arc<dyn IDiffDetectionProtocol>,
-        hook_check: Arc<dyn IHookCheckProtocol>,
         hook_install: Arc<dyn IHookInstallProtocol>,
         hook_uninstall: Arc<dyn IHookUninstallProtocol>,
-        diff_data: Arc<dyn IDiffDataProtocol>,
-        ignore_rules: Arc<dyn IIgnoreRuleProtocol>,
         config_init: Arc<dyn IConfigInitProtocol>,
     ) -> Self {
         Self {
             diff_detection,
-            hook_check,
             hook_install,
             hook_uninstall,
-            diff_data,
-            ignore_rules,
             config_init,
         }
     }

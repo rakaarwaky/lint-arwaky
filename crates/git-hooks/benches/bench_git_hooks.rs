@@ -1,55 +1,10 @@
-// Benchmarks for git-hooks — diff data comparison and hook script generation.
+// Benchmarks for git-hooks — hook script generation.
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
-use git_hooks_lint_arwaky::capabilities_hook_manager::HookManager;
+use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
+use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
 use shared::common::FilePath;
-use shared::git_hooks::{IDiffDataProtocol, IHookInstallProtocol, IHookUninstallProtocol};
-use std::sync::Arc;
+use shared::git_hooks::{IHookInstallProtocol, IHookUninstallProtocol};
 use tempfile::TempDir;
-
-fn make_hook_manager(tmp: &TempDir) -> HookManager {
-    let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
-    let io = fs_container.io();
-    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let installer: Arc<dyn IHookInstallProtocol> =
-        Arc::new(GitHookAdapter::new(fp.clone(), io.clone()));
-    let uninstaller: Arc<dyn IHookUninstallProtocol> =
-        Arc::new(GitHookAdapter::new(fp, io.clone()));
-    HookManager::new(installer, uninstaller, io)
-}
-
-fn bench_diff_data_comparison(c: &mut Criterion) {
-    let mut group = c.benchmark_group("diff_data_comparison");
-
-    for size in [64, 1024, 65536] {
-        let tmp = TempDir::new().unwrap();
-        let p1 = tmp.path().join("a.txt");
-        let p2 = tmp.path().join("b.txt");
-
-        // Create files with known content
-        let content_a = "x".repeat(size);
-        let mut content_b: Vec<u8> = vec![b'x'; size];
-        // Change last 10% of bytes
-        let change_start = (size * 9) / 10;
-        for item in content_b[change_start..].iter_mut() {
-            *item = b'y';
-        }
-        let content_b = String::from_utf8(content_b).unwrap();
-        std::fs::write(&p1, &content_a).unwrap();
-        std::fs::write(&p2, &content_b).unwrap();
-
-        let mgr = make_hook_manager(&tmp);
-        let path1 = p1.to_str().unwrap().to_string();
-        let path2 = p2.to_str().unwrap().to_string();
-
-        group.bench_with_input(BenchmarkId::new("partial_diff", size), &size, |b, _| {
-            b.iter(|| {
-                mgr.get_diff_data(&path1, &path2);
-            });
-        });
-    }
-    group.finish();
-}
 
 fn bench_hook_install(c: &mut Criterion) {
     c.bench_function("hook_install_uninstall_cycle", |b| {
@@ -59,19 +14,20 @@ fn bench_hook_install(c: &mut Criterion) {
                 std::fs::create_dir_all(tmp.path().join(".git/hooks")).unwrap();
                 let io = filesystem::root_filesystem_container::FilesystemContainer::new().io();
                 let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-                let adapter = GitHookAdapter::new(fp, io);
-                (tmp, adapter)
+                let installer = HookInstaller::new(fp.clone(), io.clone());
+                let uninstaller =
+                    HookUninstaller::new(tmp.path().to_string_lossy().to_string(), io);
+                (tmp, installer, uninstaller)
             },
-            |(tmp, adapter)| {
+            |(_, installer, uninstaller)| {
                 let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-                adapter.install_pre_commit(&exe).unwrap();
-                adapter.uninstall_pre_commit().unwrap();
-                drop(tmp);
+                installer.install_pre_commit(&exe).unwrap();
+                uninstaller.uninstall_pre_commit().unwrap();
             },
             criterion::BatchSize::SmallInput,
         );
     });
 }
 
-criterion_group!(benches, bench_diff_data_comparison, bench_hook_install);
+criterion_group!(benches, bench_hook_install);
 criterion_main!(benches);

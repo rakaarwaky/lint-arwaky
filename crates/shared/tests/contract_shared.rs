@@ -26,8 +26,8 @@ use shared_lint_arwaky::filesystem::{
     IToolResolutionProtocol, IWorkspaceProtocol,
 };
 use shared_lint_arwaky::git_hooks::{
-    IConfigInitProtocol, IDiffDataProtocol, IDiffDetectionProtocol, IGitHooksAggregate,
-    IHookCheckProtocol, IHookInstallProtocol, IHookUninstallProtocol, IIgnoreRuleProtocol,
+    IConfigInitProtocol, IDiffDetectionProtocol, IGitHooksAggregate, IHookInstallProtocol,
+    IHookUninstallProtocol,
 };
 use shared_lint_arwaky::import_rules::{
     ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
@@ -337,9 +337,6 @@ fn git_hooks_contracts_are_traits() {
     assert_trait::<dyn IDiffDetectionProtocol>();
     assert_trait::<dyn IHookInstallProtocol>();
     assert_trait::<dyn IHookUninstallProtocol>();
-    assert_trait::<dyn IHookCheckProtocol>();
-    assert_trait::<dyn IDiffDataProtocol>();
-    assert_trait::<dyn IIgnoreRuleProtocol>();
     assert_trait::<dyn IConfigInitProtocol>();
     assert_trait::<dyn IGitHooksAggregate>();
 }
@@ -349,9 +346,6 @@ fn git_hooks_contracts_are_send_sync() {
     assert_send_sync::<dyn IDiffDetectionProtocol>();
     assert_send_sync::<dyn IHookInstallProtocol>();
     assert_send_sync::<dyn IHookUninstallProtocol>();
-    assert_send_sync::<dyn IHookCheckProtocol>();
-    assert_send_sync::<dyn IDiffDataProtocol>();
-    assert_send_sync::<dyn IIgnoreRuleProtocol>();
     assert_send_sync::<dyn IConfigInitProtocol>();
     assert_send_sync::<dyn IGitHooksAggregate>();
 }

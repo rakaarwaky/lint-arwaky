@@ -1,17 +1,27 @@
-// Unit tests — GitHookAdapter hook script generation, install/uninstall, permissions.
+// Unit tests — HookInstaller (FR-002) and HookUninstaller (FR-003)
+// each capability implements exactly one protocol.
 
-use git_hooks_lint_arwaky::capabilities_hook_adapter::GitHookAdapter;
+use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
+use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
 use shared::common::FilePath;
 use shared::git_hooks::IHookInstallProtocol;
 use shared::git_hooks::IHookUninstallProtocol;
 use tempfile::TempDir;
 
-fn make_adapter(tmp: &TempDir) -> GitHookAdapter {
+fn make_installer(tmp: &TempDir) -> HookInstaller {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    GitHookAdapter::new(fp, io)
+    HookInstaller::new(fp, io)
+}
+
+fn make_uninstaller(tmp: &TempDir) -> HookUninstaller {
+    let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
+    let _filesystem = fc.orchestrator();
+    let io = fc.io();
+    let fp = tmp.path().to_string_lossy().to_string();
+    HookUninstaller::new(fp, io)
 }
 
 fn make_git_repo(tmp: &TempDir) {
@@ -24,9 +34,9 @@ fn make_git_repo(tmp: &TempDir) {
 fn fr002_1_normal_install_creates_hook_script() {
     let tmp = TempDir::new().unwrap();
     make_git_repo(&tmp);
-    let adapter = make_adapter(&tmp);
+    let installer = make_installer(&tmp);
     let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-    let result = adapter.install_pre_commit(&exe);
+    let result = installer.install_pre_commit(&exe);
     assert!(result.is_ok(), "install should succeed: {:?}", result.err());
     let hook_path = tmp.path().join(".git/hooks/pre-commit");
     assert!(hook_path.exists(), "hook script should exist");
@@ -46,9 +56,9 @@ fn fr002_2_creates_hooks_dir_if_missing() {
     let tmp = TempDir::new().unwrap();
     // Only create .git, not .git/hooks
     std::fs::create_dir_all(tmp.path().join(".git")).unwrap();
-    let adapter = make_adapter(&tmp);
+    let installer = make_installer(&tmp);
     let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-    let result = adapter.install_pre_commit(&exe);
+    let result = installer.install_pre_commit(&exe);
     assert!(result.is_ok(), "install should succeed: {:?}", result.err());
     assert!(tmp.path().join(".git/hooks/pre-commit").exists());
 }
@@ -59,9 +69,9 @@ fn fr002_3_hook_file_already_exists_overwritten() {
     make_git_repo(&tmp);
     let hook_path = tmp.path().join(".git/hooks/pre-commit");
     std::fs::write(&hook_path, "old content").unwrap();
-    let adapter = make_adapter(&tmp);
+    let installer = make_installer(&tmp);
     let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-    let result = adapter.install_pre_commit(&exe);
+    let result = installer.install_pre_commit(&exe);
     assert!(result.is_ok());
     let content = std::fs::read_to_string(&hook_path).unwrap();
     assert_ne!(content, "old content", "hook should be overwritten");
@@ -72,9 +82,9 @@ fn fr002_3_hook_file_already_exists_overwritten() {
 fn fr002_4_not_git_repo_returns_success_false() {
     let tmp = TempDir::new().unwrap();
     // No .git directory
-    let adapter = make_adapter(&tmp);
+    let installer = make_installer(&tmp);
     let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-    let result = adapter.install_pre_commit(&exe);
+    let result = installer.install_pre_commit(&exe);
     assert!(result.is_ok());
     assert!(
         !result.unwrap().value,
@@ -88,9 +98,9 @@ fn fr002_5_unix_permissions_set() {
     {
         let tmp = TempDir::new().unwrap();
         make_git_repo(&tmp);
-        let adapter = make_adapter(&tmp);
+        let installer = make_installer(&tmp);
         let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-        adapter.install_pre_commit(&exe).unwrap();
+        installer.install_pre_commit(&exe).unwrap();
         let hook_path = tmp.path().join(".git/hooks/pre-commit");
         let perms = std::fs::metadata(&hook_path).unwrap().permissions();
         let mode = std::os::unix::fs::PermissionsExt::mode(&perms);
@@ -108,11 +118,12 @@ fn fr002_5_unix_permissions_set() {
 fn fr003_1_hook_exists_removed() {
     let tmp = TempDir::new().unwrap();
     make_git_repo(&tmp);
-    let adapter = make_adapter(&tmp);
+    let installer = make_installer(&tmp);
+    let uninstaller = make_uninstaller(&tmp);
     let exe = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
-    adapter.install_pre_commit(&exe).unwrap();
+    installer.install_pre_commit(&exe).unwrap();
     assert!(tmp.path().join(".git/hooks/pre-commit").exists());
-    let result = adapter.uninstall_pre_commit();
+    let result = IHookUninstallProtocol::uninstall_pre_commit(&uninstaller);
     assert!(result.is_ok());
     assert!(!tmp.path().join(".git/hooks/pre-commit").exists());
 }
@@ -121,8 +132,8 @@ fn fr003_1_hook_exists_removed() {
 fn fr003_2_hook_does_not_exist_returns_success() {
     let tmp = TempDir::new().unwrap();
     make_git_repo(&tmp);
-    let adapter = make_adapter(&tmp);
-    let result = adapter.uninstall_pre_commit();
+    let uninstaller = make_uninstaller(&tmp);
+    let result = IHookUninstallProtocol::uninstall_pre_commit(&uninstaller);
     assert!(result.is_ok());
     assert!(result.unwrap().value, "should return true (idempotent)");
 }
@@ -130,8 +141,8 @@ fn fr003_2_hook_does_not_exist_returns_success() {
 #[test]
 fn fr003_3_not_git_repo_returns_success_false() {
     let tmp = TempDir::new().unwrap();
-    let adapter = make_adapter(&tmp);
-    let result = adapter.uninstall_pre_commit();
+    let uninstaller = make_uninstaller(&tmp);
+    let result = IHookUninstallProtocol::uninstall_pre_commit(&uninstaller);
     assert!(result.is_ok());
     assert!(
         !result.unwrap().value,
