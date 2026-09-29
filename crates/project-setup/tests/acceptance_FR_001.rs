@@ -247,7 +247,6 @@ fn fr001_all_client_configs_are_valid_json() {
 fn fr001_configs_writable_to_disk() {
     let container = make_container();
     let agg = container.aggregate();
-    let config_writing = container.config_writing();
     let tmp = TempDir::new().unwrap();
 
     for (name, config) in &[
@@ -284,7 +283,10 @@ fn fr001_configs_writable_to_disk() {
     ] {
         let json_str = serde_json::to_string_pretty(config.value()).unwrap();
         let path = tmp.path().join(format!("mcp_{}.json", name));
-        let result = config_writing.write_config_file(&path.to_string_lossy(), &json_str);
+        let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+            &path.to_string_lossy(),
+            &json_str,
+        );
         assert!(
             result.is_ok(),
             "FR-001: {} config should be writable: {:?}",

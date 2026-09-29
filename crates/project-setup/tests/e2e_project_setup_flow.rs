@@ -19,9 +19,10 @@ fn e2e_generate_and_write_env() {
     let env = agg.execute(SetupRequest::generate_env(&home)).into_env();
     assert!(env.value().contains("PHANTOM_ROOT="));
 
-    let config_writing = container.config_writing();
-    let result =
-        config_writing.write_config_file(&tmp.path().join(".env").to_string_lossy(), env.value());
+    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+        &tmp.path().join(".env").to_string_lossy(),
+        env.value(),
+    );
     assert!(result.is_ok(), "Should write .env file: {:?}", result);
     let content = std::fs::read_to_string(tmp.path().join(".env")).unwrap();
     assert!(content.contains("PHANTOM_ROOT="));
@@ -37,8 +38,10 @@ fn e2e_generate_mcp_config_claude_and_write() {
         .into_mcp_config();
     let json_str = serde_json::to_string_pretty(config.value()).unwrap();
     let path = tmp.path().join("mcp_claude.json");
-    let config_writing = container.config_writing();
-    let result = config_writing.write_config_file(&path.to_string_lossy(), &json_str);
+    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+        &path.to_string_lossy(),
+        &json_str,
+    );
     assert!(result.is_ok());
     let content = std::fs::read_to_string(&path).unwrap();
     assert!(content.contains("claude") || content.contains("lint-arwaky"));
@@ -54,8 +57,10 @@ fn e2e_generate_mcp_config_vscode_and_write() {
         .into_mcp_config();
     let json_str = serde_json::to_string_pretty(config.value()).unwrap();
     let path = tmp.path().join("mcp_vscode.json");
-    let config_writing = container.config_writing();
-    let result = config_writing.write_config_file(&path.to_string_lossy(), &json_str);
+    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+        &path.to_string_lossy(),
+        &json_str,
+    );
     assert!(result.is_ok());
     let content = std::fs::read_to_string(&path).unwrap();
     assert!(
@@ -78,8 +83,10 @@ fn e2e_detect_language_and_write_config() {
         .into_template()
         .unwrap();
     let path = tmp.path().join("lint_arwaky.config.yaml");
-    let config_writing = container.config_writing();
-    let result = config_writing.write_config_file(&path.to_string_lossy(), &template);
+    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+        &path.to_string_lossy(),
+        &template,
+    );
     assert!(result.is_ok());
     let content = std::fs::read_to_string(&path).unwrap();
     assert!(!content.is_empty());
@@ -87,16 +94,12 @@ fn e2e_detect_language_and_write_config() {
 
 #[test]
 fn e2e_file_exists_round_trip() {
-    let container = make_container();
-    let path_existence = container.path_existence();
     let tmp = TempDir::new().unwrap();
     let path = tmp.path().join("round_trip.txt");
     let path_str = path.to_string_lossy().to_string();
 
-    assert!(!path_existence.file_exists(&path_str));
-    let config_writing = container.config_writing();
-    config_writing
-        .write_config_file(&path_str, "hello")
+    assert!(!shared::project_setup::utility_project_setup_helpers::file_exists(&path_str));
+    shared::project_setup::utility_project_setup_helpers::write_config_file(&path_str, "hello")
         .unwrap();
-    assert!(path_existence.file_exists(&path_str));
+    assert!(shared::project_setup::utility_project_setup_helpers::file_exists(&path_str));
 }
