@@ -53,6 +53,7 @@ pub mod utility_signature_parser;
 pub mod utility_skill_hint_resolver;
 pub mod utility_ts_parser;
 pub mod utility_value_object_generator;
+pub mod utility_word_boundary;
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use taxonomy_action_vo::ActionName;
@@ -142,3 +143,6 @@ pub use utility_parser_dispatcher::is_supported;
 pub use utility_parser_dispatcher::parse_file_content;
 pub use utility_skill_hint_resolver::resolve_skill_hint_for_file;
 pub use utility_skill_hint_resolver::resolve_skill_hint_for_file_typed;
+pub use utility_word_boundary::strip_inline_comment;
+pub use utility_word_boundary::word_boundary_count;
+pub use utility_word_boundary::word_boundary_replace;

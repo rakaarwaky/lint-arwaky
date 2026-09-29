@@ -1,52 +1,40 @@
 // Contract tests — verify all concrete types implement their declared contract traits.
 use auto_fix_lint_arwaky::agent_fix_orchestrator::FixOrchestrator;
-use auto_fix_lint_arwaky::capabilities_file_adapter::FileAdapter;
-use auto_fix_lint_arwaky::capabilities_fix_processor::LintFixProcessor;
-use shared::auto_fix::IFileAdapterProtocol;
-use shared::auto_fix::IFixAggregate;
+use auto_fix_lint_arwaky::capabilities_bypass_fix::BypassFix;
+use auto_fix_lint_arwaky::capabilities_symbol_rename::SymbolRename;
+use auto_fix_lint_arwaky::capabilities_unused_import_fix::UnusedImportFix;
+use auto_fix_lint_arwaky::capabilities_violation_report::ViolationReport;
 use shared::auto_fix::{
-    IBypassFixProtocol, IFixPipelineProtocol, IManualReportProtocol, ISymbolRenameProtocol,
-    IUnusedImportFixProtocol,
+    IBypassFixProtocol, IFixAggregate, ISymbolRenameProtocol, IUnusedImportFixProtocol,
+    IViolationReportProtocol,
 };
 
 #[test]
-fn file_adapter_implements_file_adapter_protocol() {
-    fn assert_trait<T: IFileAdapterProtocol>() {}
-    assert_trait::<FileAdapter>();
+fn violation_report_implements_violation_report_protocol() {
+    fn assert_trait<T: IViolationReportProtocol>() {}
+    assert_trait::<ViolationReport>();
 }
 
 #[test]
-fn lint_fix_processor_implements_pipeline_protocol() {
-    fn assert_trait<T: IFixPipelineProtocol>() {}
-    assert_trait::<LintFixProcessor>();
-}
-
-#[test]
-fn lint_fix_processor_implements_bypass_fix_protocol() {
+fn bypass_fix_implements_bypass_fix_protocol() {
     fn assert_trait<T: IBypassFixProtocol>() {}
-    assert_trait::<LintFixProcessor>();
+    assert_trait::<BypassFix>();
 }
 
 #[test]
-fn lint_fix_processor_implements_unused_import_fix_protocol() {
+fn unused_import_fix_implements_unused_import_fix_protocol() {
     fn assert_trait<T: IUnusedImportFixProtocol>() {}
-    assert_trait::<LintFixProcessor>();
+    assert_trait::<UnusedImportFix>();
 }
 
 #[test]
-fn lint_fix_processor_implements_symbol_rename_protocol() {
+fn symbol_rename_implements_symbol_rename_protocol() {
     fn assert_trait<T: ISymbolRenameProtocol>() {}
-    assert_trait::<LintFixProcessor>();
+    assert_trait::<SymbolRename>();
 }
 
 #[test]
-fn lint_fix_processor_implements_manual_report_protocol() {
-    fn assert_trait<T: IManualReportProtocol>() {}
-    assert_trait::<LintFixProcessor>();
-}
-
-#[test]
-fn fix_orchestrator_implements_fix_orchestrator_aggregate() {
+fn fix_orchestrator_implements_fix_aggregate() {
     fn assert_trait<T: IFixAggregate>() {}
     assert_trait::<FixOrchestrator>();
 }
@@ -54,8 +42,10 @@ fn fix_orchestrator_implements_fix_orchestrator_aggregate() {
 #[test]
 fn all_capabilities_are_send_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
-    assert_send_sync::<FileAdapter>();
-    assert_send_sync::<LintFixProcessor>();
+    assert_send_sync::<BypassFix>();
+    assert_send_sync::<UnusedImportFix>();
+    assert_send_sync::<SymbolRename>();
+    assert_send_sync::<ViolationReport>();
     assert_send_sync::<FixOrchestrator>();
 }
 
@@ -66,13 +56,7 @@ fn orchestrator_can_be_boxed_as_trait_object() {
 }
 
 #[test]
-fn pipeline_protocol_can_be_arc_trait_object() {
-    fn assert_object_safe<T: IFixPipelineProtocol>() {}
-    assert_object_safe::<LintFixProcessor>();
-}
-
-#[test]
-fn file_adapter_can_be_arc_trait_object() {
-    fn assert_object_safe<T: IFileAdapterProtocol>() {}
-    assert_object_safe::<FileAdapter>();
+fn violation_report_protocol_can_be_arc_trait_object() {
+    fn assert_object_safe<T: IViolationReportProtocol>() {}
+    assert_object_safe::<ViolationReport>();
 }
