@@ -426,7 +426,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Segment matching**: Path matching by splitting on `/` and comparing individual segments (not substring containment)
 - **Filesystem crate**: External crate providing graph construction, file walking, AST parsing, and content reads to orphan-rules.
 
-## Appendix A: YAML Configuration Schema
+### Appendix A: YAML Configuration Schema
 ### Top-Level Structure
 ```yaml
 architecture:
