@@ -541,10 +541,10 @@ fn aes705_does_not_fire_on_a_feature_folder_that_holds_a_surface() {
     );
 }
 
-// ─── AES605: feature folder / kernel doc pair ──────────────────────────────
+// ─── AES704: feature folder / kernel doc pair ──────────────────────────────
 
 #[test]
-fn aes605_fires_when_a_doc_pair_folder_has_no_orchestrator() {
+fn aes704_fires_when_a_doc_pair_folder_has_no_orchestrator() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     let feature = root.join("crates/sample");
@@ -554,13 +554,13 @@ fn aes605_fires_when_a_doc_pair_folder_has_no_orchestrator() {
     // deliberately omit the orchestrator file
     let findings = audit(root);
     assert!(
-        has(&findings, "AES605", "no_orchestrator"),
-        "expected no_orchestrator, got: {findings:#?}"
+        has(&findings, "AES704", "doc_pair_without_orchestrator"),
+        "expected doc_pair_without_orchestrator, got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes605_silent_when_doc_pair_folder_has_orchestrator() {
+fn aes704_silent_when_doc_pair_folder_has_orchestrator() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     let feature = root.join("crates/sample");
@@ -574,13 +574,13 @@ fn aes605_silent_when_doc_pair_folder_has_orchestrator() {
     .unwrap();
     let findings = audit(root);
     assert!(
-        !has(&findings, "AES605", "no_orchestrator"),
+        !has(&findings, "AES704", "doc_pair_without_orchestrator"),
         "should be silent when orchestrator is present; got: {findings:#?}"
     );
 }
 
 #[test]
-fn aes605_fires_when_a_kernel_folder_carries_a_doc_pair() {
+fn aes704_fires_when_a_kernel_folder_carries_a_doc_pair() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();
     fs::create_dir_all(root.join("crates/shared/src")).unwrap();
@@ -593,7 +593,7 @@ fn aes605_fires_when_a_kernel_folder_carries_a_doc_pair() {
     .unwrap();
     let findings = audit(root);
     assert!(
-        has(&findings, "AES605", "shared_has_docs"),
+        has(&findings, "AES704", "shared_has_docs"),
         "expected shared_has_docs, got: {findings:#?}"
     );
 }

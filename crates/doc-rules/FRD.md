@@ -69,7 +69,6 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 ## Test Scenarios
 
 - A document misses a mandatory H2 → AES606 fires naming the missing headings.
-- A feature folder has a doc pair but no orchestrator → AES605 fires naming the folder.
 - Requirement count drifts from the contract seams → AES607 fires stating both counts and both fix directions.
 - An FRD carries a bare FR-ID without a feature prefix → AES601 fires naming the line and missing prefix.
 - An FRD requirement is missing a required field → AES601 fires naming the field and the line.
@@ -78,7 +77,6 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 - An FRD omits its BACKLOG.md link in Reference → AES604 fires.
 - An FRD omits its PRD.md link in Reference → AES604 fires.
 - A feature backlog restates a root-state section → AES604 fires.
-- A kernel folder carries an FRD/BACKLOG pair → AES605 fires.
 - A conforming workspace produces 0 doc findings on `lint-arwaky-cli docs .` → exit code 0.
 
 ## Assumptions & Constraints

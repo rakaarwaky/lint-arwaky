@@ -2,7 +2,7 @@
 name = "doc-rules-lint-arwaky"
 version = "3.7.1"
 edition = "2024"
-description = "Structural invariants for the AES document chain (AES601–AES605)."
+description = "Structural invariants for the AES document chain (AES601–AES604, AES607)."
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 publish = true

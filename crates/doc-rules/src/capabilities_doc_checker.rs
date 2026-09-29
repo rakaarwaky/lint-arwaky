@@ -178,7 +178,6 @@ impl IDocCheckerProtocol for DocChecker {
         for doc in &documents {
             findings.extend(self.audit_document(doc, master, &root));
         }
-        // Folder-level doc-pair checks moved to structure-rules (AES605).
 
         DocResponse::Findings {
             findings: sorted(findings),
@@ -269,9 +268,6 @@ impl DocChecker {
         if name == consts::BACKLOG_DOC && !is_master {
             self.check_state_vocab_restated(&sections, master, &mut findings);
         }
-
-        // ── AES605: Feature folder health ──
-        // (folder-level checks run after all docs are collected in audit())
 
         // ── AES606: Document heading structure ──
         // Applied to every document that has a registered H2 contract.
@@ -810,8 +806,6 @@ impl DocChecker {
             ));
         }
     }
-
-    // ── AES605: Feature folder health ────────────────────────────────────
 }
 
 /// Does the body hold a table whose header carries every *columns* entry?

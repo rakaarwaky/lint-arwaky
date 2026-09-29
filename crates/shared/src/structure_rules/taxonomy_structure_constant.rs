@@ -21,31 +21,27 @@ pub const RULE_CODE_SURFACE_PURITY: &str = "AES703";
 /// A surface folder holds a capabilities or agent file that belongs in a feature folder.
 pub const SURFACE_PURITY_VIOLATION_MISPLACED_FILES: &str = "surface_has_misplaced_files";
 
-/// ─── AES704 — Feature folder docs ────────────────────────────────────────────
+/// ─── AES704 — Feature folder docs (forward + reverse) ──────────────────────
+/// Forward: a folder with capabilities or an orchestrator must carry FRD.md + BACKLOG.md.
+/// Reverse: a folder that carries FRD.md + BACKLOG.md must also carry at least one
+/// *_orchestrator file. Applied to every folder under crates/modules/packages.
+/// Kernel (shared/) is rejected: it must not carry a doc pair at all.
 pub const RULE_CODE_FEATURE_DOCS: &str = "AES704";
 
-/// A feature folder holds capabilities or agents but carries no doc pair.
 pub const FEATURE_DOCS_VIOLATION_NO_DOC_PAIR: &str = "feature_missing_doc_pair";
+pub const FEATURE_DOCS_REVERSE_ORCHESTRATOR_MISSING: &str = "doc_pair_without_orchestrator";
+pub const FEATURE_DOCS_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
+
+/// Doc filenames referenced by AES704, so structure-rules can check their
+/// presence without importing the doc-rules constants.
+pub const FRD_DOC: &str = "FRD.md";
+pub const BACKLOG_DOC: &str = "BACKLOG.md";
 
 /// ─── AES705 — Surface folder docs ────────────────────────────────────────────
 pub const RULE_CODE_SURFACE_DOCS: &str = "AES705";
 
 /// A surface-dominated folder carries no DESIGN.md.
 pub const SURFACE_DOCS_VIOLATION_NO_DESIGN: &str = "surface_missing_design_md";
-
-/// ─── AES605 — Feature folder doc/structure invariant ─────────────────────────
-/// Moved from doc-rules: a folder that carries a FRD+BACKLOG doc pair must also
-/// carry at least one *_orchestrator file. Kernel (shared/) folders must not
-/// carry a doc pair at all.
-pub const RULE_CODE_FEATURE_FOLDER: &str = "AES605";
-
-pub const FEATURE_FOLDER_VIOLATION_NO_ORCHESTRATOR: &str = "no_orchestrator";
-pub const FEATURE_FOLDER_VIOLATION_SHARED_HAS_DOCS: &str = "shared_has_docs";
-
-/// Doc filenames this rule looks for, so structure-rules can check their
-/// presence without importing the doc-rules constants.
-pub const FRD_DOC: &str = "FRD.md";
-pub const BACKLOG_DOC: &str = "BACKLOG.md";
 
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// The shared folder name, locked across every language member.
