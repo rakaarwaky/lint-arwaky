@@ -322,8 +322,9 @@ impl DocChecker {
                 .count()
                 .max(1);
             let num = caps.get(2).map_or("", |m| m.as_str());
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                line,
                 consts::RULE_CODE_FR_FORMAT,
                 consts::FR_ID_VIOLATION_MISSING_FEATURE_PREFIX,
                 format!(
@@ -387,8 +388,9 @@ impl DocChecker {
                 l.starts_with("## ") && l.contains("Requirements")
             })
             .map_or(1, |index| index + 1);
-        findings.push(DocFinding::new(
+        findings.push(DocFinding::new_with_line(
             "",
+            line,
             consts::RULE_CODE_FR_FORMAT,
             consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
             format!(
@@ -422,8 +424,9 @@ impl DocChecker {
                     .lines()
                     .count()
                     .max(1);
-                findings.push(DocFinding::new(
+                findings.push(DocFinding::new_with_line(
                     "",
+                    line,
                     consts::RULE_CODE_FR_FORMAT,
                     consts::FR_FIELDS_VIOLATION_FIELD_MISSING,
                     format!(
@@ -452,8 +455,9 @@ impl DocChecker {
                 .lines()
                 .any(|line| line.trim_start().starts_with("###") && line.contains(required));
             if !present {
-                findings.push(DocFinding::new(
+                findings.push(DocFinding::new_with_line(
                     "",
+                    api.line,
                     consts::RULE_CODE_SECTION_STRUCTURE,
                     consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION,
                     format!(
@@ -474,8 +478,9 @@ impl DocChecker {
             return;
         };
         if !has_table_with_columns(&section.body, consts::INTEGRATION_COLUMNS) {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                section.line,
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE,
                 format!(
@@ -496,8 +501,9 @@ impl DocChecker {
             return;
         };
         if !has_table_with_columns(&section.body, consts::NFR_COLUMNS) {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                section.line,
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_NFR_NOT_TABLE,
                 format!(
@@ -529,8 +535,9 @@ impl DocChecker {
         let mut sorted = ordered.clone();
         sorted.sort_unstable();
         if ordered != sorted {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                found.first().map_or(0, |(_, line)| *line),
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_ORDER,
                 format!(
@@ -551,8 +558,9 @@ impl DocChecker {
             return;
         };
         if !has_bullet(&blank_fenced(&section.body)) {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                section.line,
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_SCENARIOS_EMPTY,
                 format!(
@@ -572,8 +580,9 @@ impl DocChecker {
             return;
         };
         if !has_bullet(&blank_fenced(&section.body)) {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                section.line,
                 consts::RULE_CODE_SECTION_STRUCTURE,
                 consts::SECTION_STRUCTURE_VIOLATION_GLOSSARY_EMPTY,
                 format!(
@@ -607,8 +616,9 @@ impl DocChecker {
                 {
                     continue;
                 }
-                findings.push(DocFinding::new(
+                findings.push(DocFinding::new_with_line(
                     "",
+                    number + 1,
                     consts::RULE_CODE_SPEC_PURITY,
                     consts::SPEC_PURITY_VIOLATION_STATUS_LEAK,
                     format!(
@@ -628,8 +638,9 @@ impl DocChecker {
         };
         for (number, line) in doc.text.lines().enumerate() {
             if let Some(matched) = re.find(line) {
-                findings.push(DocFinding::new(
+                findings.push(DocFinding::new_with_line(
                     "",
+                    number + 1,
                     consts::RULE_CODE_SPEC_PURITY,
                     consts::SPEC_PURITY_VIOLATION_SOURCE_FILE_NAMED,
                     format!(
@@ -653,8 +664,9 @@ impl DocChecker {
             return;
         };
         if !section.body.contains(consts::BACKLOG_DOC) {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                section.line,
                 consts::RULE_CODE_CROSSLINKS,
                 consts::CROSSLINKS_VIOLATION_NO_BACKLOG_LINK,
                 format!(
@@ -665,8 +677,9 @@ impl DocChecker {
             ));
         }
         if !section.body.contains(consts::PRD_DOC) {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                section.line,
                 consts::RULE_CODE_CROSSLINKS,
                 consts::CROSSLINKS_VIOLATION_NO_PRD_LINK,
                 format!(
@@ -704,8 +717,9 @@ impl DocChecker {
             return;
         }
         if master.is_some() {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                section.line,
                 consts::RULE_CODE_CROSSLINKS,
                 consts::CROSSLINKS_VIOLATION_STATE_VOCAB_RESTATED,
                 format!(
@@ -740,8 +754,9 @@ impl DocChecker {
             .filter(|c| c.get(1).is_some_and(|m| m.as_str().len() == 1))
             .count();
         if h1_count != 1 {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                0,
                 consts::RULE_CODE_DOC_STRUCTURE,
                 consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
                 format!(
@@ -765,8 +780,9 @@ impl DocChecker {
             })
             .collect();
         if !missing.is_empty() {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                0,
                 consts::RULE_CODE_DOC_STRUCTURE,
                 consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
                 format!(
@@ -795,8 +811,9 @@ impl DocChecker {
             .filter(|title| !allowed.iter().any(|a| title == a || title.starts_with(a)))
             .collect();
         if !unexpected_h2.is_empty() {
-            findings.push(DocFinding::new(
+            findings.push(DocFinding::new_with_line(
                 "",
+                0,
                 consts::RULE_CODE_DOC_STRUCTURE,
                 consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
                 format!(

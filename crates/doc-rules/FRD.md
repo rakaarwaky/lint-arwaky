@@ -63,6 +63,7 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 |--------|--------|---------------------|
 | Read scope | Doc rules read the documents under audit plus, for the parity check only, the audited feature's shared contract module, read-only | Run a scan and confirm the group opens only `.md` files and the contract source files in `crates/shared/src/<module>/` |
 | Finding precision | Every finding names a file and a line number | Invoke the docs command and confirm each finding resolves to a line |
+| Schema completeness | Every finding carries a 1-based `line` (0 for document-level findings), a HIGH `severity` per RULES_AES, and maps to a shared `ViolationItem` | Call `DocFinding::to_violation_item` and confirm the `line` and `severity` fields survive the JSON round trip |
 | Determinism | Two runs over the same tree report the same findings in the same order | Run the docs command twice and compare the outputs |
 
 ## Test Scenarios
@@ -75,6 +76,7 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 - A spec carries a status leak (checkbox item, an implementation-state claim, or a progress percentage) → AES603 fires naming the pattern.
 - An FRD omits its BACKLOG.md link in Reference → AES604 fires.
 - An FRD omits its PRD.md link in Reference → AES604 fires.
+- An FRD's line-anchored finding maps to a `ViolationItem` with matching `line` and `severity` → `DocFinding::to_violation_item` preserves both fields through the JSON/SARIF round trip.
 - A feature backlog restates a root-state section → AES604 fires.
 - A conforming workspace produces 0 doc findings on `lint-arwaky-cli docs .` → exit code 0.
 
