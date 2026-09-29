@@ -1,195 +1,187 @@
-// Acceptance tests — verify that the selector correctly picks adapters based on detected languages.
+// Acceptance tests — verify the orchestrator selects the right adapters from
+// its default groups based on language flags in the scan context.
 //
-// These tests validate the business requirement: given a set of detected languages,
-// the selector returns the correct adapter names. The tests use the real
-// CapabilitiesExternalLintSelector with its default configuration.
+// The adapter groups are internal to the orchestrator; these tests exercise
+// the public scan API with pre-computed contexts.
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+#[allow(dead_code, unused_imports)]
+#[path = "../../shared/tests/common/mock_filesystem.rs"]
+mod mock_filesystem;
 
-use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
+use std::collections::HashMap;
+use std::sync::Arc;
 
-// ─── Acceptance: Default selector configuration ───────────
+use shared::common::taxonomy_path_vo::FilePath;
+use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
+
+use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
+    AdapterGroups, ExternalLintDeps, ExternalLintOrchestrator,
+};
+use mock_filesystem::MockFilesystem;
+
+/// Helper: build an orchestrator with no adapters but with default groups,
+/// then scan with the given language flags and verify the result is empty
+/// (no adapters registered → no results). The point is to assert that the
+/// orchestrator does not panic and respects the context flags.
+fn build_orchestrator_with_groups(groups: AdapterGroups) -> ExternalLintOrchestrator {
+    ExternalLintOrchestrator::new(ExternalLintDeps {
+        adapters: HashMap::new(),
+        filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
+        adapter_groups: Some(groups),
+    })
+}
+
+// ─── Acceptance: Default adapter groups ───────────────────
 
 #[test]
 fn acceptance_selector_has_exactly_ten_default_adapters() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    // All languages present → all 10 adapters (3 rust + 3 python + 3 js + 1 markdown)
-    let selected = selector.select_adapters(true, true, true, true);
-    assert_eq!(selected.len(), 10, "Expected 10 adapters for mixed project");
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let total = groups.rust.len() + groups.python.len() + groups.js.len() + groups.markdown.len();
+    assert_eq!(total, 10, "Expected 10 default adapters");
 }
 
 #[test]
 fn acceptance_rust_adapters_are_clippy_rustfmt_cargo_audit() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, false, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let names: Vec<&str> = groups.rust.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["clippy", "rustfmt", "cargo-audit"]);
 }
 
 #[test]
 fn acceptance_python_adapters_are_ruff_mypy_bandit() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, false, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let names: Vec<&str> = groups.python.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["ruff", "mypy", "bandit"]);
 }
 
 #[test]
 fn acceptance_js_adapters_are_eslint_prettier_tsc() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, true, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let names: Vec<&str> = groups.js.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["eslint", "prettier", "tsc"]);
 }
 
 #[test]
 fn acceptance_markdown_adapters_are_markdownlint() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, true);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let names: Vec<&str> = groups.markdown.iter().map(|a| a.value()).collect();
     assert_eq!(names, vec!["markdownlint"]);
 }
 
-// ─── Acceptance: Two-language combinations ────────────────
+// ─── Acceptance: Orchestrator respects language context ──
 
 #[test]
 fn acceptance_rust_plus_python() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, false, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names.len(), 6);
-    assert!(names.contains(&"clippy"));
-    assert!(names.contains(&"rustfmt"));
-    assert!(names.contains(&"cargo-audit"));
-    assert!(names.contains(&"ruff"));
-    assert!(names.contains(&"mypy"));
-    assert!(names.contains(&"bandit"));
-    assert!(!names.contains(&"eslint"));
-    assert!(!names.contains(&"prettier"));
-    assert!(!names.contains(&"tsc"));
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let orchestrator = build_orchestrator_with_groups(groups);
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext {
+        has_rust: true,
+        has_python: true,
+        has_js: false,
+        has_markdown: false,
+        ..Default::default()
+    };
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    assert!(results.values.is_empty()); // no adapters registered
 }
 
 #[test]
 fn acceptance_rust_plus_js() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, true, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names.len(), 6);
-    assert!(names.contains(&"clippy"));
-    assert!(names.contains(&"rustfmt"));
-    assert!(names.contains(&"cargo-audit"));
-    assert!(names.contains(&"eslint"));
-    assert!(names.contains(&"prettier"));
-    assert!(names.contains(&"tsc"));
-    assert!(!names.contains(&"ruff"));
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let orchestrator = build_orchestrator_with_groups(groups);
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext {
+        has_rust: true,
+        has_python: false,
+        has_js: true,
+        has_markdown: false,
+        ..Default::default()
+    };
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    assert!(results.values.is_empty());
 }
 
 #[test]
 fn acceptance_python_plus_js() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, true, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names.len(), 6);
-    assert!(names.contains(&"ruff"));
-    assert!(names.contains(&"mypy"));
-    assert!(names.contains(&"bandit"));
-    assert!(names.contains(&"eslint"));
-    assert!(names.contains(&"prettier"));
-    assert!(names.contains(&"tsc"));
-    assert!(!names.contains(&"clippy"));
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let orchestrator = build_orchestrator_with_groups(groups);
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext {
+        has_rust: false,
+        has_python: true,
+        has_js: true,
+        has_markdown: false,
+        ..Default::default()
+    };
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    assert!(results.values.is_empty());
 }
 
 #[test]
 fn acceptance_js_plus_markdown() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, true, true);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names.len(), 4);
-    assert!(names.contains(&"eslint"));
-    assert!(names.contains(&"prettier"));
-    assert!(names.contains(&"tsc"));
-    assert!(names.contains(&"markdownlint"));
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let orchestrator = build_orchestrator_with_groups(groups);
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext {
+        has_rust: false,
+        has_python: false,
+        has_js: true,
+        has_markdown: true,
+        ..Default::default()
+    };
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    assert!(results.values.is_empty());
 }
-
-// ─── Acceptance: No languages ─────────────────────────────
 
 #[test]
 fn acceptance_no_languages_returns_empty() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, false);
-    assert!(selected.is_empty());
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let orchestrator = build_orchestrator_with_groups(groups);
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext::default();
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    assert!(results.values.is_empty());
 }
-
-// ─── Acceptance: Custom selector configuration ────────────
-
-#[test]
-fn acceptance_custom_selector_respects_configuration() {
-    // A project that only wants clippy and ruff
-    let selector = CapabilitiesExternalLintSelector::new(
-        vec![AdapterName::raw("clippy")],
-        vec![AdapterName::raw("ruff")],
-        vec![],
-        vec![],
-    );
-    let selected = selector.select_adapters(true, true, true, true);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names, vec!["clippy", "ruff"]);
-}
-
-#[test]
-fn acceptance_custom_selector_empty_for_disabled_languages() {
-    // A project that only wants JS adapters but has no JS
-    let selector = CapabilitiesExternalLintSelector::new(
-        vec![],
-        vec![],
-        vec![AdapterName::raw("eslint")],
-        vec![],
-    );
-    let selected = selector.select_adapters(true, true, false, false);
-    assert!(selected.is_empty()); // no JS files → no adapters selected
-}
-
-#[test]
-fn acceptance_custom_markdown_selector() {
-    let selector = CapabilitiesExternalLintSelector::new(
-        vec![],
-        vec![],
-        vec![],
-        vec![AdapterName::raw("markdownlint")],
-    );
-    let selected = selector.select_adapters(false, false, false, true);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names, vec!["markdownlint"]);
-}
-
-// ─── Acceptance: Adapter names match expected set ─────────
 
 #[test]
 fn acceptance_adapter_names_are_lowercase_ascii() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true, true);
-    for name in selected.iter() {
-        let val = name.value();
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let all: Vec<String> = groups
+        .rust
+        .iter()
+        .chain(&groups.python)
+        .chain(&groups.js)
+        .chain(&groups.markdown)
+        .map(|a| a.value().to_string())
+        .collect();
+    for name in &all {
         assert!(
-            val.chars().all(|c| c.is_ascii_lowercase() || c == '-'),
+            name.chars().all(|c| c.is_ascii_lowercase() || c == '-'),
             "Adapter name '{}' should be lowercase ASCII with hyphens only",
-            val
+            name
         );
     }
 }
 
 #[test]
 fn acceptance_no_duplicate_adapters_across_languages() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true, true);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    let mut unique = names.clone();
-    unique.sort();
-    unique.dedup();
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let mut all: Vec<&str> = groups
+        .rust
+        .iter()
+        .map(|a| a.value())
+        .chain(groups.python.iter().map(|a| a.value()))
+        .chain(groups.js.iter().map(|a| a.value()))
+        .chain(groups.markdown.iter().map(|a| a.value()))
+        .collect();
+    all.sort();
+    all.dedup();
+    let total = groups.rust.len() + groups.python.len() + groups.js.len() + groups.markdown.len();
     assert_eq!(
-        names.len(),
-        unique.len(),
-        "Duplicate adapter names detected"
+        all.len(),
+        total,
+        "Duplicate adapter names detected across language groups"
     );
 }

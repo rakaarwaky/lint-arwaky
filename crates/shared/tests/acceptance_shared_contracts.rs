@@ -101,13 +101,8 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::ISelfUpdateProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolExecutorProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::external_lint::ILinterAdapterProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::external_lint::ICommandExecutorProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::external_lint::IAdapterScanProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::external_lint::IExternalLintSelectorProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::external_lint::ILanguageDetectProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::external_lint::INormalizeProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::external_lint::IJsToolResolutionProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::external_lint::ICargoDirProtocol>();
     // Surface
     assert_send_sync::<dyn shared_lint_arwaky::report_formatter::ITextFormatProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::report_formatter::IJsonFormatProtocol>();
@@ -244,13 +239,8 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::maintenance::IToolExecutorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IMaintenanceAggregate>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::ILinterAdapterProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::ICommandExecutorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::IAdapterScanProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::IExternalLintSelectorProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::ILanguageDetectProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::INormalizeProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::IJsToolResolutionProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::ICargoDirProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::IExternalLintAggregate>();
     // Surface
     assert_trait::<dyn shared_lint_arwaky::report_formatter::ITextFormatProtocol>();

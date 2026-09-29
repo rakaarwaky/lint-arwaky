@@ -22,10 +22,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_command_execution::exec_cmd_scan;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -34,7 +34,6 @@ use std::sync::OnceLock;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct TSCAdapter {
-    lint_executor: Arc<dyn ICommandExecutorProtocol>,
     io: Arc<dyn IFileSystemIOProtocol>,
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
@@ -73,9 +72,7 @@ impl ILinterAdapterProtocol for TSCAdapter {
             None => return Ok(LintResultList::default()),
         };
 
-        let response = self
-            .lint_executor
-            .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
+        let response = exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
             .map_err(crate::convert_executor_error)?;
 
         let output = format!("{}{}", response.stdout, response.stderr);
@@ -157,12 +154,10 @@ fn tsc_pattern2() -> Option<&'static Regex> {
 
 impl TSCAdapter {
     pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
-            lint_executor,
             io,
             tool_resolution,
         }

@@ -23,9 +23,9 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_command_execution::execute_command;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -34,7 +34,6 @@ use tracing::debug;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct CargoAuditAdapter {
-    executor: Arc<dyn ICommandExecutorProtocol>,
     pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
 
@@ -85,9 +84,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
             "audit".to_string(),
             "--json".to_string(),
         ]);
-        let response = self
-            .executor
-            .execute_command(cmd, working_dir.clone(), Some(Timeout::new(120.0)))
+        let response = execute_command(cmd, working_dir.clone(), Some(Timeout::new(120.0)))
             .map_err(|e| {
                 LinterOperationError::Adapter(AdapterError::new(
                     self.name(),
@@ -111,7 +108,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
         };
 
         for vuln in &parsed.vulnerabilities {
-            // FR-004: cargo-audit severity — case-insensitive match.
+            // FR-003: cargo-audit severity — case-insensitive match.
             let severity = match vuln.severity.as_deref().map(str::to_lowercase).as_deref() {
                 Some("critical") => Severity::CRITICAL,
                 Some("high") => Severity::HIGH,
@@ -154,13 +151,7 @@ impl ILinterAdapterProtocol for CargoAuditAdapter {
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl CargoAuditAdapter {
-    pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
-        tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    ) -> Self {
-        Self {
-            executor,
-            tool_resolution,
-        }
+    pub fn new(tool_resolution: Arc<dyn IToolResolutionProtocol>) -> Self {
+        Self { tool_resolution }
     }
 }

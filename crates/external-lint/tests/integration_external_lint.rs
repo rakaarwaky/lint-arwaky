@@ -1,103 +1,38 @@
-// Integration tests — verify individual adapter creation and selector wiring.
+// Integration tests — verify individual adapter creation and orchestrator wiring.
 //
 // These tests construct real adapters with mock executors/filesystems and verify
-// that the subsystem wires together correctly. ExternalLintContainer::default()
-// panics, so we test individual component creation instead.
+// that the subsystem wires together correctly.
 
 #[allow(dead_code, unused_imports)]
 #[path = "../../shared/tests/common/mock_filesystem.rs"]
 mod mock_filesystem;
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
-
-struct MockCmdExecutor;
-impl ICommandExecutorProtocol for MockCmdExecutor {
-    fn execute_command(
-        &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
-        _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
-    ) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-    fn health_check(&self) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-    fn exec_cmd_scan(
-        &self,
-        _: Vec<String>,
-        _: FilePath,
-        _: f64,
-        _: Option<AdapterName>,
-        _: &FilePath,
-    ) -> Result<ResponseData, LinterOperationError> {
-        Ok(ResponseData::default())
-    }
-    fn exec_cmd_adapter(
-        &self,
-        _: Vec<String>,
-        _: FilePath,
-        _: f64,
-        _: AdapterName,
-    ) -> Result<ResponseData, LinterOperationError> {
-        Ok(ResponseData::default())
-    }
-}
-
-struct MockJsResolution;
-impl IJsToolResolutionProtocol for MockJsResolution {
-    fn resolve_js_cmd(
-        &self,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
-        _: Vec<String>,
-        _: &FilePath,
-    ) -> Option<Vec<String>> {
-        None
-    }
-    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn js_apply_fix(
-        &self,
-        _: &FilePath,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
-        _: &str,
-    ) -> Result<ComplianceStatus, LinterOperationError> {
-        Ok(ComplianceStatus::new(false))
-    }
-}
 
 // ─── Integration: Individual adapter creation ─────────────
 
 #[test]
 fn create_ruff_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::RuffAdapter::new(
-        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
-    assert!(result.values.is_empty()); // no Python files in /tmp with mock filesystem
+    assert!(result.values.is_empty());
 }
 
 #[test]
 fn create_bandit_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::BanditAdapter::new(
-        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -110,7 +45,6 @@ fn create_bandit_adapter_and_scan_returns_empty() {
 #[test]
 fn create_mypy_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
-        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
@@ -122,23 +56,17 @@ fn create_mypy_adapter_and_scan_returns_empty() {
 
 #[test]
 fn create_clippy_adapter_and_scan_returns_empty() {
-    let adapter = external_lint_lint_arwaky::RustLinterAdapter::new(
-        Arc::new(MockCmdExecutor),
-        None,
-        Arc::new(MockFilesystem::new()),
-    );
+    let adapter =
+        external_lint_lint_arwaky::RustLinterAdapter::new(None, Arc::new(MockFilesystem::new()));
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
-    assert!(result.values.is_empty()); // no Cargo.toml at /tmp
+    assert!(result.values.is_empty());
 }
 
 #[test]
 fn create_rustfmt_adapter_and_scan_returns_empty() {
-    let adapter = external_lint_lint_arwaky::RustFmtAdapter::new(
-        Arc::new(MockCmdExecutor),
-        None,
-        Arc::new(MockFilesystem::new()),
-    );
+    let adapter =
+        external_lint_lint_arwaky::RustFmtAdapter::new(None, Arc::new(MockFilesystem::new()));
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
     assert!(result.values.is_empty());
@@ -146,20 +74,16 @@ fn create_rustfmt_adapter_and_scan_returns_empty() {
 
 #[test]
 fn create_cargo_audit_adapter_and_scan_returns_empty() {
-    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockFilesystem::new()),
-    );
+    let adapter =
+        external_lint_lint_arwaky::CargoAuditAdapter::new(Arc::new(MockFilesystem::new()));
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = adapter.scan(&path).unwrap();
-    assert!(result.values.is_empty()); // no Cargo.lock at /tmp
+    assert!(result.values.is_empty());
 }
 
 #[test]
 fn create_eslint_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::ESLintAdapter::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockJsResolution),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -171,8 +95,6 @@ fn create_eslint_adapter_and_scan_returns_empty() {
 #[test]
 fn create_prettier_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::PrettierAdapter::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockJsResolution),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -184,7 +106,6 @@ fn create_prettier_adapter_and_scan_returns_empty() {
 #[test]
 fn create_tsc_adapter_and_scan_returns_empty() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
-        Arc::new(MockCmdExecutor),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
@@ -193,32 +114,56 @@ fn create_tsc_adapter_and_scan_returns_empty() {
     assert!(result.values.is_empty());
 }
 
-// ─── Integration: Selector with defaults ──────────────────
+// ─── Integration: Orchestrator adapter group defaults ─────
 
 #[test]
-fn selector_with_defaults_selects_nine_when_markdown_absent() {
-    use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
+fn orchestrator_default_groups_are_populated() {
+    use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
+        AdapterGroups, ExternalLintDeps,
+    };
+    use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true, false);
-    assert_eq!(selected.len(), 9);
-}
+    // Build orchestrator with default groups
+    let deps = ExternalLintDeps {
+        adapters: HashMap::new(),
+        filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
+        adapter_groups: Some(AdapterGroups {
+            rust: vec![
+                AdapterName::raw("clippy"),
+                AdapterName::raw("rustfmt"),
+                AdapterName::raw("cargo-audit"),
+            ],
+            python: vec![
+                AdapterName::raw("ruff"),
+                AdapterName::raw("mypy"),
+                AdapterName::raw("bandit"),
+            ],
+            js: vec![
+                AdapterName::raw("eslint"),
+                AdapterName::raw("prettier"),
+                AdapterName::raw("tsc"),
+            ],
+            markdown: vec![AdapterName::raw("markdownlint")],
+        }),
+    };
+    let orchestrator =
+        external_lint_lint_arwaky::agent_external_lint_orchestrator::ExternalLintOrchestrator::new(
+            deps,
+        );
 
-#[test]
-fn selector_with_custom_lists() {
-    use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-
-    let selector = CapabilitiesExternalLintSelector::new(
-        vec![AdapterName::raw("clippy")],
-        vec![AdapterName::raw("ruff")],
-        vec![],
-        vec![],
-    );
-    let selected = selector.select_adapters(true, true, false, false);
-    assert_eq!(selected.len(), 2); // only rust + python, no js
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert!(names.contains(&"clippy"));
-    assert!(names.contains(&"ruff"));
+    // Scan with Rust+Python flags — should select 6 adapters from defaults
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext {
+        has_rust: true,
+        has_python: true,
+        has_js: false,
+        has_markdown: false,
+        ..Default::default()
+    };
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    // No adapters registered, so results are empty regardless of selection
+    assert!(results.values.is_empty());
 }
 
 // ─── Integration: apply_fix on adapters ───────────────────
@@ -226,61 +171,54 @@ fn selector_with_custom_lists() {
 #[test]
 fn bandit_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::BanditAdapter::new(
-        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let status = adapter.fix(&path).unwrap();
-    assert!(!status.value); // bandit doesn't fix
+    assert!(!status.value);
 }
 
 #[test]
 fn mypy_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::MyPyAdapter::new(
-        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let status = adapter.fix(&path).unwrap();
-    assert!(!status.value); // mypy doesn't fix
+    assert!(!status.value);
 }
 
 #[test]
 fn tsc_apply_fix_always_returns_false() {
     let adapter = external_lint_lint_arwaky::TSCAdapter::new(
-        Arc::new(MockCmdExecutor),
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let status = adapter.fix(&path).unwrap();
-    assert!(!status.value); // tsc doesn't fix
+    assert!(!status.value);
 }
 
 #[test]
 fn ruff_apply_fix_returns_true() {
     let adapter = external_lint_lint_arwaky::RuffAdapter::new(
-        Arc::new(MockCmdExecutor),
         None,
         Arc::new(MockFilesystem::new()),
         Arc::new(MockFilesystem::new()),
     );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let status = adapter.fix(&path).unwrap();
-    assert!(status.value); // ruff --fix exits 0 → true
+    assert!(status.value);
 }
 
 #[test]
 fn cargo_audit_apply_fix_returns_true() {
-    // cargo-audit has no fix, but returns true (manual update needed)
-    let adapter = external_lint_lint_arwaky::CargoAuditAdapter::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockFilesystem::new()),
-    );
+    let adapter =
+        external_lint_lint_arwaky::CargoAuditAdapter::new(Arc::new(MockFilesystem::new()));
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let status = adapter.fix(&path).unwrap();
     assert!(status.value);

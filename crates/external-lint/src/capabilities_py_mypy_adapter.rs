@@ -21,10 +21,10 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_command_execution::exec_cmd_adapter;
 use shared::quality_rules::LinterOperationError;
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -34,7 +34,6 @@ use std::sync::OnceLock;
 pub struct MyPyAdapter {
     pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
     pub io: Arc<dyn IFileSystemIOProtocol>,
-    lint_executor: Arc<dyn ICommandExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
 
@@ -64,9 +63,7 @@ impl ILinterAdapterProtocol for MyPyAdapter {
         ];
         let working_dir = self.tool_resolution.default_working_dir(path);
 
-        let response = self
-            .lint_executor
-            .exec_cmd_adapter(cmd, working_dir, 120.0, self.name())
+        let response = exec_cmd_adapter(cmd, working_dir, 120.0, self.name())
             .map_err(crate::convert_executor_error)?;
 
         let stdout = &response.stdout;
@@ -177,13 +174,11 @@ fn mypy_re_without_col() -> Option<&'static Regex> {
 
 impl MyPyAdapter {
     pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
         bin_path: Option<FilePath>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
-            lint_executor,
             bin_path,
             io,
             tool_resolution,

@@ -1,23 +1,16 @@
 // PURPOSE: ExternalLintContainer — root layer, wires orchestrator with utility adapters
 //
 // The DI container that assembles the external lint subsystem:
-//   1. Creates a StdioClient (ICommandExecutorProtocol) for subprocess execution
-//   2. Creates ExternalLintExecutor, which serves the ICommandExecutorProtocol,
-//      IJsToolResolutionProtocol, and ICargoDirProtocol seams
-//   3. Registers all 10 adapters (ruff, bandit, mypy, eslint, prettier, tsc,
+//   1. Registers all 10 adapters (ruff, bandit, mypy, eslint, prettier, tsc,
 //      markdownlint, clippy, rustfmt, cargo-audit)
-//
-// Each adapter follows the same pattern: Arc<dyn ILinterAdapterProtocol> in a HashMap keyed by name.
+//   2. Wires default adapter groups into the orchestrator (no selector protocol)
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
-use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
+use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::external_lint::{IExternalLintAggregate, IExternalLintSelectorProtocol};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
@@ -32,25 +25,10 @@ impl ExternalLintContainer {
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
-        let executor: Arc<dyn ICommandExecutorProtocol> = Arc::new(
-            crate::capabilities_stdio_client::StdioClient::new(Timeout::new(60.0)),
-        );
-
-        let lint_executor_impl = Arc::new(
-            crate::capabilities_external_lint_executor::ExternalLintExecutor::new(
-                executor.clone(),
-                io.clone(),
-                tool_resolution.clone(),
-            ),
-        );
-        let lint_executor: Arc<dyn ICommandExecutorProtocol> = lint_executor_impl.clone();
-        let js_resolution: Arc<dyn IJsToolResolutionProtocol> = lint_executor_impl.clone();
-
         let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
         adapters.insert(
             "ruff".to_string(),
             Arc::new(crate::capabilities_py_ruff_adapter::RuffAdapter::new(
-                lint_executor.clone(),
                 None,
                 io.clone(),
                 tool_resolution.clone(),
@@ -59,7 +37,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "bandit".to_string(),
             Arc::new(crate::capabilities_py_bandit_adapter::BanditAdapter::new(
-                lint_executor.clone(),
                 None,
                 io.clone(),
                 tool_resolution.clone(),
@@ -68,7 +45,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "mypy".to_string(),
             Arc::new(crate::capabilities_py_mypy_adapter::MyPyAdapter::new(
-                lint_executor.clone(),
                 None,
                 io.clone(),
                 tool_resolution.clone(),
@@ -77,8 +53,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "eslint".to_string(),
             Arc::new(crate::capabilities_js_eslint_adapter::ESLintAdapter::new(
-                lint_executor.clone(),
-                js_resolution.clone(),
                 io.clone(),
                 tool_resolution.clone(),
             )),
@@ -87,8 +61,6 @@ impl ExternalLintContainer {
             "prettier".to_string(),
             Arc::new(
                 crate::capabilities_js_prettier_adapter::PrettierAdapter::new(
-                    lint_executor.clone(),
-                    js_resolution.clone(),
                     io.clone(),
                     tool_resolution.clone(),
                 ),
@@ -97,7 +69,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "tsc".to_string(),
             Arc::new(crate::capabilities_js_tsc_adapter::TSCAdapter::new(
-                lint_executor.clone(),
                 io.clone(),
                 tool_resolution.clone(),
             )),
@@ -106,8 +77,6 @@ impl ExternalLintContainer {
             "markdownlint".to_string(),
             Arc::new(
                 crate::capabilities_md_markdownlint_adapter::MarkdownLintAdapter::new(
-                    lint_executor.clone(),
-                    js_resolution.clone(),
                     io.clone(),
                     tool_resolution.clone(),
                 ),
@@ -117,7 +86,6 @@ impl ExternalLintContainer {
             "clippy".to_string(),
             Arc::new(
                 crate::capabilities_rs_clippy_adapter::RustLinterAdapter::new(
-                    executor.clone(),
                     None,
                     tool_resolution.clone(),
                 ),
@@ -126,7 +94,6 @@ impl ExternalLintContainer {
         adapters.insert(
             "rustfmt".to_string(),
             Arc::new(crate::capabilities_rs_fmt_adapter::RustFmtAdapter::new(
-                executor.clone(),
                 None,
                 tool_resolution.clone(),
             )),
@@ -135,22 +102,20 @@ impl ExternalLintContainer {
             "cargo-audit".to_string(),
             Arc::new(
                 crate::capabilities_rs_audit_adapter::CargoAuditAdapter::new(
-                    executor.clone(),
                     tool_resolution.clone(),
                 ),
             ),
         );
 
-        // Create selector via DI (AES201: agent must not import capabilities directly)
-        let selector: Arc<dyn IExternalLintSelectorProtocol> =
-            Arc::new(CapabilitiesExternalLintSelector::with_defaults());
+        // Default adapter groups — no separate selector protocol needed.
+        let adapter_groups = Some(ExternalLintOrchestrator::new_default_groups());
 
         Self {
             aggregate: Arc::new(ExternalLintOrchestrator::new(ExternalLintDeps {
                 adapters,
                 filesystem,
                 filesystem_io: io,
-                selector,
+                adapter_groups,
             })),
         }
     }

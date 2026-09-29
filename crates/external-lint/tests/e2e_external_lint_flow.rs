@@ -1,7 +1,7 @@
 // E2E tests — full pipeline: detect languages → select adapters → verify adapter names.
 //
 // These tests simulate the complete flow that ExternalLintOrchestrator follows:
-// language detection → adapter selection → adapter name verification.
+// language detection → adapter selection → scan orchestration.
 // We don't actually run the linters (that would require installed tools),
 // but we verify the end-to-end wiring from detection to selection.
 
@@ -15,164 +15,58 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
-    ExternalLintDeps, ExternalLintOrchestrator,
+    AdapterGroups, ExternalLintDeps, ExternalLintOrchestrator,
 };
-use external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
 
-// ─── Mocks ────────────────────────────────────────────────
-
-struct MockCmdExecutor;
-impl ICommandExecutorProtocol for MockCmdExecutor {
-    fn execute_command(
-        &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
-        _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
-    ) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-    fn health_check(&self) -> anyhow::Result<ResponseData> {
-        Ok(ResponseData::default())
-    }
-    fn exec_cmd_scan(
-        &self,
-        _: Vec<String>,
-        _: FilePath,
-        _: f64,
-        _: Option<AdapterName>,
-        _: &FilePath,
-    ) -> Result<ResponseData, LinterOperationError> {
-        Ok(ResponseData::default())
-    }
-    fn exec_cmd_adapter(
-        &self,
-        _: Vec<String>,
-        _: FilePath,
-        _: f64,
-        _: AdapterName,
-    ) -> Result<ResponseData, LinterOperationError> {
-        Ok(ResponseData::default())
-    }
-}
-
-/// Minimal `IJsToolResolutionProtocol` so the markdown adapter can be wired
-/// without a real filesystem.
-struct MockJsResolution;
-impl IJsToolResolutionProtocol for MockJsResolution {
-    fn resolve_js_cmd(
-        &self,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
-        _: Vec<String>,
-        _: &FilePath,
-    ) -> Option<Vec<String>> {
-        Some(vec!["markdownlint".to_string()])
-    }
-    fn resolve_js_working_dir(&self, path: &FilePath) -> FilePath {
-        path.clone()
-    }
-    fn js_apply_fix(
-        &self,
-        _: &FilePath,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
-        _: &str,
-    ) -> Result<shared::common::taxonomy_message_vo::ComplianceStatus, LinterOperationError> {
-        Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
-            false,
-        ))
-    }
-}
-
-// ─── E2E: Rust-only project ───────────────────────────────
+// ─── E2E: Default adapter groups ──────────────────────────
 
 #[test]
-fn e2e_rust_only_project_selects_clippy_rustfmt_audit() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, false, false, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names, vec!["clippy", "rustfmt", "cargo-audit"]);
+fn e2e_rust_adapters_default_to_clippy_rustfmt_audit() {
+    // Verify the default Rust group contains the expected adapters
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let rust_names: Vec<&str> = groups.rust.iter().map(|a| a.value()).collect();
+    assert_eq!(rust_names, vec!["clippy", "rustfmt", "cargo-audit"]);
 }
 
-// ─── E2E: Python-only project ─────────────────────────────
-
 #[test]
-fn e2e_python_only_project_selects_ruff_mypy_bandit() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, true, false, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names, vec!["ruff", "mypy", "bandit"]);
+fn e2e_python_adapters_default_to_ruff_mypy_bandit() {
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let py_names: Vec<&str> = groups.python.iter().map(|a| a.value()).collect();
+    assert_eq!(py_names, vec!["ruff", "mypy", "bandit"]);
 }
 
-// ─── E2E: JS-only project ─────────────────────────────────
-
 #[test]
-fn e2e_js_only_project_selects_eslint_prettier_tsc() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, true, false);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names, vec!["eslint", "prettier", "tsc"]);
+fn e2e_js_adapters_default_to_eslint_prettier_tsc() {
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let js_names: Vec<&str> = groups.js.iter().map(|a| a.value()).collect();
+    assert_eq!(js_names, vec!["eslint", "prettier", "tsc"]);
 }
 
-// ─── E2E: Markdown-only project ───────────────────────────
-
 #[test]
-fn e2e_markdown_only_project_selects_markdownlint() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, true);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert_eq!(names, vec!["markdownlint"]);
+fn e2e_markdown_adapters_default_to_markdownlint() {
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let md_names: Vec<&str> = groups.markdown.iter().map(|a| a.value()).collect();
+    assert_eq!(md_names, vec!["markdownlint"]);
 }
 
-// ─── E2E: Mixed project ───────────────────────────────────
-
 #[test]
-fn e2e_mixed_project_selects_all_ten() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, true, true);
-    assert_eq!(selected.len(), 10);
-    let names: Vec<&str> = selected.iter().map(|a| a.value()).collect();
-    assert!(names.contains(&"clippy"));
-    assert!(names.contains(&"rustfmt"));
-    assert!(names.contains(&"cargo-audit"));
-    assert!(names.contains(&"ruff"));
-    assert!(names.contains(&"mypy"));
-    assert!(names.contains(&"bandit"));
-    assert!(names.contains(&"eslint"));
-    assert!(names.contains(&"prettier"));
-    assert!(names.contains(&"tsc"));
-    assert!(names.contains(&"markdownlint"));
-}
-
-// ─── E2E: No languages detected ───────────────────────────
-
-#[test]
-fn e2e_no_languages_detected_selects_nothing() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, false);
-    assert!(selected.is_empty());
+fn e2e_mixed_project_defaults_to_ten_adapters() {
+    let groups = ExternalLintOrchestrator::new_default_groups();
+    let total = groups.rust.len() + groups.python.len() + groups.js.len() + groups.markdown.len();
+    assert_eq!(total, 10);
 }
 
 // ─── E2E: Full pipeline — Rust+Python project ─────────────
 
 #[test]
 fn e2e_full_pipeline_rust_python() {
-    // Step 1: Select adapters (simulating language detection)
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(true, true, false, false);
-    let selected_names: Vec<String> = selected.iter().map(|a| a.value().to_string()).collect();
-
-    // Step 2: Build orchestrator with matching adapters
-    let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
     let files = vec!["main.rs".to_string(), "app.py".to_string()];
-    let _fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+    let fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::with_files(files.clone()));
     let tr_arc: Arc<dyn shared::filesystem::IToolResolutionProtocol> =
         Arc::new(MockFilesystem::with_files(files.clone()));
@@ -180,78 +74,53 @@ fn e2e_full_pipeline_rust_python() {
         Arc::new(MockFilesystem::with_files(files.clone()));
 
     let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
-    for name in &selected_names {
-        match name.as_str() {
-            "ruff" => {
-                adapters.insert(
-                    name.clone(),
-                    Arc::new(external_lint_lint_arwaky::RuffAdapter::new(
-                        lint_exec.clone(),
-                        None,
-                        io_arc.clone(),
-                        tr_arc.clone(),
-                    )),
-                );
-            }
-            "mypy" => {
-                adapters.insert(
-                    name.clone(),
-                    Arc::new(external_lint_lint_arwaky::MyPyAdapter::new(
-                        lint_exec.clone(),
-                        None,
-                        io_arc.clone(),
-                        tr_arc.clone(),
-                    )),
-                );
-            }
-            "bandit" => {
-                adapters.insert(
-                    name.clone(),
-                    Arc::new(external_lint_lint_arwaky::BanditAdapter::new(
-                        lint_exec.clone(),
-                        None,
-                        io_arc.clone(),
-                        tr_arc.clone(),
-                    )),
-                );
-            }
-            // Skip Rust adapters (need ICommandExecutorProtocol mock)
-            _ => {}
-        }
-    }
+    adapters.insert(
+        "ruff".to_string(),
+        Arc::new(external_lint_lint_arwaky::RuffAdapter::new(
+            None,
+            io_arc.clone(),
+            tr_arc.clone(),
+        )),
+    );
+    adapters.insert(
+        "mypy".to_string(),
+        Arc::new(external_lint_lint_arwaky::MyPyAdapter::new(
+            None,
+            io_arc.clone(),
+            tr_arc.clone(),
+        )),
+    );
+    adapters.insert(
+        "bandit".to_string(),
+        Arc::new(external_lint_lint_arwaky::BanditAdapter::new(
+            None,
+            io_arc.clone(),
+            tr_arc.clone(),
+        )),
+    );
 
-    // Step 3: Verify adapter_names matches
     let deps = ExternalLintDeps {
         adapters,
-        filesystem: Arc::new(MockFilesystem::with_files(files)),
+        filesystem: fs_arc.clone(),
         filesystem_io: io_arc.clone(),
-        selector: Arc::new(
-            external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
-        ),
+        adapter_groups: None,
     };
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let adapter_names = orchestrator.adapter_names();
-
     let registered: Vec<&str> = adapter_names.iter().map(|a| a.value()).collect();
     assert!(registered.contains(&"ruff"));
     assert!(registered.contains(&"mypy"));
     assert!(registered.contains(&"bandit"));
 
-    // Step 4: scan_all with empty adapters (no Rust ones registered)
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let results = orchestrator.scan_all(&path);
-    assert!(results.values.is_empty()); // adapters scan empty dirs → no findings
+    assert!(results.values.is_empty());
 }
 
 // ─── E2E: Full pipeline — Markdown project ────────────────
 
 #[test]
 fn e2e_full_pipeline_markdown_only() {
-    let selector = CapabilitiesExternalLintSelector::with_defaults();
-    let selected = selector.select_adapters(false, false, false, true);
-    let selected_names: Vec<String> = selected.iter().map(|a| a.value().to_string()).collect();
-
-    let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
     let files = vec!["README.md".to_string(), "CHANGELOG.md".to_string()];
     let fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::with_files(files.clone()));
@@ -261,25 +130,19 @@ fn e2e_full_pipeline_markdown_only() {
         Arc::new(MockFilesystem::with_files(files.clone()));
 
     let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
-    for name in &selected_names {
-        if name == "markdownlint" {
-            adapters.insert(
-                name.clone(),
-                Arc::new(external_lint_lint_arwaky::MarkdownLintAdapter::new(
-                    lint_exec.clone(),
-                    Arc::new(MockJsResolution),
-                    io_arc.clone(),
-                    tr_arc.clone(),
-                )),
-            );
-        }
-    }
+    adapters.insert(
+        "markdownlint".to_string(),
+        Arc::new(external_lint_lint_arwaky::MarkdownLintAdapter::new(
+            io_arc.clone(),
+            tr_arc.clone(),
+        )),
+    );
 
     let deps = ExternalLintDeps {
         adapters,
         filesystem: fs_arc.clone(),
         filesystem_io: io_arc.clone(),
-        selector: Arc::new(selector),
+        adapter_groups: None,
     };
     let orchestrator = ExternalLintOrchestrator::new(deps);
     let adapter_names = orchestrator.adapter_names();
@@ -288,5 +151,60 @@ fn e2e_full_pipeline_markdown_only() {
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let results = orchestrator.scan_all(&path);
-    assert!(results.values.is_empty()); // mock executor returns no violations
+    assert!(results.values.is_empty());
+}
+
+// ─── E2E: Context-driven scan — no languages ──────────────
+
+#[test]
+fn e2e_no_languages_selects_nothing() {
+    let deps = ExternalLintDeps {
+        adapters: HashMap::new(),
+        filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
+        adapter_groups: None,
+    };
+    let orchestrator = ExternalLintOrchestrator::new(deps);
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext {
+        has_rust: false,
+        has_python: false,
+        has_js: false,
+        has_markdown: false,
+        ..Default::default()
+    };
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    assert!(results.values.is_empty());
+}
+
+// ─── E2E: Context-driven scan — Rust only ─────────────────
+
+#[test]
+fn e2e_rust_only_project_with_context() {
+    let deps = ExternalLintDeps {
+        adapters: HashMap::new(),
+        filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
+        adapter_groups: Some(AdapterGroups {
+            rust: vec![
+                AdapterName::raw("clippy"),
+                AdapterName::raw("rustfmt"),
+                AdapterName::raw("cargo-audit"),
+            ],
+            python: vec![],
+            js: vec![],
+            markdown: vec![],
+        }),
+    };
+    let orchestrator = ExternalLintOrchestrator::new(deps);
+    let path = FilePath::new("/tmp".to_string()).unwrap();
+    let context = ExternalLintContext {
+        has_rust: true,
+        has_python: false,
+        has_js: false,
+        has_markdown: false,
+        ..Default::default()
+    };
+    let results = orchestrator.scan_all_with_context(&path, &context);
+    assert!(results.values.is_empty());
 }

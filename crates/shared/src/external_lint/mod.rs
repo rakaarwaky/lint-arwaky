@@ -8,14 +8,9 @@ pub mod taxonomy_external_lint_vo;
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
 
-// ── Contract traits ──
+// ── Contract traits (business capabilities only) ──
 pub use contract_external_lint_aggregate::IExternalLintAggregate;
 pub use contract_external_lint_protocol::IAdapterScanProtocol;
-pub use contract_external_lint_protocol::ICargoDirProtocol;
-pub use contract_external_lint_protocol::ICommandExecutorProtocol;
-pub use contract_external_lint_protocol::IExternalLintSelectorProtocol;
-pub use contract_external_lint_protocol::IJsToolResolutionProtocol;
-pub use contract_external_lint_protocol::ILanguageDetectProtocol;
 pub use contract_external_lint_protocol::ILinterAdapterProtocol;
 pub use contract_external_lint_protocol::INormalizeProtocol;
 

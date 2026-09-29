@@ -10,6 +10,7 @@ pub mod utility_ast_python;
 pub mod utility_ast_rust;
 pub mod utility_ast_typescript;
 pub mod utility_barrel_resolution;
+pub mod utility_command_execution;
 pub mod utility_container_wiring;
 pub mod utility_filesystem_io;
 pub mod utility_import_extractor;

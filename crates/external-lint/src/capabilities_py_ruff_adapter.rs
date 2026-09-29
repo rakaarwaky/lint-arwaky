@@ -22,10 +22,10 @@ use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_command_execution::exec_cmd_adapter;
 use shared::quality_rules::LinterOperationError;
 use std::sync::Arc;
 
@@ -34,7 +34,6 @@ use std::sync::Arc;
 pub struct RuffAdapter {
     pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
     pub io: Arc<dyn IFileSystemIOProtocol>,
-    lint_executor: Arc<dyn ICommandExecutorProtocol>,
     bin_path: Option<FilePath>,
 }
 
@@ -65,9 +64,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
         ];
         let working_dir = self.tool_resolution.default_working_dir(path);
 
-        let response = self
-            .lint_executor
-            .exec_cmd_adapter(cmd, working_dir, 60.0, self.name())
+        let response = exec_cmd_adapter(cmd, working_dir, 60.0, self.name())
             .map_err(crate::convert_executor_error)?;
 
         let stdout = &response.stdout;
@@ -149,9 +146,7 @@ impl ILinterAdapterProtocol for RuffAdapter {
         ];
         let working_dir = self.tool_resolution.default_working_dir(path);
 
-        let _ = self
-            .lint_executor
-            .exec_cmd_adapter(cmd, working_dir, 60.0, self.name())
+        let _ = exec_cmd_adapter(cmd, working_dir, 60.0, self.name())
             .map_err(crate::convert_executor_error)?;
         Ok(ComplianceStatus::new(true))
     }
@@ -161,13 +156,11 @@ impl ILinterAdapterProtocol for RuffAdapter {
 
 impl RuffAdapter {
     pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
         bin_path: Option<FilePath>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
-            lint_executor,
             bin_path,
             io,
             tool_resolution,
@@ -182,7 +175,7 @@ impl RuffAdapter {
     }
 
     pub fn map_severity(&self, _severity: &str, code: &str) -> Severity {
-        // FR-004: Ruff severity mapping is code-based, not tool-severity-based.
+        // FR-003: Ruff severity mapping is code-based, not tool-severity-based.
         if code == "E999" || code.starts_with('S') {
             Severity::CRITICAL // syntax error (E999) or security rules (S1xx)
         } else if code == "F401" {

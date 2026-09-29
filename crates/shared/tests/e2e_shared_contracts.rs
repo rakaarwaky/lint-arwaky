@@ -101,13 +101,8 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::maintenance::ISelfUpdateProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IToolExecutorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::ILinterAdapterProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::ICommandExecutorProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::IAdapterScanProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::IExternalLintSelectorProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::ILanguageDetectProtocol>();
     assert_trait::<dyn shared_lint_arwaky::external_lint::INormalizeProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::IJsToolResolutionProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::external_lint::ICargoDirProtocol>();
     // Surface
     assert_trait::<dyn shared_lint_arwaky::report_formatter::ITextFormatProtocol>();
     assert_trait::<dyn shared_lint_arwaky::report_formatter::IJsonFormatProtocol>();

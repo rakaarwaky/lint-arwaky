@@ -1,13 +1,15 @@
 // PURPOSE: ExternalLintOrchestrator — agent layer, orchestrates external linter adapters
 //
-// The orchestrator dynamically selects which adapters to run based on the
-// languages detected in the project (Rust, Python, JavaScript/TypeScript,
-// Markdown). It receives a pre-computed `ExternalLintContext` from the surface
-// layer, eliminating all filesystem I/O from the agent layer (orchestration-only).
+// The orchestrator runs adapter scans sequentially and post-filters results by
+// ignored paths. Language detection and adapter selection are private mechanics
+// (not exposed as protocols); the surface layer may supply a pre-computed
+// context via `ScanAllWithContext`, or the orchestrator will detect languages
+// itself when called via `ScanAll`.
 //
 // Adapters are run sequentially. If an adapter's binary
 // is not installed, a warning is printed (not an error) — the scan continues
 // with the remaining adapters.
+
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -16,9 +18,7 @@ use shared::common::AdapterNameList;
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::external_lint::IExternalLintAggregate;
-use shared::external_lint::IExternalLintSelectorProtocol;
 use shared::external_lint::contract_external_lint_protocol::IAdapterScanProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILanguageDetectProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::external_lint::taxonomy_external_lint_request::ExternalLintRequest;
 use shared::external_lint::taxonomy_external_lint_response::ExternalLintResponse;
@@ -30,11 +30,22 @@ use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
+/// Default adapter groups keyed by language.
+#[derive(Clone, Debug)]
+pub struct AdapterGroups {
+    pub rust: Vec<AdapterName>,
+    pub python: Vec<AdapterName>,
+    pub js: Vec<AdapterName>,
+    pub markdown: Vec<AdapterName>,
+}
+
 pub struct ExternalLintDeps {
     pub adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_io: Arc<dyn IFileSystemIOProtocol>,
-    pub selector: Arc<dyn IExternalLintSelectorProtocol>,
+    /// Optional language-specific adapter overrides from config.
+    /// When present, these replace the default groups.
+    pub adapter_groups: Option<AdapterGroups>,
 }
 
 pub struct ExternalLintOrchestrator {
@@ -62,9 +73,17 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
+
 impl ExternalLintOrchestrator {
     pub fn scan_all(&self, path: &FilePath) -> LintResultList {
-        self.scan_all_with_context(path, &ExternalLintContext::default())
+        let context = ExternalLintContext {
+            has_rust: self.detect_languages(path).0,
+            has_python: self.detect_languages(path).1,
+            has_js: self.detect_languages(path).2,
+            has_markdown: self.detect_languages(path).3,
+            ..Default::default()
+        };
+        self.scan_all_with_context(path, &context)
     }
 
     pub fn scan_all_with_context(
@@ -72,40 +91,49 @@ impl ExternalLintOrchestrator {
         path: &FilePath,
         context: &ExternalLintContext,
     ) -> LintResultList {
-        // Select adapters based on pre-computed language flags (no I/O).
-        let selected: Vec<String> = self
-            .deps
-            .selector
-            .select_adapters(
-                context.has_rust,
-                context.has_python,
-                context.has_js,
-                context.has_markdown,
-            )
-            .iter()
-            .map(|a| a.value().to_string())
-            .collect();
-
-        // Filter by config entries if present (pre-computed by surface).
-        let adapter_names: Vec<&str> = if context.config_entries.is_empty() {
-            selected.iter().map(|s| s.as_str()).collect()
+        // Select adapters from config entries or pre-computed language flags.
+        let selected: Vec<String> = if context.config_entries.is_empty() {
+            let groups = self
+                .deps
+                .adapter_groups
+                .clone()
+                .unwrap_or_else(ExternalLintOrchestrator::new_default_groups);
+            let rust_on = context.has_rust || self.detect_languages(path).0;
+            let python_on = context.has_python || self.detect_languages(path).1;
+            let js_on = context.has_js || self.detect_languages(path).2;
+            let md_on = context.has_markdown || self.detect_languages(path).3;
+            let mut names = Vec::new();
+            if rust_on {
+                names.extend(groups.rust.iter().map(|a| a.value().to_string()));
+            }
+            if python_on {
+                names.extend(groups.python.iter().map(|a| a.value().to_string()));
+            }
+            if js_on {
+                names.extend(groups.js.iter().map(|a| a.value().to_string()));
+            }
+            if md_on {
+                names.extend(groups.markdown.iter().map(|a| a.value().to_string()));
+            }
+            names
         } else {
-            selected
-                .iter()
+            // Config-driven: select from full adapter map filtered by config entries.
+            let all_names: Vec<String> = self.deps.adapters.keys().cloned().collect();
+            all_names
+                .into_iter()
                 .filter(|name| {
                     context
                         .config_entries
                         .iter()
-                        .any(|e| e.name.value() == **name)
+                        .any(|e| e.name.value() == name.as_str())
                 })
-                .map(|s| s.as_str())
                 .collect()
         };
 
         // Run adapters sequentially (this is the actual orchestration work).
         let mut all = Vec::new();
-        for name in &adapter_names {
-            if let Some(adapter) = self.deps.adapters.get(*name) {
+        for name in &selected {
+            if let Some(adapter) = self.deps.adapters.get(name.as_str()) {
                 match adapter.scan(path) {
                     Ok(results) => {
                         all.extend(results.values);
@@ -132,8 +160,6 @@ impl ExternalLintOrchestrator {
         }
 
         // Post-processing: filter violations by pre-computed ignored paths.
-        // should_ignore() is a read-only check on already-computed data,
-        // not filesystem I/O, so it remains in the orchestrator.
         if !context.ignored_paths.is_empty() {
             all.retain(|v| {
                 !self
@@ -144,23 +170,8 @@ impl ExternalLintOrchestrator {
         }
         LintResultList::new(all)
     }
-    pub fn adapter_names(&self) -> AdapterNameList {
-        AdapterNameList::new(
-            self.deps
-                .adapters
-                .keys()
-                .map(|k| AdapterName::raw(k.clone()))
-                .collect(),
-        )
-    }
-    pub fn new(deps: ExternalLintDeps) -> Self {
-        Self { deps }
-    }
-}
 
-// ─── Block 4: FR-001 language detection ────────────────────
-
-impl ILanguageDetectProtocol for ExternalLintOrchestrator {
+    /// Detect languages via extension walk over `path`. Private — not a protocol.
     fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool, bool) {
         let files = self
             .deps
@@ -177,9 +188,45 @@ impl ILanguageDetectProtocol for ExternalLintOrchestrator {
         let has_markdown = files.iter().any(|f| f.ends_with(".md"));
         (has_rust, has_python, has_js, has_markdown)
     }
+
+    pub fn adapter_names(&self) -> AdapterNameList {
+        AdapterNameList::new(
+            self.deps
+                .adapters
+                .keys()
+                .map(|k| AdapterName::raw(k.clone()))
+                .collect(),
+        )
+    }
+
+    pub fn new(deps: ExternalLintDeps) -> Self {
+        Self { deps }
+    }
+
+    /// Return the default adapter groups keyed by language.
+    pub fn new_default_groups() -> AdapterGroups {
+        AdapterGroups {
+            rust: vec![
+                AdapterName::raw("clippy"),
+                AdapterName::raw("rustfmt"),
+                AdapterName::raw("cargo-audit"),
+            ],
+            python: vec![
+                AdapterName::raw("ruff"),
+                AdapterName::raw("mypy"),
+                AdapterName::raw("bandit"),
+            ],
+            js: vec![
+                AdapterName::raw("eslint"),
+                AdapterName::raw("prettier"),
+                AdapterName::raw("tsc"),
+            ],
+            markdown: vec![AdapterName::raw("markdownlint")],
+        }
+    }
 }
 
-// ─── Block 5: FR-003 scan_all aggregation ─────────────────
+// ─── Block 4: scan_all aggregation (FR-001) ───────────────
 
 impl IAdapterScanProtocol for ExternalLintOrchestrator {
     fn scan_all(&self, path: &FilePath, context: &ExternalLintContext) -> LintResultList {

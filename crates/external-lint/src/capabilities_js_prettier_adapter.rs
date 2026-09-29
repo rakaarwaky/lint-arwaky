@@ -20,11 +20,10 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_command_execution::{exec_cmd_adapter, exec_cmd_scan};
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -32,8 +31,6 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct PrettierAdapter {
-    lint_executor: Arc<dyn ICommandExecutorProtocol>,
-    js_resolution: Arc<dyn IJsToolResolutionProtocol>,
     io: Arc<dyn IFileSystemIOProtocol>,
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
@@ -69,9 +66,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
             None => return Ok(LintResultList::default()),
         };
 
-        let response = self
-            .lint_executor
-            .exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
+        let response = exec_cmd_scan(cmd, wd.clone(), 60.0, Some(self.name()), path)
             .map_err(crate::convert_executor_error)?;
         let mut results = Vec::new();
         let combined_output = format!("{}{}", response.stdout, response.stderr);
@@ -98,7 +93,7 @@ impl ILinterAdapterProtocol for PrettierAdapter {
                         file_str
                     )),
                     source: Some(self.name()),
-                    severity: Severity::MEDIUM, // FR-004: Prettier diff → MEDIUM
+                    severity: Severity::MEDIUM, // FR-003: Prettier diff → MEDIUM
                     enclosing_scope: Default::default(),
                     related_locations: LocationList::new(),
                 });
@@ -109,8 +104,18 @@ impl ILinterAdapterProtocol for PrettierAdapter {
     }
 
     fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.js_resolution
-            .js_apply_fix(path, &ToolName::new("prettier"), "--write")
+        let wd = self.tool_resolution.resolve_js_working_dir(path);
+        let abs_path = self.io.canonicalize_path_str(path);
+        let cmd = match self.tool_resolution.resolve_js_cmd(
+            &ToolName::new("prettier"),
+            vec!["--write".to_string(), abs_path.value],
+            &wd,
+        ) {
+            Some(c) => c,
+            None => return Ok(ComplianceStatus::new(false)),
+        };
+        exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw("prettier"))
+            .map(|r| ComplianceStatus::new(r.returncode == 0))
             .map_err(crate::convert_executor_error)
     }
 }
@@ -119,14 +124,10 @@ impl ILinterAdapterProtocol for PrettierAdapter {
 
 impl PrettierAdapter {
     pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        js_resolution: Arc<dyn IJsToolResolutionProtocol>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
-            lint_executor,
-            js_resolution,
             io,
             tool_resolution,
         }

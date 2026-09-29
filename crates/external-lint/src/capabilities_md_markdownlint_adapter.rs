@@ -25,11 +25,11 @@ use shared::common::taxonomy_path_vo::FilePath;
 use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::taxonomy_tool_name_vo::ToolName;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IJsToolResolutionProtocol;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_command_execution::exec_cmd_adapter;
+use shared::filesystem::utility_command_execution::exec_cmd_scan;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
@@ -37,8 +37,6 @@ use std::sync::Arc;
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct MarkdownLintAdapter {
-    lint_executor: Arc<dyn ICommandExecutorProtocol>,
-    js_resolution: Arc<dyn IJsToolResolutionProtocol>,
     io: Arc<dyn IFileSystemIOProtocol>,
     tool_resolution: Arc<dyn IToolResolutionProtocol>,
 }
@@ -65,7 +63,7 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
             // markdownlint-cli2), fall back to a direct PATH lookup when the
             // local resolution returns `None`.
             let cmd = self
-                .js_resolution
+                .tool_resolution
                 .resolve_js_cmd(&ToolName::new(binary), args.clone(), &wd)
                 .or_else(|| {
                     if self
@@ -86,13 +84,8 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
             // tool with the scan root as working directory makes those paths
             // resolve against `root`, so canonicalization in the parser lands
             // on the same absolute path the rest of the report uses.
-            let Ok(response) = self.lint_executor.exec_cmd_scan(
-                cmd,
-                abs_path.clone(),
-                60.0,
-                Some(self.name()),
-                path,
-            ) else {
+            let Ok(response) = exec_cmd_scan(cmd, abs_path.clone(), 60.0, Some(self.name()), path)
+            else {
                 continue;
             };
 
@@ -106,8 +99,18 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
     }
 
     fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.js_resolution
-            .js_apply_fix(path, &ToolName::new("markdownlint-cli"), "--fix")
+        let wd = self.tool_resolution.resolve_js_working_dir(path);
+        let abs_path = self.io.canonicalize_path_str(path);
+        let cmd = match self.tool_resolution.resolve_js_cmd(
+            &ToolName::new("markdownlint-cli"),
+            vec![abs_path.value, "--fix".to_string()],
+            &wd,
+        ) {
+            Some(c) => c,
+            None => return Ok(ComplianceStatus::new(false)),
+        };
+        exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw("markdownlint"))
+            .map(|r| ComplianceStatus::new(r.returncode == 0))
             .map_err(crate::convert_executor_error)
     }
 }
@@ -116,14 +119,10 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
 
 impl MarkdownLintAdapter {
     pub fn new(
-        lint_executor: Arc<dyn ICommandExecutorProtocol>,
-        js_resolution: Arc<dyn IJsToolResolutionProtocol>,
         io: Arc<dyn IFileSystemIOProtocol>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
-            lint_executor,
-            js_resolution,
             io,
             tool_resolution,
         }

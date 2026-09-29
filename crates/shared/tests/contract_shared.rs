@@ -13,9 +13,7 @@ use shared_lint_arwaky::config_system::{
     IWorkspaceMembersProtocol,
 };
 use shared_lint_arwaky::external_lint::{
-    IAdapterScanProtocol, ICargoDirProtocol, ICommandExecutorProtocol, IExternalLintAggregate,
-    IExternalLintSelectorProtocol, IJsToolResolutionProtocol, ILanguageDetectProtocol,
-    ILinterAdapterProtocol, INormalizeProtocol,
+    IAdapterScanProtocol, IExternalLintAggregate, ILinterAdapterProtocol, INormalizeProtocol,
 };
 use shared_lint_arwaky::file_watch::{
     IChangeLintProtocol, IEventDedupProtocol, ILintableFilterProtocol, IWatchAggregate,
@@ -389,18 +387,6 @@ fn maintenance_contracts_are_send_sync() {
 // One `#[test]` per trait, each with a uniquely named local helper so no
 // helper name repeats inside a single function.
 #[test]
-fn external_language_detect_contract_is_a_trait() {
-    fn assert_language_detect_trait<T: ?Sized>() {}
-    assert_language_detect_trait::<dyn ILanguageDetectProtocol>();
-}
-
-#[test]
-fn external_selector_contract_is_a_trait() {
-    fn assert_selector_trait<T: ?Sized>() {}
-    assert_selector_trait::<dyn IExternalLintSelectorProtocol>();
-}
-
-#[test]
 fn external_linter_adapter_contract_is_a_trait() {
     fn assert_adapter_trait<T: ?Sized>() {}
     assert_adapter_trait::<dyn ILinterAdapterProtocol>();
@@ -410,24 +396,6 @@ fn external_linter_adapter_contract_is_a_trait() {
 fn external_normalize_contract_is_a_trait() {
     fn assert_normalize_trait<T: ?Sized>() {}
     assert_normalize_trait::<dyn INormalizeProtocol>();
-}
-
-#[test]
-fn external_command_executor_contract_is_a_trait() {
-    fn assert_command_executor_trait<T: ?Sized>() {}
-    assert_command_executor_trait::<dyn ICommandExecutorProtocol>();
-}
-
-#[test]
-fn external_js_resolution_contract_is_a_trait() {
-    fn assert_js_resolution_trait<T: ?Sized>() {}
-    assert_js_resolution_trait::<dyn IJsToolResolutionProtocol>();
-}
-
-#[test]
-fn external_cargo_dir_contract_is_a_trait() {
-    fn assert_cargo_dir_trait<T: ?Sized>() {}
-    assert_cargo_dir_trait::<dyn ICargoDirProtocol>();
 }
 
 #[test]
@@ -444,22 +412,12 @@ fn external_adapter_scan_contract_is_a_trait() {
 
 #[test]
 fn external_lint_contracts_are_send_sync() {
-    fn assert_detect_sync<T: Send + Sync + ?Sized>() {}
-    fn assert_selector_sync<T: Send + Sync + ?Sized>() {}
     fn assert_adapter_sync<T: Send + Sync + ?Sized>() {}
     fn assert_normalize_sync<T: Send + Sync + ?Sized>() {}
-    fn assert_command_sync<T: Send + Sync + ?Sized>() {}
-    fn assert_js_sync<T: Send + Sync + ?Sized>() {}
-    fn assert_cargo_sync<T: Send + Sync + ?Sized>() {}
     fn assert_aggregate_sync<T: Send + Sync + ?Sized>() {}
     fn assert_adapter_scan_sync<T: Send + Sync + ?Sized>() {}
-    assert_detect_sync::<dyn ILanguageDetectProtocol>();
-    assert_selector_sync::<dyn IExternalLintSelectorProtocol>();
     assert_adapter_sync::<dyn ILinterAdapterProtocol>();
     assert_normalize_sync::<dyn INormalizeProtocol>();
-    assert_command_sync::<dyn ICommandExecutorProtocol>();
-    assert_js_sync::<dyn IJsToolResolutionProtocol>();
-    assert_cargo_sync::<dyn ICargoDirProtocol>();
     assert_aggregate_sync::<dyn IExternalLintAggregate>();
     assert_adapter_scan_sync::<dyn IAdapterScanProtocol>();
 }

@@ -24,19 +24,17 @@ use shared::common::taxonomy_severity_vo::Severity;
 use shared::common::utility_path_normalization::resolve_capabilities_path;
 use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared::filesystem::utility_command_execution::execute_command;
 use shared::quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
 use tracing::debug;
-
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 /// Adapter that wraps `cargo fmt --check` as an ILinterAdapterProtocol.
 pub struct RustFmtAdapter {
     pub tool_resolution: Arc<dyn IToolResolutionProtocol>,
-    executor: Arc<dyn ICommandExecutorProtocol>,
     _bin_path: Option<FilePath>,
 }
 
@@ -66,19 +64,17 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
             "fmt".to_string(),
             "--check".to_string(),
         ];
-        let result = self
-            .executor
-            .execute_command(
-                PatternList::new(cmd),
-                working_dir.clone(),
-                Some(Timeout::new(120.0)),
-            )
-            .map_err(|e| {
-                LinterOperationError::Adapter(AdapterError::new(
-                    self.name(),
-                    ErrorMessage::new(e.to_string()),
-                ))
-            })?;
+        let result = execute_command(
+            PatternList::new(cmd),
+            working_dir.clone(),
+            Some(Timeout::new(120.0)),
+        )
+        .map_err(|e| {
+            LinterOperationError::Adapter(AdapterError::new(
+                self.name(),
+                ErrorMessage::new(e.to_string()),
+            ))
+        })?;
 
         if result.returncode == 0 {
             return Ok(LintResultList::new(results));
@@ -129,7 +125,7 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
     fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
         let working_dir = self.tool_resolution.resolve_cargo_working_dir(path);
         let cmd = vec!["cargo".to_string(), "fmt".to_string()];
-        let _ = self.executor.execute_command(
+        let _ = execute_command(
             PatternList::new(cmd),
             working_dir,
             Some(Timeout::new(120.0)),
@@ -142,12 +138,10 @@ impl ILinterAdapterProtocol for RustFmtAdapter {
 
 impl RustFmtAdapter {
     pub fn new(
-        executor: Arc<dyn ICommandExecutorProtocol>,
         bin_path: Option<FilePath>,
         tool_resolution: Arc<dyn IToolResolutionProtocol>,
     ) -> Self {
         Self {
-            executor,
             _bin_path: bin_path,
             tool_resolution,
         }

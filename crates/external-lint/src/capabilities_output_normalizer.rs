@@ -1,4 +1,4 @@
-// PURPOSE: OutputNormalizer — INormalizeProtocol implementation (FR-005)
+// PURPOSE: OutputNormalizer — INormalizeProtocol implementation (FR-003)
 //
 // Converts each external tool's raw output into the unified `LintResult` shape.
 // Rule codes keep their tool-native identifiers (`clippy::<lint>`,
