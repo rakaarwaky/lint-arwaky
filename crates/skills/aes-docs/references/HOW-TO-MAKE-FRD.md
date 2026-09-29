@@ -37,7 +37,7 @@ capability names.
 3a. **The FR count must match the protocol class count.** The number of
 `### FR-<Feature>-NNN:` headings and the number of `pub trait I*Protocol`
 declarations across the feature's contract protocol files must be equal
-(`protocol_count_mismatch`, AES607).
+(`protocol_count_mismatch`, AES601).
 One protocol class is one capability seam, and one seam is one
 requirement. **A single protocol file may declare many protocol classes** —
 count the classes, never the files. Method counts are irrelevant: a

@@ -8,7 +8,7 @@
 
 ## System Overview
 
-The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against seven rules (AES601–AES607): FR-ID format and field completeness, section structure shape, spec purity, crosslink integrity, feature-folder health, document heading structure, and FR/protocol class parity. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose. The auditor walks the filesystem; no external tool is involved.
+The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against five rules (AES601–AES605): FR-ID format and field completeness with FR/protocol class parity, section structure shape, spec purity, crosslink integrity, and document heading structure. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose. The auditor walks the filesystem; no external tool is involved.
 
 ## Functional Requirements
 
@@ -18,12 +18,11 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 - **Input**: A workspace root and the list of recognized document paths (`FRD.md`, `BACKLOG.md`, `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`).
 - **Output**: `Vec<LintResult>` carrying one finding per invariant violation.
 - **Business Rules**:
-  - AES601 validates FR-ID format and required fields in every FRD requirement block.
+  - AES601 validates FR-ID format and required fields in every FRD requirement block, and verifies FRD requirement count equals protocol class count in the shared contract module.
   - AES602 validates API Contract subsections, Integration Points table shape, NFR table shape, Test Scenarios bullets, and Glossary bullets.
   - AES603 prevents status leaks and source-file names in spec documents.
   - AES604 enforces Reference crosslinks and state-vocab restatement rules.
-  - AES606 checks H1/H2 heading structure against per-document contracts.
-  - AES607 verifies FRD requirement count equals protocol class count in the shared contract module.
+  - AES605 checks H1/H2 heading structure against per-document contracts.
 - **Edge Cases**: Root-level legacy `BACKLOG.md` is accepted as a master document during migration. Feature backlogs are forbidden from restating root-state sections.
 - **Error Handling**: Unreadable files produce no findings. Missing documents are skipped silently rather than flagged.
 
@@ -68,8 +67,8 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 
 ## Test Scenarios
 
-- A document misses a mandatory H2 → AES606 fires naming the missing headings.
-- Requirement count drifts from the contract seams → AES607 fires stating both counts and both fix directions.
+- A document misses a mandatory H2 → AES605 fires naming the missing headings.
+- Requirement count drifts from the contract seams → AES601 fires stating both counts and both fix directions.
 - An FRD carries a bare FR-ID without a feature prefix → AES601 fires naming the line and missing prefix.
 - An FRD requirement is missing a required field → AES601 fires naming the field and the line.
 - A spec names a concrete source-file path → AES603 fires naming the line and the reference.

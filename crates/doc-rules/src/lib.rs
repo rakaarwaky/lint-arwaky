@@ -1,4 +1,4 @@
-// doc-rules — structural invariants for the AES document chain (AES601–AES607)
+// doc-rules — structural invariants for the AES document chain (AES601–AES605)
 
 // ── Capability (stateful check logic) ────────────────────────────────────────
 pub mod capabilities_doc_checker;

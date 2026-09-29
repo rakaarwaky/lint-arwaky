@@ -110,7 +110,7 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
 A change to Markdown only, with no code edit.
 
 1. Create a worktree the same way as above.
-2. Edit the document; the AES606 heading contract governs the H1/H2 structure of
+2. Edit the document; the AES605 heading contract governs the H1/H2 structure of
    every root document, so run the doc gate before committing:
    ```bash
    ./target/debug/lint-arwaky-cli docs .

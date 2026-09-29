@@ -1,4 +1,4 @@
-// PURPOSE: AES607 counters — requirement headings in an FRD and capability-seam
+// PURPOSE: FR/protocol parity counters — requirement headings in an FRD and capability-seam
 // classes in a feature's shared contract module. Both are stateless counts, so
 // they live here and the checker only decides what a mismatch means.
 use std::fs;

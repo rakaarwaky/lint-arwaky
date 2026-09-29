@@ -1,7 +1,7 @@
 // PURPOSE: DocChecker — the invariant auditor behind IDocCheckerProtocol
 //
 // Walks a workspace, collects the documents the chain recognizes, and audits
-// each against five document categories (AES601–AES607). Each finding carries
+// each against five document categories (AES601–AES605). Each finding carries
 // a machine-readable violation_type so consumers can route on it.
 use shared::doc_rules::contract_doc_protocol::IDocCheckerProtocol;
 use shared::doc_rules::taxonomy_doc_rules_constant as consts;
@@ -269,7 +269,7 @@ impl DocChecker {
             self.check_state_vocab_restated(&sections, master, &mut findings);
         }
 
-        // ── AES606: Document heading structure ──
+        // ── AES605: Document heading structure ──
         // Applied to every document that has a registered H2 contract.
         if let Some((required, allowed)) = doc_h2_contract(&name) {
             self.check_doc_heading(doc, &name, required, allowed, &mut findings);
@@ -389,7 +389,7 @@ impl DocChecker {
             .map_or(1, |index| index + 1);
         findings.push(DocFinding::new(
             "",
-            consts::RULE_CODE_FR_PROTOCOL_PARITY,
+            consts::RULE_CODE_FR_FORMAT,
             consts::FR_PROTOCOL_PARITY_VIOLATION_COUNT_MISMATCH,
             format!(
                 "line {line} FRD declares {fr_count} requirements but the feature's contract \
@@ -742,8 +742,8 @@ impl DocChecker {
         if h1_count != 1 {
             findings.push(DocFinding::new(
                 "",
-                consts::RULE_CODE_AGENT_DOC_STRUCTURE,
-                consts::AGENT_DOC_STRUCTURE_VIOLATION_H1_COUNT,
+                consts::RULE_CODE_DOC_STRUCTURE,
+                consts::DOC_STRUCTURE_VIOLATION_H1_COUNT,
                 format!(
                     "{name} must open with exactly one level-1 heading, found {}; the template names one H1 at the top of the file",
                     h1_count
@@ -767,8 +767,8 @@ impl DocChecker {
         if !missing.is_empty() {
             findings.push(DocFinding::new(
                 "",
-                consts::RULE_CODE_AGENT_DOC_STRUCTURE,
-                consts::AGENT_DOC_STRUCTURE_VIOLATION_H2_MISSING,
+                consts::RULE_CODE_DOC_STRUCTURE,
+                consts::DOC_STRUCTURE_VIOLATION_H2_MISSING,
                 format!(
                     "{name} has no H2 heading for {}; each of these level-2 sections is mandatory — {}",
                     missing.join(", "),
@@ -797,8 +797,8 @@ impl DocChecker {
         if !unexpected_h2.is_empty() {
             findings.push(DocFinding::new(
                 "",
-                consts::RULE_CODE_AGENT_DOC_STRUCTURE,
-                consts::AGENT_DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
+                consts::RULE_CODE_DOC_STRUCTURE,
+                consts::DOC_STRUCTURE_VIOLATION_H2_UNEXPECTED,
                 format!(
                     "{name} carries H2 heading(s) outside the template: {}; move each to a level-3 heading or remove it",
                     unexpected_h2.join(", ")
