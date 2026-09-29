@@ -41,6 +41,7 @@ pub enum TuiEvent {
     PathBackspace,
     PathConfirm,
     PathUseCurrent,
+    PathCancel,
     ChangeProjectRoot,
     ConfirmAction,
     CancelConfirm,

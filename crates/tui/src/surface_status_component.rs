@@ -2,6 +2,7 @@
 //
 // Displays current status message, selected file name, and violation count.
 // Violation count is colored red when > 0, green when 0.
+// Uses ASCII box-drawing fallback when NO_COLOR is set (#365).
 use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
@@ -9,6 +10,30 @@ use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
 use shared::tui::AppState;
+
+/// Returns the box-drawing character for a vertical separator.
+/// Falls back to "|" when NO_COLOR is set (#365).
+fn vsep() -> &'static str {
+    if theme::no_color() { "|" } else { "\u{2502}" }
+}
+
+/// Returns the warning character shown before violation counts.
+/// Falls back to "!" when NO_COLOR is set (#365).
+fn warn() -> &'static str {
+    if theme::no_color() { "!" } else { "\u{26a0}" }
+}
+
+/// Returns the progress-bar filled block.
+/// Falls back to "=" when NO_COLOR is set (#365).
+fn bar_filled() -> &'static str {
+    if theme::no_color() { "=" } else { "\u{2588}" }
+}
+
+/// Returns the progress-bar empty block.
+/// Falls back to " " when NO_COLOR is set (#365).
+fn bar_empty() -> &'static str {
+    if theme::no_color() { " " } else { "\u{2591}" }
+}
 
 pub struct StatusComponent;
 
@@ -29,7 +54,7 @@ impl StatusComponent {
                 (0, bar_width)
             };
             let empty = bar_width - filled;
-            let bar: String = "\u{2588}".repeat(filled) + &"\u{2591}".repeat(empty);
+            let bar: String = bar_filled().repeat(filled) + &bar_empty().repeat(empty);
 
             let phase_display = if state.scan_phase.is_empty() {
                 "Scanning...".to_string()
@@ -60,9 +85,12 @@ impl StatusComponent {
                         .add_modifier(ratatui::style::Modifier::BOLD),
                 ),
                 Span::styled(progress_detail, Style::default().fg(theme::LABEL)),
-                Span::styled(" \u{2502} ", Style::default().fg(theme::SEPARATOR)),
                 Span::styled(
-                    format!("⚠ {} violations", state.scan_violations),
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::SEPARATOR),
+                ),
+                Span::styled(
+                    format!("{} {} violations", warn(), state.scan_violations),
                     violation_style,
                 ),
             ])
@@ -81,12 +109,18 @@ impl StatusComponent {
             Line::from(vec![
                 Span::styled(" Status: ", Style::default().fg(theme::SEPARATOR)),
                 Span::styled(&state.status_message, Style::default().fg(theme::LABEL)),
-                Span::styled(" \u{2502} ", Style::default().fg(theme::SEPARATOR)),
+                Span::styled(
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::SEPARATOR),
+                ),
                 Span::styled("Selected: ", Style::default().fg(theme::SEPARATOR)),
                 Span::styled(selected_name, Style::default().fg(theme::ACCENT)),
-                Span::styled(" \u{2502} ", Style::default().fg(theme::SEPARATOR)),
                 Span::styled(
-                    format!("⚠ {} viol.", state.violation_count),
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::SEPARATOR),
+                ),
+                Span::styled(
+                    format!("{} {} viol.", warn(), state.violation_count),
                     violation_style,
                 ),
             ])
