@@ -99,7 +99,7 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 ---
 
-## Placement (AES702, AES703, AES704)
+## Placement (AES702, AES703)
 
 A `capabilities_*` file belongs in a **feature folder** — a subdirectory of a member
 directory (`crates/`, `modules/`, `packages/`) that is neither `shared/` nor a surface folder.
@@ -139,7 +139,7 @@ The folder name matches the feature it serves: `crates/calculator/` documents th
 word (`utils`, `common`, `core`) describes no feature and cannot carry a meaningful FRD.
 
 A feature folder carrying capabilities or an agent but neither document is an
-**AES704** violation — the linter names the missing file and you write it. A folder
+**AES702** violation — the linter names the missing file and you write it. A folder
 carrying neither capabilities nor an agent is not a feature and owes no document pair.
 
 ---
