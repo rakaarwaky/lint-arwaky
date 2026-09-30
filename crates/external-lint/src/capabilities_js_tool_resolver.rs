@@ -1,18 +1,13 @@
-// PURPOSE: ExternalLintExecutor — implements ICommandExecutorProtocol,
-// IJsToolResolutionProtocol, and ICargoDirProtocol.
-// Wraps the raw command executor and adds error mapping for scan/adapter operations.
+// PURPOSE: ExternalLintExecutor — implements IJsToolResolutionProtocol.
+// Resolves JS/TS tool commands and working directories via node_modules/.bin.
 
 use std::sync::Arc;
 
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
 use shared::common::taxonomy_message_vo::ComplianceStatus;
 use shared::common::taxonomy_operation_error::LinterOperationError;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
 use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::external_lint::ICargoDirProtocol;
 use shared::external_lint::ICommandExecutorProtocol;
 use shared::external_lint::IJsToolResolutionProtocol;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
@@ -26,57 +21,7 @@ pub struct ExternalLintExecutor {
     executor: Arc<dyn ICommandExecutorProtocol>,
 }
 
-// ─── Block 2: FR-006 command execution with error mapping ─
-
-impl ICommandExecutorProtocol for ExternalLintExecutor {
-    fn execute_command(
-        &self,
-        command: PatternList,
-        working_dir: FilePath,
-        timeout: Option<Timeout>,
-    ) -> anyhow::Result<ResponseData> {
-        self.executor.execute_command(command, working_dir, timeout)
-    }
-
-    fn health_check(&self) -> anyhow::Result<ResponseData> {
-        self.executor.health_check()
-    }
-
-    fn exec_cmd_scan(
-        &self,
-        args: Vec<String>,
-        working_dir: FilePath,
-        timeout_secs: f64,
-        adapter_name: Option<AdapterName>,
-        path: &FilePath,
-    ) -> Result<ResponseData, LinterOperationError> {
-        self.executor
-            .execute_command(
-                PatternList::new(args),
-                working_dir,
-                Some(Timeout::new(timeout_secs)),
-            )
-            .map_err(|e| crate::map_scan_error(e, path.clone(), adapter_name))
-    }
-
-    fn exec_cmd_adapter(
-        &self,
-        args: Vec<String>,
-        working_dir: FilePath,
-        timeout_secs: f64,
-        adapter_name: AdapterName,
-    ) -> Result<ResponseData, LinterOperationError> {
-        self.executor
-            .execute_command(
-                PatternList::new(args),
-                working_dir,
-                Some(Timeout::new(timeout_secs)),
-            )
-            .map_err(|e| crate::map_adapter_error(e, adapter_name))
-    }
-}
-
-// ─── Block 2b: FR-007 JS tool resolution ──────────────────
+// ─── Block 2: FR-007 JS tool resolution ──────────────────
 
 impl IJsToolResolutionProtocol for ExternalLintExecutor {
     fn resolve_js_cmd(
@@ -111,16 +56,10 @@ impl IJsToolResolutionProtocol for ExternalLintExecutor {
                 return Ok(ComplianceStatus::new(false));
             }
         };
-        let response = self.exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool.value()))?;
+        let response =
+            self.executor
+                .exec_cmd_adapter(cmd, wd, 60.0, AdapterName::raw(tool.value()))?;
         Ok(ComplianceStatus::new(response.returncode == 0))
-    }
-}
-
-// ─── Block 2c: FR-008 cargo working directory resolution ──
-
-impl ICargoDirProtocol for ExternalLintExecutor {
-    fn resolve_cargo_working_dir(&self, path: &FilePath) -> FilePath {
-        self.tool_resolution.resolve_cargo_working_dir(path)
     }
 }
 

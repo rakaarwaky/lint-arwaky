@@ -272,11 +272,10 @@ fn stdio_client_implements_command_executor_protocol() {
 
 #[test]
 fn external_lint_executor_implements_protocol() {
-    let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockFilesystem::new()),
-        Arc::new(MockFilesystem::new()),
-    );
+    let executor =
+        external_lint_lint_arwaky::capabilities_command_executor::ExternalLintExecutor::new(
+            Arc::new(MockCmdExecutor),
+        );
     let _dyn_exec: &dyn ICommandExecutorProtocol = &executor;
     // verify callable methods
     let path = FilePath::new("/tmp".to_string()).unwrap();
@@ -335,11 +334,10 @@ fn orchestrator_implements_aggregate_protocol() {
 #[test]
 fn external_lint_executor_implements_cargo_dir_protocol() {
     use shared::external_lint::ICargoDirProtocol;
-    let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockFilesystem::new()),
-        Arc::new(MockFilesystem::new()),
-    );
+    let executor =
+        external_lint_lint_arwaky::capabilities_cargo_dir_resolver::ExternalLintExecutor::new(
+            Arc::new(MockFilesystem::new()),
+        );
     let _dyn: &dyn ICargoDirProtocol = &executor;
     let wd = _dyn.resolve_cargo_working_dir(&FilePath::new("/tmp".to_string()).unwrap());
     assert!(!wd.value().is_empty());
@@ -392,11 +390,12 @@ fn output_normalizer_implements_protocol() {
 #[test]
 fn external_lint_executor_implements_js_resolution_protocol() {
     use shared::external_lint::IJsToolResolutionProtocol;
-    let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockFilesystem::new()),
-        Arc::new(MockFilesystem::new()),
-    );
+    let executor =
+        external_lint_lint_arwaky::capabilities_js_tool_resolver::ExternalLintExecutor::new(
+            Arc::new(MockCmdExecutor),
+            Arc::new(MockFilesystem::new()),
+            Arc::new(MockFilesystem::new()),
+        );
     let _dyn: &dyn IJsToolResolutionProtocol = &executor;
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let tool = shared::common::taxonomy_tool_name_vo::ToolName::new("eslint");

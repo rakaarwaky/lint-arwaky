@@ -47,9 +47,10 @@ pub(crate) fn map_adapter_error(
 }
 
 pub mod agent_external_lint_orchestrator;
-pub mod capabilities_external_lint_executor;
-pub use capabilities_external_lint_executor::ExternalLintExecutor;
+pub mod capabilities_cargo_dir_resolver;
+pub mod capabilities_command_executor;
 pub mod capabilities_external_lint_selector;
+pub mod capabilities_js_tool_resolver;
 pub mod capabilities_language_detector;
 pub use capabilities_language_detector::LanguageDetector;
 pub mod capabilities_output_normalizer;

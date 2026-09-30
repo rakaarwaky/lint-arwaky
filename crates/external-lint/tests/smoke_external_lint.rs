@@ -209,11 +209,10 @@ fn smoke_all_adapters_created_quickly() {
 #[test]
 fn smoke_external_lint_executor_creation() {
     let start = Instant::now();
-    let executor = external_lint_lint_arwaky::ExternalLintExecutor::new(
-        Arc::new(MockCmdExecutor),
-        Arc::new(MockFilesystem::new()),
-        Arc::new(MockFilesystem::new()),
-    );
+    let executor =
+        external_lint_lint_arwaky::capabilities_command_executor::ExternalLintExecutor::new(
+            Arc::new(MockCmdExecutor),
+        );
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let _ = executor.exec_cmd_adapter(
         vec!["echo".into()],
