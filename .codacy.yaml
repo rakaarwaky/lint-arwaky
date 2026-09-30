@@ -9,4 +9,3 @@ exclude_paths:
 - "scripts/**"
 - "tools/**"
 - "CONTRIBUTING.md"
-- ".agents/plans/**"
