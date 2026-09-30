@@ -38,12 +38,7 @@ credentials.json
 serviceAccountKey
 .zed/settings.json
 .archive/
-.agents/finding
 .kilo/
-.agents/reports
-.agents/plans
-.agents/graph-loop/
-.agents/state/
 .worktrees
 .qwen-web/
 .commandcode
@@ -66,5 +61,7 @@ serviceAccountKey
 !**/.repowise/bot.yaml
 !**/.repowise/health-rules.json
 
-# AI agent skill packs (embedded at build time; regenerated via tools/regenerate_skills.py)
+# AI agent working directory — plans, findings, and installed skill packs are all
+# local-only. The shippable skill pack lives in crates/skills/ (see
+# crates/shared/build.rs), not here.
 .agents/
