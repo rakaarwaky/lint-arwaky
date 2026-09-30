@@ -1,6 +1,6 @@
 # PRD — Lint Arwaky
 
-> Product Requirements. Describes WHAT this project does and WHY. Real condition lives in [BACKLOG.md](BACKLOG.md).
+> Product Requirements. Describes WHAT this project does and WHY. Real condition lives in [ROADMAP.md](ROADMAP.md).
 
 ## Problem Statement
 
@@ -11,7 +11,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
 | # | Goal | Measurement | Target |
 |---|------|-------------|--------|
 | 1 | Multi-language linting in a single pass | `scan` on mixed-language workspace | violations from all 3 languages |
-| 2 | 27 AES rules enforced across 6 groups | `workspaces-bad` scan | all 27 rule codes produce violations per supported language |
+| 2 | 32 AES rules enforced across 7 groups | `workspaces-bad` scan | every applicable rule code produces violations per supported language |
 | 3 | MCP server with 5 tools, full CLI parity | `execute_command` on every CLI command | all commands reachable |
 | 4 | Self-auditing | `lint-arwaky-cli check .` on this repo | 0 violations |
 
@@ -23,7 +23,7 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 ## Scope
 
-- **In scope**: CLI binary, MCP server, TUI, 27 AES rules across six groups, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
+- **In scope**: CLI binary, MCP server, TUI, 32 AES rules across seven groups, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
 - **Out of scope**: IDE plugins, web dashboard, cloud SaaS, non-Rust implementation, structural/multi-file semantic refactors in auto-fix.
 
 ## Product Decisions (locked)
@@ -51,18 +51,18 @@ Software projects accumulate quality debt silently. Developers lack a single too
 
 MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 
-## AES Rule Summary (29 Rules)
+## AES Rule Summary (32 Rules)
 
-Six groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), and **Folder Structure** (AES701–705, 5). Full rule definitions: [RULES_AES.md](RULES_AES.md).
+Seven groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), **Doc** (AES601–605, 5), and **Structure** (AES701–703, 3). The `scan`/`check` command runs the six code linters plus structure; **Doc** rules are audited over the document chain via the `docs` command. Full rule definitions: [RULES_AES.md](RULES_AES.md).
 
 ## Feature Requirements (Prioritized)
 
-> Real condition for each feature lives in [BACKLOG.md](BACKLOG.md). This section is specification only.
+> Real condition for each feature lives in [ROADMAP.md](ROADMAP.md). This section is specification only.
 
 ### P0 — Must Have
 
 - Multi-language scanning (Rust, Python, JS/TS). Acceptance: `scan` on mixed-language workspace returns violations from all three.
-- 27 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for all 27 rule codes in each supported language.
+- 32 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for every applicable code-level rule in each supported language; doc rules are audited over the document chain.
 - CLI with `check`, `scan`, `fix`, `ci` commands. Acceptance: each exits with the correct code from the contract above.
 - MCP server with 5 tools, full execute parity. Acceptance: every CLI command is reachable via `execute_command`.
 - Self-auditing capability. Acceptance: `lint-arwaky-cli check .` on this repo reports 0 violations.
@@ -109,4 +109,4 @@ Crate responsibilities are listed in [AGENTS.md](AGENTS.md#workspace-packages-st
 
 ## Reference
 
-- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Testing: [TEST.md](TEST.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Backlog: [BACKLOG.md](BACKLOG.md)
+- Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Testing: [TEST.md](TEST.md) · Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · Roadmap: [ROADMAP.md](ROADMAP.md)
