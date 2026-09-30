@@ -30,44 +30,31 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 
 ## Available Scripts/Commands
 
-| Command | Description |
-|---------|-------------|
-| `scan` / `check` [path] | Run all 6 linters |
-| `naming` / `import` / `quality` / `role` / `orphan` [path] | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506) |
-| `external` [path] | External linters (Clippy, Ruff, ESLint, tool-native codes) |
-| `fix` [path] | Apply safe fixes (`--dry-run` previews) |
-| `ci` [path] | CI mode with exit codes (`--threshold <n>`) |
-| `docs` [path] | Audit document invariants (AES601–AES605) |
-| `watch` [path] | Continuous linting on file changes |
-| `doctor` / `security` / `dependencies` [path] | Toolchain diagnostics, cargo-audit scan, dependency report |
-| `install-hook` / `uninstall-hook` | Git pre-commit hook |
-| `init` / `install` / `mcp-config` / `config-show` | Setup and config |
-| `version` / `adapters` | Info |
-| `skill list` | List embedded AES skill documentation |
-| `skill read <name>` | Print a skill's SKILL.md (`--with-references` adds language HOW-TOs) |
 
-Exit codes: `0` Ok · `1` policy fail · `2` runtime error · `3` prerequisite missing.
-
-### TUI
-
-An interactive terminal UI with file browser, lint results preview, search, and keyboard-driven lint actions.
-
-```bash
-lint-arwaky-tui              # start TUI
-NO_COLOR=1 lint-arwaky-tui   # ASCII fallback for light terminals
-```
+| Command                                                      | Description                                                             |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `scan` / `check` \[path\]                                    | Run all 6 linters                                                       |
+| `naming` / `import` / `quality` / `role` / `orphan` \[path\] | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506) |
+| `external` \[path\]                                          | External linters (Clippy, Ruff, ESLint, tool-native codes)              |
+| `fix` \[path\]                                               | Apply safe fixes (`--dry-run` previews)                                 |
+| `ci` \[path\]                                                | CI mode with exit codes (`--threshold <n>`)                             |
+| `docs` \[path\]                                              | Audit document invariants (AES601–AES605)                               |
+| `watch` \[path\]                                             | Continuous linting on file changes                                      |
+| `doctor` / `security` / `dependencies` \[path\]              | Toolchain diagnostics, cargo-audit scan, dependency report              |
+| `install-hook` / `uninstall-hook`                            | Git pre-commit hook                                                     |
+| `init` / `install` / `mcp-config` / `config-show`            | Setup and config                                                        |
+| `version` / `adapters`                                       | Info                                                                    |
+| `skill list`                                                 | List embedded AES skill documentation                                   |
+| `skill read <name>`                                          | Print a skill's SKILL.md (`--with-references` adds language HOW-TOs)    |
+| `lint-arwaky-tui`                                            | Start TUI                                                            |
 
 Key bindings: `c` check, `s` scan, `f` fix dry-run, `F` fix live (gated), `/` search, `?` help overlay. Press `r` to change project root. Destructive actions (`F`, `H`, `U`) require explicit confirmation.
-
-## AES Rules (29)
-
-Six groups: **Naming** AES101–102, **Import** AES201–205, **Quality** AES301–305, **Role** AES401–406, **Orphan** AES501–506, and **Folder Structure** AES701–705. Full definitions: [RULES_AES.md](RULES_AES.md). External linter results use tool-native codes (e.g. `clippy::needless_return`) and are reported alongside the 29 AES rules.
 
 ## Configuration
 
 YAML with a 5-level priority chain: project root `lint_arwaky.config.yaml` → parent dirs (3 levels) → XDG user `~/.config/lint-arwaky/` → XDG system `/etc/xdg/lint-arwaky/` → embedded defaults. Generate with `lint-arwaky-cli init`; inspect with `config-show`.
 
-## MCP Server
+### MCP Server
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server with full CLI parity and 5 tools: `execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`.
 
@@ -78,7 +65,7 @@ lint-arwaky-cli mcp-config --client claude   # print client config
 
 See [DEPLOY.md](DEPLOY.md) for client setup.
 
-## Integrate as a CI Gate
+### Integrate as a CI Gate
 
 Lint Arwaky drops into any Rust/Python/TS project. Structure code in `crates/`, `packages/`, `modules/`, then:
 
@@ -94,9 +81,9 @@ Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make i
 
 7-layer Agentic Engineering System: taxonomy → contract → capabilities → utility → agent → surface → root. Every file is named `layer_concern_role` and dependencies flow down only. Full spec: [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Performance
+### Performance
 
-1,000 files < 5s; 10,000 files < 15s (full pipeline). File discovery < 500 ms; parallel AST parse < 2 s. tree-sitter for all languages, rayon-parallel, no async runtime.
+1,000 files &lt; 5s; 10,000 files &lt; 15s (full pipeline). File discovery &lt; 500 ms; parallel AST parse &lt; 2 s. tree-sitter for all languages, rayon-parallel, no async runtime.
 
 ## Testing
 
