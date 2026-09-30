@@ -1,5 +1,5 @@
 // Benchmarks for git-hooks — hook script generation.
-use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
 use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
 use shared::common::FilePath;

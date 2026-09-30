@@ -73,11 +73,6 @@ fn config_read_contract_is_a_trait() {
 }
 
 #[test]
-fn config_language_contract_is_a_trait() {
-    fn assert_language_trait<T: ?Sized>() {}
-}
-
-#[test]
 fn workspace_detect_contract_is_a_trait() {
     fn assert_detect_trait<T: ?Sized>() {}
     assert_detect_trait::<dyn IWorkspaceMembersProtocol>();
@@ -99,16 +94,6 @@ fn config_parse_contract_is_a_trait() {
 fn config_validate_contract_is_a_trait() {
     fn assert_validate_trait<T: ?Sized>() {}
     assert_validate_trait::<dyn IConfigMergeProtocol>();
-}
-
-#[test]
-fn config_cache_contract_is_a_trait() {
-    fn assert_cache_trait<T: ?Sized>() {}
-}
-
-#[test]
-fn config_ignored_paths_contract_is_a_trait() {
-    fn assert_ignored_paths_trait<T: ?Sized>() {}
 }
 
 #[test]

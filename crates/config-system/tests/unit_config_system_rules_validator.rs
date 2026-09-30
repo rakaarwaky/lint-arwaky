@@ -3,7 +3,7 @@ use shared::common::AdapterName;
 use shared::common::{Count, Score};
 use shared::config_system::Thresholds;
 use shared::config_system::taxonomy_config_system_vo::{
-    AdapterEntry, AdapterStatus, ProjectConfig, ValidationResult,
+    AdapterEntry, AdapterStatus, ProjectConfig,
 };
 use shared::config_system::utility_config_parser::{is_adapter_enabled, validate_thresholds};
 

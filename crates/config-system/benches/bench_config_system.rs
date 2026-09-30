@@ -6,13 +6,12 @@ use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_m
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ConfigRequest;
-use shared::config_system::contract_config_protocol::IConfigMergeProtocol;
 use shared::config_system::contract_config_protocol::IWorkspaceMembersProtocol;
 use shared::config_system::taxonomy_config_system_vo::{
     AdapterEntry, AdapterStatus, ProjectConfig,
 };
 use shared::config_system::utility_config_parser::parse_config_yaml;
-use shared::config_system::utility_config_parser::{is_adapter_enabled, validate_thresholds};
+use shared::config_system::utility_config_parser::validate_thresholds;
 use std::fs;
 use tempfile::TempDir;
 
@@ -75,9 +74,7 @@ fn bench_validate_thresholds(c: &mut Criterion) {
                     .collect(),
                 ..Default::default()
             };
-            let _ = is_adapter_enabled;
-            let _ = validate_thresholds;
-            b.iter(|| std::hint::black_box(validator.validate_thresholds(&config)))
+            b.iter(|| std::hint::black_box(validate_thresholds(&config)))
         });
     }
     group.finish();

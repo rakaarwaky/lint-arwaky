@@ -299,5 +299,5 @@ fn load_config_sync_finds_rust_config_from_deep_crate_file() {
 #[test]
 fn parser_accessor_returns_same_instance() {
     let sut = make_orchestrator();
-    assert!(Arc::ptr_eq(&sut.parser(), &sut.parser()));
+    assert!(Arc::ptr_eq(sut.parser(), sut.parser()));
 }
