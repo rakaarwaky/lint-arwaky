@@ -89,10 +89,9 @@ run_gate "Rust Format" cargo fmt --all -- --check &
 wait_and_report $!
 echo "Phase 1 duration: $((SECONDS - ph1_start))s"
 
-# Skill markdown has a single source of truth at `crates/skills/`.
-# `crates/shared/skills/` is a gitignored staging dir that `build.rs` copies
-# from that source before the tarball is packaged, so there is no second copy
-# to keep in sync.
+# Skill markdown has a single source of truth at `crates/shared/skills/`.
+# The shared crate packages that directory directly and copies it to OUT_DIR
+# at build time for the generated `include_str!` calls.
 
 # ─── Phase 2: Build + Clippy (single compilation) ─────────
 # clippy builds all targets in debug, then build binary (instant)

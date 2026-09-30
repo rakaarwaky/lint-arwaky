@@ -488,15 +488,6 @@ if $PUBLISH; then
       fi
     done
 
-    # Stage skills into the shared crate's packaging dir (gitignored; shipped
-    # via `[package] include = ["skills/**"]` so crates.io consumers keep the
-    # embedded skill markdown)
-    if [ -d "crates/skills" ] && [ -d "crates/shared" ]; then
-      rm -rf "crates/shared/skills"
-      cp -r "crates/skills" "crates/shared/skills"
-      info "Staged crates/skills -> crates/shared/skills for packaging"
-    fi
-
     # Crates in dependency order (leaf → root)
     PUBLISH_CRATES=(
       "shared-lint-arwaky"
@@ -542,10 +533,9 @@ if $PUBLISH; then
       warn "Some crates failed to publish (check output above)"
     fi
 
-    # Cleanup: remove copied config files and staged skills from shared crate
+    # Cleanup copied config files from the shared crate.
     rm -f "$SHARED_CONFIG_DIR"/lint_arwaky.config.*.yaml
-    rm -rf "crates/shared/skills"
-    info "Cleaned up copied config files and staged skills"
+    info "Cleaned up copied config files"
   fi
 fi
 

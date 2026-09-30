@@ -60,28 +60,18 @@ fn stage_config(manifest_dir: &Path, out_dir: &Path) {
 /// `include_str!` sites in `taxonomy_project_setup_constant.rs` resolve at compile
 /// time.
 ///
-/// In a workspace build the source of truth is
-/// `../../crates/skills/` (from the shared crate root, two levels up gets to
-/// the workspace root, then into `crates/skills/`). In a published tarball
-/// build the source is `<manifest>/skills/` (staged there by the preceding
-/// workspace build and packaged via `[package] include`).
-///
-/// Neither case is fatal: a binary without embedded skills still compiles;
-/// init-time skill installation simply yields an empty catalog.
+/// The source of truth is `<manifest>/skills/` in both workspace builds and
+/// published crate builds. `[package] include` keeps the directory in the
+/// crates.io tarball.
 fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
-    let skills_src = if manifest_dir.join("../../crates/skills").is_dir() {
-        manifest_dir.join("../../crates/skills")
-    } else if manifest_dir.join("skills").is_dir() {
-        manifest_dir.join("skills")
-    } else {
+    let skills_src = manifest_dir.join("skills");
+    if !skills_src.is_dir() {
         eprintln!(
-            "Skills directory not found. Skipping embedding: neither \
-             ../../crates/skills/ nor skills/ exists under {}",
-            manifest_dir.display()
+            "Skills directory not found at {}. Check that skills/ is in the crate root.",
+            skills_src.display()
         );
-        println!("cargo:warning=skills directory missing — EMBEDDED_SKILLS will be empty");
-        return;
-    };
+        std::process::exit(1);
+    }
 
     let skills_dst = out_dir.join("skills");
     if let Err(e) = fs::create_dir_all(&skills_dst) {
@@ -90,7 +80,7 @@ fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
     }
     copy_dir_recursive(&skills_src, &skills_dst);
 
-    println!("cargo:rerun-if-changed=../../crates/skills");
+    println!("cargo:rerun-if-changed=skills");
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) {

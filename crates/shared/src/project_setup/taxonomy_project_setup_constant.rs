@@ -7,10 +7,9 @@ use crate::project_setup::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// plus optional language-specific `reference(s)/<HOW-TO-*.md>` files
 /// that are installed only when that language is detected.
 ///
-/// The markdown source of truth lives in `crates/skills/` at the workspace
-/// root. `build.rs` stages it into OUT_DIR so `include_str!` picks up
-/// changes at compile time; the same staging copy is shipped in the
-/// published tarball via `[package] include` in Cargo.toml.
+/// The markdown source of truth lives in `crates/shared/skills/`. `build.rs`
+/// copies it into OUT_DIR so `include_str!` picks up changes at compile time;
+/// `[package] include` ships the same source in the published crate.
 /// Regenerate this constant with `python3 tools/regenerate_skills.py` after
 /// adding, removing, or renaming a skill file.
 pub const EMBEDDED_SKILLS_COUNT: usize = 56;

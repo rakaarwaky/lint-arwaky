@@ -6,9 +6,8 @@ description = "Foundation crate: cross-cutting taxonomy (`_vo`, `_entity`, `_eve
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 publish = true
-# `crates/shared/skills/` is gitignored and auto-staged by build.rs from the
-# workspace source of truth `crates/skills/`. `include` re-adds it to the
-# packaged tarball so crates.io consumers keep the embedded skill markdown.
+# Skill markdown is stored beside the shared crate and included in the
+# packaged tarball so crates.io consumers keep the embedded skill content.
 include = ["src/**", "config/**", "skills/**", "benches/**", "tests/**", "build.rs", "Cargo.toml"]
 
 [lints]

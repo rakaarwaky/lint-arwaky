@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Analyze AES contract protocol files against the one-trait-one-method rule.
 
-Rule (from crates/skills/aes-contract/references/HOW-TO-MAKE-RUST-CONTRACT.md):
+Rule (from crates/shared/skills/aes-contract/references/HOW-TO-MAKE-RUST-CONTRACT.md):
   A `_protocol` file must declare exactly ONE pub trait with exactly ONE method.
   Extra methods belong in their own protocol file.
 
