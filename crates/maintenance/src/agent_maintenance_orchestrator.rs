@@ -5,7 +5,6 @@ use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
 use shared::maintenance::contract_maintenance_protocol::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol, IToolUpdateProtocol,
-    IToolchainDiagnosticProtocol,
 };
 use shared::maintenance::taxonomy_maintenance_request::MaintenanceRequest;
 use shared::maintenance::taxonomy_maintenance_response::MaintenanceResponse;
@@ -19,10 +18,9 @@ use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
-/// One injected seam per maintenance FR; each of the nine capability checkers
+/// One injected seam per maintenance FR; each of the eight capability checkers
 /// supplies its own protocol implementation.
 pub struct MaintenanceDeps {
-    pub toolchain: Arc<dyn IToolchainDiagnosticProtocol>,
     pub doctor: Arc<dyn IDoctorProtocol>,
     pub stats: Arc<dyn IProjectStatsProtocol>,
     pub clean: Arc<dyn ICacheCleanupProtocol>,
@@ -34,7 +32,6 @@ pub struct MaintenanceDeps {
 }
 
 pub struct MaintenanceCommandsOrchestrator {
-    toolchain: Arc<dyn IToolchainDiagnosticProtocol>,
     doctor: Arc<dyn IDoctorProtocol>,
     stats: Arc<dyn IProjectStatsProtocol>,
     clean: Arc<dyn ICacheCleanupProtocol>,
@@ -93,7 +90,6 @@ impl IMaintenanceAggregate for MaintenanceCommandsOrchestrator {
 impl MaintenanceCommandsOrchestrator {
     pub fn new(deps: MaintenanceDeps) -> Self {
         Self {
-            toolchain: deps.toolchain,
             doctor: deps.doctor,
             stats: deps.stats,
             clean: deps.clean,
@@ -127,8 +123,10 @@ impl MaintenanceCommandsOrchestrator {
 
     pub fn cancel(&self, _job_id: JobId) {}
 
+    /// Served by the same doctor seam: toolchain diagnostics are the doctor's
+    /// own input, so both verbs share one capability implementation.
     pub fn diagnose_toolchain(&self) -> ToolchainDiagnostics {
-        self.toolchain.diagnose_toolchain()
+        self.doctor.diagnose_toolchain()
     }
 
     pub fn health_check(&self) -> HealthCheckResult {

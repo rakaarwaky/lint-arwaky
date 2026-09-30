@@ -3,11 +3,11 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-09-29
+Last Updated: 2026-09-30
 
 ## Current Condition
 
-- Done: `cargo test -p maintenance-lint-arwaky --lib --tests` → 45 passed, 0 failures at `ca070e66` (2026-09-29). Per-scenario evidence below.
+- Done: `cargo test -p maintenance-lint-arwaky --lib --tests` → 54 passed, 0 failures at `c23e9c35` (2026-09-30). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
 - Next Action: Re-run `cargo test -p maintenance-lint-arwaky --lib --tests` after any code change to this crate
@@ -16,15 +16,14 @@ Last Updated: 2026-09-29
 
 | ID | Priority | State | Health | Dependencies | Next Action | Updated |
 |---|---:|---|---|---|---|---|
-| MAIN-01 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-02 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-03 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-04 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-05 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-06 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-07 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-08 | P0 | Done | On Track | None | — | 2026-09-29  |
-| MAIN-09 | P1 | Done | On Track | None | — | 2026-09-29  |
+| MAIN-01 | P0 | Done | On Track | None | — | 2026-09-30 |
+| MAIN-02 | P0 | Done | On Track | None | — | 2026-09-30 |
+| MAIN-03 | P0 | Done | On Track | None | — | 2026-09-30 |
+| MAIN-04 | P0 | Done | On Track | None | — | 2026-09-30 |
+| MAIN-05 | P0 | Done | On Track | None | — | 2026-09-30 |
+| MAIN-06 | P0 | Done | On Track | None | — | 2026-09-30 |
+| MAIN-07 | P0 | Done | On Track | None | — | 2026-09-30 |
+| MAIN-08 | P0 | Done | On Track | None | — | 2026-09-30 |
 
 ## Scenario Evidence
 
@@ -87,7 +86,6 @@ None
 ## Change Log
 
 | Date | Change | By |
-|---|---|---|
-| 2026-09-17 | Initial backlog created from FRD test-scenario mapping | @raka |
+|---|---:|---|---|
+| 2026-09-30 | Merged FR-Maintenance-005 (Diagnose Toolchain) into FR-Maintenance-001; renumbered FRs 006-009 to 005-008; removed ToolchainDiagnosticChecker; unified IDoctorProtocol implementation | @raka |
 | 2026-09-27 | Added FR-MAINTENANCE-009: self-update — GitHub release query + binary install | @raka |
-| 2026-09-29 | Removed IToolExecutorProtocol (moved to utility); split capabilities; verified 45 tests at ca070e66 | @raka |

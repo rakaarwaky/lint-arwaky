@@ -17,7 +17,7 @@ GitHub releases, security scanning, dependency reporting, and project
 statistics. It is the ops-focused crate — it handles environment health,
 not code quality analysis.
 
-The crate follows the AES 7-layer architecture. Each of the nine business
+The crate follows the AES 7-layer architecture. Each of the eight business
 capabilities below corresponds to one `_protocol` trait in `shared/maintenance`
 and one implementation in `capabilities_maintenance_checker`.
 
@@ -46,17 +46,29 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-Maintenance-001: Environment Health Check (doctor)
+### FR-Maintenance-001: Environment Health Check (doctor + toolchain)
 
-- **Description**: Build a health status report by combining toolchain
-  diagnostics with adapter status information.
+- **Description**: Report toolchain diagnostics — the installation status and
+  version of every external tool — and build an environment health report
+  from them.
 - **Input**: None (operates on current working directory).
-- **Output**: Doctor result containing language versions, adapter statuses
-  (map of tool name to status), and overall health status.
+- **Output**: Toolchain diagnostics containing rust tools, python tools, js
+  tools, vcs tools (each a list of tool statuses) plus the binary path, and a
+  doctor result containing language versions, adapter statuses (map of tool
+  name to status), and overall health status.
 - **Business Rules**:
 
-  - Calls `diagnose_toolchain` to obtain per-tool status (OK/WARN/FAIL)
-    and version strings for Rust, Python, JS, and VCS tools.
+  - Rust tools: `rustc`, `cargo`, `clippy` (via `cargo clippy`), `rustfmt`
+    — all required.
+  - Python tools: `python3`, `ruff`, `mypy` — all optional.
+  - JS tools: `node`, `eslint` — all optional.
+  - VCS tools: `git` (required).
+  - Tool status: `OK` (found), `WARN` (optional, not found), `FAIL`
+    (required, not found).
+  - Version extracted from first line of stdout. Clippy is checked via
+    `cargo clippy --version` and reported as "clippy".
+  - The doctor report reads the same toolchain diagnostics this capability
+    produces and never re-runs the tool checks.
   - Extracts rust, python, and node version from the first tool in each
     category.
   - Builds adapter statuses map from all tool statuses.
@@ -66,8 +78,11 @@ flowchart TD
 
   - No tools installed → health is false, adapter statuses all show FAIL.
   - Partial toolchain (e.g., Python only) → health is false.
-- **Error Handling**: No error thrown; all information is embedded in the
-  result structure.
+  - Tool installed but version command produces no output → version set to
+    empty string.
+  - Multiple versions installed → only the first found is reported.
+- **Error Handling**: No error thrown; failed tool checks return a status
+  without crashing, and all information is embedded in the result structures.
 
 ---
 
@@ -135,34 +150,7 @@ flowchart TD
 
 ---
 
-### FR-Maintenance-005: Diagnose Toolchain
-
-- **Description**: Check installation status and version of Rust, Python,
-  JavaScript, and VCS tools.
-- **Input**: None.
-- **Output**: Toolchain diagnostics containing rust tools, python tools,
-  js tools, vcs tools (each a list of tool statuses), and binary path.
-- **Business Rules**:
-
-  - Rust tools: `rustc`, `cargo`, `clippy` (via `cargo clippy`), `rustfmt`
-    — all required.
-  - Python tools: `python3`, `ruff`, `mypy` — all optional.
-  - JS tools: `node`, `eslint` — all optional.
-  - VCS tools: `git` (required).
-  - Tool status: `OK` (found), `WARN` (optional, not found), `FAIL`
-    (required, not found).
-  - Version extracted from first line of stdout.
-  - Clippy is checked via `cargo clippy --version` and reported as "clippy".
-- **Edge Cases**:
-
-  - Tool installed but version command produces no output → version set to
-    empty string.
-  - Multiple versions installed → only the first found is reported.
-- **Error Handling**: Failed tool checks return status without crashing.
-
----
-
-### FR-Maintenance-006: Security Scan
+### FR-Maintenance-005: Security Scan
 
 - **Description**: Run dependency vulnerability scanning using cargo-audit
   for Rust projects.
@@ -189,7 +177,7 @@ flowchart TD
 
 ---
 
-### FR-Maintenance-007: Dependency Report
+### FR-Maintenance-006: Dependency Report
 
 - **Description**: Parse Rust project dependency files and list direct and
   transitive dependencies.
@@ -212,7 +200,7 @@ flowchart TD
 
 ---
 
-### FR-Maintenance-008: Adapter Health Check
+### FR-Maintenance-007: Adapter Health Check
 
 - **Description**: Check availability of all 9 linter adapters and return
   their installation status.
@@ -246,7 +234,7 @@ flowchart TD
 
 ---
 
-### FR-Maintenance-009: Self-Update (binary)
+### FR-Maintenance-008: Self-Update (binary)
 
 - **Description**: Query the latest release from GitHub and install the
   `lint-arwaky-cli` binary when a newer version is available.
@@ -387,7 +375,7 @@ FRD Ref: FR-Maintenance-004
 
 ### SCEN-005 — Diagnose
 
-FRD Ref: FR-Maintenance-005
+FRD Ref: FR-Maintenance-001
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -398,7 +386,7 @@ FRD Ref: FR-Maintenance-005
 
 ### SCEN-006 — Security
 
-FRD Ref: FR-Maintenance-006
+FRD Ref: FR-Maintenance-005
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -409,7 +397,7 @@ FRD Ref: FR-Maintenance-006
 
 ### SCEN-007 — Dependencies
 
-FRD Ref: FR-Maintenance-007
+FRD Ref: FR-Maintenance-006
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -419,7 +407,7 @@ FRD Ref: FR-Maintenance-007
 
 ### SCEN-008 — Adapter Health Check
 
-FRD Ref: FR-Maintenance-008
+FRD Ref: FR-Maintenance-007
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -429,7 +417,7 @@ FRD Ref: FR-Maintenance-008
 
 ### SCEN-009 — Self-Update
 
-FRD Ref: FR-Maintenance-009
+FRD Ref: FR-Maintenance-008
 
 | # | Scenario | Expected |
 | - | - | - |

@@ -21,8 +21,8 @@ fn container_provides_parser() {
     let _ = common::make_container().parser();
 }
 #[test]
-fn container_provides_validator() {
-    let _ = common::make_container().validator();
+fn container_provides_lister() {
+    let _ = common::make_container().lister();
 }
 
 #[test]
@@ -80,10 +80,10 @@ fn container_parser_parses_yaml() {
 }
 
 #[test]
-fn container_validator_validates_default_config() {
-    let result = common::make_container()
-        .validator()
-        .validate_thresholds(&ProjectConfig::default());
+fn validate_thresholds_allows_valid_config() {
+    use shared::config_system::utility_config_parser::validate_thresholds;
+    let config = ProjectConfig::default();
+    let result = validate_thresholds(&config);
     assert!(result.is_valid);
 }
 
@@ -106,9 +106,8 @@ thresholds:
         .parser()
         .parse_yaml_config(&fp)
         .unwrap();
-    let validation = common::make_container()
-        .validator()
-        .validate_thresholds(&config);
+    use shared::config_system::utility_config_parser::validate_thresholds;
+    let validation = validate_thresholds(&config);
     assert!(validation.is_valid);
     assert_eq!(config.project_name.value, "pipeline-test");
 }

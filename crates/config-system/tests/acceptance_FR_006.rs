@@ -2,15 +2,13 @@
 // Tests threshold validation and adapter enablement per FR-006 spec.
 mod common;
 
-use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use shared::common::AdapterName;
 use shared::common::{Count, Score};
-use shared::config_system::{
-    AdapterEntry, AdapterStatus, IConfigValidateProtocol, ProjectConfig, Thresholds,
-};
+use shared::config_system::utility_config_parser::validate_thresholds;
+use shared::config_system::{AdapterEntry, AdapterStatus, ProjectConfig, Thresholds};
 
-fn make_validator() -> ConfigRulesValidator {
-    ConfigRulesValidator::new()
+fn check(config: &ProjectConfig) -> bool {
+    validate_thresholds(config).is_valid
 }
 
 // FR-006 Scenario 1: Score threshold 50.0 → Valid
@@ -20,7 +18,7 @@ fn us6_score_threshold_50_is_valid() {
         thresholds: Thresholds::new(Score::new(50.0), Count::new(10), Count::new(500)),
         ..Default::default()
     };
-    assert!(make_validator().validate_thresholds(&config).is_valid);
+    assert!(check(&config));
 }
 
 // FR-006 Scenario 2: Score threshold 0.0 → Valid (boundary)
@@ -30,7 +28,7 @@ fn us6_score_threshold_0_is_valid() {
         thresholds: Thresholds::new(Score::new(0.0), Count::new(1), Count::new(1)),
         ..Default::default()
     };
-    assert!(make_validator().validate_thresholds(&config).is_valid);
+    assert!(check(&config));
 }
 
 // FR-006 Scenario 3: Score threshold 100.0 → Valid (boundary)
@@ -40,7 +38,7 @@ fn us6_score_threshold_100_is_valid() {
         thresholds: Thresholds::new(Score::new(100.0), Count::new(1), Count::new(1)),
         ..Default::default()
     };
-    assert!(make_validator().validate_thresholds(&config).is_valid);
+    assert!(check(&config));
 }
 
 // FR-006 Scenario 4: Score threshold -1.0 → Invalid
@@ -50,7 +48,7 @@ fn us6_score_threshold_negative_is_invalid() {
         thresholds: Thresholds::new(Score::new(-1.0), Count::new(10), Count::new(500)),
         ..Default::default()
     };
-    let result = make_validator().validate_thresholds(&config);
+    let result = validate_thresholds(&config);
     assert!(!result.is_valid);
     assert!(result.reason.unwrap().contains("Score threshold"));
 }
@@ -62,7 +60,7 @@ fn us6_score_threshold_above_100_is_invalid() {
         thresholds: Thresholds::new(Score::new(101.0), Count::new(10), Count::new(500)),
         ..Default::default()
     };
-    let result = make_validator().validate_thresholds(&config);
+    let result = validate_thresholds(&config);
     assert!(!result.is_valid);
     assert!(result.reason.unwrap().contains("Score threshold"));
 }
@@ -71,7 +69,12 @@ fn us6_score_threshold_above_100_is_invalid() {
 #[test]
 fn us6_unknown_adapter_defaults_to_enabled() {
     let config = ProjectConfig::default();
-    assert!(make_validator().is_adapter_enabled(&config, &AdapterName::raw("unknown_adapter")));
+    assert!(
+        shared::config_system::utility_config_parser::is_adapter_enabled(
+            &config,
+            &AdapterName::raw("unknown_adapter")
+        )
+    );
 }
 
 // Additional: Complexity threshold zero → Invalid
@@ -81,7 +84,7 @@ fn us6_complexity_zero_is_invalid() {
         thresholds: Thresholds::new(Score::new(80.0), Count::new(0), Count::new(500)),
         ..Default::default()
     };
-    assert!(!make_validator().validate_thresholds(&config).is_valid);
+    assert!(!check(&config));
 }
 
 // Additional: max_file_lines zero → Invalid
@@ -91,7 +94,7 @@ fn us6_max_file_lines_zero_is_invalid() {
         thresholds: Thresholds::new(Score::new(80.0), Count::new(10), Count::new(0)),
         ..Default::default()
     };
-    assert!(!make_validator().validate_thresholds(&config).is_valid);
+    assert!(!check(&config));
 }
 
 // Additional: Multiple invalid thresholds accumulate errors
@@ -101,7 +104,7 @@ fn us6_multiple_invalid_thresholds_accumulate_errors() {
         thresholds: Thresholds::new(Score::new(200.0), Count::new(0), Count::new(-1)),
         ..Default::default()
     };
-    let result = make_validator().validate_thresholds(&config);
+    let result = validate_thresholds(&config);
     assert!(!result.is_valid);
     let reason = result.reason.unwrap();
     assert!(reason.contains("Score threshold"));
@@ -120,5 +123,10 @@ fn us6_adapter_disabled_via_status_field() {
         )],
         ..Default::default()
     };
-    assert!(!make_validator().is_adapter_enabled(&config, &AdapterName::raw("mypy")));
+    assert!(
+        !shared::config_system::utility_config_parser::is_adapter_enabled(
+            &config,
+            &AdapterName::raw("mypy")
+        )
+    );
 }

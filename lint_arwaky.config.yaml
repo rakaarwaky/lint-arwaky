@@ -407,10 +407,7 @@ architecture:
       enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
-      exceptions:
-        - "capabilities_toolchain_diagnostic_checker"
-        - "capabilities_doctor_checker"
-        - "capabilities_adapter_health_checker"
+      exceptions: []
 
     # ─── AES400: Role ───
     AES401:
@@ -428,29 +425,7 @@ architecture:
       scope: ["capabilities"]
       max_functions: 30
       max_impl: 5
-      exceptions:
-        # Pre-existing multi-protocol capabilities that need splitting in a follow-up.
-        # These files implement 2+ contract protocols intentionally (each covers a
-        # distinct FR). AES403 CapabilityMultiProtocol is suppressed while the split
-        # is in progress.
-        - capabilities_fix_processor
-        - capabilities_parser_provider
-        - capabilities_workspace_detector
-        - capabilities_yaml_reader
-        - capabilities_external_lint_executor
-        - capabilities_change_analyzer
-        - capabilities_notify_provider
-        - capabilities_diff_checker
-        - capabilities_hook_adapter
-        - capabilities_hook_manager
-        - capabilities_maintenance_checker
-        - capabilities_setup_processor
-        - capabilities_mandatory_definition_checker
-        - capabilities_json_formatter
-        - capabilities_junit_formatter
-        - capabilities_sarif_formatter
-        - capabilities_text_formatter
-        - capabilities_structure_auditor
+      exceptions: []
 
     AES404:
       enabled: true

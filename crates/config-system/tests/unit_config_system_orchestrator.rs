@@ -5,7 +5,7 @@ use config_system_lint_arwaky::agent_config_orchestrator::{
     ConfigOrchestrator, ConfigOrchestratorDeps,
 };
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
-use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
+// ConfigRulesValidator removed: validation is a shared utility function
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 use shared::common::FilePath;
@@ -21,7 +21,6 @@ fn make_orchestrator() -> ConfigOrchestrator {
         workspace_detector: Arc::new(WorkspaceDetector::new(io.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(io.clone())),
         parser: Arc::new(ConfigParserProvider::new(io.clone())),
-        validator: Arc::new(ConfigRulesValidator::new()),
         filesystem: common::make_fs(),
     })
 }
@@ -298,6 +297,7 @@ fn load_config_sync_finds_rust_config_from_deep_crate_file() {
 }
 
 #[test]
-fn validator_accessor_returns_same_instance() {
-    let _v = make_orchestrator().validator();
+fn parser_accessor_returns_same_instance() {
+    let sut = make_orchestrator();
+    assert!(Arc::ptr_eq(sut.parser(), sut.parser()));
 }

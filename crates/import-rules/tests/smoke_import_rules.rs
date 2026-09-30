@@ -42,12 +42,14 @@ fn minimal_config() -> ArchitectureConfig {
     )
 }
 
-fn make_filesystem() -> (
+type FilesystemDeps = (
     Arc<dyn IFilesystemAggregate>,
     Arc<dyn IFileSystemIOProtocol>,
     Arc<dyn IWorkspaceProtocol>,
     Arc<dyn IParserProtocol>,
-) {
+);
+
+fn make_filesystem() -> FilesystemDeps {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
     (c.orchestrator(), c.io(), c.workspace(), c.parser())
 }

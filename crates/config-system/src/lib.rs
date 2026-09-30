@@ -1,8 +1,6 @@
 // PURPOSE: Module declarations for config-system (orchestrator, validators, providers)
 pub mod agent_config_orchestrator;
 pub use agent_config_orchestrator::ConfigOrchestrator;
-pub mod capabilities_rules_validator;
-pub use capabilities_rules_validator::ConfigRulesValidator;
 pub mod capabilities_workspace_detector;
 pub use capabilities_workspace_detector::WorkspaceDetector;
 pub mod capabilities_parser_provider;

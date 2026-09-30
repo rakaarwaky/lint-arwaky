@@ -546,3 +546,42 @@ pub fn parse_adapter_entries_from_yaml(
         })
         .collect()
 }
+
+/// Whether an adapter should run given a parsed project config.
+/// An adapter absent from the config is enabled by default.
+pub fn is_adapter_enabled(
+    config: &crate::config_system::taxonomy_config_system_vo::ProjectConfig,
+    adapter_name: &crate::common::taxonomy_adapter_name_vo::AdapterName,
+) -> bool {
+    for adapter in &config.adapters {
+        if adapter.name == *adapter_name {
+            return adapter.status
+                == crate::config_system::taxonomy_config_system_vo::AdapterStatus::Enabled;
+        }
+    }
+    true
+}
+
+/// Validate threshold values against schema constraints.
+pub fn validate_thresholds(
+    config: &crate::config_system::taxonomy_config_system_vo::ProjectConfig,
+) -> crate::config_system::taxonomy_config_system_vo::ValidationResult {
+    let t = &config.thresholds;
+    let mut errors = Vec::new();
+
+    if !(0.0..=100.0).contains(&t.score.value) {
+        errors.push("Score threshold must be between 0 and 100.".to_string());
+    }
+    if t.complexity.value <= 0 {
+        errors.push("Complexity threshold must be positive.".to_string());
+    }
+    if t.max_file_lines.value <= 0 {
+        errors.push("max_file_lines threshold must be positive.".to_string());
+    }
+
+    if errors.is_empty() {
+        crate::config_system::taxonomy_config_system_vo::ValidationResult::ok()
+    } else {
+        crate::config_system::taxonomy_config_system_vo::ValidationResult::fail(&errors.join(" | "))
+    }
+}

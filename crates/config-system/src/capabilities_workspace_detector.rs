@@ -1,13 +1,11 @@
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_protocol::IWorkspaceDetectProtocol;
 use shared::config_system::contract_config_protocol::IWorkspaceMembersProtocol;
-use shared::config_system::contract_config_protocol::WorkspaceType;
+use shared::config_system::taxonomy_config_system_vo::WorkspaceType;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 use tracing::warn;
 
-// PURPOSE: WorkspaceDetector — detects workspace type from marker files
-// Maps ConfigLanguage ↔ WorkspaceType and adds discover_workspace_members
+// PURPOSE: WorkspaceDetector — FR-002 Multi-Workspace: detect type, probe workspace, enumerate members
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -17,7 +15,7 @@ pub struct WorkspaceDetector {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IWorkspaceDetectProtocol for WorkspaceDetector {
+impl IWorkspaceMembersProtocol for WorkspaceDetector {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         let path_buf = std::path::PathBuf::from(&path.value);
 
@@ -43,9 +41,7 @@ impl IWorkspaceDetectProtocol for WorkspaceDetector {
                 .is_ok()
         })
     }
-}
 
-impl IWorkspaceMembersProtocol for WorkspaceDetector {
     fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {
         let root_path = std::path::Path::new(&root.value);
         let mut members = Vec::new();
@@ -71,7 +67,7 @@ impl IWorkspaceMembersProtocol for WorkspaceDetector {
             return members;
         }
 
-        // FR-004: If root's parent is a workspace directory, return root as single member
+        // FR-002: If root's parent is a workspace directory, return root as single member
         if let Some(parent) = root_path.parent()
             && let Some(parent_name) = parent.file_name().and_then(|n| n.to_str())
             && matches!(parent_name, "crates" | "packages" | "modules")
@@ -171,12 +167,12 @@ fn has_markers(
     false
 }
 
-/// FR-003: Detect Rust workspace by marker files (Cargo.toml).
+/// FR-002: Detect Rust workspace by marker files (Cargo.toml).
 fn has_rust_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> bool {
     has_markers(path, &["Cargo.toml"], "crates", fs)
 }
 
-/// FR-003: Detect Python workspace by marker files.
+/// FR-002: Detect Python workspace by marker files.
 fn has_python_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> bool {
     has_markers(
         path,
@@ -191,7 +187,7 @@ fn has_python_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) ->
     )
 }
 
-/// FR-003: Detect TypeScript workspace by marker files.
+/// FR-002: Detect TypeScript workspace by marker files.
 fn has_typescript_markers(path: &std::path::Path, fs: &dyn IFileSystemIOProtocol) -> bool {
     has_markers(path, &["package.json", "tsconfig.json"], "packages", fs)
 }

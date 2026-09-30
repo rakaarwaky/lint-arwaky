@@ -15,7 +15,6 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
         ConfigOrchestrator, ConfigOrchestratorDeps,
     };
     use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
-    use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
     use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
     use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
 
@@ -24,7 +23,6 @@ fn make_orchestrator() -> config_system_lint_arwaky::agent_config_orchestrator::
         workspace_detector: Arc::new(WorkspaceDetector::new(io.clone())),
         config_reader: Arc::new(ConfigYamlReader::new(io.clone())),
         parser: Arc::new(ConfigParserProvider::new(io.clone())),
-        validator: Arc::new(ConfigRulesValidator::new()),
         filesystem: common::make_fs(),
     })
 }

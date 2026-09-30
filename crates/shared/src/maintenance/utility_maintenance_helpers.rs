@@ -1,7 +1,7 @@
 // PURPOSE: Stateless helper functions for the maintenance feature.
 // Pure-string and taxonomy-only — no contract or cross-utility imports.
 
-use crate::maintenance::taxonomy_maintenance_vo::ToolStatus;
+use crate::maintenance::taxonomy_maintenance_vo::{ToolStatus, ToolchainDiagnostics};
 use std::process::Command;
 
 /// Accept only a plain version string: optional `v` prefix, dot-separated
@@ -41,6 +41,44 @@ pub fn is_newer_version(candidate: &str, current: &str) -> bool {
     cand.resize(width, 0);
     cur.resize(width, 0);
     cand > cur
+}
+
+/// Assemble the standard toolchain diagnostics: rustc, cargo, clippy, rustfmt,
+/// python3, ruff, mypy, node, eslint, git, plus the current binary path.
+pub fn build_toolchain_diagnostics() -> ToolchainDiagnostics {
+    let rust_tools = vec![
+        check_tool("rustc", &["--version"], true),
+        check_tool("cargo", &["--version"], true),
+    ];
+    let mut clippy_status = check_tool("cargo", &["clippy", "--version"], true);
+    clippy_status.name = "clippy".to_string();
+    let rust_tools = [rust_tools, vec![clippy_status]].concat();
+    let rust_tools = [
+        rust_tools.clone(),
+        vec![check_tool("rustfmt", &["--version"], true)],
+    ]
+    .concat();
+    let python_tools = vec![
+        check_tool("python3", &["--version"], false),
+        check_tool("ruff", &["--version"], false),
+        check_tool("mypy", &["--version"], false),
+    ];
+    let mut js_tools = vec![check_tool("node", &["--version"], false)];
+    js_tools.push(check_tool("eslint", &["--version"], false));
+    let vcs_tools = vec![check_tool("git", &["--version"], true)];
+    // Read-only display of the running binary path in the doctor report; never
+    // used to resolve or exec anything, so there is no untrusted-path exposure.
+    // nosemgrep: rust.lang.security.current-exe.current-exe
+    let binary_path = std::env::current_exe()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_default();
+    ToolchainDiagnostics {
+        rust_tools,
+        python_tools,
+        js_tools,
+        vcs_tools,
+        binary_path,
+    }
 }
 
 /// Execute a tool command and return its status.
