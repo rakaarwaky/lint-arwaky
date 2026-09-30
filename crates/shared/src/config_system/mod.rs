@@ -14,15 +14,8 @@ pub mod utility_config_parser;
 
 // ── Contract traits ──
 pub use contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-pub use contract_config_protocol::IConfigCacheProtocol;
-pub use contract_config_protocol::IConfigIgnoredPathsProtocol;
-pub use contract_config_protocol::IConfigLanguageProtocol;
-pub use contract_config_protocol::IConfigListProtocol;
-pub use contract_config_protocol::IConfigParseProtocol;
+pub use contract_config_protocol::IConfigMergeProtocol;
 pub use contract_config_protocol::IConfigReadProtocol;
-pub use contract_config_protocol::IConfigTomlProtocol;
-pub use contract_config_protocol::IConfigValidateProtocol;
-pub use contract_config_protocol::IWorkspaceDetectProtocol;
 pub use contract_config_protocol::IWorkspaceMembersProtocol;
 pub use taxonomy_config_system_vo::WorkspaceType;
 

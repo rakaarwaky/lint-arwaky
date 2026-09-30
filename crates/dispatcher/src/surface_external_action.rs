@@ -13,7 +13,7 @@ use std::process::Command;
 use std::sync::Arc;
 
 use shared::common::FilePath;
-use shared::config_system::contract_config_protocol::IConfigParseProtocol;
+use shared::config_system::contract_config_protocol::IConfigMergeProtocol;
 use shared::config_system::taxonomy_config_system_vo::AdapterEntry;
 use shared::external_lint::IExternalLintAggregate;
 use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
@@ -30,7 +30,7 @@ pub fn collect_external_direct(
     external_lint: Arc<dyn IExternalLintAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filesystem_io: Arc<dyn IFileSystemIOProtocol>,
-    config_parser: Arc<dyn IConfigParseProtocol>,
+    config_parser: Arc<dyn IConfigMergeProtocol>,
     filter: Option<String>,
     ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
@@ -136,7 +136,7 @@ pub fn filter_outside_member_dirs(
 /// Returns parsed adapter entries if any config file is found, else empty vec.
 fn load_config_entries(
     root_path: &std::path::Path,
-    config_parser: &dyn IConfigParseProtocol,
+    _config_parser: &dyn IConfigMergeProtocol,
     _fs: &dyn IFilesystemAggregate,
     fs_io: &dyn IFileSystemIOProtocol,
 ) -> Vec<AdapterEntry> {
@@ -152,7 +152,7 @@ fn load_config_entries(
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists() {
                 if let Ok(content) = fs_io.read_to_string(&cfg_path) {
-                    let entries = config_parser.parse_adapter_entries_from_yaml(&content.value);
+                    let entries = shared::config_system::utility_config_parser::parse_adapter_entries_from_yaml(&content.value);
                     if !entries.is_empty() {
                         return entries;
                     }

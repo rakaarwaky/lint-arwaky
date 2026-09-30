@@ -11,7 +11,7 @@ use shared::common::Threshold;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::config_system::{
-    IConfigListProtocol, IConfigOrchestratorAggregate, IConfigParseProtocol,
+    IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
 };
 use shared::doc_rules::IDocRunnerAggregate;
 use shared::external_lint::IExternalLintAggregate;
@@ -37,8 +37,8 @@ pub struct McpServerDependencies {
     pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub config_parser: Arc<dyn IConfigParseProtocol>,
-    pub config_reader: Arc<dyn IConfigListProtocol>,
+    pub config_parser: Arc<dyn IConfigMergeProtocol>,
+    pub config_reader: Arc<dyn IConfigReadProtocol>,
     pub external_lint: Arc<dyn IExternalLintAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,

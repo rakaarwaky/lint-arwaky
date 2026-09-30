@@ -5,7 +5,6 @@ use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
 use shared::maintenance::contract_maintenance_protocol::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol, IToolUpdateProtocol,
-    IToolchainDiagnosticProtocol,
 };
 use std::sync::Arc;
 
@@ -26,8 +25,6 @@ impl MaintenanceContainer {
             Arc::new(crate::CacheCleanupChecker::new(io.clone()));
         let update: Arc<dyn IToolUpdateProtocol> =
             Arc::new(crate::ToolUpdateChecker::new(io.clone()));
-        let toolchain: Arc<dyn IToolchainDiagnosticProtocol> =
-            Arc::new(crate::ToolchainDiagnosticChecker::new(io.clone()));
         let security: Arc<dyn ISecurityScanProtocol> =
             Arc::new(crate::SecurityScanChecker::new(io.clone()));
         let deps_report: Arc<dyn IDependencyReportProtocol> =
@@ -38,7 +35,6 @@ impl MaintenanceContainer {
             Arc::new(crate::SelfUpdateChecker::new(io.clone()));
         let orchestrator: Arc<dyn IMaintenanceAggregate> =
             Arc::new(MaintenanceCommandsOrchestrator::new(MaintenanceDeps {
-                toolchain,
                 doctor,
                 stats,
                 clean,

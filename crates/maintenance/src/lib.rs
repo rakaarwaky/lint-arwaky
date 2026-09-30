@@ -7,7 +7,6 @@ pub use shared::maintenance::IProjectStatsProtocol;
 pub use shared::maintenance::ISecurityScanProtocol;
 pub use shared::maintenance::ISelfUpdateProtocol;
 pub use shared::maintenance::IToolUpdateProtocol;
-pub use shared::maintenance::IToolchainDiagnosticProtocol;
 
 pub mod agent_maintenance_orchestrator;
 pub use agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};
@@ -18,8 +17,6 @@ pub mod capabilities_cache_cleanup_checker;
 pub use capabilities_cache_cleanup_checker::CacheCleanupChecker;
 pub mod capabilities_tool_update_checker;
 pub use capabilities_tool_update_checker::ToolUpdateChecker;
-pub mod capabilities_toolchain_diagnostic_checker;
-pub use capabilities_toolchain_diagnostic_checker::ToolchainDiagnosticChecker;
 pub mod capabilities_doctor_checker;
 pub use capabilities_doctor_checker::DoctorChecker;
 pub mod capabilities_adapter_health_checker;

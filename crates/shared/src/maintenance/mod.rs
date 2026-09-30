@@ -21,7 +21,7 @@ pub use contract_maintenance_protocol::IProjectStatsProtocol;
 pub use contract_maintenance_protocol::ISecurityScanProtocol;
 pub use contract_maintenance_protocol::ISelfUpdateProtocol;
 pub use contract_maintenance_protocol::IToolUpdateProtocol;
-pub use contract_maintenance_protocol::IToolchainDiagnosticProtocol;
+
 pub use taxonomy_maintenance_constant::GITHUB_REPO;
 pub use taxonomy_maintenance_request::MaintenanceRequest;
 pub use taxonomy_maintenance_response::MaintenanceResponse;

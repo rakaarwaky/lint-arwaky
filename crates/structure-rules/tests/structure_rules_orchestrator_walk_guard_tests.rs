@@ -46,7 +46,7 @@ fn orchestrator_walk_terminates_on_a_symlink_cycle() {
         "//! orchestrator",
     );
     // Loop back: feature/src/self -> feature
-    symlink(&feature.join("src"), feature.join("src/self")).unwrap();
+    symlink(feature.join("src"), feature.join("src/self")).unwrap();
 
     let findings = audit(root);
     // The orchestrator is directly in src/, so the reverse doc-pair check is
@@ -73,7 +73,7 @@ fn orchestrator_walk_ignores_a_looping_symlink_nested_deeper() {
     // which the walk must not reach.
     fs::create_dir_all(feature.join("src/inner")).unwrap();
     // Loop: inner/self -> src (ancestor), creating a back-edge.
-    symlink(&feature.join("src"), feature.join("src/inner/self")).unwrap();
+    symlink(feature.join("src"), feature.join("src/inner/self")).unwrap();
 
     let findings = audit(root);
     assert!(

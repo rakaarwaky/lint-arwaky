@@ -26,15 +26,12 @@ fn fr_001_all_aggregates_are_send_sync() {
 fn fr_001_all_protocols_are_send_sync() {
     // Config
     assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigReadProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigLanguageProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IWorkspaceDetectProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::config_system::IWorkspaceMembersProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigTomlProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigParseProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigValidateProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigCacheProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigIgnoredPathsProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigListProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IWorkspaceMembersProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigMergeProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigMergeProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigMergeProtocol>();
+    assert_send_sync::<dyn shared_lint_arwaky::config_system::IConfigReadProtocol>();
     // Filesystem
     assert_send_sync::<dyn shared_lint_arwaky::filesystem::IFileSystemIOProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::filesystem::IGraphProtocol>();
@@ -86,7 +83,6 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::ICacheCleanupProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolUpdateProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolchainDiagnosticProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::ISecurityScanProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IDependencyReportProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IAdapterHealthProtocol>();
@@ -147,15 +143,12 @@ fn fr_003_all_contract_traits_are_object_safe() {
     fn assert_trait<T: ?Sized>() {}
     // Config — 10 protocols + 1 aggregate = 11 contract seams
     assert_trait::<dyn shared_lint_arwaky::config_system::IConfigReadProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigLanguageProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceDetectProtocol>();
     assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceMembersProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigTomlProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigParseProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigValidateProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigCacheProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigIgnoredPathsProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigListProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceMembersProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigMergeProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigMergeProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigMergeProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigReadProtocol>();
     assert_trait::<dyn shared_lint_arwaky::config_system::IConfigOrchestratorAggregate>();
     // Filesystem
     assert_trait::<dyn shared_lint_arwaky::filesystem::IFileSystemIOProtocol>();
@@ -216,7 +209,6 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::ICacheCleanupProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IToolUpdateProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::maintenance::IToolchainDiagnosticProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::ISecurityScanProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IDependencyReportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IAdapterHealthProtocol>();

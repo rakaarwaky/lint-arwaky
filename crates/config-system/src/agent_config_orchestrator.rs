@@ -1,30 +1,26 @@
 use dashmap::DashMap;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_cache_key_vo::CacheKey;
 use shared::common::taxonomy_common_vo::PatternList;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::contract_config_protocol::IConfigCacheProtocol;
-use shared::config_system::contract_config_protocol::IConfigIgnoredPathsProtocol;
-use shared::config_system::contract_config_protocol::IConfigLanguageProtocol;
-use shared::config_system::contract_config_protocol::IConfigListProtocol;
-use shared::config_system::contract_config_protocol::IConfigParseProtocol;
-use shared::config_system::contract_config_protocol::IConfigReadProtocol;
-use shared::config_system::contract_config_protocol::IConfigTomlProtocol;
-use shared::config_system::contract_config_protocol::IConfigValidateProtocol;
-use shared::config_system::contract_config_protocol::IWorkspaceDetectProtocol;
-use shared::config_system::contract_config_protocol::IWorkspaceMembersProtocol;
+use shared::config_system::contract_config_protocol::{
+    IConfigMergeProtocol, IConfigReadProtocol, IWorkspaceMembersProtocol,
+};
+// Utility functions are free functions in shared crate, not traits:
+// - ConfigLanguage::config_file_names()
+// - parse_adapter_entries_from_yaml()
+// - merge_default_ignored_paths()
+// - ignored_paths_from_config()
+// - default_config_for_language()
+// These are imported via their modules below.
 use shared::config_system::contract_config_protocol::WorkspaceType;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_config_system_error::ConfigError;
 use shared::config_system::taxonomy_config_system_request::ConfigRequest;
 use shared::config_system::taxonomy_config_system_response::ConfigResponse;
-use shared::config_system::taxonomy_config_system_vo::AdapterEntry;
 use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_system_vo::ConfigResult;
 use shared::config_system::taxonomy_config_system_vo::ConfigSource;
-use shared::config_system::taxonomy_config_system_vo::ProjectConfig;
-use shared::config_system::taxonomy_config_system_vo::ValidationResult;
 use shared::config_system::taxonomy_config_system_vo::WorkspaceInfo;
 use shared::config_system::utility_config_parser::default_config_for_language;
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -36,9 +32,8 @@ use tracing::warn;
 
 pub struct ConfigOrchestratorDeps {
     pub workspace_detector: Arc<dyn IWorkspaceMembersProtocol>,
-    pub config_reader: Arc<dyn IConfigListProtocol>,
-    pub parser: Arc<dyn IConfigParseProtocol>,
-    pub validator: Arc<dyn IConfigValidateProtocol>,
+    pub config_reader: Arc<dyn IConfigReadProtocol>,
+    pub parser: Arc<dyn IConfigMergeProtocol>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
@@ -98,9 +93,7 @@ impl IConfigReadProtocol for ConfigOrchestrator {
     ) -> Result<Option<ConfigSource>, ConfigError> {
         self.deps.config_reader.read_config(project_root, language)
     }
-}
 
-impl IConfigListProtocol for ConfigOrchestrator {
     fn list_config_files(
         &self,
         project_root: &FilePath,
@@ -109,63 +102,7 @@ impl IConfigListProtocol for ConfigOrchestrator {
     }
 }
 
-impl IConfigLanguageProtocol for ConfigOrchestrator {
-    fn config_file_names(&self, language: ConfigLanguage) -> Vec<String> {
-        self.deps.config_reader.config_file_names(language)
-    }
-}
-
-impl IConfigParseProtocol for ConfigOrchestrator {
-    fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
-        self.deps.parser.parse_yaml_config(path)
-    }
-
-    fn parse_config_yaml_with_warnings(&self, yaml_str: &str) -> (ArchitectureConfig, Vec<String>) {
-        self.deps.parser.parse_config_yaml_with_warnings(yaml_str)
-    }
-
-    fn parse_adapter_entries_from_yaml(&self, yaml_str: &str) -> Vec<AdapterEntry> {
-        self.deps.parser.parse_adapter_entries_from_yaml(yaml_str)
-    }
-
-    fn merge_config_with_defaults(
-        &self,
-        config: &ArchitectureConfig,
-        language: ConfigLanguage,
-    ) -> (ArchitectureConfig, Vec<String>) {
-        self.deps
-            .parser
-            .merge_config_with_defaults(config, language)
-    }
-}
-
-impl IConfigTomlProtocol for ConfigOrchestrator {
-    fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
-        self.deps.parser.parse_toml_config(path)
-    }
-}
-
-impl IConfigValidateProtocol for ConfigOrchestrator {
-    fn is_adapter_enabled(&self, config: &ProjectConfig, adapter_name: &AdapterName) -> bool {
-        self.deps.validator.is_adapter_enabled(config, adapter_name)
-    }
-
-    fn validate_thresholds(&self, config: &ProjectConfig) -> ValidationResult {
-        self.deps.validator.validate_thresholds(config)
-    }
-}
-
-impl IConfigIgnoredPathsProtocol for ConfigOrchestrator {
-    fn build_ignored_paths(&self, config: &ArchitectureConfig) -> PatternList {
-        PatternList::new(
-            shared::config_system::utility_config_merger::merge_default_ignored_paths(
-                shared::config_system::utility_config_merger::ignored_paths_from_config(config),
-            ),
-        )
-    }
-}
-
-impl IWorkspaceDetectProtocol for ConfigOrchestrator {
+impl IWorkspaceMembersProtocol for ConfigOrchestrator {
     fn detect(&self, path: &FilePath) -> WorkspaceType {
         self.deps.workspace_detector.detect(path)
     }
@@ -173,9 +110,7 @@ impl IWorkspaceDetectProtocol for ConfigOrchestrator {
     fn is_workspace(&self, path: &FilePath) -> bool {
         self.deps.workspace_detector.is_workspace(path)
     }
-}
 
-impl IWorkspaceMembersProtocol for ConfigOrchestrator {
     fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {
         self.deps
             .workspace_detector
@@ -349,11 +284,11 @@ impl ConfigOrchestrator {
         }
     }
 
-    pub fn validator(&self) -> &Arc<dyn IConfigValidateProtocol> {
-        &self.deps.validator
+    pub fn parser(&self) -> &Arc<dyn IConfigMergeProtocol> {
+        &self.deps.parser
     }
 
-    /// FR-005/FR-007: Load from cache (single parse per key), apply merge, layer defaults.
+    /// Load from cache (single parse per key), apply merge, layer defaults.
     fn merge_and_fill_defaults_cached(
         &self,
         source: &ConfigSource,
@@ -367,10 +302,8 @@ impl ConfigOrchestrator {
             .merge_config_with_defaults(&parsed, language);
         merged
     }
-}
 
-impl IConfigCacheProtocol for ConfigOrchestrator {
-    /// FR-007: parse once per key, then serve every later request from the cache.
+    /// Internal cache: parse once per key, serve later reads from the cache.
     fn parse_cached(
         &self,
         cache_key: &CacheKey,
@@ -383,9 +316,5 @@ impl IConfigCacheProtocol for ConfigOrchestrator {
         self.config_cache
             .insert(cache_key.clone(), Arc::new(parsed.clone()));
         (parsed, warnings)
-    }
-
-    fn is_cached(&self, cache_key: &CacheKey) -> bool {
-        self.config_cache.contains_key(cache_key)
     }
 }

@@ -44,12 +44,14 @@ fn test_config() -> ArchitectureConfig {
     )
 }
 
-fn make_filesystem() -> (
+type FilesystemDeps = (
     Arc<dyn IFilesystemAggregate>,
     Arc<dyn IFileSystemIOProtocol>,
     Arc<dyn IWorkspaceProtocol>,
     Arc<dyn IParserProtocol>,
-) {
+);
+
+fn make_filesystem() -> FilesystemDeps {
     let container = filesystem::root_filesystem_container::FilesystemContainer::new();
     (
         container.orchestrator(),

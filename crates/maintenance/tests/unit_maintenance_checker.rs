@@ -1,7 +1,7 @@
 // Unit tests — MaintenanceChecker methods (split into individual capability checkers).
 use maintenance_lint_arwaky::{
     IAdapterHealthProtocol, IDependencyReportProtocol, IDoctorProtocol, IProjectStatsProtocol,
-    ISecurityScanProtocol, ISelfUpdateProtocol, IToolchainDiagnosticProtocol,
+    ISecurityScanProtocol, ISelfUpdateProtocol,
 };
 use shared::common::FilePath;
 
@@ -14,7 +14,7 @@ fn make_io()
 
 #[test]
 fn diagnose_toolchain_returns_non_empty_lists() {
-    let checker = maintenance_lint_arwaky::ToolchainDiagnosticChecker::new(make_io());
+    let checker = maintenance_lint_arwaky::DoctorChecker::new(make_io());
     let diag = checker.diagnose_toolchain();
     assert!(!diag.rust_tools.is_empty(), "Should have rust tools");
     assert!(!diag.python_tools.is_empty(), "Should have python tools");
@@ -24,7 +24,7 @@ fn diagnose_toolchain_returns_non_empty_lists() {
 
 #[test]
 fn diagnose_toolchain_has_binary_path() {
-    let checker = maintenance_lint_arwaky::ToolchainDiagnosticChecker::new(make_io());
+    let checker = maintenance_lint_arwaky::DoctorChecker::new(make_io());
     let diag = checker.diagnose_toolchain();
     assert!(
         !diag.binary_path.is_empty(),

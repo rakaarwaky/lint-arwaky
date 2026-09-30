@@ -84,7 +84,7 @@ fn embedded_init_template_contains_every_root_rule_code() {
     let missing: Vec<String> = root_codes
         .iter()
         .filter(|code| !embedded.contains(*code))
-        .map(|code| code.clone())
+        .cloned()
         .collect();
     assert!(
         missing.is_empty(),

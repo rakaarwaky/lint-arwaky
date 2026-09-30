@@ -7,7 +7,6 @@
 //   FR-GitHooks-004: Project config initialization + ignore rule management
 
 use git_hooks_lint_arwaky::capabilities_config_init::ConfigInit;
-use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
 use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
@@ -48,7 +47,7 @@ fn make_uninstaller(tmp: &TempDir) -> HookUninstaller {
     HookUninstaller::new(fp, io)
 }
 
-fn make_config_init(tmp: &TempDir) -> ConfigInit {
+fn make_config_init() -> ConfigInit {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _filesystem = fc.orchestrator();
     let io = fc.io();
@@ -270,7 +269,7 @@ fn fr001_check_does_not_panic_on_invalid_path() {
 #[test]
 fn fr004_initialize_config_creates_default() {
     let tmp = TempDir::new().unwrap();
-    let config_init = make_config_init(&tmp);
+    let config_init = make_config_init();
     let result = config_init.initialize_config(tmp.path().to_str().unwrap());
     assert!(
         result.value.contains("Initialized"),
@@ -296,7 +295,7 @@ fn fr004_initialize_config_already_exists() {
         &config_path,
         "# Lint Arwaky Configuration\nignored_paths:\n  - vendor\n",
     );
-    let config_init = make_config_init(&tmp);
+    let config_init = make_config_init();
     let result = config_init.initialize_config(tmp.path().to_str().unwrap());
     assert!(
         result.value.contains("ALREADY_EXISTS"),
@@ -313,7 +312,7 @@ fn fr004_add_rule_to_config() {
         &config_path,
         "# Lint Arwaky Configuration\nignored_paths:\n  - vendor\n",
     );
-    let config_init = make_config_init(&tmp);
+    let config_init = make_config_init();
 
     let request = HookIgnoreUpdateVO::new("dist", false, config_path.to_str().unwrap().to_string());
     let result = config_init.update_ignore_rule(request);
@@ -335,7 +334,7 @@ fn fr004_remove_rule_from_config() {
         &config_path,
         "# Lint Arwaky Configuration\nignored_paths:\n  - vendor\n  - node_modules\n",
     );
-    let config_init = make_config_init(&tmp);
+    let config_init = make_config_init();
 
     let request =
         HookIgnoreUpdateVO::new("vendor", true, config_path.to_str().unwrap().to_string());
@@ -361,7 +360,7 @@ fn fr004_remove_rule_from_config() {
 fn fr004_config_not_found_suggests_init() {
     let tmp = TempDir::new().unwrap();
     let config_path = tmp.path().join("nonexistent.yaml");
-    let config_init = make_config_init(&tmp);
+    let config_init = make_config_init();
 
     let request = HookIgnoreUpdateVO::new("test", false, config_path.to_str().unwrap().to_string());
     let result = config_init.update_ignore_rule(request);
@@ -380,7 +379,7 @@ fn fr004_add_existing_rule_is_noop() {
         &config_path,
         "# Lint Arwaky Configuration\nignored_paths:\n  - vendor\n",
     );
-    let config_init = make_config_init(&tmp);
+    let config_init = make_config_init();
 
     let request =
         HookIgnoreUpdateVO::new("vendor", false, config_path.to_str().unwrap().to_string());
@@ -399,7 +398,6 @@ fn fr004_add_existing_rule_is_noop() {
 #[test]
 fn config_init_identity_is_git_hook_manager() {
     let tmp = TempDir::new().unwrap();
-    let config_init = make_config_init(&tmp);
     let installer = make_installer(&tmp);
     let identity = installer.get_hook_manager_identity();
     assert_eq!(identity.value(), "git_hook_manager");

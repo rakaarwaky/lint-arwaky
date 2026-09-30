@@ -8,7 +8,7 @@ use tracing::error;
 use dispatcher::surface_check_action::FilesystemSeam;
 use shared::cli_commands::Format;
 use shared::common::FilePath;
-use shared::config_system::IConfigOrchestratorAggregate;
+use shared::config_system::{IConfigMergeProtocol, IConfigOrchestratorAggregate};
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared::quality_rules::ICodeAnalysisAggregate;
 use shared::structure_rules::IStructureAggregate;
@@ -87,7 +87,7 @@ pub struct ExternalCommandParams {
     pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
-    pub config_parser: Arc<dyn shared::config_system::IConfigParseProtocol>,
+    pub config_parser: Arc<dyn IConfigMergeProtocol>,
     pub filter: Option<String>,
     pub ignored_paths: Vec<String>,
 }
