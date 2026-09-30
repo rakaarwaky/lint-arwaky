@@ -1,4 +1,13 @@
 # Changelog
+
+## Unreleased
+
+### Changed
+
+- Moved the embedded skill source from `crates/skills/` to
+  `crates/shared/skills/`, colocating packaged assets with the crate that owns
+  and embeds them.
+
 ## 3.7.1 (2026-09-27)
 
 ### Features

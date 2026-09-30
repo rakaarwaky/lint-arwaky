@@ -34,7 +34,7 @@ constant is the single source of truth at runtime; the markdown in this folder
 is the source of truth in the repository.
 
 ```text
-crates/skills/
+crates/shared/skills/
 ├── <skill-name>/SKILL.md                     # one directory per skill
 └── <skill-name>/references/HOW-TO-MAKE-*.md  # optional per-language playbooks
 
@@ -59,8 +59,8 @@ anything not in this folder — are left alone.
 
 | Path | Purpose |
 | --- | --- |
-| `crates/skills/<name>/SKILL.md` | The skill body: trigger, purpose, and routing. |
-| `crates/skills/<name>/references/` | Per-language HOW-TO playbooks, filtered at provision time. |
+| `crates/shared/skills/<name>/SKILL.md` | The skill body: trigger, purpose, and routing. |
+| `crates/shared/skills/<name>/references/` | Per-language HOW-TO playbooks, filtered at provision time. |
 | `tools/regenerate_skills.py` | Regenerates the embedded constant from this folder. |
 | `crates/shared/src/project_setup/` | The generated constant that `init` reads from. |
 
@@ -98,7 +98,7 @@ in every `SKILL.md` and reference file and reports any pointer an agent would
 follow into nothing:
 
 ```bash
-lint-arwaky-cli check docs crates/skills
+lint-arwaky-cli check docs crates/shared/skills
 ```
 
 A clean run means every skill is reachable and every cross-reference resolves.
@@ -109,7 +109,7 @@ A clean run means every skill is reachable and every cross-reference resolves.
    naming convention.
 2. Run `python3 tools/regenerate_skills.py` and commit the regenerated
    constant alongside the markdown change.
-3. Run `lint-arwaky-cli check docs crates/skills` and confirm it is clean.
+3. Run `lint-arwaky-cli check docs crates/shared/skills` and confirm it is clean.
 
 Skill content changes land in the binary at the next build, so a skill fix
 reaches target projects on the next `init` run of a rebuilt binary.

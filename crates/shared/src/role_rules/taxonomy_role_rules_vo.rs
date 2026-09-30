@@ -63,7 +63,7 @@ pub fn core_layer_names() -> HashSet<String> {
 
 /// Surface tier, resolved from the filename suffix.
 ///
-/// `_router` is utility, matching `crates/skills/aes-surface/SKILL.md` line 72.
+/// `_router` is utility, matching `crates/shared/skills/aes-surface/SKILL.md` line 72.
 /// `_entry` is not a surface suffix at all — entry points are root, and a
 /// `surface_*_entry` file is caught by AES102 before AES406 ever sees it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

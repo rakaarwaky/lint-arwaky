@@ -88,7 +88,7 @@ lint-arwaky-cli install   # installs external linter deps
 lint-arwaky-cli doctor    # verify toolchain health
 ```
 
-Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make it a required status check, and add `lint-arwaky-cli ci . --threshold <score>` for score-based release gating. Full blueprint: [DEPLOY.md](DEPLOY.md) and [crates/skills/aes-testing-suite/SKILL.md](crates/skills/aes-testing-suite/SKILL.md).
+Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make it a required status check, and add `lint-arwaky-cli ci . --threshold <score>` for score-based release gating. Full blueprint: [DEPLOY.md](DEPLOY.md) and [crates/shared/skills/aes-testing-suite/SKILL.md](crates/shared/skills/aes-testing-suite/SKILL.md).
 
 ## Architecture
 
@@ -112,6 +112,7 @@ Acceptance tests follow `tests/acceptance_FR_00N.rs`. Pass/fail criteria: [TEST.
 ```
 crates/
 ├── shared/            # Taxonomy VOs, contracts, utilities
+│   └── skills/        # Embedded skill content (source for init)
 ├── config-system/     # Config loading, merging, validation
 ├── filesystem/        # File walking, AST parsing, graph construction
 ├── naming-rules/      # AES101–102
@@ -129,8 +130,7 @@ crates/
 ├── file-watch/        # Continuous lint
 ├── project-setup/     # init / install / mcp-config
 ├── maintenance/       # doctor / security / deps
-├── tui/               # Interactive terminal UI
-└── skills/            # Embedded skill content (source for init)
+└── tui/               # Interactive terminal UI
 ```
 
 Each crate has an `FRD.md` (spec) beside a `BACKLOG.md` (real condition). Root: [PRD.md](PRD.md), [ROADMAP.md](ROADMAP.md), [ARCHITECTURE.md](ARCHITECTURE.md).

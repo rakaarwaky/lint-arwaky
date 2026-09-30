@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-"""Regenerate taxonomy_skills_constant.rs from crates/skills on disk.
+"""Regenerate taxonomy_skills_constant.rs from crates/shared/skills on disk.
 
 Each skill ships one language-agnostic SKILL.md (always installed) plus
 optional reference(s)/<HOW-TO-MAKE-*.md> files. Reference files whose
 filename contains PYTHON, RUST, or TYPESCRIPT are installed only when that
 language is detected; all others are language-agnostic.
 
-The skills markdown lives in `crates/skills/` at the workspace root — that is
-the single source of truth. `build.rs` stages it into `OUT_DIR` for the
-workspace build and, for published crates, ships the staging copy via
-`[package] include` in Cargo.toml.
+The skills markdown lives in `crates/shared/skills/` and is the single source
+of truth. `build.rs` copies it into `OUT_DIR`, while `[package] include` ships
+the same files in published crates.
 
 Run:  python3 tools/regenerate_skills.py [repo-root]
 """
@@ -19,7 +18,7 @@ import re
 import sys
 
 REPO = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
-SKILLS = REPO / "crates" / "skills"
+SKILLS = REPO / "crates" / "shared" / "skills"
 OUT = REPO / "crates" / "shared" / "src" / "project_setup" / "taxonomy_skills_constant.rs"
 
 # Detect language from filename: PYTHON-TAXONOMY, RUST-AGENT, TYPESCRIPT-SURFACE, etc.
@@ -69,10 +68,9 @@ lines = [
     "/// plus optional language-specific `reference(s)/<HOW-TO-*.md>` files",
     "/// that are installed only when that language is detected.",
     "///",
-    "/// The markdown source of truth lives in `crates/skills/` at the workspace",
-    "/// root. `build.rs` stages it into OUT_DIR so `include_str!` picks up",
-    "/// changes at compile time; the same staging copy is shipped in the",
-    "/// published tarball via `[package] include` in Cargo.toml.",
+    "/// The markdown source of truth lives in `crates/shared/skills/`. `build.rs`",
+    "/// copies it into OUT_DIR so `include_str!` picks up changes at compile time;",
+    "/// `[package] include` ships the same source in the published crate.",
     "/// Regenerate this constant with `python3 tools/regenerate_skills.py` after",
     "/// adding, removing, or renaming a skill file.",
     f"pub const EMBEDDED_SKILLS_COUNT: usize = {len(entries)};",
@@ -85,10 +83,10 @@ for name, rel, lang in entries:
     lines.append(f'        "{name}",')
     lines.append(f'        "{rel}",')
     lines.append(f'        include_str!(concat!(env!("OUT_DIR"), "/skills/{rel}")),')
-    # NOTE: `crates/skills/` at the workspace root is the single source of truth
+    # NOTE: `crates/shared/skills/` is the single source of truth
     # for skill markdown. `build.rs` stages it into OUT_DIR at compile time;
     # for published crates the staging copy is packaged via `[package] include`
-    # in Cargo.toml. After editing any skill file in `crates/skills/`, run
+    # in Cargo.toml. After editing any skill file in `crates/shared/skills/`, run
     # `python3 tools/regenerate_skills.py` to regenerate
     # `taxonomy_skills_constant.rs`.
     lines.append(f"        {lang_rs},")
