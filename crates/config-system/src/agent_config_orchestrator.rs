@@ -317,8 +317,4 @@ impl ConfigOrchestrator {
             .insert(cache_key.clone(), Arc::new(parsed.clone()));
         (parsed, warnings)
     }
-
-    fn is_cached(&self, cache_key: &CacheKey) -> bool {
-        self.config_cache.contains_key(cache_key)
-    }
 }
