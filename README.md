@@ -2,7 +2,7 @@
 
 Architecture linter enforcement for Rust, Python, and TypeScript. Built in Rust, structured by the [Agentic Engineering System](ARCHITECTURE.md), and self-auditing — the project lints itself under its own rules.
 
-Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 29 AES rules across 6 groups in Rust, Python, and TypeScript in a single scan.
+Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 32 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
 
 ## Prerequisites
 
@@ -33,16 +33,18 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 
 | Command                                                      | Description                                                             |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| `scan` / `check` \[path\]                                    | Run all 6 linters                                                       |
-| `naming` / `import` / `quality` / `role` / `orphan` \[path\] | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506) |
+| `scan` / `check` \[path\]                                                | Run all 7 code linters (naming, import, quality, role, orphan, structure, external) |
+| `naming` / `import` / `quality` / `role` / `orphan` / `structure` \[path\] | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506, 701–703) |
 | `external` \[path\]                                          | External linters (Clippy, Ruff, ESLint, tool-native codes)              |
 | `fix` \[path\]                                               | Apply safe fixes (`--dry-run` previews)                                 |
 | `ci` \[path\]                                                | CI mode with exit codes (`--threshold <n>`)                             |
 | `docs` \[path\]                                              | Audit document invariants (AES601–AES605)                               |
+| `git` \[path\]                                               | Scan only files changed since a git base (`--base <ref>`)               |
 | `watch` \[path\]                                             | Continuous linting on file changes                                      |
 | `doctor` / `security` / `dependencies` \[path\]              | Toolchain diagnostics, cargo-audit scan, dependency report              |
 | `install-hook` / `uninstall-hook`                            | Git pre-commit hook                                                     |
-| `init` / `install` / `mcp-config` / `config-show`            | Setup and config                                                        |
+| `init` / `install` / `mcp-config` / `config`                 | Setup and config                                                        |
+| `update` (alias `la`)                                        | Self-update to the latest release binary (`--check-only` previews)      |
 | `version` / `adapters`                                       | Info                                                                    |
 | `skill list`                                                 | List embedded AES skill documentation                                   |
 | `skill read <name>`                                          | Print a skill's SKILL.md (`--with-references` adds language HOW-TOs)    |
@@ -52,7 +54,7 @@ Key bindings: `c` check, `s` scan, `f` fix dry-run, `F` fix live (gated), `/` se
 
 ## Configuration
 
-YAML with a 5-level priority chain: project root `lint_arwaky.config.yaml` → parent dirs (3 levels) → XDG user `~/.config/lint-arwaky/` → XDG system `/etc/xdg/lint-arwaky/` → embedded defaults. Generate with `lint-arwaky-cli init`; inspect with `config-show`.
+YAML with a 5-level priority chain: project root `lint_arwaky.config.yaml` → parent dirs (3 levels) → XDG user `~/.config/lint-arwaky/` → XDG system `/etc/xdg/lint-arwaky/` → embedded defaults. Generate with `lint-arwaky-cli init`; inspect with `config`.
 
 ### MCP Server
 
@@ -107,6 +109,8 @@ crates/
 ├── quality-rules/     # AES301–305
 ├── role-rules/        # AES401–406
 ├── orphan-rules/      # AES501–506
+├── doc-rules/         # AES601–605 (document invariants)
+├── structure-rules/   # AES701–703 (folder structure)
 ├── external-lint/     # External linter adapters
 ├── auto-fix/          # Mechanical fixes
 ├── report-formatter/  # text/JSON/SARIF/JUnit output

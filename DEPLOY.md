@@ -72,9 +72,9 @@ cargo build --release --target x86_64-pc-windows-msvc
 
 ```bash
 lint-arwaky-cli version
-# Expected: lint-arwaky 3.7.0
+# Expected: lint-arwaky 3.7.1
 
-lint-arwaky-cli maintenance doctor
+lint-arwaky-cli doctor
 # Expected: cargo: OK (cargo X.Y.Z), binary: OK (/path/to/lint-arwaky-cli)
 ```
 
@@ -152,7 +152,7 @@ The `health_check` MCP tool reports on adapter health and system state.
 lint-arwaky-cli scan .
 
 # Deep directory scan
-lint-arwaky-cli scan <path> .
+lint-arwaky-cli scan <path>
 
 # CI mode with exit codes
 lint-arwaky-cli ci

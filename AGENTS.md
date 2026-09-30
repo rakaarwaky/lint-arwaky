@@ -7,7 +7,7 @@ Make sure to read [TEST.md](TEST.md) for pass/fail criteria before committing an
 
 ## Project Overview
 
-**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 29 rules across 6 groups. The project itself is written in Rust and is self-auditing (it passes its own lint rules).
+**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 32 rules across 7 groups (naming, import, quality, role, orphan, doc, structure). The project itself is written in Rust and is self-auditing (it passes its own lint rules).
 
 **Key docs:**
 
@@ -17,7 +17,7 @@ Make sure to read [TEST.md](TEST.md) for pass/fail criteria before committing an
 | [PRD.md](PRD.md) | Product requirements, feature map, exit codes |
 | [TEST.md](TEST.md) | Test workspaces, pass/fail criteria, expected violation counts |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Setup, code style, PR process |
-| [RULES_AES.md](RULES_AES.md) | All 29 AES rules with severities and descriptions |
+| [RULES_AES.md](RULES_AES.md) | All 32 AES rules with severities and descriptions |
 
 ---
 
@@ -51,7 +51,7 @@ CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
 Binary path: `$HOME/.cargo/bin/lint-arwaky-cli`
 
 ```bash
-lint-arwaky-cli scan .   # runs ALL 6 linters on own codebase
+lint-arwaky-cli scan .   # runs ALL 7 code linters on own codebase
 ```
 
 ### Scan test projects
@@ -165,7 +165,7 @@ When merging a PR to develop:
 
 ## Skills
 
-`.agents/skills/` holds skill definitions for AI-assisted development; each is one directory with a `SKILL.md` and optional `references/<language>.md`. Layer creation (`aes-taxonomy`, `aes-contract`, `aes-utility`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-root`), maintenance (`aes-lint-arwaky`, `aes-migration`), and documentation (`aes-docs`, `aes-testing-suite`) skills are triggered by keyword.
+`crates/shared/skills/` is the source of truth for the distributed skill pack; each is one directory with a `SKILL.md` and an optional `references/HOW-TO-*.md` set of per-language playbooks. Layer creation (`aes-taxonomy`, `aes-contract`, `aes-utility`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-root`), maintenance (`aes-lint-arwaky`, `aes-migration`), and documentation (`aes-docs`, `aes-testing-suite`) skills are triggered by keyword.
 
 `lint-arwaky init` installs every `SKILL.md` plus only the `references/` files matching the target's detected languages. `crates/shared/src/project_setup/taxonomy_skills_constant.rs` is generated — run `python3 tools/regenerate_skills.py` after adding, removing, or renaming a skill file.
 
@@ -189,7 +189,7 @@ mergify stack push               # pushes the amended stack
 ```
 
 Stacks manage their own `Depends-On:` headers and GitHub-native stacking.
-Never use `git rebase -i` on a stack branch — use `mergify stack {edit,fixup,squash,reorder,move,drop}` instead. See `.agents/skills/github/mergify-stack/SKILL.md` for the full reference.
+Never use `git rebase -i` on a stack branch — use `mergify stack {edit,fixup,squash,reorder,move,drop}` instead. See the [Mergify stack documentation](https://docs.mergify.com/stacks/) for the full reference.
 
 ## Quality gates
 
