@@ -66,6 +66,9 @@ pub fn build_toolchain_diagnostics() -> ToolchainDiagnostics {
     let mut js_tools = vec![check_tool("node", &["--version"], false)];
     js_tools.push(check_tool("eslint", &["--version"], false));
     let vcs_tools = vec![check_tool("git", &["--version"], true)];
+    // nosemgrep: rust.lang.security.current-exe.current-exe — read-only
+    // display of the running binary path in the doctor report; never used to
+    // resolve or exec anything, so there is no untrusted-path exposure here.
     let binary_path = std::env::current_exe()
         .map(|p| p.to_string_lossy().to_string())
         .unwrap_or_default();
