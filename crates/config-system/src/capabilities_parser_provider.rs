@@ -1,10 +1,10 @@
-// PURPOSE: ConfigParserProvider — IConfigParseProtocol and IConfigTomlProtocol implementation for YAML and TOML config parsing
+// PURPOSE: ConfigParserProvider — implements IConfigMergeProtocol (FR-003: Config Merger)
 use shared::common::taxonomy_common_vo::ErrorMessage;
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_protocol::IConfigParseProtocol;
-use shared::config_system::contract_config_protocol::IConfigTomlProtocol;
+use shared::config_system::contract_config_protocol::IConfigMergeProtocol;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_config_system_error::ConfigError;
+use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
 use shared::config_system::taxonomy_config_system_vo::ConfigKey;
 use shared::config_system::taxonomy_config_system_vo::ProjectConfig;
 use shared::config_system::utility_config_parser::default_config_for_language;
@@ -19,7 +19,8 @@ pub struct ConfigParserProvider {
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
 
-impl IConfigParseProtocol for ConfigParserProvider {
+impl IConfigMergeProtocol for ConfigParserProvider {
+    /// FR-003: deserialize a YAML config file into a ProjectConfig.
     fn parse_yaml_config(&self, path: &FilePath) -> Result<ProjectConfig, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();
@@ -49,33 +50,17 @@ impl IConfigParseProtocol for ConfigParserProvider {
         Ok(config)
     }
 
-    fn parse_config_yaml_with_warnings(
-        &self,
-        yaml_str: &str,
-    ) -> (
-        shared::config_system::taxonomy_config_system_vo::ArchitectureConfig,
-        Vec<String>,
-    ) {
+    fn parse_config_yaml_with_warnings(&self, yaml_str: &str) -> (ArchitectureConfig, Vec<String>) {
         shared::config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
     }
 
-    fn parse_adapter_entries_from_yaml(
-        &self,
-        yaml_str: &str,
-    ) -> Vec<shared::config_system::taxonomy_config_system_vo::AdapterEntry> {
-        shared::config_system::utility_config_parser::parse_adapter_entries_from_yaml(yaml_str)
-    }
-
-    /// FR-005: merge rules into layer definitions, injecting the embedded
+    /// FR-003: merge rules into layer definitions, injecting the embedded
     /// defaults when the config declares no layers.
     fn merge_config_with_defaults(
         &self,
-        config: &shared::config_system::taxonomy_config_system_vo::ArchitectureConfig,
+        config: &ArchitectureConfig,
         language: ConfigLanguage,
-    ) -> (
-        shared::config_system::taxonomy_config_system_vo::ArchitectureConfig,
-        Vec<String>,
-    ) {
+    ) -> (ArchitectureConfig, Vec<String>) {
         let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(config);
         let mut merged = config.clone();
         merged.layers = merged_layers;
@@ -89,11 +74,8 @@ impl IConfigParseProtocol for ConfigParserProvider {
         }
         (merged, warnings)
     }
-}
 
-// ─── Block 2b: TOML Protocol Implementation ───────────────
-
-impl IConfigTomlProtocol for ConfigParserProvider {
+    /// FR-003: Parse the [tool.lint-arwaky] section of a TOML file.
     fn parse_toml_config(&self, path: &FilePath) -> Result<Option<ProjectConfig>, ConfigError> {
         let p = &path.value;
         let err_path = path.clone();

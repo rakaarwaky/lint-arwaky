@@ -3,7 +3,7 @@ mod common;
 
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
 use shared::common::FilePath;
-use shared::config_system::{IConfigParseProtocol, IConfigTomlProtocol};
+use shared::config_system::IConfigMergeProtocol;
 use std::fs;
 use tempfile::TempDir;
 

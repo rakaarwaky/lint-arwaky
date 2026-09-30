@@ -1,18 +1,18 @@
 // Benchmark tests for config-system — parsing, loading, and workspace discovery.
 // Best practices: significance_level(0.05), sample_size(30+), throughput measurement
-use config_system_lint_arwaky::capabilities_rules_validator::ConfigRulesValidator;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use shared::common::taxonomy_adapter_name_vo::AdapterName;
 use shared::common::taxonomy_path_vo::FilePath;
 use shared::config_system::ConfigRequest;
-use shared::config_system::contract_config_protocol::IConfigValidateProtocol;
-use shared::config_system::contract_config_protocol::IWorkspaceDetectProtocol;
+use shared::config_system::contract_config_protocol::IConfigMergeProtocol;
+use shared::config_system::contract_config_protocol::IWorkspaceMembersProtocol;
 use shared::config_system::taxonomy_config_system_vo::{
     AdapterEntry, AdapterStatus, ProjectConfig,
 };
 use shared::config_system::utility_config_parser::parse_config_yaml;
+use shared::config_system::utility_config_parser::{is_adapter_enabled, validate_thresholds};
 use std::fs;
 use tempfile::TempDir;
 
@@ -75,7 +75,8 @@ fn bench_validate_thresholds(c: &mut Criterion) {
                     .collect(),
                 ..Default::default()
             };
-            let validator = ConfigRulesValidator::new();
+            let _ = is_adapter_enabled;
+            let _ = validate_thresholds;
             b.iter(|| std::hint::black_box(validator.validate_thresholds(&config)))
         });
     }

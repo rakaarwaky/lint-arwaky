@@ -1,17 +1,13 @@
+// PURPOSE: ConfigYamlReader — implements IConfigReadProtocol (FR-001: Config Discovery)
 use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_protocol::IConfigLanguageProtocol;
-use shared::config_system::contract_config_protocol::IConfigListProtocol;
 use shared::config_system::contract_config_protocol::IConfigReadProtocol;
 use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
 use shared::config_system::taxonomy_config_system_error::ConfigError;
 use shared::config_system::taxonomy_config_system_vo::ConfigSource;
 use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use std::sync::Arc;
 
 use tracing::warn;
-
-// PURPOSE: ConfigYamlReader — reads and parses lint-arwaky YAML config files from disk
-// XDG Base Directory Specification compliant config lookup
-use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -82,9 +78,7 @@ impl IConfigReadProtocol for ConfigYamlReader {
         // Fall back to XDG-compliant directories
         self.read_any(language)
     }
-}
 
-impl IConfigListProtocol for ConfigYamlReader {
     fn list_config_files(
         &self,
         project_root: &FilePath,
@@ -125,16 +119,6 @@ impl IConfigListProtocol for ConfigYamlReader {
             }
         }
         Ok(found)
-    }
-}
-
-impl IConfigLanguageProtocol for ConfigYamlReader {
-    fn config_file_names(&self, language: ConfigLanguage) -> Vec<String> {
-        language
-            .config_file_names()
-            .iter()
-            .map(|name| (*name).to_string())
-            .collect()
     }
 }
 

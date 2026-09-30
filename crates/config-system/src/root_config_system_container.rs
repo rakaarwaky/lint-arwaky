@@ -1,13 +1,11 @@
 use crate::agent_config_orchestrator::{ConfigOrchestrator, ConfigOrchestratorDeps};
 use crate::capabilities_parser_provider::ConfigParserProvider;
-use crate::capabilities_rules_validator::ConfigRulesValidator;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
 // Utility module wired into entry for orphan reachability (AES504)
 use shared::config_system::utility_config_parser;
 use shared::config_system::{
-    IConfigLanguageProtocol, IConfigListProtocol, IConfigOrchestratorAggregate,
-    IConfigParseProtocol, IConfigReadProtocol, IConfigTomlProtocol, IConfigValidateProtocol,
+    IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
     IWorkspaceMembersProtocol,
 };
 use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
@@ -18,12 +16,8 @@ use std::sync::Arc;
 pub struct ConfigContainer {
     orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     reader: Arc<dyn IConfigReadProtocol>,
-    parser: Arc<dyn IConfigParseProtocol>,
-    toml_parser: Arc<dyn IConfigTomlProtocol>,
-    validator: Arc<dyn IConfigValidateProtocol>,
+    parser: Arc<dyn IConfigMergeProtocol>,
     detector: Arc<dyn IWorkspaceMembersProtocol>,
-    language: Arc<dyn IConfigLanguageProtocol>,
-    lister: Arc<dyn IConfigListProtocol>,
 }
 
 impl ConfigContainer {
@@ -34,7 +28,6 @@ impl ConfigContainer {
     ) -> Self {
         let workspace_detector = Arc::new(WorkspaceDetector::new(io.clone()));
         let yaml_reader = Arc::new(ConfigYamlReader::new(io.clone()));
-        let validator = Arc::new(ConfigRulesValidator::new());
         let parser = Arc::new(ConfigParserProvider::new(io));
 
         Self {
@@ -42,16 +35,11 @@ impl ConfigContainer {
                 workspace_detector: workspace_detector.clone(),
                 config_reader: yaml_reader.clone(),
                 parser: parser.clone(),
-                validator: validator.clone(),
                 filesystem,
             })),
-            reader: yaml_reader.clone(),
-            lister: yaml_reader.clone(),
-            parser: parser.clone(),
-            toml_parser: parser.clone(),
-            validator: validator.clone(),
-            detector: workspace_detector.clone(),
-            language: yaml_reader,
+            reader: yaml_reader,
+            parser,
+            detector: workspace_detector,
         }
     }
 
@@ -63,24 +51,12 @@ impl ConfigContainer {
         self.reader.clone()
     }
 
-    pub fn lister(&self) -> Arc<dyn IConfigListProtocol> {
-        self.lister.clone()
-    }
-
-    pub fn language(&self) -> Arc<dyn IConfigLanguageProtocol> {
-        self.language.clone()
-    }
-
-    pub fn parser(&self) -> Arc<dyn IConfigParseProtocol> {
+    pub fn parser(&self) -> Arc<dyn IConfigMergeProtocol> {
         self.parser.clone()
     }
 
-    pub fn toml_parser(&self) -> Arc<dyn IConfigTomlProtocol> {
-        self.toml_parser.clone()
-    }
-
-    pub fn validator(&self) -> Arc<dyn IConfigValidateProtocol> {
-        self.validator.clone()
+    pub fn lister(&self) -> Arc<dyn IConfigReadProtocol> {
+        self.reader.clone()
     }
 
     pub fn detector(&self) -> Arc<dyn IWorkspaceMembersProtocol> {

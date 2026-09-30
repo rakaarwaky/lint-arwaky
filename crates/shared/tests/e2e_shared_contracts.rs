@@ -24,17 +24,10 @@ fn e2e_all_aggregates_support_arc_dynamic_dispatch() {
 #[test]
 fn e2e_all_protocols_are_object_safe() {
     fn assert_trait<T: ?Sized>() {}
-    // Config — 10 protocols + 1 aggregate
+    // Config — 3 protocols + 1 aggregate
     assert_trait::<dyn shared_lint_arwaky::config_system::IConfigReadProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigLanguageProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceDetectProtocol>();
     assert_trait::<dyn shared_lint_arwaky::config_system::IWorkspaceMembersProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigTomlProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigParseProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigValidateProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigCacheProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigIgnoredPathsProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigListProtocol>();
+    assert_trait::<dyn shared_lint_arwaky::config_system::IConfigMergeProtocol>();
     // Filesystem
     assert_trait::<dyn shared_lint_arwaky::filesystem::IFileSystemIOProtocol>();
     assert_trait::<dyn shared_lint_arwaky::filesystem::IGraphProtocol>();

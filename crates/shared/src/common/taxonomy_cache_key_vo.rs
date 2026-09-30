@@ -1,8 +1,7 @@
 // PURPOSE: CacheKey — newtype for config-cache lookup keys
 use serde::{Deserialize, Serialize};
 
-/// A cache key used in `IConfigCacheProtocol`.
-///
+// A cache key used for parsing configs (no longer uses IConfigCacheProtocol trait).
 /// Newtype wrapping `String` so the contract does not accidentally mix a
 /// cache key with a YAML blob or a file path.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
