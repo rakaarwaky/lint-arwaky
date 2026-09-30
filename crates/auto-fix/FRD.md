@@ -150,6 +150,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
   - AES304 violations with `Skipped(unsafe_removal)` or `Skipped(already_has_context)` outcome during fix are included in the manual report as skipped items.
   - In dry-run mode, no files are modified; outcomes mirror a real run.
   - The `dry_run` flag is a per-request parameter, not a process-level setting.
+  - **Process exit code aggregation**: Aligned with PRD Exit Code Contract, if any item produces `Failed(reason)` the aggregate exit code is 2; if all items are `Applied` and/or `Skipped(reason)` with zero failures, the exit code is 0 with skip warnings emitted.
 - **Edge Cases**:
 
   - No violations found → reports "No automatic fixes applied".
@@ -269,6 +270,7 @@ FRD Ref: FR-AutoFix-004
 - AES304 patterns requiring semantic understanding (`panic!`, `todo!`, `unimplemented!`, `unreachable!`) are **not auto-fixed** — they are skipped and reported as requiring manual intervention.
 - Multi-line import blocks are **not auto-fixed** — removing a single line would break syntax.
 - Symbol renaming is mechanical (`renamed_` prefix) — it does not produce semantically correct names. Correct renaming requires developer judgment.
+- Process exit code aggregation: Aligned with PRD Exit Code Contract (`Failed` → exit 2; all `Applied`/`Skipped` → exit 0 with skip warnings).
 - The filesystem crate provides read/write I/O via `IFileSystemIOProtocol`; capabilities in auto-fix depend on it directly.
 - No async runtime dependency.
 
