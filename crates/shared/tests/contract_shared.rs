@@ -32,7 +32,7 @@ use shared_lint_arwaky::import_rules::{
 use shared_lint_arwaky::maintenance::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IMaintenanceAggregate, IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol,
-    IToolUpdateProtocol, IToolchainDiagnosticProtocol,
+    IToolUpdateProtocol,
 };
 use shared_lint_arwaky::naming_rules::{
     INamingConventionProtocol, INamingRunnerAggregate, ISuffixPolicyProtocol,
@@ -330,7 +330,6 @@ fn maintenance_contracts_are_traits() {
     assert_trait::<dyn IProjectStatsProtocol>();
     assert_trait::<dyn ICacheCleanupProtocol>();
     assert_trait::<dyn IToolUpdateProtocol>();
-    assert_trait::<dyn IToolchainDiagnosticProtocol>();
     assert_trait::<dyn ISecurityScanProtocol>();
     assert_trait::<dyn IDependencyReportProtocol>();
     assert_trait::<dyn IAdapterHealthProtocol>();
@@ -344,7 +343,6 @@ fn maintenance_contracts_are_send_sync() {
     assert_send_sync::<dyn IProjectStatsProtocol>();
     assert_send_sync::<dyn ICacheCleanupProtocol>();
     assert_send_sync::<dyn IToolUpdateProtocol>();
-    assert_send_sync::<dyn IToolchainDiagnosticProtocol>();
     assert_send_sync::<dyn ISecurityScanProtocol>();
     assert_send_sync::<dyn IDependencyReportProtocol>();
     assert_send_sync::<dyn IAdapterHealthProtocol>();

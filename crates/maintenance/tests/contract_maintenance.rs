@@ -3,12 +3,11 @@ use maintenance_lint_arwaky::agent_maintenance_orchestrator::MaintenanceCommands
 use maintenance_lint_arwaky::{
     AdapterHealthChecker, CacheCleanupChecker, DependencyReportChecker, DoctorChecker,
     ProjectStatsChecker, SecurityScanChecker, SelfUpdateChecker, ToolUpdateChecker,
-    ToolchainDiagnosticChecker,
 };
 use shared::maintenance::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IMaintenanceAggregate, IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol,
-    IToolUpdateProtocol, IToolchainDiagnosticProtocol,
+    IToolUpdateProtocol,
 };
 
 #[test]
@@ -18,13 +17,7 @@ fn orchestrator_implements_commands_aggregate() {
 }
 
 #[test]
-fn toolchain_diagnostic_checker_implements_toolchain_diagnostic_protocol() {
-    fn assert_trait<T: IToolchainDiagnosticProtocol>() {}
-    assert_trait::<ToolchainDiagnosticChecker>();
-}
-
-#[test]
-fn doctor_checker_implements_doctor_protocol() {
+fn doctor_checker_serves_doctor_and_toolchain() {
     fn assert_trait<T: IDoctorProtocol>() {}
     assert_trait::<DoctorChecker>();
 }
@@ -79,7 +72,6 @@ fn all_contracts_are_send_sync() {
     assert_send_sync::<ProjectStatsChecker>();
     assert_send_sync::<CacheCleanupChecker>();
     assert_send_sync::<ToolUpdateChecker>();
-    assert_send_sync::<ToolchainDiagnosticChecker>();
     assert_send_sync::<SecurityScanChecker>();
     assert_send_sync::<DependencyReportChecker>();
     assert_send_sync::<AdapterHealthChecker>();
@@ -89,7 +81,6 @@ fn all_contracts_are_send_sync() {
 #[test]
 fn every_maintenance_protocol_is_arc_trait_object() {
     fn assert_arc<T: ?Sized>() {}
-    assert_arc::<dyn IToolchainDiagnosticProtocol>();
     assert_arc::<dyn IDoctorProtocol>();
     assert_arc::<dyn IProjectStatsProtocol>();
     assert_arc::<dyn ICacheCleanupProtocol>();

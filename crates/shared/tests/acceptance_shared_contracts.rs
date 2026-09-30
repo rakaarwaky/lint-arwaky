@@ -83,7 +83,6 @@ fn fr_001_all_protocols_are_send_sync() {
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::ICacheCleanupProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolUpdateProtocol>();
-    assert_send_sync::<dyn shared_lint_arwaky::maintenance::IToolchainDiagnosticProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::ISecurityScanProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IDependencyReportProtocol>();
     assert_send_sync::<dyn shared_lint_arwaky::maintenance::IAdapterHealthProtocol>();
@@ -210,7 +209,6 @@ fn fr_003_all_contract_traits_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::ICacheCleanupProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IToolUpdateProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::maintenance::IToolchainDiagnosticProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::ISecurityScanProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IDependencyReportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IAdapterHealthProtocol>();

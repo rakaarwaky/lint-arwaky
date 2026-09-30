@@ -5,8 +5,9 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 //
-// FR count is 9 (FR-Maintenance-001 through FR-Maintenance-009), one per
-// business capability.
+// FR count is 8 (FR-Maintenance-001 through FR-Maintenance-008), one per
+// business capability. The former FR-Maintenance-005 (Diagnose Toolchain) was
+// merged into FR-Maintenance-001 and renumbered away; its ID is never reused.
 
 use crate::common::taxonomy_path_vo::FilePath;
 use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
@@ -15,9 +16,10 @@ use crate::maintenance::taxonomy_maintenance_vo::{
     ToolchainDiagnostics,
 };
 
-/// FR-Maintenance-001: Environment Health Check (doctor).
+/// FR-Maintenance-001: Environment Health Check (doctor + toolchain).
 pub trait IDoctorProtocol: Send + Sync {
     fn doctor(&self) -> DoctorResultVO;
+    fn diagnose_toolchain(&self) -> ToolchainDiagnostics;
 }
 
 /// FR-Maintenance-002: Project Statistics (stats).
@@ -35,27 +37,22 @@ pub trait IToolUpdateProtocol: Send + Sync {
     fn update(&self);
 }
 
-/// FR-Maintenance-005: Diagnose Toolchain.
-pub trait IToolchainDiagnosticProtocol: Send + Sync {
-    fn diagnose_toolchain(&self) -> ToolchainDiagnostics;
-}
-
-/// FR-Maintenance-006: Security Scan.
+/// FR-Maintenance-005: Security Scan.
 pub trait ISecurityScanProtocol: Send + Sync {
     fn run_security_scan(&self, project_path: &FilePath) -> SecurityScanReport;
 }
 
-/// FR-Maintenance-007: Dependency Report.
+/// FR-Maintenance-006: Dependency Report.
 pub trait IDependencyReportProtocol: Send + Sync {
     fn run_dependency_report(&self, project_path: &FilePath) -> Result<DependencyReport, String>;
 }
 
-/// FR-Maintenance-008: Adapter Health Check.
+/// FR-Maintenance-007: Adapter Health Check.
 pub trait IAdapterHealthProtocol: Send + Sync {
     fn health_check(&self) -> HealthCheckResult;
 }
 
-/// FR-Maintenance-009: Self-Update (binary).
+/// FR-Maintenance-008: Self-Update (binary).
 pub trait ISelfUpdateProtocol: Send + Sync {
     fn self_update(&self, check_only: bool) -> SelfUpdateResultVO;
 }

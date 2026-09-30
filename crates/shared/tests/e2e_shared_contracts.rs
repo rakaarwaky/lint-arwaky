@@ -79,7 +79,6 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_lint_arwaky::maintenance::IProjectStatsProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::ICacheCleanupProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IToolUpdateProtocol>();
-    assert_trait::<dyn shared_lint_arwaky::maintenance::IToolchainDiagnosticProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::ISecurityScanProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IDependencyReportProtocol>();
     assert_trait::<dyn shared_lint_arwaky::maintenance::IAdapterHealthProtocol>();
