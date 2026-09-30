@@ -270,12 +270,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Contributing",
             "License",
         ],
-        &[
-            "AES Rules",
-            "MCP Server",
-            "Integrate as a CI Gate",
-            "Performance",
-        ],
+        &[],
     ),
     (
         ROADMAP_DOC,
