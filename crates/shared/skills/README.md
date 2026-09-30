@@ -75,7 +75,7 @@ All provisioned skills follow the `aes-<layer>` convention: `aes-taxonomy`,
 | `python3 tools/regenerate_skills.py` | After adding, removing, or renaming a skill file. |
 | `CARGO_INCREMENTAL=0 cargo build --release` | After any skill content change, to re-embed. |
 | `lint-arwaky-cli init <project>` | To provision the pack into a target project. |
-| `lint-arwaky-cli check docs <path>` | To audit the provisioned pack for broken links. |
+| `lint-arwaky-cli docs <path>` | To audit the provisioned pack for broken links. |
 
 ## Configuration
 
@@ -98,7 +98,7 @@ in every `SKILL.md` and reference file and reports any pointer an agent would
 follow into nothing:
 
 ```bash
-lint-arwaky-cli check docs crates/shared/skills
+lint-arwaky-cli docs crates/shared/skills
 ```
 
 A clean run means every skill is reachable and every cross-reference resolves.
@@ -109,7 +109,7 @@ A clean run means every skill is reachable and every cross-reference resolves.
    naming convention.
 2. Run `python3 tools/regenerate_skills.py` and commit the regenerated
    constant alongside the markdown change.
-3. Run `lint-arwaky-cli check docs crates/shared/skills` and confirm it is clean.
+3. Run `lint-arwaky-cli docs crates/shared/skills` and confirm it is clean.
 
 Skill content changes land in the binary at the next build, so a skill fix
 reaches target projects on the next `init` run of a rebuilt binary.

@@ -1,10 +1,12 @@
 # AES (Agentic Engineering System) Rules — v3.0
 
-See [ARCHITECTURE.md](../../ARCHITECTURE.md) for the full 7-layer specification.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 ---
 
 ## Summary
+
+**32 rules across 7 groups:** Naming (AES101–102), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–605), and Structure (AES701–703). The `scan`/`check` command runs the six code linters plus structure; Doc rules read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
 
 
 | Code   | Name                | Severity | Group  | Description                                                                                |

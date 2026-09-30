@@ -36,9 +36,9 @@ workspaces-good/
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 100+  | 100+       | —              | 29 unique codes    |
-| bad       | Python   | 100+  | 100+       | —              | 29 unique codes    |
-| bad       | JS/TS    | 100+  | 100+       | —              | 29 unique codes    |
+| bad       | Rust     | 100+  | 100+       | —              | 27 unique codes    |
+| bad       | Python   | 100+  | 100+       | —              | 27 unique codes    |
+| bad       | JS/TS    | 100+  | 100+       | —              | 27 unique codes    |
 | good      | Rust     | 35    | 0          | 0               | —                 |
 | good      | Python   | 42    | 0          | 0               | —                 |
 | good      | JS/TS    | 33    | 0          | 0               | —                 |
@@ -60,7 +60,7 @@ cd <repo-root>
 cargo run --bin lint-arwaky-cli -- scan .
 ```
 
-> `scan .` runs ALL 6 linters (quality, role, import, naming, orphan, external) on the lint-arwaky codebase itself. Expected: **0 violations**.
+> `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES605) are audited separately with `docs .`.
 
 ### 2.2 Scan Test Projects
 
@@ -147,7 +147,6 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES603 | Spec Purity                            | ✓   |       |      |
 | AES604 | Crosslinks                             | ✓   |       |      |
 | AES605 | Doc Heading Structure                  | ✓   |       |      |
-| AES601 | FR/Protocol Parity                     | ✓   |       |      |
 | AES701 | Shared folder purity                   | ✓   | ✓     | ✓    |
 | AES702 | Feature folder health                  | ✓   | ✓     | ✓    |
 | AES703 | Surface folder purity                  | ✓   | ✓     | ✓    |
