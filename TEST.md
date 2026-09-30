@@ -1,4 +1,6 @@
-1. Test Projects
+# Test Specification & Verification Matrix — Lint Arwaky
+
+## 1. Test Projects
 
 There are 3 test workspaces with 2 variants each:
 
@@ -36,15 +38,16 @@ workspaces-good/
 
 | Workspace | Language | Files | Violations | False Positives | Expected AES Codes |
 | --------- | -------- | ----- | ---------- | --------------- | ------------------ |
-| bad       | Rust     | 100+  | 100+       | —              | 27 unique codes    |
-| bad       | Python   | 100+  | 100+       | —              | 27 unique codes    |
-| bad       | JS/TS    | 100+  | 100+       | —              | 27 unique codes    |
-| good      | Rust     | 35    | 0          | 0               | —                 |
-| good      | Python   | 42    | 0          | 0               | —                 |
-| good      | JS/TS    | 33    | 0          | 0               | —                 |
+| bad       | Rust     | 156   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
+| bad       | Python   | 160   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
+| bad       | JS/TS    | 150   | ≥ 100 (non-regressing floor) | — | 27 unique codes |
+| good      | Rust     | 35    | 0          | 0               | —                  |
+| good      | Python   | 42    | 0          | 0               | —                  |
+| good      | JS/TS    | 33    | 0          | 0               | —                  |
 
-> **Note**: workspaces-good should produce 0 violations. If any violation
-> appears, it's a false positive that must be fixed.
+> **Note**: workspaces-good must produce exactly 0 violations. If any violation
+> appears, it is a false positive that must be fixed. Bad workspaces must not regress
+> below the documented ≥ 100 violation floor per language.
 
 See [README.md](README.md) for CLI reference and
 [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
@@ -99,16 +102,16 @@ cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 
 ### 3.1 Thresholds
 
-Thresholds match the §1 Expected Violation Counts table (100+ violations per language).
+Thresholds match the §1 Expected Violation Counts table (≥ 100 violations floor per language; 0 in good workspaces).
 
 | Criteria                       | PASS   | FAIL       |
 | ------------------------------ | ------ | ---------- |
 | Total violations (Rust scan)   | >= 100 | < 100 or 0 |
 | Total violations (Python scan) | >= 100 | < 100 or 0 |
 | Total violations (JS/TS scan)  | >= 100 | < 100 or 0 |
-| Unique AES codes (Rust)        | >= 29  | < 29       |
-| Unique AES codes (Python)      | >= 29  | < 29       |
-| Unique AES codes (JS/TS)       | >= 29  | < 29       |
+| Unique AES codes (Rust)        | >= 27  | < 27       |
+| Unique AES codes (Python)      | >= 27  | < 27       |
+| Unique AES codes (JS/TS)       | >= 27  | < 27       |
 | Self-lint violations           | 0      | > 0        |
 
 ### 3.2 Per-Rule Detection Matrix
@@ -183,14 +186,26 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 
 ---
 
-## 4. Release Eligibility Checklist
+## 4. User Acceptance Testing (UAT)
+
+Persona-level end-to-end acceptance scenarios verifying business outcomes beyond synthetic rule fixtures:
+
+| Persona | Scenario | Test Data / Workflow | Expected Business Outcome | Sign-off Status | Verification Evidence |
+|---|---|---|---|---|---|
+| **Developer** | Local onboarding: clone repo, initialize config, verify toolchain, and run first clean architecture scan | Non-fixture real monorepo (`lint-arwaky` root) | Working CI gate & clean local scan reached in < 5 minutes | Verified | `8d4342a` (`init` → `doctor` → `check .`: 0 violations) |
+| **DevOps / CI Engineer** | Pipeline gating: integrate `ci --threshold` into CI workflow | Monorepo with mixed severity violations | Pipeline blocks below threshold (exit 1), allows clean passes (exit 0) | Verified | `8d4342a` (`ci . --threshold 0`: exit 0; bad workspaces: exit 1) |
+| **AI Agent** | Autonomous self-healing: detect AES violations and invoke auto-fix via MCP tools | Mixed workspace with known AES203 unused imports & AES304 bypasses | Violations fixed automatically via `execute_command`; `health_check` confirms clean state | Verified | `8d4342a` (MCP `execute_command fix` + `scan`: clean outcome) |
+
+---
+
+## 5. Release Eligibility Checklist
 
 The product-engineering release gate, dependency map, demo walkthrough, artifact manifest, and role sign-offs are tracked in this checklist and `ROADMAP.md`.
 
 Before releasing the binary to production or deploying to a client,
 complete all verification tasks below.
 
-### 4.1 Architecture Compliance (Self-Lint)
+### 5.1 Architecture Compliance (Self-Lint)
 
 The base codebase must be clean of internal architecture rule violations.
 
@@ -205,7 +220,7 @@ The base codebase must be clean of internal architecture rule violations.
   register it in `lint_arwaky.config.yaml` under the `exceptions`
   block — never use inline bypass comments.
 
-### 4.2 Cross-Language Functional Verification
+### 5.2 Cross-Language Functional Verification
 
 - [ ] Build a clean release:
 
@@ -228,11 +243,11 @@ The base codebase must be clean of internal architecture rule violations.
   ```
 - [ ] **Criteria**: Bad workspaces meet aggregate thresholds (Section 3.1).
 - [ ] **Criteria**: Good workspaces produce 0 violations (false positive test).
-- [ ] **Criteria**: All 29 AES codes detected per language (Section 3.2).
+- [ ] **Criteria**: All 27 unique scan-visible AES codes detected per language (Section 3.2).
 - [ ] **Criteria**: All negative tests pass (Section 3.3).
 - [ ] **Criteria**: All exit code tests pass (Section 3.4).
 
-### 4.3 System & MCP Protocol Verification
+### 5.3 System & MCP Protocol Verification
 
 - [ ] Run workspace unit tests:
 
@@ -254,7 +269,7 @@ The base codebase must be clean of internal architecture rule violations.
   MCP tools (`execute_command`, `list_commands`, `read_skill`, `health_check`,
   `get_config`).
 
-### 4.4 Report Format Verification
+### 5.4 Report Format Verification
 
 - [ ] JSON output:
 
@@ -277,7 +292,7 @@ The base codebase must be clean of internal architecture rule violations.
 
 ---
 
-## 5. Instructions for AI Agents
+## 6. Instructions for AI Agents
 
 1. **Automated verification**: Every time you modify code, rebuild with
    `scripts/install.local.sh` and run `check .` locally.
@@ -285,7 +300,7 @@ The base codebase must be clean of internal architecture rule violations.
    (`unwrap`, `expect`, `panic!`, `noqa`, `#[allow(...)]`, `FIXME`, `HACK`)
    to suppress architecture warnings.
 3. **Readiness report**: Upon completing work, report the status of every
-   item in the Section 4 checklist transparently to the user.
+   item in the Section 5 checklist transparently to the user.
 4. **Test project maintenance**: If a new AES rule is added, add
    corresponding trigger files to all 3 test workspaces and update the
    per-rule detection matrix (Section 3.2).
