@@ -508,3 +508,11 @@ fn run_command_in_dir_missing_dir_fails() {
     assert!(!ok);
     assert!(stderr.contains("Failed to execute"));
 }
+
+#[test]
+fn threshold_rejects_values_above_percentage_range() {
+    assert!(Threshold::try_new(0).is_ok());
+    assert!(Threshold::try_new(100).is_ok());
+    assert!(Threshold::try_new(101).is_err());
+    assert!(Threshold::try_new(u32::MAX).is_err());
+}

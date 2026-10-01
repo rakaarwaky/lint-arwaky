@@ -10,6 +10,12 @@ fn surface() -> McpActionSurface {
     common::make_action_surface()
 }
 
+/// Authorization runs before path validation, so reaching the path-validation
+/// branch for a mutating action needs a surface that authorizes mutations.
+fn mutable_surface() -> McpActionSurface {
+    common::make_action_surface_allowing_mutations()
+}
+
 // ─── Dispatch: unknown actions fail loudly, never silently ─────────
 
 #[test]
@@ -68,7 +74,7 @@ fn execute_command_version_reports_configured_version() {
 
 #[test]
 fn execute_command_fix_rejects_empty_path_with_invalid_path_envelope() {
-    let result = surface().execute_command("fix", "", 80, false);
+    let result = mutable_surface().execute_command("fix", "", 80, false);
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
 }
@@ -89,9 +95,40 @@ fn execute_command_ci_rejects_empty_path() {
 
 #[test]
 fn execute_command_install_hook_rejects_empty_path() {
-    let result = surface().execute_command("install-hook", "", 80, false);
+    let result = mutable_surface().execute_command("install-hook", "", 80, false);
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
+}
+
+// ─── Read-only authorization gate ──────────────────────────────────
+//
+// Production wires `allow_mutations` from LINT_ARWAKY_MCP_ALLOW_MUTATIONS, so
+// the default surface is read-only. Authorization runs first: a mutating
+// action must be refused on its own terms, before any path is touched.
+
+#[test]
+fn execute_command_denies_mutating_actions_on_a_read_only_surface() {
+    for action in ["fix", "install-hook", "uninstall-hook", "init", "install"] {
+        let result = surface().execute_command(action, ".", 80, false);
+        assert_eq!(result["exit_code"], 2, "action {action} must not succeed");
+        assert_eq!(
+            result["error"],
+            format!("Action '{action}' is disabled: MCP server is read-only"),
+            "mutating action {action} must name the read-only refusal"
+        );
+    }
+}
+
+#[test]
+fn execute_command_read_only_refusal_precedes_path_validation() {
+    // The refusal must not depend on the path being valid or invalid.
+    for path in [".", "", "../escape"] {
+        let result = surface().execute_command("fix", path, 80, false);
+        assert_eq!(
+            result["error"],
+            "Action 'fix' is disabled: MCP server is read-only"
+        );
+    }
 }
 
 // Documents the CURRENT boundary semantics at the MCP input layer:

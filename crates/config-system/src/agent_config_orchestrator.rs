@@ -37,9 +37,14 @@ pub struct ConfigOrchestratorDeps {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
+struct CachedConfig {
+    content_hash: u64,
+    config: Arc<ArchitectureConfig>,
+}
+
 pub struct ConfigOrchestrator {
     deps: ConfigOrchestratorDeps,
-    config_cache: DashMap<CacheKey, Arc<ArchitectureConfig>>,
+    config_cache: DashMap<CacheKey, CachedConfig>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -309,12 +314,23 @@ impl ConfigOrchestrator {
         cache_key: &CacheKey,
         yaml_str: &str,
     ) -> (ArchitectureConfig, Vec<String>) {
-        if let Some(cached) = self.config_cache.get(cache_key) {
-            return (cached.value().as_ref().clone(), Vec::new());
+        use std::hash::{Hash, Hasher};
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        yaml_str.hash(&mut hasher);
+        let content_hash = hasher.finish();
+        if let Some(cached) = self.config_cache.get(cache_key)
+            && cached.content_hash == content_hash
+        {
+            return (cached.config.as_ref().clone(), Vec::new());
         }
         let (parsed, warnings) = self.deps.parser.parse_config_yaml_with_warnings(yaml_str);
-        self.config_cache
-            .insert(cache_key.clone(), Arc::new(parsed.clone()));
+        self.config_cache.insert(
+            cache_key.clone(),
+            CachedConfig {
+                content_hash,
+                config: Arc::new(parsed.clone()),
+            },
+        );
         (parsed, warnings)
     }
 }

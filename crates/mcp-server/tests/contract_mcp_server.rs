@@ -6,8 +6,10 @@
 mod common;
 
 use mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer;
+use mcp_server_lint_arwaky::taxonomy_mcp_server_vo::{
+    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
+};
 use rmcp::ServerHandler;
-use shared_mcp_server::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
 use std::sync::Arc;
 
 fn server() -> LintArwakyMcpServer {

@@ -8,13 +8,13 @@
 //
 // Help content is embedded as a static string in help_text().
 use crate::utility_tui_theme as theme;
+use crate::{AppState, PanelFocus, PreviewMode};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
-use shared_tui::{AppState, PanelFocus, PreviewMode};
 
 pub struct PreviewView;
 

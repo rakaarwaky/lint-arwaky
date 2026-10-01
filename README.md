@@ -102,7 +102,7 @@ Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make i
 
 ### Performance
 
-Two measured scopes, one number each: **filesystem indexing** (discovery + read + parse) 1,000 files &lt; 2s, 10,000 files &lt; 10s; **full pipeline** (indexing + every rule group, external adapters excluded) 1,000 files &lt; 5s, 10,000 files &lt; 15s. Within indexing: file discovery &lt; 500 ms; parallel AST parse &lt; 2 s. tree-sitter for all languages, rayon-parallel, no async runtime.
+Two measured scopes, one number each: **filesystem indexing** (discovery + read + parse) 1,000 files &lt; 2s, 10,000 files &lt; 10s; **full pipeline** (indexing + every rule group, external adapters excluded) 1,000 files &lt; 5s, 10,000 files &lt; 15s. Within indexing: file discovery &lt; 500 ms; parallel AST parse &lt; 2 s. tree-sitter for all languages, rayon-parallel, no async runtime. This budget is checked for regressions by the nightly Criterion job in [`.github/workflows/benchmarks.yml`](.github/workflows/benchmarks.yml).
 
 External adapters are not inside either budget — they are bounded only by their own per-tool ceilings (60–180s each, run sequentially), so a `scan` with every adapter present can take far longer than the pipeline budget. See `crates/external-lint/FRD.md`.
 

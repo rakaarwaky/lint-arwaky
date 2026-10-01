@@ -3,6 +3,7 @@
 // MCP protocol surface (surface_mcp_tool_command) delegates here; this surface
 // delegates to dispatcher surfaces (pure business logic) and maps results to
 // JSON responses. No formatting/println — JSON is returned as serde_json::Value.
+use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
@@ -58,6 +59,10 @@ pub struct McpServerDependencies {
     pub parse_adapter_names: fn(&str) -> Vec<String>,
     pub parse_score_threshold: fn(&str) -> Option<f64>,
     pub server_version: String,
+    /// Canonical confinement boundary for every client-supplied path.
+    pub workspace_root: PathBuf,
+    /// Mutating actions are denied unless the operator explicitly opts in.
+    pub allow_mutations: bool,
 }
 
 pub struct McpActionSurface {
@@ -69,14 +74,28 @@ impl McpActionSurface {
         Self { deps }
     }
 
-    fn to_fp(path: &str) -> Result<FilePath, serde_json::Value> {
-        FilePath::new(path.to_string())
-            .map_err(|_| serde_json::json!({"error": "Invalid path", "exit_code": 2}))
+    fn to_fp(&self, path: &str) -> Result<FilePath, serde_json::Value> {
+        resolve_confined_path(&self.deps.workspace_root, path).and_then(|resolved| {
+            FilePath::new(resolved.to_string_lossy().to_string())
+                .map_err(|_| error_response("Invalid path"))
+        })
+    }
+
+    fn authorize_action(&self, action: &str) -> Result<(), serde_json::Value> {
+        if is_mutating_action(action) && !self.deps.allow_mutations {
+            Err(serde_json::json!({
+                "status": "error",
+                "error": format!("Action '{action}' is disabled: MCP server is read-only"),
+                "exit_code": 2
+            }))
+        } else {
+            Ok(())
+        }
     }
 
     /// Run check/scan — all linters combined via dispatcher.
     pub fn execute_check(&self, path: &str) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
@@ -104,7 +123,8 @@ impl McpActionSurface {
                 let total = violations.len();
                 let exit_code = if total == 0 { 0 } else { 1 };
                 serde_json::json!({
-                    "status": if exit_code == 0 { "success" } else { "failure" },
+                    "status": if exit_code == 0 { "ok" } else { "warning" },
+                    "result": if exit_code == 0 { "clean" } else { "violations" },
                     "action": "check",
                     "path": path,
                     "exit_code": exit_code,
@@ -118,7 +138,7 @@ impl McpActionSurface {
 
     /// Run CI — scoring + threshold via dispatcher.
     pub fn execute_ci(&self, path: &str, threshold: u64) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
@@ -133,12 +153,23 @@ impl McpActionSurface {
                 filesystem_io: self.deps.filesystem_io.clone(),
             },
             Some(fp),
-            Threshold::new(threshold as u32),
+            match u32::try_from(threshold)
+                .ok()
+                .and_then(|value| Threshold::try_new(value).ok())
+            {
+                Some(threshold) => threshold,
+                None => {
+                    return error_response(
+                        "Invalid 'threshold': expected an integer from 0 to 100",
+                    );
+                }
+            },
         ) {
             Ok(report) => {
                 let exit_code = if report.pass { 0 } else { 1 };
                 serde_json::json!({
-                    "status": if report.pass { "pass" } else { "fail" },
+                    "status": if report.pass { "ok" } else { "warning" },
+                    "result": if report.pass { "pass" } else { "fail" },
                     "action": "ci",
                     "threshold": report.threshold,
                     "path": path,
@@ -154,11 +185,9 @@ impl McpActionSurface {
 
     /// Run fix — auto-fix with dry_run support via dispatcher.
     pub fn execute_fix(&self, path: &str, dry_run: bool) -> serde_json::Value {
-        let fp = match FilePath::new(path.to_string()) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
-            Err(_) => {
-                return serde_json::json!({"error": "Invalid path", "exit_code": 2});
-            }
+            Err(error) => return error,
         };
         match dispatcher::surface_fix_action::collect_fix(
             Some(fp),
@@ -184,7 +213,8 @@ impl McpActionSurface {
                     "partial"
                 };
                 serde_json::json!({
-                    "status": status,
+                    "status": if status == "success" { "ok" } else if status == "partial" { "warning" } else { "error" },
+                    "result": status,
                     "action": "fix",
                     "path": path,
                     "dry_run": report.dry_run,
@@ -201,7 +231,7 @@ impl McpActionSurface {
 
     /// Run quality scan via dispatcher.
     pub fn execute_quality(&self, path: &str) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
@@ -220,7 +250,7 @@ impl McpActionSurface {
 
     /// Run import scan via dispatcher.
     pub fn execute_import(&self, path: &str) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
@@ -239,7 +269,7 @@ impl McpActionSurface {
 
     /// Run naming scan via dispatcher.
     pub fn execute_naming(&self, path: &str) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
@@ -258,21 +288,25 @@ impl McpActionSurface {
 
     /// Run role scan via dispatcher (direct aggregate — no subprocess).
     pub fn execute_role(&self, path: &str) -> serde_json::Value {
+        let fp = match self.to_fp(path) {
+            Ok(fp) => fp,
+            Err(error) => return error,
+        };
         match dispatcher::surface_role_action::collect_role_direct(
             self.deps.role_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
-            path,
+            fp.value(),
             &[],
         ) {
-            Ok(violations) => violations_response("role", path, &violations),
+            Ok(violations) => violations_response("role", fp.value(), &violations),
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
         }
     }
 
     /// Run orphan scan via dispatcher.
     pub fn execute_orphan(&self, path: &str) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
@@ -293,7 +327,8 @@ impl McpActionSurface {
             Ok(violations) => {
                 let exit_code = if violations.is_empty() { 0 } else { 1 };
                 serde_json::json!({
-                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "status": if exit_code == 0 { "ok" } else { "warning" },
+                    "result": if exit_code == 0 { "clean" } else { "violations" },
                     "action": "orphan",
                     "exit_code": exit_code,
                     "orphan_count": violations.len(),
@@ -306,7 +341,7 @@ impl McpActionSurface {
 
     /// Run external lint via dispatcher (direct aggregate — no subprocess).
     pub fn execute_external(&self, path: &str) -> serde_json::Value {
-        let fp = match Self::to_fp(path) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
             Err(e) => return e,
         };
@@ -342,16 +377,14 @@ impl McpActionSurface {
         for status in &diag.vcs_tools {
             checks.push(serde_json::json!({"tool": status.name, "status": if status.status == "OK" { "ok" } else { "not_found" }, "version": status.version}));
         }
-        serde_json::json!({"status": "success", "action": "doctor", "exit_code": 0, "checks": checks})
+        serde_json::json!({"status": "ok", "action": "doctor", "exit_code": 0, "checks": checks})
     }
 
     /// Run security scan via dispatcher.
     pub fn execute_security(&self, path: &str) -> serde_json::Value {
-        let fp = match FilePath::new(path.to_string()) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
-            Err(_) => {
-                return serde_json::json!({"error": "Invalid path", "exit_code": 2});
-            }
+            Err(error) => return error,
         };
         match dispatcher::surface_maintenance_action::collect_security(
             self.deps.maintenance_orchestrator.clone(),
@@ -366,7 +399,8 @@ impl McpActionSurface {
                     1
                 };
                 serde_json::json!({
-                    "status": if exit_code == 0 { "clean" } else if exit_code == 3 { "tool_missing" } else { "findings" },
+                    "status": if exit_code == 0 { "ok" } else { "warning" },
+                    "result": if exit_code == 0 { "clean" } else if exit_code == 3 { "tool_missing" } else { "findings" },
                     "action": "security",
                     "exit_code": exit_code,
                     "language": report.language,
@@ -396,18 +430,17 @@ impl McpActionSurface {
 
     /// Run dependency report via dispatcher.
     pub fn execute_dependencies(&self, path: &str) -> serde_json::Value {
-        let fp = match FilePath::new(path.to_string()) {
+        let fp = match self.to_fp(path) {
             Ok(f) => f,
-            Err(_) => {
-                return serde_json::json!({"error": "Invalid path", "exit_code": 2});
-            }
+            Err(error) => return error,
         };
         match dispatcher::surface_maintenance_action::collect_dependencies(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
         ) {
             Ok(report) => serde_json::json!({
-                "status": "success",
+                "status": "ok",
+                "result": "complete",
                 "action": "dependencies",
                 "exit_code": 0,
                 "language": report.language,
@@ -422,7 +455,7 @@ impl McpActionSurface {
 
     /// Version info.
     pub fn execute_version(&self) -> serde_json::Value {
-        serde_json::json!({"version": self.deps.server_version, "name": "lint-arwaky", "exit_code": 0})
+        serde_json::json!({"status": "ok", "version": self.deps.server_version, "name": "lint-arwaky", "exit_code": 0})
     }
 
     /// Watch is not supported via MCP.
@@ -432,14 +465,21 @@ impl McpActionSurface {
 
     /// Run docs audit via dispatcher.
     pub fn execute_docs(&self, path: &str) -> serde_json::Value {
-        let result =
-            dispatcher::surface_docs_action::collect_docs(path, self.deps.doc_orchestrator.clone());
+        let fp = match self.to_fp(path) {
+            Ok(fp) => fp,
+            Err(error) => return error,
+        };
+        let result = dispatcher::surface_docs_action::collect_docs(
+            fp.value(),
+            self.deps.doc_orchestrator.clone(),
+        );
         match result {
             Ok(findings) => {
                 let exit_code = if findings.is_empty() { 0 } else { 1 };
                 let results: Vec<String> = findings.iter().map(|f| f.summary()).collect();
                 serde_json::json!({
-                    "status": if exit_code == 0 { "success" } else { "violations" },
+                    "status": if exit_code == 0 { "ok" } else { "warning" },
+                    "result": if exit_code == 0 { "clean" } else { "violations" },
                     "action": "docs",
                     "exit_code": exit_code,
                     "finding_count": findings.len(),
@@ -458,7 +498,10 @@ impl McpActionSurface {
         threshold: u64,
         dry_run: bool,
     ) -> serde_json::Value {
-        match action {
+        if let Err(error) = self.authorize_action(action) {
+            return error;
+        }
+        let response = match action {
             "check" | "scan" => self.execute_check(path),
             "ci" => self.execute_ci(path, threshold),
             "fix" => self.execute_fix(path, dry_run),
@@ -476,7 +519,7 @@ impl McpActionSurface {
             "watch" => self.execute_watch(),
             "adapters" => self.handle_health_check(),
             "install-hook" => {
-                let fp = match Self::to_fp(path) {
+                let fp = match self.to_fp(path) {
                     Ok(f) => f,
                     Err(e) => return e,
                 };
@@ -485,7 +528,7 @@ impl McpActionSurface {
                     &fp,
                 ) {
                     Ok(report) => {
-                        serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "install-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
+                        serde_json::json!({"status": if report.success { "ok" } else { "error" }, "result": if report.success { "installed" } else { "failed" }, "action": "install-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
                     Err(e) => serde_json::json!({"error": e.to_string(), "exit_code": 2}),
                 }
@@ -495,7 +538,7 @@ impl McpActionSurface {
                     self.deps.git_hooks_aggregate.clone(),
                 ) {
                     Ok(report) => {
-                        serde_json::json!({"status": if report.success { "success" } else { "error" }, "action": "uninstall-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
+                        serde_json::json!({"status": if report.success { "ok" } else { "error" }, "result": if report.success { "uninstalled" } else { "failed" }, "action": "uninstall-hook", "exit_code": if report.success { 0 } else { 2 }, "message": report.message})
                     }
                     Err(e) => serde_json::json!({"error": e.to_string(), "exit_code": 2}),
                 }
@@ -508,7 +551,7 @@ impl McpActionSurface {
                 let any_failure = items.iter().any(|i| !i.ok);
                 let exit_code = if any_failure { 2 } else { 0 };
                 let messages: Vec<String> = items.iter().map(|i| i.message.clone()).collect();
-                serde_json::json!({"status": if any_failure { "partial" } else { "success" }, "action": action, "exit_code": exit_code, "items": messages})
+                serde_json::json!({"status": if any_failure { "warning" } else { "ok" }, "result": if any_failure { "partial" } else { "complete" }, "action": action, "exit_code": exit_code, "items": messages})
             }
             "mcp-config" => {
                 serde_json::json!({"error": "mcp-config requires transport configuration — use CLI for full setup", "exit_code": 2})
@@ -522,7 +565,8 @@ impl McpActionSurface {
             _ => {
                 serde_json::json!({"error": format!("Unknown action: {}", action), "exit_code": 2})
             }
-        }
+        };
+        normalize_response(response)
     }
 
     // ─── Non-dispatcher MCP business logic ────────────────────
@@ -545,6 +589,7 @@ impl McpActionSurface {
             .count();
         let version_report = dispatcher::surface_version_action::collect_version();
         serde_json::json!({
+            "status": "ok",
             "version": version_report.version,
             "adapters_available": available,
             "adapters_total": adapters.len(),
@@ -566,7 +611,7 @@ impl McpActionSurface {
                 serde_json::json!({"name": name, "description": desc, "example": example})
             })
             .collect();
-        serde_json::json!({ "commands": commands, "total": commands.len(), "exit_code": 0 })
+        serde_json::json!({ "status": "ok", "commands": commands, "total": commands.len(), "exit_code": 0 })
     }
 
     /// Read skill documentation by section.
@@ -621,11 +666,9 @@ impl McpActionSurface {
 
     /// Effective architecture configuration for a target path/language.
     pub fn handle_get_config(&self, path: &str, language: Option<String>) -> String {
-        let fp = match FilePath::new(path.to_string()) {
-            Ok(f) => f,
-            Err(_) => {
-                return serde_json::json!({"error": "Invalid path", "exit_code": 2}).to_string();
-            }
+        let fp = match self.to_fp(path) {
+            Ok(fp) => fp,
+            Err(error) => return error.to_string(),
         };
 
         let config_files = match self.deps.config_reader.list_config_files(&fp) {
@@ -717,11 +760,72 @@ fn violations_response(
 ) -> serde_json::Value {
     let exit_code = if violations.is_empty() { 0 } else { 1 };
     serde_json::json!({
-        "status": if exit_code == 0 { "success" } else { "violations" },
+        "status": if exit_code == 0 { "ok" } else { "warning" },
+                    "result": if exit_code == 0 { "clean" } else { "violations" },
         "action": action,
         "path": path,
         "exit_code": exit_code,
         "violation_count": violations.len(),
         "results": violations_to_json(violations),
     })
+}
+
+/// Resolve a client path beneath the configured root. Lexical parent segments
+/// are rejected before canonicalization, and canonicalization then protects
+/// against symlink escapes.
+pub fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, serde_json::Value> {
+    if requested.trim().is_empty() {
+        return Err(error_response("Invalid path"));
+    }
+    let canonical_root = root
+        .canonicalize()
+        .map_err(|_| error_response("Workspace root does not exist"))?;
+    let requested_path = Path::new(requested);
+    if requested_path
+        .components()
+        .any(|part| matches!(part, Component::ParentDir))
+    {
+        return Err(error_response("Path escapes workspace root"));
+    }
+    let candidate = if requested_path.is_absolute() {
+        requested_path.to_path_buf()
+    } else {
+        canonical_root.join(requested_path)
+    };
+    let resolved = candidate
+        .canonicalize()
+        .map_err(|_| error_response("Path does not exist"))?;
+    if !resolved.starts_with(&canonical_root) {
+        return Err(error_response("Path escapes workspace root"));
+    }
+    Ok(resolved)
+}
+
+pub fn is_mutating_action(action: &str) -> bool {
+    matches!(
+        action,
+        "fix" | "install-hook" | "uninstall-hook" | "init" | "install"
+    )
+}
+
+fn normalize_response(mut response: serde_json::Value) -> serde_json::Value {
+    let exit_code = response
+        .get("exit_code")
+        .and_then(serde_json::Value::as_i64)
+        .unwrap_or(2);
+    if let Some(object) = response.as_object_mut() {
+        let normalized = if exit_code == 0 {
+            "ok"
+        } else if exit_code == 1 || exit_code == 3 {
+            "warning"
+        } else {
+            "error"
+        };
+        object.insert("status".to_string(), serde_json::json!(normalized));
+    }
+    response
+}
+
+fn error_response(message: &str) -> serde_json::Value {
+    serde_json::json!({"status": "error", "error": message, "exit_code": 2})
 }

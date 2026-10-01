@@ -69,3 +69,30 @@ fn test_catalog_contains_expected_commands() {
     assert!(names.contains(&"scan"), "catalog must include 'scan'");
     assert!(names.contains(&"ci"), "catalog must include 'ci'");
 }
+
+#[test]
+fn client_paths_are_confined_to_workspace() {
+    use mcp_server_lint_arwaky::surface_mcp_action_command::resolve_confined_path;
+    let root = tempfile::tempdir().unwrap();
+    std::fs::create_dir(root.path().join("inside")).unwrap();
+    assert!(resolve_confined_path(root.path(), ".").is_ok());
+    assert!(resolve_confined_path(root.path(), "inside").is_ok());
+    assert_eq!(
+        resolve_confined_path(root.path(), "../outside").unwrap_err()["error"],
+        "Path escapes workspace root"
+    );
+    let outside = tempfile::tempdir().unwrap();
+    assert_eq!(
+        resolve_confined_path(root.path(), outside.path().to_str().unwrap()).unwrap_err()["error"],
+        "Path escapes workspace root"
+    );
+}
+
+#[test]
+fn mutating_actions_are_classified_for_read_only_authorization() {
+    use mcp_server_lint_arwaky::surface_mcp_action_command::is_mutating_action;
+    assert!(is_mutating_action("fix"));
+    assert!(is_mutating_action("install-hook"));
+    assert!(is_mutating_action("uninstall-hook"));
+    assert!(!is_mutating_action("check"));
+}

@@ -301,3 +301,23 @@ fn parser_accessor_returns_same_instance() {
     let sut = make_orchestrator();
     assert!(Arc::ptr_eq(sut.parser(), sut.parser()));
 }
+
+#[test]
+fn config_cache_invalidates_when_file_content_changes() {
+    let tmp = TempDir::new().unwrap();
+    let config_path = tmp.path().join("lint_arwaky.config.yaml");
+    fs::write(&config_path, "architecture:\n  enabled: true\n").unwrap();
+    fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
+    let sut = make_orchestrator();
+    let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
+    let first = sut
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
+    assert!(first.config.enabled.value);
+
+    fs::write(&config_path, "architecture:\n  enabled: false\n").unwrap();
+    let second = sut
+        .execute(ConfigRequest::load_for_language(&fp, ConfigLanguage::Rust))
+        .into_config_result();
+    assert!(!second.config.enabled.value);
+}

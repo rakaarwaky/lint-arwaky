@@ -8,6 +8,7 @@
 //     invoke. A stub panics loudly if a test accidentally wanders into a code
 //     path it did not intend to exercise — vacuous success is not possible.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcp_server_lint_arwaky::surface_mcp_action_command::{McpActionSurface, McpServerDependencies};
@@ -123,7 +124,21 @@ fn make_fs_seam() -> dispatcher::surface_check_action::FilesystemSeam {
 /// Build an `McpActionSurface` with real filesystem/config seams and stub rule
 /// aggregates. Only deps-free surface code paths (dispatch, path validation,
 /// envelopes, catalog, config reporting) must be exercised against it.
+///
+/// Read-only by default, matching production unless
+/// `LINT_ARWAKY_MCP_ALLOW_MUTATIONS` is set.
 pub fn make_action_surface() -> McpActionSurface {
+    make_action_surface_with(false)
+}
+
+/// Same surface, but with mutating actions authorized. Only for tests that must
+/// reach the code *after* authorization — e.g. proving that a mutating action
+/// still reads `args.args["path"]` and surfaces its validation error.
+pub fn make_action_surface_allowing_mutations() -> McpActionSurface {
+    make_action_surface_with(true)
+}
+
+fn make_action_surface_with(allow_mutations: bool) -> McpActionSurface {
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let fs_aggregate = fs_container.orchestrator();
     let fs_io = fs_container.io();
@@ -170,5 +185,10 @@ pub fn make_action_surface() -> McpActionSurface {
             shared_config_system::utility_config_parser::parse_adapter_names_from_yaml,
         parse_score_threshold: shared_config_system::utility_config_parser::parse_score_threshold,
         server_version: "0.0.0-qa-test".to_string(),
+        // The config tests hand this surface their own `tempfile::TempDir`
+        // paths, so the confinement root has to contain them. Confinement
+        // itself is proven against real roots in behavioral_mcp_server.rs.
+        workspace_root: PathBuf::from("/"),
+        allow_mutations,
     })
 }

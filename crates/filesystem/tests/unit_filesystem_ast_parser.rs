@@ -223,3 +223,15 @@ pub fn process() -> UserVO {
         "ContractProtocol should be in used_identifiers"
     );
 }
+
+#[test]
+fn ast_cache_evicts_old_entries_at_capacity() {
+    let parser = ASTParser::with_cache_capacity(2);
+    let mut files = vec![
+        make_entry("first.rs", "fn first() {}", Language::Rust),
+        make_entry("second.rs", "fn second() {}", Language::Rust),
+        make_entry("third.rs", "fn third() {}", Language::Rust),
+    ];
+    parser.parse_all(&mut files);
+    assert!(parser.cached_ast_count() <= 2);
+}

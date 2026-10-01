@@ -22,5 +22,5 @@ fn tui_report_formatter_module_importable() {
     use tui_lint_arwaky::utility_report_formatter;
 
     let _ = utility_report_formatter::format_doctor_report
-        as fn(&shared_maintenance::ToolchainDiagnostics) -> shared_tui::LintExecutionResult;
+        as fn(&shared_maintenance::ToolchainDiagnostics) -> tui_lint_arwaky::LintExecutionResult;
 }

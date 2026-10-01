@@ -4,8 +4,8 @@
 //! binding therefore cannot be changed in one surface while remaining stale in
 //! another.
 
+use crate::TuiEvent;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use shared_tui::TuiEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Trigger {
