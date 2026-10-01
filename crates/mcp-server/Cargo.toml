@@ -36,6 +36,8 @@ workspace = true
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
+config-system.workspace = true
+filesystem.workspace = true
 
 [[bench]]
 name = "bench_mcp_server"

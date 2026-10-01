@@ -5,6 +5,7 @@ pub mod taxonomy_duration_vo;
 pub mod taxonomy_external_lint_request;
 pub mod taxonomy_external_lint_response;
 pub mod taxonomy_external_lint_vo;
+pub mod utility_output_normalization;
 pub mod utility_path_normalization;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -28,3 +29,4 @@ pub use taxonomy_duration_vo::Timeout;
 pub use taxonomy_external_lint_request::ExternalLintRequest;
 pub use taxonomy_external_lint_response::ExternalLintResponse;
 pub use taxonomy_external_lint_vo::ExternalLintContext;
+pub use utility_output_normalization::strip_ansi_escapes;

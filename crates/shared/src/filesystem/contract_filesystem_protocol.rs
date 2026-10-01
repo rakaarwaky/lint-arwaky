@@ -182,7 +182,8 @@ pub trait IToolResolutionProtocol: Send + Sync {
     /// Check if an executable exists in local node_modules/.bin.
     fn has_local_bin(&self, working_dir: &Path, executable: &ToolName) -> bool;
 
-    /// Resolve JS tool command from local node_modules/.bin.
+    /// Resolve JS tool command from local node_modules/.bin, falling back to
+    /// a global PATH lookup when the local binary is absent.
     fn resolve_js_cmd(
         &self,
         executable: &ToolName,
