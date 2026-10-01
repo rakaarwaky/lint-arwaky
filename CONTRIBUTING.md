@@ -198,6 +198,39 @@ CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
 - Use `--delete-branch` when merging feature/fix PRs; never delete `develop`
   when merging to `main`.
 
+## Versioning Policy
+
+All lint-arwaky workspace crates are published in **lockstep** under a single
+version number (see `[workspace.dependencies]` in the root `Cargo.toml`). This
+is a deliberate trade-off, not an accident:
+
+- A version bump does **not** imply every crate's public API changed — consult
+  `CHANGELOG.md`'s per-release notes for which crates were actually modified.
+- Lockstep keeps the ~20 crates coherent for consumers who install the
+  `lint-arwaky-cli` binary (the primary distribution), where cross-crate
+  version skew is a bug, not a feature.
+- Per-crate independent semver (release-plz / cargo-workspaces style) was
+  evaluated and rejected for now: no crate is currently consumed standalone
+  outside the workspace binaries. If that changes, revisit this policy and
+  record the migration plan here.
+
+When bumping the version, every `[workspace.dependencies]` entry, every member
+crate `version`, and `CHANGELOG.md` must move together in the same change.
+
+## Issue Closure Policy
+
+A **defect/bug issue must not be closed without a PR that includes a regression
+test** demonstrating the reported behavior no longer reproduces. Link the test
+(file + test name) in the closing PR description or comment.
+
+This policy exists because issues #354, #366, and #368 were previously closed
+while at least one of their originally-reported defects remained in the code —
+confirmed by a later re-audit and re-filed as #552, #564, and #566. "Closed"
+must mean "verified fixed", not "worked on".
+
+Feature/enhancement issues are exempt (there is no defect to reproduce), but
+their acceptance criteria must still be verifiably met before closure.
+
 ## Why Contribute
 
 | Aspect                     | Benefit                                                        |

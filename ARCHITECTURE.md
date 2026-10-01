@@ -326,6 +326,33 @@ Agent may depend only on Taxonomy, Contract, and Utility.
 - Agent must not calculate business results.
 - Agent must not define domain models.
 
+### Cross-Feature Orchestrators (`dispatcher`)
+
+Every feature crate owns a single-feature `agent_<feature>_orchestrator`. The
+workspace-level `dispatcher` crate is the **cross-feature** equivalent: an
+orchestrator-of-orchestrators that composes several features' Contract
+Aggregates into one executable flow (scan, ci, fix, setup, ...). Because the
+per-feature `agent` role is strictly single-feature, the dispatcher uses its own
+role name and file suffix:
+
+| Role                          | File pattern                              | Allowed Imports                                                     | Forbidden Imports          |
+| ----------------------------- | ----------------------------------------- | -------------------------------------------------------------------- | --------------------------- |
+| Cross-feature orchestrator    | `orchestrator_<concern>_pipeline`         | Taxonomy, Contract (aggregate + protocol), Utility                    | Capabilities, Surface, Root |
+
+Rules:
+
+- Dispatcher files are named `orchestrator_<concern>_pipeline.rs` — never with
+  a Surface `_action` suffix, which is reserved for Taxonomy-only Utility
+  surfaces and previously made Surface crates treat dispatcher as a same-layer
+  peer (see issue #570/#580).
+- Surface crates (cli-commands, mcp-server, tui) must **not** depend on the
+  `dispatcher` crate directly. They reach cross-feature flows only through the
+  `IOrchestrationAggregate` contract re-exported from the `shared-orchestration`
+  crate; the dispatcher implements that aggregate internally. The composition
+  root (`root_entry_container.rs`) injects the implementation.
+- A workspace dependency-graph test (`tests/architecture_boundaries.rs`) fails
+  the build if any Surface crate re-adds a direct edge to `dispatcher`.
+
 ---
 
 ## 10. Surface Layer
@@ -390,3 +417,22 @@ Root may depend on all layers.
 - Root must not contain business logic.
 - Root must not contain orchestration policy.
 - Root must not contain technical parsing or user interface behavior.
+
+---
+
+## 12. Dependency Policy
+
+Which crates may carry heavyweight dependencies is policy, not accident:
+
+| Dependency | Allowed in | Why |
+| ---------- | ---------- | --- |
+| `tokio` (async runtime) | `file-watch`, `shared-file-watch` (notify's async debouncer), `mcp-server` (rmcp SDK), and the root package (MCP/TUI binary entries) | These seams are inherently async |
+| `rayon` | The parallel lint rule crates and `shared-filesystem` | CPU-bound parallel analysis is the documented performance architecture |
+| `tokio`/`rayon` in `tui` | **Not allowed** | The TUI's concurrency is `std::thread` + `std::sync::mpsc` by design ("no async runtime" in README's performance principle) |
+
+The README's "no async runtime" principle means exactly this: no crate outside
+the allowlist above may depend on an async runtime. The advisory
+`dependency-hygiene.yml` CI job (cargo-machete) catches unused dependencies so
+an unjustified runtime cannot silently reappear.
+
+---
