@@ -1,0 +1,31 @@
+name: Dependency Hygiene
+
+# Advisory (non-blocking) check that catches unused crate dependencies before
+# they are merged — keeps the "no async runtime where none is needed"
+# principle honest (see ARCHITECTURE.md → Dependency Policy). cargo-machete
+# needs no nightly toolchain and no build, so it is cheap to run per PR.
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  machete:
+    name: cargo-machete (unused dependencies)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install cargo-machete
+        uses: taiki-e/install-action@fd09ccbe70d174f3c26b2fa0588e8c07a7bf4f7e # v2.37.0 cargo-machete
+      - name: Run cargo-machete
+        run: |
+          set +e
+          cargo machete --with-metadata 2>&1 | tee machete.log
+          if grep -E "^[a-zA-Z0-9_-]+ lint-arwaky|unused dependency|error" machete.log | grep -q .; then
+            echo "::error title=Unused dependencies::cargo-machete found unused dependencies — remove them or document why they must stay"
+            exit 1
+          fi
