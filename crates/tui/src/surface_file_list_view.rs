@@ -36,8 +36,9 @@ impl FileListView {
             .borders(Borders::ALL)
             .border_style(border_style);
 
-        // Use pre-computed filtered_indices from AppState
-        let display_indices: Vec<usize> = if !state.search.filtered_indices.is_empty() {
+        // In search mode, an empty filtered set is meaningful: it represents a
+        // completed search with no matches rather than an unfiltered list.
+        let display_indices: Vec<usize> = if state.search.mode {
             state.search.filtered_indices.clone()
         } else {
             (0..state.navigation.entries.len()).collect()
@@ -56,8 +57,8 @@ impl FileListView {
 
         // In search mode, filter_pos is the highlight position in the displayed list.
         // In normal mode, selected_index is the highlight position.
-        let display_selected = if !state.search.filtered_indices.is_empty() {
-            Some(state.search.filter_pos)
+        let display_selected = if state.search.mode {
+            (!state.search.filtered_indices.is_empty()).then_some(state.search.filter_pos)
         } else {
             Some(state.navigation.selected_index)
         };

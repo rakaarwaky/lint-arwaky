@@ -1,8 +1,0 @@
-Lint Arwaky v3.7.1 — Scan Report
-Target: .
-
-Total: 0 violations
-
-Tip: Scan specific feature folder for detailed violations:
-  lint-arwaky-cli scan <member-path>
-  lint-arwaky-cli scan <root> --member <member-name>
