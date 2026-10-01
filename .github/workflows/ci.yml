@@ -258,13 +258,14 @@ jobs:
         # "failed to run CLI at target/llvm-cov-target/release/…" — the
         # coverage target dir holds no binary of its own (QA #643).
         #
-        # Plain cargo, into llvm-cov's target dir so the test's probe finds
-        # it: the binary is a fixture for the subprocess path, not something
-        # whose coverage is being measured, so instrumenting it buys nothing.
-        # (`cargo llvm-cov build` is not a subcommand — there is no `build`.)
+        # Plain cargo, into the default target dir: the test probes it as a
+        # fallback, and cargo-llvm-cov owns `target/llvm-cov-target` without
+        # promising what survives in it. No instrumentation either — the binary
+        # is a fixture for the subprocess path, not a subject whose coverage is
+        # measured. (`cargo llvm-cov build` is not a subcommand.)
         env:
           RUSTC_WRAPPER: ""
-        run: cargo build --bin lint-arwaky-cli --target-dir target/llvm-cov-target
+        run: cargo build --bin lint-arwaky-cli
       - name: Compute coverage summary
         # This job does not install sccache, so clear the workflow-wide wrapper
         # before cargo-llvm-cov invokes `rustc`; otherwise the wrapper binary is
