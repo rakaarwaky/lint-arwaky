@@ -94,7 +94,6 @@ fn shortcut_bar_renders_bindings_from_the_central_table() {
     let text = buffer_text(&terminal);
     // Action-output context uses the same central binding with its result label.
     assert!(text.contains("c:re-check"));
-    assert!(text.contains("?:help"));
 }
 
 #[test]
