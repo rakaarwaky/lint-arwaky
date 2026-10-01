@@ -10,6 +10,7 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
 
+# Reads repository metadata and writes PR labels only.
 permissions:
   contents: read
   pull-requests: write

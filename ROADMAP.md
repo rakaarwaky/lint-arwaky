@@ -35,6 +35,7 @@ One unified table: every feature + cross-cutting items, sorted by priority.
 | FR-PRJS | P1 | `crates/project-setup` | Done | On Track | — | — | 2026-09-30 |
 | FR-MAINT | P1 | `crates/maintenance` | Done | On Track | — | — | 2026-09-30 |
 | FR-TUIC | P2 | `crates/tui` | Done | On Track | — | — | 2026-09-30 |
+| FR-SECR | P3 | Hardcoded-secret detection | Deferred | On Track | Dedicated scanners are more suitable | Keep out of AES rules; recommend gitleaks/TruffleHog in README | 2026-10-01 |
 
 ## Status Policy
 

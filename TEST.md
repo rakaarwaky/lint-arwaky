@@ -177,12 +177,14 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | 2  | `scan` on workspaces-bad (violations found) | 1                                |
 | 3  | `scan` on nonexistent path                  | 2                                |
 | 4  | `scan` with invalid arguments               | 2                                |
-| 5  | `security` without cargo-audit installed    | 3                                |
-| 6  | `ci --threshold 0` with violations          | 1                                |
-| 7  | `ci --threshold 100` with few violations    | 0                                |
-| 8  | `fix --dry-run` with violations             | 0 (preview only)                 |
-| 9  | `doctor` with all tools installed           | 0                                |
-| 10 | `doctor` with missing tools                 | 0 (missing tools listed in body) |
+| 5  | `security` without cargo-audit installed    | 3 + visible scanner-missing warning |
+| 6  | `security` on pure Python without `pip-audit` | 3 + visible `pip-audit` warning; never silent `findings: []` |
+| 7  | `security` on JS/TS lockfile without npm      | 3 + visible `npm-audit` warning; never a clean result |
+| 8  | `ci --threshold 0` with violations          | 1                                |
+| 9  | `ci --threshold 100` with few violations    | 0                                |
+| 10 | `fix --dry-run` with violations             | 0 (preview only)                 |
+| 11 | `doctor` with all tools installed           | 0                                |
+| 12 | `doctor` with missing tools                 | 0 (missing tools listed in body) |
 
 ---
 

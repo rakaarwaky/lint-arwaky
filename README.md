@@ -4,6 +4,13 @@ Architecture linter enforcement for Rust, Python, and TypeScript. Built in Rust,
 
 Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 32 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
 
+> **Security scope:** Lint Arwaky does not detect hardcoded secrets or
+> credentials such as API keys, tokens, and passwords. Pair it with a dedicated
+> secret scanner such as [gitleaks](https://github.com/gitleaks/gitleaks) or
+> [TruffleHog](https://github.com/trufflesecurity/trufflehog). Secret detection
+> is deliberately delegated to these specialist tools rather than added as an
+> AES architecture rule.
+
 ## Prerequisites
 
 - Rust 1.85.0+ and Cargo (pinned via `rust-toolchain.toml`)

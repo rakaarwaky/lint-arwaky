@@ -50,6 +50,18 @@ sha256sum /tmp/lint-arwaky.tar.gz
 
 Only proceed to extraction/execution after the digest matches. Until a checksum file is published in the release, this manual verification step is the integrity control for the remote install path.
 
+Release CI already generates SLSA build-provenance attestations. When the GitHub
+CLI is available, optionally verify that a downloaded binary was built by this
+repository's CI (a stronger guarantee than checksum equality alone):
+
+```bash
+gh attestation verify lint-arwaky-cli --repo rakaarwaky/lint-arwaky
+```
+
+This consumes the attestation already produced by the release workflow; it does
+not require additional CI infrastructure. Authentication may be required by the
+GitHub CLI, so checksum verification remains the minimum mandatory check.
+
 ### Option 2: From source (recommended for contributors)
 
 ```bash
@@ -94,7 +106,7 @@ lint-arwaky-cli doctor
 
 ## MCP Server Setup
 
-The MCP server is a self-contained binary that speaks JSON-RPC 2.0 over stdin/stdout using the `2024-11-05` protocol version.
+The MCP server is a self-contained binary that speaks JSON-RPC 2.0 over stdin/stdout using the `2024-11-05` protocol version. Its clients and tool-call arguments are governed by the local-process trust boundary documented in [SECURITY.md](SECURITY.md#scope-and-mcp-trust-model); in particular, paths supplied to `execute_command` are untrusted even when the client is local.
 
 ### Configure for Claude Desktop
 
