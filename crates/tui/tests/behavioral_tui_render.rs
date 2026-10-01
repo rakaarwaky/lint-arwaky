@@ -92,7 +92,8 @@ fn shortcut_bar_renders_bindings_from_the_central_table() {
         .draw(|frame| ShortcutComponent::new().render(&state, frame, frame.area()))
         .unwrap();
     let text = buffer_text(&terminal);
-    assert!(text.contains("c:check"));
+    // Action-output context uses the same central binding with its result label.
+    assert!(text.contains("c:re-check"));
     assert!(text.contains("?:help"));
 }
 
