@@ -1,0 +1,678 @@
+ Downloading crates ...
+  Downloaded cast v0.3.0
+  Downloaded ciborium-io v0.2.2
+  Downloaded ciborium-ll v0.2.2
+  Downloaded anes v0.1.6
+  Downloaded ciborium v0.2.2
+  Downloaded alloca v0.4.0
+  Downloaded criterion-plot v0.8.2
+  Downloaded itertools v0.13.0
+  Downloaded criterion v0.8.2
+  Downloaded oorandom v11.1.5
+  Downloaded page_size v0.6.0
+  Downloaded plotters v0.3.7
+  Downloaded plotters-svg v0.3.7
+  Downloaded plotters-backend v0.3.7
+  Downloaded tinytemplate v1.2.1
+warning: Cargo.toml: file `/home/runner/work/lint-arwaky/lint-arwaky/crates/root_cli_main_entry.rs` found to be present in multiple build targets:
+  * `bin` target `la`
+  * `bin` target `lint-arwaky`
+  * `bin` target `lint-arwaky-cli`
+warning: `lint_arwaky-arwaky` (manifest) generated 1 warning
+   Compiling memchr v2.8.3
+   Compiling cfg-if v1.0.4
+   Compiling libc v0.2.189
+   Compiling thiserror v2.0.21
+   Compiling itoa v1.0.18
+   Compiling once_cell v1.21.4
+   Compiling serde_core v1.0.229
+   Compiling regex-syntax v0.8.11
+   Compiling aho-corasick v1.1.4
+   Compiling crossbeam-utils v0.8.22
+   Compiling same-file v1.0.6
+   Compiling num-traits v0.2.19
+   Compiling walkdir v2.5.0
+   Compiling serde v1.0.229
+   Compiling pin-project-lite v0.2.17
+   Compiling regex-automata v0.4.18
+   Compiling smallvec v1.15.2
+   Compiling zmij v1.0.23
+   Compiling utf8parse v0.2.2
+   Compiling iana-time-zone v0.1.65
+   Compiling anstyle-parse v1.0.0
+   Compiling chrono v0.4.45
+   Compiling serde_json v1.0.151
+   Compiling colorchoice v1.0.5
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling anstyle-query v1.1.5
+   Compiling anstyle v1.0.14
+   Compiling anstream v1.0.0
+   Compiling unicode-ident v1.0.24
+   Compiling clap_lex v1.1.0
+   Compiling strsim v0.11.1
+   Compiling proc-macro2 v1.0.107
+   Compiling clap_builder v4.6.7
+   Compiling scopeguard v1.2.0
+   Compiling lock_api v0.4.14
+   Compiling parking_lot_core v0.9.12
+   Compiling quote v1.0.47
+   Compiling log v0.4.33
+   Compiling syn v3.0.6
+   Compiling bitflags v2.13.1
+   Compiling tracing-core v0.1.36
+   Compiling allocator-api2 v0.2.21
+   Compiling foldhash v0.2.0
+   Compiling equivalent v1.0.2
+   Compiling bstr v1.13.0
+   Compiling tracing v0.1.44
+   Compiling hashbrown v0.17.1
+   Compiling clap v4.6.7
+   Compiling regex v1.13.1
+   Compiling crossbeam-epoch v0.9.20
+   Compiling fastrand v2.5.0
+   Compiling crossbeam-deque v0.8.7
+   Compiling linux-raw-sys v0.12.1
+   Compiling tree-sitter-language v0.1.8
+   Compiling indexmap v2.14.0
+   Compiling either v1.17.0
+   Compiling globset v0.4.19
+   Compiling streaming-iterator v0.1.9
+   Compiling ignore v0.4.33
+   Compiling tree-sitter v0.27.0
+   Compiling shared-common-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/common)
+   Compiling rustix v1.1.4
+   Compiling tree-sitter-typescript v0.23.2
+   Compiling tree-sitter-rust v0.24.2
+   Compiling tree-sitter-python v0.25.0
+   Compiling tree-sitter-javascript v0.25.0
+   Compiling getrandom v0.3.4
+   Compiling rayon-core v1.13.0
+   Compiling zerocopy v0.8.55
+   Compiling zerocopy-derive v0.8.55
+   Compiling rayon v1.12.0
+   Compiling shared-filesystem-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/filesystem)
+   Compiling alloca v0.4.0
+   Compiling plotters-backend v0.3.7
+   Compiling ciborium-io v0.2.2
+   Compiling tempfile v3.27.0
+   Compiling plotters-svg v0.3.7
+   Compiling itertools v0.13.0
+   Compiling cast v0.3.0
+   Compiling plotters v0.3.7
+   Compiling anyhow v1.0.104
+   Compiling tinytemplate v1.2.1
+   Compiling page_size v0.6.0
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling ryu v1.0.23
+   Compiling criterion-plot v0.8.2
+   Compiling unsafe-libyaml v0.2.11
+   Compiling hashbrown v0.14.5
+   Compiling shared-cli-commands-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/cli_commands)
+   Compiling dashmap v6.2.1
+   Compiling serde_yaml_ng v0.10.0
+   Compiling half v2.7.1
+   Compiling camino v1.2.6
+   Compiling foldhash v0.1.5
+   Compiling ciborium-ll v0.2.2
+   Compiling hashbrown v0.15.5
+   Compiling fixedbitset v0.5.7
+   Compiling ciborium v0.2.2
+   Compiling shared-quality-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/quality_rules)
+   Compiling petgraph v0.8.3
+   Compiling criterion v0.8.2
+   Compiling parking_lot v0.12.5
+   Compiling shared-config-system-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/config_system)
+   Compiling bytes v1.12.1
+   Compiling option-ext v0.2.0
+   Compiling dirs-sys v0.5.0
+   Compiling dirs v7.0.0
+   Compiling mio v1.2.2
+   Compiling errno v0.3.14
+   Compiling signal-hook-registry v1.4.8
+   Compiling filesystem-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/filesystem)
+   Compiling shared-role-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/role_rules)
+   Compiling socket2 v0.6.5
+   Compiling tokio v1.53.1
+   Compiling shared-orphan-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/orphan_rules)
+   Compiling shared-project-setup-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/project_setup)
+   Compiling shared-external-lint-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/external_lint)
+   Compiling shared-import-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/import_rules)
+   Compiling shared-naming-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/naming_rules)
+   Compiling shared-maintenance-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/maintenance)
+   Compiling shared-auto-fix-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/auto_fix)
+   Compiling rand_core v0.10.1
+   Compiling crc32fast v1.5.0
+   Compiling winnow v1.0.4
+   Compiling getrandom v0.4.3
+   Compiling serde_spanned v1.1.1
+   Compiling toml_datetime v1.1.1+spec-1.1.0
+   Compiling toml_writer v1.1.2+spec-1.1.0
+   Compiling toml_parser v1.1.3+spec-1.1.0
+   Compiling stable_deref_trait v1.2.1
+   Compiling shared-doc-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/doc_rules)
+   Compiling crossbeam-channel v0.5.16
+   Compiling shared-structure-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/structure_rules)
+   Compiling toml v1.1.6+spec-1.1.0
+   Compiling nix v0.31.3
+   Compiling shared-report-formatter-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/report_formatter)
+   Compiling gix-trace v0.1.21
+   Compiling tinyvec_macros v0.1.1
+   Compiling tinyvec v1.12.0
+   Compiling gix-validate v0.11.3
+   Compiling ctrlc v3.5.2
+   Compiling unicode-normalization v0.1.25
+   Compiling gix-path v0.12.3
+   Compiling config-system-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/config-system)
+   Compiling prodash v31.0.0
+   Compiling gix-utils v0.3.5
+   Compiling zlib-rs v0.6.6
+   Compiling gix-error v0.2.5
+   Compiling futures-core v0.3.34
+   Compiling quality-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/quality-rules)
+   Compiling futures-sink v0.3.34
+   Compiling typenum v1.20.1
+   Compiling byteorder v1.5.0
+   Compiling hash32 v0.3.1
+   Compiling slab v0.4.12
+   Compiling shared-file-watch-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/file_watch)
+   Compiling generic-array v0.14.7
+   Compiling heapless v0.8.0
+   Compiling shared-git-hooks-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/git_hooks)
+   Compiling futures-channel v0.3.34
+   Compiling dispatcher-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/dispatcher)
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling faster-hex v0.10.0
+   Compiling digest v0.10.7
+   Compiling futures-io v0.3.34
+   Compiling futures-task v0.3.34
+   Compiling cpufeatures v0.2.17
+   Compiling futures-util v0.3.34
+   Compiling sha1 v0.10.7
+   Compiling percent-encoding v2.3.2
+   Compiling jiff-core v0.1.0
+   Compiling sha1-checked v0.10.0
+   Compiling tokio-util v0.7.19
+   Compiling gix-features v0.48.1
+   Compiling static_assertions v1.1.0
+   Compiling jiff v0.2.35
+   Compiling simd-adler32 v0.3.10
+   Compiling adler2 v2.0.1
+   Compiling gix-hash v0.25.1
+   Compiling miniz_oxide v0.8.9
+   Compiling zerofrom v0.1.8
+   Compiling yoke v0.8.3
+   Compiling flate2 v1.1.9
+   Compiling gix-hashtable v0.15.2
+   Compiling hashbrown v0.16.1
+   Compiling base64 v0.23.0
+   Compiling zerovec v0.11.6
+   Compiling memmap2 v0.9.11
+   Compiling unicode-width v0.2.2
+   Compiling role-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/role-rules)
+   Compiling tinystr v0.8.3
+   Compiling castaway v0.2.4
+   Compiling gix-fs v0.21.2
+   Compiling gix-chunk v0.7.3
+   Compiling itertools v0.14.0
+   Compiling deranged v0.5.8
+   Compiling litemap v0.8.2
+   Compiling num-conv v0.2.2
+   Compiling zeroize v1.9.0
+   Compiling unicode-segmentation v1.13.3
+   Compiling gix-date v0.15.6
+   Compiling powerfmt v0.2.0
+   Compiling time-core v0.1.9
+   Compiling writeable v0.6.3
+   Compiling num_threads v0.1.7
+   Compiling time v0.3.55
+   Compiling unicode-truncate v2.0.1
+   Compiling icu_locale_core v2.2.0
+   Compiling gix-actor v0.41.2
+   Compiling ref-cast v1.0.26
+   Compiling strum v0.28.0
+   Compiling gix-object v0.61.0
+   Compiling gix-tempfile v23.0.2
+   Compiling compact_str v0.9.1
+   Compiling potential_utf v0.1.5
+   Compiling zerotrie v0.2.4
+   Compiling kasuari v0.4.12
+   Compiling futures-executor v0.3.34
+   Compiling gix-quote v0.7.2
+   Compiling orphan-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/orphan-rules)
+   Compiling lru v0.18.1
+   Compiling utf8_iter v1.0.4
+   Compiling nonempty v0.12.0
+   Compiling critical-section v1.2.0
+   Compiling dyn-clone v1.0.20
+   Compiling ratatui-core v0.1.2
+   Compiling schemars v1.2.2
+   Compiling icu_collections v2.2.0
+   Compiling futures v0.3.34
+   Compiling icu_provider v2.2.0
+   Compiling signal-hook v0.3.18
+   Compiling report-formatter-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/report-formatter)
+   Compiling uuid v1.24.0
+   Compiling http v1.5.0
+   Compiling fnv v1.0.7
+   Compiling lazy_static v1.5.0
+   Compiling rmcp v3.5.0
+   Compiling signal-hook-mio v0.2.5
+   Compiling sharded-slab v0.1.7
+   Compiling derive_more v2.1.1
+   Compiling icu_normalizer_data v2.2.0
+   Compiling icu_properties_data v2.2.0
+   Compiling gix-commitgraph v0.37.1
+   Compiling rustls-pki-types v1.15.1
+   Compiling aws-lc-sys v0.45.0
+   Compiling gix-glob v0.26.1
+   Compiling fdeflate v0.3.7
+   Compiling matchers v0.2.0
+   Compiling tracing-log v0.2.0
+   Compiling line-clipping v0.3.7
+   Compiling thread_local v1.1.10
+   Compiling pxfm v0.1.30
+   Compiling nu-ansi-term v0.50.3
+   Compiling ratatui-widgets v0.3.2
+   Compiling tracing-subscriber v0.3.23
+   Compiling png v0.18.1
+   Compiling aws-lc-rs v1.18.1
+   Compiling gix-revwalk v0.32.0
+   Compiling http-body v1.1.0
+   Compiling moxcms v0.8.1
+   Compiling icu_properties v2.2.0
+   Compiling icu_normalizer v2.2.0
+   Compiling crossterm v0.29.0
+   Compiling inotify-sys v0.1.8
+   Compiling gix-lock v23.0.1
+   Compiling project-setup-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/project-setup)
+   Compiling gethostname v1.1.0
+   Compiling x11rb-protocol v0.13.2
+   Compiling bytemuck v1.25.2
+   Compiling byteorder-lite v0.1.0
+   Compiling untrusted v0.9.0
+   Compiling rustls-webpki v0.103.15
+   Compiling ratatui-crossterm v0.1.2
+   Compiling inotify v0.11.4
+   Compiling idna_adapter v1.2.2
+   Compiling ratatui-macros v0.7.2
+   Compiling import-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/import-rules)
+   Compiling external-lint-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/external-lint)
+   Compiling x11rb v0.13.2
+   Compiling notify-types v2.1.0
+   Compiling image v0.25.10
+   Compiling try-lock v0.2.5
+   Compiling shared-mcp-server-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/mcp_server)
+   Compiling symlink v0.1.0
+   Compiling atomic-waker v1.1.2
+   Compiling shell-words v1.1.1
+   Compiling tower-service v0.3.3
+   Compiling subtle v2.6.1
+   Compiling unicode-bom v2.0.3
+   Compiling rustls v0.23.45
+   Compiling h2 v0.4.16
+   Compiling tracing-appender v0.2.5
+   Compiling want v0.3.1
+   Compiling notify v8.2.0
+   Compiling ratatui v0.30.2
+   Compiling idna v1.1.0
+   Compiling httparse v1.10.1
+   Compiling arboard v3.6.1
+   Compiling tracing-error v0.2.1
+   Compiling form_urlencoded v1.2.2
+   Compiling gix-config-value v0.18.1
+   Compiling shared-tui-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/shared/src/tui)
+   Compiling compression-core v0.4.32
+   Compiling url v2.5.8
+   Compiling hyper v1.11.0
+   Compiling compression-codecs v0.4.38
+   Compiling notify-debouncer-mini v0.7.0
+   Compiling gix-command v0.9.1
+   Compiling mcp-server-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/mcp-server)
+   Compiling kstring v2.0.4
+   Compiling git-hooks-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/git-hooks)
+   Compiling sync_wrapper v1.0.2
+   Compiling maintenance-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/maintenance)
+   Compiling auto-fix-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/auto-fix)
+   Compiling naming-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/naming-rules)
+   Compiling gix-sec v0.14.2
+   Compiling encoding_rs v0.8.35
+   Compiling ipnet v2.12.1
+   Compiling openssl-probe v0.2.1
+   Compiling tower-layer v0.3.3
+   Compiling base64 v0.22.1
+   Compiling tower v0.5.3
+   Compiling rustls-native-certs v0.8.4
+   Compiling hyper-util v0.1.20
+   Compiling tokio-rustls v0.26.4
+   Compiling gix-attributes v0.33.2
+   Compiling async-compression v0.4.43
+   Compiling tui-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/tui)
+   Compiling http-body-util v0.1.4
+   Compiling cli-commands v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/cli-commands)
+   Compiling tower-http v0.6.11
+   Compiling hyper-rustls v0.27.9
+   Compiling rustls-platform-verifier v0.7.0
+   Compiling file-watch-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/file-watch)
+   Compiling gix-ref v0.64.0
+   Compiling gix-url v0.36.2
+   Compiling gix-packetline v0.21.5
+   Compiling mime v0.3.17
+   Compiling gix-prompt v0.15.1
+   Compiling gix-revision v0.46.0
+   Compiling gix-traverse v0.58.0
+   Compiling reqwest v0.13.5
+   Compiling gix-bitmap v0.3.3
+   Compiling filetime v0.2.29
+   Compiling arrayvec v0.7.8
+   Compiling gix-refspec v0.42.0
+   Compiling gix-index v0.52.0
+   Compiling uluru v3.1.0
+   Compiling gix-credentials v0.38.2
+   Compiling gix-ignore v0.21.1
+   Compiling clru v0.6.3
+   Compiling gix-config v0.57.0
+   Compiling gix-pack v0.71.0
+   Compiling gix-worktree v0.53.0
+   Compiling gix-filter v0.31.0
+   Compiling gix-pathspec v0.18.1
+   Compiling gix-shallow v0.12.1
+   Compiling gix-negotiate v0.32.0
+   Compiling arc-swap v1.9.2
+   Compiling semver v1.0.28
+   Compiling gix-transport v0.57.2
+   Compiling io-close v0.3.7
+   Compiling gix-odb v0.81.0
+   Compiling gix-submodule v0.31.0
+   Compiling gix-worktree-state v0.31.0
+   Compiling gix-discover v0.52.0
+   Compiling gix-diff v0.64.0
+   Compiling structure-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/structure-rules)
+   Compiling doc-rules-lint-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky/crates/doc-rules)
+   Compiling gix-protocol v0.62.0
+   Compiling toml-span v0.7.1
+   Compiling smol_str v0.3.6
+   Compiling twox-hash v2.1.3
+   Compiling cpufeatures v0.3.0
+   Compiling rustc-stable-hash v0.1.2
+   Compiling chacha20 v0.10.1
+   Compiling cargo-lock v11.1.0
+   Compiling tame-index v0.26.3
+   Compiling gix v0.84.0
+   Compiling fs-err v3.3.1
+   Compiling console v0.16.6
+   Compiling platforms v3.12.0
+   Compiling cvss v2.2.0
+   Compiling home v0.5.12
+   Compiling dialoguer v0.12.0
+   Compiling rand v0.10.3
+   Compiling rustsec v0.33.0
+   Compiling lint_arwaky-arwaky v3.7.1 (/home/runner/work/lint-arwaky/lint-arwaky)
+    Finished `test` profile [unoptimized] target(s) in 1m 26s
+────────────
+ Nextest run ID c024c3a9-2f5e-4bd9-a51a-c529b2c21680 with nextest profile: default
+    Starting 2007 tests across 263 binaries
+        PASS [   0.005s] (   1/2007) auto-fix-lint-arwaky::acceptance_AES101_fix aes101_dry_run_does_not_modify_file
+        PASS [   0.005s] (   2/2007) auto-fix-lint-arwaky::acceptance_AES101_fix aes101_naming_violation_is_fixable_dry_run
+        PASS [   0.005s] (   3/2007) auto-fix-lint-arwaky::acceptance_AES201_fix aes201_output_mentions_fixable_codes
+        PASS [   0.005s] (   4/2007) auto-fix-lint-arwaky::acceptance_AES201_fix aes201_forbidden_import_is_fixable
+        PASS [   0.005s] (   5/2007) auto-fix-lint-arwaky::acceptance_AES304_fix aes304_bypass_comment_is_fixable
+        PASS [   0.005s] (   6/2007) auto-fix-lint-arwaky::acceptance_AES304_fix aes304_dry_run_does_not_modify_file
+        PASS [   0.004s] (   7/2007) auto-fix-lint-arwaky::contract_auto_fix all_capabilities_are_send_sync
+        PASS [   0.005s] (   8/2007) auto-fix-lint-arwaky::acceptance_AES304_fix aes304_unwrap_pattern_detected
+        PASS [   0.004s] (   9/2007) auto-fix-lint-arwaky::contract_auto_fix bypass_fix_implements_bypass_fix_protocol
+        PASS [   0.004s] (  10/2007) auto-fix-lint-arwaky::contract_auto_fix fix_orchestrator_implements_fix_aggregate
+        PASS [   0.004s] (  11/2007) auto-fix-lint-arwaky::contract_auto_fix orchestrator_can_be_boxed_as_trait_object
+        PASS [   0.004s] (  12/2007) auto-fix-lint-arwaky::contract_auto_fix symbol_rename_implements_symbol_rename_protocol
+        PASS [   0.004s] (  13/2007) auto-fix-lint-arwaky::contract_auto_fix unused_import_fix_implements_unused_import_fix_protocol
+        PASS [   0.004s] (  14/2007) auto-fix-lint-arwaky::contract_auto_fix violation_report_implements_violation_report_protocol
+        PASS [   0.004s] (  15/2007) auto-fix-lint-arwaky::contract_auto_fix violation_report_protocol_can_be_arc_trait_object
+        PASS [   0.005s] (  16/2007) auto-fix-lint-arwaky::e2e_auto_fix_flow e2e_dry_run_clean_file
+        PASS [   0.005s] (  17/2007) auto-fix-lint-arwaky::e2e_auto_fix_flow e2e_dry_run_file_with_bypass_comment
+        PASS [   0.005s] (  18/2007) auto-fix-lint-arwaky::e2e_auto_fix_flow e2e_dry_run_file_with_unused_import
+        PASS [   0.005s] (  19/2007) auto-fix-lint-arwaky::e2e_auto_fix_flow e2e_per_request_dry_run_toggle
+        PASS [   0.004s] (  20/2007) auto-fix-lint-arwaky::integration_auto_fix container_creates_with_quality_rules
+        PASS [   0.004s] (  21/2007) auto-fix-lint-arwaky::integration_auto_fix container_orchestrator_with_custom_file_adapter
+        PASS [   0.004s] (  22/2007) auto-fix-lint-arwaky::integration_auto_fix container_orchestrator_with_filesystem
+        PASS [   0.005s] (  23/2007) auto-fix-lint-arwaky::integration_auto_fix orchestrator_execute_on_empty_project_dry_run
+        PASS [   0.005s] (  24/2007) auto-fix-lint-arwaky::integration_auto_fix orchestrator_execute_per_request_dry_run_false
+        PASS [   0.005s] (  25/2007) auto-fix-lint-arwaky::integration_auto_fix orchestrator_report_no_manual_violations_on_empty
+        PASS [   0.004s] (  26/2007) auto-fix-lint-arwaky::smoke_auto_fix auto_fix_container_creates
+        PASS [   0.005s] (  27/2007) auto-fix-lint-arwaky::smoke_auto_fix auto_fix_orchestrator_creates
+        PASS [   0.005s] (  28/2007) auto-fix-lint-arwaky::smoke_auto_fix auto_fix_orchestrator_is_trait_object
+        PASS [   0.004s] (  29/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_replaces_unwrap
+        PASS [   0.004s] (  30/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_skips_expect_with_message
+        PASS [   0.004s] (  31/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_skips_non_bypass_line
+        PASS [   0.004s] (  32/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_skips_nonexistent_line
+        PASS [   0.004s] (  33/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_skips_unsafe_macros
+        PASS [   0.004s] (  34/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_strips_allow_attr
+        PASS [   0.004s] (  35/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_strips_hack_comment
+        PASS [   0.004s] (  36/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_bypass_strips_noqa_inline
+        PASS [   0.004s] (  37/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_outcome_display_formatting
+        PASS [   0.004s] (  38/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_result_exit_code_contract_failed_outcomes_trigger_error
+        PASS [   0.004s] (  39/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_unused_removes_js_require
+        PASS [   0.004s] (  40/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_unused_removes_python_import
+        PASS [   0.004s] (  41/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_unused_removes_use_line
+        PASS [   0.004s] (  42/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_unused_skips_multiline
+        PASS [   0.004s] (  43/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor fix_unused_skips_non_import_line
+        PASS [   0.004s] (  44/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor manual_report_lists_only_non_fixable_codes
+        PASS [   0.004s] (  45/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor manual_report_on_empty_violations_is_empty
+        PASS [   0.004s] (  46/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor rename_preserves_surrounding_text
+        PASS [   0.004s] (  47/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor rename_replaces_word_boundaries
+        PASS [   0.004s] (  48/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor rename_skips_keyword_conflict
+        PASS [   0.004s] (  49/2007) auto-fix-lint-arwaky::unit_auto_fix_fix_processor rename_skips_nonexistent_symbol
+        PASS [   0.004s] (  50/2007) cli-commands::acceptance_cli_commands acceptance_import_command_compiles
+        PASS [   0.004s] (  51/2007) cli-commands::acceptance_cli_commands acceptance_naming_command_compiles
+        PASS [   0.004s] (  52/2007) cli-commands::acceptance_cli_commands acceptance_quality_command_compiles
+        PASS [   0.004s] (  53/2007) cli-commands::acceptance_cli_commands acceptance_role_command_compiles
+        PASS [   0.004s] (  54/2007) cli-commands::acceptance_cli_commands acceptance_scan_command_returns_exit_code
+        PASS [   0.004s] (  55/2007) cli-commands::contract_cli_commands contract_config_command_handle_config_show_exists
+        PASS [   0.004s] (  56/2007) cli-commands::contract_cli_commands contract_fix_command_handle_fix_exists
+        PASS [   0.004s] (  57/2007) cli-commands::contract_cli_commands contract_scan_command_handle_scan_exists
+        PASS [   0.004s] (  58/2007) cli-commands::contract_cli_commands contract_skill_command_handle_skill_list_exists
+        PASS [   0.004s] (  59/2007) cli-commands::contract_cli_commands contract_skill_command_handle_skill_read_exists
+        PASS [   0.004s] (  60/2007) cli-commands::e2e_cli_commands_flow e2e_quality_command_full_flow
+        PASS [   0.004s] (  61/2007) cli-commands::e2e_cli_commands_flow e2e_scan_command_full_flow
+        PASS [   0.004s] (  62/2007) cli-commands::integration_cli_commands integration_orphan_command_accepts_config_aggregate
+        PASS [   0.004s] (  63/2007) cli-commands::integration_cli_commands integration_scan_command_accepts_filesystem_aggregate
+        PASS [   0.004s] (  64/2007) cli-commands::smoke_cli_commands smoke_all_surface_modules_importable
+        PASS [   0.004s] (  65/2007) cli-commands::smoke_cli_commands smoke_utility_output_text_formatter_module_imports
+        PASS [   0.004s] (  66/2007) cli-commands::unit_cli_formatting aes403_in_agent_file_routes_to_agent_skill
+        PASS [   0.004s] (  67/2007) cli-commands::unit_cli_formatting group_by_member_empty_violations
+        PASS [   0.004s] (  68/2007) cli-commands::unit_cli_formatting group_by_member_groups_correctly
+        PASS [   0.004s] (  69/2007) cli-commands::unit_cli_formatting group_by_member_single_file_path
+        PASS [   0.004s] (  70/2007) cli-commands::unit_cli_formatting group_by_member_with_force_member
+        PASS [   0.004s] (  71/2007) cli-commands::unit_cli_formatting skill_hint_available_for_every_violation_in_a_scan
+        PASS [   0.004s] (  72/2007) cli-commands::unit_cli_formatting skill_hint_follows_file_layer_not_aes_code
+        PASS [   0.004s] (  73/2007) cli-commands::unit_cli_formatting status_icon_fail_returns_cross
+        PASS [   0.004s] (  74/2007) cli-commands::unit_cli_formatting status_icon_ok_returns_checkmark
+        PASS [   0.004s] (  75/2007) cli-commands::unit_utility_skill_hint_resolver aes201_follows_file_layer_not_fixed_contract
+        PASS [   0.004s] (  76/2007) cli-commands::unit_utility_skill_hint_resolver aes403_follows_file_layer_not_fixed_capabilities
+        PASS [   0.004s] (  77/2007) cli-commands::unit_utility_skill_hint_resolver aes505_orphan_in_agent_file_routes_to_agent_skill
+        PASS [   0.004s] (  78/2007) cli-commands::unit_utility_skill_hint_resolver every_aes_code_resolves_to_non_empty_guidance
+        PASS [   0.004s] (  79/2007) cli-commands::unit_utility_skill_hint_resolver file_paths_resolve_layer_correctly
+        PASS [   0.003s] (  80/2007) cli-commands::unit_utility_skill_hint_resolver windows_style_paths_resolve_layer
+        PASS [   0.008s] (  81/2007) config-system-lint-arwaky::acceptance_FR_001 us1_config_in_project_root_is_found
+        PASS [   0.009s] (  82/2007) config-system-lint-arwaky::acceptance_FR_001 us1_config_in_parent_directory_is_found
+        PASS [   0.009s] (  83/2007) config-system-lint-arwaky::acceptance_FR_002 us2_rust_workspace_loads_rust_config
+        PASS [   0.009s] (  84/2007) config-system-lint-arwaky::acceptance_FR_002 us2_python_workspace_loads_python_config
+        PASS [   0.009s] (  85/2007) config-system-lint-arwaky::acceptance_FR_002 us2_typescript_workspace_loads_typescript_config
+        PASS [   0.009s] (  86/2007) config-system-lint-arwaky::acceptance_FR_003 us3_defaults_are_valid_and_usable
+        PASS [   0.008s] (  87/2007) config-system-lint-arwaky::acceptance_FR_003 us3_no_config_file_uses_defaults
+        PASS [   0.009s] (  88/2007) config-system-lint-arwaky::acceptance_FR_004 us4_discovers_all_workspace_member_types
+        PASS [   0.004s] (  89/2007) config-system-lint-arwaky::acceptance_FR_004 us4_empty_workspace_returns_empty
+        PASS [   0.008s] (  90/2007) config-system-lint-arwaky::acceptance_FR_004 us4_each_member_gets_own_config
+        PASS [   0.004s] (  91/2007) config-system-lint-arwaky::acceptance_FR_005 us5_config_language_prevents_path_injection
+        PASS [   0.004s] (  92/2007) config-system-lint-arwaky::acceptance_FR_005 us5_symlink_outside_root_is_rejected
+        PASS [   0.004s] (  93/2007) config-system-lint-arwaky::acceptance_FR_005 us5_valid_file_within_root_is_read
+        PASS [   0.004s] (  94/2007) config-system-lint-arwaky::acceptance_FR_006 conflicting_legacy_layers_produce_a_migration_warning
+        PASS [   0.004s] (  95/2007) config-system-lint-arwaky::acceptance_FR_006 one_bad_field_does_not_discard_other_valid_fields
+        PASS [   0.004s] (  96/2007) config-system-lint-arwaky::acceptance_FR_006 unknown_config_keys_are_reported
+        PASS [   0.004s] (  97/2007) config-system-lint-arwaky::acceptance_FR_006 us6_adapter_disabled_via_status_field
+        PASS [   0.004s] (  98/2007) config-system-lint-arwaky::acceptance_FR_006 us6_complexity_zero_is_invalid
+        PASS [   0.004s] (  99/2007) config-system-lint-arwaky::acceptance_FR_006 us6_max_file_lines_zero_is_invalid
+        PASS [   0.004s] ( 100/2007) config-system-lint-arwaky::acceptance_FR_006 us6_multiple_invalid_thresholds_accumulate_errors
+        PASS [   0.004s] ( 101/2007) config-system-lint-arwaky::acceptance_FR_006 us6_score_threshold_0_is_valid
+        PASS [   0.004s] ( 102/2007) config-system-lint-arwaky::acceptance_FR_006 us6_score_threshold_100_is_valid
+        PASS [   0.004s] ( 103/2007) config-system-lint-arwaky::acceptance_FR_006 us6_score_threshold_50_is_valid
+        PASS [   0.004s] ( 104/2007) config-system-lint-arwaky::acceptance_FR_006 us6_score_threshold_above_100_is_invalid
+        PASS [   0.004s] ( 105/2007) config-system-lint-arwaky::acceptance_FR_006 us6_score_threshold_negative_is_invalid
+        PASS [   0.004s] ( 106/2007) config-system-lint-arwaky::acceptance_FR_006 us6_unknown_adapter_defaults_to_enabled
+        PASS [   0.009s] ( 107/2007) config-system-lint-arwaky::acceptance_FR_007 us7_concurrent_requests_for_same_key_are_safe
+        PASS [   0.009s] ( 108/2007) config-system-lint-arwaky::acceptance_FR_007 us7_load_config_sync_uses_cache_for_same_path
+        PASS [   0.008s] ( 109/2007) config-system-lint-arwaky::acceptance_FR_007 us7_same_config_file_cached_on_second_load
+        PASS [   0.008s] ( 110/2007) config-system-lint-arwaky::acceptance_FR_008 us8_config_adds_new_path
+        PASS [   0.008s] ( 111/2007) config-system-lint-arwaky::acceptance_FR_008 us8_config_duplicate_path_is_deduplicated
+        PASS [   0.008s] ( 112/2007) config-system-lint-arwaky::acceptance_FR_008 us8_config_empty_string_is_filtered
+        PASS [   0.004s] ( 113/2007) config-system-lint-arwaky::acceptance_FR_009 us9_invalid_toml_returns_error
+        PASS [   0.008s] ( 114/2007) config-system-lint-arwaky::acceptance_FR_008 us8_no_config_returns_8_default_ignored_paths
+        PASS [   0.004s] ( 115/2007) config-system-lint-arwaky::acceptance_FR_009 us9_toml_file_not_found_returns_error
+        PASS [   0.004s] ( 116/2007) config-system-lint-arwaky::acceptance_FR_009 us9_toml_with_tool_section_parses_correctly
+        PASS [   0.004s] ( 117/2007) config-system-lint-arwaky::acceptance_FR_009 us9_toml_with_underscore_key_parses_correctly
+        PASS [   0.004s] ( 118/2007) config-system-lint-arwaky::acceptance_FR_009 us9_toml_without_tool_section_returns_none
+        PASS [   0.004s] ( 119/2007) config-system-lint-arwaky::acceptance_FR_010 us10_lists_config_files_for_all_languages
+        PASS [   0.004s] ( 120/2007) config-system-lint-arwaky::acceptance_FR_010 us10_lists_single_rust_config
+        PASS [   0.004s] ( 121/2007) config-system-lint-arwaky::acceptance_FR_010 us10_returns_empty_when_no_configs_exist
+        PASS [   0.004s] ( 122/2007) config-system-lint-arwaky::acceptance_FR_010 us10_unified_config_single_entry
+        PASS [   0.004s] ( 123/2007) config-system-lint-arwaky::contract_config_system all_contracts_are_send_sync
+        PASS [   0.004s] ( 124/2007) config-system-lint-arwaky::contract_config_system config_orchestrator_implements_aggregate
+        PASS [   0.004s] ( 125/2007) config-system-lint-arwaky::contract_config_system config_parser_provider_implements_parse_protocol
+        PASS [   0.004s] ( 126/2007) config-system-lint-arwaky::contract_config_system config_yaml_reader_implements_read_protocol
+        PASS [   0.003s] ( 127/2007) config-system-lint-arwaky::contract_config_system workspace_detector_implements_detect_protocol
+        PASS [   0.004s] ( 128/2007) config-system-lint-arwaky::e2e_config_system_flow e2e_reader_lists_multi_language_configs
+        PASS [   0.005s] ( 129/2007) config-system-lint-arwaky::e2e_config_system_flow full_config_lifecycle_rust_workspace
+        PASS [   0.008s] ( 130/2007) config-system-lint-arwaky::e2e_config_system_flow full_config_lifecycle_typescript_fallback
+        PASS [   0.008s] ( 131/2007) config-system-lint-arwaky::integration_config_system container_orchestrator_loads_defaults_for_empty_project
+        PASS [   0.005s] ( 132/2007) config-system-lint-arwaky::integration_config_system container_parser_parses_yaml
+        PASS [   0.009s] ( 133/2007) config-system-lint-arwaky::integration_config_system container_orchestrator_loads_real_config
+        PASS [   0.004s] ( 134/2007) config-system-lint-arwaky::integration_config_system container_provides_lister
+        PASS [   0.004s] ( 135/2007) config-system-lint-arwaky::integration_config_system container_provides_orchestrator
+        PASS [   0.004s] ( 136/2007) config-system-lint-arwaky::integration_config_system container_provides_parser
+        PASS [   0.004s] ( 137/2007) config-system-lint-arwaky::integration_config_system container_provides_reader
+        PASS [   0.004s] ( 138/2007) config-system-lint-arwaky::integration_config_system container_reader_lists_config_files
+        PASS [   0.004s] ( 139/2007) config-system-lint-arwaky::integration_config_system full_pipeline_read_parse_validate
+        PASS [   0.004s] ( 140/2007) config-system-lint-arwaky::integration_config_system validate_thresholds_allows_valid_config
+        PASS [   0.009s] ( 141/2007) config-system-lint-arwaky::integration_config_template_sync embedded_init_template_contains_every_root_rule_code
+        PASS [   0.009s] ( 142/2007) config-system-lint-arwaky::integration_config_template_sync embedded_init_template_defines_the_same_rule_groups_as_root_config
+        PASS [   0.009s] ( 143/2007) config-system-lint-arwaky::integration_config_template_sync embedded_rule_entries_share_the_root_enabled_state
+        PASS [   0.008s] ( 144/2007) config-system-lint-arwaky::smoke_config_system config_system_boots_and_loads_defaults
+        PASS [   0.008s] ( 145/2007) config-system-lint-arwaky::smoke_config_system config_system_sync_load_responds
+        PASS [   0.008s] ( 146/2007) config-system-lint-arwaky::unit_config_system_orchestrator config_cache_returns_same_arc_on_second_load
+        PASS [   0.004s] ( 147/2007) config-system-lint-arwaky::unit_config_system_orchestrator discover_workspaces_returns_empty_for_non_workspace
+        PASS [   0.008s] ( 148/2007) config-system-lint-arwaky::unit_config_system_orchestrator discover_workspaces_returns_members
+        PASS [   0.008s] ( 149/2007) config-system-lint-arwaky::unit_config_system_orchestrator ignored_paths_includes_hardcoded_defaults
+        PASS [   0.008s] ( 150/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_for_language_injects_defaults_when_no_layers
+        PASS [   0.008s] ( 151/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_for_language_python
+        PASS [   0.008s] ( 152/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_sync_finds_config_from_deep_file_path
+        PASS [   0.009s] ( 153/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_sync_finds_config_from_very_deep_file_path
+        PASS [   0.008s] ( 154/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_sync_finds_config_in_current_dir
+        PASS [   0.009s] ( 155/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_sync_finds_rust_config_from_deep_crate_file
+        PASS [   0.009s] ( 156/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_sync_returns_defaults_for_deep_file_with_no_config
+        PASS [   0.102s] ( 157/2007) config-system-lint-arwaky::unit_config_system_orchestrator config_cache_invalidates_when_file_content_changes
+        PASS [   0.009s] ( 158/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_config_sync_returns_defaults_for_empty_dir
+        PASS [   0.009s] ( 159/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_project_config_reads_existing_yaml
+        PASS [   0.008s] ( 160/2007) config-system-lint-arwaky::unit_config_system_orchestrator load_project_config_uses_defaults_when_no_file
+        PASS [   0.004s] ( 161/2007) config-system-lint-arwaky::unit_config_system_orchestrator parser_accessor_returns_same_instance
+        PASS [   0.004s] ( 162/2007) config-system-lint-arwaky::unit_config_system_parser_provider new_creates_instance
+        PASS [   0.004s] ( 163/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_toml_config_file_not_found
+        PASS [   0.004s] ( 164/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_toml_config_invalid_toml
+        PASS [   0.004s] ( 165/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_toml_config_returns_none_without_tool_section
+        PASS [   0.004s] ( 166/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_toml_config_with_tool_section
+        PASS [   0.004s] ( 167/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_toml_config_with_underscore_key
+        PASS [   0.004s] ( 168/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_yaml_config_empty_file_uses_defaults
+        PASS [   0.004s] ( 169/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_yaml_config_file_not_found
+        PASS [   0.004s] ( 170/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_yaml_config_happy_path
+        PASS [   0.004s] ( 171/2007) config-system-lint-arwaky::unit_config_system_parser_provider parse_yaml_config_invalid_yaml
+        PASS [   0.004s] ( 172/2007) config-system-lint-arwaky::unit_config_system_rules_validator adapter_enabled_defaults_true_when_adapter_not_in_list
+        PASS [   0.004s] ( 173/2007) config-system-lint-arwaky::unit_config_system_rules_validator adapter_enabled_matches_first_occurrence
+        PASS [   0.004s] ( 174/2007) config-system-lint-arwaky::unit_config_system_rules_validator adapter_enabled_returns_false_when_status_disabled
+        PASS [   0.004s] ( 175/2007) config-system-lint-arwaky::unit_config_system_rules_validator adapter_enabled_returns_false_when_status_not_installed
+        PASS [   0.004s] ( 176/2007) config-system-lint-arwaky::unit_config_system_rules_validator adapter_enabled_returns_true_when_status_enabled
+        PASS [   0.004s] ( 177/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_accumulates_multiple_errors
+        PASS [   0.004s] ( 178/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_boundary_score_0_is_valid
+        PASS [   0.004s] ( 179/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_boundary_score_100_is_valid
+        PASS [   0.004s] ( 180/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_fails_when_complexity_zero
+        PASS [   0.004s] ( 181/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_fails_when_max_file_lines_zero
+        PASS [   0.004s] ( 182/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_fails_when_score_above_100
+        PASS [   0.004s] ( 183/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_fails_when_score_negative
+        PASS [   0.004s] ( 184/2007) config-system-lint-arwaky::unit_config_system_rules_validator validate_thresholds_ok_with_valid_values
+        PASS [   0.004s] ( 185/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_by_parent_directory_name_crates
+        PASS [   0.004s] ( 186/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_by_parent_directory_name_modules
+        PASS [   0.004s] ( 187/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_by_parent_directory_name_packages
+        PASS [   0.004s] ( 188/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_python_from_file_deep_in_modules_src
+        PASS [   0.004s] ( 189/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_python_from_file_very_deep_in_modules
+        PASS [   0.004s] ( 190/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_python_workspace_by_pyproject_toml
+        PASS [   0.004s] ( 191/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_python_workspace_by_requirements_txt
+        PASS [   0.004s] ( 192/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_python_workspace_by_setup_py
+        PASS [   0.004s] ( 193/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_rust_from_file_deep_in_crates_src
+        PASS [   0.004s] ( 194/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_rust_takes_priority_over_typescript
+        PASS [   0.004s] ( 195/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_rust_workspace_by_cargo_toml
+        PASS [   0.004s] ( 196/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_typescript_from_file_deep_in_packages_src
+        PASS [   0.004s] ( 197/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_typescript_workspace_by_package_json
+        PASS [   0.004s] ( 198/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_unknown_for_file_not_in_workspace
+        PASS [   0.004s] ( 199/2007) config-system-lint-arwaky::unit_config_system_workspace_detector detect_unknown_when_no_markers
+        PASS [   0.004s] ( 200/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_from_within_workspace_dir
+        PASS [   0.004s] ( 201/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_returns_empty_when_no_workspace_dirs
+        PASS [   0.004s] ( 202/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_root_parent_is_modules_dir
+        PASS [   0.004s] ( 203/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_root_parent_is_packages_dir
+        PASS [   0.004s] ( 204/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_root_parent_is_workspace_dir
+        PASS [   0.004s] ( 205/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_under_crates_dir
+        PASS [   0.004s] ( 206/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_under_modules_dir
+        PASS [   0.004s] ( 207/2007) config-system-lint-arwaky::unit_config_system_workspace_detector discover_members_under_packages_dir
+        PASS [   0.004s] ( 208/2007) config-system-lint-arwaky::unit_config_system_workspace_detector is_workspace_false_when_no_workspace_dirs
+        PASS [   0.004s] ( 209/2007) config-system-lint-arwaky::unit_config_system_workspace_detector is_workspace_true_when_crates_dir_exists
+        PASS [   0.004s] ( 210/2007) config-system-lint-arwaky::unit_config_system_workspace_detector is_workspace_true_when_modules_dir_exists
+        PASS [   0.004s] ( 211/2007) config-system-lint-arwaky::unit_config_system_workspace_detector is_workspace_true_when_packages_dir_exists
+        PASS [   0.004s] ( 212/2007) config-system-lint-arwaky::unit_config_system_workspace_detector new_creates_equivalent_instances
+        PASS [   0.004s] ( 213/2007) config-system-lint-arwaky::unit_config_system_yaml_reader list_config_files_deduplicates_unified_config
+        PASS [   0.004s] ( 214/2007) config-system-lint-arwaky::unit_config_system_yaml_reader list_config_files_finds_unified_config
+        PASS [   0.004s] ( 215/2007) config-system-lint-arwaky::unit_config_system_yaml_reader list_config_files_returns_empty_when_none_exist
+        PASS [   0.004s] ( 216/2007) config-system-lint-arwaky::unit_config_system_yaml_reader new_creates_instance
+        PASS [   0.004s] ( 217/2007) config-system-lint-arwaky::unit_config_system_yaml_reader read_config_finds_python_yaml_in_project_root
+        PASS [   0.004s] ( 218/2007) config-system-lint-arwaky::unit_config_system_yaml_reader read_config_finds_rust_yaml_in_project_root
+        PASS [   0.004s] ( 219/2007) config-system-lint-arwaky::unit_config_system_yaml_reader read_config_returns_none_when_no_file_found
+        PASS [   0.004s] ( 220/2007) config-system-lint-arwaky::unit_config_system_yaml_reader read_config_searches_parent_directories_up_to_depth_3
+        PASS [   0.004s] ( 221/2007) config-system-lint-arwaky::unit_config_system_yaml_reader read_config_typescript_finds_unified_yaml
+        PASS [   0.004s] ( 222/2007) config-system-lint-arwaky::utility_config_merger_tests merge_empty_config
+        PASS [   0.004s] ( 223/2007) config-system-lint-arwaky::utility_config_merger_tests merge_global_rule
+        PASS [   0.066s] ( 224/2007) dispatcher-lint-arwaky::acceptance_dispatcher acceptance_check_action_on_current_project
+        PASS [   0.004s] ( 225/2007) dispatcher-lint-arwaky::acceptance_dispatcher acceptance_output_component_formats_results
+        PASS [   0.004s] ( 226/2007) dispatcher-lint-arwaky::contract_dispatcher check_action_module_exists
+        PASS [   0.004s] ( 227/2007) dispatcher-lint-arwaky::contract_dispatcher output_component_module_exists
+        PASS [   0.066s] ( 228/2007) dispatcher-lint-arwaky::e2e_dispatcher_flow e2e_check_action_full_flow
+        PASS [   0.067s] ( 229/2007) dispatcher-lint-arwaky::integration_dispatcher dispatcher_check_action_on_clean_project
+        PASS [   0.378s] ( 230/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_python_single_file
+        PASS [   0.531s] ( 231/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_python_subfolder
+        PASS [   0.744s] ( 232/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_python_workspace
+        PASS [   0.373s] ( 233/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_rust_single_file
+        PASS [   0.533s] ( 234/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_rust_subfolder
+        PASS [   0.839s] ( 235/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_rust_workspace
+        PASS [   0.385s] ( 236/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_typescript_single_file
+        PASS [   0.539s] ( 237/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_typescript_subfolder
+        FAIL [   5.009s] ( 238/2007) dispatcher-lint-arwaky surface_check_action::subprocess_timeout_tests::hanging_subprocess_is_killed_at_timeout
+  stdout ───
+
+    running 1 test
+    test surface_check_action::subprocess_timeout_tests::hanging_subprocess_is_killed_at_timeout ... FAILED
+
+    failures:
+
+    failures:
+        surface_check_action::subprocess_timeout_tests::hanging_subprocess_is_killed_at_timeout
+
+    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.00s
+
+  stderr ───
+
+    thread 'surface_check_action::subprocess_timeout_tests::hanging_subprocess_is_killed_at_timeout' (38667) panicked at crates/dispatcher/src/surface_check_action.rs:1096:9:
+    assertion failed: started.elapsed() < Duration::from_secs(2)
+    note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+  Cancelling due to test failure: 1 test still running
+        PASS [   0.620s] ( 239/2007) dispatcher-lint-arwaky::regression_scan_modes regression_bad_typescript_workspace
+────────────
+     Summary [   5.735s] 239/2007 tests run: 238 passed, 1 failed, 0 skipped
+        FAIL [   5.009s] ( 238/2007) dispatcher-lint-arwaky surface_check_action::subprocess_timeout_tests::hanging_subprocess_is_killed_at_timeout
+warning: 1768/2007 tests were not run due to test failure (run with --no-fail-fast to run all tests, or run with --max-fail)
+error: test run failed
