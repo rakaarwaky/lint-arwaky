@@ -7,18 +7,18 @@
 //      YAML config is honored (not hardcoded). A fallback default list applies if empty.
 use std::borrow::Cow;
 
-use shared::cli_commands::LintResult;
-use shared::quality_rules::contract_quality_protocol::IBypassCheckerProtocol;
-use shared::quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
+use shared_cli_commands::LintResult;
+use shared_quality_rules::contract_quality_protocol::IBypassCheckerProtocol;
+use shared_quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
 
-use shared::quality_rules::utility_bypass_detector::{
+use shared_quality_rules::utility_bypass_detector::{
     is_inside_string_or_char, matches_word_token, skip_brace_block, skip_cfg_test_block,
     starts_with_allow_attr, strip_trailing_comment,
 };
-use shared::quality_rules::{Language, ViolationKind, WORD_PATTERN_TOKENS};
+use shared_quality_rules::{Language, ViolationKind, WORD_PATTERN_TOKENS};
 
-use shared::common::{PatternList, Severity};
-use shared::quality_rules::utility_language_mapper::code_analysis_language_from_file;
+use shared_common::{PatternList, Severity};
+use shared_quality_rules::utility_language_mapper::code_analysis_language_from_file;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct BypassChecker {

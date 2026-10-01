@@ -8,13 +8,13 @@ use quality_rules_lint_arwaky::capabilities_check_bypass_checker::BypassChecker;
 use quality_rules_lint_arwaky::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 use quality_rules_lint_arwaky::capabilities_line_checker::ArchLineChecker;
 
-use shared::common::{Count, LayerDefinition};
-use shared::config_system::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::IBypassCheckerProtocol;
-use shared::quality_rules::ICodeMetricAnalyzerProtocol;
-use shared::quality_rules::ILineCheckerProtocol;
+use shared_common::{Count, LayerDefinition};
+use shared_config_system::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::IBypassCheckerProtocol;
+use shared_quality_rules::ICodeMetricAnalyzerProtocol;
+use shared_quality_rules::ILineCheckerProtocol;
 
 fn generate_content(lines: usize) -> String {
     (0..lines)
@@ -33,7 +33,7 @@ fn generate_violating_content() -> String {
 fn bench_line_checker(c: &mut Criterion) {
     let checker = ArchLineChecker::new();
     let def = LayerDefinition {
-        code_analysis: shared::quality_rules::CodeAnalysisRuleVO {
+        code_analysis: shared_quality_rules::CodeAnalysisRuleVO {
             min_lines: Count::new(5),
             max_lines: Count::new(1000),
             ..Default::default()
@@ -120,7 +120,7 @@ fn bench_full_analysis(c: &mut Criterion) {
         .map(|i| FileEntry {
             path: PathBuf::from(format!("src/file_{}.rs", i)),
             extension: "rs".to_string(),
-            language: shared::common::taxonomy_language_vo::Language::Rust,
+            language: shared_common::taxonomy_language_vo::Language::Rust,
             size: violating.len() as u64,
             content: violating.clone(),
             parse_ok: true,
@@ -140,7 +140,7 @@ fn bench_full_analysis(c: &mut Criterion) {
         .map(|i| FileEntry {
             path: PathBuf::from(format!("src/clean_{}.rs", i)),
             extension: "rs".to_string(),
-            language: shared::common::taxonomy_language_vo::Language::Rust,
+            language: shared_common::taxonomy_language_vo::Language::Rust,
             size: 50,
             content: "fn main() {\n    println!(\"hello\");\n}\n".to_string(),
             parse_ok: true,

@@ -1,7 +1,7 @@
 // E2E tests — full maintenance flow: diagnose → health check → stats → doctor.
-use shared::common::FilePath;
-use shared::maintenance::IMaintenanceAggregate;
-use shared::maintenance::MaintenanceRequest;
+use shared_common::FilePath;
+use shared_maintenance::IMaintenanceAggregate;
+use shared_maintenance::MaintenanceRequest;
 
 fn make_orch() -> std::sync::Arc<dyn IMaintenanceAggregate> {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();

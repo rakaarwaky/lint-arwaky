@@ -5,20 +5,20 @@
 use std::sync::Arc;
 use tracing::debug;
 
-use shared::common::FilePath;
-use shared::config_system::{
+use shared_common::FilePath;
+use shared_config_system::{
     ArchitectureConfig, ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate,
 };
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
 use crate::surface_check_action::FilesystemSeam;
-use shared::orphan_rules::IOrphanAggregate;
-use shared::orphan_rules::OrphanRequest;
+use shared_orphan_rules::IOrphanAggregate;
+use shared_orphan_rules::OrphanRequest;
 
-use shared::common::ViolationItem;
+use shared_common::ViolationItem;
 
 /// Factory function type: creates a fresh filesystem aggregate (uncached pipeline).
 pub type FilesystemFactory = dyn Fn() -> FilesystemSeam + Send + Sync;
@@ -187,7 +187,7 @@ pub fn collect_orphan(
         })
         .collect();
     let unified_orphan_files =
-        shared::orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO::new(all_file_paths);
+        shared_orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO::new(all_file_paths);
 
     // Build ONE graph context from ALL files — this sees cross-member imports.
     // Use top_root (absolute workspace root) as root_dir so that path resolution
@@ -319,7 +319,7 @@ fn scan_single_root(
         })
         .collect();
     let orphan_files =
-        shared::orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO::new(file_paths);
+        shared_orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO::new(file_paths);
 
     // Build graph context from filesystem's pre-built data
     let context = ws_orchestrator

@@ -1,10 +1,10 @@
 // Unit tests — JsonFormatter (FR-002): structured pretty-printed JSON output.
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
-use shared::cli_commands::DiagnosticSeverity;
-use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
-use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared_cli_commands::DiagnosticSeverity;
+use shared_cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
+use shared_common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 
-use shared::report_formatter::IJsonFormatProtocol;
+use shared_report_formatter::IJsonFormatProtocol;
 
 fn report_with_mixed_results() -> ScanReport {
     let aes = LintResult {
@@ -97,7 +97,7 @@ fn diagnostics_are_serialized() {
 
 #[test]
 fn score_is_embedded_when_present() {
-    let report = ScanReport::new(vec![], vec![]).with_score(shared::common::Score::new(85.0));
+    let report = ScanReport::new(vec![], vec![]).with_score(shared_common::Score::new(85.0));
     let out = JsonFormatter::new().format_json(&report);
     let v: serde_json::Value = serde_json::from_str(out.value()).unwrap();
     assert_eq!(v["summary"]["score"], 85.0);

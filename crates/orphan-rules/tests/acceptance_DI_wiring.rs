@@ -19,9 +19,9 @@ use filesystem::capabilities_dependency_graph::DependencyGraph;
 use filesystem::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::orphan_rules::utility_orphan_graph::trace_reachability;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_orphan_rules::utility_orphan_graph::trace_reachability;
 use std::sync::Arc;
 
 /// Creates a filesystem orchestrator with default dependencies.

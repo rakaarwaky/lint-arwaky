@@ -12,15 +12,15 @@
 //   4. `check_fn_count_limit` enforces a tier-specific function-count ceiling
 //      with an AST-to-lexical fallback.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
-use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
-use shared::role_rules::taxonomy_role_rules_constant::{
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language, ParseMetadata};
+use shared_role_rules::contract_role_protocol::ISurfaceRoleProtocol;
+use shared_role_rules::taxonomy_role_rules_constant::{
     MAX_CONTROL_FLOW, MAX_FN_COUNT_PASSIVE, MAX_FN_COUNT_SMART, MAX_FN_COUNT_UTILITY,
     MAX_PUBLIC_METHODS,
 };
-use shared::role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
+use shared_role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct SurfaceRoleChecker {}

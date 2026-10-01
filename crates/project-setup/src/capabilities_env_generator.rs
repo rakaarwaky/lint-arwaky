@@ -3,10 +3,10 @@
 // Implements IEnvGenerationProtocol. Generates .env content with PHANTOM_ROOT
 // for JS/TS IDE integration during project initialization.
 
-use shared::common::taxonomy_job_vo::EnvContentVO;
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::project_setup::contract_setup_protocol::IEnvGenerationProtocol;
+use shared_common::taxonomy_job_vo::EnvContentVO;
+use shared_common::taxonomy_path_vo::DirectoryPath;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_project_setup::contract_setup_protocol::IEnvGenerationProtocol;
 
 use std::sync::Arc;
 

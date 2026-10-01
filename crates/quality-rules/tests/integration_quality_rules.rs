@@ -1,9 +1,9 @@
 // PURPOSE: Integration tests — CodeAnalysisContainer wiring and full check pipeline
 use quality_rules_lint_arwaky::CodeAnalysisContainer;
 
-use shared::common::FilePath;
-use shared::config_system::ArchitectureConfig;
-use shared::quality_rules::CodeAnalysisRequest;
+use shared_common::FilePath;
+use shared_config_system::ArchitectureConfig;
+use shared_quality_rules::CodeAnalysisRequest;
 
 // ── Container construction ──────────────────────────────────
 
@@ -26,7 +26,7 @@ fn default_container_creates_successfully() {
 #[test]
 fn container_with_custom_config_creates_successfully() {
     let config = ArchitectureConfig::default();
-    let layer_map = shared::common::LayerMapVO::new(std::collections::HashMap::new());
+    let layer_map = shared_common::LayerMapVO::new(std::collections::HashMap::new());
     let container = CodeAnalysisContainer::new_with_config(config, layer_map);
     let linter = container.code_analysis_linter();
     assert_eq!(
@@ -52,7 +52,7 @@ fn run_analysis_with_empty_entries_returns_empty() {
 
 #[test]
 fn run_analysis_skips_unparseable_entries() {
-    use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+    use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
     use std::path::PathBuf;
 
     let container = CodeAnalysisContainer::new();
@@ -60,7 +60,7 @@ fn run_analysis_skips_unparseable_entries() {
     let entries = vec![FileEntry {
         path: PathBuf::from("src/lib.rs"),
         extension: "rs".to_string(),
-        language: shared::common::taxonomy_language_vo::Language::Rust,
+        language: shared_common::taxonomy_language_vo::Language::Rust,
         size: 100,
         content: String::new(),
         parse_ok: false,
@@ -74,7 +74,7 @@ fn run_analysis_skips_unparseable_entries() {
 
 #[test]
 fn run_analysis_skips_empty_content() {
-    use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+    use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
     use std::path::PathBuf;
 
     let container = CodeAnalysisContainer::new();
@@ -82,7 +82,7 @@ fn run_analysis_skips_empty_content() {
     let entries = vec![FileEntry {
         path: PathBuf::from("src/lib.rs"),
         extension: "rs".to_string(),
-        language: shared::common::taxonomy_language_vo::Language::Rust,
+        language: shared_common::taxonomy_language_vo::Language::Rust,
         size: 100,
         content: String::new(),
         parse_ok: true,
@@ -96,7 +96,7 @@ fn run_analysis_skips_empty_content() {
 
 #[test]
 fn run_analysis_detects_bypass_in_code() {
-    use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+    use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
     use std::path::PathBuf;
 
     let container = CodeAnalysisContainer::new();
@@ -104,7 +104,7 @@ fn run_analysis_detects_bypass_in_code() {
     let entries = vec![FileEntry {
         path: PathBuf::from("src/example.rs"),
         extension: "rs".to_string(),
-        language: shared::common::taxonomy_language_vo::Language::Rust,
+        language: shared_common::taxonomy_language_vo::Language::Rust,
         size: 100,
         content: "let x = foo.unwrap();\n".to_string(),
         parse_ok: true,
@@ -137,7 +137,7 @@ fn score_perfect_when_no_violations() {
 fn format_report_returns_content() {
     let container = CodeAnalysisContainer::new();
     let linter = container.code_analysis_linter();
-    let results = shared::cli_commands::LintResultList::new(Vec::new());
+    let results = shared_cli_commands::LintResultList::new(Vec::new());
     let root = FilePath::new("/project".to_string()).unwrap();
     let report = linter
         .execute(CodeAnalysisRequest::format_report(&results.values, &root))

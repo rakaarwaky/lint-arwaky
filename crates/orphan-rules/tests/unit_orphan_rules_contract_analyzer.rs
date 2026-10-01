@@ -1,16 +1,16 @@
 // Unit tests for ContractOrphanAnalyzer — orphan detection for contract-layer files.
 use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
-use shared::orphan_rules::{IContractOrphanProtocol, IOrphanParserProtocol};
-use shared::quality_rules::taxonomy_quality_rules_vo::{InheritanceMap, ReachabilityResult};
+use shared_orphan_rules::{IContractOrphanProtocol, IOrphanParserProtocol};
+use shared_quality_rules::taxonomy_quality_rules_vo::{InheritanceMap, ReachabilityResult};
 use std::collections::HashSet;
 
 fn empty_reachability() -> ReachabilityResult {
     ReachabilityResult::new(HashSet::new())
 }
 
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::taxonomy_orphan_rules_vo::*;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::taxonomy_orphan_rules_vo::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 

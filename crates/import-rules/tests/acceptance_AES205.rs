@@ -1,14 +1,14 @@
 // PURPOSE: Acceptance tests — AES205 circular dependency detection.
 use import_rules_lint_arwaky::capabilities_cycle_import_analyzer::DependencyCycleAnalyzer;
-use shared::common::NamingConfig;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::ArchitectureConfig;
-use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
-use shared::import_rules::taxonomy_import_rules_vo::DependencyEdge;
+use shared_common::NamingConfig;
+use shared_common::taxonomy_common_vo::{BooleanVO, Count};
+use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::ArchitectureConfig;
+use shared_import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared_import_rules::taxonomy_import_rules_vo::DependencyEdge;
 use std::collections::HashMap;
 
 fn analyzer() -> DependencyCycleAnalyzer {
@@ -159,12 +159,12 @@ fn aes205_scan_cross_layer_dependency_detected() {
     let content = "use agent::runner;\n\nfn process() { runner::run(); }\n";
     content_map.insert(file_path.to_string(), content.to_string());
 
-    let entry = shared::filesystem::taxonomy_filesystem_vo::ImportEntry {
+    let entry = shared_filesystem::taxonomy_filesystem_vo::ImportEntry {
         source_file: std::path::PathBuf::from(file_path),
         raw_path: "agent::runner".to_string(),
         resolved_path: None,
-        import_type: shared::filesystem::taxonomy_filesystem_vo::ImportType::Use,
-        language: shared::filesystem::taxonomy_filesystem_vo::Language::Rust,
+        import_type: shared_filesystem::taxonomy_filesystem_vo::ImportType::Use,
+        language: shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
         is_dynamic: false,
         is_resolved: false,
         symbols: Vec::new(),
@@ -207,12 +207,12 @@ fn aes205_scan_mutual_cross_layer_cycle() {
     );
     imports_map.insert(
         f1.to_string(),
-        vec![shared::filesystem::taxonomy_filesystem_vo::ImportEntry {
+        vec![shared_filesystem::taxonomy_filesystem_vo::ImportEntry {
             source_file: std::path::PathBuf::from(f1),
             raw_path: "agent::runner".to_string(),
             resolved_path: None,
-            import_type: shared::filesystem::taxonomy_filesystem_vo::ImportType::Use,
-            language: shared::filesystem::taxonomy_filesystem_vo::Language::Rust,
+            import_type: shared_filesystem::taxonomy_filesystem_vo::ImportType::Use,
+            language: shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
             is_dynamic: false,
             is_resolved: false,
             symbols: Vec::new(),
@@ -229,12 +229,12 @@ fn aes205_scan_mutual_cross_layer_cycle() {
     );
     imports_map.insert(
         f2.to_string(),
-        vec![shared::filesystem::taxonomy_filesystem_vo::ImportEntry {
+        vec![shared_filesystem::taxonomy_filesystem_vo::ImportEntry {
             source_file: std::path::PathBuf::from(f2),
             raw_path: "capabilities::handler".to_string(),
             resolved_path: None,
-            import_type: shared::filesystem::taxonomy_filesystem_vo::ImportType::Use,
-            language: shared::filesystem::taxonomy_filesystem_vo::Language::Rust,
+            import_type: shared_filesystem::taxonomy_filesystem_vo::ImportType::Use,
+            language: shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
             is_dynamic: false,
             is_resolved: false,
             symbols: Vec::new(),

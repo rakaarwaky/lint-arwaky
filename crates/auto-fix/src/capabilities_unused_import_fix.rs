@@ -2,14 +2,14 @@
 //
 // Implements IUnusedImportFixProtocol to remove unused import lines
 // (use, import, from, require(), = require()) from source files.
-// All stateless logic is provided by shared::common::utility_word_boundary
+// All stateless logic is provided by shared_auto_fix::utility_word_boundary
 // helpers; this struct owns the IFileSystemIOProtocol seam directly.
 
-use shared::auto_fix::contract_fix_protocol::IUnusedImportFixProtocol;
-use shared::auto_fix::{FailReason, FixOutcome, SkipReason};
-use shared::common::LineNumber;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_auto_fix::contract_fix_protocol::IUnusedImportFixProtocol;
+use shared_auto_fix::{FailReason, FixOutcome, SkipReason};
+use shared_common::LineNumber;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

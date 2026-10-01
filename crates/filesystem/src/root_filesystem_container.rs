@@ -10,12 +10,12 @@ use crate::capabilities_dependency_graph::DependencyGraph;
 use crate::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use crate::capabilities_tool_resolution::CapabilitiesToolResolution;
 use crate::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

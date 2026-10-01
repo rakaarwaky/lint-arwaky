@@ -10,15 +10,15 @@ use quality_rules_lint_arwaky::capabilities_dead_inheritance_checker::DeadInheri
 use quality_rules_lint_arwaky::capabilities_line_checker::ArchLineChecker;
 use quality_rules_lint_arwaky::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
 
-use shared::quality_rules::IBypassCheckerProtocol;
-use shared::quality_rules::ICodeAnalysisAggregate;
-use shared::quality_rules::ICodeMetricAnalyzerProtocol;
-use shared::quality_rules::IDeadInheritanceProtocol;
-use shared::quality_rules::ILineCheckerProtocol;
-use shared::quality_rules::IMandatoryClassProtocol;
+use shared_quality_rules::IBypassCheckerProtocol;
+use shared_quality_rules::ICodeAnalysisAggregate;
+use shared_quality_rules::ICodeMetricAnalyzerProtocol;
+use shared_quality_rules::IDeadInheritanceProtocol;
+use shared_quality_rules::ILineCheckerProtocol;
+use shared_quality_rules::IMandatoryClassProtocol;
 
-use shared::common::LayerMapVO;
-use shared::config_system::ArchitectureConfig;
+use shared_common::LayerMapVO;
+use shared_config_system::ArchitectureConfig;
 
 // ── ArchLineChecker → ILineCheckerProtocol ──────────────────
 

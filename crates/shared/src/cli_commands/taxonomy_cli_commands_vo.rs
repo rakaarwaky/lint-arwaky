@@ -4,11 +4,11 @@ use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use crate::cli_commands::taxonomy_format_vo::Format;
-use crate::common::taxonomy_action_vo::ActionName;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::common::taxonomy_suggestion_vo::Suggestion;
+use crate::taxonomy_action_vo::ActionName;
+use crate::taxonomy_format_vo::Format;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_suggestion_vo::Suggestion;
 
 // ─── Cli and Commands (from taxonomy_cli_vo) ──────────────────────────
 
@@ -204,7 +204,7 @@ pub fn get_cli() -> Cli {
 
 // ─── Transport / protocol VOs (from taxonomy_protocol_vo) ─────────────
 
-use crate::string_value_object;
+use shared_common::string_value_object;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct TransportEndpoint {
@@ -496,7 +496,7 @@ impl std::error::Error for PipelineError {}
 pub struct ScanReport {
     pub results: Vec<LintResult>,
     pub diagnostics: Vec<PipelineDiagnostic>,
-    pub score: Option<crate::common::taxonomy_common_vo::Score>,
+    pub score: Option<shared_common::taxonomy_common_vo::Score>,
 }
 
 impl ScanReport {
@@ -512,12 +512,12 @@ impl ScanReport {
     pub fn violation_count(&self) -> usize {
         self.results
             .iter()
-            .filter(|r| r.severity != crate::common::taxonomy_severity_vo::Severity::INFO)
+            .filter(|r| r.severity != shared_common::taxonomy_severity_vo::Severity::INFO)
             .count()
     }
 
     /// Attach a score to the report.
-    pub fn with_score(mut self, score: crate::common::taxonomy_common_vo::Score) -> Self {
+    pub fn with_score(mut self, score: shared_common::taxonomy_common_vo::Score) -> Self {
         self.score = Some(score);
         self
     }

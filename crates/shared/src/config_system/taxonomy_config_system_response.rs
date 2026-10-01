@@ -1,10 +1,10 @@
 // PURPOSE: ConfigResponse — response payload for the config aggregate
 
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use crate::config_system::taxonomy_config_system_vo::ConfigResult;
-use crate::config_system::taxonomy_config_system_vo::ConfigSource;
-use crate::config_system::taxonomy_config_system_vo::WorkspaceInfo;
+use crate::taxonomy_config_system_vo::ArchitectureConfig;
+use crate::taxonomy_config_system_vo::ConfigResult;
+use crate::taxonomy_config_system_vo::ConfigSource;
+use crate::taxonomy_config_system_vo::WorkspaceInfo;
+use shared_common::taxonomy_common_vo::PatternList;
 
 pub enum ConfigResponse {
     LoadProjectConfig { result: ConfigResult },

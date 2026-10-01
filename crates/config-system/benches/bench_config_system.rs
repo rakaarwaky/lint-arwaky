@@ -3,15 +3,13 @@
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::root_config_system_container::ConfigContainer;
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::ConfigRequest;
-use shared::config_system::contract_config_protocol::IWorkspaceMembersProtocol;
-use shared::config_system::taxonomy_config_system_vo::{
-    AdapterEntry, AdapterStatus, ProjectConfig,
-};
-use shared::config_system::utility_config_parser::parse_config_yaml;
-use shared::config_system::utility_config_parser::validate_thresholds;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::ConfigRequest;
+use shared_config_system::contract_config_protocol::IWorkspaceMembersProtocol;
+use shared_config_system::taxonomy_config_system_vo::{AdapterEntry, AdapterStatus, ProjectConfig};
+use shared_config_system::utility_config_parser::parse_config_yaml;
+use shared_config_system::utility_config_parser::validate_thresholds;
 use std::fs;
 use tempfile::TempDir;
 
@@ -40,7 +38,7 @@ fn bench_workspace_detect(c: &mut Criterion) {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let fs_arc: std::sync::Arc<
-        dyn shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol,
+        dyn shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol,
     > = fs_container.io();
     let detector = WorkspaceDetector::new(fs_arc);
     let mut group = c.benchmark_group("workspace_detect");
@@ -97,7 +95,7 @@ fn bench_load_config_sync(c: &mut Criterion) {
         |b, path| {
             let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
             let fs: std::sync::Arc<
-                dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+                dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
             > = fs_container.orchestrator();
             let orch = ConfigContainer::new(fs, fs_container.io()).orchestrator();
             b.iter(|| {

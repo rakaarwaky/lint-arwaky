@@ -13,7 +13,13 @@ workspace = true
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
-shared.workspace = true
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
+shared-filesystem.workspace = true
+shared-import-rules.workspace = true
+shared-orphan-rules.workspace = true
+shared-role-rules.workspace = true
 rayon.workspace = true
 tracing.workspace = true
 

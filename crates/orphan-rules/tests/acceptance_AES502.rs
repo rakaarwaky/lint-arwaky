@@ -1,9 +1,9 @@
 // Acceptance tests — AES502: Contract orphan detection.
 use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrphanAnalyzer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::IContractOrphanProtocol;
-use shared::quality_rules::taxonomy_quality_rules_vo::{InheritanceMap, ReachabilityResult};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::IContractOrphanProtocol;
+use shared_quality_rules::taxonomy_quality_rules_vo::{InheritanceMap, ReachabilityResult};
 use std::collections::{HashMap, HashSet};
 
 fn empty_reachability() -> ReachabilityResult {

@@ -8,9 +8,9 @@
 // US7: Parallel parsing completes for many files.
 
 use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
-use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_common::taxonomy_language_vo::Language;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 
 fn make_entry(path: &str, content: &str, language: Language) -> FileEntry {
@@ -43,7 +43,7 @@ fn us1_valid_rust_file_produces_metadata() {
     assert!(files[0].parse_ok);
     assert!(files[0].parse_metadata.is_some());
     match files[0].parse_metadata.as_ref().unwrap() {
-        shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(meta) => {
+        shared_filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(meta) => {
             assert!(!meta.function_definitions.is_empty());
         }
         _ => panic!("Expected Rust metadata"),
@@ -154,7 +154,7 @@ fn fr001_python_file_parse_metadata() {
     parser.parse_all(&mut files);
     assert!(files[0].parse_ok);
     match files[0].parse_metadata.as_ref().unwrap() {
-        shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Python(meta) => {
+        shared_filesystem::taxonomy_filesystem_vo::ParseMetadata::Python(meta) => {
             assert!(!meta.class_declarations.is_empty());
             assert!(!meta.function_definitions.is_empty());
         }
@@ -200,7 +200,7 @@ fn fr001_typescript_file_parse_metadata() {
     parser.parse_all(&mut files);
     assert!(files[0].parse_ok);
     match files[0].parse_metadata.as_ref().unwrap() {
-        shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(meta) => {
+        shared_filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(meta) => {
             assert!(!meta.import_statements.is_empty());
         }
         _ => panic!("Expected TypeScript metadata"),

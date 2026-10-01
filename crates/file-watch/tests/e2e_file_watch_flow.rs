@@ -1,5 +1,5 @@
 // E2E tests — file watch flow: create container → analyze changes → verify.
-use shared::file_watch::IWatchAggregate;
+use shared_file_watch::IWatchAggregate;
 use std::sync::Arc;
 
 fn make_orch() -> Arc<dyn IWatchAggregate> {

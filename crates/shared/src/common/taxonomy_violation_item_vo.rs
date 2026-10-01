@@ -2,12 +2,12 @@
 // Rendering (text/json/sarif/junit) lives in cli-commands (surface_formatting).
 // Dispatcher computes violation lists; CLI/MCP surfaces format them themselves.
 
-use crate::common::taxonomy_common_vo::{ColumnNumber, LineNumber};
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_severity_vo::Severity;
+use crate::taxonomy_common_vo::{ColumnNumber, LineNumber};
+use crate::taxonomy_error_vo::ErrorCode;
+use crate::taxonomy_lint_result_vo::LintResult;
+use crate::taxonomy_message_vo::LintMessage;
+use crate::taxonomy_path_vo::FilePath;
+use crate::taxonomy_severity_vo::Severity;
 
 /// Minimal violation item for display. Uses existing VOs — no duplicate String wrappers.
 #[derive(Debug, Clone)]

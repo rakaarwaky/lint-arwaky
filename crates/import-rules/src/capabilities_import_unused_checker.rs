@@ -3,13 +3,13 @@
 // When a trait import appears unused, checks if any type used in the file
 // implements that trait anywhere in the project (needed for method dispatch).
 
-use shared::cli_commands::LintResult;
-use shared::common::{FilePath, LintMessage, Severity, SymbolName};
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
-use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::taxonomy_import_rules_error::ImportError;
-use shared::import_rules::utility_import_resolver;
-use shared::import_rules::utility_import_symbol_extractor;
+use shared_cli_commands::LintResult;
+use shared_common::{FilePath, LintMessage, Severity, SymbolName};
+use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
+use shared_import_rules::contract_import_protocol::IUnusedImportProtocol;
+use shared_import_rules::taxonomy_import_rules_error::ImportError;
+use shared_import_rules::utility_import_resolver;
+use shared_import_rules::utility_import_symbol_extractor;
 use std::collections::HashMap;
 
 pub struct UnusedImportRuleChecker;
@@ -38,7 +38,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         let mut unused: Vec<String> = Vec::new();
         for alias in imported_aliases.keys() {
             let alias_str = alias.value();
-            if shared::import_rules::utility_import_resolver::is_future_import(content, alias_str) {
+            if shared_import_rules::utility_import_resolver::is_future_import(content, alias_str) {
                 continue;
             }
             if !used_symbols.contains(alias) && !exported_symbols.contains(alias) {
@@ -76,7 +76,7 @@ impl IUnusedImportProtocol for UnusedImportRuleChecker {
         let mut violations = Vec::new();
         for alias in imported_aliases.keys() {
             let alias_str = alias.value();
-            if shared::import_rules::utility_import_resolver::is_future_import(content, alias_str) {
+            if shared_import_rules::utility_import_resolver::is_future_import(content, alias_str) {
                 continue;
             }
             if used_symbols.contains(alias) || exported_symbols.contains(alias) {

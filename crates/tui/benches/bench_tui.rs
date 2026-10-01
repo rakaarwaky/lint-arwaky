@@ -7,11 +7,11 @@ fn bench_file_entry_construction(c: &mut Criterion) {
 
     group.bench_function("create_file_entry", |b| {
         b.iter(|| {
-            let entry = shared::tui::FileEntry {
+            let entry = shared_tui::FileEntry {
                 name: "module.rs".to_string(),
                 full_path: "/tmp/project/src/module.rs".to_string(),
                 is_dir: false,
-                layer: shared::tui::AesLayer::Capabilities,
+                layer: shared_tui::AesLayer::Capabilities,
                 violation_count: 3,
                 extension: "rs".to_string(),
                 size_bytes: 1024,
@@ -30,12 +30,12 @@ fn bench_file_entry_batch(c: &mut Criterion) {
     for n in [10, 50, 200] {
         group.bench_with_input(BenchmarkId::new("create_batch", n), &n, |b, &n| {
             b.iter(|| {
-                let entries: Vec<shared::tui::FileEntry> = (0..n)
-                    .map(|i| shared::tui::FileEntry {
+                let entries: Vec<shared_tui::FileEntry> = (0..n)
+                    .map(|i| shared_tui::FileEntry {
                         name: format!("file_{}.rs", i),
                         full_path: format!("/tmp/project/src/file_{}.rs", i),
                         is_dir: false,
-                        layer: shared::tui::AesLayer::Capabilities,
+                        layer: shared_tui::AesLayer::Capabilities,
                         violation_count: i % 5,
                         extension: "rs".to_string(),
                         size_bytes: 1024,

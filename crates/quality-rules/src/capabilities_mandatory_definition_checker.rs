@@ -1,9 +1,9 @@
-use shared::cli_commands::LintResult;
-use shared::quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
+use shared_cli_commands::LintResult;
+use shared_quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
 
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::quality_rules::utility_mandatory_checker::rust_declares_type;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_quality_rules::utility_mandatory_checker::rust_declares_type;
 
 // PURPOSE: MandatoryDefinitionChecker — AES303 sub-check 1: enforce struct/enum/trait/class/interface/type definitions exist.
 // ALGORITHM:
@@ -33,8 +33,8 @@ impl IMandatoryClassProtocol for MandatoryDefinitionChecker {
             None => return,
         };
 
-        // Skip barrel files + main.py (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
-        if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&basename.as_str())
+        // Skip barrel files + main.py (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
+        if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&basename.as_str())
             || basename == "main.py"
             || basename == "py.typed"
             || basename == "main.rs"

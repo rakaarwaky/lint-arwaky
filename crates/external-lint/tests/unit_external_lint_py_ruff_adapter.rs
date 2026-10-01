@@ -6,14 +6,14 @@ use external_lint_lint_arwaky::capabilities_py_ruff_adapter::RuffAdapter;
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_operation_error::LinterOperationError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::external_lint::ICommandExecutorProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_external_lint::ICommandExecutorProtocol;
+use shared_external_lint::taxonomy_duration_vo::Timeout;
 use std::sync::Arc;
 
 /// Backs the FR-006 `ICommandExecutorProtocol` seam: raw execution plus the
@@ -134,11 +134,11 @@ fn unknown_code_defaults_to_medium() {
 /// as a command argument.
 #[test]
 fn relative_scan_target_is_canonicalized_to_absolute_in_cmd() {
-    use shared::common::taxonomy_adapter_name_vo::AdapterName;
-    use shared::common::taxonomy_operation_error::LinterOperationError;
-    use shared::common::taxonomy_path_vo::FilePath;
-    use shared::common::taxonomy_response_data_vo::ResponseData;
-    use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+    use shared_common::taxonomy_adapter_name_vo::AdapterName;
+    use shared_common::taxonomy_operation_error::LinterOperationError;
+    use shared_common::taxonomy_path_vo::FilePath;
+    use shared_common::taxonomy_response_data_vo::ResponseData;
+    use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
     use std::sync::Mutex;
 
     #[derive(Default)]
@@ -148,9 +148,9 @@ fn relative_scan_target_is_canonicalized_to_absolute_in_cmd() {
     impl ICommandExecutorProtocol for CapturingLintExecutor {
         fn execute_command(
             &self,
-            _: shared::common::taxonomy_common_vo::PatternList,
+            _: shared_common::taxonomy_common_vo::PatternList,
             _: FilePath,
-            _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+            _: Option<shared_external_lint::taxonomy_duration_vo::Timeout>,
         ) -> anyhow::Result<ResponseData> {
             Ok(ResponseData::default())
         }

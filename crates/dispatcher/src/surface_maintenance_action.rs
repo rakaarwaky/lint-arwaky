@@ -1,9 +1,9 @@
 // PURPOSE: MaintenanceCommandsSurface — maintenance business logic, no formatting.
 // Delegates all operations through IMaintenanceAggregate.
 // No direct std::process::Command or filesystem I/O — aggregate handles subprocess execution.
-use shared::common::FilePath;
-use shared::maintenance::MaintenanceRequest;
-use shared::maintenance::{
+use shared_common::FilePath;
+use shared_maintenance::MaintenanceRequest;
+use shared_maintenance::{
     DependencyReport, HealthCheckResult, IMaintenanceAggregate, SecurityScanReport,
     SelfUpdateResultVO, ToolchainDiagnostics,
 };

@@ -3,8 +3,8 @@
 /// IStructureSharedPurityProtocol  → AES701 (shared/kernel folder rules)
 /// IStructureFeatureHealthProtocol → AES702 (feature folder health + docs)
 /// IStructureSurfacePurityProtocol → AES703 (surface folder purity + docs)
-use crate::structure_rules::taxonomy_structure_rules_request::StructureRequest;
-use crate::structure_rules::taxonomy_structure_rules_response::StructureResponse;
+use crate::taxonomy_structure_rules_request::StructureRequest;
+use crate::taxonomy_structure_rules_response::StructureResponse;
 
 /// Shared (kernel) folder purity: no forbidden layers, no doc pair.
 pub trait IStructureSharedPurityProtocol: Send + Sync {

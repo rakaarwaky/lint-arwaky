@@ -1,9 +1,9 @@
 // Acceptance test AES403 — Capability implementation.
 // Capabilities must have >= 1 implementor and max 3 types per file.
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
@@ -24,7 +24,7 @@ fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
     }
 }
 
-fn run_audit(files: Vec<FileEntry>) -> Vec<shared::common::LintResult> {
+fn run_audit(files: Vec<FileEntry>) -> Vec<shared_common::LintResult> {
     let config = ArchitectureConfig::default();
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
@@ -69,7 +69,7 @@ fn aes403_too_many_types_detected() {
         !aes403.is_empty(),
         "capability with 4 types should trigger AES403"
     );
-    assert_eq!(aes403[0].severity, shared::common::Severity::HIGH);
+    assert_eq!(aes403[0].severity, shared_common::Severity::HIGH);
 }
 
 // ── Valid capability with implementor → no violation ──
@@ -172,7 +172,7 @@ fn aes403_block_order_inherent_before_protocol_detected() {
         !aes403.is_empty(),
         "inherent impl before protocol impl should trigger AES403"
     );
-    assert_eq!(aes403[0].severity, shared::common::Severity::HIGH);
+    assert_eq!(aes403[0].severity, shared_common::Severity::HIGH);
     assert!(
         aes403[0].message.to_string().contains("Block 2"),
         "message should name the block-order rule"
@@ -219,7 +219,7 @@ fn aes403_local_constant_detected() {
         !aes403.is_empty(),
         "file-level const in a capability should trigger AES403"
     );
-    assert_eq!(aes403[0].severity, shared::common::Severity::MEDIUM);
+    assert_eq!(aes403[0].severity, shared_common::Severity::MEDIUM);
     assert!(
         aes403[0].message.to_string().contains("MAX_RETRIES"),
         "message should name the constant"
@@ -247,7 +247,7 @@ fn aes403_embedded_test_detected() {
         1,
         "an inline test module should produce exactly one AES403 finding"
     );
-    assert_eq!(aes403[0].severity, shared::common::Severity::LOW);
+    assert_eq!(aes403[0].severity, shared_common::Severity::LOW);
 }
 
 // ── Public helper → CapabilityPublicHelper ──
@@ -274,7 +274,7 @@ fn aes403_public_helper_detected() {
         1,
         "a non-constructor pub helper with no external caller should produce exactly one AES403 finding"
     );
-    assert_eq!(aes403[0].severity, shared::common::Severity::MEDIUM);
+    assert_eq!(aes403[0].severity, shared_common::Severity::MEDIUM);
     assert!(
         aes403[0].message.to_string().contains("internal_helper"),
         "message should name the helper"
@@ -390,7 +390,7 @@ fn aes403_python_embedded_test_detected() {
         1,
         "a python `def test_*` should produce exactly one AES403 finding"
     );
-    assert_eq!(aes403[0].severity, shared::common::Severity::LOW);
+    assert_eq!(aes403[0].severity, shared_common::Severity::LOW);
 }
 
 #[test]
@@ -410,7 +410,7 @@ fn aes403_typescript_embedded_test_detected() {
         1,
         "a TypeScript describe block should produce exactly one AES403 finding"
     );
-    assert_eq!(aes403[0].severity, shared::common::Severity::LOW);
+    assert_eq!(aes403[0].severity, shared_common::Severity::LOW);
 }
 
 // ──────────────────────────────────────────────────────────
@@ -485,7 +485,7 @@ fn aes403_multi_protocol_rust_detected() {
     assert_eq!(
         aes403
             .iter()
-            .filter(|r| r.severity == shared::common::Severity::MEDIUM)
+            .filter(|r| r.severity == shared_common::Severity::MEDIUM)
             .count(),
         1,
         "multi-protocol violation should be MEDIUM"

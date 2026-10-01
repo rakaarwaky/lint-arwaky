@@ -100,7 +100,9 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
 3. Write the test first in the owning crate's `tests/` directory, named after the
    functional requirement ID (e.g. `tests/acceptance_FR_001.rs`, scoped to the
    crate directory namespace and mapping to `FR-<Feature>-001` in that crate's `FRD.md`),
-   then implement the feature.
+   then implement the feature. Legacy tests already carrying domain-specific names
+   (e.g. `acceptance_cli_commands.rs`, `acceptance_mcp_server.rs`) keep their name
+   until a dedicated rename refactor; new tests follow the `acceptance_FR_NNN` pattern.
 4. Verify the change took effect:
    ```bash
    cargo nextest run -p <crate>

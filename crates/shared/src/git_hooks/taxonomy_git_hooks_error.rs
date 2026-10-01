@@ -1,5 +1,5 @@
 // PURPOSE: GitHookError — structured error type for git hook operation failures
-use crate::domain_error_vo;
+use shared_common::domain_error_vo;
 
 /// Domain error types for the git hooks subsystem.
 /// Uses the `domain_error_vo!` macro from `utility_value_object_generator`.
@@ -10,7 +10,7 @@ domain_error_vo!(GitHookError, "Git Hook Error", "GIT_HOOK", 3001u16);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::common::taxonomy_message_vo::LintMessage;
+    use shared_common::taxonomy_message_vo::LintMessage;
 
     #[test]
     fn git_hook_error_has_expected_shape() {

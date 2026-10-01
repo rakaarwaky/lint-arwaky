@@ -1,19 +1,19 @@
 // PURPOSE: Acceptance test AES301 — max line count exceeded
 // Create a file with >1000 lines, verify violation when configured with max_lines < line count
-use shared::cli_commands::LintResult;
-use shared::common::{Count, LayerDefinition};
-use shared::quality_rules::ILineCheckerProtocol;
+use shared_cli_commands::LintResult;
+use shared_common::{Count, LayerDefinition};
+use shared_quality_rules::ILineCheckerProtocol;
 
 use quality_rules_lint_arwaky::capabilities_line_checker::ArchLineChecker;
 
 fn make_layer_def_with_max(max: i64) -> LayerDefinition {
     LayerDefinition {
-        code_analysis: shared::quality_rules::CodeAnalysisRuleVO {
+        code_analysis: shared_quality_rules::CodeAnalysisRuleVO {
             max_lines: Count::new(max),
             min_lines: Count::new(0),
             ..Default::default()
         },
-        exceptions: shared::common::PatternList { values: vec![] },
+        exceptions: shared_common::PatternList { values: vec![] },
         ..Default::default()
     }
 }
@@ -43,7 +43,7 @@ fn file_exceeding_max_lines_produces_aes301_violation() {
         "Expected AES301 code, got: {}",
         violations[0].code.code()
     );
-    assert_eq!(violations[0].severity, shared::common::Severity::HIGH);
+    assert_eq!(violations[0].severity, shared_common::Severity::HIGH);
 }
 
 #[test]

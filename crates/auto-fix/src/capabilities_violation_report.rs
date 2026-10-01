@@ -8,17 +8,17 @@
 // but delegates per-violation work to the three dedicated capabilities
 // (UnusedImportFix, BypassFix, SymbolRename).
 
-use shared::auto_fix::contract_fix_protocol::{
+use shared_auto_fix::contract_fix_protocol::{
     IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol, IViolationReportProtocol,
 };
-use shared::auto_fix::{FIXABLE_CODES, FixOutcome, FixResult, RUST_KEYWORDS, SkipReason};
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::{AdapterName, Count, DescriptionVO, ErrorCode};
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared_auto_fix::{FIXABLE_CODES, FixOutcome, FixResult, RUST_KEYWORDS, SkipReason};
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::{AdapterName, Count, DescriptionVO, ErrorCode};
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -57,7 +57,8 @@ impl IViolationReportProtocol for ViolationReport {
         let mut total_fixable =
             naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
         let mut manual_skipped: Vec<LintMessage> = Vec::new();
-        let mut events: Vec<shared::auto_fix::FixApplied> = Vec::new();
+        let mut failed_outcomes: Vec<LintMessage> = Vec::new();
+        let mut events: Vec<shared_auto_fix::FixApplied> = Vec::new();
 
         for violation in &naming_violations {
             let msg = violation.message.value();
@@ -85,15 +86,29 @@ impl IViolationReportProtocol for ViolationReport {
                         &new_name,
                         dry_run,
                     );
-                    if outcome.is_applied() {
-                        let changes = match &outcome {
-                            FixOutcome::Applied { changes } => *changes,
-                            _ => 0,
-                        };
-                        fixed_count += changes;
-                        events.push(self.emit_fix_event_impl(&violation.file, "AES101", changes));
-                    } else {
-                        total_fixable -= 1;
+                    match &outcome {
+                        FixOutcome::Applied { changes } => {
+                            fixed_count += *changes;
+                            events.push(self.emit_fix_event_impl(
+                                &violation.file,
+                                "AES101",
+                                *changes,
+                            ));
+                        }
+                        FixOutcome::Failed(reason) => {
+                            total_fixable -= 1;
+                            failed_outcomes.push(LintMessage::new(format!(
+                                "  {} | {} | failed: {} | {}:{}",
+                                violation.code,
+                                violation.message,
+                                reason,
+                                violation.file,
+                                violation.line
+                            )));
+                        }
+                        FixOutcome::Skipped(_) => {
+                            total_fixable -= 1;
+                        }
                     }
                 } else {
                     total_fixable -= 1;
@@ -121,6 +136,13 @@ impl IViolationReportProtocol for ViolationReport {
                         violation.code, violation.message, violation.file, violation.line
                     )));
                 }
+                FixOutcome::Failed(reason) => {
+                    total_fixable -= 1;
+                    failed_outcomes.push(LintMessage::new(format!(
+                        "  {} | {} | failed: {} | {}:{}",
+                        violation.code, violation.message, reason, violation.file, violation.line
+                    )));
+                }
                 _ => {
                     total_fixable -= 1;
                 }
@@ -132,21 +154,29 @@ impl IViolationReportProtocol for ViolationReport {
             let outcome =
                 self.unused_import_fix
                     .fix_unused_import_dry(violation.file.value(), line, dry_run);
-            if outcome.is_applied() {
-                let changes = match &outcome {
-                    FixOutcome::Applied { changes } => *changes,
-                    _ => 0,
-                };
-                fixed_count += changes;
-                events.push(self.emit_fix_event_impl(&violation.file, "AES203", changes));
-            } else {
-                total_fixable -= 1;
+            match &outcome {
+                FixOutcome::Applied { changes } => {
+                    fixed_count += *changes;
+                    events.push(self.emit_fix_event_impl(&violation.file, "AES203", *changes));
+                }
+                FixOutcome::Failed(reason) => {
+                    total_fixable -= 1;
+                    failed_outcomes.push(LintMessage::new(format!(
+                        "  {} | {} | failed: {} | {}:{}",
+                        violation.code, violation.message, reason, violation.file, violation.line
+                    )));
+                }
+                FixOutcome::Skipped(_) => {
+                    total_fixable -= 1;
+                }
             }
         }
 
         let mut manual_steps = self.report_non_fixable(results);
         manual_steps.extend(manual_skipped);
+        manual_steps.extend(failed_outcomes.iter().cloned());
 
+        let failed_count = failed_outcomes.len();
         let remaining = if !dry_run && fixed_count > 0 {
             let after_results = self
                 .linter
@@ -192,7 +222,15 @@ impl IViolationReportProtocol for ViolationReport {
             )
         };
 
-        let error = if !dry_run && fixed_count == 0 && total_fixable > 0 {
+        // Exit-code contract (PRD "Exit Code Contract" → `fix` aggregation rule):
+        // any per-item `Failed` outcome is a runtime error, not a policy skip.
+        // `Skipped` outcomes are policy skips and never raise the error.
+        let error = if failed_count > 0 {
+            Some(ErrorMessage::new(format!(
+                "{} fix attempt(s) failed with a runtime error",
+                failed_count
+            )))
+        } else if !dry_run && fixed_count == 0 && total_fixable > 0 {
             Some(ErrorMessage::new("All fix attempts failed".to_string()))
         } else {
             None
@@ -238,8 +276,8 @@ impl ViolationReport {
         path: &FilePath,
         error_code: &str,
         changes: usize,
-    ) -> shared::auto_fix::FixApplied {
-        shared::auto_fix::FixApplied::new(
+    ) -> shared_auto_fix::FixApplied {
+        shared_auto_fix::FixApplied::new(
             path.clone(),
             AdapterName::raw("violation-report"),
             ErrorCode::raw(error_code.to_string()),

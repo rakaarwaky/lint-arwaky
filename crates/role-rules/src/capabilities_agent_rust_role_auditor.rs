@@ -6,13 +6,13 @@
 // annotation) live in utility_agent_role_checker.rs so all three auditors
 // share one copy; the rest are Rust-specific and stay here.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
-use shared::role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_RUST;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
+use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_RUST;
 
-use shared::role_rules::utility_agent_role_checker;
+use shared_role_rules::utility_agent_role_checker;
 
 // === Block 1: Type Definition ===
 
@@ -270,7 +270,7 @@ impl AgentRustRoleAuditor {
     ) {
         let (injected, _distinct) = utility_agent_role_checker::count_protocol_fields(
             content,
-            shared::filesystem::taxonomy_filesystem_vo::Language::Rust,
+            shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
         );
         // A feature whose shared module declares exactly one protocol is a
         // single-subsystem feature — but only when the agent actually injects

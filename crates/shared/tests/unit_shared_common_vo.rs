@@ -1,47 +1,33 @@
 // Unit tests — shared/common taxonomy VOs and utilities.
 mod common;
 
-use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
-use shared_lint_arwaky::common::taxonomy_common_error::ExitCode;
-use shared_lint_arwaky::common::taxonomy_common_vo::{
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_error::ExitCode;
+use shared_common::taxonomy_common_vo::{
     BooleanVO, ColumnNumber, Count, ErrorMessage, LanguageVO, LineNumber, PatternList, Score,
     Timestamp,
 };
-use shared_lint_arwaky::common::taxonomy_config_language_vo::ConfigLanguage;
-use shared_lint_arwaky::common::taxonomy_error_vo::{
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_error_vo::{
     ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
     error_code_is_style,
 };
-use shared_lint_arwaky::common::taxonomy_format_vo::Format;
-use shared_lint_arwaky::common::taxonomy_job_id_vo::JobId;
-use shared_lint_arwaky::common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus};
-use shared_lint_arwaky::common::taxonomy_language_vo::Language;
-use shared_lint_arwaky::common::taxonomy_layer_vo::{
-    FileContentVO, Identity, LayerNameVO, LineContentVO,
-};
-use shared_lint_arwaky::common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
-use shared_lint_arwaky::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
-use shared_lint_arwaky::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared_lint_arwaky::common::taxonomy_paths_vo::{FilePathList, RenamedFile};
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
-use shared_lint_arwaky::common::taxonomy_suggestion_vo::{
+use shared_common::taxonomy_format_vo::Format;
+use shared_common::taxonomy_job_id_vo::JobId;
+use shared_common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus};
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared_common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
+use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
+use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile};
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_suggestion_vo::{
     ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
 };
-use shared_lint_arwaky::common::taxonomy_threshold_vo::Threshold;
-use shared_lint_arwaky::common::utility_command_runner::{run_command, run_command_in_dir};
-use shared_lint_arwaky::common::utility_compliance_score::compute_score;
-use shared_lint_arwaky::common::utility_language_detector::{
-    detect_language, detect_language_info, is_lintable,
-};
-use shared_lint_arwaky::common::utility_path_normalization::{
-    normalize_path, resolve_capabilities_path,
-};
-use shared_lint_arwaky::common::utility_signature_parser::{
-    extract_python_method_signatures, extract_trait_method_signatures,
-    extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
-    signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
-};
-use shared_lint_arwaky::common::{LintResult, LintResultList};
+use shared_common::taxonomy_threshold_vo::Threshold;
+use shared_common::{LintResult, LintResultList};
+use shared_filesystem::utility_command_runner::{run_command, run_command_in_dir};
 use std::str::FromStr;
 
 // ── FilePath ────────────────────────────────────────────────
@@ -217,27 +203,6 @@ fn threshold_defaults_and_value() {
     assert_eq!(Threshold::from(60), Threshold::new(60));
 }
 
-#[test]
-fn compute_score_sums_penalties_from_one_hundred() {
-    let results = vec![
-        common::violation("a.rs", 1, "AES101", Severity::HIGH),
-        common::violation("a.rs", 2, "AES101", Severity::HIGH),
-    ];
-    let score = compute_score(&results);
-    assert!((score - 94.0).abs() < 1e-9);
-}
-
-#[test]
-fn compute_score_clamps_at_zero() {
-    let results = vec![
-        common::violation("a.rs", 1, "AES101", Severity::CRITICAL),
-        common::violation("a.rs", 2, "AES101", Severity::CRITICAL),
-        common::violation("a.rs", 3, "AES101", Severity::CRITICAL),
-    ];
-    let score = compute_score(&results);
-    assert!((score - 85.0).abs() < 1e-9);
-}
-
 // ── Languages ───────────────────────────────────────────────
 #[test]
 fn config_language_parse_and_format() {
@@ -313,33 +278,6 @@ fn language_vo_from_path() {
 }
 
 // ── Detect language utilities ───────────────────────────────
-#[test]
-fn detect_language_by_extension() {
-    assert_eq!(detect_language(&common::fp("x.py")), Language::Python);
-    assert_eq!(detect_language(&common::fp("x.ts")), Language::TypeScript);
-    assert_eq!(detect_language(&common::fp("x.mjs")), Language::JavaScript);
-    assert_eq!(detect_language(&common::fp("x.rs")), Language::Rust);
-    assert_eq!(detect_language(&common::fp("x.md")), Language::Unknown);
-}
-
-#[test]
-fn is_lintable_flags() {
-    assert!(is_lintable(&common::fp("x.rs")));
-    assert!(is_lintable(&common::fp("x.py")));
-    assert!(is_lintable(&common::fp("x.ts")));
-    assert!(!is_lintable(&common::fp("x.yaml")));
-}
-
-#[test]
-fn detect_language_info_flags() {
-    let info = detect_language_info(&common::fp("x.ts"));
-    assert!(info.is_js);
-    assert!(!info.is_rs);
-    assert_eq!(info.lang, Language::TypeScript);
-    let info = detect_language_info(&common::fp("x.rs"));
-    assert!(info.is_rs);
-    assert!(!info.is_py);
-}
 
 // ── Format ──────────────────────────────────────────────────
 #[test]
@@ -569,106 +507,4 @@ fn run_command_in_dir_missing_dir_fails() {
     let (_, stderr, ok) = run_command_in_dir("echo", &["x"], Some("/nonexistent-dir-xyz"));
     assert!(!ok);
     assert!(stderr.contains("Failed to execute"));
-}
-
-#[test]
-fn normalize_path_identity() {
-    let path = common::fp("src/x.rs");
-    assert_eq!(normalize_path(path.clone()), path);
-    assert_eq!(
-        resolve_capabilities_path(path.clone(), Some(common::fp("."))),
-        path
-    );
-}
-
-// ── Signature parsers ───────────────────────────────────────
-#[test]
-fn extract_trait_method_signatures_rust() {
-    let content = "pub trait IReaderProtocol {\n    fn read(&self) -> Result<String>;\n    fn other() {}\n}\nfn free() {}\n";
-    let sigs = extract_trait_method_signatures(content);
-    assert_eq!(sigs.len(), 1);
-    assert_eq!(sigs[0].0, 2);
-    assert!(sigs[0].1.contains("fn read"));
-}
-
-#[test]
-fn extract_python_method_signatures_with_primitives() {
-    let content = "class Foo:\n    def run(self) -> str:\n        pass\n    def safe(self, value) -> str:\n        return value\n";
-    let sigs = extract_python_method_signatures(content);
-    assert_eq!(sigs.len(), 2);
-    assert!(sigs[0].1.contains("def run"));
-    assert!(sigs[1].1.contains("def safe"));
-}
-
-#[test]
-fn extract_typescript_method_signatures_test() {
-    let content = "interface IFoo {\n  getName(): string;\n  safeName(): unknown;\n}\n";
-    let sigs = extract_typescript_method_signatures(content);
-    assert_eq!(sigs.len(), 1);
-}
-
-#[test]
-fn forbidden_primitive_detection_python() {
-    let found = python_signature_uses_forbidden_primitive("def run(self, x: str) -> int:");
-    assert!(found.contains(&"str"));
-    assert!(found.contains(&"int"));
-    let clean =
-        python_signature_uses_forbidden_primitive("def run(self, x: ValueObject) -> ValueObject:");
-    assert!(clean.is_empty());
-}
-
-#[test]
-fn python_generic_brackets_with_space_not_flagged_as_bare_list_dict() {
-    // `list [ResultVO]` / `dict [KeyVO, ValueVO]` are parameterized and must
-    // not be reported as bare `list` / `dict`.
-    let found = python_signature_uses_forbidden_primitive("def run(self) -> list [ResultVO]:");
-    assert!(
-        !found.contains(&"list"),
-        "list [ResultVO] should not be bare list"
-    );
-
-    let found =
-        python_signature_uses_forbidden_primitive("def run(self) -> dict [KeyVO, ValueVO]:");
-    assert!(
-        !found.contains(&"dict"),
-        "dict [K, V] should not be bare dict"
-    );
-
-    // Parameter-side spaced generic annotations are also not bare.
-    let found =
-        python_signature_uses_forbidden_primitive("def run(self, items: list [ResultVO]) -> bool:");
-    assert!(
-        !found.contains(&"list"),
-        "param list [ResultVO] should not be bare list"
-    );
-
-    let found = python_signature_uses_forbidden_primitive(
-        "def run(self, mapping: dict [KeyVO, ValueVO]) -> bool:",
-    );
-    assert!(
-        !found.contains(&"dict"),
-        "param dict [K, V] should not be bare dict"
-    );
-
-    // Bare list/dict without brackets are still flagged.
-    let found = python_signature_uses_forbidden_primitive("def run(self) -> list:");
-    assert!(found.contains(&"list"));
-}
-
-#[test]
-fn forbidden_primitive_detection_typescript() {
-    let found = typescript_signature_uses_forbidden_primitive("getName(x: string): any");
-    assert!(found.contains(&"string"));
-    assert!(found.contains(&"any"));
-}
-
-#[test]
-fn forbidden_primitive_detection_rust() {
-    let found = signature_uses_forbidden_primitive("fn read(&self, x: i32) -> String;");
-    assert!(found.contains(&"i32"));
-    assert!(found.contains(&"String"));
-    let clean = signature_uses_forbidden_primitive(
-        "fn read(&self, x: &FilePath) -> Result<String, Error>;",
-    );
-    assert!(clean.is_empty() || !clean.contains(&"i32"));
 }

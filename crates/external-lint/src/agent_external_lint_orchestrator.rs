@@ -11,21 +11,21 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use shared::cli_commands::taxonomy_result_vo::LintResultList;
-use shared::common::AdapterNameList;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::external_lint::IExternalLintAggregate;
-use shared::external_lint::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::IAdapterScanProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILanguageDetectProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::external_lint::taxonomy_external_lint_request::ExternalLintRequest;
-use shared::external_lint::taxonomy_external_lint_response::ExternalLintResponse;
-use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_cli_commands::taxonomy_result_vo::LintResultList;
+use shared_common::AdapterNameList;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_external_lint::IExternalLintAggregate;
+use shared_external_lint::IExternalLintSelectorProtocol;
+use shared_external_lint::contract_external_lint_protocol::IAdapterScanProtocol;
+use shared_external_lint::contract_external_lint_protocol::ILanguageDetectProtocol;
+use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_external_lint::taxonomy_external_lint_request::ExternalLintRequest;
+use shared_external_lint::taxonomy_external_lint_response::ExternalLintResponse;
+use shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────

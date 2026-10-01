@@ -1,13 +1,13 @@
 // PURPOSE: SharedPurityAuditor — AES701: shared/kernel folder purity and docs
 
-use shared::structure_rules::utility_structure_parsers::{self, sorted};
+use shared_structure_rules::utility_structure_parsers::{self, sorted};
 
-use shared::structure_rules::contract_structure_protocol::IStructureSharedPurityProtocol;
-use shared::structure_rules::taxonomy_structure_rules_constant as consts;
-use shared::structure_rules::taxonomy_structure_rules_request::{
+use shared_structure_rules::contract_structure_protocol::IStructureSharedPurityProtocol;
+use shared_structure_rules::taxonomy_structure_rules_constant as consts;
+use shared_structure_rules::taxonomy_structure_rules_request::{
     StructureFinding, StructureRequest,
 };
-use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
+use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
 /// AES701: checks that shared folders contain only taxonomy, utility, and contract
 /// files, and that kernel folders carry no doc pair.
@@ -61,7 +61,7 @@ fn workspace_root(root: &std::path::Path) -> std::path::PathBuf {
 fn check_shared_purity(
     folder_rel: &str,
     ws_root: &std::path::Path,
-    inventory: &shared::structure_rules::taxonomy_structure_rules_vo::FolderInventory,
+    inventory: &shared_structure_rules::taxonomy_structure_rules_vo::FolderInventory,
     findings: &mut Vec<StructureFinding>,
 ) {
     for file in &inventory.files {

@@ -1,7 +1,7 @@
 use crate::surface_event_action::SurfaceActionHandler;
 use crate::surface_lint_action::SurfaceLintExecutor;
 use crate::surface_tui_command::TuiCommandSurface;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
 // PURPOSE: Root-layer TUI container — composition root wiring surfaces directly.

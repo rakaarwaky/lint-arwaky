@@ -1,16 +1,16 @@
 // PURPOSE: NamingOrchestrator — agent that orchestrates naming rule checks
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::naming_rules::contract_naming_checker_protocol::{
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_naming_rules::contract_naming_checker_protocol::{
     INamingConventionProtocol, ISuffixPolicyProtocol,
 };
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
-use shared::naming_rules::taxonomy_naming_rules_response::NamingResponse;
+use shared_naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

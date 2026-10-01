@@ -2,20 +2,20 @@
 // Each test file includes this via: #[path = "mock_filesystem.rs"] mod mock_filesystem;
 
 use once_cell::sync::Lazy;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_config_language_vo::ConfigLanguage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_source_vo::ContentString;
-use shared::common::taxonomy_tool_name_vo::ToolName as CommonToolName;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::filesystem::taxonomy_filesystem_request::FilesystemRequest;
-use shared::filesystem::taxonomy_filesystem_response::FilesystemResponse;
-use shared::filesystem::taxonomy_filesystem_vo::*;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_source_vo::ContentString;
+use shared_common::taxonomy_tool_name_vo::ToolName as CommonToolName;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::taxonomy_filesystem_request::FilesystemRequest;
+use shared_filesystem::taxonomy_filesystem_response::FilesystemResponse;
+use shared_filesystem::taxonomy_filesystem_vo::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -42,7 +42,7 @@ impl IParserProtocol for MockFilesystem {
         &self,
         _path: &std::path::Path,
         _content: &str,
-        _language: shared::common::taxonomy_language_vo::Language,
+        _language: shared_common::taxonomy_language_vo::Language,
     ) -> Vec<ImportEntry> {
         vec![]
     }

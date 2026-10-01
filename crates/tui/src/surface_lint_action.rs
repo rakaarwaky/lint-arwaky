@@ -16,20 +16,20 @@ use dispatcher::surface_plugin_action::collect_adapters_detailed;
 use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
 use dispatcher::surface_version_action::collect_version;
 
-use shared::auto_fix::IFixAggregate;
-use shared::common::FilePath;
-use shared::config_system::IConfigOrchestratorAggregate;
-use shared::external_lint::IExternalLintAggregate;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::IGitHooksAggregate;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::IMaintenanceAggregate;
-use shared::naming_rules::INamingRunnerAggregate;
-use shared::orphan_rules::IOrphanAggregate;
-use shared::project_setup::ISetupAggregate;
-use shared::quality_rules::ICodeAnalysisAggregate;
-use shared::role_rules::IRoleRunnerAggregate;
-use shared::tui::{ActionFlags, LintExecutionResult};
+use shared_auto_fix::IFixAggregate;
+use shared_common::FilePath;
+use shared_config_system::IConfigOrchestratorAggregate;
+use shared_external_lint::IExternalLintAggregate;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_git_hooks::IGitHooksAggregate;
+use shared_import_rules::IImportRunnerAggregate;
+use shared_maintenance::IMaintenanceAggregate;
+use shared_naming_rules::INamingRunnerAggregate;
+use shared_orphan_rules::IOrphanAggregate;
+use shared_project_setup::ISetupAggregate;
+use shared_quality_rules::ICodeAnalysisAggregate;
+use shared_role_rules::IRoleRunnerAggregate;
+use shared_tui::{ActionFlags, LintExecutionResult};
 
 use std::sync::Arc;
 
@@ -47,12 +47,12 @@ pub struct SurfaceLintExecutor {
     import_orchestrator: Option<Arc<dyn IImportRunnerAggregate>>,
     naming_orchestrator: Option<Arc<dyn INamingRunnerAggregate>>,
     role_orchestrator: Option<Arc<dyn IRoleRunnerAggregate>>,
-    structure_orchestrator: Option<Arc<dyn shared::structure_rules::IStructureAggregate>>,
-    doc_orchestrator: Option<Arc<dyn shared::doc_rules::IDocRunnerAggregate>>,
+    structure_orchestrator: Option<Arc<dyn shared_structure_rules::IStructureAggregate>>,
+    doc_orchestrator: Option<Arc<dyn shared_doc_rules::IDocRunnerAggregate>>,
     filesystem: Arc<dyn IFilesystemAggregate>,
-    filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
-    filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
-    filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+    filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
+    filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
+    filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
     fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
     orphan_factory: Arc<OrphanFactory>,
@@ -138,7 +138,7 @@ impl SurfaceLintExecutor {
             }
         };
         let fp = Some(FilePath::new(path.to_string()).unwrap_or_default());
-        let threshold = shared::common::Threshold::new(flags.threshold);
+        let threshold = shared_common::Threshold::new(flags.threshold);
         match collect_ci(deps, fp, threshold) {
             Ok(report) => {
                 let status = if report.pass { "PASS" } else { "FAIL" };
@@ -460,9 +460,9 @@ impl SurfaceLintExecutor {
     pub fn new(
         code_analysis: Arc<dyn ICodeAnalysisAggregate>,
         filesystem: Arc<dyn IFilesystemAggregate>,
-        filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
-        filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
-        filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
+        filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
+        filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
+        filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
         fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
         fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
         orphan_factory: Arc<OrphanFactory>,
@@ -555,7 +555,7 @@ impl SurfaceLintExecutor {
 
     pub fn with_structure_orchestrator(
         mut self,
-        structure_orchestrator: Arc<dyn shared::structure_rules::IStructureAggregate>,
+        structure_orchestrator: Arc<dyn shared_structure_rules::IStructureAggregate>,
     ) -> Self {
         self.structure_orchestrator = Some(structure_orchestrator);
         self
@@ -563,7 +563,7 @@ impl SurfaceLintExecutor {
 
     pub fn with_doc_orchestrator(
         mut self,
-        doc_orchestrator: Arc<dyn shared::doc_rules::IDocRunnerAggregate>,
+        doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
     ) -> Self {
         self.doc_orchestrator = Some(doc_orchestrator);
         self
@@ -609,7 +609,7 @@ impl SurfaceLintExecutor {
     }
 }
 
-fn format_violations(path: &str, violations: &[shared::common::ViolationItem]) -> String {
+fn format_violations(path: &str, violations: &[shared_common::ViolationItem]) -> String {
     if violations.is_empty() {
         return format!("No violations found for {}.", path);
     }

@@ -1,17 +1,17 @@
 // PURPOSE: CI command — CLI thin wrapper
 // Calls dispatcher for CI business logic, only adds CLI output.
-use shared::common::ExitCode;
+use shared_common::ExitCode;
 use std::sync::Arc;
 use tracing::{error, info};
 
-use shared::common::{FilePath, Threshold};
-use shared::config_system::IConfigOrchestratorAggregate;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::naming_rules::INamingRunnerAggregate;
-use shared::orphan_rules::IOrphanAggregate;
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_common::{FilePath, Threshold};
+use shared_config_system::IConfigOrchestratorAggregate;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_import_rules::IImportRunnerAggregate;
+use shared_naming_rules::INamingRunnerAggregate;
+use shared_orphan_rules::IOrphanAggregate;
+use shared_quality_rules::ICodeAnalysisAggregate;
 
 /// Parameters for the CI command — groups all linter aggregates + CLI args.
 pub struct CiCommandParams {

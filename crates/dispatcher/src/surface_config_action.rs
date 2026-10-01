@@ -1,8 +1,8 @@
 // PURPOSE: ConfigCommandsSurface — config show business logic, no formatting.
 // Adapted: sync — iterates known languages using read_config (sync) instead of
 // list_config_files (async). No tokio runtime needed.
-use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
+use shared_common::FilePath;
+use shared_config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
 use std::sync::Arc;
 
 /// One discovered config file (content already redacted).

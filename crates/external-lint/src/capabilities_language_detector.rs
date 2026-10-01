@@ -1,7 +1,7 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::external_lint::contract_external_lint_protocol::ILanguageDetectProtocol;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_external_lint::contract_external_lint_protocol::ILanguageDetectProtocol;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 /// FR-ExternalLint-001: lightweight extension walk that classifies which

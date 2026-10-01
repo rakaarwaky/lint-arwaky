@@ -1,11 +1,11 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::contract_orphan_protocol::IContractOrphanProtocol;
-use shared::orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
-use shared::orphan_rules::utility_orphan_filename::{
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::contract_orphan_protocol::IContractOrphanProtocol;
+use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
+use shared_orphan_rules::utility_orphan_filename::{
     content_contains_whole_word, file_basename, file_suffix,
 };
-use shared::quality_rules::taxonomy_quality_rules_vo::{
+use shared_quality_rules::taxonomy_quality_rules_vo::{
     InheritanceMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;
@@ -225,7 +225,7 @@ pub fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
 
 impl ContractOrphanAnalyzer {
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
-        match shared::common::parse_file_content(file_path, content) {
+        match shared_orphan_rules::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
             FileParseResultVO::TypeScript(result) => result.trait_names(),
@@ -244,7 +244,7 @@ impl ContractOrphanAnalyzer {
             if content.is_empty() {
                 continue;
             }
-            match shared::common::parse_file_content(cf, &content) {
+            match shared_orphan_rules::parse_file_content(cf, &content) {
                 FileParseResultVO::Rust(result) => {
                     let has_impl = result.has_trait_impl(trait_name);
                     tracing::debug!(
@@ -311,8 +311,8 @@ impl ContractOrphanAnalyzer {
     ) -> bool {
         for cf in search_files {
             let cb = file_basename(cf);
-            // Barrel file check (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
-            if !shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&cb.as_str()) {
+            // Barrel file check (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
+            if !shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&cb.as_str()) {
                 continue;
             }
             let barrel_content = content_map.get(cf).cloned().unwrap_or_default();

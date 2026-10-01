@@ -1,7 +1,7 @@
 // PURPOSE: Graph-color VO for DFS cycle detection; DependencyEdge and ResolvedImport.
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_name_vo::SymbolName;
 
 /// Graph traversal colour used by the cycle-import checker's DFS.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -87,8 +87,8 @@ impl ResolvedImport {
 }
 
 /// Import-rule violation (AES201-AES205) — payload emitted by capability checkers.
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_message_vo::LintMessage;
 
 #[derive(Debug, Clone)]
 pub enum AesImportViolation {

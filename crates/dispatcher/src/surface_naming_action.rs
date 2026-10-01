@@ -8,15 +8,15 @@
 // filesystem aggregate.
 use std::sync::Arc;
 
-use shared::common::FilePath;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::naming_rules::INamingRunnerAggregate;
-use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
-use shared::naming_rules::taxonomy_naming_rules_response::NamingResponse;
+use shared_common::FilePath;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_naming_rules::INamingRunnerAggregate;
+use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 
-use shared::common::ViolationItem;
+use shared_common::ViolationItem;
 
 pub fn collect_naming(
     path: Option<FilePath>,

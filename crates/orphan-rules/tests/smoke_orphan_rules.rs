@@ -12,9 +12,9 @@ use orphan_rules_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrp
 use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
 use orphan_rules_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::{IOrphanAggregate, OrphanFileListVO, OrphanRequest};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::ArchitectureConfig;
+use shared_orphan_rules::{IOrphanAggregate, OrphanFileListVO, OrphanRequest};
 use std::sync::Arc;
 
 #[test]

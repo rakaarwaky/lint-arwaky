@@ -5,9 +5,9 @@
 
 use std::collections::BTreeMap;
 
-use shared::cli_commands::Format;
-use shared::common::ViolationItem;
-use shared::common::resolve_skill_hint_for_file;
+use shared_cli_commands::Format;
+use shared_cli_commands::resolve_skill_hint_for_file;
+use shared_common::ViolationItem;
 
 /// Format a violation location as "file:line:column".
 pub fn format_location(file: &str, line: i64, column: i64) -> String {

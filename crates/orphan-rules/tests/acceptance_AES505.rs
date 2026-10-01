@@ -1,9 +1,9 @@
 // Acceptance tests — AES505: Agent orphan detection.
 use orphan_rules_lint_arwaky::capabilities_orphan_agent_analyzer::AgentOrphanAnalyzer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::IAgentOrphanProtocol;
-use shared::quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::IAgentOrphanProtocol;
+use shared_quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
 use std::collections::HashMap;
 
 fn agent_analyzer() -> AgentOrphanAnalyzer {
@@ -184,7 +184,7 @@ fn aes505_no_aggregate_traits_not_in_alive_set_is_orphan() {
 
 #[test]
 fn aes505_no_aggregate_traits_in_alive_set_is_not_orphan() {
-    use shared::common::taxonomy_path_vo::FilePath as FP;
+    use shared_common::taxonomy_path_vo::FilePath as FP;
     use std::collections::HashSet;
 
     let analyzer = agent_analyzer();
@@ -213,10 +213,10 @@ fn aes505_no_aggregate_traits_in_alive_set_is_not_orphan() {
 
 #[test]
 fn aes505_agent_violation_display_message() {
-    use shared::orphan_rules::AesOrphanViolation;
+    use shared_orphan_rules::AesOrphanViolation;
     let _violation = AesOrphanViolation::AgentOrphan {
         agg_name: "IFooAggregate".to_string(),
-        reason: Some(shared::common::taxonomy_message_vo::LintMessage::new(
+        reason: Some(shared_common::taxonomy_message_vo::LintMessage::new(
             "Agent file aggregate trait is not used by any surface, container, entry, or main file.".to_string(),
         )),
     };

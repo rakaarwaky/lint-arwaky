@@ -1,18 +1,21 @@
 // cli-commands — taxonomy and contract types
+pub mod taxonomy_action_vo;
 pub mod taxonomy_cli_commands_request;
 pub mod taxonomy_cli_commands_vo;
-pub use crate::common::taxonomy_format_vo;
+pub mod utility_skill_hint_resolver;
+pub use shared_common::taxonomy_format_vo;
 // Backward-compat alias: downstream crates (external-lint, etc.) import via
 // `shared::cli_commands::taxonomy_result_vo::LintResult`. The alias points
 // to the canonical module so both paths resolve to the same type.
-pub use crate::common::taxonomy_lint_result_vo as taxonomy_result_vo;
+pub use shared_common::taxonomy_lint_result_vo as taxonomy_result_vo;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
 
 // ── Taxonomy types ──
-pub use crate::common::taxonomy_lint_result_vo::LintResult;
-pub use crate::common::taxonomy_lint_result_vo::LintResultList;
+pub use shared_common::taxonomy_lint_result_vo::LintResult;
+pub use shared_common::taxonomy_lint_result_vo::LintResultList;
+pub use taxonomy_action_vo::ActionName;
 pub use taxonomy_cli_commands_request::ScanMode;
 pub use taxonomy_cli_commands_request::ScanRequest;
 pub use taxonomy_cli_commands_request::ScanTarget;
@@ -29,3 +32,5 @@ pub use taxonomy_cli_commands_vo::TransportProtocol;
 pub use taxonomy_cli_commands_vo::TransportUrlVO;
 pub use taxonomy_cli_commands_vo::command_catalog;
 pub use taxonomy_format_vo::Format;
+pub use utility_skill_hint_resolver::resolve_skill_hint_for_file;
+pub use utility_skill_hint_resolver::resolve_skill_hint_for_file_typed;

@@ -1,12 +1,12 @@
-pub use shared::maintenance::IAdapterHealthProtocol;
-pub use shared::maintenance::ICacheCleanupProtocol;
-pub use shared::maintenance::IDependencyReportProtocol;
-pub use shared::maintenance::IDoctorProtocol;
-pub use shared::maintenance::IMaintenanceAggregate;
-pub use shared::maintenance::IProjectStatsProtocol;
-pub use shared::maintenance::ISecurityScanProtocol;
-pub use shared::maintenance::ISelfUpdateProtocol;
-pub use shared::maintenance::IToolUpdateProtocol;
+pub use shared_maintenance::IAdapterHealthProtocol;
+pub use shared_maintenance::ICacheCleanupProtocol;
+pub use shared_maintenance::IDependencyReportProtocol;
+pub use shared_maintenance::IDoctorProtocol;
+pub use shared_maintenance::IMaintenanceAggregate;
+pub use shared_maintenance::IProjectStatsProtocol;
+pub use shared_maintenance::ISecurityScanProtocol;
+pub use shared_maintenance::ISelfUpdateProtocol;
+pub use shared_maintenance::IToolUpdateProtocol;
 
 pub mod agent_maintenance_orchestrator;
 pub use agent_maintenance_orchestrator::{MaintenanceCommandsOrchestrator, MaintenanceDeps};

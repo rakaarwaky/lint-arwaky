@@ -1,26 +1,24 @@
 // Agent layer — orchestrates FR-001 through FR-005
 // Only orchestration: delegates to capabilities & utility
-use shared::{
-    common::{
-        DEFAULT_IGNORED_PATHS,
-        taxonomy_common_vo::{FileContentPair, PatternList},
-        taxonomy_config_language_vo::ConfigLanguage,
-        taxonomy_path_vo::FilePath,
-        taxonomy_source_vo::ContentString,
-    },
-    filesystem::{
-        contract_filesystem_aggregate::IFilesystemAggregate,
-        contract_filesystem_protocol::IFileSystemIOProtocol,
-        contract_filesystem_protocol::IGraphProtocol,
-        contract_filesystem_protocol::IParserProtocol,
-        contract_filesystem_protocol::IToolResolutionProtocol,
-        contract_filesystem_protocol::IWorkspaceProtocol,
-        taxonomy_filesystem_request::FilesystemRequest,
-        taxonomy_filesystem_response::FilesystemResponse,
-        taxonomy_filesystem_vo::{
-            DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
-            ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
-        },
+use shared_common::{
+    DEFAULT_IGNORED_PATHS,
+    taxonomy_common_vo::{FileContentPair, PatternList},
+    taxonomy_config_language_vo::ConfigLanguage,
+    taxonomy_path_vo::FilePath,
+    taxonomy_source_vo::ContentString,
+};
+use shared_filesystem::{
+    contract_filesystem_aggregate::IFilesystemAggregate,
+    contract_filesystem_protocol::IFileSystemIOProtocol,
+    contract_filesystem_protocol::IGraphProtocol,
+    contract_filesystem_protocol::IParserProtocol,
+    contract_filesystem_protocol::IToolResolutionProtocol,
+    contract_filesystem_protocol::IWorkspaceProtocol,
+    taxonomy_filesystem_request::FilesystemRequest,
+    taxonomy_filesystem_response::FilesystemResponse,
+    taxonomy_filesystem_vo::{
+        DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
+        ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
     },
 };
 use std::{
@@ -178,7 +176,7 @@ impl FilesystemOrchestrator {
                 entries
                     .iter()
                     .map(|e| {
-                        shared::filesystem::utility_container_wiring::path_to_relative(
+                        shared_filesystem::utility_container_wiring::path_to_relative(
                             &e.path, &top_root,
                         )
                     })
@@ -191,7 +189,7 @@ impl FilesystemOrchestrator {
         let mut forward: HashMap<String, Vec<String>> = HashMap::new();
         let mut resolved_import_entries: Vec<ImportEntry> = Vec::with_capacity(imports.len());
         for imp in &imports {
-            let src_rel = shared::filesystem::utility_container_wiring::path_to_relative(
+            let src_rel = shared_filesystem::utility_container_wiring::path_to_relative(
                 &imp.source_file,
                 &top_root,
             );
@@ -207,8 +205,9 @@ impl FilesystemOrchestrator {
                         .push(tgt_rel.clone());
                     if tgt_rel.ends_with(".rs") {
                         if let Some(lib_path) =
-                            shared::filesystem::utility_import_resolution::derive_crate_lib_rs(
+                            shared_filesystem::utility_import_resolution::derive_crate_lib_rs(
                                 tgt_rel,
+                                &all_files_set,
                             )
                         {
                             if all_files_set.contains(lib_path.as_str()) && lib_path != src_rel {
@@ -231,7 +230,7 @@ impl FilesystemOrchestrator {
                     k.clone(),
                     v.iter()
                         .map(|p| {
-                            shared::filesystem::utility_container_wiring::path_to_relative(
+                            shared_filesystem::utility_container_wiring::path_to_relative(
                                 p, &top_root,
                             )
                         })
@@ -243,7 +242,7 @@ impl FilesystemOrchestrator {
         // P2: contract → capabilities bridge (reverse index, issue #193).
         // For every trait/interface/base, wire its defining (contract) file to each
         // implementor so BFS that reaches a contract also reaches its capabilities.
-        shared::filesystem::utility_container_wiring::add_impl_bridge_edges(
+        shared_filesystem::utility_container_wiring::add_impl_bridge_edges(
             &top_root,
             self.deps.graph.symbol_definitions(),
             self.deps.graph.implementations(),
@@ -253,7 +252,7 @@ impl FilesystemOrchestrator {
         // P1: Container-aware wiring — resolve each *_container.* file's used identifiers
         // against the workspace symbol table and add synthetic edges container →
         // referenced file, so BFS that reaches the container reaches its DI services.
-        shared::filesystem::utility_container_wiring::add_container_wiring_edges(
+        shared_filesystem::utility_container_wiring::add_container_wiring_edges(
             &all_files,
             &top_root,
             self.deps.graph.symbol_definitions(),
@@ -261,12 +260,12 @@ impl FilesystemOrchestrator {
             &mut forward,
         );
 
-        shared::filesystem::utility_container_wiring::add_lib_rs_edges(&all_files, &mut forward);
+        shared_filesystem::utility_container_wiring::add_lib_rs_edges(&all_files, &mut forward);
 
         // Build the reverse (inbound) link map only after all synthetic edges
         // (impl bridges, container wiring, lib.rs) have been added, so taxonomy
         // and utility analyzers see the same inbound links the surfaces analyzer does.
-        let reverse = shared::filesystem::utility_container_wiring::build_reverse_index(&forward);
+        let reverse = shared_filesystem::utility_container_wiring::build_reverse_index(&forward);
         GraphAnalysisContext::new(
             ImportGraph::new(forward),
             InboundLinkMap::new(reverse),
@@ -519,9 +518,9 @@ impl FilesystemOrchestrator {
                 None
             }
         } else if imp.resolved_path.is_some() {
-            imp.resolved_path.as_ref().map(|p| {
-                shared::filesystem::utility_container_wiring::path_to_relative(p, top_root)
-            })
+            imp.resolved_path
+                .as_ref()
+                .map(|p| shared_filesystem::utility_container_wiring::path_to_relative(p, top_root))
         } else {
             let raw = &imp.raw_path;
             let src_dir = Path::new(src_rel)
@@ -548,7 +547,7 @@ impl FilesystemOrchestrator {
                     None
                 }
             } else {
-                shared::filesystem::utility_import_resolution::resolve_by_language(
+                shared_filesystem::utility_import_resolution::resolve_by_language(
                     imp,
                     &src_dir,
                     src_rel,
@@ -598,7 +597,7 @@ impl FilesystemOrchestrator {
             .copied()
             .collect();
         let scanned: Vec<PathBuf> =
-            shared::filesystem::utility_workspace_detection::discover_source_files(
+            shared_filesystem::utility_workspace_detection::discover_source_files(
                 &abs_root, &ignored,
             )
             .into_iter()

@@ -5,21 +5,21 @@ use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportF
 use import_rules_lint_arwaky::capabilities_import_mandatory_checker::ArchImportMandatoryChecker;
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
-use shared::common::NamingConfig;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::ArchitectureConfig;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
+use shared_common::NamingConfig;
+use shared_common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::ArchitectureConfig;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared_import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared_import_rules::contract_import_protocol::IUnusedImportProtocol;
+use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
 fn minimal_config() -> ArchitectureConfig {
@@ -87,7 +87,7 @@ fn smoke_forbidden_checker_with_sample_imports() {
             ..Default::default()
         },
     );
-    let layer_map = shared::common::LayerMapVO::new(layers.clone());
+    let layer_map = shared_common::LayerMapVO::new(layers.clone());
     let config = ArchitectureConfig::new(
         BooleanVO::new(true),
         layers,
@@ -141,10 +141,10 @@ fn smoke_cycle_analyzer_creates_and_normalizes() {
 fn smoke_dummy_checker_with_clean_file() {
     let checker = DummyImportChecker::new();
     let file = FilePath::new("/tmp/project/capabilities_handler.rs".to_string()).unwrap();
-    let content = shared::common::ContentString::new("fn process() { let x = 1; }\n".to_string());
+    let content = shared_common::ContentString::new("fn process() { let x = 1; }\n".to_string());
     let root = FilePath::new("/tmp/project".to_string()).unwrap();
     let layers = HashMap::new();
-    let layer_map = shared::common::LayerMapVO::new(layers);
+    let layer_map = shared_common::LayerMapVO::new(layers);
 
     let result = checker
         .check_all_dummy(&file, &content, &root, &layer_map, &HashMap::new())

@@ -1,6 +1,6 @@
 // PURPOSE: NamingResponse — response payload for the naming aggregate
 
-use crate::common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_result_vo::LintResult;
 
 pub enum NamingResponse {
     /// Violations found by the audit.

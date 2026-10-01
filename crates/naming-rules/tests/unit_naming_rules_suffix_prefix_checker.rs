@@ -1,7 +1,7 @@
 // Unit tests for SuffixPolicyChecker — AES102 suffix/prefix rules.
 use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
-use shared::common::{LayerDefinition, LayerMapVO, LayerNameVO, PatternList, SuffixPolicyVO};
-use shared::naming_rules::SUFFIX_POLICY_STRICT;
+use shared_common::{LayerDefinition, LayerMapVO, LayerNameVO, PatternList, SuffixPolicyVO};
+use shared_naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
 
 fn checker() -> SuffixPolicyChecker {

@@ -1,10 +1,10 @@
 use crate::agent_orphan_orchestrator::{ArchOrphanAnalyzer, ArchOrphanDeps};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
-use shared::orphan_rules::IOrphanAggregate;
+use shared_orphan_rules::IOrphanAggregate;
 
 use std::sync::Arc;
 
@@ -26,10 +26,10 @@ impl OrphanContainer {
         workspace: Arc<dyn IWorkspaceProtocol>,
     ) -> Self {
         let config = ArchitectureConfig {
-            ignored_paths: shared::common::taxonomy_paths_vo::FilePathList::new(
+            ignored_paths: shared_common::taxonomy_paths_vo::FilePathList::new(
                 ignored_paths
                     .into_iter()
-                    .filter_map(|p| shared::common::taxonomy_path_vo::FilePath::new(p).ok())
+                    .filter_map(|p| shared_common::taxonomy_path_vo::FilePath::new(p).ok())
                     .collect(),
             ),
             ..Default::default()
@@ -83,7 +83,7 @@ impl OrphanContainer {
     ) -> Self {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
         let config = orchestrator
-            .execute(shared::config_system::ConfigRequest::load_sync(&fp))
+            .execute(shared_config_system::ConfigRequest::load_sync(&fp))
             .into_sync_config();
         Self::new_with_config(config, filesystem, workspace)
     }

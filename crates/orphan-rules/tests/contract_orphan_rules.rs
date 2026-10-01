@@ -8,7 +8,7 @@ use orphan_rules_lint_arwaky::capabilities_orphan_contract_analyzer::ContractOrp
 use orphan_rules_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrphanAnalyzer;
 use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
 use orphan_rules_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
-use shared::orphan_rules::{
+use shared_orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     IEntryPointProtocol, IGraphContextProtocol, IOrphanAggregate, IOrphanParserProtocol,
     IReachabilityProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
@@ -139,7 +139,7 @@ fn aggregate_is_object_safe() {
 
 #[test]
 fn aggregate_exposes_a_single_execute_entry_point() {
-    use shared::orphan_rules::OrphanRequest;
+    use shared_orphan_rules::OrphanRequest;
     fn assert_method<T: IOrphanAggregate>() {
         let _ = |t: &T, request: OrphanRequest| t.execute(request);
     }

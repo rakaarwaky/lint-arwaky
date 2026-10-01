@@ -1,16 +1,16 @@
 // PURPOSE: Quality rules scan business logic, no formatting.
 // Adapted: receives ICodeAnalysisAggregate via DI instead of creating it from config.
 // No direct code_analysis crate dependency — only through shared contracts.
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 
-use shared::common::FilePath;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_common::FilePath;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
-use shared::common::ViolationItem;
-use shared::quality_rules::CodeAnalysisRequest;
+use shared_common::ViolationItem;
+use shared_quality_rules::CodeAnalysisRequest;
 
 pub fn collect_quality(
     path: Option<FilePath>,

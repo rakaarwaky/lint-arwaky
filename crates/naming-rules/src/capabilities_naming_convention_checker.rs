@@ -1,18 +1,18 @@
 // PURPOSE: NamingConventionChecker — AES101 stem-shape naming validation capability
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::INamingConventionProtocol;
-use shared::naming_rules::taxonomy_naming_rules_constant::{
+use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_naming_rules::contract_naming_checker_protocol::INamingConventionProtocol;
+use shared_naming_rules::taxonomy_naming_rules_constant::{
     MIN_WORDS_DEFAULT, RULE_CODE_NAMING_CONVENTION,
 };
-use shared::naming_rules::utility_naming_checker::{
+use shared_naming_rules::utility_naming_checker::{
     basename_of, detect_layer, get_stem, parse_path, rule_exception_set, string_filename_result,
 };
 

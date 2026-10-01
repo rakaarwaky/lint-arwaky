@@ -1,9 +1,9 @@
 // PURPOSE: CodeAnalysisResponse — response payload for the code_analysis aggregate
 
-use crate::common::taxonomy_common_vo::{BooleanVO, Score};
-use crate::common::taxonomy_display_content_vo::DisplayContent;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
+use crate::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
+use shared_common::taxonomy_common_vo::{BooleanVO, Score};
+use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_lint_result_vo::LintResult;
 
 pub enum CodeAnalysisResponse {
     Analysis { violations: Vec<LintResult> },

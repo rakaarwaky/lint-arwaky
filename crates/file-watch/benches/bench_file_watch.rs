@@ -1,7 +1,7 @@
 // Benchmark tests for file-watch — change filter throughput.
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use shared::file_watch::contract_watch_protocol::IChangeFilterProtocol;
-use shared::file_watch::{WatchEvent, WatchEventKind};
+use shared_file_watch::contract_watch_protocol::IChangeFilterProtocol;
+use shared_file_watch::{WatchEvent, WatchEventKind};
 
 fn bench_change_filter_filter_events(c: &mut Criterion) {
     let mut group = c.benchmark_group("change_filter_filter_events");

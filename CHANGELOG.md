@@ -4,6 +4,19 @@
 
 ### Changed
 
+- Split the monolithic `shared-lint-arwaky` crate into 20 packages, one per
+  folder under `crates/shared/src/` (`shared-common`, `shared-filesystem`,
+  `shared-auto-fix`, …). Each folder gains its own `Cargo.toml`; no file was
+  relocated and no folder renamed, and `crates/shared/` now holds assets
+  (`skills/`, `config/`, `tests/`, `benches/`) only. The old
+  `crates/shared/Cargo.toml` and `crates/shared/src/lib.rs` are gone.
+  Consumers depend on the sub-packages directly — there is no re-export shim.
+- Import resolution now understands that layout: a workspace dependency key
+  (`shared-common = { path = "crates/shared/src/common" }`) resolves a
+  `use shared_common::…` path, `resolve_sub_path` falls back to the package
+  root `mod.rs` for crates declaring `[lib] path = "mod.rs"`, and
+  `derive_crate_lib_rs` derives that barrel as the crate root so the orphan
+  reachability graph keeps its hub.
 - Moved the embedded skill source from `crates/skills/` to
   `crates/shared/skills/`, colocating packaged assets with the crate that owns
   and embeds them.

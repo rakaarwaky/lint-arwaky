@@ -3,22 +3,22 @@
 
 use std::collections::HashMap;
 
-use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
-use shared_lint_arwaky::common::taxonomy_common_vo::{
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::{
     BooleanVO, ColumnNumber, Count, LineNumber, PatternList, Score,
 };
-use shared_lint_arwaky::common::taxonomy_definition_vo::LayerMapVO;
-use shared_lint_arwaky::common::taxonomy_error_vo::{
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_error_vo::{
     ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
     error_code_is_style,
 };
-use shared_lint_arwaky::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared_lint_arwaky::common::taxonomy_lint_vo::{LocationList, ScopeRef};
-use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
-use shared_lint_arwaky::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
-use shared_lint_arwaky::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared_lint_arwaky::config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_lint_vo::{LocationList, ScopeRef};
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 // ── FilePath ────────────────────────────────────────────────
 
@@ -301,15 +301,15 @@ fn architecture_config_default() {
 fn architecture_config_custom() {
     let mut layers = HashMap::new();
     layers.insert(
-        shared_lint_arwaky::common::taxonomy_layer_vo::LayerNameVO::new("surface"),
-        shared_lint_arwaky::common::taxonomy_definition_vo::LayerDefinition::default(),
+        shared_common::taxonomy_layer_vo::LayerNameVO::new("surface"),
+        shared_common::taxonomy_definition_vo::LayerDefinition::default(),
     );
     let config = ArchitectureConfig::new(
         BooleanVO::new(true),
         layers,
         Vec::new(),
-        shared_lint_arwaky::common::taxonomy_definition_vo::NamingConfig::new(Count::new(3)),
-        shared_lint_arwaky::common::taxonomy_paths_vo::FilePathList { values: vec![] },
+        shared_common::taxonomy_definition_vo::NamingConfig::new(Count::new(3)),
+        shared_common::taxonomy_paths_vo::FilePathList { values: vec![] },
         BooleanVO::new(false),
     );
     assert_eq!(config.layers.len(), 1);
@@ -455,18 +455,20 @@ fn architecture_config_is_send_sync() {
 // they can be used as dyn Trait in a where clause.
 
 fn _assert_object_safe_filesystem_aggregate<
-    T: shared_lint_arwaky::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+    T: shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
 >() {
 }
 fn _assert_object_safe_parser<
-    T: shared_lint_arwaky::filesystem::contract_filesystem_protocol::IParserProtocol,
+    T: shared_filesystem::contract_filesystem_protocol::IParserProtocol,
 >() {
 }
 fn _assert_object_safe_workspace<
-    T: shared_lint_arwaky::filesystem::contract_filesystem_protocol::IWorkspaceProtocol,
+    T: shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol,
 >() {
 }
-fn _assert_object_safe_config_orch<T: shared_lint_arwaky::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate>(){
+fn _assert_object_safe_config_orch<
+    T: shared_config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate,
+>() {
 }
 
 #[test]

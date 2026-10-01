@@ -1,9 +1,9 @@
 // PURPOSE: LayerDefinition, LayerMapVO, NamingConfig, LayerNamingConfig — VOs for AES layer definitions and naming policies
-use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::common::taxonomy_common_vo::Count;
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_common_vo::SuffixPolicyVO;
-use crate::common::taxonomy_layer_vo::LayerNameVO;
+use crate::taxonomy_common_vo::BooleanVO;
+use crate::taxonomy_common_vo::Count;
+use crate::taxonomy_common_vo::PatternList;
+use crate::taxonomy_common_vo::SuffixPolicyVO;
+use crate::taxonomy_layer_vo::LayerNameVO;
 use serde::{Deserialize, Serialize};
 
 /// Wrap a single-field VO that exposes a `new(value)` constructor plus the
@@ -68,7 +68,7 @@ pub struct LayerDefinition {
     #[serde(default)]
     pub orphan: OrphanRuleVO,
     #[serde(flatten, default)]
-    pub code_analysis: crate::quality_rules::taxonomy_code_analysis_vo::CodeAnalysisRuleVO,
+    pub code_analysis: crate::taxonomy_code_analysis_vo::CodeAnalysisRuleVO,
 }
 
 single_field_vo!(LayerMapVO, values: std::collections::HashMap<LayerNameVO, LayerDefinition>);

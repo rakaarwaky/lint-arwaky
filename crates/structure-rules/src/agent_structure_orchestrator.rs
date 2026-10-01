@@ -1,16 +1,16 @@
 // PURPOSE: StructureOrchestrator — routes audit requests to the three
 // structural-auditor capability seams (AES701, AES702, AES703) and folds
 // their findings into the aggregate response.
-use shared::structure_rules::contract_structure_aggregate::IStructureAggregate;
-use shared::structure_rules::contract_structure_protocol::{
+use shared_structure_rules::contract_structure_aggregate::IStructureAggregate;
+use shared_structure_rules::contract_structure_protocol::{
     IStructureFeatureHealthProtocol, IStructureSharedPurityProtocol,
     IStructureSurfacePurityProtocol,
 };
-use shared::structure_rules::taxonomy_structure_rules_request::{
+use shared_structure_rules::taxonomy_structure_rules_request::{
     StructureFinding, StructureRequest,
 };
-use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
-use shared::structure_rules::utility_structure_parsers::sorted;
+use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
+use shared_structure_rules::utility_structure_parsers::sorted;
 use std::sync::Arc;
 
 /// Orchestrates the folder-layout audit over three capability seams.

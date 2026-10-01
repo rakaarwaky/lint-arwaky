@@ -1,10 +1,10 @@
 // Unit tests — TextFormatter (FR-001): human-readable output with severity badges.
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::cli_commands::DiagnosticSeverity;
-use shared::cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
-use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared_cli_commands::DiagnosticSeverity;
+use shared_cli_commands::{Format, LintResult, PipelineDiagnostic, ScanReport};
+use shared_common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
 
-use shared::report_formatter::ITextFormatProtocol;
+use shared_report_formatter::ITextFormatProtocol;
 
 fn aes_violation(code: &str, sev: Severity) -> LintResult {
     LintResult {
@@ -145,7 +145,7 @@ fn parse_warn_diagnostics_section_rendered() {
 
 #[test]
 fn score_line_included_when_present() {
-    let report = ScanReport::new(vec![], vec![]).with_score(shared::common::Score::new(92.5));
+    let report = ScanReport::new(vec![], vec![]).with_score(shared_common::Score::new(92.5));
     let text = TextFormatter::new()
         .format_text(&report)
         .value()

@@ -3,8 +3,8 @@
 // Provides formatting function for toolchain diagnostics.
 // Pure utility function — no trait impls.
 
-use shared::maintenance::ToolchainDiagnostics;
-use shared::tui::LintExecutionResult;
+use shared_maintenance::ToolchainDiagnostics;
+use shared_tui::LintExecutionResult;
 
 /// Format toolchain diagnostics into a LintExecutionResult.
 pub fn format_doctor_report(diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {

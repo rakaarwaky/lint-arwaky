@@ -6,12 +6,12 @@
 // LintResult constructor, the I/O exemption, and the language flags — live
 // here and are shared by all three.
 
-use crate::common::FilePath;
-use crate::common::taxonomy_language_info_vo::LanguageInfo;
-use crate::common::taxonomy_language_vo::Language;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::common::taxonomy_severity_vo::Severity;
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_common::FilePath;
+use shared_common::taxonomy_language_info_vo::LanguageInfo;
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 
 /// True when `path` names a contract-layer file.
 ///

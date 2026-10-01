@@ -5,14 +5,14 @@ use external_lint_lint_arwaky::capabilities_py_bandit_adapter::BanditAdapter;
 #[path = "../../shared/tests/common/mock_filesystem.rs"]
 mod mock_filesystem;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_operation_error::LinterOperationError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::external_lint::ICommandExecutorProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_external_lint::ICommandExecutorProtocol;
+use shared_external_lint::taxonomy_duration_vo::Timeout;
 use std::sync::Arc;
 
 use mock_filesystem::MockFilesystem;

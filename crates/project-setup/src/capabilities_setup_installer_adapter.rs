@@ -8,11 +8,11 @@
 // The npm installer supports `sudo` prefix for global installations that need
 // elevated permissions.
 
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::project_setup::contract_setup_protocol::IAdapterInstallationProtocol;
-use shared::project_setup::contract_setup_protocol::InstallPackagesResult;
-use shared::project_setup::taxonomy_project_setup_vo::SetupError;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_job_vo::SuccessStatus;
+use shared_project_setup::contract_setup_protocol::IAdapterInstallationProtocol;
+use shared_project_setup::contract_setup_protocol::InstallPackagesResult;
+use shared_project_setup::taxonomy_project_setup_vo::SetupError;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

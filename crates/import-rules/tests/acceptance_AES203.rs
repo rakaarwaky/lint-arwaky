@@ -1,8 +1,8 @@
 // PURPOSE: Acceptance tests — AES203 unused import detection.
 use import_rules_lint_arwaky::capabilities_import_unused_checker::UnusedImportRuleChecker;
-use shared::common::{SymbolName, taxonomy_path_vo::FilePath};
-use shared::filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
-use shared::import_rules::IUnusedImportProtocol;
+use shared_common::{SymbolName, taxonomy_path_vo::FilePath};
+use shared_filesystem::taxonomy_filesystem_vo::{ImportEntry, ImportType, Language};
+use shared_import_rules::IUnusedImportProtocol;
 use std::collections::HashMap;
 use std::path::PathBuf;
 

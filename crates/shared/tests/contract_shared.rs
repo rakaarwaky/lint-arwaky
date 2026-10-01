@@ -2,60 +2,60 @@
 // is usable as a bound, object-safe where declared, and Send + Sync.
 // shared is the foundation crate: it declares contracts but implements none.
 
-use shared_lint_arwaky::auto_fix::{
+use shared_auto_fix::{
     IBypassFixProtocol, IFixAggregate, ISymbolRenameProtocol, IUnusedImportFixProtocol,
 };
-use shared_lint_arwaky::config_system::{
+use shared_config_system::{
     IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
     IWorkspaceMembersProtocol,
 };
-use shared_lint_arwaky::external_lint::{
+use shared_external_lint::{
     IAdapterScanProtocol, ICargoDirProtocol, ICommandExecutorProtocol, IExternalLintAggregate,
     IExternalLintSelectorProtocol, IJsToolResolutionProtocol, ILanguageDetectProtocol,
     ILinterAdapterProtocol, INormalizeProtocol,
 };
-use shared_lint_arwaky::file_watch::{
+use shared_file_watch::{
     IChangeFilterProtocol, IChangeLintProtocol, IWatchAggregate, IWatchLifecycleProtocol,
 };
-use shared_lint_arwaky::filesystem::{
+use shared_filesystem::{
     IFileSystemIOProtocol, IFilesystemAggregate, IGraphProtocol, IParserProtocol,
     IToolResolutionProtocol, IWorkspaceProtocol,
 };
-use shared_lint_arwaky::git_hooks::{
+use shared_git_hooks::{
     IConfigInitProtocol, IDiffDetectionProtocol, IGitHooksAggregate, IHookInstallProtocol,
     IHookUninstallProtocol,
 };
-use shared_lint_arwaky::import_rules::{
+use shared_import_rules::{
     ICycleImportProtocol, IDummyImportCheckerProtocol, IImportForbiddenProtocol,
     IImportMandatoryProtocol, IImportRunnerAggregate, IUnusedImportProtocol,
 };
-use shared_lint_arwaky::maintenance::{
+use shared_maintenance::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IMaintenanceAggregate, IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol,
     IToolUpdateProtocol,
 };
-use shared_lint_arwaky::naming_rules::{
+use shared_naming_rules::{
     INamingConventionProtocol, INamingRunnerAggregate, ISuffixPolicyProtocol,
 };
-use shared_lint_arwaky::orphan_rules::{
+use shared_orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
     IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
     IUtilityOrphanProtocol,
 };
-use shared_lint_arwaky::project_setup::{
+use shared_project_setup::{
     IAdapterInstallationProtocol, IConfigTemplateProtocol, IConfigWritingProtocol,
     IEnvGenerationProtocol, IFilePathExistenceProtocol, ILanguageDetectionProtocol,
     IMcpConfigGenerationProtocol, IPreFlightProtocol, ISetupAggregate,
 };
-use shared_lint_arwaky::quality_rules::{
+use shared_quality_rules::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
     IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
 };
-use shared_lint_arwaky::report_formatter::{
+use shared_report_formatter::{
     IJUnitFormatProtocol, IJsonFormatProtocol, IReportFormatterAggregate, ISarifFormatProtocol,
     ITextFormatProtocol,
 };
-use shared_lint_arwaky::role_rules::{
+use shared_role_rules::{
     IAgentRoleProtocol, ICapabilitiesRoleProtocol, IClassificationProtocol, IContractRoleProtocol,
     IRoleRunnerAggregate, ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
@@ -463,19 +463,19 @@ fn project_setup_contracts_are_send_sync() {
 // ── Core VOs are Send + Sync (used across async boundaries) ─
 #[test]
 fn core_value_objects_are_send_sync() {
-    use shared_lint_arwaky::common::{
+    use shared_common::{
         AdapterError, ErrorCode, FilePath, Identity, JobId, Language, LintResult, Score, Severity,
         Threshold,
     };
-    use shared_lint_arwaky::config_system::{ConfigSource, ProjectConfig};
-    use shared_lint_arwaky::filesystem::FileEntry;
+    use shared_config_system::{ConfigSource, ProjectConfig};
+    use shared_filesystem::FileEntry;
 
     assert_send_sync::<FilePath>();
     assert_send_sync::<Identity>();
     assert_send_sync::<ErrorCode>();
     assert_send_sync::<JobId>();
     assert_send_sync::<Language>();
-    assert_send_sync::<shared_lint_arwaky::common::taxonomy_config_language_vo::ConfigLanguage>();
+    assert_send_sync::<shared_common::taxonomy_config_language_vo::ConfigLanguage>();
     assert_send_sync::<Severity>();
     assert_send_sync::<Score>();
     assert_send_sync::<Threshold>();

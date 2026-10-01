@@ -1,32 +1,32 @@
-use shared::cli_commands::taxonomy_result_vo::LintResult;
-use shared::quality_rules::taxonomy_quality_rules_vo::{
+use shared_cli_commands::taxonomy_result_vo::LintResult;
+use shared_quality_rules::taxonomy_quality_rules_vo::{
     GraphAnalysisContext, OrphanIndicatorResult, ReachabilityResult,
 };
 
-use shared::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_path_vo::FilePath;
 
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::IOrphanAggregate;
-use shared::orphan_rules::{OrphanRequest, OrphanResponse};
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_config_system::ArchitectureConfig;
+use shared_orphan_rules::IOrphanAggregate;
+use shared_orphan_rules::{OrphanRequest, OrphanResponse};
 
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::orphan_rules::OrphanFileListVO;
-use shared::orphan_rules::{
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_orphan_rules::OrphanFileListVO;
+use shared_orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
     IEntryPointProtocol, IGraphContextProtocol, IReachabilityProtocol, ISurfacesOrphanProtocol,
     ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
 
-use shared::common::taxonomy_common_vo::BooleanVO;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_definition_vo::OrphanRuleVO;
-use shared::common::{
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_definition_vo::OrphanRuleVO;
+use shared_common::{
     AdapterName, ColumnNumber, DescriptionVO, ErrorCode, LayerNameVO, LineNumber, LintMessage,
     LocationList, ScopeRef,
 };
-use shared::role_rules::taxonomy_role_rules_constant::{
+use shared_role_rules::taxonomy_role_rules_constant::{
     LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
 };
 
@@ -47,7 +47,7 @@ pub struct ArchOrphanDeps {
     pub agent_analyzer: Arc<dyn IAgentOrphanProtocol>,
     pub surfaces_analyzer: Arc<dyn ISurfacesOrphanProtocol>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
+    pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
 }
 
 pub struct ArchOrphanAnalyzer {
@@ -106,7 +106,7 @@ impl IGraphContextProtocol for ArchOrphanAnalyzer {
 
 impl IEntryPointProtocol for ArchOrphanAnalyzer {
     fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
-        shared::orphan_rules::utility_orphan_filename::identify_entry_points(
+        shared_orphan_rules::utility_orphan_filename::identify_entry_points(
             std::slice::from_ref(files),
             &[],
         )
@@ -119,7 +119,7 @@ impl IReachabilityProtocol for ArchOrphanAnalyzer {
         entry_points: &OrphanFileListVO,
         context: &GraphAnalysisContext,
     ) -> ReachabilityResult {
-        let alive_set = shared::orphan_rules::utility_orphan_graph::trace_reachability(
+        let alive_set = shared_orphan_rules::utility_orphan_graph::trace_reachability(
             &entry_points.values,
             &context.import_graph,
         );
@@ -190,7 +190,7 @@ impl ArchOrphanAnalyzer {
 
     pub fn check_orphans_with_entries(
         &self,
-        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        files: &[shared_filesystem::taxonomy_filesystem_vo::FileEntry],
         context: &GraphAnalysisContext,
     ) -> Vec<LintResult> {
         if !self.config.enabled.value {
@@ -247,7 +247,7 @@ impl ArchOrphanAnalyzer {
         );
         let configured = self.get_orphan_entry_points();
         let configured_vo =
-            shared::orphan_rules::taxonomy_orphan_rules_vo::OrphanEntryPatternListVO::new(
+            shared_orphan_rules::taxonomy_orphan_rules_vo::OrphanEntryPatternListVO::new(
                 configured,
             );
 
@@ -276,14 +276,14 @@ impl ArchOrphanAnalyzer {
             .collect();
 
         let entry_points_vo = OrphanFileListVO::new(all_files_rel);
-        let entry_points = shared::orphan_rules::utility_orphan_filename::identify_entry_points(
+        let entry_points = shared_orphan_rules::utility_orphan_filename::identify_entry_points(
             std::slice::from_ref(&entry_points_vo),
             &[configured_vo],
         );
         // BFS reachability through the import graph. The graph already carries
         // synthetic DI edges (contract→capabilities bridge and container→wired
         // services), so a single linear BFS follows both import and DI paths.
-        let alive_set = shared::orphan_rules::utility_orphan_graph::trace_reachability(
+        let alive_set = shared_orphan_rules::utility_orphan_graph::trace_reachability(
             &entry_points.values,
             &context.import_graph,
         );
@@ -384,8 +384,8 @@ impl ArchOrphanAnalyzer {
                 return None;
             }
         };
-        let filename = shared::common::utility_layer_detector::extract_filename(file_fp.value());
-        let base_layer = shared::common::utility_layer_detector::detect_layer_from_prefix(filename);
+        let filename = shared_common::utility_layer_detector::extract_filename(file_fp.value());
+        let base_layer = shared_common::utility_layer_detector::detect_layer_from_prefix(filename);
         if filename.contains("surface") {
             trace!(
                 file = f,
@@ -399,13 +399,13 @@ impl ArchOrphanAnalyzer {
             trace!(file = f, filename = filename, "SKIP no layer prefix");
             return None;
         };
-        let layer_str = shared::common::utility_layer_detector::resolve_specialized_layer(
+        let layer_str = shared_common::utility_layer_detector::resolve_specialized_layer(
             &base_layer,
             file_fp.value(),
             layer_keys,
         );
         let definition =
-            shared::common::utility_layer_detector::get_layer_def(&layer_str, &self.config.layers)
+            shared_common::utility_layer_detector::get_layer_def(&layer_str, &self.config.layers)
                 .cloned()
                 .unwrap_or_else(|| LayerDefinition {
                     orphan: OrphanRuleVO {
@@ -496,9 +496,9 @@ impl ArchOrphanAnalyzer {
         top_root: &str,
         content_map: &HashMap<String, String>,
     ) -> OrphanIndicatorResult {
-        // Barrel file exceptions (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
+        // Barrel file exceptions (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
         let basename = f.rsplit(['/', '\\']).next().unwrap_or(f);
-        if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&basename) {
+        if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&basename) {
             return OrphanIndicatorResult::new(false, String::new(), Severity::HIGH);
         }
 

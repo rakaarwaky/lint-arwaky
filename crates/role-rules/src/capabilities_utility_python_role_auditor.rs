@@ -8,11 +8,11 @@
 // `file.language` is Python and the file is classified to the utility layer.
 // The language-independent pieces live in utility_utility_role_checker.rs.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::contract_role_protocol::IUtilityRoleProtocol;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
+use shared_role_rules::contract_role_protocol::IUtilityRoleProtocol;
 
-use shared::role_rules::utility_utility_role_checker as utility;
+use shared_role_rules::utility_utility_role_checker as utility;
 
 // === Block 1: Type Definition ===
 

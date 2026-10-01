@@ -8,9 +8,9 @@
 
 use dashmap::DashMap;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
-use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{
+use shared_common::taxonomy_language_vo::Language;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::{
     FileEntry, ImportEntry, ParseMetadata, ParseWarning,
 };
 use std::path::{Path, PathBuf};
@@ -73,7 +73,7 @@ impl IParserProtocol for ASTParser {
                     .map(|symbol| {
                         let mut single = entry.clone();
                         single.symbols = vec![symbol.clone()];
-                        shared::filesystem::utility_barrel_resolution::resolve_single_import(
+                        shared_filesystem::utility_barrel_resolution::resolve_single_import(
                             single, root_dir,
                         )
                     })
@@ -86,7 +86,7 @@ impl IParserProtocol for ASTParser {
                 }
             } else {
                 resolved.push(
-                    shared::filesystem::utility_barrel_resolution::resolve_single_import(
+                    shared_filesystem::utility_barrel_resolution::resolve_single_import(
                         entry, root_dir,
                     ),
                 );
@@ -158,7 +158,7 @@ impl ASTParser {
                         let has_errors = tree.root_node().has_error();
 
                         // Extract imports using the tree directly — no clone needed.
-                        let imports = shared::filesystem::utility_import_extractor::extract_imports(
+                        let imports = shared_filesystem::utility_import_extractor::extract_imports(
                             &entry.path,
                             &entry.content,
                             entry.language,
@@ -237,27 +237,27 @@ fn extract_metadata_from_tree(
 ) -> ParseMetadata {
     match language {
         Language::Rust => ParseMetadata::Rust(
-            shared::filesystem::utility_ast_rust::extract_rust_metadata(tree, content),
+            shared_filesystem::utility_ast_rust::extract_rust_metadata(tree, content),
         ),
         Language::Python => {
             let mut meta =
-                shared::filesystem::utility_ast_python::extract_python_metadata(tree, content);
+                shared_filesystem::utility_ast_python::extract_python_metadata(tree, content);
             meta.used_identifiers =
-                shared::filesystem::utility_ast_python::extract_python_identifiers(tree, content);
+                shared_filesystem::utility_ast_python::extract_python_identifiers(tree, content);
             ParseMetadata::Python(meta)
         }
         Language::TypeScript => {
             let mut meta =
-                shared::filesystem::utility_ast_typescript::extract_ts_metadata(tree, content);
+                shared_filesystem::utility_ast_typescript::extract_ts_metadata(tree, content);
             meta.used_identifiers =
-                shared::filesystem::utility_ast_typescript::extract_ts_identifiers(tree, content);
+                shared_filesystem::utility_ast_typescript::extract_ts_identifiers(tree, content);
             ParseMetadata::TypeScript(meta)
         }
         Language::JavaScript => {
             let mut meta =
-                shared::filesystem::utility_ast_typescript::extract_ts_metadata(tree, content);
+                shared_filesystem::utility_ast_typescript::extract_ts_metadata(tree, content);
             meta.used_identifiers =
-                shared::filesystem::utility_ast_typescript::extract_ts_identifiers(tree, content);
+                shared_filesystem::utility_ast_typescript::extract_ts_identifiers(tree, content);
             ParseMetadata::JavaScript(meta)
         }
         Language::Unknown => ParseMetadata::Unknown,
@@ -269,7 +269,7 @@ impl ASTParser {
     /// Uses Arc clone (refcount bump) instead of deep-copying the tree.
     fn extract_imports(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
         let tree = self.asts.get(path).map(|r| Arc::clone(r.value()));
-        shared::filesystem::utility_import_extractor::extract_imports(
+        shared_filesystem::utility_import_extractor::extract_imports(
             path,
             content,
             language,

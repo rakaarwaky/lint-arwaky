@@ -1,5 +1,5 @@
-pub use shared::auto_fix::IFixAggregate;
-pub use shared::auto_fix::{
+pub use shared_auto_fix::IFixAggregate;
+pub use shared_auto_fix::{
     IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol, IViolationReportProtocol,
 };
 

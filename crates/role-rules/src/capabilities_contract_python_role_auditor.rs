@@ -10,15 +10,15 @@
 // the LintResult shape, the I/O exemption) live in
 // utility_contract_role_checker.rs so the three auditors share one copy.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_signature_parser::{
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::contract_role_protocol::IContractRoleProtocol;
+use shared_role_rules::utility_signature_parser::{
     extract_python_method_signatures, python_signature_uses_forbidden_primitive,
 };
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
 
-use shared::role_rules::utility_contract_role_checker as utility;
+use shared_role_rules::utility_contract_role_checker as utility;
 
 // === Block 1: Type Definition ===
 

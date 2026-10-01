@@ -11,7 +11,11 @@ publish = true
 workspace = true
 
 [dependencies]
-shared.workspace = true
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
+shared-filesystem.workspace = true
+shared-quality-rules.workspace = true
 rayon.workspace = true
 
 [dev-dependencies]

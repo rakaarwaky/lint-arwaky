@@ -11,7 +11,13 @@ publish = true
 workspace = true
 
 [dependencies]
-shared.workspace = true
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
+shared-filesystem.workspace = true
+shared-orphan-rules.workspace = true
+shared-quality-rules.workspace = true
+shared-role-rules.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 rayon.workspace = true

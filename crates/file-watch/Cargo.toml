@@ -12,7 +12,9 @@ workspace = true
 watch = []
 
 [dependencies]
-shared.workspace = true
+shared-common.workspace = true
+shared-file-watch.workspace = true
+shared-quality-rules.workspace = true
 notify.workspace = true
 notify-debouncer-mini.workspace = true
 tokio.workspace = true

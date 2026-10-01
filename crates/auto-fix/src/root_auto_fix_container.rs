@@ -9,12 +9,12 @@ use crate::capabilities_bypass_fix::BypassFix;
 use crate::capabilities_symbol_rename::SymbolRename;
 use crate::capabilities_unused_import_fix::UnusedImportFix;
 use crate::capabilities_violation_report::ViolationReport;
-use shared::auto_fix::IFixAggregate;
-use shared::auto_fix::{
+use shared_auto_fix::IFixAggregate;
+use shared_auto_fix::{
     IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol, IViolationReportProtocol,
 };
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -53,9 +53,9 @@ impl AutoFixContainer {
     pub fn orchestrator_with_filesystem(
         &self,
         _filesystem: Arc<
-            dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+            dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
         >,
-        io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
+        io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
     ) -> Arc<dyn IFixAggregate> {
         self.orchestrator(io)
     }

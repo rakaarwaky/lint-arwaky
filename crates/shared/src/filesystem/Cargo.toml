@@ -1,0 +1,26 @@
+[package]
+name = "shared-filesystem-lint-arwaky"
+version = "3.7.1"
+edition = "2024"
+description = "AES filesystem foundation: taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`), contract (`_port`, `_protocol`, `_aggregate`), and utility types shared across lint-arwaky. Split out of `shared-lint-arwaky`."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+# The folder *is* the crate root, so the manifest lives beside `mod.rs`.
+[lib]
+path = "mod.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+shared-common.workspace = true
+serde.workspace = true
+tracing.workspace = true
+tree-sitter = "0.27.0"
+tree-sitter-rust = "0.24.2"
+tree-sitter-python = "0.25.0"
+tree-sitter-typescript = "0.23"
+tree-sitter-javascript = "0.25.0"
+ignore = "0.4"

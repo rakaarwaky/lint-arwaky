@@ -1,6 +1,6 @@
 // E2E tests — cli command flow.
-use shared::cli_commands::Format;
-use shared::common::FilePath;
+use shared_cli_commands::Format;
+use shared_common::FilePath;
 use std::sync::Arc;
 
 #[test]
@@ -11,11 +11,11 @@ fn e2e_scan_command_full_flow() {
         fn(
             Option<FilePath>,
             Format,
-            Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
-            Option<Arc<dyn shared::config_system::IConfigOrchestratorAggregate>>,
+            Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+            Option<Arc<dyn shared_config_system::IConfigOrchestratorAggregate>>,
             Option<String>,
             Option<String>,
-        ) -> shared::common::ExitCode,
+        ) -> shared_common::ExitCode,
     >();
 }
 
@@ -25,10 +25,10 @@ fn e2e_quality_command_full_flow() {
         fn(
             Option<FilePath>,
             Format,
-            Arc<dyn shared::quality_rules::ICodeAnalysisAggregate>,
-            Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+            Arc<dyn shared_quality_rules::ICodeAnalysisAggregate>,
+            Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
             Option<String>,
             Vec<String>,
-        ) -> shared::common::ExitCode,
+        ) -> shared_common::ExitCode,
     >();
 }

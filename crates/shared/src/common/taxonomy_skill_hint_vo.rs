@@ -1,7 +1,7 @@
 // PURPOSE: File layer → skill routing, one rule for every violation code.
 // Pure data: the layer→skill table. No file I/O, no layer detection — callers
 // resolve the layer from the file path first (utility layer) and pass it here.
-use crate::common::taxonomy_error_vo::ErrorCode;
+use crate::taxonomy_error_vo::ErrorCode;
 
 /// Layer name (as the layer detector reports it) → skill name.
 const LAYER_SKILLS: &[(&str, &str)] = &[

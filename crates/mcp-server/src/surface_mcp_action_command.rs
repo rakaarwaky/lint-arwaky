@@ -6,27 +6,27 @@
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared::auto_fix::IFixAggregate;
-use shared::common::Threshold;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::config_system::{
+use shared_auto_fix::IFixAggregate;
+use shared_common::Threshold;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_config_system::{
     IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
 };
-use shared::doc_rules::IDocRunnerAggregate;
-use shared::external_lint::IExternalLintAggregate;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::IGitHooksAggregate;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::maintenance::IMaintenanceAggregate;
-use shared::naming_rules::INamingRunnerAggregate;
-use shared::orphan_rules::IOrphanAggregate;
-use shared::project_setup::ISetupAggregate;
-use shared::quality_rules::ICodeAnalysisAggregate;
-use shared::role_rules::IRoleRunnerAggregate;
+use shared_doc_rules::IDocRunnerAggregate;
+use shared_external_lint::IExternalLintAggregate;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_git_hooks::IGitHooksAggregate;
+use shared_import_rules::IImportRunnerAggregate;
+use shared_maintenance::IMaintenanceAggregate;
+use shared_naming_rules::INamingRunnerAggregate;
+use shared_orphan_rules::IOrphanAggregate;
+use shared_project_setup::ISetupAggregate;
+use shared_quality_rules::ICodeAnalysisAggregate;
+use shared_role_rules::IRoleRunnerAggregate;
 
-use shared::common::taxonomy_violation_item_vo::ViolationItem;
+use shared_common::taxonomy_violation_item_vo::ViolationItem;
 
 #[derive(Clone)]
 pub struct McpServerDependencies {
@@ -44,12 +44,12 @@ pub struct McpServerDependencies {
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
     pub role_orchestrator: Arc<dyn IRoleRunnerAggregate>,
     pub doc_orchestrator: Arc<dyn IDocRunnerAggregate>,
-    pub structure_orchestrator: Arc<dyn shared::structure_rules::IStructureAggregate>,
+    pub structure_orchestrator: Arc<dyn shared_structure_rules::IStructureAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
-    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
-    pub filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
-    pub filesystem_parser: Arc<dyn shared::filesystem::IParserProtocol>,
+    pub filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
+    pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
+    pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
+    pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
     pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
     pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
@@ -167,15 +167,24 @@ impl McpActionSurface {
             self.deps.fix_orchestrator_factory.clone(),
         ) {
             Ok(report) => {
-                let exit_code = if report.success {
+                let exit_code = if report.has_failed {
+                    2 // runtime error — any Failed(reason) outranks policy fail
+                } else if report.success {
                     0
                 } else if report.fixed_count > 0 {
                     1 // partial fix — violations remain
                 } else {
                     0
                 };
+                let status = if report.has_failed {
+                    "error"
+                } else if report.success {
+                    "success"
+                } else {
+                    "partial"
+                };
                 serde_json::json!({
-                    "status": if report.success { "success" } else { "partial" },
+                    "status": status,
                     "action": "fix",
                     "path": path,
                     "dry_run": report.dry_run,
@@ -538,7 +547,7 @@ impl McpActionSurface {
 
     /// List CLI commands filtered by domain.
     pub fn handle_list_commands(&self, domain: Option<String>) -> serde_json::Value {
-        let catalog = shared::cli_commands::taxonomy_cli_commands_vo::COMMAND_CATALOG;
+        let catalog = shared_cli_commands::taxonomy_cli_commands_vo::COMMAND_CATALOG;
         let commands: Vec<serde_json::Value> = catalog
             .iter()
             .filter(|(name, _desc, _ex)| match domain.as_deref() {

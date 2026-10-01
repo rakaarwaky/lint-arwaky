@@ -6,7 +6,7 @@
 // represents decorated declarations as a `decorated_definition` node rather
 // than a bare `class_definition`.
 
-use shared::filesystem::utility_ast_python::extract_python_metadata;
+use shared_filesystem::utility_ast_python::extract_python_metadata;
 
 fn parse(content: &str) -> tree_sitter::Tree {
     let mut parser = tree_sitter::Parser::new();
@@ -118,7 +118,7 @@ fn decorated_class_with_multiple_bases() {
 
 // ─── AES203 regression: identifiers inside f-string interpolations ──────
 
-use shared::filesystem::utility_ast_python::extract_python_identifiers;
+use shared_filesystem::utility_ast_python::extract_python_identifiers;
 
 #[test]
 fn fstring_interpolation_identifiers_are_extracted() {

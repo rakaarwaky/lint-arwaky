@@ -1,9 +1,7 @@
 // PURPOSE: Acceptance test AES303 — missing definitions (mandatory class/struct/enum/trait) + dead inheritance
-use shared::cli_commands::LintResult;
-use shared::common::{BooleanVO, LayerDefinition};
-use shared::quality_rules::{
-    CodeAnalysisRuleVO, IDeadInheritanceProtocol, IMandatoryClassProtocol,
-};
+use shared_cli_commands::LintResult;
+use shared_common::{BooleanVO, LayerDefinition};
+use shared_quality_rules::{CodeAnalysisRuleVO, IDeadInheritanceProtocol, IMandatoryClassProtocol};
 
 use quality_rules_lint_arwaky::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
 use quality_rules_lint_arwaky::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
@@ -22,7 +20,7 @@ fn def_with_mandatory(enabled: bool) -> LayerDefinition {
             mandatory_class_definition: BooleanVO::new(enabled),
             ..Default::default()
         },
-        exceptions: shared::common::PatternList { values: vec![] },
+        exceptions: shared_common::PatternList { values: vec![] },
         ..Default::default()
     }
 }
@@ -44,7 +42,7 @@ fn file_without_struct_or_class_produces_aes303() {
 
     assert_eq!(violations.len(), 1);
     assert!(violations[0].code.code().contains("AES303"));
-    assert_eq!(violations[0].severity, shared::common::Severity::HIGH);
+    assert_eq!(violations[0].severity, shared_common::Severity::HIGH);
 }
 
 #[test]

@@ -9,7 +9,11 @@ license = "MIT"
 workspace = true
 
 [dependencies]
-shared.workspace = true
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-file-watch.workspace = true
+shared-filesystem.workspace = true
+shared-git-hooks.workspace = true
 serde_yaml_ng.workspace = true
 tracing.workspace = true
 

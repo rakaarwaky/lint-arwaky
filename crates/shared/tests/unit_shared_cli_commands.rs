@@ -1,21 +1,17 @@
 // Unit tests — shared/cli_commands taxonomy types.
 use clap::Parser;
-use shared_lint_arwaky::cli_commands::Format;
-use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_request::{
-    ScanMode, ScanRequest, ScanTarget,
-};
-use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{
-    COMMAND_CATALOG, command_catalog,
-};
-use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{Cli, Commands};
-use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{
+use shared_cli_commands::Format;
+use shared_cli_commands::taxonomy_cli_commands_request::{ScanMode, ScanRequest, ScanTarget};
+use shared_cli_commands::taxonomy_cli_commands_vo::{COMMAND_CATALOG, command_catalog};
+use shared_cli_commands::taxonomy_cli_commands_vo::{Cli, Commands};
+use shared_cli_commands::taxonomy_cli_commands_vo::{
     DiagnosticSeverity, PipelineDiagnostic, PipelineError, ScanReport,
 };
-use shared_lint_arwaky::cli_commands::taxonomy_cli_commands_vo::{
+use shared_cli_commands::taxonomy_cli_commands_vo::{
     TransportEndpoint, TransportProtocol, TransportUrlVO,
 };
-use shared_lint_arwaky::common::Score;
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
+use shared_common::Score;
+use shared_common::taxonomy_severity_vo::Severity;
 
 // ── Cli / Commands (clap) ───────────────────────────────────
 #[test]
@@ -95,9 +91,9 @@ fn command_catalog_contains_core_commands() {
     let catalog = command_catalog();
     assert!(catalog.len() >= 22);
     for (name, _, _) in COMMAND_CATALOG {
-        assert!(catalog.contains_key(&shared_lint_arwaky::common::ActionName::from(*name)));
+        assert!(catalog.contains_key(&shared_cli_commands::ActionName::from(*name)));
     }
-    let check = catalog.get(&shared_lint_arwaky::common::ActionName::from("check"));
+    let check = catalog.get(&shared_cli_commands::ActionName::from("check"));
     assert!(check.is_some());
     assert!(!check.unwrap().example.value.is_empty());
 }
@@ -106,7 +102,7 @@ fn command_catalog_contains_core_commands() {
 fn command_metadata_display() {
     let catalog = command_catalog();
     let check = catalog
-        .get(&shared_lint_arwaky::common::ActionName::from("check"))
+        .get(&shared_cli_commands::ActionName::from("check"))
         .expect("check exists");
     let rendered = check.to_string();
     assert!(rendered.contains('('));
@@ -175,7 +171,7 @@ fn scan_mode_default_is_check() {
 // ── ScanReport / diagnostics ────────────────────────────────
 #[test]
 fn scan_report_violation_count_ignores_info() {
-    use shared_lint_arwaky::common::LintResult;
+    use shared_common::LintResult;
     let info = LintResult::new_arch("a.rs", 1, "AES101", Severity::INFO, "info");
     let high = LintResult::new_arch("b.rs", 1, "AES101", Severity::HIGH, "bad");
     let report = ScanReport::new(vec![info, high], Vec::new());

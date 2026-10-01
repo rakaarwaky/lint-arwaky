@@ -4,8 +4,8 @@
 /// the invariants that define the document chain. Each method reports a list of
 /// findings; the agent behind the aggregate invokes them all and returns a
 /// combined list.
-use crate::doc_rules::taxonomy_doc_rules_request::DocRequest;
-use crate::doc_rules::taxonomy_doc_rules_response::DocResponse;
+use crate::taxonomy_doc_rules_request::DocRequest;
+use crate::taxonomy_doc_rules_response::DocResponse;
 
 /// Capability contract for doc-rules: invariant audit over Markdown files.
 pub trait IDocCheckerProtocol: Send + Sync {

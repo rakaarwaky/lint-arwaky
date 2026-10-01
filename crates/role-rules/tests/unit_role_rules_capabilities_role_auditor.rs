@@ -2,11 +2,11 @@
 use role_rules_lint_arwaky::capabilities_capabilities_python_role_auditor::CapabilitiesPythonRoleAuditor;
 use role_rules_lint_arwaky::capabilities_capabilities_rust_role_auditor::CapabilitiesRustRoleAuditor;
 use role_rules_lint_arwaky::capabilities_capabilities_ts_role_auditor::CapabilitiesTypeScriptRoleAuditor;
-use shared::common::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::ICapabilitiesRoleProtocol;
+use shared_common::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::ICapabilitiesRoleProtocol;
 
-use shared::filesystem::taxonomy_filesystem_vo::{
+use shared_filesystem::taxonomy_filesystem_vo::{
     ExternalReferenceMap, Language, ParseMetadata, RustMetadata,
 };
 use std::path::PathBuf;
@@ -160,7 +160,7 @@ fn metadata_rust_no_implementor_flagged() {
 fn metadata_rust_valid_composition_no_violation() {
     let meta = RustMetadata {
         struct_definitions: vec!["Foo".into()],
-        impl_blocks: vec![shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+        impl_blocks: vec![shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
             trait_name: Some("IFooProtocol".into()),
             trait_path: None,
             implementor_type: "Foo".into(),
@@ -766,7 +766,7 @@ fn implementor_std_trait_only_flagged() {
 #[test]
 fn implementor_qualified_protocol_path_accepted() {
     // `impl shared::foo::IFooProtocol for Foo` must be recognised.
-    let content = "pub struct Foo {}\nimpl shared::role_rules::IFooProtocol for Foo {}\n";
+    let content = "pub struct Foo {}\nimpl shared_role_rules::IFooProtocol for Foo {}\n";
     let f = make_file("src/capabilities_foo.rs", Language::Rust, content);
     let mut v = Vec::new();
     checker().check_capability_implementor(&f, &mut v);
@@ -814,7 +814,7 @@ fn implementor_python_multiple_bases_one_is_protocol_accepted() {
 fn implementor_metadata_aggregate_flagged() {
     let meta = RustMetadata {
         struct_definitions: vec!["Foo".into()],
-        impl_blocks: vec![shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+        impl_blocks: vec![shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
             trait_name: Some("IFooAggregate".into()),
             trait_path: None,
             implementor_type: "Foo".into(),
@@ -836,9 +836,9 @@ fn implementor_metadata_aggregate_flagged() {
 fn implementor_metadata_qualified_protocol_accepted() {
     let meta = RustMetadata {
         struct_definitions: vec!["Foo".into()],
-        impl_blocks: vec![shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+        impl_blocks: vec![shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
             trait_name: Some("IFooProtocol".into()),
-            trait_path: Some("shared::role_rules::contract_role_protocol".into()),
+            trait_path: Some("shared_role_rules::contract_role_protocol".into()),
             implementor_type: "Foo".into(),
             has_generics: false,
         }],
@@ -859,13 +859,13 @@ fn implementor_metadata_protocol_and_aggregate_both_present_accepted() {
     let meta = RustMetadata {
         struct_definitions: vec!["Foo".into()],
         impl_blocks: vec![
-            shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+            shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
                 trait_name: Some("IFooAggregate".into()),
                 trait_path: None,
                 implementor_type: "Foo".into(),
                 has_generics: false,
             },
-            shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+            shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
                 trait_name: Some("IFooProtocol".into()),
                 trait_path: None,
                 implementor_type: "Foo".into(),

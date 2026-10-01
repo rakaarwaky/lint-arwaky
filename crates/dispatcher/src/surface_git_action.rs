@@ -5,11 +5,11 @@
 // no aggregate exists for git subprocess execution. This is a known gap —
 // a GitCommandsAggregate should be created in a git-operations crate to
 // abstract subprocess calls behind a contract trait.
-use shared::cli_commands::LintResult;
-use shared::common::{FilePath, GitBranchName};
-use shared::git_hooks::{GitHooksRequest, IGitHooksAggregate};
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_cli_commands::LintResult;
+use shared_common::{FilePath, GitBranchName};
+use shared_git_hooks::{GitHooksRequest, IGitHooksAggregate};
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::process::Command;
 use std::sync::Arc;
 
@@ -38,7 +38,7 @@ pub fn collect_git_diff(
     let files: Vec<FilePath> = changed_files
         .into_iter()
         .filter(|fp| {
-            shared::common::utility_language_detector::is_lintable(fp)
+            shared_filesystem::utility_language_detector::is_lintable(fp)
                 && filter.map(|f| fp.value.contains(f)).unwrap_or(true)
         })
         .collect();

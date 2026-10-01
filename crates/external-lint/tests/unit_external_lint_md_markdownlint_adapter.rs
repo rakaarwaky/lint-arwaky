@@ -6,18 +6,18 @@ use external_lint_lint_arwaky::capabilities_md_markdownlint_adapter::MarkdownLin
 mod mock_filesystem;
 
 use mock_filesystem::MockFilesystem;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_operation_error::LinterOperationError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::external_lint::ICommandExecutorProtocol;
-use shared::external_lint::IJsToolResolutionProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_external_lint::ICommandExecutorProtocol;
+use shared_external_lint::IJsToolResolutionProtocol;
+use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_external_lint::taxonomy_duration_vo::Timeout;
 use std::sync::{Arc, Mutex};
 
 /// Mock command executor that returns canned stdout for each candidate binary.
@@ -74,9 +74,9 @@ impl ICommandExecutorProtocol for MockMdExecutor {
     ) -> Result<ResponseData, LinterOperationError> {
         self.execute_command(PatternList::new(cmd), FilePath::default(), None)
             .map_err(|e| {
-                LinterOperationError::Adapter(shared::common::AdapterError::new(
+                LinterOperationError::Adapter(shared_common::AdapterError::new(
                     AdapterName::raw("markdownlint"),
-                    shared::common::taxonomy_common_vo::ErrorMessage::new(e.to_string()),
+                    shared_common::taxonomy_common_vo::ErrorMessage::new(e.to_string()),
                 ))
             })
     }
@@ -158,8 +158,8 @@ fn make_adapter(
 ) {
     let executor = Arc::new(MockMdExecutor::new(outputs));
     let js = Arc::new(MockJsResolution::with(available));
-    let io: Arc<dyn shared::filesystem::IFileSystemIOProtocol> = Arc::new(MockFilesystem::new());
-    let tr: Arc<dyn shared::filesystem::IToolResolutionProtocol> = Arc::new(MockFilesystem::new());
+    let io: Arc<dyn shared_filesystem::IFileSystemIOProtocol> = Arc::new(MockFilesystem::new());
+    let tr: Arc<dyn shared_filesystem::IToolResolutionProtocol> = Arc::new(MockFilesystem::new());
     let lint_exec: Arc<dyn ICommandExecutorProtocol> = executor.clone();
     let js_res: Arc<dyn IJsToolResolutionProtocol> = js.clone();
     let adapter = MarkdownLintAdapter::new(lint_exec, js_res, io, tr);
@@ -500,7 +500,7 @@ fn fix_returns_a_status_without_error() {
 
 #[test]
 fn normalizer_prefixes_markdownlint_codes() {
-    use shared::external_lint::contract_external_lint_protocol::INormalizeProtocol;
+    use shared_external_lint::contract_external_lint_protocol::INormalizeProtocol;
     let normalizer = external_lint_lint_arwaky::OutputNormalizer;
     let root = FilePath::new("/tmp".to_string()).unwrap_or_default();
     let (results, warnings) = normalizer.normalize(
@@ -515,10 +515,10 @@ fn normalizer_prefixes_markdownlint_codes() {
 
 #[test]
 fn normalizer_maps_unknown_markdownlint_severity_to_medium() {
-    use shared::external_lint::contract_external_lint_protocol::INormalizeProtocol;
+    use shared_external_lint::contract_external_lint_protocol::INormalizeProtocol;
     let normalizer = external_lint_lint_arwaky::OutputNormalizer;
     let tool = ToolName::new("markdownlint");
-    let code = shared::common::taxonomy_error_vo::ErrorCode::raw("markdownlint::MD041");
+    let code = shared_common::taxonomy_error_vo::ErrorCode::raw("markdownlint::MD041");
     assert_eq!(
         normalizer.map_severity(&tool, &code, &Severity::INFO),
         Severity::MEDIUM

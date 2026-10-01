@@ -5,8 +5,8 @@ use clap::{Parser, Subcommand};
 use std::str::FromStr;
 use std::sync::Arc;
 
-use shared::cli_commands::Format;
-use shared::common::{FilePath, GitBranchName, Threshold};
+use shared_cli_commands::Format;
+use shared_common::{FilePath, GitBranchName, Threshold};
 
 fn init_tracing() {
     tracing_subscriber::fmt()
@@ -227,7 +227,7 @@ fn main() {
 
     let fs_container = filesystem::root_filesystem_container::FilesystemContainer::new();
     let filesystem: Arc<
-        dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+        dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
     > = fs_container.orchestrator();
     let filesystem_io = fs_container.io();
     let filesystem_workspace = fs_container.workspace();
@@ -267,14 +267,14 @@ fn main() {
     let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
         Arc::new(
             config_orchestrator
-                .execute(shared::config_system::ConfigRequest::load_sync(
+                .execute(shared_config_system::ConfigRequest::load_sync(
                     &FilePath::new(".".to_string()).unwrap_or_default(),
                 ))
                 .into_sync_config(),
         ),
-        Arc::new(shared::common::LayerMapVO::new(
+        Arc::new(shared_common::LayerMapVO::new(
             config_orchestrator
-                .execute(shared::config_system::ConfigRequest::load_sync(
+                .execute(shared_config_system::ConfigRequest::load_sync(
                     &FilePath::new(".".to_string()).unwrap_or_default(),
                 ))
                 .into_sync_config()
@@ -302,7 +302,7 @@ fn main() {
 
     let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
         config_orchestrator
-            .execute(shared::config_system::ConfigRequest::load_sync(
+            .execute(shared_config_system::ConfigRequest::load_sync(
                 &FilePath::new(".".to_string()).unwrap_or_default(),
             ))
             .into_sync_config(),
@@ -314,7 +314,7 @@ fn main() {
     // BF-1: dry_run is now per-request via execute(path, dry_run), not baked into orchestrator.
     // Factory ignores the bool parameter for backwards compatibility; callers pass dry_run to execute().
     let fix_orchestrator_factory: Arc<
-        dyn Fn(bool) -> Arc<dyn shared::auto_fix::IFixAggregate> + Send + Sync,
+        dyn Fn(bool) -> Arc<dyn shared_auto_fix::IFixAggregate> + Send + Sync,
     > = {
         let container = auto_fix_container;
         let fs_for_factory = filesystem.clone();
@@ -356,7 +356,7 @@ fn main() {
     );
     let git_orchestrator = git_container.aggregate();
 
-    let report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate> = Arc::new(
+    let report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate> = Arc::new(
         report_formatter::ReportFormatterOrchestrator::new(report_formatter::ReportFormatterDeps {
             text: Arc::new(report_formatter::TextFormatter::new()),
             json: Arc::new(report_formatter::JsonFormatter::new()),
@@ -367,7 +367,7 @@ fn main() {
 
     // Extract ignored_paths from config for all sub-commands.
     let ignored_paths: Vec<String> = config_orchestrator
-        .execute(shared::config_system::ConfigRequest::ignored_paths(
+        .execute(shared_config_system::ConfigRequest::ignored_paths(
             &FilePath::new(".".to_string()).unwrap_or_default(),
         ))
         .into_patterns()
@@ -633,14 +633,14 @@ fn main() {
                 Ok(report) => {
                     println!("{}", report.message);
                     if report.success {
-                        shared::common::ExitCode::OK
+                        shared_common::ExitCode::OK
                     } else {
-                        shared::common::ExitCode::RUNTIME_ERROR
+                        shared_common::ExitCode::RUNTIME_ERROR
                     }
                 }
                 Err(e) => {
                     eprintln!("{e}");
-                    shared::common::ExitCode::RUNTIME_ERROR
+                    shared_common::ExitCode::RUNTIME_ERROR
                 }
             }
         }
@@ -649,21 +649,21 @@ fn main() {
                 Ok(report) => {
                     println!("{}", report.message);
                     if report.success {
-                        shared::common::ExitCode::OK
+                        shared_common::ExitCode::OK
                     } else {
-                        shared::common::ExitCode::RUNTIME_ERROR
+                        shared_common::ExitCode::RUNTIME_ERROR
                     }
                 }
                 Err(e) => {
                     eprintln!("{e}");
-                    shared::common::ExitCode::RUNTIME_ERROR
+                    shared_common::ExitCode::RUNTIME_ERROR
                 }
             }
         }
         Command::Version => {
             let report = dispatcher::surface_version_action::collect_version();
             println!("lint-arwaky {}", report.version);
-            shared::common::ExitCode::OK
+            shared_common::ExitCode::OK
         }
         Command::Skill { sub } => match sub {
             SkillSubCommand::Read {

@@ -7,9 +7,9 @@
 // US6: Working directory resolution for JS and Cargo tools.
 
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use tempfile::TempDir;
 
 fn make_tool() -> CapabilitiesToolResolution {

@@ -4,7 +4,7 @@ use mcp_server::surface_mcp_action_command::{McpActionSurface, McpServerDependen
 use mcp_server::surface_mcp_tool_command::LintArwakyMcpServer;
 use rmcp::ServiceExt;
 use rmcp::transport::stdio;
-use shared::config_system::utility_config_parser::parse_config_yaml;
+use shared_config_system::utility_config_parser::parse_config_yaml;
 use std::sync::Arc;
 use tracing_subscriber::prelude::*;
 
@@ -51,8 +51,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         orphan_factory: deps.orphan_factory,
         parse_config_yaml,
         parse_adapter_names:
-            shared::config_system::utility_config_parser::parse_adapter_names_from_yaml,
-        parse_score_threshold: shared::config_system::utility_config_parser::parse_score_threshold,
+            shared_config_system::utility_config_parser::parse_adapter_names_from_yaml,
+        parse_score_threshold: shared_config_system::utility_config_parser::parse_score_threshold,
         server_version: dispatcher::surface_version_action::collect_version().version,
     };
 

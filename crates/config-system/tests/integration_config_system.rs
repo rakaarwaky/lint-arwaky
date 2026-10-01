@@ -1,9 +1,9 @@
 // Integration tests — full DI wiring via ConfigContainer.
 mod common;
 
-use shared::common::FilePath;
-use shared::config_system::ConfigRequest;
-use shared::config_system::{ConfigLanguage, ProjectConfig};
+use shared_common::FilePath;
+use shared_config_system::ConfigRequest;
+use shared_config_system::{ConfigLanguage, ProjectConfig};
 
 use std::fs;
 use tempfile::TempDir;
@@ -81,7 +81,7 @@ fn container_parser_parses_yaml() {
 
 #[test]
 fn validate_thresholds_allows_valid_config() {
-    use shared::config_system::utility_config_parser::validate_thresholds;
+    use shared_config_system::utility_config_parser::validate_thresholds;
     let config = ProjectConfig::default();
     let result = validate_thresholds(&config);
     assert!(result.is_valid);
@@ -106,7 +106,7 @@ thresholds:
         .parser()
         .parse_yaml_config(&fp)
         .unwrap();
-    use shared::config_system::utility_config_parser::validate_thresholds;
+    use shared_config_system::utility_config_parser::validate_thresholds;
     let validation = validate_thresholds(&config);
     assert!(validation.is_valid);
     assert_eq!(config.project_name.value, "pipeline-test");

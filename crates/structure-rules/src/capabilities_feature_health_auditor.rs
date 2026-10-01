@@ -1,13 +1,13 @@
 // PURPOSE: FeatureHealthAuditor — AES702: feature folder health and docs
 
-use shared::structure_rules::utility_structure_parsers::{self, sorted};
+use shared_structure_rules::utility_structure_parsers::{self, sorted};
 
-use shared::structure_rules::contract_structure_protocol::IStructureFeatureHealthProtocol;
-use shared::structure_rules::taxonomy_structure_rules_constant as consts;
-use shared::structure_rules::taxonomy_structure_rules_request::{
+use shared_structure_rules::contract_structure_protocol::IStructureFeatureHealthProtocol;
+use shared_structure_rules::taxonomy_structure_rules_constant as consts;
+use shared_structure_rules::taxonomy_structure_rules_request::{
     StructureFinding, StructureRequest,
 };
-use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
+use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
 /// AES702: checks that feature folders hold capabilities + orchestrator pairs,
 /// carry no foreign-layer files, and document themselves with FRD.md + BACKLOG.md.
@@ -77,7 +77,7 @@ fn check_feature_folder(
     folder: &std::path::Path,
     rel: &str,
     ws_root: &std::path::Path,
-    inventory: &shared::structure_rules::taxonomy_structure_rules_vo::FolderInventory,
+    inventory: &shared_structure_rules::taxonomy_structure_rules_vo::FolderInventory,
     findings: &mut Vec<StructureFinding>,
 ) {
     // Health: both sides required.

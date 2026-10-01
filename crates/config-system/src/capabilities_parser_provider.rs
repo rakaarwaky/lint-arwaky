@@ -1,14 +1,14 @@
 // PURPOSE: ConfigParserProvider — implements IConfigMergeProtocol (FR-003: Config Merger)
-use shared::common::taxonomy_common_vo::ErrorMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_protocol::IConfigMergeProtocol;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_system_error::ConfigError;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::config_system::taxonomy_config_system_vo::ConfigKey;
-use shared::config_system::taxonomy_config_system_vo::ProjectConfig;
-use shared::config_system::utility_config_parser::default_config_for_language;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_common::taxonomy_common_vo::ErrorMessage;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::contract_config_protocol::IConfigMergeProtocol;
+use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared_config_system::taxonomy_config_system_error::ConfigError;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_config_system::taxonomy_config_system_vo::ConfigKey;
+use shared_config_system::taxonomy_config_system_vo::ProjectConfig;
+use shared_config_system::utility_config_parser::default_config_for_language;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -51,7 +51,7 @@ impl IConfigMergeProtocol for ConfigParserProvider {
     }
 
     fn parse_config_yaml_with_warnings(&self, yaml_str: &str) -> (ArchitectureConfig, Vec<String>) {
-        shared::config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
+        shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml_str)
     }
 
     /// FR-003: merge rules into layer definitions, injecting the embedded
@@ -61,7 +61,7 @@ impl IConfigMergeProtocol for ConfigParserProvider {
         config: &ArchitectureConfig,
         language: ConfigLanguage,
     ) -> (ArchitectureConfig, Vec<String>) {
-        let (merged_layers, _) = shared::config_system::utility_config_merger::merge_config(config);
+        let (merged_layers, _) = shared_config_system::utility_config_merger::merge_config(config);
         let mut merged = config.clone();
         merged.layers = merged_layers;
         let mut warnings = Vec::new();

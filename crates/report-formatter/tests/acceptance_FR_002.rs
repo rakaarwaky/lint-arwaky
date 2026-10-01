@@ -1,9 +1,9 @@
 // FR-002 — JSON Format Output
 use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
-use shared::cli_commands::DiagnosticSeverity;
-use shared::cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
-use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IJsonFormatProtocol;
+use shared_cli_commands::DiagnosticSeverity;
+use shared_cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
+use shared_common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared_report_formatter::IJsonFormatProtocol;
 
 fn parse(out: &str) -> serde_json::Value {
     serde_json::from_str(out).expect("output must be valid JSON")
@@ -22,7 +22,7 @@ fn us1_normal_report_is_valid_pretty_json() {
             ..Default::default()
         }],
         diagnostics: vec![],
-        score: Some(shared::common::Score::new(85.0)),
+        score: Some(shared_common::Score::new(85.0)),
     };
     let out = JsonFormatter::new().format_json(&report);
     let v = parse(out.value());
