@@ -222,10 +222,13 @@ flowchart TD
   - Rust adapters (Rustfmt, cargo-audit) run with a 120-second timeout.
   - The environment variable `PYTHONUNBUFFERED=1` is set on all subprocesses.
   - A spawn failure or timeout is reported as an adapter error; the scan continues with the next adapter.
+  - **No retry.** An adapter gets exactly one attempt per scan, for both spawn failures and timeouts, per the Integration resilience decision in `PRD.md`: a retried tool run executes against a different tool state and can mask the result the first run would have reported, so a skip-and-log is preferred over a second attempt. The contrasting multi-strategy fallback chain in `crates/git-hooks/FRD.md` is not an inconsistency — every strategy there queries the same trusted local repository, so a fallback still yields a correct file list, whereas no second strategy exists here that would yield a correct lint result.
+  - **No overall budget.** Each ceiling applies to one adapter. They sum rather than cap, so a scan with every language present can run up to 180 + 120 + 120 + (7 × 60) ≈ 840 s (~14 minutes) before returning. Callers that need a bound — notably the MCP surface, which has no timeout of its own — must impose it themselves.
 - **Edge Cases**:
 
   - Executable absent from PATH → the adapter is reported unavailable, scan continues.
-  - Timeout exceeded → error logged, other adapters continue.
+  - Timeout exceeded → error logged, other adapters continue, no retry.
+  - Every adapter present and slow → the call blocks for the summed worst case; no layer above interrupts it.
 - **Error Handling**: Spawn and timeout errors are surfaced as `LinterOperationError`.
 
 ---
@@ -314,6 +317,8 @@ flowchart TD
 | Code preservation | The tool-native rule code is preserved verbatim in the normalized finding | Assert the original code appears unchanged in the formatted output for each adapter |
 | Coverage | Every supported language is served by exactly one selected adapter | Scan a workspace containing all supported languages and assert no file is left uncovered |
 | Concurrency | Adapters run sequentially with no threads and no async runtime | Inspect the scan's thread count during a run and assert it stays at the caller level |
+| Worst-case adapter phase | Per-adapter ceilings sum with no overall budget: ~840 s (~14 minutes) with all 10 adapters present and each at its ceiling | Compute the sum of the configured ceilings for the selected adapter set and assert the documented bound; callers above this crate set their own timeout against it |
+| Resilience posture | One attempt per adapter per scan; a timeout or spawn failure skips that adapter and logs, and never retries | Force a timeout in one adapter and assert exactly one spawn occurred and the remaining adapters still completed |
 | Missing tool | A tool absent from PATH is reported as unavailable, and the scan continues | Run with one adapter's executable removed from PATH and assert the remaining adapters still complete |
 
 ## Test Scenarios / QA Checklist

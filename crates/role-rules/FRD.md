@@ -16,7 +16,7 @@ The role-rules crate enforces architectural boundaries and responsibility rules 
 
 File discovery, raw content reads, and AST parsing are handled by the external `filesystem` crate. The Surface calls `filesystem.build_file_index(root)` to populate caches, then passes pre-fetched `&[FileEntry]` (with parse_metadata) to the role-rules orchestrator via `run_audit_with_entries`. The role-rules crate does zero I/O — it only performs business logic analysis on pre-fetched data.
 
-Import checking is NOT performed by role-rules. All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES206). Role-rules only validates structural and responsibility constraints within each file.
+Import checking is NOT performed by role-rules. All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES205). Role-rules only validates structural and responsibility constraints within each file.
 
 ### Architecture & Data Flow
 
@@ -153,7 +153,7 @@ flowchart TD
 
 ### FR-RoleRules-004: Capability Protocol Implementation (AES403)
 
-- **Description**: Audit capability files (`capabilities_*` / `capability_*`) for protocol implementation and composition constraints. This rule checks **implementation only**, not imports. Import validation is handled by the import-rules crate (AES201–AES206).
+- **Description**: Audit capability files (`capabilities_*` / `capability_*`) for protocol implementation and composition constraints. This rule checks **implementation only**, not imports. Import validation is handled by the import-rules crate (AES201–AES205).
 - **Input**: `FileEntry` (path + content + language + parse metadata).
 - **Output**: AES403 violations.
 - **Business Rules**:
@@ -200,7 +200,7 @@ flowchart TD
 
 ### FR-RoleRules-006: Agent Orchestrator Composition (AES405)
 
-- **Description**: Audit agent files (`agent_*`) for correct aggregate implementation and composition constraints. This rule checks **implementation only**, not imports. Import validation is handled by the import-rules crate (AES201–AES206).
+- **Description**: Audit agent files (`agent_*`) for correct aggregate implementation and composition constraints. This rule checks **implementation only**, not imports. Import validation is handled by the import-rules crate (AES201–AES205).
 - **Input**: `FileEntry` (path + content + language + parse metadata).
 - **Output**: AES405 violations.
 - **Business Rules**:
@@ -416,7 +416,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - Root layer files are pure DI wiring and never checked.
 - Language detection is based on file extension, performed by the filesystem crate.
 - Detection uses a combination of AST parse metadata (when available) and line-based scanning (fallback). Entity/error/event checks and surface domain logic checks are line-based. Contract checks use the shared signature parser.
-- Import checking is NOT performed by role-rules. All import validation is handled by the import-rules crate (AES201–AES206).
+- Import checking is NOT performed by role-rules. All import validation is handled by the import-rules crate (AES201–AES205).
 - The crate receives file data (path + content + language + parse metadata) from the external filesystem crate. No file I/O or AST parsing is performed internally.
 - Files that cannot be read or parsed by the filesystem crate are excluded from the returned list and never reach role-rules.
 - All numeric thresholds are hardcoded constants (max_types = 3, max_public_methods = 50, max_control_flow = 50). Rule enable/disable, ignore paths, and exceptions are configurable via YAML.

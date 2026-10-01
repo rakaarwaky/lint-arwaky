@@ -94,8 +94,8 @@ flowchart TD
 - **Edge Cases**:
 
   - Empty results → valid JSON with empty arrays and zero summary.
-  - Serialization failure → falls back to `{}` string.
-- **Error Handling**: Serialization error caught gracefully.
+  - Serialization failure → an explicitly marked error document, never a bare `{}`: `{"formatter_error": true, "format": "json", "reason": "<cause>"}`. A consumer reading `.summary.total` finds no summary at all, so a formatting failure can never be read as "0 violations".
+- **Error Handling**: Serialization error caught and reported in the output document; the formatter still returns display content rather than raising.
 
 ---
 
@@ -126,8 +126,8 @@ flowchart TD
 
   - Empty results → valid SARIF with empty results array.
   - Line number 0 or negative → clamped to 1.
-  - Serialization failure → returns empty object string.
-- **Error Handling**: Serialization error caught gracefully.
+  - Serialization failure → an explicitly marked error document, never a bare `{}` and never something shaped like a valid-but-empty SARIF log: `{"formatter_error": true, "format": "sarif", "reason": "<cause>"}`. The payload carries no `$schema`, no `version`, and no `runs`, so a SARIF consumer rejects it as malformed instead of reading it as a clean run with zero results.
+- **Error Handling**: Serialization error caught and reported in the output document; the formatter still returns display content rather than raising.
 
 ---
 
@@ -224,6 +224,7 @@ FRD Ref: FR-ReportFormatter-002
 | 2 | Empty results | Valid JSON with empty arrays, zero summary |
 | 3 | Report with external results | `external_results` array populated |
 | 4 | Report with PARSE_WARN | `diagnostics` array populated |
+| 5 | Serialization failure forced | Output carries `formatter_error: true` and no summary; a consumer can tell it apart from a clean scan |
 
 ### SCEN-003 — SARIF Format
 
@@ -238,6 +239,7 @@ FRD Ref: FR-ReportFormatter-003
 | 5 | PARSE_WARN diagnostic | SARIF level "note" |
 | 6 | Line number 0 | Clamped to 1 |
 | 7 | Empty results | Valid SARIF with empty results array |
+| 8 | Serialization failure forced | Output carries `formatter_error: true`, no `runs` array, and fails SARIF schema validation rather than reading as zero results |
 
 ### SCEN-004 — JUnit Format
 
@@ -267,7 +269,7 @@ FRD Ref: FR-001 through FR-004 via `IReportFormatterAggregate`
 
 ## Assumptions & Constraints
 
-- All formatters are infallible — they cannot return errors (only display content).
+- Formatters never raise and never panic: every call returns display content. They are **not** infallible at the contract level — JSON and SARIF serialization can fail, and that failure is a reportable outcome carried in the output document (`formatter_error`), distinguishable from a clean scan by any consumer. Text and JUnit generation has no failure path at all.
 - `ScanReport` is the single input type for all formatters.
 - Format routing is determined at compile time via exhaustive match on `Format` enum inside the agent orchestrator.
 - All formatters are self-contained — no dependency on other rule crates.

@@ -347,7 +347,8 @@ flowchart TD
 ## Non-functional Requirements
 | Metric | Target | Measurement method |
 | --- | --- | --- |
-| Pipeline throughput | 1,000 files in under 2 s; 10,000 files in under 10 s | Time a full build-index run over workspaces of each size |
+| Pipeline throughput (indexing scope) | 1,000 files in under 2 s; 10,000 files in under 10 s — this crate's own build-index run: discovery, read, parse | Time a full build-index run over workspaces of each size, with the Criterion benches under this crate; the recorded figure is the evidence for the matching row in `PRD.md` |
+| Pipeline throughput (full-pipeline scope) | 1,000 files in under 5 s; 10,000 files in under 15 s — indexing plus every rule group, external adapters excluded | Time a `check` run over workspaces of each size; the indexing budget above is the lower bound inside it |
 | Accessor cost | Cache accessors are O(1) | Call an accessor repeatedly and confirm constant time across cache sizes |
 | Cache bound | The content cache is capped at 20,000 entries | Inspect the cap and assert insertion beyond it does not grow the cache |
 | Memory | Bounded by total workspace size | Measure retained memory against two workspace sizes |

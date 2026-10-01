@@ -159,6 +159,38 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 
 ---
 
+### Reason Code Reference
+
+`Skipped(reason)` and `Failed(reason)` carry a **closed** set of reason codes,
+not free text. This table is the canonical enumeration across every fix
+capability; a consumer (CI dashboard, MCP tool surface, report renderer) may
+treat any value outside it as a contract breach.
+
+| Reason | Outcome | Capability | Meaning |
+|---|---|---|---|
+| `MultiLineImport` | Skipped | import removal | The target line belongs to a multi-line import block; deleting one line would break syntax |
+| `LineOutOfBounds` | Skipped | import removal, bypass removal | Line number is 0 or past end of file |
+| `NotAnImportLine` | Skipped | import removal | The target line is not an import statement |
+| `NoBypassPattern` | Skipped | bypass removal | The target line carries no recognised bypass pattern |
+| `UnsafeRemoval` | Skipped | bypass removal | The pattern needs semantic understanding (`panic!`, `todo!`, `unimplemented!`, `unreachable!`) |
+| `AlreadyHasContext` | Skipped | bypass removal | The pattern already carries a context message (e.g. `expect("…")`) |
+| `AlreadyValid` | Skipped | rename | The symbol name is already valid snake_case |
+| `SymbolNotFound` | Skipped | rename | The old symbol name does not occur in the file |
+| `KeywordConflict` | Skipped | rename | The new name collides with a language keyword |
+| `FileNotFound` | Failed | all | The target file does not exist |
+| `ReadError` | Failed | all | The file could not be read |
+| `WriteError` | Failed | all | The file could not be written; the file is left untouched |
+
+Nine skip reasons and three fail reasons, twelve in total. The FR sections
+above spell out when each one fires, using the lower-case spelling
+(`Skipped(multi_line_import)`); the canonical identifier is the enumerated name
+in this table. Adding a fix capability means adding its reasons here in the
+same change — `CONTRIBUTING.md`'s Feature Change checklist carries the
+obligation, and the cross-document consistency gate in CI fails when this table
+and the enumerated reason set disagree.
+
+---
+
 ## API Contract
 
 ### Protocol API

@@ -139,6 +139,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
   - **Score threshold** must be between 0.0 and 100.0 (inclusive); **complexity** and **max_file_lines** thresholds must be positive (> 0).
   - Adapter enabled check: defaults to `true` if adapter not found in config.
   - Caching is keyed by config path; a hit returns the previously parsed value without re-parsing.
+  - **Cache lifetime and invalidation** — the cache lives for as long as the config orchestrator that owns it, which is one process invocation. There is no TTL, no modification-time check, and no explicit invalidation entry point: once a path has been parsed, every later read of that path in the same process is served from the cache, whatever the file on disk now says. A single-shot command therefore sees the config as it stood at first read, and a long-lived `watch` session keeps serving the config it parsed at startup until the session is restarted. Editing the config file while `watch` runs has no effect on that session.
 - **Edge Cases**:
 
   - Config with empty `layers` array → defaults injected, warning emitted.
@@ -267,6 +268,8 @@ FRD Ref: FR-ConfigSystem-003
 | 12 | No config ignored paths | 8 universal defaults returned |
 | 13 | Config adds ".git" (already default) | Deduplicated, not added twice |
 | 14 | Same config path read twice | Second read served from cache |
+| 15 | Config file edited on disk between two reads of the same path, same process | Second read still served from the cache — the edit is not observed |
+| 16 | Same config path read from a fresh orchestrator (new process) after an edit | The edited file is parsed; the cache does not outlive the process |
 
 ---
 
