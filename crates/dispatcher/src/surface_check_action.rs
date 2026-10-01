@@ -1083,8 +1083,8 @@ mod subprocess_timeout_tests {
     #[cfg(unix)]
     #[test]
     fn hanging_subprocess_is_killed_at_timeout() {
-        let child = Command::new("sh")
-            .args(["-c", "sleep 5"])
+        let child = Command::new("sleep")
+            .arg("5")
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
