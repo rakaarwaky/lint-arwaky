@@ -54,8 +54,8 @@ flowchart TD
 ```
 
 ## Functional Requirements
-### FR-OrphanRules-001: Graph Context Reception and Dispatch
-- **Description**: Receive the `GraphAnalysisContext` (built externally by the filesystem crate), trace BFS reachability from entry points, and dispatch to layer-specific orphan analyzers.
+### FR-OrphanRules-001: Graph Context, Entry Points, and Reachability
+- **Description**: Receive the `GraphAnalysisContext` (built externally by the filesystem crate), identify the entry points that anchor the reachability graph, trace BFS reachability from them, and dispatch to layer-specific orphan analyzers.
 - **Input**: `GraphAnalysisContext` (built by filesystem crate) containing:
 
   - All workspace source files (workspace-root-relative paths).
@@ -63,57 +63,29 @@ flowchart TD
   - Forward import graph (file → file edges).
   - Inbound link map (file → list of importers).
   - Inheritance map (file → trait, class, or interface names it inherits).
-- **Output**: `GraphAnalysisContext` forwarded as-is; BFS alive set computed internally.
+
+  Plus the configured entry-point patterns from architecture configuration.
+- **Output**: `GraphAnalysisContext` forwarded as-is; the entry-point set and the BFS alive set computed internally.
 - **Business Rules**:
 
   - The filesystem crate builds the `GraphAnalysisContext` externally — orphan-rules performs zero I/O and zero graph construction.
   - All paths in the graph context are workspace-root-relative (the orchestrator converts between absolute and relative as needed).
-  - Barrel files are identified via `DEFAULT_RULE_EXCEPTIONS` and skipped by the orchestrator before dispatching to analyzers.
+  - Barrel/package marker files — package markers and re-export files, not logic — are identified via `DEFAULT_RULE_EXCEPTIONS` from the shared crate and skipped by the orchestrator before dispatching to any analyzer. A barrel file inside a deeply nested module is still skipped.
   - File contents are pre-read via `IFilesystemAggregate::read_cached()` into a bounded content map so that sub-analyzers (contract, agent) can perform content-based searches without direct I/O.
+  - Entry-point discovery: default patterns (files whose name ends with the entry-point marker for any supported language) plus configured `orphan_entry_points` from layer definitions. Matching uses **segment matching** — exact match, stem match, prefix/suffix with `_`/`.` delimiters — never substring `contains()`, to prevent false positives. Identified from ALL workspace files (not just the scanned module); paths are converted to workspace-root-relative before matching; the result is deduplicated and sorted.
+  - Reachability tracing: breadth-first search from the entry-point set through the forward import graph, with a visited tracker, to produce the set of transitively reachable ("alive") files. The alive set is consumed by all layer-specific analyzers and converted to absolute paths for sub-analyzer `contains()` checks.
 - **Edge Cases**:
 
   - Empty workspace (zero files) → empty context, no violations.
   - Files with parse failures contribute no edges to the graph — they are treated as orphan candidates.
-- **Error Handling**: Individual file read/parse failures degrade gracefully (empty edges → orphan candidacy).
-
-### FR-OrphanRules-002: Entry Point Discovery
-- **Description**: Identify valid entry points that anchor the reachability graph, using configured patterns matched against all workspace files.
-- **Input**: All workspace file paths from the graph context, configured entry point patterns from architecture configuration.
-- **Output**: Set of entry point file paths.
-- **Business Rules**:
-
-  - Default entry point patterns (hardcoded when no config patterns provided):
-
-    - Files whose name ends with the entry-point marker for any supported language
-  - Additional patterns are merged from architecture configuration layer definitions (`orphan_entry_points`).
-  - Pattern matching uses **segment matching**: exact match, stem match, prefix/suffix with `_`/`.` delimiters — never substring `contains()` to prevent false positives.
-  - Entry points are identified from ALL workspace files (not just the scanned module) to resolve cross-module imports correctly.
-  - All workspace file paths are converted to workspace-root-relative for graph key matching before entry point identification.
-  - Deduplicates and sorts the final list.
-- **Edge Cases**:
-
   - Workspace with zero entry points → all non-barrel files flagged as orphans.
   - Workspace with entry points in non-standard locations → requires config override.
-- **Error Handling**: Missing or inaccessible entry point files (not in the file list) are excluded from the set.
-
-### FR-OrphanRules-003: Reachability Tracing
-- **Description**: Perform BFS from all entry points through the forward import graph to determine which files are transitively reachable ("alive").
-- **Input**: Entry point set and the forward import graph from the analysis context.
-- **Output**: Set of all reachable file paths (alive set).
-- **Business Rules**:
-
-  - Uses breadth-first search with a visited tracker to avoid revisiting nodes.
-  - A file is "alive" if it is transitively reachable from any entry point via import edges.
-  - The alive set is used by all layer-specific orphan analyzers.
-  - The alive set is converted to absolute paths for `contains()` checks by sub-analyzers.
-- **Edge Cases**:
-
   - Isolated files with no imports from any entry point → not in alive set → flagged by analyzers.
   - Entry points that import nothing → valid (they are roots, alive by definition).
   - Cycles in the graph → handled by visited set, no infinite loops.
-- **Error Handling**: Cycles handled by visited set. Missing graph nodes (file in file list but not in graph) → treated as unreachable.
+- **Error Handling**: Individual file read/parse failures degrade gracefully (empty edges → orphan candidacy). Missing or inaccessible entry-point files (not in the file list) are excluded from the set. Cycles handled by visited set; missing graph nodes (file in file list but not in graph) → treated as unreachable.
 
-### FR-OrphanRules-004: Taxonomy Orphan Detection (AES501)
+### FR-OrphanRules-002: Taxonomy Orphan Detection (AES501)
 - **Description**: Check that taxonomy layer files (`taxonomy_*`) are imported by at least one file from a higher layer, or are reachable from entry points.
 - **Input**: File path, inbound link map, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -134,7 +106,7 @@ flowchart TD
   - Taxonomy VO imported by a contract protocol → not orphan.
 - **Error Handling**: Files with no detectable inbound links → orphan candidates.
 
-### FR-OrphanRules-005: Contract Orphan Detection (AES502)
+### FR-OrphanRules-003: Contract Orphan Detection (AES502)
 - **Description**: Check that contract files are both reachable from entry points and have implementations and callers, using trait extraction and whole-word content searching.
 - **Input**: File path, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -159,7 +131,7 @@ flowchart TD
   - Contract file with no traits/interfaces (e.g., only type aliases) → not orphan (nothing to check).
 - **Error Handling**: Files with empty content or no trait names → not flagged (nothing to check).
 
-### FR-OrphanRules-006: Capabilities Orphan Detection (AES503)
+### FR-OrphanRules-004: Capabilities Orphan Detection (AES503)
 - **Description**: Check that capability files are both reachable from entry points and wired in a root container file.
 - **Input**: File path, alive set, filesystem aggregate (for container wiring checks).
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -177,7 +149,7 @@ flowchart TD
   - Capability with no struct/class names → treated as potential orphan.
 - **Error Handling**: Files that fail to parse → orphan (fail-strict).
 
-### FR-OrphanRules-007: Utility Orphan Detection (AES504)
+### FR-OrphanRules-005: Utility Orphan Detection (AES504)
 - **Description**: Check that utility files are both reachable from entry points and imported by at least one consumer layer (capabilities, agent, surface, or root).
 - **Input**: File path, inbound link map, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -198,7 +170,7 @@ flowchart TD
   - Utility with no inbound links → orphan.
 - **Error Handling**: Files that fail to parse → orphan (fail-strict).
 
-### FR-OrphanRules-008: Agent Orphan Detection (AES505)
+### FR-OrphanRules-006: Agent Orphan Detection (AES505)
 - **Description**: Check that agent files are both reachable from entry points and have their aggregate traits wired in a container file.
 - **Input**: File path, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -217,7 +189,7 @@ flowchart TD
   - Agent with aggregate traits but none found in container files → orphan.
 - **Error Handling**: Files that fail to parse → flagged as orphan (fail-strict).
 
-### FR-OrphanRules-009: Surface Orphan Detection (AES506)
+### FR-OrphanRules-007: Surface Orphan Detection (AES506)
 - **Description**: Check that surface files are reachable from entry points based on their group classification (Smart, Utility, Passive).
 - **Input**: File path, alive set, inbound link map, layer definition.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -237,18 +209,6 @@ flowchart TD
   - Surface file with unclassifiable suffix → skipped entirely (no violation, no error).
 - **Error Handling**: Files that fail to parse → orphan (fail-strict). Unclassifiable suffix → skip.
 
-### FR-OrphanRules-010: Barrel File Exception Handling
-- **Description**: Skip known barrel/package marker files from orphan detection.
-- **Input**: File path.
-- **Output**: Skip signal (no violation produced).
-- **Business Rules**:
-
-  - Barrel files are identified via `DEFAULT_RULE_EXCEPTIONS` from the shared crate.
-  - These files are package markers or re-export files, not logic.
-  - Check is performed in the orchestrator before dispatching to any analyzer.
-- **Edge Cases**: A barrel file inside a deeply nested module is still skipped.
-- **Error Handling**: N/A — simple filename check.
-
 ## API Contract
 
 ### Protocol API
@@ -263,6 +223,16 @@ flowchart TD
 | `is_surface_orphan` | &FilePath, &FilePath, &ReachabilityResult, &InboundLinkMap, Option<&LayerDefinition> | `OrphanIndicatorResult` | — | — | Is surface orphan. |
 | `is_taxonomy_orphan` | &FilePath, &FilePath, Option<&LayerDefinition>, &InboundLinkMap, &[String], &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is taxonomy orphan. |
 | `is_utility_orphan` | &FilePath, &FilePath, &[String], &InboundLinkMap, &HashMap<String, String>, &ReachabilityResult | `OrphanIndicatorResult` | — | — | Is utility orphan. |
+
+### Agent Steps (no protocol trait — AES405)
+
+FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **no trait** in the shared contract module. They are orchestration the orphan-rules agent owns: it receives the graph context from the filesystem aggregate and delegates the pure work to the shared orphan/quality utilities. An agent must never implement a contract protocol (AES405), and no other feature consumes these steps, so a seam would have exactly one implementer — the agent — which is the shape the rule forbids. They are therefore inherent methods on the aggregate:
+
+| Method | Input | Output | Error | Description |
+|---|---|---|---|---|
+| `build_orphan_graph_context` | &FilePath | `GraphAnalysisContext` | — | Ask the filesystem aggregate to build the analysis context for a root. |
+| `identify_orphan_entry_points` | &OrphanFileListVO | `OrphanFileListVO` | — | Identify entry points from a workspace file list. |
+| `trace_alive_files` | &OrphanFileListVO, &GraphAnalysisContext | `ReachabilityResult` | — | Trace which files are alive (reachable) from the entry points. |
 
 ### Aggregate API
 

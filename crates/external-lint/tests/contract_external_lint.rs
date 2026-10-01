@@ -11,13 +11,18 @@ mod mock_filesystem;
 use std::sync::Arc;
 
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_operation_error::LinterOperationError;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_common::taxonomy_severity_vo::Severity;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
 use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use std::collections::HashMap;
 
 use mock_filesystem::MockFilesystem;
 
@@ -343,18 +348,115 @@ fn external_lint_executor_implements_cargo_dir_protocol() {
     assert!(!wd.value().is_empty());
 }
 
-// ─── Contract: LanguageDetector implements ILanguageDetectProtocol (FR-001) ──
+// ─── FR-001: language detection lives in the filesystem aggregate ──────────
+//
+// external-lint no longer owns a language-detection protocol or capability.
+// The orchestrator asks the filesystem aggregate via `DetectProjectLanguages`;
+// see `crates/filesystem` FR-Filesystem-005 for the contract.
+//
+// These tests make the delegation observable: a stub adapter that always
+// reports one finding, paired with a mock filesystem that reports one language.
+// With the language reported, the adapter runs and its finding appears; with it
+// withheld, the selector declines and nothing appears. A regression that
+// reverted to `ExternalLintContext::default()` — the bug this PR fixed — would
+// fail the first assertion, because the default carries no languages.
+
+/// Adapter that reports one finding whatever it is handed, so a test can tell
+/// "the adapter ran" apart from "no adapter was selected".
+struct StubAdapter {
+    name: &'static str,
+}
+
+impl ILinterAdapterProtocol for StubAdapter {
+    fn name(&self) -> AdapterName {
+        AdapterName::raw(self.name.to_string())
+    }
+
+    fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
+        Ok(LintResultList::new(vec![LintResult::new_arch(
+            &path.value(),
+            1,
+            "stub::finding",
+            Severity::MEDIUM,
+            "stub finding",
+        )]))
+    }
+
+    fn fix(&self, _path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
+        Ok(ComplianceStatus::default())
+    }
+}
+
+fn orchestrator_with(
+    languages: shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO,
+) -> (
+    external_lint_lint_arwaky::agent_external_lint_orchestrator::ExternalLintOrchestrator,
+    Arc<StubAdapter>,
+) {
+    use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
+        ExternalLintDeps, ExternalLintOrchestrator,
+    };
+
+    let adapter = Arc::new(StubAdapter { name: "stub" });
+    let mut adapters = HashMap::new();
+    adapters.insert(
+        "stub".to_string(),
+        adapter.clone() as Arc<dyn ILinterAdapterProtocol>,
+    );
+    // The selector decides *which* adapters to run from the language flags, so
+    // the stub has to be the name it selects for a Rust project — otherwise the
+    // test would pass or fail on the selector's defaults rather than on the
+    // delegation under test.
+    let selector = external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::new(
+        vec![AdapterName::raw("stub".to_string())],
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+    );
+    let deps = ExternalLintDeps {
+        adapters,
+        filesystem: Arc::new(MockFilesystem::with_languages(languages)),
+        filesystem_io: Arc::new(MockFilesystem::new()),
+        selector: Arc::new(selector),
+    };
+    (ExternalLintOrchestrator::new(deps), adapter)
+}
 
 #[test]
-fn language_detector_implements_protocol() {
-    use shared_external_lint::ILanguageDetectProtocol;
-    let detector =
-        external_lint_lint_arwaky::LanguageDetector::new(Arc::new(MockFilesystem::new()));
-    let _dyn: &dyn ILanguageDetectProtocol = &detector;
-    let (has_rust, has_python, has_js, has_markdown) =
-        _dyn.detect_languages(&FilePath::new("/tmp".to_string()).unwrap());
-    // No files were registered on the mock filesystem — all booleans are false.
-    assert!(!has_rust && !has_python && !has_js && !has_markdown);
+fn orchestrator_runs_adapter_when_filesystem_reports_a_language() {
+    use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
+
+    let mut languages = ProjectLanguagesVO::default();
+    languages.has_rust = true;
+    let (orchestrator, _adapter) = orchestrator_with(languages);
+
+    let results = orchestrator.scan_all(&FilePath::new("/tmp".to_string()).unwrap());
+    assert!(
+        results
+            .values
+            .iter()
+            .any(|r| r.code.to_string() == "stub::finding"),
+        "the language reported by the filesystem seam must reach the selector and run \
+         the adapter; got {:?}",
+        results.values
+    );
+}
+
+#[test]
+fn orchestrator_skips_adapter_when_filesystem_reports_no_language() {
+    // The same stub adapter, but the filesystem seam reports no language — the
+    // control for the test above. Together the pair shows the result depends on
+    // what the aggregate answered, not on the adapter map.
+    let (orchestrator, _adapter) = orchestrator_with(Default::default());
+    let results = orchestrator.scan_all(&FilePath::new("/tmp").unwrap());
+    assert!(
+        !results
+            .values
+            .iter()
+            .any(|r| r.code.to_string() == "stub::finding"),
+        "with no language reported no adapter should be selected; got {:?}",
+        results.values
+    );
 }
 
 // ─── Contract: OutputNormalizer implements INormalizeProtocol (FR-005) ──

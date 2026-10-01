@@ -132,6 +132,15 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
                 entries: self.import_list_snapshot(),
             },
+            FilesystemRequest::DetectProjectLanguages { root } => {
+                // Through the workspace seam, not straight to the shared utility:
+                // every sibling arm in this match goes through an injected
+                // capability, and a substituted implementation must stay in
+                // control of what the agent observes.
+                FilesystemResponse::ProjectLanguages {
+                    languages: self.deps.workspace.detect_project_languages(&root),
+                }
+            }
         }
     }
 }

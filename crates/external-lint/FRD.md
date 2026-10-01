@@ -1,4 +1,4 @@
-# FRD — external-lint (v1.13.0)
+# FRD — external-lint (v1.14.0)
 
 ---
 
@@ -16,12 +16,17 @@ The crate also provides **auto-fix** capabilities — each adapter exposes an `a
 
 All adapters execute **sequentially** (no threads, no async runtime). Each adapter runs its external tool as a subprocess, captures output, and normalizes results. The entry point is the DI container, which wires all adapters and exposes the aggregate trait.
 
+The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md), FR-Filesystem-005). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
+
 ### Architecture & Data Flow
 
 ```mermaid
 flowchart TD
     A["Surface / Dispatcher"] -->|input| B["ExternalLintContainer"]
     B --> C["ExternalLintOrchestrator\n(IExternalLintAggregate)"]
+
+    C -->|"DetectProjectLanguages\n(no caller context)"| FS["filesystem aggregate\n(FR-Filesystem-005)"]
+    FS -->|"has_rust / has_python\nhas_js / has_markdown"| C
 
     C -->|"select_adapters()"| D["ExternalLintSelector\n(IExternalLintSelectorProtocol)"]
     D -->|"adapter names"| C
@@ -48,32 +53,11 @@ flowchart TD
 
 ## Functional Requirements
 
-### FR-ExternalLint-001: Detect Project Languages
+### FR-ExternalLint-001: Select and Execute Adapters by Language
 
-- **Description**: Determine which languages (Rust, Python, JS/TS) and content types (Markdown) are present in the project using a lightweight extension walk via the filesystem aggregate's `discover_files()`.
-- **Input**: Filesystem aggregate reference.
-- **Output**: Four booleans: `has_rust`, `has_python`, `has_js`, `has_markdown`.
-- **Business Rules**:
-
-  - Language detection based on file extension:
-    - Rust: `.rs`
-    - Python: `.py`
-    - JS/TS: `.js`, `.jsx`, `.ts`, `.tsx`
-    - Markdown: `.md`, `.markdown`
-  - Symlink behavior follows filesystem crate convention: follow if target is within workspace root, skip otherwise.
-- **Edge Cases**:
-
-  - Empty project → all booleans false, no adapters selected.
-  - Unknown extensions → ignored.
-- **Error Handling**: Filesystem crate handles walk errors internally. Returns partial detection results.
-
----
-
-### FR-ExternalLint-002: Select Adapters by Language
-
-- **Description**: Based on detected languages, select the appropriate set of linter adapters to run.
-- **Input**: Booleans `has_rust`, `has_python`, `has_js`, `has_markdown`.
-- **Output**: Ordered list of adapter names.
+- **Description**: Based on the language flags for a project, select the appropriate set of linter adapters and run them in adapter-list order, aggregating the results. The orchestrator optionally filters adapters by configuration entries and post-filters results by ignored paths.
+- **Input**: Target path, the booleans `has_rust`, `has_python`, `has_js`, `has_markdown`, and an optional context (config entries, ignored paths).
+- **Output**: Ordered list of adapter names, and the aggregated lint results from all adapters.
 - **Business Rules**:
 
   - Rust adapters: `clippy`, `rustfmt`, `cargo-audit`.
@@ -82,39 +66,26 @@ flowchart TD
   - Markdown adapters: `markdownlint`.
   - Adapters are appended in language-group order (Rust → Python → JS → Markdown).
   - Hardcoded defaults via `with_defaults()` constructor.
-- **Edge Cases**:
-
-  - No languages detected → empty adapter list, no scans run.
-  - All languages detected → up to 10 adapters selected.
-- **Error Handling**: No error; empty list for no matches.
-
----
-
-### FR-ExternalLint-003: Execute Scan Across Adapters
-
-- **Description**: Run all selected adapters one after another in adapter-list order, aggregating results. The orchestrator optionally filters adapters by configuration entries and post-filters results by ignored paths.
-- **Input**: Target path, optional context (config entries, ignored paths).
-- **Output**: Aggregated lint results from all adapters.
-- **Business Rules**:
-
-  - Iterates the adapter list in order (Rust → Python → JS groups).
-  - Each adapter receives the same target path.
-  - Optionally filters adapter list by `context.config_entries` if present.
+  - When no caller-supplied context is present, the language flags are requested from the `filesystem` aggregate via `DetectProjectLanguages`. This crate performs no extension walk of its own.
+  - Iterates the adapter list in that order. Each adapter receives the same target path.
+  - Optionally filters the adapter list by `context.config_entries` if present.
   - Results are collected into a single `Vec` as they arrive.
   - After collection, filters results against `context.ignored_paths` via the filesystem aggregate's `should_ignore()`.
   - No threads — execution is strictly sequential.
   - Each adapter's scan method invokes subprocess and normalizes output.
 - **Edge Cases**:
 
+  - No languages detected → empty adapter list, no scans run.
+  - All languages detected → up to 10 adapters selected.
   - All adapters return empty results → returns empty result list.
   - One adapter fails (panic or error) → remaining adapters still run, failure logged as warning.
   - Adapter binary not installed → warning printed, results for that adapter are empty ("No such file or directory" / "os error 2" detection).
   - Adapter timeout exceeded → error logged, other adapters continue.
-- **Error Handling**: Per-adapter errors are caught at the loop boundary. Missing tool detection via OS error string matching. A failing adapter does not stop subsequent adapters.
+- **Error Handling**: No error on selection; empty list for no matches. Per-adapter errors are caught at the loop boundary. Missing tool detection via OS error string matching. A failing adapter does not stop subsequent adapters.
 
 ---
 
-### FR-ExternalLint-004: Apply Auto-Fix via Adapters
+### FR-ExternalLint-002: Apply Auto-Fix via Adapters
 
 - **Description**: Run an external linter tool's native fix command for a specific file, returning whether the fix succeeded.
 - **Input**: Tool name, file path, fix argument (e.g., `--fix`, `--write`).
@@ -137,7 +108,7 @@ flowchart TD
 
 ---
 
-### FR-ExternalLint-005: Normalize External Tool Output
+### FR-ExternalLint-003: Normalize External Tool Output
 
 - **Description**: Each adapter normalizes its external tool's stdout/JSON output into `LintResult` structs compatible with the unified lint-arwaky format. Rule codes use **tool-native identifiers** (e.g., `clippy::needless_return`, `ruff::E501`).
 - **Input**: Raw output from external linter subprocess (JSON or text).
@@ -210,7 +181,7 @@ flowchart TD
 
 ---
 
-### FR-ExternalLint-006: Subprocess Execution
+### FR-ExternalLint-004: Subprocess Execution
 
 - **Description**: Spawn external linter tools as blocking subprocesses, capturing stdout/stderr, enforcing per-adapter timeouts, and mapping spawn/timeout errors.
 - **Input**: Tool name, argument list, target path, and timeout in seconds.
@@ -233,7 +204,7 @@ flowchart TD
 
 ---
 
-### FR-ExternalLint-007: JS Tool Path Resolution
+### FR-ExternalLint-005: JS Tool Path Resolution
 
 - **Description**: Resolve the binary path for a JS/TS tool, preferring a local `node_modules/.bin/<tool>` installation over a global PATH lookup, and locate the working directory by walking up to 10 parent directories.
 - **Input**: Tool name and a starting path.
@@ -252,7 +223,7 @@ flowchart TD
 
 ---
 
-### FR-ExternalLint-008: Rust Working Directory Resolution
+### FR-ExternalLint-006: Rust Working Directory Resolution
 
 - **Description**: Find the directory containing `Cargo.toml` or `Cargo.lock` for Rust tool execution, walking up the directory tree.
 - **Input**: Starting path.
@@ -295,7 +266,7 @@ flowchart TD
 | External lint aggregate | out (internal) | Expose the single composite entry point the surface calls | A request selects a language with no registered adapter → the response reports that no adapter is available for that language |
 | External lint selector protocol | out (internal) | Choose the adapter matching a file's language | A file's language maps to no adapter → the file is skipped and reported as uncovered |
 | Command executor protocol | out (internal) | Spawn the external tool and capture its output | The executable is missing from PATH → the adapter reports the tool as unavailable and the scan continues |
-| `filesystem` aggregate | in | Detect languages, resolve tool working directories, and filter ignored paths | Tool resolution fails for a workspace member → that member is skipped, and the rest of the scan proceeds |
+| `filesystem` aggregate | in | Resolve which language groups are present (`DetectProjectLanguages`), resolve tool working directories, and filter ignored paths | Tool resolution fails for a workspace member → that member is skipped, and the rest of the scan proceeds |
 | `cargo clippy` | in | Lint Rust idiom, performance, and style, and apply its fixes | The tool exits non-zero on findings → the exit status is read as "findings present", not as a crash; a spawn failure is reported as an adapter error |
 | `cargo fmt` / `rustfmt --check` | in | Verify or apply Rust formatting | Formatting diverges → `--check` reports the files to reformat; `--write` rewrites them |
 | `cargo audit --json` | in | Audit Rust dependency vulnerabilities | The advisory database is unreachable → the audit reports that it could not run, never that no vulnerabilities exist |
@@ -310,8 +281,8 @@ flowchart TD
 ## Non-functional Requirements
 | Metric | Target | Measurement method |
 | --- | --- | --- |
-| Scan time | Total scan time is the sum of adapter times; language detection is O(file count) | Time each adapter separately and confirm the total matches the sum within measurement noise |
-| Language detection | O(n) in the number of discovered files | Scale the file count tenfold and confirm detection time scales linearly |
+| Scan time | Total scan time is the sum of adapter times plus the one delegated language query; the extension walk itself is O(file count) and owned by the filesystem aggregate | Time each adapter separately and confirm the total matches the sum within measurement noise |
+| Language flags | One `FilesystemRequest::DetectProjectLanguages` per scan with no caller-supplied context; this crate performs no extension walk of its own | Count filesystem-aggregate calls per scan and confirm exactly one, and assert this crate contains no directory-walking code |
 | Adapter memory | One result vector per adapter; JSON parsing loads one tool's full output at a time | Measure peak memory while running the adapter that produces the largest output |
 | Severity mapping | Every tool severity maps to a known level; an unknown level defaults to MEDIUM | Feed one diagnostic per severity level per tool and assert the mapped level |
 | Code preservation | The tool-native rule code is preserved verbatim in the normalized finding | Assert the original code appears unchanged in the formatted output for each adapter |
@@ -325,23 +296,25 @@ flowchart TD
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
-- **SCEN-001 — Language Detection** — e.g. Rust-only project → Only clippy, rustfmt, cargo-audit run
+- **SCEN-001 — Language Flags** — e.g. Rust-only project → the filesystem aggregate reports `has_rust = true`, and only clippy, rustfmt, cargo-audit run
 - **SCEN-002 — Adapter Selection** — e.g. Multi-language project → All 10 adapters selected
 - **SCEN-003 — Scan Execution** — e.g. One adapter fails → Other adapters still run
 - **SCEN-004 — Auto-Fix** — e.g. ESLint fix → `eslint --fix` executed
 - **SCEN-005 — Normalization** — e.g. Clippy `correctness` lint → Severity CRITICAL, code `clippy::<name>`
 
-### SCEN-001 — Language Detection
+### SCEN-001 — Language Flags
+
+Project-level language detection is owned by the `filesystem` aggregate (FR-Filesystem-005). This scenario verifies only that external-lint consumes the flags it receives and selects adapters accordingly.
 
 | # | Scenario | Expected |
 | - | - | - |
-| 1 | Rust-only project | Only clippy, rustfmt, cargo-audit run |
-| 2 | Python-only project | Only ruff, mypy, bandit run |
-| 3 | JS-only project | Only eslint, prettier, tsc run |
-| 4 | Multi-language project | All 10 adapters run |
-| 5 | Markdown-only project | Only markdownlint runs |
-| 6 | Empty directory | No adapters run, empty result list |
-| 7 | Single .rs file path | Only Rust adapters run |
+| 1 | Flags `has_rust = true`, rest false | Only clippy, rustfmt, cargo-audit run |
+| 2 | Flags `has_python = true`, rest false | Only ruff, mypy, bandit run |
+| 3 | Flags `has_js = true`, rest false | Only eslint, prettier, tsc run |
+| 4 | All four flags true | All 10 adapters run |
+| 5 | Flags `has_markdown = true`, rest false | Only markdownlint runs |
+| 6 | All flags false | No adapters run, empty result list |
+| 7 | No caller-supplied context | Exactly one `FilesystemRequest::DetectProjectLanguages` is issued to the filesystem aggregate |
 
 ### SCEN-002 — Adapter Selection
 
@@ -397,7 +370,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - Subprocess timeout defaults to 60 seconds for Python/JS adapters; Rust adapters use 120-180 seconds.
 - The crate assumes the project root contains appropriate config files for each language's tools.
 - JSON parsing of tool output is lenient; malformed output results in empty results rather than crashes.
-- Language detection uses the filesystem crate's file extension walk.
+- Language detection is delegated to the filesystem aggregate's `DetectProjectLanguages` request; this crate performs no extension walk.
 - Execution is sequential (no threads). No async runtime dependency.
 - Rule codes use tool-native identifiers. No new naming scheme is imposed.
 

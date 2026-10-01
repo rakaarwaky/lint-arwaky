@@ -186,11 +186,7 @@ fn extract_rust_impl(node: tree_sitter::Node, content: &str) -> RustImplItem {
     if let Some(for_pos) = text.find(" for ") {
         let before_for = text[..for_pos].trim();
         let after_for = text[for_pos + 5..].trim();
-        if let Some(impl_end) = before_for.rfind('>') {
-            let trait_part = before_for[impl_end + 1..].trim();
-            trait_name = Some(trait_part.to_string());
-            trait_path = Some(trait_part.to_string());
-        } else if let Some(trait_part) = before_for.strip_prefix("impl ") {
+        if let Some(trait_part) = trait_name_before_for(before_for) {
             trait_name = Some(trait_part.to_string());
             trait_path = Some(trait_part.to_string());
         }
@@ -223,6 +219,46 @@ fn extract_rust_impl(node: tree_sitter::Node, content: &str) -> RustImplItem {
         implementor_type,
         has_generics,
     }
+}
+
+/// The trait named in the head of an `impl … Trait for Type` block.
+///
+/// The head has three shapes, and each needs the trait's own name rather than
+/// whatever happens to sit last:
+///
+/// - `impl Foo for Bar` — the whole head after `impl ` is the trait.
+/// - `impl<T> Foo for Bar` / `impl<'a, T> Foo for Bar` — a generic list for the
+///   impl itself precedes the trait.
+/// - `impl Foo<T> for Bar` — the *trait* is parameterized, so its own brackets
+///   trail its name.
+///
+/// Reading up to the last `>` handles the first two but not the third: for
+/// `impl Foo<u32> for Bar` it yields `u32`, losing the trait name entirely and
+/// hiding the implementation from every consumer that keys on the trait. So the
+/// leading generic list is stripped first — and only when it is attached to the
+/// `impl` keyword, since that is the only position where it can be one — and
+/// the remainder is trimmed of the trait's own trailing parameter list.
+fn trait_name_before_for(before_for: &str) -> Option<&str> {
+    let head = before_for.strip_prefix("impl")?.trim_start();
+    // The impl's own generic list is attached to the keyword with no space —
+    // `impl<T> Foo for Bar`, `impl<'a, T> Foo for Bar`. Any other bracket that
+    // opens a list belongs to the trait, which is the whole point of this
+    // function: in `impl Foo<u32> for Bar` the `<` is the trait's, so treating it
+    // as an impl generic list would strip `Foo` and leave nothing behind.
+    let head = if head.starts_with('<') {
+        let offset = head.find('>')?;
+        head[offset + 1..].trim_start()
+    } else {
+        head
+    };
+    // Drop the trait's own type parameters: `Foo<u32, Bar>` -> `Foo`.
+    let head = head
+        .split('<')
+        .next()
+        .unwrap_or(head)
+        .trim()
+        .trim_end_matches(['>', ',', ' ']);
+    if head.is_empty() { None } else { Some(head) }
 }
 
 /// Extract all identifiers from the AST, excluding those inside use declarations.

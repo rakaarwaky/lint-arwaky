@@ -24,7 +24,7 @@ flowchart TD
         O --> P2["IGraphProtocol\n(FR-Filesystem-002)"]
         O --> P3["IFileSystemIOProtocol\n(FR-Filesystem-003)"]
         O --> P4["IToolResolutionProtocol\n(FR-Filesystem-004)"]
-        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)"]
+        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)\nworkspace root + members\n+ project languages (FR-005B)"]
         O --> C["Cache\n(DashMap)"]
 
         P1 --> T1["tree-sitter parsers\n(Rust, Python, TS, JS)"]
@@ -33,6 +33,7 @@ flowchart TD
         P3 --> T4["process executor"]
         P4 --> T5["PATH / local binary\nresolver"]
         P5 --> T6["manifest detector\n(Cargo.toml, pyproject, package.json)"]
+        P5 --> T7["extension classifier\n(rs/py/js/md → flags)"]
 
         T1 --> R1["ParsedEntry[]\n+ ImportEntry[]"]
         T2 --> R1
@@ -61,7 +62,7 @@ flowchart TD
 | FR-Filesystem-002 | Dependency graph + symbol maps |
 | FR-Filesystem-003 | File paths, content, I/O operations |
 | FR-Filesystem-004 | Tool availability + resolved paths |
-| FR-Filesystem-005 | Workspace metadata (root, member, lang) |
+| FR-Filesystem-005 | Workspace metadata + project language presence flags |
 
 ---
 
@@ -221,11 +222,11 @@ flowchart TD
 
 ---
 
-### FR-Filesystem-005: Workspace Detection
+### FR-Filesystem-005: Workspace & Project Language Detection
 
-**Description**: Detects workspace root, member status, source directories, and language configuration from file paths and manifest markers.
+**Description**: Detects workspace root, member status, source directories, project-level language presence flags, and language configuration from file paths and manifest markers.
 
-**What it produces**: Workspace structure metadata.
+**What it produces**: Workspace structure metadata plus `ProjectLanguagesVO`.
 
 | Output | Description |
 | --- | --- |
@@ -234,10 +235,11 @@ flowchart TD
 | Leaf member | Whether path is a member without sub-members |
 | Source directory | Primary source directory (src/, lib/, etc.) |
 | Language detection | ConfigLanguage from file path or manifest markers |
+| Project languages | `ProjectLanguagesVO` — boolean flags for Rust, Python, JS/TS, and Markdown file presence under the root |
 | Container wiring | Whether identifiers are wired in container manifest |
 | Module resolver | Resolved module path relative to base directory |
 
-**Output**: Workspace root path, member status flags, source directory path, language enum, wiring boolean, and resolved module path.
+**Output**: Workspace root path, member status flags, source directory path, language enum, project language presence flags, wiring boolean, and resolved module path.
 
 **Input**: Start path (string or Path).
 
@@ -250,14 +252,17 @@ flowchart TD
 - Language: check manifest markers.
 - Container wiring: check if identifiers are referenced in Cargo.toml.
 - Orphan module: resolve module path relative to base_dir, confined under root.
+- Project language detection (FR-005B): walk the project root and classify extensions into four presence flags — `.rs` → `has_rust`, `.py` → `has_python`, `.js/.jsx/.ts/.tsx` → `has_js`, `.md/.markdown` → `has_markdown`. Short-circuits when all four are found. Directories in `DEFAULT_IGNORED_PATHS` are skipped. A single-file input classifies only that file's extension.
 
 **Edge Cases**:
 
 - Path outside workspace: returns None for root, false for member checks.
 - Multiple manifests: uses closest ancestor as workspace root.
 - Non-standard layouts: falls back to heuristic detection.
+- Empty project: all language flags false.
+- Unknown extensions: ignored.
 
-**Error Handling**: Non-fatal — returns None/Err for unresolvable cases.
+**Error Handling**: Non-fatal — returns None/Err for unresolvable cases. Returns partial flags for whatever was found before any I/O error.
 
 ---
 
@@ -312,7 +317,7 @@ flowchart TD
 | `is_executable_in_path` | &ToolName | `bool` | — | — | Is executable in path. |
 | `is_binary_available` | &ToolName | `bool` | — | — | Is binary available. |
 | `has_local_bin` | &Path, &ToolName | `bool` | — | — | Has local bin. |
-| `resolve_js_cmd` | &ToolName, Vec<String>, &FilePath | `Option<Vec<String>>` | — | — | Resolve js cmd. |
+| `resolve_js_cmd` | `&ToolName, Vec<String>, &FilePath` | `Option<Vec<String>>` | — | — | Resolve js cmd. |
 | `resolve_js_working_dir` | &FilePath | `FilePath` | — | — | Resolve js working dir. |
 | `resolve_cargo_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo working dir. |
 | `resolve_cargo_lock_working_dir` | &FilePath | `FilePath` | — | — | Resolve cargo lock working dir. |
@@ -366,7 +371,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-002: Dependency Graph Construction** — e.g. A imports B → Edge A → B
 - **SCEN-003: File I/O & Directory Operations** — e.g. Workspace with 100 .rs files → All 100 discovered
 - **SCEN-004: Tool Resolution** — e.g. node_modules/.bin/eslint exists → Command resolved
-- **SCEN-005: Workspace Detection** — e.g. Start from crates/some-crate/src → Finds workspace root
+- **SCEN-005: Workspace & Project Language Detection** — e.g. Start from crates/some-crate/src → Finds workspace root; a root of `.rs` + `.md` sets `has_rust` + `has_markdown` only
 
 ### SCEN-001: AST Parsing & Import Extraction
 
@@ -380,7 +385,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | `#[cfg(test)] use foo::Bar` | Not extracted |
 | 7 | External dependency | Not extracted |
 | 8 | Barrel re-export through a Rust module barrel | Resolved to original source |
-| 9 | 1,000 files parsed in parallel | Completes in < 1s |
+| 9 | 1,000 files parsed in parallel | Completes in under 1 s |
 
 ### SCEN-002: Dependency Graph Construction
 
@@ -416,7 +421,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Config file present | Detected = true |
 | 4 | Cargo.toml in ancestor | Found |
 
-### SCEN-005: Workspace Detection
+### SCEN-005: Workspace & Project Language Detection
 
 | # | Scenario | Expected |
 | --- | --- | --- |
@@ -424,6 +429,10 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 2 | Path with Cargo.toml (no workspace) | is_member = true |
 | 3 | Path with Cargo.toml nearby | language = Rust |
 | 4 | Leaf member detection | No sub-members |
+| 5 | Project root containing `.rs` and `.md` files only | `has_rust` + `has_markdown` true; `has_python` + `has_js` false (FR-005B) |
+| 6 | Project root with source files only under `target/` | All four flags false — `DEFAULT_IGNORED_PATHS` skipped (FR-005B) |
+| 7 | Project root containing a symlink to a directory outside it | Outside files do not set any flag (FR-005B) |
+| 8 | Single file passed as root | Only that file's extension is classified (FR-005B) |
 
 ---
 
@@ -554,8 +563,8 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **IFileSystemIOProtocol**: Low-level file I/O, path ops, directory ops, process execution
 - **IToolResolutionProtocol**: External tool availability and command resolution
 - **IWorkspaceProtocol**: Workspace structure detection and navigation
-- **Container**: Composition root — creates capabilities, injects via Arc<dyn Trait>
-- **OrchestratorDeps**: DI struct — holds Arc<dyn ProtocolTrait> for agent injection
+- **Container**: Composition root — creates capabilities, injects via `Arc<dyn Trait>`
+- **OrchestratorDeps**: DI struct — holds `Arc<dyn ProtocolTrait>` for agent injection
 - **FileEntry**: Value object: path + content + language + extension + parse metadata
 - **ImportEntry**: Value object: source file + target module + symbols + resolution status
 - **ParseWarning**: Diagnostic for files that failed to parse

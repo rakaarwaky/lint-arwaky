@@ -449,6 +449,35 @@ pub struct ScanTiming {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Project Language VOs
+// ═══════════════════════════════════════════════════════════════
+
+/// Which language groups and content types are present under a project root.
+///
+/// FR-Filesystem-005: the filesystem aggregate owns project-level language
+/// detection so no other feature re-implements the extension walk. `markdown`
+/// is reported separately from the three programming languages because it
+/// gates a linter adapter rather than a source language.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProjectLanguagesVO {
+    /// Any `.rs` file is present.
+    pub has_rust: bool,
+    /// Any `.py` file is present.
+    pub has_python: bool,
+    /// Any `.js`, `.jsx`, `.ts`, or `.tsx` file is present.
+    pub has_js: bool,
+    /// Any `.md` or `.markdown` file is present.
+    pub has_markdown: bool,
+}
+
+impl ProjectLanguagesVO {
+    /// Whether no language and no Markdown file was found.
+    pub fn is_empty(&self) -> bool {
+        !self.has_rust && !self.has_python && !self.has_js && !self.has_markdown
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Graph Analysis VOs — used by orphan-rules and other consumers
 // ═══════════════════════════════════════════════════════════════
 

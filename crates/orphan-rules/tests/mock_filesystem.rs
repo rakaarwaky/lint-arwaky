@@ -108,6 +108,9 @@ impl IWorkspaceProtocol for MockFilesystem {
             ConfigLanguage::TypeScript
         }
     }
+    fn detect_project_languages(&self, _root: &std::path::Path) -> ProjectLanguagesVO {
+        ProjectLanguagesVO::default()
+    }
     fn check_wired_in_container(
         &self,
         _workspace_root: &std::path::Path,
@@ -339,6 +342,11 @@ impl IFilesystemAggregate for MockFilesystem {
             | FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
                 entries: Vec::new(),
             },
+            FilesystemRequest::DetectProjectLanguages { .. } => {
+                FilesystemResponse::ProjectLanguages {
+                    languages: ProjectLanguagesVO::default(),
+                }
+            }
         }
     }
 }

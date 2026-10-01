@@ -30,6 +30,8 @@ pub mod capabilities_contract_rust_role_auditor;
 pub use capabilities_contract_rust_role_auditor::ContractRustRoleAuditor;
 pub mod capabilities_contract_ts_role_auditor;
 pub use capabilities_contract_ts_role_auditor::ContractTypeScriptRoleAuditor;
+pub mod capabilities_role_classifier;
+pub use capabilities_role_classifier::RoleClassifier;
 pub mod capabilities_surface_role_auditor;
 pub use capabilities_surface_role_auditor::SurfaceRoleChecker;
 pub mod capabilities_taxonomy_role_auditor;

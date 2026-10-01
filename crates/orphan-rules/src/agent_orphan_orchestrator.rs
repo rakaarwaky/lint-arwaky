@@ -15,8 +15,7 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_orphan_rules::OrphanFileListVO;
 use shared_orphan_rules::{
     IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
-    IEntryPointProtocol, IGraphContextProtocol, IReachabilityProtocol, ISurfacesOrphanProtocol,
-    ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
+    ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol, IUtilityOrphanProtocol,
 };
 
 use shared_common::taxonomy_common_vo::BooleanVO;
@@ -89,10 +88,21 @@ impl IOrphanAggregate for ArchOrphanAnalyzer {
     }
 }
 
-// ─── FR-001/002/003: graph context, entry points, reachability ───
+// ─── Block 3: Constructors, Helpers, Private Methods ──────
 
-impl IGraphContextProtocol for ArchOrphanAnalyzer {
-    fn build_orphan_graph_context(&self, root_dir: &FilePath) -> GraphAnalysisContext {
+// FR-001/002/003: graph context, entry points, and reachability are
+// orchestration steps, not capability seams. The orphan-rules agent owns
+// them directly: they receive a context built by the filesystem aggregate
+// and delegate the pure work to shared utilities. They are intentionally not
+// published as contract protocols — an agent must not implement a contract
+// protocol (AES405), and no other feature consumes these steps.
+impl ArchOrphanAnalyzer {
+    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
+        Self { deps, config }
+    }
+
+    /// Build the graph context for a project root via the filesystem aggregate.
+    pub fn build_orphan_graph_context(&self, root_dir: &FilePath) -> GraphAnalysisContext {
         let root_path = std::path::Path::new(root_dir.value());
         let ignored = self.ignored_paths();
         self.deps
@@ -102,19 +112,17 @@ impl IGraphContextProtocol for ArchOrphanAnalyzer {
             ))
             .into_graph_context()
     }
-}
 
-impl IEntryPointProtocol for ArchOrphanAnalyzer {
-    fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
+    /// Identify entry points from a workspace file list.
+    pub fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO {
         shared_orphan_rules::utility_orphan_filename::identify_entry_points(
             std::slice::from_ref(files),
             &[],
         )
     }
-}
 
-impl IReachabilityProtocol for ArchOrphanAnalyzer {
-    fn trace_alive_files(
+    /// Trace the alive set for a set of entry points against an import graph.
+    pub fn trace_alive_files(
         &self,
         entry_points: &OrphanFileListVO,
         context: &GraphAnalysisContext,
@@ -129,13 +137,6 @@ impl IReachabilityProtocol for ArchOrphanAnalyzer {
                 .map(|s| FilePath::new(s).unwrap_or_default())
                 .collect(),
         )
-    }
-}
-
-// ─── Block 3: Constructors, Helpers, Private Methods ──────
-impl ArchOrphanAnalyzer {
-    pub fn new(deps: ArchOrphanDeps, config: ArchitectureConfig) -> Self {
-        Self { deps, config }
     }
 
     pub fn check_orphans(&self, files: &OrphanFileListVO, root_dir: &FilePath) -> Vec<LintResult> {
