@@ -47,11 +47,9 @@ impl SecurityScanChecker {
     }
 
     fn scan_rust(&self, root: &str) -> SecurityScanReport {
-        let (stdout, _, _) = self.io.run_external_command_in(
-            &ToolName::new("cargo"),
-            &["audit", "--json"],
-            root,
-        );
+        let (stdout, _, _) =
+            self.io
+                .run_external_command_in(&ToolName::new("cargo"), &["audit", "--json"], root);
         let parsed = serde_json::from_str::<serde_json::Value>(&stdout).ok();
         let findings = parsed
             .as_ref()
@@ -105,8 +103,10 @@ impl SecurityScanChecker {
         let findings = parsed
             .as_ref()
             .and_then(|json| {
-                json.as_array()
-                    .or_else(|| json.get("dependencies").and_then(serde_json::Value::as_array))
+                json.as_array().or_else(|| {
+                    json.get("dependencies")
+                        .and_then(serde_json::Value::as_array)
+                })
             })
             .map(|dependencies| {
                 dependencies
@@ -150,11 +150,9 @@ impl SecurityScanChecker {
     }
 
     fn scan_javascript(&self, root: &str) -> SecurityScanReport {
-        let (stdout, _, _) = self.io.run_external_command_in(
-            &ToolName::new("npm"),
-            &["audit", "--json"],
-            root,
-        );
+        let (stdout, _, _) =
+            self.io
+                .run_external_command_in(&ToolName::new("npm"), &["audit", "--json"], root);
         let parsed = serde_json::from_str::<serde_json::Value>(&stdout).ok();
         let findings = parsed
             .as_ref()
