@@ -5689,7 +5689,6 @@ dependencies = [
  "dirs",
  "dispatcher-lint-arwaky",
  "ratatui",
- "rayon",
  "serde_json",
  "shared-auto-fix-lint-arwaky",
  "shared-common-lint-arwaky",

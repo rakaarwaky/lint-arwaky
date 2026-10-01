@@ -40,6 +40,7 @@ fn smoke_orchestrator_creation() {
     let config = ArchitectureConfig::default();
     let rust_auditor = Arc::new(role_rules_lint_arwaky::CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
+        classifier: Arc::new(role_rules_lint_arwaky::RoleClassifier::new()),
         taxonomy: Arc::new(role_rules_lint_arwaky::TaxonomyRoleChecker::new()),
         contract_rust: Arc::new(role_rules_lint_arwaky::ContractRustRoleAuditor::new()),
         contract_python: Arc::new(role_rules_lint_arwaky::ContractPythonRoleAuditor::new()),

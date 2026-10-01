@@ -14,6 +14,11 @@ use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 /// AES layer, then dispatch to the layer-specific role checker. The prefix is
 /// the first `_`-separated segment of the file stem; `root` and unrecognised
 /// prefixes are skipped.
+///
+/// The sole implementer is the `RoleClassifier` capability. The role-rules agent
+/// holds one as a dependency and delegates the classification rather than
+/// implementing this trait itself — an agent must never implement a contract
+/// protocol (AES405).
 pub trait IClassificationProtocol: Send + Sync {
     /// Resolve the AES layer name for a file from its filename prefix.
     /// Returns `None` when the prefix maps to no layer, so the file is skipped.
@@ -173,6 +178,28 @@ pub trait IAgentRoleProtocol: Send + Sync {
 
     /// Block 2 (aggregate impl) must precede Block 3 (inherent impl). HIGH.
     fn check_agent_block_order(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// At most one contract protocol implemented, and only alongside the
+    /// aggregate. HIGH.
+    ///
+    /// An agent is the feature's composition root: it implements the
+    /// feature aggregate and coordinates injected seams. Implementing a
+    /// contract protocol as well duplicates a capability's job in the
+    /// orchestration layer, which is where the `check_single_protocol`
+    /// counterpart for capabilities draws its line. A std trait impl
+    /// (`Default`, `Display`, `Clone`) is not a contract protocol and is
+    /// reported as nothing.
+    fn check_agent_single_aggregate(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
+    /// Block markers must run 1 → 2 → 3 with no Block 4 or beyond. MEDIUM.
+    ///
+    /// The 3-block structure is a readability contract: Block 1 types and
+    /// injected deps, Block 2 the aggregate, Block 3 constructors and
+    /// helpers. A fourth marker means the file has grown past the shape the
+    /// HOW-TO documents, so the reader loses the block map. Markers are the
+    /// `─── Block N:` banner comments; a file that carries none is not
+    /// reported, since the marker is a convention rather than a requirement.
+    fn check_agent_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
     /// No forbidden I/O operations in the agent file. MEDIUM.
     fn check_agent_io_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>);

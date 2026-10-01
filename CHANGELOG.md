@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+### Fixed
+
+- **AES405 no longer ignores an agent that implements a contract protocol or
+  outgrows the 3-block structure.** The rule inspected only `Block 1..3` and never
+  asked what the agent implemented, so two blind spots survived the commit that
+  introduced them (`ab7f8d78`, 2026-09-28):
+  - an agent could `impl I*Protocol` — duplicating a capability's work, which is
+    exactly the shape the rule exists to prevent. Std traits (`Default`,
+    `Display`, `Clone`, …) and aggregate traits are not protocol
+    implementations and remain allowed;
+  - an agent could carry `Block 4`+ markers and pass. Only a `Block <n>:` heading
+    opens a block, so prose that merely mentions blocks does not false-fire.
+
+  Both defects came from a bogus 1:1 FR↔protocol invariant, so removing it
+  required deleting the protocols whose only implementer was the agent:
+  `ILanguageDetectProtocol` and `IAdapterScanProtocol` (external-lint, 8→6 FRs),
+  and `IGraphContextProtocol`/`IEntryPointProtocol`/`IReachabilityProtocol`
+  (orphan-rules, 10→7 FRs, bodies moved to inherent agent methods). Role-rules
+  classification moved to a new `RoleClassifier` capability; config-system
+  dropped two redundant pass-through impls whose capabilities were already the
+  real implementers.
+
+  Language detection now lives in the filesystem aggregate as
+  `DetectProjectLanguages` / `ProjectLanguagesVO` (four flags, markdown
+  included), replacing a dead three-tuple helper. This also fixes a latent bug:
+  external-lint's `ScanAll` passed `ExternalLintContext::default()`, so it
+  selected zero adapters.
+
 ### Changed
 
 - Split the monolithic `shared-lint-arwaky` crate into 20 packages, one per

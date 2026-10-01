@@ -3,45 +3,24 @@
 // One file for the orphan feature. Each trait below is one capability
 // seam: a trait carries every method that capability implements, with one
 // concrete return type each, so a capability implements its trait outright
-// and never carries unimplemented stubs. One trait per FR-OrphanRules-001..010.
+// and never carries unimplemented stubs. One trait per FR-OrphanRules-002..008.
+//
+// FR-OrphanRules-001 (graph context), FR-OrphanRules-002 (entry points), and
+// FR-OrphanRules-003 (reachability) deliberately have no trait here. They are
+// orchestration steps the orphan-rules agent owns: it receives the context
+// from the filesystem aggregate and delegates the pure work to shared
+// utilities. An agent must not implement a contract protocol (AES405), and no
+// other feature consumes those steps, so a seam would have exactly one
+// implementer — the agent — which is the shape the rule forbids.
 
 use crate::taxonomy_orphan_rules_vo::FileParseResultVO;
-use crate::taxonomy_orphan_rules_vo::OrphanFileListVO;
 use shared_common::taxonomy_definition_vo::LayerDefinition;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext;
 use shared_quality_rules::taxonomy_quality_rules_vo::InheritanceMap;
 use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;
-
-/// FR-OrphanRules-001: receive the externally-built `GraphAnalysisContext`,
-/// pre-read file contents into a bounded cache, and dispatch to the
-/// layer-specific analyzers. The filesystem crate owns all I/O and graph
-/// construction; this seam only receives and forwards.
-pub trait IGraphContextProtocol: Send + Sync {
-    /// Build the graph context for a project root via the filesystem aggregate.
-    fn build_orphan_graph_context(&self, root_dir: &FilePath) -> GraphAnalysisContext;
-}
-
-/// FR-OrphanRules-002: identify the entry points that anchor the reachability
-/// graph, matching configured patterns against all workspace files.
-pub trait IEntryPointProtocol: Send + Sync {
-    /// Identify entry points from a workspace file list.
-    fn identify_orphan_entry_points(&self, files: &OrphanFileListVO) -> OrphanFileListVO;
-}
-
-/// FR-OrphanRules-003: BFS from the entry points through the forward import
-/// graph to produce the set of transitively reachable ("alive") files.
-pub trait IReachabilityProtocol: Send + Sync {
-    /// Trace the alive set for a set of entry points against an import graph.
-    fn trace_alive_files(
-        &self,
-        entry_points: &OrphanFileListVO,
-        context: &GraphAnalysisContext,
-    ) -> ReachabilityResult;
-}
 
 /// FR-OrphanRules-004 (AES501): taxonomy files must have a higher-layer importer
 /// or be reachable from an entry point.
