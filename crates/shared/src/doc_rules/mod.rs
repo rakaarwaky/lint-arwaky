@@ -4,6 +4,8 @@ pub mod contract_doc_protocol;
 pub mod taxonomy_doc_rules_constant;
 pub mod taxonomy_doc_rules_request;
 pub mod taxonomy_doc_rules_response;
+pub mod taxonomy_doc_section_vo;
+pub mod utility_markdown_scanner;
 pub mod utility_protocol_counter;
 
 // ─── Re-exports ────────────────────────────────────────────
@@ -12,3 +14,4 @@ pub use contract_doc_protocol::IDocCheckerProtocol;
 pub use taxonomy_doc_rules_constant::*;
 pub use taxonomy_doc_rules_request::{DocFinding, DocRequest};
 pub use taxonomy_doc_rules_response::DocResponse;
+pub use taxonomy_doc_section_vo::Section;

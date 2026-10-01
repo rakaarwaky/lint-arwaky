@@ -34,6 +34,17 @@ lists **one row per capability method** the feature's protocol exposes
 orchestrator exposes to the surface. Columns for both tables: Method,
 Input, Output, Error, Event, Description — real signatures, not invented
 capability names.
+3b. **The API Contract subsections are a closed set.** Level 3 under
+`## API Contract` is exactly `### Protocol API` then `### Aggregate API`,
+in that order, once each — nothing else. Each subsection must carry its own
+table with all six columns; prose, a partial column set, or a second copy of
+a subsection all fail. **Per-protocol detail goes in the rows of the
+`Protocol API` table, never in a heading.** Adding `### IParserProtocol`,
+`### IGraphProtocol`, and so on — one level-3 heading per protocol class — is
+the workaround this rule closes (`api_h3_unexpected`, AES602): the heading
+narrates a seam split the single table refused to make, so the contract reads
+as if the seams existed when the rows do not. There is one `Protocol API`
+table, and every protocol method is a row in it.
 3a. **The FR count must match the protocol class count.** The number of
 `### FR-<Feature>-NNN:` headings and the number of `pub trait I*Protocol`
 declarations across the feature's contract protocol files must be equal
@@ -173,7 +184,7 @@ reason.
 | Reference                     | Separates spec promise from backlog claim.        |
 | System Overview               | Orients the reader before details begin.          |
 | Functional Requirements       | The testable promise                              |
-| API Contract                  | Protocol + Aggregate surfaces integrators build against. |
+| API Contract                  | Protocol + Aggregate surfaces integrators build against. Holds exactly two level-3 subsections. |
 | Integration Points            | Names every outside system that can fail you.     |
 | Non-functional Requirements   | Feature-level numbers the PRD deliberately omits. |
 | Test Scenarios                | Promises the backlog must evidence.               |
