@@ -11,6 +11,7 @@ result into output plus an exit code. No rule logic lives here.
 | File | Subcommand | Aggregates reached |
 | --- | --- | --- |
 | `surface_scan_command.rs` | `scan <path>` | naming, import, quality, role, orphan, structure |
+| `surface_scan_command.rs` | `docs <path>` | doc-rules aggregate. **`<path>` is the audit root, not a filter** — unlike every other path-taking subcommand here, which scopes a workspace-wide run down to the target. Pointing `docs` at a sub-directory audits that sub-tree as its own document chain, so crosslink checks (AES604) that expect root-level `PRD.md`/`ROADMAP.md` siblings behave differently than in a whole-workspace run. See `crates/doc-rules/FRD.md`. |
 | `surface_check_action.rs` (dispatcher) | `check <path>` | the same group as `scan`, exit-code shaped |
 | `surface_ci_command.rs` | `ci` | every group, with thresholds |
 | `surface_fix_command.rs` | `fix <path>` | auto-fix aggregate |

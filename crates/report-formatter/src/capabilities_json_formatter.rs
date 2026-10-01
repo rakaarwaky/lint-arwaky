@@ -95,5 +95,15 @@ fn render_json(report: &ScanReport) -> DisplayContent {
         summary,
     };
 
-    DisplayContent::new(serde_json::to_string_pretty(&dto).unwrap_or_else(|_| "{}".to_string()))
+    // A serialization failure must never render as a bare `{}`: an empty object
+    // is indistinguishable from a clean scan for a consumer reading
+    // `.summary.total`. Emit an explicitly marked error document instead.
+    DisplayContent::new(serde_json::to_string_pretty(&dto).unwrap_or_else(|e| {
+        serde_json::json!({
+            "formatter_error": true,
+            "format": "json",
+            "reason": e.to_string(),
+        })
+        .to_string()
+    }))
 }
