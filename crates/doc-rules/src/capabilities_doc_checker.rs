@@ -18,8 +18,12 @@ use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 /// The invariant auditor behind the doc checker protocol.
 pub struct DocChecker {}
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl IDocCheckerProtocol for DocChecker {
     /// Walk the document chain under the request's root and audit every
@@ -47,6 +51,8 @@ impl IDocCheckerProtocol for DocChecker {
         }
     }
 }
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 impl DocChecker {
     /// Collect every document the chain recognizes under *root*.

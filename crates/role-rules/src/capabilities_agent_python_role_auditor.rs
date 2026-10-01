@@ -13,7 +13,11 @@ use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_PYTHON;
 
 use shared_role_rules::utility_agent_role_checker;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 pub struct AgentPythonRoleAuditor {}
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl IAgentRoleProtocol for AgentPythonRoleAuditor {
     fn check_agent_routing(&self, file: &FileEntry, layer: &str, violations: &mut Vec<LintResult>) {
@@ -89,6 +93,8 @@ impl IAgentRoleProtocol for AgentPythonRoleAuditor {
         self.free_fn(&file.content, &file.path.to_string_lossy(), violations);
     }
 }
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 impl Default for AgentPythonRoleAuditor {
     fn default() -> Self {

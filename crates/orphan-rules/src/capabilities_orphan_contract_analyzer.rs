@@ -10,7 +10,11 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{
 };
 use std::collections::HashMap;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 pub struct ContractOrphanAnalyzer;
+// ─── Block 2: Protocol Trait Implementation ────────────────
+
 impl IContractOrphanProtocol for ContractOrphanAnalyzer {
     /// Determines whether a contract is orphaned based on reachability and implementation status.
     ///
@@ -155,6 +159,8 @@ impl IContractOrphanProtocol for ContractOrphanAnalyzer {
         OrphanIndicatorResult::new(false, String::new(), Severity::LOW)
     }
 }
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 /// Normalizes a workspace-relative path for comparison.
 ///

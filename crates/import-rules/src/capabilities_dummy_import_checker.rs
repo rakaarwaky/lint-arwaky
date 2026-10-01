@@ -14,6 +14,8 @@ use shared_import_rules::utility_import_resolver;
 
 pub struct DummyImportChecker;
 
+// ─── Block 2: Protocol Trait Implementation ────────────────
+
 impl IDummyImportCheckerProtocol for DummyImportChecker {
     fn rule_name(&self) -> Identity {
         Identity::new("AES204")
@@ -129,6 +131,8 @@ impl IDummyImportCheckerProtocol for DummyImportChecker {
         Ok(violations)
     }
 }
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 impl Default for DummyImportChecker {
     fn default() -> Self {
