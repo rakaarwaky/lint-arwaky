@@ -10,6 +10,7 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_response_data_vo::ResponseData;
 use shared_external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 use shared_external_lint::taxonomy_duration_vo::Timeout;
+use shared_external_lint::utility_output_normalization::strip_ansi_escapes;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -109,8 +110,8 @@ impl ICommandExecutorProtocol for StdioClient {
         );
         Ok(ResponseData {
             value: Some(serde_json::Value::Null),
-            stdout,
-            stderr,
+            stdout: strip_ansi_escapes(&stdout),
+            stderr: strip_ansi_escapes(&stderr),
             returncode: match status.code() {
                 Some(c) => c as i64,
                 None => -1,

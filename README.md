@@ -1,5 +1,7 @@
 # Lint Arwaky
 
+[![CI](https://github.com/rakaarwaky/lint-arwaky/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rakaarwaky/lint-arwaky/actions/workflows/ci.yml)
+
 Architecture linter enforcement for Rust, Python, and TypeScript. Built in Rust, structured by the [Agentic Engineering System](ARCHITECTURE.md), and self-auditing — the project lints itself under its own rules.
 
 Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 32 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
@@ -100,7 +102,7 @@ Add a CI job running `lint-arwaky-cli check .` (exit 1 on any violation), make i
 
 ### Performance
 
-Two measured scopes, one number each: **filesystem indexing** (discovery + read + parse) 1,000 files &lt; 2s, 10,000 files &lt; 10s; **full pipeline** (indexing + every rule group, external adapters excluded) 1,000 files &lt; 5s, 10,000 files &lt; 15s. Within indexing: file discovery &lt; 500 ms; parallel AST parse &lt; 2 s. tree-sitter for all languages, rayon-parallel, no async runtime.
+Two measured scopes, one number each: **filesystem indexing** (discovery + read + parse) 1,000 files &lt; 2s, 10,000 files &lt; 10s; **full pipeline** (indexing + every rule group, external adapters excluded) 1,000 files &lt; 5s, 10,000 files &lt; 15s. Within indexing: file discovery &lt; 500 ms; parallel AST parse &lt; 2 s. tree-sitter for all languages, rayon-parallel, no async runtime. This budget is checked for regressions by the nightly Criterion job in [`.github/workflows/benchmarks.yml`](.github/workflows/benchmarks.yml).
 
 External adapters are not inside either budget — they are bounded only by their own per-tool ceilings (60–180s each, run sequentially), so a `scan` with every adapter present can take far longer than the pipeline budget. See `crates/external-lint/FRD.md`.
 

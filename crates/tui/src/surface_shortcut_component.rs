@@ -8,12 +8,12 @@
 //
 // format_shortcuts() renders each row as colored spans (yellow keys, white labels).
 use crate::utility_tui_theme as theme;
+use crate::{AppState, PreviewMode};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use shared_tui::{AppState, PreviewMode};
 
 pub struct ShortcutComponent;
 

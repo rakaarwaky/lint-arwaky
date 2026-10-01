@@ -20,6 +20,7 @@ use shared_filesystem::{
         DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
         ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
     },
+    utility_workspace_detection,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -131,6 +132,15 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
                 entries: self.import_list_snapshot(),
             },
+            FilesystemRequest::DetectProjectLanguages { root } => {
+                // Through the workspace seam, not straight to the shared utility:
+                // every sibling arm in this match goes through an injected
+                // capability, and a substituted implementation must stay in
+                // control of what the agent observes.
+                FilesystemResponse::ProjectLanguages {
+                    languages: self.deps.workspace.detect_project_languages(&root),
+                }
+            }
         }
     }
 }
@@ -363,8 +373,16 @@ impl FilesystemOrchestrator {
             .collect()
     }
     /// Discovers all files (source and non-source) under a root.
+    ///
+    /// Must stay recursive and file-only: this is the language-detection input
+    /// for the external-lint orchestrator. The previous `self.scan_directory`
+    /// delegation did a single depth-1 `read_dir` and returned directory
+    /// entries too, so a target whose sources sit two levels down (e.g.
+    /// `workspaces-bad/modules/<member>/src/*.py`) yielded no extension at
+    /// all, `has_python`/`has_js`/`has_rust` all came back false, and every
+    /// external adapter was silently skipped.
     pub fn discover_files(&self, root: &Path) -> Vec<String> {
-        self.scan_directory(root)
+        utility_workspace_detection::discover_files(root)
     }
     /// Collects source-file paths under a directory, filtered by ignored patterns.
     pub fn collect_source_files(&self, dir: &Path, ignored: &[String]) -> Vec<FilePath> {

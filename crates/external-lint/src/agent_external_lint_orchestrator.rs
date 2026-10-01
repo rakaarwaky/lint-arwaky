@@ -1,9 +1,11 @@
 // PURPOSE: ExternalLintOrchestrator — agent layer, orchestrates external linter adapters
 //
-// The orchestrator dynamically selects which adapters to run based on the
-// languages detected in the project (Rust, Python, JavaScript/TypeScript,
-// Markdown). It receives a pre-computed `ExternalLintContext` from the surface
-// layer, eliminating all filesystem I/O from the agent layer (orchestration-only).
+// The orchestrator selects which adapters to run from language flags the caller
+// supplies, then runs them sequentially. It receives a pre-computed
+// `ExternalLintContext` from the surface layer, eliminating all filesystem I/O
+// from the agent layer (orchestration-only). When no context is supplied the
+// agent asks the `filesystem` aggregate for the flags — it never walks the tree
+// itself (FR-Filesystem-005).
 //
 // Adapters are run sequentially. If an adapter's binary
 // is not installed, a warning is printed (not an error) — the scan continues
@@ -17,8 +19,6 @@ use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_external_lint::IExternalLintAggregate;
 use shared_external_lint::IExternalLintSelectorProtocol;
-use shared_external_lint::contract_external_lint_protocol::IAdapterScanProtocol;
-use shared_external_lint::contract_external_lint_protocol::ILanguageDetectProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 use shared_external_lint::taxonomy_external_lint_request::ExternalLintRequest;
 use shared_external_lint::taxonomy_external_lint_response::ExternalLintResponse;
@@ -26,6 +26,7 @@ use shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -63,8 +64,30 @@ impl IExternalLintAggregate for ExternalLintOrchestrator {
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 impl ExternalLintOrchestrator {
+    pub fn new(deps: ExternalLintDeps) -> Self {
+        Self { deps }
+    }
+
+    /// Scan `path` with no caller-supplied context.
+    ///
+    /// The language flags come from the `filesystem` aggregate, which owns
+    /// project-level language detection (FR-Filesystem-005). external-lint
+    /// borrows the capability rather than re-implementing the extension walk.
     pub fn scan_all(&self, path: &FilePath) -> LintResultList {
-        self.scan_all_with_context(path, &ExternalLintContext::default())
+        let languages = self
+            .deps
+            .filesystem
+            .execute(FilesystemRequest::detect_project_languages(
+                std::path::Path::new(&path.value),
+            ))
+            .into_project_languages();
+        // Nothing recognisable under the root means no adapter applies, so stop
+        // before building a context that would select nothing anyway.
+        if languages.is_empty() {
+            return LintResultList::new(Vec::new());
+        }
+        let context = self.context_from_languages(&languages);
+        self.scan_all_with_context(path, &context)
     }
 
     pub fn scan_all_with_context(
@@ -144,6 +167,7 @@ impl ExternalLintOrchestrator {
         }
         LintResultList::new(all)
     }
+
     pub fn adapter_names(&self) -> AdapterNameList {
         AdapterNameList::new(
             self.deps
@@ -153,36 +177,28 @@ impl ExternalLintOrchestrator {
                 .collect(),
         )
     }
-    pub fn new(deps: ExternalLintDeps) -> Self {
-        Self { deps }
-    }
-}
 
-// ─── Block 4: FR-001 language detection ────────────────────
-
-impl ILanguageDetectProtocol for ExternalLintOrchestrator {
-    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool, bool) {
-        let files = self
-            .deps
-            .filesystem
-            .execute(FilesystemRequest::discover_files(std::path::Path::new(
-                &path.value,
-            )))
-            .into_paths();
-        let has_rust = files.iter().any(|f| f.ends_with(".rs"));
-        let has_python = files.iter().any(|f| f.ends_with(".py"));
-        let has_js = files.iter().any(|f| {
-            f.ends_with(".js") || f.ends_with(".jsx") || f.ends_with(".ts") || f.ends_with(".tsx")
-        });
-        let has_markdown = files.iter().any(|f| f.ends_with(".md"));
-        (has_rust, has_python, has_js, has_markdown)
-    }
-}
-
-// ─── Block 5: FR-003 scan_all aggregation ─────────────────
-
-impl IAdapterScanProtocol for ExternalLintOrchestrator {
-    fn scan_all(&self, path: &FilePath, context: &ExternalLintContext) -> LintResultList {
-        self.scan_all_with_context(path, context)
+    /// Build a scan context from the language flags the `filesystem` aggregate
+    /// reported for a project root.
+    ///
+    /// The extension walk is the filesystem feature's capability, so the agent
+    /// only reads the returned flags and shapes them into a context.
+    fn context_from_languages(&self, languages: &ProjectLanguagesVO) -> ExternalLintContext {
+        ExternalLintContext {
+            has_rust: languages.has_rust,
+            has_python: languages.has_python,
+            has_js: languages.has_js,
+            has_markdown: languages.has_markdown,
+            // Built-in ignore list, so a caller that delegates the whole context
+            // to this agent still gets findings filtered out of `target`,
+            // `node_modules`, `tests` and the rest. An empty list would skip
+            // the post-scan filter entirely, since the filter only runs when
+            // there is something to filter against.
+            ignored_paths: shared_common::DEFAULT_IGNORED_PATHS
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+            config_entries: Vec::new(),
+        }
     }
 }

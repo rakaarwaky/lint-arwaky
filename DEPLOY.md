@@ -92,8 +92,13 @@ cargo build --release
 #   target/release/lint-arwaky-mcp
 #   target/release/lint-arwaky-tui
 
-# Optionally symlink into PATH
+# Optionally symlink into PATH. `lint-arwaky` and `la` are name aliases of the
+# single compiled CLI binary (not separate [[bin]] targets), so install them as
+# symlinks too — scripts/install.sh does this automatically via
+# `install_alias_symlinks`.
 ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/
+ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/lint-arwaky
+ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/la
 ln -s "$PWD/target/release/lint-arwaky-mcp" ~/.local/bin/
 ```
 
@@ -236,6 +241,18 @@ lint-arwaky-cli init
 ```
 
 ## Production Deployment Checklist
+
+### Current Quality Status (update before each release attempt)
+
+_Last updated: 2026-10-01_
+
+- **Open defects:** 90+ logged across audit cycles (#522–#650), including 11+ confirmed CRITICAL — see PE #617. Severity counts are derived from issue **titles** (`[ROLE][SEVERITY] …`), not labels, until #618 is resolved (label writes fail with `Resource not accessible by integration`).
+- **CI detection-threshold gap — CLOSED:** the AES codes gate now enforces the reconciled scan-visible count (27 of 32 rules, per `TEST.md` §3.1/§3.2) with no safety margin — see QA #636.
+- **Self-lint gate integrity — CLOSED:** the `check .` step now fails loudly on unparseable output or non-zero exit instead of substituting `0` violations — see QA #642.
+- **Coverage measurement:** now computed in CI via `cargo-llvm-cov` (`coverage` job summary) — see QA #643; no minimum percentage is enforced yet.
+- **External-tool end-to-end coverage — CLOSED:** CI installs ruff/mypy/bandit/eslint/prettier/tsc and asserts tool-native findings — see QA #637.
+- **Doctest execution — CLOSED:** `cargo test --doc --workspace` runs as a dedicated CI step — see QA #638/#644.
+- **Release recommendation:** **NOT READY** — open CRITICAL defects and the missing release sign-off record (PE #629) block any release-ready verdict regardless of the above gate improvements.
 
 ### Before Deploy
 

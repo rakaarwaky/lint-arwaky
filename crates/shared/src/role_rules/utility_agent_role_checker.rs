@@ -473,13 +473,21 @@ pub fn is_aggregate_name(name: Option<&str>) -> bool {
 }
 
 /// True when a type name looks like a contract protocol seam.
+///
+/// The name may arrive in any of the shapes a caller writes it: a bare
+/// `IScannerProtocol`, a path-qualified `shared::IScannerProtocol`, or a
+/// parameterized `IScannerProtocol<T>` / `IScannerProtocol[T]` / `Box<dyn
+/// IScannerProtocol>`. Generic brackets and a path qualifier are stripped so
+/// every spelling reduces to the bare trait name before it is matched —
+/// otherwise a parameterized seam slips past and the agent goes unflagged.
 fn is_protocol_name(name: &str) -> bool {
-    let base = name
-        .rsplit(['.', ':', '<'])
-        .next()
-        .unwrap_or(name)
-        .trim()
-        .trim_end_matches(['>', ']', ' ']);
+    // Cut at the first generic or trait-object bracket, so `IFooProtocol<T>`
+    // and `Box<dyn IFooProtocol>` both reduce to `IFooProtocol`.
+    let base = name.split(['<', '[', '{']).next().unwrap_or(name);
+    // Then take the last path segment: `crate::IFooProtocol` -> `IFooProtocol`.
+    let base = base.rsplit("::").next().unwrap_or(base);
+    let base = base.rsplit(['.', ':']).next().unwrap_or(base);
+    let base = base.trim().trim_end_matches(['>', ']', ' ', ',']);
     base.starts_with('I') && base.ends_with("Protocol")
 }
 
@@ -692,6 +700,245 @@ fn dynamic_any(t: &str) -> bool {
         }
     }
     false
+}
+
+/// Contract protocols implemented by a type declared in this file.
+///
+/// A contract protocol is an `I<Name>Protocol` seam: the agent implements the
+/// feature aggregate and injects protocol seams, it never *implements* one,
+/// because that is a capability's job. Std traits (`Default`, `Display`,
+/// `Clone`) and aggregate traits are not contract protocols and are excluded
+/// here so `impl Default for X` reads as nothing.
+///
+/// Returns the trait names in declaration order, deduplicated.
+pub fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut push = |name: &str| {
+        if !out.iter().any(|n| n == name) {
+            out.push(name.to_string());
+        }
+    };
+
+    match file.parse_metadata.as_ref() {
+        Some(ParseMetadata::Rust(r)) => {
+            for imp in &r.impl_blocks {
+                if let Some(trait_name) = &imp.trait_name
+                    && is_protocol_name(trait_name)
+                {
+                    push(trait_name);
+                }
+            }
+        }
+        Some(ParseMetadata::Python(p)) => {
+            for c in &p.class_declarations {
+                for base in &c.bases {
+                    if is_protocol_name(base) {
+                        push(base);
+                    }
+                }
+            }
+        }
+        Some(ParseMetadata::TypeScript(t)) | Some(ParseMetadata::JavaScript(t)) => {
+            for c in &t.class_declarations {
+                for iface in &c.implements {
+                    if is_protocol_name(iface) {
+                        push(iface);
+                    }
+                }
+            }
+        }
+        Some(_) | None => scan_contract_protocol_impls(&file.content, &mut push),
+    }
+    out
+}
+
+/// Line-scan fallback for `contract_protocol_impls` when parse metadata is
+/// absent. `scan` is called once per distinct contract protocol found.
+fn scan_contract_protocol_impls(content: &str, mut scan: impl FnMut(&str)) {
+    for line in content.lines() {
+        let t = line.trim();
+        if is_comment(t) {
+            continue;
+        }
+        if let Some(rest) = rust_impl_trait_name(t) {
+            if is_protocol_name(rest) {
+                scan(rest);
+            }
+        } else if let Some(base) = class_base_list(t) {
+            // Python: `class Bar(IFooProtocol)` — and the TS form
+            // `class Bar implements IFooProtocol`.
+            for candidate in base.split(',').chain(base.split(" implements ")) {
+                let name = candidate.trim().trim_start_matches("public ").trim();
+                if is_protocol_name(name) {
+                    scan(name);
+                }
+            }
+        }
+    }
+}
+
+/// The trait name of a Rust `impl … Trait for Type` line, if the line is one.
+///
+/// `impl` may carry its own generic list before the trait and that list is not
+/// always followed by a space — `impl<T> IFoo for X` — so the keyword is matched
+/// on its own and whatever follows it, parameters included, is the head. The
+/// trait is then the last whitespace-separated token before ` for `, which skips
+/// the generic list without having to parse it. A line with no ` for ` is an
+/// inherent impl and has no trait.
+fn rust_impl_trait_name(t: &str) -> Option<&str> {
+    let rest = t.strip_prefix("impl")?;
+    let rest = rest.trim_start();
+    let (lhs, _rhs) = rest.split_once(" for ")?;
+    Some(lhs.rsplit([' ', ',']).next().unwrap_or(lhs).trim())
+}
+
+/// The base-class / implements list of a `class` declaration line, when the
+/// line carries one. Returns the text inside `(...)` for Python and the part
+/// after `implements` for TypeScript.
+///
+/// TypeScript writes `export class X …` in every module, so the keyword is
+/// located rather than required at the start of the line; `export default`,
+/// `export abstract`, and a bare `class` are all accepted.
+fn class_base_list(t: &str) -> Option<&str> {
+    let idx = t.find("class ")?;
+    let rest = t[idx + "class ".len()..].trim_start();
+    if let Some(i) = rest.find("implements ") {
+        return Some(rest[i + "implements ".len()..].trim_end_matches('{').trim());
+    }
+    let open = rest.find('(')?;
+    let close = rest.rfind(')')?;
+    Some(&rest[open + 1..close])
+}
+
+/// Rule — an agent file implements no contract protocol. HIGH.
+///
+/// This is a flat prohibition, not a budget: there is no count at which a second
+/// implementation becomes acceptable, and implementing one *alongside* the
+/// aggregate is already a violation. An agent composes its feature by injecting
+/// protocol seams, so implementing a protocol here makes the orchestration layer
+/// duplicate a capability's work — the behaviour belongs in a `capabilities_*`
+/// file. See `contract_protocol_impls` for what counts as a contract protocol
+/// and what is deliberately excluded (std traits and aggregate traits).
+pub fn check_agent_protocol_forbidden(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let protocols = contract_protocol_impls(file);
+    if protocols.is_empty() {
+        return;
+    }
+    let path = file.path.to_string_lossy().to_string();
+    let names = protocols.join(", ");
+    violations.push(LintResult::new_arch(
+        &path,
+        0,
+        "AES405",
+        Severity::HIGH,
+        format!(
+            "AES405 AGENT_ROLE: Agent file implements a contract protocol.\n\
+             WHY? {path} implements {names}. An agent is the feature's composition \
+             root: it implements the feature aggregate and injects protocol seams. \
+             Implementing a protocol here makes the orchestration layer duplicate a \
+             capability's work.\n\
+             HOW TO FIX? Move the protocol implementation into a \
+             `capabilities_*` file in this feature and inject that capability's \
+             protocol into the agent. Keep the aggregate impl as the only contract \
+             this file fulfils."
+        ),
+    ));
+}
+
+/// Rule — the `─── Block N:` banner markers must stop at 3. MEDIUM.
+///
+/// The 3-block structure is the readability contract the HOW-TO documents: a
+/// fourth marker means the file has outgrown the shape, and the reader loses
+/// the block map. A file carrying no markers is not reported — the marker is
+/// a convention the reader can spot by shape, not a requirement the linter
+/// enforces from nothing.
+pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let markers = block_marker_numbers(&file.content);
+    let Some(max) = markers.iter().max().copied() else {
+        return;
+    };
+    if max <= 3 {
+        return;
+    }
+    let path = file.path.to_string_lossy().to_string();
+    let found: Vec<String> = markers.iter().map(|n| format!("Block {n}")).collect();
+    violations.push(LintResult::new_arch(
+        &path,
+        0,
+        "AES405",
+        Severity::MEDIUM,
+        format!(
+            "AES405 AGENT_ROLE: Agent file carries block markers beyond Block 3.\n\
+             WHY? {path} declares {}. The 3-block structure is Block 1 (types and \
+             injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructors, \
+             std traits, helpers); a Block 4 means the file has outgrown it.\n\
+             HOW TO FIX? Fold the extra blocks back into Block 3, or move the \
+             behaviour they hold into a capability or utility file so the agent \
+             returns to 3 blocks.",
+            found.join(", ")
+        ),
+    ));
+}
+
+/// The `N` of every `Block N:` banner comment, in declaration order.
+///
+/// A banner is `Block <digits>:` standing as its own word inside a comment. Both
+/// halves matter. The colon separates a marker from prose — the HOW-TO and rule
+/// messages describe the structure as `Block 1 (type + injected deps) -> Block
+/// 2`, and requiring the colon keeps those sentences from reading as markers.
+/// The word boundary keeps a longer word that merely contains "Block" — such as
+/// `Sub-Block 4:` — from reading as a banner either. A file carrying no banner
+/// is left to the other structural checks.
+fn block_marker_numbers(content: &str) -> Vec<usize> {
+    let mut out = Vec::new();
+    for line in content.lines() {
+        let t = line.trim();
+        if !is_comment(t) {
+            continue;
+        }
+        let Some((idx, rest)) = standalone_word(t, "Block") else {
+            continue;
+        };
+        let rest = &t[idx + rest..];
+        let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+        if digits.is_empty() || !rest[digits.len()..].starts_with(':') {
+            continue;
+        }
+        if let Ok(n) = digits.parse::<usize>() {
+            out.push(n);
+        }
+    }
+    out
+}
+
+/// The byte offset of *word* in `t` when it stands as a standalone token, plus
+/// the length of the characters that follow it.
+///
+/// `Sub-Block 4:` contains the substring "Block" but the character before it is
+/// part of a longer word, so it is not a standalone occurrence. Rust identifiers
+/// treat `-` as a separator, but a banner comment is prose: a hyphenated
+/// `Sub-Block` reads as one word to a human, so a hyphen counts as part of the
+/// preceding token here.
+fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
+    let mut from = 0;
+    while let Some(rel) = t[from..].find(word) {
+        let idx = from + rel;
+        let before_ok = t[..idx]
+            .chars()
+            .next_back()
+            .is_none_or(|c| !c.is_alphanumeric() && c != '_' && c != '-');
+        let after = &t[idx + word.len()..];
+        let after_ok = after
+            .chars()
+            .next()
+            .is_none_or(|c| !c.is_alphanumeric() && c != '_');
+        if before_ok && after_ok {
+            let skip = t[idx..].chars().next().map_or(0, char::len_utf8);
+            return Some((idx, word.len() + skip));
+        }
+        from = idx + word.len();
+    }
+    None
 }
 
 /// The workspace root: the ancestor that owns `crates/shared/src`.

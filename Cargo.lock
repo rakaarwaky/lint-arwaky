@@ -3089,7 +3089,6 @@ dependencies = [
  "shared-git-hooks-lint-arwaky",
  "shared-import-rules-lint-arwaky",
  "shared-maintenance-lint-arwaky",
- "shared-mcp-server-lint-arwaky",
  "shared-naming-rules-lint-arwaky",
  "shared-orphan-rules-lint-arwaky",
  "shared-project-setup-lint-arwaky",
@@ -3097,7 +3096,6 @@ dependencies = [
  "shared-report-formatter-lint-arwaky",
  "shared-role-rules-lint-arwaky",
  "shared-structure-rules-lint-arwaky",
- "shared-tui-lint-arwaky",
  "structure-rules-lint-arwaky",
  "thiserror 2.0.21",
  "tokio",
@@ -3204,10 +3202,14 @@ dependencies = [
 name = "mcp-server-lint-arwaky"
 version = "3.7.1"
 dependencies = [
+ "config-system-lint-arwaky",
  "criterion",
  "dirs",
  "dispatcher-lint-arwaky",
+ "filesystem-lint-arwaky",
  "rmcp",
+ "schemars",
+ "serde",
  "serde_json",
  "shared-auto-fix-lint-arwaky",
  "shared-cli-commands-lint-arwaky",
@@ -3219,7 +3221,6 @@ dependencies = [
  "shared-git-hooks-lint-arwaky",
  "shared-import-rules-lint-arwaky",
  "shared-maintenance-lint-arwaky",
- "shared-mcp-server-lint-arwaky",
  "shared-naming-rules-lint-arwaky",
  "shared-orphan-rules-lint-arwaky",
  "shared-project-setup-lint-arwaky",
@@ -4815,16 +4816,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared-mcp-server-lint-arwaky"
-version = "3.7.1"
-dependencies = [
- "rmcp",
- "schemars",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "shared-naming-rules-lint-arwaky"
 version = "3.7.1"
 dependencies = [
@@ -4885,13 +4876,6 @@ dependencies = [
 [[package]]
 name = "shared-structure-rules-lint-arwaky"
 version = "3.7.1"
-
-[[package]]
-name = "shared-tui-lint-arwaky"
-version = "3.7.1"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "shell-words"
@@ -5683,14 +5667,11 @@ version = "3.7.1"
 dependencies = [
  "anyhow",
  "arboard",
- "config-system-lint-arwaky",
  "criterion",
  "crossterm",
  "dirs",
  "dispatcher-lint-arwaky",
  "ratatui",
- "rayon",
- "serde_json",
  "shared-auto-fix-lint-arwaky",
  "shared-common-lint-arwaky",
  "shared-config-system-lint-arwaky",
@@ -5706,9 +5687,7 @@ dependencies = [
  "shared-quality-rules-lint-arwaky",
  "shared-role-rules-lint-arwaky",
  "shared-structure-rules-lint-arwaky",
- "shared-tui-lint-arwaky",
  "tempfile",
- "tokio",
  "tracing",
  "tracing-appender",
  "tracing-error",

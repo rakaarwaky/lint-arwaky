@@ -64,7 +64,7 @@ fn fr002_2_creates_hooks_dir_if_missing() {
 }
 
 #[test]
-fn fr002_3_hook_file_already_exists_overwritten() {
+fn fr002_3_unmanaged_hook_is_backed_up_before_install() {
     let tmp = TempDir::new().unwrap();
     make_git_repo(&tmp);
     let hook_path = tmp.path().join(".git/hooks/pre-commit");
@@ -74,8 +74,13 @@ fn fr002_3_hook_file_already_exists_overwritten() {
     let result = installer.install_pre_commit(&exe);
     assert!(result.is_ok());
     let content = std::fs::read_to_string(&hook_path).unwrap();
-    assert_ne!(content, "old content", "hook should be overwritten");
+    assert_ne!(content, "old content", "managed hook should be installed");
+    assert!(content.contains("# managed-by: lint-arwaky"));
     assert!(content.contains("lint-arwaky-cli check ."));
+    assert_eq!(
+        std::fs::read_to_string(tmp.path().join(".git/hooks/pre-commit.bak")).unwrap(),
+        "old content"
+    );
 }
 
 #[test]

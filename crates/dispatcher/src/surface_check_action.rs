@@ -27,8 +27,10 @@ use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared_structure_rules::IStructureAggregate;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::sync::Arc;
+
+use crate::utility_subprocess_runner::{subprocess_timeout, wait_for_child};
 
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
 /// dispatch individual protocol operations without leaking the aggregate layer.
@@ -111,7 +113,7 @@ where
     let violations = match opts.scan_aggregates.as_ref() {
         Some(agg) => run_all_linters_in_process(&target_path, agg, &mut on_progress),
         None => {
-            let result = run_all_linters_json(&target_path, opts.filesystem.as_ref());
+            let result = run_all_linters_json(&target_path, opts.filesystem.as_ref())?;
             on_progress("Scan complete".to_string(), 0, 0);
             result
         }
@@ -167,8 +169,6 @@ fn apply_filter(mut violations: Vec<ViolationItem>, filter: &Option<String>) -> 
     violations
 }
 
-pub use collect_scan as collect_check;
-
 /// Check if a path belongs to a workspace member.
 pub fn is_member_path(path: &FilePath, ws: &dyn IWorkspaceProtocol) -> bool {
     ws.is_member_path(path)
@@ -179,7 +179,7 @@ pub fn collect_scan_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<Violat
     if !seam.io.path_exists(std::path::Path::new(path)) {
         return Err(format!("Error: path '{}' does not exist", path));
     }
-    Ok(run_all_linters_json(path, seam))
+    run_all_linters_json(path, seam)
 }
 
 /// Default check: subprocess JSON scan of all linters.
@@ -389,13 +389,21 @@ fn run_all_linters_in_process(
         let has_markdown = ext_files
             .iter()
             .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
+        // Honor the project's `adapters:` SSOT exactly like the `external`
+        // subcommand does — an empty list would run every language adapter,
+        // including tools the config never enables (markdownlint), which is
+        // where the workspaces-good false positives came from.
+        let config_entries = crate::surface_external_action::load_config_entries(
+            std::path::Path::new(&target_canon_str),
+            seam.io.as_ref(),
+        );
         let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
             has_python,
             has_js,
             has_markdown,
             ignored_paths: ignored.clone(),
-            config_entries: Vec::new(),
+            config_entries,
         };
         let mut external: Vec<ViolationItem> = agg
             .external
@@ -937,7 +945,7 @@ fn build_import_map(
 }
 
 /// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
-fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Vec<ViolationItem> {
+fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<ViolationItem>, String> {
     let exe_path = match std::env::current_exe() {
         Ok(p) => p,
         Err(_) => std::path::PathBuf::from("lint-arwaky-cli"),
@@ -948,24 +956,30 @@ fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Vec<ViolationItem>
     let mut all: Vec<ViolationItem> = Vec::new();
 
     for linter_name in &linter_names {
-        let output = Command::new(&exe_path)
+        let child = Command::new(&exe_path)
             .args([linter_name, path, "--format", "json"])
-            .output();
-
-        if let Ok(out) = output {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
-                if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
-                    for item in results {
-                        if let Some(v) = ViolationItem::from_json_obj(item) {
-                            all.push(v);
-                        }
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|error| {
+                format!("Failed to spawn linter subprocess '{linter_name}': {error}")
+            })?;
+        let timeout = subprocess_timeout();
+        let out = wait_for_child(child, timeout)
+            .map_err(|error| format!("Linter subprocess '{linter_name}' {error}"))?;
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
+            if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
+                for item in results {
+                    if let Some(v) = ViolationItem::from_json_obj(item) {
+                        all.push(v);
                     }
-                } else if let Some(items) = val.as_array() {
-                    for item in items {
-                        if let Some(v) = ViolationItem::from_json_obj(item) {
-                            all.push(v);
-                        }
+                }
+            } else if let Some(items) = val.as_array() {
+                for item in items {
+                    if let Some(v) = ViolationItem::from_json_obj(item) {
+                        all.push(v);
                     }
                 }
             }
@@ -994,7 +1008,7 @@ fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Vec<ViolationItem>
         });
     }
 
-    all
+    Ok(all)
 }
 
 /// Rewrite each violation's relative file path to an absolute, canonicalized

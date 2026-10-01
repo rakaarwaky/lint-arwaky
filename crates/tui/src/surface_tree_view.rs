@@ -6,6 +6,7 @@
 //
 // Uses simple string-based rendering (no ratatui Tree widget) for compatibility.
 use crate::utility_tui_theme as theme;
+use crate::{AppState, PanelFocus};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
@@ -13,7 +14,6 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{
     Block, Borders, List, ListItem, ListState, Scrollbar, ScrollbarOrientation, ScrollbarState,
 };
-use shared_tui::{AppState, PanelFocus};
 use std::path::Path;
 
 pub struct TreeView;

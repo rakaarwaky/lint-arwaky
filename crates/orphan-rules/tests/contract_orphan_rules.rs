@@ -9,17 +9,13 @@ use orphan_rules_lint_arwaky::capabilities_orphan_surfaces_analyzer::SurfacesOrp
 use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
 use orphan_rules_lint_arwaky::capabilities_orphan_utility_analyzer::UtilityOrphanAnalyzer;
 use shared_orphan_rules::{
-    IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol,
-    IEntryPointProtocol, IGraphContextProtocol, IOrphanAggregate, IOrphanParserProtocol,
-    IReachabilityProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
+    IAgentOrphanProtocol, ICapabilitiesOrphanProtocol, IContractOrphanProtocol, IOrphanAggregate,
+    IOrphanParserProtocol, ISurfacesOrphanProtocol, ITaxonomyOrphanProtocol,
     IUtilityOrphanProtocol,
 };
 
 // ── Per-trait bound helpers (unique name per seam) ──────────
 
-fn assert_igraph_context<T: IGraphContextProtocol>() {}
-fn assert_ientry_point<T: IEntryPointProtocol>() {}
-fn assert_ireachability<T: IReachabilityProtocol>() {}
 fn assert_itaxonomy<T: ITaxonomyOrphanProtocol>() {}
 fn assert_icontract<T: IContractOrphanProtocol>() {}
 fn assert_icapabilities<T: ICapabilitiesOrphanProtocol>() {}
@@ -30,53 +26,64 @@ fn assert_iaggregate<T: IOrphanAggregate>() {}
 
 // ── Tests ──────────────────────────────────────────────────
 
+// FR-OrphanRules-001 (graph context, entry points, reachability) has no
+// protocol: those are orchestration steps the agent owns, and an agent must
+// not implement a contract protocol (AES405). The methods remain callable.
 #[test]
-fn fr001_arch_orphan_analyzer_implements_graph_context_protocol() {
-    assert_igraph_context::<ArchOrphanAnalyzer>();
+fn fr001_orchestration_steps_are_inherent_agent_methods() {
+    let _graph_ctx: fn(
+        &ArchOrphanAnalyzer,
+        &shared_common::taxonomy_path_vo::FilePath,
+    )
+        -> shared_quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext =
+        ArchOrphanAnalyzer::build_orphan_graph_context;
+    let _entry: fn(
+        &ArchOrphanAnalyzer,
+        &shared_orphan_rules::OrphanFileListVO,
+    ) -> shared_orphan_rules::OrphanFileListVO = ArchOrphanAnalyzer::identify_orphan_entry_points;
+    // The reachability step moved off IReachabilityProtocol along with the other
+    // two, so it needs the same assertion — without it a signature change or a
+    // deletion here would pass CI unnoticed.
+    let _reach: fn(
+        &ArchOrphanAnalyzer,
+        &shared_orphan_rules::OrphanFileListVO,
+        &shared_quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext,
+    ) -> shared_quality_rules::taxonomy_quality_rules_vo::ReachabilityResult =
+        ArchOrphanAnalyzer::trace_alive_files;
 }
 
 #[test]
-fn fr002_arch_orphan_analyzer_implements_entry_point_protocol() {
-    assert_ientry_point::<ArchOrphanAnalyzer>();
-}
-
-#[test]
-fn fr003_arch_orphan_analyzer_implements_reachability_protocol() {
-    assert_ireachability::<ArchOrphanAnalyzer>();
-}
-
-#[test]
-fn fr004_taxonomy_orphan_analyzer_implements_protocol() {
+fn fr002_taxonomy_orphan_analyzer_implements_protocol() {
     assert_itaxonomy::<TaxonomyOrphanAnalyzer>();
 }
 
 #[test]
-fn fr005_contract_orphan_analyzer_implements_protocol() {
+fn fr003_contract_orphan_analyzer_implements_protocol() {
     assert_icontract::<ContractOrphanAnalyzer>();
 }
 
 #[test]
-fn fr006_capabilities_orphan_analyzer_implements_protocol() {
+fn fr004_capabilities_orphan_analyzer_implements_protocol() {
     assert_icapabilities::<CapabilitiesOrphanAnalyzer>();
 }
 
 #[test]
-fn fr007_utility_orphan_analyzer_implements_protocol() {
+fn fr005_utility_orphan_analyzer_implements_protocol() {
     assert_iutility::<UtilityOrphanAnalyzer>();
 }
 
 #[test]
-fn fr008_agent_orphan_analyzer_implements_protocol() {
+fn fr006_agent_orphan_analyzer_implements_protocol() {
     assert_iagent::<AgentOrphanAnalyzer>();
 }
 
 #[test]
-fn fr009_surfaces_orphan_analyzer_implements_protocol() {
+fn fr007_surfaces_orphan_analyzer_implements_protocol() {
     assert_isurfaces::<SurfacesOrphanAnalyzer>();
 }
 
 #[test]
-fn fr010_orphan_parser_protocol_is_object_safe() {
+fn orphan_parser_protocol_is_object_safe() {
     fn assert_object_safe<T: IOrphanParserProtocol + ?Sized>() {}
     assert_object_safe::<dyn IOrphanParserProtocol>();
 }
@@ -122,10 +129,11 @@ fn surfaces_analyzer_is_object_safe() {
 
 #[test]
 fn one_concrete_type_may_satisfy_several_seams() {
-    // ArchOrphanAnalyzer backs FR-001/002/003 and the parser seam.
-    assert_igraph_context::<ArchOrphanAnalyzer>();
-    assert_ientry_point::<ArchOrphanAnalyzer>();
-    assert_ireachability::<ArchOrphanAnalyzer>();
+    // The parser seam is satisfied by a capability, not by the agent; the agent
+    // owns the FR-001 orchestration steps directly and has no seam to satisfy.
+    assert_itaxonomy::<TaxonomyOrphanAnalyzer>();
+    assert_icontract::<ContractOrphanAnalyzer>();
+    assert_iutility::<UtilityOrphanAnalyzer>();
 }
 
 // ─── Aggregate contract tests ──────────────────────────────

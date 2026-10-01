@@ -13,9 +13,7 @@ use shared_config_system::contract_config_protocol::{
 // - ignored_paths_from_config()
 // - default_config_for_language()
 // These are imported via their modules below.
-use shared_config_system::contract_config_protocol::WorkspaceType;
 use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared_config_system::taxonomy_config_system_error::ConfigError;
 use shared_config_system::taxonomy_config_system_request::ConfigRequest;
 use shared_config_system::taxonomy_config_system_response::ConfigResponse;
 use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
@@ -37,9 +35,14 @@ pub struct ConfigOrchestratorDeps {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
 }
 
+struct CachedConfig {
+    content_hash: u64,
+    config: Arc<ArchitectureConfig>,
+}
+
 pub struct ConfigOrchestrator {
     deps: ConfigOrchestratorDeps,
-    config_cache: DashMap<CacheKey, Arc<ArchitectureConfig>>,
+    config_cache: DashMap<CacheKey, CachedConfig>,
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -83,41 +86,15 @@ impl IConfigOrchestratorAggregate for ConfigOrchestrator {
     }
 }
 
-// ─── Block 3: Constructors, Std Traits, Protocol Delegations, Helpers ─────
+// ─── Block 3: Constructors, Std Traits, Helpers ─────
 
-impl IConfigReadProtocol for ConfigOrchestrator {
-    fn read_config(
-        &self,
-        project_root: &FilePath,
-        language: ConfigLanguage,
-    ) -> Result<Option<ConfigSource>, ConfigError> {
-        self.deps.config_reader.read_config(project_root, language)
-    }
-
-    fn list_config_files(
-        &self,
-        project_root: &FilePath,
-    ) -> Result<Vec<(ConfigLanguage, FilePath)>, ConfigError> {
-        self.deps.config_reader.list_config_files(project_root)
-    }
-}
-
-impl IWorkspaceMembersProtocol for ConfigOrchestrator {
-    fn detect(&self, path: &FilePath) -> WorkspaceType {
-        self.deps.workspace_detector.detect(path)
-    }
-
-    fn is_workspace(&self, path: &FilePath) -> bool {
-        self.deps.workspace_detector.is_workspace(path)
-    }
-
-    fn discover_workspace_members(&self, root: &FilePath) -> Vec<FilePath> {
-        self.deps
-            .workspace_detector
-            .discover_workspace_members(root)
-    }
-}
-
+// FR-ConfigSystem-001/002 are satisfied by the capabilities themselves
+// (`ConfigYamlReader` implements `IConfigReadProtocol`, `WorkspaceDetector`
+// implements `IWorkspaceMembersProtocol`). The orchestrator does not
+// re-implement those seams: an agent must not implement a contract protocol
+// (AES405), and the container wires the capabilities directly for callers
+// that need them. The orchestrator holds the same capabilities as deps and
+// uses them to compose its own behaviour.
 impl ConfigOrchestrator {
     pub fn read_config(
         &self,
@@ -309,12 +286,23 @@ impl ConfigOrchestrator {
         cache_key: &CacheKey,
         yaml_str: &str,
     ) -> (ArchitectureConfig, Vec<String>) {
-        if let Some(cached) = self.config_cache.get(cache_key) {
-            return (cached.value().as_ref().clone(), Vec::new());
+        use std::hash::{Hash, Hasher};
+        let mut hasher = std::collections::hash_map::DefaultHasher::new();
+        yaml_str.hash(&mut hasher);
+        let content_hash = hasher.finish();
+        if let Some(cached) = self.config_cache.get(cache_key)
+            && cached.content_hash == content_hash
+        {
+            return (cached.config.as_ref().clone(), Vec::new());
         }
         let (parsed, warnings) = self.deps.parser.parse_config_yaml_with_warnings(yaml_str);
-        self.config_cache
-            .insert(cache_key.clone(), Arc::new(parsed.clone()));
+        self.config_cache.insert(
+            cache_key.clone(),
+            CachedConfig {
+                content_hash,
+                config: Arc::new(parsed.clone()),
+            },
+        );
         (parsed, warnings)
     }
 }

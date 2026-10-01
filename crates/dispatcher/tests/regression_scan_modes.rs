@@ -51,17 +51,56 @@ fn scan(path: &str) -> Vec<shared_common::ViolationItem> {
     dispatcher_lint_arwaky::surface_check_action::collect_scan(opts).unwrap_or_default()
 }
 
-/// CLI subprocess scan via release binary (for workspaces-bad where violations expected).
+/// Locate a built `lint-arwaky-cli` binary for the subprocess-fallback tests.
+///
+/// Probed, in order:
+///   1. `<dir-of-this-test-binary>/{release,debug}/lint-arwaky-cli`
+///   2. `<workspace-root>/target/{release,debug}/lint-arwaky-cli`
+///
+/// (1) covers a build that produced the test binary and the CLI together, and
+/// (2) covers a plain `cargo build` into the default target dir — which is
+/// what the CI coverage job does, because cargo-llvm-cov owns its own
+/// `target/llvm-cov-target` and gives no guarantee about what survives in it.
+///
+/// Pinning a single `release/` path, as this used to, made these tests fail in
+/// any build that is not a release build of the same target dir.
+/// `--lib --tests` never builds bin targets, so the caller is still responsible
+/// for having built one: `cargo build --release --bin lint-arwaky-cli`.
+fn cli_path() -> std::path::PathBuf {
+    let beside_this_test = std::env::current_exe().ok().and_then(|p| {
+        p.parent()
+            .and_then(|p| p.parent())
+            .and_then(|p| p.parent())
+            .map(|p| p.to_path_buf())
+    });
+    let default_target = workspace_root().join("target");
+    let mut probed = Vec::new();
+    for dir in [beside_this_test, Some(default_target)]
+        .into_iter()
+        .flatten()
+    {
+        for profile in ["release", "debug"] {
+            let candidate = dir.join(profile).join("lint-arwaky-cli");
+            if candidate.is_file() {
+                return candidate;
+            }
+            probed.push(candidate);
+        }
+    }
+    panic!(
+        "no lint-arwaky-cli binary found. Probed: {}. Build one with: \
+         cargo build --release --bin lint-arwaky-cli",
+        probed
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+}
+
+/// CLI subprocess scan (for workspaces-bad where violations expected).
 fn cli_scan(path: &str) -> String {
-    let exe = std::env::current_exe()
-        .ok()
-        .and_then(|p| {
-            p.parent()
-                .and_then(|p| p.parent())
-                .and_then(|p| p.parent())
-                .map(|p| p.join("release/lint-arwaky-cli"))
-        })
-        .unwrap_or_else(|| std::path::PathBuf::from("target/release/lint-arwaky-cli"));
+    let exe = cli_path();
     let full_path = workspace_root().join(path);
     let output = Command::new(&exe)
         .args([
@@ -71,13 +110,7 @@ fn cli_scan(path: &str) -> String {
             "json",
         ])
         .output()
-        .unwrap_or_else(|e| {
-            panic!(
-                "failed to run CLI at {}: {}. Build with: cargo build --release",
-                exe.display(),
-                e
-            )
-        });
+        .unwrap_or_else(|e| panic!("failed to run CLI at {}: {}", exe.display(), e));
     String::from_utf8_lossy(&output.stdout).to_string()
 }
 

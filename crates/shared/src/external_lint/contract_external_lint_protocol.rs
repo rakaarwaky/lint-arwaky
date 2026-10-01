@@ -4,9 +4,15 @@
 // in `crates/external-lint/FRD.md`. The aggregate seam
 // (`IExternalLintAggregate`) is the entry point and is not counted toward the
 // 1:1 FR-to-protocol mapping.
+//
+// Project language detection has no trait here and no external-lint
+// requirement: it is FR-Filesystem-005B, served by the `filesystem` aggregate as
+// `FilesystemRequest::DetectProjectLanguages`. A feature does not own a protocol
+// for behaviour another feature already owns. `FR-ExternalLint-001` is the
+// adapter-selection requirement, whose seam is
+// `IExternalLintSelectorProtocol` below.
 
 use crate::taxonomy_duration_vo::Timeout;
-use crate::taxonomy_external_lint_vo::ExternalLintContext;
 use shared_common::taxonomy_adapter_list_vo::AdapterNameList;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::PatternList;
@@ -19,20 +25,16 @@ use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_quality_rules::taxonomy_operation_error::LinterOperationError;
 use shared_quality_rules::taxonomy_quality_rules_vo::LintResultList;
 
-/// FR-ExternalLint-001: detect which languages (Rust, Python, JS/TS) and
-/// content types (Markdown) are present in the project using the filesystem
-/// aggregate's file extension walk.
-pub trait ILanguageDetectProtocol: Send + Sync {
-    /// Returns `(has_rust, has_python, has_js, has_markdown)` from an
-    /// extension walk over `path`.
-    fn detect_languages(&self, path: &FilePath) -> (bool, bool, bool, bool);
-}
-
-/// FR-ExternalLint-002: select the set of adapters to run given the detected
+/// FR-ExternalLint-001: select the set of adapters to run given the detected
 /// language booleans and whether Markdown files are present. Returns the ordered
 /// list of adapter names in language-group order (Rust → Python → JS →
 /// markdown). When `has_markdown` is true, `markdownlint` is appended after the
 /// JS group.
+///
+/// The language booleans are pre-computed by the caller — either from the
+/// surface, or from the `filesystem` aggregate's
+/// `FilesystemRequest::DetectProjectLanguages`. This trait maps flags to
+/// adapter names and nothing else.
 pub trait IExternalLintSelectorProtocol: Send + Sync {
     fn select_adapters(
         &self,
@@ -43,16 +45,7 @@ pub trait IExternalLintSelectorProtocol: Send + Sync {
     ) -> AdapterNameList;
 }
 
-/// FR-ExternalLint-003: run every selected adapter sequentially, aggregating
-/// results and post-filtering them by the context's ignored paths. One adapter
-/// failing never stops the remaining adapters.
-pub trait IAdapterScanProtocol: Send + Sync {
-    /// Run `path` against every adapter selected for `context`, in adapter-list
-    /// order, and return the aggregated results.
-    fn scan_all(&self, path: &FilePath, context: &ExternalLintContext) -> LintResultList;
-}
-
-/// FR-ExternalLint-004: each linter adapter exposes the canonical scanning and
+/// FR-ExternalLint-002: each linter adapter exposes the canonical scanning and
 /// auto-fix surface. Fix-capable adapters run the tool's native fix command;
 /// non-fixing adapters (MyPy, Bandit, TSC, cargo-audit) return a no-op
 /// `ComplianceStatus`.
@@ -70,7 +63,7 @@ pub trait ILinterAdapterProtocol: Send + Sync {
     fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError>;
 }
 
-/// FR-ExternalLint-005: normalize each adapter's external tool output into
+/// FR-ExternalLint-003: normalize each adapter's external tool output into
 /// `LintResult` structs, preserving tool-native rule codes (e.g.
 /// `clippy::needless_return`, `ruff::E501`) and applying the per-tool severity
 /// mapping. File paths are canonicalized against `root`.

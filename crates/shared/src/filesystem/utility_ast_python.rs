@@ -19,7 +19,7 @@ fn child_by_field(node: tree_sitter::Node, content: &str, field: &str) -> Option
 /// # Examples
 ///
 /// ```
-/// use filesystem_lint_arwaky::utility_ast_python::extract_python_metadata;
+/// use shared_filesystem_lint_arwaky::utility_ast_python::extract_python_metadata;
 /// use tree_sitter::Parser;
 /// let mut parser = Parser::new();
 /// let language = tree_sitter_python::LANGUAGE;

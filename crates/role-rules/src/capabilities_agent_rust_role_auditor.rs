@@ -48,6 +48,14 @@ impl IAgentRoleProtocol for AgentRustRoleAuditor {
         self.block_order(&file.content, &file.path.to_string_lossy(), violations);
     }
 
+    fn check_agent_protocol_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_agent_role_checker::check_agent_protocol_forbidden(file, violations);
+    }
+
+    fn check_agent_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_agent_role_checker::check_block_markers(file, violations);
+    }
+
     fn check_agent_io_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
         self.io_forbidden(&file.content, &file.path.to_string_lossy(), violations);
     }

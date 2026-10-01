@@ -17,8 +17,8 @@ use shared_common::taxonomy_layer_vo::{Identity, LayerNameVO};
 ///
 /// # Examples
 /// ```rust
-/// use shared_lint_arwaky::common::utility_scope_matcher::file_belongs_to_scope;
-/// use shared_lint_arwaky::common::taxonomy_layer_vo::Identity;
+/// use shared_import_rules_lint_arwaky::utility_scope_matcher::file_belongs_to_scope;
+/// use shared_common::taxonomy_layer_vo::Identity;
 ///
 /// // "surfaces_auth.rs" belongs to layer "surfaces" (no suffix constraint)
 /// let result = file_belongs_to_scope("surfaces_auth.rs", &Identity::new("surfaces"));
@@ -82,7 +82,7 @@ pub fn file_belongs_to_scope(
 ///
 /// # Examples
 /// ```rust
-/// use shared_lint_arwaky::common::utility_scope_matcher::extract_file_stem;
+/// use shared_import_rules_lint_arwaky::utility_scope_matcher::extract_file_stem;
 ///
 /// assert_eq!(extract_file_stem("surfaces_auth.rs"), "surfaces_auth");
 /// assert_eq!(extract_file_stem("mod.rs"), "mod");
@@ -96,7 +96,7 @@ pub fn extract_file_stem(basename: &str) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use shared_lint_arwaky::common::utility_scope_matcher::extract_layer_prefix;
+/// use shared_import_rules_lint_arwaky::utility_scope_matcher::extract_layer_prefix;
 ///
 /// assert_eq!(extract_layer_prefix("surfaces_auth"), "surfaces");
 /// assert_eq!(extract_layer_prefix("utility_parser"), "utility");
@@ -110,7 +110,7 @@ pub fn extract_layer_prefix(stem: &str) -> &str {
 ///
 /// # Examples
 /// ```rust
-/// use shared_lint_arwaky::common::utility_scope_matcher::extract_suffix;
+/// use shared_import_rules_lint_arwaky::utility_scope_matcher::extract_suffix;
 ///
 /// assert_eq!(extract_suffix("surfaces_auth"), "auth");
 /// assert_eq!(extract_suffix("utility_parser"), "parser");

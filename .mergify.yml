@@ -30,10 +30,17 @@ defaults:
     # merge_method below, so main's history stays linear.
     update_method: merge
     merge_method: squash
-    # Tests take ~2m30s and Self-Lint ~1m4s; the auto-derived timeout
-    # (derived from the fastest recent CI run) falls short and triggers
-    # false CHECKS_TIMEOUT dequeues. 5min gives headroom.
-    checks_timeout: 5min
+    # The queue re-runs CI on the integration commit with cold caches, so the
+    # numbers that matter are the queue's, not a warm local run's: Tests takes
+    # ~6m30s and Self-Lint ~3m20s there. Both are merge_conditions, so the
+    # timeout must clear the slowest of them or the PR is dequeued
+    # (CHECKS_TIMEOUT) after the work has already succeeded.
+    #
+    # Evidence: PR #683 entered the queue and was dequeued 6 minutes later
+    # with CHECKS_TIMEOUT, with every required check green on the PR itself.
+    # 5min was sized against warm-cache durations and no longer holds.
+    # 15min clears a cold run with room for a slower runner.
+    checks_timeout: 15min
     merge_conditions:
       - check-success = Format
       - check-success = Clippy
