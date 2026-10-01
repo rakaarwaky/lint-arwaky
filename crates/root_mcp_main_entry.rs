@@ -3,6 +3,8 @@ use lint_arwaky::root_entry_container::CommonDeps;
 use mcp_server::surface_mcp_action_command::{McpActionSurface, McpServerDependencies};
 use mcp_server::surface_mcp_tool_command::LintArwakyMcpServer;
 use rmcp::ServiceExt;
+// SECURITY: stdio is the only supported rmcp transport. Re-review the
+// RUSTSEC-2026-0189 exception in deny.toml before adding HTTP/SSE transport.
 use rmcp::transport::stdio;
 use shared_config_system::utility_config_parser::parse_config_yaml;
 use std::sync::Arc;
@@ -11,7 +13,8 @@ use tracing_subscriber::prelude::*;
 fn init_tracing() {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "warn,lint_arwaky::audit=info".into()),
         )
         .with_writer(std::io::stderr)
         .with_ansi(false)

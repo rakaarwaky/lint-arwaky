@@ -1,0 +1,8 @@
+# Keep cargo-audit aligned with the reviewed advisory exceptions in deny.toml.
+[advisories]
+ignore = [
+    # Unmaintained transitive dependency through ratatui; no direct usage.
+    "RUSTSEC-2024-0436",
+    # Applies to rmcp's HTTP transport; this project constructs stdio only.
+    "RUSTSEC-2026-0189",
+]

@@ -13,6 +13,7 @@ on:
         required: true
         type: string
 
+# Publishes release assets and signs provenance with GitHub OIDC.
 permissions:
   contents: write
   id-token: write
@@ -128,6 +129,16 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: binaries
+
+      # Hardening for PE-5-03 (#631): a prior release (v3.7.0) shipped without the
+      # .sha256 asset even though this job's `files:` list already expected it. Fail
+      # loudly instead of silently publishing a Release that's missing an expected
+      # asset, so a gap like that can't recur unnoticed.
+      - name: Verify expected assets present
+        run: |
+          for f in lint-arwaky-cli lint-arwaky-mcp lint-arwaky-cli.sha256; do
+            test -f "$f" || { echo "::error::missing expected release asset: $f"; exit 1; }
+          done
 
       - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
