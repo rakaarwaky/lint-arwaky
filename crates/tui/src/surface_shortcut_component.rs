@@ -8,18 +8,12 @@
 //
 // format_shortcuts() renders each row as colored spans (yellow keys, white labels).
 use crate::utility_tui_theme as theme;
+use crate::{AppState, PreviewMode};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use tui_lint_arwaky::{AppState, PreviewMode};
-
-type ShortcutRows = (
-    Vec<(&'static str, &'static str)>,
-    Vec<(&'static str, &'static str)>,
-    Vec<(&'static str, &'static str)>,
-);
 
 pub struct ShortcutComponent;
 
@@ -29,21 +23,23 @@ impl ShortcutComponent {
     }
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let (row1, row2, row3) = match state.preview_mode {
-            PreviewMode::LintResults | PreviewMode::ActionOutput | PreviewMode::FileContent => {
-                context_sensitive_rows(state)
-            }
-            _ => default_rows(),
-        };
+        let rows = crate::surface_shortcut_bindings::rows_for_context(matches!(
+            state.preview.mode,
+            PreviewMode::LintResults | PreviewMode::ActionOutput | PreviewMode::FileContent
+        ));
+        let [row1, row2, row3] = rows;
 
         // I1: while search mode is active, show the live search line instead of shortcuts.
-        if state.search_mode {
+        if state.search.mode {
             let text = format!(
                 "search: {} (Enter confirm / Esc cancel)",
-                state.search_query
+                state.search.query
             );
-            let paragraph =
-                Paragraph::new(text).style(Style::default().bg(theme::BACKGROUND).fg(theme::KEY));
+            let paragraph = Paragraph::new(text).style(
+                Style::default()
+                    .bg(theme::color(theme::BACKGROUND))
+                    .fg(theme::color(theme::KEY)),
+            );
             frame.render_widget(paragraph, area);
             return;
         }
@@ -54,7 +50,8 @@ impl ShortcutComponent {
             Line::from(format_shortcuts(&row3)),
         ];
 
-        let paragraph = Paragraph::new(text).style(Style::default().bg(theme::BACKGROUND));
+        let paragraph =
+            Paragraph::new(text).style(Style::default().bg(theme::color(theme::BACKGROUND)));
         frame.render_widget(paragraph, area);
     }
 }
@@ -65,66 +62,6 @@ impl Default for ShortcutComponent {
     }
 }
 
-fn default_rows() -> ShortcutRows {
-    (
-        vec![
-            ("c", "check"),
-            ("s", "scan"),
-            ("f", "fix (dry)"),
-            ("F", "fix (live)"),
-            ("t", "ci"),
-            ("w", "watch (CLI only)"),
-            ("o", "orphan"),
-            ("d", "doctor"),
-            ("i", "init"),
-        ],
-        vec![
-            ("I", "install"),
-            ("m", "mcp"),
-            ("C", "config"),
-            ("H", "hook"),
-            ("U", "unhook"),
-            ("a", "adapters"),
-            ("v", "version"),
-        ],
-        vec![
-            ("^S", "deps"),
-            ("^P", "security"),
-            ("y", "copy"),
-            ("^Y", "save to file"),
-            ("?", "help"),
-            ("q", "quit"),
-        ],
-    )
-}
-
-fn context_sensitive_rows(_state: &AppState) -> ShortcutRows {
-    (
-        vec![
-            ("c", "re-check"),
-            ("f", "fix (dry)"),
-            ("F", "fix (live)"),
-            ("Esc", "back"),
-            ("j/k", "scroll"),
-        ],
-        vec![
-            ("I", "install"),
-            ("m", "mcp"),
-            ("C", "config"),
-            ("H", "hook"),
-            ("U", "unhook"),
-            ("a", "adapters"),
-            ("v", "version"),
-        ],
-        vec![
-            ("^S", "deps"),
-            ("^P", "security"),
-            ("?", "help"),
-            ("q", "quit"),
-        ],
-    )
-}
-
 fn format_shortcuts<'a>(shortcuts: &'a [(&'a str, &'a str)]) -> Vec<Span<'a>> {
     let mut spans = Vec::new();
     for (i, (key, label)) in shortcuts.iter().enumerate() {
@@ -133,11 +70,11 @@ fn format_shortcuts<'a>(shortcuts: &'a [(&'a str, &'a str)]) -> Vec<Span<'a>> {
         }
         spans.push(Span::styled(
             format!("{}:", key),
-            Style::default().fg(theme::KEY),
+            Style::default().fg(theme::color(theme::KEY)),
         ));
         spans.push(Span::styled(
             label.to_string(),
-            Style::default().fg(theme::LABEL),
+            Style::default().fg(theme::color(theme::LABEL)),
         ));
     }
     spans

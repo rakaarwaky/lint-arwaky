@@ -14,6 +14,7 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+# Creates release commits/branches and PRs, so both write scopes are required.
 permissions:
   contents: write
   pull-requests: write

@@ -6,12 +6,14 @@
 //
 // Uses simple string-based rendering (no ratatui Tree widget) for compatibility.
 use crate::utility_tui_theme as theme;
+use crate::{AppState, PanelFocus};
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, Borders, List, ListItem};
-use tui_lint_arwaky::{AppState, PanelFocus};
+use ratatui::widgets::{
+    Block, Borders, List, ListItem, ListState, Scrollbar, ScrollbarOrientation, ScrollbarState,
+};
 use std::path::Path;
 
 pub struct TreeView;
@@ -22,13 +24,13 @@ impl TreeView {
     }
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let is_focused = state.panel_focus == PanelFocus::Tree;
+        let is_focused = state.navigation.panel_focus == PanelFocus::Tree;
         let border_style = if is_focused {
             Style::default()
-                .fg(theme::ACCENT)
+                .fg(theme::color(theme::ACCENT))
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(theme::SEPARATOR)
+            Style::default().fg(theme::color(theme::SEPARATOR))
         };
 
         let block = Block::default()
@@ -37,14 +39,17 @@ impl TreeView {
             .border_style(border_style);
 
         let mut items = Vec::new();
-        let components = build_path_components(&state.current_dir, &state.project_root);
+        let components = build_path_components(
+            &state.navigation.current_dir,
+            &state.navigation.project_root,
+        );
 
         let root_line = Line::from(vec![
-            Span::styled("[*] ", Style::default().fg(theme::KEY)),
+            Span::styled("[*] ", Style::default().fg(theme::color(theme::KEY))),
             Span::styled(
-                shorten_path(&state.project_root),
+                shorten_path(&state.navigation.project_root),
                 Style::default()
-                    .fg(theme::LABEL)
+                    .fg(theme::color(theme::LABEL))
                     .add_modifier(Modifier::BOLD),
             ),
         ]);
@@ -55,21 +60,51 @@ impl TreeView {
             let is_current = i == components.len().saturating_sub(1);
             let style = if is_current {
                 Style::default()
-                    .fg(theme::ACCENT)
+                    .fg(theme::color(theme::ACCENT))
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(theme::DIRECTORY)
+                Style::default().fg(theme::color(theme::DIRECTORY))
             };
             let dir_line = Line::from(vec![
                 Span::raw(indent.clone()),
-                Span::styled("[-] ", Style::default().fg(theme::KEY)),
+                Span::styled("[-] ", Style::default().fg(theme::color(theme::KEY))),
                 Span::styled(format!("{}/", component), style),
             ]);
             items.push(ListItem::new(dir_line));
         }
 
+        // Keep the leaf reachable even when a deeply nested path is taller than
+        // the panel. `tree_scroll` remains the user's requested offset, while
+        // the automatic offset guarantees the current directory is visible.
+        let visible_height = area.height.saturating_sub(2) as usize;
+        let last = items.len().saturating_sub(1);
+        let max_offset = items.len().saturating_sub(visible_height.max(1));
+        let leaf_offset = last.saturating_sub(visible_height.saturating_sub(1));
+        let offset = state
+            .navigation
+            .tree_scroll
+            .max(leaf_offset)
+            .min(max_offset);
+        let mut list_state = ListState::default();
+        list_state.select(Some(last));
+        *list_state.offset_mut() = offset;
+
         let list = List::new(items).block(block);
-        frame.render_widget(list, area);
+        frame.render_stateful_widget(list, area, &mut list_state);
+
+        if max_offset > 0 {
+            let inner_area = area.inner(ratatui::layout::Margin {
+                vertical: 1,
+                horizontal: 0,
+            });
+            if inner_area.width > 0 && inner_area.height > 0 {
+                let mut scrollbar_state = ScrollbarState::new(last + 1).position(last);
+                let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+                    .thumb_style(Style::default().fg(theme::color(theme::SCROLLBAR)))
+                    .track_style(Style::default().fg(theme::color(theme::SCROLLBAR)));
+                frame.render_stateful_widget(scrollbar, inner_area, &mut scrollbar_state);
+            }
+        }
     }
 }
 

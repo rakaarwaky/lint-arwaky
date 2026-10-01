@@ -10,9 +10,9 @@ on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
 
+# Enables auto-merge on PRs; no repository-content mutation is performed here.
 permissions:
   pull-requests: write
-  contents: write
 
 jobs:
   enable-auto-merge:

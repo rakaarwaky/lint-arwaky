@@ -219,7 +219,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Surface Layer",
             "Root Layer",
         ],
-        &[],
+        &["Dependency Policy"],
     ),
     (
         CONTRIBUTING_DOC,
@@ -234,6 +234,8 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
             "Prerequisites",
             "Running the binaries",
             "Branch Management",
+            "Versioning Policy",
+            "Issue Closure Policy",
             "Why Contribute",
             "Questions?",
         ],

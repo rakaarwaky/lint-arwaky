@@ -9,6 +9,7 @@ on:
     # Run once per day so stale checks do not fire on every push.
     - cron: '0 2 * * *'
 
+# Updates issue state/comments and reads workflow-run state only.
 permissions:
   issues: write
   issue-comment: write

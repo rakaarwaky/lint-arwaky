@@ -11,7 +11,9 @@ use rmcp::model::{
 use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
 
-use mcp_server_lint_arwaky::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
+use crate::taxonomy_mcp_server_vo::{
+    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
+};
 
 use crate::surface_mcp_action_command::McpActionSurface;
 
@@ -63,9 +65,42 @@ impl LintArwakyMcpServer {
             Err(error) => return validation_error(&error),
         };
 
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "mcp_execute_command_invocation",
+            tool = "execute_command",
+            action = %action,
+            path = %path,
+            threshold,
+            dry_run,
+            "MCP command invocation"
+        );
         let result = self
             .action
             .execute_command(&action, &path, threshold, dry_run);
+        let exit_code = result
+            .get("exit_code")
+            .and_then(serde_json::Value::as_i64)
+            .unwrap_or(2);
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "mcp_execute_command_result",
+            tool = "execute_command",
+            action = %action,
+            success = exit_code == 0,
+            exit_code,
+            "MCP command result"
+        );
+        if matches!(action.as_str(), "install-hook" | "uninstall-hook") {
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "git_hook_change",
+                action = %action,
+                success = exit_code == 0,
+                exit_code,
+                "MCP git-hook action result"
+            );
+        }
         serde_json::to_string(&result).unwrap_or_default()
     }
 

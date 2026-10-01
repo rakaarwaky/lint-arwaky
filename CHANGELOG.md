@@ -27,6 +27,12 @@
   `crates/shared/skills/`, colocating packaged assets with the crate that owns
   and embeds them.
 
+<!-- STATUS (PE-3-01 / #623, recorded 2026-10-01): 3.7.1 below is versioned in Cargo.toml
+     and changelogged here, but has NO corresponding GitHub tag or Release
+     (`gh release view v3.7.1` → not found; `gh api .../tags` lists no v3.7.1). Treat it
+     as not-yet-released. Resolve the tag/Release status (see ROADMAP.md Risk Register)
+     before adding further entries above this line or bumping the version again. -->
+
 ## 3.7.1 (2026-09-27)
 
 ### Features

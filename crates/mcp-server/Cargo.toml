@@ -26,6 +26,9 @@ dispatcher = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 rmcp = { workspace = true }
+# Direct dependency required by the `JsonSchema` derive: `rmcp` re-exports the
+# trait for the `use`, but the derive expands to `::schemars::…` paths.
+schemars = { workspace = true }
 dirs = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

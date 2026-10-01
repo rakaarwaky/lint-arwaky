@@ -7,7 +7,9 @@ mod mock_filesystem;
 // mock lives in the shared crate's tests dir; this #[path] link keeps a single
 // source of truth across the workspace (T1/D2).
 
-use dispatcher_lint_arwaky::surface_check_action::{ScanOptions, collect_scan};
+use dispatcher_lint_arwaky::surface_check_action::{
+    ScanOptions, collect_scan, collect_scan_with_progress,
+};
 use shared_common::FilePath;
 use std::sync::Arc;
 
@@ -39,6 +41,24 @@ fn collect_scan_nonexistent_path_returns_error() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(err.contains("does not exist"));
+}
+
+#[test]
+fn progress_hook_is_called_before_scan_validation() {
+    let opts = ScanOptions {
+        path: Some(FilePath::new("/nonexistent/path".to_string()).unwrap()),
+        multi_project_orchestrator: None,
+        filter: None,
+        member: None,
+        filesystem: mock_seam(),
+        scan_aggregates: None,
+    };
+    let mut phases = Vec::new();
+    let result = collect_scan_with_progress(opts, |phase, done, total| {
+        phases.push((phase, done, total));
+    });
+    assert!(result.is_err());
+    assert_eq!(phases[0].0, "Starting scan");
 }
 
 #[test]

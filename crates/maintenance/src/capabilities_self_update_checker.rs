@@ -117,6 +117,13 @@ impl SelfUpdateChecker {
             "https://github.com/{}/releases/download/{}/lint-arwaky-cli.sha256",
             GITHUB_REPO, tag
         );
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "self_update_attempt",
+            release_tag = %tag,
+            source_url = %asset_url,
+            "self-update download started"
+        );
         let dir = self.install_dir()?;
         let target = dir.join("lint-arwaky-cli");
         let tmp = dir.join(".lint-arwaky-cli.download");
@@ -132,6 +139,14 @@ impl SelfUpdateChecker {
         );
         if !success {
             let _ = self.io.remove_file(&tmp);
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "self_update_result",
+                release_tag = %tag,
+                action = "failed",
+                reason = "asset_download_failed",
+                "self-update download failed"
+            );
             let detail = if stderr.trim().is_empty() {
                 "release asset download failed"
             } else {
@@ -146,19 +161,38 @@ impl SelfUpdateChecker {
         );
         if !ok {
             let _ = self.io.remove_file(&tmp);
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "self_update_result",
+                release_tag = %tag,
+                action = "refused",
+                reason = "checksum_unavailable",
+                "self-update refused installation"
+            );
             return Err(
                 "release has no published SHA-256 checksum; refusing to install".to_string(),
             );
         }
-        let (stdout, _, verified) = self.io.run_external_command_in(
-            &ToolName::new("sha256sum"),
-            &["--check", &checksum_tmp_str],
-            &dir_str,
-        );
+        let verification = self.verify_download_checksum(&tmp, &checksum_tmp);
         let _ = self.io.remove_file(&checksum_tmp);
-        if !verified {
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "self_update_checksum",
+            release_tag = %tag,
+            checksum_verified = verification.is_ok(),
+            "self-update checksum verification completed"
+        );
+        if let Err(error) = verification {
             let _ = self.io.remove_file(&tmp);
-            return Err(format!("checksum verification failed: {}", stdout.trim()));
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "self_update_result",
+                release_tag = %tag,
+                action = "refused",
+                reason = "checksum_mismatch",
+                "self-update refused installation"
+            );
+            return Err(error);
         }
         let (_, _, moved) = self.io.run_external_command_in(
             &ToolName::new("mv"),
@@ -167,6 +201,14 @@ impl SelfUpdateChecker {
         );
         if !moved {
             let _ = self.io.remove_file(&tmp);
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "self_update_result",
+                release_tag = %tag,
+                action = "failed",
+                reason = "replacement_failed",
+                "self-update replacement failed"
+            );
             return Err("failed to move downloaded binary into place".to_string());
         }
         let (_, _, chmodded) = self.io.run_external_command_in(
@@ -175,8 +217,75 @@ impl SelfUpdateChecker {
             &dir_str,
         );
         if !chmodded {
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "self_update_result",
+                release_tag = %tag,
+                action = "failed",
+                reason = "chmod_failed",
+                "self-update installed binary but chmod failed"
+            );
             return Err("failed to make downloaded binary executable".to_string());
         }
+        tracing::info!(
+            target: "lint_arwaky::audit",
+            event = "self_update_result",
+            release_tag = %tag,
+            action = "installed",
+            destination = %target_str,
+            "self-update replacement completed"
+        );
         Ok(target_str)
+    }
+
+    /// Verify the published hash against the downloaded temporary file itself.
+    /// The checksum asset may name the final binary, so it must never be passed
+    /// directly to `sha256sum --check` from the install directory.
+    pub fn verify_download_checksum(
+        &self,
+        downloaded: &Path,
+        published_checksum: &Path,
+    ) -> Result<(), String> {
+        let checksum = self
+            .io
+            .read_to_string(published_checksum)
+            .map_err(|e| format!("cannot read published checksum: {e}"))?;
+        let expected = checksum
+            .value
+            .split_whitespace()
+            .next()
+            .filter(|hash| hash.len() == 64 && hash.bytes().all(|b| b.is_ascii_hexdigit()))
+            .ok_or_else(|| "published checksum is not a valid SHA-256 digest".to_string())?;
+        let directory = downloaded.parent().unwrap_or_else(|| Path::new("."));
+        let filename = downloaded
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| "download path has no valid filename".to_string())?;
+        let rewritten = directory.join(".lint-arwaky-cli.sha256.verify");
+        self.io
+            .write_string(&rewritten, &format!("{expected}  {filename}\n"))
+            .map_err(|e| format!("cannot prepare checksum verification: {e}"))?;
+
+        let rewritten_filename = rewritten
+            .file_name()
+            .and_then(|name| name.to_str())
+            .ok_or_else(|| "checksum verification path has no valid filename".to_string())?;
+        let directory_str = directory.to_string_lossy().to_string();
+        let (stdout, stderr, verified) = self.io.run_external_command_in(
+            &ToolName::new("sha256sum"),
+            &["--check", rewritten_filename],
+            &directory_str,
+        );
+        let _ = self.io.remove_file(&rewritten);
+        if verified {
+            Ok(())
+        } else {
+            let detail = if stderr.trim().is_empty() {
+                stdout.trim()
+            } else {
+                stderr.trim()
+            };
+            Err(format!("checksum verification failed: {detail}"))
+        }
     }
 }

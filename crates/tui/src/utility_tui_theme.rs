@@ -36,5 +36,22 @@ pub const MIN_TERMINAL_WIDTH: u16 = 40;
 
 /// Returns true when the user has requested no-color output.
 pub fn no_color() -> bool {
-    std::env::var("NO_COLOR").is_ok()
+    std::env::var_os("NO_COLOR").is_some()
+}
+
+/// Resolve a design-token color for the current terminal accessibility mode.
+/// All renderers call this helper instead of applying raw palette constants.
+pub fn color(value: Color) -> Color {
+    color_with_override(value, no_color())
+}
+
+/// Pure form of [`color`] used by rendering tests without mutating process-wide
+/// environment state. `Color::Reset` delegates foreground/background selection
+/// to the terminal and is safe for monochrome terminals.
+pub fn color_with_override(value: Color, no_color_requested: bool) -> Color {
+    if no_color_requested {
+        Color::Reset
+    } else {
+        value
+    }
 }

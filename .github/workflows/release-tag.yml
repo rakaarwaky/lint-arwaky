@@ -12,6 +12,7 @@ on:
     types: [closed]
     branches: [main]
 
+# Creates tags and dispatches the release workflow.
 permissions:
   contents: write
 
