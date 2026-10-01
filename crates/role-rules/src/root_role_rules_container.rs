@@ -63,7 +63,7 @@ impl RoleContainer {
 
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
         let deps = RoleCheckerDeps {
-            classifier: Arc::new(RoleClassifier::new()),
+            classifier: Arc::clone(&self.deps.classifier),
             taxonomy: Arc::clone(&self.deps.taxonomy),
             contract_rust: Arc::clone(&self.deps.contract_rust),
             contract_python: Arc::clone(&self.deps.contract_python),

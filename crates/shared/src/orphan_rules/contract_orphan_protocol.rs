@@ -3,12 +3,13 @@
 // One file for the orphan feature. Each trait below is one capability
 // seam: a trait carries every method that capability implements, with one
 // concrete return type each, so a capability implements its trait outright
-// and never carries unimplemented stubs. One trait per FR-OrphanRules-002..008.
+// and never carries unimplemented stubs. One trait per FR-OrphanRules-002..008
+// — seven traits against the seven requirements in `crates/orphan-rules/FRD.md`,
+// whose numbering is canonical.
 //
-// FR-OrphanRules-001 (graph context), FR-OrphanRules-002 (entry points), and
-// FR-OrphanRules-003 (reachability) deliberately have no trait here. They are
-// orchestration steps the orphan-rules agent owns: it receives the context
-// from the filesystem aggregate and delegates the pure work to shared
+// FR-OrphanRules-001 (graph context, entry points, and reachability) has no
+// trait here. It is orchestration the orphan-rules agent owns: it receives the
+// context from the filesystem aggregate and delegates the pure work to shared
 // utilities. An agent must not implement a contract protocol (AES405), and no
 // other feature consumes those steps, so a seam would have exactly one
 // implementer — the agent — which is the shape the rule forbids.
@@ -22,7 +23,7 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{
 };
 use std::collections::HashMap;
 
-/// FR-OrphanRules-004 (AES501): taxonomy files must have a higher-layer importer
+/// FR-OrphanRules-002 (AES501): taxonomy files must have a higher-layer importer
 /// or be reachable from an entry point.
 pub trait ITaxonomyOrphanProtocol: Send + Sync {
     /// Detect taxonomy-layer orphans: files under taxonomy/ that nothing imports.
@@ -38,7 +39,7 @@ pub trait ITaxonomyOrphanProtocol: Send + Sync {
     ) -> OrphanIndicatorResult;
 }
 
-/// FR-OrphanRules-005 (AES502): contract files must be reachable and have both
+/// FR-OrphanRules-003 (AES502): contract files must be reachable and have both
 /// an implementation and a caller.
 pub trait IContractOrphanProtocol: Send + Sync {
     /// Detect contract-layer orphans: traits/aggregates never implemented or exported.
@@ -53,7 +54,7 @@ pub trait IContractOrphanProtocol: Send + Sync {
     ) -> OrphanIndicatorResult;
 }
 
-/// FR-OrphanRules-006 (AES503): capability files must be reachable and wired
+/// FR-OrphanRules-004 (AES503): capability files must be reachable and wired
 /// into a root container.
 pub trait ICapabilitiesOrphanProtocol: Send + Sync {
     /// Detect capabilities-layer orphans: checkers never wired into a container.
@@ -67,7 +68,7 @@ pub trait ICapabilitiesOrphanProtocol: Send + Sync {
     ) -> OrphanIndicatorResult;
 }
 
-/// FR-OrphanRules-007 (AES504): utility files must be reachable and imported by
+/// FR-OrphanRules-005 (AES504): utility files must be reachable and imported by
 /// at least one consumer layer.
 pub trait IUtilityOrphanProtocol: Send + Sync {
     /// Detect utility-layer orphans: helper functions imported by nobody.
@@ -82,7 +83,7 @@ pub trait IUtilityOrphanProtocol: Send + Sync {
     ) -> OrphanIndicatorResult;
 }
 
-/// FR-OrphanRules-008 (AES505): agent files must be reachable and have their
+/// FR-OrphanRules-006 (AES505): agent files must be reachable and have their
 /// aggregate traits wired into a composition root.
 pub trait IAgentOrphanProtocol: Send + Sync {
     /// Detect agent-layer orphans: orchestrators never composed into a root container.
@@ -96,7 +97,7 @@ pub trait IAgentOrphanProtocol: Send + Sync {
     ) -> OrphanIndicatorResult;
 }
 
-/// FR-OrphanRules-009 (AES506): surface files must be reachable, checked per
+/// FR-OrphanRules-007 (AES506): surface files must be reachable, checked per
 /// their Smart / Utility / Passive group classification.
 pub trait ISurfacesOrphanProtocol: Send + Sync {
     /// Detect surface-layer orphans: UI/command surfaces never reachable from an entry point.

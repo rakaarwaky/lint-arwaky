@@ -5,10 +5,12 @@
 // (`IExternalLintAggregate`) is the entry point and is not counted toward the
 // 1:1 FR-to-protocol mapping.
 //
-// FR-ExternalLint-001 (project language detection) deliberately has no trait
-// here: language detection belongs to the `filesystem` aggregate, which serves
-// it as `FilesystemRequest::DetectProjectLanguages`. A feature does not own a
-// protocol for behaviour another feature already owns.
+// Project language detection has no trait here and no external-lint
+// requirement: it is FR-Filesystem-005B, served by the `filesystem` aggregate as
+// `FilesystemRequest::DetectProjectLanguages`. A feature does not own a protocol
+// for behaviour another feature already owns. `FR-ExternalLint-001` is the
+// adapter-selection requirement, whose seam is
+// `IExternalLintSelectorProtocol` below.
 
 use crate::taxonomy_duration_vo::Timeout;
 use shared_common::taxonomy_adapter_list_vo::AdapterNameList;

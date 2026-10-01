@@ -154,7 +154,7 @@ impl RoleOrchestrator {
                     // feature that declares exactly one.
                     auditor.check_agent_routing(file, "agent", violations);
                     auditor.check_agent_block_order(file, violations);
-                    auditor.check_agent_single_aggregate(file, violations);
+                    auditor.check_agent_protocol_forbidden(file, violations);
                     auditor.check_agent_block_markers(file, violations);
                     auditor.check_agent_io_forbidden(file, violations);
                     auditor.check_agent_constant_placement(file, violations);

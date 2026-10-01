@@ -23,7 +23,7 @@ class IScannerAggregate(Protocol):
         ...
 
 
-class ProtocolImplAgent:
+class ProtocolImplAgent(IScannerAggregate):
     def __init__(self, scanner: IScannerProtocol, reporter: IReporterProtocol):
         self._scanner = scanner
         self._reporter = reporter

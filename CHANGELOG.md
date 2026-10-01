@@ -37,7 +37,6 @@
   js, markdown), replacing a dead helper with no caller. This also fixes a
   latent bug: external-lint's `scan_all` passed
   `ExternalLintContext::default()`, so it selected zero adapters.
-
 - **Project language detection no longer follows symbolic links.** The
   extension walk used `is_dir()`, which follows a link, so a symlink inside a
   project could decide its language flags from files outside the root, and a

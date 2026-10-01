@@ -41,6 +41,15 @@ fn fr001_orchestration_steps_are_inherent_agent_methods() {
         &ArchOrphanAnalyzer,
         &shared_orphan_rules::OrphanFileListVO,
     ) -> shared_orphan_rules::OrphanFileListVO = ArchOrphanAnalyzer::identify_orphan_entry_points;
+    // The reachability step moved off IReachabilityProtocol along with the other
+    // two, so it needs the same assertion — without it a signature change or a
+    // deletion here would pass CI unnoticed.
+    let _reach: fn(
+        &ArchOrphanAnalyzer,
+        &shared_orphan_rules::OrphanFileListVO,
+        &shared_quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext,
+    ) -> shared_quality_rules::taxonomy_quality_rules_vo::ReachabilityResult =
+        ArchOrphanAnalyzer::trace_alive_files;
 }
 
 #[test]

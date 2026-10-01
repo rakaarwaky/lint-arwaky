@@ -214,13 +214,29 @@ fn path_contains_component(path: &std::path::Path, component: &str) -> bool {
 /// Walks the directory tree (or inspects a single file) and reports whether
 /// Rust (`.rs`), Python (`.py`), JS/TS (`.js`/`.jsx`/`.ts`/`.tsx`), and
 /// Markdown (`.md`/`.markdown`) files are present. Ignores directories in
-/// `shared_common::DEFAULT_IGNORED_PATHS`.
+/// `shared_common::DEFAULT_IGNORED_PATHS` and every symbolic link.
+///
+/// Symbolic links are skipped rather than followed. Following them would let a
+/// link decide the answer for files that are not in the project at all, and a
+/// cycle (`loop -> .`) would recurse until the stack is gone. The walk answers
+/// "what languages does this directory contain", so only entries physically
+/// inside `root` may contribute.
 pub fn detect_project_languages(root: &std::path::Path) -> ProjectLanguagesVO {
     let mut flags = ProjectLanguagesVO::default();
 
+    /// Classify one directory entry, returning true when every group is found.
+    ///
+    /// `is_dir` / `is_file` are deliberately avoided: both follow a symlink, so
+    /// `symlink_metadata` is what distinguishes a real entry from a link.
     fn walk(dir: &std::path::Path, flags: &mut ProjectLanguagesVO) -> bool {
         for path in list_dir_entries(dir) {
-            if path.is_dir() {
+            let Ok(meta) = std::fs::symlink_metadata(&path) else {
+                continue;
+            };
+            if meta.file_type().is_symlink() {
+                continue;
+            }
+            if meta.is_dir() {
                 let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
                     continue;
@@ -239,14 +255,22 @@ pub fn detect_project_languages(root: &std::path::Path) -> ProjectLanguagesVO {
         false
     }
 
-    if root.is_file() {
-        if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
-            classify_ext(ext, &mut flags);
+    // A root that is itself a symlink still names a real file, so classify it
+    // from its own name; only a linked *directory* is refused, because
+    // descending into it would leave the requested root.
+    match std::fs::symlink_metadata(root) {
+        Ok(meta) if meta.file_type().is_symlink() && !meta.is_file() => flags,
+        _ => {
+            if root.is_file() {
+                if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
+                    classify_ext(ext, &mut flags);
+                }
+            } else {
+                walk(root, &mut flags);
+            }
+            flags
         }
-    } else {
-        walk(root, &mut flags);
     }
-    flags
 }
 
 /// Classify a single file extension into language-group flags.

@@ -190,9 +190,9 @@ fn utility_typescript_role_auditor_implements_protocol() {
 
 #[test]
 fn role_classifier_capability_classifies_file_prefix() {
-    // AES405: an agent must not implement a contract protocol. Classification is
-    // owned by the RoleClassifier capability, which the orchestrator delegates to,
-    // so it has no contract trait at all — an inherent method is enough.
+    // AES405: the orchestrator must not implement IClassificationProtocol itself.
+    // The trait is fulfilled by the RoleClassifier capability, which the
+    // orchestrator holds as a dependency and delegates to.
     let classifier = RoleClassifier::new();
     let file = dummy_file();
     assert!(classifier.classify_layer(&file).is_none());
@@ -204,6 +204,51 @@ fn role_classifier_capability_classifies_file_prefix() {
             .map(|l| l.value.to_string()),
         Some("capabilities".to_string())
     );
+}
+
+#[test]
+fn role_classifier_maps_every_layer_prefix() {
+    let c = RoleClassifier::new();
+    let layer = |name: &str| {
+        c.classify_layer(&dummy_file_named(name))
+            .map(|l| l.value.to_string())
+    };
+    assert_eq!(layer("taxonomy_x_vo.rs").as_deref(), Some("taxonomy"));
+    assert_eq!(layer("contract_x_protocol.rs").as_deref(), Some("contract"));
+    assert_eq!(layer("capabilities_x.rs").as_deref(), Some("capabilities"));
+    assert_eq!(layer("capability_x.rs").as_deref(), Some("capabilities"));
+    assert_eq!(layer("utility_x.rs").as_deref(), Some("utility"));
+    assert_eq!(layer("agent_x.rs").as_deref(), Some("agent"));
+    assert_eq!(layer("surface_x.rs").as_deref(), Some("surfaces"));
+    assert_eq!(layer("surfaces_x.rs").as_deref(), Some("surfaces"));
+}
+
+#[test]
+fn role_classifier_skips_root_and_unknown_prefixes() {
+    let c = RoleClassifier::new();
+    let layer = |name: &str| {
+        c.classify_layer(&dummy_file_named(name))
+            .map(|l| l.value.to_string())
+    };
+    // `root` is pure DI wiring; unrecognised prefixes are skipped too.
+    assert_eq!(layer("root_x_container.rs"), None);
+    assert_eq!(layer("shared_x_thing.rs"), None);
+}
+
+#[test]
+fn role_classifier_skips_bare_stem_without_underscore() {
+    // FR-RoleRules-001: the prefix is the first `_`-separated segment, so a
+    // filename with no underscore has no prefix match. `split('_').next()`
+    // alone would return the whole stem and classify `agent.rs` as an agent.
+    let c = RoleClassifier::new();
+    for name in ["agent.rs", "taxonomy.py", "utility.rs", "contract.ts"] {
+        assert_eq!(
+            c.classify_layer(&dummy_file_named(name))
+                .map(|l| l.value.to_string()),
+            None,
+            "`{name}` has no `_`-separated prefix and must be skipped"
+        );
+    }
 }
 
 #[test]

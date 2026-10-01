@@ -42,8 +42,8 @@ impl IAgentRoleProtocol for AgentTsRoleAuditor {
         self.block_order(&file.content, &file.path.to_string_lossy(), violations);
     }
 
-    fn check_agent_single_aggregate(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
-        utility_agent_role_checker::check_single_aggregate(file, violations);
+    fn check_agent_protocol_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {
+        utility_agent_role_checker::check_agent_protocol_forbidden(file, violations);
     }
 
     fn check_agent_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>) {

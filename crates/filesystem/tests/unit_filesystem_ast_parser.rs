@@ -235,3 +235,71 @@ fn ast_cache_evicts_old_entries_at_capacity() {
     parser.parse_all(&mut files);
     assert!(parser.cached_ast_count() <= 2);
 }
+
+// ── impl trait-name extraction ─────────────────────────────
+//
+// The trait name is what every downstream consumer keys on — AES405's
+// protocol check, orphan reachability, and the implementation graph. Reading up
+// to the last `>` in the impl head mis-reads a parameterized trait
+// (`impl IFoo<u32> for Bar`) as `u32`, silently dropping the implementation, so
+// each head shape is pinned here.
+
+fn rust_impl_trait(content: &str) -> Option<String> {
+    use shared_filesystem::utility_ast_rust::extract_rust_metadata;
+    let mut parser = tree_sitter::Parser::new();
+    parser
+        .set_language(&tree_sitter_rust::LANGUAGE.into())
+        .unwrap();
+    let tree = parser.parse(content, None).unwrap();
+    let meta = extract_rust_metadata(&tree, content);
+    meta.impl_blocks
+        .into_iter()
+        .next()
+        .and_then(|b| b.trait_name)
+}
+
+#[test]
+fn plain_impl_trait_name() {
+    assert_eq!(
+        rust_impl_trait("impl Foo for Bar {\n}\n").as_deref(),
+        Some("Foo")
+    );
+}
+
+#[test]
+fn generic_impl_keeps_trait_name() {
+    assert_eq!(
+        rust_impl_trait("impl<T> Foo for Bar {\n}\n").as_deref(),
+        Some("Foo")
+    );
+}
+
+#[test]
+fn lifetime_generic_impl_keeps_trait_name() {
+    assert_eq!(
+        rust_impl_trait("impl<'a, T> Foo for Bar {\n}\n").as_deref(),
+        Some("Foo")
+    );
+}
+
+#[test]
+fn parameterized_trait_keeps_its_own_name() {
+    // The regression: reading up to the last `>` yields `u32` here.
+    assert_eq!(
+        rust_impl_trait("impl Foo<u32> for Bar {\n}\n").as_deref(),
+        Some("Foo")
+    );
+}
+
+#[test]
+fn path_qualified_trait_keeps_full_path() {
+    assert_eq!(
+        rust_impl_trait("impl crate::Foo for Bar {\n}\n").as_deref(),
+        Some("crate::Foo")
+    );
+}
+
+#[test]
+fn inherent_impl_has_no_trait_name() {
+    assert_eq!(rust_impl_trait("impl Bar {\n}\n"), None);
+}

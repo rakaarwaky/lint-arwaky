@@ -26,6 +26,7 @@ use shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -73,7 +74,19 @@ impl ExternalLintOrchestrator {
     /// project-level language detection (FR-Filesystem-005). external-lint
     /// borrows the capability rather than re-implementing the extension walk.
     pub fn scan_all(&self, path: &FilePath) -> LintResultList {
-        let context = self.context_for(path);
+        let languages = self
+            .deps
+            .filesystem
+            .execute(FilesystemRequest::detect_project_languages(
+                std::path::Path::new(&path.value),
+            ))
+            .into_project_languages();
+        // Nothing recognisable under the root means no adapter applies, so stop
+        // before building a context that would select nothing anyway.
+        if languages.is_empty() {
+            return LintResultList::new(Vec::new());
+        }
+        let context = self.context_from_languages(&languages);
         self.scan_all_with_context(path, &context)
     }
 
@@ -165,24 +178,26 @@ impl ExternalLintOrchestrator {
         )
     }
 
-    /// Ask the `filesystem` aggregate which languages are present under `path`.
+    /// Build a scan context from the language flags the `filesystem` aggregate
+    /// reported for a project root.
     ///
-    /// Delegated, not computed here: the extension walk is the filesystem
-    /// feature's capability, so the agent only reads the returned flags.
-    fn context_for(&self, path: &FilePath) -> ExternalLintContext {
-        let languages = self
-            .deps
-            .filesystem
-            .execute(FilesystemRequest::detect_project_languages(
-                std::path::Path::new(&path.value),
-            ))
-            .into_project_languages();
+    /// The extension walk is the filesystem feature's capability, so the agent
+    /// only reads the returned flags and shapes them into a context.
+    fn context_from_languages(&self, languages: &ProjectLanguagesVO) -> ExternalLintContext {
         ExternalLintContext {
             has_rust: languages.has_rust,
             has_python: languages.has_python,
             has_js: languages.has_js,
             has_markdown: languages.has_markdown,
-            ignored_paths: Vec::new(),
+            // Built-in ignore list, so a caller that delegates the whole context
+            // to this agent still gets findings filtered out of `target`,
+            // `node_modules`, `tests` and the rest. An empty list would skip
+            // the post-scan filter entirely, since the filter only runs when
+            // there is something to filter against.
+            ignored_paths: shared_common::DEFAULT_IGNORED_PATHS
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
             config_entries: Vec::new(),
         }
     }

@@ -26,6 +26,14 @@ impl IClassificationProtocol for RoleClassifier {
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or_default();
+        // The segment only counts when the stem actually contains a `_`.
+        // FR-RoleRules-001 scopes the map to `layer_concern_role` filenames and
+        // says a file with no underscore has no prefix match; without this guard
+        // `split('_').next()` hands back the whole stem, so a bare `agent.rs`
+        // would be classified — and then audited — as an agent.
+        if !stem.contains('_') {
+            return None;
+        }
         match stem.split('_').next().unwrap_or_default() {
             "taxonomy" => Some(LayerNameVO::new("taxonomy")),
             "contract" => Some(LayerNameVO::new("contract")),

@@ -179,19 +179,24 @@ pub trait IAgentRoleProtocol: Send + Sync {
     /// Block 2 (aggregate impl) must precede Block 3 (inherent impl). HIGH.
     fn check_agent_block_order(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
-    /// At most one contract protocol implemented, and only alongside the
-    /// aggregate. HIGH.
+    /// An agent file implements no contract protocol. HIGH.
     ///
-    /// An agent is the feature's composition root: it implements the
-    /// feature aggregate and coordinates injected seams. Implementing a
-    /// contract protocol as well duplicates a capability's job in the
-    /// orchestration layer, which is where the `check_single_protocol`
-    /// counterpart for capabilities draws its line. A std trait impl
-    /// (`Default`, `Display`, `Clone`) is not a contract protocol and is
-    /// reported as nothing.
-    fn check_agent_single_aggregate(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+    /// A flat prohibition, not a budget: no number of implementations is
+    /// acceptable, and one alongside the aggregate is already a violation. An
+    /// agent is the feature's composition root: it implements the feature
+    /// aggregate and coordinates injected seams, so implementing a contract
+    /// protocol as well duplicates a capability's job in the orchestration
+    /// layer. A std trait impl (`Default`, `Display`, `Clone`) and the
+    /// aggregate trait itself are not contract protocols and are reported as
+    /// nothing.
+    fn check_agent_protocol_forbidden(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
-    /// Block markers must run 1 → 2 → 3 with no Block 4 or beyond. MEDIUM.
+    /// No block marker above 3. MEDIUM.
+    ///
+    /// A ceiling, not a sequence check: any `Block <n>:` banner with n > 3 is
+    /// reported, and nothing else about the markers is examined. Block ordering
+    /// and presence are a different check — `check_agent_block_order` handles
+    /// Block 2 preceding Block 3.
     ///
     /// The 3-block structure is a readability contract: Block 1 types and
     /// injected deps, Block 2 the aggregate, Block 3 constructors and

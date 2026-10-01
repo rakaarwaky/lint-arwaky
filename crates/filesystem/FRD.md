@@ -24,7 +24,7 @@ flowchart TD
         O --> P2["IGraphProtocol\n(FR-Filesystem-002)"]
         O --> P3["IFileSystemIOProtocol\n(FR-Filesystem-003)"]
         O --> P4["IToolResolutionProtocol\n(FR-Filesystem-004)"]
-        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)\nworkspace + project languages"]
+        O --> P5["IWorkspaceProtocol\n(FR-Filesystem-005)\nworkspace root + members\n+ project languages (FR-005B)"]
         O --> C["Cache\n(DashMap)"]
 
         P1 --> T1["tree-sitter parsers\n(Rust, Python, TS, JS)"]
@@ -33,6 +33,7 @@ flowchart TD
         P3 --> T4["process executor"]
         P4 --> T5["PATH / local binary\nresolver"]
         P5 --> T6["manifest detector\n(Cargo.toml, pyproject, package.json)"]
+        P5 --> T7["extension classifier\n(rs/py/js/md → flags)"]
 
         T1 --> R1["ParsedEntry[]\n+ ImportEntry[]"]
         T2 --> R1
@@ -370,7 +371,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-002: Dependency Graph Construction** — e.g. A imports B → Edge A → B
 - **SCEN-003: File I/O & Directory Operations** — e.g. Workspace with 100 .rs files → All 100 discovered
 - **SCEN-004: Tool Resolution** — e.g. node_modules/.bin/eslint exists → Command resolved
-- **SCEN-005: Workspace Detection** — e.g. Start from crates/some-crate/src → Finds workspace root
+- **SCEN-005: Workspace & Project Language Detection** — e.g. Start from crates/some-crate/src → Finds workspace root; a root of `.rs` + `.md` sets `has_rust` + `has_markdown` only
 
 ### SCEN-001: AST Parsing & Import Extraction
 
@@ -420,7 +421,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Config file present | Detected = true |
 | 4 | Cargo.toml in ancestor | Found |
 
-### SCEN-005: Workspace Detection
+### SCEN-005: Workspace & Project Language Detection
 
 | # | Scenario | Expected |
 | --- | --- | --- |
@@ -428,6 +429,10 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 2 | Path with Cargo.toml (no workspace) | is_member = true |
 | 3 | Path with Cargo.toml nearby | language = Rust |
 | 4 | Leaf member detection | No sub-members |
+| 5 | Project root containing `.rs` and `.md` files only | `has_rust` + `has_markdown` true; `has_python` + `has_js` false (FR-005B) |
+| 6 | Project root with source files only under `target/` | All four flags false — `DEFAULT_IGNORED_PATHS` skipped (FR-005B) |
+| 7 | Project root containing a symlink to a directory outside it | Outside files do not set any flag (FR-005B) |
+| 8 | Single file passed as root | Only that file's extension is classified (FR-005B) |
 
 ---
 
