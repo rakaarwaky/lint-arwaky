@@ -256,21 +256,23 @@ pub fn detect_project_languages(root: &std::path::Path) -> ProjectLanguagesVO {
     }
 
     // A root that is itself a symlink still names a real file, so classify it
-    // from its own name; only a linked *directory* is refused, because
-    // descending into it would leave the requested root.
-    match std::fs::symlink_metadata(root) {
-        Ok(meta) if meta.file_type().is_symlink() && !meta.is_file() => flags,
-        _ => {
-            if root.is_file() {
-                if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
-                    classify_ext(ext, &mut flags);
-                }
-            } else {
-                walk(root, &mut flags);
-            }
-            flags
-        }
+    // from its own name. Only a symlink pointing at a *directory* is refused:
+    // descending into it would leave the requested root. `symlink_metadata`
+    // reports the link rather than its target, so the target has to be asked
+    // about separately — `is_file()` on link metadata is always false.
+    let root_is_linked_dir = std::fs::symlink_metadata(root)
+        .is_ok_and(|meta| meta.file_type().is_symlink() && root.is_dir());
+    if root_is_linked_dir {
+        return flags;
     }
+    if root.is_file() {
+        if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
+            classify_ext(ext, &mut flags);
+        }
+    } else {
+        walk(root, &mut flags);
+    }
+    flags
 }
 
 /// Classify a single file extension into language-group flags.
