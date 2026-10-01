@@ -38,7 +38,7 @@ pub fn collect_git_diff(
     let files: Vec<FilePath> = changed_files
         .into_iter()
         .filter(|fp| {
-            shared_common::utility_language_detector::is_lintable(fp)
+            shared_filesystem::utility_language_detector::is_lintable(fp)
                 && filter.map(|f| fp.value.contains(f)).unwrap_or(true)
         })
         .collect();

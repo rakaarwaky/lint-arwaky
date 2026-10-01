@@ -1,5 +1,5 @@
 // PURPOSE: utility_parser_dispatcher — route file parsing to the correct language parser.
-use crate::taxonomy_ast_vo::FileParseResultVO;
+use shared_common::taxonomy_ast_vo::FileParseResultVO;
 use std::path::Path;
 
 pub fn parse_file_content(path: &str, content: &str) -> FileParseResultVO {

@@ -2,7 +2,7 @@
 //
 // Implements IUnusedImportFixProtocol to remove unused import lines
 // (use, import, from, require(), = require()) from source files.
-// All stateless logic is provided by shared_common::utility_word_boundary
+// All stateless logic is provided by shared_auto_fix::utility_word_boundary
 // helpers; this struct owns the IFileSystemIOProtocol seam directly.
 
 use shared_auto_fix::contract_fix_protocol::IUnusedImportFixProtocol;

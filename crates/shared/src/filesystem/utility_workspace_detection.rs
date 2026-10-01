@@ -346,7 +346,7 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .unwrap_or_else(|_| e.path().to_path_buf());
             let rel_path = abs_path.strip_prefix(&abs_root).unwrap_or(e.path());
             let rel_str = rel_path.to_string_lossy();
-            !shared_common::utility_path_filter::is_path_ignored(&rel_str, &merged_ignored)
+            !crate::utility_path_filter::is_path_ignored(&rel_str, &merged_ignored)
         })
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()

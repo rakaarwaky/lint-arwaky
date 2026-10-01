@@ -2,14 +2,14 @@
 //
 // Implements ISymbolRenameProtocol to perform mechanical symbol renaming
 // with word-boundary-aware replacement. Pure rename logic lives in
-// shared_common::utility_word_boundary; this struct owns the
+// shared_auto_fix::utility_word_boundary; this struct owns the
 // IFileSystemIOProtocol seam directly.
 
 use shared_auto_fix::contract_fix_protocol::ISymbolRenameProtocol;
+use shared_auto_fix::utility_word_boundary::{word_boundary_count, word_boundary_replace};
 use shared_auto_fix::{FailReason, FixOutcome, RUST_KEYWORDS, SkipReason};
 use shared_common::taxonomy_name_vo::SymbolName;
 use shared_common::taxonomy_path_vo::FilePath;
-use shared_common::{word_boundary_count, word_boundary_replace};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 

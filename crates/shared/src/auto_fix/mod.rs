@@ -6,6 +6,7 @@ pub mod taxonomy_auto_fix_event;
 pub mod taxonomy_auto_fix_request;
 pub mod taxonomy_auto_fix_response;
 pub mod taxonomy_auto_fix_vo;
+pub mod utility_word_boundary;
 
 // ─── Re-exports ────────────────────────────────────────────
 // Barrel re-export pattern: allows consumers to import directly
@@ -25,3 +26,6 @@ pub use taxonomy_auto_fix_request::FixRequest;
 pub use taxonomy_auto_fix_response::FixResponse;
 pub use taxonomy_auto_fix_vo::FixResult;
 pub use taxonomy_auto_fix_vo::{FailReason, FixOutcome, SkipReason};
+pub use utility_word_boundary::strip_inline_comment;
+pub use utility_word_boundary::word_boundary_count;
+pub use utility_word_boundary::word_boundary_replace;

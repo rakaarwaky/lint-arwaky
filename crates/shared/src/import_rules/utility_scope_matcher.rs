@@ -2,7 +2,7 @@
 // Extracted from forbidden/mandatory checkers to eliminate duplicated
 // stem/suffix extraction and scope-membership logic.
 
-use crate::taxonomy_layer_vo::{Identity, LayerNameVO};
+use shared_common::taxonomy_layer_vo::{Identity, LayerNameVO};
 
 /// Check if a file belongs to a given scope rule based on its filename.
 ///

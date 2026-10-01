@@ -4,8 +4,8 @@ use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::taxonomy_action_vo::ActionName;
 use crate::taxonomy_format_vo::Format;
-use shared_common::taxonomy_action_vo::ActionName;
 use shared_common::taxonomy_lint_result_vo::LintResult;
 use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use shared_common::taxonomy_suggestion_vo::Suggestion;

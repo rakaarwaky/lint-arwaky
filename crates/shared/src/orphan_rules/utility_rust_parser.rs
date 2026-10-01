@@ -1,7 +1,7 @@
 // PURPOSE: utility_rust_parser — Rust AST parsing via syn crate.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
-use crate::taxonomy_ast_vo::{
+use shared_common::taxonomy_ast_vo::{
     AstFnDefVO, AstImportVO, AstModDeclVO, AstStructDefVO, AstTraitDefVO, AstTraitImplVO,
     IdentifierVisitor, RustParseResultVO,
 };

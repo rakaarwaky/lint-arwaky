@@ -5,7 +5,7 @@
 // `string_value_object!` macro.
 //
 // JobId is re-exported from common for backward compatibility.
-use crate::string_value_object;
-pub use crate::taxonomy_job_id_vo::JobId;
+use shared_common::string_value_object;
+pub use shared_common::taxonomy_job_id_vo::JobId;
 
 string_value_object!(ActionName);

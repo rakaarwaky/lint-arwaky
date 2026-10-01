@@ -10,10 +10,13 @@ pub mod utility_ast_python;
 pub mod utility_ast_rust;
 pub mod utility_ast_typescript;
 pub mod utility_barrel_resolution;
+pub mod utility_command_runner;
 pub mod utility_container_wiring;
 pub mod utility_filesystem_io;
 pub mod utility_import_extractor;
 pub mod utility_import_resolution;
+pub mod utility_language_detector;
+pub mod utility_path_filter;
 pub mod utility_tool_resolution;
 pub mod utility_workspace_detection;
 
