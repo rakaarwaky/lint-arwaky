@@ -43,11 +43,11 @@ impl StatusComponent {
     }
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let line = if state.scanning {
+        let line = if state.scan.running {
             // Scan progress indicator: progress bar + phase + counts
             let bar_width = 20;
-            let (filled, _) = if state.scan_files_total > 0 {
-                let ratio = state.scan_files_done as f64 / state.scan_files_total as f64;
+            let (filled, _) = if state.scan.files_total > 0 {
+                let ratio = state.scan.files_done as f64 / state.scan.files_total as f64;
                 let filled = (ratio * bar_width as f64) as usize;
                 (filled.min(bar_width), bar_width)
             } else {
@@ -56,41 +56,44 @@ impl StatusComponent {
             let empty = bar_width - filled;
             let bar: String = bar_filled().repeat(filled) + &bar_empty().repeat(empty);
 
-            let phase_display = if state.scan_phase.is_empty() {
+            let phase_display = if state.scan.phase.is_empty() {
                 "Scanning...".to_string()
             } else {
-                state.scan_phase.clone()
+                state.scan.phase.clone()
             };
 
-            let progress_detail = if state.scan_files_total > 0 {
+            let progress_detail = if state.scan.files_total > 0 {
                 format!(
                     " {} {}/{}",
-                    bar, state.scan_files_done, state.scan_files_total,
+                    bar, state.scan.files_done, state.scan.files_total,
                 )
             } else {
                 format!(" {}", bar)
             };
 
-            let violation_style = if state.scan_violations > 0 {
-                Style::default().fg(theme::VIOLATIONS)
+            let violation_style = if state.scan.violations > 0 {
+                Style::default().fg(theme::color(theme::VIOLATIONS))
             } else {
-                Style::default().fg(theme::PENDING)
+                Style::default().fg(theme::color(theme::PENDING))
             };
 
             Line::from(vec![
                 Span::styled(
                     format!(" {} ", phase_display),
                     Style::default()
-                        .fg(theme::ACCENT)
+                        .fg(theme::color(theme::ACCENT))
                         .add_modifier(ratatui::style::Modifier::BOLD),
                 ),
-                Span::styled(progress_detail, Style::default().fg(theme::LABEL)),
                 Span::styled(
-                    format!(" {} ", vsep()),
-                    Style::default().fg(theme::SEPARATOR),
+                    progress_detail,
+                    Style::default().fg(theme::color(theme::LABEL)),
                 ),
                 Span::styled(
-                    format!("{} {} violations", warn(), state.scan_violations),
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    format!("{} {} violations", warn(), state.scan.violations),
                     violation_style,
                 ),
             ])
@@ -101,23 +104,35 @@ impl StatusComponent {
             };
 
             let violation_style = if state.violation_count > 0 {
-                Style::default().fg(theme::VIOLATIONS)
+                Style::default().fg(theme::color(theme::VIOLATIONS))
             } else {
-                Style::default().fg(theme::CLEAN)
+                Style::default().fg(theme::color(theme::CLEAN))
             };
 
             Line::from(vec![
-                Span::styled(" Status: ", Style::default().fg(theme::SEPARATOR)),
-                Span::styled(&state.status_message, Style::default().fg(theme::LABEL)),
                 Span::styled(
-                    format!(" {} ", vsep()),
-                    Style::default().fg(theme::SEPARATOR),
+                    " Status: ",
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
                 ),
-                Span::styled("Selected: ", Style::default().fg(theme::SEPARATOR)),
-                Span::styled(selected_name, Style::default().fg(theme::ACCENT)),
+                Span::styled(
+                    &state.status_message,
+                    Style::default().fg(theme::color(theme::LABEL)),
+                ),
                 Span::styled(
                     format!(" {} ", vsep()),
-                    Style::default().fg(theme::SEPARATOR),
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    "Selected: ",
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    selected_name,
+                    Style::default().fg(theme::color(theme::ACCENT)),
+                ),
+                Span::styled(
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
                 ),
                 Span::styled(
                     format!("{} {} viol.", warn(), state.violation_count),
@@ -126,7 +141,8 @@ impl StatusComponent {
             ])
         };
 
-        let paragraph = Paragraph::new(line).style(Style::default().bg(theme::BACKGROUND));
+        let paragraph =
+            Paragraph::new(line).style(Style::default().bg(theme::color(theme::BACKGROUND)));
         frame.render_widget(paragraph, area);
     }
 }

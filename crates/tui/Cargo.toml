@@ -34,7 +34,6 @@ tracing-error = { workspace = true }
 ratatui = { workspace = true }
 crossterm = { workspace = true }
 arboard = { workspace = true }
-rayon = { workspace = true }
 dirs = { workspace = true }
 
 [lints]
