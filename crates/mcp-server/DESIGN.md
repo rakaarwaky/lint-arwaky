@@ -45,6 +45,18 @@ rejected before any lint work starts.
 The server never terminates on a client error. A malformed request is answered
 and the loop continues, because an MCP client may recover and retry.
 
+## Response Contract
+
+Every action returns `exit_code` as the primary machine signal (`0` success,
+`1` policy findings, `2` invalid request/runtime error, `3` missing tool). The
+shared `status` vocabulary is `ok`, `warning`, or `error`; action-specific
+outcomes such as `clean`, `violations`, `pass`, and `fail` are reported in
+`result`.
+
+The server confines all client paths to the canonical startup working directory.
+It starts read-only; operators must set `LINT_ARWAKY_MCP_ALLOW_MUTATIONS=true`
+to permit `fix`, hook changes, or project initialization.
+
 ## Invariants
 
 - Tools reach lint behavior through the CLI command layer, never by importing a

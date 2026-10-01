@@ -14,12 +14,15 @@ use shared_filesystem::taxonomy_filesystem_vo::{
     FileEntry, ImportEntry, ParseMetadata, ParseWarning,
 };
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, OnceLock, RwLock};
+use std::collections::VecDeque;
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 pub struct ASTParser {
     asts: DashMap<PathBuf, Arc<tree_sitter::Tree>>,
+    access_order: Mutex<VecDeque<PathBuf>>,
+    cache_capacity: usize,
     warnings: OnceLock<Vec<ParseWarning>>,
     imports: RwLock<Vec<ImportEntry>>,
 }
@@ -103,8 +106,14 @@ impl IParserProtocol for ASTParser {
 
 impl ASTParser {
     pub fn new() -> Self {
+        Self::with_cache_capacity(1024)
+    }
+
+    pub fn with_cache_capacity(cache_capacity: usize) -> Self {
         Self {
             asts: DashMap::new(),
+            access_order: Mutex::new(VecDeque::new()),
+            cache_capacity,
             warnings: OnceLock::new(),
             imports: RwLock::new(Vec::new()),
         }
@@ -169,7 +178,7 @@ impl ASTParser {
                             // Store tree (even with errors) — downstream consumers can use
                             // the partial AST from error-free subtrees, and we avoid
                             // re-parsing on subsequent extract_imports calls.
-                            self.asts.insert(entry.path.clone(), Arc::new(tree));
+                            self.cache_tree(entry.path.clone(), tree);
                             entry.parse_ok = false;
                             (
                                 vec![ParseWarning {
@@ -187,7 +196,7 @@ impl ASTParser {
                             entry.parse_metadata = Some(metadata);
                             entry.parse_ok = true;
                             // Store tree after extracting metadata — tree is moved into Arc.
-                            self.asts.insert(entry.path.clone(), Arc::new(tree));
+                            self.cache_tree(entry.path.clone(), tree);
                             (Vec::new(), imports)
                         }
                     }
@@ -218,6 +227,37 @@ impl ASTParser {
         if let Ok(mut w) = self.imports.write() {
             *w = all_imports;
         }
+    }
+}
+
+impl ASTParser {
+    fn cache_tree(&self, path: PathBuf, tree: tree_sitter::Tree) {
+        if self.cache_capacity == 0 {
+            return;
+        }
+        self.asts.insert(path.clone(), Arc::new(tree));
+        self.touch_cache_key(&path);
+        if let Ok(mut order) = self.access_order.lock() {
+            while self.asts.len() > self.cache_capacity {
+                if let Some(oldest) = order.pop_front() {
+                    self.asts.remove(&oldest);
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+
+    fn touch_cache_key(&self, path: &Path) {
+        if let Ok(mut order) = self.access_order.lock() {
+            order.retain(|existing| existing != path);
+            order.push_back(path.to_path_buf());
+        }
+    }
+
+    /// Number of retained syntax trees (primarily useful for cache telemetry/tests).
+    pub fn cached_ast_count(&self) -> usize {
+        self.asts.len()
     }
 }
 
@@ -269,6 +309,9 @@ impl ASTParser {
     /// Uses Arc clone (refcount bump) instead of deep-copying the tree.
     fn extract_imports(&self, path: &Path, content: &str, language: Language) -> Vec<ImportEntry> {
         let tree = self.asts.get(path).map(|r| Arc::clone(r.value()));
+        if tree.is_some() {
+            self.touch_cache_key(path);
+        }
         shared_filesystem::utility_import_extractor::extract_imports(
             path,
             content,

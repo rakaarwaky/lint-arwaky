@@ -46,6 +46,7 @@ pub fn collect_ci(
     path: Option<FilePath>,
     threshold: Threshold,
 ) -> Result<CiReport, String> {
+    Threshold::try_new(threshold.value())?;
     let root_str = match &path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),

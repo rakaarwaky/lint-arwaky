@@ -45,9 +45,39 @@ pub fn read_lintable_file(path: &str) -> Result<Option<String>, String> {
 // File Writing
 // ═══════════════════════════════════════════════════════════════
 
-/// Write string to file.
+/// Atomically replace a file by writing and syncing a sibling temporary file
+/// before renaming it over the destination. Keeping the temporary file in the
+/// same directory preserves the filesystem's atomic-rename guarantee.
 pub fn write_string(path: &Path, content: &str) -> Result<(), std::io::Error> {
-    std::fs::write(path, content)
+    use std::io::Write;
+
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
+    let mut attempt = 0_u32;
+    let (tmp_path, mut tmp) = loop {
+        let candidate = parent.join(format!(".{name}.lint-arwaky-{}-{attempt}.tmp", std::process::id()));
+        match std::fs::OpenOptions::new().write(true).create_new(true).open(&candidate) {
+            Ok(file) => break (candidate, file),
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists && attempt < 100 => {
+                attempt += 1;
+            }
+            Err(error) => return Err(error),
+        }
+    };
+
+    let result = (|| {
+        if let Ok(metadata) = std::fs::metadata(path) {
+            tmp.set_permissions(metadata.permissions())?;
+        }
+        tmp.write_all(content.as_bytes())?;
+        tmp.sync_all()?;
+        drop(tmp);
+        std::fs::rename(&tmp_path, path)
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(&tmp_path);
+    }
+    result
 }
 
 /// Copy file from src to dst.

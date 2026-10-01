@@ -202,3 +202,18 @@ fn fr003_canonicalize_path() {
     let canon = io.canonicalize(&file).unwrap();
     assert!(canon.is_absolute());
 }
+
+#[test]
+fn write_string_atomically_replaces_existing_content_without_temp_leaks() {
+    let tmp = tempfile::tempdir().unwrap();
+    let target = tmp.path().join("source.rs");
+    std::fs::write(&target, "original").unwrap();
+    shared_filesystem::utility_filesystem_io::write_string(&target, "replacement").unwrap();
+    assert_eq!(std::fs::read_to_string(&target).unwrap(), "replacement");
+    let leftovers: Vec<_> = std::fs::read_dir(tmp.path())
+        .unwrap()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_name().to_string_lossy().contains("lint-arwaky"))
+        .collect();
+    assert!(leftovers.is_empty(), "temporary files leaked: {leftovers:?}");
+}

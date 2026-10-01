@@ -68,7 +68,9 @@ fn process_config(raw: &serde_yaml_ng::Value) -> (ArchitectureConfig, Vec<String
         None => return (ArchitectureConfig::default(), warnings),
     };
 
-    let mut config = deserialize_config(preprocess_json(arch_json), &mut warnings);
+    let processed = preprocess_json(arch_json, &mut warnings);
+    warn_unknown_architecture_keys(&processed, &mut warnings);
+    let mut config = deserialize_config(processed, &mut warnings);
     config = enable_default_orphan_detection(config);
     config = apply_fallback_ignored_paths(config, raw);
     (config, warnings)
@@ -101,9 +103,12 @@ fn parse_ignored_paths(raw: &serde_yaml_ng::Value) -> FilePathList {
 
 /// Preprocess the architecture JSON: migrate legacy layers field, strip nulls,
 /// convert ignored_paths format, and apply layer suffix → naming migration.
-fn preprocess_json(mut json: serde_json::Value) -> serde_json::Value {
+fn preprocess_json(
+    mut json: serde_json::Value,
+    warnings: &mut Vec<String>,
+) -> serde_json::Value {
     // Legacy: move `rules.*.layers` → top-level `layers` when no top-level layers exist.
-    migrate_legacy_layers(&mut json);
+    migrate_legacy_layers(&mut json, warnings);
 
     // Strip null values recursively.
     remove_nulls(&mut json);
@@ -129,20 +134,40 @@ fn preprocess_json(mut json: serde_json::Value) -> serde_json::Value {
 }
 
 /// Legacy: promote `rules.*.layers` to a top-level `layers` key when missing.
-fn migrate_legacy_layers(json: &mut serde_json::Value) {
+fn migrate_legacy_layers(json: &mut serde_json::Value, warnings: &mut Vec<String>) {
     if json.get("layers").is_some() {
         return;
     }
     let Some(rules_obj) = json.get_mut("rules").and_then(|r| r.as_object_mut()) else {
         return;
     };
-    for (_code, rule_val) in rules_obj.iter_mut() {
-        if let Some(layers) = rule_val.get_mut("layers") {
-            let layers = std::mem::take(layers);
-            json["layers"] = layers;
-            break;
+    // serde_json::Map iteration is deterministic. Record all candidates before
+    // mutating so conflicting legacy values can never be discarded silently.
+    let candidates: Vec<(String, serde_json::Value)> = rules_obj
+        .iter()
+        .filter_map(|(code, rule)| rule.get("layers").cloned().map(|v| (code.clone(), v)))
+        .collect();
+    let Some((kept_code, kept_layers)) = candidates.first().cloned() else {
+        return;
+    };
+    let discarded: Vec<String> = candidates
+        .iter()
+        .skip(1)
+        .filter(|(_, value)| value != &kept_layers)
+        .map(|(code, _)| code.clone())
+        .collect();
+    if !discarded.is_empty() {
+        warnings.push(format!(
+            "Conflicting legacy rules.*.layers values: kept '{kept_code}', discarded {}",
+            discarded.join(", ")
+        ));
+    }
+    for rule in rules_obj.values_mut() {
+        if let Some(object) = rule.as_object_mut() {
+            object.remove("layers");
         }
     }
+    json["layers"] = kept_layers;
 }
 
 /// Recursively remove null values from a JSON value.
@@ -398,15 +423,84 @@ fn push_entry(flat: &mut serde_json::Value, entry: serde_json::Value) {
 
 /// Deserialize JSON into ArchitectureConfig, collecting warnings on failure.
 fn deserialize_config(json: serde_json::Value, warnings: &mut Vec<String>) -> ArchitectureConfig {
-    match serde_json::from_value::<ArchitectureConfig>(json) {
+    match serde_json::from_value::<ArchitectureConfig>(json.clone()) {
         Ok(c) => c,
-        Err(e) => {
-            warnings.push(format!("Failed to deserialize ArchitectureConfig: {:?}", e));
+        Err(error) => {
+            warnings.push(format!("Failed to deserialize ArchitectureConfig: {error}"));
             warnings.push(
-                "Falling back to default config. Check your YAML syntax and field types."
+                "Invalid fields use defaults; other valid configuration fields remain active."
                     .to_string(),
             );
-            ArchitectureConfig::default()
+            deserialize_config_fields(&json, warnings)
+        }
+    }
+}
+
+/// Recover valid top-level fields independently so one wrong type does not
+/// erase the complete configuration.
+fn deserialize_config_fields(
+    json: &serde_json::Value,
+    warnings: &mut Vec<String>,
+) -> ArchitectureConfig {
+    let mut config = ArchitectureConfig::default();
+    let Some(object) = json.as_object() else { return config };
+    macro_rules! recover {
+        ($key:literal, $field:ident) => {
+            if let Some(value) = object.get($key) {
+                match serde_json::from_value(value.clone()) {
+                    Ok(parsed) => config.$field = parsed,
+                    Err(error) => warnings.push(format!(
+                        "Invalid architecture.{}: {}; using field default",
+                        $key, error
+                    )),
+                }
+            }
+        };
+    }
+    recover!("enabled", enabled);
+    recover!("layers", layers);
+    recover!("rules", rules);
+    recover!("naming", naming);
+    recover!("ignored_paths", ignored_paths);
+    recover!("mandatory_class_definition", mandatory_class_definition);
+    config
+}
+
+fn warn_unknown_architecture_keys(json: &serde_json::Value, warnings: &mut Vec<String>) {
+    const KNOWN: &[&str] = &[
+        "enabled", "layers", "rules", "naming", "ignored_paths",
+        "mandatory_class_definition",
+    ];
+    if let Some(object) = json.as_object() {
+        for key in object.keys().filter(|key| !KNOWN.contains(&key.as_str())) {
+            warnings.push(format!("Unknown configuration key: architecture.{key}"));
+        }
+        if let Some(rules) = object.get("rules").and_then(|value| value.as_array()) {
+            warn_unknown_rule_keys(rules, warnings);
+        }
+    }
+}
+
+fn warn_unknown_rule_keys(rules: &[serde_json::Value], warnings: &mut Vec<String>) {
+    const KNOWN: &[&str] = &[
+        "name", "description", "rule_type", "enabled", "scope", "exceptions",
+        "allowed", "forbidden", "mandatory", "naming_convention", "suffix_policy",
+        "allowed_suffix", "forbidden_suffix", "min_lines", "max_lines",
+        "forbidden_bypass", "mandatory_class_definition", "dead_inheritance_bypass",
+        "check_unused_mandatory_imports", "forbid_any_type", "mandatory_imports",
+        "duplication_threshold", "max_functions", "max_impl", "severity",
+        "no_domain_logic", "must_implement_service_container_aggregate",
+        "lazy_eager_initialization_only", "stateless_execution", "single_execution_goal",
+        "high_level_policy_only", "coordinates_multiple_orchestrators", "crud_only",
+        "no_decision_logic", "thread_async_safe", "no_domain_data_storage",
+        "owns_system_health_transitions", "lifecycle_tracking_only", "no_primitives",
+        "forbidden_inheritance", "check_orphan", "orphan_entry_points", "entry_points",
+    ];
+    for (index, rule) in rules.iter().enumerate() {
+        if let Some(object) = rule.as_object() {
+            for key in object.keys().filter(|key| !KNOWN.contains(&key.as_str())) {
+                warnings.push(format!("Unknown configuration key: architecture.rules[{index}].{key}"));
+            }
         }
     }
 }

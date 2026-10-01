@@ -26,8 +26,10 @@ use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared_structure_rules::IStructureAggregate;
+use std::io::Read;
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Child, Command, Output, Stdio};
+use std::time::{Duration, Instant};
 use std::sync::Arc;
 
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
@@ -96,7 +98,7 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
     };
     let violations = match opts.scan_aggregates.as_ref() {
         Some(agg) => run_all_linters_in_process(&target_path, agg),
-        None => run_all_linters_json(&target_path, opts.filesystem.as_ref()),
+        None => run_all_linters_json(&target_path, opts.filesystem.as_ref())?,
     };
     let violations = apply_filter(violations, &opts.filter);
     Ok(violations)
@@ -161,7 +163,7 @@ pub fn collect_scan_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<Violat
     if !seam.io.path_exists(std::path::Path::new(path)) {
         return Err(format!("Error: path '{}' does not exist", path));
     }
-    Ok(run_all_linters_json(path, seam))
+    run_all_linters_json(path, seam)
 }
 
 /// Default check: subprocess JSON scan of all linters.
@@ -886,8 +888,57 @@ fn build_import_map(
     import_map
 }
 
+fn subprocess_timeout() -> Duration {
+    std::env::var("LINT_ARWAKY_SUBPROCESS_TIMEOUT_SECS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .map(Duration::from_secs)
+        .unwrap_or_else(|| Duration::from_secs(60))
+}
+
+fn wait_for_child(mut child: Child, timeout: Duration) -> Result<Output, String> {
+    let stdout = child.stdout.take().ok_or("stdout pipe unavailable")?;
+    let stderr = child.stderr.take().ok_or("stderr pipe unavailable")?;
+    let stdout_reader = std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        let mut pipe = stdout;
+        pipe.read_to_end(&mut bytes).map(|_| bytes)
+    });
+    let stderr_reader = std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        let mut pipe = stderr;
+        pipe.read_to_end(&mut bytes).map(|_| bytes)
+    });
+    let started = Instant::now();
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if started.elapsed() < timeout => {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            Ok(None) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                let _ = stdout_reader.join();
+                let _ = stderr_reader.join();
+                return Err(format!("timed out after {}s", timeout.as_secs_f64()));
+            }
+            Err(error) => return Err(format!("wait failed: {error}")),
+        }
+    };
+    let stdout = stdout_reader
+        .join()
+        .map_err(|_| "stdout reader panicked".to_string())?
+        .map_err(|error| error.to_string())?;
+    let stderr = stderr_reader
+        .join()
+        .map_err(|_| "stderr reader panicked".to_string())?
+        .map_err(|error| error.to_string())?;
+    Ok(Output { status, stdout, stderr })
+}
+
 /// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
-fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Vec<ViolationItem> {
+fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<ViolationItem>, String> {
     let exe_path = match std::env::current_exe() {
         Ok(p) => p,
         Err(_) => std::path::PathBuf::from("lint-arwaky-cli"),
@@ -898,24 +949,29 @@ fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Vec<ViolationItem>
     let mut all: Vec<ViolationItem> = Vec::new();
 
     for linter_name in &linter_names {
-        let output = Command::new(&exe_path)
+        let child = Command::new(&exe_path)
             .args([linter_name, path, "--format", "json"])
-            .output();
-
-        if let Ok(out) = output {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
-                if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
-                    for item in results {
-                        if let Some(v) = ViolationItem::from_json_obj(item) {
-                            all.push(v);
-                        }
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()
+            .map_err(|error| format!("Failed to spawn linter subprocess '{linter_name}': {error}"))?;
+        let timeout = subprocess_timeout();
+        let out = wait_for_child(child, timeout).map_err(|error| {
+            format!("Linter subprocess '{linter_name}' {error}")
+        })?;
+        let stdout = String::from_utf8_lossy(&out.stdout);
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
+            if let Some(results) = val.get("results").and_then(|r| r.as_array()) {
+                for item in results {
+                    if let Some(v) = ViolationItem::from_json_obj(item) {
+                        all.push(v);
                     }
-                } else if let Some(items) = val.as_array() {
-                    for item in items {
-                        if let Some(v) = ViolationItem::from_json_obj(item) {
-                            all.push(v);
-                        }
+                }
+            } else if let Some(items) = val.as_array() {
+                for item in items {
+                    if let Some(v) = ViolationItem::from_json_obj(item) {
+                        all.push(v);
                     }
                 }
             }
@@ -944,7 +1000,7 @@ fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Vec<ViolationItem>
         });
     }
 
-    all
+    Ok(all)
 }
 
 /// Rewrite each violation's relative file path to an absolute, canonicalized
@@ -1012,4 +1068,25 @@ fn json_violation_in_target(
         return target_joined.starts_with(canonical_target);
     }
     false
+}
+
+#[cfg(test)]
+mod subprocess_timeout_tests {
+    use super::wait_for_child;
+    use std::process::{Command, Stdio};
+    use std::time::{Duration, Instant};
+
+    #[cfg(unix)]
+    #[test]
+    fn hanging_subprocess_is_killed_at_timeout() {
+        let child = Command::new("sh")
+            .args(["-c", "sleep 5"])
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let started = Instant::now();
+        let error = wait_for_child(child, Duration::from_millis(50)).unwrap_err();
+        assert!(error.contains("timed out"));
+        assert!(started.elapsed() < Duration::from_secs(2));
+    }
 }

@@ -40,6 +40,21 @@ impl IHookInstallProtocol for HookInstaller {
             )))
         })?;
         let hook_path = hooks_dir.join("pre-commit");
+        const MANAGED_MARKER: &str = "# managed-by: lint-arwaky";
+        if self.io.path_exists(&hook_path) {
+            let existing = self.io.read_to_string(&hook_path).map_err(|e| {
+                GitHookError::new(LintMessage::new(format!("Failed to inspect existing hook: {e}")))
+            })?;
+            if !existing.value.contains(MANAGED_MARKER) {
+                let backup_path = hooks_dir.join("pre-commit.bak");
+                self.io.copy_file(&hook_path, &backup_path).map_err(|e| {
+                    GitHookError::new(LintMessage::new(format!(
+                        "Existing pre-commit hook is unmanaged and could not be backed up to {}: {e}",
+                        backup_path.display()
+                    )))
+                })?;
+            }
+        }
         let exe_str = if executable_path.value.is_empty() {
             "lint-arwaky-cli"
         } else {
@@ -47,6 +62,7 @@ impl IHookInstallProtocol for HookInstaller {
         };
         let hook_content = format!(
             "#!/bin/bash
+# managed-by: lint-arwaky
 # Lint Arwaky Pre-Commit Hook
 echo \"Running Lint Arwaky check...\"
 {} check .

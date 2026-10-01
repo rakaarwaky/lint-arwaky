@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Backend hardening
+- Confine MCP paths to the startup workspace and default mutating MCP actions to opt-in.
+- Validate generic MCP argument types and CI thresholds, and standardize action statuses.
+- Preserve valid config fields while warning on unknown keys and legacy layer conflicts; invalidate edited config cache entries.
+- Use atomic file replacement, preserve unmanaged git hooks, bound the AST cache, and time out fallback linter subprocesses.
+
 ### Changed
 
 - Split the monolithic `shared-lint-arwaky` crate into 20 packages, one per
