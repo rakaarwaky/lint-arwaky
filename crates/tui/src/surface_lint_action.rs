@@ -16,6 +16,7 @@ use dispatcher::surface_plugin_action::collect_adapters_detailed;
 use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
 use dispatcher::surface_version_action::collect_version;
 
+use crate::{ActionFlags, LintExecutionResult};
 use shared_auto_fix::IFixAggregate;
 use shared_common::FilePath;
 use shared_config_system::IConfigOrchestratorAggregate;
@@ -29,7 +30,6 @@ use shared_orphan_rules::IOrphanAggregate;
 use shared_project_setup::ISetupAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
-use shared_tui::{ActionFlags, LintExecutionResult};
 
 use std::sync::Arc;
 

@@ -131,6 +131,7 @@ Traceability flows through four standardized layers:
 |----------|------------|-----------------|
 | Performance (filesystem indexing) | 1,000 files < 2s; 10,000 files < 10s — the index build alone: discovery, read, parse | `filesystem/FRD.md` |
 | Performance (full pipeline) | 1,000 files < 5s; 10,000 files < 15s — indexing plus every rule group, excluding external adapters | `filesystem/FRD.md`, `README.md` |
+| Performance (regression detection) | The budget above is checked nightly by Criterion against a cached baseline; regressions fail the scheduled job | `.github/workflows/benchmarks.yml` |
 | Worst-case external-lint chain | A single `scan`/`ci`/MCP `execute_command` call can block ~14 minutes: 10 adapters run sequentially, each with its own 60–180s ceiling and no overall budget. MCP clients must set a timeout above this bound | `external-lint/FRD.md`, `mcp-server` design |
 | Security | No network calls for core; symlink safety enforced | `filesystem/FRD.md` |
 | Scalability | 10,000+ file monorepos | `filesystem/FRD.md` |

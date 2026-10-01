@@ -238,6 +238,24 @@ install_binaries() {
     done
 }
 
+# ── Step: Install name-alias symlinks ─────────────────────────────────────────
+# `lint-arwaky` and `la` are install-time aliases of the single compiled CLI
+# binary (`lint-arwaky-cli`), not separate [[bin]] targets — see DEPLOY.md.
+install_alias_symlinks() {
+    local install_bin="$1"
+
+    for ALIAS in lint-arwaky la; do
+        if $DRY_RUN; then
+            echo "  [dry-run] ln -sf lint-arwaky-cli $install_bin/$ALIAS"
+        elif [ -f "$install_bin/lint-arwaky-cli" ]; then
+            ln -sf lint-arwaky-cli "$install_bin/$ALIAS"
+            echo "  ${GREEN}✓${NC} $install_bin/$ALIAS -> lint-arwaky-cli"
+        else
+            warn "lint-arwaky-cli not found, skipping $ALIAS alias"
+        fi
+    done
+}
+
 # ── Step: Install docs & config ───────────────────────────────────────────────
 install_docs() {
     local config_dir="$1"
@@ -307,6 +325,13 @@ verify_installation() {
             echo -e "  ${YELLOW}⚠${NC} $cmd not found"
         fi
     done
+    for alias_cmd in lint-arwaky la; do
+        if command -v "$alias_cmd" &>/dev/null || [ -L "$install_bin/$alias_cmd" ]; then
+            echo -e "  ${GREEN}✓${NC} $alias_cmd (alias of lint-arwaky-cli)"
+        else
+            echo -e "  ${YELLOW}⚠${NC} $alias_cmd alias not found"
+        fi
+    done
 }
 
 # ── MAIN: Local Mode ──────────────────────────────────────────────────────────
@@ -314,12 +339,13 @@ install_local() {
     local install_bin="${LINT_ARWAKY_INSTALL_BIN:-${XDG_BIN_HOME:-$HOME/.local/bin}}"
     local config_dir="$CONFIG_DIR"
     local report_dir="$REPORT_DIR"
-    local binaries=(lint-arwaky la lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
+    local binaries=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 
     setup_xdg_dirs "$install_bin" "$config_dir" "$report_dir"
     install_dependencies false
     build_from_source
     install_binaries "$install_bin" "${binaries[@]}"
+    install_alias_symlinks "$install_bin"
     install_docs "$config_dir" "$PROJECT_ROOT"
     setup_aliases
     verify_installation "$install_bin"
@@ -368,6 +394,7 @@ install_remote() {
     install_dependencies false
     install_prebuilt "$install_bin"
     install_binaries "$install_bin" "${binaries[@]}"
+    install_alias_symlinks "$install_bin"
     install_docs "$config_dir" "$PROJECT_ROOT"
     setup_aliases
     verify_installation "$install_bin"
@@ -382,7 +409,7 @@ install_dev() {
     local install_bin="${LINT_ARWAKY_INSTALL_BIN:-${XDG_BIN_HOME:-$HOME/.local/bin}}"
     local config_dir="$CONFIG_DIR"
     local report_dir="$REPORT_DIR"
-    local binaries=(lint-arwaky la lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
+    local binaries=(lint-arwaky-cli lint-arwaky-mcp lint-arwaky-tui)
 
     # Extra dev tools
     echo -e "\n${BOLD}Setting up developer tools...${NC}"
@@ -413,6 +440,7 @@ install_dev() {
     install_dependencies true
     build_from_source
     install_binaries "$install_bin" "${binaries[@]}"
+    install_alias_symlinks "$install_bin"
     install_docs "$config_dir" "$PROJECT_ROOT"
     setup_aliases
     setup_git_hooks "$PROJECT_ROOT"

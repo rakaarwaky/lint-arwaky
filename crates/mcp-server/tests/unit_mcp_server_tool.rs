@@ -6,8 +6,10 @@
 mod common;
 
 use mcp_server_lint_arwaky::surface_mcp_tool_command::LintArwakyMcpServer;
+use mcp_server_lint_arwaky::taxonomy_mcp_server_vo::{
+    ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs,
+};
 use rmcp::handler::server::wrapper::Parameters;
-use shared_mcp_server::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
 use std::sync::Arc;
 
 fn server() -> LintArwakyMcpServer {
@@ -41,12 +43,16 @@ fn handle_execute_command_wires_action_into_dispatch() {
 #[test]
 fn handle_execute_command_wires_path_arg_into_path_validation() {
     // An empty `path` argument must surface the `Invalid path` envelope,
-    // proving args.args["path"] is actually read by the handler.
+    // proving args.args["path"] is actually read by the handler. `fix` is a
+    // mutating action, and authorization runs before path validation, so this
+    // surface has to allow mutations to reach the assertion.
     let args = ExecuteCommandArgs {
         action: "fix".to_string(),
         args: Some(serde_json::json!({ "path": "" })),
     };
-    let result = parse(&server().handle_execute_command(Parameters(args)));
+    let server =
+        LintArwakyMcpServer::new(Arc::new(common::make_action_surface_allowing_mutations()));
+    let result = parse(&server.handle_execute_command(Parameters(args)));
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");
 }

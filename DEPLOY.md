@@ -92,8 +92,13 @@ cargo build --release
 #   target/release/lint-arwaky-mcp
 #   target/release/lint-arwaky-tui
 
-# Optionally symlink into PATH
+# Optionally symlink into PATH. `lint-arwaky` and `la` are name aliases of the
+# single compiled CLI binary (not separate [[bin]] targets), so install them as
+# symlinks too — scripts/install.sh does this automatically via
+# `install_alias_symlinks`.
 ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/
+ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/lint-arwaky
+ln -s "$PWD/target/release/lint-arwaky-cli" ~/.local/bin/la
 ln -s "$PWD/target/release/lint-arwaky-mcp" ~/.local/bin/
 ```
 

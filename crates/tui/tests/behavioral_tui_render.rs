@@ -4,13 +4,13 @@
 
 use ratatui::Terminal;
 use ratatui::backend::TestBackend;
-use shared_tui::{AesLayer, AppState, FileEntry, PanelFocus, PreviewMode};
 use tui_lint_arwaky::surface_file_list_view::FileListView;
 use tui_lint_arwaky::surface_path_screen::PathScreen;
 use tui_lint_arwaky::surface_preview_view::PreviewView;
 use tui_lint_arwaky::surface_shortcut_component::ShortcutComponent;
 use tui_lint_arwaky::surface_status_component::StatusComponent;
 use tui_lint_arwaky::surface_tree_view::TreeView;
+use tui_lint_arwaky::{AesLayer, AppState, FileEntry, PanelFocus, PreviewMode};
 
 fn buffer_text(terminal: &Terminal<TestBackend>) -> String {
     terminal

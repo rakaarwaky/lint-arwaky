@@ -33,7 +33,7 @@ inside that object, never on the JSON-RPC envelope:
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `exit_code` | integer | The CLI exit-code contract value: `0` Ok, `1` PolicyFail, `2` RuntimeError, `3` PrerequisiteMissing. Always present. |
-| `status` | string | A short, human-oriented label for the same outcome (`success`, `violations`, `clean`, `failure`, `error`, …). Advisory only. |
+| `status` | string | A short, human-oriented label for the same outcome (`ok`, `warning`, or `error`). Action-specific detail is carried by `result`. |
 | `action` | string | The command that ran, echoed back. |
 | `error` | string | Present only when the call could not run at all; it is accompanied by `exit_code: 2`. |
 | other | — | Per-command payload (e.g. `total_violations`, `results`, `items`, `message`). |
@@ -101,13 +101,22 @@ States.
 The server never terminates on a client error. A malformed request is answered
 and the loop continues, because an MCP client may recover and retry.
 
-**Timeout decision (current contract).** Unbounded tool calls are the accepted
-behaviour for now: a lint run that is killed half-way produces a partial result
-that is indistinguishable from a clean one, which is worse than a slow answer.
-The obligation moves to the client, which must set its own timeout above the
-documented worst case. Bounding the adapter phase as a whole (one budget for
-all adapters, instead of one ceiling each) is the tracked follow-up; until it
-ships, this table is the contract agents should implement against.
+### Response Contract
+
+Every action returns `exit_code` as the primary machine signal (`0` success,
+`1` policy findings, `2` invalid request/runtime error, `3` missing tool). The
+shared `status` vocabulary is `ok`, `warning`, or `error`; action-specific
+outcomes such as `clean`, `violations`, `pass`, and `fail` are reported in
+`result`.
+
+The server confines all client paths to the canonical startup working directory.
+It starts read-only; operators must set `LINT_ARWAKY_MCP_ALLOW_MUTATIONS=true`
+to permit `fix`, hook changes, or project initialization.
+
+**Timeout decision (current contract).** Overall MCP calls remain unbounded;
+the subprocess fallback has a configurable 60-second per-linter timeout, while
+in-process and adapter phases run to completion. Clients should retain their own
+overall timeout above the documented worst case.
 
 ## Invariants
 
