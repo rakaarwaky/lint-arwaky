@@ -339,6 +339,11 @@ impl IFilesystemAggregate for MockFilesystem {
             | FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
                 entries: Vec::new(),
             },
+            FilesystemRequest::DetectProjectLanguages { .. } => {
+                FilesystemResponse::ProjectLanguages {
+                    languages: ProjectLanguagesVO::default(),
+                }
+            }
         }
     }
 }

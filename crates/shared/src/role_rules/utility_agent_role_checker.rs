@@ -694,6 +694,198 @@ fn dynamic_any(t: &str) -> bool {
     false
 }
 
+/// Contract protocols implemented by a type declared in this file.
+///
+/// A contract protocol is an `I<Name>Protocol` seam: the agent implements the
+/// feature aggregate and injects protocol seams, it never *implements* one,
+/// because that is a capability's job. Std traits (`Default`, `Display`,
+/// `Clone`) and aggregate traits are not contract protocols and are excluded
+/// here so `impl Default for X` reads as nothing.
+///
+/// Returns the trait names in declaration order, deduplicated.
+pub fn contract_protocol_impls(file: &FileEntry) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut push = |name: &str| {
+        if !out.iter().any(|n| n == name) {
+            out.push(name.to_string());
+        }
+    };
+
+    match file.parse_metadata.as_ref() {
+        Some(ParseMetadata::Rust(r)) => {
+            for imp in &r.impl_blocks {
+                if let Some(trait_name) = &imp.trait_name
+                    && is_protocol_name(trait_name)
+                {
+                    push(trait_name);
+                }
+            }
+        }
+        Some(ParseMetadata::Python(p)) => {
+            for c in &p.class_declarations {
+                for base in &c.bases {
+                    if is_protocol_name(base) {
+                        push(base);
+                    }
+                }
+            }
+        }
+        Some(ParseMetadata::TypeScript(t)) | Some(ParseMetadata::JavaScript(t)) => {
+            for c in &t.class_declarations {
+                for iface in &c.implements {
+                    if is_protocol_name(iface) {
+                        push(iface);
+                    }
+                }
+            }
+        }
+        Some(_) | None => scan_contract_protocol_impls(&file.content, &mut push),
+    }
+    out
+}
+
+/// Line-scan fallback for `contract_protocol_impls` when parse metadata is
+/// absent. `scan` is called once per distinct contract protocol found.
+fn scan_contract_protocol_impls(content: &str, mut scan: impl FnMut(&str)) {
+    for line in content.lines() {
+        let t = line.trim();
+        if is_comment(t) {
+            continue;
+        }
+        if let Some(rest) = t.strip_prefix("impl ") {
+            // Rust: `impl IFooProtocol for Bar` — the trait is what follows
+            // `impl ` and precedes ` for `.
+            let Some((lhs, _rhs)) = rest.split_once(" for ") else {
+                continue;
+            };
+            let trait_name = lhs.trim();
+            if is_protocol_name(trait_name) {
+                scan(trait_name);
+            }
+        } else if let Some(base) = class_base_list(t) {
+            // Python: `class Bar(IFooProtocol)` — and the TS form
+            // `class Bar implements IFooProtocol`.
+            for candidate in base.split(',').chain(base.split(" implements ")) {
+                let name = candidate.trim().trim_start_matches("public ").trim();
+                if is_protocol_name(name) {
+                    scan(name);
+                }
+            }
+        }
+    }
+}
+
+/// The base-class / implements list of a `class` declaration line, when the
+/// line carries one. Returns the text inside `(...)` for Python and the part
+/// after `implements` for TypeScript.
+fn class_base_list(t: &str) -> Option<&str> {
+    if !t.starts_with("class ") {
+        return None;
+    }
+    if let Some(idx) = t.find("implements ") {
+        return Some(t[idx + "implements ".len()..].trim_end_matches('{').trim());
+    }
+    let open = t.find('(')?;
+    let close = t.rfind(')')?;
+    Some(&t[open + 1..close])
+}
+
+/// Rule — at most one contract protocol implemented alongside the
+/// aggregate. HIGH.
+///
+/// An agent composes its feature; implementing a contract protocol makes it
+/// duplicate a capability. See `contract_protocol_impls` for what counts as a
+/// contract protocol and what is deliberately excluded.
+pub fn check_single_aggregate(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let protocols = contract_protocol_impls(file);
+    if protocols.is_empty() {
+        return;
+    }
+    let path = file.path.to_string_lossy().to_string();
+    let names = protocols.join(", ");
+    violations.push(LintResult::new_arch(
+        &path,
+        0,
+        "AES405",
+        Severity::HIGH,
+        format!(
+            "AES405 AGENT_ROLE: Agent file implements a contract protocol.\n\
+             WHY? {path} implements {names}. An agent is the feature's composition \
+             root: it implements the feature aggregate and injects protocol seams. \
+             Implementing a protocol here makes the orchestration layer duplicate a \
+             capability's work.\n\
+             HOW TO FIX? Move the protocol implementation into a \
+             `capabilities_*` file in this feature and inject that capability's \
+             protocol into the agent. Keep the aggregate impl as the only contract \
+             this file fulfils."
+        ),
+    ));
+}
+
+/// Rule — the `─── Block N:` banner markers must stop at 3. MEDIUM.
+///
+/// The 3-block structure is the readability contract the HOW-TO documents: a
+/// fourth marker means the file has outgrown the shape, and the reader loses
+/// the block map. A file carrying no markers is not reported — the marker is
+/// a convention the reader can spot by shape, not a requirement the linter
+/// enforces from nothing.
+pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let markers = block_marker_numbers(&file.content);
+    let Some(max) = markers.iter().max().copied() else {
+        return;
+    };
+    if max <= 3 {
+        return;
+    }
+    let path = file.path.to_string_lossy().to_string();
+    let found: Vec<String> = markers.iter().map(|n| format!("Block {n}")).collect();
+    violations.push(LintResult::new_arch(
+        &path,
+        0,
+        "AES405",
+        Severity::MEDIUM,
+        format!(
+            "AES405 AGENT_ROLE: Agent file carries block markers beyond Block 3.\n\
+             WHY? {path} declares {}. The 3-block structure is Block 1 (types and \
+             injected deps) -> Block 2 (aggregate impl) -> Block 3 (constructors, \
+             std traits, helpers); a Block 4 means the file has outgrown it.\n\
+             HOW TO FIX? Fold the extra blocks back into Block 3, or move the \
+             behaviour they hold into a capability or utility file so the agent \
+             returns to 3 blocks.",
+            found.join(", ")
+        ),
+    ));
+}
+
+/// The `N` of every `Block N:` banner comment, in declaration order.
+///
+/// A banner is `Block <digits>:` inside a comment. The colon is what
+/// separates a marker from prose: the HOW-TO and rule messages describe the
+/// structure as `Block 1 (type + injected deps) -> Block 2`, and requiring
+/// the colon keeps those sentences from reading as markers. A file carrying
+/// no banner is left to the other structural checks.
+fn block_marker_numbers(content: &str) -> Vec<usize> {
+    let mut out = Vec::new();
+    for line in content.lines() {
+        let t = line.trim();
+        if !is_comment(t) {
+            continue;
+        }
+        let Some(idx) = t.find("Block ") else {
+            continue;
+        };
+        let rest = &t[idx + "Block ".len()..];
+        let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+        if digits.is_empty() || !rest[digits.len()..].starts_with(':') {
+            continue;
+        }
+        if let Ok(n) = digits.parse::<usize>() {
+            out.push(n);
+        }
+    }
+    out
+}
+
 /// The workspace root: the ancestor that owns `crates/shared/src`.
 fn workspace_root(file_path: &Path) -> Option<std::path::PathBuf> {
     let mut current = file_path.parent();

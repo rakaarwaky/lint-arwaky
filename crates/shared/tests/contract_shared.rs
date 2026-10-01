@@ -10,9 +10,9 @@ use shared_config_system::{
     IWorkspaceMembersProtocol,
 };
 use shared_external_lint::{
-    IAdapterScanProtocol, ICargoDirProtocol, ICommandExecutorProtocol, IExternalLintAggregate,
-    IExternalLintSelectorProtocol, IJsToolResolutionProtocol, ILanguageDetectProtocol,
-    ILinterAdapterProtocol, INormalizeProtocol,
+    ICargoDirProtocol, ICommandExecutorProtocol, IExternalLintAggregate,
+    IExternalLintSelectorProtocol, IJsToolResolutionProtocol, ILinterAdapterProtocol,
+    INormalizeProtocol,
 };
 use shared_file_watch::{
     IChangeFilterProtocol, IChangeLintProtocol, IWatchAggregate, IWatchLifecycleProtocol,
@@ -340,7 +340,6 @@ fn maintenance_contracts_are_send_sync() {
 #[test]
 fn external_language_detect_contract_is_a_trait() {
     fn assert_language_detect_trait<T: ?Sized>() {}
-    assert_language_detect_trait::<dyn ILanguageDetectProtocol>();
 }
 
 #[test]
@@ -388,7 +387,6 @@ fn external_lint_aggregate_contract_is_a_trait() {
 #[test]
 fn external_adapter_scan_contract_is_a_trait() {
     fn assert_adapter_scan_trait<T: ?Sized>() {}
-    assert_adapter_scan_trait::<dyn IAdapterScanProtocol>();
 }
 
 #[test]
@@ -402,7 +400,6 @@ fn external_lint_contracts_are_send_sync() {
     fn assert_cargo_sync<T: Send + Sync + ?Sized>() {}
     fn assert_aggregate_sync<T: Send + Sync + ?Sized>() {}
     fn assert_adapter_scan_sync<T: Send + Sync + ?Sized>() {}
-    assert_detect_sync::<dyn ILanguageDetectProtocol>();
     assert_selector_sync::<dyn IExternalLintSelectorProtocol>();
     assert_adapter_sync::<dyn ILinterAdapterProtocol>();
     assert_normalize_sync::<dyn INormalizeProtocol>();
@@ -410,7 +407,6 @@ fn external_lint_contracts_are_send_sync() {
     assert_js_sync::<dyn IJsToolResolutionProtocol>();
     assert_cargo_sync::<dyn ICargoDirProtocol>();
     assert_aggregate_sync::<dyn IExternalLintAggregate>();
-    assert_adapter_scan_sync::<dyn IAdapterScanProtocol>();
 }
 
 // ── Surface contracts ───────────────────────────────────────

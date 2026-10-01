@@ -10,18 +10,46 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub enum FilesystemResponse {
-    Files { entries: Vec<FileEntry> },
-    Content { value: ContentString },
-    ContentOpt { value: Option<String> },
-    Has { exists: bool },
-    Entries { pairs: Vec<FileContentPair> },
-    Paths { paths: Vec<String> },
-    SourcePaths { paths: Vec<FilePath> },
-    Identifiers { ids: Vec<String> },
-    TraitsMap { map: HashMap<String, Vec<String>> },
-    Root { path: Option<PathBuf> },
-    Imports { entries: Vec<ImportEntry> },
-    GraphContext { context: GraphAnalysisContext },
+    Files {
+        entries: Vec<FileEntry>,
+    },
+    Content {
+        value: ContentString,
+    },
+    ContentOpt {
+        value: Option<String>,
+    },
+    Has {
+        exists: bool,
+    },
+    Entries {
+        pairs: Vec<FileContentPair>,
+    },
+    Paths {
+        paths: Vec<String>,
+    },
+    SourcePaths {
+        paths: Vec<FilePath>,
+    },
+    Identifiers {
+        ids: Vec<String>,
+    },
+    TraitsMap {
+        map: HashMap<String, Vec<String>>,
+    },
+    Root {
+        path: Option<PathBuf>,
+    },
+    Imports {
+        entries: Vec<ImportEntry>,
+    },
+    GraphContext {
+        context: GraphAnalysisContext,
+    },
+    /// Language presence flags for a project root.
+    ProjectLanguages {
+        languages: crate::taxonomy_filesystem_vo::ProjectLanguagesVO,
+    },
 }
 
 impl FilesystemResponse {
@@ -109,6 +137,13 @@ impl FilesystemResponse {
         match self {
             Self::GraphContext { context } => context,
             _ => GraphAnalysisContext::default(),
+        }
+    }
+
+    pub fn into_project_languages(self) -> crate::taxonomy_filesystem_vo::ProjectLanguagesVO {
+        match self {
+            Self::ProjectLanguages { languages } => languages,
+            _ => crate::taxonomy_filesystem_vo::ProjectLanguagesVO::default(),
         }
     }
 }

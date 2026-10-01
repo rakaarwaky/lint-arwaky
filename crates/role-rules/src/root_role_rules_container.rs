@@ -13,6 +13,7 @@ use crate::capabilities_capabilities_ts_role_auditor::CapabilitiesTypeScriptRole
 use crate::capabilities_contract_python_role_auditor::ContractPythonRoleAuditor;
 use crate::capabilities_contract_rust_role_auditor::ContractRustRoleAuditor;
 use crate::capabilities_contract_ts_role_auditor::ContractTypeScriptRoleAuditor;
+use crate::capabilities_role_classifier::RoleClassifier;
 use crate::capabilities_surface_role_auditor::SurfaceRoleChecker;
 use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::capabilities_utility_python_role_auditor::UtilityPythonRoleAuditor;
@@ -40,6 +41,7 @@ impl RoleContainer {
         let agent_python = Arc::new(AgentPythonRoleAuditor::new());
         let agent_ts = Arc::new(AgentTsRoleAuditor::new());
         let deps = RoleCheckerDeps {
+            classifier: Arc::new(RoleClassifier::new()),
             taxonomy: Arc::new(TaxonomyRoleChecker::new()),
             contract_rust: Arc::new(ContractRustRoleAuditor::new()),
             contract_python: Arc::new(ContractPythonRoleAuditor::new()),
@@ -61,6 +63,7 @@ impl RoleContainer {
 
     pub fn orchestrator(&self) -> Arc<dyn IRoleRunnerAggregate> {
         let deps = RoleCheckerDeps {
+            classifier: Arc::new(RoleClassifier::new()),
             taxonomy: Arc::clone(&self.deps.taxonomy),
             contract_rust: Arc::clone(&self.deps.contract_rust),
             contract_python: Arc::clone(&self.deps.contract_python),

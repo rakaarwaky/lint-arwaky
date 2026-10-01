@@ -50,6 +50,8 @@ pub enum FilesystemRequest {
     ImportListSnapshot,
     /// Returns all used identifiers across all cached parse metadata.
     UsedIdentifiersAll,
+    /// Detect which language groups and content types are present under a root.
+    DetectProjectLanguages { root: PathBuf },
 }
 
 impl FilesystemRequest {
@@ -150,5 +152,10 @@ impl FilesystemRequest {
     }
     pub fn used_identifiers_all() -> Self {
         Self::UsedIdentifiersAll
+    }
+    pub fn detect_project_languages(root: &Path) -> Self {
+        Self::DetectProjectLanguages {
+            root: root.to_path_buf(),
+        }
     }
 }
