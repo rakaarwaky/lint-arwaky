@@ -44,13 +44,24 @@ pub fn handle_fix(
 
             if report.dry_run {
                 println!("Dry-run complete — no changes applied.");
-                ExitCode::OK
+                if report.has_failed {
+                    error!("one or more fix previews failed with a runtime error");
+                    ExitCode::RUNTIME_ERROR
+                } else {
+                    ExitCode::OK
+                }
             } else {
                 println!(
                     "Fixed {} violations ({} remaining)",
                     report.fixed_count, report.after_count
                 );
-                if report.success {
+                if report.has_failed {
+                    // Any per-item Failed(reason) is a runtime error, per the
+                    // PRD Exit Code Contract `fix` aggregation rule. It must
+                    // outrank the policy-fail branch below.
+                    error!("one or more fix attempts failed with a runtime error");
+                    ExitCode::RUNTIME_ERROR
+                } else if report.success {
                     println!("Fix complete — all violations resolved.");
                     ExitCode::OK
                 } else {

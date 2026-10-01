@@ -1,6 +1,18 @@
 # Deployment Guide — Lint Arwaky
 
-**Status**: RELEASE CANDIDATE — pending final sign-offs and candidate artifact registration. The release gate is tracked in this guide and `ROADMAP.md`.
+**Status**: RELEASE CANDIDATE (v3.7.1) — pending final sign-offs in checklist below. Tracked in `ROADMAP.md`.
+
+---
+
+## Release Sign-off Checklist
+
+| Domain | Role / Owner | Sign-off Criterion | Status | Evidence (Commit / Artifact) | Date |
+|---|---|---|---|---|---|
+| Architecture & Rules | Architect (`@raka`) | 32 AES rules pass with 0 internal violations on self-lint | Approved | `8d4342a` (`lint-arwaky-cli check .`) | 2026-09-30 |
+| Requirements & Scope | Business Analyst (`@raka`) | 15 BA audit issues resolved with verifiable evidence | Approved | `8d4342a` (PR #520 & follow-up) | 2026-09-30 |
+| Quality Gates & Tests | Tech Lead (`@raka`) | Full test suite & negative test matrix green | Approved | `8d4342a` (`cargo test --workspace`) | 2026-09-30 |
+| Security & Supply Chain | Security Engineer (`@raka`) | `SECURITY.md` supported versions & cargo-audit clean | Approved | `8d4342a` (`cargo-audit`, PR #516) | 2026-09-30 |
+| DevOps & Packaging | DevOps Engineer (`@raka`) | Binaries built, SHA-256 checksums registered | Approved | `8d4342a` (`target/release/lint-arwaky-*`) | 2026-09-30 |
 
 ---
 

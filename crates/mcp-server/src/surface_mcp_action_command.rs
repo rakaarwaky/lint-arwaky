@@ -167,15 +167,24 @@ impl McpActionSurface {
             self.deps.fix_orchestrator_factory.clone(),
         ) {
             Ok(report) => {
-                let exit_code = if report.success {
+                let exit_code = if report.has_failed {
+                    2 // runtime error — any Failed(reason) outranks policy fail
+                } else if report.success {
                     0
                 } else if report.fixed_count > 0 {
                     1 // partial fix — violations remain
                 } else {
                     0
                 };
+                let status = if report.has_failed {
+                    "error"
+                } else if report.success {
+                    "success"
+                } else {
+                    "partial"
+                };
                 serde_json::json!({
-                    "status": if report.success { "success" } else { "partial" },
+                    "status": status,
                     "action": "fix",
                     "path": path,
                     "dry_run": report.dry_run,

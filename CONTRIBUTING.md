@@ -97,8 +97,12 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
    git worktree add -b <branch-name> .worktree/<branch-name> origin/main
    cd .worktree/<branch-name>
    ```
-3. Write the test first in the owning crate's `tests/` directory, then the
-   implementation.
+3. Write the test first in the owning crate's `tests/` directory, named after the
+   functional requirement ID (e.g. `tests/acceptance_FR_001.rs`, scoped to the
+   crate directory namespace and mapping to `FR-<Feature>-001` in that crate's `FRD.md`),
+   then implement the feature. Legacy tests already carrying domain-specific names
+   (e.g. `acceptance_cli_commands.rs`, `acceptance_mcp_server.rs`) keep their name
+   until a dedicated rename refactor; new tests follow the `acceptance_FR_NNN` pattern.
 4. Verify the change took effect:
    ```bash
    cargo nextest run -p <crate>
@@ -120,6 +124,13 @@ A change to Markdown only, with no code edit.
    python3 tools/regenerate_skills.py
    ```
 4. Commit with `docs:` and open a PR.
+
+### Claim Before You Build (Shared Contract Changes)
+
+Before restructuring a shared document contract enforced by AES605 (such as `AGENTS.md` required H2 headings, `PRD.md` sections, or `ARCHITECTURE.md` layers):
+1. **Open or claim an issue first**: Do not begin implementation without an assigned GitHub issue.
+2. **Adjudicate conflicts**: If competing proposals emerge (such as #493 vs #494 regarding 11 vs 12 H2 sections), the Tech Lead / Architect resolves the specification contract before PR creation.
+3. **Record rationale**: Document the resolution in `ROADMAP.md` Change Log or `CHANGELOG.md` to prevent duplicate parallel PRs.
 
 ---
 

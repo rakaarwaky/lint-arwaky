@@ -20,6 +20,10 @@ pub struct FixReport {
     pub fixed_count: usize,
     pub output: String,
     pub success: bool,
+    /// True when any per-item fix returned `Failed(reason)`. Per the
+    /// PRD Exit Code Contract this means the command is a runtime error (2),
+    /// not a policy failure.
+    pub has_failed: bool,
     /// Violations matching fixable rules (AES101/203/304) — rendered in dry-run preview.
     pub fixable: Vec<LintResult>,
 }
@@ -50,6 +54,8 @@ pub fn collect_fix(
 
     let fix_orch = (fix_orchestrator_factory)(dry_run);
     let fix_result = fix_orch.execute(FixRequest::execute(&project_path, dry_run));
+    let fix_result = fix_result.into_fix_result();
+    let has_failed = fix_result.error.is_some();
 
     let (after_count, fixed_count, success) = if dry_run {
         (results.len(), 0usize, true)
@@ -67,8 +73,9 @@ pub fn collect_fix(
         before_count: results.len(),
         after_count,
         fixed_count,
-        output: fix_result.into_fix_result().output.value,
+        output: fix_result.output.value,
         success,
+        has_failed,
         fixable,
     })
 }
@@ -100,6 +107,8 @@ pub fn collect_fix_direct(
         .collect();
 
     let fix_result = fix_orchestrator.execute(FixRequest::execute(&project_path, dry_run));
+    let fix_result = fix_result.into_fix_result();
+    let has_failed = fix_result.error.is_some();
 
     let (after_count, fixed_count, success) = if dry_run {
         (results.len(), 0usize, true)
@@ -117,8 +126,9 @@ pub fn collect_fix_direct(
         before_count: results.len(),
         after_count,
         fixed_count,
-        output: fix_result.into_fix_result().output.value,
+        output: fix_result.output.value,
         success,
+        has_failed,
         fixable,
     })
 }
