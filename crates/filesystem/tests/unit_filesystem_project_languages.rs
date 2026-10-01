@@ -51,7 +51,6 @@ fn empty_project_reports_no_languages() {
     assert!(detect_project_languages(tmp.path()).is_empty());
 }
 
-#[cfg(unix)]
 #[test]
 fn ignored_directories_are_skipped() {
     // `target/` is in DEFAULT_IGNORED_PATHS: a build artifact tree must not

@@ -43,6 +43,7 @@ flowchart TD
         P3 --> R3
         T5 --> R4["ToolInfo\n(available + paths)"]
         T6 --> R5["WorkspaceInfo\n(root, member, lang)"]
+        T7 --> R5
     end
 
     R1 --> D
@@ -50,7 +51,7 @@ flowchart TD
     R3 --> D
     R4 --> D
     R5 --> D
-    D -->|"80 methods via\n&dyn IFilesystemAggregate"| A
+    D -->|"81 methods via\n&dyn IFilesystemAggregate"| A
 
 ```
 
@@ -334,6 +335,7 @@ flowchart TD
 | `detect_language_from_path` | &str | `ConfigLanguage` | — | — | Detect language from path. |
 | `check_wired_in_container` | &Path, &PatternList | `bool` | — | — | Check wired in container. |
 | `resolve_orphan_module_path` | &Path, &Path, &str | `Option<PathBuf>` | — | — | Resolve orphan module path. |
+| `detect_project_languages` | &Path | `ProjectLanguagesVO` | — | — | Detect which language groups are present (FR-005B). |
 
 ### Aggregate API
 
@@ -517,7 +519,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | resolve_cargo_lock_working_dir | `&FilePath` | `FilePath` |
 | default_working_dir | `&FilePath` | `FilePath` |
 
-### IWorkspaceProtocol (8 operations)
+### IWorkspaceProtocol (9 operations)
 
 | Operation | Input | Output |
 | --- | --- | --- |
@@ -529,6 +531,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | detect_language_from_path | `&str` | `ConfigLanguage` |
 | check_wired_in_container | `&Path, &PatternList` | `bool` |
 | resolve_orphan_module_path | `&Path, &Path, &str` | `Option<PathBuf>` |
+| detect_project_languages (FR-005B) | `&Path` | `ProjectLanguagesVO` |
 
 ### IFilesystemAggregate — Cache Accessors & Orchestration (18 operations)
 
@@ -557,7 +560,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 
 ## Glossary
 
-- **IFilesystemAggregate**: Composed trait: all 5 protocols + cache/orchestration accessors = 80 methods
+- **IFilesystemAggregate**: Composed trait: all 5 protocols + cache/orchestration accessors = 81 methods
 - **IParserProtocol**: AST parse results and import extraction queries
 - **IGraphProtocol**: Dependency graph, definitions, implementations, reachability, cycles, orphans
 - **IFileSystemIOProtocol**: Low-level file I/O, path ops, directory ops, process execution
@@ -573,7 +576,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 
 ### Consumer Access Pattern
 
-All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **80 methods** (6 + 7 + 29 + 12 + 8 + 18).
+All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **81 methods** (6 + 7 + 29 + 12 + 9 + 18).
 
 ### Setup
 
