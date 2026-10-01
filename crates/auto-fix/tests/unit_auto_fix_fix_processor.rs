@@ -210,6 +210,37 @@ fn make_violation_report(files: HashMap<String, String>) -> ViolationReport {
 
 // ── fix_bypass_comments tests ──────────────────────────────
 
+/// Test FR-PRD-003 exit-code aggregation: `Failed` outcomes must trigger error in FixResult.
+#[test]
+fn fix_result_exit_code_contract_failed_outcomes_trigger_error() {
+    use shared_auto_fix::{FailReason, FixOutcome};
+    let fp = "/tmp/nonexistent.rs";
+    // Target file does not exist in MockIO → produces FailReason::FileNotFound
+    let p = make_bypass_fix(HashMap::new());
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
+    assert_eq!(outcome, FixOutcome::Failed(FailReason::FileNotFound));
+
+    // Display implementation works and formats reason without debug punctuation
+    assert_eq!(format!("{outcome}"), "Failed(FileNotFound)");
+}
+
+#[test]
+fn fix_outcome_display_formatting() {
+    use shared_auto_fix::{FailReason, SkipReason};
+    assert_eq!(
+        format!("{}", FixOutcome::Applied { changes: 3 }),
+        "Applied (3 change(s))"
+    );
+    assert_eq!(
+        format!("{}", FixOutcome::Skipped(SkipReason::MultiLineImport)),
+        "Skipped(MultiLineImport)"
+    );
+    assert_eq!(
+        format!("{}", FixOutcome::Failed(FailReason::WriteError)),
+        "Failed(WriteError)"
+    );
+}
+
 #[test]
 fn fix_bypass_strips_allow_attr() {
     let fp = "/tmp/allow.rs";

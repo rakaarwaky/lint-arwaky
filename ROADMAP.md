@@ -73,7 +73,7 @@ One unified table: every feature + cross-cutting items, sorted by priority.
 
 - **Risk (re-verified 2026-09-30, commit `8d4342a` — closed):** Document invariant audit via `lint-arwaky-cli docs .` reports 0 violations across all `FRD.md` and workspace document chain files (doc-length overruns and doc-thin checks resolved in PR #500 / PR #520). Definition of Done document gate passes clean.
 - **Risk (closed 2026-09-17):** Broken doc tests after documentation upgrade. **Resolved by** `bb715442`: all doc tests pass; self-lint clean.
-- **Risk (historical gate waiver — closed 2026-09-29):** AES607 counting bug in PR #335 false-failed legitimate PRs (#344, #350, #351). A temporary branch-protection waiver was granted under the Gate Waiver Process (AGENTS.md) and resolved via PR #500 / PR #520 commit `8d4342a`.
+- **Risk (historical gate waiver — closed 2026-09-29):** AES607 counting bug in PR #335 false-failed legitimate PRs (#344, #350, #351). A temporary branch-protection waiver was granted by the repository admin and resolved via PR #500 / PR #520 commit `8d4342a`. The Gate Waiver Process codified in `AGENTS.md` was written retroactively from this incident and governs future waivers only.
 
 ## Change Log
 
@@ -84,3 +84,4 @@ One unified table: every feature + cross-cutting items, sorted by priority.
 | 2026-09-29 | Streamlined columns: removed Feature/Spec/Backlog; added shared DATA.md + surface BACKLOG requirements |
 | 2026-09-29 | Resolved AGENTS.md section contract conflict (#493 vs #494): adopted 12 strict H2 headings (restoring Related Documents) in PR #500 / PR #509 with AES605 test enforcement |
 | 2026-09-30 | Addressed 15 Business Analyst audit issues (BA-1-01 through BA-5-03): added outcome metrics, evidence citations, UAT plan, deterministic bad-workspace floors, gate waiver policy, and release checklist |
+| 2026-09-30 | Fixed `fix` exit-code aggregation contract mismatch: added `FailReason`/`SkipReason` Display impls, wired `FixResult.error` → dispatcher `FixReport.has_failed` → CLI/MCP exit 2, clarified PRD `fix` rule (post-fix remaining violations → exit 1, not exit 0), added `fix_result_exit_code_contract_failed_outcomes_trigger_error` regression test. Corrected historical gate-waiver attribution in Risk Register. |

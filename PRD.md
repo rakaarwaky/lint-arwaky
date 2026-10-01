@@ -64,10 +64,12 @@ MCP JSON responses SHOULD include `exit_code` aligned with this contract.
 - If all checks pass cleanly with 0 violations and all prerequisites present → Exit Code `0` (Ok).
 
 **`fix` aggregation rule:**
-- If any fix attempt produces `Failed(reason)` (e.g. I/O failure, write error) → Exit Code `2` (Runtime error).
-- If all fix attempts produce `Applied` and/or `Skipped(reason)` with zero `Failed` → Exit Code `0` (Ok), with skip reasons printed as warnings.
-- If all attempted items are `Skipped(reason)` (0 `Applied`, 0 `Failed`) → Exit Code `0` (Ok, warnings emitted).
-- `fix --dry-run` and live `fix` share identical exit-code aggregation semantics.
+- If any fix attempt produces `Failed(reason)` (e.g. I/O failure, write error) → Exit Code `2` (Runtime error). This outranks the policy-fail result below.
+- If all attempted items are `Skipped(reason)` (0 `Applied`, 0 `Failed`) → Exit Code `0` (Ok, skip reasons emitted as warnings).
+- Otherwise, when every attempt is `Applied` or `Skipped` with zero `Failed`:
+  - If re-scanning finds 0 violations remaining → Exit Code `0` (Ok), with skip reasons printed as warnings.
+  - If violations remain that auto-fix cannot resolve (e.g. manual-only rules) → Exit Code `1` (Policy fail), consistent with `scan`.
+- `fix --dry-run` and live `fix` share identical exit-code aggregation semantics. A dry-run never writes files, so it exits `0` unless an attempt itself produced `Failed(reason)`.
 
 ## AES Rule Summary (32 Rules)
 
@@ -79,22 +81,22 @@ Seven groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Qual
 
 ### P0 — Must Have
 
-- **FR-PRD-001**: Multi-language scanning (Rust, Python, JS/TS). Acceptance: `scan` on mixed-language workspace returns violations from all three (evidence: `crates/filesystem` acceptance suite FR-001, `workspaces-bad/`).
-- **FR-PRD-002**: 32 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for every applicable code-level rule in each supported language; doc rules are audited over the document chain (evidence: `TEST.md` Section 3.2, `crates/doc-rules` contract test suite).
-- **FR-PRD-003**: CLI core commands (`check`, `scan`, `fix`, `ci`). Acceptance: each exits with the correct code from the Exit Code Contract (evidence: `crates/cli-commands` acceptance tests, `crates/dispatcher` acceptance suite).
-- **FR-PRD-004**: MCP server with 5 tools, full execute parity. Acceptance: every CLI command is reachable via `execute_command` (evidence: `crates/mcp-server` acceptance suite FR-001).
+- **FR-PRD-001**: Multi-language scanning (Rust, Python, JS/TS). Acceptance: `scan` on mixed-language workspace returns violations from all three (evidence: the `filesystem` crate's FR-001 acceptance suite, `workspaces-bad/`).
+- **FR-PRD-002**: 32 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for every applicable code-level rule in each supported language; doc rules are audited over the document chain (evidence: `TEST.md` Section 3.2, `doc-rules` contract test suite).
+- **FR-PRD-003**: CLI core commands (`check`, `scan`, `fix`, `ci`). Acceptance: each exits with the correct code from the Exit Code Contract (evidence: `cli-commands` and `dispatcher` acceptance suites).
+- **FR-PRD-004**: MCP server with 5 tools, full execute parity. Acceptance: every CLI command is reachable via `execute_command` (evidence: `mcp-server` acceptance suite).
 - **FR-PRD-005**: Self-auditing capability. Acceptance: `lint-arwaky-cli check .` on this repo reports 0 violations (evidence: `AGENTS.md` Definition of Done gate).
 
 ### P1 — Should Have
 
-- **FR-PRD-006**: External linter adapters (Clippy, Ruff, ESLint, etc.). Acceptance: `adapters` lists all installed tools (evidence: `crates/external-lint` acceptance suite FR-001).
-- **FR-PRD-007**: SARIF 2.1.0, JUnit XML, JSON reports. Acceptance: `--format sarif|junit|json` produces valid output (evidence: `crates/report-formatter` acceptance suite FR-001).
-- **FR-PRD-008**: Git hooks integration. Acceptance: `install-hook` creates a working pre-commit hook (evidence: `crates/git-hooks` acceptance suite FR-001).
-- **FR-PRD-009**: Auto-fix capabilities (remove + replace + rename). Acceptance: `fix` applies mechanical fixes; `--dry-run` previews (evidence: `crates/auto-fix` acceptance suites FR-001 through FR-004).
-- **FR-PRD-010**: Watch mode for continuous linting. Acceptance: `watch` re-lints on file save (evidence: `crates/file-watch` acceptance suite FR-001).
-- **FR-PRD-011**: TUI file browser. Acceptance: TUI renders file tree, runs lint actions, exits cleanly (evidence: `crates/tui` acceptance suite FR-001).
-- **FR-PRD-012**: Workspace exit-code contract enforced everywhere. Acceptance: all commands return codes 0/1/2/3 per contract (evidence: `crates/cli-commands` acceptance suite, `TEST.md` Section 3.4).
-- **FR-PRD-013**: Acceptance tests standardized: one test file per FR, named after the FR ID (evidence: `crates/*/tests/` acceptance test inventory).
+- **FR-PRD-006**: External linter adapters (Clippy, Ruff, ESLint, etc.). Acceptance: `adapters` lists all installed tools (evidence: `external-lint` adapter selection acceptance suite).
+- **FR-PRD-007**: SARIF 2.1.0, JUnit XML, JSON reports. Acceptance: `--format sarif|junit|json` produces valid output (evidence: `report-formatter` FR-001 acceptance suite).
+- **FR-PRD-008**: Git hooks integration. Acceptance: `install-hook` creates a working pre-commit hook (evidence: `git-hooks` acceptance suite).
+- **FR-PRD-009**: Auto-fix capabilities (remove + replace + rename). Acceptance: `fix` applies mechanical fixes; `--dry-run` previews (evidence: `auto-fix` acceptance suites for AES101/AES201/AES304, and the fix-processor unit suite covering the FR-PRD-003 exit-code aggregation contract).
+- **FR-PRD-010**: Watch mode for continuous linting. Acceptance: `watch` re-lints on file save (evidence: `file-watch` acceptance suite).
+- **FR-PRD-011**: TUI file browser. Acceptance: TUI renders file tree, runs lint actions, exits cleanly (evidence: `tui` acceptance suite).
+- **FR-PRD-012**: Workspace exit-code contract enforced everywhere. Acceptance: all commands return codes 0/1/2/3 per contract (evidence: `cli-commands` acceptance suite, `TEST.md` Section 3.4).
+- **FR-PRD-013**: Acceptance tests standardized: one test file per FR, named after the FR ID (evidence: `crates/*/tests/` acceptance test inventory; note: migration to `acceptance_FR_NNN` naming is ongoing across crates—filesystem and report-formatter already compliant).
 
 ### P2 — Nice to Have
 
@@ -107,7 +109,7 @@ Traceability flows through four standardized layers:
 1. **Product Level (PRD)**: `FR-PRD-NNN` defines high-level product capabilities.
 2. **Roadmap Level (ROADMAP)**: `FR-<CRATE_CODE>` tracks crate-level delivery milestones (`FR-FILE`, `FR-AUTO`, etc.).
 3. **Feature Level (Crate FRD)**: `FR-<FeatureName>-NNN` defines granular functional requirements within each crate (`FR-AutoFix-001`, `FR-Filesystem-001`).
-4. **Verification Level (Acceptance Tests)**: `crates/<crate-name>/tests/acceptance_FR_NNN` test suites verify `FR-<FeatureName>-NNN`, scoped by crate directory namespace.
+4. **Verification Level (Acceptance Tests)**: `acceptance_FR_NNN` test suites verify `FR-<FeatureName>-NNN`, scoped by crate directory namespace. Legacy suites under their established names (domain-specific or rule-specific) remain valid evidence; new suites follow the `acceptance_FR_NNN` pattern.
 
 ## Open Questions / Risks
 
