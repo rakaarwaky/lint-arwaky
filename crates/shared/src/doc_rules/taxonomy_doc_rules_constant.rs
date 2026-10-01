@@ -22,6 +22,19 @@ pub const SECTION_STRUCTURE_VIOLATION_ORDER: &str = "order_violation";
 /// The API Contract section is missing one of its required subsections.
 pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION: &str = "api_no_subsection";
 
+/// API Contract carries a level-3 heading outside the fixed pair
+/// (`Protocol API`, `Aggregate API`). Authoring one H3 per protocol — or any
+/// other invented subsection — is the shape this closes.
+pub const SECTION_STRUCTURE_VIOLATION_API_H3_UNEXPECTED: &str = "api_h3_unexpected";
+
+/// A required API Contract subsection does not carry its own column-complete
+/// table, so the seam was described in prose or folded into its sibling.
+pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_NO_TABLE: &str = "api_subsection_no_table";
+
+/// A required API Contract subsection is duplicated, so the fixed H3 pair
+/// (`Protocol API`, `Aggregate API`) no longer appears exactly once each.
+pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_DUPLICATED: &str = "api_subsection_duplicated";
+
 /// Integration Points is present but is not a table with the required columns.
 pub const SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE: &str = "integration_not_table";
 
@@ -158,6 +171,12 @@ pub const FR_FIELDS: &[&str] = &[
 
 /// Columns the API Contract tables must carry.
 pub const API_COLUMNS: &[&str] = &["Method", "Input", "Output", "Error", "Event", "Description"];
+
+/// The two level-3 subsections `## API Contract` must carry, in order, and
+/// nothing else. `Protocol API` lists every protocol method; `Aggregate API`
+/// lists the single `execute` entry point. A FRD that invents a third H3 —
+/// one per protocol class — is the shape `api_h3_unexpected` reports.
+pub const API_CONTRACT_SUBSECTIONS: &[&str] = &["Protocol API", "Aggregate API"];
 
 /// Columns Integration Points must carry.
 pub const INTEGRATION_COLUMNS: &[&str] = &["System", "Direction", "Purpose", "Failure mode"];
