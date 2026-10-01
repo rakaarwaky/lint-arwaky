@@ -1087,6 +1087,7 @@ mod subprocess_timeout_tests {
         let child = Command::new("sh")
             .args(["-c", "sleep 5"])
             .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
             .spawn()
             .unwrap();
         let started = Instant::now();
