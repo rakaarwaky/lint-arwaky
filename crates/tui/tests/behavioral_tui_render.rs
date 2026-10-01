@@ -87,13 +87,14 @@ fn shortcut_bar_renders_bindings_from_the_central_table() {
     let mut state = AppState::new("/project".to_string());
     state.path_dialog.visible = false;
     state.preview.mode = PreviewMode::ActionOutput;
-    let mut terminal = Terminal::new(TestBackend::new(80, 4)).unwrap();
+    let mut terminal = Terminal::new(TestBackend::new(240, 4)).unwrap();
     terminal
         .draw(|frame| ShortcutComponent::new().render(&state, frame, frame.area()))
         .unwrap();
     let text = buffer_text(&terminal);
-    // Action-output context uses the same central binding with its result label.
+    // Action-output context uses the same central bindings with their result labels.
     assert!(text.contains("c:re-check"));
+    assert!(text.contains("?:help"));
 }
 
 #[test]
