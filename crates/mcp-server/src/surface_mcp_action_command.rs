@@ -159,7 +159,9 @@ impl McpActionSurface {
             {
                 Some(threshold) => threshold,
                 None => {
-                    return error_response("Invalid 'threshold': expected an integer from 0 to 100");
+                    return error_response(
+                        "Invalid 'threshold': expected an integer from 0 to 100",
+                    );
                 }
             },
         ) {

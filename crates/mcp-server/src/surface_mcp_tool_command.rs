@@ -157,11 +157,7 @@ fn extract_string(
     }
 }
 
-fn extract_u64(
-    args: Option<&serde_json::Value>,
-    key: &str,
-    default: u64,
-) -> Result<u64, String> {
+fn extract_u64(args: Option<&serde_json::Value>, key: &str, default: u64) -> Result<u64, String> {
     let values = extract_args_object(args)?;
     match values.and_then(|values| values.get(key)) {
         None => Ok(default),
