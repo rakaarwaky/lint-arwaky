@@ -27,7 +27,7 @@ jobs:
       - name: Export formatting patch (temporary diagnostics)
         run: |
           cargo fmt --all
-          git diff --binary | base64 -w0 | fold -w3000 | while read -r chunk; do
+          git diff --binary | gzip -9 | base64 -w0 | fold -w3000 | while read -r chunk; do
             echo "::error title=RUSTFMT_PATCH::$chunk"
           done
           exit 1
@@ -67,7 +67,7 @@ jobs:
           cargo build --release > build.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            base64 -w0 build.log | fold -w3000 | while read -r chunk; do
+            gzip -9 -c build.log | base64 -w0 | fold -w3000 | while read -r chunk; do
               echo "::error title=BUILD_LOG::$chunk"
             done
           fi
