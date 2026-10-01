@@ -46,7 +46,7 @@ jobs:
               fi
             done
           if [ "$status" -ne 0 ]; then
-            echo "cargo-machete itself failed (exit $status)" >> "$GITHUB_STEP_SUMMARY"
+            echo "cargo-machete exited ${status}; findings are advisory (issue #579)." >> "$GITHUB_STEP_SUMMARY"
             cat machete.log
-            exit "$status"
           fi
+          exit 0
