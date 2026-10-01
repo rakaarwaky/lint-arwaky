@@ -1,10 +1,8 @@
-//! Shared test helpers for shared-crate integration tests.
+//! Shared test helpers for `quality-rules` integration tests.
 //!
-//! Note: `mock_filesystem.rs` in this directory is the canonical mock linked
-//! into other crates' tests via `#[path]`; it is intentionally NOT declared
-//! here because it imports the shared crate as `shared` (the dependency alias
-//! used by consuming crates), which is not resolvable inside the shared
-//! crate's own test binaries.
+//! Note: `mock_filesystem.rs` lives in `crates/shared/tests/common/` and is
+//! linked into consuming crates' tests via `#[path]`; it is not part of this
+//! directory, which holds only the helpers declared below.
 
 use shared_common::taxonomy_common_vo::LineNumber;
 use shared_common::taxonomy_error_vo::ErrorCode;

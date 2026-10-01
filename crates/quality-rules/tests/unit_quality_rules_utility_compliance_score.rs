@@ -103,7 +103,7 @@ fn compute_score_exactly_100_penalty() {
     assert_eq!(compute_score(&results), 0.0);
 }
 #[test]
-fn compute_score_clamps_at_zero() {
+fn compute_score_three_criticals_penalty_15() {
     let results = vec![
         common::violation("a.rs", 1, "AES101", Severity::CRITICAL),
         common::violation("a.rs", 2, "AES101", Severity::CRITICAL),
