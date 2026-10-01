@@ -79,7 +79,10 @@ pub fn handle_security(
             println!();
 
             if !report.tool_installed {
-                println!("Security scanning tool not installed — cannot run scan.");
+                println!(
+                    "WARNING: No dependency vulnerability scanner available for {} — install `{}` to enable this check. No clean result was produced.",
+                    report.language, report.tool_name
+                );
                 return ExitCode::PREREQUISITE_MISSING;
             }
 

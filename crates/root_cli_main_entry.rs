@@ -11,7 +11,8 @@ use shared_common::{FilePath, GitBranchName, Threshold};
 fn init_tracing() {
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "warn".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "warn,lint_arwaky::audit=info".into()),
         )
         .with_writer(std::io::stderr)
         .init();
@@ -623,6 +624,13 @@ fn main() {
             Some(FilePath::new(path).unwrap_or_default()),
         ),
         Command::InstallHook => {
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "git_hook_change",
+                action = "install-hook",
+                phase = "started",
+                "CLI git-hook action started"
+            );
             let exe = std::env::current_exe()
                 .map(|p| FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default())
                 .unwrap_or_default();
@@ -631,6 +639,13 @@ fn main() {
                 &exe,
             ) {
                 Ok(report) => {
+                    tracing::info!(
+                        target: "lint_arwaky::audit",
+                        event = "git_hook_change",
+                        action = "install-hook",
+                        success = report.success,
+                        "CLI git-hook action completed"
+                    );
                     println!("{}", report.message);
                     if report.success {
                         shared_common::ExitCode::OK
@@ -639,14 +654,36 @@ fn main() {
                     }
                 }
                 Err(e) => {
+                    tracing::info!(
+                        target: "lint_arwaky::audit",
+                        event = "git_hook_change",
+                        action = "install-hook",
+                        success = false,
+                        error = %e,
+                        "CLI git-hook action failed"
+                    );
                     eprintln!("{e}");
                     shared_common::ExitCode::RUNTIME_ERROR
                 }
             }
         }
         Command::UninstallHook => {
+            tracing::info!(
+                target: "lint_arwaky::audit",
+                event = "git_hook_change",
+                action = "uninstall-hook",
+                phase = "started",
+                "CLI git-hook action started"
+            );
             match dispatcher::surface_git_action::collect_uninstall_hook(git_orchestrator.clone()) {
                 Ok(report) => {
+                    tracing::info!(
+                        target: "lint_arwaky::audit",
+                        event = "git_hook_change",
+                        action = "uninstall-hook",
+                        success = report.success,
+                        "CLI git-hook action completed"
+                    );
                     println!("{}", report.message);
                     if report.success {
                         shared_common::ExitCode::OK
@@ -655,6 +692,14 @@ fn main() {
                     }
                 }
                 Err(e) => {
+                    tracing::info!(
+                        target: "lint_arwaky::audit",
+                        event = "git_hook_change",
+                        action = "uninstall-hook",
+                        success = false,
+                        error = %e,
+                        "CLI git-hook action failed"
+                    );
                     eprintln!("{e}");
                     shared_common::ExitCode::RUNTIME_ERROR
                 }

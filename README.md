@@ -4,6 +4,13 @@ Architecture linter enforcement for Rust, Python, and TypeScript. Built in Rust,
 
 Most linters catch syntax and style. Lint Arwaky catches architecture drift: forbidden cross-layer imports, dead files, role confusion, unused imports, and bypass culture. It enforces 32 AES rules across 7 groups (naming, import, quality, role, orphan, structure, and doc) in Rust, Python, and TypeScript in a single scan.
 
+> **Security scope:** Lint Arwaky does not detect hardcoded secrets or
+> credentials such as API keys, tokens, and passwords. Pair it with a dedicated
+> secret scanner such as [gitleaks](https://github.com/gitleaks/gitleaks) or
+> [TruffleHog](https://github.com/trufflesecurity/trufflehog). Secret detection
+> is deliberately delegated to these specialist tools rather than added as an
+> AES architecture rule.
+
 ## Prerequisites
 
 - Rust 1.85.0+ and Cargo (pinned via `rust-toolchain.toml`)
@@ -28,6 +35,9 @@ lint-arwaky-cli ci . --threshold 0   # CI exit codes
 lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 ```
 
+For a guided, presenter-ready walkthrough using the bundled fixtures, see `TEST.md`
+Section 5.5 "Demo Walkthrough".
+
 ## Available Scripts/Commands
 
 
@@ -51,6 +61,11 @@ lint-arwaky-cli fix . --dry-run      # preview auto-fixes
 | `lint-arwaky-tui`                                            | Start TUI                                                            |
 
 Key bindings: `c` check, `s` scan, `f` fix dry-run, `F` fix live (gated), `/` search, `?` help overlay. Press `r` to change project root. Destructive actions (`F`, `H`, `U`) require explicit confirmation.
+
+> **Known issue (#552):** confirming a gated destructive action (`F`, `H`, `U`, `install`,
+> `init`) currently re-arms the confirmation gate instead of executing it. Do not rely on
+> these in a live demo or production workflow until #552 closes — see `TEST.md` Section
+> 5.5 for a demo script that works around this.
 
 ## Configuration
 
