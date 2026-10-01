@@ -1,12 +1,12 @@
-use shared::cli_commands::LintResult;
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::{ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity};
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use shared_cli_commands::LintResult;
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::{ContentString, FilePath, Identity, LanguageVO, LineNumber, Severity};
+use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
-use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::taxonomy_import_rules_error::ImportError;
-use shared::import_rules::utility_dummy_detector;
-use shared::import_rules::utility_import_resolver;
+use shared_import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared_import_rules::taxonomy_import_rules_error::ImportError;
+use shared_import_rules::utility_dummy_detector;
+use shared_import_rules::utility_import_resolver;
 
 // PURPOSE: DummyImportChecker — AES204: detect dummy imports, dummy functions, dummy trait impls
 
@@ -253,7 +253,7 @@ impl DummyImportChecker {
                     match ctx.lang {
                         LanguageVO::Rust => {
                             t.contains("use shared::taxonomy_")
-                                || t.contains("use shared::common::taxonomy_")
+                                || t.contains("use shared_common::taxonomy_")
                                 || t.contains("use crate::common::taxonomy_")
                                 || t.contains("use crate::taxonomy_")
                         }
@@ -283,7 +283,7 @@ impl DummyImportChecker {
                 match ctx.lang {
                     LanguageVO::Rust => {
                         t.contains("use shared::taxonomy_")
-                            || t.contains("use shared::common::taxonomy_")
+                            || t.contains("use shared_common::taxonomy_")
                             || t.contains("use crate::common::taxonomy_")
                             || t.contains("use crate::taxonomy_")
                     }
@@ -311,8 +311,8 @@ impl DummyImportChecker {
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or("");
-        let layer = shared::common::utility_layer_detector::detect_layer_from_prefix(basename);
-        if layer.as_deref() != Some(shared::role_rules::LAYER_SURFACES) {
+        let layer = shared_common::utility_layer_detector::detect_layer_from_prefix(basename);
+        if layer.as_deref() != Some(shared_role_rules::LAYER_SURFACES) {
             return;
         }
         let lines: Vec<&str> = content.lines().collect();

@@ -1,7 +1,26 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/shared",
+    "crates/shared/src/auto_fix",
+    "crates/shared/src/cli_commands",
+    "crates/shared/src/common",
+    "crates/shared/src/config_system",
+    "crates/shared/src/doc_rules",
+    "crates/shared/src/external_lint",
+    "crates/shared/src/file_watch",
+    "crates/shared/src/filesystem",
+    "crates/shared/src/git_hooks",
+    "crates/shared/src/import_rules",
+    "crates/shared/src/maintenance",
+    "crates/shared/src/mcp_server",
+    "crates/shared/src/naming_rules",
+    "crates/shared/src/orphan_rules",
+    "crates/shared/src/project_setup",
+    "crates/shared/src/quality_rules",
+    "crates/shared/src/report_formatter",
+    "crates/shared/src/role_rules",
+    "crates/shared/src/structure_rules",
+    "crates/shared/src/tui",
     "crates/filesystem",
     "crates/config-system",
     # Layer 2: Lint rules
@@ -43,7 +62,26 @@ too_many_arguments = "allow"
 
 [workspace.dependencies]
 # Workspace member crates (version required for crates.io publish)
-shared = { package = "shared-lint-arwaky", path = "crates/shared", version = "3.7.1" }
+shared-auto-fix = { package = "shared-auto-fix-lint-arwaky", path = "crates/shared/src/auto_fix", version = "3.7.1" }
+shared-cli-commands = { package = "shared-cli-commands-lint-arwaky", path = "crates/shared/src/cli_commands", version = "3.7.1" }
+shared-common = { package = "shared-common-lint-arwaky", path = "crates/shared/src/common", version = "3.7.1" }
+shared-config-system = { package = "shared-config-system-lint-arwaky", path = "crates/shared/src/config_system", version = "3.7.1" }
+shared-doc-rules = { package = "shared-doc-rules-lint-arwaky", path = "crates/shared/src/doc_rules", version = "3.7.1" }
+shared-external-lint = { package = "shared-external-lint-lint-arwaky", path = "crates/shared/src/external_lint", version = "3.7.1" }
+shared-file-watch = { package = "shared-file-watch-lint-arwaky", path = "crates/shared/src/file_watch", version = "3.7.1" }
+shared-filesystem = { package = "shared-filesystem-lint-arwaky", path = "crates/shared/src/filesystem", version = "3.7.1" }
+shared-git-hooks = { package = "shared-git-hooks-lint-arwaky", path = "crates/shared/src/git_hooks", version = "3.7.1" }
+shared-import-rules = { package = "shared-import-rules-lint-arwaky", path = "crates/shared/src/import_rules", version = "3.7.1" }
+shared-maintenance = { package = "shared-maintenance-lint-arwaky", path = "crates/shared/src/maintenance", version = "3.7.1" }
+shared-mcp-server = { package = "shared-mcp-server-lint-arwaky", path = "crates/shared/src/mcp_server", version = "3.7.1" }
+shared-naming-rules = { package = "shared-naming-rules-lint-arwaky", path = "crates/shared/src/naming_rules", version = "3.7.1" }
+shared-orphan-rules = { package = "shared-orphan-rules-lint-arwaky", path = "crates/shared/src/orphan_rules", version = "3.7.1" }
+shared-project-setup = { package = "shared-project-setup-lint-arwaky", path = "crates/shared/src/project_setup", version = "3.7.1" }
+shared-quality-rules = { package = "shared-quality-rules-lint-arwaky", path = "crates/shared/src/quality_rules", version = "3.7.1" }
+shared-report-formatter = { package = "shared-report-formatter-lint-arwaky", path = "crates/shared/src/report_formatter", version = "3.7.1" }
+shared-role-rules = { package = "shared-role-rules-lint-arwaky", path = "crates/shared/src/role_rules", version = "3.7.1" }
+shared-structure-rules = { package = "shared-structure-rules-lint-arwaky", path = "crates/shared/src/structure_rules", version = "3.7.1" }
+shared-tui = { package = "shared-tui-lint-arwaky", path = "crates/shared/src/tui", version = "3.7.1" }
 filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "3.7.1" }
 config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "3.7.1" }
 naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "3.7.1" }
@@ -136,7 +174,26 @@ path = "crates/root_tui_main_entry.rs"
 
 [dependencies]
 # Workspace member crates
-shared.workspace = true
+shared-auto-fix.workspace = true
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
+shared-doc-rules.workspace = true
+shared-external-lint.workspace = true
+shared-file-watch.workspace = true
+shared-filesystem.workspace = true
+shared-git-hooks.workspace = true
+shared-import-rules.workspace = true
+shared-maintenance.workspace = true
+shared-mcp-server.workspace = true
+shared-naming-rules.workspace = true
+shared-orphan-rules.workspace = true
+shared-project-setup.workspace = true
+shared-quality-rules.workspace = true
+shared-report-formatter.workspace = true
+shared-role-rules.workspace = true
+shared-structure-rules.workspace = true
+shared-tui.workspace = true
 filesystem.workspace = true
 config-system.workspace = true
 naming-rules.workspace = true

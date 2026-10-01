@@ -1,5 +1,5 @@
 // PURPOSE: LanguageInfo — value object for pre-computed language flags (is_rs, is_py, is_js, lang)
-use crate::common::taxonomy_language_vo::Language;
+use crate::taxonomy_language_vo::Language;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LanguageInfo {

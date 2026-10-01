@@ -1,7 +1,7 @@
 // Unit tests — ChangeFilter edge cases and deduplication logic.
 use file_watch_lint_arwaky::capabilities_change_filter::ChangeFilter;
-use shared::file_watch::contract_watch_protocol::IChangeFilterProtocol;
-use shared::file_watch::taxonomy_file_watch_vo::{WatchEvent, WatchEventKind};
+use shared_file_watch::contract_watch_protocol::IChangeFilterProtocol;
+use shared_file_watch::taxonomy_file_watch_vo::{WatchEvent, WatchEventKind};
 
 // ─── is_lintable edge cases (FR-002) ──────────────────────
 

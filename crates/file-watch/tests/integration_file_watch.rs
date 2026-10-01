@@ -1,6 +1,6 @@
 // Integration tests — full DI wiring via FileWatchContainer.
 use file_watch_lint_arwaky::root_file_watch_container::FileWatchContainer;
-use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
+use shared_file_watch::contract_watch_aggregate::IWatchAggregate;
 use std::sync::Arc;
 
 #[test]
@@ -43,8 +43,8 @@ fn container_aggregate_is_trait_object() {
 
 #[test]
 fn filter_via_protocol() {
-    use shared::file_watch::contract_watch_protocol::IChangeFilterProtocol;
-    use shared::file_watch::{WatchEvent, WatchEventKind};
+    use shared_file_watch::contract_watch_protocol::IChangeFilterProtocol;
+    use shared_file_watch::{WatchEvent, WatchEventKind};
     let filter = file_watch_lint_arwaky::capabilities_change_filter::ChangeFilter::new();
     let events = vec![
         WatchEvent::new("main.rs".to_string(), WatchEventKind::Modified),
@@ -57,7 +57,7 @@ fn filter_via_protocol() {
 
 #[test]
 fn filter_via_container() {
-    use shared::file_watch::{WatchEvent, WatchEventKind};
+    use shared_file_watch::{WatchEvent, WatchEventKind};
     let container = FileWatchContainer::new();
     let events = vec![
         WatchEvent::new("main.rs".to_string(), WatchEventKind::Modified),

@@ -1,11 +1,11 @@
 // PURPOSE: PipelineJob, SuccessStatus, EnvContentVO, McpConfigVO — value objects for pipeline job lifecycle tracking
 // ResponseData is re-exported from common for backward compatibility
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::string_value_object;
+use crate::taxonomy_adapter_name_vo::AdapterName;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-pub use crate::common::taxonomy_response_data_vo::ResponseData;
+pub use crate::taxonomy_response_data_vo::ResponseData;
 
 // Manual impl: `SuccessStatus` overrides `Display` to render "SUCCESS"/"FAILURE"
 // instead of `true`/`false`, and the macro does not currently support a clean

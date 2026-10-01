@@ -11,7 +11,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem};
-use shared::tui::{AppState, PanelFocus};
+use shared_tui::{AppState, PanelFocus};
 use std::path::Path;
 
 pub struct TreeView;

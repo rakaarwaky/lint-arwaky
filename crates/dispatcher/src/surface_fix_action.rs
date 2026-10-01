@@ -2,12 +2,12 @@
 // Runs lint → apply auto-fixes → re-lint to measure improvement.
 // Supports dry-run mode (preview only) via the fix_orchestrator_factory closure.
 // Adapted: sync (no async_trait, no tokio).
-use shared::auto_fix::{FixRequest, IFixAggregate};
-use shared::cli_commands::LintResult;
-use shared::common::FilePath;
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_auto_fix::{FixRequest, IFixAggregate};
+use shared_cli_commands::LintResult;
+use shared_common::FilePath;
+use shared_quality_rules::ICodeAnalysisAggregate;
 
-use shared::quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::CodeAnalysisRequest;
 use std::sync::Arc;
 
 /// Auto-fix outcome — formatted by CLI/MCP surfaces.

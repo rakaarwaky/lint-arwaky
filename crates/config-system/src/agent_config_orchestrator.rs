@@ -1,9 +1,9 @@
 use dashmap::DashMap;
-use shared::common::taxonomy_cache_key_vo::CacheKey;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::config_system::contract_config_protocol::{
+use shared_common::taxonomy_cache_key_vo::CacheKey;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared_config_system::contract_config_protocol::{
     IConfigMergeProtocol, IConfigReadProtocol, IWorkspaceMembersProtocol,
 };
 // Utility functions are free functions in shared crate, not traits:
@@ -13,17 +13,17 @@ use shared::config_system::contract_config_protocol::{
 // - ignored_paths_from_config()
 // - default_config_for_language()
 // These are imported via their modules below.
-use shared::config_system::contract_config_protocol::WorkspaceType;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_system_error::ConfigError;
-use shared::config_system::taxonomy_config_system_request::ConfigRequest;
-use shared::config_system::taxonomy_config_system_response::ConfigResponse;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::config_system::taxonomy_config_system_vo::ConfigResult;
-use shared::config_system::taxonomy_config_system_vo::ConfigSource;
-use shared::config_system::taxonomy_config_system_vo::WorkspaceInfo;
-use shared::config_system::utility_config_parser::default_config_for_language;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_config_system::contract_config_protocol::WorkspaceType;
+use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared_config_system::taxonomy_config_system_error::ConfigError;
+use shared_config_system::taxonomy_config_system_request::ConfigRequest;
+use shared_config_system::taxonomy_config_system_response::ConfigResponse;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_config_system::taxonomy_config_system_vo::ConfigResult;
+use shared_config_system::taxonomy_config_system_vo::ConfigSource;
+use shared_config_system::taxonomy_config_system_vo::WorkspaceInfo;
+use shared_config_system::utility_config_parser::default_config_for_language;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 use tracing::warn;
@@ -252,8 +252,8 @@ impl ConfigOrchestrator {
         let language = ConfigLanguage::from(ws_type);
         let result = self.load_config_for_language(project_root, language);
         PatternList::new(
-            shared::config_system::utility_config_merger::merge_default_ignored_paths(
-                shared::config_system::utility_config_merger::ignored_paths_from_config(
+            shared_config_system::utility_config_merger::merge_default_ignored_paths(
+                shared_config_system::utility_config_merger::ignored_paths_from_config(
                     &result.config,
                 ),
             ),
@@ -267,8 +267,8 @@ impl ConfigOrchestrator {
     ) -> PatternList {
         let result = self.load_config_for_language(project_root, language);
         PatternList::new(
-            shared::config_system::utility_config_merger::merge_default_ignored_paths(
-                shared::config_system::utility_config_merger::ignored_paths_from_config(
+            shared_config_system::utility_config_merger::merge_default_ignored_paths(
+                shared_config_system::utility_config_merger::ignored_paths_from_config(
                     &result.config,
                 ),
             ),

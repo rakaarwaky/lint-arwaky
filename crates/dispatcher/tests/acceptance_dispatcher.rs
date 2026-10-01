@@ -1,7 +1,7 @@
 // Acceptance tests — dispatcher surface actions produce valid output.
-use shared::cli_commands::LintResult;
-use shared::common::ViolationItem;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared_cli_commands::LintResult;
+use shared_common::ViolationItem;
+use shared_common::taxonomy_path_vo::FilePath;
 
 #[test]
 fn acceptance_check_action_on_current_project() {

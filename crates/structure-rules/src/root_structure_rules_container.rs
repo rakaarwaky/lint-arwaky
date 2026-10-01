@@ -7,7 +7,7 @@ use crate::agent_structure_orchestrator::StructureOrchestrator;
 use crate::capabilities_feature_health_auditor::FeatureHealthAuditor;
 use crate::capabilities_shared_purity_auditor::SharedPurityAuditor;
 use crate::capabilities_surface_purity_auditor::SurfacePurityAuditor;
-use shared::structure_rules::contract_structure_aggregate::IStructureAggregate;
+use shared_structure_rules::contract_structure_aggregate::IStructureAggregate;
 use std::sync::Arc;
 
 /// Composition root for the structure-rules feature.

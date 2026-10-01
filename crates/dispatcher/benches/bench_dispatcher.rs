@@ -5,21 +5,18 @@ fn bench_output_json(c: &mut Criterion) {
     let mut group = c.benchmark_group("output_json");
     group.significance_level(0.05).confidence_level(0.95);
 
-    let results: Vec<shared::common::LintResult> = (0..200)
-        .map(|i| shared::common::taxonomy_lint_result_vo::LintResult {
-            file: shared::common::FilePath::new(format!("src/module_{}.rs", i)).unwrap(),
-            line: shared::common::LineNumber::new(i as i64),
+    let results: Vec<shared_common::LintResult> = (0..200)
+        .map(|i| shared_common::taxonomy_lint_result_vo::LintResult {
+            file: shared_common::FilePath::new(format!("src/module_{}.rs", i)).unwrap(),
+            line: shared_common::LineNumber::new(i as i64),
             column: Default::default(),
-            code: shared::common::ErrorCode::raw(format!("AES{}", 100 + (i % 15))),
-            message: shared::common::LintMessage::new(format!(
-                "violation at module_{}.rs:{}",
-                i, i
-            )),
+            code: shared_common::ErrorCode::raw(format!("AES{}", 100 + (i % 15))),
+            message: shared_common::LintMessage::new(format!("violation at module_{}.rs:{}", i, i)),
             source: None,
             severity: if i % 3 == 0 {
-                shared::common::Severity::HIGH
+                shared_common::Severity::HIGH
             } else {
-                shared::common::Severity::MEDIUM
+                shared_common::Severity::MEDIUM
             },
             enclosing_scope: None,
             related_locations: Default::default(),

@@ -2,8 +2,8 @@
 // Tests DashMap-based config caching and concurrent access.
 mod common;
 
-use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
+use shared_common::FilePath;
+use shared_config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
 
 use std::fs;
 use std::sync::Arc;

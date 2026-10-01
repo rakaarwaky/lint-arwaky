@@ -1,19 +1,19 @@
 // PURPOSE: Acceptance test AES302 — min line count below threshold
 // Create a file with <10 lines, verify violation when configured with min_lines > line count
-use shared::cli_commands::LintResult;
-use shared::common::{Count, LayerDefinition};
-use shared::quality_rules::ILineCheckerProtocol;
+use shared_cli_commands::LintResult;
+use shared_common::{Count, LayerDefinition};
+use shared_quality_rules::ILineCheckerProtocol;
 
 use quality_rules_lint_arwaky::capabilities_line_checker::ArchLineChecker;
 
 fn make_layer_def_with_min(min: i64) -> LayerDefinition {
     LayerDefinition {
-        code_analysis: shared::quality_rules::CodeAnalysisRuleVO {
+        code_analysis: shared_quality_rules::CodeAnalysisRuleVO {
             min_lines: Count::new(min),
             max_lines: Count::new(0),
             ..Default::default()
         },
-        exceptions: shared::common::PatternList { values: vec![] },
+        exceptions: shared_common::PatternList { values: vec![] },
         ..Default::default()
     }
 }
@@ -40,7 +40,7 @@ fn file_below_min_lines_produces_aes302_violation() {
         "Expected AES302 code, got: {}",
         violations[0].code.code()
     );
-    assert_eq!(violations[0].severity, shared::common::Severity::HIGH);
+    assert_eq!(violations[0].severity, shared_common::Severity::HIGH);
 }
 
 #[test]

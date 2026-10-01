@@ -1,8 +1,8 @@
-use shared::cli_commands::LintResult;
-use shared::quality_rules::contract_quality_protocol::ILineCheckerProtocol;
+use shared_cli_commands::LintResult;
+use shared_quality_rules::contract_quality_protocol::ILineCheckerProtocol;
 
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_severity_vo::Severity;
 
 // PURPOSE: ArchLineChecker — ILineCheckerProtocol for AES301 (file too large) and AES302 (file too short)
 // ALGORITHM:
@@ -33,8 +33,8 @@ impl ILineCheckerProtocol for ArchLineChecker {
             None => return,
         };
 
-        // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
-        if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&basename.as_str()) {
+        // Skip barrel files (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
+        if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&basename.as_str()) {
             return;
         }
 

@@ -5,7 +5,7 @@
 // Utility: stateless functions
 // Consumers: import-rules (via IFilesystemAggregate), agent orchestrator
 
-use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use crate::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::HashMap;
 
 // ─── Inlined from utility_filesystem_io (AES201: utility cannot import utility) ───
@@ -37,7 +37,7 @@ pub fn resolve_single_import(mut entry: ImportEntry, root_dir: &Path) -> ImportE
     }
 
     // Handle Python relative imports (starting with '.')
-    if entry.language == crate::filesystem::taxonomy_filesystem_vo::Language::Python
+    if entry.language == crate::taxonomy_filesystem_vo::Language::Python
         && (entry.raw_path.starts_with('.') || entry.raw_path.starts_with(".."))
     {
         return resolve_python_relative_import(entry, root_dir);
@@ -143,8 +143,8 @@ fn find_barrel_file(module_path: &str, root_dir: &Path) -> Option<String> {
     let clean_path = normalize_module_path(module_path);
     let module_dir = base.join(&clean_path);
 
-    // Use single source: crate::common::DEFAULT_RULE_EXCEPTIONS
-    let barrel_candidates: Vec<&str> = crate::common::DEFAULT_RULE_EXCEPTIONS.to_vec();
+    // Use single source: shared_common::DEFAULT_RULE_EXCEPTIONS
+    let barrel_candidates: Vec<&str> = shared_common::DEFAULT_RULE_EXCEPTIONS.to_vec();
 
     // Check the module directory itself
     if let Some(found) = try_barrel_candidates(&module_dir, &barrel_candidates) {

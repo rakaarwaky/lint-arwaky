@@ -4,7 +4,7 @@ use project_setup_lint_arwaky::capabilities_env_generator::SetupEnvGenerator;
 use project_setup_lint_arwaky::capabilities_language_detector::SetupLanguageDetector;
 use project_setup_lint_arwaky::capabilities_mcp_config_generator::SetupMcpConfigGenerator;
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
-use shared::project_setup::{
+use shared_project_setup::{
     IAdapterInstallationProtocol, IEnvGenerationProtocol, ILanguageDetectionProtocol,
     IMcpConfigGenerationProtocol, ISetupAggregate,
 };

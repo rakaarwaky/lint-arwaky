@@ -4,25 +4,25 @@ use auto_fix_lint_arwaky::capabilities_bypass_fix::BypassFix;
 use auto_fix_lint_arwaky::capabilities_symbol_rename::SymbolRename;
 use auto_fix_lint_arwaky::capabilities_unused_import_fix::UnusedImportFix;
 use auto_fix_lint_arwaky::capabilities_violation_report::ViolationReport;
-use shared::auto_fix::{
+use shared_auto_fix::{
     FixOutcome, IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
     IViolationReportProtocol,
 };
-use shared::common::{ContentString, FilePath, Severity, SymbolName};
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_common::{ContentString, FilePath, Severity, SymbolName};
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::collections::HashMap;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 /// Build a LintResult with the given code for FR-004 manual-report tests.
-fn violation(code: &str, severity: Severity) -> shared::common::LintResult {
-    shared::common::LintResult {
+fn violation(code: &str, severity: Severity) -> shared_common::LintResult {
+    shared_common::LintResult {
         file: FilePath::new("src/main.rs").unwrap(),
-        line: shared::common::LineNumber::new(3),
-        code: shared::common::ErrorCode::raw(code),
-        message: shared::common::LintMessage::new(format!("violation {code}")),
-        source: Some(shared::common::AdapterName::raw("architecture")),
+        line: shared_common::LineNumber::new(3),
+        code: shared_common::ErrorCode::raw(code),
+        message: shared_common::LintMessage::new(format!("violation {code}")),
+        source: Some(shared_common::AdapterName::raw("architecture")),
         severity,
         ..Default::default()
     }
@@ -96,7 +96,7 @@ impl IFileSystemIOProtocol for MockIO {
     }
     fn is_source_ext(
         &self,
-        _ext: &shared::filesystem::taxonomy_filesystem_vo::FileExtension,
+        _ext: &shared_filesystem::taxonomy_filesystem_vo::FileExtension,
     ) -> bool {
         false
     }
@@ -112,11 +112,11 @@ impl IFileSystemIOProtocol for MockIO {
     fn scan_directory_with_ignored(
         &self,
         _dir: &Path,
-        _ignored: &shared::common::PatternList,
+        _ignored: &shared_common::PatternList,
     ) -> Vec<PathBuf> {
         vec![]
     }
-    fn is_ignored_dir(&self, _dir: &Path, _ignored: &shared::common::PatternList) -> bool {
+    fn is_ignored_dir(&self, _dir: &Path, _ignored: &shared_common::PatternList) -> bool {
         false
     }
     fn read_dir_entries_as_pathbuf(&self, _dir: &Path) -> Result<Vec<PathBuf>, io::Error> {
@@ -126,8 +126,8 @@ impl IFileSystemIOProtocol for MockIO {
         &self,
         _src: &Path,
         _dst: &Path,
-    ) -> Result<shared::filesystem::taxonomy_filesystem_vo::ByteCount, io::Error> {
-        Ok(shared::filesystem::taxonomy_filesystem_vo::ByteCount { bytes: 0 })
+    ) -> Result<shared_filesystem::taxonomy_filesystem_vo::ByteCount, io::Error> {
+        Ok(shared_filesystem::taxonomy_filesystem_vo::ByteCount { bytes: 0 })
     }
     fn create_dir_all(&self, _path: &Path) -> Result<(), io::Error> {
         Ok(())
@@ -138,7 +138,7 @@ impl IFileSystemIOProtocol for MockIO {
     fn set_permissions(
         &self,
         _path: &Path,
-        _mode: shared::filesystem::taxonomy_filesystem_vo::FileMode,
+        _mode: shared_filesystem::taxonomy_filesystem_vo::FileMode,
     ) -> io::Result<()> {
         Ok(())
     }
@@ -149,8 +149,8 @@ impl IFileSystemIOProtocol for MockIO {
         &self,
         _args: &[&str],
         _dir: &str,
-    ) -> shared::filesystem::taxonomy_filesystem_vo::GitCommandResult {
-        shared::filesystem::taxonomy_filesystem_vo::GitCommandResult::new(
+    ) -> shared_filesystem::taxonomy_filesystem_vo::GitCommandResult {
+        shared_filesystem::taxonomy_filesystem_vo::GitCommandResult::new(
             String::new(),
             String::new(),
             true,
@@ -159,21 +159,21 @@ impl IFileSystemIOProtocol for MockIO {
     fn parse_output_lines(
         &self,
         _output: &str,
-    ) -> shared::filesystem::taxonomy_filesystem_vo::ParsedLines {
-        shared::filesystem::taxonomy_filesystem_vo::ParsedLines::new(vec![])
+    ) -> shared_filesystem::taxonomy_filesystem_vo::ParsedLines {
+        shared_filesystem::taxonomy_filesystem_vo::ParsedLines::new(vec![])
     }
     fn run_external_command_in(
         &self,
-        _name: &shared::common::ToolName,
+        _name: &shared_common::ToolName,
         _args: &[&str],
         _current_dir: &str,
     ) -> (String, String, bool) {
         (String::new(), String::new(), true)
     }
-    fn timing(&self) -> &shared::filesystem::ScanTiming {
+    fn timing(&self) -> &shared_filesystem::ScanTiming {
         use std::sync::OnceLock;
-        static TIMING: OnceLock<shared::filesystem::ScanTiming> = OnceLock::new();
-        TIMING.get_or_init(shared::filesystem::ScanTiming::default)
+        static TIMING: OnceLock<shared_filesystem::ScanTiming> = OnceLock::new();
+        TIMING.get_or_init(shared_filesystem::ScanTiming::default)
     }
 }
 
@@ -214,7 +214,7 @@ fn make_violation_report(files: HashMap<String, String>) -> ViolationReport {
 fn fix_bypass_strips_allow_attr() {
     let fp = "/tmp/allow.rs";
     let p = make_bypass_fix(make_files(&[(fp, "#[allow(dead_code)]\nfn unused() {}\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -222,7 +222,7 @@ fn fix_bypass_strips_allow_attr() {
 fn fix_bypass_strips_hack_comment() {
     let fp = "/tmp/hack.rs";
     let p = make_bypass_fix(make_files(&[(fp, "// HACK: workaround\nfn main() {}\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -230,7 +230,7 @@ fn fix_bypass_strips_hack_comment() {
 fn fix_bypass_strips_noqa_inline() {
     let fp = "/tmp/noqa.rs";
     let p = make_bypass_fix(make_files(&[(fp, "let x = foo()  # noqa\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -238,7 +238,7 @@ fn fix_bypass_strips_noqa_inline() {
 fn fix_bypass_replaces_unwrap() {
     let fp = "/tmp/unwrap.rs";
     let p = make_bypass_fix(make_files(&[(fp, "let x = foo().unwrap();\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -246,7 +246,7 @@ fn fix_bypass_replaces_unwrap() {
 fn fix_bypass_skips_unsafe_macros() {
     let fp = "/tmp/panic.rs";
     let p = make_bypass_fix(make_files(&[(fp, "panic!(\"not implemented\");\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 
@@ -254,7 +254,7 @@ fn fix_bypass_skips_unsafe_macros() {
 fn fix_bypass_skips_expect_with_message() {
     let fp = "/tmp/expect.rs";
     let p = make_bypass_fix(make_files(&[(fp, "foo().expect(\"msg\");\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 
@@ -262,7 +262,7 @@ fn fix_bypass_skips_expect_with_message() {
 fn fix_bypass_skips_nonexistent_line() {
     let fp = "/tmp/short.rs";
     let p = make_bypass_fix(make_files(&[(fp, "fn main() {}\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(999));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(999));
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 
@@ -270,7 +270,7 @@ fn fix_bypass_skips_nonexistent_line() {
 fn fix_bypass_skips_non_bypass_line() {
     let fp = "/tmp/clean.rs";
     let p = make_bypass_fix(make_files(&[(fp, "fn main() {}\n")]));
-    let outcome = p.fix_bypass_comments(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_bypass_comments(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 
@@ -283,7 +283,7 @@ fn fix_unused_removes_use_line() {
         fp,
         "use std::collections::HashMap;\nfn main() {}\n",
     )]));
-    let outcome = p.fix_unused_import(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_unused_import(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -294,7 +294,7 @@ fn fix_unused_removes_js_require() {
         fp,
         "const fs = require('fs');\nconsole.log(1);\n",
     )]));
-    let outcome = p.fix_unused_import(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_unused_import(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -302,7 +302,7 @@ fn fix_unused_removes_js_require() {
 fn fix_unused_removes_python_import() {
     let fp = "/tmp/import.py";
     let p = make_unused_import_fix(make_files(&[(fp, "import os\nprint('hello')\n")]));
-    let outcome = p.fix_unused_import(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_unused_import(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Applied { .. }));
 }
 
@@ -311,7 +311,7 @@ fn fix_unused_skips_multiline() {
     let fp = "/tmp/multi.rs";
     let content = "use std::collections::{\n    HashMap,\n    BTreeMap,\n};\nfn main() {}\n";
     let p = make_unused_import_fix(make_files(&[(fp, content)]));
-    let outcome = p.fix_unused_import(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_unused_import(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 
@@ -319,7 +319,7 @@ fn fix_unused_skips_multiline() {
 fn fix_unused_skips_non_import_line() {
     let fp = "/tmp/code.rs";
     let p = make_unused_import_fix(make_files(&[(fp, "fn main() {}\n")]));
-    let outcome = p.fix_unused_import(fp, shared::common::LineNumber::new(1));
+    let outcome = p.fix_unused_import(fp, shared_common::LineNumber::new(1));
     assert!(matches!(outcome, FixOutcome::Skipped(_)));
 }
 

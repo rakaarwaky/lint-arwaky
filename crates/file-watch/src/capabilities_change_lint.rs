@@ -1,11 +1,11 @@
 // PURPOSE: ChangeLintHandler — IChangeLintProtocol (FR-FileWatch-003)
 
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::file_watch::contract_watch_protocol::IChangeLintProtocol;
-use shared::file_watch::taxonomy_file_watch_error::WatchServiceError;
-use shared::file_watch::taxonomy_file_watch_vo::WatchEvent;
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_file_watch::contract_watch_protocol::IChangeLintProtocol;
+use shared_file_watch::taxonomy_file_watch_error::WatchServiceError;
+use shared_file_watch::taxonomy_file_watch_vo::WatchEvent;
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::ICodeAnalysisAggregate;
 use tracing::info;
 
 use std::sync::Arc;

@@ -4,10 +4,10 @@
 // ignore-rule management. Both are config lifecycle operations grouped
 // into one seam per FR-004.
 
-use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
-use shared::git_hooks::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
+use shared_git_hooks::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

@@ -1,5 +1,5 @@
 // Unit tests for maintenance version-helper functions
-use shared::maintenance::utility_maintenance_helpers;
+use shared_maintenance::utility_maintenance_helpers;
 
 #[test]
 fn normalize_version_strips_v_prefix() {

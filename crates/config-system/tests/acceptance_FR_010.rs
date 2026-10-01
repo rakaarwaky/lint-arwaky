@@ -3,8 +3,8 @@
 mod common;
 
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
-use shared::common::FilePath;
-use shared::config_system::IConfigReadProtocol;
+use shared_common::FilePath;
+use shared_config_system::IConfigReadProtocol;
 use std::fs;
 use tempfile::TempDir;
 
@@ -53,5 +53,5 @@ fn us10_lists_single_rust_config() {
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let files = make_reader().list_config_files(&fp).unwrap();
     assert_eq!(files.len(), 1);
-    assert_eq!(files[0].0, shared::config_system::ConfigLanguage::Rust);
+    assert_eq!(files[0].0, shared_config_system::ConfigLanguage::Rust);
 }

@@ -1,9 +1,9 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::contract_orphan_protocol::IAgentOrphanProtocol;
-use shared::orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
-use shared::orphan_rules::utility_orphan_filename::content_contains_whole_word;
-use shared::quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, ReachabilityResult};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::contract_orphan_protocol::IAgentOrphanProtocol;
+use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
+use shared_orphan_rules::utility_orphan_filename::content_contains_whole_word;
+use shared_quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 
 pub struct AgentOrphanAnalyzer;
@@ -77,7 +77,7 @@ impl IAgentOrphanProtocol for AgentOrphanAnalyzer {
         }
 
         // Build diagnostic message
-        let filename = shared::common::utility_layer_detector::extract_filename(fp);
+        let filename = shared_common::utility_layer_detector::extract_filename(fp);
         let reason = if !is_alive && !is_wired {
             format!(
                 "AES505 AGENT_ORPHAN: '{}' is not reachable and not wired.\nWHY? Agent file '{}' is not reachable from any _entry file AND not wired in any root_*_container.\nFIX: Import '{}' from a _entry file AND register it in a root_*_container.rs.",
@@ -111,7 +111,7 @@ impl AgentOrphanAnalyzer {
     }
 
     fn extract_aggregate_traits(&self, file_path: &str, content: &str) -> Vec<String> {
-        let mut traits = match shared::common::parse_file_content(file_path, content) {
+        let mut traits = match shared_common::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.aggregate_trait_names(),
             FileParseResultVO::Python(result) => result.aggregate_names(),
             FileParseResultVO::TypeScript(result) => result.aggregate_names(),

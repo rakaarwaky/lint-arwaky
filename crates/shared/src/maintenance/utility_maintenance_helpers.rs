@@ -1,7 +1,7 @@
 // PURPOSE: Stateless helper functions for the maintenance feature.
 // Pure-string and taxonomy-only — no contract or cross-utility imports.
 
-use crate::maintenance::taxonomy_maintenance_vo::{ToolStatus, ToolchainDiagnostics};
+use crate::taxonomy_maintenance_vo::{ToolStatus, ToolchainDiagnostics};
 use std::process::Command;
 
 /// Accept only a plain version string: optional `v` prefix, dot-separated

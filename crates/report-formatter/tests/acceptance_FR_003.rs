@@ -1,9 +1,9 @@
 // FR-003 — SARIF 2.1.0 Format Output
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
-use shared::cli_commands::DiagnosticSeverity;
-use shared::cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
-use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::ISarifFormatProtocol;
+use shared_cli_commands::DiagnosticSeverity;
+use shared_cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
+use shared_common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared_report_formatter::ISarifFormatProtocol;
 
 fn result(code: &str, sev: Severity, line: i64) -> LintResult {
     LintResult {

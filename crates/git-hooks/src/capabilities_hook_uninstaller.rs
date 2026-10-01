@@ -3,12 +3,12 @@
 // Handles removal of the pre-commit hook script from `.git/hooks/`.
 // Idempotent — returns success even if the hook does not exist.
 
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_message_vo::LintMessage;
 
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
-use shared::git_hooks::taxonomy_git_hooks_error::GitHookError;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
+use shared_git_hooks::taxonomy_git_hooks_error::GitHookError;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

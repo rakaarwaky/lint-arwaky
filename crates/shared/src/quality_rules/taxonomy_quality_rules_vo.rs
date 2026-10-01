@@ -1,16 +1,16 @@
 // PURPOSE: Orphan-specific analysis VOs + re-exports of graph types from filesystem.
 // Re-export LintResultList so code_analysis contracts stay within their own domain.
-pub use crate::common::taxonomy_lint_result_vo::LintResultList;
+pub use shared_common::taxonomy_lint_result_vo::LintResultList;
 
 // ── Re-export graph types from filesystem (canonical home) ──
-pub use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
-pub use crate::filesystem::taxonomy_filesystem_vo::ImportGraph;
-pub use crate::filesystem::taxonomy_filesystem_vo::InboundLinkMap;
-pub use crate::filesystem::taxonomy_filesystem_vo::InheritanceMap;
+pub use shared_filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
+pub use shared_filesystem::taxonomy_filesystem_vo::ImportGraph;
+pub use shared_filesystem::taxonomy_filesystem_vo::InboundLinkMap;
+pub use shared_filesystem::taxonomy_filesystem_vo::InheritanceMap;
 
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_severity_vo::Severity;
 use serde::{Deserialize, Serialize};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
 use std::collections::HashSet;
 
 /// A set of file paths.
@@ -46,11 +46,11 @@ impl OrphanIndicatorResult {
 
 // PURPOSE: AesCodeAnalysisViolation — data container for code quality rule violations (AES301-305)
 // Messages are written inline in each checker, not here.
-pub use crate::common::taxonomy_language_vo::Language;
+pub use shared_common::taxonomy_language_vo::Language;
 
 use std::path::PathBuf;
 
-use crate::common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_message_vo::LintMessage;
 
 pub const WORD_PATTERN_TOKENS: &[&str] = &[
     "unwrap",

@@ -5,14 +5,12 @@
 //   taxonomy_adapter_name_vo, taxonomy_suggestion_vo, and the filesystem VO
 //   surface exercised by `unit_shared_filesystem_vo.rs`.
 
-use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
-use shared_lint_arwaky::common::taxonomy_layer_vo::{
-    FileContentVO, Identity, LayerNameVO, LineContentVO,
-};
-use shared_lint_arwaky::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared_lint_arwaky::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
-use shared_lint_arwaky::common::taxonomy_suggestion_vo::{
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_suggestion_vo::{
     ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
 };
 
@@ -23,11 +21,11 @@ fn lint_result_new_arch_populates_identity_fields() {
     assert_eq!(r.file.value(), "src/foo.rs");
     assert_eq!(
         r.line,
-        shared_lint_arwaky::common::taxonomy_common_vo::LineNumber::new(12)
+        shared_common::taxonomy_common_vo::LineNumber::new(12)
     );
     assert_eq!(
         r.code,
-        shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode::raw("AES101")
+        shared_common::taxonomy_error_vo::ErrorCode::raw("AES101")
     );
     assert_eq!(r.message.value(), "bad name");
     assert_eq!(r.source.as_deref(), Some("architecture"));

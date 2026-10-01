@@ -1,14 +1,13 @@
 // PURPOSE: AdapterError, ScanError, ValidationError — structured error types for adapter operations
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_error::Cause;
-use crate::common::taxonomy_common_error::Constraint;
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_common_error::ExitCode;
-use crate::common::taxonomy_common_error::FieldName;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_source_vo::ContentString;
-// use crate::import_rules::taxonomy_import_rules_error::ImportError;
+use crate::taxonomy_adapter_name_vo::AdapterName;
+use crate::taxonomy_common_error::Cause;
+use crate::taxonomy_common_error::Constraint;
+use crate::taxonomy_common_error::ErrorMessage;
+use crate::taxonomy_common_error::ExitCode;
+use crate::taxonomy_common_error::FieldName;
+use crate::taxonomy_error_vo::ErrorCode;
+use crate::taxonomy_path_vo::FilePath;
+use crate::taxonomy_source_vo::ContentString;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
@@ -24,7 +23,7 @@ pub struct AdapterError {
     #[serde(default)]
     pub exit_code: Option<ExitCode>,
     #[serde(default)]
-    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
+    pub error_id: crate::taxonomy_error_vo::ErrorId,
 }
 
 impl AdapterError {
@@ -36,7 +35,7 @@ impl AdapterError {
             command: None,
             stderr: None,
             exit_code: None,
-            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(1),
+            error_id: crate::taxonomy_error_vo::ErrorId::raw(1),
         }
     }
 
@@ -67,7 +66,7 @@ pub struct ScanError {
     #[serde(default)]
     pub cause: Option<Cause>,
     #[serde(default)]
-    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
+    pub error_id: crate::taxonomy_error_vo::ErrorId,
 }
 
 impl ScanError {
@@ -78,7 +77,7 @@ impl ScanError {
             error_code: None,
             adapter_name: None,
             cause: None,
-            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(2),
+            error_id: crate::taxonomy_error_vo::ErrorId::raw(2),
         }
     }
 

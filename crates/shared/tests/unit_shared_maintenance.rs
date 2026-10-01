@@ -1,7 +1,5 @@
 // Unit tests — shared/maintenance taxonomy types.
-use shared_lint_arwaky::maintenance::{
-    MaintenanceRequest, MaintenanceResponse, SelfUpdateResultVO,
-};
+use shared_maintenance::{MaintenanceRequest, MaintenanceResponse, SelfUpdateResultVO};
 
 // ── SelfUpdateResultVO ─────────────────────────────────────
 #[test]

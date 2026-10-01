@@ -5,10 +5,10 @@ use git_hooks_lint_arwaky::capabilities_config_init::ConfigInit;
 use git_hooks_lint_arwaky::capabilities_diff_checker::DiffChecker;
 use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
 use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
-use shared::common::FilePath;
-use shared::git_hooks::GitHooksRequest;
-use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::{IHookInstallProtocol, IHookUninstallProtocol};
+use shared_common::FilePath;
+use shared_git_hooks::GitHooksRequest;
+use shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared_git_hooks::{IHookInstallProtocol, IHookUninstallProtocol};
 use std::sync::Arc;
 use tempfile::TempDir;
 

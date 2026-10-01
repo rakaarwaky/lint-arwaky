@@ -7,16 +7,16 @@ use std::time::Duration;
 
 use tracing::{error, info, warn};
 
-use shared::common::ExitCode;
-use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
-use shared::file_watch::contract_watch_protocol::{
+use shared_common::ExitCode;
+use shared_file_watch::contract_watch_aggregate::IWatchAggregate;
+use shared_file_watch::contract_watch_protocol::{
     IChangeFilterProtocol, IChangeLintProtocol, IWatchLifecycleProtocol,
 };
-use shared::file_watch::taxonomy_file_watch_request::WatchRequest;
-use shared::file_watch::taxonomy_file_watch_response::WatchResponse;
-use shared::file_watch::taxonomy_file_watch_vo::WatchConfig;
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_file_watch::taxonomy_file_watch_request::WatchRequest;
+use shared_file_watch::taxonomy_file_watch_response::WatchResponse;
+use shared_file_watch::taxonomy_file_watch_vo::WatchConfig;
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::ICodeAnalysisAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

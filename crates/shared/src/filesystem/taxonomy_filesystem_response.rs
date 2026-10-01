@@ -1,11 +1,11 @@
 // PURPOSE: FilesystemResponse — response payload for the filesystem aggregate
 
-use crate::common::taxonomy_common_vo::FileContentPair;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
-use crate::filesystem::taxonomy_filesystem_vo::GraphAnalysisContext;
-use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use crate::taxonomy_filesystem_vo::FileEntry;
+use crate::taxonomy_filesystem_vo::GraphAnalysisContext;
+use crate::taxonomy_filesystem_vo::ImportEntry;
+use shared_common::taxonomy_common_vo::FileContentPair;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_source_vo::ContentString;
 use std::collections::HashMap;
 use std::path::PathBuf;
 

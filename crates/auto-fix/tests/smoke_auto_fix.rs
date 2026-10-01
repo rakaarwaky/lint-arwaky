@@ -1,6 +1,6 @@
 // Smoke tests — verify container creation and orchestrator creation complete within 5s.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::IFixAggregate;
+use shared_auto_fix::IFixAggregate;
 
 #[test]
 fn auto_fix_container_creates() {

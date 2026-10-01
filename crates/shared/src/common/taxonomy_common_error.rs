@@ -1,6 +1,6 @@
 // PURPOSE: Cause, Constraint, ExitCode, FieldName, ModuleName, PrimitiveTypeName — common error value objects
-pub use crate::common::taxonomy_common_vo::ErrorMessage;
 use crate::string_value_object;
+pub use crate::taxonomy_common_vo::ErrorMessage;
 use serde::Serialize;
 
 string_value_object!(Cause);
@@ -20,11 +20,11 @@ string_value_object!(PrimitiveTypeName);
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(transparent)]
 pub struct ExitCode {
-    pub value: crate::common::taxonomy_common_vo::LineNumber,
+    pub value: crate::taxonomy_common_vo::LineNumber,
 }
 
 impl ExitCode {
-    pub fn new(value: impl Into<crate::common::taxonomy_common_vo::LineNumber>) -> Self {
+    pub fn new(value: impl Into<crate::taxonomy_common_vo::LineNumber>) -> Self {
         Self {
             value: value.into(),
         }
@@ -36,19 +36,19 @@ impl ExitCode {
     // ── Named constants (workspace exit-code contract) ──────────────
     /// Exit 0 — Ok / clean / diagnostic completed.
     pub const OK: Self = Self {
-        value: crate::common::taxonomy_common_vo::LineNumber { value: 0 },
+        value: crate::taxonomy_common_vo::LineNumber { value: 0 },
     };
     /// Exit 1 — Policy fail (violations, CI fail, vulns found, remaining after fix).
     pub const POLICY_FAIL: Self = Self {
-        value: crate::common::taxonomy_common_vo::LineNumber { value: 1 },
+        value: crate::taxonomy_common_vo::LineNumber { value: 1 },
     };
     /// Exit 2 — Runtime error (bad path, pipeline crash, invalid state).
     pub const RUNTIME_ERROR: Self = Self {
-        value: crate::common::taxonomy_common_vo::LineNumber { value: 2 },
+        value: crate::taxonomy_common_vo::LineNumber { value: 2 },
     };
     /// Exit 3 — Prerequisite missing (required external tool not installed).
     pub const PREREQUISITE_MISSING: Self = Self {
-        value: crate::common::taxonomy_common_vo::LineNumber { value: 3 },
+        value: crate::taxonomy_common_vo::LineNumber { value: 3 },
     };
 
     /// Convert to `std::process::ExitCode` for CLI surface return values.
@@ -72,7 +72,7 @@ impl std::fmt::Display for ExitCode {
 impl From<i64> for ExitCode {
     fn from(v: i64) -> Self {
         Self {
-            value: crate::common::taxonomy_common_vo::LineNumber::new(v),
+            value: crate::taxonomy_common_vo::LineNumber::new(v),
         }
     }
 }
@@ -84,7 +84,7 @@ impl<'de> serde::Deserialize<'de> for ExitCode {
     {
         #[derive(serde::Deserialize)]
         struct W {
-            value: crate::common::taxonomy_common_vo::LineNumber,
+            value: crate::taxonomy_common_vo::LineNumber,
         }
         let w = W::deserialize(deserializer)?;
         Ok(Self { value: w.value })

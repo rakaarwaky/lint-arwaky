@@ -6,9 +6,9 @@
 // US5: Graph queries (dependents, dependencies, reachability).
 
 use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
-use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{
+use shared_common::taxonomy_language_vo::Language;
+use shared_filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ImportType,
 };
 use std::path::{Path, PathBuf};

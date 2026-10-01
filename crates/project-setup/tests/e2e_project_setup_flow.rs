@@ -1,7 +1,7 @@
 // E2E tests — full project setup flow: container → generate configs → write → verify.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::SetupRequest;
+use shared_common::taxonomy_path_vo::DirectoryPath;
+use shared_project_setup::SetupRequest;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
@@ -19,7 +19,7 @@ fn e2e_generate_and_write_env() {
     let env = agg.execute(SetupRequest::generate_env(&home)).into_env();
     assert!(env.value().contains("PHANTOM_ROOT="));
 
-    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+    let result = shared_project_setup::utility_project_setup_helpers::write_config_file(
         &tmp.path().join(".env").to_string_lossy(),
         env.value(),
     );
@@ -38,7 +38,7 @@ fn e2e_generate_mcp_config_claude_and_write() {
         .into_mcp_config();
     let json_str = serde_json::to_string_pretty(config.value()).unwrap();
     let path = tmp.path().join("mcp_claude.json");
-    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+    let result = shared_project_setup::utility_project_setup_helpers::write_config_file(
         &path.to_string_lossy(),
         &json_str,
     );
@@ -57,7 +57,7 @@ fn e2e_generate_mcp_config_vscode_and_write() {
         .into_mcp_config();
     let json_str = serde_json::to_string_pretty(config.value()).unwrap();
     let path = tmp.path().join("mcp_vscode.json");
-    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+    let result = shared_project_setup::utility_project_setup_helpers::write_config_file(
         &path.to_string_lossy(),
         &json_str,
     );
@@ -83,7 +83,7 @@ fn e2e_detect_language_and_write_config() {
         .into_template()
         .unwrap();
     let path = tmp.path().join("lint_arwaky.config.yaml");
-    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+    let result = shared_project_setup::utility_project_setup_helpers::write_config_file(
         &path.to_string_lossy(),
         &template,
     );
@@ -98,8 +98,8 @@ fn e2e_file_exists_round_trip() {
     let path = tmp.path().join("round_trip.txt");
     let path_str = path.to_string_lossy().to_string();
 
-    assert!(!shared::project_setup::utility_project_setup_helpers::file_exists(&path_str));
-    shared::project_setup::utility_project_setup_helpers::write_config_file(&path_str, "hello")
+    assert!(!shared_project_setup::utility_project_setup_helpers::file_exists(&path_str));
+    shared_project_setup::utility_project_setup_helpers::write_config_file(&path_str, "hello")
         .unwrap();
-    assert!(shared::project_setup::utility_project_setup_helpers::file_exists(&path_str));
+    assert!(shared_project_setup::utility_project_setup_helpers::file_exists(&path_str));
 }

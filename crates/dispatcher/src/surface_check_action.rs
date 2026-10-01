@@ -3,29 +3,29 @@
 // In-process mode (W10): when `scan_aggregates` is provided, all 7 linters run
 // in-process through their aggregate entry points. Subprocess self-invocation
 // remains the fallback when aggregates are absent (`scan_aggregates: None`).
-use shared::common::FilePath;
-use shared::common::ViolationItem;
-use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
-use shared::doc_rules::IDocRunnerAggregate;
-use shared::doc_rules::taxonomy_doc_rules_request::DocRequest;
-use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
-use shared::external_lint::IExternalLintAggregate;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
-use shared::naming_rules::INamingRunnerAggregate;
-use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
-use shared::orphan_rules::IOrphanAggregate;
-use shared::orphan_rules::OrphanRequest;
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::ICodeAnalysisAggregate;
-use shared::role_rules::IRoleRunnerAggregate;
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
-use shared::structure_rules::IStructureAggregate;
+use shared_common::FilePath;
+use shared_common::ViolationItem;
+use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
+use shared_doc_rules::IDocRunnerAggregate;
+use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
+use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
+use shared_external_lint::IExternalLintAggregate;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_import_rules::IImportRunnerAggregate;
+use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
+use shared_naming_rules::INamingRunnerAggregate;
+use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_orphan_rules::IOrphanAggregate;
+use shared_orphan_rules::OrphanRequest;
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::ICodeAnalysisAggregate;
+use shared_role_rules::IRoleRunnerAggregate;
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_structure_rules::IStructureAggregate;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Arc;
@@ -297,7 +297,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         .orphan
         .execute(OrphanRequest::scan(
             &root_fp,
-            &shared::common::taxonomy_common_vo::PatternList::new(ignored.clone()),
+            &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
         ))
         .into_scan_outcome();
     all.extend(
@@ -340,7 +340,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         let has_markdown = ext_files
             .iter()
             .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
-        let context = shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext {
+        let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
             has_python,
             has_js,
@@ -351,7 +351,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         let mut external: Vec<ViolationItem> = agg
             .external
             .execute(
-                shared::external_lint::ExternalLintRequest::scan_all_with_context(
+                shared_external_lint::ExternalLintRequest::scan_all_with_context(
                     &ext_target_fp,
                     &context,
                 ),
@@ -454,23 +454,23 @@ fn doc_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<ViolationI
     findings
         .into_iter()
         .filter_map(|finding| {
-            let file = shared::common::FilePath::new(finding.doc.clone()).ok()?;
+            let file = shared_common::FilePath::new(finding.doc.clone()).ok()?;
             let doc_path = target_canon.join(&finding.doc);
             let exists = doc_path.is_file() || agg.fs_seam.io.path_exists(&doc_path);
             if !exists {
                 return None;
             }
-            let message = shared::common::LintMessage::new(format!(
+            let message = shared_common::LintMessage::new(format!(
                 "[{}] {}",
                 finding.violation_type, finding.message
             ));
             Some(ViolationItem {
-                code: shared::common::ErrorCode::raw(finding.code),
+                code: shared_common::ErrorCode::raw(finding.code),
                 file,
-                line: shared::common::LineNumber::new(1),
-                column: shared::common::ColumnNumber::new(1),
+                line: shared_common::LineNumber::new(1),
+                column: shared_common::ColumnNumber::new(1),
                 message,
-                severity: shared::common::Severity::HIGH,
+                severity: shared_common::Severity::HIGH,
             })
         })
         .collect()
@@ -564,7 +564,7 @@ fn run_single_file_scan(
     seam: &FilesystemSeam,
     scan_root: &std::path::Path,
     agg: &ScanAggregates,
-    root_fp: &shared::common::taxonomy_path_vo::FilePath,
+    root_fp: &shared_common::taxonomy_path_vo::FilePath,
     ignored: &[String],
 ) -> Vec<ViolationItem> {
     let content = seam
@@ -583,17 +583,17 @@ fn run_single_file_scan(
         .workspace
         .detect_language_from_path(scan_root.to_string_lossy().as_ref())
     {
-        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
-            shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+        shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+            shared_filesystem::taxonomy_filesystem_vo::Language::Rust
         }
-        shared::common::taxonomy_config_language_vo::ConfigLanguage::Python => {
-            shared::filesystem::taxonomy_filesystem_vo::Language::Python
+        shared_common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+            shared_filesystem::taxonomy_filesystem_vo::Language::Python
         }
-        shared::common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
-            shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+        shared_common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+            shared_filesystem::taxonomy_filesystem_vo::Language::TypeScript
         }
     };
-    let mut entries = vec![shared::filesystem::taxonomy_filesystem_vo::FileEntry {
+    let mut entries = vec![shared_filesystem::taxonomy_filesystem_vo::FileEntry {
         path: scan_root.to_path_buf(),
         extension,
         language,
@@ -605,7 +605,7 @@ fn run_single_file_scan(
     seam.parser.parse_all(&mut entries);
     let import_map: std::collections::HashMap<
         String,
-        Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>,
+        Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>,
     > = std::collections::HashMap::new();
     let mut all: Vec<ViolationItem> = Vec::new();
     all.extend(
@@ -643,7 +643,7 @@ fn run_single_file_scan(
         .orphan
         .execute(OrphanRequest::scan(
             root_fp,
-            &shared::common::taxonomy_common_vo::PatternList::new(ignored.to_vec()),
+            &shared_common::taxonomy_common_vo::PatternList::new(ignored.to_vec()),
         ))
         .into_scan_outcome();
     all.extend(
@@ -700,7 +700,7 @@ fn build_skip_dirs(
     scan_root: &std::path::Path,
 ) -> std::collections::HashSet<&'static str> {
     let mut skip_dirs: std::collections::HashSet<&str> =
-        shared::common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS
+        shared_common::taxonomy_default_constant::DEFAULT_IGNORED_PATHS
             .iter()
             .copied()
             .collect();
@@ -807,8 +807,8 @@ fn build_index_ignored(ignored: &[String], scan_root: &std::path::Path) -> Vec<S
 fn build_entries(
     seam: &FilesystemSeam,
     discovered: &[String],
-) -> Vec<shared::filesystem::taxonomy_filesystem_vo::FileEntry> {
-    let mut entries: Vec<shared::filesystem::taxonomy_filesystem_vo::FileEntry> = Vec::new();
+) -> Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> {
+    let mut entries: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> = Vec::new();
     for file_path in discovered {
         let content = seam
             .aggregate
@@ -822,17 +822,17 @@ fn build_entries(
             .to_string();
         let language = seam.workspace.detect_language_from_path(file_path);
         let language = match language {
-            shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
-                shared::filesystem::taxonomy_filesystem_vo::Language::Rust
+            shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust => {
+                shared_filesystem::taxonomy_filesystem_vo::Language::Rust
             }
-            shared::common::taxonomy_config_language_vo::ConfigLanguage::Python => {
-                shared::filesystem::taxonomy_filesystem_vo::Language::Python
+            shared_common::taxonomy_config_language_vo::ConfigLanguage::Python => {
+                shared_filesystem::taxonomy_filesystem_vo::Language::Python
             }
-            shared::common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
-                shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
+            shared_common::taxonomy_config_language_vo::ConfigLanguage::TypeScript => {
+                shared_filesystem::taxonomy_filesystem_vo::Language::TypeScript
             }
         };
-        entries.push(shared::filesystem::taxonomy_filesystem_vo::FileEntry {
+        entries.push(shared_filesystem::taxonomy_filesystem_vo::FileEntry {
             path: std::path::PathBuf::from(file_path),
             extension,
             language,
@@ -853,8 +853,8 @@ fn build_entries(
 /// AES201/202/203/205 see cross-member imports.
 fn build_import_map(
     seam: &FilesystemSeam,
-    entries: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
-) -> std::collections::HashMap<String, Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>>
+    entries: &[shared_filesystem::taxonomy_filesystem_vo::FileEntry],
+) -> std::collections::HashMap<String, Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>>
 {
     let ws_snapshot = seam
         .aggregate
@@ -869,7 +869,7 @@ fn build_import_map(
 
     let mut import_map: std::collections::HashMap<
         String,
-        Vec<shared::filesystem::taxonomy_filesystem_vo::ImportEntry>,
+        Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>,
     > = std::collections::HashMap::new();
     for entry in entries {
         for imp in seam.parser.imports_for(&entry.path) {

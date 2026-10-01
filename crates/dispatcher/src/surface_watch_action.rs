@@ -6,9 +6,9 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use shared::common::ExitCode;
-use shared::common::FilePath;
-use shared::file_watch::{IWatchAggregate, WatchConfig, WatchRequest, WatchResponse};
+use shared_common::ExitCode;
+use shared_common::FilePath;
+use shared_file_watch::{IWatchAggregate, WatchConfig, WatchRequest, WatchResponse};
 
 pub fn handle_watch(
     watch_aggregate: Arc<dyn IWatchAggregate>,

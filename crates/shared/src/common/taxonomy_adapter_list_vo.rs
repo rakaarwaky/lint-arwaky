@@ -1,6 +1,6 @@
 // PURPOSE: AdapterNameList — value object for a list of adapter names
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
 use crate::list_wrapper_vo;
+use crate::taxonomy_adapter_name_vo::AdapterName;
 
 list_wrapper_vo!(AdapterNameList, AdapterName);
 

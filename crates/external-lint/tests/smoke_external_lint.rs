@@ -10,16 +10,16 @@ mod mock_filesystem;
 use std::sync::Arc;
 use std::time::Instant;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_operation_error::LinterOperationError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::ICommandExecutorProtocol;
-use shared::external_lint::IJsToolResolutionProtocol;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_duration_vo::Timeout;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_external_lint::ICommandExecutorProtocol;
+use shared_external_lint::IJsToolResolutionProtocol;
+use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
@@ -27,9 +27,9 @@ struct MockCmdExecutor;
 impl ICommandExecutorProtocol for MockCmdExecutor {
     fn execute_command(
         &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
+        _: shared_common::taxonomy_common_vo::PatternList,
         _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+        _: Option<shared_common::taxonomy_duration_vo::Timeout>,
     ) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::default())
     }
@@ -61,7 +61,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -73,7 +73,7 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: &str,
     ) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))
@@ -138,12 +138,12 @@ fn smoke_all_adapters_created_quickly() {
     let start = Instant::now();
 
     let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
-    let cmd_exec: Arc<dyn shared::external_lint::ICommandExecutorProtocol> =
+    let cmd_exec: Arc<dyn shared_external_lint::ICommandExecutorProtocol> =
         Arc::new(MockCmdExecutor);
-    let _fs: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+    let _fs: Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::new());
-    let tr: Arc<dyn shared::filesystem::IToolResolutionProtocol> = Arc::new(MockFilesystem::new());
-    let io: Arc<dyn shared::filesystem::IFileSystemIOProtocol> = Arc::new(MockFilesystem::new());
+    let tr: Arc<dyn shared_filesystem::IToolResolutionProtocol> = Arc::new(MockFilesystem::new());
+    let io: Arc<dyn shared_filesystem::IFileSystemIOProtocol> = Arc::new(MockFilesystem::new());
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
 

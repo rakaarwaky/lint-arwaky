@@ -7,9 +7,9 @@ use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::xml_escape;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::cli_commands::{Format, LintResult, ScanReport};
-use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IReportFormatterAggregate;
+use shared_cli_commands::{Format, LintResult, ScanReport};
+use shared_common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared_report_formatter::IReportFormatterAggregate;
 use std::sync::Arc;
 
 fn make_orchestrator() -> ReportFormatterOrchestrator {
@@ -33,7 +33,7 @@ fn report() -> ScanReport {
             ..Default::default()
         }],
         diagnostics: vec![],
-        score: Some(shared::common::Score::new(75.0)),
+        score: Some(shared_common::Score::new(75.0)),
     }
 }
 

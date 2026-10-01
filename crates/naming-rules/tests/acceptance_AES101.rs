@@ -1,12 +1,12 @@
 // Acceptance tests — AES101 naming convention (map to FRD user stories).
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::LintResultList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::naming_rules::RULE_CODE_NAMING_CONVENTION;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_naming_rules::RULE_CODE_NAMING_CONVENTION;
 use std::collections::HashMap;
 
 fn checker() -> NamingConventionChecker {
@@ -189,7 +189,7 @@ fn main_rs_is_skipped() {
 #[test]
 fn excepted_filename_passes() {
     let def = LayerDefinition {
-        exceptions: shared::common::PatternList::new(vec!["special_file.rs".to_string()]),
+        exceptions: shared_common::PatternList::new(vec!["special_file.rs".to_string()]),
         ..Default::default()
     };
     let result = checker().check_file_naming_internal(
@@ -209,9 +209,9 @@ fn excepted_filename_passes() {
 
 #[test]
 fn check_file_naming_via_trait_api() {
-    use shared::naming_rules::INamingConventionProtocol;
+    use shared_naming_rules::INamingConventionProtocol;
 
-    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
+    let config = shared_config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let layer_map = layer_map();
     let files = FilePathList::new(vec![
         FilePath::new("src/capabilities_BadFile.rs".to_string()).unwrap(),

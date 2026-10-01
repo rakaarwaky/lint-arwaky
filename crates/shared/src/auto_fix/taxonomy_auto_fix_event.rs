@@ -1,10 +1,10 @@
 // PURPOSE: FixApplied — domain event published when a lint fix is applied
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_vo::Count;
-use crate::common::taxonomy_common_vo::Timestamp;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::Timestamp;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct FixApplied {

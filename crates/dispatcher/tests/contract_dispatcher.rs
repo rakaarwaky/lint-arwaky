@@ -6,5 +6,5 @@ fn check_action_module_exists() {
 
 #[test]
 fn output_component_module_exists() {
-    let _ = std::any::type_name::<shared::common::ViolationItem>();
+    let _ = std::any::type_name::<shared_common::ViolationItem>();
 }

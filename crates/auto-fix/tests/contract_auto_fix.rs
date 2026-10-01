@@ -4,7 +4,7 @@ use auto_fix_lint_arwaky::capabilities_bypass_fix::BypassFix;
 use auto_fix_lint_arwaky::capabilities_symbol_rename::SymbolRename;
 use auto_fix_lint_arwaky::capabilities_unused_import_fix::UnusedImportFix;
 use auto_fix_lint_arwaky::capabilities_violation_report::ViolationReport;
-use shared::auto_fix::{
+use shared_auto_fix::{
     IBypassFixProtocol, IFixAggregate, ISymbolRenameProtocol, IUnusedImportFixProtocol,
     IViolationReportProtocol,
 };

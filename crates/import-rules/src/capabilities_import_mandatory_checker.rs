@@ -1,18 +1,18 @@
 // PURPOSE: ArchImportMandatoryChecker — AES202: enforce mandatory import rules
 // Uses ImportEntry fields directly — no text-based parsing, no bridge functions.
 
-use shared::cli_commands::{LintResult, LintResultList};
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::utility_layer_detector;
-use shared::common::{FilePath, FilePathList, Identity, Severity};
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use shared_cli_commands::{LintResult, LintResultList};
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::utility_layer_detector;
+use shared_common::{FilePath, FilePathList, Identity, Severity};
+use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
-use shared::config_system::ArchitectureConfig;
-use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
-use shared::import_rules::taxonomy_import_rules_constant::AES202_RULE_CODE;
-use shared::import_rules::taxonomy_import_rules_error::ImportError;
-use shared::import_rules::utility_import_resolver;
+use shared_config_system::ArchitectureConfig;
+use shared_import_rules::contract_import_protocol::IImportMandatoryProtocol;
+use shared_import_rules::taxonomy_import_rules_constant::AES202_RULE_CODE;
+use shared_import_rules::taxonomy_import_rules_error::ImportError;
+use shared_import_rules::utility_import_resolver;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 
@@ -205,7 +205,7 @@ impl ArchImportMandatoryChecker {
             }
             let scope_identity = Identity::new(&rule.scope.value);
             if let Some((rule_layer, _)) =
-                shared::common::utility_scope_matcher::file_belongs_to_scope(
+                shared_common::utility_scope_matcher::file_belongs_to_scope(
                     basename,
                     &scope_identity,
                 )
@@ -277,9 +277,7 @@ impl ArchImportMandatoryChecker {
                     .map(|n| n.to_string_lossy().to_string())
                     .unwrap_or_default();
                 let resolved_layer =
-                    shared::common::utility_layer_detector::detect_layer_from_prefix(
-                        &resolved_file,
-                    );
+                    shared_common::utility_layer_detector::detect_layer_from_prefix(&resolved_file);
                 let layer_matches = resolved_layer.as_deref() == Some(layer_str);
                 let suffix_matches = suffixes.is_empty()
                     || suffixes.iter().any(|s| {

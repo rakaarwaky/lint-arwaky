@@ -1,47 +1,43 @@
 // Unit tests — shared/common taxonomy VOs and utilities.
 mod common;
 
-use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
-use shared_lint_arwaky::common::taxonomy_common_error::ExitCode;
-use shared_lint_arwaky::common::taxonomy_common_vo::{
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_error::ExitCode;
+use shared_common::taxonomy_common_vo::{
     BooleanVO, ColumnNumber, Count, ErrorMessage, LanguageVO, LineNumber, PatternList, Score,
     Timestamp,
 };
-use shared_lint_arwaky::common::taxonomy_config_language_vo::ConfigLanguage;
-use shared_lint_arwaky::common::taxonomy_error_vo::{
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_error_vo::{
     ErrorCode, error_code_is_architecture, error_code_is_logic, error_code_is_security,
     error_code_is_style,
 };
-use shared_lint_arwaky::common::taxonomy_format_vo::Format;
-use shared_lint_arwaky::common::taxonomy_job_id_vo::JobId;
-use shared_lint_arwaky::common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus};
-use shared_lint_arwaky::common::taxonomy_language_vo::Language;
-use shared_lint_arwaky::common::taxonomy_layer_vo::{
-    FileContentVO, Identity, LayerNameVO, LineContentVO,
-};
-use shared_lint_arwaky::common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
-use shared_lint_arwaky::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
-use shared_lint_arwaky::common::taxonomy_path_vo::{DirectoryPath, FilePath};
-use shared_lint_arwaky::common::taxonomy_paths_vo::{FilePathList, RenamedFile};
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
-use shared_lint_arwaky::common::taxonomy_suggestion_vo::{
+use shared_common::taxonomy_format_vo::Format;
+use shared_common::taxonomy_job_id_vo::JobId;
+use shared_common::taxonomy_job_vo::{AdapterMetadata, McpConfigVO, SuccessStatus};
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_layer_vo::{FileContentVO, Identity, LayerNameVO, LineContentVO};
+use shared_common::taxonomy_lint_vo::{Location, LocationList, ScopeRef};
+use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
+use shared_common::taxonomy_path_vo::{DirectoryPath, FilePath};
+use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile};
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_suggestion_vo::{
     ClassPath, DescriptionVO, LogOutput, MetadataVO, StdError, StdOutput, Suggestion,
 };
-use shared_lint_arwaky::common::taxonomy_threshold_vo::Threshold;
-use shared_lint_arwaky::common::utility_command_runner::{run_command, run_command_in_dir};
-use shared_lint_arwaky::common::utility_compliance_score::compute_score;
-use shared_lint_arwaky::common::utility_language_detector::{
+use shared_common::taxonomy_threshold_vo::Threshold;
+use shared_common::utility_command_runner::{run_command, run_command_in_dir};
+use shared_common::utility_compliance_score::compute_score;
+use shared_common::utility_language_detector::{
     detect_language, detect_language_info, is_lintable,
 };
-use shared_lint_arwaky::common::utility_path_normalization::{
-    normalize_path, resolve_capabilities_path,
-};
-use shared_lint_arwaky::common::utility_signature_parser::{
+use shared_common::utility_path_normalization::{normalize_path, resolve_capabilities_path};
+use shared_common::utility_signature_parser::{
     extract_python_method_signatures, extract_trait_method_signatures,
     extract_typescript_method_signatures, python_signature_uses_forbidden_primitive,
     signature_uses_forbidden_primitive, typescript_signature_uses_forbidden_primitive,
 };
-use shared_lint_arwaky::common::{LintResult, LintResultList};
+use shared_common::{LintResult, LintResultList};
 use std::str::FromStr;
 
 // ── FilePath ────────────────────────────────────────────────

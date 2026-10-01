@@ -6,15 +6,15 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IGraphProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IGraphProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImportEntry, ImportType,
 };
 use std::path::PathBuf;
@@ -312,7 +312,7 @@ fn bench_tool_resolution(c: &mut Criterion) {
     group.sample_size(30);
 
     let tool = CapabilitiesToolResolution::new();
-    let sh_name = shared::common::taxonomy_tool_name_vo::ToolName::new("sh");
+    let sh_name = shared_common::taxonomy_tool_name_vo::ToolName::new("sh");
 
     group.bench_function("is_binary_available", |b| {
         b.iter(|| {

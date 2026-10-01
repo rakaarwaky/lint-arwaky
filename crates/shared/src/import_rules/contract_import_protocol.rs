@@ -5,20 +5,20 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::common::taxonomy_definition_vo::LayerMapVO;
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::common::taxonomy_lint_result_vo::LintResultList;
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_name_vo::SymbolName;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
-use crate::import_rules::taxonomy_import_rules_error::ImportError;
-use crate::import_rules::taxonomy_import_rules_vo::DependencyEdge;
+use crate::taxonomy_import_rules_error::ImportError;
+use crate::taxonomy_import_rules_vo::DependencyEdge;
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_source_vo::ContentString;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 use std::collections::HashMap;
 
 pub trait ICycleImportProtocol: Send + Sync {
@@ -36,7 +36,7 @@ pub trait ICycleImportProtocol: Send + Sync {
         &self,
         config: &ArchitectureConfig,
         layer_map: &LayerMapVO,
-        files: &crate::common::taxonomy_paths_vo::FilePathList,
+        files: &shared_common::taxonomy_paths_vo::FilePathList,
         root_dir: &FilePath,
         content_map: &HashMap<String, String>,
         imports_map: &HashMap<String, Vec<ImportEntry>>,

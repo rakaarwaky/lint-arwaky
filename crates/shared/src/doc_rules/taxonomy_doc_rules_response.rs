@@ -1,6 +1,6 @@
 // PURPOSE: DocResponse — response payload for the doc-rules aggregate
 
-use crate::doc_rules::taxonomy_doc_rules_request::DocFinding;
+use crate::taxonomy_doc_rules_request::DocFinding;
 
 /// Result of a doc invariant audit.
 pub enum DocResponse {

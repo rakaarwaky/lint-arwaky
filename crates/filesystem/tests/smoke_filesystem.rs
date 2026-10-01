@@ -1,9 +1,9 @@
 // Smoke test — verify the filesystem crate boots and core operations respond within 5s.
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
-use shared::common::PatternList;
-use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_common::PatternList;
+use shared_common::taxonomy_language_vo::Language;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 use tempfile::TempDir;
 
@@ -72,7 +72,7 @@ fn filesystem_workspace_detection_responds() {
     let lang = workspace.detect_language_from_path("src/main.rs");
     assert_eq!(
         lang,
-        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
+        shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust
     );
     let elapsed = start.elapsed();
     assert!(
@@ -87,7 +87,7 @@ fn filesystem_tool_resolution_responds() {
     let start = std::time::Instant::now();
     let container = FilesystemContainer::new();
     let tools = container.tool_resolution();
-    let name = shared::common::taxonomy_tool_name_vo::ToolName::new("sh");
+    let name = shared_common::taxonomy_tool_name_vo::ToolName::new("sh");
     assert!(tools.is_binary_available(&name));
     let elapsed = start.elapsed();
     assert!(

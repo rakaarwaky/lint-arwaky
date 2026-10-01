@@ -4,23 +4,23 @@
 // Merged from the former taxonomy_config_system_vo, taxonomy_identifier_vo,
 // taxonomy_multi_project_workspace_info_vo, taxonomy_setting_vo,
 // taxonomy_source_vo, and taxonomy_validation_vo modules.
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
-use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::common::taxonomy_common_vo::Count;
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_common_vo::Score;
-pub use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::common::taxonomy_definition_vo::NamingConfig;
-use crate::common::taxonomy_definition_vo::OrphanRuleVO;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use crate::string_value_object;
+use crate::taxonomy_config_language_vo::ConfigLanguage;
 use serde::{Deserialize, Serialize};
+use shared_common::string_value_object;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_code_analysis_vo::CodeAnalysisRuleVO;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_common_vo::Score;
+pub use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_definition_vo::NamingConfig;
+use shared_common::taxonomy_definition_vo::OrphanRuleVO;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use std::collections::HashMap;
 
 // ─── Architecture definition ─────────────────────────────────────────────
@@ -67,7 +67,7 @@ pub struct NamingRuleVO {
     #[serde(default)]
     pub naming_convention: BooleanVO,
     #[serde(default)]
-    pub suffix_policy: crate::common::taxonomy_common_vo::SuffixPolicyVO,
+    pub suffix_policy: shared_common::taxonomy_common_vo::SuffixPolicyVO,
     #[serde(default, alias = "allowed_suffix")]
     pub allowed_suffix: PatternList,
     #[serde(default, alias = "forbidden_suffix")]

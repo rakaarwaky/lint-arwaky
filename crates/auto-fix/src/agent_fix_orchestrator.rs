@@ -22,14 +22,14 @@
 // - V3: Removed FixRequest::ManualReport variant — all work flows through
 //       FixRequest::Execute.
 
-use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
-use shared::auto_fix::taxonomy_auto_fix_request::FixRequest;
-use shared::auto_fix::taxonomy_auto_fix_response::FixResponse;
-use shared::auto_fix::{
+use shared_auto_fix::contract_fix_aggregate::IFixAggregate;
+use shared_auto_fix::taxonomy_auto_fix_request::FixRequest;
+use shared_auto_fix::taxonomy_auto_fix_response::FixResponse;
+use shared_auto_fix::{
     FixOutcome, IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol,
     IViolationReportProtocol,
 };
-use shared::common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_name_vo::SymbolName;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -72,14 +72,14 @@ impl FixOrchestrator {
     pub fn fix_bypass(&self, file_path: &str, line: u32) -> FixOutcome {
         self.deps
             .bypass_fix
-            .fix_bypass_comments(file_path, shared::common::LineNumber::new(line as i64))
+            .fix_bypass_comments(file_path, shared_common::LineNumber::new(line as i64))
     }
 
     /// Convenience: apply a single unused-import fix at the given line.
     pub fn fix_unused_import(&self, file_path: &str, line: u32) -> FixOutcome {
         self.deps
             .unused_import_fix
-            .fix_unused_import(file_path, shared::common::LineNumber::new(line as i64))
+            .fix_unused_import(file_path, shared_common::LineNumber::new(line as i64))
     }
 
     /// Convenience: rename a symbol across the file (FR-003).

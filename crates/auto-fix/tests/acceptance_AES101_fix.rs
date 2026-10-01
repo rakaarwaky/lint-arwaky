@@ -1,8 +1,8 @@
 // Acceptance tests — verify AES101 (naming convention) violations are fixable via symbol rename.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::FixRequest;
-use shared::auto_fix::IFixAggregate;
-use shared::common::FilePath;
+use shared_auto_fix::FixRequest;
+use shared_auto_fix::IFixAggregate;
+use shared_common::FilePath;
 use tempfile::TempDir;
 
 fn make_orch() -> std::sync::Arc<dyn IFixAggregate> {

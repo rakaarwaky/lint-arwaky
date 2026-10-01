@@ -5,8 +5,8 @@
 // orchestrator; no business logic lives here.
 use crate::agent_doc_orchestrator::DocOrchestrator;
 use crate::capabilities_doc_checker::DocChecker;
-use shared::doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
-use shared::doc_rules::contract_doc_protocol::IDocCheckerProtocol;
+use shared_doc_rules::contract_doc_aggregate::IDocRunnerAggregate;
+use shared_doc_rules::contract_doc_protocol::IDocCheckerProtocol;
 use std::sync::Arc;
 
 /// Composition root for the doc-rules feature.

@@ -1,10 +1,10 @@
 // PURPOSE: GitHooksResponse — response payload for the git_hooks aggregate
 
-use crate::common::taxonomy_job_vo::SuccessStatus;
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_lint_result_vo::LintResultList;
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::git_hooks::taxonomy_git_hooks_error::GitHookError;
+use crate::taxonomy_git_hooks_error::GitHookError;
+use shared_common::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_message_vo::LintMessage;
 
 pub enum GitHooksResponse {
     RunCheck {

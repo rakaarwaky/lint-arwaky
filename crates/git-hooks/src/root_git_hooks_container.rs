@@ -1,9 +1,9 @@
 // PURPOSE: GitContainer — composition root that wires Capabilities to Contract traits and bootstraps the git hooks subsystem (root layer)
 
-use shared::common::FilePath;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::git_hooks::{IGitHooksAggregate, IHookInstallProtocol, IHookUninstallProtocol};
+use shared_common::FilePath;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_git_hooks::{IGitHooksAggregate, IHookInstallProtocol, IHookUninstallProtocol};
 
 use std::sync::Arc;
 

@@ -3,7 +3,7 @@ use config_system_lint_arwaky::agent_config_orchestrator::ConfigOrchestrator;
 use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvider;
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
-use shared::config_system::{
+use shared_config_system::{
     IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
     IWorkspaceMembersProtocol,
 };

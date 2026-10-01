@@ -7,7 +7,11 @@ license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 
 [dependencies]
-shared = { workspace = true }
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-external-lint.workspace = true
+shared-filesystem.workspace = true
+shared-quality-rules.workspace = true
 serde = { workspace = true }
 serde_json = { workspace = true }
 anyhow = { workspace = true }

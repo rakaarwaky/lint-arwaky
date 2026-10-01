@@ -1,8 +1,8 @@
 // PURPOSE: FilePathList, DirectoryPath, SourceDir — VOs for file/directory path collections
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_path_vo::FilePath;
 use crate::list_wrapper_vo;
+use crate::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RenamedFile {

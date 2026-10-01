@@ -1,8 +1,8 @@
 // PURPOSE: JsonFormatter — implements IJsonFormatProtocol for JSON output (FR-002).
-use shared::cli_commands::{Format, ScanReport};
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::IJsonFormatProtocol;
-use shared::report_formatter::taxonomy_report_formatter_vo::{
+use shared_cli_commands::{Format, ScanReport};
+use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_report_formatter::contract_report_formatter_protocol::IJsonFormatProtocol;
+use shared_report_formatter::taxonomy_report_formatter_vo::{
     JsonDiagnostic, JsonReportDto, JsonSummary, JsonViolation,
 };
 
@@ -55,10 +55,10 @@ fn render_json(report: &ScanReport) -> DisplayContent {
         };
 
         match r.severity {
-            shared::common::Severity::CRITICAL => crit += 1,
-            shared::common::Severity::HIGH => high += 1,
-            shared::common::Severity::MEDIUM => med += 1,
-            shared::common::Severity::LOW => low += 1,
+            shared_common::Severity::CRITICAL => crit += 1,
+            shared_common::Severity::HIGH => high += 1,
+            shared_common::Severity::MEDIUM => med += 1,
+            shared_common::Severity::LOW => low += 1,
             _ => {}
         }
 

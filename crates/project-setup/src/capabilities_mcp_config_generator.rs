@@ -4,16 +4,16 @@
 // for 7 client formats (Claude, Cursor, Windsurf, Copilot, Hermes, VS Code, All)
 // and resolves the lint-arwaky-mcp binary path.
 
-use shared::common::taxonomy_job_vo::McpConfigVO;
-use shared::project_setup::contract_setup_protocol::IMcpConfigGenerationProtocol;
-use shared::project_setup::taxonomy_project_setup_vo::McpBinaryNameVO;
+use shared_common::taxonomy_job_vo::McpConfigVO;
+use shared_project_setup::contract_setup_protocol::IMcpConfigGenerationProtocol;
+use shared_project_setup::taxonomy_project_setup_vo::McpBinaryNameVO;
 
 use std::collections::HashMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
 /// Business logic for MCP config generation. Delegates auxiliary file operations
-/// to the utility layer (`shared::project_setup::utility_project_setup_helpers`).
+/// to the utility layer (`shared_project_setup::utility_project_setup_helpers`).
 pub struct SetupMcpConfigGenerator;
 
 // ─── Block 2: Protocol Trait Implementation ───────────────

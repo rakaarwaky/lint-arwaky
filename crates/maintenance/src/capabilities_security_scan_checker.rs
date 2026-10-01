@@ -1,8 +1,8 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::maintenance::contract_maintenance_protocol::ISecurityScanProtocol;
-use shared::maintenance::taxonomy_maintenance_vo::{SecurityFinding, SecurityScanReport};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_maintenance::contract_maintenance_protocol::ISecurityScanProtocol;
+use shared_maintenance::taxonomy_maintenance_vo::{SecurityFinding, SecurityScanReport};
 use std::path::Path;
 use std::sync::Arc;
 

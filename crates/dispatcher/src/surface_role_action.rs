@@ -6,14 +6,14 @@
 use std::process::Command;
 use std::sync::Arc;
 
-use shared::common::FilePath;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::role_rules::IRoleRunnerAggregate;
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_common::FilePath;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_role_rules::IRoleRunnerAggregate;
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 
-use shared::common::ViolationItem;
+use shared_common::ViolationItem;
 
 /// Direct role scan — no subprocess. Used by the CLI `role` subcommand so that
 /// subprocess self-invocation from `scan` terminates (child never re-spawns).

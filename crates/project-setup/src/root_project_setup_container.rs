@@ -1,7 +1,7 @@
 // PURPOSE: SetupContainer — wiring for project-setup feature (root layer, wiring only)
 
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::project_setup::{
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_project_setup::{
     IAdapterInstallationProtocol, IEnvGenerationProtocol, ILanguageDetectionProtocol,
     IMcpConfigGenerationProtocol, ISetupAggregate,
 };

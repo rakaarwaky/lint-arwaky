@@ -1,8 +1,8 @@
 // PURPOSE: FilesystemRequest — request payload for the filesystem aggregate
 
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use crate::taxonomy_filesystem_vo::ImportEntry;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_path_vo::FilePath;
 use std::path::{Path, PathBuf};
 
 pub enum FilesystemRequest {

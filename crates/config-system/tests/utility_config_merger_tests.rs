@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use shared::common::taxonomy_common_vo::{BooleanVO, Count};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, NamingConfig};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
-use shared::config_system::utility_config_merger::merge_config;
+use shared_common::taxonomy_common_vo::{BooleanVO, Count};
+use shared_common::taxonomy_definition_vo::{LayerDefinition, NamingConfig};
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::taxonomy_config_system_vo::{ArchitectureConfig, ArchitectureRule};
+use shared_config_system::utility_config_merger::merge_config;
 
 fn make_config(
     layers: HashMap<LayerNameVO, LayerDefinition>,
@@ -34,7 +34,7 @@ fn merge_global_rule() {
     layers.insert(LayerNameVO::new("agent"), LayerDefinition::default());
     let rule = ArchitectureRule {
         scope: LayerNameVO::new(""),
-        forbidden: shared::common::taxonomy_common_vo::PatternList {
+        forbidden: shared_common::taxonomy_common_vo::PatternList {
             values: vec!["capabilities".to_string()],
         },
         ..Default::default()

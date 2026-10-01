@@ -1,9 +1,9 @@
 // Acceptance test AES405 — Agent composition.
 // Agent files must have >= 1 aggregate implementor and max 3 types.
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
@@ -24,7 +24,7 @@ fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
     }
 }
 
-fn run_audit(files: Vec<FileEntry>) -> Vec<shared::common::LintResult> {
+fn run_audit(files: Vec<FileEntry>) -> Vec<shared_common::LintResult> {
     let config = ArchitectureConfig::default();
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
@@ -69,7 +69,7 @@ fn aes405_too_many_types_detected() {
         !aes405.is_empty(),
         "agent with 4 types should trigger AES405"
     );
-    assert_eq!(aes405[0].severity, shared::common::Severity::HIGH);
+    assert_eq!(aes405[0].severity, shared_common::Severity::HIGH);
 }
 
 // ── Valid agent with implementor → no violation ──

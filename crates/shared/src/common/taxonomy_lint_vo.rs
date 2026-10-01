@@ -1,11 +1,11 @@
 // PURPOSE: CommandArgs, Location, LocationList, ScopeBounds, ScopeRef, ViolationConstraint — VOs for lint violations
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_common_vo::ColumnNumber;
-use crate::common::taxonomy_common_vo::LineNumber;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::taxonomy_common_vo::ColumnNumber;
+use crate::taxonomy_common_vo::LineNumber;
+use crate::taxonomy_path_vo::FilePath;
+use crate::taxonomy_source_vo::ContentString;
+use crate::taxonomy_suggestion_vo::DescriptionVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ScopeRef {

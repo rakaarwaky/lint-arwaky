@@ -1,0 +1,21 @@
+[package]
+name = "shared-mcp-server-lint-arwaky"
+version = "3.7.1"
+edition = "2024"
+description = "AES mcp server foundation: taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`), contract (`_port`, `_protocol`, `_aggregate`), and utility types shared across lint-arwaky. Split out of `shared-lint-arwaky`."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+# The folder *is* the crate root, so the manifest lives beside `mod.rs`.
+[lib]
+path = "mod.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+rmcp.workspace = true
+schemars.workspace = true

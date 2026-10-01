@@ -1,7 +1,7 @@
 // PURPOSE: Watch command — CLI thin wrapper
 // Calls dispatcher for watch business logic, only adds CLI output.
-use shared::common::{ExitCode, FilePath};
-use shared::file_watch::IWatchAggregate;
+use shared_common::{ExitCode, FilePath};
+use shared_file_watch::IWatchAggregate;
 use std::sync::Arc;
 use tracing::{error, info};
 

@@ -1,19 +1,19 @@
 // PURPOSE: CI entry point — CI threshold validation business logic, no formatting.
 use std::sync::Arc;
 
-use shared::common::{FilePath, Severity, Threshold};
-use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
-use shared::naming_rules::INamingRunnerAggregate;
-use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
-use shared::orphan_rules::IOrphanAggregate;
-use shared::orphan_rules::OrphanRequest;
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_common::{FilePath, Severity, Threshold};
+use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_import_rules::IImportRunnerAggregate;
+use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
+use shared_naming_rules::INamingRunnerAggregate;
+use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_orphan_rules::IOrphanAggregate;
+use shared_orphan_rules::OrphanRequest;
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::ICodeAnalysisAggregate;
 
 /// CI evaluation result — formatted by CLI/MCP surfaces.
 #[derive(Debug, Clone)]

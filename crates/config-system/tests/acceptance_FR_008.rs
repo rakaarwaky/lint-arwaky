@@ -2,8 +2,8 @@
 // Tests default ignored paths, config additions, deduplication, and empty string filtering.
 mod common;
 
-use shared::common::FilePath;
-use shared::config_system::{ConfigRequest, IConfigOrchestratorAggregate};
+use shared_common::FilePath;
+use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use std::fs;
 use tempfile::TempDir;
 

@@ -2,8 +2,8 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
 use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
-use shared::common::FilePath;
-use shared::git_hooks::{IHookInstallProtocol, IHookUninstallProtocol};
+use shared_common::FilePath;
+use shared_git_hooks::{IHookInstallProtocol, IHookUninstallProtocol};
 use tempfile::TempDir;
 
 fn bench_hook_install(c: &mut Criterion) {

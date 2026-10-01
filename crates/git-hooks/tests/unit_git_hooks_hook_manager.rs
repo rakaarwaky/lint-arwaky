@@ -1,7 +1,7 @@
 // Unit tests — ConfigInit: initialize_config, update_ignore_rule.
 
 use git_hooks_lint_arwaky::capabilities_config_init::ConfigInit;
-use shared::git_hooks::{HookIgnoreUpdateVO, IConfigInitProtocol};
+use shared_git_hooks::{HookIgnoreUpdateVO, IConfigInitProtocol};
 use tempfile::TempDir;
 
 fn make_config_init() -> ConfigInit {

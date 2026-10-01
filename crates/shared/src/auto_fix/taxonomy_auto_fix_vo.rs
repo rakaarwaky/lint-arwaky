@@ -1,8 +1,8 @@
 // PURPOSE: FixResult, FixOutcome — value objects for auto-fix application outcomes
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct FixResult {

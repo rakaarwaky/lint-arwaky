@@ -1,7 +1,7 @@
 // PURPOSE: JunitFormatter — implements IJUnitFormatProtocol for JUnit XML output (FR-004).
-use shared::cli_commands::{Format, LintResult, ScanReport};
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::IJUnitFormatProtocol;
+use shared_cli_commands::{Format, LintResult, ScanReport};
+use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_report_formatter::contract_report_formatter_protocol::IJUnitFormatProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// JunitFormatter — produces JUnit XML output from ScanReport.
@@ -55,10 +55,10 @@ fn format_junit_report(report: &ScanReport) -> DisplayContent {
         .filter(|r| {
             matches!(
                 r.severity,
-                shared::common::Severity::CRITICAL
-                    | shared::common::Severity::HIGH
-                    | shared::common::Severity::MEDIUM
-                    | shared::common::Severity::LOW
+                shared_common::Severity::CRITICAL
+                    | shared_common::Severity::HIGH
+                    | shared_common::Severity::MEDIUM
+                    | shared_common::Severity::LOW
             )
         })
         .count();
@@ -102,7 +102,7 @@ fn append_lint_result_testcase(xml: &mut String, r: &LintResult) {
     let name = xml_escape(&format!("{}:{}", r.file.value(), r.line.value()));
     let message = xml_escape(r.message.value());
     let sev = r.severity.to_string();
-    let is_info = r.severity == shared::common::Severity::INFO;
+    let is_info = r.severity == shared_common::Severity::INFO;
 
     xml.push_str(&format!(
         "    <testcase classname=\"{classname}\" name=\"{name}\">\n"

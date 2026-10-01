@@ -10,14 +10,14 @@ mod mock_filesystem;
 
 use std::sync::Arc;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::ICommandExecutorProtocol;
-use shared::external_lint::IJsToolResolutionProtocol;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_external_lint::ICommandExecutorProtocol;
+use shared_external_lint::IJsToolResolutionProtocol;
+use shared_external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
@@ -27,9 +27,9 @@ struct MockCmdExecutor;
 impl ICommandExecutorProtocol for MockCmdExecutor {
     fn execute_command(
         &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
+        _: shared_common::taxonomy_common_vo::PatternList,
         _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+        _: Option<shared_common::taxonomy_duration_vo::Timeout>,
     ) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::default())
     }
@@ -43,7 +43,7 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
         _: f64,
         _: Option<AdapterName>,
         _: &FilePath,
-    ) -> Result<ResponseData, shared::common::taxonomy_operation_error::LinterOperationError> {
+    ) -> Result<ResponseData, shared_common::taxonomy_operation_error::LinterOperationError> {
         Ok(ResponseData::default())
     }
     fn exec_cmd_adapter(
@@ -52,7 +52,7 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
         _: FilePath,
         _: f64,
         _: AdapterName,
-    ) -> Result<ResponseData, shared::common::taxonomy_operation_error::LinterOperationError> {
+    ) -> Result<ResponseData, shared_common::taxonomy_operation_error::LinterOperationError> {
         Ok(ResponseData::default())
     }
 }
@@ -62,7 +62,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -74,13 +74,13 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: &str,
     ) -> Result<
-        shared::common::taxonomy_message_vo::ComplianceStatus,
-        shared::common::taxonomy_operation_error::LinterOperationError,
+        shared_common::taxonomy_message_vo::ComplianceStatus,
+        shared_common::taxonomy_operation_error::LinterOperationError,
     > {
-        Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
+        Ok(shared_common::taxonomy_message_vo::ComplianceStatus::new(
             false,
         ))
     }
@@ -261,7 +261,7 @@ fn all_adapters_coerce_to_dyn_protocol() {
 #[test]
 fn stdio_client_implements_command_executor_protocol() {
     let client = external_lint_lint_arwaky::StdioClient::new(
-        shared::common::taxonomy_duration_vo::Timeout::new(5.0),
+        shared_common::taxonomy_duration_vo::Timeout::new(5.0),
     );
     let _dyn_client: &dyn ICommandExecutorProtocol = &client;
     // health_check must not panic
@@ -320,11 +320,11 @@ fn orchestrator_implements_aggregate_protocol() {
 
     let path = FilePath::new("/tmp".to_string()).unwrap();
     let result = _dyn_agg
-        .execute(shared::external_lint::ExternalLintRequest::scan_all(&path))
+        .execute(shared_external_lint::ExternalLintRequest::scan_all(&path))
         .into_violations();
     assert!(result.values.is_empty()); // no adapters registered, so no results
     let names = _dyn_agg
-        .execute(shared::external_lint::ExternalLintRequest::adapter_names())
+        .execute(shared_external_lint::ExternalLintRequest::adapter_names())
         .into_adapter_names();
     assert!(names.is_empty());
 }
@@ -333,7 +333,7 @@ fn orchestrator_implements_aggregate_protocol() {
 
 #[test]
 fn external_lint_executor_implements_cargo_dir_protocol() {
-    use shared::external_lint::ICargoDirProtocol;
+    use shared_external_lint::ICargoDirProtocol;
     let executor =
         external_lint_lint_arwaky::capabilities_cargo_dir_resolver::ExternalLintExecutor::new(
             Arc::new(MockFilesystem::new()),
@@ -347,7 +347,7 @@ fn external_lint_executor_implements_cargo_dir_protocol() {
 
 #[test]
 fn language_detector_implements_protocol() {
-    use shared::external_lint::ILanguageDetectProtocol;
+    use shared_external_lint::ILanguageDetectProtocol;
     let detector =
         external_lint_lint_arwaky::LanguageDetector::new(Arc::new(MockFilesystem::new()));
     let _dyn: &dyn ILanguageDetectProtocol = &detector;
@@ -361,12 +361,12 @@ fn language_detector_implements_protocol() {
 
 #[test]
 fn output_normalizer_implements_protocol() {
-    use shared::external_lint::INormalizeProtocol;
+    use shared_external_lint::INormalizeProtocol;
     let normalizer = external_lint_lint_arwaky::OutputNormalizer;
     let _dyn: &dyn INormalizeProtocol = &normalizer;
     let root = FilePath::new("/tmp".to_string()).unwrap();
     let (results, warnings) = _dyn.normalize(
-        &shared::common::taxonomy_tool_name_vo::ToolName::new("clippy"),
+        &shared_common::taxonomy_tool_name_vo::ToolName::new("clippy"),
         r#"[{"file":"main.rs","line":3,"column":1,"code":"dead_code","message":"unused","severity":"style"}]"#,
         &root,
     );
@@ -377,7 +377,7 @@ fn output_normalizer_implements_protocol() {
 
     // Malformed JSON yields no results plus a warning, never a panic.
     let (empty, warns) = _dyn.normalize(
-        &shared::common::taxonomy_tool_name_vo::ToolName::new("clippy"),
+        &shared_common::taxonomy_tool_name_vo::ToolName::new("clippy"),
         "not json",
         &root,
     );
@@ -389,7 +389,7 @@ fn output_normalizer_implements_protocol() {
 
 #[test]
 fn external_lint_executor_implements_js_resolution_protocol() {
-    use shared::external_lint::IJsToolResolutionProtocol;
+    use shared_external_lint::IJsToolResolutionProtocol;
     let executor =
         external_lint_lint_arwaky::capabilities_js_tool_resolver::ExternalLintExecutor::new(
             Arc::new(MockCmdExecutor),
@@ -398,7 +398,7 @@ fn external_lint_executor_implements_js_resolution_protocol() {
         );
     let _dyn: &dyn IJsToolResolutionProtocol = &executor;
     let path = FilePath::new("/tmp".to_string()).unwrap();
-    let tool = shared::common::taxonomy_tool_name_vo::ToolName::new("eslint");
+    let tool = shared_common::taxonomy_tool_name_vo::ToolName::new("eslint");
     // The mock filesystem holds no local `node_modules/.bin/eslint`.
     assert!(
         _dyn.resolve_js_cmd(&tool, vec!["file.js".into(), "--fix".into()], &path)

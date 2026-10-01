@@ -1,6 +1,6 @@
 // PURPOSE: utility_file_system — stateless filesystem utilities for TUI surfaces
 // Pure functions only — no DI, no trait params, no contract imports.
-use shared::common::FilePath;
+use shared_common::FilePath;
 use std::io::Write;
 use std::path::Path;
 

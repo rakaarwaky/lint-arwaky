@@ -1,7 +1,7 @@
 // Unit tests — ViolationItem construction and fields from various sources.
-use shared::cli_commands::LintResult;
-use shared::common::ViolationItem;
-use shared::common::{
+use shared_cli_commands::LintResult;
+use shared_common::ViolationItem;
+use shared_common::{
     ColumnNumber, ErrorCode, FilePath, LineNumber, LintMessage, LocationList, Severity,
 };
 

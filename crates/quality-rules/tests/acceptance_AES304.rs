@@ -1,8 +1,8 @@
 // PURPOSE: Acceptance test AES304 — bypass detection
 // Verify unwrap(), #[allow(...)], FIXME, HACK, XXX are flagged; unwrap_or_default() is NOT flagged.
-use shared::cli_commands::LintResult;
-use shared::common::PatternList;
-use shared::quality_rules::IBypassCheckerProtocol;
+use shared_cli_commands::LintResult;
+use shared_common::PatternList;
+use shared_quality_rules::IBypassCheckerProtocol;
 
 use quality_rules_lint_arwaky::capabilities_check_bypass_checker::BypassChecker;
 
@@ -29,7 +29,7 @@ fn unwrap_detected() {
     );
     assert_eq!(violations.len(), 1);
     assert!(violations[0].code.code().contains("AES304"));
-    assert_eq!(violations[0].severity, shared::common::Severity::CRITICAL);
+    assert_eq!(violations[0].severity, shared_common::Severity::CRITICAL);
 }
 
 #[test]

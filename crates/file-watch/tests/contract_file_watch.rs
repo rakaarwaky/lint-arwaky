@@ -2,8 +2,8 @@
 use file_watch_lint_arwaky::agent_watch_orchestrator::WatchOrchestrator;
 use file_watch_lint_arwaky::capabilities_change_filter::ChangeFilter;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::contract_watch_aggregate::IWatchAggregate;
-use shared::file_watch::contract_watch_protocol::{
+use shared_file_watch::contract_watch_aggregate::IWatchAggregate;
+use shared_file_watch::contract_watch_protocol::{
     IChangeFilterProtocol, IChangeLintProtocol, IWatchLifecycleProtocol,
 };
 

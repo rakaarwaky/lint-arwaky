@@ -1,5 +1,5 @@
 // E2E tests — dispatcher scan flow.
-use shared::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_path_vo::FilePath;
 
 #[test]
 fn e2e_check_action_full_flow() {
