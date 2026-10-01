@@ -123,10 +123,13 @@ jobs:
         # QA #642: never default unparseable/crashed output to "0 violations".
         # The regex must match a `Total:` line and the CLI exit code must be
         # checked, otherwise a tool failure would silently pass as clean.
+        # Both assignments need an explicit `|| …`: this step runs under
+        # `bash -e`, so a bare failing command substitution aborts the step
+        # before either guard can print its `::error::` diagnosis.
         run: |
-          output=$(./target/debug/lint-arwaky-cli check . 2>&1)
-          exit_code=$?
-          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+')
+          exit_code=0
+          output=$(./target/debug/lint-arwaky-cli check . 2>&1) || exit_code=$?
+          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+') || true
           if [ -z "$violations" ]; then
             echo "::error::could not parse a violation count from check . output"
             echo "$output"
@@ -135,6 +138,7 @@ jobs:
           echo "Violations: ${violations}"
           if [ "$exit_code" -ne 0 ]; then
             echo "::error::lint-arwaky-cli check . exited with code ${exit_code}"
+            echo "$output"
             exit 1
           fi
           [ "${violations}" = "0" ]
@@ -146,8 +150,13 @@ jobs:
         # = 27 unique codes expected from `scan workspaces-bad`.
         # When rules are added/removed, update this threshold and TEST.md §3.2
         # in lockstep (QA #636).
+        # `|| true` on the assignment: `scan` exits 1 whenever it reports
+        # violations, which is its contract — under `pipefail` that status
+        # would abort the step before the threshold check could print its
+        # diagnosis. The captured count is unaffected, and a total tool
+        # failure still yields 0 codes, which fails the threshold below.
         run: |
-          codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
+          codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad 2>&1 | grep -oP "AES\d+" | sort -u | wc -l) || true
           echo "Unique codes: ${codes:-0}"
           [ "${codes:-0}" -ge 27 ]
 
@@ -155,13 +164,21 @@ jobs:
         # Proves the external-lint adapters actually invoked the real tools
         # installed above: at least one tool-native (non-AES) violation code
         # must appear for both the Python and the JS/TS bad workspaces.
+        # Adapters report bare tool codes (`F401`, `formatting`), never a
+        # `tool::code` prefix, so match the report's violation lines
+        # (`  [CODE] <count>  ← …`) and drop the AES codes the built-in
+        # linters own — including the `[typescript]`/`[python]` language tags
+        # in the section headers, which the trailing count/arrow excludes.
+        # `|| true` on the count assignments: GitHub runs steps under
+        # `bash -eo pipefail`, so a grep with no match would abort the step
+        # before the `[ ... -lt 1 ]` check could print its diagnosis.
         run: |
           py_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/modules 2>&1 || true)
           ts_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/packages 2>&1 || true)
-          py_native=$(echo "$py_out" | grep -oE "(ruff|mypy|bandit)::[A-Za-z0-9_.-]+" | sort -u | wc -l)
-          ts_native=$(echo "$ts_out" | grep -oE "(eslint|prettier|tsc)::[A-Za-z0-9_./-]+" | sort -u | wc -l)
-          echo "Tool-native codes — Python: ${py_native}, JS/TS: ${ts_native}"
-          if [ "${py_native}" -lt 1 ] || [ "${ts_native}" -lt 1 ]; then
+          py_native=$(echo "$py_out" | grep -oP '^\s*\[\K[A-Za-z0-9_.\/-]+(?=\]\s+\d+\s+←)' | grep -v '^AES' | sort -u | wc -l) || true
+          ts_native=$(echo "$ts_out" | grep -oP '^\s*\[\K[A-Za-z0-9_.\/-]+(?=\]\s+\d+\s+←)' | grep -v '^AES' | sort -u | wc -l) || true
+          echo "Tool-native codes — Python: ${py_native:-0}, JS/TS: ${ts_native:-0}"
+          if [ "${py_native:-0}" -lt 1 ] || [ "${ts_native:-0}" -lt 1 ]; then
             echo "::error::no tool-native violation codes found — external adapters did not run end-to-end"
             exit 1
           fi
@@ -208,4 +225,9 @@ jobs:
         with:
           tool: cargo-llvm-cov,cargo-nextest
       - name: Compute coverage summary
+        # This job does not install sccache, so clear the workflow-wide wrapper
+        # before cargo-llvm-cov invokes `rustc`; otherwise the wrapper binary is
+        # missing and the run dies before compiling anything (QA #643).
+        env:
+          RUSTC_WRAPPER: ""
         run: cargo llvm-cov nextest --workspace --lib --tests --summary-only

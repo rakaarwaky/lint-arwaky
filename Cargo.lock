@@ -3204,9 +3204,11 @@ dependencies = [
 name = "mcp-server-lint-arwaky"
 version = "3.7.1"
 dependencies = [
+ "config-system-lint-arwaky",
  "criterion",
  "dirs",
  "dispatcher-lint-arwaky",
+ "filesystem-lint-arwaky",
  "rmcp",
  "serde_json",
  "shared-auto-fix-lint-arwaky",
@@ -5689,7 +5691,6 @@ dependencies = [
  "dirs",
  "dispatcher-lint-arwaky",
  "ratatui",
- "rayon",
  "serde_json",
  "shared-auto-fix-lint-arwaky",
  "shared-common-lint-arwaky",

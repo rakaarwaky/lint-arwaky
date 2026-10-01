@@ -22,7 +22,10 @@ fn parse(json: &str) -> serde_json::Value {
 
 #[test]
 fn handle_execute_command_wires_action_into_dispatch() {
-    let args = ExecuteCommandArgs { action: "definitely-not-real".to_string(), args: None };
+    let args = ExecuteCommandArgs {
+        action: "definitely-not-real".to_string(),
+        args: None,
+    };
     let result = parse(&server().handle_execute_command(Parameters(args)));
     assert_eq!(result["exit_code"], 2);
     assert!(
@@ -50,11 +53,18 @@ fn handle_execute_command_wires_path_arg_into_path_validation() {
 
 #[test]
 fn handle_execute_command_version_has_stable_envelope() {
-    let args = ExecuteCommandArgs { action: "version".to_string(), args: None };
+    let args = ExecuteCommandArgs {
+        action: "version".to_string(),
+        args: None,
+    };
     let result = parse(&server().handle_execute_command(Parameters(args)));
     assert_eq!(result["exit_code"], 0);
     assert_eq!(result["name"], "lint-arwaky");
-    assert!(result["version"].as_str().is_some_and(|v| !v.is_empty()), "{}", result);
+    assert!(
+        result["version"].as_str().is_some_and(|v| !v.is_empty()),
+        "{}",
+        result
+    );
 }
 
 // ─── list_commands handler wiring ──────────────────────────────────
@@ -82,7 +92,9 @@ fn handle_list_commands_returns_full_catalog_without_filter() {
 
 #[test]
 fn handle_list_commands_applies_domain_filter() {
-    let args = ListCommandsArgs { domain: Some("check".to_string()) };
+    let args = ListCommandsArgs {
+        domain: Some("check".to_string()),
+    };
     let result = parse(&server().handle_list_commands(Parameters(args)));
     assert_eq!(result["exit_code"], 0);
     let commands = result["commands"].as_array().expect("commands array");
@@ -109,9 +121,10 @@ fn handle_get_config_reports_missing_config_loudly() {
     assert_eq!(result["exit_code"], 0);
     let warnings = result["warnings"].as_array().expect("warnings array");
     assert!(
-        warnings
-            .iter()
-            .any(|w| w.as_str().unwrap_or_default().contains("No config files found")),
+        warnings.iter().any(|w| w
+            .as_str()
+            .unwrap_or_default()
+            .contains("No config files found")),
         "missing config must be visible, not silent: {}",
         result
     );
@@ -144,7 +157,10 @@ fn handle_get_config_reads_score_threshold_from_project_config() {
 
 #[test]
 fn handle_get_config_rejects_invalid_path() {
-    let args = GetConfigArgs { path: Some("".to_string()), language: None };
+    let args = GetConfigArgs {
+        path: Some("".to_string()),
+        language: None,
+    };
     let result = parse(&server().handle_get_config(Parameters(args)));
     assert_eq!(result["exit_code"], 2);
     assert_eq!(result["error"], "Invalid path");

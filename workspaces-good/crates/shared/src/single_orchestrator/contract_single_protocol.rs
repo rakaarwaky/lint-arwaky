@@ -4,8 +4,8 @@
 // injects that one protocol and coordinates the whole feature. The two
 // taxonomy types give the protocol and the aggregate their request and
 // response, so neither has to invent its own shapes.
-use calculator_shared::taxonomy_single_request::SingleRequest;
-use calculator_shared::taxonomy_single_response::SingleResponse;
+use crate::taxonomy_single_request::SingleRequest;
+use crate::taxonomy_single_response::SingleResponse;
 
 pub trait ISingleCheckerProtocol: Send + Sync {
     fn audit(&self, request: SingleRequest) -> SingleResponse;

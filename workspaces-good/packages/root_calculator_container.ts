@@ -12,19 +12,34 @@ import { ICalculatorAggregate } from "calculator-shared/src/contract_calculator_
 import { IDivisionAggregate } from "calculator-shared/src/contract_division_aggregate";
 import { IMultiplicationAggregate } from "calculator-shared/src/contract_multiplication_aggregate";
 import { ISubtractionAggregate } from "calculator-shared/src/contract_subtraction_aggregate";
-import { AdditionOrchestrator, AdditionOrchestratorDeps } from "calculator-addition/src/agent_addition_orchestrator";
+import {
+  AdditionOrchestrator,
+  AdditionOrchestratorDeps,
+} from "calculator-addition/src/agent_addition_orchestrator";
 import { AdditionAnalyzer } from "calculator-addition/src/capabilities_addition_analyzer";
 import { AdditionLog } from "calculator-addition/src/capabilities_addition_log";
-import { DivisionOrchestrator, DivisionOrchestratorDeps } from "calculator-division/src/agent_division_orchestrator";
+import {
+  DivisionOrchestrator,
+  DivisionOrchestratorDeps,
+} from "calculator-division/src/agent_division_orchestrator";
 import { DivisionAnalyzer } from "calculator-division/src/capabilities_division_analyzer";
 import { DivisionLog } from "calculator-division/src/capabilities_division_log";
-import { MultiplicationOrchestrator, MultiplicationOrchestratorDeps } from "calculator-multiplication/src/agent_multiplication_orchestrator";
+import {
+  MultiplicationOrchestrator,
+  MultiplicationOrchestratorDeps,
+} from "calculator-multiplication/src/agent_multiplication_orchestrator";
 import { MultiplicationAnalyzer } from "calculator-multiplication/src/capabilities_multiplication_analyzer";
 import { MultiplicationLog } from "calculator-multiplication/src/capabilities_multiplication_log";
-import { SubtractionOrchestrator, SubtractionOrchestratorDeps } from "calculator-subtraction/src/agent_subtraction_orchestrator";
+import {
+  SubtractionOrchestrator,
+  SubtractionOrchestratorDeps,
+} from "calculator-subtraction/src/agent_subtraction_orchestrator";
 import { SubtractionAnalyzer } from "calculator-subtraction/src/capabilities_subtraction_analyzer";
 import { SubtractionLog } from "calculator-subtraction/src/capabilities_subtraction_log";
-import { CalculatorOrchestrator, CalculatorOrchestratorDeps } from "./agent_calculator_orchestrator";
+import {
+  CalculatorOrchestrator,
+  CalculatorOrchestratorDeps,
+} from "./agent_calculator_orchestrator";
 
 // ─── Block 1: Struct Definition ───────────────────────────
 
@@ -45,10 +60,11 @@ export class CalculatorContainer {
       analyzer: new SubtractionAnalyzer(),
       log: subtractionLog,
     } as SubtractionOrchestratorDeps);
-    const multiplication: IMultiplicationAggregate = new MultiplicationOrchestrator({
-      analyzer: new MultiplicationAnalyzer(),
-      log: multiplicationLog,
-    } as MultiplicationOrchestratorDeps);
+    const multiplication: IMultiplicationAggregate =
+      new MultiplicationOrchestrator({
+        analyzer: new MultiplicationAnalyzer(),
+        log: multiplicationLog,
+      } as MultiplicationOrchestratorDeps);
     const division: IDivisionAggregate = new DivisionOrchestrator({
       analyzer: new DivisionAnalyzer(),
       log: divisionLog,

@@ -140,9 +140,18 @@ run_gate "False Positives (workspaces-good == 0)" bash -c '
 ' &
 FP_PID=$!
 
-# Single cargo nextest invocation — 3× faster than cargo test
+# Single cargo nextest invocation — 3× faster than cargo test.
+# `set -eo pipefail` matters: without it the pipeline status is `tail`'s (0)
+# and a failing test run reported PASS — the gate must propagate nextest's
+# exit code. `cargo build --release` first: the `regression_scan_modes`
+# suite executes the release binary (same as CI's "Build release binary
+# (for regression tests)" step), and `cargo test --doc` because nextest
+# cannot run doctests (QA #638).
 run_gate "Tests (workspace)" bash -c '
+    set -eo pipefail
+    cargo build --release 2>&1 | tail -1
     cargo nextest run --workspace --lib --tests 2>&1 | tail -5
+    cargo test --doc --workspace 2>&1 | tail -3
     echo "  tests completed"
 ' &
 TEST_PID=$!

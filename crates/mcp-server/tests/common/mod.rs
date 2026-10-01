@@ -10,9 +10,7 @@
 
 use std::sync::Arc;
 
-use mcp_server_lint_arwaky::surface_mcp_action_command::{
-    McpActionSurface, McpServerDependencies,
-};
+use mcp_server_lint_arwaky::surface_mcp_action_command::{McpActionSurface, McpServerDependencies};
 
 use shared_auto_fix::IFixAggregate;
 use shared_auto_fix::taxonomy_auto_fix_request::FixRequest;
@@ -58,9 +56,7 @@ macro_rules! stub_aggregate {
         struct $name;
         impl $trait for $name {
             fn execute(&self, _request: $req) -> $res {
-                unimplemented!(
-                    "QA #641 test stub: this aggregate is not exercised by these tests"
-                )
+                unimplemented!("QA #641 test stub: this aggregate is not exercised by these tests")
             }
         }
     };
@@ -80,14 +76,24 @@ stub_aggregate!(
     GitHooksRequest,
     GitHooksResponse
 );
-stub_aggregate!(ImportStub, IImportRunnerAggregate, ImportRequest, ImportResponse);
+stub_aggregate!(
+    ImportStub,
+    IImportRunnerAggregate,
+    ImportRequest,
+    ImportResponse
+);
 stub_aggregate!(
     MaintenanceStub,
     IMaintenanceAggregate,
     MaintenanceRequest,
     MaintenanceResponse
 );
-stub_aggregate!(NamingStub, INamingRunnerAggregate, NamingRequest, NamingResponse);
+stub_aggregate!(
+    NamingStub,
+    INamingRunnerAggregate,
+    NamingRequest,
+    NamingResponse
+);
 stub_aggregate!(OrphanStub, IOrphanAggregate, OrphanRequest, OrphanResponse);
 stub_aggregate!(SetupStub, ISetupAggregate, SetupRequest, SetupResponse);
 stub_aggregate!(
@@ -125,11 +131,10 @@ pub fn make_action_surface() -> McpActionSurface {
     let fs_tool_resolution = fs_container.tool_resolution();
     let fs_parser = fs_container.parser();
 
-    let config_container =
-        config_system_lint_arwaky::root_config_system_container::ConfigContainer::new(
-            fs_aggregate.clone(),
-            fs_io.clone(),
-        );
+    let config_container = config_system::root_config_system_container::ConfigContainer::new(
+        fs_aggregate.clone(),
+        fs_io.clone(),
+    );
 
     let fs_seam = Arc::new(make_fs_seam());
     McpActionSurface::new(McpServerDependencies {

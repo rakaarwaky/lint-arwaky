@@ -20,7 +20,10 @@ fn server() -> LintArwakyMcpServer {
 fn get_info_advertises_lint_arwaky_identity() {
     let info = server().get_info();
     assert_eq!(info.server_info.name, "lint-arwaky");
-    assert!(!info.server_info.version.is_empty(), "server must advertise a version");
+    assert!(
+        !info.server_info.version.is_empty(),
+        "server must advertise a version"
+    );
 }
 
 #[test]
@@ -71,7 +74,10 @@ fn execute_command_args_requires_action() {
 
     let wrong_type: Result<ExecuteCommandArgs, _> =
         serde_json::from_value(serde_json::json!({ "action": 42 }));
-    assert!(wrong_type.is_err(), "non-string `action` must be rejected at the schema boundary");
+    assert!(
+        wrong_type.is_err(),
+        "non-string `action` must be rejected at the schema boundary"
+    );
 }
 
 #[test]

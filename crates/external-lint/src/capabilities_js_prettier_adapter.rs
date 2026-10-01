@@ -59,10 +59,23 @@ impl ILinterAdapterProtocol for PrettierAdapter {
         let wd = self.tool_resolution.resolve_js_working_dir(path);
         let abs_path = self.io.canonicalize_path_str(path);
 
+        // FR-ExternalLint scopes this adapter to JavaScript/TypeScript
+        // formatting; markdown is markdownlint's job. A directory target
+        // would otherwise hand prettier every file type it supports
+        // (markdown, yaml, json, …), so narrow it to a JS/TS glob — the
+        // file-target guard above already does the same for single files.
+        let target = if self.io.is_dir(Path::new(&abs_path.value)) {
+            format!(
+                "{}/**/*.{{ts,tsx,js,jsx}}",
+                abs_path.value.trim_end_matches('/')
+            )
+        } else {
+            abs_path.value.clone()
+        };
         let prettier_name = ToolName::new("prettier");
         let cmd = match self.tool_resolution.resolve_js_cmd(
             &prettier_name,
-            vec!["--check".to_string(), abs_path.value],
+            vec!["--check".to_string(), target],
             &wd,
         ) {
             Some(c) => c,
@@ -86,7 +99,19 @@ impl ILinterAdapterProtocol for PrettierAdapter {
                 {
                     continue;
                 }
-                let file_fp = FilePath::new(file_str.to_string()).unwrap_or_else(|_| path.clone());
+                // Prettier echoes paths relative to the working directory it
+                // ran in (`wd`), not to the scan target. Join them back onto
+                // `wd` so the report carries a real path — otherwise the scan
+                // scope filter drops every finding as a non-existent file.
+                let file_abs = if Path::new(file_str).is_absolute() {
+                    file_str.to_string()
+                } else {
+                    Path::new(&wd.value)
+                        .join(file_str)
+                        .to_string_lossy()
+                        .to_string()
+                };
+                let file_fp = FilePath::new(file_abs).unwrap_or_else(|_| path.clone());
                 let filename_vo = resolve_capabilities_path(file_fp, Some(path.clone()));
                 results.push(LintResult {
                     file: filename_vo,

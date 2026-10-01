@@ -59,7 +59,10 @@ fn regression_640_existing_custom_hook_is_backed_up_on_install() {
         .join(".git")
         .join("hooks")
         .join("pre-commit.lint-arwaky.bak");
-    assert!(backup_path.exists(), "backup of the pre-existing custom hook must exist");
+    assert!(
+        backup_path.exists(),
+        "backup of the pre-existing custom hook must exist"
+    );
     let backup = std::fs::read_to_string(&backup_path).unwrap();
     assert_eq!(
         backup, CUSTOM_HOOK,
@@ -124,5 +127,8 @@ fn regression_640_non_git_repo_is_noop() {
     let exec_path = FilePath::new("lint-arwaky-cli".to_string()).unwrap();
     let result = installer.install_pre_commit(&exec_path).unwrap();
     assert!(!result.value, "non-git repo must report no-op (false)");
-    assert!(!tmp.path().join(".git").exists(), "no .git dir must be created");
+    assert!(
+        !tmp.path().join(".git").exists(),
+        "no .git dir must be created"
+    );
 }

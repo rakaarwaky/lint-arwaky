@@ -93,5 +93,8 @@ fn regression_640_yaml_valid_config_control() {
     let yaml = "architecture:\n  enabled: true\n  mandatory_class_definition: true\n  rules: []\n";
     let (config, _) = make_parser().parse_config_yaml_with_warnings(yaml);
     assert!(config.enabled.value, "valid config must parse its values");
-    assert!(config.mandatory_class_definition.value, "valid config must parse its values");
+    assert!(
+        config.mandatory_class_definition.value,
+        "valid config must parse its values"
+    );
 }

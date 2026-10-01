@@ -10,6 +10,9 @@ thresholds:
 
 # ─── Adapters ─────────────────────────────────────────────────────────
 # All adapters listed. The system auto-filters by detected language.
+# This list is also authoritative: `scan`/`check`/`external` only run the
+# adapters named here, so an adapter that is not listed (markdownlint) is
+# never invoked — CI and TEST.md §1 install exactly this set.
 adapters:
   # Rust
   - name: "clippy"
