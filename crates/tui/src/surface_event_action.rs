@@ -1,10 +1,10 @@
 use crate::surface_lint_action::SurfaceLintExecutor;
 use shared_common::FilePath;
-use shared_tui::{ConfirmState, LintExecutionResult, ScanUpdate};
+use tui_lint_arwaky::{ConfirmState, LintExecutionResult, ScanUpdate};
 
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared_tui::TuiEvent;
-use shared_tui::{AppState, PanelFocus, PreviewMode};
+use tui_lint_arwaky::TuiEvent;
+use tui_lint_arwaky::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
 
 // PURPOSE: Surface-layer action handler — the central state machine for TUI events.
@@ -32,11 +32,11 @@ impl SurfaceActionHandler {
         state: &mut AppState,
     ) -> Option<std::sync::mpsc::Receiver<ScanUpdate>> {
         // Guard: don't start a second scan while one is running.
-        if state.scanning {
+        if state.is_scanning() {
             return None;
         }
         let path = state.selected_path();
-        state.set_scanning(true, "Starting scan...".to_string(), 0);
+        state.begin_scan("Starting scan...".to_string(), 0);
         state.set_status(format!("Scanning {}...", path));
         // Reset preview to show scan output when complete.
         state.preview_text.clear();
@@ -94,7 +94,6 @@ impl SurfaceActionHandler {
                 }
                 ScanUpdate::Cancelled => {
                     state.finish_scan(0);
-                    state.scanning = false;
                     state.scan_cancel = None;
                     state.preview_mode = PreviewMode::ActionOutput;
                     state.preview_scroll = 0;
@@ -114,10 +113,10 @@ impl SurfaceActionHandler {
         label: &str,
         action: Box<dyn FnOnce(&SurfaceLintExecutor) -> LintExecutionResult + Send>,
     ) -> bool {
-        if state.action_pending {
+        if state.is_action_pending() {
             return false;
         }
-        state.action_pending = true;
+        state.begin_action();
         state.set_status(format!("Running {label}..."));
         let lint_port = self.lint_port.clone();
         let (tx, rx) = std::sync::mpsc::sync_channel(4);
@@ -136,7 +135,7 @@ impl SurfaceActionHandler {
         rx: &std::sync::mpsc::Receiver<LintExecutionResult>,
     ) {
         if let Ok(result) = rx.try_recv() {
-            state.action_pending = false;
+            state.end_action();
             state.preview_text = result.output;
             state.violation_count = result.violation_count;
             state.preview_scroll = 0;
@@ -147,10 +146,10 @@ impl SurfaceActionHandler {
     }
 
     /// Poll the stored `action_result_rx` (if any) while an action is pending.
-    /// Clears `action_pending` when no receiver is left (already reaped).
+    /// Clears the busy flag when no receiver is left (already reaped).
     pub fn poll_pending_background_action(&self, state: &mut AppState) {
         let Some(rx) = state.action_result_rx.take() else {
-            state.action_pending = false;
+            state.end_action();
             return;
         };
         self.poll_background_action(state, &rx);
@@ -511,7 +510,7 @@ impl SurfaceActionHandler {
                 if name.starts_with('.') {
                     return None;
                 }
-                shared_tui::FileEntry::from_path(&entry_path)
+                tui_lint_arwaky::FileEntry::from_path(&entry_path)
             })
             .collect();
         if state.entries.is_empty() {
@@ -574,7 +573,7 @@ impl SurfaceActionHandler {
         F: FnOnce(
             &SurfaceLintExecutor,
             &str,
-            &shared_tui::taxonomy_tui_vo::ActionFlags,
+            &tui_lint_arwaky::taxonomy_tui_vo::ActionFlags,
         ) -> LintExecutionResult,
     {
         let path = state.selected_path();

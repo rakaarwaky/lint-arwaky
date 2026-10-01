@@ -9,7 +9,7 @@ use ratatui::layout::Rect;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use shared_tui::AppState;
+use tui_lint_arwaky::AppState;
 
 /// Returns the box-drawing character for a vertical separator.
 /// Falls back to "|" when NO_COLOR is set (#365).
@@ -43,7 +43,7 @@ impl StatusComponent {
     }
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let line = if state.scanning {
+        let line = if state.is_scanning() {
             // Scan progress indicator: progress bar + phase + counts
             let bar_width = 20;
             let (filled, _) = if state.scan_files_total > 0 {

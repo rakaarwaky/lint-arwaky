@@ -18,6 +18,22 @@ The architecture supports multi-language workspaces.
 | Packages directory | TypeScript or JavaScript packages                                 |
 | Modules directory  | Python modules                                                    |
 
+### Shared-Kernel Scope (issue #572)
+
+`crates/shared/src/*` is the locked feature kernel: taxonomy, contract, and
+utility types that **more than one feature** consumes. Surface-specific state
+does not belong there:
+
+| Submodule          | Status                                    | Reason |
+| ------------------ | ----------------------------------------- | ------ |
+| `tui`              | Moved into `crates/tui`                   | TUI crate was the only consumer |
+| `mcp_server`       | Moved into `crates/mcp-server`            | MCP server crate was the only consumer |
+| `cli_commands`     | Stays in `shared`                         | `LintResult`/`ScanReport` taxonomy is consumed by 10+ crates (rule crates, dispatcher, report-formatter, cli-commands, root) |
+| `report_formatter` | Stays in `shared`                         | `IReportFormatterAggregate` is a cross-crate contract: implemented by `report-formatter`, consumed by `cli-commands` |
+
+When auditing a `shared` submodule, relocate it only if it has a single
+consumer; otherwise document the consumers here.
+
 ---
 
 ## 3. Naming Convention

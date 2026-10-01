@@ -14,7 +14,7 @@ use ratatui::style::{Modifier, Style};
 use ratatui::widgets::{
     Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap,
 };
-use shared_tui::{AppState, PanelFocus, PreviewMode};
+use tui_lint_arwaky::{AppState, PanelFocus, PreviewMode};
 
 pub struct PreviewView;
 

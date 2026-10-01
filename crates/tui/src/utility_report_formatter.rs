@@ -4,7 +4,7 @@
 // Pure utility function — no trait impls.
 
 use shared_maintenance::ToolchainDiagnostics;
-use shared_tui::LintExecutionResult;
+use tui_lint_arwaky::LintExecutionResult;
 
 /// Format toolchain diagnostics into a LintExecutionResult.
 pub fn format_doctor_report(diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {

@@ -11,8 +11,8 @@ use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
-use shared_tui::AesLayer;
-use shared_tui::{AppState, PanelFocus};
+use tui_lint_arwaky::AesLayer;
+use tui_lint_arwaky::{AppState, PanelFocus};
 
 pub struct FileListView;
 

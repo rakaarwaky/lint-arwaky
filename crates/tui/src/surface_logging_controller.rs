@@ -4,7 +4,7 @@
 // when the XDG state dir is unavailable; the fallback is surfaced via eprintln
 // because the TUI status line is only reachable after the event loop starts.
 // No console (stdout) layer — stdout is owned by ratatui.
-use shared_tui::TuiEvent;
+use tui_lint_arwaky::TuiEvent;
 use std::fs;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::rolling::{RollingFileAppender, Rotation};

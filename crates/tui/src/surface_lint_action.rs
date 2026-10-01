@@ -29,7 +29,7 @@ use shared_orphan_rules::IOrphanAggregate;
 use shared_project_setup::ISetupAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
-use shared_tui::{ActionFlags, LintExecutionResult};
+use tui_lint_arwaky::{ActionFlags, LintExecutionResult};
 
 use std::sync::Arc;
 

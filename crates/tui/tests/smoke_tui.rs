@@ -18,8 +18,8 @@ fn smoke_is_valid_directory_completes_quickly() {
 #[test]
 fn smoke_tui_types_are_send_sync() {
     fn assert_send_sync<T: Send + Sync>() {}
-    assert_send_sync::<shared_tui::FileEntry>();
-    assert_send_sync::<shared_tui::LintExecutionResult>();
+    assert_send_sync::<tui_lint_arwaky::FileEntry>();
+    assert_send_sync::<tui_lint_arwaky::LintExecutionResult>();
     assert_send_sync::<FilePath>();
     assert_send_sync::<DisplayContent>();
 }

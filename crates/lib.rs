@@ -30,7 +30,6 @@ pub use shared_filesystem;
 pub use shared_git_hooks;
 pub use shared_import_rules;
 pub use shared_maintenance;
-pub use shared_mcp_server;
 pub use shared_naming_rules;
 pub use shared_orphan_rules;
 pub use shared_project_setup;
@@ -38,7 +37,6 @@ pub use shared_quality_rules;
 pub use shared_report_formatter;
 pub use shared_role_rules;
 pub use shared_structure_rules;
-pub use shared_tui;
 pub use tui;
 
 // ── Root entry wiring ──────────────────────────────────────

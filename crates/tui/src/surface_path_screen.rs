@@ -9,7 +9,7 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
-use shared_tui::AppState;
+use tui_lint_arwaky::AppState;
 
 pub struct PathScreen;
 

@@ -16,7 +16,7 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use shared_tui::{AppState, ScanUpdate, TuiEvent};
+use tui_lint_arwaky::{AppState, ScanUpdate, TuiEvent};
 
 use std::io::stdout;
 use std::sync::Arc;
@@ -96,13 +96,13 @@ impl TuiCommandSurface {
 
         loop {
             // --- Poll scan progress (non-blocking) ---
-            if state.scanning
+            if state.is_scanning()
                 && let Some(ref rx) = scan_rx
             {
                 self.action_handler.poll_scan(state, rx);
             }
             // --- Poll pending background global action (non-blocking) ---
-            if state.action_pending {
+            if state.is_action_pending() {
                 self.action_handler.poll_pending_background_action(state);
             }
 
@@ -171,13 +171,13 @@ impl TuiCommandSurface {
 
                 // --- Intercept ActionScan: spawn background thread ---
                 if matches!(tui_event, TuiEvent::ActionScan) {
-                    if !state.scanning
+                    if !state.is_scanning()
                         && let Some(rx) = self.action_handler.start_scan(state)
                     {
                         scan_rx = Some(rx);
                     }
                     // Ignore if already scanning
-                } else if state.scanning
+                } else if state.is_scanning()
                     && matches!(
                         tui_event,
                         TuiEvent::ActionCheck
@@ -323,7 +323,7 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         KeyCode::Char('/') => TuiEvent::ToggleSearch,
         // Esc cancels an in-flight scan before it quits the TUI.
         KeyCode::Esc => {
-            if state.scanning {
+            if state.is_scanning() {
                 TuiEvent::CancelScan
             } else {
                 TuiEvent::Quit

@@ -273,6 +273,15 @@ pub enum PreviewMode {
     ActionOutput,
 }
 
+/// What the background worker slot is occupied with (issue #577).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BusyKind {
+    /// A background lint scan is running.
+    Scan,
+    /// A background global action (install/doctor/init/mcp-config) is running.
+    Action,
+}
+
 #[derive(Debug)]
 pub struct AppState {
     pub project_root: String,
@@ -306,10 +315,11 @@ pub struct AppState {
     pub watch_receiver: Option<std::sync::mpsc::Receiver<WatchMessage>>,
     /// Latest watch output to display in preview panel.
     pub watch_results: String,
-    /// Whether a background scan is currently running.
-    pub scanning: bool,
-    /// Whether a background global action (install/doctor/init/mcp-config) is running.
-    pub action_pending: bool,
+    /// What the single background worker slot is occupied with, if anything.
+    /// One value replaces the previous separate `scanning` / `action_pending`
+    /// bools, so a scan and a global action can never both be flagged as
+    /// running at the same time (issue #577).
+    pub busy: Option<BusyKind>,
     /// Receiver for the background global-action thread's result (mirror of the scan receiver).
     pub action_result_rx: Option<std::sync::mpsc::Receiver<LintExecutionResult>>,
     /// Shared cancel flag read by the background scan thread; set when the user presses Esc mid-scan.
@@ -358,8 +368,7 @@ impl AppState {
             watching: false,
             watch_receiver: None,
             watch_results: String::new(),
-            scanning: false,
-            action_pending: false,
+            busy: None,
             action_result_rx: None,
             scan_cancel: None,
             pending_confirm: None,
@@ -485,10 +494,30 @@ impl AppState {
         (self.terminal_height as usize).saturating_sub(5)
     }
 
+    /// Whether a background scan is currently running.
+    pub fn is_scanning(&self) -> bool {
+        matches!(self.busy, Some(BusyKind::Scan))
+    }
+
+    /// Whether a background global action is currently running.
+    pub fn is_action_pending(&self) -> bool {
+        matches!(self.busy, Some(BusyKind::Action))
+    }
+
+    /// Mark a background global action as started.
+    pub fn begin_action(&mut self) {
+        self.busy = Some(BusyKind::Action);
+    }
+
+    /// Mark the background global action as finished.
+    pub fn end_action(&mut self) {
+        self.busy = None;
+    }
+
     /// Mark the scan as started with the given phase and total file count.
-    pub fn set_scanning(&mut self, scanning: bool, phase: String, total: usize) {
-        self.scanning = scanning;
-        self.scan_phase = if scanning { phase } else { String::new() };
+    pub fn begin_scan(&mut self, phase: String, total: usize) {
+        self.busy = Some(BusyKind::Scan);
+        self.scan_phase = phase;
         self.scan_files_done = 0;
         self.scan_files_total = total;
         self.scan_violations = 0;
@@ -503,7 +532,7 @@ impl AppState {
 
     /// Mark the scan as finished and record the final violation count.
     pub fn finish_scan(&mut self, total_violations: usize) {
-        self.scanning = false;
+        self.busy = None;
         self.scan_phase.clear();
         self.scan_files_done = 0;
         self.scan_files_total = 0;

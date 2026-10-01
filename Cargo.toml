@@ -12,7 +12,6 @@ members = [
     "crates/shared/src/git_hooks",
     "crates/shared/src/import_rules",
     "crates/shared/src/maintenance",
-    "crates/shared/src/mcp_server",
     "crates/shared/src/naming_rules",
     "crates/shared/src/orphan_rules",
     "crates/shared/src/project_setup",
@@ -20,7 +19,6 @@ members = [
     "crates/shared/src/report_formatter",
     "crates/shared/src/role_rules",
     "crates/shared/src/structure_rules",
-    "crates/shared/src/tui",
     "crates/filesystem",
     "crates/config-system",
     # Layer 2: Lint rules
@@ -73,7 +71,6 @@ shared-filesystem = { package = "shared-filesystem-lint-arwaky", path = "crates/
 shared-git-hooks = { package = "shared-git-hooks-lint-arwaky", path = "crates/shared/src/git_hooks", version = "3.7.1" }
 shared-import-rules = { package = "shared-import-rules-lint-arwaky", path = "crates/shared/src/import_rules", version = "3.7.1" }
 shared-maintenance = { package = "shared-maintenance-lint-arwaky", path = "crates/shared/src/maintenance", version = "3.7.1" }
-shared-mcp-server = { package = "shared-mcp-server-lint-arwaky", path = "crates/shared/src/mcp_server", version = "3.7.1" }
 shared-naming-rules = { package = "shared-naming-rules-lint-arwaky", path = "crates/shared/src/naming_rules", version = "3.7.1" }
 shared-orphan-rules = { package = "shared-orphan-rules-lint-arwaky", path = "crates/shared/src/orphan_rules", version = "3.7.1" }
 shared-project-setup = { package = "shared-project-setup-lint-arwaky", path = "crates/shared/src/project_setup", version = "3.7.1" }
@@ -81,7 +78,6 @@ shared-quality-rules = { package = "shared-quality-rules-lint-arwaky", path = "c
 shared-report-formatter = { package = "shared-report-formatter-lint-arwaky", path = "crates/shared/src/report_formatter", version = "3.7.1" }
 shared-role-rules = { package = "shared-role-rules-lint-arwaky", path = "crates/shared/src/role_rules", version = "3.7.1" }
 shared-structure-rules = { package = "shared-structure-rules-lint-arwaky", path = "crates/shared/src/structure_rules", version = "3.7.1" }
-shared-tui = { package = "shared-tui-lint-arwaky", path = "crates/shared/src/tui", version = "3.7.1" }
 filesystem = { package = "filesystem-lint-arwaky", path = "crates/filesystem", version = "3.7.1" }
 config-system = { package = "config-system-lint-arwaky", path = "crates/config-system", version = "3.7.1" }
 naming-rules = { package = "naming-rules-lint-arwaky", path = "crates/naming-rules", version = "3.7.1" }
@@ -182,7 +178,6 @@ shared-filesystem.workspace = true
 shared-git-hooks.workspace = true
 shared-import-rules.workspace = true
 shared-maintenance.workspace = true
-shared-mcp-server.workspace = true
 shared-naming-rules.workspace = true
 shared-orphan-rules.workspace = true
 shared-project-setup.workspace = true
@@ -190,7 +185,6 @@ shared-quality-rules.workspace = true
 shared-report-formatter.workspace = true
 shared-role-rules.workspace = true
 shared-structure-rules.workspace = true
-shared-tui.workspace = true
 filesystem.workspace = true
 config-system.workspace = true
 naming-rules.workspace = true

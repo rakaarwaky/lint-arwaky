@@ -11,7 +11,7 @@ use rmcp::model::{
 use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
 
-use shared_mcp_server::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
+use mcp_server_lint_arwaky::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
 
 use crate::surface_mcp_action_command::McpActionSurface;
 
