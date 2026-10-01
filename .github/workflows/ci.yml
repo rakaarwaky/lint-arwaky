@@ -175,25 +175,6 @@ jobs:
           echo "Unique codes: ${codes:-0}"
           [ "${codes:-0}" -ge 27 ]
 
-      - name: DIAGNOSTIC js adapter
-        run: |
-          echo "PATH=$PATH"
-          echo "--- which"; for t in node npm eslint prettier tsc; do echo "$t -> $(command -v $t || echo MISSING)"; done
-          echo "--- versions"
-          node --version || true
-          eslint --version || echo "ESLINT FAILED"
-          prettier --version || echo "PRETTIER FAILED"
-          tsc --version || echo "TSC FAILED"
-          echo "--- direct prettier on one known-bad fixture"
-          set +e
-          prettier --check workspaces-bad/packages/cli_commands/src/surface_fn_count_passive_layout.ts
-          echo "prettier exit=$?"
-          set -e
-          echo "--- adapter-visible working dir resolution"
-          ls -d workspaces-bad/node_modules 2>/dev/null || echo "no workspaces-bad/node_modules"
-          echo "--- single-file CLI scan"
-          ./target/debug/lint-arwaky-cli scan workspaces-bad/packages/cli_commands/src/surface_fn_count_passive_layout.ts --format json | head -c 3000 || true
-
       - name: External Tool Integration Check (QA #637)
         # Proves the external-lint adapters actually invoked the real tools
         # installed above: at least one tool-native (non-AES) violation code
