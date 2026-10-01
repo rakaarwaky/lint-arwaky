@@ -1,7 +1,7 @@
 // PURPOSE: utility_python_parser — comment-aware structured parsing for Python.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
-use crate::orphan_rules::taxonomy_orphan_rules_vo::{AstFnDefVO, AstImportVO, PythonParseResultVO};
+use crate::common::taxonomy_ast_vo::{AstFnDefVO, AstImportVO, PythonParseResultVO};
 
 pub fn parse_python(content: &str) -> PythonParseResultVO {
     let mut result = PythonParseResultVO {

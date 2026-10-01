@@ -3,6 +3,7 @@ pub mod taxonomy_action_vo;
 pub mod taxonomy_adapter_error;
 pub mod taxonomy_adapter_list_vo;
 pub mod taxonomy_adapter_name_vo;
+pub mod taxonomy_ast_vo;
 pub mod taxonomy_cache_key_vo;
 pub mod taxonomy_code_analysis_vo;
 pub mod taxonomy_common_error;
