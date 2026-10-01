@@ -54,6 +54,23 @@
 - `check_agent_single_aggregate` is renamed `check_agent_protocol_forbidden`: it
   is a flat prohibition, not a budget, and the old name read as "at most one".
 
+- **Project language detection no longer follows symbolic links.** The
+  extension walk used `is_dir()`, which follows a link, so a symlink inside a
+  project could decide its language flags from files outside the root, and a
+  cycle (`loop -> .`) would recurse until the stack was exhausted. The walk now
+  uses `symlink_metadata` and skips links. The walk it replaced went through
+  `ignore::WalkBuilder`, which does not follow links by default, so this restores
+  that guarantee rather than introducing it.
+- **The Rust AST no longer loses the trait name of a parameterized `impl`.**
+  `impl IFooProtocol<u32> for Agent` recorded `u32` as the trait name, because
+  extraction read up to the last `>` in the impl head. Every consumer keyed on
+  the trait — the AES405 protocol check, orphan reachability, the implementation
+  graph — therefore saw the implementation as absent. Extraction now strips an
+  impl-level generic list (attached to the `impl` keyword, so it cannot be
+  confused with the trait's own brackets) and then the trait's parameters.
+- `check_agent_single_aggregate` is renamed `check_agent_protocol_forbidden`: it
+  is a flat prohibition, not a budget, and the old name read as "at most one".
+
 ### Changed
 
 - Split the monolithic `shared-lint-arwaky` crate into 20 packages, one per
