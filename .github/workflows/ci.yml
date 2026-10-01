@@ -251,6 +251,15 @@ jobs:
         uses: taiki-e/install-action@fd09ccbe70d174f3c26b2fa0588e8c07a7bf4f7e # v2.37.0
         with:
           tool: cargo-llvm-cov,cargo-nextest
+      - name: Build the CLI for the subprocess-fallback tests
+        # dispatcher::regression_scan_modes exercises the linter's subprocess
+        # fallback, which shells out to a built CLI binary. `--lib --tests`
+        # never builds bin targets, so without this the run dies on
+        # "failed to run CLI at target/llvm-cov-target/release/…" — the
+        # coverage target dir holds no binary of its own (QA #643).
+        env:
+          RUSTC_WRAPPER: ""
+        run: cargo llvm-cov build --bin lint-arwaky-cli
       - name: Compute coverage summary
         # This job does not install sccache, so clear the workflow-wide wrapper
         # before cargo-llvm-cov invokes `rustc`; otherwise the wrapper binary is

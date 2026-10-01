@@ -51,17 +51,36 @@ fn scan(path: &str) -> Vec<shared_common::ViolationItem> {
     dispatcher_lint_arwaky::surface_check_action::collect_scan(opts).unwrap_or_default()
 }
 
-/// CLI subprocess scan via release binary (for workspaces-bad where violations expected).
-fn cli_scan(path: &str) -> String {
-    let exe = std::env::current_exe()
+/// Locate a built `lint-arwaky-cli` binary for the subprocess-fallback tests.
+///
+/// Probes `<target-dir>/release` and then `<target-dir>/debug`, where
+/// `<target-dir>` is derived from this test binary's own location. Pinning
+/// `release/` alone made these tests fail in any build that is not a release
+/// build of the same target dir — notably `cargo llvm-cov`, which builds into
+/// `target/llvm-cov-target` in the dev profile. `--lib --tests` never builds
+/// bin targets, so the caller is still responsible for having built one
+/// (`cargo build --release --bin lint-arwaky-cli`, or `cargo llvm-cov build
+/// --bin lint-arwaky-cli` under coverage).
+fn cli_path() -> std::path::PathBuf {
+    let target_dir = std::env::current_exe()
         .ok()
         .and_then(|p| {
             p.parent()
                 .and_then(|p| p.parent())
                 .and_then(|p| p.parent())
-                .map(|p| p.join("release/lint-arwaky-cli"))
+                .map(|p| p.to_path_buf())
         })
-        .unwrap_or_else(|| std::path::PathBuf::from("target/release/lint-arwaky-cli"));
+        .unwrap_or_else(|| workspace_root().join("target"));
+    ["release", "debug"]
+        .iter()
+        .map(|profile| target_dir.join(profile).join("lint-arwaky-cli"))
+        .find(|candidate| candidate.is_file())
+        .unwrap_or_else(|| target_dir.join("release").join("lint-arwaky-cli"))
+}
+
+/// CLI subprocess scan (for workspaces-bad where violations expected).
+fn cli_scan(path: &str) -> String {
+    let exe = cli_path();
     let full_path = workspace_root().join(path);
     let output = Command::new(&exe)
         .args([
@@ -73,7 +92,8 @@ fn cli_scan(path: &str) -> String {
         .output()
         .unwrap_or_else(|e| {
             panic!(
-                "failed to run CLI at {}: {}. Build with: cargo build --release",
+                "failed to run CLI at {}: {}. Build with: \
+                 cargo build --release --bin lint-arwaky-cli",
                 exe.display(),
                 e
             )
