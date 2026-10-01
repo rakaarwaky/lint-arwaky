@@ -15,6 +15,28 @@ fn checker() -> Box<dyn ICapabilitiesRoleProtocol> {
     Box::new(CapabilitiesRustRoleAuditor::new())
 }
 
+/// The three block banners, in the comment syntax of each language.
+///
+/// `check_capability_routing` runs every AES403 sub-check including the
+/// block-marker one, so a fixture that asserts a *different* sub-check is clean
+/// must carry the banners too — otherwise it reports the missing map and the
+/// test fails for the wrong reason. The parser keys off the comment sigil, so
+/// each language needs its own spelling.
+fn banners(lang: Language) -> &'static str {
+    match lang {
+        Language::Python => {
+            "# ─── Block 1: Class Definition ───\n\
+             # ─── Block 2: Protocol Method Implementation ───\n\
+             # ─── Block 3: Dunder Methods, Factories, Helpers ───\n"
+        }
+        _ => {
+            "// ─── Block 1: Struct Definition ───\n\
+             // ─── Block 2: Protocol Trait Implementation ───\n\
+             // ─── Block 3: Constructors, Std Traits, Helpers ───\n"
+        }
+    }
+}
+
 fn checker_for(lang: Language) -> Box<dyn ICapabilitiesRoleProtocol> {
     match lang {
         Language::Rust => Box::new(CapabilitiesRustRoleAuditor::new()),
@@ -43,13 +65,21 @@ fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
     }
 }
 
+/// A `FileEntry` whose shape comes from parse metadata rather than from its
+/// text.
+///
+/// The content carries the three block banners so a test that supplies valid
+/// metadata and asserts the file is clean does not trip the block-marker
+/// sub-check, which reads the text. `size` is a fixed placeholder — nothing
+/// under test reads it.
 fn make_file_with_rust_meta(path: &str, meta: RustMetadata) -> FileEntry {
+    let content = banners(Language::Rust).to_string();
     FileEntry {
         path: PathBuf::from(path),
         extension: "rs".to_string(),
         language: Language::Rust,
-        size: 100,
-        content: String::new(),
+        size: content.len() as u64,
+        content,
         parse_ok: true,
         parse_metadata: Some(ParseMetadata::Rust(meta)),
     }
@@ -107,8 +137,11 @@ fn fallback_rust_too_many_types_flagged() {
 
 #[test]
 fn fallback_rust_valid_composition_no_violation() {
-    let content = "pub struct Foo {}\nimpl IFooProtocol for Foo {}\n";
-    let f = make_file("src/capabilities_something.rs", Language::Rust, content);
+    let content = format!(
+        "{}pub struct Foo {{}}\nimpl IFooProtocol for Foo {{}}\n",
+        banners(Language::Rust)
+    );
+    let f = make_file("src/capabilities_something.rs", Language::Rust, &content);
     let mut v = Vec::new();
     checker().check_capability_routing(&f, "capabilities", &mut v);
     assert!(v.is_empty(), "valid capability composition should pass");
@@ -130,8 +163,11 @@ fn fallback_python_no_parent_flagged() {
 #[test]
 fn fallback_python_with_parent_no_violation() {
     // `typing.Protocol` is not a contract protocol. Use a real protocol base.
-    let content = "class Foo(IFooProtocol):\n    pass\n";
-    let f = make_file("src/capabilities_something.py", Language::Python, content);
+    let content = format!(
+        "{}class Foo(IFooProtocol):\n    pass\n",
+        banners(Language::Python)
+    );
+    let f = make_file("src/capabilities_something.py", Language::Python, &content);
     let mut v = Vec::new();
     checker_for(f.language).check_capability_routing(&f, "capabilities", &mut v);
     assert!(
@@ -886,8 +922,11 @@ fn implementor_metadata_protocol_and_aggregate_both_present_accepted() {
 
 #[test]
 fn routing_valid_python_capability_no_violation() {
-    let content = "class Foo(IFooProtocol):\n    def execute(self):\n        return 1\n\n    def _helper(self):\n        return 2\n";
-    let f = make_file("src/capabilities_foo.py", Language::Python, content);
+    let content = format!(
+        "{}class Foo(IFooProtocol):\n    def execute(self):\n        return 1\n\n    def _helper(self):\n        return 2\n",
+        banners(Language::Python)
+    );
+    let f = make_file("src/capabilities_foo.py", Language::Python, &content);
     let mut v = Vec::new();
     checker_for(f.language).check_capability_routing(&f, "capabilities", &mut v);
     assert!(
@@ -898,8 +937,11 @@ fn routing_valid_python_capability_no_violation() {
 
 #[test]
 fn routing_valid_ts_capability_no_violation() {
-    let content = "export class Foo implements IFooProtocol {\n    private readonly dep: Dep;\n\n    public constructor(dep: Dep) { this.dep = dep; }\n\n    execute(): number { return 1; }\n\n    private _helper(): number { return 2; }\n}\n";
-    let f = make_file("src/capabilities_foo.ts", Language::TypeScript, content);
+    let content = format!(
+        "{}export class Foo implements IFooProtocol {{\n    private readonly dep: Dep;\n\n    public constructor(dep: Dep) {{ this.dep = dep; }}\n\n    execute(): number {{ return 1; }}\n\n    private _helper(): number {{ return 2; }}\n}}\n",
+        banners(Language::TypeScript)
+    );
+    let f = make_file("src/capabilities_foo.ts", Language::TypeScript, &content);
     let mut v = Vec::new();
     checker_for(f.language).check_capability_routing(&f, "capabilities", &mut v);
     assert!(

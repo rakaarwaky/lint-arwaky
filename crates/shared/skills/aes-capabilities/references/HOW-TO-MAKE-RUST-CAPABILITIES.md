@@ -69,7 +69,7 @@ A utility file **performs a pure operation** — no state, no business rules, ju
 1. Confirm implements protocol behavior (not orchestration/data/mechanics).
 2. File `use shared::..._protocol::I<Name>` — if missing → flag `CapabilityNoProtocol`.
 3. Create `contract_<name>_protocol.rs` if missing.
-4. Enforce 3-Block with explicit `// Block 1:`, `// Block 2:`, `// Block 3:` comments.
+4. Enforce 3-Block with explicit `// Block 1:`, `// Block 2:`, `// Block 3:` comments — AES403 `CapabilityBlockMarkers` reports a file whose banners are missing, out of order, or above 3.
 5. AES403: ≥1 trait implementor, ≤3 types, `Arc<dyn Trait>` for DI, shared VOs.
 6. No forbidden imports, no inter-capability deps, no local domain models.
 7. `cargo check -p <crate-name>`.
@@ -131,21 +131,33 @@ impl Capabilities<NameCapability> {
 
 ## Section Contract
 
+The `Enforced` column says which rule reports a violation, so you know what the
+linter will catch and what stays a review responsibility. `Manual` means no rule
+checks it — the shape is still the contract, but a violation is caught by review
+or by `cargo`, not by `scan`.
 
-| Check                                                                                         | Why it belongs here                                                 |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Block 1 → 2 → 3 order followed with explicit comments.                                        | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 2: ONLY `impl I<Name>Protocol for ...`.                                                 | Required by AES layer rules and the linter; missing it is a defect. |
-| ≥1 struct implements protocol trait; ≤3 total struct+enum.                                    | Required by AES layer rules and the linter; missing it is a defect. |
-| Imports from `_protocol` module or Utility only.                                              | Required by AES layer rules and the linter; missing it is a defect. |
-| No local domain models, no agent/capability imports.                                          | Required by AES layer rules and the linter; missing it is a defect. |
-| `Arc<dyn Trait>` for DI; shared VOs for fields and trait signatures.                          | Required by AES layer rules and the linter; missing it is a defect. |
-| Constants → `taxonomy_<domain>_constant.rs`.                                                  | Required by AES layer rules and the linter; missing it is a defect. |
-| Block 3 helpers with no production caller are `fn` or `pub(crate)`, not `pub`.                | Required by AES layer rules and the linter; missing it is a defect. |
-| Low-level, reusable, stateless ops → moved to Utility.                                        | Required by AES layer rules and the linter; missing it is a defect. |
-| `#[cfg(test)] mod tests` lives in `tests/`, never inline in the capability file.             | Required by AES layer rules and the linter; missing it is a defect. |
-| `cargo check -p <crate-name>` passes.                                                         | Required by AES layer rules and the linter; missing it is a defect. |
+| Check                                                        | Enforced                                                          |
+| ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| All three `// Block 1:` / `// Block 2:` / `// Block 3:` banners present, in order, none above 3. | **AES403** `CapabilityBlockMarkers` (MEDIUM)                      |
+| Block 2 (protocol impl) precedes Block 3 (inherent impl).    | **AES403** `CapabilityBlockOrder` (HIGH)                          |
+| ≥1 struct implements a protocol trait.                       | **AES403** `CapabilityNoImplementor` (MEDIUM)                     |
+| Exactly 1 protocol trait per file.                           | **AES403** `CapabilityMultiProtocol` (MEDIUM)                     |
+| ≤3 total struct + enum.                                      | **AES403** `CapabilityTooManyTypes` (HIGH)                        |
+| Imports from `_protocol` or Utility only.                    | **AES201**–**AES205** (import rules)                              |
+| No agent / surface / root imports.                           | **AES201** `FORBIDDEN_IMPORT`                                     |
+| Block 2 holds ONLY `impl I<Name>Protocol for ...`.           | Manual — no rule reads Block 2's contents                        |
+| `Arc<dyn Trait>` for DI; shared VOs for fields and signatures. | Manual                                                          |
+| Constants → `taxonomy_<domain>_constant.rs`.                 | **AES403** `CapabilityLocalConstant` (MEDIUM)                     |
+| Block 3 helpers with no production caller are `fn` or `pub(crate)`, not `pub`. | **AES403** `CapabilityPublicHelper` (MEDIUM)       |
+| `#[cfg(test)] mod tests` lives in `tests/`, never inline.    | **AES403** `CapabilityEmbeddedTest` (LOW)                         |
+| Low-level, reusable, stateless ops → moved to Utility.       | Manual — the helper-vs-utility matrix below is a judgement call   |
+| `cargo check -p <crate-name>` passes.                        | `cargo`, not `scan`                                               |
 
+**On the block banners.** A banner is `Block <digits>:` standing as its own word
+inside a comment. The colon is load-bearing: prose such as
+`Block 1 (types) -> Block 2` is not a marker, and neither is `Sub-Block 4:`. Put
+the banner above the item it heads — and above that item's own `///` doc comment,
+never between the doc comment and the item, which would detach the documentation.
 
 ---
 
@@ -155,11 +167,13 @@ impl Capabilities<NameCapability> {
 lint-arwaky-cli scan <layer-path>
 # Checks: AES101/AES102 (filename + suffix), AES201–AES205 (layer imports),
 # AES401–AES406 (role/primitive/structure rules for this layer).
-# AES403 machine-enforced: type budget ≤3; protocol implementor present;
-#   block order (protocol impl before inherent impl); local constants in
-#   taxonomy file, not in capabilities file; no inline #[cfg(test)] mod tests;
-#   pub helpers without production callers flagged.
-# Manual (not machine-checked): helper-vs-utility matrix; role naming lists.
+# AES403 machine-enforced: type budget ≤3; exactly 1 protocol trait; protocol
+#   implementor present; block order (protocol impl before inherent impl);
+#   all three block banners present, in order, none above 3; local constants
+#   in taxonomy file, not in capabilities file; no inline #[cfg(test)] mod
+#   tests; pub helpers without production callers flagged.
+# Manual (not machine-checked): Block 2 contents; helper-vs-utility matrix;
+#   Arc<dyn Trait> for DI; role naming lists.
 # Fallback compile gate: cargo check -p <crate-name>
 ```
 
