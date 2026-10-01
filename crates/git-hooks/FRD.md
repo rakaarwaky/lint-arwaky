@@ -76,6 +76,11 @@ flowchart TD
     4. `master...HEAD`
   - Falls back to `git diff --name-only HEAD` if all variants return empty.
   - Final fallback: `git ls-files --modified --others --exclude-standard`.
+  - The fallback chain exists here, and not in the external-lint adapters, by
+    the Integration resilience decision in `PRD.md`: every strategy above
+    queries the same trusted local repository, so a fallback still yields a
+    correct — if broader — file list, whereas a retried external tool run can
+    report against a changed tool state.
   - Classification via `--diff-filter`: added (A), modified (M), deleted (D),
     renamed (R with `old => new` parsing).
   - Lintable file filter (source code only):
