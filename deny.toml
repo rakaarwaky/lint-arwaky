@@ -2,6 +2,7 @@
 # See: https://embarkstudios.github.io/cargo-deny/
 
 [advisories]
+version = 2
 unmaintained = "all"
 ignore = [
     # paste is unmaintained but only a transitive dep via ratatui; no direct usage.
