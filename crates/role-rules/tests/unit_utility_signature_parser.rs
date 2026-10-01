@@ -83,8 +83,21 @@ fn forbidden_primitive_detection_rust() {
     let found = signature_uses_forbidden_primitive("fn read(&self, x: i32) -> String;");
     assert!(found.contains(&"i32"));
     assert!(found.contains(&"String"));
-    let clean = signature_uses_forbidden_primitive(
+
+    // `Result<String, …>` at a contract boundary is forbidden in its own right,
+    // so this signature is NOT clean — assert the specific finding it produces.
+    let result_sig = signature_uses_forbidden_primitive(
         "fn read(&self, x: &FilePath) -> Result<String, Error>;",
     );
-    assert!(clean.is_empty() || !clean.contains(&"i32"));
+    assert!(
+        result_sig.contains(&"Result<String, _>"),
+        "expected Result<String, _>, found {result_sig:?}"
+    );
+
+    // Neither a reference parameter nor `bool` return is a primitive.
+    let clean = signature_uses_forbidden_primitive("fn read(&self, path: &FilePath) -> bool;");
+    assert!(
+        clean.is_empty(),
+        "expected no forbidden primitives in a clean signature, found {clean:?}"
+    );
 }

@@ -62,16 +62,29 @@ fn windows_style_paths_resolve_layer() {
     );
 }
 
+// Rule codes are derived from the source of truth — the `| AESxxx |` rows of
+// the rules tables in RULES_AES.md — so a rule added there is covered here
+// automatically instead of silently falling behind a hard-coded array.
+fn aes_codes_from_rules_doc() -> Vec<String> {
+    include_str!("../../../RULES_AES.md")
+        .lines()
+        .filter_map(|line| {
+            let rest = line.trim_start().strip_prefix("| AES")?;
+            Some(format!("AES{}", rest.get(0..3)?))
+        })
+        .collect()
+}
+
 #[test]
 fn every_aes_code_resolves_to_non_empty_guidance() {
-    let codes = [
-        "AES101", "AES102", "AES201", "AES202", "AES203", "AES204", "AES205", "AES301", "AES302",
-        "AES303", "AES304", "AES305", "AES401", "AES402", "AES403", "AES404", "AES405", "AES406",
-        "AES501", "AES502", "AES503", "AES504", "AES505", "AES506", "AES601", "AES602", "AES603",
-        "AES604", "AES701", "AES702", "AES703",
-    ];
+    let codes = aes_codes_from_rules_doc();
+    assert!(
+        codes.len() >= 32,
+        "parsed only {} rule codes from RULES_AES.md — table format changed?",
+        codes.len()
+    );
     for code in codes {
-        let hint = resolve_skill_hint_for_file(code, "crates/foo/contract_scan_protocol.rs");
+        let hint = resolve_skill_hint_for_file(&code, "crates/foo/contract_scan_protocol.rs");
         assert!(!hint.guidance().is_empty(), "code {code} gave empty hint");
     }
 }
