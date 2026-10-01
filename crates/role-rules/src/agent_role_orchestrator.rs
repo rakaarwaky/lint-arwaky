@@ -2,8 +2,11 @@
 //
 // FRD-compliant: accepts pre-parsed FileEntry from the filesystem crate.
 // No file I/O or AST parsing is performed internally.
+//
+// The prefix → layer map is NOT here. An agent must not implement a contract
+// protocol (AES405), so the classification lives in the `RoleClassifier`
+// capability and this agent holds it as a dependency and delegates to it.
 
-use shared_common::taxonomy_layer_vo::LayerNameVO;
 use shared_common::taxonomy_lint_result_vo::LintResult;
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
@@ -28,6 +31,7 @@ use shared_role_rules::utility_role_reference_scanner::build_external_reference_
 // ─── Block 1: Struct Definitions ──────────────────────────
 
 pub struct RoleCheckerDeps {
+    pub classifier: Arc<dyn IClassificationProtocol>,
     pub taxonomy: Arc<dyn ITaxonomyRoleProtocol>,
     pub contract_rust: Arc<dyn IContractRoleProtocol>,
     pub contract_python: Arc<dyn IContractRoleProtocol>,
@@ -49,32 +53,6 @@ pub struct RoleOrchestrator {
     deps: RoleCheckerDeps,
     config: ArchitectureConfig,
     ignored_paths: Vec<String>,
-}
-
-// ─── FR-001: File Classification and Dispatch ─────────────
-
-impl IClassificationProtocol for RoleOrchestrator {
-    fn classify_layer(&self, file: &FileEntry) -> Option<LayerNameVO> {
-        let filename = file
-            .path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or_default();
-        let stem = Path::new(filename)
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or_default();
-        match stem.split('_').next().unwrap_or_default() {
-            "taxonomy" => Some(LayerNameVO::new("taxonomy")),
-            "contract" => Some(LayerNameVO::new("contract")),
-            "capabilities" | "capability" => Some(LayerNameVO::new("capabilities")),
-            "utility" => Some(LayerNameVO::new("utility")),
-            "agent" => Some(LayerNameVO::new("agent")),
-            "surface" | "surfaces" => Some(LayerNameVO::new("surfaces")),
-            // `root` is pure DI wiring; unrecognised prefixes are skipped.
-            _ => None,
-        }
-    }
 }
 
 // ─── Block 2: Aggregate Trait Implementation ──────────────
@@ -142,7 +120,6 @@ impl RoleOrchestrator {
                 .and_then(|s| s.to_str())
                 .unwrap_or_default();
             let basename = stem;
-            let prefix = basename.split('_').next().unwrap_or_default();
 
             // Skip barrel files (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
             if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) || filename == "main.rs" {
@@ -153,7 +130,13 @@ impl RoleOrchestrator {
                 continue;
             }
 
-            match prefix {
+            // FR-RoleRules-001: layer classification is delegated to the
+            // classifier capability; the agent only routes on the result.
+            let Some(layer) = self.deps.classifier.classify_layer(file) else {
+                continue;
+            };
+
+            match layer.value.as_str() {
                 "agent"
                     if self.is_rule_enabled("AES405") && !self.is_exception("AES405", filename) =>
                 {
@@ -171,6 +154,8 @@ impl RoleOrchestrator {
                     // feature that declares exactly one.
                     auditor.check_agent_routing(file, "agent", violations);
                     auditor.check_agent_block_order(file, violations);
+                    auditor.check_agent_protocol_forbidden(file, violations);
+                    auditor.check_agent_block_markers(file, violations);
                     auditor.check_agent_io_forbidden(file, violations);
                     auditor.check_agent_constant_placement(file, violations);
                     auditor.check_agent_computation(file, violations);

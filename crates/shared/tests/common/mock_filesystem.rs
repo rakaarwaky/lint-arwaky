@@ -31,6 +31,10 @@ pub struct MockFilesystem {
     discover: Vec<String>,
     is_python: Option<bool>,
     canonicalize_prefix: Option<String>,
+    /// What `DetectProjectLanguages` reports. Default: no languages, which makes
+    /// every adapter selector decline — a test that needs an adapter to run
+    /// sets this so the delegation is actually observable.
+    languages: ProjectLanguagesVO,
 }
 
 impl MockFilesystem {
@@ -39,6 +43,7 @@ impl MockFilesystem {
             discover: Vec::new(),
             is_python: None,
             canonicalize_prefix: None,
+            languages: ProjectLanguagesVO::default(),
         }
     }
 
@@ -48,6 +53,20 @@ impl MockFilesystem {
             discover: files,
             is_python: None,
             canonicalize_prefix: None,
+            languages: ProjectLanguagesVO::default(),
+        }
+    }
+
+    /// Mock that reports the given project languages from
+    /// `DetectProjectLanguages`. An adapter-selection test needs this: with the
+    /// default (no languages) every selector declines, so the assertion would
+    /// pass whether or not the request was delegated to the filesystem seam.
+    pub fn with_languages(languages: ProjectLanguagesVO) -> Self {
+        Self {
+            discover: Vec::new(),
+            is_python: None,
+            canonicalize_prefix: None,
+            languages,
         }
     }
 
@@ -59,6 +78,7 @@ impl MockFilesystem {
             discover: Vec::new(),
             is_python: Some(is_python),
             canonicalize_prefix: None,
+            languages: ProjectLanguagesVO::default(),
         }
     }
 
@@ -69,6 +89,7 @@ impl MockFilesystem {
             discover: Vec::new(),
             is_python: Some(true),
             canonicalize_prefix: Some(prefix.to_string()),
+            languages: ProjectLanguagesVO::default(),
         }
     }
 }
@@ -183,6 +204,9 @@ impl IWorkspaceProtocol for MockFilesystem {
     }
     fn detect_language_from_path(&self, _path: &str) -> ConfigLanguage {
         ConfigLanguage::Rust
+    }
+    fn detect_project_languages(&self, _root: &std::path::Path) -> ProjectLanguagesVO {
+        self.languages.clone()
     }
     fn check_wired_in_container(
         &self,
@@ -420,6 +444,11 @@ impl IFilesystemAggregate for MockFilesystem {
             | FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
                 entries: Vec::new(),
             },
+            FilesystemRequest::DetectProjectLanguages { .. } => {
+                FilesystemResponse::ProjectLanguages {
+                    languages: self.languages.clone(),
+                }
+            }
         }
     }
 }

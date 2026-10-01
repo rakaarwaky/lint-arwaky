@@ -6,6 +6,7 @@ use shared_common::taxonomy_common_vo::PatternList;
 use shared_common::taxonomy_config_language_vo::ConfigLanguage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use shared_filesystem::utility_workspace_detection;
 use std::path::{Path, PathBuf};
 
@@ -38,6 +39,10 @@ impl IWorkspaceProtocol for CapabilitiesWorkspace {
 
     fn detect_language_from_path(&self, path: &str) -> ConfigLanguage {
         utility_workspace_detection::detect_language_from_path(path)
+    }
+
+    fn detect_project_languages(&self, root: &Path) -> ProjectLanguagesVO {
+        utility_workspace_detection::detect_project_languages(root)
     }
 
     fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &PatternList) -> bool {

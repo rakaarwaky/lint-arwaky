@@ -49,6 +49,7 @@ pub use taxonomy_filesystem_vo::Language;
 pub use taxonomy_filesystem_vo::MAX_LINT_FILE_BYTES;
 pub use taxonomy_filesystem_vo::ParseMetadata;
 pub use taxonomy_filesystem_vo::ParseWarning;
+pub use taxonomy_filesystem_vo::ProjectLanguagesVO;
 pub use taxonomy_filesystem_vo::PythonClassItem;
 pub use taxonomy_filesystem_vo::PythonFnItem;
 pub use taxonomy_filesystem_vo::PythonMetadata;

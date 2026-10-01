@@ -9,7 +9,7 @@ use crate::taxonomy_filesystem_vo::{
     ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
 };
 use crate::taxonomy_filesystem_vo::{
-    DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning,
+    DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning, ProjectLanguagesVO,
 };
 use shared_common::taxonomy_common_vo::PatternList;
 use shared_common::taxonomy_config_language_vo::ConfigLanguage;
@@ -239,6 +239,14 @@ pub trait IWorkspaceProtocol: Send + Sync {
 
     /// FR-005: Check if any container/entry file under workspace root references identifiers.
     fn check_wired_in_container(&self, workspace_root: &Path, identifiers: &PatternList) -> bool;
+
+    /// FR-005B: Detect which language groups are present under `root`.
+    ///
+    /// The extension walk is a workspace-detection capability, so the agent
+    /// reaches it through this seam rather than calling the shared utility
+    /// directly — that keeps a substituted workspace implementation (a mock in
+    /// tests, a cache in production) in control of what the agent observes.
+    fn detect_project_languages(&self, root: &Path) -> ProjectLanguagesVO;
 
     /// Resolve a module path relative to base_dir, confined under root.
     fn resolve_orphan_module_path(
