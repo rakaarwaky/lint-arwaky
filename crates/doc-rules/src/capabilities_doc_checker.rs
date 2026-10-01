@@ -4,6 +4,12 @@ use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
 use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 
+use shared_doc_rules::taxonomy_doc_section_vo::Section;
+use shared_doc_rules::utility_markdown_scanner::{
+    blank_fenced, doc_h2_contract, fr_id_bare_re, h3_subsections, has_bullet,
+    has_table_with_columns, heading_re, normalize_heading, sections, source_ext_pattern,
+    status_leak_patterns,
+};
 use shared_doc_rules::utility_protocol_counter::{
     count_fr_headings, count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
 };
@@ -11,142 +17,9 @@ use shared_doc_rules::utility_protocol_counter::{
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::Path;
-use std::sync::OnceLock;
-
-/// A markdown heading with its body and 1-based start line.
-struct Section {
-    level: usize,
-    title: String,
-    body: String,
-    line: usize,
-}
 
 /// The invariant auditor behind the doc checker protocol.
 pub struct DocChecker {}
-/// Status-leak patterns, mirroring the Python checker's `_STATUS_LEAKS`.
-fn status_leak_patterns() -> Option<&'static [(regex::Regex, &'static str)]> {
-    static PATTERNS: OnceLock<Option<Vec<(regex::Regex, &'static str)>>> = OnceLock::new();
-    PATTERNS
-        .get_or_init(|| {
-            let build = || -> Option<Vec<(regex::Regex, &'static str)>> {
-                Some(vec![
-                    (
-                        regex::Regex::new(r"^\s*[-*]\s*\[[ xX]\]").ok()?,
-                        "a checkbox task item",
-                    ),
-                    (
-                        regex::Regex::new(r"(?i)^\s*\**\s*status\s*\**\s*:").ok()?,
-                        "a Status: field",
-                    ),
-                    (
-                        regex::Regex::new(
-                            r"(?i)\b(implemented|unimplemented|partially implemented)\b",
-                        )
-                        .ok()?,
-                        "implementation state",
-                    ),
-                    (
-                        regex::Regex::new(r"(?i)\b(shipped|released|deployed) in v\w*\b").ok()?,
-                        "release state",
-                    ),
-                    (
-                        regex::Regex::new(r"^\s*(✅|❌|🟢|🔴|✔|✖)").ok()?,
-                        "a status marker",
-                    ),
-                    (
-                        regex::Regex::new(r"(?i)\b\d+\s*%\s*(complete|done)").ok()?,
-                        "a progress percentage",
-                    ),
-                ])
-            };
-            build()
-        })
-        .as_ref()
-        .map(|v| &**v)
-}
-
-/// Pattern matching a concrete source-file reference, per HOW-TO Rule 9.
-fn source_ext_pattern() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| {
-        let exts = consts::SOURCE_EXTENSIONS.join("|");
-        regex::Regex::new(&format!(
-            r"(?:[A-Za-z0-9_]+/)*[A-Za-z0-9_.<>{{}}*-]+\.(?:{exts})(?:[\w-]{{0}})"
-        ))
-        .ok()
-    })
-    .as_ref()
-}
-
-/// Heading matcher.
-fn heading_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"(?m)^(#{1,6})\s+(.*?)\s*$").ok())
-        .as_ref()
-}
-
-/// Look up the H2 contract for a recognized root document.
-fn doc_h2_contract(name: &str) -> Option<(&[&str], &[&str])> {
-    consts::DOC_HEADING_CONTRACTS
-        .iter()
-        .find(|(n, _, _)| *n == name)
-        .map(|(_, required, allowed)| (*required, *allowed))
-}
-
-/// Bullet matcher.
-fn bullet_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"(?m)^\s*[-*]\s+\S").ok())
-        .as_ref()
-}
-
-/// Bare FR-ID matcher (FR-NNN without a feature prefix).
-fn fr_id_bare_re() -> Option<&'static regex::Regex> {
-    static PAT: OnceLock<Option<regex::Regex>> = OnceLock::new();
-    PAT.get_or_init(|| regex::Regex::new(r"(?m)^(#{2,4})\s+FR-(\d+)\s*:\s*(.*)$").ok())
-        .as_ref()
-}
-
-/// Normalize a heading for comparison: lowercase, drop punctuation.
-fn normalize_heading(title: &str) -> String {
-    let lowered = title.to_lowercase();
-    let stripped: String = lowered
-        .chars()
-        .map(|c| {
-            if c.is_alphanumeric() || c.is_whitespace() {
-                c
-            } else {
-                ' '
-            }
-        })
-        .collect();
-    let collapsed = stripped.split_whitespace().collect::<Vec<_>>().join(" ");
-    // Drop a leading list index so "4. Vertical Slicing Folder Structure"
-    // still matches the template section name.
-    match collapsed.split_once(' ') {
-        Some((first, rest)) if first.chars().all(|c| c.is_ascii_digit()) && !first.is_empty() => {
-            rest.to_string()
-        }
-        _ => collapsed,
-    }
-}
-
-/// Strip fenced code blocks so prose checks ignore examples.
-fn blank_fenced(text: &str) -> String {
-    let mut out = String::with_capacity(text.len());
-    let mut inside = false;
-    for line in text.lines() {
-        let trimmed = line.trim_start();
-        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
-            inside = !inside;
-            out.push('\n');
-            continue;
-        }
-        out.push_str(if inside { "" } else { line });
-        out.push('\n');
-    }
-    out
-}
 
 impl IDocCheckerProtocol for DocChecker {
     /// Walk the document chain under the request's root and audit every
@@ -228,7 +101,7 @@ impl DocChecker {
         // check that needs it (check_scenarios, check_glossary,
         // check_doc_heading each used to invoke it independently).
         let prose = blank_fenced(&doc.text);
-        let sections = self.sections(&doc.text);
+        let sections = sections(&doc.text);
         let mut findings = Vec::new();
 
         // ── AES601: FR format ──
@@ -288,61 +161,6 @@ impl DocChecker {
             f.doc = rel.clone();
         }
         findings
-    }
-
-    /// Parse the document into level-1 and level-2 sections.
-    ///
-    /// Headings are collected in a single O(H) pass with a stack-based sweep.
-    fn sections(&self, text: &str) -> Vec<Section> {
-        let Some(re) = heading_re() else {
-            return Vec::new();
-        };
-        // Collect all headings (any level) with their offsets in one pass.
-        let mut all: Vec<(usize, usize, String, usize, usize)> = Vec::new();
-        for caps in re.captures_iter(text) {
-            let full = match caps.get(0) {
-                Some(f) => f,
-                None => continue,
-            };
-            // Level is the number of `#` characters (capture group 1), NOT
-            // the full match length.
-            let level = caps.get(1).map_or(0, |m| m.as_str().len());
-            let start = full.start();
-            let line = text[..start].lines().count().max(1);
-            let title = caps.get(2).map_or("", |m| m.as_str()).to_string();
-            let body_start = full.end();
-            all.push((level, start, title, line, body_start));
-        }
-        // Compute next-same-or-higher-rank boundary for each heading.
-        let n = all.len();
-        let mut boundary: Vec<Option<usize>> = vec![None; n];
-        let mut stack: Vec<usize> = Vec::new();
-        for i in 0..n {
-            let (level, _, _, _, _) = &all[i];
-            while let Some(&top) = stack.last() {
-                if all[top].0 >= *level {
-                    boundary[top] = Some(i);
-                    stack.pop();
-                } else {
-                    break;
-                }
-            }
-            stack.push(i);
-        }
-        // Build sections for H1 and H2 headings only.
-        all.iter()
-            .enumerate()
-            .filter(|(_, (level, _, _, _, _))| *level <= 2)
-            .map(|(orig_idx, (level, _start, title, line, body_start))| {
-                let body_end = boundary[orig_idx].map(|j| all[j].1).unwrap_or(text.len());
-                Section {
-                    level: *level,
-                    title: title.clone(),
-                    body: text[*body_start.min(&text.len())..body_end].to_string(),
-                    line: *line,
-                }
-            })
-            .collect()
     }
 
     // ── AES601: FR format ────────────────────────────────────────────────
@@ -492,31 +310,129 @@ impl DocChecker {
 
     // ── AES602: Section structure ────────────────────────────────────────
 
-    /// API Contract must carry Protocol API and Aggregate API subsections.
+    /// API Contract must carry exactly `### Protocol API` then
+    /// `### Aggregate API` — in that order, once each, no others — and each
+    /// must own a column-complete table of its own.
+    ///
+    /// The previous check only asked whether the two headings appeared
+    /// somewhere in the section. That let an author answer the seam with one
+    /// `Protocol API` table holding every method of every protocol, and then
+    /// add a level-3 heading per protocol class to narrate the split that the
+    /// single table refused to make. Level-3 headings are now a closed set
+    /// with the tables checked underneath them, so the contract cannot be
+    /// smuggled through a heading the rule never read.
     fn check_api_contract(&self, sections: &[Section], findings: &mut Vec<DocFinding>) {
         let Some(api) = sections
             .iter()
-            .find(|s| normalize_heading(&s.title).starts_with("api contract"))
+            .find(|s| s.level == 2 && normalize_heading(&s.title).starts_with("api contract"))
         else {
             return;
         };
-        for required in ["Protocol API", "Aggregate API"] {
-            let present = api
-                .body
-                .lines()
-                .any(|line| line.trim_start().starts_with("###") && line.contains(required));
-            if !present {
+        let subsections = h3_subsections(api);
+
+        // Every level-3 heading is matched against the fixed pair, so a
+        // heading the rule does not know is reported rather than ignored.
+        for want in consts::API_CONTRACT_SUBSECTIONS {
+            let matches: Vec<&Section> = subsections
+                .iter()
+                .filter(|s| {
+                    let norm = normalize_heading(&s.title);
+                    norm == normalize_heading(want) || norm.starts_with(&normalize_heading(want))
+                })
+                .collect();
+            if matches.is_empty() {
                 findings.push(DocFinding::new_with_line(
                     "",
                     api.line,
                     consts::RULE_CODE_SECTION_STRUCTURE,
                     consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION,
                     format!(
-                        "line {} API Contract has no {required} subsection; the template splits the contract into Protocol API and Aggregate API",
+                        "line {} API Contract has no {want} subsection; the template splits the contract into Protocol API and Aggregate API",
                         api.line
                     ),
                 ));
             }
+            for (index, section) in matches.iter().enumerate() {
+                // A table is mandatory per subsection: `Aggregate API` stating
+                // its single entry point only in prose is as unverifiable as
+                // `Protocol API` with no rows.
+                if !has_table_with_columns(&section.body, consts::API_COLUMNS) {
+                    findings.push(DocFinding::new_with_line(
+                        "",
+                        section.line,
+                        consts::RULE_CODE_SECTION_STRUCTURE,
+                        consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_NO_TABLE,
+                        format!(
+                            "line {} {want} carries no table with columns {}; every row is a method the caller builds against, so the subsection states them in a table",
+                            section.line,
+                            consts::API_COLUMNS.join(" | ")
+                        ),
+                    ));
+                }
+                if index > 0 {
+                    findings.push(DocFinding::new_with_line(
+                        "",
+                        section.line,
+                        consts::RULE_CODE_SECTION_STRUCTURE,
+                        consts::SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_DUPLICATED,
+                        format!(
+                            "line {} {want} appears more than once; the pair Protocol API / Aggregate API is fixed, so each appears exactly once",
+                            section.line
+                        ),
+                    ));
+                }
+            }
+        }
+
+        // The pair is closed: a third heading — one per protocol class, or any
+        // other invented subsection — is the author working around the fixed
+        // pair rather than satisfying it.
+        for section in &subsections {
+            let norm = normalize_heading(&section.title);
+            let recognized = consts::API_CONTRACT_SUBSECTIONS.iter().any(|want| {
+                let want = normalize_heading(want);
+                norm == want || norm.starts_with(&want)
+            });
+            if !recognized {
+                findings.push(DocFinding::new_with_line(
+                    "",
+                    section.line,
+                    consts::RULE_CODE_SECTION_STRUCTURE,
+                    consts::SECTION_STRUCTURE_VIOLATION_API_H3_UNEXPECTED,
+                    format!(
+                        "line {} API Contract carries subsection '{}'; the section holds exactly Protocol API and Aggregate API — fold per-protocol detail into the rows of the Protocol API table, never into a heading",
+                        section.line, section.title
+                    ),
+                ));
+            }
+        }
+
+        // The pair also has an order: readers meet the protocol surface before
+        // the composite entry point that delegates to it.
+        let order: Vec<usize> = subsections
+            .iter()
+            .filter_map(|s| {
+                let norm = normalize_heading(&s.title);
+                consts::API_CONTRACT_SUBSECTIONS.iter().position(|want| {
+                    let want = normalize_heading(want);
+                    norm == want || norm.starts_with(&want)
+                })
+            })
+            .collect();
+        let mut sorted = order.clone();
+        sorted.sort_unstable();
+        if order != sorted {
+            findings.push(DocFinding::new_with_line(
+                "",
+                api.line,
+                consts::RULE_CODE_SECTION_STRUCTURE,
+                consts::SECTION_STRUCTURE_VIOLATION_ORDER,
+                format!(
+                    "line {} API Contract subsections appear out of order; expected: {}",
+                    api.line,
+                    consts::API_CONTRACT_SUBSECTIONS.join(", ")
+                ),
+            ));
         }
     }
 
@@ -872,46 +788,6 @@ impl DocChecker {
             ));
         }
     }
-}
-
-/// Does the body hold a table whose header carries every *columns* entry?
-fn has_table_with_columns(body: &str, columns: &[&str]) -> bool {
-    for line in body.lines() {
-        let trimmed = line.trim();
-        if !trimmed.starts_with('|') {
-            continue;
-        }
-        let cells: Vec<String> = trimmed
-            .trim_matches('|')
-            .split('|')
-            .map(|c| c.trim().to_lowercase())
-            .collect();
-        if columns
-            .iter()
-            .all(|want| cells.iter().any(|cell| cell.contains(&want.to_lowercase())))
-        {
-            return true;
-        }
-    }
-    false
-}
-
-/// Does the body carry a bullet item outside any fenced code block?
-/// Fenced lines are skipped so a bullet inside a fence is not counted as a
-/// meaningful prose bullet.
-fn has_bullet(body: &str) -> bool {
-    let mut inside_fence = false;
-    for line in body.lines() {
-        let trimmed = line.trim_start();
-        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
-            inside_fence = !inside_fence;
-            continue;
-        }
-        if !inside_fence && bullet_re().is_some_and(|re| re.is_match(line)) {
-            return true;
-        }
-    }
-    false
 }
 
 /// Read a document, returning `None` when it is absent or unreadable.
