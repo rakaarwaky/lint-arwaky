@@ -105,6 +105,35 @@ fn run_security_scan_without_cargo_lock() {
 }
 
 #[test]
+fn pure_python_security_scan_selects_pip_audit_and_never_reports_unknown_clean() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("requirements.txt"), "requests==2.19.0\n").unwrap();
+    let checker = maintenance_lint_arwaky::SecurityScanChecker::new(make_io());
+    let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let report = checker.run_security_scan(&path);
+
+    assert_eq!(report.language, "Python");
+    assert_eq!(report.tool_name, "pip-audit");
+    // `false` is an explicit scanner-missing state consumed as a warning and
+    // prerequisite error by CLI/MCP, never a successful empty finding list.
+    if !report.tool_installed {
+        assert!(report.findings.is_empty());
+    }
+}
+
+#[test]
+fn pure_javascript_security_scan_selects_npm_audit() {
+    let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("package-lock.json"), "{}").unwrap();
+    let checker = maintenance_lint_arwaky::SecurityScanChecker::new(make_io());
+    let path = FilePath::new(dir.path().to_string_lossy().to_string()).unwrap();
+    let report = checker.run_security_scan(&path);
+
+    assert_eq!(report.language, "JavaScript/TypeScript");
+    assert_eq!(report.tool_name, "npm audit");
+}
+
+#[test]
 fn run_dependency_report_without_cargo_lock() {
     let checker = maintenance_lint_arwaky::DependencyReportChecker::new(make_io());
     let path = FilePath::new("/tmp").unwrap();
@@ -155,6 +184,50 @@ fn self_update_check_only_returns_valid_vo() {
             result.latest_version
         );
     }
+}
+
+#[test]
+fn self_update_verifies_download_when_no_target_exists() {
+    let dir = tempfile::tempdir().unwrap();
+    let downloaded = dir.path().join(".lint-arwaky-cli.download");
+    let checksum = dir.path().join("lint-arwaky-cli.sha256");
+    std::fs::write(&downloaded, b"hello").unwrap();
+    std::fs::write(
+        &checksum,
+        b"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824  lint-arwaky-cli\n",
+    )
+    .unwrap();
+
+    let checker = maintenance_lint_arwaky::SelfUpdateChecker::new(make_io());
+    assert!(
+        checker
+            .verify_download_checksum(&downloaded, &checksum)
+            .is_ok()
+    );
+    assert!(!dir.path().join("lint-arwaky-cli").exists());
+}
+
+#[test]
+fn self_update_rejects_corrupt_download_even_when_target_matches() {
+    let dir = tempfile::tempdir().unwrap();
+    let downloaded = dir.path().join(".lint-arwaky-cli.download");
+    let target = dir.path().join("lint-arwaky-cli");
+    let checksum = dir.path().join("lint-arwaky-cli.sha256");
+    std::fs::write(&target, b"hello").unwrap();
+    std::fs::write(&downloaded, b"tampered").unwrap();
+    std::fs::write(
+        &checksum,
+        b"2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824  lint-arwaky-cli\n",
+    )
+    .unwrap();
+
+    let checker = maintenance_lint_arwaky::SelfUpdateChecker::new(make_io());
+    assert!(
+        checker
+            .verify_download_checksum(&downloaded, &checksum)
+            .is_err()
+    );
+    assert_eq!(std::fs::read(target).unwrap(), b"hello");
 }
 
 #[test]

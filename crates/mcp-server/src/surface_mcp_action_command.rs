@@ -372,6 +372,14 @@ impl McpActionSurface {
                     "language": report.language,
                     "tool_name": report.tool_name,
                     "tool_installed": report.tool_installed,
+                    "warning": if report.tool_installed {
+                        serde_json::Value::Null
+                    } else {
+                        serde_json::Value::String(format!(
+                            "No dependency vulnerability scanner available for {} — install {} to enable this check; no clean result was produced",
+                            report.language, report.tool_name
+                        ))
+                    },
                     "findings_count": report.findings.len(),
                     "findings": report.findings.iter().map(|f| serde_json::json!({
                         "severity": f.severity.to_uppercase(),
