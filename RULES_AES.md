@@ -55,7 +55,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | Code   | Name                  | Severity | Group  | Description                                                                                     |
 | -------- | --------------------- | -------- | ------ | ------------------------------------------------------------------------------------------------- |
 | AES601 | FR Format             | HIGH     | Doc    | Requirement IDs are `FR-<FEATURE>-NNN`; every requirement states all six fields; FRD requirement count equals protocol class count.                  |
-| AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present.                  |
+| AES602 | Section Structure     | HIGH     | Doc    | FRD sections follow template order; required tables and subsections are present; API Contract holds exactly the Protocol API / Aggregate API pair, each with its own table. |
 | AES603 | Spec Purity           | HIGH     | Doc    | Specs never name source files and never carry implementation state.                              |
 | AES604 | Crosslinks            | HIGH     | Doc    | An FRD crosslinks its PRD and backlog; a feature backlog never restates master sections.         |
 | AES605 | Doc Heading Structure | HIGH     | Doc    | Every root document carries one H1 and its own template-derived H2 set; off-template H2s are reported. |
@@ -457,12 +457,25 @@ Sections follow the template order (Reference, System Overview, Functional Requi
 
 | Violation type               | Fires when                                                            |
 | ------------------------------ | ---------------------------------------------------------------------- |
-| `order_violation`             | The level-2 sections appear out of template order.                    |
+| `order_violation`             | The level-2 sections appear out of template order, or the API Contract subsections do. |
 | `api_no_subsection`           | API Contract is missing its Protocol API or Aggregate API subsection.  |
+| `api_h3_unexpected`           | API Contract carries a level-3 heading other than Protocol API / Aggregate API. |
+| `api_subsection_no_table`     | A required API subsection has no table with Method, Input, Output, Error, Event, Description. |
+| `api_subsection_duplicated`   | A required API subsection appears more than once.                      |
 | `integration_not_table`       | Integration Points is not a table with System, Direction, Purpose, Failure mode. |
 | `nfr_not_table`               | Non-functional Requirements is not a table with Metric, Target, Measurement method. |
 | `scenarios_empty`             | Test Scenarios carries no bullet items.                               |
 | `glossary_empty`              | Glossary carries no `- **Term**: definition` bullets.                  |
+
+**API Contract is strict to the level-3 heading.** The rule reads the
+headings *under* `## API Contract`, not only the H2 set, because an H2-only
+contract is satisfiable without ever naming a seam: one `Protocol API` table
+can hold every method of every protocol, and the per-protocol split can then
+be narrated in extra level-3 headings the rule never inspected. The section
+therefore accepts exactly two subsections — `### Protocol API` then
+`### Aggregate API`, in that order, once each — and each must own a
+column-complete table. Per-protocol detail belongs in the rows of the
+`Protocol API` table, never in a heading.
 
 ---
 
