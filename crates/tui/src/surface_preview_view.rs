@@ -24,20 +24,20 @@ impl PreviewView {
     }
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let is_focused = state.panel_focus == PanelFocus::Preview;
+        let is_focused = state.navigation.panel_focus == PanelFocus::Preview;
         let border_style = if is_focused {
             Style::default()
-                .fg(theme::ACCENT)
+                .fg(theme::color(theme::ACCENT))
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(theme::SEPARATOR)
+            Style::default().fg(theme::color(theme::SEPARATOR))
         };
 
-        let (title, content) = match state.preview_mode {
-            PreviewMode::FileContent => (" Preview ".to_string(), state.preview_text.clone()),
-            PreviewMode::LintResults => (" Lint Results ".to_string(), state.preview_text.clone()),
+        let (title, content) = match state.preview.mode {
+            PreviewMode::FileContent => (" Preview ".to_string(), state.preview.text.clone()),
+            PreviewMode::LintResults => (" Lint Results ".to_string(), state.preview.text.clone()),
             PreviewMode::ActionOutput => {
-                (" Action Output ".to_string(), state.preview_text.clone())
+                (" Action Output ".to_string(), state.preview.text.clone())
             }
             PreviewMode::HelpOverlay => (" Help ".to_string(), help_text()),
         };
@@ -50,8 +50,8 @@ impl PreviewView {
         let paragraph = Paragraph::new(content)
             .block(block)
             .wrap(Wrap { trim: false })
-            .scroll((state.preview_scroll as u16, 0))
-            .style(Style::default().fg(theme::LABEL));
+            .scroll((state.preview.scroll as u16, 0))
+            .style(Style::default().fg(theme::color(theme::LABEL)));
 
         frame.render_widget(paragraph, area);
 
@@ -60,23 +60,23 @@ impl PreviewView {
             horizontal: 0,
         });
         if inner_area.width > 0 && inner_area.height > 0 {
-            let content_length = state.preview_text.lines().count().max(1);
+            let content_length = state.preview.text.lines().count().max(1);
             let max_scroll = content_length.saturating_sub(1);
-            let scroll_position = if state.preview_scroll > max_scroll {
+            let scroll_position = if state.preview.scroll > max_scroll {
                 max_scroll
             } else {
-                state.preview_scroll
+                state.preview.scroll
             };
             let mut scrollbar_state = ScrollbarState::new(content_length).position(scroll_position);
             let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
                 .begin_symbol(Some("↑"))
                 .end_symbol(Some("↓"))
                 .thumb_style(Style::default().fg(if is_focused {
-                    theme::ACCENT
+                    theme::color(theme::ACCENT)
                 } else {
-                    theme::SCROLLBAR
+                    theme::color(theme::SCROLLBAR)
                 }))
-                .track_style(Style::default().fg(theme::SCROLLBAR));
+                .track_style(Style::default().fg(theme::color(theme::SCROLLBAR)));
 
             frame.render_stateful_widget(scrollbar, inner_area, &mut scrollbar_state);
         }
@@ -90,44 +90,5 @@ impl Default for PreviewView {
 }
 
 fn help_text() -> String {
-    "\
-Navigation:
-  j/↓     Move down
-  k/↑     Move up
-  h/←     Back (parent dir)
-  l/→/⏎   Open folder / preview file
-  Home    Jump to top
-  End     Jump to bottom
-  Tab     Cycle panel focus
-  /       Search files
-
-Actions (on selected file/folder):
-  c       check — AES compliance
-  s       scan — multi-adapter scan
-  f       fix — auto-fix (dry-run)
-  F       fix live — apply fixes to files (requires confirm)
-  t       ci — CI mode (threshold)
-  w       watch — not supported (use CLI)
-  o       orphan — dead code check
-  ^S      dependencies — scan deps
-  ^P      security — vulnerability scan
-
-Setup:
-  d       doctor — environment diag
-  i       init — create config
-  I       install — adapter deps
-  m       mcp-config — MCP config
-  C       config-show — show config
-  H       install-hook — git hook (requires confirm)
-  U       uninstall-hook — remove hook
-  a       adapters — list adapters
-  v       version — show version
-
-General:
-  ?       Toggle this help
-  y       Copy preview to clipboard
-  ^Y      Save preview to lint-results.txt
-  q       Quit
-"
-    .to_string()
+    crate::utility_shortcuts::help_text()
 }

@@ -6,7 +6,7 @@ use crate::surface_shortcut_component::ShortcutComponent;
 use crate::surface_status_component::StatusComponent;
 use crate::surface_tree_view::TreeView;
 use crossterm::event;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
+use crossterm::event::{KeyCode, KeyEvent, MouseEvent, MouseEventKind};
 use crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
@@ -93,20 +93,28 @@ impl TuiCommandSurface {
         views: &RenderViews,
     ) -> anyhow::Result<()> {
         let mut scan_rx: Option<std::sync::mpsc::Receiver<ScanUpdate>> = None;
+        // Ratatui only needs a new frame after state, terminal geometry, or a
+        // background result changes. Polling remains active while idle so worker
+        // messages still wake the renderer without a continuous draw loop.
+        let mut needs_redraw = true;
 
         loop {
             // --- Poll scan progress (non-blocking) ---
-            if state.scanning
+            if state.scan.running
                 && let Some(ref rx) = scan_rx
+                && self.action_handler.poll_scan(state, rx)
             {
-                self.action_handler.poll_scan(state, rx);
+                needs_redraw = true;
             }
             // --- Poll pending background global action (non-blocking) ---
-            if state.action_pending {
-                self.action_handler.poll_pending_background_action(state);
+            if state.actions.pending
+                && self.action_handler.poll_pending_background_action(state)
+            {
+                needs_redraw = true;
             }
 
-            terminal.draw(|frame| {
+            if needs_redraw {
+                terminal.draw(|frame| {
                 let area = frame.area();
 
                 // W5: guard — refuse to draw the full layout on a too-small terminal.
@@ -120,17 +128,17 @@ impl TuiCommandSurface {
                     let line = Line::from(vec![Span::styled(
                         message,
                         Style::default()
-                            .fg(crate::utility_tui_theme::KEY)
+                            .fg(crate::utility_tui_theme::color(crate::utility_tui_theme::KEY))
                             .add_modifier(Modifier::BOLD),
                     )]);
                     let paragraph = Paragraph::new(line)
-                        .style(Style::default().bg(crate::utility_tui_theme::BACKGROUND))
+                        .style(Style::default().bg(crate::utility_tui_theme::color(crate::utility_tui_theme::BACKGROUND)))
                         .alignment(Alignment::Center);
                     frame.render_widget(paragraph, area);
                     return;
                 }
 
-                if state.show_path_dialog {
+                if state.path_dialog.visible {
                     views.path_screen.render(state, frame, area);
                     return;
                 }
@@ -163,6 +171,8 @@ impl TuiCommandSurface {
                 views.shortcuts.render(state, frame, main_layout[2]);
                 views.status.render(state, frame, main_layout[3]);
             })?;
+                needs_redraw = false;
+            }
 
             if event::poll(Duration::from_millis(50))? {
                 let crossterm_event = event::read()?;
@@ -171,13 +181,13 @@ impl TuiCommandSurface {
 
                 // --- Intercept ActionScan: spawn background thread ---
                 if matches!(tui_event, TuiEvent::ActionScan) {
-                    if !state.scanning
+                    if !state.scan.running
                         && let Some(rx) = self.action_handler.start_scan(state)
                     {
                         scan_rx = Some(rx);
                     }
                     // Ignore if already scanning
-                } else if state.scanning
+                } else if state.scan.running
                     && matches!(
                         tui_event,
                         TuiEvent::ActionCheck
@@ -193,6 +203,9 @@ impl TuiCommandSurface {
                 } else {
                     self.action_handler.handle(state, tui_event);
                 }
+                // A key, mouse, or resize event can alter any render-relevant
+                // state; the next iteration paints the new frame once.
+                needs_redraw = true;
             }
 
             if state.should_quit {
@@ -213,10 +226,9 @@ fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
 }
 
 fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
-    let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
 
     // --- Pending confirmation: only y/Enter = confirm, n/Esc = cancel (#354) ---
-    if state.pending_confirm.is_some() {
+    if state.actions.pending_confirm.is_some() {
         return match key.code {
             KeyCode::Enter | KeyCode::Char('y') | KeyCode::Char('Y') => TuiEvent::ConfirmAction,
             KeyCode::Esc | KeyCode::Char('n') | KeyCode::Char('N') => TuiEvent::CancelConfirm,
@@ -245,19 +257,8 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         };
     }
 
-    if ctrl {
-        return match key.code {
-            KeyCode::Char('q') => TuiEvent::Quit,
-            // Ctrl+S triggers XOFF flow control on most terminals — remap to Ctrl+Shift+S (#363).
-            KeyCode::Char('s') => TuiEvent::ActionDependencies,
-            KeyCode::Char('p') => TuiEvent::ActionSecurity,
-            KeyCode::Char('y') => TuiEvent::CopyToFile,
-            _ => TuiEvent::None,
-        };
-    }
-
     // Path dialog: ALL input goes to path editing when dialog is visible
-    if state.show_path_dialog {
+    if state.path_dialog.visible {
         return match key.code {
             KeyCode::Char(ch) => TuiEvent::PathInput(ch),
             KeyCode::Backspace => TuiEvent::PathBackspace,
@@ -270,7 +271,7 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
     }
 
     // Search mode: character and edit keys go to search
-    if state.search_mode {
+    if state.search.mode {
         return match key.code {
             KeyCode::Char(ch) => TuiEvent::SearchInput(ch),
             KeyCode::Backspace => TuiEvent::SearchBackspace,
@@ -280,57 +281,12 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
         };
     }
 
-    // Normal mode: navigation and action keys
-    match key.code {
-        KeyCode::Char('q') => TuiEvent::Quit,
-        KeyCode::Char('j') | KeyCode::Down => TuiEvent::MoveDown,
-        KeyCode::Char('k') | KeyCode::Up => TuiEvent::MoveUp,
-        KeyCode::Char('h') | KeyCode::Left => TuiEvent::NavigateBack,
-        KeyCode::Char('l') | KeyCode::Right | KeyCode::Enter => TuiEvent::NavigateForward,
-        KeyCode::Home => TuiEvent::MoveTop,
-        KeyCode::End => TuiEvent::MoveBottom,
-        KeyCode::PageUp => TuiEvent::PreviewScrollUp,
-        KeyCode::PageDown => TuiEvent::PreviewScrollDown,
-        KeyCode::Tab => TuiEvent::FocusNext,
-        KeyCode::BackTab => TuiEvent::FocusPrev,
-        KeyCode::Char('c') => TuiEvent::ActionCheck,
-        KeyCode::Char('s') => TuiEvent::ActionScan,
-        // Plain `f` = dry-run fix; `F` (uppercase or Shift+F) = live fix (#363).
-        KeyCode::Char('f') | KeyCode::Char('F') => {
-            if matches!(key.code, KeyCode::Char('F')) || key.modifiers.contains(KeyModifiers::SHIFT)
-            {
-                TuiEvent::ActionFixLive
-            } else {
-                TuiEvent::ActionFix
-            }
-        }
-        KeyCode::Char('t') => TuiEvent::ActionCi,
-        KeyCode::Char('w') => TuiEvent::ActionWatch,
-        KeyCode::Char('o') => TuiEvent::ActionOrphan,
-        // `r` re-opens the project root dialog (I4).
-        KeyCode::Char('r') => TuiEvent::ChangeProjectRoot,
-        KeyCode::Char('d') => TuiEvent::ActionDoctor,
-        KeyCode::Char('i') => TuiEvent::ActionInit,
-        KeyCode::Char('I') => TuiEvent::ActionInstall,
-        KeyCode::Char('m') => TuiEvent::ActionMcpConfig,
-        KeyCode::Char('C') => TuiEvent::ActionConfigShow,
-        KeyCode::Char('H') => TuiEvent::ActionInstallHook,
-        KeyCode::Char('U') => TuiEvent::ActionUninstallHook,
-        KeyCode::Char('a') => TuiEvent::ActionAdapters,
-        KeyCode::Char('v') => TuiEvent::ActionVersion,
-        KeyCode::Char('y') => TuiEvent::CopyToClipboard,
-        KeyCode::Char('?') => TuiEvent::ToggleHelp,
-        KeyCode::Char('/') => TuiEvent::ToggleSearch,
-        // Esc cancels an in-flight scan before it quits the TUI.
-        KeyCode::Esc => {
-            if state.scanning {
-                TuiEvent::CancelScan
-            } else {
-                TuiEvent::Quit
-            }
-        }
-        _ => TuiEvent::None,
-    }
+    // Normal mode is resolved from the shared shortcut table. Contextual
+    // dialog/search/help bindings above remain explicit because they shadow
+    // normal actions while those overlays are active.
+    crate::utility_shortcuts::action_for(&key)
+        .map(crate::utility_shortcuts::ShortcutAction::to_event)
+        .unwrap_or(TuiEvent::None)
 }
 
 fn from_mouse_event(mouse: MouseEvent) -> TuiEvent {
@@ -351,24 +307,24 @@ fn render_header(state: &AppState, frame: &mut ratatui::Frame, area: ratatui::la
     let line = Line::from(vec![
         Span::styled(
             " lint-arwaky TUI ",
-            Style::default().fg(crate::utility_tui_theme::HEADER),
+            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::HEADER)),
         ),
         Span::styled(
             "\u{2502} ",
-            Style::default().fg(crate::utility_tui_theme::SEPARATOR),
+            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::SEPARATOR)),
         ),
         Span::styled(
             "Path: ",
-            Style::default().fg(crate::utility_tui_theme::SEPARATOR),
+            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::SEPARATOR)),
         ),
         Span::styled(
-            &state.current_dir,
-            Style::default().fg(crate::utility_tui_theme::LABEL),
+            &state.navigation.current_dir,
+            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::LABEL)),
         ),
         Span::styled("  ", Style::default()),
         Span::styled(
             "[q/Esc] Quit",
-            Style::default().fg(crate::utility_tui_theme::SEPARATOR),
+            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::SEPARATOR)),
         ),
     ]);
 

@@ -28,42 +28,42 @@ impl PathScreen {
             .borders(Borders::ALL)
             .border_style(
                 Style::default()
-                    .fg(theme::ACCENT)
+                    .fg(theme::color(theme::ACCENT))
                     .add_modifier(Modifier::BOLD),
             )
-            .style(Style::default().bg(theme::BACKGROUND));
+            .style(Style::default().bg(theme::color(theme::BACKGROUND)));
 
         let cwd = std::env::current_dir()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| ".".to_string());
 
-        let input_display = if state.path_input.is_empty() {
+        let input_display = if state.path_dialog.input.is_empty() {
             format!("[{}]", cwd)
         } else {
-            state.path_input.clone()
+            state.path_dialog.input.clone()
         };
 
         let text = vec![
             Line::from(""),
             Line::from(Span::styled(
                 "  Type path or press Enter for current dir:",
-                Style::default().fg(theme::LABEL),
+                Style::default().fg(theme::color(theme::LABEL)),
             )),
             Line::from(""),
             Line::from(vec![
-                Span::styled("  > ", Style::default().fg(theme::FOCUS_CONFIRM)),
+                Span::styled("  > ", Style::default().fg(theme::color(theme::FOCUS_CONFIRM))),
                 Span::styled(
                     input_display,
                     Style::default()
-                        .fg(theme::PATH_INPUT)
+                        .fg(theme::color(theme::PATH_INPUT))
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled("_", Style::default().fg(theme::LABEL)),
+                Span::styled("_", Style::default().fg(theme::color(theme::LABEL))),
             ]),
             Line::from(""),
             Line::from(Span::styled(
                 "  [Enter] Confirm   [Tab] Use current dir   [Esc] Cancel",
-                Style::default().fg(theme::SEPARATOR),
+                Style::default().fg(theme::color(theme::SEPARATOR)),
             )),
         ];
 
