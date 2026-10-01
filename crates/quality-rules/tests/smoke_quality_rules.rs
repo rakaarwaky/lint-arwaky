@@ -2,9 +2,9 @@
 use quality_rules_lint_arwaky::CodeAnalysisContainer;
 use quality_rules_lint_arwaky::contains_critical_severity;
 
-use shared::cli_commands::LintResult;
-use shared::common::Severity;
-use shared::quality_rules::CodeAnalysisRequest;
+use shared_cli_commands::LintResult;
+use shared_common::Severity;
+use shared_quality_rules::CodeAnalysisRequest;
 
 #[test]
 fn container_creation_smoke() {
@@ -19,7 +19,7 @@ fn orchestrator_creation_smoke() {
 
 #[test]
 fn basic_check_on_simple_file() {
-    use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+    use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
     use std::path::PathBuf;
 
     let container = CodeAnalysisContainer::new();
@@ -27,7 +27,7 @@ fn basic_check_on_simple_file() {
     let entries = vec![FileEntry {
         path: PathBuf::from("src/simple.rs"),
         extension: "rs".to_string(),
-        language: shared::common::taxonomy_language_vo::Language::Rust,
+        language: shared_common::taxonomy_language_vo::Language::Rust,
         size: 50,
         content: "fn main() {}\n".to_string(),
         parse_ok: true,

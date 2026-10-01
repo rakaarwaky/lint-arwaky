@@ -1,8 +1,8 @@
 // PURPOSE: IWatchAggregate — single entry point over the watch domain
 // The agent behind the aggregate dispatches each WatchRequest to the right
 // capability operation. Consumers never see the provider or analyzer protocols.
-use crate::file_watch::taxonomy_file_watch_request::WatchRequest;
-use crate::file_watch::taxonomy_file_watch_response::WatchResponse;
+use crate::taxonomy_file_watch_request::WatchRequest;
+use crate::taxonomy_file_watch_response::WatchResponse;
 
 /// Single entry point over the file-watch domain; the agent dispatches internally.
 pub trait IWatchAggregate: Send + Sync {

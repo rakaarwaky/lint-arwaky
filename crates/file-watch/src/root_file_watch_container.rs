@@ -6,11 +6,11 @@ use crate::agent_watch_orchestrator::WatchOrchestrator;
 use crate::capabilities_change_filter::ChangeFilter;
 use crate::capabilities_change_lint::ChangeLintHandler;
 use crate::capabilities_notify_provider::NotifyWatchProvider;
-use shared::file_watch::IWatchAggregate;
-use shared::file_watch::contract_watch_protocol::{
+use shared_file_watch::IWatchAggregate;
+use shared_file_watch::contract_watch_protocol::{
     IChangeFilterProtocol, IChangeLintProtocol, IWatchLifecycleProtocol,
 };
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_quality_rules::ICodeAnalysisAggregate;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

@@ -1,9 +1,9 @@
 // Unit tests for SurfaceRoleChecker — surfaces-layer role audit (AES406).
 use role_rules_lint_arwaky::capabilities_surface_role_auditor::SurfaceRoleChecker;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::ISurfaceRoleProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::ISurfaceRoleProtocol;
 
-use shared::filesystem::taxonomy_filesystem_vo::{
+use shared_filesystem::taxonomy_filesystem_vo::{
     Language, ParseMetadata, RustMetadata, TypeScriptMetadata,
 };
 use std::path::PathBuf;
@@ -95,7 +95,7 @@ fn fn_count_over_passive_limit_flagged() {
 fn fn_count_over_passive_limit_metadata_flagged() {
     let meta = RustMetadata {
         function_definitions: (0..26)
-            .map(|i| shared::filesystem::taxonomy_filesystem_vo::RustFnItem {
+            .map(|i| shared_filesystem::taxonomy_filesystem_vo::RustFnItem {
                 name: format!("func_{}", i),
                 has_body: true,
             })
@@ -181,7 +181,7 @@ fn fn_count_python_under_utility_limit_no_violation() {
 fn fn_count_typescript_metadata_flagged() {
     let meta = TypeScriptMetadata {
         function_definitions: (0..26)
-            .map(|i| shared::filesystem::taxonomy_filesystem_vo::TSFnItem {
+            .map(|i| shared_filesystem::taxonomy_filesystem_vo::TSFnItem {
                 name: format!("func_{}", i),
                 has_body: true,
             })
@@ -203,7 +203,7 @@ fn fn_count_typescript_smart_limit_50_no_violation_at_30() {
     // `_command` is smart (limit 50). 30 functions stays clean.
     let meta = TypeScriptMetadata {
         function_definitions: (0..30)
-            .map(|i| shared::filesystem::taxonomy_filesystem_vo::TSFnItem {
+            .map(|i| shared_filesystem::taxonomy_filesystem_vo::TSFnItem {
                 name: format!("func_{}", i),
                 has_body: true,
             })
@@ -223,7 +223,7 @@ fn fn_count_typescript_smart_limit_50_no_violation_at_30() {
 
 #[test]
 fn tier_classification_for_router_is_utility() {
-    use shared::role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
+    use shared_role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
     assert_eq!(
         classify_surface_tier("surface_x_router"),
         SurfaceTier::Utility
@@ -235,7 +235,7 @@ fn tier_classification_for_entry_is_not_smart() {
     // `_entry` is not a surface suffix — it classifies as passive by fallback.
     // It is still legal only via AES102 (root layer); no tier limit applies here
     // because an AES102 violation would have already been reported.
-    use shared::role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
+    use shared_role_rules::taxonomy_role_rules_vo::{SurfaceTier, classify_surface_tier};
     assert_eq!(
         classify_surface_tier("surface_x_entry"),
         SurfaceTier::Passive

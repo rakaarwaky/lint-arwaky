@@ -7,10 +7,10 @@
 //   For constant purity, uses ParseMetadata struct/enum/trait/fn definitions to
 //   detect non-constant declarations.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
-use shared::role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
+use shared_role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct TaxonomyRoleChecker {}
@@ -150,10 +150,10 @@ impl TaxonomyRoleChecker {
         let path_str = file.path.to_string_lossy();
         let content = &file.content;
         let primitives: &[&str] = match file.language {
-            shared::filesystem::taxonomy_filesystem_vo::Language::Rust => Self::RUST_PRIMITIVES,
-            shared::filesystem::taxonomy_filesystem_vo::Language::Python => Self::PY_PRIMITIVES,
-            shared::filesystem::taxonomy_filesystem_vo::Language::TypeScript
-            | shared::filesystem::taxonomy_filesystem_vo::Language::JavaScript => {
+            shared_filesystem::taxonomy_filesystem_vo::Language::Rust => Self::RUST_PRIMITIVES,
+            shared_filesystem::taxonomy_filesystem_vo::Language::Python => Self::PY_PRIMITIVES,
+            shared_filesystem::taxonomy_filesystem_vo::Language::TypeScript
+            | shared_filesystem::taxonomy_filesystem_vo::Language::JavaScript => {
                 Self::JS_PRIMITIVES
             }
             _ => return,

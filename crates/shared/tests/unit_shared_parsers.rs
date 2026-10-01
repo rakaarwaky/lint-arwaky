@@ -5,9 +5,9 @@
 // coverage; this file pins their current (correct) behavior so subsequent
 // complexity refactors cannot silently change results.
 
-use shared_lint_arwaky::common::utility_python_parser::parse_python;
-use shared_lint_arwaky::common::utility_rust_parser::parse_rust;
-use shared_lint_arwaky::common::utility_ts_parser::parse_ts;
+use shared_common::utility_python_parser::parse_python;
+use shared_common::utility_rust_parser::parse_rust;
+use shared_common::utility_ts_parser::parse_ts;
 
 // ── Python ───────────────────────────────────────────────────
 #[test]

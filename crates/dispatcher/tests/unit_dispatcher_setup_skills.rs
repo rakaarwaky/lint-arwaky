@@ -1,10 +1,10 @@
 // Unit tests — skills language relevance and filtering for init command.
 use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
-use shared::common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
-use shared::common::taxonomy_suggestion_vo::DescriptionVO;
-use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::project_setup::{
+use shared_common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_project_setup::{
     EMBEDDED_SKILLS, ISetupAggregate, ProjectLanguageVO, ProjectLanguagesVO, SetupRequest,
     SetupResponse,
 };
@@ -204,7 +204,7 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     }
     fn should_ignore(
         &self,
-        _path: &shared::common::taxonomy_path_vo::FilePath,
+        _path: &shared_common::taxonomy_path_vo::FilePath,
         _ignored: &[String],
     ) -> bool {
         false
@@ -214,8 +214,8 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     }
     fn canonicalize_path_str(
         &self,
-        path: &shared::common::taxonomy_path_vo::FilePath,
-    ) -> shared::common::taxonomy_path_vo::FilePath {
+        path: &shared_common::taxonomy_path_vo::FilePath,
+    ) -> shared_common::taxonomy_path_vo::FilePath {
         path.clone()
     }
     fn is_symlink(&self, _path: &Path) -> bool {
@@ -235,7 +235,7 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     }
     fn is_source_ext(
         &self,
-        _ext: &shared::filesystem::taxonomy_filesystem_vo::FileExtension,
+        _ext: &shared_filesystem::taxonomy_filesystem_vo::FileExtension,
     ) -> bool {
         false
     }
@@ -251,14 +251,14 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     fn scan_directory_with_ignored(
         &self,
         _dir: &Path,
-        _ignored: &shared::common::taxonomy_common_vo::PatternList,
+        _ignored: &shared_common::taxonomy_common_vo::PatternList,
     ) -> Vec<PathBuf> {
         vec![]
     }
     fn is_ignored_dir(
         &self,
         _dir: &Path,
-        _ignored: &shared::common::taxonomy_common_vo::PatternList,
+        _ignored: &shared_common::taxonomy_common_vo::PatternList,
     ) -> bool {
         false
     }
@@ -268,7 +268,7 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     fn read_to_string(
         &self,
         _path: &Path,
-    ) -> Result<shared::common::taxonomy_source_vo::ContentString, std::io::Error> {
+    ) -> Result<shared_common::taxonomy_source_vo::ContentString, std::io::Error> {
         Err(std::io::Error::new(std::io::ErrorKind::NotFound, "mock"))
     }
     fn write_string(&self, path: &Path, content: &str) -> Result<(), std::io::Error> {
@@ -280,10 +280,8 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
         &self,
         _src: &Path,
         _dst: &Path,
-    ) -> Result<shared::filesystem::taxonomy_filesystem_vo::ByteCount, std::io::Error> {
-        Ok(shared::filesystem::taxonomy_filesystem_vo::ByteCount::new(
-            0,
-        ))
+    ) -> Result<shared_filesystem::taxonomy_filesystem_vo::ByteCount, std::io::Error> {
+        Ok(shared_filesystem::taxonomy_filesystem_vo::ByteCount::new(0))
     }
     fn create_dir_all(&self, _path: &Path) -> Result<(), std::io::Error> {
         Ok(())
@@ -294,7 +292,7 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     fn set_permissions(
         &self,
         _path: &Path,
-        _mode: shared::filesystem::taxonomy_filesystem_vo::FileMode,
+        _mode: shared_filesystem::taxonomy_filesystem_vo::FileMode,
     ) -> std::io::Result<()> {
         Ok(())
     }
@@ -305,8 +303,8 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
         &self,
         _args: &[&str],
         _dir: &str,
-    ) -> shared::filesystem::taxonomy_filesystem_vo::GitCommandResult {
-        shared::filesystem::taxonomy_filesystem_vo::GitCommandResult::new(
+    ) -> shared_filesystem::taxonomy_filesystem_vo::GitCommandResult {
+        shared_filesystem::taxonomy_filesystem_vo::GitCommandResult::new(
             String::new(),
             String::new(),
             false,
@@ -315,8 +313,8 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     fn parse_output_lines(
         &self,
         output: &str,
-    ) -> shared::filesystem::taxonomy_filesystem_vo::ParsedLines {
-        shared::filesystem::taxonomy_filesystem_vo::ParsedLines::new(
+    ) -> shared_filesystem::taxonomy_filesystem_vo::ParsedLines {
+        shared_filesystem::taxonomy_filesystem_vo::ParsedLines::new(
             output.lines().map(String::from).collect(),
         )
     }
@@ -328,9 +326,9 @@ impl IFileSystemIOProtocol for RecordingFilesystem {
     ) -> (String, String, bool) {
         (String::new(), String::new(), false)
     }
-    fn timing(&self) -> &shared::filesystem::taxonomy_filesystem_vo::ScanTiming {
-        static T: shared::filesystem::taxonomy_filesystem_vo::ScanTiming =
-            shared::filesystem::taxonomy_filesystem_vo::ScanTiming {
+    fn timing(&self) -> &shared_filesystem::taxonomy_filesystem_vo::ScanTiming {
+        static T: shared_filesystem::taxonomy_filesystem_vo::ScanTiming =
+            shared_filesystem::taxonomy_filesystem_vo::ScanTiming {
                 walk_ms: 0,
                 cache_ms: 0,
                 parse_ms: 0,

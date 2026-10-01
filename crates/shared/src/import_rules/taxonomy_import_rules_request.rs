@@ -1,7 +1,7 @@
 // PURPOSE: ImportRequest — request payload for the import aggregate
 
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry};
 use std::collections::HashMap;
 
 pub enum ImportRequest {

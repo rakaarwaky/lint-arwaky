@@ -5,11 +5,11 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::common::taxonomy_definition_vo::LayerMapVO;
-use crate::common::taxonomy_lint_result_vo::LintResultList;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
 
 /// FR-NamingRules-001: check each file's stem against the layer_concern_role
 /// convention (AES101).

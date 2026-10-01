@@ -147,21 +147,21 @@ macro_rules! domain_error_vo {
     ($name:ident, $prefix:expr, $code:expr, $id:expr) => {
         #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
         pub struct $name {
-            pub path: $crate::common::taxonomy_path_vo::FilePath,
-            pub message: $crate::common::taxonomy_message_vo::LintMessage,
+            pub path: $crate::taxonomy_path_vo::FilePath,
+            pub message: $crate::taxonomy_message_vo::LintMessage,
             #[serde(default)]
-            pub error_code: $crate::common::taxonomy_error_vo::ErrorCode,
+            pub error_code: $crate::taxonomy_error_vo::ErrorCode,
             #[serde(default)]
-            pub error_id: $crate::common::taxonomy_error_vo::ErrorId,
+            pub error_id: $crate::taxonomy_error_vo::ErrorId,
         }
 
         impl $name {
-            pub fn new(message: $crate::common::taxonomy_message_vo::LintMessage) -> Self {
+            pub fn new(message: $crate::taxonomy_message_vo::LintMessage) -> Self {
                 Self {
-                    path: $crate::common::taxonomy_path_vo::FilePath::default(),
+                    path: $crate::taxonomy_path_vo::FilePath::default(),
                     message,
-                    error_code: $crate::common::taxonomy_error_vo::ErrorCode::raw($code),
-                    error_id: $crate::common::taxonomy_error_vo::ErrorId::raw($id),
+                    error_code: $crate::taxonomy_error_vo::ErrorCode::raw($code),
+                    error_id: $crate::taxonomy_error_vo::ErrorId::raw($id),
                 }
             }
 
@@ -191,14 +191,14 @@ macro_rules! domain_error_vo {
     ($name:ident, $prefix:expr) => {
         #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
         pub struct $name {
-            pub path: $crate::common::taxonomy_path_vo::FilePath,
-            pub message: $crate::common::taxonomy_message_vo::LintMessage,
+            pub path: $crate::taxonomy_path_vo::FilePath,
+            pub message: $crate::taxonomy_message_vo::LintMessage,
         }
 
         impl $name {
-            pub fn new(message: $crate::common::taxonomy_message_vo::LintMessage) -> Self {
+            pub fn new(message: $crate::taxonomy_message_vo::LintMessage) -> Self {
                 Self {
-                    path: $crate::common::taxonomy_path_vo::FilePath::default(),
+                    path: $crate::taxonomy_path_vo::FilePath::default(),
                     message,
                 }
             }

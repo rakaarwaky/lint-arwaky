@@ -11,11 +11,11 @@
 //   - Adapter installation (pip for Python, npm for JS)
 //   - Language detection
 
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
-use shared::project_setup::taxonomy_project_setup_request::SetupRequest;
-use shared::project_setup::taxonomy_project_setup_response::SetupResponse;
-use shared::project_setup::{
+use shared_common::taxonomy_job_vo::SuccessStatus;
+use shared_project_setup::contract_setup_aggregate::ISetupAggregate;
+use shared_project_setup::taxonomy_project_setup_request::SetupRequest;
+use shared_project_setup::taxonomy_project_setup_response::SetupResponse;
+use shared_project_setup::{
     IAdapterInstallationProtocol, IEnvGenerationProtocol, ILanguageDetectionProtocol,
     IMcpConfigGenerationProtocol,
 };
@@ -92,7 +92,7 @@ impl ISetupAggregate for SetupManagementOrchestrator {
             },
             SetupRequest::GetConfigTemplate { language } => {
                 let result =
-                    shared::project_setup::utility_project_setup_helpers::get_config_template(
+                    shared_project_setup::utility_project_setup_helpers::get_config_template(
                         &language,
                     );
                 SetupResponse::Template {
@@ -100,23 +100,23 @@ impl ISetupAggregate for SetupManagementOrchestrator {
                 }
             }
             SetupRequest::PreFlightCheck => SetupResponse::PreFlight {
-                result: shared::project_setup::utility_project_setup_helpers::pre_flight_check(),
+                result: shared_project_setup::utility_project_setup_helpers::pre_flight_check(),
             },
             SetupRequest::GetEmbeddedSkills => SetupResponse::Skills {
-                skills: shared::project_setup::utility_project_setup_helpers::get_embedded_skills()
+                skills: shared_project_setup::utility_project_setup_helpers::get_embedded_skills()
                     .to_vec(),
             },
             SetupRequest::WriteConfigFile { filename, content } => SetupResponse::ConfigWritten {
-                result: shared::project_setup::utility_project_setup_helpers::write_config_file(
+                result: shared_project_setup::utility_project_setup_helpers::write_config_file(
                     &filename, &content,
                 ),
             },
             SetupRequest::CreateGlobalConfigDir => SetupResponse::ConfigDir {
                 result:
-                    shared::project_setup::utility_project_setup_helpers::create_global_config_dir(),
+                    shared_project_setup::utility_project_setup_helpers::create_global_config_dir(),
             },
             SetupRequest::FileExists { ref path } => SetupResponse::Exists {
-                exists: shared::project_setup::utility_project_setup_helpers::file_exists(path),
+                exists: shared_project_setup::utility_project_setup_helpers::file_exists(path),
             },
         }
     }

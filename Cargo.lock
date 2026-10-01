@@ -194,7 +194,10 @@ dependencies = [
  "quality-rules-lint-arwaky",
  "serde",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-auto-fix-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -500,7 +503,23 @@ dependencies = [
  "dirs",
  "dispatcher-lint-arwaky",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-auto-fix-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-doc-rules-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
+ "shared-naming-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-report-formatter-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
+ "shared-structure-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -590,7 +609,9 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml_ng",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
  "tempfile",
  "toml",
  "tracing",
@@ -1034,7 +1055,23 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-auto-fix-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-doc-rules-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-git-hooks-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
+ "shared-naming-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
+ "shared-structure-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -1056,7 +1093,8 @@ version = "3.7.1"
 dependencies = [
  "regex",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-doc-rules-lint-arwaky",
  "tempfile",
 ]
 
@@ -1144,7 +1182,11 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
  "tracing",
 ]
 
@@ -1205,7 +1247,9 @@ dependencies = [
  "notify",
  "notify-debouncer-mini",
  "quality-rules-lint-arwaky",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
  "tempfile",
  "tokio",
  "tracing",
@@ -1233,7 +1277,8 @@ dependencies = [
  "ignore",
  "petgraph",
  "rayon",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
  "tempfile",
  "tracing",
  "tree-sitter",
@@ -1492,7 +1537,11 @@ dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
  "serde_yaml_ng",
- "shared-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-git-hooks-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -2673,7 +2722,13 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -3023,7 +3078,26 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml_ng",
- "shared-lint-arwaky",
+ "shared-auto-fix-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-doc-rules-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-git-hooks-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
+ "shared-mcp-server-lint-arwaky",
+ "shared-naming-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-report-formatter-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
+ "shared-structure-rules-lint-arwaky",
+ "shared-tui-lint-arwaky",
  "structure-rules-lint-arwaky",
  "thiserror 2.0.21",
  "tokio",
@@ -3099,7 +3173,9 @@ dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -3133,7 +3209,23 @@ dependencies = [
  "dispatcher-lint-arwaky",
  "rmcp",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-auto-fix-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-doc-rules-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-git-hooks-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
+ "shared-mcp-server-lint-arwaky",
+ "shared-naming-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
+ "shared-structure-rules-lint-arwaky",
  "tempfile",
  "tokio",
  "tracing",
@@ -3221,7 +3313,10 @@ dependencies = [
  "filesystem-lint-arwaky",
  "rayon",
  "regex",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-naming-rules-lint-arwaky",
  "tempfile",
 ]
 
@@ -3472,7 +3567,13 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -3770,7 +3871,9 @@ dependencies = [
  "dirs",
  "filesystem-lint-arwaky",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -3788,7 +3891,11 @@ dependencies = [
  "criterion",
  "filesystem-lint-arwaky",
  "rayon",
- "shared-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
  "tempfile",
 ]
 
@@ -4113,7 +4220,9 @@ version = "3.7.1"
 dependencies = [
  "criterion",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-report-formatter-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -4219,7 +4328,10 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
  "tempfile",
  "tracing",
 ]
@@ -4569,36 +4681,214 @@ dependencies = [
 ]
 
 [[package]]
-name = "shared-lint-arwaky"
+name = "shared-auto-fix-lint-arwaky"
 version = "3.7.1"
 dependencies = [
- "anyhow",
- "async-trait",
+ "once_cell",
+ "serde",
+ "shared-common-lint-arwaky",
+]
+
+[[package]]
+name = "shared-cli-commands-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "clap",
+ "serde",
+ "shared-common-lint-arwaky",
+]
+
+[[package]]
+name = "shared-common-lint-arwaky"
+version = "3.7.1"
+dependencies = [
  "chrono",
  "clap",
  "criterion",
- "dashmap",
- "dirs",
- "ignore",
- "once_cell",
  "proc-macro2",
- "rayon",
- "regex",
- "rmcp",
- "schemars",
  "serde",
  "serde_json",
- "serde_yaml_ng",
+ "shared-auto-fix-lint-arwaky",
+ "shared-cli-commands-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-git-hooks-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
+ "shared-naming-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-report-formatter-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
  "syn 3.0.6",
  "tempfile",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "shared-config-system-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
+ "serde_json",
+ "serde_yaml_ng",
+ "shared-common-lint-arwaky",
+ "thiserror 2.0.21",
+ "tracing",
+]
+
+[[package]]
+name = "shared-doc-rules-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "regex",
+ "serde",
+ "shared-common-lint-arwaky",
+]
+
+[[package]]
+name = "shared-external-lint-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "anyhow",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+]
+
+[[package]]
+name = "shared-file-watch-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "async-trait",
+ "serde",
+ "shared-common-lint-arwaky",
  "tokio",
+]
+
+[[package]]
+name = "shared-filesystem-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "ignore",
+ "serde",
+ "shared-common-lint-arwaky",
  "tracing",
  "tree-sitter",
  "tree-sitter-javascript",
  "tree-sitter-python",
  "tree-sitter-rust",
  "tree-sitter-typescript",
+]
+
+[[package]]
+name = "shared-git-hooks-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
+ "serde_json",
+ "shared-common-lint-arwaky",
+ "shared-file-watch-lint-arwaky",
+]
+
+[[package]]
+name = "shared-import-rules-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "shared-maintenance-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
+ "shared-common-lint-arwaky",
+]
+
+[[package]]
+name = "shared-mcp-server-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "rmcp",
+ "schemars",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "shared-naming-rules-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+]
+
+[[package]]
+name = "shared-orphan-rules-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
+ "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "tracing",
+]
+
+[[package]]
+name = "shared-project-setup-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "dirs",
+ "serde",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+]
+
+[[package]]
+name = "shared-quality-rules-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+]
+
+[[package]]
+name = "shared-report-formatter-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
+ "shared-cli-commands-lint-arwaky",
+ "shared-common-lint-arwaky",
+]
+
+[[package]]
+name = "shared-role-rules-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "shared-common-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+]
+
+[[package]]
+name = "shared-structure-rules-lint-arwaky"
+version = "3.7.1"
+
+[[package]]
+name = "shared-tui-lint-arwaky"
+version = "3.7.1"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -4732,7 +5022,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 name = "structure-rules-lint-arwaky"
 version = "3.7.1"
 dependencies = [
- "shared-lint-arwaky",
+ "shared-structure-rules-lint-arwaky",
  "tempfile",
 ]
 
@@ -5399,7 +5689,22 @@ dependencies = [
  "ratatui",
  "rayon",
  "serde_json",
- "shared-lint-arwaky",
+ "shared-auto-fix-lint-arwaky",
+ "shared-common-lint-arwaky",
+ "shared-config-system-lint-arwaky",
+ "shared-doc-rules-lint-arwaky",
+ "shared-external-lint-lint-arwaky",
+ "shared-filesystem-lint-arwaky",
+ "shared-git-hooks-lint-arwaky",
+ "shared-import-rules-lint-arwaky",
+ "shared-maintenance-lint-arwaky",
+ "shared-naming-rules-lint-arwaky",
+ "shared-orphan-rules-lint-arwaky",
+ "shared-project-setup-lint-arwaky",
+ "shared-quality-rules-lint-arwaky",
+ "shared-role-rules-lint-arwaky",
+ "shared-structure-rules-lint-arwaky",
+ "shared-tui-lint-arwaky",
  "tempfile",
  "tokio",
  "tracing",

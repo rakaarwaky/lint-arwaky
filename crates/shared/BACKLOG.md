@@ -3,11 +3,11 @@
 FRD: —
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State / Health: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-09-29
+Last Updated: 2026-10-01
 
 ## Current Condition
 
-- Done: `cargo test -p shared-lint-arwaky --lib --tests` → 0 failures
+- Done: `cargo nextest run --workspace --lib --tests` → 1993 passed, 0 failed
 - In Progress: None
 - Blocked: None
 - Next Action: —
@@ -42,4 +42,5 @@ Done.
 
 | Date | Change |
 |---|---|
+| 2026-10-01 | Evidence command retargeted: `shared-lint-arwaky` was split into 20 packages, so the suite is verified workspace-wide |
 | 2026-09-29 | Created backlog entry for shared kernel folder |

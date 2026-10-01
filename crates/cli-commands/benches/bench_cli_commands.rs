@@ -5,15 +5,15 @@ fn bench_format_lint_results(c: &mut Criterion) {
     let mut group = c.benchmark_group("format_lint_results");
     group.significance_level(0.05).confidence_level(0.95);
 
-    let results: Vec<shared::common::LintResult> = (0..100)
-        .map(|i| shared::common::taxonomy_lint_result_vo::LintResult {
-            file: shared::common::FilePath::new(format!("src/file_{}.rs", i)).unwrap(),
-            line: shared::common::LineNumber::new(i as i64),
+    let results: Vec<shared_common::LintResult> = (0..100)
+        .map(|i| shared_common::taxonomy_lint_result_vo::LintResult {
+            file: shared_common::FilePath::new(format!("src/file_{}.rs", i)).unwrap(),
+            line: shared_common::LineNumber::new(i as i64),
             column: Default::default(),
-            code: shared::common::ErrorCode::raw(format!("AES{}", 100 + (i % 10))),
-            message: shared::common::LintMessage::new(format!("violation at file_{}.rs:{}", i, i)),
+            code: shared_common::ErrorCode::raw(format!("AES{}", 100 + (i % 10))),
+            message: shared_common::LintMessage::new(format!("violation at file_{}.rs:{}", i, i)),
             source: None,
-            severity: shared::common::Severity::MEDIUM,
+            severity: shared_common::Severity::MEDIUM,
             enclosing_scope: None,
             related_locations: Default::default(),
         })
@@ -37,11 +37,9 @@ fn bench_scan_request_construction(c: &mut Criterion) {
 
     group.bench_function("create_scan_request", |b| {
         b.iter(|| {
-            let target = shared::cli_commands::ScanTarget::new("/tmp/project".to_string());
-            let req = shared::cli_commands::ScanRequest::new(
-                target,
-                shared::cli_commands::ScanMode::Check,
-            );
+            let target = shared_cli_commands::ScanTarget::new("/tmp/project".to_string());
+            let req =
+                shared_cli_commands::ScanRequest::new(target, shared_cli_commands::ScanMode::Check);
             std::hint::black_box(req);
         });
     });

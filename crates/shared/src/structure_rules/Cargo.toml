@@ -1,0 +1,18 @@
+[package]
+name = "shared-structure-rules-lint-arwaky"
+version = "3.7.1"
+edition = "2024"
+description = "AES structure rules foundation: taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`), contract (`_port`, `_protocol`, `_aggregate`), and utility types shared across lint-arwaky. Split out of `shared-lint-arwaky`."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+# The folder *is* the crate root, so the manifest lives beside `mod.rs`.
+[lib]
+path = "mod.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+# none — pure leaf

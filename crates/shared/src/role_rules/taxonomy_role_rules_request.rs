@@ -1,6 +1,6 @@
 // PURPOSE: RoleRequest — request payload for the role aggregate
 
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 
 pub enum RoleRequest {
     /// Run AES401-406 role audits on pre-parsed file entries.

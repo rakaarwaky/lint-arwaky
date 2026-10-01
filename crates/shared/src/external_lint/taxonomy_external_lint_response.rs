@@ -1,7 +1,7 @@
 // PURPOSE: ExternalLintResponse — response payload for the external_lint aggregate
 
-use crate::common::taxonomy_adapter_list_vo::AdapterNameList;
-use crate::common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_adapter_list_vo::AdapterNameList;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
 
 pub enum ExternalLintResponse {
     /// Violations reported by the adapters.

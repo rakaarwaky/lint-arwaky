@@ -1,7 +1,7 @@
 // PURPOSE: Git diff — CLI thin wrapper
 // Calls dispatcher for git-diff business logic, only adds CLI output.
-use shared::common::{ExitCode, GitBranchName};
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_common::{ExitCode, GitBranchName};
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tracing::error;
 
@@ -27,7 +27,7 @@ pub fn handle_git_diff(
 
             let mut per_file: std::collections::BTreeMap<
                 String,
-                Vec<&shared::cli_commands::LintResult>,
+                Vec<&shared_cli_commands::LintResult>,
             > = std::collections::BTreeMap::new();
             for r in &report.results {
                 per_file.entry(r.file.value.clone()).or_default().push(r);

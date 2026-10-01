@@ -1,17 +1,17 @@
 // Unit tests — shared/config_system taxonomy types.
-use shared_lint_arwaky::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared_lint_arwaky::config_system::taxonomy_config_system_error::ConfigError;
-use shared_lint_arwaky::config_system::taxonomy_config_system_vo::ConfigKey;
-use shared_lint_arwaky::config_system::taxonomy_config_system_vo::ValidationResult;
-use shared_lint_arwaky::config_system::taxonomy_config_system_vo::WorkspaceInfo;
-use shared_lint_arwaky::config_system::taxonomy_config_system_vo::{
+use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared_config_system::taxonomy_config_system_error::ConfigError;
+use shared_config_system::taxonomy_config_system_vo::ConfigKey;
+use shared_config_system::taxonomy_config_system_vo::ValidationResult;
+use shared_config_system::taxonomy_config_system_vo::WorkspaceInfo;
+use shared_config_system::taxonomy_config_system_vo::{
     AdapterEntry, AdapterStatus, ProjectConfig, Thresholds,
 };
-use shared_lint_arwaky::config_system::taxonomy_config_system_vo::{
+use shared_config_system::taxonomy_config_system_vo::{
     ArchitectureConfig, ArchitectureRule, NamingRuleVO, RoleRuleVO,
 };
-use shared_lint_arwaky::config_system::taxonomy_config_system_vo::{ConfigResult, ConfigSource};
-use shared_lint_arwaky::config_system::{
+use shared_config_system::taxonomy_config_system_vo::{ConfigResult, ConfigSource};
+use shared_config_system::{
     ConfigKey as ConfigKeyRe, ConfigLanguage as ConfigLanguageRe, ProjectConfig as ProjectConfigRe,
 };
 use std::str::FromStr;
@@ -77,11 +77,11 @@ fn adapter_status_variants() {
 
 #[test]
 fn adapter_entry_helpers() {
-    let entry = AdapterEntry::enabled(shared_lint_arwaky::common::AdapterName::raw("ruff"));
+    let entry = AdapterEntry::enabled(shared_common::AdapterName::raw("ruff"));
     assert!(entry.is_active());
     assert!((entry.timeout - 60.0).abs() < 1e-9);
     let custom = AdapterEntry::with_timeout(
-        shared_lint_arwaky::common::AdapterName::raw("mypy"),
+        shared_common::AdapterName::raw("mypy"),
         AdapterStatus::Disabled,
         2.0,
         30.0,
@@ -177,7 +177,7 @@ fn validation_result_ok_and_fail() {
 fn config_error_display() {
     let error = ConfigError::new(
         ConfigKey::new("thresholds.score"),
-        shared_lint_arwaky::common::ErrorMessage::new("below minimum"),
+        shared_common::ErrorMessage::new("below minimum"),
     );
     let rendered = error.to_string();
     assert!(rendered.contains("thresholds.score"));
@@ -186,10 +186,7 @@ fn config_error_display() {
 
 #[test]
 fn config_error_default_fields() {
-    let error = ConfigError::new(
-        ConfigKey::new("x"),
-        shared_lint_arwaky::common::ErrorMessage::new("m"),
-    );
+    let error = ConfigError::new(ConfigKey::new("x"), shared_common::ErrorMessage::new("m"));
     assert_eq!(error.config_file.value(), "");
 }
 
@@ -209,7 +206,7 @@ fn config_key_parts_parent_leaf() {
 #[test]
 fn workspace_info_new() {
     let info = WorkspaceInfo::new(
-        shared_lint_arwaky::common::FilePath::new("crates/core").expect("path"),
+        shared_common::FilePath::new("crates/core").expect("path"),
         "crate".to_string(),
         ArchitectureConfig::default(),
     );

@@ -2,7 +2,7 @@
 use crate::string_value_object;
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::taxonomy_path_vo::FilePath;
 
 string_value_object!(ContentString);
 

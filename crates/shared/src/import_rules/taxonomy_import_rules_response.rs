@@ -1,7 +1,7 @@
 // PURPOSE: ImportResponse — response payload for the import aggregate
 
-use crate::common::taxonomy_adapter_error::ScanError;
-use crate::common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_adapter_error::ScanError;
+use shared_common::taxonomy_lint_result_vo::LintResult;
 
 pub enum ImportResponse {
     /// Audit result from a path-based run (may fail if the path is missing).

@@ -3,7 +3,7 @@ use external_lint_lint_arwaky::capabilities_rs_clippy_adapter::{
     clippy_lint_group, map_clippy_severity,
 };
 
-use shared::common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_severity_vo::Severity;
 
 #[test]
 fn correctness_lint_maps_to_critical() {

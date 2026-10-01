@@ -2,9 +2,9 @@
 // Utility layer: standalone functions only. The layer-prefix table is declared
 // here rather than imported, because a utility file may not import another
 // utility module (AES201 self-import).
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_skill_hint_vo::SkillHint;
-use crate::common::taxonomy_skill_hint_vo::resolve_skill_hint;
+use crate::taxonomy_error_vo::ErrorCode;
+use crate::taxonomy_skill_hint_vo::SkillHint;
+use crate::taxonomy_skill_hint_vo::resolve_skill_hint;
 
 /// Filename stem prefix → layer name. Mirrors the AES102 prefix convention;
 /// `surfaces` is the layer name the taxonomy routing table uses.

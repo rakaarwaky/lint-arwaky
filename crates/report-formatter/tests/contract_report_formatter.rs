@@ -4,7 +4,7 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::report_formatter::{
+use shared_report_formatter::{
     IJUnitFormatProtocol, IJsonFormatProtocol, IReportFormatterAggregate, ISarifFormatProtocol,
     ITextFormatProtocol,
 };

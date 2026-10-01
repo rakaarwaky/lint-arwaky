@@ -1,8 +1,8 @@
 // Integration tests — full DI wiring via AutoFixContainer with real quality-rules.
 use auto_fix_lint_arwaky::root_auto_fix_container::AutoFixContainer;
-use shared::auto_fix::FixRequest;
-use shared::auto_fix::IFixAggregate;
-use shared::common::FilePath;
+use shared_auto_fix::FixRequest;
+use shared_auto_fix::IFixAggregate;
+use shared_common::FilePath;
 use std::sync::Arc;
 use tempfile::TempDir;
 

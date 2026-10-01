@@ -1,7 +1,7 @@
 // PURPOSE: FR/protocol parity counters — requirement headings in an FRD and capability-seam
 // classes in a feature's shared contract module. Both are stateless counts, so
 // they live here and the checker only decides what a mismatch means.
-use crate::doc_rules::taxonomy_doc_rules_constant as consts;
+use crate::taxonomy_doc_rules_constant as consts;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;

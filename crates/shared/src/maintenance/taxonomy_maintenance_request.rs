@@ -1,7 +1,7 @@
 // PURPOSE: MaintenanceRequest — request payload for the maintenance aggregate
 
-use crate::common::taxonomy_action_vo::JobId;
-use crate::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_action_vo::JobId;
+use shared_common::taxonomy_path_vo::FilePath;
 
 pub enum MaintenanceRequest {
     /// Collect file/line/dir counts for a project.

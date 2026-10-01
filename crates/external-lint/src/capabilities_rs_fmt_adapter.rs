@@ -10,26 +10,26 @@
 //   - apply_fix runs `cargo fmt` (without --check) to auto-format
 //   - Only reports added lines (+ prefix) as violations, not context lines
 
-use shared::cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
-use shared::common::ErrorMessage;
-use shared::common::taxonomy_adapter_error::AdapterError;
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::{ColumnNumber, LineNumber, PatternList};
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_error_vo::ErrorCode;
-use shared::common::taxonomy_lint_vo::LocationList;
-use shared::common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_path_normalization::resolve_capabilities_path;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::quality_rules::LinterOperationError;
+use shared_cli_commands::taxonomy_result_vo::{LintResult, LintResultList};
+use shared_common::ErrorMessage;
+use shared_common::taxonomy_adapter_error::AdapterError;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::{ColumnNumber, LineNumber, PatternList};
+use shared_common::taxonomy_duration_vo::Timeout;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::{ComplianceStatus, LintMessage};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::utility_path_normalization::resolve_capabilities_path;
+use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_quality_rules::LinterOperationError;
 use std::path::Path;
 use std::sync::Arc;
 use tracing::debug;
 
-use shared::external_lint::ICommandExecutorProtocol;
+use shared_external_lint::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

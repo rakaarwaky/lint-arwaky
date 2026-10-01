@@ -1,10 +1,10 @@
 // PURPOSE: ConfigError, ConfigErrorKind — structured error types for configuration loading failures
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::config_system::taxonomy_config_system_vo::ActualValue;
-use crate::config_system::taxonomy_config_system_vo::ConfigKey;
-use crate::config_system::taxonomy_config_system_vo::ExpectedValue;
+use crate::taxonomy_config_system_vo::ActualValue;
+use crate::taxonomy_config_system_vo::ConfigKey;
+use crate::taxonomy_config_system_vo::ExpectedValue;
 use serde::{Deserialize, Serialize};
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_path_vo::FilePath;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default, thiserror::Error)]
 pub struct ConfigError {
@@ -14,7 +14,7 @@ pub struct ConfigError {
     pub actual: ActualValue,
     pub config_file: FilePath,
     #[serde(default)]
-    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
+    pub error_id: shared_common::taxonomy_error_vo::ErrorId,
 }
 
 impl ConfigError {
@@ -25,7 +25,7 @@ impl ConfigError {
             expected: ExpectedValue::default(),
             actual: ActualValue::default(),
             config_file: FilePath::default(),
-            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(1001),
+            error_id: shared_common::taxonomy_error_vo::ErrorId::raw(1001),
         }
     }
 

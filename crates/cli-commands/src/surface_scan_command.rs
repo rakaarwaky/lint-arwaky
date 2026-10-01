@@ -1,17 +1,17 @@
 // PURPOSE: Check/scan commands — CLI formatting + exit-code mapping.
 // Calls dispatcher for business logic, only adds CLI output.
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared::common::ExitCode;
+use shared_common::ExitCode;
 use std::sync::Arc;
 use tracing::error;
 
 use dispatcher::surface_check_action::FilesystemSeam;
-use shared::cli_commands::Format;
-use shared::common::FilePath;
-use shared::config_system::{IConfigMergeProtocol, IConfigOrchestratorAggregate};
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::quality_rules::ICodeAnalysisAggregate;
-use shared::structure_rules::IStructureAggregate;
+use shared_cli_commands::Format;
+use shared_common::FilePath;
+use shared_config_system::{IConfigMergeProtocol, IConfigOrchestratorAggregate};
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_quality_rules::ICodeAnalysisAggregate;
+use shared_structure_rules::IStructureAggregate;
 
 use crate::utility_output_text_formatter::output_violations;
 
@@ -32,8 +32,8 @@ pub struct ScanCommandParams {
 pub struct ImportCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
-    pub import_orchestrator: Arc<dyn shared::import_rules::IImportRunnerAggregate>,
-    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub import_orchestrator: Arc<dyn shared_import_rules::IImportRunnerAggregate>,
+    pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
@@ -44,8 +44,8 @@ pub struct ImportCommandParams {
 pub struct NamingCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
-    pub naming_orchestrator: Arc<dyn shared::naming_rules::INamingRunnerAggregate>,
-    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub naming_orchestrator: Arc<dyn shared_naming_rules::INamingRunnerAggregate>,
+    pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
@@ -56,8 +56,8 @@ pub struct NamingCommandParams {
 pub struct RoleCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
-    pub role_orchestrator: Arc<dyn shared::role_rules::IRoleRunnerAggregate>,
-    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub role_orchestrator: Arc<dyn shared_role_rules::IRoleRunnerAggregate>,
+    pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
@@ -69,9 +69,9 @@ pub struct OrphanCommandParams {
     pub path: Option<FilePath>,
     pub member: Option<String>,
     pub format: Format,
-    pub orphan_orchestrator: Arc<dyn shared::orphan_rules::IOrphanAggregate>,
+    pub orphan_orchestrator: Arc<dyn shared_orphan_rules::IOrphanAggregate>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,
@@ -83,8 +83,8 @@ pub struct OrphanCommandParams {
 pub struct ExternalCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
-    pub external_lint: Arc<dyn shared::external_lint::IExternalLintAggregate>,
-    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub external_lint: Arc<dyn shared_external_lint::IExternalLintAggregate>,
+    pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub config_parser: Arc<dyn IConfigMergeProtocol>,
@@ -96,7 +96,7 @@ pub struct ExternalCommandParams {
 pub struct DocsCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
-    pub doc_orchestrator: Arc<dyn shared::doc_rules::IDocRunnerAggregate>,
+    pub doc_orchestrator: Arc<dyn shared_doc_rules::IDocRunnerAggregate>,
 }
 
 /// Parameters for the `structure` command.
@@ -104,7 +104,7 @@ pub struct StructureCommandParams {
     pub path: Option<FilePath>,
     pub format: Format,
     pub structure_orchestrator: Arc<dyn IStructureAggregate>,
-    pub report_formatter: Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
+    pub report_formatter: Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
     pub filesystem: Arc<dyn IFilesystemAggregate>,
     pub filesystem_seam: FilesystemSeam,
     pub filter: Option<String>,

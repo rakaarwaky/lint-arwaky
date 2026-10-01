@@ -1,9 +1,9 @@
 // PURPOSE: SetupCommandsSurface — project setup business logic, no formatting.
 // handle_install delegates to ISetupAggregate.
 // No direct std::process::Command calls.
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::project_setup::SetupRequest;
-use shared::project_setup::{ISetupAggregate, ProjectLanguagesVO};
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_project_setup::SetupRequest;
+use shared_project_setup::{ISetupAggregate, ProjectLanguagesVO};
 use std::sync::Arc;
 
 /// One setup step outcome — message + success flag for CLI rendering.

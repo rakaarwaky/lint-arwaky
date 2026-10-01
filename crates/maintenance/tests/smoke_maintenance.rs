@@ -1,6 +1,6 @@
 // Smoke tests — verify maintenance container and core operations complete within 5s.
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
-use shared::maintenance::IMaintenanceAggregate;
+use shared_maintenance::IMaintenanceAggregate;
 
 #[test]
 fn maintenance_container_creates() {

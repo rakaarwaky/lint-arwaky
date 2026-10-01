@@ -9,14 +9,12 @@ use filesystem_lint_arwaky::capabilities_dependency_graph::DependencyGraph;
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ImportType, Language};
-use shared::filesystem::utility_barrel_resolution::{
-    parse_barrel_reexports, resolve_single_import,
-};
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ImportType, Language};
+use shared_filesystem::utility_barrel_resolution::{parse_barrel_reexports, resolve_single_import};
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -55,7 +53,7 @@ fn make_orchestrator() -> FilesystemOrchestrator {
     let tool_resolution: Arc<dyn IToolResolutionProtocol> =
         Arc::new(CapabilitiesToolResolution::new());
     let parser: Arc<dyn IParserProtocol> = Arc::new(ASTParser::new());
-    let graph: Arc<dyn shared::filesystem::contract_filesystem_protocol::IGraphProtocol> =
+    let graph: Arc<dyn shared_filesystem::contract_filesystem_protocol::IGraphProtocol> =
         Arc::new(DependencyGraph::new());
 
     FilesystemOrchestrator::new(FilesystemOrchestratorDeps {
@@ -256,8 +254,8 @@ fn e2e_chained_python_import_graph_reaches_capabilities() {
     // so that BFS reachability marks the capabilities file alive.
     // This exercises resolve_import_target through the real pipeline,
     // not a hand-built graph.
-    use shared::filesystem::FilesystemRequest;
-    use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+    use shared_filesystem::FilesystemRequest;
+    use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 
     let tmp = tempfile::TempDir::new().unwrap();
     let member_src = tmp.path().join("modules").join("image").join("src");

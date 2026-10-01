@@ -1,10 +1,10 @@
 // Unit tests for ArchImportForbiddenChecker — AES201 forbidden import rules.
 use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
-use shared::common::{
+use shared_common::{
     BooleanVO, Count, FilePathList, LayerDefinition, LayerMapVO, LayerNameVO, NamingConfig,
     PatternList,
 };
-use shared::config_system::ArchitectureConfig;
+use shared_config_system::ArchitectureConfig;
 use std::collections::HashMap;
 
 /// Build a minimal ArchitectureConfig with a capabilities layer that forbids

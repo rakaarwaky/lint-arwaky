@@ -1,13 +1,13 @@
 // PURPOSE: SurfacePurityAuditor — AES703: surface folder purity and docs
 
-use shared::structure_rules::utility_structure_parsers::{self, sorted};
+use shared_structure_rules::utility_structure_parsers::{self, sorted};
 
-use shared::structure_rules::contract_structure_protocol::IStructureSurfacePurityProtocol;
-use shared::structure_rules::taxonomy_structure_rules_constant as consts;
-use shared::structure_rules::taxonomy_structure_rules_request::{
+use shared_structure_rules::contract_structure_protocol::IStructureSurfacePurityProtocol;
+use shared_structure_rules::taxonomy_structure_rules_constant as consts;
+use shared_structure_rules::taxonomy_structure_rules_request::{
     StructureFinding, StructureRequest,
 };
-use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
+use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
 /// AES703: checks that surface-dominated folders carry only surface files plus
 /// permitted support files, and document themselves with DESIGN.md.
@@ -74,7 +74,7 @@ fn check_surface_folder(
     folder: &std::path::Path,
     folder_rel: &str,
     ws_root: &std::path::Path,
-    inventory: &shared::structure_rules::taxonomy_structure_rules_vo::FolderInventory,
+    inventory: &shared_structure_rules::taxonomy_structure_rules_vo::FolderInventory,
     findings: &mut Vec<StructureFinding>,
 ) {
     // Purity: no capabilities or agent files.

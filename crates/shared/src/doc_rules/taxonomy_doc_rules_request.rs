@@ -1,6 +1,6 @@
 // PURPOSE: DocRequest — request payload for the doc-rules aggregate
 
-use crate::common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_severity_vo::Severity;
 use std::path::{Path, PathBuf};
 
 /// A Markdown document the checker inspects.
@@ -57,8 +57,8 @@ impl DocFinding {
     /// it to *root* yields the absolute path the SARIF renderer expects.
     /// When the path cannot be constructed the item falls back to a default
     /// file path so the mapping is total.
-    pub fn to_violation_item(&self, root: &Path) -> crate::common::ViolationItem {
-        use crate::common::{ErrorCode, FilePath, LintMessage, ViolationItem};
+    pub fn to_violation_item(&self, root: &Path) -> shared_common::ViolationItem {
+        use shared_common::{ErrorCode, FilePath, LintMessage, ViolationItem};
         let file = if self.doc.is_empty() {
             FilePath::default()
         } else {
@@ -72,8 +72,8 @@ impl DocFinding {
         ViolationItem {
             code: ErrorCode::raw(self.code),
             file,
-            line: crate::common::LineNumber::new(self.line as i64),
-            column: crate::common::ColumnNumber::new(1),
+            line: shared_common::LineNumber::new(self.line as i64),
+            column: shared_common::ColumnNumber::new(1),
             message: LintMessage::new(self.message.clone()),
             severity: self.severity.clone(),
         }

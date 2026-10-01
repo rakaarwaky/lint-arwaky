@@ -1,19 +1,19 @@
 // Smoke tests — quick boot + respond within 5s.
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::common::PatternList;
-use shared::common::SuffixPolicyVO;
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::LintResultList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::naming_rules::SUFFIX_POLICY_STRICT;
-use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
-use shared::naming_rules::taxonomy_naming_rules_response::NamingResponse;
-use shared::naming_rules::utility_naming_checker::{get_stem, get_suffix};
+use shared_common::PatternList;
+use shared_common::SuffixPolicyVO;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_naming_rules::SUFFIX_POLICY_STRICT;
+use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
+use shared_naming_rules::utility_naming_checker::{get_stem, get_suffix};
 use std::collections::HashMap;
 use std::sync::Arc;
 

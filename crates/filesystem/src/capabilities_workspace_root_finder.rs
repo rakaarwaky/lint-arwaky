@@ -2,11 +2,11 @@
 // Implements IWorkspaceProtocol by delegating to utility_workspace_detection stateless functions.
 // 3-block structure per AES skill.
 
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_config_language_vo::ConfigLanguage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::filesystem::utility_workspace_detection;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::utility_workspace_detection;
 use std::path::{Path, PathBuf};
 
 // ─── Block 1: Struct Definition ───────────────────────────

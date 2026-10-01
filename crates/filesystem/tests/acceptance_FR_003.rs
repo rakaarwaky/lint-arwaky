@@ -8,8 +8,8 @@
 // US7: Non-UTF-8 files are handled gracefully.
 
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
-use shared::common::PatternList;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_common::PatternList;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use tempfile::TempDir;
 
 fn make_io() -> CapabilitiesFileSystemIO {

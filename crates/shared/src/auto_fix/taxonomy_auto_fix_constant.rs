@@ -1,6 +1,6 @@
 // PURPOSE: Shared constants for the auto-fix feature.
 
-use crate::common::ErrorCode;
+use shared_common::ErrorCode;
 
 /// Error codes that auto-fix can handle.
 pub static FIXABLE_CODES: once_cell::sync::Lazy<Vec<ErrorCode>> =

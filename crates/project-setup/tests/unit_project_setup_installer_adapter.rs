@@ -1,7 +1,7 @@
 // Unit tests — SetupInstallerAdapter edge cases.
 use project_setup_lint_arwaky::capabilities_setup_installer_adapter::SetupInstallerAdapter;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::project_setup::IAdapterInstallationProtocol;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_project_setup::IAdapterInstallationProtocol;
 
 #[test]
 fn install_python_packages_empty_returns_ok() {

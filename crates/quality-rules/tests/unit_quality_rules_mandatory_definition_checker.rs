@@ -1,10 +1,8 @@
 // Unit tests for MandatoryDefinitionChecker — AES303 mandatory class definition.
 use quality_rules_lint_arwaky::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
 use quality_rules_lint_arwaky::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
-use shared::common::{BooleanVO, LayerDefinition};
-use shared::quality_rules::{
-    CodeAnalysisRuleVO, IDeadInheritanceProtocol, IMandatoryClassProtocol,
-};
+use shared_common::{BooleanVO, LayerDefinition};
+use shared_quality_rules::{CodeAnalysisRuleVO, IDeadInheritanceProtocol, IMandatoryClassProtocol};
 
 fn class_checker() -> MandatoryDefinitionChecker {
     MandatoryDefinitionChecker::new()

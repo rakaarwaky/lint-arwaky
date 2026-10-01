@@ -1,17 +1,17 @@
 // PURPOSE: SuffixPolicyChecker — AES102 suffix/prefix policy enforcement capability
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::{LintResult, LintResultList};
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::naming_rules::contract_naming_checker_protocol::ISuffixPolicyProtocol;
-use shared::naming_rules::taxonomy_naming_rules_constant::{
+use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::{LintResult, LintResultList};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_naming_rules::contract_naming_checker_protocol::ISuffixPolicyProtocol;
+use shared_naming_rules::taxonomy_naming_rules_constant::{
     RULE_CODE_SUFFIX_PREFIX, SPECIALIZED_LAYER_MARKER, SUFFIX_POLICY_STRICT,
 };
-use shared::naming_rules::utility_naming_checker::{
+use shared_naming_rules::utility_naming_checker::{
     basename_of, detect_layer, get_stem, get_suffix, parse_path, rule_exception_set,
     string_filename_result,
 };

@@ -1,10 +1,10 @@
 use crate::surface_lint_action::SurfaceLintExecutor;
-use shared::common::FilePath;
-use shared::tui::{ConfirmState, LintExecutionResult, ScanUpdate};
+use shared_common::FilePath;
+use shared_tui::{ConfirmState, LintExecutionResult, ScanUpdate};
 
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::tui::TuiEvent;
-use shared::tui::{AppState, PanelFocus, PreviewMode};
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_tui::TuiEvent;
+use shared_tui::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
 
 // PURPOSE: Surface-layer action handler — the central state machine for TUI events.
@@ -511,7 +511,7 @@ impl SurfaceActionHandler {
                 if name.starts_with('.') {
                     return None;
                 }
-                shared::tui::FileEntry::from_path(&entry_path)
+                shared_tui::FileEntry::from_path(&entry_path)
             })
             .collect();
         if state.entries.is_empty() {
@@ -548,9 +548,9 @@ impl SurfaceActionHandler {
                 if total > max_lines {
                     output.push_str(&format!("\n... ({} more lines)", total - max_lines));
                 }
-                shared::common::DisplayContent::new(output)
+                shared_common::DisplayContent::new(output)
             }
-            Err(e) => shared::common::DisplayContent::new(format!("Cannot read file: {e}")),
+            Err(e) => shared_common::DisplayContent::new(format!("Cannot read file: {e}")),
         };
         state.preview_text = display.to_string();
         state.preview_scroll = 0;
@@ -574,7 +574,7 @@ impl SurfaceActionHandler {
         F: FnOnce(
             &SurfaceLintExecutor,
             &str,
-            &shared::tui::taxonomy_tui_vo::ActionFlags,
+            &shared_tui::taxonomy_tui_vo::ActionFlags,
         ) -> LintExecutionResult,
     {
         let path = state.selected_path();

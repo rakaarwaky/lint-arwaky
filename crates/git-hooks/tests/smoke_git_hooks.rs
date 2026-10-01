@@ -1,6 +1,6 @@
 // Smoke tests — verify container creation and aggregate access complete within 5s.
 use git_hooks_lint_arwaky::root_git_hooks_container::GitContainer;
-use shared::common::FilePath;
+use shared_common::FilePath;
 use std::sync::Arc;
 
 #[test]
@@ -50,7 +50,7 @@ fn git_container_aggregate_trait_object() {
     let io = fc.io();
     let fp = FilePath::new("/tmp".to_string()).unwrap();
     let container = GitContainer::new(fp, filesystem, io);
-    let _: Arc<dyn shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate> =
+    let _: Arc<dyn shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate> =
         container.aggregate();
     let elapsed = start.elapsed();
     assert!(

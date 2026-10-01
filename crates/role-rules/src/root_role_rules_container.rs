@@ -18,8 +18,8 @@ use crate::capabilities_taxonomy_role_auditor::TaxonomyRoleChecker;
 use crate::capabilities_utility_python_role_auditor::UtilityPythonRoleAuditor;
 use crate::capabilities_utility_rust_role_auditor::UtilityRustRoleAuditor;
 use crate::capabilities_utility_ts_role_auditor::UtilityTypeScriptRoleAuditor;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::role_rules::IRoleRunnerAggregate;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_role_rules::IRoleRunnerAggregate;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

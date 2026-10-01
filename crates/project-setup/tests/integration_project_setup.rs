@@ -1,6 +1,6 @@
 // Integration tests — full DI wiring via SetupContainer.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::{
+use shared_project_setup::{
     IAdapterInstallationProtocol, IEnvGenerationProtocol, ILanguageDetectionProtocol,
     IMcpConfigGenerationProtocol, ISetupAggregate, SetupRequest,
 };
@@ -66,7 +66,7 @@ fn mcp_config_generate_via_container() {
 
 #[test]
 fn aggregate_get_config_template() {
-    let result = shared::project_setup::utility_project_setup_helpers::get_config_template("rust");
+    let result = shared_project_setup::utility_project_setup_helpers::get_config_template("rust");
     assert!(result.is_ok());
     assert!(!result.unwrap().is_empty());
 }

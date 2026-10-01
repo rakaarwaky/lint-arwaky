@@ -1,17 +1,17 @@
 // PURPOSE: LintResult, LintResultList, FilePathSet — value objects for lint violation results
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_vo::ColumnNumber;
-use crate::common::taxonomy_common_vo::LineNumber;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_lint_vo::LocationList;
-use crate::common::taxonomy_lint_vo::ScopeRef;
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_severity_vo::Severity;
-use crate::common::taxonomy_suggestion_vo::DescriptionVO;
+use crate::taxonomy_adapter_name_vo::AdapterName;
+use crate::taxonomy_common_vo::ColumnNumber;
+use crate::taxonomy_common_vo::LineNumber;
+use crate::taxonomy_error_vo::ErrorCode;
+use crate::taxonomy_layer_vo::Identity;
+use crate::taxonomy_lint_vo::LocationList;
+use crate::taxonomy_lint_vo::ScopeRef;
+use crate::taxonomy_message_vo::LintMessage;
+use crate::taxonomy_path_vo::FilePath;
+use crate::taxonomy_severity_vo::Severity;
+use crate::taxonomy_suggestion_vo::DescriptionVO;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct LintResult {

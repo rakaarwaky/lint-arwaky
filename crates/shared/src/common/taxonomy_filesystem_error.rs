@@ -1,9 +1,9 @@
 // PURPOSE: FileSystemError — structured error type for filesystem operation failures
-use crate::common::taxonomy_action_vo::ActionName;
-use crate::common::taxonomy_common_error::Cause;
-use crate::common::taxonomy_common_error::ErrorMessage;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::taxonomy_action_vo::ActionName;
+use crate::taxonomy_common_error::Cause;
+use crate::taxonomy_common_error::ErrorMessage;
+use crate::taxonomy_error_vo::ErrorCode;
+use crate::taxonomy_path_vo::FilePath;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, thiserror::Error)]
@@ -16,7 +16,7 @@ pub struct FileSystemError {
     #[serde(default)]
     pub cause: Cause,
     #[serde(default)]
-    pub error_id: crate::common::taxonomy_error_vo::ErrorId,
+    pub error_id: crate::taxonomy_error_vo::ErrorId,
 }
 
 impl FileSystemError {
@@ -27,7 +27,7 @@ impl FileSystemError {
             operation,
             error_code: ErrorCode::default(),
             cause: Cause::default(),
-            error_id: crate::common::taxonomy_error_vo::ErrorId::raw(3),
+            error_id: crate::taxonomy_error_vo::ErrorId::raw(3),
         }
     }
 

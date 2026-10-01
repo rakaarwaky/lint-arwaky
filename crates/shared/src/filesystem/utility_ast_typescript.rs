@@ -3,7 +3,7 @@
 //
 // Utility: pure functions, no struct, no trait impl
 
-use crate::filesystem::taxonomy_filesystem_vo::{TSClassItem, TSFnItem, TypeScriptMetadata};
+use crate::taxonomy_filesystem_vo::{TSClassItem, TSFnItem, TypeScriptMetadata};
 
 fn text_of(node: tree_sitter::Node, content: &str) -> String {
     content[node.byte_range()].to_string()

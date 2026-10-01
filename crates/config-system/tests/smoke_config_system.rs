@@ -1,8 +1,8 @@
 // Smoke test — verify the config-system crate boots and core operations respond.
 mod common;
 
-use shared::common::FilePath;
-use shared::config_system::ConfigRequest;
+use shared_common::FilePath;
+use shared_config_system::ConfigRequest;
 use tempfile::TempDir;
 
 #[test]

@@ -8,7 +8,7 @@ mod mock_filesystem;
 // source of truth across the workspace (T1/D2).
 
 use dispatcher_lint_arwaky::surface_check_action::{ScanOptions, collect_scan};
-use shared::common::FilePath;
+use shared_common::FilePath;
 use std::sync::Arc;
 
 use mock_filesystem::MockFilesystem;

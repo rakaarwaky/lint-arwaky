@@ -33,11 +33,11 @@ fn fr005_which_mcp_binary_contains_lint_arwaky_mcp() {
 #[test]
 fn fr005_file_exists_check() {
     assert!(
-        shared::project_setup::utility_project_setup_helpers::file_exists("Cargo.toml"),
+        shared_project_setup::utility_project_setup_helpers::file_exists("Cargo.toml"),
         "FR-005: Cargo.toml should exist"
     );
     assert!(
-        !shared::project_setup::utility_project_setup_helpers::file_exists(
+        !shared_project_setup::utility_project_setup_helpers::file_exists(
             "definitely_does_not_exist_12345.txt"
         )
     );
@@ -45,7 +45,7 @@ fn fr005_file_exists_check() {
 
 #[test]
 fn fr005_pre_flight_check() {
-    let results = shared::project_setup::utility_project_setup_helpers::pre_flight_check();
+    let results = shared_project_setup::utility_project_setup_helpers::pre_flight_check();
     assert!(
         !results.is_empty(),
         "FR-005: pre_flight_check should return results"

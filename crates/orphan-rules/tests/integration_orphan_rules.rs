@@ -5,9 +5,9 @@ mod mock_filesystem;
 
 use mock_filesystem::{mock_filesystem, mock_workspace};
 use orphan_rules_lint_arwaky::root_orphan_detector_container::OrphanContainer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::ArchitectureConfig;
-use shared::orphan_rules::{OrphanFileListVO, OrphanRequest};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::ArchitectureConfig;
+use shared_orphan_rules::{OrphanFileListVO, OrphanRequest};
 
 #[test]
 fn container_creates_with_default_config() {
@@ -61,7 +61,7 @@ fn analyzer_scan_orphans_on_empty_dir() {
     let (context, results) = analyzer
         .execute(OrphanRequest::scan(
             &root,
-            &shared::common::taxonomy_common_vo::PatternList::new(Vec::<String>::new()),
+            &shared_common::taxonomy_common_vo::PatternList::new(Vec::<String>::new()),
         ))
         .into_scan_outcome();
     // Empty filesystem returns empty results
@@ -71,7 +71,7 @@ fn analyzer_scan_orphans_on_empty_dir() {
 
 #[test]
 fn analyzer_returns_empty_for_disabled_config() {
-    use shared::common::taxonomy_common_vo::BooleanVO;
+    use shared_common::taxonomy_common_vo::BooleanVO;
     let fs = mock_filesystem();
     let config = ArchitectureConfig {
         enabled: BooleanVO::new(false),
@@ -91,7 +91,7 @@ fn analyzer_returns_empty_for_disabled_config() {
 
 #[test]
 fn analyzer_check_orphans_with_context_returns_empty_for_no_files() {
-    use shared::filesystem::taxonomy_filesystem_vo::{
+    use shared_filesystem::taxonomy_filesystem_vo::{
         GraphAnalysisContext, ImportGraph, InboundLinkMap, InheritanceMap,
     };
     use std::collections::HashMap;

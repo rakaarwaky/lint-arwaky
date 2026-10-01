@@ -1,6 +1,6 @@
 // Acceptance test — FR-002: Environment file generation produces valid .env with PHANTOM_ROOT.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::common::taxonomy_path_vo::DirectoryPath;
+use shared_common::taxonomy_path_vo::DirectoryPath;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
@@ -59,7 +59,7 @@ fn fr002_env_writable_to_disk() {
     let home = DirectoryPath::new(tmp.path().to_string_lossy().to_string()).unwrap();
     let env = env_gen.generate_env(&home);
     let path = tmp.path().join(".env");
-    let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+    let result = shared_project_setup::utility_project_setup_helpers::write_config_file(
         &path.to_string_lossy(),
         env.value(),
     );

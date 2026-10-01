@@ -18,31 +18,31 @@
 //   5. Return aggregated LintResult list
 
 use rayon::prelude::*;
-use shared::cli_commands::{LintResult, LintResultList};
+use shared_cli_commands::{LintResult, LintResultList};
 
-use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::quality_rules::contract_quality_protocol::IBypassCheckerProtocol;
-use shared::quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
-use shared::quality_rules::contract_quality_protocol::IDeadInheritanceProtocol;
-use shared::quality_rules::contract_quality_protocol::ILineCheckerProtocol;
-use shared::quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
-use shared::quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
-use shared::quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
+use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared_quality_rules::contract_quality_protocol::IBypassCheckerProtocol;
+use shared_quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
+use shared_quality_rules::contract_quality_protocol::IDeadInheritanceProtocol;
+use shared_quality_rules::contract_quality_protocol::ILineCheckerProtocol;
+use shared_quality_rules::contract_quality_protocol::IMandatoryClassProtocol;
+use shared_quality_rules::taxonomy_quality_rules_request::CodeAnalysisRequest;
+use shared_quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
 
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_compliance_score::compute_score;
-use shared::common::utility_layer_detector::{
+use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::utility_compliance_score::compute_score;
+use shared_common::utility_layer_detector::{
     collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,
     resolve_specialized_layer,
 };
-use shared::common::{BooleanVO, Score};
-use shared::common::{LayerMapVO, LayerNameVO};
-use shared::config_system::ArchitectureConfig;
-use shared::quality_rules::CodeAnalysisRuleVO;
+use shared_common::{BooleanVO, Score};
+use shared_common::{LayerMapVO, LayerNameVO};
+use shared_config_system::ArchitectureConfig;
+use shared_quality_rules::CodeAnalysisRuleVO;
 
-use shared::quality_rules::utility_violation_formatter::format_code_analysis_violation;
+use shared_quality_rules::utility_violation_formatter::format_code_analysis_violation;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -121,7 +121,7 @@ impl CodeAnalysisOrchestrator {
     /// Run analysis on pre-parsed file entries from the filesystem crate.
     pub fn run_analysis_with_entries(
         &self,
-        files: &[shared::filesystem::taxonomy_filesystem_vo::FileEntry],
+        files: &[shared_filesystem::taxonomy_filesystem_vo::FileEntry],
     ) -> Vec<LintResult> {
         if !self.config.enabled.value {
             return Vec::new();
@@ -155,8 +155,8 @@ impl CodeAnalysisOrchestrator {
                     return v;
                 }
 
-                // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
-                if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) {
+                // Skip barrel files (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
+                if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) {
                     return v;
                 }
 
@@ -250,7 +250,7 @@ impl CodeAnalysisOrchestrator {
 
     pub fn check_critical(&self, results: &[LintResult]) -> BooleanVO {
         BooleanVO::new(
-            shared::quality_rules::utility_compliance_checker::contains_critical_severity(results),
+            shared_quality_rules::utility_compliance_checker::contains_critical_severity(results),
         )
     }
 

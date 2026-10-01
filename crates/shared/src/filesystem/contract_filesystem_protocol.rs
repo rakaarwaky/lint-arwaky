@@ -5,18 +5,18 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_config_language_vo::ConfigLanguage;
-use crate::common::taxonomy_language_vo::Language;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_source_vo::ContentString;
-use crate::common::taxonomy_tool_name_vo::ToolName;
-use crate::filesystem::taxonomy_filesystem_vo::{
+use crate::taxonomy_filesystem_vo::{
     ByteCount, FileExtension, FileMode, GitCommandResult, ParsedLines, ScanTiming,
 };
-use crate::filesystem::taxonomy_filesystem_vo::{
+use crate::taxonomy_filesystem_vo::{
     DefinitionEntry, FileEntry, ImplEntry, ImportEntry, ParseWarning,
 };
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_source_vo::ContentString;
+use shared_common::taxonomy_tool_name_vo::ToolName;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -37,7 +37,7 @@ pub trait IFileSystemIOProtocol: Send + Sync {
     /// Check if path should be ignored.
     fn should_ignore(
         &self,
-        path: &crate::common::taxonomy_path_vo::FilePath,
+        path: &shared_common::taxonomy_path_vo::FilePath,
         ignored: &[String],
     ) -> bool;
 

@@ -1,7 +1,7 @@
 // Acceptance test — FR-001: MCP Configuration Generation.
 // Tests all 7 client formats, binary resolution, and alwaysAllow list.
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::project_setup::SetupRequest;
+use shared_project_setup::SetupRequest;
 use tempfile::TempDir;
 
 fn make_container() -> SetupContainer {
@@ -283,7 +283,7 @@ fn fr001_configs_writable_to_disk() {
     ] {
         let json_str = serde_json::to_string_pretty(config.value()).unwrap();
         let path = tmp.path().join(format!("mcp_{}.json", name));
-        let result = shared::project_setup::utility_project_setup_helpers::write_config_file(
+        let result = shared_project_setup::utility_project_setup_helpers::write_config_file(
             &path.to_string_lossy(),
             &json_str,
         );

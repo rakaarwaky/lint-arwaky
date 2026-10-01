@@ -8,17 +8,17 @@
 // but delegates per-violation work to the three dedicated capabilities
 // (UnusedImportFix, BypassFix, SymbolRename).
 
-use shared::auto_fix::contract_fix_protocol::{
+use shared_auto_fix::contract_fix_protocol::{
     IBypassFixProtocol, ISymbolRenameProtocol, IUnusedImportFixProtocol, IViolationReportProtocol,
 };
-use shared::auto_fix::{FIXABLE_CODES, FixOutcome, FixResult, RUST_KEYWORDS, SkipReason};
-use shared::common::taxonomy_common_error::ErrorMessage;
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::{AdapterName, Count, DescriptionVO, ErrorCode};
-use shared::quality_rules::CodeAnalysisRequest;
-use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared_auto_fix::{FIXABLE_CODES, FixOutcome, FixResult, RUST_KEYWORDS, SkipReason};
+use shared_common::taxonomy_common_error::ErrorMessage;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::{AdapterName, Count, DescriptionVO, ErrorCode};
+use shared_quality_rules::CodeAnalysisRequest;
+use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -57,7 +57,7 @@ impl IViolationReportProtocol for ViolationReport {
         let mut total_fixable =
             naming_violations.len() + bypass_violations.len() + unused_import_violations.len();
         let mut manual_skipped: Vec<LintMessage> = Vec::new();
-        let mut events: Vec<shared::auto_fix::FixApplied> = Vec::new();
+        let mut events: Vec<shared_auto_fix::FixApplied> = Vec::new();
 
         for violation in &naming_violations {
             let msg = violation.message.value();
@@ -238,8 +238,8 @@ impl ViolationReport {
         path: &FilePath,
         error_code: &str,
         changes: usize,
-    ) -> shared::auto_fix::FixApplied {
-        shared::auto_fix::FixApplied::new(
+    ) -> shared_auto_fix::FixApplied {
+        shared_auto_fix::FixApplied::new(
             path.clone(),
             AdapterName::raw("violation-report"),
             ErrorCode::raw(error_code.to_string()),

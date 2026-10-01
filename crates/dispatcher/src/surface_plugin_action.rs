@@ -1,13 +1,13 @@
 // PURPOSE: PluginCommandsSurface — adapter/plugin listing business logic, no formatting.
-use shared::common::AdapterNameList;
-use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::external_lint::IExternalLintAggregate;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_common::AdapterNameList;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_external_lint::IExternalLintAggregate;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 use std::sync::Arc;
 
 pub fn collect_adapters(external_lint: Arc<dyn IExternalLintAggregate>) -> AdapterNameList {
     external_lint
-        .execute(shared::external_lint::ExternalLintRequest::AdapterNames)
+        .execute(shared_external_lint::ExternalLintRequest::AdapterNames)
         .into_adapter_names()
 }
 

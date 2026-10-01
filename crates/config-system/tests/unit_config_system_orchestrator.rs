@@ -8,8 +8,8 @@ use config_system_lint_arwaky::capabilities_parser_provider::ConfigParserProvide
 // ConfigRulesValidator removed: validation is a shared utility function
 use config_system_lint_arwaky::capabilities_workspace_detector::WorkspaceDetector;
 use config_system_lint_arwaky::capabilities_yaml_reader::ConfigYamlReader;
-use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
+use shared_common::FilePath;
+use shared_config_system::{ConfigLanguage, ConfigRequest, IConfigOrchestratorAggregate};
 
 use std::fs;
 use std::sync::Arc;
@@ -103,7 +103,7 @@ fn load_config_for_language_injects_defaults_when_no_layers() {
 #[test]
 fn load_config_sync_returns_defaults_for_empty_dir() {
     let tmp = TempDir::new().unwrap();
-    let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
+    let fp = shared_common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
     let config = make_orchestrator()
         .execute(ConfigRequest::load_sync(&fp))
         .into_sync_config();
@@ -119,7 +119,7 @@ fn load_config_sync_finds_config_in_current_dir() {
     )
     .unwrap();
     fs::write(tmp.path().join("Cargo.toml"), "[package]\nname=\"x\"\n").unwrap();
-    let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
+    let fp = shared_common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
     let config = make_orchestrator()
         .execute(ConfigRequest::load_sync(&fp))
         .into_sync_config();
@@ -129,7 +129,7 @@ fn load_config_sync_finds_config_in_current_dir() {
 #[test]
 fn ignored_paths_includes_hardcoded_defaults() {
     let tmp = TempDir::new().unwrap();
-    let fp = shared::common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
+    let fp = shared_common::taxonomy_path_vo::FilePath::new(tmp.path().to_str().unwrap()).unwrap();
     let paths = make_orchestrator()
         .execute(ConfigRequest::ignored_paths(&fp))
         .into_patterns();

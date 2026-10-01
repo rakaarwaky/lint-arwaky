@@ -1,8 +1,8 @@
 // PURPOSE: Skill read/list — CLI output for embedded AES skill documentation.
 // Surface layer: formats EMBEDDED_SKILLS for the terminal, no business logic.
-use shared::common::ExitCode;
-use shared::project_setup::EmbeddedSkillVO;
-use shared::project_setup::taxonomy_project_setup_constant::EMBEDDED_SKILLS;
+use shared_common::ExitCode;
+use shared_project_setup::EmbeddedSkillVO;
+use shared_project_setup::taxonomy_project_setup_constant::EMBEDDED_SKILLS;
 use std::collections::BTreeMap;
 
 /// One row of the `skill list` table.

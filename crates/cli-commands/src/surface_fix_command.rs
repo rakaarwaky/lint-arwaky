@@ -1,8 +1,8 @@
 // PURPOSE: Fix command — CLI thin wrapper
 // Calls dispatcher for fix business logic, only adds CLI output.
-use shared::auto_fix::IFixAggregate;
-use shared::common::{ExitCode, FilePath};
-use shared::quality_rules::ICodeAnalysisAggregate;
+use shared_auto_fix::IFixAggregate;
+use shared_common::{ExitCode, FilePath};
+use shared_quality_rules::ICodeAnalysisAggregate;
 use std::sync::Arc;
 use tracing::{error, info};
 

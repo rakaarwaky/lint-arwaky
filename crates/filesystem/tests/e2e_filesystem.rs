@@ -7,13 +7,13 @@ use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO
 use filesystem_lint_arwaky::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
-use shared::common::PatternList;
-use shared::common::taxonomy_language_vo::Language;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{DefinitionEntry, FileEntry};
+use shared_common::PatternList;
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::{DefinitionEntry, FileEntry};
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -145,7 +145,7 @@ fn e2e_full_pipeline_with_graph_query() {
     let implementations = Vec::new();
 
     for entry in &files {
-        if let Some(shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(rust_meta)) =
+        if let Some(shared_filesystem::taxonomy_filesystem_vo::ParseMetadata::Rust(rust_meta)) =
             &entry.parse_metadata
         {
             for def in &rust_meta.struct_definitions {
@@ -252,7 +252,7 @@ fn e2e_workspace_detection_in_pipeline() {
     let lang = workspace.detect_language_from_path("src/main.rs");
     assert_eq!(
         lang,
-        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
+        shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust
     );
 
     // Source dir detection — look for crates/packages/modules, not src/

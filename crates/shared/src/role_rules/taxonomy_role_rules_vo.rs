@@ -1,17 +1,17 @@
 // PURPOSE: Role-rules value objects — layer name helpers and role violation payloads (AES401-406).
 use std::collections::HashSet;
 
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_name_vo::SymbolName;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_AGENT;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_CAPABILITIES;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_CONTRACT;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_GLOBAL;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_ROOT;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_SURFACES;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_TAXONOMY;
-use crate::role_rules::taxonomy_role_rules_constant::LAYER_UTILITY;
+use crate::taxonomy_role_rules_constant::LAYER_AGENT;
+use crate::taxonomy_role_rules_constant::LAYER_CAPABILITIES;
+use crate::taxonomy_role_rules_constant::LAYER_CONTRACT;
+use crate::taxonomy_role_rules_constant::LAYER_GLOBAL;
+use crate::taxonomy_role_rules_constant::LAYER_ROOT;
+use crate::taxonomy_role_rules_constant::LAYER_SURFACES;
+use crate::taxonomy_role_rules_constant::LAYER_TAXONOMY;
+use crate::taxonomy_role_rules_constant::LAYER_UTILITY;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_name_vo::SymbolName;
 
 // ─── Layer name helpers ──────────────────────────────────────────────
 

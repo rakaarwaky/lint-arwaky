@@ -1,11 +1,9 @@
 // Unit tests for config system validation utilities.
-use shared::common::AdapterName;
-use shared::common::{Count, Score};
-use shared::config_system::Thresholds;
-use shared::config_system::taxonomy_config_system_vo::{
-    AdapterEntry, AdapterStatus, ProjectConfig,
-};
-use shared::config_system::utility_config_parser::{is_adapter_enabled, validate_thresholds};
+use shared_common::AdapterName;
+use shared_common::{Count, Score};
+use shared_config_system::Thresholds;
+use shared_config_system::taxonomy_config_system_vo::{AdapterEntry, AdapterStatus, ProjectConfig};
+use shared_config_system::utility_config_parser::{is_adapter_enabled, validate_thresholds};
 
 fn make_config_with_adapters(adapters: Vec<AdapterEntry>) -> ProjectConfig {
     ProjectConfig {

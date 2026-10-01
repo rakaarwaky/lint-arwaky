@@ -1,6 +1,6 @@
-use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::maintenance::contract_maintenance_protocol::IToolUpdateProtocol;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_maintenance::contract_maintenance_protocol::IToolUpdateProtocol;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

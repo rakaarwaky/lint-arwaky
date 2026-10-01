@@ -2,14 +2,14 @@
 // Adapted: sync — IImportRunnerAggregate::run_audit is now sync. No tokio runtime.
 use std::sync::Arc;
 
-use shared::common::FilePath;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
+use shared_common::FilePath;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_import_rules::IImportRunnerAggregate;
+use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 
-use shared::common::ViolationItem;
+use shared_common::ViolationItem;
 
 pub fn collect_import(
     path: Option<FilePath>,

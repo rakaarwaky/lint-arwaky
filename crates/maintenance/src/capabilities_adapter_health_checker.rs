@@ -1,9 +1,9 @@
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::maintenance::contract_maintenance_protocol::IAdapterHealthProtocol;
-use shared::maintenance::taxonomy_maintenance_vo::{HealthCheckAdapterVO, HealthCheckResult};
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_maintenance::contract_maintenance_protocol::IAdapterHealthProtocol;
+use shared_maintenance::taxonomy_maintenance_vo::{HealthCheckAdapterVO, HealthCheckResult};
 use std::sync::Arc;
 
-use shared::maintenance::utility_maintenance_helpers;
+use shared_maintenance::utility_maintenance_helpers;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 pub struct AdapterHealthChecker {

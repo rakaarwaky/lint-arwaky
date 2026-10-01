@@ -1,15 +1,15 @@
 // PURPOSE: SarifFormatter — implements ISarifFormatProtocol for SARIF output (FR-003).
 use std::collections::{BTreeMap, BTreeSet};
 
-use shared::cli_commands::{Format, LintResult, ScanReport};
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::ISarifFormatProtocol;
-use shared::report_formatter::taxonomy_report_formatter_vo::{
+use shared_cli_commands::{Format, LintResult, ScanReport};
+use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_report_formatter::contract_report_formatter_protocol::ISarifFormatProtocol;
+use shared_report_formatter::taxonomy_report_formatter_vo::{
     SarifArtifactLocation, SarifLocation, SarifPhysicalLocation, SarifRegion,
 };
-use shared::report_formatter::taxonomy_report_formatter_vo::{SarifDriver, SarifRule};
-use shared::report_formatter::taxonomy_report_formatter_vo::{SarifLog, SarifRun, SarifTool};
-use shared::report_formatter::taxonomy_report_formatter_vo::{SarifMessage, SarifResult};
+use shared_report_formatter::taxonomy_report_formatter_vo::{SarifDriver, SarifRule};
+use shared_report_formatter::taxonomy_report_formatter_vo::{SarifLog, SarifRun, SarifTool};
+use shared_report_formatter::taxonomy_report_formatter_vo::{SarifMessage, SarifResult};
 
 // ─── Block 1: Struct Definition ───────────────────────────
 /// SarifFormatter — produces SARIF 2.1.0 JSON output from ScanReport.
@@ -55,11 +55,11 @@ impl Default for SarifFormatter {
 
 /// FR-003: render a full ScanReport as a SARIF 2.1.0 document.
 fn format_sarif_report(report: &ScanReport) -> DisplayContent {
-    fn severity_to_sarif_level(sev: &shared::common::Severity) -> &'static str {
+    fn severity_to_sarif_level(sev: &shared_common::Severity) -> &'static str {
         match sev {
-            shared::common::Severity::CRITICAL | shared::common::Severity::HIGH => "error",
-            shared::common::Severity::MEDIUM => "warning",
-            shared::common::Severity::LOW | shared::common::Severity::INFO => "note",
+            shared_common::Severity::CRITICAL | shared_common::Severity::HIGH => "error",
+            shared_common::Severity::MEDIUM => "warning",
+            shared_common::Severity::LOW | shared_common::Severity::INFO => "note",
         }
     }
 

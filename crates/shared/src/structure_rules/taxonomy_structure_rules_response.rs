@@ -1,6 +1,6 @@
 // PURPOSE: StructureResponse — response payload for the structure-rules aggregate
 
-use crate::structure_rules::taxonomy_structure_rules_request::StructureFinding;
+use crate::taxonomy_structure_rules_request::StructureFinding;
 
 /// Result of a structure invariant audit.
 pub enum StructureResponse {

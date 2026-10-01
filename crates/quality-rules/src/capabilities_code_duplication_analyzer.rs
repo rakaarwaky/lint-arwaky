@@ -1,8 +1,8 @@
-use shared::quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
-use shared::quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
+use shared_quality_rules::contract_quality_protocol::ICodeMetricAnalyzerProtocol;
+use shared_quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
 
-use shared::common::LintMessage;
-use shared::config_system::ArchitectureConfig;
+use shared_common::LintMessage;
+use shared_config_system::ArchitectureConfig;
 use std::collections::hash_map::DefaultHasher;
 use std::sync::Arc;
 
@@ -106,7 +106,7 @@ impl CodeDuplicationAnalyzer {
             for w in lines.windows(min_dup_lines) {
                 // P2.1: normalize once — cache hash for second pass
                 let key =
-                    shared::quality_rules::utility_code_duplication_detector::normalize_window(w);
+                    shared_quality_rules::utility_code_duplication_detector::normalize_window(w);
                 let id = hash_key(&key);
                 global.entry(id).or_default().insert(fi);
                 file_hashes.insert(id);

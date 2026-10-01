@@ -13,13 +13,13 @@ use filesystem::capabilities_tool_resolution::CapabilitiesToolResolution;
 use filesystem::capabilities_workspace_root_finder::CapabilitiesWorkspace;
 use mock_filesystem::mock_workspace;
 use orphan_rules_lint_arwaky::capabilities_orphan_capabilities_analyzer::CapabilitiesOrphanAnalyzer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::orphan_rules::ICapabilitiesOrphanProtocol;
-use shared::orphan_rules::utility_orphan_graph::trace_reachability;
-use shared::quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_orphan_rules::ICapabilitiesOrphanProtocol;
+use shared_orphan_rules::utility_orphan_graph::trace_reachability;
+use shared_quality_rules::taxonomy_quality_rules_vo::ReachabilityResult;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -151,10 +151,10 @@ fn aes503_multiple_files_one_reachable() {
 
 #[test]
 fn aes503_capabilities_violation_display_message() {
-    use shared::orphan_rules::AesOrphanViolation;
+    use shared_orphan_rules::AesOrphanViolation;
     let _violation = AesOrphanViolation::CapabilitiesOrphan {
         stem: "capabilities_handler".to_string(),
-        reason: Some(shared::common::taxonomy_message_vo::LintMessage::new(
+        reason: Some(shared_common::taxonomy_message_vo::LintMessage::new(
             "Not wired in container.".to_string(),
         )),
     };

@@ -1,8 +1,8 @@
 // E2E tests — full pipeline: create temp dir with files → construct FileEntry list → run audit → verify violations.
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use std::fs;
 
 /// Create a FileEntry from a file on disk (simulates filesystem → orchestrator pipeline).

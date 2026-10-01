@@ -5,13 +5,13 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs. One trait per FR-OrphanRules-001..010.
 
-use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
-use crate::orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO;
-use crate::quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext;
-use crate::quality_rules::taxonomy_quality_rules_vo::InheritanceMap;
-use crate::quality_rules::taxonomy_quality_rules_vo::{
+use crate::taxonomy_orphan_rules_vo::FileParseResultVO;
+use crate::taxonomy_orphan_rules_vo::OrphanFileListVO;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext;
+use shared_quality_rules::taxonomy_quality_rules_vo::InheritanceMap;
+use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;

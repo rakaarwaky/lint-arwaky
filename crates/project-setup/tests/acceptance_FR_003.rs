@@ -46,7 +46,7 @@ fn fr003_detect_languages_returns_list() {
 
 #[test]
 fn fr003_get_config_template_rust() {
-    let result = shared::project_setup::utility_project_setup_helpers::get_config_template("rust");
+    let result = shared_project_setup::utility_project_setup_helpers::get_config_template("rust");
     assert!(result.is_ok(), "FR-003: 'rust' should have a template");
     let template = result.unwrap();
     assert!(!template.is_empty());
@@ -55,8 +55,7 @@ fn fr003_get_config_template_rust() {
 
 #[test]
 fn fr003_get_config_template_python() {
-    let result =
-        shared::project_setup::utility_project_setup_helpers::get_config_template("python");
+    let result = shared_project_setup::utility_project_setup_helpers::get_config_template("python");
     assert!(result.is_ok(), "FR-003: 'python' should have a template");
     let template = result.unwrap();
     assert!(!template.is_empty());
@@ -65,7 +64,7 @@ fn fr003_get_config_template_python() {
 #[test]
 fn fr003_get_config_template_javascript() {
     let result =
-        shared::project_setup::utility_project_setup_helpers::get_config_template("javascript");
+        shared_project_setup::utility_project_setup_helpers::get_config_template("javascript");
     assert!(
         result.is_ok(),
         "FR-003: 'javascript' should have a template"

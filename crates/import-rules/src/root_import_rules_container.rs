@@ -1,13 +1,13 @@
 // PURPOSE: ImportContainer — wiring for import-rules feature (root layer, wiring only)
 use crate::agent_import_orchestrator::{ImportOrchestrator, ImportOrchestratorDeps};
-use shared::common::FilePath;
-use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
+use shared_common::FilePath;
+use shared_config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::import_rules::IImportRunnerAggregate;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_import_rules::IImportRunnerAggregate;
 use std::sync::Arc;
 
 pub struct ImportContainer {
@@ -46,7 +46,7 @@ impl ImportContainer {
     ) -> Self {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
         let config = orchestrator
-            .execute(shared::config_system::ConfigRequest::load_sync(&fp))
+            .execute(shared_config_system::ConfigRequest::load_sync(&fp))
             .into_sync_config();
         Self::new_with_config(
             config,

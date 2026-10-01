@@ -2,9 +2,9 @@
 // tests can exercise executor logic without touching the filesystem IO layer.
 // Not a business capability; no corresponding FR.
 
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_tool_name_vo::ToolName;
-use crate::maintenance::taxonomy_maintenance_vo::ToolOutput;
+use crate::taxonomy_maintenance_vo::ToolOutput;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_tool_name_vo::ToolName;
 use std::process::Command;
 
 /// Run a tool from PATH and return its output.

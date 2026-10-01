@@ -1,8 +1,8 @@
 // FR-001 — Project Config Discovery
 mod common;
 
-use shared::common::FilePath;
-use shared::config_system::ConfigRequest;
+use shared_common::FilePath;
+use shared_config_system::ConfigRequest;
 use std::fs;
 use tempfile::TempDir;
 
@@ -47,4 +47,4 @@ fn us1_config_in_parent_directory_is_found() {
     assert!(result.source.path.value.contains("lint_arwaky.config.yaml"));
 }
 
-use shared::config_system::ConfigLanguage;
+use shared_config_system::ConfigLanguage;

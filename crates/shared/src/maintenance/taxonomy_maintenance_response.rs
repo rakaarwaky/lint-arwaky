@@ -1,7 +1,7 @@
 // PURPOSE: MaintenanceResponse — response payload for the maintenance aggregate
 
-use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
-use crate::maintenance::taxonomy_maintenance_vo::{
+use crate::taxonomy_maintenance_vo::MaintenanceStatsVO;
+use crate::taxonomy_maintenance_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, SelfUpdateResultVO,
     ToolchainDiagnostics,
 };

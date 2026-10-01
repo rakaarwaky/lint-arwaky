@@ -1,9 +1,9 @@
 // PURPOSE: Taxonomy parser — YAML → ArchitectureConfig factory functions
 // These functions produce taxonomy VOs from raw YAML, so they belong in taxonomy layer.
-use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use crate::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_common::taxonomy_common_vo::BooleanVO;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
 use std::sync::OnceLock;
 
 static DEFAULT_CONFIG: OnceLock<ArchitectureConfig> = OnceLock::new();
@@ -501,9 +501,9 @@ pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
 /// ```
 pub fn parse_adapter_entries_from_yaml(
     yaml_str: &str,
-) -> Vec<crate::config_system::taxonomy_config_system_vo::AdapterEntry> {
-    use crate::common::taxonomy_adapter_name_vo::AdapterName;
-    use crate::config_system::taxonomy_config_system_vo::{AdapterEntry, AdapterStatus};
+) -> Vec<crate::taxonomy_config_system_vo::AdapterEntry> {
+    use crate::taxonomy_config_system_vo::{AdapterEntry, AdapterStatus};
+    use shared_common::taxonomy_adapter_name_vo::AdapterName;
     let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
         Ok(v) => v,
         Err(_) => return Vec::new(),
@@ -550,13 +550,12 @@ pub fn parse_adapter_entries_from_yaml(
 /// Whether an adapter should run given a parsed project config.
 /// An adapter absent from the config is enabled by default.
 pub fn is_adapter_enabled(
-    config: &crate::config_system::taxonomy_config_system_vo::ProjectConfig,
-    adapter_name: &crate::common::taxonomy_adapter_name_vo::AdapterName,
+    config: &crate::taxonomy_config_system_vo::ProjectConfig,
+    adapter_name: &shared_common::taxonomy_adapter_name_vo::AdapterName,
 ) -> bool {
     for adapter in &config.adapters {
         if adapter.name == *adapter_name {
-            return adapter.status
-                == crate::config_system::taxonomy_config_system_vo::AdapterStatus::Enabled;
+            return adapter.status == crate::taxonomy_config_system_vo::AdapterStatus::Enabled;
         }
     }
     true
@@ -564,8 +563,8 @@ pub fn is_adapter_enabled(
 
 /// Validate threshold values against schema constraints.
 pub fn validate_thresholds(
-    config: &crate::config_system::taxonomy_config_system_vo::ProjectConfig,
-) -> crate::config_system::taxonomy_config_system_vo::ValidationResult {
+    config: &crate::taxonomy_config_system_vo::ProjectConfig,
+) -> crate::taxonomy_config_system_vo::ValidationResult {
     let t = &config.thresholds;
     let mut errors = Vec::new();
 
@@ -580,8 +579,8 @@ pub fn validate_thresholds(
     }
 
     if errors.is_empty() {
-        crate::config_system::taxonomy_config_system_vo::ValidationResult::ok()
+        crate::taxonomy_config_system_vo::ValidationResult::ok()
     } else {
-        crate::config_system::taxonomy_config_system_vo::ValidationResult::fail(&errors.join(" | "))
+        crate::taxonomy_config_system_vo::ValidationResult::fail(&errors.join(" | "))
     }
 }

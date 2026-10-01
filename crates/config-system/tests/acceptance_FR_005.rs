@@ -4,8 +4,8 @@
 // boundary. Config merging tests are in unit_config_system_orchestrator.rs.
 mod common;
 
-use shared::common::FilePath;
-use shared::config_system::{ConfigLanguage, IConfigReadProtocol};
+use shared_common::FilePath;
+use shared_config_system::{ConfigLanguage, IConfigReadProtocol};
 use std::fs;
 use tempfile::TempDir;
 
@@ -49,7 +49,7 @@ fn us5_valid_file_within_root_is_read() {
 
 #[test]
 fn us5_config_language_prevents_path_injection() {
-    use shared::config_system::ConfigLanguage;
+    use shared_config_system::ConfigLanguage;
     use std::str::FromStr;
     assert!(ConfigLanguage::from_str("rust").is_ok());
     assert!(ConfigLanguage::from_str("python").is_ok());

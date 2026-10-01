@@ -1,7 +1,7 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use project_setup_lint_arwaky::root_project_setup_container::SetupContainer;
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::SetupRequest;
+use shared_common::taxonomy_path_vo::DirectoryPath;
+use shared_project_setup::SetupRequest;
 
 fn bench_container_creation(c: &mut Criterion) {
     c.bench_function("setup_container_creation", |b| {

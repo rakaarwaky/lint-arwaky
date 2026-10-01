@@ -1,7 +1,7 @@
 // Unit tests for BypassChecker — AES304 bypass comment/attribute detection.
 use quality_rules_lint_arwaky::capabilities_check_bypass_checker::BypassChecker;
-use shared::common::PatternList;
-use shared::quality_rules::IBypassCheckerProtocol;
+use shared_common::PatternList;
+use shared_quality_rules::IBypassCheckerProtocol;
 
 fn checker() -> BypassChecker {
     BypassChecker::new()

@@ -4,11 +4,11 @@
 // Stateless functions supporting the four business capabilities (MCP config,
 // env generation, language detection, adapter installation).
 
-use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::project_setup::taxonomy_project_setup_vo::{
+use crate::taxonomy_project_setup_vo::{
     CreateConfigDirResult, EmbeddedSkillVO, PackageManagerStatus, PreFlightResult, SetupError,
     WriteConfigResult,
 };
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 
 /// Return the embedded config template for the given language.
 pub fn get_config_template(language: &str) -> Result<&'static str, SetupError> {
@@ -24,7 +24,7 @@ pub fn get_config_template(language: &str) -> Result<&'static str, SetupError> {
 
 /// Retrieve all embedded skill files compiled into the binary.
 pub fn get_embedded_skills() -> &'static [EmbeddedSkillVO] {
-    crate::project_setup::EMBEDDED_SKILLS
+    crate::EMBEDDED_SKILLS
 }
 
 /// Write a configuration file to disk and return a description.

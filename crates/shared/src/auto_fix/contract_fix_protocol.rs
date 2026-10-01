@@ -8,13 +8,13 @@
 //
 // FR count: exactly 4 FR-backed protocols.
 
-use crate::auto_fix::taxonomy_auto_fix_vo::FixOutcome;
-use crate::auto_fix::taxonomy_auto_fix_vo::FixResult;
-use crate::common::taxonomy_common_vo::LineNumber;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_name_vo::SymbolName;
-use crate::common::taxonomy_path_vo::FilePath;
+use crate::taxonomy_auto_fix_vo::FixOutcome;
+use crate::taxonomy_auto_fix_vo::FixResult;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_path_vo::FilePath;
 pub trait IUnusedImportFixProtocol: Send + Sync {
     /// FR-001: Remove unused import at the specified line.
     fn fix_unused_import(&self, file_path: &str, line: LineNumber) -> FixOutcome;

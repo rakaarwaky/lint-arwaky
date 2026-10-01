@@ -10,15 +10,15 @@ mod mock_filesystem;
 
 use std::sync::Arc;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_message_vo::ComplianceStatus;
-use shared::common::taxonomy_operation_error::LinterOperationError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::ICommandExecutorProtocol;
-use shared::external_lint::IJsToolResolutionProtocol;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_external_lint::ICommandExecutorProtocol;
+use shared_external_lint::IJsToolResolutionProtocol;
+use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use mock_filesystem::MockFilesystem;
 
@@ -26,9 +26,9 @@ struct MockCmdExecutor;
 impl ICommandExecutorProtocol for MockCmdExecutor {
     fn execute_command(
         &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
+        _: shared_common::taxonomy_common_vo::PatternList,
         _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+        _: Option<shared_common::taxonomy_duration_vo::Timeout>,
     ) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::default())
     }
@@ -60,7 +60,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -72,7 +72,7 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: &str,
     ) -> Result<ComplianceStatus, LinterOperationError> {
         Ok(ComplianceStatus::new(false))

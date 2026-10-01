@@ -1,7 +1,7 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::maintenance::contract_maintenance_protocol::IDependencyReportProtocol;
-use shared::maintenance::taxonomy_maintenance_vo::{DependencyInfo, DependencyReport};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_maintenance::contract_maintenance_protocol::IDependencyReportProtocol;
+use shared_maintenance::taxonomy_maintenance_vo::{DependencyInfo, DependencyReport};
 use std::path::Path;
 use std::sync::Arc;
 

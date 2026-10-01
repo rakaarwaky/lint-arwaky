@@ -1,8 +1,8 @@
 // PURPOSE: Taxonomy layer — filesystem domain value objects
 // Shared across all crates that need file I/O, parsing, or dependency graph types.
 
-pub use crate::common::taxonomy_language_vo::Language;
 use serde::{Deserialize, Serialize};
+pub use shared_common::taxonomy_language_vo::Language;
 use std::collections::HashMap;
 use std::path::PathBuf;
 

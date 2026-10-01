@@ -17,10 +17,10 @@ use role_rules_lint_arwaky::capabilities_taxonomy_role_auditor::TaxonomyRoleChec
 use role_rules_lint_arwaky::capabilities_utility_python_role_auditor::UtilityPythonRoleAuditor;
 use role_rules_lint_arwaky::capabilities_utility_rust_role_auditor::UtilityRustRoleAuditor;
 use role_rules_lint_arwaky::capabilities_utility_ts_role_auditor::UtilityTypeScriptRoleAuditor;
-use shared::common::LintResult;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
-use shared::role_rules::{
+use shared_common::LintResult;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_role_rules::{
     IAgentRoleProtocol, ICapabilitiesRoleProtocol, IClassificationProtocol, IContractRoleProtocol,
     IRoleRunnerAggregate, ISurfaceRoleProtocol, ITaxonomyRoleProtocol, IUtilityRoleProtocol,
 };
@@ -30,7 +30,7 @@ fn dummy_file() -> FileEntry {
     FileEntry {
         path: std::path::PathBuf::from("src/test.rs"),
         extension: "rs".to_string(),
-        language: shared::filesystem::taxonomy_filesystem_vo::Language::Rust,
+        language: shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
         size: 10,
         content: "fn foo() {}".to_string(),
         parse_ok: true,
@@ -182,7 +182,7 @@ fn utility_typescript_role_auditor_implements_protocol() {
 
 #[test]
 fn role_orchestrator_implements_classification_protocol() {
-    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
+    let config = shared_config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
         taxonomy: Arc::new(TaxonomyRoleChecker::new()),
@@ -208,7 +208,7 @@ fn role_orchestrator_implements_classification_protocol() {
 
 #[test]
 fn role_orchestrator_implements_aggregate() {
-    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
+    let config = shared_config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let rust_auditor = Arc::new(CapabilitiesRustRoleAuditor::new());
     let deps = RoleCheckerDeps {
         taxonomy: Arc::new(TaxonomyRoleChecker::new()),

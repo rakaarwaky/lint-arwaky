@@ -1,11 +1,11 @@
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::orphan_rules::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
-use shared::orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
-use shared::orphan_rules::utility_orphan_filename::file_stem;
-use shared::quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, ReachabilityResult};
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_orphan_rules::contract_orphan_protocol::ICapabilitiesOrphanProtocol;
+use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
+use shared_orphan_rules::utility_orphan_filename::file_stem;
+use shared_quality_rules::taxonomy_quality_rules_vo::{OrphanIndicatorResult, ReachabilityResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -92,7 +92,7 @@ impl CapabilitiesOrphanAnalyzer {
 
     fn extract_identifiers(&self, file_path: &str, content: &str, stem: &str) -> Vec<String> {
         let mut identifiers: Vec<String> = Vec::new();
-        match shared::common::parse_file_content(file_path, content) {
+        match shared_common::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 identifiers.extend(result.struct_names());
                 identifiers.extend(result.trait_names());

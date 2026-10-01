@@ -17,10 +17,10 @@
 // }
 // ```
 
-use crate::common::taxonomy_common_vo::ErrorMessage;
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_name_vo::SymbolName;
-use crate::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_common_vo::ErrorMessage;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::taxonomy_path_vo::FilePath;
 use std::fmt;
 
 /// Domain-level errors for import analysis.

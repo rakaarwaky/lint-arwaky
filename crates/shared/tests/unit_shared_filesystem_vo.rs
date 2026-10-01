@@ -1,6 +1,6 @@
 // Unit tests — shared/filesystem taxonomy VOs.
-use shared_lint_arwaky::common::taxonomy_language_vo::Language;
-use shared_lint_arwaky::filesystem::taxonomy_filesystem_vo::{
+use shared_common::taxonomy_language_vo::Language;
+use shared_filesystem::taxonomy_filesystem_vo::{
     ByteCount, CacheStatsVO, DefinitionEntry, FileEntry, FileExtension, FileMode, FileNodeVO,
     GitCommandResult, GraphAnalysisContext, GraphData, GraphStatsVO, ImplEntry, ImportEdgeVO,
     ImportEntry, ImportGraph, ImportType, InboundLinkMap, InheritanceMap, MemoryBudgetVO,
