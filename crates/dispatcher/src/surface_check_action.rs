@@ -150,8 +150,6 @@ fn apply_filter(mut violations: Vec<ViolationItem>, filter: &Option<String>) -> 
     violations
 }
 
-pub use collect_scan as collect_check;
-
 /// Check if a path belongs to a workspace member.
 pub fn is_member_path(path: &FilePath, ws: &dyn IWorkspaceProtocol) -> bool {
     ws.is_member_path(path)
@@ -918,8 +916,13 @@ fn wait_for_child(mut child: Child, timeout: Duration) -> Result<Output, String>
             Ok(None) => {
                 let _ = child.kill();
                 let _ = child.wait();
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
+                // Do NOT join the reader threads here: if the killed child
+                // forked grandchildren that inherited the pipes, a join would
+                // block until they exit — exactly the hang the timeout was
+                // meant to prevent. Dropping the handles detaches the readers;
+                // they finish at pipe EOF and cannot outlive the process.
+                drop(stdout_reader);
+                drop(stderr_reader);
                 return Err(format!("timed out after {}s", timeout.as_secs_f64()));
             }
             Err(error) => return Err(format!("wait failed: {error}")),
