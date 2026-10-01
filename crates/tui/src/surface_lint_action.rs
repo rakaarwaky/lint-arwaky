@@ -3,7 +3,7 @@
 // formatting. Delegates to dispatcher crate for business logic; formats output as
 // LintExecutionResult for the action handler.
 // All methods are synchronous — consistent with dispatcher sync API.
-use dispatcher::surface_check_action::{ScanOptions, collect_scan};
+use dispatcher::surface_check_action::{ScanOptions, collect_scan, collect_scan_with_progress};
 use dispatcher::surface_ci_action::{CiScanDeps, collect_ci};
 use dispatcher::surface_config_action::collect_config_show;
 use dispatcher::surface_fix_action::collect_fix_direct;
@@ -58,12 +58,24 @@ pub struct SurfaceLintExecutor {
     orphan_factory: Arc<OrphanFactory>,
 }
 
+/// Convert a UI path into the validated domain value exactly once at the
+/// surface boundary. Never replace invalid input with `FilePath::default()`:
+/// an empty path must be visible to the user as an action failure.
+fn validated_path(path: &str) -> Result<FilePath, LintExecutionResult> {
+    FilePath::new(path.to_string())
+        .map_err(|_| LintExecutionResult::failure(format!("Invalid path: {path}")))
+}
+
 // ─── Block 2: Lint Action Methods ─────────────────────────
 
 impl SurfaceLintExecutor {
     pub fn check(&self, path: &str, _flags: &ActionFlags) -> LintExecutionResult {
+        let file_path = match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        };
         let opts = ScanOptions {
-            path: Some(FilePath::new(path.to_string()).unwrap_or_default()),
+            path: Some(file_path),
             multi_project_orchestrator: self.config_orchestrator.clone(),
             filter: None,
             member: None,
@@ -81,8 +93,12 @@ impl SurfaceLintExecutor {
     }
 
     pub fn scan(&self, path: &str) -> LintExecutionResult {
+        let file_path = match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        };
         let opts = ScanOptions {
-            path: Some(FilePath::new(path.to_string()).unwrap_or_default()),
+            path: Some(file_path),
             multi_project_orchestrator: self.config_orchestrator.clone(),
             filter: None,
             member: None,
@@ -99,6 +115,32 @@ impl SurfaceLintExecutor {
         }
     }
 
+    /// Scan with dispatcher-owned progress milestones for the interactive TUI.
+    pub fn scan_with_progress<F>(&self, path: &str, on_progress: F) -> LintExecutionResult
+    where
+        F: FnMut(String, usize, usize),
+    {
+        let file_path = match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        };
+        let opts = ScanOptions {
+            path: Some(file_path),
+            multi_project_orchestrator: self.config_orchestrator.clone(),
+            filter: None,
+            member: None,
+            filesystem: Arc::new(self.fs_seam.as_ref().clone()),
+            scan_aggregates: self.build_scan_aggregates(),
+        };
+        match collect_scan_with_progress(opts, on_progress) {
+            Ok(violations) => {
+                let count = violations.len();
+                LintExecutionResult::success(format_violations(path, &violations), count)
+            }
+            Err(error) => LintExecutionResult::failure(format!("Error: {error}")),
+        }
+    }
+
     pub fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
         let fix_orch = match &self.fix_orchestrator {
             Some(o) => o.clone(),
@@ -112,7 +154,10 @@ impl SurfaceLintExecutor {
                 return LintExecutionResult::failure(output);
             }
         };
-        let fp = Some(FilePath::new(path.to_string()).unwrap_or_default());
+        let fp = Some(match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        });
         match collect_fix_direct(fp, flags.dry_run, self.code_analysis.clone(), fix_orch) {
             Ok(report) => {
                 let mode = if report.dry_run { "DRY-RUN" } else { "LIVE" };
@@ -137,7 +182,10 @@ impl SurfaceLintExecutor {
                 );
             }
         };
-        let fp = Some(FilePath::new(path.to_string()).unwrap_or_default());
+        let fp = Some(match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        });
         let threshold = shared_common::Threshold::new(flags.threshold);
         match collect_ci(deps, fp, threshold) {
             Ok(report) => {
@@ -178,7 +226,10 @@ impl SurfaceLintExecutor {
                 return LintExecutionResult::success(output, 0);
             }
         };
-        let fp = Some(FilePath::new(path.to_string()).unwrap_or_default());
+        let fp = Some(match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        });
         match collect_orphan(fp, None, deps, None) {
             Ok(violations) => {
                 let count = violations.len();
@@ -216,7 +267,10 @@ impl SurfaceLintExecutor {
                 return LintExecutionResult::success(output, 0);
             }
         };
-        let fp = Some(FilePath::new(path.to_string()).unwrap_or_default());
+        let fp = Some(match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        });
         match collect_security(maintenance, fp) {
             Ok(report) => {
                 let count = report.findings.len();
@@ -257,7 +311,10 @@ impl SurfaceLintExecutor {
                 return LintExecutionResult::success(output, 0);
             }
         };
-        let fp = Some(FilePath::new(path.to_string()).unwrap_or_default());
+        let fp = Some(match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        });
         match collect_dependencies(maintenance, fp) {
             Ok(report) => {
                 let count = report.dependencies.len();
@@ -627,4 +684,16 @@ fn format_violations(path: &str, violations: &[shared_common::ViolationItem]) ->
         ));
     }
     output
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validated_path;
+
+    #[test]
+    fn invalid_ui_path_is_a_visible_failure() {
+        let error = validated_path("   ").expect_err("blank paths must be rejected");
+        assert!(!error.success);
+        assert!(error.output.contains("Invalid path"));
+    }
 }

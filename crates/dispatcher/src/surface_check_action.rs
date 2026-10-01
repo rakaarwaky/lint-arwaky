@@ -72,6 +72,20 @@ pub type CheckOptions = ScanOptions;
 /// Run all 6 linters via subprocesses, collect JSON, return unified violation list.
 /// Err(String) carries a user-facing error message (path not found, bad member, ...).
 pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
+    collect_scan_with_progress(opts, |_phase, _done, _total| {})
+}
+
+/// Scan variant with a progress hook for interactive clients. The dispatcher
+/// reports real discovery and aggregate-completion milestones; callers can
+/// render these without inventing progress in the UI layer.
+pub fn collect_scan_with_progress<F>(
+    opts: ScanOptions,
+    mut on_progress: F,
+) -> Result<Vec<ViolationItem>, String>
+where
+    F: FnMut(String, usize, usize),
+{
+    on_progress("Starting scan".to_string(), 0, 0);
     let root = match &opts.path {
         Some(p) => p.value().to_string(),
         None => ".".to_string(),
@@ -95,8 +109,12 @@ pub fn collect_scan(opts: ScanOptions) -> Result<Vec<ViolationItem>, String> {
         None => root.clone(),
     };
     let violations = match opts.scan_aggregates.as_ref() {
-        Some(agg) => run_all_linters_in_process(&target_path, agg),
-        None => run_all_linters_json(&target_path, opts.filesystem.as_ref()),
+        Some(agg) => run_all_linters_in_process(&target_path, agg, &mut on_progress),
+        None => {
+            let result = run_all_linters_json(&target_path, opts.filesystem.as_ref());
+            on_progress("Scan complete".to_string(), 0, 0);
+            result
+        }
     };
     let violations = apply_filter(violations, &opts.filter);
     Ok(violations)
@@ -184,7 +202,11 @@ pub fn collect_default_check(
 /// the target itself as the scan scope, and every linter output that names a
 /// non-existent file is dropped (with no violation emitted) so stale or
 /// doubled paths can never surface as E902.
-fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<ViolationItem> {
+fn run_all_linters_in_process(
+    path: &str,
+    agg: &ScanAggregates,
+    on_progress: &mut dyn FnMut(String, usize, usize),
+) -> Vec<ViolationItem> {
     let seam = agg.fs_seam.clone();
 
     let target = std::path::Path::new(path);
@@ -214,7 +236,10 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
     // Single-file target: build a one-entry index and run the auditors on it.
     if scan_root.is_file() {
-        return run_single_file_scan(&seam, &scan_root, agg, &root_fp, &ignored);
+        on_progress("Scanning file".to_string(), 0, 1);
+        let result = run_single_file_scan(&seam, &scan_root, agg, &root_fp, &ignored);
+        on_progress("Scan complete".to_string(), 1, 1);
+        return result;
     }
 
     // Discover source files under the target, matching the per-linter commands
@@ -246,8 +271,11 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         ));
 
     let discovered = discover_lintable_files(&seam, &scan_root, &ignored);
+    let total_files = discovered.len();
+    on_progress("Files discovered".to_string(), 0, total_files);
     let entries = build_entries(&seam, &discovered);
     let import_map = build_import_map(&seam, &entries);
+    on_progress("Index built".to_string(), 0, total_files);
 
     let parent_workspace = target_canon
         .parent()
@@ -267,6 +295,11 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .iter()
             .map(ViolationItem::from_lint_result),
     );
+    on_progress(
+        "Quality checks complete".to_string(),
+        total_files,
+        total_files,
+    );
     all.extend(
         agg.role
             .execute(RoleRequest::audit(&entries))
@@ -274,6 +307,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .iter()
             .map(ViolationItem::from_lint_result),
     );
+    on_progress("Role checks complete".to_string(), total_files, total_files);
     // Workspace-wide import map so AES201/202/203/205 see cross-member imports
     // (the dispatcher's fs instance differs from the import orchestrator's own).
     all.extend(
@@ -286,12 +320,22 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             .iter()
             .map(ViolationItem::from_lint_result),
     );
+    on_progress(
+        "Import checks complete".to_string(),
+        total_files,
+        total_files,
+    );
     all.extend(
         agg.naming
             .execute(NamingRequest::audit(&entries))
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
+    );
+    on_progress(
+        "Naming checks complete".to_string(),
+        total_files,
+        total_files,
     );
     let (_graph_ctx, orphan_violations) = agg
         .orphan
@@ -304,6 +348,11 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
         orphan_violations
             .iter()
             .map(ViolationItem::from_lint_result),
+    );
+    on_progress(
+        "Orphan checks complete".to_string(),
+        total_files,
+        total_files,
     );
 
     // External — adapters run on the target *as given* (relative paths resolve
@@ -398,6 +447,7 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     // source-file index, so it runs against the scan target directly and its
     // findings are appended after the file-scope filter like structure does.
     all.extend(doc_violations_in_scope(&target_canon_str, agg));
+    on_progress("Scan complete".to_string(), total_files, total_files);
 
     all
 }
