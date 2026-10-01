@@ -7,7 +7,7 @@ Most linters catch syntax and style. Lint Arwaky catches architecture drift: for
 ## Prerequisites
 
 - Rust 1.85.0+ and Cargo (pinned via `rust-toolchain.toml`)
-- Linux or macOS
+- Linux primary, macOS secondary (Windows runtime excluded pending PRD Open Question #3 trade-off; cross-compilation target available)
 - For external linter adapters: `lint-arwaky-cli install`
 
 ## Quick Start

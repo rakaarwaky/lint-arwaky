@@ -102,12 +102,38 @@ impl FixOutcome {
     }
 }
 
+impl std::fmt::Display for SkipReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MultiLineImport => write!(f, "MultiLineImport"),
+            Self::LineOutOfBounds => write!(f, "LineOutOfBounds"),
+            Self::NotAnImportLine => write!(f, "NotAnImportLine"),
+            Self::NoBypassPattern => write!(f, "NoBypassPattern"),
+            Self::UnsafeRemoval => write!(f, "UnsafeRemoval"),
+            Self::AlreadyHasContext => write!(f, "AlreadyHasContext"),
+            Self::AlreadyValid => write!(f, "AlreadyValid"),
+            Self::SymbolNotFound => write!(f, "SymbolNotFound"),
+            Self::KeywordConflict => write!(f, "KeywordConflict"),
+        }
+    }
+}
+
+impl std::fmt::Display for FailReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::FileNotFound => write!(f, "FileNotFound"),
+            Self::ReadError => write!(f, "ReadError"),
+            Self::WriteError => write!(f, "WriteError"),
+        }
+    }
+}
+
 impl std::fmt::Display for FixOutcome {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Applied { changes } => write!(f, "Applied ({changes} change(s))"),
-            Self::Skipped(reason) => write!(f, "Skipped({reason:?})"),
-            Self::Failed(reason) => write!(f, "Failed({reason:?})"),
+            Self::Skipped(reason) => write!(f, "Skipped({reason})"),
+            Self::Failed(reason) => write!(f, "Failed({reason})"),
         }
     }
 }

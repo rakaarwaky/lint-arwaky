@@ -138,6 +138,14 @@ git worktree remove .worktree/<branch-name>
 git branch -d <branch-name>
 ```
 
+### Gate Waiver Process
+
+If a required CI check is proven defective (e.g. a shipped rule false-fails legitimate PRs, as occurred with AES607 in PR #335):
+1. **Approver role**: A repository admin (`@raka`) may grant a temporary, time-boxed override via branch protection settings.
+2. **Mandatory tracking**: The override requires a linked GitHub issue documenting the defect root cause, reproduction steps, and an assigned fix owner with a target ETA.
+3. **Time-box limit**: The waiver expires automatically after a maximum of 5 business days.
+4. **Audit trail**: Every active waiver must be logged in `ROADMAP.md`'s Risk Register until resolved and verified by a subsequent clean run.
+
 ## Branch Management
 
 Allowed branch naming: `main`, `develop`
@@ -158,6 +166,11 @@ When merging a PR to develop:
 `lint-arwaky init` installs every `SKILL.md` plus only the `references/` files matching the target's detected languages. `crates/shared/src/project_setup/taxonomy_skills_constant.rs` is generated — run `python3 tools/regenerate_skills.py` after adding, removing, or renaming a skill file.
 
 **Role pipeline:** `Architect` → `Business Analyst` → `Tech Lead` → `Fullstack Developer` (review then execute). Plan files go to `.agents/plans/`.
+
+**Pipeline gate:**
+- A `severity-critical` issue raised by `Architect` or `Business Analyst` is a hard block: `Tech Lead` cannot begin implementation until the issue has a recorded triage state (`accepted`, `deferred`, or `rejected` with rationale) in the plan file.
+- `severity-warning` and `severity-info` findings are advisory only and do not block downstream role progression.
+- Triage authority belongs to the Tech Lead / Repository Maintainer (`@raka`). In case of competing specifications, the Tech Lead adjudicates before worktrees or PRs are created.
 
 ### Mergify Stacks (dependent PRs)
 
