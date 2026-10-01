@@ -1,6 +1,6 @@
 // PURPOSE: MaintenanceRequest — request payload for the maintenance aggregate
 
-use shared_common::taxonomy_action_vo::JobId;
+use shared_common::taxonomy_job_id_vo::JobId;
 use shared_common::taxonomy_path_vo::FilePath;
 
 pub enum MaintenanceRequest {

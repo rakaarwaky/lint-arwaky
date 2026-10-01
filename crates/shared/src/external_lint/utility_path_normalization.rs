@@ -1,6 +1,6 @@
 // PURPOSE: Path normalization utilities for external tool execution (clippy, ruff, eslint, ...).
 // Plain free functions — no protocol / dependency injection.
-use crate::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_path_vo::FilePath;
 
 /// Return `path` unchanged. External lint tools already receive absolute/normalized paths.
 pub fn normalize_path(path: FilePath) -> FilePath {

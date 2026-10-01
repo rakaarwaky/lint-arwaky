@@ -7,6 +7,10 @@ pub mod taxonomy_orphan_rules_response;
 pub mod taxonomy_orphan_rules_vo;
 pub mod utility_orphan_filename;
 pub mod utility_orphan_graph;
+pub mod utility_parser_dispatcher;
+pub mod utility_python_parser;
+pub mod utility_rust_parser;
+pub mod utility_ts_parser;
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_orphan_aggregate::IOrphanAggregate;
@@ -38,3 +42,5 @@ pub use taxonomy_orphan_rules_vo::PythonParseResultVO;
 pub use taxonomy_orphan_rules_vo::RustParseResultVO;
 pub use taxonomy_orphan_rules_vo::TsParseResultVO;
 pub use taxonomy_orphan_rules_vo::extract_idents_from_stream;
+pub use utility_parser_dispatcher::is_supported;
+pub use utility_parser_dispatcher::parse_file_content;

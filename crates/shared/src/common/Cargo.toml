@@ -42,20 +42,11 @@ path = "../../tests/smoke_shared.rs"
 name = "unit_common_taxonomy_skill_hint_vo"
 path = "../../tests/unit_common_taxonomy_skill_hint_vo.rs"
 [[test]]
-name = "unit_common_utility_compliance_score"
-path = "../../tests/unit_common_utility_compliance_score.rs"
-[[test]]
 name = "unit_common_utility_layer_detector"
 path = "../../tests/unit_common_utility_layer_detector.rs"
 [[test]]
 name = "unit_common_utility_path_filter"
 path = "../../tests/unit_common_utility_path_filter.rs"
-[[test]]
-name = "unit_common_utility_path_normalization"
-path = "../../tests/unit_common_utility_path_normalization.rs"
-[[test]]
-name = "unit_common_utility_scope_matcher"
-path = "../../tests/unit_common_utility_scope_matcher.rs"
 [[test]]
 name = "unit_shared_cli_commands"
 path = "../../tests/unit_shared_cli_commands.rs"

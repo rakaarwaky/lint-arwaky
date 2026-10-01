@@ -5,11 +5,11 @@
 // (`IExternalLintAggregate`) is the entry point and is not counted toward the
 // 1:1 FR-to-protocol mapping.
 
+use crate::taxonomy_duration_vo::Timeout;
 use crate::taxonomy_external_lint_vo::ExternalLintContext;
 use shared_common::taxonomy_adapter_list_vo::AdapterNameList;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::PatternList;
-use shared_common::taxonomy_duration_vo::Timeout;
 use shared_common::taxonomy_error_vo::ErrorCode;
 use shared_common::taxonomy_message_vo::ComplianceStatus;
 use shared_common::taxonomy_path_vo::FilePath;

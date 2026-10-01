@@ -10,7 +10,7 @@ use syn::visit::Visit;
 // ─── Block 1: Identifier Visitor (for Rust AST walking) ────────────────
 
 /// Walks a Rust AST and collects all identifier references.
-/// Used by `utility_rust_parser::parse_rust` to populate `used_identifiers`.
+/// Used by `shared_orphan_rules::utility_rust_parser::parse_rust` to populate `used_identifiers`.
 pub struct IdentifierVisitor {
     pub identifiers: Vec<String>,
 }

@@ -12,11 +12,11 @@
 
 use shared_common::taxonomy_lint_result_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::utility_signature_parser::{
-    extract_typescript_method_signatures, typescript_signature_uses_forbidden_primitive,
-};
 use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use shared_role_rules::contract_role_protocol::IContractRoleProtocol;
+use shared_role_rules::utility_signature_parser::{
+    extract_typescript_method_signatures, typescript_signature_uses_forbidden_primitive,
+};
 
 use shared_role_rules::utility_contract_role_checker as utility;
 

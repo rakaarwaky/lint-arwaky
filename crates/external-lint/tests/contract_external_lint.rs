@@ -29,7 +29,7 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
         &self,
         _: shared_common::taxonomy_common_vo::PatternList,
         _: FilePath,
-        _: Option<shared_common::taxonomy_duration_vo::Timeout>,
+        _: Option<shared_external_lint::taxonomy_duration_vo::Timeout>,
     ) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::default())
     }
@@ -261,7 +261,7 @@ fn all_adapters_coerce_to_dyn_protocol() {
 #[test]
 fn stdio_client_implements_command_executor_protocol() {
     let client = external_lint_lint_arwaky::StdioClient::new(
-        shared_common::taxonomy_duration_vo::Timeout::new(5.0),
+        shared_external_lint::taxonomy_duration_vo::Timeout::new(5.0),
     );
     let _dyn_client: &dyn ICommandExecutorProtocol = &client;
     // health_check must not panic

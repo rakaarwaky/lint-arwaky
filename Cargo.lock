@@ -4754,6 +4754,7 @@ name = "shared-external-lint-lint-arwaky"
 version = "3.7.1"
 dependencies = [
  "anyhow",
+ "serde",
  "shared-common-lint-arwaky",
  "shared-config-system-lint-arwaky",
  "shared-quality-rules-lint-arwaky",
@@ -4840,6 +4841,7 @@ dependencies = [
  "shared-common-lint-arwaky",
  "shared-filesystem-lint-arwaky",
  "shared-quality-rules-lint-arwaky",
+ "syn 3.0.6",
  "tracing",
 ]
 

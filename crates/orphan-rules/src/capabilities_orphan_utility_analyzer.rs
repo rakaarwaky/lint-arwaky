@@ -166,7 +166,7 @@ impl UtilityOrphanAnalyzer {
     }
 
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match shared_common::parse_file_content(file_path, content) {
+        match shared_orphan_rules::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 let in_imports = result.imports.iter().any(|imp| {
                     imp.segments.iter().any(|seg| {

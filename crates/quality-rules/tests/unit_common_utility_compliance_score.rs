@@ -1,4 +1,6 @@
-// PURPOSE: Test compliance score utility from shared_common::utility_compliance_score
+mod common;
+
+// PURPOSE: Test compliance score utility from shared_quality_rules::utility_compliance_score
 
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_common::taxonomy_common_vo::LineNumber;
@@ -8,7 +10,7 @@ use shared_common::taxonomy_lint_vo::LocationList;
 use shared_common::taxonomy_message_vo::LintMessage;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::utility_compliance_score::compute_score;
+use shared_quality_rules::utility_compliance_score::compute_score;
 
 /// Helper: build a minimal LintResult with the given severity.
 fn make_result(severity: Severity) -> LintResult {
@@ -34,31 +36,26 @@ fn compute_score_empty_returns_100() {
 }
 
 // ── Single-severity deductions ──────────────────────────────
-
 #[test]
 fn compute_score_info_no_penalty() {
     let results = vec![make_result(Severity::INFO)];
     assert_eq!(compute_score(&results), 100.0);
 }
-
 #[test]
 fn compute_score_low_deducts_1() {
     let results = vec![make_result(Severity::LOW)];
     assert_eq!(compute_score(&results), 99.0);
 }
-
 #[test]
 fn compute_score_medium_deducts_2() {
     let results = vec![make_result(Severity::MEDIUM)];
     assert_eq!(compute_score(&results), 98.0);
 }
-
 #[test]
 fn compute_score_high_deducts_3() {
     let results = vec![make_result(Severity::HIGH)];
     assert_eq!(compute_score(&results), 97.0);
 }
-
 #[test]
 fn compute_score_critical_deducts_5() {
     let results = vec![make_result(Severity::CRITICAL)];
@@ -66,7 +63,6 @@ fn compute_score_critical_deducts_5() {
 }
 
 // ── Multiple violations ─────────────────────────────────────
-
 #[test]
 fn compute_score_multiple_violations_sum() {
     let results = vec![
@@ -77,7 +73,6 @@ fn compute_score_multiple_violations_sum() {
     // penalty = 3 + 2 + 1 = 6
     assert_eq!(compute_score(&results), 94.0);
 }
-
 #[test]
 fn compute_score_many_violations_clamped_at_zero() {
     // 30 CRITICAL violations = 30 * 5 = 150 penalty → clamped to 0.0
@@ -86,7 +81,6 @@ fn compute_score_many_violations_clamped_at_zero() {
 }
 
 // ── Mixed severities ────────────────────────────────────────
-
 #[test]
 fn compute_score_mixed_severities() {
     let results = vec![
@@ -102,10 +96,28 @@ fn compute_score_mixed_severities() {
 }
 
 // ── Boundary ────────────────────────────────────────────────
-
 #[test]
 fn compute_score_exactly_100_penalty() {
     // 20 CRITICAL = 100 penalty → exactly 0.0
     let results: Vec<LintResult> = (0..20).map(|_| make_result(Severity::CRITICAL)).collect();
     assert_eq!(compute_score(&results), 0.0);
+}
+#[test]
+fn compute_score_clamps_at_zero() {
+    let results = vec![
+        common::violation("a.rs", 1, "AES101", Severity::CRITICAL),
+        common::violation("a.rs", 2, "AES101", Severity::CRITICAL),
+        common::violation("a.rs", 3, "AES101", Severity::CRITICAL),
+    ];
+    let score = compute_score(&results);
+    assert!((score - 85.0).abs() < 1e-9);
+}
+#[test]
+fn compute_score_sums_penalties_from_one_hundred() {
+    let results = vec![
+        common::violation("a.rs", 1, "AES101", Severity::HIGH),
+        common::violation("a.rs", 2, "AES101", Severity::HIGH),
+    ];
+    let score = compute_score(&results);
+    assert!((score - 94.0).abs() < 1e-9);
 }

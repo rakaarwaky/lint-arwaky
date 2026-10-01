@@ -11,6 +11,7 @@ pub mod utility_dummy_detector;
 pub mod utility_import_module_parser;
 pub mod utility_import_resolver;
 pub mod utility_import_symbol_extractor;
+pub mod utility_scope_matcher;
 
 // ─── Re-exports ────────────────────────────────────────────
 pub use contract_import_protocol::ICycleImportProtocol;

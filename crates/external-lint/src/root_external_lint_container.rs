@@ -15,10 +15,10 @@ use std::sync::Arc;
 
 use crate::agent_external_lint_orchestrator::{ExternalLintDeps, ExternalLintOrchestrator};
 use crate::capabilities_external_lint_selector::CapabilitiesExternalLintSelector;
-use shared_common::taxonomy_duration_vo::Timeout;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_external_lint::taxonomy_duration_vo::Timeout;
 use shared_external_lint::{IExternalLintAggregate, IExternalLintSelectorProtocol};
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;

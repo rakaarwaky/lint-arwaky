@@ -28,7 +28,7 @@ impl ICommandExecutorProtocol for MockCmdExecutor {
         &self,
         _: shared_common::taxonomy_common_vo::PatternList,
         _: FilePath,
-        _: Option<shared_common::taxonomy_duration_vo::Timeout>,
+        _: Option<shared_external_lint::taxonomy_duration_vo::Timeout>,
     ) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::default())
     }

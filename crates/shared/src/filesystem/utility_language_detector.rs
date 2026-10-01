@@ -1,8 +1,8 @@
 // PURPOSE: Language detection — pure, stateless taxonomy utility.
-use crate::taxonomy_language_info_vo::LanguageInfo;
-use crate::taxonomy_language_vo::Language;
-use crate::taxonomy_path_vo::FilePath;
-use crate::taxonomy_source_vo::SourceContentVO;
+use shared_common::taxonomy_language_info_vo::LanguageInfo;
+use shared_common::taxonomy_language_vo::Language;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_source_vo::SourceContentVO;
 
 /// Detect the programming language of a file from its extension.
 pub fn detect_language(path: &FilePath) -> Language {
