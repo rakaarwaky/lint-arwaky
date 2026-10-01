@@ -30,7 +30,7 @@ pub fn collect_external_direct(
     external_lint: Arc<dyn IExternalLintAggregate>,
     filesystem: Arc<dyn IFilesystemAggregate>,
     filesystem_io: Arc<dyn IFileSystemIOProtocol>,
-    config_parser: Arc<dyn IConfigMergeProtocol>,
+    _config_parser: Arc<dyn IConfigMergeProtocol>,
     filter: Option<String>,
     ignored_paths: &[String],
 ) -> Result<Vec<ViolationItem>, String> {
@@ -64,8 +64,7 @@ pub fn collect_external_direct(
         .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
 
     // Load adapter entries from config (pre-computed, no orchestrator I/O)
-    let config_entries =
-        load_config_entries(root_path, &*config_parser, &*filesystem, &*filesystem_io);
+    let config_entries = load_config_entries(root_path, filesystem_io.as_ref());
 
     let context = ExternalLintContext {
         has_rust,
@@ -117,6 +116,20 @@ pub fn filter_outside_member_dirs(
         Some(r) => r,
         None => return,
     };
+    // External tools (ruff, eslint, …) are handed a canonicalized target and
+    // echo back absolute paths, while `find_workspace_root` may resolve to a
+    // relative one (e.g. `workspaces-bad`). A relative root makes every
+    // `strip_prefix` fail, the fallback keeps the absolute path, and the
+    // member-dir check then rejects the entire batch — silently dropping all
+    // external violations. Absolutize before comparing.
+    let ws_root = if ws_root.is_absolute() {
+        ws_root
+    } else {
+        match std::env::current_dir() {
+            Ok(cwd) => cwd.join(&ws_root),
+            Err(_) => return,
+        }
+    };
     let member_dirs: Vec<&str> = ["crates", "packages", "modules"]
         .iter()
         .filter(|d| ws_root.join(d).is_dir())
@@ -134,10 +147,14 @@ pub fn filter_outside_member_dirs(
 
 /// Walk up from `root_path` looking for lint_arwaky.config.*.yaml files.
 /// Returns parsed adapter entries if any config file is found, else empty vec.
-fn load_config_entries(
+///
+/// Shared by the `external` subcommand and `scan`/`check` (`collect_scan`),
+/// so both paths select adapters from the same `adapters:` SSOT — without
+/// this, `scan` ran *every* language adapter and reported findings from
+/// tools the project's config does not enable (e.g. markdownlint on a repo
+/// that never opted into it).
+pub fn load_config_entries(
     root_path: &std::path::Path,
-    _config_parser: &dyn IConfigMergeProtocol,
-    _fs: &dyn IFilesystemAggregate,
     fs_io: &dyn IFileSystemIOProtocol,
 ) -> Vec<AdapterEntry> {
     let config_names = vec!["lint_arwaky.config.yaml"];

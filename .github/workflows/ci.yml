@@ -89,7 +89,14 @@ jobs:
         run: cargo build --release
 
       - name: Run tests
+        # Note: cargo-nextest cannot execute doctests (known upstream
+        # limitation) — doctests are run as a separate step below (QA #644).
         run: cargo nextest run --workspace --lib --tests -j 2
+
+      - name: Run doctests
+        # QA #638: ~25 doctests across 11 source files are only executed here;
+        # nextest cannot substitute for `cargo test --doc`.
+        run: cargo test --doc --workspace
 
   self-lint:
     name: Self-Lint
@@ -104,21 +111,99 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y mold
       - uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Install external linters (per TEST.md §1 prerequisite, QA #637)
+        run: |
+          python3 -m pip install ruff mypy bandit
+          # Install the JS/TS tools into a runner-local prefix instead of
+          # `npm install -g`: the image's global npm prefix is not guaranteed
+          # to be on PATH, and a tool that is not on PATH makes the
+          # eslint/tsc/prettier adapters resolve to `None` and silently report
+          # zero findings (QA #637).
+          npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/js-tools" eslint prettier typescript
+          echo "$RUNNER_TEMP/js-tools/node_modules/.bin" >> "$GITHUB_PATH"
+          export PATH="$RUNNER_TEMP/js-tools/node_modules/.bin:$PATH"
+          node --version
+          for tool in eslint prettier tsc; do
+            if ! command -v "$tool" >/dev/null; then
+              echo "::error::$tool is not resolvable on PATH after install"
+              exit 1
+            fi
+            echo "$tool -> $(command -v "$tool")"
+          done
+
       - name: Build CLI
         run: cargo build --bin lint-arwaky-cli
 
       - name: AES Self-Lint
+        # QA #642: never default unparseable/crashed output to "0 violations".
+        # The regex must match a `Total:` line and the CLI exit code must be
+        # checked, otherwise a tool failure would silently pass as clean.
+        # Both assignments need an explicit `|| …`: this step runs under
+        # `bash -e`, so a bare failing command substitution aborts the step
+        # before either guard can print its `::error::` diagnosis.
         run: |
-          output=$(./target/debug/lint-arwaky-cli check . 2>&1)
-          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+' || echo "0")
+          exit_code=0
+          output=$(./target/debug/lint-arwaky-cli check . 2>&1) || exit_code=$?
+          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+') || true
+          if [ -z "$violations" ]; then
+            echo "::error::could not parse a violation count from check . output"
+            echo "$output"
+            exit 1
+          fi
           echo "Violations: ${violations}"
+          if [ "$exit_code" -ne 0 ]; then
+            echo "::error::lint-arwaky-cli check . exited with code ${exit_code}"
+            echo "$output"
+            exit 1
+          fi
           [ "${violations}" = "0" ]
 
       - name: AES Codes Check
+        # Threshold must match the reconciled scan-visible rule count in
+        # TEST.md §3.1/§3.2 exactly: 32 total AES rules (per-rule matrix) minus
+        # 5 doc-only invariants (AES601–AES605, audited via `docs`, not `scan`)
+        # = 27 unique codes expected from `scan workspaces-bad`.
+        # When rules are added/removed, update this threshold and TEST.md §3.2
+        # in lockstep (QA #636).
+        # `|| true` on the assignment: `scan` exits 1 whenever it reports
+        # violations, which is its contract — under `pipefail` that status
+        # would abort the step before the threshold check could print its
+        # diagnosis. The captured count is unaffected, and a total tool
+        # failure still yields 0 codes, which fails the threshold below.
         run: |
-          codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
+          codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad 2>&1 | grep -oP "AES\d+" | sort -u | wc -l) || true
           echo "Unique codes: ${codes:-0}"
-          [ "${codes:-0}" -ge 24 ]
+          [ "${codes:-0}" -ge 27 ]
+
+      - name: External Tool Integration Check (QA #637)
+        # Proves the external-lint adapters actually invoked the real tools
+        # installed above: at least one tool-native (non-AES) violation code
+        # must appear for both the Python and the JS/TS bad workspaces.
+        # Adapters report bare tool codes (`F401`, `formatting`), never a
+        # `tool::code` prefix, so match the report's violation lines
+        # (`  [CODE] <count>  ← …`) and drop the AES codes the built-in
+        # linters own — including the `[typescript]`/`[python]` language tags
+        # in the section headers, which the trailing count/arrow excludes.
+        # `|| true` on the count assignments: GitHub runs steps under
+        # `bash -eo pipefail`, so a grep with no match would abort the step
+        # before the `[ ... -lt 1 ]` check could print its diagnosis.
+        run: |
+          py_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/modules 2>&1 || true)
+          ts_out=$(./target/debug/lint-arwaky-cli scan workspaces-bad/packages 2>&1 || true)
+          py_native=$(echo "$py_out" | grep -oP '^\s*\[\K[A-Za-z0-9_.\/-]+(?=\]\s+\d+\s+←)' | grep -v '^AES' | sort -u | wc -l) || true
+          ts_native=$(echo "$ts_out" | grep -oP '^\s*\[\K[A-Za-z0-9_.\/-]+(?=\]\s+\d+\s+←)' | grep -v '^AES' | sort -u | wc -l) || true
+          echo "Tool-native codes — Python: ${py_native:-0}, JS/TS: ${ts_native:-0}"
+          if [ "${py_native:-0}" -lt 1 ] || [ "${ts_native:-0}" -lt 1 ]; then
+            echo "::error::no tool-native violation codes found — external adapters did not run end-to-end"
+            # Echo both reports: a zero count is otherwise indistinguishable
+            # from "the tool ran and found nothing", which is the failure this
+            # step exists to catch.
+            echo "--- workspaces-bad/modules ---"
+            echo "$py_out"
+            echo "--- workspaces-bad/packages ---"
+            echo "$ts_out"
+            exit 1
+          fi
 
   security:
     name: Security Audit
@@ -143,3 +228,33 @@ jobs:
         env:
           RUSTC_WRAPPER: ""
         run: cargo deny check advisories
+
+  # QA #643: makes the test-coverage percentage computable and visible in CI
+  # output (summary printed in the job log). See TEST.md §3.5 for thresholds.
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: [build]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # v1 stable
+        with:
+          components: llvm-tools-preview
+      # `.cargo/config.toml` pins `-C link-arg=-fuse-ld=mold` for the host
+      # target, so every job that links Rust code needs mold — without it the
+      # link step dies with "collect2: fatal error: cannot find 'ld'".
+      - name: Install mold linker
+        run: sudo apt-get update && sudo apt-get install -y mold
+      - name: Install cargo-llvm-cov + cargo-nextest
+        uses: taiki-e/install-action@fd09ccbe70d174f3c26b2fa0588e8c07a7bf4f7e # v2.37.0
+        with:
+          tool: cargo-llvm-cov,cargo-nextest
+      - name: Compute coverage summary
+        # This job does not install sccache, so clear the workflow-wide wrapper
+        # before cargo-llvm-cov invokes `rustc`; otherwise the wrapper binary is
+        # missing and the run dies before compiling anything (QA #643).
+        env:
+          RUSTC_WRAPPER: ""
+        run: cargo llvm-cov nextest --workspace --lib --tests --summary-only

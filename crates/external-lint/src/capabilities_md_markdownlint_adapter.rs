@@ -59,7 +59,14 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
         let wd = self.tool_resolution.resolve_js_working_dir(path);
         let abs_path = self.io.canonicalize_path_str(path);
 
-        for (binary, args) in tool_invocations(&abs_path.value) {
+        // Directory targets: hand the tool a Markdown-only glob. Passing the
+        // bare directory makes markdownlint walk *every* file under it and
+        // report bogus rule violations against `.rs`/`.toml` sources (MD041
+        // "first line should be a top-level heading" on a Rust file), which
+        // pollutes the report with findings that are not markdownlint's to
+        // make. Mirrors the prettier adapter's JS/TS glob narrowing.
+        let is_dir = self.io.is_dir(Path::new(&abs_path.value));
+        for (binary, args) in tool_invocations(&abs_path.value, is_dir) {
             // JS tool resolution prefers local `node_modules/.bin/`. For
             // tools that are typically installed globally (like
             // markdownlint-cli2), fall back to a direct PATH lookup when the
@@ -137,13 +144,20 @@ fn is_markdown_file(path: &str) -> bool {
 
 /// The CLI variants to try, in order. `markdownlint-cli` speaks JSON under
 /// `--json`; `markdownlint-cli2` has no JSON mode and only writes text.
-fn tool_invocations(abs_path: &str) -> Vec<(&'static str, Vec<String>)> {
+/// Directory targets get a Markdown-only glob so neither variant lints
+/// non-Markdown files under the tree (see `scan`).
+fn tool_invocations(abs_path: &str, is_dir: bool) -> Vec<(&'static str, Vec<String>)> {
+    let target = if is_dir {
+        format!("{}/**/*.{{md,markdown}}", abs_path.trim_end_matches('/'))
+    } else {
+        abs_path.to_string()
+    };
     vec![
         (
             "markdownlint-cli",
-            vec!["--json".to_string(), abs_path.to_string()],
+            vec!["--json".to_string(), target.clone()],
         ),
-        ("markdownlint-cli2", vec![abs_path.to_string()]),
+        ("markdownlint-cli2", vec![target]),
     ]
 }
 

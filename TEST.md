@@ -56,6 +56,22 @@ workspaces-good/
 > **Note**: workspaces-good must produce exactly 0 violations. If any violation
 > appears, it is a false positive that must be fixed. Bad workspaces must not regress
 > below the documented ≥ 100 violation floor per language.
+>
+> **Reconciled rule count (single source of truth — §3.2):** the product
+> enforces **32 AES rules** total (per README and the §3.2 Per-Rule Detection
+> Matrix). `scan` can only ever surface **27** of them: AES601–AES605 are
+> doc-only invariants audited by the separate `docs` command. So
+> *27 unique scan codes + 5 doc-only codes = 32 rules*. This is the documented
+> exception explaining why the aggregate `workspaces-bad` scan expectation
+> (27) is below the full catalog (32); the CI "AES Codes Check" gate enforces
+> exactly 27 — no lower safety margin (QA #636).
+
+> **External tools prerequisite**: Python & JS/TS scans require external tools
+> installed (ruff, mypy, bandit, eslint, prettier, tsc) for external lint
+> violations. **CI satisfies this**: the `self-lint` job in
+> `.github/workflows/ci.yml` installs all six tools and asserts tool-native
+> (non-AES) violation codes appear in the bad-workspace scan output before the
+> job can pass (QA #637).
 
 See [README.md](README.md) for CLI reference and
 [ARCHITECTURE.md](ARCHITECTURE.md) for AES background.
@@ -63,6 +79,18 @@ See [README.md](README.md) for CLI reference and
 ---
 
 ## 2. How to Run Tests
+
+### 2.0 Regression Test Convention
+
+Every CRITICAL or WARNING defect fix MUST add or extend a
+`regression_<short-name>.rs` file in the `tests/` directory of the crate where
+the defect was found, asserting the previously-broken behavior is now
+correct. The canonical example is
+[`crates/dispatcher/tests/regression_scan_modes.rs`](crates/dispatcher/tests/regression_scan_modes.rs).
+Where a fix spans behaviors, name the test after the tracking issue
+(e.g. `regression_640_existing_custom_hook_is_backed_up_on_install`), so the
+guard is greppably tied to the defect it protects. A defect fix is not
+complete until its regression guard lands (QA #639).
 
 ### 2.1 Self-Lint (must be clean)
 
@@ -97,7 +125,8 @@ cargo run --bin lint-arwaky-cli -- scan workspaces-good/packages
 
 > Language is auto-detected from file extensions. No language flag needed.
 > Python & JS/TS scans require external tools installed (ruff, mypy, bandit,
-> eslint, prettier, tsc) for external lint violations.
+> eslint, prettier, tsc) for external lint violations — see the prerequisite
+> note in §1, which the CI `self-lint` job satisfies (QA #637).
 
 ### 2.3 Individual Rule Surface
 
@@ -111,6 +140,33 @@ cargo run --bin lint-arwaky-cli -- import workspaces-bad/crates
 # Run only orphan detection
 cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 ```
+
+### 2.4 Unit, Integration, and Doc Tests
+
+```bash
+# Unit + integration tests (~2000 tests workspace-wide)
+cargo nextest run --workspace --lib --tests
+
+# Doctests (~25 runnable examples across 11 source files)
+cargo test --doc --workspace
+```
+
+> **Doctests are in documented test scope** (QA #638): public-API doc examples
+> are real tests and must stay green. `cargo-nextest` **cannot execute
+> doctests at all** (known upstream limitation) — `nextest run` and
+> `cargo test --doc` are complementary, not substitutable, and run as two
+> separate steps in CI. Do **not** assume `--doc` can be appended to the
+> nextest invocation (QA #644).
+
+### 2.5 Code Coverage
+
+```bash
+# Statement/branch coverage summary (requires llvm-tools-preview component)
+cargo llvm-cov nextest --workspace --lib --tests --summary-only
+```
+
+> The CI `coverage` job prints this summary on every run so the workspace
+> coverage percentage is always visible without manual computation (QA #643).
 
 ---
 
@@ -130,6 +186,13 @@ Thresholds match the §1 Expected Violation Counts table (≥ 100 violations flo
 | Unique AES codes (JS/TS)       | >= 27  | < 27       |
 | Self-lint violations           | 0      | > 0        |
 | Doc-consistency gate failures  | 0      | > 0        |
+
+> The "Unique AES codes" threshold is the reconciled scan-visible count from
+> §1/§3.2 (27 of the 32 total AES rules; AES601–AES605 are doc-only). The CI
+> "AES Codes Check" step enforces exactly this value with no lower safety
+> margin, so a detection regression in any one of the 27 scan-visible rules
+> fails CI (QA #636). When rules are added/removed, update §3.2, this table,
+> §1, and the `ci.yml` threshold in lockstep.
 
 ### 3.2 Per-Rule Detection Matrix
 
@@ -202,6 +265,52 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | 10 | `fix --dry-run` with violations             | 0 (preview only)                 |
 | 11 | `doctor` with all tools installed           | 0                                |
 | 12 | `doctor` with missing tools                 | 0 (missing tools listed in body) |
+
+### 3.5 Test Suite Quality Thresholds
+
+§3.1 gates the AES self-lint surface; this section gates the test suite itself.
+Meaningful targets for the quality metrics reporting required by the QA cycle
+(QA #650), cross-referenced from the "Current Quality Status" section in
+[DEPLOY.md](DEPLOY.md):
+
+| Criteria                                        | PASS | FAIL            |
+| ----------------------------------------------- | ---- | --------------- |
+| `cargo nextest run --workspace` pass rate       | 100% | any failing test |
+| `cargo test --doc --workspace` pass rate        | 100% | any failing test |
+| `#[ignore]`d tests without a linked issue + expiry date | 0 | >= 1         |
+| Open CRITICAL defects before release             | 0    | >= 1            |
+
+> **Baseline to preserve**: the workspace currently has **zero `#[ignore]`d
+> tests** — a test may only be quarantined with a linked tracking issue and an
+> expiry date; anything else must be fixed or deleted, not ignored.
+>
+> **Tracking caveat (QA #645)**: any severity or defect-density metric derived
+> from GitHub Issue *labels* is unreliable until #618 (label write permission)
+> is resolved. Use issue *title* text — `[ROLE][SEVERITY] …` — as the source
+> of truth for severity counts until then, and caveat any quality dashboard
+> accordingly.
+
+### 3.6 Assertion-Depth Guideline for High-Risk Crates
+
+Test-file *structure* (the acceptance/unit/contract/integration/smoke/e2e
+taxonomy) is not sufficient on crates with outsized blast radius — tests must
+also have *depth* (QA #641):
+
+- Any crate whose public surface is reachable by an untrusted external caller
+  (e.g. `crates/mcp-server`, called by out-of-repo MCP clients) or that fronts
+  destructive user actions (e.g. `crates/tui`) SHOULD average **≥ 3 tests per
+  taxonomy category file**, each asserting behavior (inputs → outputs, exact
+  error envelopes, exit codes) rather than type existence.
+- Vacuous checks — e.g. asserting only `std::any::type_name::<T>()`, module
+  importability, or struct size — do not count toward a category's test depth
+  and SHOULD be replaced with behavioral assertions over time.
+- The path/boundary reaching untrusted input (e.g. the MCP `execute_command`
+  path argument) MUST have negative-path tests: invalid, empty, and hostile
+  inputs each with exact expected envelopes.
+
+This guideline was introduced while remediating QA #641 (`crates/mcp-server`)
+and is cross-linked with FE #612 (`crates/tui`) so both surfaces are
+remediated under one shared "thin high-risk test suite" theme.
 
 ---
 
@@ -375,6 +484,13 @@ PE-2-03 (#622).
 5. **No false positives**: If a clean file produces a violation, it is a
    bug in the rule implementation — fix the rule, do not modify the test
    project to accommodate the bug.
+6. **Full test execution**: run both `cargo nextest run --workspace --lib
+   --tests` and `cargo test --doc --workspace` — nextest alone silently skips
+   all doctests (Sections 2.4, QA #644).
+7. **Coverage**: to compute the workspace coverage percentage locally, run
+   `cargo llvm-cov nextest --workspace --lib --tests --summary-only`
+   (Section 2.5); CI's `coverage` job publishes the same summary every run
+   (QA #643).
 
 ---
 

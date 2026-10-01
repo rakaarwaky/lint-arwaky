@@ -108,6 +108,11 @@ pub fn has_local_bin(working_dir: &Path, executable: &str) -> bool {
 // ═══════════════════════════════════════════════════════════════
 
 /// Resolve JS tool command from local node_modules/.bin.
+///
+/// FR-ExternalLint-007 business rule 3: when the project has no local
+/// `node_modules/.bin/<tool>`, fall back to a global PATH lookup instead of
+/// reporting the tool as unavailable — global installs (e.g. `npm install -g
+/// prettier`) are a supported deployment.
 pub fn resolve_js_cmd(
     executable: &str,
     args: Vec<String>,
@@ -117,12 +122,16 @@ pub fn resolve_js_cmd(
         .join("node_modules")
         .join(".bin")
         .join(executable);
-    if path_exists(&local_bin) {
-        let mut cmd = vec![local_bin.to_string_lossy().to_string()];
-        cmd.extend(args);
-        return Some(cmd);
-    }
-    None
+    let mut cmd = if path_exists(&local_bin) {
+        vec![local_bin.to_string_lossy().to_string()]
+    } else if is_executable_in_path(executable) {
+        // Global install: let the spawned process resolve it through PATH.
+        vec![executable.to_string()]
+    } else {
+        return None;
+    };
+    cmd.extend(args);
+    Some(cmd)
 }
 
 /// Walk up to find JS project root.

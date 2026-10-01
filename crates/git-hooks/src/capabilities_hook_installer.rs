@@ -77,6 +77,10 @@ exit 0
 ",
             exe_str
         );
+        // QA #640: never silently destroy a pre-existing custom hook — back it
+        // up to `pre-commit.lint-arwaky.bak` before overwriting, unless the
+        // existing hook is already exactly the one we manage (idempotent case).
+        self.backup_existing_hook(&hook_path, &hook_content)?;
         self.io
             .write_string(&hook_path, &hook_content)
             .map_err(|e| {
@@ -115,5 +119,39 @@ impl HookInstaller {
     fn is_git_repo(&self) -> bool {
         let git = self.git_dir();
         self.io.is_dir(&git)
+    }
+
+    /// Back up a pre-existing custom pre-commit hook to
+    /// `pre-commit.lint-arwaky.bak` before it is overwritten. No-op when the
+    /// hook is missing, empty, or already exactly the hook this installer
+    /// manages (content-identical), keeping re-installs idempotent.
+    fn backup_existing_hook(
+        &self,
+        hook_path: &std::path::Path,
+        new_content: &str,
+    ) -> Result<(), GitHookError> {
+        if !self.io.is_file(hook_path) {
+            return Ok(());
+        }
+        let existing = self.io.read_to_string(hook_path).map_err(|e| {
+            GitHookError::new(LintMessage::new(format!(
+                "Failed to read existing hook: {}",
+                e
+            )))
+        })?;
+        let existing_value = existing.value();
+        if existing_value.is_empty() || existing_value == new_content {
+            return Ok(());
+        }
+        let backup_path = hook_path.with_extension("lint-arwaky.bak");
+        self.io
+            .write_string(&backup_path, existing_value)
+            .map_err(|e| {
+                GitHookError::new(LintMessage::new(format!(
+                    "Failed to back up existing hook: {}",
+                    e
+                )))
+            })?;
+        Ok(())
     }
 }

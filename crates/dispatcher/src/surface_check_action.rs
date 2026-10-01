@@ -389,13 +389,21 @@ fn run_all_linters_in_process(
         let has_markdown = ext_files
             .iter()
             .any(|f| f.ends_with(".md") || f.ends_with(".markdown"));
+        // Honor the project's `adapters:` SSOT exactly like the `external`
+        // subcommand does — an empty list would run every language adapter,
+        // including tools the config never enables (markdownlint), which is
+        // where the workspaces-good false positives came from.
+        let config_entries = crate::surface_external_action::load_config_entries(
+            std::path::Path::new(&target_canon_str),
+            seam.io.as_ref(),
+        );
         let context = shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext {
             has_rust,
             has_python,
             has_js,
             has_markdown,
             ignored_paths: ignored.clone(),
-            config_entries: Vec::new(),
+            config_entries,
         };
         let mut external: Vec<ViolationItem> = agg
             .external
