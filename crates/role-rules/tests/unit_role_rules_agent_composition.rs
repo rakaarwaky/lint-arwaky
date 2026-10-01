@@ -420,3 +420,80 @@ fn ts_block_four_flagged() {
     );
     assert!(!v.is_empty(), "a Block 4 banner in TS must flag");
 }
+
+// ── Fallback false positives ─────────────────────────────
+//
+// The line scan is a heuristic, so it only runs on lines that are declarations.
+// A `class …` mentioned inside a string literal or a trailing comment is prose,
+// and treating it as a declaration would report a protocol that was never
+// implemented.
+
+#[test]
+fn fallback_ignores_class_inside_string_literal() {
+    let messages = protocol_messages(
+        "let doc = \"class Foo implements IScannerProtocol\";\n",
+        None,
+        "ts",
+    );
+    assert!(
+        !messages
+            .iter()
+            .any(|m| m.contains("implements a contract protocol")),
+        "a `class` in a string literal is not a declaration: {messages:?}"
+    );
+}
+
+#[test]
+fn fallback_ignores_class_after_trailing_comment() {
+    let messages = protocol_messages(
+        "// see also: class Foo implements IScannerProtocol\n",
+        None,
+        "ts",
+    );
+    assert!(
+        !messages
+            .iter()
+            .any(|m| m.contains("implements a contract protocol")),
+        "a `class` inside a comment is not a declaration: {messages:?}"
+    );
+}
+
+#[test]
+fn fallback_accepts_real_declaration_prefixes() {
+    // The prefixes TypeScript actually writes must keep working after the
+    // declaration-prefix restriction.
+    for decl in [
+        "class Agent implements IScannerProtocol {",
+        "export class Agent implements IScannerProtocol {",
+        "export default class Agent implements IScannerProtocol {",
+        "export abstract class Agent implements IScannerProtocol {",
+        "abstract class Agent implements IScannerProtocol {",
+    ] {
+        let messages = protocol_messages(&format!("{decl}\n  scan() {{}}\n}}\n"), None, "ts");
+        assert!(
+            messages
+                .iter()
+                .any(|m| m.contains("implements a contract protocol")),
+            "`{decl}` is a declaration and must flag: {messages:?}"
+        );
+    }
+}
+
+#[test]
+fn block_marker_scan_survives_multibyte_punctuation() {
+    // The banner scan must not slice mid-character: a comment using fullwidth
+    // punctuation after `Block` is legal text, and reading its length in bytes
+    // would panic on the character boundary.
+    let messages = block_messages("// ─── Block：4 ───\n");
+    assert!(
+        messages.is_empty(),
+        "no banner here (no colon after the number), and no panic: {messages:?}"
+    );
+    let ascii = block_messages("// ─── Block 4: ───\n");
+    assert!(
+        ascii
+            .iter()
+            .any(|m| m.contains("block markers beyond Block 3")),
+        "the ASCII banner still flags: {ascii:?}"
+    );
+}

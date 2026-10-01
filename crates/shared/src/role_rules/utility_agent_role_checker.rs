@@ -797,10 +797,24 @@ fn rust_impl_trait_name(t: &str) -> Option<&str> {
 /// after `implements` for TypeScript.
 ///
 /// TypeScript writes `export class X …` in every module, so the keyword is
-/// located rather than required at the start of the line; `export default`,
-/// `export abstract`, and a bare `class` are all accepted.
+/// located rather than required at the start of the line, but only after one of
+/// the declaration prefixes has been confirmed. Accepting `class ` anywhere in
+/// the line would read a string literal or a trailing comment that mentions a
+/// class as if it declared one, and the fallback would then report a protocol
+/// that was never implemented.
 fn class_base_list(t: &str) -> Option<&str> {
     let idx = t.find("class ")?;
+    // Everything before the keyword must be a modifier or nothing at all.
+    match t[..idx].trim() {
+        ""
+        | "export"
+        | "export default"
+        | "export abstract"
+        | "export default abstract"
+        | "abstract"
+        | "declare" => {}
+        _ => return None,
+    }
     let rest = t[idx + "class ".len()..].trim_start();
     if let Some(i) = rest.find("implements ") {
         return Some(rest[i + "implements ".len()..].trim_end_matches('{').trim());
@@ -933,7 +947,12 @@ fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
             .next()
             .is_none_or(|c| !c.is_alphanumeric() && c != '_');
         if before_ok && after_ok {
-            let skip = t[idx..].chars().next().map_or(0, char::len_utf8);
+            // Return the offset *after* the word and the character that follows
+            // it, measured from the character that follows — never from the
+            // word's own first byte, which is always one byte and would leave
+            // the slice inside a multi-byte character when the next character is
+            // not ASCII (a fullwidth colon in a comment, say).
+            let skip = after.chars().next().map_or(0, char::len_utf8);
             return Some((idx, word.len() + skip));
         }
         from = idx + word.len();
