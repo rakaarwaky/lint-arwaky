@@ -29,8 +29,8 @@ use shared_structure_rules::IStructureAggregate;
 use std::io::Read;
 use std::path::PathBuf;
 use std::process::{Child, Command, Output, Stdio};
-use std::time::{Duration, Instant};
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 /// Capability seams exposed alongside the filesystem aggregate, so callers can
 /// dispatch individual protocol operations without leaking the aggregate layer.
@@ -934,7 +934,11 @@ fn wait_for_child(mut child: Child, timeout: Duration) -> Result<Output, String>
         .join()
         .map_err(|_| "stderr reader panicked".to_string())?
         .map_err(|error| error.to_string())?;
-    Ok(Output { status, stdout, stderr })
+    Ok(Output {
+        status,
+        stdout,
+        stderr,
+    })
 }
 
 /// Run all 6 linters as subprocesses with `--format json`, collect ViolationItems.
@@ -955,11 +959,12 @@ fn run_all_linters_json(path: &str, seam: &FilesystemSeam) -> Result<Vec<Violati
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .map_err(|error| format!("Failed to spawn linter subprocess '{linter_name}': {error}"))?;
+            .map_err(|error| {
+                format!("Failed to spawn linter subprocess '{linter_name}': {error}")
+            })?;
         let timeout = subprocess_timeout();
-        let out = wait_for_child(child, timeout).map_err(|error| {
-            format!("Linter subprocess '{linter_name}' {error}")
-        })?;
+        let out = wait_for_child(child, timeout)
+            .map_err(|error| format!("Linter subprocess '{linter_name}' {error}"))?;
         let stdout = String::from_utf8_lossy(&out.stdout);
         if let Ok(val) = serde_json::from_str::<serde_json::Value>(stdout.trim()) {
             if let Some(results) = val.get("results").and_then(|r| r.as_array()) {

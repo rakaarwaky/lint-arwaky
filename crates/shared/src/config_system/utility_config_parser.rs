@@ -103,10 +103,7 @@ fn parse_ignored_paths(raw: &serde_yaml_ng::Value) -> FilePathList {
 
 /// Preprocess the architecture JSON: migrate legacy layers field, strip nulls,
 /// convert ignored_paths format, and apply layer suffix → naming migration.
-fn preprocess_json(
-    mut json: serde_json::Value,
-    warnings: &mut Vec<String>,
-) -> serde_json::Value {
+fn preprocess_json(mut json: serde_json::Value, warnings: &mut Vec<String>) -> serde_json::Value {
     // Legacy: move `rules.*.layers` → top-level `layers` when no top-level layers exist.
     migrate_legacy_layers(&mut json, warnings);
 
@@ -443,7 +440,9 @@ fn deserialize_config_fields(
     warnings: &mut Vec<String>,
 ) -> ArchitectureConfig {
     let mut config = ArchitectureConfig::default();
-    let Some(object) = json.as_object() else { return config };
+    let Some(object) = json.as_object() else {
+        return config;
+    };
     macro_rules! recover {
         ($key:literal, $field:ident) => {
             if let Some(value) = object.get($key) {
@@ -468,7 +467,11 @@ fn deserialize_config_fields(
 
 fn warn_unknown_architecture_keys(json: &serde_json::Value, warnings: &mut Vec<String>) {
     const KNOWN: &[&str] = &[
-        "enabled", "layers", "rules", "naming", "ignored_paths",
+        "enabled",
+        "layers",
+        "rules",
+        "naming",
+        "ignored_paths",
         "mandatory_class_definition",
     ];
     if let Some(object) = json.as_object() {
@@ -483,23 +486,56 @@ fn warn_unknown_architecture_keys(json: &serde_json::Value, warnings: &mut Vec<S
 
 fn warn_unknown_rule_keys(rules: &[serde_json::Value], warnings: &mut Vec<String>) {
     const KNOWN: &[&str] = &[
-        "name", "description", "rule_type", "enabled", "scope", "exceptions",
-        "allowed", "forbidden", "mandatory", "naming_convention", "suffix_policy",
-        "allowed_suffix", "forbidden_suffix", "min_lines", "max_lines",
-        "forbidden_bypass", "mandatory_class_definition", "dead_inheritance_bypass",
-        "check_unused_mandatory_imports", "forbid_any_type", "mandatory_imports",
-        "duplication_threshold", "max_functions", "max_impl", "severity",
-        "no_domain_logic", "must_implement_service_container_aggregate",
-        "lazy_eager_initialization_only", "stateless_execution", "single_execution_goal",
-        "high_level_policy_only", "coordinates_multiple_orchestrators", "crud_only",
-        "no_decision_logic", "thread_async_safe", "no_domain_data_storage",
-        "owns_system_health_transitions", "lifecycle_tracking_only", "no_primitives",
-        "forbidden_inheritance", "check_orphan", "orphan_entry_points", "entry_points",
+        "name",
+        "description",
+        "rule_type",
+        "enabled",
+        "scope",
+        "exceptions",
+        "allowed",
+        "forbidden",
+        "mandatory",
+        "naming_convention",
+        "suffix_policy",
+        "allowed_suffix",
+        "forbidden_suffix",
+        "min_lines",
+        "max_lines",
+        "forbidden_bypass",
+        "mandatory_class_definition",
+        "dead_inheritance_bypass",
+        "check_unused_mandatory_imports",
+        "forbid_any_type",
+        "mandatory_imports",
+        "duplication_threshold",
+        "max_functions",
+        "max_impl",
+        "severity",
+        "no_domain_logic",
+        "must_implement_service_container_aggregate",
+        "lazy_eager_initialization_only",
+        "stateless_execution",
+        "single_execution_goal",
+        "high_level_policy_only",
+        "coordinates_multiple_orchestrators",
+        "crud_only",
+        "no_decision_logic",
+        "thread_async_safe",
+        "no_domain_data_storage",
+        "owns_system_health_transitions",
+        "lifecycle_tracking_only",
+        "no_primitives",
+        "forbidden_inheritance",
+        "check_orphan",
+        "orphan_entry_points",
+        "entry_points",
     ];
     for (index, rule) in rules.iter().enumerate() {
         if let Some(object) = rule.as_object() {
             for key in object.keys().filter(|key| !KNOWN.contains(&key.as_str())) {
-                warnings.push(format!("Unknown configuration key: architecture.rules[{index}].{key}"));
+                warnings.push(format!(
+                    "Unknown configuration key: architecture.rules[{index}].{key}"
+                ));
             }
         }
     }

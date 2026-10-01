@@ -153,9 +153,14 @@ impl McpActionSurface {
                 filesystem_io: self.deps.filesystem_io.clone(),
             },
             Some(fp),
-            match u32::try_from(threshold).ok().and_then(|value| Threshold::try_new(value).ok()) {
+            match u32::try_from(threshold)
+                .ok()
+                .and_then(|value| Threshold::try_new(value).ok())
+            {
                 Some(threshold) => threshold,
-                None => return error_response("Invalid 'threshold': expected an integer from 0 to 100"),
+                None => {
+                    return error_response("Invalid 'threshold': expected an integer from 0 to 100");
+                }
             },
         ) {
             Ok(report) => {
@@ -766,7 +771,10 @@ pub fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, se
         .canonicalize()
         .map_err(|_| error_response("Workspace root does not exist"))?;
     let requested_path = Path::new(requested);
-    if requested_path.components().any(|part| matches!(part, Component::ParentDir)) {
+    if requested_path
+        .components()
+        .any(|part| matches!(part, Component::ParentDir))
+    {
         return Err(error_response("Path escapes workspace root"));
     }
     let candidate = if requested_path.is_absolute() {
@@ -784,11 +792,17 @@ pub fn resolve_confined_path(root: &Path, requested: &str) -> Result<PathBuf, se
 }
 
 pub fn is_mutating_action(action: &str) -> bool {
-    matches!(action, "fix" | "install-hook" | "uninstall-hook" | "init" | "install")
+    matches!(
+        action,
+        "fix" | "install-hook" | "uninstall-hook" | "init" | "install"
+    )
 }
 
 fn normalize_response(mut response: serde_json::Value) -> serde_json::Value {
-    let exit_code = response.get("exit_code").and_then(serde_json::Value::as_i64).unwrap_or(2);
+    let exit_code = response
+        .get("exit_code")
+        .and_then(serde_json::Value::as_i64)
+        .unwrap_or(2);
     if let Some(object) = response.as_object_mut() {
         let normalized = if exit_code == 0 {
             "ok"

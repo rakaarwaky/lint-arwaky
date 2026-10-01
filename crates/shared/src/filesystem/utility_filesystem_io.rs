@@ -55,8 +55,15 @@ pub fn write_string(path: &Path, content: &str) -> Result<(), std::io::Error> {
     let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
     let mut attempt = 0_u32;
     let (tmp_path, mut tmp) = loop {
-        let candidate = parent.join(format!(".{name}.lint-arwaky-{}-{attempt}.tmp", std::process::id()));
-        match std::fs::OpenOptions::new().write(true).create_new(true).open(&candidate) {
+        let candidate = parent.join(format!(
+            ".{name}.lint-arwaky-{}-{attempt}.tmp",
+            std::process::id()
+        ));
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&candidate)
+        {
             Ok(file) => break (candidate, file),
             Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists && attempt < 100 => {
                 attempt += 1;

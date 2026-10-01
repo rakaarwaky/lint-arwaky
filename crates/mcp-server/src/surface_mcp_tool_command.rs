@@ -51,9 +51,11 @@ impl LintArwakyMcpServer {
         };
         let threshold = match extract_u64(values, "threshold", 80) {
             Ok(value) if value <= 100 => value,
-            Ok(value) => return validation_error(&format!(
-                "Invalid value for 'threshold': expected 0..=100, got {value}"
-            )),
+            Ok(value) => {
+                return validation_error(&format!(
+                    "Invalid value for 'threshold': expected 0..=100, got {value}"
+                ));
+            }
             Err(error) => return validation_error(&error),
         };
         let dry_run = match extract_bool(values, "dry_run", false) {
@@ -61,7 +63,9 @@ impl LintArwakyMcpServer {
             Err(error) => return validation_error(&error),
         };
 
-        let result = self.action.execute_command(&action, &path, threshold, dry_run);
+        let result = self
+            .action
+            .execute_command(&action, &path, threshold, dry_run);
         serde_json::to_string(&result).unwrap_or_default()
     }
 
@@ -138,43 +142,56 @@ impl LintArwakyMcpServer {
     }
 }
 
-
 fn extract_string(
-    args: Option<&serde_json::Map<String, serde_json::Value>>,
+    args: Option<&serde_json::Value>,
     key: &str,
     default: &str,
 ) -> Result<String, String> {
-    match args.and_then(|values| values.get(key)) {
+    let values = extract_args_object(args)?;
+    match values.and_then(|values| values.get(key)) {
         None => Ok(default.to_string()),
-        Some(value) => value.as_str().map(String::from).ok_or_else(|| {
-            format!("Invalid type for '{key}': expected a string")
-        }),
+        Some(value) => value
+            .as_str()
+            .map(String::from)
+            .ok_or_else(|| format!("Invalid type for '{key}': expected a string")),
     }
 }
 
 fn extract_u64(
-    args: Option<&serde_json::Map<String, serde_json::Value>>,
+    args: Option<&serde_json::Value>,
     key: &str,
     default: u64,
 ) -> Result<u64, String> {
-    match args.and_then(|values| values.get(key)) {
+    let values = extract_args_object(args)?;
+    match values.and_then(|values| values.get(key)) {
         None => Ok(default),
-        Some(value) => value.as_u64().ok_or_else(|| {
-            format!("Invalid type for '{key}': expected a non-negative integer")
-        }),
+        Some(value) => value
+            .as_u64()
+            .ok_or_else(|| format!("Invalid type for '{key}': expected a non-negative integer")),
     }
 }
 
 fn extract_bool(
-    args: Option<&serde_json::Map<String, serde_json::Value>>,
+    args: Option<&serde_json::Value>,
     key: &str,
     default: bool,
 ) -> Result<bool, String> {
-    match args.and_then(|values| values.get(key)) {
+    let values = extract_args_object(args)?;
+    match values.and_then(|values| values.get(key)) {
         None => Ok(default),
-        Some(value) => value.as_bool().ok_or_else(|| {
-            format!("Invalid type for '{key}': expected a boolean")
-        }),
+        Some(value) => value
+            .as_bool()
+            .ok_or_else(|| format!("Invalid type for '{key}': expected a boolean")),
+    }
+}
+
+fn extract_args_object(
+    args: Option<&serde_json::Value>,
+) -> Result<Option<&serde_json::Map<String, serde_json::Value>>, String> {
+    match args {
+        None => Ok(None),
+        Some(serde_json::Value::Object(values)) => Ok(Some(values)),
+        Some(_) => Err("Invalid type for 'args': expected an object".to_string()),
     }
 }
 
@@ -193,10 +210,9 @@ mod tests {
             "threshold": "95",
             "dry_run": "true"
         });
-        let object = values.as_object();
-        assert!(extract_string(object, "path", ".").is_err());
-        assert!(extract_u64(object, "threshold", 80).is_err());
-        assert!(extract_bool(object, "dry_run", false).is_err());
+        assert!(extract_string(Some(&values), "path", ".").is_err());
+        assert!(extract_u64(Some(&values), "threshold", 80).is_err());
+        assert!(extract_bool(Some(&values), "dry_run", false).is_err());
     }
 
     #[test]

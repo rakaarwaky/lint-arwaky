@@ -43,7 +43,9 @@ impl IHookInstallProtocol for HookInstaller {
         const MANAGED_MARKER: &str = "# managed-by: lint-arwaky";
         if self.io.path_exists(&hook_path) {
             let existing = self.io.read_to_string(&hook_path).map_err(|e| {
-                GitHookError::new(LintMessage::new(format!("Failed to inspect existing hook: {e}")))
+                GitHookError::new(LintMessage::new(format!(
+                    "Failed to inspect existing hook: {e}"
+                )))
             })?;
             if !existing.value.contains(MANAGED_MARKER) {
                 let backup_path = hooks_dir.join("pre-commit.bak");

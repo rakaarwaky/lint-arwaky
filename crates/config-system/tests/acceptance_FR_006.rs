@@ -134,15 +134,28 @@ fn us6_adapter_disabled_via_status_field() {
 #[test]
 fn unknown_config_keys_are_reported() {
     let yaml = "architecture:\n  treshold: 90\n  enabled: true\n  rules:\n    AES999:\n      enabled: true\n      typo_field: true\n";
-    let (_, warnings) = shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml);
-    assert!(warnings.iter().any(|warning| warning.contains("architecture.treshold")), "{warnings:?}");
-    assert!(warnings.iter().any(|warning| warning.contains("typo_field")), "{warnings:?}");
+    let (_, warnings) =
+        shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml);
+    assert!(
+        warnings
+            .iter()
+            .any(|warning| warning.contains("architecture.treshold")),
+        "{warnings:?}"
+    );
+    assert!(
+        warnings
+            .iter()
+            .any(|warning| warning.contains("typo_field")),
+        "{warnings:?}"
+    );
 }
 
 #[test]
 fn one_bad_field_does_not_discard_other_valid_fields() {
-    let yaml = "architecture:\n  enabled: definitely-not-a-boolean\n  mandatory_class_definition: true\n";
-    let (config, warnings) = shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml);
+    let yaml =
+        "architecture:\n  enabled: definitely-not-a-boolean\n  mandatory_class_definition: true\n";
+    let (config, warnings) =
+        shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml);
     assert!(config.mandatory_class_definition.value);
     assert!(!warnings.is_empty());
 }
@@ -150,6 +163,12 @@ fn one_bad_field_does_not_discard_other_valid_fields() {
 #[test]
 fn conflicting_legacy_layers_produce_a_migration_warning() {
     let yaml = "architecture:\n  rules:\n    AES101:\n      layers: { taxonomy: {} }\n    AES102:\n      layers: { contract: {} }\n";
-    let (_, warnings) = shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml);
-    assert!(warnings.iter().any(|warning| warning.contains("Conflicting legacy") && warning.contains("AES102")), "{warnings:?}");
+    let (_, warnings) =
+        shared_config_system::utility_config_parser::parse_config_yaml_with_warnings(yaml);
+    assert!(
+        warnings
+            .iter()
+            .any(|warning| warning.contains("Conflicting legacy") && warning.contains("AES102")),
+        "{warnings:?}"
+    );
 }

@@ -13,8 +13,8 @@ use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::taxonomy_filesystem_vo::{
     FileEntry, ImportEntry, ParseMetadata, ParseWarning,
 };
-use std::path::{Path, PathBuf};
 use std::collections::VecDeque;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
 // ─── Block 1: Struct Definition ───────────────────────────

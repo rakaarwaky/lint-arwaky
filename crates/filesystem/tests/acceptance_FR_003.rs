@@ -215,5 +215,8 @@ fn write_string_atomically_replaces_existing_content_without_temp_leaks() {
         .filter_map(Result::ok)
         .filter(|entry| entry.file_name().to_string_lossy().contains("lint-arwaky"))
         .collect();
-    assert!(leftovers.is_empty(), "temporary files leaked: {leftovers:?}");
+    assert!(
+        leftovers.is_empty(),
+        "temporary files leaked: {leftovers:?}"
+    );
 }
