@@ -101,7 +101,7 @@ States.
 The server never terminates on a client error. A malformed request is answered
 and the loop continues, because an MCP client may recover and retry.
 
-## Response Contract
+### Response Contract
 
 Every action returns `exit_code` as the primary machine signal (`0` success,
 `1` policy findings, `2` invalid request/runtime error, `3` missing tool). The

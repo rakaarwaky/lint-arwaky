@@ -89,14 +89,7 @@ jobs:
         run: cargo build --release
 
       - name: Run tests
-        run: |
-          set +e
-          cargo nextest run --workspace --lib --tests -j 2 > test.log 2>&1
-          status=$?
-          gzip -9 -c test.log | base64 -w0 | fold -w3000 | while IFS= read -r chunk || [ -n "$chunk" ]; do
-            echo "::error title=TEST_LOG::$chunk"
-          done
-          exit "$status"
+        run: cargo nextest run --workspace --lib --tests -j 2
 
   self-lint:
     name: Self-Lint
@@ -116,13 +109,9 @@ jobs:
 
       - name: AES Self-Lint
         run: |
-          set +e
           output=$(./target/debug/lint-arwaky-cli check . 2>&1)
           violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+' || echo "0")
           echo "Violations: ${violations}"
-          printf '%s' "$output" | gzip -9 | base64 -w0 | fold -w3000 | while IFS= read -r chunk || [ -n "$chunk" ]; do
-            echo "::error title=SELF_LINT_LOG::$chunk"
-          done
           [ "${violations}" = "0" ]
 
       - name: AES Codes Check

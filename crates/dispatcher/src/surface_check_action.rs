@@ -26,7 +26,6 @@ use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
 use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use shared_structure_rules::IStructureAggregate;
-use std::io::Read;
 use std::path::PathBuf;
 use std::process::{Child, Command, Output, Stdio};
 use std::sync::Arc;
@@ -902,12 +901,12 @@ fn wait_for_child(mut child: Child, timeout: Duration) -> Result<Output, String>
     let stdout_reader = std::thread::spawn(move || {
         let mut bytes = Vec::new();
         let mut pipe = stdout;
-        pipe.read_to_end(&mut bytes).map(|_| bytes)
+        std::io::Read::read_to_end(&mut pipe, &mut bytes).map(|_| bytes)
     });
     let stderr_reader = std::thread::spawn(move || {
         let mut bytes = Vec::new();
         let mut pipe = stderr;
-        pipe.read_to_end(&mut bytes).map(|_| bytes)
+        std::io::Read::read_to_end(&mut pipe, &mut bytes).map(|_| bytes)
     });
     let started = Instant::now();
     let status = loop {
