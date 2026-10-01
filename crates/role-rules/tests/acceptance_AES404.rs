@@ -1,11 +1,11 @@
 // Acceptance test AES404 — Utility purity.
 // Utility files must not define structs, enums, classes, impl blocks, or type aliases.
 use role_rules_lint_arwaky::root_role_rules_container::RoleContainer;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::{
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::{
     FileEntry, Language, ParseMetadata, RustMetadata, TypeScriptMetadata,
 };
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
 use std::path::PathBuf;
 
 fn make_file(path: &str, lang: Language, content: &str) -> FileEntry {
@@ -43,7 +43,7 @@ fn make_file_with_rust_meta(path: &str, meta: RustMetadata) -> FileEntry {
     }
 }
 
-fn run_audit(files: Vec<FileEntry>) -> Vec<shared::common::LintResult> {
+fn run_audit(files: Vec<FileEntry>) -> Vec<shared_common::LintResult> {
     let config = ArchitectureConfig::default();
     let container = RoleContainer::new_with_config(config);
     let orch = container.orchestrator();
@@ -162,7 +162,7 @@ fn aes404_rust_utility_with_type_alias_detected() {
 #[test]
 fn aes404_metadata_trait_impl_reported() {
     let meta = RustMetadata {
-        impl_blocks: vec![shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+        impl_blocks: vec![shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
             trait_name: Some("IHelperProtocol".into()),
             trait_path: Some("shared::IHelperProtocol".into()),
             implementor_type: "Helper".into(),
@@ -195,7 +195,7 @@ fn aes404_metadata_trait_impl_reported() {
 #[test]
 fn aes404_metadata_inherent_impl_reported() {
     let meta = RustMetadata {
-        impl_blocks: vec![shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+        impl_blocks: vec![shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
             trait_name: None,
             trait_path: None,
             implementor_type: "Helper".into(),
@@ -320,7 +320,7 @@ fn aes404_metadata_ts_interface_and_type_reported() {
 #[test]
 fn aes404_metadata_clean_no_violation() {
     let meta = RustMetadata {
-        function_definitions: vec![shared::filesystem::taxonomy_filesystem_vo::RustFnItem {
+        function_definitions: vec![shared_filesystem::taxonomy_filesystem_vo::RustFnItem {
             name: "helper".into(),
             has_body: true,
         }],

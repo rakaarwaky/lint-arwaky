@@ -1,6 +1,6 @@
 // PURPOSE: NamingRequest — request payload for the naming aggregate
 
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 
 pub enum NamingRequest {
     /// Run AES101/AES102 audit on pre-parsed file entries.

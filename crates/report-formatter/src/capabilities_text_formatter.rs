@@ -4,9 +4,9 @@
 // to other crates. Produces human-readable output with severity badges,
 // violation counts grouped by rule code (descending), severity breakdown,
 // external lint results section, diagnostics section, and compliance score.
-use shared::cli_commands::{Format, LintResult, ScanReport};
-use shared::common::taxonomy_display_content_vo::DisplayContent;
-use shared::report_formatter::contract_report_formatter_protocol::ITextFormatProtocol;
+use shared_cli_commands::{Format, LintResult, ScanReport};
+use shared_common::taxonomy_display_content_vo::DisplayContent;
+use shared_report_formatter::contract_report_formatter_protocol::ITextFormatProtocol;
 use std::collections::BTreeMap;
 
 // ─── Block 1: Struct Definition ───────────────────────────
@@ -163,9 +163,9 @@ fn format_text_report(report: &ScanReport) -> DisplayContent {
         out.push_str("-------------------------------------------\n");
         for d in &report.diagnostics {
             let sev_label = match d.severity {
-                shared::cli_commands::DiagnosticSeverity::Warning => "WARNING",
-                shared::cli_commands::DiagnosticSeverity::Error => "ERROR",
-                shared::cli_commands::DiagnosticSeverity::Info => "INFO",
+                shared_cli_commands::DiagnosticSeverity::Warning => "WARNING",
+                shared_cli_commands::DiagnosticSeverity::Error => "ERROR",
+                shared_cli_commands::DiagnosticSeverity::Info => "INFO",
             };
             out.push_str(&format!("  [{}] [{}] {}\n", sev_label, d.source, d.message));
         }
@@ -177,7 +177,7 @@ fn format_text_report(report: &ScanReport) -> DisplayContent {
     let violation_count = report
         .results
         .iter()
-        .filter(|r| r.severity != shared::common::Severity::INFO)
+        .filter(|r| r.severity != shared_common::Severity::INFO)
         .count();
     out.push_str(&format!("Total violations: {}\n", violation_count));
     if let Some(score) = &report.score {
@@ -189,13 +189,13 @@ fn format_text_report(report: &ScanReport) -> DisplayContent {
 
 // ─── Helper Functions ─────────────────────────────────────
 
-fn severity_badge(sev: &shared::common::Severity) -> &'static str {
+fn severity_badge(sev: &shared_common::Severity) -> &'static str {
     match sev {
-        shared::common::Severity::CRITICAL => "[!!!]",
-        shared::common::Severity::HIGH => "[!! ]",
-        shared::common::Severity::MEDIUM => "[!  ]",
-        shared::common::Severity::LOW => "[.  ]",
-        shared::common::Severity::INFO => "[   ]",
+        shared_common::Severity::CRITICAL => "[!!!]",
+        shared_common::Severity::HIGH => "[!! ]",
+        shared_common::Severity::MEDIUM => "[!  ]",
+        shared_common::Severity::LOW => "[.  ]",
+        shared_common::Severity::INFO => "[   ]",
     }
 }
 
@@ -228,11 +228,11 @@ fn count_by_severity(results: &[&LintResult]) -> SeverityCounts {
     };
     for r in results {
         match r.severity {
-            shared::common::Severity::CRITICAL => counts.critical += 1,
-            shared::common::Severity::HIGH => counts.high += 1,
-            shared::common::Severity::MEDIUM => counts.medium += 1,
-            shared::common::Severity::LOW => counts.low += 1,
-            shared::common::Severity::INFO => counts.info += 1,
+            shared_common::Severity::CRITICAL => counts.critical += 1,
+            shared_common::Severity::HIGH => counts.high += 1,
+            shared_common::Severity::MEDIUM => counts.medium += 1,
+            shared_common::Severity::LOW => counts.low += 1,
+            shared_common::Severity::INFO => counts.info += 1,
         }
     }
     counts

@@ -1,9 +1,9 @@
-use shared::common::taxonomy_tool_name_vo::ToolName;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::maintenance::contract_maintenance_protocol::ISelfUpdateProtocol;
-use shared::maintenance::taxonomy_maintenance_constant::GITHUB_REPO;
-use shared::maintenance::taxonomy_maintenance_vo::SelfUpdateResultVO;
-use shared::maintenance::utility_maintenance_helpers;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_maintenance::contract_maintenance_protocol::ISelfUpdateProtocol;
+use shared_maintenance::taxonomy_maintenance_constant::GITHUB_REPO;
+use shared_maintenance::taxonomy_maintenance_vo::SelfUpdateResultVO;
+use shared_maintenance::utility_maintenance_helpers;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 

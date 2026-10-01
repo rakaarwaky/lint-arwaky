@@ -1,10 +1,10 @@
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_layer_detector;
-use shared::orphan_rules::contract_orphan_protocol::IUtilityOrphanProtocol;
-use shared::orphan_rules::taxonomy_orphan_rules_constant::CONSUMER_LAYERS;
-use shared::orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
-use shared::quality_rules::taxonomy_quality_rules_vo::{
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::utility_layer_detector;
+use shared_orphan_rules::contract_orphan_protocol::IUtilityOrphanProtocol;
+use shared_orphan_rules::taxonomy_orphan_rules_constant::CONSUMER_LAYERS;
+use shared_orphan_rules::taxonomy_orphan_rules_vo::FileParseResultVO;
+use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;
@@ -166,7 +166,7 @@ impl UtilityOrphanAnalyzer {
     }
 
     pub fn is_module_imported(file_path: &str, content: &str, module_name: &str) -> bool {
-        match shared::common::parse_file_content(file_path, content) {
+        match shared_common::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => {
                 let in_imports = result.imports.iter().any(|imp| {
                     imp.segments.iter().any(|seg| {

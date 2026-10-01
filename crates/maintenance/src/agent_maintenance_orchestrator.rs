@@ -1,16 +1,16 @@
-use shared::common::taxonomy_action_vo::JobId;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_action_vo::JobId;
+use shared_common::taxonomy_path_vo::FilePath;
 
-use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
-use shared::maintenance::contract_maintenance_protocol::{
+use shared_maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
+use shared_maintenance::contract_maintenance_protocol::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol, IToolUpdateProtocol,
 };
-use shared::maintenance::taxonomy_maintenance_request::MaintenanceRequest;
-use shared::maintenance::taxonomy_maintenance_response::MaintenanceResponse;
+use shared_maintenance::taxonomy_maintenance_request::MaintenanceRequest;
+use shared_maintenance::taxonomy_maintenance_response::MaintenanceResponse;
 
-use shared::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
-use shared::maintenance::taxonomy_maintenance_vo::{
+use shared_maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
+use shared_maintenance::taxonomy_maintenance_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, SelfUpdateResultVO,
     ToolchainDiagnostics,
 };

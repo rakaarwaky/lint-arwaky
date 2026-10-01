@@ -3,10 +3,10 @@ use maintenance_lint_arwaky::{
     IAdapterHealthProtocol, IDependencyReportProtocol, IDoctorProtocol, IProjectStatsProtocol,
     ISecurityScanProtocol, ISelfUpdateProtocol,
 };
-use shared::common::FilePath;
+use shared_common::FilePath;
 
 fn make_io()
--> std::sync::Arc<dyn shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol> {
+-> std::sync::Arc<dyn shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol> {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _fs = fc.orchestrator();
     fc.io()

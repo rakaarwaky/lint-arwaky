@@ -1,8 +1,8 @@
 // Unit tests for ASTParser — FR-001: AST Parsing & Import Extraction.
 use filesystem_lint_arwaky::capabilities_ast_parser::ASTParser;
-use shared::common::taxonomy_language_vo::Language;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_common::taxonomy_language_vo::Language;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 use std::path::PathBuf;
 
 fn make_entry(path: &str, content: &str, language: Language) -> FileEntry {
@@ -95,7 +95,7 @@ fn parse_typescript_captures_enum_declarations() {
     parser.parse_all(&mut files);
     assert!(files[0].parse_ok);
     let meta = match &files[0].parse_metadata {
-        Some(shared::filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(m)) => m,
+        Some(shared_filesystem::taxonomy_filesystem_vo::ParseMetadata::TypeScript(m)) => m,
         other => panic!("expected TypeScript metadata, got: {other:?}"),
     };
     assert!(
@@ -194,7 +194,7 @@ fn parse_parallel_multiple_files() {
 
 #[test]
 fn test_extract_rust_metadata_used_identifiers() {
-    use shared::filesystem::utility_ast_rust::extract_rust_metadata;
+    use shared_filesystem::utility_ast_rust::extract_rust_metadata;
 
     let content = r#"
 use taxonomy::vo::UserVO;

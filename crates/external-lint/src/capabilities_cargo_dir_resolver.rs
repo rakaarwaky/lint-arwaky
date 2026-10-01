@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::external_lint::ICargoDirProtocol;
-use shared::filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_external_lint::ICargoDirProtocol;
+use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

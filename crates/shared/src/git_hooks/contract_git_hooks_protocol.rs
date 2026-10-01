@@ -6,16 +6,16 @@
 // Utility-only protocols (IDiffDataProtocol, IIgnoreRuleProtocol, IHookCheckProtocol)
 // have been removed — they were not business capabilities.
 
-use crate::common::taxonomy_git_vo::GitBranchName;
-use crate::common::taxonomy_job_vo::SuccessStatus;
-use crate::common::taxonomy_layer_vo::Identity;
-use crate::common::taxonomy_lint_result_vo::LintResultList;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::common::taxonomy_suggestion_vo::DescriptionVO;
-use crate::file_watch::taxonomy_file_watch_vo::GitDiffResultVO;
-use crate::git_hooks::taxonomy_git_hooks_error::GitHookError;
-use crate::git_hooks::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
+use crate::taxonomy_git_hooks_error::GitHookError;
+use crate::taxonomy_git_hooks_vo::HookIgnoreUpdateVO;
+use shared_common::taxonomy_git_vo::GitBranchName;
+use shared_common::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+use shared_file_watch::taxonomy_file_watch_vo::GitDiffResultVO;
 
 /// FR-GitHooks-001: identify changed files via git diff and run the lint
 /// pipeline over them. One seam that owns both detection and execution.

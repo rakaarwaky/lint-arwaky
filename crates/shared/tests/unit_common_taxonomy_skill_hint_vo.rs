@@ -1,9 +1,7 @@
 // Unit tests — skill hint resolution: file layer → routing.
 // One rule: the file's layer determines the skill for every code.
-use shared_lint_arwaky::common::resolve_skill_hint_for_file;
-use shared_lint_arwaky::common::taxonomy_skill_hint_vo::{
-    SkillHint, resolve_skill_hint, skill_of_layer,
-};
+use shared_common::resolve_skill_hint_for_file;
+use shared_common::taxonomy_skill_hint_vo::{SkillHint, resolve_skill_hint, skill_of_layer};
 
 #[test]
 fn skill_of_layer_maps_each_layer() {

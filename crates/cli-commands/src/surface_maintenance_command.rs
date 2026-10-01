@@ -1,8 +1,8 @@
 // PURPOSE: Maintenance — CLI thin wrapper
 // Calls dispatcher for maintenance business logic, only adds CLI output.
-use shared::common::ExitCode;
-use shared::common::FilePath;
-use shared::maintenance::IMaintenanceAggregate;
+use shared_common::ExitCode;
+use shared_common::FilePath;
+use shared_maintenance::IMaintenanceAggregate;
 use std::sync::Arc;
 use tracing::error;
 

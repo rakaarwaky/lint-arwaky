@@ -1,9 +1,9 @@
 // Integration tests — full DI wiring via FilesystemContainer.
 use filesystem_lint_arwaky::root_filesystem_container::FilesystemContainer;
-use shared::common::PatternList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_common::PatternList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -42,7 +42,7 @@ fn workspace_capability_detects_language() {
     let lang = workspace.detect_language_from_path("src/main.rs");
     assert_eq!(
         lang,
-        shared::common::taxonomy_config_language_vo::ConfigLanguage::Rust
+        shared_common::taxonomy_config_language_vo::ConfigLanguage::Rust
     );
 }
 
@@ -50,7 +50,7 @@ fn workspace_capability_detects_language() {
 fn tool_resolution_capability_checks_path() {
     let container = FilesystemContainer::new();
     let tools = container.tool_resolution();
-    let name = shared::common::taxonomy_tool_name_vo::ToolName::new("sh");
+    let name = shared_common::taxonomy_tool_name_vo::ToolName::new("sh");
     assert!(tools.is_binary_available(&name));
 }
 
@@ -153,7 +153,7 @@ fn parser_capability_extracts_imports_from_snippet() {
     let imports = parser.extract(
         &PathBuf::from("/test.rs"),
         "use std::collections::HashMap;\n",
-        shared::common::taxonomy_language_vo::Language::Rust,
+        shared_common::taxonomy_language_vo::Language::Rust,
     );
     assert!(!imports.is_empty());
 }

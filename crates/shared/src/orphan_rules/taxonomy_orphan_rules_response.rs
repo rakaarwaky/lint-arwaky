@@ -1,8 +1,8 @@
 // PURPOSE: OrphanResponse — response payload for the orphan aggregate
 
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::orphan_rules::taxonomy_orphan_rules_vo::OrphanFileListVO;
-use crate::quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext;
+use crate::taxonomy_orphan_rules_vo::OrphanFileListVO;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_quality_rules::taxonomy_quality_rules_vo::GraphAnalysisContext;
 
 pub enum OrphanResponse {
     GraphContext {

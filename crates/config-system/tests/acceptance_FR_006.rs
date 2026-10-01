@@ -2,10 +2,10 @@
 // Tests threshold validation and adapter enablement per FR-006 spec.
 mod common;
 
-use shared::common::AdapterName;
-use shared::common::{Count, Score};
-use shared::config_system::utility_config_parser::validate_thresholds;
-use shared::config_system::{AdapterEntry, AdapterStatus, ProjectConfig, Thresholds};
+use shared_common::AdapterName;
+use shared_common::{Count, Score};
+use shared_config_system::utility_config_parser::validate_thresholds;
+use shared_config_system::{AdapterEntry, AdapterStatus, ProjectConfig, Thresholds};
 
 fn check(config: &ProjectConfig) -> bool {
     validate_thresholds(config).is_valid
@@ -70,7 +70,7 @@ fn us6_score_threshold_above_100_is_invalid() {
 fn us6_unknown_adapter_defaults_to_enabled() {
     let config = ProjectConfig::default();
     assert!(
-        shared::config_system::utility_config_parser::is_adapter_enabled(
+        shared_config_system::utility_config_parser::is_adapter_enabled(
             &config,
             &AdapterName::raw("unknown_adapter")
         )
@@ -124,7 +124,7 @@ fn us6_adapter_disabled_via_status_field() {
         ..Default::default()
     };
     assert!(
-        !shared::config_system::utility_config_parser::is_adapter_enabled(
+        !shared_config_system::utility_config_parser::is_adapter_enabled(
             &config,
             &AdapterName::raw("mypy")
         )

@@ -1,6 +1,6 @@
 // PURPOSE: FixRequest — request payload for the fix aggregate
 
-use crate::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_path_vo::FilePath;
 
 pub enum FixRequest {
     /// Run linter + apply fixes for all fixable violation types.

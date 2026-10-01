@@ -2,8 +2,8 @@
 // symlink cycles and pathologically deep layouts must terminate.
 #![cfg(not(windows))]
 
-use shared::structure_rules::taxonomy_structure_rules_request::StructureRequest;
-use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
+use shared_structure_rules::taxonomy_structure_rules_request::StructureRequest;
+use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 use structure_rules_lint_arwaky::root_structure_rules_container::RootStructureRulesContainer;
 
 use std::fs;

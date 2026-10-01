@@ -7,26 +7,26 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::cli_commands::LintResult;
-use shared::common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError, SymbolName};
-use shared::config_system::ArchitectureConfig;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::contract_filesystem_protocol::IParserProtocol;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ParseMetadata};
-use shared::import_rules::DEFAULT_SKIP_DIRS;
-use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
-use shared::import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
-use shared::import_rules::contract_import_protocol::IImportForbiddenProtocol;
-use shared::import_rules::contract_import_protocol::IImportMandatoryProtocol;
-use shared::import_rules::contract_import_protocol::IUnusedImportProtocol;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
-use shared::import_rules::taxonomy_import_rules_response::ImportResponse;
+use shared_cli_commands::LintResult;
+use shared_common::{ContentString, ErrorMessage, FilePath, FilePathList, ScanError, SymbolName};
+use shared_config_system::ArchitectureConfig;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ImportEntry, ParseMetadata};
+use shared_import_rules::DEFAULT_SKIP_DIRS;
+use shared_import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared_import_rules::contract_import_protocol::IDummyImportCheckerProtocol;
+use shared_import_rules::contract_import_protocol::IImportForbiddenProtocol;
+use shared_import_rules::contract_import_protocol::IImportMandatoryProtocol;
+use shared_import_rules::contract_import_protocol::IUnusedImportProtocol;
+use shared_import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
+use shared_import_rules::taxonomy_import_rules_response::ImportResponse;
 
-use shared::common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_definition_vo::LayerMapVO;
 use tracing::warn;
 
 // ─── Block 1: Struct Definition ───────────────────────────

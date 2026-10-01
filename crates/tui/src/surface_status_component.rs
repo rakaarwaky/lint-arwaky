@@ -9,7 +9,7 @@ use ratatui::layout::Rect;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use shared::tui::AppState;
+use shared_tui::AppState;
 
 /// Returns the box-drawing character for a vertical separator.
 /// Falls back to "|" when NO_COLOR is set (#365).

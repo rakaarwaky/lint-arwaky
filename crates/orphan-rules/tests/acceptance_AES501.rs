@@ -1,9 +1,9 @@
 // Acceptance tests — AES501: Taxonomy orphan detection.
 use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::orphan_rules::ITaxonomyOrphanProtocol;
-use shared::quality_rules::taxonomy_quality_rules_vo::{InboundLinkMap, ReachabilityResult};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_orphan_rules::ITaxonomyOrphanProtocol;
+use shared_quality_rules::taxonomy_quality_rules_vo::{InboundLinkMap, ReachabilityResult};
 use std::collections::{HashMap, HashSet};
 
 fn empty_reachability() -> ReachabilityResult {

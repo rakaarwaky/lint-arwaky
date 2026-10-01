@@ -4,9 +4,9 @@
 // languages present in a project by scanning for marker files and source
 // extensions. No default language is returned when nothing is detected (FR-003).
 
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::project_setup::contract_setup_protocol::ILanguageDetectionProtocol;
-use shared::project_setup::taxonomy_project_setup_vo::{ProjectLanguageVO, ProjectLanguagesVO};
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_project_setup::contract_setup_protocol::ILanguageDetectionProtocol;
+use shared_project_setup::taxonomy_project_setup_vo::{ProjectLanguageVO, ProjectLanguagesVO};
 
 use std::sync::Arc;
 
@@ -111,7 +111,7 @@ impl SetupLanguageDetector {
                     Some(n) => n,
                     None => continue,
                 };
-                if name.starts_with('.') || shared::common::DEFAULT_IGNORED_PATHS.contains(&name) {
+                if name.starts_with('.') || shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
                     continue;
                 }
                 self.scan_source_extensions(

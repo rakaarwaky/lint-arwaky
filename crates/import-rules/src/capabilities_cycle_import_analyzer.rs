@@ -1,20 +1,20 @@
 // PURPOSE: DependencyCycleAnalyzer — AES205: circular dependency detection
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
-use shared::cli_commands::LintResult;
-use shared::common::taxonomy_definition_vo::LayerMapVO;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_name_vo::SymbolName;
-use shared::common::utility_layer_detector;
-use shared::common::{FilePath, FilePathList, Severity};
-use shared::filesystem::taxonomy_filesystem_vo::ImportEntry;
+use shared_cli_commands::LintResult;
+use shared_common::taxonomy_definition_vo::LayerMapVO;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_name_vo::SymbolName;
+use shared_common::utility_layer_detector;
+use shared_common::{FilePath, FilePathList, Severity};
+use shared_filesystem::taxonomy_filesystem_vo::ImportEntry;
 
-use shared::config_system::ArchitectureConfig;
-use shared::import_rules::contract_import_protocol::ICycleImportProtocol;
-use shared::import_rules::taxonomy_import_rules_error::ImportError;
-use shared::import_rules::taxonomy_import_rules_vo::DependencyEdge;
-use shared::import_rules::utility_cycle_detector;
-use shared::import_rules::utility_import_module_parser;
+use shared_config_system::ArchitectureConfig;
+use shared_import_rules::contract_import_protocol::ICycleImportProtocol;
+use shared_import_rules::taxonomy_import_rules_error::ImportError;
+use shared_import_rules::taxonomy_import_rules_vo::DependencyEdge;
+use shared_import_rules::utility_cycle_detector;
+use shared_import_rules::utility_import_module_parser;
 
 use std::collections::HashMap;
 

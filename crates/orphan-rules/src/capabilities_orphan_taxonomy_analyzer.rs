@@ -1,10 +1,10 @@
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::common::utility_layer_detector;
-use shared::orphan_rules::contract_orphan_protocol::ITaxonomyOrphanProtocol;
-use shared::orphan_rules::utility_orphan_filename::file_stem;
-use shared::quality_rules::taxonomy_quality_rules_vo::{
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::utility_layer_detector;
+use shared_orphan_rules::contract_orphan_protocol::ITaxonomyOrphanProtocol;
+use shared_orphan_rules::utility_orphan_filename::file_stem;
+use shared_quality_rules::taxonomy_quality_rules_vo::{
     InboundLinkMap, OrphanIndicatorResult, ReachabilityResult,
 };
 use std::collections::HashMap;
@@ -36,7 +36,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                     .filter(|importer| *importer != f.value())
                     .any(|importer| {
                         let imp_filename =
-                            shared::common::utility_layer_detector::extract_filename(importer);
+                            shared_common::utility_layer_detector::extract_filename(importer);
                         imp_filename.starts_with("contract_")
                             || imp_filename.starts_with("capabilities_")
                             || imp_filename.starts_with("agent_")
@@ -57,7 +57,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                 {
                     mod_importers.iter().any(|importer| {
                         let imp_filename =
-                            shared::common::utility_layer_detector::extract_filename(importer);
+                            shared_common::utility_layer_detector::extract_filename(importer);
                         imp_filename.starts_with("contract_")
                             || imp_filename.starts_with("capabilities_")
                             || imp_filename.starts_with("agent_")
@@ -131,7 +131,7 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
                         .iter()
                         .filter(|i| *i != f.value())
                         .map(|i| {
-                            shared::common::utility_layer_detector::extract_filename(i).to_string()
+                            shared_common::utility_layer_detector::extract_filename(i).to_string()
                         })
                         .collect();
                     format!(

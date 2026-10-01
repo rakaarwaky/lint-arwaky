@@ -1,6 +1,6 @@
 // Unit tests — capability protocol methods for each capability separately.
-use shared::common::taxonomy_path_vo::DirectoryPath;
-use shared::project_setup::{
+use shared_common::taxonomy_path_vo::DirectoryPath;
+use shared_project_setup::{
     IEnvGenerationProtocol, ILanguageDetectionProtocol, IMcpConfigGenerationProtocol,
 };
 

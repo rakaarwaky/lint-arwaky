@@ -11,7 +11,9 @@ publish = true
 workspace = true
 
 [dependencies]
-shared.workspace = true
+shared-cli-commands.workspace = true
+shared-common.workspace = true
+shared-report-formatter.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
 

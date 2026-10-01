@@ -4,7 +4,7 @@
 //
 // Utility: stateless standalone functions
 
-use crate::common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
 // ─── IO primitives delegated to shared (AES201: utility cannot import utility) ───
@@ -221,7 +221,7 @@ pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
                     Some(n) => n,
                     None => continue,
                 };
-                if crate::common::DEFAULT_IGNORED_PATHS.contains(&name) {
+                if shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
                     continue;
                 }
                 walk_detect(&path, has_rs, has_py, has_js);
@@ -284,7 +284,7 @@ pub fn confine_under_root(root: &Path, candidate: &Path) -> Option<PathBuf> {
 pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
     for path in list_dir_entries(dir) {
         let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if crate::common::DEFAULT_IGNORED_PATHS.contains(&name) {
+        if shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
             continue;
         }
         if path.is_dir() && check_dir_containers(&path, identifiers) {
@@ -308,10 +308,10 @@ pub fn check_dir_containers(dir: &Path, identifiers: &[String]) -> bool {
 /// Discover source files under root, skipping ignored directories during traversal.
 /// Uses `ignore::WalkBuilder` for efficient directory skipping plus a post-walk
 /// filter using `is_path_ignored` to handle all config-specified patterns.
-/// Uses crate::common::DEFAULT_IGNORED_PATHS as built-in defaults.
+/// Uses shared_common::DEFAULT_IGNORED_PATHS as built-in defaults.
 pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
     // Merge single-source defaults + caller-provided patterns
-    let mut merged_ignored: Vec<String> = crate::common::DEFAULT_IGNORED_PATHS
+    let mut merged_ignored: Vec<String> = shared_common::DEFAULT_IGNORED_PATHS
         .iter()
         .map(|s| s.to_string())
         .collect();
@@ -346,7 +346,7 @@ pub fn discover_source_files(root: &Path, ignored: &[String]) -> Vec<String> {
                 .unwrap_or_else(|_| e.path().to_path_buf());
             let rel_path = abs_path.strip_prefix(&abs_root).unwrap_or(e.path());
             let rel_str = rel_path.to_string_lossy();
-            !crate::common::utility_path_filter::is_path_ignored(&rel_str, &merged_ignored)
+            !shared_common::utility_path_filter::is_path_ignored(&rel_str, &merged_ignored)
         })
         .map(|e| e.path().to_string_lossy().to_string())
         .collect()

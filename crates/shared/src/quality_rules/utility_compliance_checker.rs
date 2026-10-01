@@ -1,7 +1,7 @@
 // PURPOSE: CRITICAL severity detection — pure helper
 
-use crate::cli_commands::LintResult;
-use crate::common::Severity;
+use shared_cli_commands::LintResult;
+use shared_common::Severity;
 
 /// Returns true if any result has CRITICAL severity.
 pub fn contains_critical_severity(results: &[LintResult]) -> bool {

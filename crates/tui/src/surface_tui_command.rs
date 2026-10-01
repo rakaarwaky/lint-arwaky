@@ -16,7 +16,7 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use shared::tui::{AppState, ScanUpdate, TuiEvent};
+use shared_tui::{AppState, ScanUpdate, TuiEvent};
 
 use std::io::stdout;
 use std::sync::Arc;

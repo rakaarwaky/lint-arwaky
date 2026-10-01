@@ -11,7 +11,10 @@ publish = true
 workspace = true
 
 [dependencies]
-shared.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
+shared-filesystem.workspace = true
+shared-naming-rules.workspace = true
 regex.workspace = true
 rayon.workspace = true
 

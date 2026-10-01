@@ -6,8 +6,8 @@
 
 use std::collections::HashMap;
 
-use shared::file_watch::contract_watch_protocol::IChangeFilterProtocol;
-use shared::file_watch::taxonomy_file_watch_vo::WatchEvent;
+use shared_file_watch::contract_watch_protocol::IChangeFilterProtocol;
+use shared_file_watch::taxonomy_file_watch_vo::WatchEvent;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

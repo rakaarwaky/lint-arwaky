@@ -1,5 +1,5 @@
 // Acceptance tests — file watch operations produce valid results.
-use shared::file_watch::IWatchAggregate;
+use shared_file_watch::IWatchAggregate;
 use std::sync::Arc;
 
 fn make_orch() -> Arc<dyn IWatchAggregate> {

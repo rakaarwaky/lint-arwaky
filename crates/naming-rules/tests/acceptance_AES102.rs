@@ -1,14 +1,14 @@
 // Acceptance tests — AES102 suffix/prefix rules (map to FRD user stories).
 use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
-use shared::common::PatternList;
-use shared::common::SuffixPolicyVO;
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::LintResultList;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::naming_rules::RULE_CODE_SUFFIX_PREFIX;
-use shared::naming_rules::SUFFIX_POLICY_STRICT;
+use shared_common::PatternList;
+use shared_common::SuffixPolicyVO;
+use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::LintResultList;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_naming_rules::RULE_CODE_SUFFIX_PREFIX;
+use shared_naming_rules::SUFFIX_POLICY_STRICT;
 use std::collections::HashMap;
 
 fn checker() -> SuffixPolicyChecker {
@@ -241,9 +241,9 @@ fn excepted_file_bypasses_suffix_check() {
 
 #[test]
 fn check_domain_suffixes_via_trait_api() {
-    use shared::naming_rules::ISuffixPolicyProtocol;
+    use shared_naming_rules::ISuffixPolicyProtocol;
 
-    let config = shared::config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
+    let config = shared_config_system::taxonomy_config_system_vo::ArchitectureConfig::default();
     let map = strict_capabilities_layer_map();
     let files = FilePathList::new(vec![
         FilePath::new("src/capabilities_user_vo.rs".to_string()).unwrap(),

@@ -1,6 +1,6 @@
 // PURPOSE: FixResponse — response payload for the fix aggregate
 
-use crate::auto_fix::taxonomy_auto_fix_vo::FixResult;
+use crate::taxonomy_auto_fix_vo::FixResult;
 
 pub enum FixResponse {
     Execute { result: FixResult },

@@ -1,12 +1,12 @@
 // PURPOSE: WatchServiceError — structured error type for file watch service failures
-use crate::domain_error_vo;
+use shared_common::domain_error_vo;
 
 domain_error_vo!(WatchServiceError, "Watch Error", "WATCH_SVC", 2001u16);
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::common::taxonomy_message_vo::LintMessage;
+    use shared_common::taxonomy_message_vo::LintMessage;
 
     #[test]
     fn watch_service_error_has_expected_shape() {

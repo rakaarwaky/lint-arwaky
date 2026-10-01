@@ -1,6 +1,6 @@
 // Integration tests — cli-commands with real filesystem.
-use shared::cli_commands::Format;
-use shared::common::FilePath;
+use shared_cli_commands::Format;
+use shared_common::FilePath;
 use std::sync::Arc;
 
 #[test]
@@ -10,11 +10,11 @@ fn integration_scan_command_accepts_filesystem_aggregate() {
         fn(
             Option<FilePath>,
             Format,
-            Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
-            Option<Arc<dyn shared::config_system::IConfigOrchestratorAggregate>>,
+            Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+            Option<Arc<dyn shared_config_system::IConfigOrchestratorAggregate>>,
             Option<String>,
             Option<String>,
-        ) -> shared::common::ExitCode,
+        ) -> shared_common::ExitCode,
     >();
 }
 
@@ -25,11 +25,11 @@ fn integration_orphan_command_accepts_config_aggregate() {
             Option<FilePath>,
             Option<String>,
             Format,
-            Arc<dyn shared::orphan_rules::IOrphanAggregate>,
-            Arc<dyn shared::config_system::IConfigOrchestratorAggregate>,
-            Arc<dyn shared::report_formatter::IReportFormatterAggregate>,
-            Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
+            Arc<dyn shared_orphan_rules::IOrphanAggregate>,
+            Arc<dyn shared_config_system::IConfigOrchestratorAggregate>,
+            Arc<dyn shared_report_formatter::IReportFormatterAggregate>,
+            Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>,
             Option<String>,
-        ) -> shared::common::ExitCode,
+        ) -> shared_common::ExitCode,
     >();
 }

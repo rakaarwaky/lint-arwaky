@@ -3,7 +3,7 @@ use criterion::{Criterion, criterion_group, criterion_main};
 
 fn bench_stats_collection(c: &mut Criterion) {
     use maintenance_lint_arwaky::IProjectStatsProtocol;
-    use shared::common::FilePath;
+    use shared_common::FilePath;
 
     let mut group = c.benchmark_group("stats_collection");
     group.significance_level(0.05).confidence_level(0.95);

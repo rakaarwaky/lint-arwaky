@@ -2,8 +2,8 @@
 // document and stay silent on a conforming one. Findings carry a code
 // (AES601–AES605) plus a violation_type, and both are asserted.
 use doc_rules_lint_arwaky::root_doc_rules_container::RootDocRulesContainer;
-use shared::doc_rules::taxonomy_doc_rules_request::DocRequest;
-use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
+use shared_doc_rules::taxonomy_doc_rules_request::DocRequest;
+use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 
 use std::fs;
 use std::path::Path;
@@ -1298,7 +1298,7 @@ fn aes607_stays_silent_when_the_feature_has_no_shared_contract_module() {
 // ── Issue #341: DocFinding carries line and severity ─────────────────
 
 /// Run the audit and keep the raw findings so schema fields are inspectable.
-fn audit_findings(root: &Path) -> Vec<shared::doc_rules::DocFinding> {
+fn audit_findings(root: &Path) -> Vec<shared_doc_rules::DocFinding> {
     let orchestrator = RootDocRulesContainer::orchestrator();
     match orchestrator.execute(DocRequest::audit_all(root)) {
         DocResponse::Findings { findings } => findings,
@@ -1327,7 +1327,7 @@ fn findings_carry_a_1_based_line_and_high_severity() {
     );
     assert_eq!(
         finding.severity,
-        shared::common::Severity::HIGH,
+        shared_common::Severity::HIGH,
         "AES6xx rules are HIGH per RULES_AES"
     );
 }
@@ -1346,7 +1346,7 @@ fn document_level_findings_use_line_zero() {
         "document-level findings use line 0; got {}",
         h1.line
     );
-    assert_eq!(h1.severity, shared::common::Severity::HIGH);
+    assert_eq!(h1.severity, shared_common::Severity::HIGH);
 }
 
 #[test]
@@ -1389,7 +1389,7 @@ fn violation_items_reach_the_sarif_path() {
             "message": item.message.value(),
             "severity": item.severity.to_string(),
         });
-        let restored = shared::common::ViolationItem::from_json_obj(&json)
+        let restored = shared_common::ViolationItem::from_json_obj(&json)
             .expect("the mapped item must round-trip through the JSON renderer shape");
         assert_eq!(restored.line, item.line);
         assert_eq!(restored.severity, item.severity);

@@ -4,15 +4,16 @@
 // build of a published `.crate` tarball (crates.io extracts the package to an
 // isolated directory, so any path above the crate root is missing there):
 //
-//   1. Config YAML — committed at `<manifest>/config/`, in-package already.
-//   2. Skill markdown — committed at `<manifest>/skills/`, in-package already.
+//   1. Config YAML — committed at `crates/shared/config/`.
+//   2. Skill markdown — committed at `crates/shared/skills/`.
 //
-// `cargo package` stages `<manifest>/skills/` into the tarball via the
-// `[package] include` list in Cargo.toml, so `include_str!(concat!(env!("OUT_DIR"),
-// "/skills/..."))` stays valid for a consumer that builds straight from the
-// registry.
+// The script now lives at `crates/shared/build.rs` but is invoked by the
+// `project-setup` package nested two levels below (`crates/shared/src/
+// project_setup/`), so `CARGO_MANIFEST_DIR` points there and the assets are
+// reached through its `../../` ancestor. `resolve_assets` picks whichever of
+// the two layouts actually carries them.
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 fn main() {
     let out_dir = match std::env::var("OUT_DIR") {
@@ -30,8 +31,28 @@ fn main() {
         }
     };
 
-    stage_config(Path::new(&manifest_dir), Path::new(&out_dir));
-    stage_skills(Path::new(&manifest_dir), Path::new(&out_dir));
+    let assets = resolve_assets(Path::new(&manifest_dir));
+    stage_config(&assets, Path::new(&out_dir));
+    stage_skills(&assets, Path::new(&out_dir));
+}
+
+/// Locate the directory that carries both `config/` and `skills/`.
+///
+/// Historically that was the manifest dir itself; since the monolith was split
+/// into per-folder packages the manifest sits two levels deeper, so fall back
+/// to the `../../` ancestor.
+fn resolve_assets(manifest_dir: &Path) -> PathBuf {
+    for candidate in [manifest_dir.to_path_buf(), manifest_dir.join("../..")] {
+        if candidate.join("config").is_dir() && candidate.join("skills").is_dir() {
+            return candidate;
+        }
+    }
+    eprintln!(
+        "Assets not found: neither {} nor {} carries config/ and skills/",
+        manifest_dir.display(),
+        manifest_dir.join("../..").display()
+    );
+    std::process::exit(1);
 }
 
 /// Copy `config/lint_arwaky.config.yaml` into `OUT_DIR`.
@@ -53,7 +74,7 @@ fn stage_config(manifest_dir: &Path, out_dir: &Path) {
         std::process::exit(1);
     }
 
-    println!("cargo:rerun-if-changed=config/lint_arwaky.config.yaml");
+    println!("cargo:rerun-if-changed={}", src.display());
 }
 
 /// Recursively copy skills source into `OUT_DIR/skills/` so the
@@ -80,7 +101,7 @@ fn stage_skills(manifest_dir: &Path, out_dir: &Path) {
     }
     copy_dir_recursive(&skills_src, &skills_dst);
 
-    println!("cargo:rerun-if-changed=skills");
+    println!("cargo:rerun-if-changed={}", skills_src.display());
 }
 
 fn copy_dir_recursive(src: &Path, dst: &Path) {

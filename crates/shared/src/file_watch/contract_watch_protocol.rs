@@ -5,10 +5,10 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::file_watch::taxonomy_file_watch_error::WatchServiceError;
-use crate::file_watch::taxonomy_file_watch_vo::WatchConfig;
-use crate::file_watch::taxonomy_file_watch_vo::WatchEvent;
+use crate::taxonomy_file_watch_error::WatchServiceError;
+use crate::taxonomy_file_watch_vo::WatchConfig;
+use crate::taxonomy_file_watch_vo::WatchEvent;
+use shared_common::taxonomy_common_vo::BooleanVO;
 
 /// FR-FileWatch-001: Watch Filesystem Lifecycle.
 ///

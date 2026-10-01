@@ -4,15 +4,15 @@
 fn contract_scan_command_handle_scan_exists() {
     let _ = std::any::type_name::<
         fn(
-            Option<shared::common::FilePath>,
-            shared::cli_commands::Format,
+            Option<shared_common::FilePath>,
+            shared_cli_commands::Format,
             std::sync::Arc<
-                dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
+                dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate,
             >,
-            Option<std::sync::Arc<dyn shared::config_system::IConfigOrchestratorAggregate>>,
+            Option<std::sync::Arc<dyn shared_config_system::IConfigOrchestratorAggregate>>,
             Option<String>,
             Option<String>,
-        ) -> shared::common::ExitCode,
+        ) -> shared_common::ExitCode,
     >();
 }
 
@@ -20,8 +20,8 @@ fn contract_scan_command_handle_scan_exists() {
 fn contract_config_command_handle_config_show_exists() {
     let _ = std::any::type_name::<
         fn(
-            std::sync::Arc<dyn shared::config_system::IConfigOrchestratorAggregate>,
-        ) -> shared::common::ExitCode,
+            std::sync::Arc<dyn shared_config_system::IConfigOrchestratorAggregate>,
+        ) -> shared_common::ExitCode,
     >();
 }
 
@@ -29,22 +29,22 @@ fn contract_config_command_handle_config_show_exists() {
 fn contract_fix_command_handle_fix_exists() {
     let _ = std::any::type_name::<
         fn(
-            Option<shared::common::FilePath>,
+            Option<shared_common::FilePath>,
             bool,
-            std::sync::Arc<dyn shared::quality_rules::ICodeAnalysisAggregate>,
+            std::sync::Arc<dyn shared_quality_rules::ICodeAnalysisAggregate>,
             std::sync::Arc<
-                dyn Fn(bool) -> std::sync::Arc<dyn shared::auto_fix::IFixAggregate> + Send + Sync,
+                dyn Fn(bool) -> std::sync::Arc<dyn shared_auto_fix::IFixAggregate> + Send + Sync,
             >,
-        ) -> shared::common::ExitCode,
+        ) -> shared_common::ExitCode,
     >();
 }
 
 #[test]
 fn contract_skill_command_handle_skill_list_exists() {
-    let _ = std::any::type_name::<fn() -> shared::common::ExitCode>();
+    let _ = std::any::type_name::<fn() -> shared_common::ExitCode>();
 }
 
 #[test]
 fn contract_skill_command_handle_skill_read_exists() {
-    let _ = std::any::type_name::<fn(&str, bool) -> shared::common::ExitCode>();
+    let _ = std::any::type_name::<fn(&str, bool) -> shared_common::ExitCode>();
 }

@@ -6,7 +6,22 @@ description = "Ratatui-based interactive TUI for lint-arwaky"
 license = "MIT"
 
 [dependencies]
-shared = { workspace = true }
+shared-auto-fix.workspace = true
+shared-common.workspace = true
+shared-config-system.workspace = true
+shared-doc-rules.workspace = true
+shared-external-lint.workspace = true
+shared-filesystem.workspace = true
+shared-git-hooks.workspace = true
+shared-import-rules.workspace = true
+shared-maintenance.workspace = true
+shared-naming-rules.workspace = true
+shared-orphan-rules.workspace = true
+shared-project-setup.workspace = true
+shared-quality-rules.workspace = true
+shared-role-rules.workspace = true
+shared-structure-rules.workspace = true
+shared-tui.workspace = true
 dispatcher = { workspace = true }
 config-system = { workspace = true }
 serde_json = { workspace = true }

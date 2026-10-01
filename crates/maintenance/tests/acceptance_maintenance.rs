@@ -1,7 +1,7 @@
 // Acceptance tests — verify maintenance operations produce valid results.
-use shared::common::FilePath;
-use shared::maintenance::IMaintenanceAggregate;
-use shared::maintenance::MaintenanceRequest;
+use shared_common::FilePath;
+use shared_maintenance::IMaintenanceAggregate;
+use shared_maintenance::MaintenanceRequest;
 
 fn make_orch() -> std::sync::Arc<dyn IMaintenanceAggregate> {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();

@@ -1,8 +1,8 @@
 // PURPOSE: CodeAnalysisRuleVO — value object for code analysis and line checker rule definitions
 // Used by: config_system (ArchitectureRule), quality_rules (when uncommented)
-use crate::common::taxonomy_common_vo::BooleanVO;
-use crate::common::taxonomy_common_vo::Count;
-use crate::common::taxonomy_common_vo::PatternList;
+use crate::taxonomy_common_vo::BooleanVO;
+use crate::taxonomy_common_vo::Count;
+use crate::taxonomy_common_vo::PatternList;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]

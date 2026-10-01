@@ -14,14 +14,14 @@ use mock_filesystem::MockFilesystem;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_operation_error::LinterOperationError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::ICommandExecutorProtocol;
-use shared::external_lint::IJsToolResolutionProtocol;
-use shared::external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
-use shared::external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_external_lint::ICommandExecutorProtocol;
+use shared_external_lint::IJsToolResolutionProtocol;
+use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
+use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
 
 use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
     ExternalLintDeps, ExternalLintOrchestrator,
@@ -34,9 +34,9 @@ struct MockCmdExecutor;
 impl ICommandExecutorProtocol for MockCmdExecutor {
     fn execute_command(
         &self,
-        _: shared::common::taxonomy_common_vo::PatternList,
+        _: shared_common::taxonomy_common_vo::PatternList,
         _: FilePath,
-        _: Option<shared::common::taxonomy_duration_vo::Timeout>,
+        _: Option<shared_common::taxonomy_duration_vo::Timeout>,
     ) -> anyhow::Result<ResponseData> {
         Ok(ResponseData::default())
     }
@@ -70,7 +70,7 @@ struct MockJsResolution;
 impl IJsToolResolutionProtocol for MockJsResolution {
     fn resolve_js_cmd(
         &self,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: Vec<String>,
         _: &FilePath,
     ) -> Option<Vec<String>> {
@@ -82,10 +82,10 @@ impl IJsToolResolutionProtocol for MockJsResolution {
     fn js_apply_fix(
         &self,
         _: &FilePath,
-        _: &shared::common::taxonomy_tool_name_vo::ToolName,
+        _: &shared_common::taxonomy_tool_name_vo::ToolName,
         _: &str,
-    ) -> Result<shared::common::taxonomy_message_vo::ComplianceStatus, LinterOperationError> {
-        Ok(shared::common::taxonomy_message_vo::ComplianceStatus::new(
+    ) -> Result<shared_common::taxonomy_message_vo::ComplianceStatus, LinterOperationError> {
+        Ok(shared_common::taxonomy_message_vo::ComplianceStatus::new(
             false,
         ))
     }
@@ -172,11 +172,11 @@ fn e2e_full_pipeline_rust_python() {
     // Step 2: Build orchestrator with matching adapters
     let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
     let files = vec!["main.rs".to_string(), "app.py".to_string()];
-    let _fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+    let _fs_arc: Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::with_files(files.clone()));
-    let tr_arc: Arc<dyn shared::filesystem::IToolResolutionProtocol> =
+    let tr_arc: Arc<dyn shared_filesystem::IToolResolutionProtocol> =
         Arc::new(MockFilesystem::with_files(files.clone()));
-    let io_arc: Arc<dyn shared::filesystem::IFileSystemIOProtocol> =
+    let io_arc: Arc<dyn shared_filesystem::IFileSystemIOProtocol> =
         Arc::new(MockFilesystem::with_files(files.clone()));
 
     let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();
@@ -253,11 +253,11 @@ fn e2e_full_pipeline_markdown_only() {
 
     let lint_exec: Arc<dyn ICommandExecutorProtocol> = Arc::new(MockCmdExecutor);
     let files = vec!["README.md".to_string(), "CHANGELOG.md".to_string()];
-    let fs_arc: Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
+    let fs_arc: Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate> =
         Arc::new(MockFilesystem::with_files(files.clone()));
-    let tr_arc: Arc<dyn shared::filesystem::IToolResolutionProtocol> =
+    let tr_arc: Arc<dyn shared_filesystem::IToolResolutionProtocol> =
         Arc::new(MockFilesystem::with_files(files.clone()));
-    let io_arc: Arc<dyn shared::filesystem::IFileSystemIOProtocol> =
+    let io_arc: Arc<dyn shared_filesystem::IFileSystemIOProtocol> =
         Arc::new(MockFilesystem::with_files(files.clone()));
 
     let mut adapters: HashMap<String, Arc<dyn ILinterAdapterProtocol>> = HashMap::new();

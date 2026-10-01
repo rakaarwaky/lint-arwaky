@@ -12,9 +12,9 @@ fn tui_utility_modules_importable() {
     use tui_lint_arwaky::utility_file_system;
 
     // Verify key functions are accessible
-    let _ = utility_file_system::is_valid_directory as fn(&shared::common::FilePath) -> bool;
+    let _ = utility_file_system::is_valid_directory as fn(&shared_common::FilePath) -> bool;
     let _ = utility_file_system::parent_directory
-        as fn(&shared::common::FilePath) -> Option<shared::common::FilePath>;
+        as fn(&shared_common::FilePath) -> Option<shared_common::FilePath>;
 }
 
 #[test]
@@ -22,5 +22,5 @@ fn tui_report_formatter_module_importable() {
     use tui_lint_arwaky::utility_report_formatter;
 
     let _ = utility_report_formatter::format_doctor_report
-        as fn(&shared::maintenance::ToolchainDiagnostics) -> shared::tui::LintExecutionResult;
+        as fn(&shared_maintenance::ToolchainDiagnostics) -> shared_tui::LintExecutionResult;
 }

@@ -1,21 +1,21 @@
-// PURPOSE: Test compliance score utility from shared::common::utility_compliance_score
+// PURPOSE: Test compliance score utility from shared_common::utility_compliance_score
 
-use shared_lint_arwaky::common::taxonomy_adapter_name_vo::AdapterName;
-use shared_lint_arwaky::common::taxonomy_common_vo::LineNumber;
-use shared_lint_arwaky::common::taxonomy_error_vo::ErrorCode;
-use shared_lint_arwaky::common::taxonomy_lint_result_vo::LintResult;
-use shared_lint_arwaky::common::taxonomy_lint_vo::LocationList;
-use shared_lint_arwaky::common::taxonomy_message_vo::LintMessage;
-use shared_lint_arwaky::common::taxonomy_path_vo::FilePath;
-use shared_lint_arwaky::common::taxonomy_severity_vo::Severity;
-use shared_lint_arwaky::common::utility_compliance_score::compute_score;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::LineNumber;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_lint_vo::LocationList;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::utility_compliance_score::compute_score;
 
 /// Helper: build a minimal LintResult with the given severity.
 fn make_result(severity: Severity) -> LintResult {
     LintResult {
         file: FilePath::new("test.rs").unwrap(),
         line: LineNumber::new(1),
-        column: shared_lint_arwaky::common::taxonomy_common_vo::ColumnNumber::new(0),
+        column: shared_common::taxonomy_common_vo::ColumnNumber::new(0),
         code: ErrorCode::raw("AES101"),
         message: LintMessage::new("test"),
         source: Some(AdapterName::raw("architecture")),

@@ -7,11 +7,11 @@
 //
 // Prevents regressions in: tracing→stderr fix, workspace root detection,
 // path normalization, member filtering, single file scan.
-use shared::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_path_vo::FilePath;
 use std::process::Command;
 
-fn fs()
--> std::sync::Arc<dyn shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate> {
+fn fs() -> std::sync::Arc<dyn shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate>
+{
     filesystem::root_filesystem_container::FilesystemContainer::new().orchestrator()
 }
 
@@ -38,7 +38,7 @@ fn workspace_root() -> std::path::PathBuf {
 }
 
 /// In-process scan via collect_scan (works for workspaces-good where 0 violations expected).
-fn scan(path: &str) -> Vec<shared::common::ViolationItem> {
+fn scan(path: &str) -> Vec<shared_common::ViolationItem> {
     let full_path = workspace_root().join(path);
     let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
         path: Some(FilePath::new(full_path.to_string_lossy().to_string()).unwrap()),
@@ -282,14 +282,14 @@ fn regression_bad_typescript_workspace() {
 // External member-dirs filter (regression: setup.py at workspace root)
 // ═══════════════════════════════════════════════════════════════
 
-fn violation_for(path: &str) -> shared::common::ViolationItem {
-    shared::common::ViolationItem {
-        code: shared::common::taxonomy_error_vo::ErrorCode::raw("B307"),
+fn violation_for(path: &str) -> shared_common::ViolationItem {
+    shared_common::ViolationItem {
+        code: shared_common::taxonomy_error_vo::ErrorCode::raw("B307"),
         file: FilePath::new(path.to_string()).unwrap(),
-        line: shared::common::taxonomy_common_vo::LineNumber::new(1),
-        column: shared::common::taxonomy_common_vo::ColumnNumber::new(1),
-        message: shared::common::taxonomy_message_vo::LintMessage::new("test"),
-        severity: shared::common::taxonomy_severity_vo::Severity::MEDIUM,
+        line: shared_common::taxonomy_common_vo::LineNumber::new(1),
+        column: shared_common::taxonomy_common_vo::ColumnNumber::new(1),
+        message: shared_common::taxonomy_message_vo::LintMessage::new("test"),
+        severity: shared_common::taxonomy_severity_vo::Severity::MEDIUM,
     }
 }
 

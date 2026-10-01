@@ -1,7 +1,7 @@
 // PURPOSE: Resolve external crate/package imports to file paths within a workspace.
 // Pure functions — no state, no I/O side effects beyond filesystem reads.
 
-use crate::filesystem::taxonomy_filesystem_vo::{ImportEntry, Language};
+use crate::taxonomy_filesystem_vo::{ImportEntry, Language};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
@@ -74,7 +74,65 @@ pub fn resolve_external_crate_import(
             }
         }
     }
+    // Fallback: a workspace dependency *key* is the ident a consumer writes in
+    // `use`, while both the package name and the member directory may differ
+    // from it — e.g. `shared-common = { package = "shared-common-lint-arwaky",
+    // path = "crates/shared/src/common" }` is reached as `shared_common::…`
+    // from a directory three levels deep. Only the workspace manifest ties the
+    // three together.
+    if let Some(src_dir) = workspace_dep_src_dir(top_root, crate_name) {
+        if let Some(path) = resolve_sub_path(&src_dir, sub_path, all_files_set) {
+            return Some(path);
+        }
+    }
     None
+}
+
+/// Locate the source directory of `crate_name` through `[workspace.dependencies]`
+/// of the manifest at `top_root`.
+///
+/// The source directory is `<member>/src` normally; a package whose
+/// `[lib] path = "mod.rs"` keeps its crate root beside `Cargo.toml`, so those
+/// members have no `src/` child and resolve from the member directory itself.
+fn workspace_dep_src_dir(top_root: &Path, crate_name: &str) -> Option<String> {
+    let content = std::fs::read_to_string(top_root.join("Cargo.toml")).ok()?;
+    let mut in_deps = false;
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.starts_with('[') {
+            in_deps = trimmed == "[workspace.dependencies]";
+            continue;
+        }
+        if !in_deps || trimmed.starts_with('#') {
+            continue;
+        }
+        let Some((key, value)) = trimmed.split_once('=') else {
+            continue;
+        };
+        if key.trim().replace('-', "_") != crate_name {
+            continue;
+        }
+        let member_base = toml_inline_str(value, "path")?;
+        let member_path = top_root.join(&member_base);
+        return Some(
+            if !member_path.join("src").is_dir() && member_path.join("mod.rs").is_file() {
+                member_base
+            } else {
+                format!("{member_base}/src")
+            },
+        );
+    }
+    None
+}
+
+/// Read `field = "value"` out of a TOML value such as an inline table
+/// (`{ package = "…", path = "…", version = "…" }`).
+fn toml_inline_str(value: &str, field: &str) -> Option<String> {
+    let idx = value.find(&format!("{field} ="))?;
+    let rest = &value[idx + field.len()..];
+    let start = rest.find('"')? + 1;
+    let end = rest[start..].find('"')?;
+    Some(rest[start..start + end].to_string())
 }
 
 fn read_cargo_package_name(cargo_toml: &Path) -> Option<String> {
@@ -119,10 +177,16 @@ fn resolve_sub_path(
             format!("{}/{}", src_dir, parts[..i].join("/"))
         };
         // Try Rust patterns
-        let rust_candidates = vec![
+        let mut rust_candidates = vec![
             format!("{}.rs", candidate_base),
             format!("{}/mod.rs", candidate_base),
         ];
+        if i == 0 {
+            // Crate-root re-export (`use shared_common::FilePath`). A package
+            // whose `[lib] path = "mod.rs"` has no `lib.rs`, so its root is
+            // `<src_dir>/mod.rs` — the last resort after the `lib` patterns.
+            rust_candidates.push(format!("{}/mod.rs", src_dir));
+        }
         for candidate in &rust_candidates {
             if all_files_set.contains(candidate.as_str()) {
                 return Some(candidate.clone());
@@ -154,15 +218,30 @@ fn resolve_sub_path(
     None
 }
 
-/// Given a resolved external crate file path (e.g. "crates/shared/src/taxonomy_result_vo.rs"),
-/// derive the crate root lib.rs (e.g. "crates/shared/src/lib.rs").
-pub fn derive_crate_lib_rs(resolved_path: &str) -> Option<String> {
+/// Given a resolved external crate file path (e.g.
+/// "crates/filesystem/src/capabilities_ast_parser.rs"), derive the crate root
+/// that re-exports it (e.g. "crates/filesystem/src/lib.rs").
+///
+/// Most members keep their root at `src/lib.rs`. A package declaring
+/// `[lib] path = "mod.rs"` keeps its sources beside `Cargo.toml`, so the root
+/// is the nearest `mod.rs` barrel above the file — reached only when the
+/// `src/lib.rs` candidate is absent, leaving ordinary crates untouched.
+pub fn derive_crate_lib_rs(resolved_path: &str, all_files_set: &HashSet<&str>) -> Option<String> {
     let parts: Vec<&str> = resolved_path.split('/').collect();
-    if let Some(src_idx) = parts.iter().position(|&p| p == "src") {
-        let lib_rs = format!("{}/lib.rs", parts[..=src_idx].join("/"));
-        Some(lib_rs)
-    } else {
-        None
+    let src_idx = parts.iter().position(|&p| p == "src")?;
+    let lib_rs = format!("{}/lib.rs", parts[..=src_idx].join("/"));
+    if all_files_set.contains(lib_rs.as_str()) {
+        return Some(lib_rs);
+    }
+    let mut dir = std::path::PathBuf::from(std::path::Path::new(resolved_path).parent()?);
+    loop {
+        let candidate = dir.join("mod.rs").to_string_lossy().to_string();
+        if all_files_set.contains(candidate.as_str()) {
+            return (candidate != resolved_path).then_some(candidate);
+        }
+        if !dir.pop() {
+            return None;
+        }
     }
 }
 

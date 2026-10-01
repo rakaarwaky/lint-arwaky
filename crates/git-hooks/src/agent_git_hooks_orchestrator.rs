@@ -7,17 +7,17 @@
 // The orchestrator composes four protocol seams (one per FR) and holds no
 // logic of its own — it is pure composition.
 
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::common::taxonomy_layer_vo::Identity;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
-use shared::git_hooks::taxonomy_git_hooks_error::GitHookError;
-use shared::git_hooks::taxonomy_git_hooks_request::GitHooksRequest;
-use shared::git_hooks::taxonomy_git_hooks_response::GitHooksResponse;
+use shared_common::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared_git_hooks::contract_git_hooks_protocol::IConfigInitProtocol;
+use shared_git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
+use shared_git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
+use shared_git_hooks::contract_git_hooks_protocol::IHookUninstallProtocol;
+use shared_git_hooks::taxonomy_git_hooks_error::GitHookError;
+use shared_git_hooks::taxonomy_git_hooks_request::GitHooksRequest;
+use shared_git_hooks::taxonomy_git_hooks_response::GitHooksResponse;
 
 use std::sync::Arc;
 
@@ -62,7 +62,7 @@ impl GitHooksOrchestrator {
         self.hook_install.as_ref()
     }
 
-    pub fn run_git_hooks_check(&self, path: &FilePath) -> shared::cli_commands::LintResultList {
+    pub fn run_git_hooks_check(&self, path: &FilePath) -> shared_cli_commands::LintResultList {
         self.diff_detection.run_git_diff_check(path)
     }
 
@@ -77,14 +77,14 @@ impl GitHooksOrchestrator {
     pub fn initialize_config(
         &self,
         path: &str,
-    ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
+    ) -> shared_common::taxonomy_suggestion_vo::DescriptionVO {
         self.config_init.initialize_config(path)
     }
 
     pub fn update_ignore_rule(
         &self,
-        request: shared::git_hooks::HookIgnoreUpdateVO,
-    ) -> shared::common::taxonomy_suggestion_vo::DescriptionVO {
+        request: shared_git_hooks::HookIgnoreUpdateVO,
+    ) -> shared_common::taxonomy_suggestion_vo::DescriptionVO {
         self.config_init.update_ignore_rule(request)
     }
 

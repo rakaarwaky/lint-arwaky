@@ -1,10 +1,10 @@
 // PURPOSE: ConfigYamlReader — implements IConfigReadProtocol (FR-001: Config Discovery)
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::config_system::contract_config_protocol::IConfigReadProtocol;
-use shared::config_system::taxonomy_config_language_vo::ConfigLanguage;
-use shared::config_system::taxonomy_config_system_error::ConfigError;
-use shared::config_system::taxonomy_config_system_vo::ConfigSource;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_config_system::contract_config_protocol::IConfigReadProtocol;
+use shared_config_system::taxonomy_config_language_vo::ConfigLanguage;
+use shared_config_system::taxonomy_config_system_error::ConfigError;
+use shared_config_system::taxonomy_config_system_vo::ConfigSource;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
 use tracing::warn;
@@ -96,10 +96,10 @@ impl IConfigReadProtocol for ConfigYamlReader {
                         let path = FilePath::new(candidate.to_string_lossy().to_string()).map_err(
                             |e| {
                                 ConfigError::new(
-                                    shared::config_system::taxonomy_config_system_vo::ConfigKey::new(
+                                    shared_config_system::taxonomy_config_system_vo::ConfigKey::new(
                                         "config.list",
                                     ),
-                                    shared::common::ErrorMessage::new(format!(
+                                    shared_common::ErrorMessage::new(format!(
                                         "Failed to create FilePath: {}",
                                         e
                                     )),

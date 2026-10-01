@@ -4,15 +4,15 @@ use crate::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
 use crate::capabilities_dead_inheritance_checker::DeadInheritanceChecker;
 use crate::capabilities_line_checker::ArchLineChecker;
 use crate::capabilities_mandatory_definition_checker::MandatoryDefinitionChecker;
-use shared::quality_rules::{
+use shared_quality_rules::{
     IBypassCheckerProtocol, ICodeAnalysisAggregate, ICodeMetricAnalyzerProtocol,
     IDeadInheritanceProtocol, ILineCheckerProtocol, IMandatoryClassProtocol,
 };
 
-use shared::common::FilePath;
-use shared::config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
+use shared_common::FilePath;
+use shared_config_system::{ArchitectureConfig, IConfigOrchestratorAggregate};
 
-use shared::common::LayerMapVO;
+use shared_common::LayerMapVO;
 use std::sync::Arc;
 
 pub struct CodeAnalysisContainer {
@@ -62,7 +62,7 @@ impl CodeAnalysisContainer {
     ) -> Self {
         let fp = FilePath::new(project_root.to_string()).unwrap_or_default();
         let config = orchestrator
-            .execute(shared::config_system::ConfigRequest::load_sync(&fp))
+            .execute(shared_config_system::ConfigRequest::load_sync(&fp))
             .into_sync_config();
         let layer_map = LayerMapVO::new(config.layers.clone());
         Self::new_with_config(config, layer_map)

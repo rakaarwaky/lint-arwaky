@@ -7,9 +7,9 @@
 // US6: Container wiring check.
 
 use filesystem_lint_arwaky::capabilities_workspace_root_finder::CapabilitiesWorkspace;
-use shared::common::taxonomy_config_language_vo::ConfigLanguage;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_common::taxonomy_config_language_vo::ConfigLanguage;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 use tempfile::TempDir;
 
 fn make_workspace() -> CapabilitiesWorkspace {
@@ -154,7 +154,7 @@ fn us6_check_wired_in_container_true() {
     )
     .unwrap();
     let ws = make_workspace();
-    let pl = shared::common::taxonomy_common_vo::PatternList::new(vec!["MyCrate".to_string()]);
+    let pl = shared_common::taxonomy_common_vo::PatternList::new(vec!["MyCrate".to_string()]);
     assert!(ws.check_wired_in_container(tmp.path(), &pl));
 }
 
@@ -164,7 +164,7 @@ fn us6_check_wired_in_container_false() {
     let crates_dir = tmp.path().join("crates");
     std::fs::create_dir_all(&crates_dir).unwrap();
     let ws = make_workspace();
-    let pl = shared::common::taxonomy_common_vo::PatternList::new(vec!["ghost-crate".to_string()]);
+    let pl = shared_common::taxonomy_common_vo::PatternList::new(vec!["ghost-crate".to_string()]);
     assert!(!ws.check_wired_in_container(tmp.path(), &pl));
 }
 

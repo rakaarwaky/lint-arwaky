@@ -2,7 +2,7 @@
 // All violation messages are produced here (VO empty container pattern).
 // Checkers/analyzers return AesCodeAnalysisViolation VOs; this function owns the full message text.
 
-use crate::quality_rules::AesCodeAnalysisViolation;
+use crate::AesCodeAnalysisViolation;
 
 /// Format the full violation message for an `AesCodeAnalysisViolation`.
 ///

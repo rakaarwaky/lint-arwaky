@@ -5,9 +5,9 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs.
 
-use crate::common::taxonomy_definition_vo::LayerDefinition;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::quality_rules::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
+use crate::taxonomy_quality_rules_vo::AesCodeAnalysisViolation;
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_lint_result_vo::LintResult;
 use std::path::PathBuf;
 
 pub trait IBypassCheckerProtocol: Send + Sync {

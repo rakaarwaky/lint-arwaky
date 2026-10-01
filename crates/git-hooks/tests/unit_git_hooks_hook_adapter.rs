@@ -3,9 +3,9 @@
 
 use git_hooks_lint_arwaky::capabilities_hook_installer::HookInstaller;
 use git_hooks_lint_arwaky::capabilities_hook_uninstaller::HookUninstaller;
-use shared::common::FilePath;
-use shared::git_hooks::IHookInstallProtocol;
-use shared::git_hooks::IHookUninstallProtocol;
+use shared_common::FilePath;
+use shared_git_hooks::IHookInstallProtocol;
+use shared_git_hooks::IHookUninstallProtocol;
 use tempfile::TempDir;
 
 fn make_installer(tmp: &TempDir) -> HookInstaller {

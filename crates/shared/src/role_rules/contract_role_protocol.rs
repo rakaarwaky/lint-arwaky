@@ -5,10 +5,10 @@
 // concrete return type each, so a capability implements its trait outright
 // and never carries unimplemented stubs. One trait per FR-RoleRules-001..007.
 
-use crate::common::taxonomy_layer_vo::LayerNameVO;
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::filesystem::taxonomy_filesystem_vo::ExternalReferenceMap;
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_filesystem::taxonomy_filesystem_vo::ExternalReferenceMap;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 
 /// FR-RoleRules-001: classify each file by its filename prefix to determine its
 /// AES layer, then dispatch to the layer-specific role checker. The prefix is

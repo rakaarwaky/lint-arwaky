@@ -2,7 +2,7 @@
 use file_watch_lint_arwaky::capabilities_change_filter::ChangeFilter;
 use file_watch_lint_arwaky::capabilities_notify_provider::NotifyWatchProvider;
 use file_watch_lint_arwaky::root_file_watch_container::FileWatchContainer;
-use shared::file_watch::contract_watch_protocol::IWatchLifecycleProtocol;
+use shared_file_watch::contract_watch_protocol::IWatchLifecycleProtocol;
 use std::sync::Arc;
 
 #[test]

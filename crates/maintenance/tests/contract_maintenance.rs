@@ -4,7 +4,7 @@ use maintenance_lint_arwaky::{
     AdapterHealthChecker, CacheCleanupChecker, DependencyReportChecker, DoctorChecker,
     ProjectStatsChecker, SecurityScanChecker, SelfUpdateChecker, ToolUpdateChecker,
 };
-use shared::maintenance::{
+use shared_maintenance::{
     IAdapterHealthProtocol, ICacheCleanupProtocol, IDependencyReportProtocol, IDoctorProtocol,
     IMaintenanceAggregate, IProjectStatsProtocol, ISecurityScanProtocol, ISelfUpdateProtocol,
     IToolUpdateProtocol,

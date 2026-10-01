@@ -9,10 +9,10 @@
 // the document chain.
 use std::sync::Arc;
 
-use shared::common::ViolationItem;
-use shared::structure_rules::IStructureAggregate;
-use shared::structure_rules::taxonomy_structure_rules_request::StructureRequest;
-use shared::structure_rules::taxonomy_structure_rules_response::StructureResponse;
+use shared_common::ViolationItem;
+use shared_structure_rules::IStructureAggregate;
+use shared_structure_rules::taxonomy_structure_rules_request::StructureRequest;
+use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
 /// Run the folder-layout audit over *root*, returning the violations.
 pub fn collect_structure(
@@ -27,16 +27,16 @@ pub fn collect_structure(
     Ok(findings
         .into_iter()
         .map(|f| {
-            let code = shared::common::ErrorCode::raw(f.code);
-            let file = shared::common::FilePath::new(f.file.clone()).unwrap_or_default();
-            let message = shared::common::LintMessage::new(f.message.clone());
+            let code = shared_common::ErrorCode::raw(f.code);
+            let file = shared_common::FilePath::new(f.file.clone()).unwrap_or_default();
+            let message = shared_common::LintMessage::new(f.message.clone());
             ViolationItem {
                 code,
                 file,
-                line: shared::common::LineNumber::default(),
-                column: shared::common::ColumnNumber::default(),
+                line: shared_common::LineNumber::default(),
+                column: shared_common::ColumnNumber::default(),
                 message,
-                severity: shared::common::Severity::MEDIUM,
+                severity: shared_common::Severity::MEDIUM,
             }
         })
         .collect())

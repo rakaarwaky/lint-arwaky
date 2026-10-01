@@ -1,4 +1,4 @@
-use crate::tui::taxonomy_tui_vo::PanelFocus;
+use crate::taxonomy_tui_vo::PanelFocus;
 
 pub const DEFAULT_FOCUS: PanelFocus = PanelFocus::FileList;
 

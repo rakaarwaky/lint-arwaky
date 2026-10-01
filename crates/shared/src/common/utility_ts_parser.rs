@@ -1,7 +1,7 @@
 // PURPOSE: utility_ts_parser — comment-aware structured parsing for TypeScript/JavaScript.
 // Stateless standalone functions. Depends only on taxonomy VOs.
 
-use crate::common::taxonomy_ast_vo::{AstFnDefVO, AstImportVO, TsParseResultVO};
+use crate::taxonomy_ast_vo::{AstFnDefVO, AstImportVO, TsParseResultVO};
 
 pub fn parse_ts(content: &str) -> TsParseResultVO {
     let mut result = TsParseResultVO {

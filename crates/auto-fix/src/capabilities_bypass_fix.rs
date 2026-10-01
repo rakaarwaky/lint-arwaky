@@ -5,12 +5,12 @@
 // Inline comment stripping uses the shared word-boundary utility;
 // this struct owns the IFileSystemIOProtocol seam directly.
 
-use shared::auto_fix::contract_fix_protocol::IBypassFixProtocol;
-use shared::auto_fix::{FailReason, FixOutcome, SkipReason};
-use shared::common::LineNumber;
-use shared::common::strip_inline_comment;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_auto_fix::contract_fix_protocol::IBypassFixProtocol;
+use shared_auto_fix::{FailReason, FixOutcome, SkipReason};
+use shared_common::LineNumber;
+use shared_common::strip_inline_comment;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

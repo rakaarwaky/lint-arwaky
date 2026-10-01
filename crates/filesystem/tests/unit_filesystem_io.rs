@@ -1,8 +1,8 @@
 // Unit tests for CapabilitiesFileSystemIO — FR-003: File I/O & Directory Operations.
 use filesystem_lint_arwaky::capabilities_filesystem_io::CapabilitiesFileSystemIO;
-use shared::common::PatternList;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::FileExtension;
+use shared_common::PatternList;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::FileExtension;
 use std::path::Path;
 use tempfile::TempDir;
 
@@ -227,7 +227,7 @@ fn set_permissions_works() {
     let io = make_io();
     io.set_permissions(
         &file,
-        shared::filesystem::taxonomy_filesystem_vo::FileMode::new(0o644),
+        shared_filesystem::taxonomy_filesystem_vo::FileMode::new(0o644),
     )
     .unwrap();
     let meta = io.metadata(&file).unwrap();

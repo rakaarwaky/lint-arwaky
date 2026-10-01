@@ -5,16 +5,16 @@ use naming_rules_lint_arwaky::agent_naming_orchestrator::{
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
-use shared::common::PatternList;
-use shared::common::SuffixPolicyVO;
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::naming_rules::INamingRunnerAggregate;
-use shared::naming_rules::SUFFIX_POLICY_STRICT;
-use shared::naming_rules::taxonomy_naming_rules_request::NamingRequest;
-use shared::naming_rules::taxonomy_naming_rules_response::NamingResponse;
+use shared_common::PatternList;
+use shared_common::SuffixPolicyVO;
+use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared_naming_rules::INamingRunnerAggregate;
+use shared_naming_rules::SUFFIX_POLICY_STRICT;
+use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -55,7 +55,7 @@ fn make_file_entries(dir: &std::path::Path, names: &[&str]) -> Vec<FileEntry> {
 fn run_audit(
     orch: &dyn INamingRunnerAggregate,
     entries: &[FileEntry],
-) -> Vec<shared::common::taxonomy_lint_result_vo::LintResult> {
+) -> Vec<shared_common::taxonomy_lint_result_vo::LintResult> {
     let request = NamingRequest::RunAuditWithEntries {
         files: entries.to_vec(),
     };
@@ -204,16 +204,16 @@ fn e2e_container_wiring_produces_same_results() {
 // ── FR-Config: Rule disabled in config → no violations for that rule ──
 
 fn make_config_with_disabled_aes101() -> ArchitectureConfig {
-    use shared::common::taxonomy_common_vo::BooleanVO;
-    use shared::common::taxonomy_error_vo::ErrorCode;
-    use shared::config_system::taxonomy_config_system_vo::ArchitectureRule;
+    use shared_common::taxonomy_common_vo::BooleanVO;
+    use shared_common::taxonomy_error_vo::ErrorCode;
+    use shared_config_system::taxonomy_config_system_vo::ArchitectureRule;
 
     ArchitectureConfig {
         rules: vec![ArchitectureRule {
-            name: shared::common::taxonomy_suggestion_vo::DescriptionVO::new(
+            name: shared_common::taxonomy_suggestion_vo::DescriptionVO::new(
                 "disable AES101".to_string(),
             ),
-            description: shared::common::taxonomy_suggestion_vo::DescriptionVO::new("".to_string()),
+            description: shared_common::taxonomy_suggestion_vo::DescriptionVO::new("".to_string()),
             rule_type: ErrorCode::raw("AES101"),
             enabled: BooleanVO::new(false),
             ..Default::default()

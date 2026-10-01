@@ -13,7 +13,7 @@ use ratatui::layout::Rect;
 use ratatui::style::Style;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use shared::tui::{AppState, PreviewMode};
+use shared_tui::{AppState, PreviewMode};
 
 type ShortcutRows = (
     Vec<(&'static str, &'static str)>,

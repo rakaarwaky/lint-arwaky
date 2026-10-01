@@ -1,8 +1,8 @@
 // FR-002 — Multi-Language Support
 mod common;
 
-use shared::common::FilePath;
-use shared::config_system::ConfigRequest;
+use shared_common::FilePath;
+use shared_config_system::ConfigRequest;
 use std::fs;
 use tempfile::TempDir;
 

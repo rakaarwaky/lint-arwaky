@@ -1,0 +1,112 @@
+[package]
+name = "shared-common-lint-arwaky"
+version = "3.7.1"
+edition = "2024"
+description = "AES common foundation: taxonomy (`_vo`, `_entity`, `_event`, `_error`, `_constant`), contract (`_port`, `_protocol`, `_aggregate`), and utility types shared across lint-arwaky. Split out of `shared-lint-arwaky`."
+license = "MIT"
+repository = "https://github.com/rakaarwaky/lint-arwaky"
+publish = true
+
+# The folder *is* the crate root, so the manifest lives beside `mod.rs`.
+[lib]
+path = "mod.rs"
+# The legacy suite under `crates/shared/tests/` addresses this package by its
+# workspace dependency key (`shared_common`), not the `-lint-arwaky` package
+# name — mirroring how the root package exposes `lint_arwaky`.
+name = "shared_common"
+
+[lints]
+workspace = true
+
+# The integration suite stays where it was (crates/shared/tests/);
+# Cargo allows a target path outside the package directory.
+[[test]]
+name = "acceptance_shared_contracts"
+path = "../../tests/acceptance_shared_contracts.rs"
+[[test]]
+name = "contract_shared"
+path = "../../tests/contract_shared.rs"
+[[test]]
+name = "contract_shared_traits"
+path = "../../tests/contract_shared_traits.rs"
+[[test]]
+name = "e2e_shared_contracts"
+path = "../../tests/e2e_shared_contracts.rs"
+[[test]]
+name = "integration_shared"
+path = "../../tests/integration_shared.rs"
+[[test]]
+name = "smoke_shared"
+path = "../../tests/smoke_shared.rs"
+[[test]]
+name = "unit_common_taxonomy_skill_hint_vo"
+path = "../../tests/unit_common_taxonomy_skill_hint_vo.rs"
+[[test]]
+name = "unit_common_utility_compliance_score"
+path = "../../tests/unit_common_utility_compliance_score.rs"
+[[test]]
+name = "unit_common_utility_layer_detector"
+path = "../../tests/unit_common_utility_layer_detector.rs"
+[[test]]
+name = "unit_common_utility_path_filter"
+path = "../../tests/unit_common_utility_path_filter.rs"
+[[test]]
+name = "unit_common_utility_path_normalization"
+path = "../../tests/unit_common_utility_path_normalization.rs"
+[[test]]
+name = "unit_common_utility_scope_matcher"
+path = "../../tests/unit_common_utility_scope_matcher.rs"
+[[test]]
+name = "unit_shared_cli_commands"
+path = "../../tests/unit_shared_cli_commands.rs"
+[[test]]
+name = "unit_shared_common_vo"
+path = "../../tests/unit_shared_common_vo.rs"
+[[test]]
+name = "unit_shared_config_system"
+path = "../../tests/unit_shared_config_system.rs"
+[[test]]
+name = "unit_shared_filesystem_vo"
+path = "../../tests/unit_shared_filesystem_vo.rs"
+[[test]]
+name = "unit_shared_maintenance"
+path = "../../tests/unit_shared_maintenance.rs"
+[[test]]
+name = "unit_shared_parsers"
+path = "../../tests/unit_shared_parsers.rs"
+[[test]]
+name = "unit_shared_taxonomy_vo_hotspots"
+path = "../../tests/unit_shared_taxonomy_vo_hotspots.rs"
+
+[[bench]]
+name = "bench_shared"
+path = "../../benches/bench_shared.rs"
+harness = false
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
+clap.workspace = true
+syn = { version = "3", features = ["full", "visit", "parsing"] }
+proc-macro2 = { version = "1", features = ["span-locations"] }
+
+[dev-dependencies]
+shared-auto-fix.workspace = true
+shared-cli-commands.workspace = true
+shared-config-system.workspace = true
+shared-external-lint.workspace = true
+shared-file-watch.workspace = true
+shared-filesystem.workspace = true
+shared-git-hooks.workspace = true
+shared-import-rules.workspace = true
+shared-maintenance.workspace = true
+shared-naming-rules.workspace = true
+shared-orphan-rules.workspace = true
+shared-project-setup.workspace = true
+shared-quality-rules.workspace = true
+shared-report-formatter.workspace = true
+shared-role-rules.workspace = true
+criterion = { version = "0.8.2", features = ["html_reports"] }
+tempfile = "3.27.0"

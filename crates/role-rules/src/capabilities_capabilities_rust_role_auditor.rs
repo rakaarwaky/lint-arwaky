@@ -7,12 +7,12 @@
 // then run here. Type budget and implementor checks live in
 // utility_capabilities_role_checker.rs so the three auditors share one copy.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{ExternalReferenceMap, FileEntry};
-use shared::role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::{ExternalReferenceMap, FileEntry};
+use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
 
-use shared::role_rules::utility_capabilities_role_checker;
+use shared_role_rules::utility_capabilities_role_checker;
 
 // === Block 1: Type Definition ===
 

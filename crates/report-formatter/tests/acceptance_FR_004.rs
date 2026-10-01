@@ -1,9 +1,9 @@
 // FR-004 — JUnit XML Format Output
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
-use shared::cli_commands::DiagnosticSeverity;
-use shared::cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
-use shared::common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
-use shared::report_formatter::IJUnitFormatProtocol;
+use shared_cli_commands::DiagnosticSeverity;
+use shared_cli_commands::{LintResult, PipelineDiagnostic, ScanReport};
+use shared_common::{AdapterName, ErrorCode, FilePath, LineNumber, LintMessage, Severity};
+use shared_report_formatter::IJUnitFormatProtocol;
 
 fn result(code: &str, sev: Severity, message: &str) -> LintResult {
     LintResult {

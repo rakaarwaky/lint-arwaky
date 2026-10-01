@@ -1,7 +1,7 @@
 // PURPOSE: ExternalLintRequest — request payload for the external_lint aggregate
 
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
+use crate::taxonomy_external_lint_vo::ExternalLintContext;
+use shared_common::taxonomy_path_vo::FilePath;
 
 pub enum ExternalLintRequest {
     /// Scan a path, letting the aggregate build its own default context.

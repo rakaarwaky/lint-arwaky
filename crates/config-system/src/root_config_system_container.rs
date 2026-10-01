@@ -3,13 +3,13 @@ use crate::capabilities_parser_provider::ConfigParserProvider;
 use crate::capabilities_workspace_detector::WorkspaceDetector;
 use crate::capabilities_yaml_reader::ConfigYamlReader;
 // Utility module wired into entry for orphan reachability (AES504)
-use shared::config_system::utility_config_parser;
-use shared::config_system::{
+use shared_config_system::utility_config_parser;
+use shared_config_system::{
     IConfigMergeProtocol, IConfigOrchestratorAggregate, IConfigReadProtocol,
     IWorkspaceMembersProtocol,
 };
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
 use std::sync::Arc;
 
@@ -66,8 +66,8 @@ impl ConfigContainer {
     /// Get default AES configuration (from shared parser).
     pub fn default_config(
         &self,
-    ) -> shared::config_system::taxonomy_config_system_vo::ArchitectureConfig {
-        shared::config_system::utility_config_parser::default_aes_config()
+    ) -> shared_config_system::taxonomy_config_system_vo::ArchitectureConfig {
+        shared_config_system::utility_config_parser::default_aes_config()
     }
 
     /// Parse score threshold from YAML (uses utility_config_parser).

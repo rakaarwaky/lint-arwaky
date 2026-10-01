@@ -1,8 +1,8 @@
-use shared::cli_commands::LintResult;
-use shared::quality_rules::contract_quality_protocol::IDeadInheritanceProtocol;
+use shared_cli_commands::LintResult;
+use shared_quality_rules::contract_quality_protocol::IDeadInheritanceProtocol;
 
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::quality_rules::utility_bypass_detector::skip_cfg_test_block;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_quality_rules::utility_bypass_detector::skip_cfg_test_block;
 
 // PURPOSE: DeadInheritanceChecker — IDeadInheritanceProtocol for AES303 dead inheritance sub-check
 // Detects empty/placeholder definitions: unit structs without impl, empty Python classes,

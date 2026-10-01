@@ -1,8 +1,8 @@
 // PURPOSE: CodeAnalysisRequest — request payload for the code_analysis aggregate
 
-use crate::common::taxonomy_lint_result_vo::LintResult;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
 
 pub enum CodeAnalysisRequest {
     /// Run quality checks on pre-parsed file entries from the filesystem crate.

@@ -5,13 +5,13 @@
 // The language-specific checks (block order, I/O, constant placement,
 // stateless, free functions, abstract methods, computation) stay here.
 
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::common::taxonomy_severity_vo::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
-use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
-use shared::role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_PYTHON;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
+use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
+use shared_role_rules::taxonomy_role_rules_constant::AGENT_FORBIDDEN_IO_PYTHON;
 
-use shared::role_rules::utility_agent_role_checker;
+use shared_role_rules::utility_agent_role_checker;
 
 pub struct AgentPythonRoleAuditor {}
 

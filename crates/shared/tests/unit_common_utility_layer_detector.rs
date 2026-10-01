@@ -1,9 +1,7 @@
 // Unit tests for utility_layer_detector — layer detection from module paths.
 use std::fs;
 
-use shared_lint_arwaky::common::utility_layer_detector::{
-    detect_module_layer, resolve_module_path_to_layer,
-};
+use shared_common::utility_layer_detector::{detect_module_layer, resolve_module_path_to_layer};
 
 #[test]
 fn test_detect_module_layer_with_prefix() {

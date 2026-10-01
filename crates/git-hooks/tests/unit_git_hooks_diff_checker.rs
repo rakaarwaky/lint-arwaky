@@ -1,7 +1,7 @@
 // Unit tests — DiffChecker: lintable filter, get_diff, run_git_diff_check.
 
 use git_hooks_lint_arwaky::capabilities_diff_checker::is_lintable_file;
-use shared::common::FilePath;
+use shared_common::FilePath;
 
 // ─── Lintable filter (FR-001) ─────────────────────────────
 

@@ -5,19 +5,19 @@
 // (`IExternalLintAggregate`) is the entry point and is not counted toward the
 // 1:1 FR-to-protocol mapping.
 
-use crate::common::taxonomy_adapter_list_vo::AdapterNameList;
-use crate::common::taxonomy_adapter_name_vo::AdapterName;
-use crate::common::taxonomy_common_vo::PatternList;
-use crate::common::taxonomy_duration_vo::Timeout;
-use crate::common::taxonomy_error_vo::ErrorCode;
-use crate::common::taxonomy_message_vo::ComplianceStatus;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_response_data_vo::ResponseData;
-use crate::common::taxonomy_severity_vo::Severity;
-use crate::common::taxonomy_tool_name_vo::ToolName;
-use crate::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
-use crate::quality_rules::taxonomy_operation_error::LinterOperationError;
-use crate::quality_rules::taxonomy_quality_rules_vo::LintResultList;
+use crate::taxonomy_external_lint_vo::ExternalLintContext;
+use shared_common::taxonomy_adapter_list_vo::AdapterNameList;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_duration_vo::Timeout;
+use shared_common::taxonomy_error_vo::ErrorCode;
+use shared_common::taxonomy_message_vo::ComplianceStatus;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_common::taxonomy_severity_vo::Severity;
+use shared_common::taxonomy_tool_name_vo::ToolName;
+use shared_quality_rules::taxonomy_operation_error::LinterOperationError;
+use shared_quality_rules::taxonomy_quality_rules_vo::LintResultList;
 
 /// FR-ExternalLint-001: detect which languages (Rust, Python, JS/TS) and
 /// content types (Markdown) are present in the project using the filesystem

@@ -1,9 +1,9 @@
 // Unit tests for TaxonomyOrphanAnalyzer — orphan detection for taxonomy-layer files.
 use orphan_rules_lint_arwaky::capabilities_orphan_taxonomy_analyzer::TaxonomyOrphanAnalyzer;
-use shared::orphan_rules::ITaxonomyOrphanProtocol;
+use shared_orphan_rules::ITaxonomyOrphanProtocol;
 
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::quality_rules::taxonomy_quality_rules_vo::{InboundLinkMap, ReachabilityResult};
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_quality_rules::taxonomy_quality_rules_vo::{InboundLinkMap, ReachabilityResult};
 use std::collections::HashSet;
 
 fn empty_reachability() -> ReachabilityResult {

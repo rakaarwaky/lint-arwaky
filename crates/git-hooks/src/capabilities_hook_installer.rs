@@ -4,15 +4,15 @@
 // setting. This is the lowest-level install component that interacts directly
 // with the filesystem.
 
-use shared::common::taxonomy_job_vo::SuccessStatus;
-use shared::common::taxonomy_layer_vo::Identity;
-use shared::common::taxonomy_message_vo::LintMessage;
-use shared::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_job_vo::SuccessStatus;
+use shared_common::taxonomy_layer_vo::Identity;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_path_vo::FilePath;
 
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::filesystem::taxonomy_filesystem_vo::FileMode;
-use shared::git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
-use shared::git_hooks::taxonomy_git_hooks_error::GitHookError;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_filesystem::taxonomy_filesystem_vo::FileMode;
+use shared_git_hooks::contract_git_hooks_protocol::IHookInstallProtocol;
+use shared_git_hooks::taxonomy_git_hooks_error::GitHookError;
 use std::sync::Arc;
 
 // ─── Block 1: Struct Definition ───────────────────────────

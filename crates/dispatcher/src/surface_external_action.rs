@@ -12,16 +12,16 @@ use std::path::Path;
 use std::process::Command;
 use std::sync::Arc;
 
-use shared::common::FilePath;
-use shared::config_system::contract_config_protocol::IConfigMergeProtocol;
-use shared::config_system::taxonomy_config_system_vo::AdapterEntry;
-use shared::external_lint::IExternalLintAggregate;
-use shared::external_lint::taxonomy_external_lint_vo::ExternalLintContext;
-use shared::filesystem::FilesystemRequest;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_common::FilePath;
+use shared_config_system::contract_config_protocol::IConfigMergeProtocol;
+use shared_config_system::taxonomy_config_system_vo::AdapterEntry;
+use shared_external_lint::IExternalLintAggregate;
+use shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext;
+use shared_filesystem::FilesystemRequest;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 
-use shared::common::ViolationItem;
+use shared_common::ViolationItem;
 
 /// Direct external lint scan — no subprocess. Used by the CLI `external`
 /// subcommand so that subprocess self-invocation from `scan` terminates.
@@ -78,7 +78,7 @@ pub fn collect_external_direct(
 
     let scan_results = external_lint
         .execute(
-            shared::external_lint::ExternalLintRequest::scan_all_with_context(&root_fp, &context),
+            shared_external_lint::ExternalLintRequest::scan_all_with_context(&root_fp, &context),
         )
         .into_violations();
     let mut violations: Vec<ViolationItem> = scan_results
@@ -152,7 +152,7 @@ fn load_config_entries(
             let cfg_path = dir.join(cfg_name);
             if cfg_path.exists() {
                 if let Ok(content) = fs_io.read_to_string(&cfg_path) {
-                    let entries = shared::config_system::utility_config_parser::parse_adapter_entries_from_yaml(&content.value);
+                    let entries = shared_config_system::utility_config_parser::parse_adapter_entries_from_yaml(&content.value);
                     if !entries.is_empty() {
                         return entries;
                     }

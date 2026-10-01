@@ -1,9 +1,9 @@
 // PURPOSE: E2E tests — full pipeline: temp dir with quality violations → container → analysis → verify all types found
 use quality_rules_lint_arwaky::CodeAnalysisContainer;
 
-use shared::common::FilePath;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::quality_rules::CodeAnalysisRequest;
+use shared_common::FilePath;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_quality_rules::CodeAnalysisRequest;
 use std::path::PathBuf;
 
 #[test]
@@ -24,7 +24,7 @@ fn e2e_detects_all_violation_types() {
         FileEntry {
             path: PathBuf::from("src/aes304_example.rs"),
             extension: "rs".to_string(),
-            language: shared::common::taxonomy_language_vo::Language::Rust,
+            language: shared_common::taxonomy_language_vo::Language::Rust,
             size: bypass_content.len() as u64,
             content: bypass_content,
             parse_ok: true,
@@ -33,7 +33,7 @@ fn e2e_detects_all_violation_types() {
         FileEntry {
             path: PathBuf::from("src/aes304_duplicate.rs"),
             extension: "rs".to_string(),
-            language: shared::common::taxonomy_language_vo::Language::Rust,
+            language: shared_common::taxonomy_language_vo::Language::Rust,
             size: dup_content.len() as u64,
             content: dup_content,
             parse_ok: true,
@@ -60,7 +60,7 @@ fn e2e_detects_all_violation_types() {
     );
 
     // Report should contain violation data
-    let results_list = shared::cli_commands::LintResultList::new(results);
+    let results_list = shared_cli_commands::LintResultList::new(results);
     let root = FilePath::new("/project".to_string()).unwrap();
     let report = linter
         .execute(CodeAnalysisRequest::format_report(
@@ -73,22 +73,22 @@ fn e2e_detects_all_violation_types() {
 
 #[test]
 fn e2e_disabled_config_returns_empty() {
-    use shared::common::BooleanVO;
-    use shared::config_system::ArchitectureConfig;
+    use shared_common::BooleanVO;
+    use shared_config_system::ArchitectureConfig;
 
     let config = ArchitectureConfig {
         enabled: BooleanVO::new(false),
         ..ArchitectureConfig::default()
     };
 
-    let layer_map = shared::common::LayerMapVO::new(std::collections::HashMap::new());
+    let layer_map = shared_common::LayerMapVO::new(std::collections::HashMap::new());
     let container = CodeAnalysisContainer::new_with_config(config, layer_map);
     let linter = container.code_analysis_linter();
 
     let entries = vec![FileEntry {
         path: PathBuf::from("src/lib.rs"),
         extension: "rs".to_string(),
-        language: shared::common::taxonomy_language_vo::Language::Rust,
+        language: shared_common::taxonomy_language_vo::Language::Rust,
         size: 100,
         content: "let x = foo.unwrap();\n".to_string(),
         parse_ok: true,
@@ -114,7 +114,7 @@ fn e2e_bypass_patterns_in_comment_detected() {
     let entries = vec![FileEntry {
         path: PathBuf::from("src/comment_bypass.rs"),
         extension: "rs".to_string(),
-        language: shared::common::taxonomy_language_vo::Language::Rust,
+        language: shared_common::taxonomy_language_vo::Language::Rust,
         size: content.len() as u64,
         content: content.to_string(),
         parse_ok: true,

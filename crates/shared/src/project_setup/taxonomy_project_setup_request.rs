@@ -1,7 +1,7 @@
 // PURPOSE: SetupRequest — request payload for the setup aggregate
 
-use crate::cli_commands::taxonomy_cli_commands_vo::TransportUrlVO;
-use crate::common::taxonomy_path_vo::DirectoryPath;
+use shared_cli_commands::taxonomy_cli_commands_vo::TransportUrlVO;
+use shared_common::taxonomy_path_vo::DirectoryPath;
 
 pub enum SetupRequest {
     /// Verify that a transport URL is reachable.

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use std::sync::Arc;
 
 pub fn make_fs() -> Arc<dyn IFilesystemAggregate> {

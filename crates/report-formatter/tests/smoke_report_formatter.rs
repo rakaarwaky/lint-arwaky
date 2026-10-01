@@ -6,8 +6,8 @@ use report_formatter_lint_arwaky::capabilities_json_formatter::JsonFormatter;
 use report_formatter_lint_arwaky::capabilities_junit_formatter::JunitFormatter;
 use report_formatter_lint_arwaky::capabilities_sarif_formatter::SarifFormatter;
 use report_formatter_lint_arwaky::capabilities_text_formatter::TextFormatter;
-use shared::cli_commands::{Format, ScanReport};
-use shared::report_formatter::IReportFormatterAggregate;
+use shared_cli_commands::{Format, ScanReport};
+use shared_report_formatter::IReportFormatterAggregate;
 use std::sync::Arc;
 
 #[test]

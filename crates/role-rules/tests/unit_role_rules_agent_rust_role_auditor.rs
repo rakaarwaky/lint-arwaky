@@ -1,10 +1,10 @@
 // Unit tests for the Rust agent role auditor — AES405 sub-checks.
 use role_rules_lint_arwaky::capabilities_agent_rust_role_auditor::AgentRustRoleAuditor;
-use shared::common::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::IAgentRoleProtocol;
+use shared_common::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::IAgentRoleProtocol;
 
-use shared::filesystem::taxonomy_filesystem_vo::{Language, ParseMetadata, RustMetadata};
+use shared_filesystem::taxonomy_filesystem_vo::{Language, ParseMetadata, RustMetadata};
 use std::path::PathBuf;
 
 fn auditor() -> AgentRustRoleAuditor {
@@ -130,7 +130,7 @@ fn metadata_rust_too_many_types_flagged() {
 fn metadata_rust_valid_composition_no_violation() {
     let meta = RustMetadata {
         struct_definitions: vec!["Foo".into()],
-        impl_blocks: vec![shared::filesystem::taxonomy_filesystem_vo::RustImplItem {
+        impl_blocks: vec![shared_filesystem::taxonomy_filesystem_vo::RustImplItem {
             trait_name: Some("IFooAggregate".into()),
             trait_path: None,
             implementor_type: "Foo".into(),

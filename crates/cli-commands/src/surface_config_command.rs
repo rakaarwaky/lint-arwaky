@@ -1,7 +1,7 @@
 // PURPOSE: Config show — CLI thin wrapper
 // Calls dispatcher for config business logic, only adds CLI output.
-use shared::common::ExitCode;
-use shared::config_system::IConfigOrchestratorAggregate;
+use shared_common::ExitCode;
+use shared_config_system::IConfigOrchestratorAggregate;
 use std::sync::Arc;
 use tracing::warn;
 

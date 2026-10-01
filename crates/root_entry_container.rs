@@ -3,32 +3,32 @@
 use std::sync::Arc;
 
 use dispatcher::surface_orphan_action::OrphanFactory;
-use shared::auto_fix::contract_fix_aggregate::IFixAggregate;
-use shared::config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
-use shared::doc_rules::IDocRunnerAggregate;
-use shared::external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
-use shared::filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
-use shared::git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
-use shared::import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
-use shared::maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
-use shared::naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
-use shared::orphan_rules::contract_orphan_aggregate::IOrphanAggregate;
-use shared::project_setup::contract_setup_aggregate::ISetupAggregate;
-use shared::quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::structure_rules::contract_structure_aggregate::IStructureAggregate;
+use shared_auto_fix::contract_fix_aggregate::IFixAggregate;
+use shared_config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
+use shared_doc_rules::IDocRunnerAggregate;
+use shared_external_lint::contract_external_lint_aggregate::IExternalLintAggregate;
+use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
+use shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
+use shared_import_rules::contract_import_runner_aggregate::IImportRunnerAggregate;
+use shared_maintenance::contract_maintenance_aggregate::IMaintenanceAggregate;
+use shared_naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared_orphan_rules::contract_orphan_aggregate::IOrphanAggregate;
+use shared_project_setup::contract_setup_aggregate::ISetupAggregate;
+use shared_quality_rules::contract_code_analysis_aggregate::ICodeAnalysisAggregate;
+use shared_role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared_structure_rules::contract_structure_aggregate::IStructureAggregate;
 
 /// All shared dependencies constructed once and consumed by entry points.
 pub struct CommonDeps {
     pub filesystem: Arc<dyn IFilesystemAggregate>,
-    pub filesystem_io: Arc<dyn shared::filesystem::IFileSystemIOProtocol>,
-    pub filesystem_workspace: Arc<dyn shared::filesystem::IWorkspaceProtocol>,
-    pub filesystem_tool_resolution: Arc<dyn shared::filesystem::IToolResolutionProtocol>,
-    pub filesystem_parser: Arc<dyn shared::filesystem::IParserProtocol>,
+    pub filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
+    pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
+    pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
+    pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
     pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
-    pub config_parser: Arc<dyn shared::config_system::IConfigMergeProtocol>,
-    pub config_reader: Arc<dyn shared::config_system::IConfigReadProtocol>,
+    pub config_parser: Arc<dyn shared_config_system::IConfigMergeProtocol>,
+    pub config_reader: Arc<dyn shared_config_system::IConfigReadProtocol>,
     pub code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     pub import_orchestrator: Arc<dyn IImportRunnerAggregate>,
     pub naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
@@ -88,15 +88,15 @@ impl CommonDeps {
         let naming_container = naming_rules::root_naming_rules_container::NamingContainer::new(
             Arc::new(
                 config_orchestrator
-                    .execute(shared::config_system::ConfigRequest::load_sync(
-                        &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+                    .execute(shared_config_system::ConfigRequest::load_sync(
+                        &shared_common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
                     ))
                     .into_sync_config(),
             ),
-            Arc::new(shared::common::LayerMapVO::new(
+            Arc::new(shared_common::LayerMapVO::new(
                 config_orchestrator
-                    .execute(shared::config_system::ConfigRequest::load_sync(
-                        &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+                    .execute(shared_config_system::ConfigRequest::load_sync(
+                        &shared_common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
                     ))
                     .into_sync_config()
                     .layers
@@ -123,8 +123,8 @@ impl CommonDeps {
 
         let role_container = role_rules::root_role_rules_container::RoleContainer::new_with_config(
             config_orchestrator
-                .execute(shared::config_system::ConfigRequest::load_sync(
-                    &shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+                .execute(shared_config_system::ConfigRequest::load_sync(
+                    &shared_common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
                 ))
                 .into_sync_config(),
         );
@@ -167,7 +167,7 @@ impl CommonDeps {
         });
 
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
-            shared::common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
+            shared_common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
             filesystem.clone(),
             filesystem_io.clone(),
         );

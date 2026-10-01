@@ -9,12 +9,12 @@
 // business capability. The former FR-Maintenance-005 (Diagnose Toolchain) was
 // merged into FR-Maintenance-001 and renumbered away; its ID is never reused.
 
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::maintenance::taxonomy_maintenance_vo::MaintenanceStatsVO;
-use crate::maintenance::taxonomy_maintenance_vo::{
+use crate::taxonomy_maintenance_vo::MaintenanceStatsVO;
+use crate::taxonomy_maintenance_vo::{
     DependencyReport, DoctorResultVO, HealthCheckResult, SecurityScanReport, SelfUpdateResultVO,
     ToolchainDiagnostics,
 };
+use shared_common::taxonomy_path_vo::FilePath;
 
 /// FR-Maintenance-001: Environment Health Check (doctor + toolchain).
 pub trait IDoctorProtocol: Send + Sync {

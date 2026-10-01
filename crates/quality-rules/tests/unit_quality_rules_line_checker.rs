@@ -1,7 +1,7 @@
 // Unit tests for ArchLineChecker — AES301/AES302 line count validation.
 use quality_rules_lint_arwaky::capabilities_line_checker::ArchLineChecker;
-use shared::common::{Count, LayerDefinition};
-use shared::quality_rules::{CodeAnalysisRuleVO, ILineCheckerProtocol};
+use shared_common::{Count, LayerDefinition};
+use shared_quality_rules::{CodeAnalysisRuleVO, ILineCheckerProtocol};
 
 fn checker() -> ArchLineChecker {
     ArchLineChecker::new()

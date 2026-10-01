@@ -1,14 +1,14 @@
 // PURPOSE: Acceptance tests — AES201 forbidden import detection.
 // Verifies: taxonomy→capabilities, surface→agent, capabilities→agent, etc.
 use import_rules_lint_arwaky::capabilities_import_forbidden_checker::ArchImportForbiddenChecker;
-use shared::common::NamingConfig;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::ArchitectureConfig;
-use shared::import_rules::IImportForbiddenProtocol;
+use shared_common::NamingConfig;
+use shared_common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::ArchitectureConfig;
+use shared_import_rules::IImportForbiddenProtocol;
 use std::collections::HashMap;
 
 /// Full AES config with 3 layers and their forbidden/allowed rules.
@@ -184,7 +184,7 @@ fn aes201_protocol_rule_name_returns_aes201() {
 fn aes201_empty_import_map_produces_no_violations() {
     let checker = ArchImportForbiddenChecker::new();
     let (config, layer_map) = aes_config();
-    use shared::common::FilePathList;
+    use shared_common::FilePathList;
     use std::collections::HashMap;
     let files = FilePathList::new(vec![
         FilePath::new("/tmp/project/capabilities_handler.rs".to_string()).unwrap(),

@@ -6,15 +6,15 @@
 
 use std::collections::HashSet;
 
-use shared::cli_commands::LintResultList;
-use shared::common::taxonomy_common_vo::Count;
-use shared::common::taxonomy_git_vo::GitBranchName;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
-use shared::file_watch::GitDiffResultVO;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
-use shared::git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
+use shared_cli_commands::LintResultList;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_git_vo::GitBranchName;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
+use shared_file_watch::GitDiffResultVO;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
+use shared_git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
 
 use std::sync::Arc;
 

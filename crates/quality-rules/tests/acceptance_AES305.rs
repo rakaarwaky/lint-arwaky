@@ -3,8 +3,8 @@
 use std::path::PathBuf;
 
 use quality_rules_lint_arwaky::capabilities_code_duplication_analyzer::CodeDuplicationAnalyzer;
-use shared::config_system::ArchitectureConfig;
-use shared::quality_rules::ICodeMetricAnalyzerProtocol;
+use shared_config_system::ArchitectureConfig;
+use shared_quality_rules::ICodeMetricAnalyzerProtocol;
 
 use std::sync::Arc;
 
@@ -15,9 +15,9 @@ fn analyzer() -> CodeDuplicationAnalyzer {
 fn analyzer_with_threshold(threshold: f64) -> CodeDuplicationAnalyzer {
     let mut config = ArchitectureConfig::default();
     // Add AES305 rule with custom threshold
-    config.rules.push(shared::config_system::ArchitectureRule {
-        name: shared::common::taxonomy_suggestion_vo::DescriptionVO::new("AES305".to_string()),
-        code_analysis: shared::quality_rules::CodeAnalysisRuleVO {
+    config.rules.push(shared_config_system::ArchitectureRule {
+        name: shared_common::taxonomy_suggestion_vo::DescriptionVO::new("AES305".to_string()),
+        code_analysis: shared_quality_rules::CodeAnalysisRuleVO {
             duplication_threshold: Some(threshold),
             ..Default::default()
         },
@@ -45,7 +45,7 @@ fn two_identical_files_produces_violation() {
         "Expected duplication violation for identical files"
     );
     let has_aes305 = match &violations[0].1 {
-        shared::quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => reason
+        shared_quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => reason
             .as_ref()
             .is_some_and(|r| r.to_string().contains("AES305")),
         _ => false,
@@ -128,7 +128,7 @@ fn violation_message_contains_percentage() {
     let violations = ana.handle_duplicates_entries(&entries);
     assert!(!violations.is_empty());
     let msg = match &violations[0].1 {
-        shared::quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => {
+        shared_quality_rules::AesCodeAnalysisViolation::CodeDuplication { reason } => {
             reason.as_ref().map_or("".to_string(), |r| r.to_string())
         }
         other => format!("{other:?}"),

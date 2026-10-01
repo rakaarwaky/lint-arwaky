@@ -1,8 +1,8 @@
 // PURPOSE: Setup — CLI thin wrapper
 // Calls dispatcher for setup business logic, only adds CLI output.
-use shared::common::ExitCode;
-use shared::filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared::project_setup::ISetupAggregate;
+use shared_common::ExitCode;
+use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_project_setup::ISetupAggregate;
 use std::sync::Arc;
 
 pub fn handle_init(

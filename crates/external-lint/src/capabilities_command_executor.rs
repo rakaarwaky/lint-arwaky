@@ -3,13 +3,13 @@
 
 use std::sync::Arc;
 
-use shared::common::taxonomy_adapter_name_vo::AdapterName;
-use shared::common::taxonomy_common_vo::PatternList;
-use shared::common::taxonomy_duration_vo::Timeout;
-use shared::common::taxonomy_operation_error::LinterOperationError;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_response_data_vo::ResponseData;
-use shared::external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
+use shared_common::taxonomy_adapter_name_vo::AdapterName;
+use shared_common::taxonomy_common_vo::PatternList;
+use shared_common::taxonomy_duration_vo::Timeout;
+use shared_common::taxonomy_operation_error::LinterOperationError;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_response_data_vo::ResponseData;
+use shared_external_lint::contract_external_lint_protocol::ICommandExecutorProtocol;
 
 // ─── Block 1: Struct Definition ───────────────────────────
 

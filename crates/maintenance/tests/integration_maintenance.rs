@@ -1,7 +1,7 @@
 // Integration tests — full DI wiring via MaintenanceContainer.
-use shared::common::FilePath;
-use shared::maintenance::IMaintenanceAggregate;
-use shared::maintenance::MaintenanceRequest;
+use shared_common::FilePath;
+use shared_maintenance::IMaintenanceAggregate;
+use shared_maintenance::MaintenanceRequest;
 use std::sync::Arc;
 
 fn make_container() -> maintenance_lint_arwaky::root_maintenance_container::MaintenanceContainer {
@@ -96,6 +96,6 @@ fn orchestrator_cancel_does_not_panic() {
     let container = make_container();
     let orch = container.orchestrator();
     orch.execute(MaintenanceRequest::cancel(
-        shared::common::taxonomy_action_vo::JobId::default(),
+        shared_common::taxonomy_action_vo::JobId::default(),
     ));
 }

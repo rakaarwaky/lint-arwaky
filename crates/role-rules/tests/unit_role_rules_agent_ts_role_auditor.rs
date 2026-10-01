@@ -1,10 +1,10 @@
 // Unit tests for the TypeScript agent role auditor — AES405 sub-checks.
 use role_rules_lint_arwaky::capabilities_agent_ts_role_auditor::AgentTsRoleAuditor;
-use shared::common::Severity;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::IAgentRoleProtocol;
+use shared_common::Severity;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::IAgentRoleProtocol;
 
-use shared::filesystem::taxonomy_filesystem_vo::Language;
+use shared_filesystem::taxonomy_filesystem_vo::Language;
 use std::path::PathBuf;
 
 fn auditor() -> AgentTsRoleAuditor {

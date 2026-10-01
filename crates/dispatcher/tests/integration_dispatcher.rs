@@ -1,5 +1,5 @@
 // Integration tests — dispatcher actions with real filesystem.
-use shared::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_path_vo::FilePath;
 
 #[test]
 fn dispatcher_check_action_on_clean_project() {

@@ -1,10 +1,10 @@
 // PURPOSE: DocChecker — the invariant auditor behind IDocCheckerProtocol.
-use shared::doc_rules::contract_doc_protocol::IDocCheckerProtocol;
-use shared::doc_rules::taxonomy_doc_rules_constant as consts;
-use shared::doc_rules::taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
-use shared::doc_rules::taxonomy_doc_rules_response::DocResponse;
+use shared_doc_rules::contract_doc_protocol::IDocCheckerProtocol;
+use shared_doc_rules::taxonomy_doc_rules_constant as consts;
+use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocRequest, DocSource};
+use shared_doc_rules::taxonomy_doc_rules_response::DocResponse;
 
-use shared::doc_rules::utility_protocol_counter::{
+use shared_doc_rules::utility_protocol_counter::{
     count_fr_headings, count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
 };
 

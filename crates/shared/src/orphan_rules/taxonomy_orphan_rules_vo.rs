@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-use crate::common::taxonomy_message_vo::LintMessage;
-use crate::common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_message_vo::LintMessage;
+use shared_common::taxonomy_path_vo::FilePath;
 
 // ─── Contract surface VOs ──────────────────────────────────────────────
 
@@ -69,7 +69,7 @@ impl OrphanEntryPatternListVO {
 // (the Rust/Python/TS parsers) all live in `common`. Re-exported here so every
 // existing `shared::orphan_rules::taxonomy_orphan_rules_vo::<AstType>` path
 // keeps resolving without touching any call site.
-pub use crate::common::taxonomy_ast_vo::*;
+pub use shared_common::taxonomy_ast_vo::*;
 
 /// A set of file paths used for orphan-analysis reachability checks.
 pub type FilePathSet = HashSet<FilePath>;

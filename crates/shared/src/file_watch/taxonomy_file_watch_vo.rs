@@ -1,10 +1,10 @@
 // PURPOSE: Watch feature value objects — watch config, filesystem events, git diff results.
 use serde::{Deserialize, Serialize};
 
-use crate::common::taxonomy_common_vo::Count;
-use crate::common::taxonomy_path_vo::FilePath;
-use crate::common::taxonomy_paths_vo::FilePathList;
-use crate::common::taxonomy_paths_vo::RenamedFileList;
+use shared_common::taxonomy_common_vo::Count;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_common::taxonomy_paths_vo::RenamedFileList;
 
 // ─── Watch configuration ──────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ impl WatchConfig {
             path: FilePath::new(path).unwrap_or_default(),
             recursive: true,
             debounce_ms: 200,
-            ignore_patterns: crate::common::DEFAULT_IGNORED_PATHS
+            ignore_patterns: shared_common::DEFAULT_IGNORED_PATHS
                 .iter()
                 .map(|s| s.to_string())
                 .collect(),

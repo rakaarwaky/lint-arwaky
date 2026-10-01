@@ -36,7 +36,8 @@ camino = "1.2.5"
 anyhow = "1.0.104"
 
 # Shared types
-shared.workspace = true
+shared-common.workspace = true
+shared-filesystem.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]

@@ -1,5 +1,5 @@
 // Unit tests — TUI report formatter utility tests.
-use shared::maintenance::{ToolStatus, ToolchainDiagnostics};
+use shared_maintenance::{ToolStatus, ToolchainDiagnostics};
 use tui_lint_arwaky::utility_report_formatter;
 
 #[test]

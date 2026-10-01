@@ -1,15 +1,15 @@
 // PURPOSE: E2E tests — full pipeline from temp dir with violation files through audit.
 use import_rules_lint_arwaky::root_import_rules_container::ImportContainer;
-use shared::common::NamingConfig;
-use shared::common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
-use shared::common::taxonomy_definition_vo::LayerDefinition;
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_path_vo::FilePath;
-use shared::common::taxonomy_paths_vo::FilePathList;
-use shared::config_system::ArchitectureConfig;
-use shared::filesystem::FilesystemRequest;
-use shared::import_rules::IImportRunnerAggregate;
-use shared::import_rules::taxonomy_import_rules_request::ImportRequest;
+use shared_common::NamingConfig;
+use shared_common::taxonomy_common_vo::{BooleanVO, Count, PatternList};
+use shared_common::taxonomy_definition_vo::LayerDefinition;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_path_vo::FilePath;
+use shared_common::taxonomy_paths_vo::FilePathList;
+use shared_config_system::ArchitectureConfig;
+use shared_filesystem::FilesystemRequest;
+use shared_import_rules::IImportRunnerAggregate;
+use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -192,10 +192,10 @@ fn e2e_audit_with_entries_returns_results() {
 
     let orch = make_orchestrator_at(tmp.path());
 
-    let file_entry = shared::filesystem::taxonomy_filesystem_vo::FileEntry {
+    let file_entry = shared_filesystem::taxonomy_filesystem_vo::FileEntry {
         path: file.clone(),
         extension: "rs".to_string(),
-        language: shared::filesystem::taxonomy_filesystem_vo::Language::Rust,
+        language: shared_filesystem::taxonomy_filesystem_vo::Language::Rust,
         size: content.len() as u64,
         content: content.to_string(),
         parse_ok: true,

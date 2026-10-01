@@ -3,27 +3,27 @@
 // FRD-compliant: accepts pre-parsed FileEntry from the filesystem crate.
 // No file I/O or AST parsing is performed internally.
 
-use shared::common::taxonomy_layer_vo::LayerNameVO;
-use shared::common::taxonomy_lint_result_vo::LintResult;
-use shared::filesystem::taxonomy_filesystem_vo::FileEntry;
-use shared::role_rules::contract_role_protocol::IAgentRoleProtocol;
-use shared::role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
-use shared::role_rules::contract_role_protocol::IClassificationProtocol;
-use shared::role_rules::contract_role_protocol::IContractRoleProtocol;
-use shared::role_rules::contract_role_protocol::ISurfaceRoleProtocol;
-use shared::role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
-use shared::role_rules::contract_role_protocol::IUtilityRoleProtocol;
-use shared::role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
-use shared::role_rules::taxonomy_role_rules_request::RoleRequest;
-use shared::role_rules::taxonomy_role_rules_response::RoleResponse;
+use shared_common::taxonomy_layer_vo::LayerNameVO;
+use shared_common::taxonomy_lint_result_vo::LintResult;
+use shared_filesystem::taxonomy_filesystem_vo::FileEntry;
+use shared_role_rules::contract_role_protocol::IAgentRoleProtocol;
+use shared_role_rules::contract_role_protocol::ICapabilitiesRoleProtocol;
+use shared_role_rules::contract_role_protocol::IClassificationProtocol;
+use shared_role_rules::contract_role_protocol::IContractRoleProtocol;
+use shared_role_rules::contract_role_protocol::ISurfaceRoleProtocol;
+use shared_role_rules::contract_role_protocol::ITaxonomyRoleProtocol;
+use shared_role_rules::contract_role_protocol::IUtilityRoleProtocol;
+use shared_role_rules::contract_role_runner_aggregate::IRoleRunnerAggregate;
+use shared_role_rules::taxonomy_role_rules_request::RoleRequest;
+use shared_role_rules::taxonomy_role_rules_response::RoleResponse;
 use std::path::Path;
 use std::sync::Arc;
 
-use shared::config_system::taxonomy_config_system_vo::ArchitectureConfig;
-use shared::filesystem::taxonomy_filesystem_vo::Language;
+use shared_config_system::taxonomy_config_system_vo::ArchitectureConfig;
+use shared_filesystem::taxonomy_filesystem_vo::Language;
 
-use shared::role_rules::utility_agent_role_checker::resolve_feature_protocol_count;
-use shared::role_rules::utility_role_reference_scanner::build_external_reference_map;
+use shared_role_rules::utility_agent_role_checker::resolve_feature_protocol_count;
+use shared_role_rules::utility_role_reference_scanner::build_external_reference_map;
 
 // ─── Block 1: Struct Definitions ──────────────────────────
 
@@ -144,9 +144,8 @@ impl RoleOrchestrator {
             let basename = stem;
             let prefix = basename.split('_').next().unwrap_or_default();
 
-            // Skip barrel files (single source: shared::common::DEFAULT_RULE_EXCEPTIONS)
-            if shared::common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) || filename == "main.rs"
-            {
+            // Skip barrel files (single source: shared_common::DEFAULT_RULE_EXCEPTIONS)
+            if shared_common::DEFAULT_RULE_EXCEPTIONS.contains(&filename) || filename == "main.rs" {
                 continue;
             }
 
@@ -189,16 +188,15 @@ impl RoleOrchestrator {
                     if self.is_rule_enabled("AES406") && !self.is_exception("AES406", filename) =>
                 {
                     self.deps.surface.check_fn_count_limit(file, violations);
-                    match shared::role_rules::taxonomy_role_rules_vo::classify_surface_tier(
-                        basename,
-                    ) {
-                        shared::role_rules::taxonomy_role_rules_vo::SurfaceTier::Smart => {
+                    match shared_role_rules::taxonomy_role_rules_vo::classify_surface_tier(basename)
+                    {
+                        shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Smart => {
                             self.deps.surface.check_smart_surface(file, violations);
                         }
-                        shared::role_rules::taxonomy_role_rules_vo::SurfaceTier::Utility => {
+                        shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Utility => {
                             self.deps.surface.check_utility_surface(file, violations);
                         }
-                        shared::role_rules::taxonomy_role_rules_vo::SurfaceTier::Passive => {
+                        shared_role_rules::taxonomy_role_rules_vo::SurfaceTier::Passive => {
                             self.deps.surface.check_passive_surface(file, violations);
                         }
                     }
