@@ -51,8 +51,6 @@ pub mod capabilities_cargo_dir_resolver;
 pub mod capabilities_command_executor;
 pub mod capabilities_external_lint_selector;
 pub mod capabilities_js_tool_resolver;
-pub mod capabilities_language_detector;
-pub use capabilities_language_detector::LanguageDetector;
 pub mod capabilities_output_normalizer;
 pub use capabilities_output_normalizer::OutputNormalizer;
 pub mod capabilities_stdio_client;

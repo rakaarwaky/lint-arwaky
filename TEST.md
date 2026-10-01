@@ -217,7 +217,7 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES402 | Contract primitives                    | ✓   | ✓     | ✓    |
 | AES403 | Capability implementation              | ✓   | ✓     | ✓    |
 | AES404 | Utility purity                         | ✓   | ✓     | ✓    |
-| AES405 | Agent composition                      | ✓   | ✓     | ✓    |
+| AES405 | Agent composition, delegation, blocks   | ✓   | ✓     | ✓    |
 | AES406 | Surface passive role                   | ✓   | ✓     | ✓    |
 | AES501 | Taxonomy orphan                        | ✓   | ✓     | ✓    |
 | AES502 | Contract orphan                        | ✓   | ✓     | ✓    |

@@ -343,18 +343,33 @@ fn external_lint_executor_implements_cargo_dir_protocol() {
     assert!(!wd.value().is_empty());
 }
 
-// ─── Contract: LanguageDetector implements ILanguageDetectProtocol (FR-001) ──
+// ─── FR-001: language detection lives in the filesystem aggregate ──────────
+//
+// external-lint no longer owns a language-detection protocol or capability.
+// The orchestrator asks the filesystem aggregate via `DetectProjectLanguages`;
+// see `crates/filesystem` FR-Filesystem-005 for the contract.
 
 #[test]
-fn language_detector_implements_protocol() {
-    use shared_external_lint::ILanguageDetectProtocol;
-    let detector =
-        external_lint_lint_arwaky::LanguageDetector::new(Arc::new(MockFilesystem::new()));
-    let _dyn: &dyn ILanguageDetectProtocol = &detector;
-    let (has_rust, has_python, has_js, has_markdown) =
-        _dyn.detect_languages(&FilePath::new("/tmp".to_string()).unwrap());
-    // No files were registered on the mock filesystem — all booleans are false.
-    assert!(!has_rust && !has_python && !has_js && !has_markdown);
+fn orchestrator_delegates_language_detection_to_filesystem() {
+    // The mock filesystem answers `DetectProjectLanguages` with no languages,
+    // so `scan_all` selects no adapters and returns an empty result list
+    // without the orchestrator walking the tree itself.
+    use external_lint_lint_arwaky::agent_external_lint_orchestrator::{
+        ExternalLintDeps, ExternalLintOrchestrator,
+    };
+    use std::collections::HashMap;
+
+    let deps = ExternalLintDeps {
+        adapters: HashMap::new(),
+        filesystem: Arc::new(MockFilesystem::new()),
+        filesystem_io: Arc::new(MockFilesystem::new()),
+        selector: Arc::new(
+            external_lint_lint_arwaky::capabilities_external_lint_selector::CapabilitiesExternalLintSelector::with_defaults(),
+        ),
+    };
+    let orchestrator = ExternalLintOrchestrator::new(deps);
+    let results = orchestrator.scan_all(&FilePath::new("/tmp".to_string()).unwrap());
+    assert!(results.values.is_empty());
 }
 
 // ─── Contract: OutputNormalizer implements INormalizeProtocol (FR-005) ──

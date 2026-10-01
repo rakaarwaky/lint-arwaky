@@ -132,6 +132,14 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             FilesystemRequest::ImportListSnapshot => FilesystemResponse::Imports {
                 entries: self.import_list_snapshot(),
             },
+            FilesystemRequest::DetectProjectLanguages { root } => {
+                FilesystemResponse::ProjectLanguages {
+                    languages:
+                        shared_filesystem::utility_workspace_detection::detect_project_languages(
+                            &root,
+                        ),
+                }
+            }
         }
     }
 }

@@ -85,9 +85,7 @@ fn e2e_all_protocols_are_object_safe() {
     assert_trait::<dyn shared_maintenance::ISelfUpdateProtocol>();
     assert_trait::<dyn shared_external_lint::ILinterAdapterProtocol>();
     assert_trait::<dyn shared_external_lint::ICommandExecutorProtocol>();
-    assert_trait::<dyn shared_external_lint::IAdapterScanProtocol>();
     assert_trait::<dyn shared_external_lint::IExternalLintSelectorProtocol>();
-    assert_trait::<dyn shared_external_lint::ILanguageDetectProtocol>();
     assert_trait::<dyn shared_external_lint::INormalizeProtocol>();
     assert_trait::<dyn shared_external_lint::IJsToolResolutionProtocol>();
     assert_trait::<dyn shared_external_lint::ICargoDirProtocol>();

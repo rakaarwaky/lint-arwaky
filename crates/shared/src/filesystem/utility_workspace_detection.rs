@@ -1,9 +1,10 @@
 // FR-005: Workspace Detection
-// Produces: workspace root, member status, source dir, language
+// FR-006: Project Language Detection
 // Consumers: cli-commands, external-lint, orphan-detector, config-system
 //
 // Utility: stateless standalone functions
 
+use crate::taxonomy_filesystem_vo::ProjectLanguagesVO;
 use shared_common::taxonomy_config_language_vo::ConfigLanguage;
 use std::path::{Path, PathBuf};
 
@@ -207,51 +208,56 @@ fn path_contains_component(path: &std::path::Path, component: &str) -> bool {
         .any(|c| matches!(c, std::path::Component::Normal(name) if name == component))
 }
 
-/// Detect languages by walking directory tree.
-/// Returns (has_rust, has_python, has_js).
-pub fn detect_languages(root: &std::path::Path) -> (bool, bool, bool) {
-    let mut has_rs = false;
-    let mut has_py = false;
-    let mut has_js = false;
+/// Detect which language groups and content types are present under `root`.
+///
+/// FR-Filesystem-005: the single owner of project-level language detection.
+/// Walks the directory tree (or inspects a single file) and reports whether
+/// Rust (`.rs`), Python (`.py`), JS/TS (`.js`/`.jsx`/`.ts`/`.tsx`), and
+/// Markdown (`.md`/`.markdown`) files are present. Ignores directories in
+/// `shared_common::DEFAULT_IGNORED_PATHS`.
+pub fn detect_project_languages(root: &std::path::Path) -> ProjectLanguagesVO {
+    let mut flags = ProjectLanguagesVO::default();
 
-    fn walk_detect(dir: &std::path::Path, has_rs: &mut bool, has_py: &mut bool, has_js: &mut bool) {
+    fn walk(dir: &std::path::Path, flags: &mut ProjectLanguagesVO) -> bool {
         for path in list_dir_entries(dir) {
             if path.is_dir() {
-                let name = match path.file_name().and_then(|n| n.to_str()) {
-                    Some(n) => n,
-                    None => continue,
-                };
+                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
                     continue;
                 }
-                walk_detect(&path, has_rs, has_py, has_js);
-            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                match ext {
-                    "rs" => *has_rs = true,
-                    "py" => *has_py = true,
-                    "js" | "ts" | "jsx" | "tsx" => *has_js = true,
-                    _ => {}
+                if walk(&path, flags) {
+                    return true;
                 }
+            } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                classify_ext(ext, flags);
             }
-            if *has_rs && *has_py && *has_js {
-                return;
+            if flags.has_rust && flags.has_python && flags.has_js && flags.has_markdown {
+                // Every group found — stop walking.
+                return true;
             }
         }
+        false
     }
 
     if root.is_file() {
         if let Some(ext) = root.extension().and_then(|e| e.to_str()) {
-            match ext {
-                "rs" => has_rs = true,
-                "py" => has_py = true,
-                "js" | "ts" | "jsx" | "tsx" => has_js = true,
-                _ => {}
-            }
+            classify_ext(ext, &mut flags);
         }
     } else {
-        walk_detect(root, &mut has_rs, &mut has_py, &mut has_js);
+        walk(root, &mut flags);
     }
-    (has_rs, has_py, has_js)
+    flags
+}
+
+/// Classify a single file extension into language-group flags.
+fn classify_ext(ext: &str, flags: &mut ProjectLanguagesVO) {
+    match ext {
+        "rs" => flags.has_rust = true,
+        "py" => flags.has_python = true,
+        "js" | "jsx" | "ts" | "tsx" => flags.has_js = true,
+        "md" | "markdown" => flags.has_markdown = true,
+        _ => {}
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════
