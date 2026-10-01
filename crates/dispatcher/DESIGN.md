@@ -17,11 +17,11 @@ here and nowhere else.
 | `surface_quality_action.rs` | AES301–305 |
 | `surface_role_action.rs` | AES401–406 |
 | `surface_orphan_action.rs` | AES501–506 |
-| `surface_structure_action.rs` | AES701–705 |
+| `surface_structure_action.rs` | AES701–703 |
 | `surface_check_action.rs` | `check` — the exit-code shaped entry over all groups |
 | `surface_ci_action.rs` | `ci` — the same groups with thresholds |
-| `surface_fix_action.rs` | `fix` — auto-fix over collected findings |
-| `surface_docs_action.rs` | `docs` — document invariants only |
+| `surface_fix_action.rs` | `fix` — auto-fix over collected findings; also aggregates every collected `FixOutcome` into the run-level outcome the surface maps to an exit code |
+| `surface_docs_action.rs` | `docs` — document invariants only; the target is the audit root, not a filter |
 | `surface_watch_action.rs` | `watch` — repeated scans over changed files |
 | `surface_config_action.rs` | `config` — effective configuration |
 | `surface_git_action.rs` | `git` — hook installation and checks |
@@ -37,6 +37,31 @@ pipeline already produced the aggregates. Where a collector must resolve a path
 — the structure group does, because its findings are workspace-root-relative —
 it resolves against the workspace root and filters for containment under the
 target.
+
+### Path scoping: `scan`/`check` vs. `docs`
+
+Not every path-taking subcommand scopes the same way, and the difference is
+deliberate:
+
+| Collector | What the target means |
+| --- | --- |
+| `surface_check_action.rs`, and every `surface_<group>_action.rs` | A **filter**. The pipeline indexes the workspace and the collector keeps only the findings contained under the target. |
+| `surface_docs_action.rs` | A **root**. The doc request carries the target as its audit root, so pointing `docs` at a sub-directory audits that sub-tree as if it were its own workspace. Crosslink checks (AES604) that expect root-level `PRD.md`/`ROADMAP.md` siblings therefore behave differently than they do for a whole-workspace run. |
+
+The doc-rules contract owns this semantic; see `crates/doc-rules/FRD.md`
+("Path scoping" under System Overview) and the `docs` row in
+`crates/cli-commands/DESIGN.md`.
+
+### Exit-code aggregation for `fix`
+
+`surface_fix_action.rs` owns the aggregation of per-item `FixOutcome`s into one
+run-level outcome: any `Failed(reason)` raises the report's failure flag, while
+a run of only `Applied`/`Skipped(reason)` items does not. `cli-commands`'
+`surface_fix_command.rs` renders that outcome and maps it onto the exit-code
+contract (a `Failed` present → `RuntimeError` (2); otherwise `Ok` (0), or
+`PolicyFail` (1) when violations remain after a non-dry run). The surface never
+re-derives the aggregation — per the CLI's own invariant, "a surface file
+computes nothing about the codebase."
 
 ## States
 
@@ -65,9 +90,16 @@ complete reports the failure.
   which the pipeline built.
 - Adding a rule group means adding one collector here and registering it in
   `ScanAggregates`; no surface needs to change.
+- The rule-code range in the Entry Points table is a copy of the range
+  `RULES_AES.md` publishes for that group. The two must agree; a rule
+  renumbering or consolidation edits both in the same change.
 
 ## Change Checklist
 
 A new group: create `surface_<group>_action.rs`, add its findings to the
 aggregates in the scan pipeline, and register the group in the config. The CLI,
 MCP, and TUI surfaces pick it up with no edit.
+
+Renumbering, adding, or consolidating a rule code: update `RULES_AES.md` first,
+then the matching row here. `tools/check_doc_consistency.py` (run in CI) fails
+when a range in this table names a code `RULES_AES.md` no longer publishes.

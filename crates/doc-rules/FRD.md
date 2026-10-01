@@ -10,6 +10,8 @@
 
 The doc-rules crate enforces the AES document-invariant contract across the workspace. It audits every recognized `.md` document against five rules (AES601–AES605): FR-ID format and field completeness with FR/protocol class parity, section structure shape, spec purity, crosslink integrity, and document heading structure. Findings carry a machine-readable `violation_type` so consumers can route on them without parsing prose. The auditor walks the filesystem; no external tool is involved.
 
+**Path scoping.** The audit request carries one path, and that path is the **audit root**, not a filter. This differs from `scan`/`check`, which index the whole workspace and then narrow the findings to the target: `docs <path>` discovers the document chain starting at `<path>` and audits only what it finds there. Two consequences follow for a sub-directory run. First, root-level documents outside `<path>` are not audited at all. Second, crosslink and master-document invariants (AES604) resolve against `<path>` — a crate directory has no sibling `PRD.md`/`ROADMAP.md`, so the invariants that look for them behave as they would in a workspace that has none. A whole-workspace audit is the intended default; a sub-directory run is a narrower, self-contained audit, not a filtered view of the full one.
+
 ## Functional Requirements
 
 ### FR-DOC-001: Document Invariant Enforcement and Audit Orchestration
@@ -72,6 +74,8 @@ The doc-rules crate enforces the AES document-invariant contract across the work
 - An FRD's line-anchored finding maps to a `ViolationItem` with matching `line` and `severity` → `DocFinding::to_violation_item` preserves both fields through the JSON/SARIF round trip.
 - A feature backlog restates a root-state section → AES604 fires.
 - A conforming workspace produces 0 doc findings on `lint-arwaky-cli docs .` → exit code 0.
+- `docs` run against a single crate directory → only that directory's documents are audited, and the crosslink invariants resolve against that directory as the root, not against the workspace root.
+- `docs` run against a directory holding no recognized document → 0 findings and exit code 0, the same as a clean audit; the target being empty is not itself a finding.
 
 ## Assumptions & Constraints
 
