@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""Doc-consistency gate.
+
+Catches the classes of documentation drift that the AES doc rules (AES601–605)
+do not cover, because each of them spans two artefacts rather than living
+inside one document:
+
+1. rule ranges   — a rule-code range in a DESIGN.md/FRD.md names a code that
+                   RULES_AES.md no longer publishes (issue #537).
+2. anchors       — an in-repo Markdown link points at a file or a heading
+                   anchor that does not exist (issue #551).
+3. data model    — crates/shared/DATA.md's attribute tables disagree with the
+                   shared value objects they document (issue #540).
+4. fix reasons   — crates/auto-fix/FRD.md's Reason Code Reference disagrees
+                   with the enumerated FixOutcome reasons (issue #545).
+5. performance   — the performance NFR states different numbers in PRD.md,
+                   README.md, and crates/filesystem/FRD.md (issue #549).
+
+Exit code 0 when every check passes, 1 otherwise. No third-party dependencies:
+this runs anywhere python3 does, including a CI job with no Rust toolchain.
+"""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# Fixture workspaces are deliberately broken; generated or vendored trees are
+# not ours to police.
+EXCLUDED_DIRS = {
+    ".git",
+    "target",
+    "node_modules",
+    ".worktree",
+    "workspaces-bad",
+    "workspaces-good",
+}
+
+
+def markdown_files() -> list[Path]:
+    out = []
+    for path in ROOT.rglob("*.md"):
+        if any(part in EXCLUDED_DIRS for part in path.relative_to(ROOT).parts):
+            continue
+        out.append(path)
+    return sorted(out)
+
+
+def rel(path: Path) -> str:
+    return str(path.relative_to(ROOT))
+
+
+def strip_code_fences(text: str) -> str:
+    """Blank out fenced blocks so examples are not mistaken for statements."""
+    out, inside = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            inside = not inside
+            out.append("")
+            continue
+        out.append("" if inside else line)
+    return "\n".join(out)
+
+
+# ─── 1. Rule-code ranges ────────────────────────────────────────────────────
+
+RULES_DOC = ROOT / "RULES_AES.md"
+RANGE_RE = re.compile(r"\bAES(\d{3})\s*[–—-]\s*(?:AES)?(\d{3})\b")
+
+
+def published_rule_codes() -> set[str]:
+    text = RULES_DOC.read_text(encoding="utf-8")
+    # The summary table rows: `| AES101 | Name | ...`
+    return set(re.findall(r"^\|\s*(AES\d{3})\s*\|", text, flags=re.MULTILINE))
+
+
+def check_rule_ranges() -> list[str]:
+    published = published_rule_codes()
+    if not published:
+        return [f"{rel(RULES_DOC)}: no rule codes found in the summary table"]
+    errors = []
+    for path in markdown_files():
+        if path == RULES_DOC:
+            continue
+        if path.name not in {"DESIGN.md", "FRD.md", "DATA.md", "BACKLOG.md"}:
+            continue
+        text = strip_code_fences(path.read_text(encoding="utf-8"))
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            for start, end in RANGE_RE.findall(line):
+                if start[0] != end[0] or int(end) < int(start):
+                    continue  # not a single-group ascending range
+                for number in range(int(start), int(end) + 1):
+                    code = f"AES{number}"
+                    if code not in published:
+                        errors.append(
+                            f"{rel(path)}:{lineno}: range AES{start}–{end} names "
+                            f"{code}, which RULES_AES.md does not publish"
+                        )
+    return errors
+
+
+# ─── 2. In-repo Markdown anchors ────────────────────────────────────────────
+
+LINK_RE = re.compile(r"\[(?:[^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
+HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*$", flags=re.MULTILINE)
+
+
+def slugify(heading: str) -> str:
+    """GitHub's heading-anchor slug."""
+    text = heading.strip().lower()
+    text = re.sub(r"`([^`]*)`", r"\1", text)
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"[*_~]", "", text)
+    text = re.sub(r"[^\w\s-]", "", text, flags=re.UNICODE)
+    # GitHub replaces each whitespace character with a hyphen; it does not
+    # collapse runs, so "A & B" becomes "a--b".
+    return re.sub(r"\s", "-", text.strip())
+
+
+def anchors_of(path: Path) -> set[str]:
+    text = strip_code_fences(path.read_text(encoding="utf-8"))
+    found: set[str] = set()
+    seen: dict[str, int] = {}
+    for _, title in HEADING_RE.findall(text):
+        slug = slugify(title)
+        count = seen.get(slug, 0)
+        seen[slug] = count + 1
+        found.add(slug if count == 0 else f"{slug}-{count}")
+    return found
+
+
+def check_anchors() -> list[str]:
+    errors = []
+    cache: dict[Path, set[str]] = {}
+    for path in markdown_files():
+        text = strip_code_fences(path.read_text(encoding="utf-8"))
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            for target in LINK_RE.findall(line):
+                if target.startswith(("http://", "https://", "mailto:", "tel:")):
+                    continue
+                file_part, _, anchor = target.partition("#")
+                if not anchor:
+                    continue
+                if file_part:
+                    target_path = (path.parent / file_part).resolve()
+                    if not target_path.is_file():
+                        errors.append(
+                            f"{rel(path)}:{lineno}: link target '{file_part}' does not exist"
+                        )
+                        continue
+                    if target_path.suffix != ".md":
+                        continue
+                else:
+                    target_path = path
+                if target_path not in cache:
+                    cache[target_path] = anchors_of(target_path)
+                if anchor.lower() not in cache[target_path]:
+                    errors.append(
+                        f"{rel(path)}:{lineno}: anchor '#{anchor}' not found in "
+                        f"{rel(target_path)}"
+                    )
+    return errors
+
+
+# ─── 3. Shared data model ───────────────────────────────────────────────────
+
+DATA_DOC = ROOT / "crates" / "shared" / "DATA.md"
+SHARED_SRC = ROOT / "crates" / "shared" / "src"
+
+# Documented object → (source module, Rust item name)
+DOCUMENTED_OBJECTS = {
+    "ViolationItem": ("common/taxonomy_violation_item_vo", "ViolationItem"),
+    "StructureFinding": (
+        "structure_rules/taxonomy_structure_rules_request",
+        "StructureFinding",
+    ),
+    "DocFinding": ("doc_rules/taxonomy_doc_rules_request", "DocFinding"),
+}
+
+
+def documented_attributes(name: str) -> set[str] | None:
+    text = DATA_DOC.read_text(encoding="utf-8")
+    pattern = re.compile(
+        r"^###\s+DO-\d+:\s*" + re.escape(name) + r"\b.*?$(.*?)(?=^###\s|\Z)",
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    match = pattern.search(text)
+    if not match:
+        return None
+    fields = set()
+    for row in match.group(1).splitlines():
+        row = row.strip()
+        if not row.startswith("|"):
+            continue
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        if not cells or cells[0] in {"Field", "Value", ""} or set(cells[0]) <= {"-", ":"}:
+            continue
+        fields.add(cells[0].strip("`"))
+    return fields
+
+
+def struct_fields(module: str, item: str) -> set[str] | None:
+    source = SHARED_SRC / f"{module}.rs"
+    if not source.is_file():
+        return None
+    text = source.read_text(encoding="utf-8")
+    match = re.search(
+        r"pub struct\s+" + re.escape(item) + r"\s*\{(.*?)^\}",
+        text,
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    if not match:
+        return None
+    return set(re.findall(r"^\s*pub\s+(\w+)\s*:", match.group(1), flags=re.MULTILINE))
+
+
+def enum_variants(module: str, item: str) -> set[str] | None:
+    source = SHARED_SRC / f"{module}.rs"
+    if not source.is_file():
+        return None
+    text = source.read_text(encoding="utf-8")
+    match = re.search(
+        r"pub enum\s+" + re.escape(item) + r"\s*\{(.*?)^\}",
+        text,
+        flags=re.DOTALL | re.MULTILINE,
+    )
+    if not match:
+        return None
+    body = re.sub(r"^\s*(///|//|#\[).*$", "", match.group(1), flags=re.MULTILINE)
+    return set(re.findall(r"^\s*([A-Z]\w*)", body, flags=re.MULTILINE))
+
+
+def check_data_model() -> list[str]:
+    errors = []
+    for name, (module, item) in DOCUMENTED_OBJECTS.items():
+        documented = documented_attributes(name)
+        actual = struct_fields(module, item)
+        if documented is None:
+            errors.append(f"{rel(DATA_DOC)}: no attribute table for {name}")
+            continue
+        if actual is None:
+            errors.append(f"cannot locate struct {item} in shared/{module}")
+            continue
+        for missing in sorted(actual - documented):
+            errors.append(
+                f"{rel(DATA_DOC)}: {name} field '{missing}' exists in the shared "
+                "kernel but is not documented"
+            )
+        for extra in sorted(documented - actual):
+            errors.append(
+                f"{rel(DATA_DOC)}: {name} documents field '{extra}', which the "
+                "shared kernel does not define"
+            )
+
+    severity = enum_variants("common/taxonomy_severity_vo", "Severity")
+    documented_severity = documented_attributes("Severity")
+    if severity and documented_severity is not None:
+        for missing in sorted(severity - documented_severity):
+            errors.append(
+                f"{rel(DATA_DOC)}: Severity value '{missing}' is undocumented"
+            )
+        for extra in sorted(documented_severity - severity):
+            errors.append(
+                f"{rel(DATA_DOC)}: Severity documents '{extra}', which the enum "
+                "does not define"
+            )
+    return errors
+
+
+# ─── 4. Auto-fix reason codes ───────────────────────────────────────────────
+
+AUTOFIX_FRD = ROOT / "crates" / "auto-fix" / "FRD.md"
+
+
+def documented_reasons() -> dict[str, str]:
+    text = AUTOFIX_FRD.read_text(encoding="utf-8")
+    match = re.search(
+        r"^###\s+Reason Code Reference\s*$(.*?)(?=^##\s|\Z)",
+        text,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+    if not match:
+        return {}
+    out = {}
+    for row in match.group(1).splitlines():
+        row = row.strip()
+        if not row.startswith("|"):
+            continue
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        if len(cells) < 2 or cells[0] in {"Reason", ""} or set(cells[0]) <= {"-", ":"}:
+            continue
+        out[cells[0].strip("`")] = cells[1]
+    return out
+
+
+def check_fix_reasons() -> list[str]:
+    documented = documented_reasons()
+    if not documented:
+        return [f"{rel(AUTOFIX_FRD)}: Reason Code Reference table not found"]
+    errors = []
+    expected = {}
+    for item, outcome in (("SkipReason", "Skipped"), ("FailReason", "Failed")):
+        variants = enum_variants("auto_fix/taxonomy_auto_fix_vo", item)
+        if variants is None:
+            errors.append(f"cannot locate enum {item} in the shared kernel")
+            continue
+        for variant in variants:
+            expected[variant] = outcome
+    for name, outcome in sorted(expected.items()):
+        if name not in documented:
+            errors.append(
+                f"{rel(AUTOFIX_FRD)}: reason '{name}' is produced by the fix "
+                "contract but missing from the Reason Code Reference"
+            )
+        elif documented[name] != outcome:
+            errors.append(
+                f"{rel(AUTOFIX_FRD)}: reason '{name}' is documented as "
+                f"'{documented[name]}' but the contract makes it '{outcome}'"
+            )
+    for name in sorted(set(documented) - set(expected)):
+        errors.append(
+            f"{rel(AUTOFIX_FRD)}: reason '{name}' is documented but no longer "
+            "exists in the fix contract"
+        )
+    return errors
+
+
+# ─── 5. Performance NFR numbers ─────────────────────────────────────────────
+
+PERF_DOCS = [
+    ROOT / "PRD.md",
+    ROOT / "README.md",
+    ROOT / "crates" / "filesystem" / "FRD.md",
+]
+# file-count tier → the set of second-budgets that may be stated for it
+PERF_BUDGETS = {"1000": {2, 5}, "10000": {10, 15}}
+PERF_RE = re.compile(
+    r"(1|10),?000 files\s*(?:in\s*)?(?:<|&lt;|under)\s*(\d+)\s*s", re.IGNORECASE
+)
+
+
+def check_performance() -> list[str]:
+    errors = []
+    for path in PERF_DOCS:
+        text = path.read_text(encoding="utf-8")
+        found: dict[str, set[int]] = {"1000": set(), "10000": set()}
+        for tier, seconds in PERF_RE.findall(text):
+            key = "1000" if tier == "1" else "10000"
+            found[key].add(int(seconds))
+        for tier, budgets in PERF_BUDGETS.items():
+            if not found[tier]:
+                continue  # the document does not state this tier at all
+            unexpected = found[tier] - budgets
+            if unexpected:
+                errors.append(
+                    f"{rel(path)}: {tier} files states "
+                    f"{sorted(unexpected)}s, which matches neither the indexing "
+                    f"nor the full-pipeline budget {sorted(budgets)}s"
+                )
+            if found[tier] != budgets:
+                errors.append(
+                    f"{rel(path)}: {tier} files states only "
+                    f"{sorted(found[tier])}s; both scopes must be stated "
+                    f"({sorted(budgets)}s: indexing, then full pipeline)"
+                )
+    return errors
+
+
+CHECKS = (
+    ("rule ranges", check_rule_ranges),
+    ("markdown anchors", check_anchors),
+    ("shared data model", check_data_model),
+    ("auto-fix reason codes", check_fix_reasons),
+    ("performance NFR", check_performance),
+)
+
+
+def main() -> int:
+    failed = 0
+    for name, check in CHECKS:
+        errors = check()
+        if errors:
+            failed += 1
+            print(f"FAIL  {name}")
+            for error in errors:
+                print(f"      {error}")
+        else:
+            print(f"ok    {name}")
+    if failed:
+        print(f"\n{failed} doc-consistency check(s) failed")
+        return 1
+    print("\nall doc-consistency checks passed")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

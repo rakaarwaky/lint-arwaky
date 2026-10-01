@@ -165,5 +165,15 @@ fn format_sarif_report(report: &ScanReport) -> DisplayContent {
         }],
     };
 
-    DisplayContent::new(serde_json::to_string_pretty(&log).unwrap_or_else(|_| "{}".to_string()))
+    // A serialization failure must never render as a bare `{}`: a lenient SARIF
+    // consumer can read an object with no `runs` as a clean scan. Emit an
+    // explicitly marked error document that fails schema validation instead.
+    DisplayContent::new(serde_json::to_string_pretty(&log).unwrap_or_else(|e| {
+        serde_json::json!({
+            "formatter_error": true,
+            "format": "sarif",
+            "reason": e.to_string(),
+        })
+        .to_string()
+    }))
 }

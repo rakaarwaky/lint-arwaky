@@ -26,6 +26,19 @@ jobs:
           components: rustfmt
       - run: cargo fmt --all -- --check
 
+  doc-consistency:
+    name: Doc Consistency
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cross-document consistency gate
+        run: python3 tools/check_doc_consistency.py
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest

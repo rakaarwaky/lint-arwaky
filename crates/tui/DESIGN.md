@@ -46,6 +46,27 @@ from the state and hold none of their own.
 A run that finds nothing shows `clean` explicitly. An empty pane is ambiguous
 between "no findings" and "nothing has run yet".
 
+### A second action while `running`
+
+A new action keypress arriving while the state is `running` is **ignored**: it
+is not queued, and it never races the in-flight run. The status line
+acknowledges it — "busy — try again once the current action finishes" — so the
+keystroke is visibly declined rather than silently dropped. The transition out
+of `running` is driven only by the in-flight run finishing, into `results`,
+`clean`, or `error`.
+
+| Trigger while `running` | Transition | What the user sees |
+| --- | --- | --- |
+| Another action key (scan, fix, ci, orphan, security) | None — stays `running` | The busy status line, with a transient "action ignored" hint |
+| A navigation key (tree/list movement, pane focus) | None — stays `running` | Navigation applies; browsing never contends for the run |
+| Quit | Leaves the loop | The run's result is discarded, not merged into a stale state |
+
+This is enforced by the event loop owning `AppState`, not by disabling terminal
+input: a dropped-at-the-terminal keystroke would also drop navigation. Queueing
+the second action is deliberately not the contract — a queued run would start
+against a tree the user has since navigated away from, which is the "stale
+results across navigation" failure this surface already has history with.
+
 ## Error States
 
 | Condition | Behaviour |

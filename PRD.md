@@ -43,6 +43,8 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | Concurrency | `std::thread` / `rayon`; async only in file-watch and mcp-server |
 | Parsing | Full AST via tree-sitter; no regex fallback |
 | Filesystem I/O | Centralized in filesystem crate |
+| Integration resilience | External lint adapters (clippy, ruff, eslint, …): one attempt per scan, skip-and-log on timeout or spawn failure — a retried tool run can report against a different tool state and mask the real result. Git diff resolution: a multi-strategy fallback chain, because every strategy queries the same trusted local repository and a fallback still yields a correct, if broader, file list. Retry/fallback is added only where a fallback still produces a materially useful and safe result. |
+| MCP tool-call duration | Unbounded: no server-side timeout and no cancellation method. The client owns the timeout and must set it above the documented worst-case chain |
 
 ## Exit Code Contract
 
@@ -53,7 +55,11 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | 2 | Runtime error | Path missing; pipeline crash; invalid args; I/O failure |
 | 3 | Prerequisite missing | Required external tool not installed |
 
-MCP JSON responses SHOULD include `exit_code` aligned with this contract.
+MCP JSON responses MUST include a top-level integer `exit_code` aligned with
+this contract, for every tool action and every outcome. An MCP client decides
+success or failure from that field, never from JSON-RPC-level success: a run
+that found violations is a successful tool call carrying `exit_code: 1`. The
+response envelope is specified in the MCP surface's design document.
 
 **Precedence when multiple conditions apply (highest wins):**
 `Runtime error (2)` > `Prerequisite missing (3)` > `Policy fail (1)` > `Ok (0)`.
@@ -123,7 +129,9 @@ Traceability flows through four standardized layers:
 
 | Category | Commitment | Detail lives in |
 |----------|------------|-----------------|
-| Performance | 1,000 files < 5s; 10,000 files < 10s | `filesystem/FRD.md` |
+| Performance (filesystem indexing) | 1,000 files < 2s; 10,000 files < 10s — the index build alone: discovery, read, parse | `filesystem/FRD.md` |
+| Performance (full pipeline) | 1,000 files < 5s; 10,000 files < 15s — indexing plus every rule group, excluding external adapters | `filesystem/FRD.md`, `README.md` |
+| Worst-case external-lint chain | A single `scan`/`ci`/MCP `execute_command` call can block ~14 minutes: 10 adapters run sequentially, each with its own 60–180s ceiling and no overall budget. MCP clients must set a timeout above this bound | `external-lint/FRD.md`, `mcp-server` design |
 | Security | No network calls for core; symlink safety enforced | `filesystem/FRD.md` |
 | Scalability | 10,000+ file monorepos | `filesystem/FRD.md` |
 | Platform | Linux primary, macOS secondary | `README.md` |
@@ -133,7 +141,7 @@ Traceability flows through four standardized layers:
 
 ## Feature Map
 
-Crate responsibilities are listed in [AGENTS.md](AGENTS.md#workspace-packages-structure) and each crate's `FRD.md` under `crates/`.
+Crate responsibilities are listed in [README.md](README.md#project-structure) and each crate's `FRD.md` under `crates/`.
 
 ## Reference
 
