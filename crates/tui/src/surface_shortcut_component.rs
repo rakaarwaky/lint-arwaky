@@ -35,8 +35,11 @@ impl ShortcutComponent {
                 "search: {} (Enter confirm / Esc cancel)",
                 state.search.query
             );
-            let paragraph =
-                Paragraph::new(text).style(Style::default().bg(theme::color(theme::BACKGROUND)).fg(theme::color(theme::KEY)));
+            let paragraph = Paragraph::new(text).style(
+                Style::default()
+                    .bg(theme::color(theme::BACKGROUND))
+                    .fg(theme::color(theme::KEY)),
+            );
             frame.render_widget(paragraph, area);
             return;
         }
@@ -47,7 +50,8 @@ impl ShortcutComponent {
             Line::from(format_shortcuts(&row3)),
         ];
 
-        let paragraph = Paragraph::new(text).style(Style::default().bg(theme::color(theme::BACKGROUND)));
+        let paragraph =
+            Paragraph::new(text).style(Style::default().bg(theme::color(theme::BACKGROUND)));
         frame.render_widget(paragraph, area);
     }
 }

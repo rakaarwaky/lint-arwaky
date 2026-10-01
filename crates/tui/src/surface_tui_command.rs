@@ -107,70 +107,72 @@ impl TuiCommandSurface {
                 needs_redraw = true;
             }
             // --- Poll pending background global action (non-blocking) ---
-            if state.actions.pending
-                && self.action_handler.poll_pending_background_action(state)
-            {
+            if state.actions.pending && self.action_handler.poll_pending_background_action(state) {
                 needs_redraw = true;
             }
 
             if needs_redraw {
                 terminal.draw(|frame| {
-                let area = frame.area();
+                    let area = frame.area();
 
-                // W5: guard — refuse to draw the full layout on a too-small terminal.
-                let min_h = crate::utility_tui_theme::MIN_TERMINAL_HEIGHT;
-                let min_w = crate::utility_tui_theme::MIN_TERMINAL_WIDTH;
-                if area.height < min_h || area.width < min_w {
-                    let message = format!(
-                        "Terminal too small — resize to at least {}x{}",
-                        min_w, min_h
-                    );
-                    let line = Line::from(vec![Span::styled(
-                        message,
-                        Style::default()
-                            .fg(crate::utility_tui_theme::color(crate::utility_tui_theme::KEY))
-                            .add_modifier(Modifier::BOLD),
-                    )]);
-                    let paragraph = Paragraph::new(line)
-                        .style(Style::default().bg(crate::utility_tui_theme::color(crate::utility_tui_theme::BACKGROUND)))
-                        .alignment(Alignment::Center);
-                    frame.render_widget(paragraph, area);
-                    return;
-                }
+                    // W5: guard — refuse to draw the full layout on a too-small terminal.
+                    let min_h = crate::utility_tui_theme::MIN_TERMINAL_HEIGHT;
+                    let min_w = crate::utility_tui_theme::MIN_TERMINAL_WIDTH;
+                    if area.height < min_h || area.width < min_w {
+                        let message = format!(
+                            "Terminal too small — resize to at least {}x{}",
+                            min_w, min_h
+                        );
+                        let line = Line::from(vec![Span::styled(
+                            message,
+                            Style::default()
+                                .fg(crate::utility_tui_theme::color(
+                                    crate::utility_tui_theme::KEY,
+                                ))
+                                .add_modifier(Modifier::BOLD),
+                        )]);
+                        let paragraph = Paragraph::new(line)
+                            .style(Style::default().bg(crate::utility_tui_theme::color(
+                                crate::utility_tui_theme::BACKGROUND,
+                            )))
+                            .alignment(Alignment::Center);
+                        frame.render_widget(paragraph, area);
+                        return;
+                    }
 
-                if state.path_dialog.visible {
-                    views.path_screen.render(state, frame, area);
-                    return;
-                }
+                    if state.path_dialog.visible {
+                        views.path_screen.render(state, frame, area);
+                        return;
+                    }
 
-                let main_layout = Layout::default()
-                    .direction(Direction::Vertical)
-                    .constraints([
-                        Constraint::Length(1),
-                        Constraint::Min(10),
-                        Constraint::Length(3),
-                        Constraint::Length(1),
-                    ])
-                    .split(area);
+                    let main_layout = Layout::default()
+                        .direction(Direction::Vertical)
+                        .constraints([
+                            Constraint::Length(1),
+                            Constraint::Min(10),
+                            Constraint::Length(3),
+                            Constraint::Length(1),
+                        ])
+                        .split(area);
 
-                render_header(state, frame, main_layout[0]);
+                    render_header(state, frame, main_layout[0]);
 
-                let panel_layout = Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([
-                        Constraint::Percentage(20),
-                        Constraint::Percentage(35),
-                        Constraint::Percentage(45),
-                    ])
-                    .split(main_layout[1]);
+                    let panel_layout = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([
+                            Constraint::Percentage(20),
+                            Constraint::Percentage(35),
+                            Constraint::Percentage(45),
+                        ])
+                        .split(main_layout[1]);
 
-                views.tree.render(state, frame, panel_layout[0]);
-                views.file_list.render(state, frame, panel_layout[1]);
-                views.preview.render(state, frame, panel_layout[2]);
+                    views.tree.render(state, frame, panel_layout[0]);
+                    views.file_list.render(state, frame, panel_layout[1]);
+                    views.preview.render(state, frame, panel_layout[2]);
 
-                views.shortcuts.render(state, frame, main_layout[2]);
-                views.status.render(state, frame, main_layout[3]);
-            })?;
+                    views.shortcuts.render(state, frame, main_layout[2]);
+                    views.status.render(state, frame, main_layout[3]);
+                })?;
                 needs_redraw = false;
             }
 
@@ -226,7 +228,6 @@ fn from_crossterm_event(event: event::Event, state: &AppState) -> TuiEvent {
 }
 
 fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
-
     // --- Pending confirmation: only y/Enter = confirm, n/Esc = cancel (#354) ---
     if state.actions.pending_confirm.is_some() {
         return match key.code {
@@ -307,24 +308,34 @@ fn render_header(state: &AppState, frame: &mut ratatui::Frame, area: ratatui::la
     let line = Line::from(vec![
         Span::styled(
             " lint-arwaky TUI ",
-            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::HEADER)),
+            Style::default().fg(crate::utility_tui_theme::color(
+                crate::utility_tui_theme::HEADER,
+            )),
         ),
         Span::styled(
             "\u{2502} ",
-            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::SEPARATOR)),
+            Style::default().fg(crate::utility_tui_theme::color(
+                crate::utility_tui_theme::SEPARATOR,
+            )),
         ),
         Span::styled(
             "Path: ",
-            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::SEPARATOR)),
+            Style::default().fg(crate::utility_tui_theme::color(
+                crate::utility_tui_theme::SEPARATOR,
+            )),
         ),
         Span::styled(
             &state.navigation.current_dir,
-            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::LABEL)),
+            Style::default().fg(crate::utility_tui_theme::color(
+                crate::utility_tui_theme::LABEL,
+            )),
         ),
         Span::styled("  ", Style::default()),
         Span::styled(
             "[q/Esc] Quit",
-            Style::default().fg(crate::utility_tui_theme::color(crate::utility_tui_theme::SEPARATOR)),
+            Style::default().fg(crate::utility_tui_theme::color(
+                crate::utility_tui_theme::SEPARATOR,
+            )),
         ),
     ]);
 

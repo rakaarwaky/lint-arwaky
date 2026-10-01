@@ -295,7 +295,11 @@ fn run_all_linters_in_process(
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    on_progress("Quality checks complete".to_string(), total_files, total_files);
+    on_progress(
+        "Quality checks complete".to_string(),
+        total_files,
+        total_files,
+    );
     all.extend(
         agg.role
             .execute(RoleRequest::audit(&entries))
@@ -316,7 +320,11 @@ fn run_all_linters_in_process(
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    on_progress("Import checks complete".to_string(), total_files, total_files);
+    on_progress(
+        "Import checks complete".to_string(),
+        total_files,
+        total_files,
+    );
     all.extend(
         agg.naming
             .execute(NamingRequest::audit(&entries))
@@ -324,7 +332,11 @@ fn run_all_linters_in_process(
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    on_progress("Naming checks complete".to_string(), total_files, total_files);
+    on_progress(
+        "Naming checks complete".to_string(),
+        total_files,
+        total_files,
+    );
     let (_graph_ctx, orphan_violations) = agg
         .orphan
         .execute(OrphanRequest::scan(
@@ -337,7 +349,11 @@ fn run_all_linters_in_process(
             .iter()
             .map(ViolationItem::from_lint_result),
     );
-    on_progress("Orphan checks complete".to_string(), total_files, total_files);
+    on_progress(
+        "Orphan checks complete".to_string(),
+        total_files,
+        total_files,
+    );
 
     // External — adapters run on the target *as given* (relative paths resolve
     // against the process CWD, exactly like the spawned linters did).

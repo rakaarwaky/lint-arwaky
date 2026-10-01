@@ -401,10 +401,13 @@ impl AppState {
                 && self.search.filter_pos < self.search.filtered_indices.len() - 1
             {
                 self.search.filter_pos += 1;
-                self.navigation.selected_index = self.search.filtered_indices[self.search.filter_pos];
+                self.navigation.selected_index =
+                    self.search.filtered_indices[self.search.filter_pos];
                 self.adjust_scroll(self.file_list_visible_height());
             }
-        } else if !self.navigation.entries.is_empty() && self.navigation.selected_index < self.navigation.entries.len() - 1 {
+        } else if !self.navigation.entries.is_empty()
+            && self.navigation.selected_index < self.navigation.entries.len() - 1
+        {
             self.navigation.selected_index += 1;
             self.adjust_scroll(self.file_list_visible_height());
         }
@@ -414,7 +417,8 @@ impl AppState {
         if self.search.mode && !self.search.query.is_empty() {
             if self.search.filter_pos > 0 {
                 self.search.filter_pos -= 1;
-                self.navigation.selected_index = self.search.filtered_indices[self.search.filter_pos];
+                self.navigation.selected_index =
+                    self.search.filtered_indices[self.search.filter_pos];
                 self.adjust_scroll(self.file_list_visible_height());
             }
         } else if self.navigation.selected_index > 0 {
@@ -440,7 +444,8 @@ impl AppState {
         if self.search.mode && !self.search.query.is_empty() {
             if !self.search.filtered_indices.is_empty() {
                 self.search.filter_pos = self.search.filtered_indices.len() - 1;
-                self.navigation.selected_index = self.search.filtered_indices[self.search.filter_pos];
+                self.navigation.selected_index =
+                    self.search.filtered_indices[self.search.filter_pos];
                 self.adjust_scroll(self.file_list_visible_height());
             }
         } else if !self.navigation.entries.is_empty() {
@@ -483,7 +488,8 @@ impl AppState {
         if self.search.mode && !self.search.query.is_empty() {
             let query = self.search.query.to_lowercase();
             self.search.filtered_indices = self
-                .navigation.entries
+                .navigation
+                .entries
                 .iter()
                 .enumerate()
                 .filter(|(_, entry)| entry.name.to_lowercase().contains(&query))
@@ -495,7 +501,8 @@ impl AppState {
             }
             // Sync selected_index from the current filter position
             if !self.search.filtered_indices.is_empty() {
-                self.navigation.selected_index = self.search.filtered_indices[self.search.filter_pos];
+                self.navigation.selected_index =
+                    self.search.filtered_indices[self.search.filter_pos];
             }
         } else {
             self.search.filtered_indices.clear();

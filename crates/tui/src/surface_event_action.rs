@@ -81,7 +81,11 @@ impl SurfaceActionHandler {
         Some(rx)
     }
 
-    pub fn poll_scan(&self, state: &mut AppState, rx: &std::sync::mpsc::Receiver<ScanUpdate>) -> bool {
+    pub fn poll_scan(
+        &self,
+        state: &mut AppState,
+        rx: &std::sync::mpsc::Receiver<ScanUpdate>,
+    ) -> bool {
         let mut changed = false;
         while let Ok(update) = rx.try_recv() {
             changed = true;
@@ -323,7 +327,8 @@ impl SurfaceActionHandler {
                 }
                 // If we set up the confirm, stop here — ConfirmAction/CANCEL will handle it
                 if state
-                    .actions.pending_confirm
+                    .actions
+                    .pending_confirm
                     .as_ref()
                     .is_some_and(|c| c.pending == TuiEvent::ActionFixLive)
                 {
@@ -578,11 +583,14 @@ impl SurfaceActionHandler {
         if state.navigation.entries.is_empty() {
             state.set_status(format!("Empty or inaccessible: {}", path));
         }
-        state.navigation.entries.sort_by(|a, b| match (a.is_dir, b.is_dir) {
-            (true, false) => std::cmp::Ordering::Less,
-            (false, true) => std::cmp::Ordering::Greater,
-            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-        });
+        state
+            .navigation
+            .entries
+            .sort_by(|a, b| match (a.is_dir, b.is_dir) {
+                (true, false) => std::cmp::Ordering::Less,
+                (false, true) => std::cmp::Ordering::Greater,
+                _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+            });
         state.navigation.selected_index = 0;
         state.navigation.scroll_offset = 0;
         // Clear stale preview when directory changes (#368)
@@ -678,9 +686,7 @@ impl SurfaceActionHandler {
                 if utility_file_system::copy_text_to_clipboard(&text) {
                     LintExecutionResult::success("Copied to clipboard!", 0)
                 } else {
-                    LintExecutionResult::failure(
-                        "Clipboard unavailable — install xclip or wl-copy",
-                    )
+                    LintExecutionResult::failure("Clipboard unavailable — install xclip or wl-copy")
                 }
             }),
         );

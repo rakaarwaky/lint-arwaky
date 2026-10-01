@@ -39,7 +39,10 @@ impl TreeView {
             .border_style(border_style);
 
         let mut items = Vec::new();
-        let components = build_path_components(&state.navigation.current_dir, &state.navigation.project_root);
+        let components = build_path_components(
+            &state.navigation.current_dir,
+            &state.navigation.project_root,
+        );
 
         let root_line = Line::from(vec![
             Span::styled("[*] ", Style::default().fg(theme::color(theme::KEY))),

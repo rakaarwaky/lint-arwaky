@@ -84,7 +84,10 @@ impl StatusComponent {
                         .fg(theme::color(theme::ACCENT))
                         .add_modifier(ratatui::style::Modifier::BOLD),
                 ),
-                Span::styled(progress_detail, Style::default().fg(theme::color(theme::LABEL))),
+                Span::styled(
+                    progress_detail,
+                    Style::default().fg(theme::color(theme::LABEL)),
+                ),
                 Span::styled(
                     format!(" {} ", vsep()),
                     Style::default().fg(theme::color(theme::SEPARATOR)),
@@ -107,14 +110,26 @@ impl StatusComponent {
             };
 
             Line::from(vec![
-                Span::styled(" Status: ", Style::default().fg(theme::color(theme::SEPARATOR))),
-                Span::styled(&state.status_message, Style::default().fg(theme::color(theme::LABEL))),
+                Span::styled(
+                    " Status: ",
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    &state.status_message,
+                    Style::default().fg(theme::color(theme::LABEL)),
+                ),
                 Span::styled(
                     format!(" {} ", vsep()),
                     Style::default().fg(theme::color(theme::SEPARATOR)),
                 ),
-                Span::styled("Selected: ", Style::default().fg(theme::color(theme::SEPARATOR))),
-                Span::styled(selected_name, Style::default().fg(theme::color(theme::ACCENT))),
+                Span::styled(
+                    "Selected: ",
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    selected_name,
+                    Style::default().fg(theme::color(theme::ACCENT)),
+                ),
                 Span::styled(
                     format!(" {} ", vsep()),
                     Style::default().fg(theme::color(theme::SEPARATOR)),
@@ -126,7 +141,8 @@ impl StatusComponent {
             ])
         };
 
-        let paragraph = Paragraph::new(line).style(Style::default().bg(theme::color(theme::BACKGROUND)));
+        let paragraph =
+            Paragraph::new(line).style(Style::default().bg(theme::color(theme::BACKGROUND)));
         frame.render_widget(paragraph, area);
     }
 }

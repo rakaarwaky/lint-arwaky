@@ -84,11 +84,7 @@ mod tests {
     #[test]
     fn fallback_is_killed_at_the_deadline() {
         let started = Instant::now();
-        let copied = run_fallback_with_timeout(
-            "sleep 1",
-            "test",
-            Duration::from_millis(40),
-        );
+        let copied = run_fallback_with_timeout("sleep 1", "test", Duration::from_millis(40));
         assert!(!copied);
         assert!(started.elapsed() < Duration::from_millis(500));
     }

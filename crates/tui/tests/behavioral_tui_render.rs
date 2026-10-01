@@ -38,7 +38,10 @@ fn file(name: &str, full_path: &str) -> FileEntry {
 fn file_list_renders_search_empty_state_with_panel_chrome() {
     let mut state = AppState::new("/project".to_string());
     state.path_dialog.visible = false;
-    state.navigation.entries.push(file("main.rs", "/project/main.rs"));
+    state
+        .navigation
+        .entries
+        .push(file("main.rs", "/project/main.rs"));
     state.search.mode = true;
     state.search.query = "missing".to_string();
     state.compute_filtered_indices();
@@ -123,7 +126,10 @@ fn path_dialog_renders_input_and_controls() {
 fn app_state_navigation_and_search_are_real_mutations() {
     let mut state = AppState::new("/project".to_string());
     state.navigation.panel_focus = PanelFocus::FileList;
-    state.navigation.entries = vec![file("one.rs", "/project/one.rs"), file("two.rs", "/project/two.rs")];
+    state.navigation.entries = vec![
+        file("one.rs", "/project/one.rs"),
+        file("two.rs", "/project/two.rs"),
+    ];
     state.select_next();
     assert_eq!(state.navigation.selected_index, 1);
     state.search.mode = true;

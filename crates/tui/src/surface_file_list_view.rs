@@ -110,7 +110,10 @@ impl FileListView {
         };
 
         if let Some(hint) = empty_hint {
-            let hint_line = Line::from(Span::styled(hint, Style::default().fg(theme::color(theme::SEPARATOR))));
+            let hint_line = Line::from(Span::styled(
+                hint,
+                Style::default().fg(theme::color(theme::SEPARATOR)),
+            ));
             let paragraph = Paragraph::new(hint_line)
                 .block(block)
                 .alignment(Alignment::Center);

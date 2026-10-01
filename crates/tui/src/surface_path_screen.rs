@@ -51,7 +51,10 @@ impl PathScreen {
             )),
             Line::from(""),
             Line::from(vec![
-                Span::styled("  > ", Style::default().fg(theme::color(theme::FOCUS_CONFIRM))),
+                Span::styled(
+                    "  > ",
+                    Style::default().fg(theme::color(theme::FOCUS_CONFIRM)),
+                ),
                 Span::styled(
                     input_display,
                     Style::default()
