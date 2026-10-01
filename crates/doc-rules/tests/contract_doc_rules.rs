@@ -359,6 +359,150 @@ fn aes602_fires_when_aggregate_api_is_absent() {
     );
 }
 
+// ── AES602: API Contract H3 strictness ───────────────────────────────
+
+#[test]
+fn aes602_fires_when_api_contract_has_a_per_protocol_h3() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The original workaround: one Protocol API table holds every method of
+    // every protocol, then a level-3 heading per protocol class narrates the
+    // split that the single table refused to make.
+    let frd = conforming_frd().replace(
+        "### Aggregate API",
+        "### IParserProtocol\n\n\
+             | Method | Input | Output | Error | Event | Description |\n\
+             | --- | --- | --- | --- | --- | --- |\n\
+             | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
+             ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES602", "api_h3_unexpected"),
+        "expected api_h3_unexpected, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_fires_when_api_contract_has_two_extra_h3s() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "### Aggregate API",
+        "### IGraphProtocol\n\n\
+             | Method | Input | Output | Error | Event | Description |\n\
+             | --- | --- | --- | --- | --- | --- |\n\
+             | `build` | `Vec<Edge>` | `Graph` | — | — | Build. |\n\n\
+             ### IParserProtocol\n\n\
+             | Method | Input | Output | Error | Event | Description |\n\
+             | --- | --- | --- | --- | --- | --- |\n\
+             | `parse` | `DocSource` | `Result<Tree>` | — | — | Parse one document. |\n\n\
+             ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    // Each unknown H3 is reported.
+    let count = findings
+        .iter()
+        .filter(|(c, v, _)| c == "AES602" && v == "api_h3_unexpected")
+        .count();
+    assert_eq!(count, 2, "expected 2 api_h3_unexpected, got: {findings:#?}");
+}
+
+#[test]
+fn aes602_fires_when_protocol_api_is_prose_only() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Author dumps every method into prose under Protocol API instead of a table.
+    let frd = conforming_frd().replace(
+        "| Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |\n\n\
+         ### Aggregate API",
+        "Every method is documented below.\n\n\
+         ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
+        "expected api_subsection_no_table, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_aggregate_api_is_prose_only() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "| Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
+         ## Integration Points",
+        "A single entry point routes requests.\n\n\
+         ## Integration Points",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "api_subsection_no_table"),
+        "expected api_subsection_no_table, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_aggregate_api_is_duplicated() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "### Aggregate API",
+        "### Aggregate API\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |\n\n\
+         ### Aggregate API",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "api_subsection_duplicated"),
+        "expected api_subsection_duplicated, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_api_subsections_are_out_of_order() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Swap the two subsections: Aggregate API before Protocol API.
+    let frd = conforming_frd();
+    let proto_pos = frd.find("### Protocol API").unwrap();
+    let agg_pos = frd.find("### Aggregate API").unwrap();
+    let agg_end = frd.find("## Integration Points").unwrap();
+    let proto_body = frd[proto_pos..agg_pos].to_string();
+    let agg_body = frd[agg_pos..agg_end].to_string();
+    let head = &frd[..proto_pos];
+    let tail = &frd[agg_end..];
+    let frd = format!("{head}{agg_body}{proto_body}{tail}");
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "order_violation"),
+        "expected order_violation, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_conforming_api_contract_reports_no_findings() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &conforming_frd());
+    let findings = audit(tmp.path());
+    // No API-Contract-related finding should fire on a conforming FRD.
+    let api_findings: Vec<_> = findings
+        .iter()
+        .filter(|(c, v, _)| c == "AES602" && v.starts_with("api_"))
+        .collect();
+    assert!(
+        api_findings.is_empty(),
+        "expected no api_* findings on conforming FRD, got: {api_findings:#?}"
+    );
+}
+
 #[test]
 fn aes602_fires_when_integration_points_is_a_bullet_list() {
     let tmp = tempfile::tempdir().unwrap();
@@ -1279,6 +1423,152 @@ fn aes607_ignores_aggregate_traits_when_counting_protocol_classes() {
     assert!(
         !has(&findings, "AES601", "protocol_count_mismatch"),
         "aggregates are not capability seams; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_ignores_doc_h3_headings_that_look_like_protocols() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The FRD carries `### IParserProtocol (6 operations)` as a level-3
+    // heading — the same text shape the old counter's `.contains("Protocol")`
+    // could have accidentally inflated from. Only Rust source files are read,
+    // so doc headings can never pad the count.
+    write_workspace(tmp.path(), &frd_with_fr_count(2));
+    let frd = r#"# FRD — sample
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md).
+
+## System Overview
+
+The feature does the work.
+
+## Functional Requirements
+
+### FR-SAMPLE-001: Document one thing
+
+- **Description**: Count the first.
+- **Input**: Nothing.
+- **Output**: One.
+- **Business Rules**: Always one.
+- **Edge Cases**: None.
+- **Error Handling**: None.
+
+### FR-SAMPLE-002: Document two things
+
+- **Description**: Count the second.
+- **Input**: Nothing.
+- **Output**: Two.
+- **Business Rules**: Always two.
+- **Edge Cases**: None.
+- **Error Handling**: None.
+
+## API Contract
+
+### Protocol API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | SampleRequest | SampleResponse | — | — | Routes. |
+
+### Aggregate API
+
+| Method | Input | Output | Error | Event | Description |
+| --- | --- | --- | --- | --- | --- |
+| `execute` | SampleRequest | SampleResponse | Reason-coded | — | Routes to the capability. |
+
+## Integration Points
+
+| System | Direction | Purpose | Failure mode |
+| --- | --- | --- | --- |
+| Shared domain | in | Supplies value objects | None — types only |
+
+## Non-functional Requirements
+
+| Metric | Target | Measurement method |
+| --- | --- | --- |
+| Dispatch cost | One call per request | Read the dispatch table |
+
+## Test Scenarios
+
+- A conforming request produces a conforming response.
+
+## Assumptions & Constraints
+
+- The capability is stateless.
+
+## Glossary
+
+- **Sample**: A value object used in this example.
+
+### IParserProtocol (6 operations)
+
+These are doc headings that must never inflate the protocol count.
+"#;
+    // The FRD above declares 2 FRs and carries doc headings shaped like
+    // protocol classes; these headings sit in the Markdown, not in any .rs.
+    fs::write(tmp.path().join("crates").join("sample").join("FRD.md"), frd).unwrap();
+    fs::write(
+        tmp.path().join("crates").join("sample").join("BACKLOG.md"),
+        conforming_backlog(),
+    )
+    .unwrap();
+    fs::write(
+        tmp.path()
+            .join("crates")
+            .join("sample")
+            .join("src/agent_sample_orchestrator.rs"),
+        "//! sample orchestrator\n",
+    )
+    .unwrap();
+    fs::write(tmp.path().join("PRD.md"), conforming_prd()).unwrap();
+    fs::write(tmp.path().join("ROADMAP.md"), conforming_roadmap()).unwrap();
+    // The shared module declares exactly one capability seam.
+    write_protocol_module(tmp.path(), 1);
+    let findings = audit(tmp.path());
+    // The FRD declares 2 FRs but the module carries 1 protocol class, so the
+    // mismatch fires — but the doc headings must not have bumped the class
+    // count up to 2 and silently silenced it.
+    assert!(
+        has(&findings, "AES601", "protocol_count_mismatch"),
+        "doc headings should not inflate the count; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes607_ignores_comments_and_strings_that_mention_protocol() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_workspace(tmp.path(), &frd_with_fr_count(1));
+    // The module carries a doc comment, a string literal, and non-matching
+    // identifiers that mention Protocol, plus a hidden trait. Only a real
+    // `pub trait I*Protocol` line may be counted.
+    let module = tmp
+        .path()
+        .join("crates")
+        .join("shared")
+        .join("src")
+        .join("sample");
+    fs::create_dir_all(&module).unwrap();
+    fs::write(
+        module.join("contract_sample_protocol.rs"),
+        "/// Doc comment mentioning `pub trait IFakeProtocol`.\n\
+         /// Another doc comment with `IProtocolSomething` in prose.\n\
+         pub trait ISampleProtocol: Send + Sync {}\n\
+         \n\
+         /// pub trait INotRealProtocol {}\n\
+         // pub trait IHiddenProtocol {}\n\
+         pub(crate) trait IInvisibleProtocol {}\n\
+         pub trait IProtocolFactory {}\n\
+         pub trait IProto {}\n\
+         pub trait IFooAggregateProtocol {}\n",
+    )
+    .unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "protocol_count_mismatch"),
+        "comments, strings, and non-matching names must not inflate the count; got: {findings:#?}"
     );
 }
 

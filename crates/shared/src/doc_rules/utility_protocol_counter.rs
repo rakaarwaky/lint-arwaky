@@ -69,20 +69,36 @@ pub fn locate_kernel_srcs(root: &Path) -> Vec<PathBuf> {
 /// points rather than capability seams and are excluded. A module that
 /// cannot be read returns `None`, which leaves the caller with nothing to
 /// compare against.
+///
+/// Only `.rs` files are read, so an FRD that writes `### IParserProtocol`
+/// as a heading can never be counted as a class; the count is always a
+/// property of the code, never of the document that describes it.
 pub fn count_protocol_traits(module_dir: &Path) -> Option<usize> {
     let mut count = 0;
     walk_rs_files(module_dir, &mut |_path, text| {
         count += text
             .lines()
-            .filter(|line| {
-                let line = line.trim();
-                line.starts_with("pub trait I")
-                    && line.contains("Protocol")
-                    && !line.contains("Aggregate")
-            })
+            .filter(|line| line.trim().starts_with("pub trait I") && is_protocol_decl(line))
             .count();
     })?;
     Some(count)
+}
+
+/// Is this line a `pub trait I*Protocol` capability seam?
+///
+/// Matched on the trait name alone — never on anything else the line happens
+/// to carry. A doc comment, a string literal, or a doc block containing
+/// `Protocol` next to `pub trait I` must not inflate the seam count.
+fn is_protocol_decl(line: &str) -> bool {
+    let Some((_, rest)) = line.trim().split_once("trait ") else {
+        return false;
+    };
+    // The trait name is the identifier before any generics/bounds.
+    let name: String = rest
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || *c == '_')
+        .collect();
+    name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate")
 }
 
 /// Recursively walk `dir` applying *visit* to every readable `.rs` file.

@@ -195,12 +195,12 @@ and the enumerated reason set disagree.
 
 ### Protocol API
 
-| Protocol Trait | Method | Input | Output | Description |
-|---|---|---|---|---|
-| `IUnusedImportFixProtocol` (FR-001) | `fix_unused_import` | &str, LineNumber | `FixOutcome` | Remove unused import at line. |
-| `IBypassFixProtocol` (FR-002) | `fix_bypass_comments` | &str, LineNumber | `FixOutcome` | Fix bypass comments at line. |
-| `ISymbolRenameProtocol` (FR-003) | `rename_symbol` | &str, &str, &str | `FixOutcome` | Rename symbol across file. |
-| `IViolationReportProtocol` (FR-004) | `report_violations` | &FilePath, bool | `FixResult` | Execute pipeline + report non-fixable. |
+| Protocol Trait | Method | Input | Output | Error | Event | Description |
+|---|---|---|---|---|---|---|
+| `IUnusedImportFixProtocol` (FR-001) | `fix_unused_import` | &str, LineNumber | `FixOutcome` | — | — | Remove unused import at line. |
+| `IBypassFixProtocol` (FR-002) | `fix_bypass_comments` | &str, LineNumber | `FixOutcome` | — | — | Fix bypass comments at line. |
+| `ISymbolRenameProtocol` (FR-003) | `rename_symbol` | &str, &str, &str | `FixOutcome` | — | — | Rename symbol across file. |
+| `IViolationReportProtocol` (FR-004) | `report_violations` | &FilePath, bool | `FixResult` | — | — | Execute pipeline + report non-fixable. |
 
 ### Aggregate API
 
