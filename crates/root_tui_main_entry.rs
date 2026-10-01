@@ -1,6 +1,6 @@
 // PURPOSE: TUI binary entry point — composition root wiring domain aggregates
 // directly into TUI surfaces (surface-only: no contract/aggregate/capabilities).
-use dispatcher::surface_orphan_action::OrphanFactory;
+use dispatcher::orchestrator_orphan_pipeline::OrphanFactory;
 use lint_arwaky::root_entry_container::CommonDeps;
 use std::sync::Arc;
 
@@ -12,10 +12,10 @@ fn main() -> anyhow::Result<()> {
 
     // DI: inject filesystem and orphan factories for SurfaceLintExecutor
     let fs_factory: Arc<
-        dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync,
+        dyn Fn() -> dispatcher::orchestrator_check_pipeline::FilesystemSeam + Send + Sync,
     > = Arc::new(|| {
         let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-        dispatcher::surface_check_action::FilesystemSeam {
+        dispatcher::orchestrator_check_pipeline::FilesystemSeam {
             io: c.io(),
             workspace: c.workspace(),
             parser: c.parser(),

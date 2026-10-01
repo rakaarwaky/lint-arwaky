@@ -259,51 +259,62 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
 
     let mut all: Vec<ViolationItem> = Vec::new();
 
+    // Each rule group runs behind catch_unwind (#575): a panicked aggregate
+    // becomes an AES999 marker and the remaining groups still report.
     all.extend(
-        agg.quality
-            .execute(CodeAnalysisRequest::run_analysis(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
+        crate::utility_pipeline_guard::guarded_lint_results("quality", path, || {
+            agg.quality
+                .execute(CodeAnalysisRequest::run_analysis(&entries))
+                .into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
     );
     all.extend(
-        agg.role
-            .execute(RoleRequest::audit(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
+        crate::utility_pipeline_guard::guarded_lint_results("role", path, || {
+            agg.role.execute(RoleRequest::audit(&entries)).into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
     );
     // Workspace-wide import map so AES201/202/203/205 see cross-member imports
     // (the dispatcher's fs instance differs from the import orchestrator's own).
     all.extend(
-        agg.import
-            .execute(ImportRequest::audit_with_entries_and_imports(
-                &entries,
-                &import_map,
+        crate::utility_pipeline_guard::guarded_lint_results("import", path, || {
+            agg.import
+                .execute(ImportRequest::audit_with_entries_and_imports(
+                    &entries,
+                    &import_map,
+                ))
+                .into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
+    );
+    all.extend(
+        crate::utility_pipeline_guard::guarded_lint_results("naming", path, || {
+            agg.naming
+                .execute(NamingRequest::audit(&entries))
+                .into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
+    );
+    match crate::utility_pipeline_guard::run_guarded("orphan", path, || {
+        agg.orphan
+            .execute(OrphanRequest::scan(
+                &root_fp,
+                &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
             ))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
-    );
-    all.extend(
-        agg.naming
-            .execute(NamingRequest::audit(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
-    );
-    let (_graph_ctx, orphan_violations) = agg
-        .orphan
-        .execute(OrphanRequest::scan(
-            &root_fp,
-            &shared_common::taxonomy_common_vo::PatternList::new(ignored.clone()),
-        ))
-        .into_scan_outcome();
-    all.extend(
-        orphan_violations
-            .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .into_scan_outcome()
+    }) {
+        Ok((_graph_ctx, orphan_violations)) => all.extend(
+            orphan_violations
+                .iter()
+                .map(ViolationItem::from_lint_result),
+        ),
+        Err(marker) => all.push(marker),
+    }
 
     // External — adapters run on the target *as given* (relative paths resolve
     // against the process CWD, exactly like the spawned linters did).
@@ -347,16 +358,24 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
             ignored_paths: ignored.clone(),
             config_entries: Vec::new(),
         };
-        let mut external: Vec<ViolationItem> = agg
-            .external
-            .execute(
-                shared_external_lint::ExternalLintRequest::scan_all_with_context(
-                    &ext_target_fp,
-                    &context,
-                ),
-            )
-            .into_violations()
-            .values
+        let external_results = crate::utility_pipeline_guard::run_guarded("external", path, || {
+            agg.external
+                .execute(
+                    shared_external_lint::ExternalLintRequest::scan_all_with_context(
+                        &ext_target_fp,
+                        &context,
+                    ),
+                )
+                .into_violations()
+        });
+        let external_values = match external_results {
+            Ok(list) => list.values,
+            Err(marker) => {
+                all.push(marker);
+                shared_cli_commands::LintResultList::new(Vec::new()).values
+            }
+        };
+        let mut external: Vec<ViolationItem> = external_values
             .iter()
             .map(ViolationItem::from_lint_result)
             .collect();
@@ -390,13 +409,21 @@ fn run_all_linters_in_process(path: &str, agg: &ScanAggregates) -> Vec<Violation
     // Structure — folder-layout audit (AES701–AES703). Its findings name a
     // folder or a file inside one, and a folder path is not itself a file, so
     // these are scoped separately and appended after the file-scope filter.
-    all.extend(structure_violations_in_scope(&target_canon_str, agg));
+    all.extend(crate::utility_pipeline_guard::guarded_items(
+        "structure",
+        &target_canon_str,
+        || structure_violations_in_scope(&target_canon_str, agg),
+    ));
 
     // Doc invariants (AES601–AES605) audit the workspace document chain
     // (FRD/BACKLOG pairs, PRD, AGENTS, ...) which is not part of the
     // source-file index, so it runs against the scan target directly and its
     // findings are appended after the file-scope filter like structure does.
-    all.extend(doc_violations_in_scope(&target_canon_str, agg));
+    all.extend(crate::utility_pipeline_guard::guarded_items(
+        "doc",
+        &target_canon_str,
+        || doc_violations_in_scope(&target_canon_str, agg),
+    ));
 
     all
 }
@@ -421,7 +448,7 @@ fn structure_violations_in_scope(target: &str, agg: &ScanAggregates) -> Vec<Viol
             .unwrap_or_else(|| target_path.to_path_buf())
     };
 
-    crate::surface_structure_action::collect_structure(target, agg.structure.clone())
+    crate::orchestrator_structure_pipeline::collect_structure(target, agg.structure.clone())
         .unwrap_or_default()
         .into_iter()
         .filter(|v| {
@@ -606,50 +633,61 @@ fn run_single_file_scan(
         String,
         Vec<shared_filesystem::taxonomy_filesystem_vo::ImportEntry>,
     > = std::collections::HashMap::new();
+    let target_str = scan_root.to_string_lossy().to_string();
     let mut all: Vec<ViolationItem> = Vec::new();
+    // Panic isolation per group (#575), mirroring the directory scan path.
     all.extend(
-        agg.quality
-            .execute(CodeAnalysisRequest::run_analysis(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
+        crate::utility_pipeline_guard::guarded_lint_results("quality", &target_str, || {
+            agg.quality
+                .execute(CodeAnalysisRequest::run_analysis(&entries))
+                .into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
     );
     all.extend(
-        agg.role
-            .execute(RoleRequest::audit(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
+        crate::utility_pipeline_guard::guarded_lint_results("role", &target_str, || {
+            agg.role.execute(RoleRequest::audit(&entries)).into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
     );
     all.extend(
-        agg.import
-            .execute(ImportRequest::audit_with_entries_and_imports(
-                &entries,
-                &import_map,
+        crate::utility_pipeline_guard::guarded_lint_results("import", &target_str, || {
+            agg.import
+                .execute(ImportRequest::audit_with_entries_and_imports(
+                    &entries,
+                    &import_map,
+                ))
+                .into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
+    );
+    all.extend(
+        crate::utility_pipeline_guard::guarded_lint_results("naming", &target_str, || {
+            agg.naming
+                .execute(NamingRequest::audit(&entries))
+                .into_violations()
+        })
+        .iter()
+        .map(ViolationItem::from_lint_result),
+    );
+    match crate::utility_pipeline_guard::run_guarded("orphan", &target_str, || {
+        agg.orphan
+            .execute(OrphanRequest::scan(
+                root_fp,
+                &shared_common::taxonomy_common_vo::PatternList::new(ignored.to_vec()),
             ))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
-    );
-    all.extend(
-        agg.naming
-            .execute(NamingRequest::audit(&entries))
-            .into_violations()
-            .iter()
-            .map(ViolationItem::from_lint_result),
-    );
-    let (_graph_ctx, orphan_violations) = agg
-        .orphan
-        .execute(OrphanRequest::scan(
-            root_fp,
-            &shared_common::taxonomy_common_vo::PatternList::new(ignored.to_vec()),
-        ))
-        .into_scan_outcome();
-    all.extend(
-        orphan_violations
-            .iter()
-            .map(ViolationItem::from_lint_result),
-    );
+            .into_scan_outcome()
+    }) {
+        Ok((_graph_ctx, orphan_violations)) => all.extend(
+            orphan_violations
+                .iter()
+                .map(ViolationItem::from_lint_result),
+        ),
+        Err(marker) => all.push(marker),
+    }
     // Drop violations naming files outside the target.
     all.retain(|v| {
         let p = std::path::Path::new(&v.file.value);

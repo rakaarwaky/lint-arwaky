@@ -13,6 +13,7 @@ use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_paths_vo::{FilePathList, RenamedFile, RenamedFileList};
 use shared_file_watch::GitDiffResultVO;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
+use shared_git_hooks::contract_git_hooks_protocol::IChangedFilesLintProtocol;
 use shared_git_hooks::contract_git_hooks_protocol::IDiffDetectionProtocol;
 use shared_git_hooks::taxonomy_git_hooks_constant::LINTABLE_EXTENSIONS;
 
@@ -28,6 +29,7 @@ pub fn is_lintable_file(fp: &FilePath) -> bool {
 
 pub struct DiffChecker {
     io: Arc<dyn IFileSystemIOProtocol>,
+    changed_files_linter: Arc<dyn IChangedFilesLintProtocol>,
 }
 
 // ─── Block 2: Protocol Trait Implementation ───────────────
@@ -93,25 +95,32 @@ impl IDiffDetectionProtocol for DiffChecker {
         let default_branch = self.get_default_branch_sync(path);
         let changed_files = self.collect_changed_files_sync(path, &default_branch);
 
-        // Filter to lintable source files only
-        let _lintable: Vec<FilePath> = changed_files
+        // Filter to lintable source files only, then delegate to the lint
+        // pipeline over the changed set (issue #582: this used to be a stub
+        // that always returned zero violations).
+        let lintable: Vec<FilePath> = changed_files
             .values
             .iter()
             .filter(|f| is_lintable_file(f))
             .cloned()
             .collect();
 
-        // TODO: delegate to linter aggregates for AES analysis on lintable files.
-        // Requires linter aggregate integration — returns empty for now.
-        LintResultList::new(Vec::new())
+        self.changed_files_linter
+            .lint_changed_files(&FilePathList::new(lintable))
     }
 }
 
 // ─── Block 3: Constructors, Helpers, Private Methods ──────
 
 impl DiffChecker {
-    pub fn new(io: Arc<dyn IFileSystemIOProtocol>) -> Self {
-        Self { io }
+    pub fn new(
+        io: Arc<dyn IFileSystemIOProtocol>,
+        changed_files_linter: Arc<dyn IChangedFilesLintProtocol>,
+    ) -> Self {
+        Self {
+            io,
+            changed_files_linter,
+        }
     }
 
     fn get_default_branch_sync(&self, project_path: &FilePath) -> String {

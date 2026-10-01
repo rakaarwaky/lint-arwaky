@@ -9,7 +9,7 @@ use tracing::error;
 use crate::utility_output_text_formatter::status_icon;
 
 pub fn handle_doctor(maintenance: Arc<dyn IMaintenanceAggregate>) -> ExitCode {
-    let diag = dispatcher::surface_maintenance_action::collect_doctor(maintenance);
+    let diag = dispatcher::orchestrator_maintenance_pipeline::collect_doctor(maintenance);
 
     println!("Environment Diagnostics");
     println!();
@@ -73,7 +73,7 @@ pub fn handle_security(
         None => ".".to_string(),
     };
 
-    match dispatcher::surface_maintenance_action::collect_security(maintenance, path) {
+    match dispatcher::orchestrator_maintenance_pipeline::collect_security(maintenance, path) {
         Ok(report) => {
             println!("Security Vulnerability Scan — {}", target);
             println!();
@@ -111,7 +111,7 @@ pub fn handle_self_update(
     check_only: bool,
 ) -> ExitCode {
     let result =
-        dispatcher::surface_maintenance_action::collect_self_update(maintenance, check_only);
+        dispatcher::orchestrator_maintenance_pipeline::collect_self_update(maintenance, check_only);
 
     println!("Lint Arwaky Self-Update");
     println!();
@@ -144,7 +144,7 @@ pub fn handle_dependencies(
         None => ".".to_string(),
     };
 
-    match dispatcher::surface_maintenance_action::collect_dependencies(maintenance, path) {
+    match dispatcher::orchestrator_maintenance_pipeline::collect_dependencies(maintenance, path) {
         Ok(report) => {
             println!("Dependency Report — {}", target);
             println!();

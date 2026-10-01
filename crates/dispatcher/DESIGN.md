@@ -12,20 +12,20 @@ here and nowhere else.
 
 | File | Serves |
 | --- | --- |
-| `surface_naming_action.rs` | AES101–102 |
-| `surface_import_action.rs` | AES201–205 |
-| `surface_quality_action.rs` | AES301–305 |
-| `surface_role_action.rs` | AES401–406 |
-| `surface_orphan_action.rs` | AES501–506 |
-| `surface_structure_action.rs` | AES701–703 |
-| `surface_check_action.rs` | `check` — the exit-code shaped entry over all groups |
-| `surface_ci_action.rs` | `ci` — the same groups with thresholds |
-| `surface_fix_action.rs` | `fix` — auto-fix over collected findings; also aggregates every collected `FixOutcome` into the run-level outcome the surface maps to an exit code |
-| `surface_docs_action.rs` | `docs` — document invariants only; the target is the audit root, not a filter |
-| `surface_watch_action.rs` | `watch` — repeated scans over changed files |
-| `surface_config_action.rs` | `config` — effective configuration |
-| `surface_git_action.rs` | `git` — hook installation and checks |
-| `surface_version_action.rs`, `surface_plugin_action.rs`, `surface_setup_action.rs`, `surface_maintenance_action.rs`, `surface_external_action.rs` | Supporting surfaces |
+| `orchestrator_naming_pipeline.rs` | AES101–102 |
+| `orchestrator_import_pipeline.rs` | AES201–205 |
+| `orchestrator_quality_pipeline.rs` | AES301–305 |
+| `orchestrator_role_pipeline.rs` | AES401–406 |
+| `orchestrator_orphan_pipeline.rs` | AES501–506 |
+| `orchestrator_structure_pipeline.rs` | AES701–703 |
+| `orchestrator_check_pipeline.rs` | `check` — the exit-code shaped entry over all groups |
+| `orchestrator_ci_pipeline.rs` | `ci` — the same groups with thresholds |
+| `orchestrator_fix_pipeline.rs` | `fix` — auto-fix over collected findings; also aggregates every collected `FixOutcome` into the run-level outcome the surface maps to an exit code |
+| `orchestrator_docs_pipeline.rs` | `docs` — document invariants only; the target is the audit root, not a filter |
+| `orchestrator_watch_pipeline.rs` | `watch` — repeated scans over changed files |
+| `orchestrator_config_pipeline.rs` | `config` — effective configuration |
+| `orchestrator_git_pipeline.rs` | `git` — hook installation and checks |
+| `orchestrator_version_pipeline.rs`, `orchestrator_plugin_pipeline.rs`, `orchestrator_setup_pipeline.rs`, `orchestrator_maintenance_pipeline.rs`, `orchestrator_external_pipeline.rs` | Supporting surfaces |
 
 Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<Finding>`.
 
@@ -45,8 +45,8 @@ deliberate:
 
 | Collector | What the target means |
 | --- | --- |
-| `surface_check_action.rs`, and every `surface_<group>_action.rs` | A **filter**. The pipeline indexes the workspace and the collector keeps only the findings contained under the target. |
-| `surface_docs_action.rs` | A **root**. The doc request carries the target as its audit root, so pointing `docs` at a sub-directory audits that sub-tree as if it were its own workspace. Crosslink checks (AES604) that expect root-level `PRD.md`/`ROADMAP.md` siblings therefore behave differently than they do for a whole-workspace run. |
+| `orchestrator_check_pipeline.rs`, and every `surface_<group>_action.rs` | A **filter**. The pipeline indexes the workspace and the collector keeps only the findings contained under the target. |
+| `orchestrator_docs_pipeline.rs` | A **root**. The doc request carries the target as its audit root, so pointing `docs` at a sub-directory audits that sub-tree as if it were its own workspace. Crosslink checks (AES604) that expect root-level `PRD.md`/`ROADMAP.md` siblings therefore behave differently than they do for a whole-workspace run. |
 
 The doc-rules contract owns this semantic; see `crates/doc-rules/FRD.md`
 ("Path scoping" under System Overview) and the `docs` row in
@@ -54,7 +54,7 @@ The doc-rules contract owns this semantic; see `crates/doc-rules/FRD.md`
 
 ### Exit-code aggregation for `fix`
 
-`surface_fix_action.rs` owns the aggregation of per-item `FixOutcome`s into one
+`orchestrator_fix_pipeline.rs` owns the aggregation of per-item `FixOutcome`s into one
 run-level outcome: any `Failed(reason)` raises the report's failure flag, while
 a run of only `Applied`/`Skipped(reason)` items does not. `cli-commands`'
 `surface_fix_command.rs` renders that outcome and maps it onto the exit-code

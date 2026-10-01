@@ -13,12 +13,22 @@ shared-cli-commands.workspace = true
 shared-common.workspace = true
 shared-file-watch.workspace = true
 shared-filesystem.workspace = true
+shared-import-rules.workspace = true
+shared-naming-rules.workspace = true
+shared-quality-rules.workspace = true
+shared-role-rules.workspace = true
 shared-git-hooks.workspace = true
 serde_yaml_ng.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+config-system = { workspace = true }
 filesystem = { workspace = true }
+import-rules = { workspace = true }
+naming-rules = { workspace = true }
+quality-rules = { workspace = true }
+role-rules = { workspace = true }
+shared-config-system.workspace = true
 tempfile = "3"
 criterion = { version = "0.8.2", features = ["html_reports"] }
 

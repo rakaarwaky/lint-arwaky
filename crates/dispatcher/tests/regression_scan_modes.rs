@@ -16,10 +16,10 @@ fn fs() -> std::sync::Arc<dyn shared_filesystem::contract_filesystem_aggregate::
 }
 
 /// Seam bundle for ScanOptions: io + workspace + parser + aggregate.
-fn seam() -> std::sync::Arc<dispatcher_lint_arwaky::surface_check_action::FilesystemSeam> {
+fn seam() -> std::sync::Arc<dispatcher_lint_arwaky::orchestrator_check_pipeline::FilesystemSeam> {
     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
     std::sync::Arc::new(
-        dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
+        dispatcher_lint_arwaky::orchestrator_check_pipeline::FilesystemSeam {
             io: c.io(),
             workspace: c.workspace(),
             parser: c.parser(),
@@ -40,7 +40,7 @@ fn workspace_root() -> std::path::PathBuf {
 /// In-process scan via collect_scan (works for workspaces-good where 0 violations expected).
 fn scan(path: &str) -> Vec<shared_common::ViolationItem> {
     let full_path = workspace_root().join(path);
-    let opts = dispatcher_lint_arwaky::surface_check_action::ScanOptions {
+    let opts = dispatcher_lint_arwaky::orchestrator_check_pipeline::ScanOptions {
         path: Some(FilePath::new(full_path.to_string_lossy().to_string()).unwrap()),
         multi_project_orchestrator: None,
         filter: None,
@@ -48,7 +48,7 @@ fn scan(path: &str) -> Vec<shared_common::ViolationItem> {
         filesystem: seam(),
         scan_aggregates: None,
     };
-    dispatcher_lint_arwaky::surface_check_action::collect_scan(opts).unwrap_or_default()
+    dispatcher_lint_arwaky::orchestrator_check_pipeline::collect_scan(opts).unwrap_or_default()
 }
 
 /// CLI subprocess scan via release binary (for workspaces-bad where violations expected).
@@ -318,7 +318,7 @@ fn regression_external_filter_keeps_member_files_drops_root_files() {
         )),
     ];
 
-    dispatcher_lint_arwaky::surface_external_action::filter_outside_member_dirs(
+    dispatcher_lint_arwaky::orchestrator_external_pipeline::filter_outside_member_dirs(
         &mut violations,
         &ws_str,
         fs().as_ref(),
@@ -347,7 +347,7 @@ fn regression_external_filter_noop_outside_workspace() {
     let file_str = target.join("standalone.py").to_string_lossy().to_string();
 
     let mut violations = vec![violation_for(&file_str)];
-    dispatcher_lint_arwaky::surface_external_action::filter_outside_member_dirs(
+    dispatcher_lint_arwaky::orchestrator_external_pipeline::filter_outside_member_dirs(
         &mut violations,
         &target_str,
         fs().as_ref(),

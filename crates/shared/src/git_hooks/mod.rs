@@ -13,6 +13,7 @@ pub mod taxonomy_git_hooks_vo;
 pub use contract_git_hooks_aggregate::IGitHooksAggregate;
 pub use contract_git_hooks_protocol::IConfigInitProtocol;
 pub use contract_git_hooks_protocol::IDiffDetectionProtocol;
+pub use contract_git_hooks_protocol::IChangedFilesLintProtocol;
 pub use contract_git_hooks_protocol::IHookInstallProtocol;
 pub use contract_git_hooks_protocol::IHookUninstallProtocol;
 

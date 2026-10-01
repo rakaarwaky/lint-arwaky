@@ -13,6 +13,22 @@ use shared_git_hooks::contract_git_hooks_aggregate::IGitHooksAggregate;
 use std::sync::Arc;
 use tempfile::TempDir;
 
+/// Test stub: the diff-check lint seam is not under test here.
+struct NoopChangedFilesLinter;
+impl shared_git_hooks::IChangedFilesLintProtocol for NoopChangedFilesLinter {
+    fn lint_changed_files(
+        &self,
+        _files: &shared_common::taxonomy_paths_vo::FilePathList,
+    ) -> shared_cli_commands::LintResultList {
+        shared_cli_commands::LintResultList::new(Vec::new())
+    }
+}
+
+fn noop_linter() -> Arc<dyn shared_git_hooks::IChangedFilesLintProtocol> {
+    Arc::new(NoopChangedFilesLinter)
+}
+
+
 fn make_orchestrator() -> Arc<GitHooksOrchestrator> {
     let fc = filesystem::root_filesystem_container::FilesystemContainer::new();
     let _filesystem = fc.orchestrator();
@@ -41,7 +57,7 @@ fn make_container() -> (TempDir, Arc<dyn IGitHooksAggregate>) {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let container = GitContainer::new(fp, filesystem, io);
+    let container = GitContainer::new(fp, filesystem, io, noop_linter());
     (tmp, container.aggregate())
 }
 
@@ -52,7 +68,7 @@ fn container_creates_with_filesystem() {
     let filesystem = fc.orchestrator();
     let io = fc.io();
     let fp = FilePath::new(tmp.path().to_string_lossy().to_string()).unwrap();
-    let _container = GitContainer::new(fp, filesystem, io);
+    let _container = GitContainer::new(fp, filesystem, io, noop_linter());
 }
 
 #[test]

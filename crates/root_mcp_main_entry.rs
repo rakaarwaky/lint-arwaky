@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         parse_adapter_names:
             shared_config_system::utility_config_parser::parse_adapter_names_from_yaml,
         parse_score_threshold: shared_config_system::utility_config_parser::parse_score_threshold,
-        server_version: dispatcher::surface_version_action::collect_version().version,
+        server_version: dispatcher::orchestrator_version_pipeline::collect_version().version,
         workspace_root: std::env::current_dir()?.canonicalize()?,
         allow_mutations: std::env::var("LINT_ARWAKY_MCP_ALLOW_MUTATIONS")
             .is_ok_and(|value| matches!(value.as_str(), "1" | "true" | "yes")),

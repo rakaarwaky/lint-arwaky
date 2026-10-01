@@ -14,7 +14,7 @@ pub fn handle_fix(
     code_analysis_linter: Arc<dyn ICodeAnalysisAggregate>,
     fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
 ) -> ExitCode {
-    match dispatcher::surface_fix_action::collect_fix(
+    match dispatcher::orchestrator_fix_pipeline::collect_fix(
         path,
         dry_run,
         code_analysis_linter,

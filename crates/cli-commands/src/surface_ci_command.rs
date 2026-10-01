@@ -27,8 +27,8 @@ pub struct CiCommandParams {
 }
 
 pub fn handle_ci(params: CiCommandParams) -> ExitCode {
-    match dispatcher::surface_ci_action::collect_ci(
-        dispatcher::surface_ci_action::CiScanDeps {
+    match dispatcher::orchestrator_ci_pipeline::collect_ci(
+        dispatcher::orchestrator_ci_pipeline::CiScanDeps {
             code_analysis_linter: params.code_analysis_linter,
             import_orchestrator: params.import_orchestrator,
             naming_orchestrator: params.naming_orchestrator,

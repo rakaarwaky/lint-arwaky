@@ -46,7 +46,7 @@ fn bench_ci_report_construction(c: &mut Criterion) {
 
     group.bench_function("create_ci_report", |b| {
         b.iter(|| {
-            let report = dispatcher_lint_arwaky::surface_ci_action::CiReport {
+            let report = dispatcher_lint_arwaky::orchestrator_ci_pipeline::CiReport {
                 version: "2.0.0".to_string(),
                 score: 0.85,
                 threshold: 70,

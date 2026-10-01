@@ -34,6 +34,17 @@ pub trait IDiffDetectionProtocol: Send + Sync {
     fn run_git_diff_check(&self, path: &FilePath) -> LintResultList;
 }
 
+/// FR-GitHooks-001 (lint half): run the per-file lint pipeline over an
+/// explicit list of changed files. Split out of IDiffDetectionProtocol so the
+/// diff checker only detects and this seam executes — the checker no longer
+/// stubs the check away (issue #582).
+pub trait IChangedFilesLintProtocol: Send + Sync {
+    /// Lint the given files with the per-file rule groups (quality, role,
+    /// import, naming). Returns one result per violation; files that cannot
+    /// be read produce an E902 marker result instead of being skipped.
+    fn lint_changed_files(&self, files: &FilePathList) -> LintResultList;
+}
+
 /// FR-GitHooks-002: install the pre-commit hook script into `.git/hooks/`.
 pub trait IHookInstallProtocol: Send + Sync {
     /// Install the pre-commit hook script.

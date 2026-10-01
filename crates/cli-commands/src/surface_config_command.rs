@@ -6,7 +6,7 @@ use std::sync::Arc;
 use tracing::warn;
 
 pub fn handle_config_show(orchestrator: Arc<dyn IConfigOrchestratorAggregate>) -> ExitCode {
-    let report = dispatcher::surface_config_action::collect_config_show(orchestrator);
+    let report = dispatcher::orchestrator_config_pipeline::collect_config_show(orchestrator);
 
     for entry in &report.entries {
         println!("── [{}] {} ──", entry.language, entry.path);

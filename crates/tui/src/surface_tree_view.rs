@@ -5,13 +5,13 @@
 // by depth, with the current (leaf) component highlighted in cyan.
 //
 // Uses simple string-based rendering (no ratatui Tree widget) for compatibility.
+use crate::taxonomy_tui_vo::{AppState, PanelFocus};
 use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem};
-use tui_lint_arwaky::{AppState, PanelFocus};
 use std::path::Path;
 
 pub struct TreeView;

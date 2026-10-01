@@ -3,7 +3,9 @@
 use shared_common::FilePath;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared_git_hooks::{IGitHooksAggregate, IHookInstallProtocol, IHookUninstallProtocol};
+use shared_git_hooks::{
+    IChangedFilesLintProtocol, IGitHooksAggregate, IHookInstallProtocol, IHookUninstallProtocol,
+};
 
 use std::sync::Arc;
 
@@ -14,9 +16,11 @@ pub struct GitContainer {
 impl GitContainer {
     pub fn new(
         root_dir: FilePath,
-        _filesystem: Arc<dyn IFilesystemAggregate>,
+        filesystem: Arc<dyn IFilesystemAggregate>,
         io: Arc<dyn IFileSystemIOProtocol>,
+        changed_files_linter: Arc<dyn IChangedFilesLintProtocol>,
     ) -> Self {
+        let _ = filesystem; // reserved for future capabilities seams
         let hook_installer: Arc<dyn IHookInstallProtocol> = Arc::new(
             crate::capabilities_hook_installer::HookInstaller::new(root_dir.clone(), io.clone()),
         );
@@ -27,6 +31,7 @@ impl GitContainer {
             ));
         let diff_checker = Arc::new(crate::capabilities_diff_checker::DiffChecker::new(
             io.clone(),
+            changed_files_linter,
         ));
         let config_init = Arc::new(crate::capabilities_config_init::ConfigInit::new(io));
 

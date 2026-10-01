@@ -9,7 +9,7 @@ pub fn handle_watch(watch_aggregate: Arc<dyn IWatchAggregate>, path: Option<File
     let on_stop: Arc<dyn Fn() + Send + Sync> = Arc::new(|| {
         info!("stopping watcher");
     });
-    match dispatcher::surface_watch_action::handle_watch(watch_aggregate, path, on_stop) {
+    match dispatcher::orchestrator_watch_pipeline::handle_watch(watch_aggregate, path, on_stop) {
         Ok(()) => ExitCode::OK,
         Err(e) => {
             error!(error = %e, "operation failed");

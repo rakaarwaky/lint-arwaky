@@ -6,7 +6,7 @@
 use std::path::{Component, Path, PathBuf};
 use std::sync::Arc;
 
-use dispatcher::surface_orphan_action::OrphanFactory;
+use dispatcher::orchestrator_orphan_pipeline::OrphanFactory;
 use shared_auto_fix::IFixAggregate;
 use shared_common::Threshold;
 use shared_common::taxonomy_path_vo::FilePath;
@@ -51,8 +51,9 @@ pub struct McpServerDependencies {
     pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
     pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
-    pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
-    pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+    pub fs_seam: Arc<dispatcher::orchestrator_check_pipeline::FilesystemSeam>,
+    pub fs_factory:
+        Arc<dyn Fn() -> dispatcher::orchestrator_check_pipeline::FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
     // DI: config parsing functions
     pub parse_config_yaml: fn(&str) -> ArchitectureConfig,
@@ -99,13 +100,13 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        let opts = dispatcher::surface_check_action::ScanOptions {
+        let opts = dispatcher::orchestrator_check_pipeline::ScanOptions {
             path: Some(fp),
             multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
             filter: None,
             member: None,
             filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
-            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
+            scan_aggregates: Some(dispatcher::orchestrator_check_pipeline::ScanAggregates {
                 quality: self.deps.code_analysis_linter.clone(),
                 role: self.deps.role_orchestrator.clone(),
                 import: self.deps.import_orchestrator.clone(),
@@ -118,7 +119,7 @@ impl McpActionSurface {
                 fs_seam: self.deps.fs_seam.clone(),
             }),
         };
-        match dispatcher::surface_check_action::collect_scan(opts) {
+        match dispatcher::orchestrator_check_pipeline::collect_scan(opts) {
             Ok(violations) => {
                 let total = violations.len();
                 let exit_code = if total == 0 { 0 } else { 1 };
@@ -142,8 +143,8 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_ci_action::collect_ci(
-            dispatcher::surface_ci_action::CiScanDeps {
+        match dispatcher::orchestrator_ci_pipeline::collect_ci(
+            dispatcher::orchestrator_ci_pipeline::CiScanDeps {
                 code_analysis_linter: self.deps.code_analysis_linter.clone(),
                 import_orchestrator: self.deps.import_orchestrator.clone(),
                 naming_orchestrator: self.deps.naming_orchestrator.clone(),
@@ -189,7 +190,7 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_fix_action::collect_fix(
+        match dispatcher::orchestrator_fix_pipeline::collect_fix(
             Some(fp),
             dry_run,
             self.deps.code_analysis_linter.clone(),
@@ -235,7 +236,7 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_quality_action::collect_quality(
+        match dispatcher::orchestrator_quality_pipeline::collect_quality(
             Some(fp),
             self.deps.code_analysis_linter.clone(),
             None,
@@ -254,7 +255,7 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_import_action::collect_import(
+        match dispatcher::orchestrator_import_pipeline::collect_import(
             Some(fp),
             self.deps.import_orchestrator.clone(),
             None,
@@ -273,7 +274,7 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_naming_action::collect_naming(
+        match dispatcher::orchestrator_naming_pipeline::collect_naming(
             Some(fp),
             self.deps.naming_orchestrator.clone(),
             None,
@@ -292,7 +293,7 @@ impl McpActionSurface {
             Ok(fp) => fp,
             Err(error) => return error,
         };
-        match dispatcher::surface_role_action::collect_role_direct(
+        match dispatcher::orchestrator_role_pipeline::collect_role_direct(
             self.deps.role_orchestrator.clone(),
             None,
             self.deps.filesystem.clone(),
@@ -310,10 +311,10 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_orphan_action::collect_orphan(
+        match dispatcher::orchestrator_orphan_pipeline::collect_orphan(
             Some(fp),
             None,
-            dispatcher::surface_orphan_action::OrphanScanDeps::new(
+            dispatcher::orchestrator_orphan_pipeline::OrphanScanDeps::new(
                 self.deps.orphan_orchestrator.clone(),
                 self.deps.config_orchestrator.clone(),
                 self.deps.filesystem.clone(),
@@ -345,7 +346,7 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(e) => return e,
         };
-        match dispatcher::surface_external_action::collect_external_direct(
+        match dispatcher::orchestrator_external_pipeline::collect_external_direct(
             Some(fp),
             self.deps.external_lint.clone(),
             self.deps.filesystem.clone(),
@@ -361,7 +362,7 @@ impl McpActionSurface {
 
     /// Run doctor diagnostics via dispatcher.
     pub fn execute_doctor(&self) -> serde_json::Value {
-        let diag = dispatcher::surface_maintenance_action::collect_doctor(
+        let diag = dispatcher::orchestrator_maintenance_pipeline::collect_doctor(
             self.deps.maintenance_orchestrator.clone(),
         );
         let mut checks = Vec::new();
@@ -386,7 +387,7 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_maintenance_action::collect_security(
+        match dispatcher::orchestrator_maintenance_pipeline::collect_security(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
         ) {
@@ -426,7 +427,7 @@ impl McpActionSurface {
             Ok(f) => f,
             Err(error) => return error,
         };
-        match dispatcher::surface_maintenance_action::collect_dependencies(
+        match dispatcher::orchestrator_maintenance_pipeline::collect_dependencies(
             self.deps.maintenance_orchestrator.clone(),
             Some(fp),
         ) {
@@ -461,7 +462,7 @@ impl McpActionSurface {
             Ok(fp) => fp,
             Err(error) => return error,
         };
-        let result = dispatcher::surface_docs_action::collect_docs(
+        let result = dispatcher::orchestrator_docs_pipeline::collect_docs(
             fp.value(),
             self.deps.doc_orchestrator.clone(),
         );
@@ -515,7 +516,7 @@ impl McpActionSurface {
                     Ok(f) => f,
                     Err(e) => return e,
                 };
-                match dispatcher::surface_git_action::collect_install_hook(
+                match dispatcher::orchestrator_git_pipeline::collect_install_hook(
                     self.deps.git_hooks_aggregate.clone(),
                     &fp,
                 ) {
@@ -526,7 +527,7 @@ impl McpActionSurface {
                 }
             }
             "uninstall-hook" => {
-                match dispatcher::surface_git_action::collect_uninstall_hook(
+                match dispatcher::orchestrator_git_pipeline::collect_uninstall_hook(
                     self.deps.git_hooks_aggregate.clone(),
                 ) {
                     Ok(report) => {
@@ -536,7 +537,7 @@ impl McpActionSurface {
                 }
             }
             "init" | "install" => {
-                let items = dispatcher::surface_setup_action::collect_init(
+                let items = dispatcher::orchestrator_setup_pipeline::collect_init(
                     self.deps.setup_orchestrator.clone(),
                     self.deps.filesystem_io.clone(),
                 );
@@ -565,7 +566,7 @@ impl McpActionSurface {
 
     /// Health check: adapter availability from maintenance aggregate.
     pub fn handle_health_check(&self) -> serde_json::Value {
-        let health = dispatcher::surface_maintenance_action::collect_health_check(
+        let health = dispatcher::orchestrator_maintenance_pipeline::collect_health_check(
             self.deps.maintenance_orchestrator.clone(),
         );
         let adapters: Vec<serde_json::Value> = health
@@ -579,7 +580,7 @@ impl McpActionSurface {
             .iter()
             .filter(|a| a["status"] == "available")
             .count();
-        let version_report = dispatcher::surface_version_action::collect_version();
+        let version_report = dispatcher::orchestrator_version_pipeline::collect_version();
         serde_json::json!({
             "status": "ok",
             "version": version_report.version,

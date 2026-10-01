@@ -2,7 +2,7 @@
 // Root layer — thin composition that constructs all container orchestrators.
 use std::sync::Arc;
 
-use dispatcher::surface_orphan_action::OrphanFactory;
+use dispatcher::orchestrator_orphan_pipeline::OrphanFactory;
 use shared_auto_fix::contract_fix_aggregate::IFixAggregate;
 use shared_config_system::contract_config_orchestrator_aggregate::IConfigOrchestratorAggregate;
 use shared_doc_rules::IDocRunnerAggregate;
@@ -25,7 +25,7 @@ pub struct CommonDeps {
     pub filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
     pub filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
     pub filesystem_parser: Arc<dyn shared_filesystem::IParserProtocol>,
-    pub fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
+    pub fs_seam: Arc<dispatcher::orchestrator_check_pipeline::FilesystemSeam>,
     pub config_orchestrator: Arc<dyn IConfigOrchestratorAggregate>,
     pub config_parser: Arc<dyn shared_config_system::IConfigMergeProtocol>,
     pub config_reader: Arc<dyn shared_config_system::IConfigReadProtocol>,
@@ -41,7 +41,8 @@ pub struct CommonDeps {
     pub setup_orchestrator: Arc<dyn ISetupAggregate>,
     pub git_hooks_aggregate: Arc<dyn IGitHooksAggregate>,
     pub fix_orchestrator_factory: Arc<dyn Fn(bool) -> Arc<dyn IFixAggregate> + Send + Sync>,
-    pub fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+    pub fs_factory:
+        Arc<dyn Fn() -> dispatcher::orchestrator_check_pipeline::FilesystemSeam + Send + Sync>,
     pub orphan_factory: Arc<OrphanFactory>,
 }
 
@@ -54,7 +55,7 @@ impl CommonDeps {
         let filesystem_workspace = fs_container.workspace();
         let filesystem_tool_resolution = fs_container.tool_resolution();
         let filesystem_parser = fs_container.parser();
-        let fs_seam = Arc::new(dispatcher::surface_check_action::FilesystemSeam {
+        let fs_seam = Arc::new(dispatcher::orchestrator_check_pipeline::FilesystemSeam {
             io: filesystem_io.clone(),
             workspace: filesystem_workspace.clone(),
             parser: filesystem_parser.clone(),
@@ -149,10 +150,10 @@ impl CommonDeps {
         };
 
         let fs_factory: Arc<
-            dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync,
+            dyn Fn() -> dispatcher::orchestrator_check_pipeline::FilesystemSeam + Send + Sync,
         > = Arc::new(|| {
             let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-            dispatcher::surface_check_action::FilesystemSeam {
+            dispatcher::orchestrator_check_pipeline::FilesystemSeam {
                 io: c.io(),
                 workspace: c.workspace(),
                 parser: c.parser(),
@@ -166,10 +167,25 @@ impl CommonDeps {
             .analyzer()
         });
 
+        let changed_files_linter: std::sync::Arc<
+            dyn shared_git_hooks::IChangedFilesLintProtocol,
+        > = std::sync::Arc::new(
+            git_hooks::capabilities_changed_files_linter::ChangedFilesLinter::new(
+                filesystem_io.clone(),
+                filesystem_workspace.clone(),
+                filesystem_parser.clone(),
+                filesystem.clone(),
+                code_analysis_linter.clone(),
+                role_orchestrator.clone(),
+                import_orchestrator.clone(),
+                naming_orchestrator.clone(),
+            ),
+        );
         let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
             shared_common::taxonomy_path_vo::FilePath::new(".").unwrap_or_default(),
             filesystem.clone(),
             filesystem_io.clone(),
+            changed_files_linter,
         );
         let git_hooks_aggregate = git_container.aggregate();
 

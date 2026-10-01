@@ -7,16 +7,16 @@ mod mock_filesystem;
 // mock lives in the shared crate's tests dir; this #[path] link keeps a single
 // source of truth across the workspace (T1/D2).
 
-use dispatcher_lint_arwaky::surface_check_action::{ScanOptions, collect_scan};
+use dispatcher_lint_arwaky::orchestrator_check_pipeline::{ScanOptions, collect_scan};
 use shared_common::FilePath;
 use std::sync::Arc;
 
 use mock_filesystem::MockFilesystem;
 
 /// Seam bundle for ScanOptions: io + workspace + parser + aggregate.
-fn mock_seam() -> Arc<dispatcher_lint_arwaky::surface_check_action::FilesystemSeam> {
+fn mock_seam() -> Arc<dispatcher_lint_arwaky::orchestrator_check_pipeline::FilesystemSeam> {
     Arc::new(
-        dispatcher_lint_arwaky::surface_check_action::FilesystemSeam {
+        dispatcher_lint_arwaky::orchestrator_check_pipeline::FilesystemSeam {
             io: Arc::new(MockFilesystem::new()),
             workspace: Arc::new(MockFilesystem::new()),
             parser: Arc::new(MockFilesystem::new()),

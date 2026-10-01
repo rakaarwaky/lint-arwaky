@@ -1,5 +1,7 @@
 // Unit tests — skills language relevance and filtering for init command.
-use dispatcher_lint_arwaky::surface_setup_action::{collect_init, is_skill_relevant_for_languages};
+use dispatcher_lint_arwaky::orchestrator_setup_pipeline::{
+    collect_init, is_skill_relevant_for_languages,
+};
 use shared_common::taxonomy_job_vo::{EnvContentVO, McpConfigVO, SuccessStatus};
 use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use shared_common::taxonomy_tool_name_vo::ToolName;

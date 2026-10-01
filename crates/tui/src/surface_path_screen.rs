@@ -3,13 +3,13 @@
 // Renders a centered popup overlay when show_path_dialog is true.
 // User can type a path, confirm, or use current directory.
 // Uses centered_rect() helper to calculate popup dimensions.
+use crate::taxonomy_tui_vo::AppState;
 use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
-use tui_lint_arwaky::AppState;
 
 pub struct PathScreen;
 

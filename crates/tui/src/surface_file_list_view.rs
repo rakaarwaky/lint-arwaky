@@ -5,14 +5,14 @@
 //   - Directory names in blue bold
 //   - Selected item highlighted with dark gray background
 //   - Focus indicator on the panel border (cyan when focused, gray when not)
+use crate::taxonomy_tui_vo::AesLayer;
+use crate::taxonomy_tui_vo::{AppState, PanelFocus};
 use crate::utility_tui_theme as theme;
 use ratatui::Frame;
 use ratatui::layout::{Alignment, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Borders, List, ListItem, ListState, Paragraph};
-use tui_lint_arwaky::AesLayer;
-use tui_lint_arwaky::{AppState, PanelFocus};
 
 pub struct FileListView;
 

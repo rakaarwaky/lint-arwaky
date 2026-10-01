@@ -3,8 +3,8 @@
 // Provides formatting function for toolchain diagnostics.
 // Pure utility function — no trait impls.
 
+use crate::taxonomy_tui_vo::LintExecutionResult;
 use shared_maintenance::ToolchainDiagnostics;
-use tui_lint_arwaky::LintExecutionResult;
 
 /// Format toolchain diagnostics into a LintExecutionResult.
 pub fn format_doctor_report(diagnostics: &ToolchainDiagnostics) -> LintExecutionResult {

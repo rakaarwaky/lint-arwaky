@@ -5,8 +5,10 @@ use crate::surface_preview_view::PreviewView;
 use crate::surface_shortcut_component::ShortcutComponent;
 use crate::surface_status_component::StatusComponent;
 use crate::surface_tree_view::TreeView;
-use crossterm::event;
+use crate::taxonomy_tui_event::TuiEvent;
+use crate::taxonomy_tui_vo::{AppState, ScanUpdate};
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers, MouseEvent, MouseEventKind};
+use crossterm::event;
 use crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
@@ -16,7 +18,6 @@ use ratatui::layout::{Alignment, Constraint, Direction, Layout};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::Paragraph;
-use tui_lint_arwaky::{AppState, ScanUpdate, TuiEvent};
 
 use std::io::stdout;
 use std::sync::Arc;

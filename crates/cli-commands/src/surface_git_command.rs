@@ -13,7 +13,7 @@ pub fn handle_git_diff(
     project_path: Option<&str>,
     filter: Option<&str>,
 ) -> ExitCode {
-    match dispatcher::surface_git_action::collect_git_diff(
+    match dispatcher::orchestrator_git_pipeline::collect_git_diff(
         code_analysis_linter,
         base,
         project_path,

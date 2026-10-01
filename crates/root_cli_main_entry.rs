@@ -233,7 +233,7 @@ fn main() {
     let filesystem_workspace = fs_container.workspace();
     let filesystem_tool_resolution = fs_container.tool_resolution();
     let filesystem_parser = fs_container.parser();
-    let fs_seam = dispatcher::surface_check_action::FilesystemSeam {
+    let fs_seam = dispatcher::orchestrator_check_pipeline::FilesystemSeam {
         io: filesystem_io.clone(),
         workspace: filesystem_workspace.clone(),
         parser: filesystem_parser.clone(),
@@ -344,6 +344,19 @@ fn main() {
     let watch_aggregate = file_watch::root_file_watch_container::FileWatchContainer::new()
         .aggregate(code_analysis_linter.clone());
 
+    let changed_files_linter: std::sync::Arc<dyn shared_git_hooks::IChangedFilesLintProtocol> =
+        std::sync::Arc::new(
+            git_hooks::capabilities_changed_files_linter::ChangedFilesLinter::new(
+                filesystem_io.clone(),
+                filesystem_workspace.clone(),
+                filesystem_parser.clone(),
+                filesystem.clone(),
+                code_analysis_linter.clone(),
+                role_orchestrator.clone(),
+                import_orchestrator.clone(),
+                naming_orchestrator.clone(),
+            ),
+        );
     let git_container = git_hooks::root_git_hooks_container::GitContainer::new(
         FilePath::new(
             std::env::current_dir()
@@ -353,6 +366,7 @@ fn main() {
         .unwrap_or_default(),
         filesystem.clone(),
         filesystem_io.clone(),
+        changed_files_linter,
     );
     let git_orchestrator = git_container.aggregate();
 
@@ -375,7 +389,7 @@ fn main() {
         .clone();
 
     // W10: in-process aggregate bundle for scan/check (subprocess fallback when absent).
-    let scan_aggregates = dispatcher::surface_check_action::ScanAggregates {
+    let scan_aggregates = dispatcher::orchestrator_check_pipeline::ScanAggregates {
         quality: code_analysis_linter.clone(),
         role: role_orchestrator.clone(),
         import: import_orchestrator.clone(),
@@ -502,7 +516,7 @@ fn main() {
                 filter,
                 fs_factory: Arc::new(|| {
                     let c = filesystem::root_filesystem_container::FilesystemContainer::new();
-                    dispatcher::surface_check_action::FilesystemSeam {
+                    dispatcher::orchestrator_check_pipeline::FilesystemSeam {
                         io: c.io(),
                         workspace: c.workspace(),
                         parser: c.parser(),
@@ -626,7 +640,7 @@ fn main() {
             let exe = std::env::current_exe()
                 .map(|p| FilePath::new(p.to_string_lossy().to_string()).unwrap_or_default())
                 .unwrap_or_default();
-            match dispatcher::surface_git_action::collect_install_hook(
+            match dispatcher::orchestrator_git_pipeline::collect_install_hook(
                 git_orchestrator.clone(),
                 &exe,
             ) {
@@ -645,7 +659,9 @@ fn main() {
             }
         }
         Command::UninstallHook => {
-            match dispatcher::surface_git_action::collect_uninstall_hook(git_orchestrator.clone()) {
+            match dispatcher::orchestrator_git_pipeline::collect_uninstall_hook(
+                git_orchestrator.clone(),
+            ) {
                 Ok(report) => {
                     println!("{}", report.message);
                     if report.success {
@@ -661,7 +677,7 @@ fn main() {
             }
         }
         Command::Version => {
-            let report = dispatcher::surface_version_action::collect_version();
+            let report = dispatcher::orchestrator_version_pipeline::collect_version();
             println!("lint-arwaky {}", report.version);
             shared_common::ExitCode::OK
         }

@@ -3,19 +3,20 @@
 // formatting. Delegates to dispatcher crate for business logic; formats output as
 // LintExecutionResult for the action handler.
 // All methods are synchronous — consistent with dispatcher sync API.
-use dispatcher::surface_check_action::{ScanOptions, collect_scan};
-use dispatcher::surface_ci_action::{CiScanDeps, collect_ci};
-use dispatcher::surface_config_action::collect_config_show;
-use dispatcher::surface_fix_action::collect_fix_direct;
-use dispatcher::surface_git_action::{collect_install_hook, collect_uninstall_hook};
-use dispatcher::surface_maintenance_action::{
+use dispatcher::orchestrator_check_pipeline::{ScanOptions, collect_scan};
+use dispatcher::orchestrator_ci_pipeline::{CiScanDeps, collect_ci};
+use dispatcher::orchestrator_config_pipeline::collect_config_show;
+use dispatcher::orchestrator_fix_pipeline::collect_fix_direct;
+use dispatcher::orchestrator_git_pipeline::{collect_install_hook, collect_uninstall_hook};
+use dispatcher::orchestrator_maintenance_pipeline::{
     collect_dependencies, collect_doctor, collect_security,
 };
-use dispatcher::surface_orphan_action::{OrphanFactory, OrphanScanDeps, collect_orphan};
-use dispatcher::surface_plugin_action::collect_adapters_detailed;
-use dispatcher::surface_setup_action::{collect_init, collect_install, collect_mcp_config};
-use dispatcher::surface_version_action::collect_version;
+use dispatcher::orchestrator_orphan_pipeline::{OrphanFactory, OrphanScanDeps, collect_orphan};
+use dispatcher::orchestrator_plugin_pipeline::collect_adapters_detailed;
+use dispatcher::orchestrator_setup_pipeline::{collect_init, collect_install, collect_mcp_config};
+use dispatcher::orchestrator_version_pipeline::collect_version;
 
+use crate::taxonomy_tui_vo::{ActionFlags, LintExecutionResult};
 use shared_auto_fix::IFixAggregate;
 use shared_common::FilePath;
 use shared_config_system::IConfigOrchestratorAggregate;
@@ -29,7 +30,6 @@ use shared_orphan_rules::IOrphanAggregate;
 use shared_project_setup::ISetupAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
-use tui_lint_arwaky::{ActionFlags, LintExecutionResult};
 
 use std::sync::Arc;
 
@@ -53,8 +53,9 @@ pub struct SurfaceLintExecutor {
     filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
     filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
     filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
-    fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
-    fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+    fs_seam: Arc<dispatcher::orchestrator_check_pipeline::FilesystemSeam>,
+    fs_factory:
+        Arc<dyn Fn() -> dispatcher::orchestrator_check_pipeline::FilesystemSeam + Send + Sync>,
     orphan_factory: Arc<OrphanFactory>,
 }
 
@@ -463,8 +464,9 @@ impl SurfaceLintExecutor {
         filesystem_io: Arc<dyn shared_filesystem::IFileSystemIOProtocol>,
         filesystem_workspace: Arc<dyn shared_filesystem::IWorkspaceProtocol>,
         filesystem_tool_resolution: Arc<dyn shared_filesystem::IToolResolutionProtocol>,
-        fs_seam: Arc<dispatcher::surface_check_action::FilesystemSeam>,
-        fs_factory: Arc<dyn Fn() -> dispatcher::surface_check_action::FilesystemSeam + Send + Sync>,
+        fs_seam: Arc<dispatcher::orchestrator_check_pipeline::FilesystemSeam>,
+        fs_factory:
+        Arc<dyn Fn() -> dispatcher::orchestrator_check_pipeline::FilesystemSeam + Send + Sync>,
         orphan_factory: Arc<OrphanFactory>,
     ) -> Self {
         Self {
@@ -569,8 +571,10 @@ impl SurfaceLintExecutor {
         self
     }
 
-    fn build_scan_aggregates(&self) -> Option<dispatcher::surface_check_action::ScanAggregates> {
-        Some(dispatcher::surface_check_action::ScanAggregates {
+    fn build_scan_aggregates(
+        &self,
+    ) -> Option<dispatcher::orchestrator_check_pipeline::ScanAggregates> {
+        Some(dispatcher::orchestrator_check_pipeline::ScanAggregates {
             quality: self.code_analysis.clone(),
             role: self.role_orchestrator.clone()?,
             import: self.import_orchestrator.clone()?,

@@ -11,9 +11,32 @@ use rmcp::model::{
 use rmcp::{ServerHandler, tool, tool_handler, tool_router};
 use std::sync::Arc;
 
-use mcp_server_lint_arwaky::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
+use crate::{ExecuteCommandArgs, GetConfigArgs, ListCommandsArgs, ReadSkillArgs};
 
 use crate::surface_mcp_action_command::McpActionSurface;
+
+/// Run a synchronous tool handler on Tokio's blocking pool (issue #574).
+///
+/// The handlers delegate to dispatcher flows (`collect_scan`, `collect_ci`,
+/// `collect_fix`, ...) that are synchronous and CPU-bound: a scan can
+/// legitimately run for seconds on a large project. Running them inline on an
+/// async task would occupy one of the runtime's worker threads for the whole
+/// duration and starve every other concurrent tool call; `spawn_blocking`
+/// moves them to the dedicated blocking pool instead.
+pub async fn run_tool_blocking<F>(handler: F) -> String
+where
+    F: FnOnce() -> String + Send + 'static,
+{
+    match tokio::task::spawn_blocking(handler).await {
+        Ok(output) => output,
+        Err(error) => serde_json::json!({
+            "status": "error",
+            "error": format!("tool handler panicked: {error}"),
+            "exit_code": 2,
+        })
+        .to_string(),
+    }
+}
 
 #[derive(Clone)]
 pub struct LintArwakyMcpServer {
@@ -112,33 +135,38 @@ impl ServerHandler for LintArwakyMcpServer {
 impl LintArwakyMcpServer {
     #[tool(description = "Execute any CLI command. This is the primary tool.")]
     pub async fn execute_command(&self, args: Parameters<ExecuteCommandArgs>) -> String {
-        LintArwakyMcpServer::handle_execute_command(self, args)
+        let server = self.clone();
+        run_tool_blocking(move || LintArwakyMcpServer::handle_execute_command(&server, args)).await
     }
 
     #[tool(
         description = "List all available CLI commands with descriptions and examples. Optional `domain` filter (e.g. \"setup\", \"check\")."
     )]
     pub async fn list_commands(&self, args: Parameters<ListCommandsArgs>) -> String {
-        LintArwakyMcpServer::handle_list_commands(self, args)
+        let server = self.clone();
+        run_tool_blocking(move || LintArwakyMcpServer::handle_list_commands(&server, args)).await
     }
 
     #[tool(
         description = "Read skill documentation by section. Searches skill candidate locations."
     )]
     pub async fn read_skill(&self, args: Parameters<ReadSkillArgs>) -> String {
-        LintArwakyMcpServer::handle_read_skill(self, args)
+        let server = self.clone();
+        run_tool_blocking(move || LintArwakyMcpServer::handle_read_skill(&server, args)).await
     }
 
     #[tool(description = "Check system health: adapters and system state.")]
     pub async fn health_check(&self) -> String {
-        LintArwakyMcpServer::handle_health_check(self)
+        let server = self.clone();
+        run_tool_blocking(move || LintArwakyMcpServer::handle_health_check(&server)).await
     }
 
     #[tool(
         description = "Return the effective architecture configuration for a target path/language. Shows rules, thresholds, adapters."
     )]
     pub async fn get_config(&self, args: Parameters<GetConfigArgs>) -> String {
-        LintArwakyMcpServer::handle_get_config(self, args)
+        let server = self.clone();
+        run_tool_blocking(move || LintArwakyMcpServer::handle_get_config(&server, args)).await
     }
 }
 

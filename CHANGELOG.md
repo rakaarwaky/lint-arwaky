@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+### Architecture audit fixes (#570–#584)
+
+- **#572** — The TUI and MCP taxonomy left the shared kernel: `shared::tui`
+  moved into `crates/tui`, `shared::mcp_server` into `crates/mcp-server`
+  (single-consumer submodules). `cli_commands` and `report_formatter` stay in
+  `shared` — 10+ consumers and a cross-crate contract respectively — now
+  documented in `ARCHITECTURE.md` §2.
+- **#577** — `AppState` gained a single `busy: Option<BusyKind>` flag with
+  `is_scanning()`/`is_action_pending()` helpers, replacing the separate
+  `scanning`/`action_pending` bools that could disagree.
+- **#574** — MCP tool handlers run their synchronous dispatcher flows through
+  `tokio::task::spawn_blocking`, so a multi-second scan can no longer starve
+  the async runtime (trivial calls stay responsive — regression-tested).
+- **#575** — Every lint aggregate call in the dispatcher pipelines runs behind
+  `catch_unwind`; a panicking rule group yields an `AES999` marker ("internal:
+  <capability> aggregate panicked — partial results") and CI scores a panicked
+  evaluation as zero, failing closed.
+- **#573** — New `integration_in_process_mode` suite: dispatcher tests now
+  exercise the in-process `scan_aggregates: Some(..)` mode with real feature
+  aggregates, including a parity test against the subprocess mode.
+- **#580** — Dispatcher files renamed `surface_*_action.rs` →
+  `orchestrator_*_pipeline.rs`: they are cross-feature orchestrators, not
+  surfaces; the `surface_` names made Surface crates treat them as same-layer
+  peers (see `ARCHITECTURE.md` §9 "Cross-Feature Orchestrators").
+- **#582** — `git-hooks` pre-commit diff checking is real: the new
+  `IChangedFilesLintProtocol` seam and `ChangedFilesLinter` run the per-file
+  rule groups (quality/role/import/naming) over changed files; unreadable
+  files surface `E902` markers instead of silently passing.
+- **#579** — Dependency policy documented (`ARCHITECTURE.md` §12) and enforced
+  by an advisory `cargo-machete` CI job; dropped unused deps (tokio, rayon,
+  serde_json, config-system from `tui`; 17 unused externals from the root
+  package; tracing from `mcp-server`; ctrlc/dirs from `cli-commands`).
+- **#578** — Nightly Criterion benchmark workflow (`.github/workflows/
+  benchmarks.yml`) guards the documented performance budgets against
+  regressions.
+- **#581** — The CLI entry compiles once: `lint-arwaky` and `la` are
+  install-time symlinks to `lint-arwaky-cli` instead of duplicate `[[bin]]`
+  targets.
+- **#583/#584** — Contributing policy additions: lockstep versioning and the
+  issue-closure (regression-test) policy.
+
 ### Backend hardening
 - Confine MCP paths to the startup workspace and default mutating MCP actions to opt-in.
 - Validate generic MCP argument types and CI thresholds, and standardize action statuses.

@@ -27,11 +27,12 @@ jobs:
 
       # Advisory by design (issue #579): findings surface as review
       # annotations and in the step summary; they never block the merge.
+      # cargo-machete exits non-zero when it lists findings, so its exit code
+      # is deliberately not propagated.
       - name: Report unused dependencies
         run: |
           set +e
           findings=$(cargo machete 2>&1)
-          status=$?
           echo "$findings" | tee machete.log
           echo '## cargo-machete advisory report' >> "$GITHUB_STEP_SUMMARY"
           echo 'Unused dependencies are reported for cleanup; this job is advisory and does not block the merge (issue #579).' >> "$GITHUB_STEP_SUMMARY"
@@ -45,8 +46,7 @@ jobs:
                 echo "::warning title=cargo-machete::unused dependency reported: ${line}"
               fi
             done
-          if [ "$status" -ne 0 ]; then
-            echo "cargo-machete itself failed (exit $status)" >> "$GITHUB_STEP_SUMMARY"
-            cat machete.log
-            exit "$status"
+          if ! command -v cargo machete >/dev/null 2>&1; then
+            echo "::error title=cargo-machete::tool unavailable"
+            exit 2
           fi

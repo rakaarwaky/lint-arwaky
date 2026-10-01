@@ -1,10 +1,10 @@
 use crate::surface_lint_action::SurfaceLintExecutor;
+use crate::taxonomy_tui_vo::{ConfirmState, LintExecutionResult, ScanUpdate};
 use shared_common::FilePath;
-use tui_lint_arwaky::{ConfirmState, LintExecutionResult, ScanUpdate};
 
+use crate::taxonomy_tui_event::TuiEvent;
+use crate::taxonomy_tui_vo::{AppState, PanelFocus, PreviewMode};
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use tui_lint_arwaky::TuiEvent;
-use tui_lint_arwaky::{AppState, PanelFocus, PreviewMode};
 use std::sync::Arc;
 
 // PURPOSE: Surface-layer action handler — the central state machine for TUI events.
@@ -510,7 +510,7 @@ impl SurfaceActionHandler {
                 if name.starts_with('.') {
                     return None;
                 }
-                tui_lint_arwaky::FileEntry::from_path(&entry_path)
+                crate::taxonomy_tui_vo::FileEntry::from_path(&entry_path)
             })
             .collect();
         if state.entries.is_empty() {
@@ -573,7 +573,7 @@ impl SurfaceActionHandler {
         F: FnOnce(
             &SurfaceLintExecutor,
             &str,
-            &tui_lint_arwaky::taxonomy_tui_vo::ActionFlags,
+            &crate::taxonomy_tui_vo::ActionFlags,
         ) -> LintExecutionResult,
     {
         let path = state.selected_path();

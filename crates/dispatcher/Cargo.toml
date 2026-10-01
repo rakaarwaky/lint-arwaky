@@ -36,7 +36,18 @@ workspace = true
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
+config-system = { workspace = true }
+doc-rules = { workspace = true }
+external-lint = { workspace = true }
 filesystem.workspace = true
+import-rules = { workspace = true }
+naming-rules = { workspace = true }
+orphan-rules = { workspace = true }
+quality-rules = { workspace = true }
+role-rules = { workspace = true }
+structure-rules = { workspace = true }
+serde_json.workspace = true
+shared-config-system.workspace = true
 
 [[bench]]
 name = "bench_dispatcher"

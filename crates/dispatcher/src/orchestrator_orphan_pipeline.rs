@@ -14,7 +14,7 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
 
-use crate::surface_check_action::FilesystemSeam;
+use crate::orchestrator_check_pipeline::FilesystemSeam;
 use shared_orphan_rules::IOrphanAggregate;
 use shared_orphan_rules::OrphanRequest;
 

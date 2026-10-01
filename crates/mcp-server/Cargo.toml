@@ -25,10 +25,10 @@ shared-structure-rules.workspace = true
 dispatcher = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+schemars.workspace = true
 rmcp = { workspace = true }
 dirs = { workspace = true }
 tokio = { workspace = true }
-tracing = { workspace = true }
 
 [lints]
 workspace = true
