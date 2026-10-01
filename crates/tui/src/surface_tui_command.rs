@@ -285,8 +285,8 @@ fn from_key_event(key: KeyEvent, state: &AppState) -> TuiEvent {
     // Normal mode is resolved from the shared shortcut table. Contextual
     // dialog/search/help bindings above remain explicit because they shadow
     // normal actions while those overlays are active.
-    crate::utility_shortcuts::action_for(&key)
-        .map(crate::utility_shortcuts::ShortcutAction::to_event)
+    crate::surface_shortcut_bindings::action_for(&key)
+        .map(crate::surface_shortcut_bindings::ShortcutAction::to_event)
         .unwrap_or(TuiEvent::None)
 }
 

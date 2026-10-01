@@ -23,7 +23,7 @@ impl ShortcutComponent {
     }
 
     pub fn render(&self, state: &AppState, frame: &mut Frame, area: Rect) {
-        let rows = crate::utility_shortcuts::rows_for_context(matches!(
+        let rows = crate::surface_shortcut_bindings::rows_for_context(matches!(
             state.preview.mode,
             PreviewMode::LintResults | PreviewMode::ActionOutput | PreviewMode::FileContent
         ));

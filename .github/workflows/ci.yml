@@ -102,12 +102,15 @@ jobs:
         if: always()
         run: |
           tail -200 /tmp/nextest.log >> "$GITHUB_STEP_SUMMARY"
+          branch="${{ github.event.pull_request.head.ref }}"
+          git fetch origin "$branch"
+          git reset --hard FETCH_HEAD
           cp /tmp/nextest.log .ci-nextest.log
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .ci-nextest.log
           git commit -m "chore: capture nextest diagnostics" || true
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}" || true
+          git push origin "HEAD:$branch" || true
 
   self-lint:
     name: Self-Lint
@@ -145,12 +148,15 @@ jobs:
         if: always()
         run: |
           tail -200 /tmp/self-lint.log >> "$GITHUB_STEP_SUMMARY"
+          branch="${{ github.event.pull_request.head.ref }}"
+          git fetch origin "$branch"
+          git reset --hard FETCH_HEAD
           cp /tmp/self-lint.log .ci-self-lint.log
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .ci-self-lint.log
           git commit -m "chore: capture self-lint diagnostics" || true
-          git push origin "HEAD:${{ github.event.pull_request.head.ref }}" || true
+          git push origin "HEAD:$branch" || true
 
       - name: AES Codes Check
         run: |

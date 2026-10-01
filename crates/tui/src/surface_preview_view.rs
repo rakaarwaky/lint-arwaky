@@ -90,5 +90,5 @@ impl Default for PreviewView {
 }
 
 fn help_text() -> String {
-    crate::utility_shortcuts::help_text()
+    crate::surface_shortcut_bindings::help_text()
 }
