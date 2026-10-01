@@ -89,7 +89,14 @@ jobs:
         run: cargo build --release
 
       - name: Run tests
-        run: cargo nextest run --workspace --lib --tests -j 2
+        run: |
+          set +e
+          cargo nextest run --workspace --lib --tests -j 2 > test.log 2>&1
+          status=$?
+          gzip -9 -c test.log | base64 -w0 | fold -w3000 | while IFS= read -r chunk || [ -n "$chunk" ]; do
+            echo "::error title=TEST_LOG::$chunk"
+          done
+          exit "$status"
 
   self-lint:
     name: Self-Lint
