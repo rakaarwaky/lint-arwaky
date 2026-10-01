@@ -32,7 +32,6 @@ use shared_quality_rules::taxonomy_quality_rules_response::CodeAnalysisResponse;
 use shared_common::taxonomy_display_content_vo::DisplayContent;
 use shared_common::taxonomy_path_vo::FilePath;
 use shared_common::taxonomy_severity_vo::Severity;
-use shared_common::utility_compliance_score::compute_score;
 use shared_common::utility_layer_detector::{
     collect_layer_keys, detect_layer_from_prefix, extract_filename, get_layer_def,
     resolve_specialized_layer,
@@ -41,6 +40,7 @@ use shared_common::{BooleanVO, Score};
 use shared_common::{LayerMapVO, LayerNameVO};
 use shared_config_system::ArchitectureConfig;
 use shared_quality_rules::CodeAnalysisRuleVO;
+use shared_quality_rules::utility_compliance_score::compute_score;
 
 use shared_quality_rules::utility_violation_formatter::format_code_analysis_violation;
 use std::sync::Arc;

@@ -9,6 +9,7 @@ pub mod taxonomy_quality_rules_response;
 pub mod utility_bypass_detector;
 pub mod utility_code_duplication_detector;
 pub mod utility_compliance_checker;
+pub mod utility_compliance_score;
 pub mod utility_language_mapper;
 pub mod utility_mandatory_checker;
 pub mod utility_violation_formatter;

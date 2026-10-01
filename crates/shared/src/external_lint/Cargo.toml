@@ -18,4 +18,5 @@ workspace = true
 shared-common.workspace = true
 shared-config-system.workspace = true
 shared-quality-rules.workspace = true
+serde.workspace = true
 anyhow.workspace = true

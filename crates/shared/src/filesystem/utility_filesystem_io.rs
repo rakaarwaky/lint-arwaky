@@ -176,9 +176,9 @@ pub fn is_python_file(path: &Path) -> bool {
 }
 
 /// Return true if rel_path should be skipped based on ignored patterns.
-/// Delegates to shared_common::utility_path_filter (single source of truth, #23).
+/// Delegates to crate::utility_path_filter (single source of truth, #23).
 pub fn is_path_ignored(rel_path: &str, ignored: &[String]) -> bool {
-    shared_common::utility_path_filter::is_path_ignored(rel_path, ignored)
+    crate::utility_path_filter::is_path_ignored(rel_path, ignored)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -253,7 +253,7 @@ pub fn run_external_command_in(
     args: &[&str],
     current_dir: &str,
 ) -> (String, String, bool) {
-    shared_common::utility_command_runner::run_command_in_dir(name, args, Some(current_dir))
+    crate::utility_command_runner::run_command_in_dir(name, args, Some(current_dir))
 }
 
 /// Parse command output into trimmed non-empty lines.

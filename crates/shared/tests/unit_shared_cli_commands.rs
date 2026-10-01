@@ -91,9 +91,9 @@ fn command_catalog_contains_core_commands() {
     let catalog = command_catalog();
     assert!(catalog.len() >= 22);
     for (name, _, _) in COMMAND_CATALOG {
-        assert!(catalog.contains_key(&shared_common::ActionName::from(*name)));
+        assert!(catalog.contains_key(&shared_cli_commands::ActionName::from(*name)));
     }
-    let check = catalog.get(&shared_common::ActionName::from("check"));
+    let check = catalog.get(&shared_cli_commands::ActionName::from("check"));
     assert!(check.is_some());
     assert!(!check.unwrap().example.value.is_empty());
 }
@@ -102,7 +102,7 @@ fn command_catalog_contains_core_commands() {
 fn command_metadata_display() {
     let catalog = command_catalog();
     let check = catalog
-        .get(&shared_common::ActionName::from("check"))
+        .get(&shared_cli_commands::ActionName::from("check"))
         .expect("check exists");
     let rendered = check.to_string();
     assert!(rendered.contains('('));

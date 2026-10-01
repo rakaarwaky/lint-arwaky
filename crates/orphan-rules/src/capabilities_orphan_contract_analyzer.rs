@@ -225,7 +225,7 @@ pub fn is_path_alive(rel: &str, alive_files: &ReachabilityResult) -> bool {
 
 impl ContractOrphanAnalyzer {
     fn extract_trait_names(&self, file_path: &str, content: &str) -> Vec<String> {
-        match shared_common::parse_file_content(file_path, content) {
+        match shared_orphan_rules::parse_file_content(file_path, content) {
             FileParseResultVO::Rust(result) => result.trait_names(),
             FileParseResultVO::Python(result) => result.class_names(),
             FileParseResultVO::TypeScript(result) => result.trait_names(),
@@ -244,7 +244,7 @@ impl ContractOrphanAnalyzer {
             if content.is_empty() {
                 continue;
             }
-            match shared_common::parse_file_content(cf, &content) {
+            match shared_orphan_rules::parse_file_content(cf, &content) {
                 FileParseResultVO::Rust(result) => {
                     let has_impl = result.has_trait_impl(trait_name);
                     tracing::debug!(

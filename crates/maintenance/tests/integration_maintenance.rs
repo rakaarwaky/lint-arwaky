@@ -96,6 +96,6 @@ fn orchestrator_cancel_does_not_panic() {
     let container = make_container();
     let orch = container.orchestrator();
     orch.execute(MaintenanceRequest::cancel(
-        shared_common::taxonomy_action_vo::JobId::default(),
+        shared_common::taxonomy_job_id_vo::JobId::default(),
     ));
 }

@@ -1,6 +1,6 @@
 // Unit tests for utility_path_filter — is_path_ignored pattern matching.
 
-use shared_common::utility_path_filter::is_path_ignored;
+use shared_filesystem::utility_path_filter::is_path_ignored;
 
 #[test]
 fn is_path_ignored_empty_path_returns_false() {

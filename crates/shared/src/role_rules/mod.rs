@@ -9,6 +9,7 @@ pub mod utility_agent_role_checker;
 pub mod utility_capabilities_role_checker;
 pub mod utility_contract_role_checker;
 pub mod utility_role_reference_scanner;
+pub mod utility_signature_parser;
 pub mod utility_utility_role_checker;
 
 // ─── Re-exports ────────────────────────────────────────────

@@ -205,7 +205,7 @@ impl ArchImportMandatoryChecker {
             }
             let scope_identity = Identity::new(&rule.scope.value);
             if let Some((rule_layer, _)) =
-                shared_common::utility_scope_matcher::file_belongs_to_scope(
+                shared_import_rules::utility_scope_matcher::file_belongs_to_scope(
                     basename,
                     &scope_identity,
                 )
