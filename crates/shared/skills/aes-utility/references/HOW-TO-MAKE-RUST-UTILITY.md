@@ -12,7 +12,9 @@
 
 ---
 
-## Utility vs Capability Boundary
+## Rules
+
+### Utility vs Capability Boundary
 
 A utility file **performs a narrow, stateless task** — it has no business rules, no injected dependencies, no instance state.
 A capability file **implements a protocol** — it has DI, business rules, and concrete behaviour.
@@ -26,10 +28,6 @@ A capability file **implements a protocol** — it has DI, business rules, and c
 | Performs a narrow reusable operation (e.g., hashing, serialization, string ops) | Yes | No |
 
 **Rule**: If a function takes `&self`, contains business rules, or serves a single consumer — it does not belong in a utility file. Move it to the consuming capability or keep it as a private helper.
-
----
-
-## Rules
 
 ### Import rules
 
