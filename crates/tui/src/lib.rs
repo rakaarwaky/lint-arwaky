@@ -7,6 +7,7 @@ pub mod surface_lint_action;
 pub mod surface_logging_controller;
 pub mod surface_path_screen;
 pub mod surface_preview_view;
+pub mod surface_shortcut_bindings;
 pub mod surface_shortcut_component;
 pub mod surface_status_component;
 pub mod surface_tree_view;
