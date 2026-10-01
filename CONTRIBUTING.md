@@ -191,6 +191,24 @@ CARGO_INCREMENTAL=0 cargo clippy --all-targets -- -D warnings
 
 ---
 
+## Issue Title Convention
+
+Until GitHub Label writes are reliable (see #618), issue titles are the
+authoritative structured-classification source: `[ROLE][SEVERITY] {title}`,
+where ROLE is one of `BA`/`SA`/`UX`/`ARCH`/`BE`/`FE`/`PE`/`QA` and SEVERITY is
+one of `CRITICAL`/`WARNING`/`INFO`. Do not rely on Label chips alone for triage
+queries — parse titles instead (QA #647).
+
+## Defect Assignment
+
+Every new defect issue must be assigned to an owner within 2 business days of
+filing, or labeled `needs-owner` if no owner is available yet — a silently
+empty `assignees` field is not an acceptable tracking state (QA #646).
+CRITICAL severity issues should be assigned at creation time whenever
+possible. Every assigned defect fix follows the Regression Test Convention in
+[TEST.md §2.0](TEST.md): a permanent `regression_*` test guard lands together
+with the fix.
+
 ## Branch Management
 
 - Allowed branch naming: `main`, `develop`. Feature/fix branches are merged into
