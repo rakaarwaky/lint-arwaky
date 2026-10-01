@@ -136,6 +136,7 @@ rayon = "1.10"
 ratatui = "0.30.2"
 crossterm = "0.29.0"
 arboard = "3"
+syn = { version = "3", features = ["full", "visit", "parsing"] }
 
 [package]
 name = "lint_arwaky-arwaky"
