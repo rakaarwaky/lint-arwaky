@@ -147,16 +147,20 @@ license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 homepage = "https://github.com/rakaarwaky/lint-arwaky"
 readme = "README.md"
-default-run = "lint-arwaky-cli"
+default-run = "lint-arwaky"
 
 [lib]
 name = "lint_arwaky"
 path = "crates/lib.rs"
 
-# The CLI is compiled exactly once. The `lint-arwaky` and `la` command names
-# are install-time symlinks to `lint-arwaky-cli` (see scripts/install.sh
-# `install_alias_symlinks` and DEPLOY.md) instead of separate [[bin]] targets
-# that would triple-compile the identical entry file (issue #581).
+[[bin]]
+name = "lint-arwaky"
+path = "crates/root_cli_main_entry.rs"
+
+[[bin]]
+name = "la"
+path = "crates/root_cli_main_entry.rs"
+
 [[bin]]
 name = "lint-arwaky-cli"
 path = "crates/root_cli_main_entry.rs"
