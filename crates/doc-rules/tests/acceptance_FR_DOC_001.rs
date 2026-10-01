@@ -1,4 +1,4 @@
-// PURPOSE: acceptance test for FR-DOC-004 — an FRD's requirement count equals
+// PURPOSE: acceptance test for FR-DOC-001 — an FRD's requirement count equals
 // its feature's count of `I*Protocol` capability-seam classes (AES601). One
 // acceptance file per FR, named after the FR ID.
 use doc_rules_lint_arwaky::root_doc_rules_container::RootDocRulesContainer;
@@ -153,7 +153,7 @@ fn parity_message(findings: &[(String, String, String)]) -> Option<String> {
 }
 
 #[test]
-fn fr_doc_004_accepts_equal_requirement_and_protocol_class_counts() {
+fn fr_doc_001_accepts_equal_requirement_and_protocol_class_counts() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(3));
     write_contract_module(tmp.path(), 3);
@@ -165,7 +165,7 @@ fn fr_doc_004_accepts_equal_requirement_and_protocol_class_counts() {
 }
 
 #[test]
-fn fr_doc_004_rejects_more_requirements_than_protocol_classes() {
+fn fr_doc_001_rejects_more_requirements_than_protocol_classes() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(3));
     write_contract_module(tmp.path(), 2);
@@ -183,7 +183,7 @@ fn fr_doc_004_rejects_more_requirements_than_protocol_classes() {
 }
 
 #[test]
-fn fr_doc_004_rejects_more_protocol_classes_than_requirements() {
+fn fr_doc_001_rejects_more_protocol_classes_than_requirements() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(1));
     write_contract_module(tmp.path(), 3);
@@ -196,7 +196,7 @@ fn fr_doc_004_rejects_more_protocol_classes_than_requirements() {
 }
 
 #[test]
-fn fr_doc_004_excludes_aggregate_traits_from_the_seam_count() {
+fn fr_doc_001_excludes_aggregate_traits_from_the_seam_count() {
     let tmp = tempfile::tempdir().unwrap();
     // One requirement, one protocol class, one aggregate: the aggregate is a
     // composite entry point, not a capability seam, so the counts align.
@@ -209,7 +209,7 @@ fn fr_doc_004_excludes_aggregate_traits_from_the_seam_count() {
 }
 
 #[test]
-fn fr_doc_004_leaves_a_feature_without_a_contract_module_alone() {
+fn fr_doc_001_leaves_a_feature_without_a_contract_module_alone() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(2));
     assert!(
@@ -219,7 +219,7 @@ fn fr_doc_004_leaves_a_feature_without_a_contract_module_alone() {
 }
 
 #[test]
-fn fr_doc_004_anchors_the_finding_to_a_line() {
+fn fr_doc_001_anchors_the_finding_to_a_line() {
     let tmp = tempfile::tempdir().unwrap();
     write_feature(tmp.path(), &frd_with_requirements(2));
     write_contract_module(tmp.path(), 1);
