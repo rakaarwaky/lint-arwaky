@@ -231,7 +231,7 @@ and the enumerated reason set disagree.
 | Concurrency | Single-threaded file access; no concurrent writers assumed | Run two fix processes against the same file and confirm the second reports a write failure rather than interleaving |
 | Dry-run fidelity | A dry run reports the same outcome codes as a real run, changing no file | Run both modes against the same input and diff the outcomes and the file tree |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 - **SCEN-001 — Unused Import Removal** — e.g. Unused import at valid line → Removed, `Applied`
 - **SCEN-002 — Bypass Fix** — e.g. `unwrap()` on target line → Replaced with `expect("safe")`, `Applied`
