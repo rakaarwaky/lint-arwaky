@@ -1,0 +1,14 @@
+crates/dispatcher/src/surface_test_entries.rs
+  h_9fc4aac70b107c 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a928c3c86ab5fbc75756e284a36d323419b53741",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
