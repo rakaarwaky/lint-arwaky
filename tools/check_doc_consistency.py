@@ -31,6 +31,7 @@ this runs anywhere python3 does, including a CI job with no Rust toolchain.
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -45,13 +46,41 @@ EXCLUDED_DIRS = {
     ".worktree",
     "workspaces-bad",
     "workspaces-good",
+    # Local scratch trees, already gitignored: `.qwen-web/input/` holds
+    # timestamped snapshots of past scans whose links are relative to the
+    # snapshot, not to this repo, so every link in them is a false failure.
+    ".qwen-web",
+    ".qwen",
+    ".agents",
 }
+
+
+def _gitignored(rel: Path) -> bool:
+    """True when git ignores this path, so a scratch tree cannot gate CI.
+
+    `EXCLUDED_DIRS` is the floor, not the whole rule: any directory a developer
+    has gitignored locally must not decide whether the doc gate passes, or the
+    result depends on whose machine ran it. Falls back to False when git is
+    unavailable so the explicit list still governs.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(ROOT), "check-ignore", "-q", str(rel)],
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return False
+    return result.returncode == 0
 
 
 def markdown_files() -> list[Path]:
     out = []
     for path in ROOT.rglob("*.md"):
-        if any(part in EXCLUDED_DIRS for part in path.relative_to(ROOT).parts):
+        rel = path.relative_to(ROOT)
+        if any(part in EXCLUDED_DIRS for part in rel.parts):
+            continue
+        if _gitignored(rel):
             continue
         out.append(path)
     return sorted(out)
