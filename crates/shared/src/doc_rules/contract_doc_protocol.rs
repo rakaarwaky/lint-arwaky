@@ -8,11 +8,11 @@
 use crate::taxonomy_doc_audit_context_vo::DocAuditContext;
 use crate::taxonomy_doc_rules_request::DocFinding;
 
-/// AES601 — requirement identifiers, required FR fields, and FR/protocol-class
-/// parity.
+/// AES601 — requirement identifiers, required FR fields, FR/protocol-class
+/// parity, and the API methods the FRD promises the code declares.
 pub trait IFrFormatProtocol: Send + Sync {
-    /// Report every FR-ID, FR-field, and parity violation in the documents of
-    /// *context*.
+    /// Report every FR-ID, FR-field, parity, and promised-method violation in
+    /// the documents of *context*.
     fn audit_fr_format(&self, context: &DocAuditContext) -> Vec<DocFinding>;
 }
 

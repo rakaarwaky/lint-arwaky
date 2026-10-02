@@ -276,6 +276,145 @@ pub fn h3_subsections(section: &Section) -> Vec<Section> {
         .collect()
 }
 
+/// The methods the FRD promises, one promise at a time.
+///
+/// Reads the `### Protocol API` and `### Aggregate API` tables under `## API
+/// Contract` and yields `(subsection, method, doc_line)` per promised method.
+///
+/// The method is read from the column its header names, not from the first
+/// cell: a table that leads with a `Protocol Trait` column still promises its
+/// `Method` column. A table with no `Method` header is skipped rather than
+/// guessed at, so a shape the rule cannot read is a parse skip and not a
+/// false violation.
+///
+/// One cell may promise several methods — the shipped tables use both
+/// `` `execute` `` and `` `start` / `subscribe` / `stop` `` — so a cell is
+/// split on `/` and each name yielded separately. Only table rows count;
+/// prose mentioning a method is not a promise.
+pub fn api_contract_methods(text: &str) -> Vec<(String, String, usize)> {
+    let mut rows = Vec::new();
+    // A single sweep over the raw document, tracking the enclosing level-2
+    // section and level-3 subsection, so every row keeps its own 1-based
+    // document line. Reading the line off a parsed `Section` instead would
+    // inherit that struct's body-relative arithmetic, and a finding must name
+    // the row a reader will go and look at.
+    let mut in_api_contract = false;
+    let mut subsection: Option<String> = None;
+    let mut method_column: Option<usize> = None;
+    // Fenced blocks are blanked first, so a `## API Contract` inside an
+    // example cannot open the section and a table inside one cannot
+    // contribute rows.
+    for (index, raw) in blank_fenced(text).lines().enumerate() {
+        let line = index + 1;
+        let trimmed = raw.trim();
+        if let Some(title) = heading_text(trimmed, 2) {
+            in_api_contract = normalize_heading(title).starts_with("api contract");
+            subsection = None;
+            method_column = None;
+            continue;
+        }
+        if let Some(title) = heading_text(trimmed, 3) {
+            if !in_api_contract {
+                continue;
+            }
+            let norm = normalize_heading(title);
+            let recognized = consts::API_CONTRACT_SUBSECTIONS.iter().any(|want| {
+                let want = normalize_heading(want);
+                norm == want || norm.starts_with(&want)
+            });
+            subsection = recognized.then(|| title.to_string());
+            method_column = None;
+            continue;
+        }
+        let Some(title) = subsection.as_deref() else {
+            continue;
+        };
+        if !trimmed.starts_with('|') {
+            // Prose between rows ends the table but keeps the subsection: a
+            // second table under the same H3 is still an API table, and it
+            // brings its own header row.
+            method_column = None;
+            continue;
+        }
+        let cells: Vec<&str> = trimmed
+            .trim_matches('|')
+            .split('|')
+            .map(str::trim)
+            .collect();
+        if method_column.is_none() {
+            // The first table row under the heading is the column header.
+            method_column = cells
+                .iter()
+                .position(|cell| normalize_heading(cell) == "method");
+            continue;
+        }
+        let Some(column) = method_column else {
+            continue;
+        };
+        let Some(cell) = cells.get(column).copied() else {
+            continue;
+        };
+        if cell.is_empty()
+            || cell
+                .chars()
+                .all(|c| c == '-' || c == ':' || c.is_whitespace())
+        {
+            continue;
+        }
+        for method in promised_methods(cell) {
+            rows.push((title.to_string(), method, line));
+        }
+    }
+    rows
+}
+
+/// The method names one table cell promises.
+///
+/// Splits on `/` because a cell may group several methods, then strips
+/// backticks, whitespace, and any parenthetical qualifier so
+/// `` `execute` `` and `` `IUnusedImportFixProtocol` (FR-001) `` both yield
+/// the bare name a trait declares. A name that is not an identifier — a
+/// `—` placeholder, or prose — yields nothing, because a table cannot promise
+/// a method it never spells.
+fn promised_methods(cell: &str) -> Vec<String> {
+    cell.split('/')
+        .map(|part| {
+            part.split('(')
+                .next()
+                .unwrap_or(part)
+                .trim()
+                .trim_matches('`')
+                .trim()
+                .to_string()
+        })
+        .filter(|name| {
+            !name.is_empty()
+                && name.chars().all(|c| c.is_alphanumeric() || c == '_')
+                && name
+                    .chars()
+                    .next()
+                    .is_some_and(|c| c.is_alphabetic() || c == '_')
+        })
+        .collect()
+}
+
+/// The heading text of a line that is exactly a level-*level* heading, or
+/// `None` for any other line.
+///
+/// Exact rank matters: a level-3 heading must not read as the level-2 section
+/// that encloses it.
+fn heading_text(trimmed: &str, level: usize) -> Option<&str> {
+    let hashes = trimmed.chars().take_while(|c| *c == '#').count();
+    if hashes != level {
+        return None;
+    }
+    let rest = trimmed[level..].trim_start();
+    if rest.len() == trimmed[level..].len() && !trimmed[level..].is_empty() {
+        return None;
+    }
+    (!rest.is_empty()).then_some(rest.trim_end())
+}
+
 /// Does the body hold a table whose header carries every *columns* entry?
 pub fn has_table_with_columns(body: &str, columns: &[&str]) -> bool {
     for line in body.lines() {
