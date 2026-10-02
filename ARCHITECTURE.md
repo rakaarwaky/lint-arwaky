@@ -131,11 +131,11 @@ project-root/                             <- Project workspace root
 └── pyproject.toml
 ```
 
-### Folder structure rules (AES701–AES703)
+### Folder structure rules (AES701–AES704)
 
 Each member directory (`crates/`, `modules/`, `packages/`) organizes its code into
 three kinds of folders: `shared`, feature folders, and surface folders. The
-structure-rules group audits that layout.
+structure-rules group audits that layout, plus the test suite every feature owes.
 
 #### `shared/` — the locked kernel
 
@@ -175,6 +175,23 @@ and enforced as a closed set by **AES605** — `Brand & Style`, `Components`, an
 per-surface contract lives in level-3 subsections under them, which stay
 free-form. A surface-dominated folder without a `DESIGN.md` fires **AES703**.
 
+#### Test suites
+
+A feature folder that owns source also owes a test suite: `tests/` carrying one
+file per test type, and `benches/` carrying at least one benchmark. The
+`aes-testing-suite` skill fixes the layout — the flat file-name prefix **is** the
+virtual folder, so there is no subdirectory to express the type in:
+
+| Directory  | One file per type                                                                 |
+| ---------- | --------------------------------------------------------------------------------- |
+| `tests/`   | `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_` |
+| `benches/` | `bench_`                                                                          |
+
+A missing category fires **AES704** (**AES103** covers the naming half: whether a
+file's prefix is legal and whether the directory nests). Support prefixes —
+`regression_`, `behavioral_`, `mock_`, `fixture_` — are legal names and satisfy no
+category, so a folder carrying only regression guards still owes all seven.
+
 #### Summary
 
 | Folder kind  | Carries                                   | Documents                        | Rules   |
@@ -182,6 +199,7 @@ free-form. A surface-dominated folder without a `DESIGN.md` fires **AES703**.
 | `shared/`    | `taxonomy_*`, `utility_*`, `contract_*`   | none                             | AES701  |
 | feature      | `capabilities_*` + `agent_*_orchestrator` | `FRD.md` + `BACKLOG.md`          | AES702  |
 | surface      | `surface_*` (+ utility, root, barrels)    | `DESIGN.md`                      | AES703  |
+| feature      | `tests/` per category + `benches/bench_`  | —                                | AES704  |
 
 ---
 

@@ -7,7 +7,7 @@ Make sure to read [TEST.md](TEST.md) for pass/fail criteria before committing an
 
 ## Project Overview
 
-**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 32 rules across 7 groups (naming, import, quality, role, orphan, doc, structure). The project itself is written in Rust and is self-auditing (it passes its own lint rules).
+**Lint Arwaky** is an architecture linter for Rust, Python, and TypeScript that enforces the [Agentic Engineering System (AES)](ARCHITECTURE.md) — a 7-layer architecture with 34 rules across 7 groups (naming, import, quality, role, orphan, doc, structure). The project itself is written in Rust and is self-auditing (it passes its own lint rules).
 
 ---
 

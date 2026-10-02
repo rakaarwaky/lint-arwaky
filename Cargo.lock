@@ -1091,6 +1091,7 @@ dependencies = [
 name = "doc-rules-lint-arwaky"
 version = "3.7.1"
 dependencies = [
+ "criterion",
  "regex",
  "serde_json",
  "shared-common-lint-arwaky",
@@ -4876,6 +4877,9 @@ dependencies = [
 [[package]]
 name = "shared-structure-rules-lint-arwaky"
 version = "3.7.1"
+dependencies = [
+ "shared-naming-rules-lint-arwaky",
+]
 
 [[package]]
 name = "shell-words"
@@ -5008,6 +5012,8 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 name = "structure-rules-lint-arwaky"
 version = "3.7.1"
 dependencies = [
+ "criterion",
+ "shared-naming-rules-lint-arwaky",
  "shared-structure-rules-lint-arwaky",
  "tempfile",
 ]

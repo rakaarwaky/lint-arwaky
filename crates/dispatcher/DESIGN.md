@@ -97,7 +97,7 @@ when a range in this table names a code `RULES_AES.md` no longer publishes.
 | Quality collector    | `surface_quality_action.rs` | AES301–305 | collected / scoped  |
 | Role collector       | `surface_role_action.rs`   | AES401–406 | collected / scoped  |
 | Orphan collector     | `surface_orphan_action.rs` | AES501–506 | collected / scoped  |
-| Structure collector  | `surface_structure_action.rs` | AES701–703 | collected / scoped  |
+| Structure collector  | `surface_structure_action.rs` | AES701–704 | collected / scoped  |
 | Check entry          | `surface_check_action.rs`  | `check`   | exit-code shaped over all groups |
 | CI entry             | `surface_ci_action.rs`     | `ci`      | the same groups with thresholds   |
 | Fix entry            | `surface_fix_action.rs`    | `fix`     | aggregates every `FixOutcome` into the run-level outcome |

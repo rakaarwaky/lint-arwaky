@@ -1,8 +1,10 @@
-# FRD — naming-rules (v2.0.0)
+# FRD — naming-rules (v2.1.0)
 
-> **Scope:** this crate enforces AES101 and AES102 only. Unknown-layer-prefix
-> files are skipped by AES102 (no layer → no suffix policy) and validated
-> structurally by AES101.
+> **Scope:** this crate enforces AES101 (stem shape), AES102 (layer suffix), and
+> AES103 (test/bench file prefix). Unknown-layer-prefix files are skipped by
+> AES102 (no layer → no suffix policy) and validated structurally by AES101.
+> AES103 is the only rule here that reads `tests/` and `benches/`, which the
+> default discovery walk prunes, so its input arrives as a second file set.
 
 ---
 
@@ -132,6 +134,30 @@ flowchart TD
 
 ---
 
+### FR-NamingRules-003: Test File Prefix Discipline (AES103)
+
+- **Description**: Every file inside `tests/` and `benches/` must be typed by its file-name prefix, because the prefix is the virtual folder — there is no subdirectory left to express the type in.
+- **Input**: The test and bench file entries discovered by the filesystem aggregate's `tests/`/`benches/` walk, the architecture configuration, and the layer map.
+- **Output**: AES103 diagnostic naming the offending prefix set, the directory, and whether the fix is a rename or a move.
+- **Business Rules**:
+
+  - **Slot classification** reads the containing directory, not the path depth. A file directly in `tests/` is a test file, one directly in `benches/` is a benchmark, and anything else is out of scope.
+  - **Legal prefixes in `tests/`** are the seven test types (`contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_`) plus the support set (`regression_`, `behavioral_`, `mock_`, `fixture_`).
+  - **Legal prefix in `benches/`** is `bench_` alone.
+  - **Flat layout**: neither directory may nest a subdirectory, with one registered exception — a `common/` support directory, which Rust reaches through a module declaration. A support module cannot sit flat beside the test files without colliding with them.
+  - **Barrels are skipped.** A Rust module barrel, a Python package marker, or a JavaScript index file names no test of its own; the same exemption AES101 grants them applies here.
+  - **Rule-level exceptions** (`config.rules[].exceptions.values`) skip a file by bare name, evaluated before any classification.
+  - **Support prefixes satisfy AES103 but not AES704.** A `regression_*` guard is a legal file name and no required category; category presence is the structure rule's question.
+- **Edge Cases**:
+
+  - A prefix belonging to the *other* directory (`bench_*` inside `tests/`) → AES103 distinguishing a move from a rename.
+  - No legal prefix at all → AES103 listing the legal set for that directory.
+  - A file nested below `tests/common/` → treated as flat, since that is where shared support code goes.
+  - A workspace with no `tests/` or `benches/` at all → no AES103 finding; the absence of a suite is AES704's question.
+- **Error Handling**: Emit AES103 at the file, naming the directory, the legal prefix set, and whether the fix is a rename or a move. Files with empty content are skipped by the same unreadable proxy AES101 and AES102 use.
+
+---
+
 ## API Contract
 
 ### Protocol API
@@ -140,6 +166,7 @@ flowchart TD
 |---|---|---|---|---|---|
 | `check_file_naming` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check file naming. |
 | `check_domain_suffixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check domain suffixes. |
+| `check_test_file_prefixes` | &ArchitectureConfig, &LayerMapVO, &FilePathList, &FilePath, &mut LintResultList | `` | — | — | Check test/bench file prefixes. |
 
 ### Aggregate API
 

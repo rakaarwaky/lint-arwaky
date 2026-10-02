@@ -20,7 +20,7 @@ use shared_filesystem::{
         DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
         ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
     },
-    utility_workspace_detection,
+    utility_test_file_discovery, utility_workspace_detection,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -77,6 +77,13 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             },
             FilesystemRequest::DiscoverSourceFiles { root, ignored } => FilesystemResponse::Paths {
                 paths: self.discover_source_files(&root, &ignored),
+            },
+            FilesystemRequest::DiscoverFilesInDirectories {
+                root,
+                directories,
+                ignored,
+            } => FilesystemResponse::Paths {
+                paths: self.discover_files_in_directories(&root, &directories, &ignored),
             },
             FilesystemRequest::ReadFile { path } => FilesystemResponse::ContentOpt {
                 value: self.read_file(&path),
@@ -357,6 +364,31 @@ impl FilesystemOrchestrator {
             .map(|p| p.to_string_lossy().to_string())
             .collect()
     }
+    /// Discovers source files inside *directories* anywhere under *root*, with
+    /// those directories exempted from the default skip list.
+    ///
+    /// This is the one discovery that keeps `tests/` and `benches/`, which the
+    /// default walk prunes. AES103 needs them; every other auditor wants them
+    /// gone. The shared utility supplies the directory list and the ignore
+    /// patterns; reading them is this agent's job, so the split keeps AES201
+    /// satisfied — a utility never reaches for a contract.
+    pub fn discover_files_in_directories(
+        &self,
+        root: &Path,
+        directories: &[String],
+        ignored: &[String],
+    ) -> Vec<String> {
+        let names: Vec<&str> = directories.iter().map(String::as_str).collect();
+        let keep = utility_test_file_discovery::ignore_patterns_keeping(&names, ignored);
+        let mut found: Vec<String> = Vec::new();
+        for dir in utility_test_file_discovery::find_test_directories(root, &names) {
+            found.extend(self.discover_source_files(&dir, &keep));
+        }
+        found.sort();
+        found.dedup();
+        found
+    }
+
     /// Reads a file's text content, falling back to disk when uncached.
     pub fn read_file(&self, path: &Path) -> Option<String> {
         self.get_file_content(path)

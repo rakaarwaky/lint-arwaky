@@ -19,6 +19,7 @@ use shared_import_rules::IImportRunnerAggregate;
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use shared_naming_rules::INamingRunnerAggregate;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_naming_rules::{BENCHES_DIR, TESTS_DIR};
 use shared_orphan_rules::IOrphanAggregate;
 use shared_orphan_rules::OrphanRequest;
 use shared_quality_rules::CodeAnalysisRequest;
@@ -277,6 +278,15 @@ fn run_all_linters_in_process(
     let import_map = build_import_map(&seam, &entries);
     on_progress("Index built".to_string(), 0, total_files);
 
+    // AES103's subject is the files the default walk prunes, so they need their
+    // own discovery. The root here is the scan target rather than the
+    // workspace root, because a member-dir scan must judge its own test files
+    // and no sibling's.
+    let test_files = build_entries(
+        &seam,
+        &discover_test_suite_files(&seam, &scan_root, &ignored),
+    );
+
     let parent_workspace = target_canon
         .parent()
         .and_then(|p| p.parent())
@@ -327,7 +337,7 @@ fn run_all_linters_in_process(
     );
     all.extend(
         agg.naming
-            .execute(NamingRequest::audit(&entries))
+            .execute(NamingRequest::audit_with_tests(&entries, &test_files))
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
@@ -766,6 +776,26 @@ fn discover_lintable_files(
         &mut discovered,
     );
     discovered
+}
+
+/// Discover the test and bench files under *scan_root* for AES103.
+///
+/// The walk lives in the filesystem foundation because it is the one discovery
+/// path that does not prune `tests/` and `benches`; this only asks for it by
+/// the names the AES103 vocabulary fixes, so a change to the layout rules
+/// cannot leave this call pointing at the old names.
+fn discover_test_suite_files(
+    seam: &FilesystemSeam,
+    scan_root: &std::path::Path,
+    ignored: &[String],
+) -> Vec<String> {
+    seam.aggregate
+        .execute(FilesystemRequest::discover_files_in_directories(
+            scan_root,
+            &[TESTS_DIR, BENCHES_DIR],
+            ignored,
+        ))
+        .into_paths()
 }
 
 /// Build the set of directory names the BFS skips: always `DEFAULT_IGNORED_PATHS`

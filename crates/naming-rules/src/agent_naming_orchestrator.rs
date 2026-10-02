@@ -9,6 +9,7 @@ use shared_naming_rules::contract_naming_checker_protocol::{
     INamingConventionProtocol, ISuffixPolicyProtocol,
 };
 use shared_naming_rules::contract_naming_runner_aggregate::INamingRunnerAggregate;
+use shared_naming_rules::contract_test_file_prefix_protocol::ITestFilePrefixProtocol;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
 use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 use std::sync::Arc;
@@ -18,6 +19,7 @@ use std::sync::Arc;
 pub struct NamingOrchestratorDeps {
     pub naming_convention: Arc<dyn INamingConventionProtocol>,
     pub suffix_policy: Arc<dyn ISuffixPolicyProtocol>,
+    pub test_file_prefix: Arc<dyn ITestFilePrefixProtocol>,
     pub config: Arc<ArchitectureConfig>,
     pub layer_map: Arc<LayerMapVO>,
 }
@@ -33,6 +35,15 @@ impl INamingRunnerAggregate for NamingOrchestrator {
         match request {
             NamingRequest::RunAuditWithEntries { files } => NamingResponse::Audit {
                 violations: self.run_audit_with_entries(&files),
+            },
+            NamingRequest::RunAuditWithTestEntries {
+                source_files,
+                test_files,
+            } => NamingResponse::Audit {
+                violations: self.run_audit_over(
+                    &FilePathList::new(Self::paths_of(&source_files)),
+                    &FilePathList::new(Self::paths_of(&test_files)),
+                ),
             },
             NamingRequest::Name => NamingResponse::Name {
                 name: self.name().to_string(),
@@ -53,19 +64,36 @@ impl NamingOrchestrator {
 
     /// Run audit on pre-parsed file entries from the filesystem crate.
     fn run_audit_with_entries(&self, files: &[FileEntry]) -> Vec<LintResult> {
+        self.run_audit_over(
+            &FilePathList::new(Self::paths_of(files)),
+            &FilePathList::default(),
+        )
+    }
+
+    /// AES101/AES102 read *source*; AES103 reads *tests*. Both file sets come
+    /// from the caller because only the filesystem walk knows which directories
+    /// the default skip list prunes.
+    fn run_audit_over(&self, source: &FilePathList, tests: &FilePathList) -> Vec<LintResult> {
         // Naming checks are path-only — do NOT skip parse failures.
         // `content.is_empty()` is used as a proxy for "unreadable" per the FRD glossary.
         // If the filesystem crate adds a separate error field in the future,
         // this filter should also check `parse_ok == false`.
-        let file_paths: Vec<FilePath> = files
+        let root = FilePath::new(".".to_string()).unwrap_or_default();
+        self.run_checks(source, tests, &root)
+    }
+
+    /// The paths of every entry carrying content, as the rule checkers read them.
+    ///
+    /// The `content.is_empty()` guard is the FRD's "unreadable" proxy; a file
+    /// with no body cannot be judged, and reporting on it would only produce
+    /// noise. It lives on the orchestrator because AES405 forbids a free
+    /// function in an agent file.
+    fn paths_of(files: &[FileEntry]) -> Vec<FilePath> {
+        files
             .iter()
             .filter(|f| !f.content.is_empty())
             .filter_map(|f| FilePath::new(f.path.to_string_lossy().to_string()).ok())
-            .collect();
-        let file_list = FilePathList::new(file_paths);
-        let root = FilePath::new(".".to_string()).unwrap_or_default();
-
-        self.run_checks(&file_list, &root)
+            .collect()
     }
 
     /// Check if a specific AES rule is enabled in the configuration.
@@ -78,7 +106,12 @@ impl NamingOrchestrator {
             .is_none_or(|r| r.enabled.value)
     }
 
-    fn run_checks(&self, files: &FilePathList, root_dir: &FilePath) -> Vec<LintResult> {
+    fn run_checks(
+        &self,
+        files: &FilePathList,
+        test_files: &FilePathList,
+        root_dir: &FilePath,
+    ) -> Vec<LintResult> {
         let mut results: Vec<LintResult> = Vec::new();
 
         if Self::is_rule_enabled(&self.deps.config, "AES101") {
@@ -103,6 +136,18 @@ impl NamingOrchestrator {
                 &mut suffix_results,
             );
             results.extend(suffix_results.values);
+        }
+
+        if Self::is_rule_enabled(&self.deps.config, "AES103") {
+            let mut prefix_results = LintResultList::new(Vec::new());
+            self.deps.test_file_prefix.check_test_file_prefixes(
+                self.deps.config.as_ref(),
+                self.deps.layer_map.as_ref(),
+                test_files,
+                root_dir,
+                &mut prefix_results,
+            );
+            results.extend(prefix_results.values);
         }
 
         results

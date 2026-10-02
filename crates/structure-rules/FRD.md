@@ -1,4 +1,4 @@
-# FRD — Structure Rules (AES701–AES703)
+# FRD — Structure Rules (AES701–AES704)
 
 ## Reference
 
@@ -7,7 +7,7 @@
 
 ## System Overview
 
-The structure-rules crate enforces the 7-layer AES folder discipline by auditing the layout of every workspace. It checks that shared, feature, and surface folders obey their shape contracts — shared folders carry DATA.md + BACKLOG.md, feature folders carry FRD.md + BACKLOG.md, and surface folders carry DESIGN.md + BACKLOG.md — and returns findings as workspace-root-relative paths so a member-directory scan resolves them correctly.
+The structure-rules crate enforces the 7-layer AES folder discipline by auditing the layout of every workspace. It checks that shared, feature, and surface folders obey their shape contracts — shared folders carry DATA.md + BACKLOG.md, feature folders carry FRD.md + BACKLOG.md, and surface folders carry DESIGN.md + BACKLOG.md — and that every feature folder carries a complete test suite. It returns findings as workspace-root-relative paths so a member-directory scan resolves them correctly.
 
 ## Functional Requirements
 
@@ -50,13 +50,32 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 - **Edge Cases**: A feature-dominated folder that happens to contain one surface file is NOT surface-dominated and is checked under AES702 instead. A surface folder with only permitted support files, DESIGN.md, and BACKLOG.md is clean.
 - **Error Handling**: If the folder path cannot be read, the auditor skips it silently.
 
+### FR-STR-004: Test Suite Category Coverage (AES704)
+
+- **Description**: Require every feature folder that owns source to carry one file per test type in `tests/` and at least one benchmark in `benches/`.
+- **Input**: An audit root path and the filesystem inventory of each candidate feature folder.
+- **Output**: `Vec<LintResult>` carrying one finding per missing test category, plus one finding per missing directory.
+- **Business Rules**:
+  - Scope uses the same gate as AES702: a folder holding at least one `capabilities_*` or one `agent_*_orchestrator` file is a feature and owes a suite. A utility-only folder, a surface, and the `shared` kernel are out of scope.
+  - `tests/` must hold at least one file for each of the seven test types: `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_`.
+  - `benches/` must hold at least one `bench_` file.
+  - A missing `tests/` directory produces one `test_suite_missing_tests_dir` finding rather than seven per-category findings; a missing `benches/` produces one `test_suite_missing_bench_dir`.
+  - Each absent category prefix produces its own `test_suite_missing_category` finding naming the prefix and what that test type proves, so a reader sees which seam is untested rather than a single "incomplete suite".
+  - The prefix vocabulary is read from `shared-naming-rules`, the same list AES103 enforces, so the two rules cannot drift apart on what counts as a category.
+  - Support prefixes — `regression_`, `behavioral_`, `mock_`, `fixture_` — are legal file names but satisfy no category. A folder carrying only regression guards still owes all seven.
+- **Edge Cases**: A `tests/` directory holding every category except one reports exactly one `test_suite_missing_category`. A feature folder with a complete suite is clean. A folder with no `tests/` directory at all reports the directory finding once. A utility-only folder reports nothing.
+- **Error Handling**: If a test directory cannot be read, it is treated as empty — every category it owed is reported — so an unreadable directory can never read as a satisfied one.
+
 ## API Contract
 
 ### Protocol API
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| `audit` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Walk all member directories, classify each folder, run all applicable checks, return sorted deduplicated findings |
+| `audit_shared` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES701 seam: shared folder purity and its doc pair |
+| `audit_feature` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES702 seam: feature folder health and its doc pair |
+| `audit_surface` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES703 seam: surface folder purity and its design docs |
+| `audit_test_suite` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES704 seam: per-category test-suite coverage |
 
 ### Aggregate API
 

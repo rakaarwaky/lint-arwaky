@@ -59,6 +59,39 @@ pub const FEATURE_DOC_PAIR: &[&str] = &[FRD_DOC, BACKLOG_DOC];
 pub const SURFACE_DOC_PAIR: &[&str] = &[DESIGN_DOC, BACKLOG_DOC];
 pub const SHARED_DOC_PAIR: &[&str] = &[DATA_DOC, BACKLOG_DOC];
 
+/// ─── AES704 — Test-suite coverage ───────────────────────────────────────────
+/// The aes-testing-suite skill fixes one test layout: seven test types in
+/// `tests/` plus benchmarks in `benches/`, each named by a flat prefix. A
+/// feature folder that owns source owes all eight, so a missing category is a
+/// structural gap rather than a naming slip.
+pub const RULE_CODE_TEST_SUITE_COVERAGE: &str = "AES704";
+
+/// A feature folder holds source but its `tests/` directory is missing entirely.
+pub const TEST_SUITE_VIOLATION_MISSING_TESTS_DIR: &str = "test_suite_missing_tests_dir";
+
+/// A feature folder holds source but its `benches/` directory is missing entirely.
+pub const TEST_SUITE_VIOLATION_MISSING_BENCH_DIR: &str = "test_suite_missing_bench_dir";
+
+/// A feature folder holds source but no file carries one required test prefix.
+pub const TEST_SUITE_VIOLATION_MISSING_CATEGORY: &str = "test_suite_missing_category";
+
+/// The prefix that marks a test file, paired with what that test type proves.
+/// AES704 reports the missing prefix; this table is what the message reads from,
+/// so the finding tells the author what the category is *for*.
+pub const TEST_SUITE_CATEGORY_PURPOSE: &[(&str, &str)] = &[
+    ("contract_", "Protocol/trait/interface impl exists"),
+    ("unit_", "One public function"),
+    ("integration_", "Module / crate / package + DI wiring"),
+    (
+        "dogfood_",
+        "CLI against live service/session; skip if unavailable",
+    ),
+    ("smoke_", "App boots + responds"),
+    ("e2e_", "Full request lifecycle"),
+    ("acceptance_", "Business requirement met"),
+    ("bench_", "Performance regression"),
+];
+
 /// ─── Shape constants ────────────────────────────────────────────────────────
 /// The shared folder name, locked across every language member.
 pub const KERNEL_DIR: &str = "shared";

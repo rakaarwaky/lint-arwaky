@@ -396,7 +396,7 @@ fn conforming_workspace_reports_no_findings() {
     );
     fs::write(root.join("crates/shared/DATA.md"), "# Shared DATA\n").unwrap();
     fs::write(root.join("crates/shared/BACKLOG.md"), "# Shared BACKLOG\n").unwrap();
-    // a complete feature, documented.
+    // a complete feature, documented, with a complete test suite.
     write(
         root.join("crates/calculator/src/agent_calc_orchestrator.rs")
             .as_path(),
@@ -414,6 +414,26 @@ fn conforming_workspace_reports_no_findings() {
     write(
         root.join("crates/calculator/BACKLOG.md").as_path(),
         "# Calculator — BACKLOG",
+    );
+    for prefix in [
+        "contract_",
+        "unit_",
+        "integration_",
+        "dogfood_",
+        "smoke_",
+        "e2e_",
+        "acceptance_",
+    ] {
+        write(
+            root.join(format!("crates/calculator/tests/{prefix}calculator.rs"))
+                .as_path(),
+            "#[test]\nfn t() {}",
+        );
+    }
+    write(
+        root.join("crates/calculator/benches/bench_calculator.rs")
+            .as_path(),
+        "fn b() {}",
     );
     // a surface crate keeping its barrels and helpers, documented.
     write(

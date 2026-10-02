@@ -15,4 +15,8 @@ path = "mod.rs"
 workspace = true
 
 [dependencies]
-# none — pure leaf
+# AES704 reads the test-type prefix vocabulary from the naming-rules shared
+# foundation, so the structure rule and the AES103 naming rule cannot drift
+# apart on which prefixes are legal. Pure data — no cycle: naming-rules does
+# not depend on structure-rules.
+shared-naming-rules.workspace = true

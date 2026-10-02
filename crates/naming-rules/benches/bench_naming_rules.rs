@@ -5,6 +5,7 @@ use naming_rules_lint_arwaky::agent_naming_orchestrator::{
 };
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
+use naming_rules_lint_arwaky::capabilities_test_file_prefix_checker::TestFilePrefixChecker;
 use shared_common::PatternList;
 use shared_common::SuffixPolicyVO;
 use shared_common::taxonomy_definition_vo::{LayerDefinition, LayerMapVO};
@@ -171,6 +172,7 @@ fn bench_orchestrator_full_audit(c: &mut Criterion) {
     let deps = NamingOrchestratorDeps {
         naming_convention: Arc::new(NamingConventionChecker::new()),
         suffix_policy: Arc::new(SuffixPolicyChecker::new()),
+        test_file_prefix: Arc::new(TestFilePrefixChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };

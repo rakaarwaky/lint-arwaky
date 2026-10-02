@@ -160,9 +160,9 @@ jobs:
 
       - name: AES Codes Check
         # Threshold must match the reconciled scan-visible rule count in
-        # TEST.md §3.1/§3.2 exactly: 32 total AES rules (per-rule matrix) minus
+        # TEST.md §3.1/§3.2 exactly: 34 total AES rules (per-rule matrix) minus
         # 5 doc-only invariants (AES601–AES605, audited via `docs`, not `scan`)
-        # = 27 unique codes expected from `scan workspaces-bad`.
+        # = 29 unique codes expected from `scan workspaces-bad`.
         # When rules are added/removed, update this threshold and TEST.md §3.2
         # in lockstep (QA #636).
         # `|| true` on the assignment: `scan` exits 1 whenever it reports
@@ -173,7 +173,7 @@ jobs:
         run: |
           codes=$(./target/debug/lint-arwaky-cli scan workspaces-bad 2>&1 | grep -oP "AES\d+" | sort -u | wc -l) || true
           echo "Unique codes: ${codes:-0}"
-          [ "${codes:-0}" -ge 27 ]
+          [ "${codes:-0}" -ge 29 ]
 
       - name: External Tool Integration Check (QA #637)
         # Proves the external-lint adapters actually invoked the real tools
