@@ -101,13 +101,7 @@ cargo run --bin lint-arwaky-cli -- scan .
 
 > `scan .` runs ALL 7 code linters (naming, import, quality, role, orphan, structure, external) on the lint-arwaky codebase itself. Expected: **0 violations**. Document invariants (AES601–AES605) are audited separately with `docs .`.
 
-Cross-document consistency — the drifts that span two artefacts and so fall outside AES601–AES605 — is a separate gate, run in CI as **Doc Consistency** and locally with:
 
-```bash
-python3 tools/check_doc_consistency.py
-```
-
-It fails when a rule-code range in a `DESIGN.md`/`FRD.md` names a code `RULES_AES.md` no longer publishes, an in-repo Markdown link points at a missing file or heading anchor, `crates/shared/DATA.md`'s attribute tables disagree with the shared value objects, the auto-fix Reason Code Reference disagrees with the enumerated reasons, the performance NFR states different numbers in `PRD.md`, `README.md`, and `crates/filesystem/FRD.md`, the AES605 `DESIGN.md` H2 contract in `crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs` disagrees with the template fenced in `HOW-TO-MAKE-DESIGN.md`, or the AES602 FRD level-3 contract (`FRD_H3_TITLES`) in the same file disagrees with the template fenced in `HOW-TO-MAKE-FRD.md`. Expected: **0 failures**.
 
 ### 2.2 Scan Test Projects
 
