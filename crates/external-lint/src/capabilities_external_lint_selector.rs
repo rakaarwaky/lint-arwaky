@@ -2,12 +2,16 @@ use shared_common::AdapterNameList;
 use shared_common::taxonomy_adapter_name_vo::AdapterName;
 use shared_external_lint::contract_external_lint_protocol::IExternalLintSelectorProtocol;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 pub struct CapabilitiesExternalLintSelector {
     rust_adapters: Vec<AdapterName>,
     python_adapters: Vec<AdapterName>,
     js_adapters: Vec<AdapterName>,
     markdown_adapters: Vec<AdapterName>,
 }
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
     fn select_adapters(
@@ -31,6 +35,8 @@ impl IExternalLintSelectorProtocol for CapabilitiesExternalLintSelector {
         AdapterNameList::new(adapter_names)
     }
 }
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 impl CapabilitiesExternalLintSelector {
     pub fn new(

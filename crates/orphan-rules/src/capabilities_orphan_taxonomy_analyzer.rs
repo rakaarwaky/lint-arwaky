@@ -9,7 +9,11 @@ use shared_quality_rules::taxonomy_quality_rules_vo::{
 };
 use std::collections::HashMap;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 pub struct TaxonomyOrphanAnalyzer;
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
     fn is_taxonomy_orphan(
@@ -158,6 +162,8 @@ impl ITaxonomyOrphanProtocol for TaxonomyOrphanAnalyzer {
         OrphanIndicatorResult::new(true, reason, Severity::LOW)
     }
 }
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 impl Default for TaxonomyOrphanAnalyzer {
     fn default() -> Self {

@@ -7,6 +7,8 @@ use shared_common::taxonomy_lint_result_vo::LintResult;
 use shared_common::taxonomy_severity_vo::Severity;
 use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, ParseMetadata};
 
+use std::collections::BTreeSet;
+
 /// True when `trait_name` names a contract protocol trait.
 ///
 /// A capability implements a contract protocol, never an aggregate — aggregate
@@ -220,6 +222,228 @@ pub fn check_single_protocol(file: &FileEntry, violations: &mut Vec<LintResult>)
             names = trait_names.join(", ")
         ),
     ));
+}
+
+/// Rule 4 — the capability declares all three blocks, in order, and no more.
+/// MEDIUM.
+///
+/// The 3-block structure (Block 1 struct / class, Block 2 protocol
+/// implementation, Block 3 constructors, std traits, helpers) is the shape the
+/// capability HOW-TO documents, and the `// Block 1:` … `// Block 3:` banners
+/// are how a reader sees it. `check_block_order` only compares two `impl` lines
+/// — it cannot tell a file that documents its three blocks from one that
+/// happens to declare them in a lucky order — so a file with no banners at all
+/// passed. This check reads the banners themselves and requires all three.
+///
+/// Three findings, one per defect, so a file missing two blocks is told about
+/// both rather than once:
+///
+/// - no banner at all — the file never declares the structure;
+/// - a subset of 1/2/3 — the file declares some blocks and skips others;
+/// - out of order or a block above 3 — the sequence itself is wrong.
+///
+/// The banner is a whole-word `Block <digits>:` inside a comment. Requiring the
+/// colon keeps prose such as `Block 1 (types) -> Block 2` from reading as a
+/// banner, and the word boundary keeps `Sub-Block 4:` out.
+///
+/// The marker parser is duplicated from `utility_agent_role_checker` rather than
+/// shared: AES201 forbids a utility importing another utility, so the two
+/// layers cannot share one copy without moving the parser into a layer both may
+/// import. They are kept identical deliberately — the same banner means the
+/// same thing to both rules.
+pub fn check_block_markers(file: &FileEntry, violations: &mut Vec<LintResult>) {
+    let path = file.path.to_string_lossy().to_string();
+    let markers = block_marker_numbers(&file.content);
+
+    if markers.is_empty() {
+        violations.push(LintResult::new_arch(
+            &path,
+            0,
+            "AES403",
+            Severity::MEDIUM,
+            format!(
+                "AES403 CAPABILITY_ROLE: Capability file declares no block markers.\n\
+                 WHY? {path} carries no `Block 1:` / `Block 2:` / `Block 3:` banner \
+                 comment, so the reader is given no map of the file. The 3-block shape \
+                 is Block 1 (struct definition) -> Block 2 (protocol trait \
+                 implementation) -> Block 3 (constructors, std traits, helpers).\n\
+                 HOW TO FIX? Add the three banner comments above their blocks:\n  \
+                 // Block 1: Struct Definition\n  \
+                 // Block 2: Protocol Trait Implementation\n  \
+                 // Block 3: Constructors, Std Traits, Helpers"
+            ),
+        ));
+        return;
+    }
+
+    let declared: BTreeSet<usize> = markers.iter().copied().collect();
+    let missing: Vec<usize> = [1usize, 2, 3]
+        .into_iter()
+        .filter(|n| !declared.contains(n))
+        .collect();
+    if !missing.is_empty() {
+        violations.push(LintResult::new_arch(
+            &path,
+            0,
+            "AES403",
+            Severity::MEDIUM,
+            format!(
+                "AES403 CAPABILITY_ROLE: Capability file is missing block marker(s).\n\
+                 WHY? {path} declares {} but not {}. A capability is three blocks — \
+                 Block 1 (struct definition), Block 2 (protocol trait implementation), \
+                 Block 3 (constructors, std traits, helpers) — and each needs its banner \
+                 so the reader can find the seam.\n\
+                 HOW TO FIX? Add the missing banner comment(s) above the block they head.",
+                block_list(&declared),
+                missing
+                    .iter()
+                    .map(|n| format!("Block {n}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        ));
+    }
+
+    // A banner above 3 means the file outgrew the shape, and a sequence that is
+    // not 1 -> 2 -> 3 means the map lies about the order.
+    let above_three: Vec<usize> = markers.iter().copied().filter(|n| *n > 3).collect();
+    if !above_three.is_empty() {
+        violations.push(LintResult::new_arch(
+            &path,
+            0,
+            "AES403",
+            Severity::MEDIUM,
+            format!(
+                "AES403 CAPABILITY_ROLE: Capability file carries block markers beyond Block 3.\n\
+                 WHY? {path} declares {}. The 3-block structure is Block 1 (struct \
+                 definition) -> Block 2 (protocol trait implementation) -> Block 3 \
+                 (constructors, std traits, helpers); a Block 4 means the file has \
+                 outgrown it.\n\
+                 HOW TO FIX? Fold the extra blocks back into Block 3, or move the \
+                 behaviour they hold into a capability or utility file.",
+                above_three
+                    .iter()
+                    .map(|n| format!("Block {n}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+        ));
+    }
+
+    // Order is checked over the distinct numbers in the order they first appear,
+    // so a banner repeated in a doc comment cannot reorder the sequence.
+    let mut sequence: Vec<usize> = Vec::new();
+    for n in &markers {
+        if !sequence.contains(n) {
+            sequence.push(*n);
+        }
+    }
+    let mut expected = sequence.clone();
+    expected.sort_unstable();
+    if sequence != expected {
+        violations.push(LintResult::new_arch(
+            &path,
+            0,
+            "AES403",
+            Severity::MEDIUM,
+            format!(
+                "AES403 CAPABILITY_ROLE: Capability block markers are out of order.\n\
+                 WHY? {path} declares them as {} but the structure is fixed: Block 1 \
+                 (struct definition) -> Block 2 (protocol trait implementation) -> \
+                 Block 3 (constructors, std traits, helpers).\n\
+                 HOW TO FIX? Move the banner comments so they head their blocks in \
+                 1 -> 2 -> 3 order.",
+                sequence
+                    .iter()
+                    .map(|n| format!("Block {n}"))
+                    .collect::<Vec<_>>()
+                    .join(" -> ")
+            ),
+        ));
+    }
+}
+
+/// The declared block numbers as a readable `Block 1, Block 2` list.
+fn block_list(declared: &BTreeSet<usize>) -> String {
+    declared
+        .iter()
+        .map(|n| format!("Block {n}"))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
+/// The `N` of every `Block N:` banner comment, in declaration order.
+///
+/// A banner is `Block <digits>:` standing as its own word inside a comment. Both
+/// halves matter. The colon separates a marker from prose — the HOW-TO and rule
+/// messages describe the structure as `Block 1 (type + injected deps) -> Block
+/// 2`, and requiring the colon keeps those sentences from reading as markers.
+/// The word boundary keeps a longer word that merely contains "Block" — such as
+/// `Sub-Block 4:` — from reading as a banner either.
+fn block_marker_numbers(content: &str) -> Vec<usize> {
+    let mut out = Vec::new();
+    for line in content.lines() {
+        let t = line.trim();
+        if !is_comment(t) {
+            continue;
+        }
+        let Some((idx, rest)) = standalone_word(t, "Block") else {
+            continue;
+        };
+        let rest = &t[idx + rest..];
+        let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+        if digits.is_empty() || !rest[digits.len()..].starts_with(':') {
+            continue;
+        }
+        if let Ok(n) = digits.parse::<usize>() {
+            out.push(n);
+        }
+    }
+    out
+}
+
+/// True when a line is a comment in any of the three languages.
+fn is_comment(trimmed: &str) -> bool {
+    trimmed.starts_with("//")
+        || trimmed.starts_with("/*")
+        || trimmed.starts_with('*')
+        || trimmed.starts_with('#')
+        || trimmed.starts_with("///")
+}
+
+/// The byte offset of *word* in `t` when it stands as a standalone token, plus
+/// the length of the characters that follow it.
+///
+/// `Sub-Block 4:` contains the substring "Block" but the character before it is
+/// part of a longer word, so it is not a standalone occurrence. Rust identifiers
+/// treat `-` as a separator, but a banner comment is prose: a hyphenated
+/// `Sub-Block` reads as one word to a human, so a hyphen counts as part of the
+/// preceding token here.
+fn standalone_word(t: &str, word: &str) -> Option<(usize, usize)> {
+    let mut from = 0;
+    while let Some(rel) = t[from..].find(word) {
+        let idx = from + rel;
+        let before_ok = t[..idx]
+            .chars()
+            .next_back()
+            .is_none_or(|c| !c.is_alphanumeric() && c != '_' && c != '-');
+        let after = &t[idx + word.len()..];
+        let after_ok = after
+            .chars()
+            .next()
+            .is_none_or(|c| !c.is_alphanumeric() && c != '_');
+        if before_ok && after_ok {
+            // Return the offset *after* the word and the character that follows
+            // it, measured from the character that follows — never from the
+            // word's own first byte, which is always one byte and would leave
+            // the slice inside a multi-byte character when the next character is
+            // not ASCII (a fullwidth colon in a comment, say).
+            let skip = after.chars().next().map_or(0, char::len_utf8);
+            return Some((idx, word.len() + skip));
+        }
+        from = idx + word.len();
+    }
+    None
 }
 
 /// Count type declarations by line scan, for files with no parse metadata.
