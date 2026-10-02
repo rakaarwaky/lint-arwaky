@@ -15,10 +15,12 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::utility_test_file_discovery;
 use shared_import_rules::IImportRunnerAggregate;
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use shared_naming_rules::INamingRunnerAggregate;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
+use shared_naming_rules::{BENCHES_DIR, TESTS_DIR};
 use shared_orphan_rules::IOrphanAggregate;
 use shared_orphan_rules::OrphanRequest;
 use shared_quality_rules::CodeAnalysisRequest;
@@ -277,6 +279,15 @@ fn run_all_linters_in_process(
     let import_map = build_import_map(&seam, &entries);
     on_progress("Index built".to_string(), 0, total_files);
 
+    // AES103's subject is the files the default walk prunes, so they need their
+    // own discovery. The root here is the scan target rather than the
+    // workspace root, because a member-dir scan must judge its own test files
+    // and no sibling's.
+    let test_files = build_entries(
+        &seam,
+        &discover_test_suite_files(&seam, &scan_root, &ignored),
+    );
+
     let parent_workspace = target_canon
         .parent()
         .and_then(|p| p.parent())
@@ -327,7 +338,7 @@ fn run_all_linters_in_process(
     );
     all.extend(
         agg.naming
-            .execute(NamingRequest::audit(&entries))
+            .execute(NamingRequest::audit_with_tests(&entries, &test_files))
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
@@ -694,9 +705,22 @@ fn run_single_file_scan(
             .iter()
             .map(ViolationItem::from_lint_result),
     );
+    // AES103 judges the test/bench files, so a one-file scan of a misnamed or
+    // nested test file has to reach it. The file itself is the only evidence
+    // that scan target can offer, so it is passed as the test set when it sits
+    // in one of those directories.
+    let test_entries: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> =
+        if utility_test_file_discovery::is_inside_any(
+            &scan_root.to_string_lossy(),
+            &[TESTS_DIR, BENCHES_DIR],
+        ) {
+            entries.clone()
+        } else {
+            Vec::new()
+        };
     all.extend(
         agg.naming
-            .execute(NamingRequest::audit(&entries))
+            .execute(NamingRequest::audit_with_tests(&entries, &test_entries))
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),
@@ -766,6 +790,26 @@ fn discover_lintable_files(
         &mut discovered,
     );
     discovered
+}
+
+/// Discover the test and bench files under *scan_root* for AES103.
+///
+/// The walk lives in the filesystem foundation because it is the one discovery
+/// path that does not prune `tests/` and `benches`; this only asks for it by
+/// the names the AES103 vocabulary fixes, so a change to the layout rules
+/// cannot leave this call pointing at the old names.
+fn discover_test_suite_files(
+    seam: &FilesystemSeam,
+    scan_root: &std::path::Path,
+    ignored: &[String],
+) -> Vec<String> {
+    seam.aggregate
+        .execute(FilesystemRequest::discover_files_in_directories(
+            scan_root,
+            &[TESTS_DIR, BENCHES_DIR],
+            ignored,
+        ))
+        .into_paths()
 }
 
 /// Build the set of directory names the BFS skips: always `DEFAULT_IGNORED_PATHS`

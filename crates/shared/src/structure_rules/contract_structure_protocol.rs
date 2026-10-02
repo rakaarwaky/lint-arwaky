@@ -21,3 +21,11 @@ pub trait IStructureFeatureHealthProtocol: Send + Sync {
 pub trait IStructureSurfacePurityProtocol: Send + Sync {
     fn audit_surface(&self, request: StructureRequest) -> StructureResponse;
 }
+
+/// Test-suite coverage: every feature folder that owns source holds at least one
+/// file for each of the seven test types in `tests/`, and at least one `bench_`
+/// file in `benches/` (AES704).
+pub trait IStructureTestSuiteProtocol: Send + Sync {
+    /// Report every missing test category across every feature folder.
+    fn audit_test_suite(&self, request: StructureRequest) -> StructureResponse;
+}

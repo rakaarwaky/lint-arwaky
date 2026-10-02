@@ -12,6 +12,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | -------- | --------------------- | ---------- | -------- | -------------------------------------------------------------------------------------------- |
 | AES101 | Naming Convention   | HIGH     | Naming | Filename must follow`prefix_concept_suffix` pattern — lowercase, underscore, min 3 words. |
 | AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.                |
+| AES103 | Test File Prefix    | HIGH     | Naming | A file in `tests/` or `benches/` must carry a legal test-type prefix and neither directory may nest. |
 
 | Code   | Name             | Severity | Group  | Description                                                                                    |
 | -------- | ------------------ | ---------- | -------- | ------------------------------------------------------------------------------------------------ |
@@ -60,6 +61,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES701 | Shared Folder Purity | HIGH     | Structure | A `shared` folder holds a `capabilities_*`, `agent_*`, or `surface_*` file.                  |
 | AES702 | Feature Folder Health | MEDIUM   | Structure | A feature folder lacks an `agent_*_orchestrator` or a `capabilities_*` file, holds foreign layer files, or lacks its doc pair.                                  |
 | AES703 | Surface Folder Purity | MEDIUM   | Structure | A surface folder holds a `capabilities_*` or `agent_*` file, or lacks DESIGN.md.                               |
+| AES704 | Test Suite Coverage | MEDIUM   | Structure | A feature folder lacks a `tests/` category or its `benches/` benchmark.                                      |
 
 ---
 
@@ -102,6 +104,49 @@ Suffix must match the layer definition. Three sub-checks:
 | `capabilities` | flexible | based on config                                                                                                          | `_vo`, `_entity`, `_error`, `_event`, `_constant`, `_constants`, `_protocol`, `_aggregate`, `_utility`, `_request`, `_response` |
 | `agent`        | strict   | `_orchestrator`                                                                                                          | N/A                                                                                                    |
 | `surfaces`     | strict   | `_command`, `_controller`, `_page`, `_view`, `_component`, `_router`, `_layout`, `_hook`, `_store`, `_action`, `_screen` | N/A                                                                                                    |
+
+---
+
+### AES103 — Test File Prefix
+
+**Severity:** HIGH
+
+The `aes-testing-suite` skill fixes one test layout: tests live in `tests/`,
+benchmarks in `benches/`, and the flat file-name prefix **is** the virtual
+folder. AES103 enforces both halves of that.
+
+#### Legal prefixes
+
+| Directory  | Legal prefixes                                                                                                                              |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/`    | the seven test types — `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `acceptance_` — plus the support set `regression_`, `behavioral_`, `mock_`, `fixture_` |
+| `benches/`  | `bench_`                                                                                                                                     |
+| anywhere    | any — a file outside both directories carries no test-type prefix and is not read by this rule                                              |
+
+#### Sub-checks
+
+1. **Flat layout** — `tests/` and `benches/` must not nest a subdirectory. The
+   one registered exception is `tests/common/`, which Rust reaches through
+   `mod common;`; a support module cannot sit flat beside the test files without
+   colliding with them.
+2. **Legal prefix** — a file's stem must start with one of its directory's
+   prefixes. A prefix belonging to the *other* directory is reported separately
+   from no prefix at all, because the fix is a move rather than a rename.
+3. **Barrel exemption** — `mod.rs`, `lib.rs`, `__init__.py`, `index.ts`, and
+   `index.js` name no test of their own and are skipped, the same exemption
+   AES101 grants them.
+
+#### Scope boundary
+
+AES103 is the only rule that reads `tests/` and `benches/`. Every other
+per-file auditor works on production source and skips them — a test file judged
+by AES101 or AES102 yields noise nobody acts on. The file index the naming
+orchestrator receives therefore carries two sets: production source for AES101
+and AES102, and the test/bench files for AES103.
+
+**Support prefixes satisfy AES103 but not AES704.** A `regression_*` guard is a
+legal file name and no required category; category presence is the structure
+rule's question.
 
 ---
 
@@ -582,5 +627,45 @@ A surface folder is a folder where surface files dominate — it has more surfac
 | Violation type                       | Fires when                                                             |
 | -------------------------------------- | ------------------------------------------------------------------------ |
 | `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*` or `agent_*` file. |
+
+---
+
+### AES704 — Test Suite Coverage
+
+**Severity:** MEDIUM
+
+The `aes-testing-suite` skill fixes one test layout: seven test types in `tests/`
+plus benchmarks in `benches/`, each named by a flat prefix. A feature folder that
+owns source owes all eight, so a missing category is a structural gap rather
+than a naming slip — AES103 asks whether a name is legal, AES704 asks whether the
+category is present.
+
+A folder is in scope when it holds at least one `capabilities_*` or one
+`agent_*_orchestrator` file — the same gate AES702 uses to decide what counts as
+a feature. A utility-only folder or a surface owes no suite.
+
+| Prefix         | Directory  | Proves                                  |
+| --------------- | ----------- | --------------------------------------- |
+| `contract_`     | `tests/`    | Protocol/trait/interface impl exists    |
+| `unit_`         | `tests/`    | One public function                     |
+| `integration_`  | `tests/`    | Module / crate / package + DI wiring    |
+| `dogfood_`      | `tests/`    | CLI against a live service; skip if unavailable |
+| `smoke_`        | `tests/`    | App boots + responds, under 5 s         |
+| `e2e_`          | `tests/`    | Full request lifecycle                  |
+| `acceptance_`   | `tests/`    | Business requirement met                |
+| `bench_`        | `benches/`  | Performance regression                  |
+
+Support prefixes (`regression_`, `behavioral_`, `mock_`, `fixture_`) are legal
+file names and satisfy **no** category: a folder carrying only regression guards
+still owes the full seven.
+
+| Violation type                     | Fires when                                                                 |
+| ----------------------------------- | -------------------------------------------------------------------------- |
+| `test_suite_missing_tests_dir`     | A feature folder owns source and has no `tests/` directory.                |
+| `test_suite_missing_bench_dir`     | A feature folder owns source and has no `benches/` directory.              |
+| `test_suite_missing_category`      | A feature folder owns source and no file carries one required test prefix.  |
+
+Each missing category is its own finding, so a reader sees exactly which seam is
+untested rather than a single "your suite is incomplete".
 
 ---

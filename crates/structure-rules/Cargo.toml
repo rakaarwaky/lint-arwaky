@@ -2,7 +2,7 @@
 name = "structure-rules-lint-arwaky"
 version = "3.7.1"
 edition = "2024"
-description = "Folder and file structure enforcer for AES701 (shared purity), AES702 (feature health), and AES703 (surface purity)."
+description = "Folder and file structure enforcer for AES701 (shared purity), AES702 (feature health), AES703 (surface purity), and AES704 (test-suite coverage)."
 license = "MIT"
 repository = "https://github.com/rakaarwaky/lint-arwaky"
 publish = true
@@ -11,7 +11,16 @@ publish = true
 workspace = true
 
 [dependencies]
+# AES704 labels test-suite paths with the same vocabulary AES103 enforces, so
+# the naming rule and the structure rule cannot drift apart on the prefix list.
+shared-naming-rules.workspace = true
 shared-structure-rules.workspace = true
 
 [dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
 tempfile = "3"
+
+[[bench]]
+name = "bench_structure_rules"
+path = "benches/bench_structure_rules.rs"
+harness = false

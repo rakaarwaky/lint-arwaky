@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
     echo "Usage: bash scripts/gates.sh [options]"
     echo ""
-    echo "Runs all quality gates: format, clippy, self-lint, AES codes, tests."
+    echo "Runs all quality gates: format, doc consistency, clippy, self-lint, AES codes, tests."
     echo ""
     echo "Options:"
     echo "  -h, --help    Show this help"
@@ -84,10 +84,12 @@ echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # ─── Phase 1: Fast static checks (no build) ────────────────
 ph1_start=$SECONDS
-echo -e "\n${CYAN}━━━ Phase 1: Format (fast, no build) ━━━${NC}"
+echo -e "\n${CYAN}━━━ Phase 1: Format + Doc Consistency (fast, no build) ━━━${NC}"
 run_gate "Rust Format" cargo fmt --all -- --check &
 FMT_PID=$!
-wait_and_report $FMT_PID
+run_gate "Doc Consistency" python3 tools/check_doc_consistency.py &
+DOC_PID=$!
+wait_and_report $FMT_PID $DOC_PID
 echo "Phase 1 duration: $((SECONDS - ph1_start))s"
 
 # Skill markdown has a single source of truth at `crates/shared/skills/`.
@@ -152,12 +154,12 @@ run_gate "Self-Lint (check .)" bash -c '
 ' &
 SELF_LINT_PID=$!
 
-run_gate "False Negatives (workspaces-bad >= 27)" bash -c '
+run_gate "False Negatives (workspaces-bad >= 29)" bash -c '
     codes_rust=$($CLI scan workspaces-bad/crates 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     codes_python=$($CLI scan workspaces-bad/modules 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     codes_ts=$($CLI scan workspaces-bad/packages 2>&1 | grep -oP "AES\d+" | sort -u | wc -l)
     echo "  Rust: ${codes_rust:-0} codes, Python: ${codes_python:-0} codes, TS: ${codes_ts:-0} codes"
-    [ "${codes_rust:-0}" -ge 27 ] && [ "${codes_python:-0}" -ge 27 ] && [ "${codes_ts:-0}" -ge 27 ]
+    [ "${codes_rust:-0}" -ge 29 ] && [ "${codes_python:-0}" -ge 29 ] && [ "${codes_ts:-0}" -ge 29 ]
 ' &
 FN_PID=$!
 

@@ -15,7 +15,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 | # | Goal | Measurement | Target | Business Outcome | Baseline → Target |
 |---|------|-------------|--------|------------------|-------------------|
 | 1 | Multi-language linting in a single pass | `scan` on mixed-language workspace | violations from all 3 languages | Fewer cross-language review passes per PR | 3 passes/PR → ≤ 1 pass/PR (-66%) |
-| 2 | 32 AES rules enforced across 7 groups | `workspaces-bad` scan | every applicable rule code produces violations per supported language | Prevent silent architecture drift before merge | 12 post-merge defect escapes/qtr → 0 escapes/qtr |
+| 2 | 34 AES rules enforced across 7 groups | `workspaces-bad` scan | every applicable rule code produces violations per supported language | Prevent silent architecture drift before merge | 12 post-merge defect escapes/qtr → 0 escapes/qtr |
 | 3 | MCP server with 5 tools, full CLI parity | `execute_command` on every CLI command | all commands reachable | AI agents autonomously detect and fix lint issues | Manual developer triage in CI: 45 min/run → < 5 min/run (-89%) |
 | 4 | Self-auditing | `lint-arwaky-cli check .` on this repo | 0 violations | Zero internal architectural regression across releases | 0 violations maintained across all releases (measured per release) |
 
@@ -27,7 +27,7 @@ Developers, AI agents, and DevOps engineers on multi-language monorepos (Rust/Py
 
 ## Scope
 
-- **In scope**: CLI binary, MCP server, TUI, 32 AES rules across seven groups, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
+- **In scope**: CLI binary, MCP server, TUI, 34 AES rules across seven groups, external linter adapters, SARIF/JUnit/JSON reports, git hooks, auto-fix (remove + replace + rename).
 - **Out of scope**: IDE plugins, web dashboard, cloud SaaS, non-Rust implementation, structural/multi-file semantic refactors in auto-fix, Windows runtime support (deferred to post-v3.x pending dedicated runner ROI; cross-compilation target available but runtime unvalidated; estimated cost of Windows CI matrix exceeds current adoption demand where >92% of target developer/CI environments are Linux/macOS).
 
 ## Product Decisions (locked)
@@ -81,7 +81,7 @@ response envelope is specified in the MCP surface's design document.
 
 ## AES Rule Summary (32 Rules)
 
-Seven groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), **Doc** (AES601–605, 5), and **Structure** (AES701–703, 3). The `scan`/`check` command runs the six code linters plus structure; **Doc** rules are audited over the document chain via the `docs` command. Full rule definitions: [RULES_AES.md](RULES_AES.md).
+Seven groups: **Naming** (AES101–103, 3), **Import** (AES201–205, 5), **Quality** (AES301–305, 5), **Role** (AES401–406, 6), **Orphan** (AES501–506, 6), **Doc** (AES601–605, 5), and **Structure** (AES701–704, 4). The `scan`/`check` command runs the six code linters plus structure; **Doc** rules are audited over the document chain via the `docs` command. Full rule definitions: [RULES_AES.md](RULES_AES.md).
 
 ## Feature Requirements (Prioritized)
 
@@ -90,7 +90,7 @@ Seven groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Qual
 ### P0 — Must Have
 
 - **FR-PRD-001**: Multi-language scanning (Rust, Python, JS/TS). Acceptance: `scan` on mixed-language workspace returns violations from all three (evidence: the `filesystem` crate's FR-001 acceptance suite, `workspaces-bad/`).
-- **FR-PRD-002**: 32 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for every applicable code-level rule in each supported language; doc rules are audited over the document chain (evidence: `TEST.md` Section 3.2, `doc-rules` contract test suite).
+- **FR-PRD-002**: 34 AES rules enforcement. Acceptance: `workspaces-bad` produces violations for every applicable code-level rule in each supported language; doc rules are audited over the document chain (evidence: `TEST.md` Section 3.2, `doc-rules` contract test suite).
 - **FR-PRD-003**: CLI core commands (`check`, `scan`, `fix`, `ci`). Acceptance: each exits with the correct code from the Exit Code Contract (evidence: `cli-commands` and `dispatcher` acceptance suites).
 - **FR-PRD-004**: MCP server with 5 tools, full execute parity. Acceptance: every CLI command is reachable via `execute_command` (evidence: `mcp-server` acceptance suite).
 - **FR-PRD-005**: Self-auditing capability. Acceptance: `lint-arwaky-cli check .` on this repo reports 0 violations (evidence: `AGENTS.md` Definition of Done gate).

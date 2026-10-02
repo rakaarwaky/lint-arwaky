@@ -7,6 +7,7 @@ use crate::agent_structure_orchestrator::StructureOrchestrator;
 use crate::capabilities_feature_health_auditor::FeatureHealthAuditor;
 use crate::capabilities_shared_purity_auditor::SharedPurityAuditor;
 use crate::capabilities_surface_purity_auditor::SurfacePurityAuditor;
+use crate::capabilities_test_suite_coverage_auditor::TestSuiteCoverageAuditor;
 use shared_structure_rules::contract_structure_aggregate::IStructureAggregate;
 use std::sync::Arc;
 
@@ -20,6 +21,7 @@ impl RootStructureRulesContainer {
             Arc::new(SharedPurityAuditor {}),
             Arc::new(FeatureHealthAuditor {}),
             Arc::new(SurfacePurityAuditor {}),
+            Arc::new(TestSuiteCoverageAuditor {}),
         ))
     }
 }

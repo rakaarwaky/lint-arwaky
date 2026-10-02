@@ -18,6 +18,14 @@ pub enum FilesystemRequest {
     CollectFileEntries { patterns: PatternList },
     /// Discover source files under a root, filtered by ignored patterns.
     DiscoverSourceFiles { root: PathBuf, ignored: Vec<String> },
+    /// Discover source files living inside *directories* under a root, with
+    /// those directories exempted from the default skip list. Backs AES103,
+    /// whose subject is exactly the files the default walk prunes.
+    DiscoverFilesInDirectories {
+        root: PathBuf,
+        directories: Vec<String>,
+        ignored: Vec<String>,
+    },
     /// Read a file's text content by path (alias for get_file_content).
     ReadFile { path: PathBuf },
     /// Scan a directory recursively and return all file paths.
@@ -79,6 +87,17 @@ impl FilesystemRequest {
     pub fn discover_source_files(root: &Path, ignored: &[String]) -> Self {
         Self::DiscoverSourceFiles {
             root: root.to_path_buf(),
+            ignored: ignored.to_vec(),
+        }
+    }
+    pub fn discover_files_in_directories(
+        root: &Path,
+        directories: &[&str],
+        ignored: &[String],
+    ) -> Self {
+        Self::DiscoverFilesInDirectories {
+            root: root.to_path_buf(),
+            directories: directories.iter().map(|d| d.to_string()).collect(),
             ignored: ignored.to_vec(),
         }
     }

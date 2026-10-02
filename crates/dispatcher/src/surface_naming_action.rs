@@ -18,6 +18,8 @@ use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
 
 use shared_common::ViolationItem;
 
+use crate::surface_test_entries;
+
 pub fn collect_naming(
     path: Option<FilePath>,
     naming_orchestrator: Arc<dyn INamingRunnerAggregate>,
@@ -45,14 +47,14 @@ pub fn collect_naming(
         ignored_paths,
     ));
 
-    // 4. Run naming audit — orchestrator does zero I/O, only delegates
-    //    to the naming convention and suffix-policy protocols (AES101 + AES102).
-    let request = NamingRequest::RunAuditWithEntries {
-        files: fs_agg
-            .execute(FilesystemRequest::FileList)
-            .into_file_list()
-            .to_vec(),
-    };
+    // 4. Run naming audit — orchestrator does zero I/O, only delegates to the
+    //    naming-convention, suffix-policy, and test-prefix protocols
+    //    (AES101 + AES102 + AES103). AES103's subject is the test and bench
+    //    files, which the index build above prunes, so they are discovered
+    //    separately rather than read from the file list.
+    let source_files = fs_agg.execute(FilesystemRequest::FileList).into_file_list();
+    let test_files = surface_test_entries::build_test_entries(&fs_agg, root_path, ignored_paths);
+    let request = NamingRequest::audit_with_tests(&source_files, &test_files);
     let NamingResponse::Audit {
         violations: results,
     } = naming_orchestrator.execute(request)

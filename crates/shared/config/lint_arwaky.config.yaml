@@ -73,6 +73,16 @@ architecture:
         ]
       exceptions: []
 
+    # AES103 — test/bench file-prefix discipline. Every file directly inside
+    # `tests/` starts with one of the seven test-type prefixes and every file
+    # inside `benches/` starts with `bench_`; the prefix is the virtual folder,
+    # so neither directory may nest a subdirectory. Files outside both
+    # directories carry no test prefix and are not read by this rule.
+    AES103:
+      enabled: true
+      severity: HIGH
+      exceptions: []
+
     AES102:
       enabled: true
       scope:
@@ -519,5 +529,9 @@ architecture:
       severity: MEDIUM
 
     AES703: # Surface folder purity — surface_has_misplaced_files
+      enabled: true
+      severity: MEDIUM
+
+    AES704: # Test-suite coverage — test_suite_missing_tests_dir | test_suite_missing_bench_dir | test_suite_missing_category
       enabled: true
       severity: MEDIUM
