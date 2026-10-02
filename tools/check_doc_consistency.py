@@ -15,6 +15,10 @@ inside one document:
                    with the enumerated FixOutcome reasons (issue #545).
 5. performance   — the performance NFR states different numbers in PRD.md,
                    README.md, and crates/filesystem/FRD.md (issue #549).
+6. DESIGN H2     — the AES605 DESIGN.md H2 contract in the doc-rules constants
+                   disagrees with the DESIGN.md template in
+                   HOW-TO-MAKE-DESIGN.md, so copying the shipped template
+                   fires AES605 the moment the file is written.
 
 Exit code 0 when every check passes, 1 otherwise. No third-party dependencies:
 this runs anywhere python3 does, including a CI job with no Rust toolchain.
@@ -369,12 +373,92 @@ def check_performance() -> list[str]:
     return errors
 
 
+# ─── 6. DESIGN.md H2 contract ───────────────────────────────────────────────
+
+HOWTO_DESIGN = ROOT / "crates/shared/skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md"
+DOC_CONTRACT_FILE = ROOT / "crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs"
+
+
+def normalize_h2(title: str) -> str:
+    """Mirror the Rust `normalize_heading`: lowercase, drop punctuation, squeeze."""
+    collapsed = re.sub(r"[^0-9a-zA-Z]+", " ", title.lower())
+    words = collapsed.split()
+    # Drop a leading list index, as the Rust side does, so "4. Colors" and
+    # "Colors" compare equal.
+    if words and words[0].isdigit():
+        words = words[1:]
+    return " ".join(words)
+
+
+def howto_design_h2() -> set[str]:
+    """H2 headings of the DESIGN.md template fenced in HOW-TO-MAKE-DESIGN.md."""
+    text = HOWTO_DESIGN.read_text(encoding="utf-8")
+    inside, body = False, []
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            if inside:
+                break
+            inside = True
+            continue
+        if inside:
+            body.append(line)
+    if not body:
+        raise ValueError(f"{rel(HOWTO_DESIGN)} has no fenced DESIGN.md template")
+    return {normalize_h2(m.group(1)) for m in re.finditer(r"^##\s+(.*?)\s*$", "\n".join(body), re.M)}
+
+
+def contract_design_h2() -> tuple[set[str], set[str]]:
+    """(required, allowed) H2 sets of the DESIGN_DOC entry in DOC_HEADING_CONTRACTS."""
+    text = DOC_CONTRACT_FILE.read_text(encoding="utf-8")
+    entry = re.search(
+        r"\(\s*DESIGN_DOC\s*,\s*&\[(.*?)\]\s*,\s*&\[(.*?)\]\s*,?\s*\)", text, re.S
+    )
+    if entry is None:
+        raise ValueError(f"{rel(DOC_CONTRACT_FILE)} has no DESIGN_DOC contract entry")
+    quoted = r'"([^"]*)"'
+    return (
+        {normalize_h2(s) for s in re.findall(quoted, entry.group(1))},
+        {normalize_h2(s) for s in re.findall(quoted, entry.group(2))},
+    )
+
+
+def check_design_h2_contract() -> list[str]:
+    """The enforced DESIGN.md H2 set must be exactly the shipped template's.
+
+    AES605 treats the H2 set as closed, so a heading the contract names but the
+    template does not is unreachable, and a heading the template emits but the
+    contract does not name makes the shipped template fail its own linter.
+    """
+    try:
+        template = howto_design_h2()
+        required, allowed = contract_design_h2()
+    except (OSError, ValueError) as exc:
+        return [str(exc)]
+
+    errors = []
+    unreachable = sorted(required - template)
+    if unreachable:
+        errors.append(
+            f"DESIGN_DOC requires H2 {unreachable}, absent from the "
+            f"{rel(HOWTO_DESIGN)} template; a file copied from that template "
+            f"cannot satisfy AES605"
+        )
+    off_template = sorted(template - required - allowed)
+    if off_template:
+        errors.append(
+            f"DESIGN_DOC has no H2 entry for {off_template}, which the "
+            f"{rel(HOWTO_DESIGN)} template emits; copying it fires AES605 h2_unexpected"
+        )
+    return errors
+
+
 CHECKS = (
     ("rule ranges", check_rule_ranges),
     ("markdown anchors", check_anchors),
     ("shared data model", check_data_model),
     ("auto-fix reason codes", check_fix_reasons),
     ("performance NFR", check_performance),
+    ("DESIGN H2 contract", check_design_h2_contract),
 )
 
 

@@ -168,8 +168,12 @@ file inside one is misplaced (**AES703**). Utility files, root wiring, and barre
 are permitted alongside the surfaces.
 
 A surface folder carries `DESIGN.md`, recording the surface's kind, its entry
-points, and the states a user sees. A surface-dominated folder without one fires
-**AES703**.
+points, and the states a user sees. Its level-2 headings are fixed by the
+template in `crates/shared/skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md`
+and enforced as a closed set by **AES605** — `Brand & Style`, `Components`, and
+`Reference` — so a file copied from that template passes with no edit. The
+per-surface contract lives in level-3 subsections under them, which stay
+free-form. A surface-dominated folder without a `DESIGN.md` fires **AES703**.
 
 #### Summary
 
