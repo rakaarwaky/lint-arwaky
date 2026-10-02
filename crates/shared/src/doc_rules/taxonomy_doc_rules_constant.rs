@@ -198,6 +198,15 @@ pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 /// Any H2 outside `required ∪ allowed` fires `h2_unexpected`.
 /// Every heading inside `required` but absent from the file fires
 /// `h2_missing`. A file with zero or more-than-one H1 fires `h1_count`.
+///
+/// The `DESIGN_DOC` entry is transcribed verbatim from the fenced template in
+/// `skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md`, and `allowed` is empty
+/// on purpose: copying that template must produce a file AES605 accepts with
+/// no edit. An empty `allowed` makes the set closed, so a DESIGN.md carrying an
+/// H2 the template does not name — including the surface-behaviour headings
+/// ("Kind", "Entry Points", "States") that an earlier revision of this contract
+/// required — fires `h2_unexpected`. `tools/check_doc_consistency.py` compares
+/// the two artefacts so this entry cannot silently drift again.
 pub type DocH2Contract = (
     &'static str,
     &'static [&'static str],
@@ -353,15 +362,7 @@ pub const DOC_HEADING_CONTRACTS: &[DocH2Contract] = &[
     ),
     (
         DESIGN_DOC,
-        &["Kind", "Entry Points", "States"],
-        &[
-            "Request Shape",
-            "Error States",
-            "Invariants",
-            "Change Checklist",
-            "Brand & Style",
-            "Components",
-            "Reference",
-        ],
+        &["Brand & Style", "Components", "Reference"],
+        &[],
     ),
 ];
