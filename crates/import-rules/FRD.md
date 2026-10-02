@@ -317,7 +317,7 @@ flowchart TD
 | Macro limitation | Macro-generated code is the only accepted source of false negatives | Record the macro exemption in the rule description and assert it is stated, since it cannot be measured from outside |
 | Concurrency | Analysis is thread-safe with no async runtime | Run concurrent audits over one workspace and assert identical findings from each |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
