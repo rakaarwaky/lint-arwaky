@@ -1,0 +1,14 @@
+crates/structure-rules/benches/bench_structure_rules.rs
+  h_9fc4aac70b107c 14,30-35,53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "193756f693b87719bc4dd9b6e5c327a2bf3d0f2c",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
