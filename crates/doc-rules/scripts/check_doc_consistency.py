@@ -35,7 +35,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 # Fixture workspaces are deliberately broken; generated or vendored trees are
 # not ours to police.
@@ -444,14 +444,14 @@ def howto_design_h2() -> set[str]:
             body.append(line)
     if not body:
         raise ValueError(f"{rel(HOWTO_DESIGN)} has no fenced DESIGN.md template")
-    return {normalize_h2(m.group(1)) for m in re.finditer(r"^##\s+(.*?)\s*$", "\n".join(body), re.M)}
+    return {normalize_h2(m.group(1)) for m in re.finditer(r"^##\s+(.*?)\s*$", "\n".join(body), re.MULTILINE)}
 
 
 def contract_design_h2() -> tuple[set[str], set[str]]:
     """(required, allowed) H2 sets of the DESIGN_DOC entry in DOC_HEADING_CONTRACTS."""
     text = DOC_CONTRACT_FILE.read_text(encoding="utf-8")
     entry = re.search(
-        r"\(\s*DESIGN_DOC\s*,\s*&\[(.*?)\]\s*,\s*&\[(.*?)\]\s*,?\s*\)", text, re.S
+        r"\(\s*DESIGN_DOC\s*,\s*&\[(.*?)\]\s*,\s*&\[(.*?)\]\s*,?\s*\)", text, re.DOTALL
     )
     if entry is None:
         raise ValueError(f"{rel(DOC_CONTRACT_FILE)} has no DESIGN_DOC contract entry")
@@ -522,7 +522,7 @@ def howto_frd_h3() -> tuple[set[str], bool]:
     if not body:
         raise ValueError(f"{rel(HOWTO_FRD)} has no fenced FRD.md template")
     titles, saw_fr = set(), False
-    for m in re.finditer(r"^###\s+(.*?)\s*$", "\n".join(body), re.M):
+    for m in re.finditer(r"^###\s+(.*?)\s*$", "\n".join(body), re.MULTILINE):
         title = m.group(1)
         if FR_ID_H3.match(m.group(0)):
             saw_fr = True
@@ -534,7 +534,7 @@ def howto_frd_h3() -> tuple[set[str], bool]:
 def contract_frd_h3() -> tuple[set[str], bool]:
     """(FRD_H3_TITLES, saw_requirement_alternative) from the doc-rules constants."""
     text = DOC_CONTRACT_FILE.read_text(encoding="utf-8")
-    entry = re.search(r"FRD_H3_TITLES[^=]*=\s*&\[(.*?)\]", text, re.S)
+    entry = re.search(r"FRD_H3_TITLES[^=]*=\s*&\[(.*?)\]", text, re.DOTALL)
     if entry is None:
         raise ValueError(f"{rel(DOC_CONTRACT_FILE)} has no FRD_H3_TITLES constant")
     # A requirement heading is sanctioned by shape, not by title, so it is not

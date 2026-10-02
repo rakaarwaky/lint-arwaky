@@ -102,7 +102,7 @@ aggregates in the scan pipeline, and register the group in the config. The CLI,
 MCP, and TUI surfaces pick it up with no edit.
 
 Renumbering, adding, or consolidating a rule code: update `RULES_AES.md` first,
-then the matching row here. `tools/check_doc_consistency.py` (run in CI) fails
+then the matching row here. `crates/doc-rules/scripts/check_doc_consistency.py` (run in CI) fails
 when a range in this table names a code `RULES_AES.md` no longer publishes.
 
 ## Components
