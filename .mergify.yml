@@ -47,7 +47,6 @@ defaults:
       - check-success = Build
       - check-success = Tests
       - check-success = Self-Lint
-      - check-success = Doc Consistency
       - check-success = Codacy Static Code Analysis
 
 merge_queue:

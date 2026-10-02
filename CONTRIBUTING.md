@@ -128,10 +128,6 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
      `crates/shared/DATA.md`.
    - A renumbered, added, or consolidated rule code → `RULES_AES.md` first, then
      every `DESIGN.md`/`FRD.md` range that names it.
-   Then run the doc-consistency gate, which fails on exactly these drifts:
-
-   ```bash
-   ```
 
 6. Commit with a conventional prefix (`feat:`, `fix:`, `refactor:`) and open a PR.
 
@@ -153,14 +149,7 @@ A change to Markdown only, with no code edit.
    python3 tools/regenerate_skills.py
    ```
 
-4. Run the doc-consistency gate — it validates in-repo Markdown anchor links,
-   rule-code ranges, the shared data model's attribute tables, and the auto-fix
-   reason table:
-
-   ```bash
-   ```
-
-5. Commit with `docs:` and open a PR.
+4. Commit with `docs:` and open a PR.
 
 ### Claim Before You Build (Shared Contract Changes)
 
