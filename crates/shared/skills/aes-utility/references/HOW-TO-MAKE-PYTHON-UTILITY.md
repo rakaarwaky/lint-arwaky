@@ -33,14 +33,16 @@ A capability file **implements a protocol** — it has DI, business rules, and c
 
 **Allowed imports:** Taxonomy only.
 **Forbidden:** Capabilities, Agent, Surface, Contract, and other `utility_*` files.
-This last one is a cross-file rule in all three languages, not Rust-specific: a utility
-importing another utility couples two helpers that should be independently extractable.
+The last one is a cross-file rule in all three languages: a utility importing another
+utility couples two helpers that should be independently extractable.
 
-1. Only module-level functions — no `class`, no `self`.
-2. Pure + deterministic — no `random`, no `datetime.now()`, no global mutable state.
-3. Domain-agnostic — no business rules, no layer-name knowledge.
-4. Reusable — used by ≥2 modules; if single consumer → keep as private helper.
-5. I/O allowed only if all above hold.
+### Structure rules (Python)
+
+1. **Structure:** Only module-level functions — no `class`, no `self`.
+2. **Purity:** Pure + deterministic — no `random`, no `datetime.now()`, no global mutable state.
+3. **Domain Awareness:** Domain-agnostic — no business rules, no layer-name knowledge.
+4. **Reusability:** Used by ≥2 modules; if single consumer → keep as private helper.
+5. **I/O Constraint:** I/O allowed only if all above hold.
 
 **Keep as private helper** if ANY: uses `self`, domain-specific, single consumer.
 **Extract here** only if ALL: no `self`, pure/I/O-safe, domain-agnostic, ≥2 consumers.
