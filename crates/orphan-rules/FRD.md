@@ -15,7 +15,7 @@ Graph construction is delegated to the external `filesystem` aggregate via `buil
 
 The orchestrator internally performs BFS reachability tracing over the import graph to determine which files are "alive" (reachable from entry points), then dispatches to 6 layer-specific orphan analyzers (AES501–AES506).
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -294,7 +294,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Configuration** — e.g. Config `check_orphan: false` for a layer → No violations for that layer
 - **Performance** — e.g. 10,000 file workspace → Completes in under 5 seconds
 
-### Core Detection
+- **Core Detection**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -305,7 +305,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | Configuration disabled | Full orphan scan returns empty immediately |
 | 6 | File with parse failure | Flagged as orphan (fail-strict) |
 
-### Barrel Files
+- **Barrel Files**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -314,7 +314,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Rust module barrel re-exports | Skipped, not flagged |
 | 4 | Rust library root | Skipped, not flagged |
 
-### AES501 — Taxonomy Orphan
+- **AES501 — Taxonomy Orphan**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -323,7 +323,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Taxonomy file with no inbound links | Orphan |
 | 4 | Taxonomy file imported by capabilities file | Not orphan |
 
-### AES502 — Contract Orphan
+- **AES502 — Contract Orphan**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -334,7 +334,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | Aggregate behind an agent, called by surface | Not orphan |
 | 6 | Contract file with no traits (only type aliases) | Not orphan (nothing to check) |
 
-### AES503 — Capabilities Orphan
+- **AES503 — Capabilities Orphan**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -343,7 +343,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Capability file not in alive set, not in any container | Orphan |
 | 4 | Capability imported by other capabilities, chain reaches container | Not orphan (chain alive) |
 
-### AES504 — Utility Orphan
+- **AES504 — Utility Orphan**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -352,7 +352,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Utility with no inbound links | Orphan |
 | 4 | Utility imported by agent file | Not orphan |
 
-### AES505 — Agent Orphan
+- **AES505 — Agent Orphan**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -361,7 +361,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Agent with no aggregate implementation | Not orphan (skip check) |
 | 4 | Agent with aggregate traits, none found in containers | Orphan (HIGH) |
 
-### AES506 — Surface Orphan
+- **AES506 — Surface Orphan**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -373,7 +373,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | Passive surface not reachable from any entry point | Orphan (LOW) |
 | 7 | Surface file with unclassifiable suffix | Skipped (no check) |
 
-### Configuration
+- **Configuration**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -383,7 +383,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Config with AES501 disabled | No taxonomy orphan violations |
 | 5 | Config with custom entry point patterns | Additional entry points recognized |
 
-### Performance
+- **Performance**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -421,9 +421,9 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Segment matching**: Path matching by splitting on `/` and comparing individual segments (not substring containment)
 - **Filesystem crate**: External crate providing graph construction, file walking, AST parsing, and content reads to orphan-rules.
 
-### Appendix A: YAML Configuration Schema
+- **Appendix A: YAML Configuration Schema**
 
-### Top-Level Structure
+- **Top-Level Structure**
 
 ```yaml
 architecture:
@@ -445,7 +445,7 @@ architecture:
           - a library-root filename
 ```
 
-### Per-Rule Configuration
+- **Per-Rule Configuration**
 
 ```yaml
 AES50X:

@@ -12,7 +12,7 @@
 
 The import-rules crate enforces correct structural boundaries and dependency flows across the 7-layer AES architecture. It validates every import statement against a config-driven dependency, detects dummy/stub code created to circumvent unused-import warnings, and identifies circular dependencies at the layer level. File discovery, raw content reads, AST parsing (import extraction + identifier extraction), and barrel resolution are handled by the filesystem aggregate (`IFilesystemAggregate`). The Surface fetches file entries, import data, and `used_identifiers` (via `used_identifiers_for(path)`) from filesystem first, then passes pre-fetched data to the import orchestrator. The import-rules crate receives `&[FileEntry]`, `content_map`, `imports_map`, and `used_identifiers_map` — all pre-fetched by the caller. The import orchestrator does **zero I/O** — it only performs business logic analysis. All rule behavior is governed by YAML configuration. The crate makes no assumptions about allowed/forbidden dependencies beyond what is explicitly defined in config.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -328,7 +328,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **AES205 — Circular Dependency** — e.g. Two layers importing each other → AES205 violation
 - **Configuration** — e.g. Rule disabled in config → No violation for that rule
 
-### AES201 — Forbidden Import
+- **AES201 — Forbidden Import**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -343,7 +343,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 9 | agent imports capabilities | AES201 CRITICAL (forbidden, via DI) |
 | 10 | contract(protocol) imports contract(aggregate) | AES201 CRITICAL (forbidden) |
 
-### AES202 — Mandatory Import
+- **AES202 — Mandatory Import**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -353,7 +353,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | File in exception list | No violation — exception |
 | 5 | taxonomy(entity) missing taxonomy(vo) import | AES202 violation |
 
-### AES203 — Unused Import
+- **AES203 — Unused Import**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -363,7 +363,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Import used only inside macro body (non-derive) | No violation (exempt) |
 | 5 | Import used in`#[derive(...)]` | No violation (detected) |
 
-### AES204 — Dummy Import
+- **AES204 — Dummy Import**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -378,7 +378,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 9 | Surface file calls`lint_path(` directly | AES204 violation (surface logic bypass) |
 | 10 | Rust module barrel with re-exports | No violation (exempt) |
 
-### AES205 — Circular Dependency
+- **AES205 — Circular Dependency**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -387,7 +387,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Self-import (file imports itself) | No violation (silently ignored) |
 | 4 | Indirect cycle (A → B → C → A) | AES205 violation |
 
-### Configuration
+- **Configuration**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -433,9 +433,9 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Grey area**: Import target that is neither in`allowed` nor `forbidden` list — produces WARNING, not CRITICAL
 - **AES-DI**: AES Dependency Injection model — layers import from contract, receive dependencies via trait objects
 
-### Appendix A: YAML Configuration Schema
+- **Appendix A: YAML Configuration Schema**
 
-### Top-Level Structure
+- **Top-Level Structure**
 
 ```yaml
 ignored_paths:
@@ -451,9 +451,9 @@ architecture:
     AES205: { ... }
 ```
 
-### Rule Configuration Schema (AES201)
+- **Rule Configuration Schema (AES201)**
 
-### Condition Entry Schema
+- **Condition Entry Schema**
 
 ```yaml
 - scope: "<layer>(<sub-layer>|<sub-layer>)"   # Scope pattern
@@ -468,7 +468,7 @@ architecture:
 - Target in `forbidden` → AES201 CRITICAL.
 - Target in neither → AES201 WARNING (grey area).
 
-### Layer Detection (Hardcoded Convention)
+- **Layer Detection (Hardcoded Convention)**
 
 | Filename Pattern    | Detected Layer |
 | --------------------- | ---------------- |
@@ -482,11 +482,11 @@ architecture:
 
 Files without a recognized prefix are skipped by layer rules
 
-### Appendix B: File Discovery Algorithm
+- **Appendix B: File Discovery Algorithm**
 
 File discovery is handled by the **filesystem crate** (external). The import-rules crate requests file discovery via `filesystem_aggregate` (`discover_source_files`) and receives raw file paths; file contents are read via `read_file` and parsed internally by import-rules. The algorithm below documents the behavior of the filesystem crate's file walker for reference.
 
-### Ignore Rules
+- **Ignore Rules**
 
 Files and directories are skipped if they match any of these criteria:
 
@@ -497,7 +497,7 @@ Files and directories are skipped if they match any of these criteria:
 5. **Workspace restriction**: At root level, only `crates/`, `packages/`, `modules/` subdirectories are scanned.
 6. **Symlink safety**: Symlink targets outside the workspace root are pruned to prevent path traversal.
 
-### Language Detection
+- **Language Detection**
 
 | Extension     | Language   |
 | --------------- | ------------ |

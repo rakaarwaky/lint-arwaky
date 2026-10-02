@@ -23,7 +23,7 @@ both the install and uninstall protocols, the hook manager (capability)
 implements the config protocol, the git hooks orchestrator (agent) composes
 the four protocols, and the git container (root) wires dependencies.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -248,7 +248,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-003 — Hook Uninstallation** — e.g. Hook exists → Removed, SuccessStatus(true)
 - **SCEN-004 — Project Config Initialization** — e.g. Config not present → Default config created, success
 
-### SCEN-001 — Git Diff Detection
+- **SCEN-001 — Git Diff Detection**
 
 FRD Ref: FR-GitHooks-001
 
@@ -269,7 +269,7 @@ FRD Ref: FR-GitHooks-001
 | 13 | Changed file with parse failure | Skipped by linters, no warning |
 | 14 | All changed files non-lintable | Empty result list |
 
-### SCEN-002 — Hook Installation
+- **SCEN-002 — Hook Installation**
 
 FRD Ref: FR-GitHooks-002
 
@@ -283,7 +283,7 @@ FRD Ref: FR-GitHooks-002
 | 6 | Windows | Permission setting skipped |
 | 7 | Empty executable path | Defaults to "lint-arwaky-cli" |
 
-### SCEN-003 — Hook Uninstallation
+- **SCEN-003 — Hook Uninstallation**
 
 FRD Ref: FR-GitHooks-003
 
@@ -293,7 +293,7 @@ FRD Ref: FR-GitHooks-003
 | 2 | Hook doesn't exist | SuccessStatus(true), idempotent |
 | 3 | Not a git repo | SuccessStatus(false) |
 
-### SCEN-004 — Project Config Initialization
+- **SCEN-004 — Project Config Initialization**
 
 FRD Ref: FR-GitHooks-004
 

@@ -35,6 +35,12 @@ pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_NO_TABLE: &str = "api_subse
 /// (`Protocol API`, `Aggregate API`) no longer appears exactly once each.
 pub const SECTION_STRUCTURE_VIOLATION_API_SUBSECTION_DUPLICATED: &str = "api_subsection_duplicated";
 
+/// An FRD carries a level-3 heading the template does not sanction. The
+/// template's level-3 set is exactly a requirement heading
+/// (`### FR-<FEATURENAME>-NNN:`), `Protocol API`, and `Aggregate API`; every
+/// other level-3 heading is an invented section.
+pub const SECTION_STRUCTURE_VIOLATION_H3_OFF_TEMPLATE: &str = "h3_off_template";
+
 /// Integration Points is present but is not a table with the required columns.
 pub const SECTION_STRUCTURE_VIOLATION_INTEGRATION_NOT_TABLE: &str = "integration_not_table";
 
@@ -158,6 +164,17 @@ pub const FRD_SECTION_ORDER: &[&str] = &[
     "Assumptions",
     "Glossary",
 ];
+
+/// The only level-3 headings `HOW-TO-MAKE-FRD.md` sanctions, by literal
+/// title. A requirement heading (`### FR-<FEATURENAME>-NNN: <name>`) is the
+/// third sanctioned shape and is matched by the shared FR-ID pattern rather
+/// than listed here, so the accepted set cannot drift between AES601 and
+/// AES602 — the same reason `fr_id_heading_re` is shared.
+///
+/// The set is closed: an FRD level-3 heading outside these two titles and the
+/// FR-ID shape fires `h3_off_template`. Level-4 and deeper stay free-form,
+/// which is where an author puts detail that must not become a section.
+pub const FRD_H3_TITLES: &[&str] = &["Protocol API", "Aggregate API"];
 
 /// The six fields every requirement must state, per HOW-TO-MAKE-FRD Rule 2.
 pub const FR_FIELDS: &[&str] = &[

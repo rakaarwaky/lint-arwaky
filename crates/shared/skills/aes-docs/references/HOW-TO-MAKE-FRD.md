@@ -45,6 +45,19 @@ the workaround this rule closes (`api_h3_unexpected`, AES602): the heading
 narrates a seam split the single table refused to make, so the contract reads
 as if the seams existed when the rows do not. There is one `Protocol API`
 table, and every protocol method is a row in it.
+3c. **The whole level-3 set is closed to three shapes, document-wide.**
+An FRD's only level-3 headings are `### FR-<FEATURENAME>-NNN: <name>`,
+`### Protocol API`, and `### Aggregate API`. Every other level-3 heading
+fires `h3_off_template` (AES602) — **wherever it sits**, not only under
+`## API Contract`, so moving an invented section into another parent section
+is not an escape (`api_h3_unexpected` reads only the API Contract subtree, so
+it cannot see this). A table you wanted to head with
+`### IToolResolutionProtocol (12 operations)` is the same information as a
+`Protocol API` row: move it into that table, fold it into the section that owns
+it, or demote it to a level-4 heading — level 4 and deeper are free-form and
+are where detail that must not become a section belongs. The sanctioned set is
+transcribed from the template below; `tools/check_doc_consistency.py` compares
+the two so they cannot drift apart again.
 3a. **The FR count must match the protocol class count.** The number of
 `### FR-<Feature>-NNN:` headings and the number of `pub trait I*Protocol`
 declarations across the feature's contract protocol files must be equal
@@ -171,6 +184,11 @@ Copy, fill, delete nothing.
 - **Term**: <one definition, one meaning>
 ```
 
+The template's level-3 headings are exactly the requirement headings, `### Protocol
+API`, and `### Aggregate API`. Detail that needs a heading of its own belongs at
+level 4, which is free-form — an FRD that invents a level-3 section fires
+`h3_off_template`.
+
 ---
 
 ## Section Contract
@@ -182,13 +200,17 @@ reason.
 | ----------------------------- | ------------------------------------------------- |
 | Reference                     | Separates spec promise from backlog claim.        |
 | System Overview               | Orients the reader before details begin.          |
-| Functional Requirements       | The testable promise                              |
+| Functional Requirements       | The testable promise. Its only level-3 headings are `### FR-<FEATURENAME>-NNN:`. |
 | API Contract                  | Protocol + Aggregate surfaces integrators build against. Holds exactly two level-3 subsections. |
 | Integration Points            | Names every outside system that can fail you.     |
 | Non-functional Requirements   | Feature-level numbers the PRD deliberately omits. |
-| Test Scenarios                | Promises the backlog must evidence.               |
+| Test Scenarios                | Promises the backlog must evidence. A bullet list — not a heading per scenario. |
 | Assumptions &amp; Constraints | Implicit requirements made explicit.              |
 | Glossary                      | One meaning per term; rows and code agree.        |
+
+The level-3 set is closed document-wide (Rule 3c): only
+`### FR-<FEATURENAME>-NNN: <name>`, `### Protocol API`, and
+`### Aggregate API`. Anything else fires `h3_off_template`.
 
 ## Verify
 
