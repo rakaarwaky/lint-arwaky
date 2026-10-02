@@ -1,0 +1,32 @@
+AGENTS.md
+  h_9fc4aac70b107c 167,202,214
+CONTRIBUTING.md
+  h_9fc4aac70b107c 30,133,153,160
+TEST.md
+  h_9fc4aac70b107c 107
+crates/dispatcher/DESIGN.md
+  h_9fc4aac70b107c 105
+crates/dispatcher/tests/unit_dispatcher_setup_skills.rs
+  h_9fc4aac70b107c 184,215,219
+crates/shared/skills/README.md
+  h_9fc4aac70b107c 18,41,64,75,110
+crates/shared/skills/aes-docs/references/HOW-TO-MAKE-FRD.md
+  h_9fc4aac70b107c 59
+crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs
+  h_9fc4aac70b107c 229
+crates/shared/src/project_setup/taxonomy_project_setup_constant.rs
+  h_9fc4aac70b107c 13
+scripts/gates.sh
+  h_9fc4aac70b107c 87,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "acbc3e6672e00eb183bd7833969177ded9b1fe0f",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
