@@ -55,6 +55,23 @@ The doc-rules contract owns this semantic; see `crates/doc-rules/FRD.md`
 ("Path scoping" under System Overview) and the `docs` row in
 `crates/cli-commands/DESIGN.md`.
 
+#### Layer scoping: the six layer subcommands
+
+`surface_layer_scan_action.rs` is a second filter, applied after the scan rather
+than instead of it. A layer subcommand still runs every rule group over the
+whole workspace — an import cycle or an orphan is a property of the workspace,
+not of one layer — and then keeps only the violations whose file name carries
+that layer's AES prefix. Narrowing the analysis instead of the output would make
+each layer command blind to findings that only become visible across layers.
+
+The layer of a file is its name prefix (`taxonomy_`, `contract_`,
+`capabilities_`, `utility_`, `agent_`, `surface_`, `root_`), the same signal
+`detect_layer_from_prefix` gives every other rule. Two consequences follow, and
+both are deliberate: `root` has no subcommand, because root files are wiring and
+`check` already reports them; and a finding that names no layer-prefixed file —
+a folder-level structure finding, a Markdown doc invariant — belongs to no
+single layer, so it is dropped here and stays with `structure` and `docs`.
+
 #### Exit-code aggregation for `fix`
 
 `surface_fix_action.rs` owns the aggregation of per-item `FixOutcome`s into one
@@ -99,6 +116,7 @@ when a range in this table names a code `RULES_AES.md` no longer publishes.
 | Orphan collector     | `surface_orphan_action.rs` | AES501–506 | collected / scoped  |
 | Structure collector  | `surface_structure_action.rs` | AES701–704 | collected / scoped  |
 | Check entry          | `surface_check_action.rs`  | `check`   | exit-code shaped over all groups |
+| Layer entry          | `surface_layer_scan_action.rs` | `taxonomy`, `contract`, `capabilities`, `utility`, `agents`, `surface` | every group, findings narrowed to one layer |
 | CI entry             | `surface_ci_action.rs`     | `ci`      | the same groups with thresholds   |
 | Fix entry            | `surface_fix_action.rs`    | `fix`     | aggregates every `FixOutcome` into the run-level outcome |
 | Docs entry           | `surface_docs_action.rs`   | `docs`    | audit root, not a filter          |

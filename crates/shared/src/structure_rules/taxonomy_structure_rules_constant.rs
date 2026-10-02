@@ -143,3 +143,11 @@ pub const MAX_ORCHESTRATOR_WALK_DEPTH: u32 = 10;
 
 /// The document file names that mark a folder's purpose and content.
 pub const SURFACE_DOC: &str = "DESIGN.md";
+
+/// The extensions a test or benchmark file may use.
+///
+/// AES704 counts a category as covered only by a file a test runner could
+/// actually collect. Counting any regular file would let `tests/unit_notes.md`
+/// satisfy `unit_` and `benches/bench_notes.md` satisfy `bench_`, so a crate
+/// could pass the rule with no runnable coverage at all.
+pub const TEST_FILE_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "jsx", "tsx"];

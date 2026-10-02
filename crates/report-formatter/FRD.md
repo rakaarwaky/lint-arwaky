@@ -15,7 +15,7 @@ The report-formatter crate provides formatting capabilities for scan report outp
 
 All formatters are **self-contained** — they operate solely on `ScanReport` data and do not depend on other rule crates.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -36,7 +36,7 @@ flowchart TD
     B -->|output| A
 ```
 
-### ScanReport Content
+- **ScanReport Content**
 
 `ScanReport` contains two categories of findings:
 
@@ -195,7 +195,7 @@ flowchart TD
 | Thread safety | Every formatter is `Send + Sync` | Assert the bound at compile time and share one formatter across threads in a test |
 | Extensibility | A new format is added by implementing the protocol and adding an enum variant | Add a format in a test branch and assert selection routes to it without touching the orchestrator |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
@@ -205,7 +205,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-004 — JUnit Format** — e.g. Normal violations → `<failure>` elements present
 - **SCEN-005 — Orchestrator Routing** — e.g. Orchestrator routes Text → Text formatter invoked directly
 
-### SCEN-001 — Text Format
+- **SCEN-001 — Text Format**
 
 FRD Ref: FR-ReportFormatter-001
 
@@ -216,7 +216,7 @@ FRD Ref: FR-ReportFormatter-001
 | 3 | Report with PARSE_WARN diagnostics | Warnings section, visually distinct |
 | 4 | Empty report | "0 violations" clean report |
 
-### SCEN-002 — JSON Format
+- **SCEN-002 — JSON Format**
 
 FRD Ref: FR-ReportFormatter-002
 
@@ -228,7 +228,7 @@ FRD Ref: FR-ReportFormatter-002
 | 4 | Report with PARSE_WARN | `diagnostics` array populated |
 | 5 | Serialization failure forced | Output carries `formatter_error: true` and no summary; a consumer can tell it apart from a clean scan |
 
-### SCEN-003 — SARIF Format
+- **SCEN-003 — SARIF Format**
 
 FRD Ref: FR-ReportFormatter-003
 
@@ -243,7 +243,7 @@ FRD Ref: FR-ReportFormatter-003
 | 7 | Empty results | Valid SARIF with empty results array |
 | 8 | Serialization failure forced | Output carries `formatter_error: true`, no `runs` array, and fails SARIF schema validation rather than reading as zero results |
 
-### SCEN-004 — JUnit Format
+- **SCEN-004 — JUnit Format**
 
 FRD Ref: FR-ReportFormatter-004
 
@@ -256,7 +256,7 @@ FRD Ref: FR-ReportFormatter-004
 | 5 | Test/failure counts | Match actual results |
 | 6 | Empty results | Valid XML with 0 tests, 0 failures |
 
-### SCEN-005 — Orchestrator Routing
+- **SCEN-005 — Orchestrator Routing**
 
 FRD Ref: FR-001 through FR-004 via `IReportFormatterAggregate`
 

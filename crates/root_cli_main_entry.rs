@@ -100,6 +100,72 @@ enum Command {
         #[arg(long)]
         member: Option<String>,
     },
+    /// Taxonomy-layer scan (only `taxonomy_*` files)
+    Taxonomy {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
+    },
+    /// Contract-layer scan (only `contract_*` files)
+    Contract {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
+    },
+    /// Capabilities-layer scan (only `capabilities_*` files)
+    Capabilities {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
+    },
+    /// Utility-layer scan (only `utility_*` files)
+    Utility {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
+    },
+    /// Agent-layer scan (only `agent_*` files)
+    Agents {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
+    },
+    /// Surface-layer scan (only `surface_*` files)
+    Surface {
+        #[arg(value_name = "PATH", default_value = ".")]
+        path: String,
+        #[arg(long, default_value = "text")]
+        format: String,
+        #[arg(long)]
+        filter: Option<String>,
+        #[arg(long)]
+        member: Option<String>,
+    },
     /// External lint scan (ruff, eslint, ...)
     External {
         #[arg(value_name = "PATH", default_value = ".")]
@@ -213,6 +279,27 @@ enum SkillSubCommand {
     },
     /// List all embedded skills
     List,
+}
+
+/// Dispatch one of the six layer-scoped subcommands. Every layer reuses the
+/// `scan` wiring and differs only in which layer's violations are reported, so
+/// the six call sites stay one line each.
+fn run_layer_scan(
+    context: &cli_commands::surface_scan_command::LayerScanContext,
+    layer: &'static str,
+    path: String,
+    format: String,
+    filter: Option<String>,
+    member: Option<String>,
+) -> shared_common::ExitCode {
+    cli_commands::surface_scan_command::handle_layer_scan(
+        context,
+        layer,
+        path,
+        parse_format(&format),
+        filter,
+        member,
+    )
 }
 
 fn parse_format(s: &str) -> Format {
@@ -389,6 +476,14 @@ fn main() {
         fs_seam: Arc::new(fs_seam.clone()),
     };
 
+    // Shared wiring for the six layer-scoped subcommands: same aggregates as
+    // `scan`, only the reported layer differs.
+    let layer_scan_context = cli_commands::surface_scan_command::LayerScanContext {
+        filesystem_seam: fs_seam.clone(),
+        config_orchestrator: Some(config_orchestrator.clone()),
+        scan_aggregates: Some(scan_aggregates.clone()),
+    };
+
     let exit_code = match cli.command {
         Command::Scan {
             path,
@@ -517,6 +612,84 @@ fn main() {
                     .analyzer()
                 }),
             },
+        ),
+        Command::Taxonomy {
+            path,
+            format,
+            filter,
+            member,
+        } => run_layer_scan(
+            &layer_scan_context,
+            shared_role_rules::LAYER_TAXONOMY,
+            path,
+            format,
+            filter,
+            member,
+        ),
+        Command::Contract {
+            path,
+            format,
+            filter,
+            member,
+        } => run_layer_scan(
+            &layer_scan_context,
+            shared_role_rules::LAYER_CONTRACT,
+            path,
+            format,
+            filter,
+            member,
+        ),
+        Command::Capabilities {
+            path,
+            format,
+            filter,
+            member,
+        } => run_layer_scan(
+            &layer_scan_context,
+            shared_role_rules::LAYER_CAPABILITIES,
+            path,
+            format,
+            filter,
+            member,
+        ),
+        Command::Utility {
+            path,
+            format,
+            filter,
+            member,
+        } => run_layer_scan(
+            &layer_scan_context,
+            shared_role_rules::LAYER_UTILITY,
+            path,
+            format,
+            filter,
+            member,
+        ),
+        Command::Agents {
+            path,
+            format,
+            filter,
+            member,
+        } => run_layer_scan(
+            &layer_scan_context,
+            shared_role_rules::LAYER_AGENT,
+            path,
+            format,
+            filter,
+            member,
+        ),
+        Command::Surface {
+            path,
+            format,
+            filter,
+            member,
+        } => run_layer_scan(
+            &layer_scan_context,
+            shared_role_rules::LAYER_SURFACES,
+            path,
+            format,
+            filter,
+            member,
         ),
         Command::External {
             path,

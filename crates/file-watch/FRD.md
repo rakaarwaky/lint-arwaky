@@ -22,7 +22,7 @@ editing `lint_arwaky.config.yaml` while `watch` runs changes nothing until the
 session is restarted. Thresholds, ignored paths, and adapter toggles are
 start-of-session values.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD

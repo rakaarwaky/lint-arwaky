@@ -409,6 +409,107 @@ fn aes602_fires_when_api_contract_has_two_extra_h3s() {
 }
 
 #[test]
+fn aes602_fires_when_a_protocol_table_is_parked_under_assumptions() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The escape `api_h3_unexpected` cannot see: `crates/filesystem/FRD.md`
+    // shipped exactly this — the same per-protocol method tables the Protocol
+    // API table already carries, moved to a parent section the API Contract
+    // check never reads. The document-wide parity check is what catches it.
+    let frd = conforming_frd().replace(
+        "## Assumptions & Constraints\n\n- The capability is stateless.",
+        "## Assumptions & Constraints\n\n\
+         - The capability is stateless.\n\n\
+         ### IToolResolutionProtocol (12 operations)\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `has_local_bin` | `&Path, &ToolName` | `bool` | — | — | Local bin. |",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "h3_off_template"),
+        "expected h3_off_template for a protocol table under Assumptions, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_a_scen_heading_is_promoted_below_test_scenarios() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The template states Test Scenarios as a bullet list, so a scenario
+    // promoted to a level-3 heading is an invented section.
+    let frd = conforming_frd().replace(
+        "## Test Scenarios\n\n- A conforming request produces a conforming response.",
+        "## Test Scenarios\n\n\
+         - A conforming request produces a conforming response.\n\n\
+         ### SCEN-001: Dispatch\n\n\
+         | # | Scenario | Expected |\n\
+         | --- | --- | --- |\n\
+         | 1 | Conforming request | Conforming response |",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "h3_off_template"),
+        "expected h3_off_template for an invented SCEN heading, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_accepts_the_three_sanctioned_h3_shapes() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The conforming FRD already carries all three: two requirement headings
+    // plus Protocol API and Aggregate API. Asserting silence proves the check
+    // is not simply "any H3 is a violation".
+    write_workspace(tmp.path(), &conforming_frd());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "sanctioned H3 shapes must not fire, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_accepts_a_demoted_h4_heading() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The remedy the message names: demote to level 4 and keep the content.
+    let frd = conforming_frd().replace(
+        "## Assumptions & Constraints\n\n- The capability is stateless.",
+        "## Assumptions & Constraints\n\n\
+         - The capability is stateless.\n\n\
+         #### Tool resolution details\n\n\
+         - Resolution order is local bin, then system path.",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "a level-4 heading is detail, not a section; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_h3_parity_ignores_headings_inside_a_fenced_block() {
+    let tmp = tempfile::tempdir().unwrap();
+    // A shell comment in a code fence is not a heading; the template's own
+    // Verify block is fenced and must not be read as a section.
+    let frd = conforming_frd().replace(
+        "## Glossary\n\n- **Sample**: A value object used in this example.",
+        "## Glossary\n\n\
+         - **Sample**: A value object used in this example.\n\n\
+         ```bash\n\
+         ### not-a-heading\n\
+         # also not a heading\n\
+         ```",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "fenced headings must be ignored, got: {findings:#?}"
+    );
+}
+
+#[test]
 fn aes602_fires_when_protocol_api_is_prose_only() {
     let tmp = tempfile::tempdir().unwrap();
     // Author dumps every method into prose under Protocol API instead of a table.
@@ -1285,11 +1386,13 @@ fn write_protocol_module_in_layout(layout: &str, dir: &Path, traits: usize) {
         if split && n + 1 == traits {
             continue;
         }
+        // The seam declares `execute`, the method `conforming_frd()` promises
+        // in both API tables, so the method-existence check stays silent.
         first.push_str(&format!(
-            "pub trait ISample{n}Protocol: Send + Sync {{}}\n\n"
+            "pub trait ISample{n}Protocol: Send + Sync {{\n    fn execute(&self);\n}}\n\n"
         ));
     }
-    first.push_str("pub trait ISampleAggregate: Send + Sync {}\n");
+    first.push_str("pub trait ISampleAggregate: Send + Sync {\n    fn execute(&self);\n}\n");
     fs::write(module.join("contract_sample_protocol.rs"), first).unwrap();
     if split {
         let last = traits - 1;
@@ -1297,7 +1400,7 @@ fn write_protocol_module_in_layout(layout: &str, dir: &Path, traits: usize) {
             module.join("contract_sample_extra_protocol.rs"),
             format!(
                 "//! second contract file for the sample feature\n\n\
-                 pub trait ISample{last}Protocol: Send + Sync {{}}\n"
+                 pub trait ISample{last}Protocol: Send + Sync {{\n    fn execute(&self);\n}}\n"
             ),
         )
         .unwrap();
@@ -1312,12 +1415,12 @@ fn write_nested_protocol_module(dir: &Path) {
     fs::create_dir_all(module.join("nested")).unwrap();
     fs::write(
         module.join("contract_sample_protocol.rs"),
-        "//! sample contract module\n\npub trait ISample0Protocol: Send + Sync {}\n\npub trait ISampleAggregate: Send + Sync {}\n",
+        "//! sample contract module\n\npub trait ISample0Protocol: Send + Sync {\n    fn execute(&self);\n}\n\npub trait ISampleAggregate: Send + Sync {\n    fn execute(&self);\n}\n",
     )
     .unwrap();
     fs::write(
         module.join("nested/sub.rs"),
-        "//! nested sub-module\n\npub trait ISample1Protocol: Send + Sync {}\n",
+        "//! nested sub-module\n\npub trait ISample1Protocol: Send + Sync {\n    fn execute(&self);\n}\n",
     )
     .unwrap();
 }
@@ -1555,7 +1658,7 @@ fn aes607_ignores_comments_and_strings_that_mention_protocol() {
         module.join("contract_sample_protocol.rs"),
         "/// Doc comment mentioning `pub trait IFakeProtocol`.\n\
          /// Another doc comment with `IProtocolSomething` in prose.\n\
-         pub trait ISampleProtocol: Send + Sync {}\n\
+         pub trait ISampleProtocol: Send + Sync {\n    fn execute(&self);\n}\n\
          \n\
          /// pub trait INotRealProtocol {}\n\
          // pub trait IHiddenProtocol {}\n\
@@ -1582,6 +1685,231 @@ fn aes607_stays_silent_when_the_feature_has_no_shared_contract_module() {
     assert!(
         !has(&findings, "AES601", "protocol_count_mismatch"),
         "a feature with no shared contract module cannot mismatch; got: {findings:#?}"
+    );
+    assert!(
+        !has(&findings, "AES601", "api_method_not_found"),
+        "an unreadable contract module yields no method finding either; got: {findings:#?}"
+    );
+}
+
+// ── AES601: Protocol/Aggregate API table methods ─────────────────────────────
+
+#[test]
+fn aes601_fires_when_an_api_table_method_is_not_declared_in_the_contract_module() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The FRD promises a `audit_purity` seam the contract module never
+    // declares: the counts still line up (2 requirements, 2 seams), so only
+    // the method-existence check can answer this document.
+    let frd = conforming_frd().replace(
+        "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |",
+        "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |\n\
+         | `audit_purity` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Promised but never declared. |",
+    );
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        has(&findings, "AES601", "api_method_not_found"),
+        "a promised method the module never declares must fire; got: {findings:#?}"
+    );
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap();
+    assert!(
+        message.contains("`audit_purity`") && message.contains("Protocol API"),
+        "the message must name the method and the table it sits in; got: {message}"
+    );
+    assert!(
+        message.contains("remove `audit_purity` from the table")
+            && message.contains("create the protocol/aggregate method"),
+        "the message must offer both remedies; got: {message}"
+    );
+}
+
+#[test]
+fn aes601_stays_silent_when_every_api_table_method_is_declared() {
+    let tmp = tempfile::tempdir().unwrap();
+    // Both tables promise `execute` and both seams declare it.
+    write_workspace(tmp.path(), &conforming_frd());
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "api_method_not_found"),
+        "a declared method must satisfy its table row; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_reports_a_promised_method_missing_from_the_aggregate_table() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The Aggregate API table promises `dispatch`, which no trait declares.
+    let frd = conforming_frd().replace(
+        "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Routes to the capability. |",
+        "| `dispatch` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Promised but never declared. |",
+    );
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap_or_else(|| panic!("the Aggregate API row must fire; got: {findings:#?}"));
+    assert!(
+        message.contains("Aggregate API") && message.contains("`dispatch`"),
+        "the finding must name the aggregate table and its method; got: {message}"
+    );
+}
+
+#[test]
+fn aes601_ignores_a_method_mentioned_only_in_prose() {
+    let tmp = tempfile::tempdir().unwrap();
+    // `renamed` appears in the aggregate table's Description cell but never as
+    // a row of its own, so it is prose and no row promises it.
+    let frd = conforming_frd().replace(
+        "Routes to the capability.",
+        "Routes to the renamed `renamed` seam.",
+    );
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "api_method_not_found"),
+        "a method named in prose is not a promised row; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_reads_the_method_column_by_its_header_not_by_position() {
+    let tmp = tempfile::tempdir().unwrap();
+    // `auto-fix/FRD.md` leads its table with a `Protocol Trait` column, so the
+    // promised method is the second cell. Reading the first cell would report
+    // four trait names the code does declare as methods.
+    let frd = conforming_frd().replace(
+        "| Method | Input | Output | Error | Event | Description |\n| --- | --- | --- | --- | --- | --- |\n| `execute` |",
+        "| Protocol Trait | Method | Input | Output | Error | Event | Description |\n|---|---|---|---|---|---|---|\n| `ISample0Protocol` (FR-SAMPLE-001) | `execute` |",
+    );
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "api_method_not_found"),
+        "the Method column is found by its header, not by position; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_reads_every_method_a_single_cell_promises() {
+    let tmp = tempfile::tempdir().unwrap();
+    // `file-watch/FRD.md` packs three methods into one cell as
+    // `start` / `subscribe` / `stop`. All three are declared, so the cell is
+    // satisfied; only one of them missing would fire, naming the one.
+    let frd = conforming_frd()
+        .replace(
+            "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |",
+            "| `start` / `stop` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Watch lifecycle. |",
+        )
+        // The Aggregate API table still promises `execute`, so the module below
+        // declares it alongside the two lifecycle methods.
+        ;
+    write_workspace(tmp.path(), &frd);
+    let module = tmp.path().join("crates/shared/src/sample");
+    fs::create_dir_all(&module).unwrap();
+    fs::write(
+        module.join("contract_sample_protocol.rs"),
+        "pub trait ISample0Protocol: Send + Sync {\n    fn start(&self);\n    fn stop(&self);\n}\n\n\
+         pub trait ISample1Protocol: Send + Sync {\n    fn start(&self);\n    fn stop(&self);\n}\n\n\
+         pub trait ISampleAggregate: Send + Sync {\n    fn execute(&self);\n}\n",
+    )
+    .unwrap();
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "api_method_not_found"),
+        "every name in a slash-joined cell is checked; got: {findings:#?}"
+    );
+
+    // Drop `stop` from the code and the same document must fire, naming only
+    // the method that is actually gone.
+    fs::write(
+        module.join("contract_sample_protocol.rs"),
+        "pub trait ISample0Protocol: Send + Sync {\n    fn start(&self);\n}\n\n\
+         pub trait ISample1Protocol: Send + Sync {\n    fn start(&self);\n}\n\n\
+         pub trait ISampleAggregate: Send + Sync {\n    fn execute(&self);\n}\n",
+    )
+    .unwrap();
+    let findings = audit(tmp.path());
+    let message = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
+        .map(|(_, _, m)| m.as_str())
+        .unwrap_or_else(|| panic!("the missing method must fire; got: {findings:#?}"));
+    assert!(
+        message.contains("`stop`") && !message.contains("`start`"),
+        "only the undeclared name is reported; got: {message}"
+    );
+}
+
+#[test]
+fn aes601_skips_an_api_table_with_no_method_header() {
+    let tmp = tempfile::tempdir().unwrap();
+    // A table with no `Method` header is a shape the rule cannot read, so it
+    // is a parse skip rather than a guessed-at column and a false violation.
+    let frd = conforming_frd().replace(
+        "| Method | Input | Output | Error | Event | Description |\n| --- | --- | --- | --- | --- | --- |\n| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |",
+        "| Seam | Behaviour |\n| --- | --- |\n| The auditor | Does the work. |",
+    );
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "api_method_not_found"),
+        "a table with no Method column yields no finding; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_ignores_an_api_table_inside_a_fenced_block() {
+    let tmp = tempfile::tempdir().unwrap();
+    // A fenced example showing a hypothetical table cannot make the document
+    // promise a method the code does not declare.
+    let frd = conforming_frd().replace(
+        "## Integration Points",
+        "```markdown\n### Protocol API\n\n| Method | Input |\n| --- | --- |\n| `never_declared` | `DocRequest` |\n```\n\n## Integration Points",
+    );
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES601", "api_method_not_found"),
+        "a fenced block is an example, not a promise; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes601_anchors_the_method_finding_to_the_table_row() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = conforming_frd().replace(
+        "| `execute` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Single composite entry point. |",
+        "| `audit_purity` | `SampleRequest` | `SampleResponse` | Reason-coded | — | Promised but never declared. |",
+    );
+    write_workspace(tmp.path(), &frd);
+    write_protocol_module(tmp.path(), 2);
+    let frd_text = fs::read_to_string(tmp.path().join("crates/sample/FRD.md")).unwrap();
+    let row_line = frd_text
+        .lines()
+        .position(|l| l.contains("`audit_purity`"))
+        .unwrap()
+        + 1;
+    let findings = audit(tmp.path());
+    let (_, _, message) = findings
+        .iter()
+        .find(|(c, v, _)| c == "AES601" && v == "api_method_not_found")
+        .expect("the promised method must fire");
+    assert!(
+        message.contains(&format!("line {row_line}")),
+        "the finding must anchor to the row's own line {row_line}; got: {message}"
     );
 }
 

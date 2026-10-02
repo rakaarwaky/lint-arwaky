@@ -46,6 +46,7 @@ Section 5.5 "Demo Walkthrough".
 | ------------------------------------------------------------ | ----------------------------------------------------------------------- |
 | `scan` / `check` \[path\]                                                | Run all 7 code linters (naming, import, quality, role, orphan, structure, external) |
 | `naming` / `import` / `quality` / `role` / `orphan` / `structure` \[path\] | Individual rule groups (AES101–102, 201–205, 301–305, 401–406, 501–506, 701–703) |
+| `taxonomy` / `contract` / `capabilities` / `utility` / `agents` / `surface` \[path\] | All rule groups, reported for one AES layer only (files prefixed `taxonomy_`, `contract_`, `capabilities_`, `utility_`, `agent_`, `surface_`) |
 | `external` \[path\]                                          | External linters (Clippy, Ruff, ESLint, tool-native codes)              |
 | `fix` \[path\]                                               | Apply safe fixes (`--dry-run` previews)                                 |
 | `ci` \[path\]                                                | CI mode with exit codes (`--threshold <n>`)                             |
@@ -60,6 +61,15 @@ Section 5.5 "Demo Walkthrough".
 | `skill list`                                                 | List embedded AES skill documentation                                   |
 | `skill read <name>`                                          | Print a skill's SKILL.md (`--with-references` adds language HOW-TOs)    |
 | `lint-arwaky-tui`                                            | Start TUI                                                            |
+
+The six layer commands differ from the rule-group commands in what they narrow.
+A group command runs one linter over the whole workspace; a layer command runs
+**every** linter and reports only the violations whose file belongs to that
+layer — import cycles and orphans are cross-file facts, so narrowing the
+analysis instead of the output would under-report. `root` has no subcommand
+(`root_*` files are wiring, so they are reported by `scan`), and findings that
+name no layer-prefixed file — a folder-level structure finding, a Markdown doc
+invariant — stay with `structure` and `docs`.
 
 Key bindings: `c` check, `s` scan, `f` fix dry-run, `F` fix live (gated), `/` search, `?` help overlay. Press `r` to change project root. Destructive actions (`F`, `H`, `U`) require explicit confirmation.
 

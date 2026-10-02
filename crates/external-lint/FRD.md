@@ -18,7 +18,7 @@ All adapters execute **sequentially** (no threads, no async runtime). Each adapt
 
 The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md), FR-Filesystem-005). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -247,7 +247,7 @@ flowchart TD
 | Method | Input | Output | Error | Event | Description |
 |---|---|---|---|---|---|
 | `scan` | &FilePath | `LintResultList` | `LinterOperationError` | — | Scan. |
-| `apply_fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
+| `fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
 | `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan. |
 | `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter. |
 | `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix. |
@@ -294,7 +294,7 @@ flowchart TD
 | Resilience posture | One attempt per adapter per scan; a timeout or spawn failure skips that adapter and logs, and never retries | Force a timeout in one adapter and assert exactly one spawn occurred and the remaining adapters still completed |
 | Missing tool | A tool absent from PATH is reported as unavailable, and the scan continues | Run with one adapter's executable removed from PATH and assert the remaining adapters still complete |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
@@ -304,7 +304,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-004 — Auto-Fix** — e.g. ESLint fix → `eslint --fix` executed
 - **SCEN-005 — Normalization** — e.g. Clippy `correctness` lint → Severity CRITICAL, code `clippy::<name>`
 
-### SCEN-001 — Language Flags
+- **SCEN-001 — Language Flags**
 
 Project-level language detection is owned by the `filesystem` aggregate (FR-Filesystem-005). This scenario verifies only that external-lint consumes the flags it receives and selects adapters accordingly.
 
@@ -319,14 +319,14 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 7 | No caller-supplied context | Exactly one `FilesystemRequest::DetectProjectLanguages` is issued to the filesystem aggregate |
 | 8 | Single-file target `README.md` (flags derived from its extension) | Only markdownlint runs |
 
-### SCEN-002 — Adapter Selection
+- **SCEN-002 — Adapter Selection**
 
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | No languages detected | Empty adapter list |
 | 2 | All languages detected | 10 adapters selected |
 
-### SCEN-003 — Scan Execution
+- **SCEN-003 — Scan Execution**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -338,7 +338,7 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 6 | Timeout exceeded | Adapter returns error, others continue |
 | 7 | Sequential execution | Adapters run one after another |
 
-### SCEN-004 — Auto-Fix
+- **SCEN-004 — Auto-Fix**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -351,7 +351,7 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 7 | markdownlint fix | `<target> --fix` executed against the first resolvable CLI variant (`markdownlint-cli`, then `markdownlint-cli2`) |
 | 8 | No markdownlint CLI installed | No-op status, no command spawned |
 
-### SCEN-005 — Normalization
+- **SCEN-005 — Normalization**
 
 | # | Scenario | Expected |
 | - | - | - |

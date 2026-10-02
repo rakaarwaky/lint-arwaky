@@ -26,7 +26,7 @@ contract and the injected utility protocols.
 > **maintenance** crate, not project-setup. This crate focuses on scaffolding
 > and installation only.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -334,7 +334,7 @@ flowchart TD
 | Managed-interpreter retry | A system-managed interpreter refusal is retried with the system-packages override | Run the install against a managed interpreter and assert the retry happens and is reported |
 | Portability | Install succeeds on Linux, macOS, and Windows, with npm gated on Node.js presence | Run the installer on each platform and assert the JavaScript step is skipped where Node is absent |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
@@ -343,7 +343,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-003 — Language Detection** — e.g. Cargo.toml exists → Rust detected
 - **SCEN-004 — Adapter Installation** — e.g. Python install → pip install --user ruff mypy bandit
 
-### SCEN-001 — MCP Config
+- **SCEN-001 — MCP Config**
 
 FRD Ref: FR-ProjectSetup-001
 
@@ -360,7 +360,7 @@ FRD Ref: FR-ProjectSetup-001
 | 9 | Binary not found anywhere | Bare name `lint-arwaky-mcp` |
 | 10 | LINT_ARWAKY_MCP_BIN set | Env var path used |
 
-### SCEN-002 — Env File
+- **SCEN-002 — Env File**
 
 FRD Ref: FR-ProjectSetup-002
 
@@ -369,7 +369,7 @@ FRD Ref: FR-ProjectSetup-002
 | 1 | Normal home path | Correct PHANTOM_ROOT value |
 | 2 | Empty home path | PHANTOM_ROOT=/ |
 
-### SCEN-003 — Language Detection
+- **SCEN-003 — Language Detection**
 
 FRD Ref: FR-ProjectSetup-003
 
@@ -382,7 +382,7 @@ FRD Ref: FR-ProjectSetup-003
 | 5 | Multi-language project | All detected languages |
 | 6 | target/, node_modules/ dirs | Skipped |
 
-### SCEN-004 — Adapter Installation
+- **SCEN-004 — Adapter Installation**
 
 FRD Ref: FR-ProjectSetup-004
 

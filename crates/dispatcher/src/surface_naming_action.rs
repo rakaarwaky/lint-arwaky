@@ -12,13 +12,13 @@ use shared_common::FilePath;
 use shared_filesystem::FilesystemRequest;
 use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
-use shared_filesystem::taxonomy_filesystem_vo::{FileEntry, Language};
 use shared_naming_rules::INamingRunnerAggregate;
 use shared_naming_rules::taxonomy_naming_rules_request::NamingRequest;
 use shared_naming_rules::taxonomy_naming_rules_response::NamingResponse;
-use shared_naming_rules::{BENCHES_DIR, TESTS_DIR};
 
 use shared_common::ViolationItem;
+
+use crate::surface_test_entries;
 
 pub fn collect_naming(
     path: Option<FilePath>,
@@ -53,7 +53,7 @@ pub fn collect_naming(
     //    files, which the index build above prunes, so they are discovered
     //    separately rather than read from the file list.
     let source_files = fs_agg.execute(FilesystemRequest::FileList).into_file_list();
-    let test_files = discover_test_entries(fs_agg, &root, ignored_paths);
+    let test_files = surface_test_entries::build_test_entries(&fs_agg, root_path, ignored_paths);
     let request = NamingRequest::audit_with_tests(&source_files, &test_files);
     let NamingResponse::Audit {
         violations: results,
@@ -76,45 +76,4 @@ pub fn collect_naming(
 
     // 7. Return violations — CLI formats output and maps exit code
     Ok(violations)
-}
-
-/// Build file entries for the test and bench files under *root*, for AES103.
-///
-/// Entries carry the path and body the naming checkers read; the parse metadata
-/// is left default because AES103 judges file *names*, not their contents.
-fn discover_test_entries(
-    fs_agg: Arc<dyn IFilesystemAggregate>,
-    root: &str,
-    ignored_paths: &[String],
-) -> Vec<FileEntry> {
-    let paths = fs_agg
-        .execute(FilesystemRequest::discover_files_in_directories(
-            std::path::Path::new(root),
-            &[TESTS_DIR, BENCHES_DIR],
-            ignored_paths,
-        ))
-        .into_paths();
-    paths
-        .into_iter()
-        .filter_map(|path| {
-            let content = fs_agg
-                .execute(FilesystemRequest::read_file(std::path::Path::new(&path)))
-                .into_content_opt()
-                .unwrap_or_default();
-            let file_path = FilePath::new(path.clone()).ok()?;
-            Some(FileEntry {
-                path: std::path::PathBuf::from(&path),
-                size: content.len() as u64,
-                content,
-                extension: file_path
-                    .value
-                    .rsplit_once('.')
-                    .map(|(_, ext)| ext.to_string())
-                    .unwrap_or_default(),
-                language: Language::Unknown,
-                parse_ok: false,
-                parse_metadata: None,
-            })
-        })
-        .collect()
 }

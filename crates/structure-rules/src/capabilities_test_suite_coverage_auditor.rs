@@ -97,7 +97,8 @@ fn relative_to(folder: &Path, ws_root: &Path) -> String {
 }
 
 /// The stem of every file sitting directly in *dir*, sorted for stable output.
-fn stems_in(dir: &Path) -> Vec<String> {
+/// The stems of every collectable file sitting directly in *dir*, sorted.
+fn test_stems_in(dir: &Path) -> Vec<String> {
     let Ok(entries) = std::fs::read_dir(dir) else {
         return Vec::new();
     };
@@ -105,6 +106,11 @@ fn stems_in(dir: &Path) -> Vec<String> {
         .flatten()
         .map(|e| e.path())
         .filter(|p| p.is_file())
+        .filter(|p| {
+            p.extension()
+                .and_then(|ext| ext.to_str())
+                .is_some_and(|ext| consts::TEST_FILE_EXTENSIONS.contains(&ext))
+        })
         .filter_map(|p| p.file_stem().and_then(|s| s.to_str()).map(String::from))
         .collect();
     stems.sort();
@@ -133,7 +139,7 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
             ),
         ));
     } else {
-        let present = stems_in(&tests_dir);
+        let present = test_stems_in(&tests_dir);
         for prefix in required_tests_prefixes() {
             if present.iter().any(|s| s.starts_with(prefix)) {
                 continue;
@@ -158,7 +164,7 @@ fn check_feature_test_suite(folder: &Path, rel: &str, findings: &mut Vec<Structu
             ),
         ));
     } else {
-        let present = stems_in(&benches_dir);
+        let present = test_stems_in(&benches_dir);
         if !present.iter().any(|s| s.starts_with(BENCH_PREFIX)) {
             findings.push(missing_category(
                 rel,

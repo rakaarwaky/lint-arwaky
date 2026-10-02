@@ -15,6 +15,7 @@ use shared_filesystem::contract_filesystem_aggregate::IFilesystemAggregate;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IParserProtocol;
 use shared_filesystem::contract_filesystem_protocol::IWorkspaceProtocol;
+use shared_filesystem::utility_test_file_discovery;
 use shared_import_rules::IImportRunnerAggregate;
 use shared_import_rules::taxonomy_import_rules_request::ImportRequest;
 use shared_naming_rules::INamingRunnerAggregate;
@@ -704,9 +705,22 @@ fn run_single_file_scan(
             .iter()
             .map(ViolationItem::from_lint_result),
     );
+    // AES103 judges the test/bench files, so a one-file scan of a misnamed or
+    // nested test file has to reach it. The file itself is the only evidence
+    // that scan target can offer, so it is passed as the test set when it sits
+    // in one of those directories.
+    let test_entries: Vec<shared_filesystem::taxonomy_filesystem_vo::FileEntry> =
+        if utility_test_file_discovery::is_inside_any(
+            &scan_root.to_string_lossy(),
+            &[TESTS_DIR, BENCHES_DIR],
+        ) {
+            entries.clone()
+        } else {
+            Vec::new()
+        };
     all.extend(
         agg.naming
-            .execute(NamingRequest::audit(&entries))
+            .execute(NamingRequest::audit_with_tests(&entries, &test_entries))
             .into_violations()
             .iter()
             .map(ViolationItem::from_lint_result),

@@ -1,66 +1,91 @@
-// PURPOSE: dogfood test — drive structure-rules's own CLI surface against a live run,
+// PURPOSE: dogfood test — drive structure_rules's own CLI surface against a live run,
 // skipping when the environment cannot supply one.
 //
 // The dogfood type is local-only by contract: it exercises the shipped binary
-// rather than an in-process seam, so it depends on what is installed. Every
-// assertion here is guarded, and an unavailable environment reports a skip
-// instead of a failure — a dogfood test must never break CI.
+// rather than an in-process seam, so it depends on what is installed. A missing
+// binary is a skip; a binary that is present but cannot *launch* is a failure,
+// because that is precisely the defect these tests exist to catch.
 //
 // AES704 requires this file to exist: `dogfood_` is one of the seven test types
 // every feature folder owes, and its purpose is proving the CLI works against a
 // real session rather than a mock.
 
-use std::process::Command;
+use std::path::PathBuf;
+use std::process::{Command, Output};
 
-/// The linter binary, resolved from `PATH` or the usual install location.
-fn binary() -> Option<std::path::PathBuf> {
-    let name = "structure-rules-lint-arwaky-cli";
-    if let Ok(path) = std::env::var("PATH") {
-        for dir in std::env::split_paths(&path) {
-            let candidate = dir.join(name);
-            if candidate.is_file() {
-                return Some(candidate);
-            }
-        }
-    }
-    None
+/// The shipped linter binary, resolved from `PATH`.
+///
+/// This is the one binary every layer's CLI is exercised through
+/// (`lint-arwaky-cli`), matching the install path in `AGENTS.md`. On Windows the
+/// resolved name carries `.exe`, so a candidate without it is never found and
+/// the tests would skip on a machine that has the CLI installed.
+fn binary() -> Option<PathBuf> {
+    let name = if cfg!(windows) {
+        "lint-arwaky-cli.exe"
+    } else {
+        "lint-arwaky-cli"
+    };
+    std::env::var_os("PATH").and_then(|path| {
+        std::env::split_paths(&path)
+            .map(|dir| dir.join(name))
+            .find(|candidate| candidate.is_file())
+    })
 }
 
-/// The dogfood run: invoke the real CLI and read its exit status.
+/// Invoke the real CLI and hand back the raw output.
 ///
-/// Returns `None` when no binary is installed, which the caller reports as a
-/// skip — a machine without the CLI has nothing to dogfood against.
-fn run(arguments: &[&str]) -> Option<i32> {
+/// Returns `None` only when no binary is installed. A launch failure is a panic
+/// rather than a silent skip: the binary exists, so something is wrong with it,
+/// and reporting "not installed" would misdescribe the cause.
+fn run(arguments: &[&str]) -> Option<Output> {
     let binary = binary()?;
-    let output = Command::new(binary).args(arguments).output().ok()?;
-    Some(output.status.code().unwrap_or(-1))
+    match Command::new(binary).args(arguments).output() {
+        Ok(output) => Some(output),
+        Err(error) => panic!("`lint-arwaky-cli {arguments:?}` failed to launch: {error}"),
+    }
+}
+
+/// The combined stdout+stderr of a CLI run.
+fn text_of(output: &Output) -> String {
+    format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    )
 }
 
 #[test]
-fn dogfood_cli_reports_a_usage_line_when_asked_for_help() {
-    let Some(code) = run(&["--help"]) else {
+fn dogfood_cli_prints_usage_when_asked_for_help() {
+    let Some(output) = run(&["--help"]) else {
         eprintln!(
-            "SKIP dogfood_structure-rules: no `structure-rules-lint-arwaky-cli` on PATH; nothing to dogfood against"
+            "SKIP dogfood_structure_rules: no `lint-arwaky-cli` on PATH; nothing to dogfood against"
         );
         return;
     };
     assert_eq!(
-        code, 0,
-        "`structure-rules-lint-arwaky-cli --help` must exit 0; a non-zero exit means the shipped CLI \
+        output.status.code(),
+        Some(0),
+        "`lint-arwaky-cli --help` must exit 0; a non-zero exit means the shipped CLI \
          does not start, which is exactly what this test exists to catch"
+    );
+    assert!(
+        !text_of(&output).trim().is_empty(),
+        "`lint-arwaky-cli --help` must print usage; exiting 0 with no output means the \
+         command dispatched nothing and the CLI is unusable from a terminal"
     );
 }
 
 #[test]
 fn dogfood_cli_exits_nonzero_on_a_path_that_does_not_exist() {
-    let Some(code) = run(&["scan", "/nonexistent-structure-rules-dogfood-target"]) else {
+    let Some(output) = run(&["scan", "/nonexistent-structure-rules-dogfood-target"]) else {
         eprintln!(
-            "SKIP dogfood_structure-rules: no `structure-rules-lint-arwaky-cli` on PATH; nothing to dogfood against"
+            "SKIP dogfood_structure_rules: no `lint-arwaky-cli` on PATH; nothing to dogfood against"
         );
         return;
     };
     assert_ne!(
-        code, 0,
+        output.status.code(),
+        Some(0),
         "scanning a missing path must exit non-zero; exiting 0 would report a \
          clean scan for a target that does not exist"
     );

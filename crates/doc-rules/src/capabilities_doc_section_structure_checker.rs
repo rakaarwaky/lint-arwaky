@@ -9,12 +9,13 @@
 use shared_doc_rules::contract_doc_protocol::ISectionStructureProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
-use shared_doc_rules::taxonomy_doc_rules_request::DocFinding;
+use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 use shared_doc_rules::taxonomy_doc_section_vo::Section;
 
 use shared_doc_rules::utility_markdown_scanner::{
-    h3_subsections, has_bullet, has_table_with_columns, normalize_heading, sections,
+    h3_headings, h3_subsections, has_bullet, has_table_with_columns, normalize_heading, sections,
 };
+use shared_doc_rules::utility_protocol_counter::fr_id_heading_re;
 
 // ─── Block 1: Struct Definition ────────────────────────────
 
@@ -45,6 +46,9 @@ impl ISectionStructureProtocol for SectionStructureChecker {
                 self.check_nfr_shape(&parsed, &mut own);
                 self.check_scenarios(&parsed, &mut own);
                 self.check_glossary(&parsed, &mut own);
+                // Document-wide, not section-scoped: the point is that the
+                // parent section cannot be chosen to dodge the rule.
+                self.check_h3_template_parity(document, &mut own);
             }
             self.check_section_order(&parsed, &mut own);
             context.stamp(document, &mut own);
@@ -268,6 +272,63 @@ impl SectionStructureChecker {
                     "line {} FRD sections appear out of template order; expected: {}",
                     found.first().map_or(0, |(_, line)| *line),
                     consts::FRD_SECTION_ORDER.join(", ")
+                ),
+            ));
+        }
+    }
+
+    /// Every level-3 heading in the FRD must be a shape the template
+    /// sanctions: a requirement heading, `Protocol API`, or `Aggregate API`.
+    ///
+    /// `check_api_contract` reads the level-3 headings *under* `## API
+    /// Contract` only, so a document that moves a level-3 section into any
+    /// other parent section escapes it. That is how `crates/filesystem/FRD.md`
+    /// came to carry six `### I*Protocol (N operations)` tables under
+    /// `## Assumptions & Constraints` while `docs` reported 0 violations: the
+    /// content was a 100% duplicate of the `Protocol API` table (63 rows on
+    /// both sides, zero-name symmetric difference), yet nothing inspected it.
+    ///
+    /// This check reads the whole document instead of one section, so the
+    /// section cannot be chosen to dodge the rule. The requirement-heading
+    /// exemption reuses the shared FR-ID pattern over the raw text rather than
+    /// a second pattern, so the set AES602 accepts and the set AES601 accepts
+    /// are the same set by construction.
+    fn check_h3_template_parity(&self, document: &DocSource, findings: &mut Vec<DocFinding>) {
+        let sanctioned = |title: &str| {
+            let norm = normalize_heading(title);
+            consts::FRD_H3_TITLES.iter().any(|want| {
+                let want = normalize_heading(want);
+                norm == want || norm.starts_with(&want)
+            })
+        };
+        // A requirement heading is sanctioned by shape, not by title, so the
+        // lines the shared FR-ID pattern accepts are collected up front and a
+        // heading on one of them is exempt. Reusing that pattern is what keeps
+        // the set AES602 accepts and the set AES601 accepts identical.
+        let requirement_lines: Vec<usize> = fr_id_heading_re()
+            .map(|re| {
+                re.captures_iter(&document.text)
+                    .filter_map(|caps| {
+                        let start = caps.get(0)?.start();
+                        Some(document.text[..start].lines().count().max(1))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        for (title, line) in h3_headings(&document.text) {
+            if sanctioned(&title) || requirement_lines.contains(&line) {
+                continue;
+            }
+            findings.push(DocFinding::new_with_line(
+                "",
+                line,
+                consts::RULE_CODE_SECTION_STRUCTURE,
+                consts::SECTION_STRUCTURE_VIOLATION_H3_OFF_TEMPLATE,
+                format!(
+                    "line {line} '{title}' is a level-3 heading the FRD template does not sanction; \
+                     the template's only level-3 headings are '### FR-<FEATURENAME>-NNN: <name>', \
+                     '### Protocol API', and '### Aggregate API' — state this content inside the \
+                     section that owns it, or demote it to a level-4 heading"
                 ),
             ));
         }

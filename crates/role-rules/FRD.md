@@ -18,7 +18,7 @@ File discovery, raw content reads, and AST parsing are handled by the external `
 
 Import checking is NOT performed by role-rules. All import validation (forbidden imports, mandatory imports, unused imports) is the responsibility of the import-rules crate (AES201–AES205). Role-rules only validates structural and responsibility constraints within each file.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -321,7 +321,7 @@ flowchart TD
 | Threshold determinism | Numeric thresholds are compiled-in constants, not configuration | Assert the threshold constants are not read from configuration |
 | Configuration coverage | Enable/disable toggles, ignored paths, and per-rule exceptions are configuration-driven | Flip each setting and assert the corresponding rules change behaviour |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
@@ -333,7 +333,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **AES406 — Surface Passive Role** — e.g. Passive surface with 51 functions (max=50) → AES406 — TooManyMethods
 - **Classification & Configuration** — e.g. Root layer file (`root_app_entry`) → Completely skipped, zero violations
 
-### AES401 — Taxonomy Purity
+- **AES401 — Taxonomy Purity**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -348,7 +348,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 9 | Taxonomy VO file with custom types only | No violation |
 | 10 | Empty taxonomy file | No violation |
 
-### AES402 — Contract Primitive Restriction
+- **AES402 — Contract Primitive Restriction**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -359,7 +359,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | Contract aggregate with `i64` in method signature | AES402 violation |
 | 6 | Contract protocol with all VO-typed signatures | No violation |
 
-### AES403 — Capability Protocol Implementation
+- **AES403 — Capability Protocol Implementation**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -378,7 +378,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 13 | Comment containing `Sub-Block 4:` | Not read as a marker |
 | 14 | Capability file implementing 2 protocol traits | AES403 — MultiProtocol |
 
-### AES404 — Utility Purity
+- **AES404 — Utility Purity**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -393,7 +393,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 9 | Utility file with `struct` inside comment | No violation (AST ignores comments) |
 | 10 | Empty utility file | No violation |
 
-### AES405 — Agent Orchestrator Composition
+- **AES405 — Agent Orchestrator Composition**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -405,7 +405,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | Agent file with `Any` type annotation | AES405 — AnyTypeAnnotation |
 | 7 | Agent file with `: Any` in comment | No violation (comment skipped) |
 
-### AES406 — Surface Passive Role
+- **AES406 — Surface Passive Role**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -417,7 +417,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | Utility surface with 40 control-flow statements | No violation (below threshold) |
 | 7 | Surface file with unclassifiable suffix | Treated as Passive |
 
-### Classification & Configuration
+- **Classification & Configuration**
 
 | # | Scenario | Expected |
 | - | - | - |

@@ -21,7 +21,7 @@ The crate follows the AES 7-layer architecture. Each of the eight business
 capabilities below corresponds to one `_protocol` trait in `shared/maintenance`
 and one implementation in `capabilities_maintenance_checker`.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -320,7 +320,7 @@ flowchart TD
 | Update atomicity | Replacement is atomic; a failed replacement leaves the previous binary runnable | Interrupt a replacement and assert the previous binary still runs |
 | Concurrency | All subprocess work is synchronous; no async runtime dependency | Inspect the dependency tree for an async runtime and assert it is absent |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
@@ -334,7 +334,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-008 — Adapter Health Check** — e.g. All 9 adapters installed → All available: true
 - **SCEN-009 — Self-Update** — e.g. GitHub reachable, same version → already_up_to_date=true, upgraded=false
 
-### SCEN-001 — Doctor
+- **SCEN-001 — Doctor**
 
 FRD Ref: FR-Maintenance-001
 
@@ -346,7 +346,7 @@ FRD Ref: FR-Maintenance-001
 | 4 | Language runtimes installed | Versions reported (rustc, python3, node) |
 | 5 | Language runtime missing | Version "NOT FOUND" |
 
-### SCEN-002 — Stats
+- **SCEN-002 — Stats**
 
 FRD Ref: FR-Maintenance-002
 
@@ -357,7 +357,7 @@ FRD Ref: FR-Maintenance-002
 | 3 | Directory with no source files | All zeros, ratio 0.0 |
 | 4 | Empty directory | All zeros, ratio 0.0 |
 
-### SCEN-003 — Clean
+- **SCEN-003 — Clean**
 
 FRD Ref: FR-Maintenance-003
 
@@ -367,7 +367,7 @@ FRD Ref: FR-Maintenance-003
 | 2 | Project with target/ | Directory removed |
 | 3 | No cache directories | No-op |
 
-### SCEN-004 — Update
+- **SCEN-004 — Update**
 
 FRD Ref: FR-Maintenance-004
 
@@ -376,7 +376,7 @@ FRD Ref: FR-Maintenance-004
 | 1 | Python tools upgrade | pip install --upgrade per tool |
 | 2 | pip not installed | Warning, no crash |
 
-### SCEN-005 — Diagnose
+- **SCEN-005 — Diagnose**
 
 FRD Ref: FR-Maintenance-001
 
@@ -387,7 +387,7 @@ FRD Ref: FR-Maintenance-001
 | 3 | Missing mypy (optional) | Status "WARN" |
 | 4 | Missing eslint (optional) | Status "WARN" |
 
-### SCEN-006 — Security
+- **SCEN-006 — Security**
 
 FRD Ref: FR-Maintenance-005
 
@@ -398,7 +398,7 @@ FRD Ref: FR-Maintenance-005
 | 3 | cargo-audit not installed | tool_installed: false, empty findings |
 | 4 | No vulnerabilities | Empty findings, success |
 
-### SCEN-007 — Dependencies
+- **SCEN-007 — Dependencies**
 
 FRD Ref: FR-Maintenance-006
 
@@ -408,7 +408,7 @@ FRD Ref: FR-Maintenance-006
 | 2 | No Cargo.lock | Returns error |
 | 3 | Empty Cargo.lock | Empty dependency list |
 
-### SCEN-008 — Adapter Health Check
+- **SCEN-008 — Adapter Health Check**
 
 FRD Ref: FR-Maintenance-007
 
@@ -418,7 +418,7 @@ FRD Ref: FR-Maintenance-007
 | 2 | Missing ruff | ruff available: false |
 | 3 | No adapters installed | All available: false |
 
-### SCEN-009 — Self-Update
+- **SCEN-009 — Self-Update**
 
 FRD Ref: FR-Maintenance-008
 

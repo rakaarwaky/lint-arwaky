@@ -499,6 +499,7 @@ Sections follow the template order (Reference, System Overview, Functional Requi
 | `api_h3_unexpected`           | API Contract carries a level-3 heading other than Protocol API / Aggregate API. |
 | `api_subsection_no_table`     | A required API subsection has no table with Method, Input, Output, Error, Event, Description. |
 | `api_subsection_duplicated`   | A required API subsection appears more than once.                      |
+| `h3_off_template`             | A level-3 heading anywhere in the FRD is not `FR-<FEATURE>-NNN:`, `Protocol API`, or `Aggregate API`. |
 | `integration_not_table`       | Integration Points is not a table with System, Direction, Purpose, Failure mode. |
 | `nfr_not_table`               | Non-functional Requirements is not a table with Metric, Target, Measurement method. |
 | `scenarios_empty`             | Test Scenarios carries no bullet items.                               |
@@ -513,6 +514,20 @@ therefore accepts exactly two subsections — `### Protocol API` then
 `### Aggregate API`, in that order, once each — and each must own a
 column-complete table. Per-protocol detail belongs in the rows of the
 `Protocol API` table, never in a heading.
+
+**The FRD level-3 set is closed document-wide, not just under API Contract.**
+`api_h3_unexpected` reads the subtree of one H2, so it can be evaded by moving
+the same invented section under a different parent: `crates/filesystem/FRD.md`
+shipped six `### I*Protocol (N operations)` tables under
+`## Assumptions & Constraints`, each restating method-for-method what its
+`### Protocol API` table already carried (63 rows on both sides, zero-name
+symmetric difference), and `docs` reported 0 violations. `h3_off_template` is
+therefore a whole-document statement: the only level-3 headings an FRD may carry
+are `### FR-<FEATURE>-NNN: <name>`, `### Protocol API`, and `### Aggregate API`,
+wherever they sit. A requirement heading is exempt by *shape* rather than by
+title, recognised through the same `FR_ID_HEADING_PATTERN` AES601 uses, so the
+set AES602 accepts and the set AES601 accepts cannot drift. Level 4 and deeper
+stay free-form — that is where detail that must not become a section belongs.
 
 ---
 

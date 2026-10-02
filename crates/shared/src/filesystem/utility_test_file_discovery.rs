@@ -34,18 +34,46 @@ const MAX_TEST_DIR_DEPTH: usize = 3;
 /// folder, under `crates/<feature>/` at a workspace root, and under
 /// `<member>/<feature>/` when the target is a member directory. One name-based
 /// walk serves all three.
-pub fn find_test_directories(root: &Path, directories: &[&str]) -> Vec<PathBuf> {
+pub fn find_test_directories(
+    root: &Path,
+    directories: &[&str],
+    ignored: &[String],
+) -> Vec<PathBuf> {
+    // The configured list names `tests` and `benches` — they are in
+    // `DEFAULT_IGNORED_PATHS` precisely so the production walk prunes them. Here
+    // they are the subject, so they are dropped from the pattern list before any
+    // prune test runs. Filtering inside the walk instead would prune the suite
+    // roots themselves and report nothing at all.
+    let effective: Vec<String> = ignored
+        .iter()
+        .filter(|pattern| !directories.contains(&pattern.as_str()))
+        .cloned()
+        .collect();
+
     let mut found = Vec::new();
-    collect_test_directories(root, directories, 0, &mut found);
+    // The root itself counts. A scan whose target *is* `crates/calc/tests`
+    // would otherwise descend looking for a directory named `tests` beneath it,
+    // find nothing, and report no AES103 finding for the very directory the
+    // scan was pointed at.
+    if directory_name(root).is_some_and(|name| directories.contains(&name)) {
+        found.push(root.to_path_buf());
+    }
+    collect_test_directories(root, directories, 0, &effective, &mut found);
     found.sort();
     found.dedup();
     found
+}
+
+/// The final segment of `path`, or `None` when it names the filesystem root.
+fn directory_name(path: &Path) -> Option<&str> {
+    path.file_name().and_then(|n| n.to_str())
 }
 
 fn collect_test_directories(
     dir: &Path,
     directories: &[&str],
     depth: usize,
+    ignored: &[String],
     found: &mut Vec<PathBuf>,
 ) {
     if depth > MAX_TEST_DIR_DEPTH {
@@ -66,15 +94,27 @@ fn collect_test_directories(
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or_default();
+        // A configured pattern prunes the subtree here, before it can be opened
+        // as a suite root. Filtering only the walk-rooted children's names would
+        // let an ignored folder still be discovered, because each suite walk is
+        // rooted *inside* it and its own name no longer matches.
+        if ignored.iter().any(|pattern| *pattern == name) {
+            continue;
+        }
         if directories.contains(&name) {
-            found.push(path);
+            found.push(path.clone());
+            // Don't skip the subtree — a suite can contain subdirectories that
+            // themselves hold files the rule must judge (nested unit tests are a
+            // known layout). Continuing the walk means those files appear in the
+            // returned directory list and get picked up by the caller.
+            collect_test_directories(&path, directories, depth + 1, ignored, found);
             continue;
         }
         // Build artifacts and VCS metadata are never a route to a test folder.
         if shared_common::DEFAULT_IGNORED_PATHS.contains(&name) {
             continue;
         }
-        collect_test_directories(&path, directories, depth + 1, found);
+        collect_test_directories(&path, directories, depth + 1, ignored, found);
     }
 }
 

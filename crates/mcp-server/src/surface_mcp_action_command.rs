@@ -26,6 +26,9 @@ use shared_orphan_rules::IOrphanAggregate;
 use shared_project_setup::ISetupAggregate;
 use shared_quality_rules::ICodeAnalysisAggregate;
 use shared_role_rules::IRoleRunnerAggregate;
+use shared_role_rules::{
+    LAYER_AGENT, LAYER_CAPABILITIES, LAYER_CONTRACT, LAYER_SURFACES, LAYER_TAXONOMY, LAYER_UTILITY,
+};
 
 use shared_common::taxonomy_violation_item_vo::ViolationItem;
 
@@ -177,6 +180,53 @@ impl McpActionSurface {
                     "total_violations": report.total_violations,
                     "score": report.score,
                     "reasons": report.reasons,
+                })
+            }
+            Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
+        }
+    }
+
+    /// Run every rule group but report only one layer's violations. `action` is the
+    /// subcommand the caller asked for, echoed back verbatim — it is the layer's
+    /// public name (`surface`), which the internal `LAYER_*` spelling (`surfaces`)
+    /// does not match.
+    pub fn execute_layer_scan(&self, path: &str, layer: &str, action: &str) -> serde_json::Value {
+        let fp = match self.to_fp(path) {
+            Ok(fp) => fp,
+            Err(error) => return error,
+        };
+        let opts = dispatcher::surface_check_action::ScanOptions {
+            path: Some(fp),
+            multi_project_orchestrator: Some(self.deps.config_orchestrator.clone()),
+            filter: None,
+            member: None,
+            filesystem: Arc::new(self.deps.fs_seam.as_ref().clone()),
+            scan_aggregates: Some(dispatcher::surface_check_action::ScanAggregates {
+                quality: self.deps.code_analysis_linter.clone(),
+                role: self.deps.role_orchestrator.clone(),
+                import: self.deps.import_orchestrator.clone(),
+                naming: self.deps.naming_orchestrator.clone(),
+                external: self.deps.external_lint.clone(),
+                orphan: self.deps.orphan_orchestrator.clone(),
+                config: self.deps.config_orchestrator.clone(),
+                structure: self.deps.structure_orchestrator.clone(),
+                doc: self.deps.doc_orchestrator.clone(),
+                fs_seam: self.deps.fs_seam.clone(),
+            }),
+        };
+        match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
+            Ok(violations) => {
+                let total = violations.len();
+                let exit_code = if total == 0 { 0 } else { 1 };
+                serde_json::json!({
+                    "status": if exit_code == 0 { "ok" } else { "warning" },
+                    "result": if exit_code == 0 { "clean" } else { "violations" },
+                    "action": action,
+                    "layer": layer,
+                    "path": path,
+                    "exit_code": exit_code,
+                    "total_violations": total,
+                    "results": violations_to_json(&violations),
                 })
             }
             Err(e) => serde_json::json!({"error": e, "exit_code": 2}),
@@ -514,6 +564,12 @@ impl McpActionSurface {
             "role" => self.execute_role(path),
             "docs" => self.execute_docs(path),
             "external" => self.execute_external(path),
+            "taxonomy" => self.execute_layer_scan(path, LAYER_TAXONOMY, action),
+            "contract" => self.execute_layer_scan(path, LAYER_CONTRACT, action),
+            "capabilities" => self.execute_layer_scan(path, LAYER_CAPABILITIES, action),
+            "utility" => self.execute_layer_scan(path, LAYER_UTILITY, action),
+            "agents" => self.execute_layer_scan(path, LAYER_AGENT, action),
+            "surface" => self.execute_layer_scan(path, LAYER_SURFACES, action),
             "dependencies" => self.execute_dependencies(path),
             "version" => self.execute_version(),
             "watch" => self.execute_watch(),

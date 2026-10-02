@@ -72,10 +72,10 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| `audit_shared` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES701 seam: shared folder purity and its doc pair |
-| `audit_feature` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES702 seam: feature folder health and its doc pair |
-| `audit_surface` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES703 seam: surface folder purity and its design docs |
-| `audit_test_suite` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | AES704 seam: per-category test-suite coverage |
+| `audit_shared` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Walk the kernel folders and report shared-folder purity and documentation findings (AES701). |
+| `audit_feature` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Classify each feature folder and report folder health and documentation findings (AES702). |
+| `audit_surface` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Report surface-folder purity and documentation findings, sorted and deduplicated (AES703). |
+| `audit_test_suite` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Report the test category each feature folder still owes — one finding per absent type, plus any missing test or benchmark directory (AES704). |
 
 ### Aggregate API
 

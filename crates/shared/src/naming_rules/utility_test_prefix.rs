@@ -105,17 +105,20 @@ pub fn nested_under(path: &str) -> Option<(&'static str, usize)> {
         path.to_string()
     };
     let segments: Vec<&str> = normalized.split('/').filter(|s| !s.is_empty()).collect();
+    // The levels a file sits below `name`, or `None` when the registered support
+    // directory makes it as deep as the layout allows.
+    //
+    // The exemption is deliberately narrow: a support directory is honoured only
+    // directly under `tests/`, and only for the file immediately inside it. A
+    // blanket "anything below `common`" test would let `tests/common/deep/…` and
+    // `benches/common/…` both slip past the flat-layout rule.
     let levels_below = |name: &'static str| -> Option<usize> {
         let index = segments.iter().rposition(|s| *s == name)?;
         let levels = segments.len() - index - 2;
-        // Anything below a support directory is as deep as the layout allows.
-        let under_support = segments
-            .get(index + 1)
-            .is_some_and(|segment| TEST_SUPPORT_DIRS.contains(segment));
-        match under_support {
-            true => None,
-            false => Some(levels),
+        if levels >= 1 && supports_shared_code(name, segments.get(index + 1)) {
+            return None;
         }
+        Some(levels)
     };
     if let Some(levels) = levels_below(TESTS_DIR)
         && levels >= 1
@@ -125,4 +128,14 @@ pub fn nested_under(path: &str) -> Option<(&'static str, usize)> {
     levels_below(BENCHES_DIR)
         .filter(|levels| *levels >= 1)
         .map(|levels| (BENCHES_DIR, levels))
+}
+
+/// Whether `segment` is a registered support directory for files directly under
+/// `parent`.
+///
+/// `tests/common/` is sanctioned because Rust reaches shared support code through
+/// a module declaration. `benches/` has no such convention, so `benches/common/`
+/// gets none — the vocabulary is per-directory, not global.
+fn supports_shared_code(parent: &str, segment: Option<&&str>) -> bool {
+    parent == TESTS_DIR && segment.is_some_and(|s| TEST_SUPPORT_DIRS.contains(s))
 }
