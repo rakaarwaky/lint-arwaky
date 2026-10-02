@@ -108,12 +108,54 @@ CLIPPY_PID=$!
 wait_and_report $CLIPPY_PID
 echo "Phase 2 duration: $((SECONDS - ph2_start))s"
 
-# ─── Phase 3: Self-lint + Tests + False Negatives (parallel) ────
-# All reuse the debug artifacts from Phase 2
+# ─── Phase 3: Tests (build) then Self-Lint + Scans (parallel) ────
+# Defensive scheduling, not a proven bug fix.
+#
+# This gate runs `cargo build --release` and then nextest, which *writes* to
+# `target/`. The three scan gates only *read* the debug binary Phase 2 built,
+# so they are safe to run concurrently with each other but not with the cargo
+# phase. Two cargo processes interleaving on one target directory is a known
+# source of spurious failures.
+#
+# What is actually observed, stated precisely because it is weaker than a
+# reproduction: one run produced `moxcms` failing to parse
+# (`expected one of ... found Tag`) and a later run produced
+# `external-lint` (test "integration_external_lint") failing to compile. Both
+# vanished on rerun; neither could be reproduced by deliberately re-running
+# this script with the serialization removed (3 consecutive runs, all green).
+# So this change removes one variable rather than fixing a demonstrated defect,
+# and it is recorded as such in ROADMAP.md's Risk Register.
+#
+# The reason to make it anyway: a gate that fails for reasons nobody can
+# reproduce trains its users to reach for `--no-verify`, and a gate nobody
+# trusts is worse than no gate. Determinism of the *pass* signal matters more
+# than the wall-clock cost of one extra `wait`.
 ph3_start=$SECONDS
-echo -e "\n${CYAN}━━━ Phase 3: Self-Lint + Tests + False Negatives (PARALLEL) ━━━${NC}"
+echo -e "\n${CYAN}━━━ Phase 3: Tests (build) then Self-Lint + Scans (parallel) ━━━${NC}"
 
 export CLI="./target/debug/lint-arwaky-cli"
+
+# Single cargo nextest invocation — 3× faster than cargo test.
+# `set -eo pipefail` matters: without it the pipeline status is `tail`'s (0)
+# and a failing test run reported PASS — the gate must propagate nextest's
+# exit code. `cargo build --release` first: the `regression_scan_modes`
+# suite executes the release binary (same as CI's "Build release binary
+# (for regression tests)" step), and `cargo test --doc` because nextest
+# cannot run doctests (QA #638).
+run_gate "Tests (workspace)" bash -c '
+    set -eo pipefail
+    cargo build --release 2>&1 | tail -1
+    cargo nextest run --workspace --lib --tests 2>&1 | tail -5
+    cargo test --doc --workspace 2>&1 | tail -3
+    echo "  tests completed"
+' &
+TEST_PID=$!
+
+# The scan gates only start once the cargo phase has released the target
+# directory. This `wait` is what makes the serialization real rather than
+# documented in the comment above.
+wait "$TEST_PID" 2>/dev/null || true
+echo "  (cargo phase settled; starting scan gates)"
 
 run_gate "Self-Lint (check .)" bash -c '
     output=$($CLI check . 2>&1) || exit_code=$?
@@ -140,23 +182,7 @@ run_gate "False Positives (workspaces-good == 0)" bash -c '
 ' &
 FP_PID=$!
 
-# Single cargo nextest invocation — 3× faster than cargo test.
-# `set -eo pipefail` matters: without it the pipeline status is `tail`'s (0)
-# and a failing test run reported PASS — the gate must propagate nextest's
-# exit code. `cargo build --release` first: the `regression_scan_modes`
-# suite executes the release binary (same as CI's "Build release binary
-# (for regression tests)" step), and `cargo test --doc` because nextest
-# cannot run doctests (QA #638).
-run_gate "Tests (workspace)" bash -c '
-    set -eo pipefail
-    cargo build --release 2>&1 | tail -1
-    cargo nextest run --workspace --lib --tests 2>&1 | tail -5
-    cargo test --doc --workspace 2>&1 | tail -3
-    echo "  tests completed"
-' &
-TEST_PID=$!
-
-wait_and_report $SELF_LINT_PID $FN_PID $FP_PID $TEST_PID
+wait_and_report $TEST_PID $SELF_LINT_PID $FN_PID $FP_PID
 echo "Phase 3 duration: $((SECONDS - ph3_start))s"
 
 TOTAL_TIME=$((SECONDS - START_TIME))
