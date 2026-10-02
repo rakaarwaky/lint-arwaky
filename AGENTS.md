@@ -164,7 +164,7 @@ When merging a PR to develop:
 
 `crates/shared/skills/` is the source of truth for the distributed skill pack; each is one directory with a `SKILL.md` and an optional `references/HOW-TO-*.md` set of per-language playbooks. Layer creation (`aes-taxonomy`, `aes-contract`, `aes-utility`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-root`), maintenance (`aes-lint-arwaky`, `aes-migration`), and documentation (`aes-docs`, `aes-testing-suite`) skills are triggered by keyword.
 
-`lint-arwaky init` installs every `SKILL.md` plus only the `references/` files matching the target's detected languages. `crates/shared/src/project_setup/taxonomy_skills_constant.rs` is generated — run `python3 tools/regenerate_skills.py` after adding, removing, or renaming a skill file.
+`lint-arwaky init` installs every `SKILL.md` plus only the `references/` files matching the target's detected languages. `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` is generated — run `python3 tools/regenerate_skills.py` after adding, removing, or renaming a skill file. The `catalog_matches_the_skills_directory` test fails if a skill file exists without being embedded, so a missed regeneration cannot reach `main`.
 
 **Role pipeline:** `Architect` → `Business Analyst` → `Tech Lead` → `Fullstack Developer` (review then execute). Plan files go to `.agents/plans/`.
 
