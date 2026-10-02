@@ -229,3 +229,136 @@ fn fr_doc_001_anchors_the_finding_to_a_line() {
         "every doc finding names a line so reports can anchor it; got: {message}"
     );
 }
+
+// ── FR-DOC-001: the promised API methods exist ──────────────────────────────
+
+/// An FRD whose `## API Contract` promises *protocol_method* and
+/// `execute`, with the requirement headings the other tests rely on.
+fn frd_promising_methods(protocol_method: &str) -> String {
+    let frd = frd_with_requirements(1);
+    format!(
+        "{frd}\n\
+         ## API Contract\n\n\
+         ### Protocol API\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `{protocol_method}` | `SampleRequest` | `SampleResponse` | — | — | One seam. |\n\n\
+         ### Aggregate API\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `execute` | `SampleRequest` | `SampleResponse` | — | — | Single entry point. |\n"
+    )
+}
+
+/// Declare *classes* protocol seams, each carrying *method*, plus an aggregate
+/// carrying `execute`.
+fn write_contract_module_with_methods(root: &Path, classes: usize, method: &str) {
+    let module = root.join("crates/shared/src/sample");
+    fs::create_dir_all(&module).unwrap();
+    let mut first = String::from("//! sample contract module\n\n");
+    for n in 0..classes {
+        first.push_str(&format!(
+            "pub trait ISample{n}Protocol: Send + Sync {{\n    fn {method}(&self);\n}}\n\n"
+        ));
+    }
+    first.push_str("pub trait ISampleAggregate: Send + Sync {\n    fn execute(&self);\n}\n");
+    fs::write(module.join("contract_sample_protocol.rs"), first).unwrap();
+}
+
+/// The method-existence finding, if the audit produced one.
+fn method_message(findings: &[(String, String, String)]) -> Option<String> {
+    findings
+        .iter()
+        .find(|(c, v, _)| c == CODE && v == "api_method_not_found")
+        .map(|(_, _, m)| m.clone())
+}
+
+#[test]
+fn fr_doc_001_accepts_a_promised_method_the_contract_module_declares() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_feature(tmp.path(), &frd_promising_methods("audit_thing"));
+    write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
+    assert!(
+        method_message(&audit(tmp.path())).is_none(),
+        "a method the seams declare satisfies its table row"
+    );
+}
+
+#[test]
+fn fr_doc_001_fires_when_a_promised_method_is_never_declared() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The FRD promises `audit_ghost`; the seam declares something else. The
+    // requirement count still matches the class count, so only the
+    // method-existence check can answer this document.
+    write_feature(tmp.path(), &frd_promising_methods("audit_ghost"));
+    write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
+    let message =
+        method_message(&audit(tmp.path())).expect("a promised method the code lacks must fire");
+    assert!(
+        message.contains("`audit_ghost`") && message.contains("Protocol API"),
+        "the message names the method and the table it sits in; got: {message}"
+    );
+}
+
+#[test]
+fn fr_doc_001_offers_both_remedies_for_a_missing_method() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_feature(tmp.path(), &frd_promising_methods("audit_ghost"));
+    write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
+    let message =
+        method_message(&audit(tmp.path())).expect("a promised method the code lacks must fire");
+    assert!(
+        message.contains("remove `audit_ghost` from the table"),
+        "the message must offer to delete the promise; got: {message}"
+    );
+    assert!(
+        message.contains("create the protocol/aggregate method"),
+        "the message must offer to declare the missing method; got: {message}"
+    );
+}
+
+#[test]
+fn fr_doc_001_anchors_a_missing_method_to_its_table_row() {
+    let tmp = tempfile::tempdir().unwrap();
+    let frd = frd_promising_methods("audit_ghost");
+    write_feature(tmp.path(), &frd);
+    write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
+    let row_line = fs::read_to_string(tmp.path().join("crates/sample/FRD.md"))
+        .unwrap()
+        .lines()
+        .position(|l| l.contains("`audit_ghost`"))
+        .unwrap()
+        + 1;
+    let message = method_message(&audit(tmp.path())).expect("the missing method must fire");
+    assert!(
+        message.contains(&format!("line {row_line}")),
+        "the finding anchors to its own row at line {row_line}; got: {message}"
+    );
+}
+
+#[test]
+fn fr_doc_001_reports_a_missing_aggregate_method_too() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The Aggregate API table promises `dispatch`, which nothing declares.
+    let frd = frd_promising_methods("audit_thing").replace("| `execute` |", "| `dispatch` |");
+    write_feature(tmp.path(), &frd);
+    write_contract_module_with_methods(tmp.path(), 1, "audit_thing");
+    let message =
+        method_message(&audit(tmp.path())).expect("an aggregate method the code lacks must fire");
+    assert!(
+        message.contains("`dispatch`") && message.contains("Aggregate API"),
+        "the aggregate table is audited the same way as the protocol table; got: {message}"
+    );
+}
+
+#[test]
+fn fr_doc_001_leaves_api_methods_alone_without_a_contract_module() {
+    let tmp = tempfile::tempdir().unwrap();
+    // No shared contract module, so no method can be checked: the finding is
+    // a parse skip, never a violation.
+    write_feature(tmp.path(), &frd_promising_methods("audit_ghost"));
+    assert!(
+        method_message(&audit(tmp.path())).is_none(),
+        "a feature with no shared contract module cannot mismatch"
+    );
+}

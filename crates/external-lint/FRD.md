@@ -247,7 +247,7 @@ flowchart TD
 | Method | Input | Output | Error | Event | Description |
 |---|---|---|---|---|---|
 | `scan` | &FilePath | `LintResultList` | `LinterOperationError` | — | Scan. |
-| `apply_fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
+| `fix` | &FilePath | `ComplianceStatus` | `LinterOperationError` | — | Apply fix. |
 | `exec_cmd_scan` | Vec<String>, FilePath, f64, Option<AdapterName>, &FilePath | `ResponseData` | `LinterOperationError` | — | Exec cmd scan. |
 | `exec_cmd_adapter` | Vec<String>, FilePath, f64, AdapterName | `ResponseData` | `LinterOperationError` | — | Exec cmd adapter. |
 | `js_apply_fix` | &FilePath, &str, &str | `ComplianceStatus` | `LinterOperationError` | — | Js apply fix. |

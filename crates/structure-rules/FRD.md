@@ -56,7 +56,9 @@ The structure-rules crate enforces the 7-layer AES folder discipline by auditing
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| `audit` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Walk all member directories, classify each folder, run all applicable checks, return sorted deduplicated findings |
+| `audit_shared` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Walk the kernel folders and report shared-folder purity and documentation findings (AES701). |
+| `audit_feature` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Classify each feature folder and report folder health and documentation findings (AES702). |
+| `audit_surface` | `StructureRequest::AuditAll { root }` | `StructureResponse::Findings { findings }` | I/O error on path read | — | Report surface-folder purity and documentation findings, sorted and deduplicated (AES703). |
 
 ### Aggregate API
 

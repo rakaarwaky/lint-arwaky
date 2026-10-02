@@ -44,6 +44,11 @@ Last Updated: 2026-09-29
 | FRD has 3 requirements, contract has 2 classes | AES601 CRITICAL | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | FRD has 1 requirement, contract has 3 classes | AES601 CRITICAL | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Aggregate trait excluded from seam count | AES601 accepts | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
+| Protocol API promises a method no trait declares | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Aggregate API promises a method no trait declares | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Promised method the contract module declares | AES601 accepts | Automated | `tests/acceptance_FR_DOC_001.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Method column read by header, not by position | AES601 accepts | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
+| Slash-joined cell promising several methods | AES601 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Fenced code block `#` comment not counted as H1 | No violation | Automated | `tests/contract_doc_rules.rs` | `cargo test -p lint_arwaky_doc_rules` | `926bd34a` |
 | Per-protocol method table parked under Assumptions | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |
 | Scenario promoted from bullet to an H3 heading | AES602 CRITICAL | Automated | `tests/contract_doc_rules.rs` | `cargo nextest run -p doc-rules-lint-arwaky` | working-tree |

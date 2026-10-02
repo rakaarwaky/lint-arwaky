@@ -2,6 +2,7 @@
 // classes in a feature's shared contract module. Both are stateless counts, so
 // they live here and the checker only decides what a mismatch means.
 use crate::taxonomy_doc_rules_constant as consts;
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
@@ -99,6 +100,42 @@ fn is_protocol_decl(line: &str) -> bool {
         .take_while(|c| c.is_alphanumeric() || *c == '_')
         .collect();
     name.starts_with('I') && name.ends_with("Protocol") && !name.contains("Aggregate")
+}
+
+/// Method names declared anywhere in the feature's contract module, or
+/// `None` when the module cannot be read.
+///
+/// A method exists when some `fn <name>` it names occurs in one of the
+/// module's `.rs` files — a protocol seam or aggregate trait that carries the
+/// method satisfies the name, and so does its implementation. The walk reuses
+/// the same `.rs`-only recursion as the protocol-class counter, so a method
+/// invented only inside prose keeps reading as missing.
+pub fn contract_method_names(module_dir: &Path) -> Option<HashSet<String>> {
+    let mut names = HashSet::new();
+    walk_rs_files(module_dir, &mut |_path, text| {
+        for line in text.lines() {
+            let trimmed = line.trim();
+            // Only a real declaration site satisfies the name: `fn` must open
+            // the statement after any visibility or async qualifier. A doc
+            // comment mentioning `fn name` is prose, not a declaration.
+            let after_vis = trimmed
+                .strip_prefix("pub ")
+                .or_else(|| trimmed.strip_prefix("pub(crate) "))
+                .unwrap_or(trimmed);
+            let after_async = after_vis.strip_prefix("async ").unwrap_or(after_vis);
+            let Some(rest) = after_async.strip_prefix("fn ") else {
+                continue;
+            };
+            let name: String = rest
+                .chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .collect();
+            if !name.is_empty() {
+                names.insert(name);
+            }
+        }
+    })?;
+    Some(names)
 }
 
 /// Recursively walk `dir` applying *visit* to every readable `.rs` file.
