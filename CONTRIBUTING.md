@@ -24,9 +24,12 @@ Before making changes, observe these non-negotiable rules:
    `rayon`; `tokio` is confined to `file-watch` and `mcp-server`.
 4. **No bypasses**: `#[allow]`, `// eslint-disable`, and `# noqa` are not
    acceptable fixes. Correct the cause instead.
-5. **Single source of truth**: `crates/shared/src/project_setup/taxonomy_skills_constant.rs`
-   is generated — run `python3 tools/regenerate_skills.py` after any skill file
-   is added, removed, or renamed.
+5. **Single source of truth**: `crates/shared/skills/` holds the skill markdown;
+   `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` embeds
+   it into the binary and is generated — run
+   `python3 tools/regenerate_skills.py` after any skill file is added, removed,
+   or renamed. The `catalog_matches_the_skills_directory` test fails when the
+   two disagree, so commit the regenerated constant with the skill change.
 
 ---
 
