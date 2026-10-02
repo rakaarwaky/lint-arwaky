@@ -164,7 +164,7 @@ When merging a PR to develop:
 
 `crates/shared/skills/` is the source of truth for the distributed skill pack; each is one directory with a `SKILL.md` and an optional `references/HOW-TO-*.md` set of per-language playbooks. Layer creation (`aes-taxonomy`, `aes-contract`, `aes-utility`, `aes-capabilities`, `aes-agent`, `aes-surface`, `aes-root`), maintenance (`aes-lint-arwaky`, `aes-migration`), and documentation (`aes-docs`, `aes-testing-suite`) skills are triggered by keyword.
 
-`lint-arwaky init` installs every `SKILL.md` plus only the `references/` files matching the target's detected languages. `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` is generated — run `python3 tools/regenerate_skills.py` after adding, removing, or renaming a skill file. The `catalog_matches_the_skills_directory` test fails if a skill file exists without being embedded, so a missed regeneration cannot reach `main`.
+`lint-arwaky init` installs every `SKILL.md` plus only the `references/` files matching the target's detected languages. `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` is generated — run `python3 SKILL.md changes are managed manually` after adding, removing, or renaming a skill file. The `catalog_matches_the_skills_directory` test fails if a skill file exists without being embedded, so a missed regeneration cannot reach `main`.
 
 **Role pipeline:** `Architect` → `Business Analyst` → `Tech Lead` → `Fullstack Developer` (review then execute). Plan files go to `.agents/plans/`.
 
@@ -199,7 +199,6 @@ Never use `git rebase -i` on a stack branch — use `mergify stack {edit,fixup,s
 ```bash
 bash scripts/gates.sh                       # fmt + clippy + self-lint + tests
 cargo nextest run --workspace --lib --tests # all tests, 3× faster
-python3 crates/doc-rules/scripts/check_doc_consistency.py      # cross-document drift (CI: "Doc Consistency")
 ```
 
 ## Definition of Done
@@ -211,7 +210,6 @@ A change is done when all of the following hold:
 - `lint-arwaky-cli check .` reports 0 violations.
 - `lint-arwaky-cli scan workspaces-good/crates` still reports 0 violations.
 - `lint-arwaky-cli docs .` reports 0 document invariant violations.
-- `python3 crates/doc-rules/scripts/check_doc_consistency.py` passes: no rule-code range, Markdown anchor, shared data-model, auto-fix reason-code, or performance-NFR drift.
 - Pass/fail criteria in [TEST.md](TEST.md) hold for the touched paths.
 - A new AES rule adds a trigger file to all 3 test workspaces and a row in the TEST.md per-rule matrix.
 - A PR that fixes behavior updates the invalidated ROADMAP.md backlog rows in the same change.

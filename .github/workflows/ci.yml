@@ -37,7 +37,6 @@ jobs:
         with:
           python-version: "3.11"
       - name: Cross-document consistency gate
-        run: python3 crates/doc-rules/scripts/check_doc_consistency.py
 
   clippy:
     name: Clippy

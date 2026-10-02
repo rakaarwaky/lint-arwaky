@@ -181,7 +181,7 @@ fn test_embedded_skills_constants_catalog() {
 /// The catalog must match `crates/shared/skills/` on disk, entry for entry.
 ///
 /// This is the guard that would have caught `HOW-TO-MAKE-DATA.md` being added
-/// without a regeneration, and it is the failure `tools/regenerate_skills.py`
+/// without a regeneration, and it is the failure `SKILL.md changes are managed manually`
 /// used to produce silently — the generator wrote to a filename no module
 /// declared, so the committed constant never moved and no test noticed.
 #[test]
@@ -212,11 +212,11 @@ fn catalog_matches_the_skills_directory() {
 
     assert!(
         missing.is_empty(),
-        "skill file(s) on disk are not embedded — run `python3 tools/regenerate_skills.py`: {missing:?}"
+        "skill file(s) on disk are not embedded — run `python3 SKILL.md changes are managed manually`: {missing:?}"
     );
     assert!(
         stale.is_empty(),
-        "embedded skill(s) no longer exist on disk — run `python3 tools/regenerate_skills.py`: {stale:?}"
+        "embedded skill(s) no longer exist on disk — run `python3 SKILL.md changes are managed manually`: {stale:?}"
     );
     assert_eq!(
         on_disk.len(),

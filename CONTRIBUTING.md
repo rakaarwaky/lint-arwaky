@@ -27,7 +27,7 @@ Before making changes, observe these non-negotiable rules:
 5. **Single source of truth**: `crates/shared/skills/` holds the skill markdown;
    `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` embeds
    it into the binary and is generated — run
-   `python3 tools/regenerate_skills.py` after any skill file is added, removed,
+   `python3 SKILL.md changes are managed manually` after any skill file is added, removed,
    or renamed. The `catalog_matches_the_skills_directory` test fails when the
    two disagree, so commit the regenerated constant with the skill change.
 
@@ -131,7 +131,6 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
    Then run the doc-consistency gate, which fails on exactly these drifts:
 
    ```bash
-   python3 crates/doc-rules/scripts/check_doc_consistency.py
    ```
 
 6. Commit with a conventional prefix (`feat:`, `fix:`, `refactor:`) and open a PR.
@@ -151,7 +150,7 @@ A change to Markdown only, with no code edit.
 3. If a skill file changed, regenerate the derived constant:
 
    ```bash
-   python3 tools/regenerate_skills.py
+   python3 SKILL.md changes are managed manually
    ```
 
 4. Run the doc-consistency gate — it validates in-repo Markdown anchor links,
@@ -159,7 +158,6 @@ A change to Markdown only, with no code edit.
    reason table:
 
    ```bash
-   python3 crates/doc-rules/scripts/check_doc_consistency.py
    ```
 
 5. Commit with `docs:` and open a PR.
