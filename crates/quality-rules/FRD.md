@@ -21,7 +21,7 @@ The quality-rules crate enforces general code quality, formatting limits, and cl
 
 File discovery, raw content reads, and AST parsing are handled by the external `filesystem` aggregate (`IFilesystemAggregate`). The Surface calls `filesystem.build_file_index(root)` to populate caches, then passes pre-fetched `&[FileEntry]` to the quality-rules orchestrator via `run_audit_with_entries`. The quality-rules crate does zero I/O — it only performs business logic analysis on pre-fetched data.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -261,7 +261,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **AES305 — Duplicate Code Detection** — e.g. Two files with 80% identical code blocks → AES305 violation (both files)
 - **Configuration** — e.g. Rule AES301 disabled in config → No AES301 violations
 
-### AES301 — Maximum File Line Count
+- **AES301 — Maximum File Line Count**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -272,7 +272,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | File in exceptions list with 2000 lines | No violation — exception |
 | 6 | File with 500 lines of comments + 500 lines of code | No violation (1000 total, not > 1000) |
 
-### AES302 — Minimum File Line Count
+- **AES302 — Minimum File Line Count**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -282,7 +282,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Python package marker with 1 line | No violation — exception |
 | 5 | File with only comments (5 lines) | AES302 violation (comments count) |
 
-### AES303 — Mandatory Definitions & Dead Inheritance
+- **AES303 — Mandatory Definitions & Dead Inheritance**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -300,7 +300,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 12 | `#[cfg(test)]` module with `struct TestFoo;` and no impl | No violation — cfg(test) skipped |
 | 13 | File in exceptions list | No violation — exception |
 
-### AES304 — Bypass Detection
+- **AES304 — Bypass Detection**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -325,7 +325,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 19 | Rust file with`print!("unwrap()")` (string literal) | No violation (inside string) |
 | 20 | File in exceptions list | No violation — exception |
 
-### AES305 — Duplicate Code Detection
+- **AES305 — Duplicate Code Detection**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -336,7 +336,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | Three files all identical | AES305 violation (all three files) |
 | 6 | File with only whitespace lines (very short after normalization) | No violation — skipped |
 
-### Configuration
+- **Configuration**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -374,9 +374,9 @@ Each scenario is stated below as a table of cases: the input condition and the e
 
 ---
 
-### Appendix A: YAML Configuration Schema
+- **Appendix A: YAML Configuration Schema**
 
-### Top-Level Structure
+- **Top-Level Structure**
 
 ```yaml
 architecture:

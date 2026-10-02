@@ -191,6 +191,42 @@ pub fn sections(text: &str) -> Vec<Section> {
         .collect()
 }
 
+/// Every level-3 heading in *text*, with its title and document-absolute line.
+///
+/// `sections()` keeps only H1/H2 and `h3_subsections()` reads one section at a
+/// time, but the FRD template parity check is a document-wide statement: the
+/// template sanctions three level-3 shapes and the document must carry no
+/// others, wherever they sit. The line is returned so the caller can ask
+/// whether some *other* pattern already accepted the heading on that line —
+/// that is how the parity check reuses the shared FR-ID pattern instead of
+/// compiling a second one that could drift from it.
+///
+/// Lines, not byte offsets, are the join key: fence blanking rewrites the text
+/// it scans, so offsets from the blanked copy do not address the raw document,
+/// while the line count is preserved by construction and does.
+///
+/// Fenced blocks are blanked first, so a `#` line inside a code fence never
+/// reads as a heading.
+pub fn h3_headings(text: &str) -> Vec<(String, usize)> {
+    let Some(re) = heading_re() else {
+        return Vec::new();
+    };
+    let prose = blank_fenced(text);
+    re.captures_iter(&prose)
+        .filter_map(|caps| {
+            let marker = caps.get(1)?;
+            if marker.as_str().len() != 3 {
+                return None;
+            }
+            let full = caps.get(0)?;
+            Some((
+                caps.get(2).map_or("", |m| m.as_str()).to_string(),
+                prose[..full.start()].lines().count().max(1),
+            ))
+        })
+        .collect()
+}
+
 /// Level-3 subsections of one level-2 section, with document-absolute lines.
 ///
 /// `sections()` keeps only H1/H2, because every invariant so far reads the top

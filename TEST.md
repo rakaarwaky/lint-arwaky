@@ -107,7 +107,7 @@ Cross-document consistency — the drifts that span two artefacts and so fall ou
 python3 tools/check_doc_consistency.py
 ```
 
-It fails when a rule-code range in a `DESIGN.md`/`FRD.md` names a code `RULES_AES.md` no longer publishes, an in-repo Markdown link points at a missing file or heading anchor, `crates/shared/DATA.md`'s attribute tables disagree with the shared value objects, the auto-fix Reason Code Reference disagrees with the enumerated reasons, the performance NFR states different numbers in `PRD.md`, `README.md`, and `crates/filesystem/FRD.md`, or the AES605 `DESIGN.md` H2 contract in `crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs` disagrees with the template fenced in `HOW-TO-MAKE-DESIGN.md`. Expected: **0 failures**.
+It fails when a rule-code range in a `DESIGN.md`/`FRD.md` names a code `RULES_AES.md` no longer publishes, an in-repo Markdown link points at a missing file or heading anchor, `crates/shared/DATA.md`'s attribute tables disagree with the shared value objects, the auto-fix Reason Code Reference disagrees with the enumerated reasons, the performance NFR states different numbers in `PRD.md`, `README.md`, and `crates/filesystem/FRD.md`, the AES605 `DESIGN.md` H2 contract in `crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs` disagrees with the template fenced in `HOW-TO-MAKE-DESIGN.md`, or the AES602 FRD level-3 contract (`FRD_H3_TITLES`) in the same file disagrees with the template fenced in `HOW-TO-MAKE-FRD.md`. Expected: **0 failures**.
 
 ### 2.2 Scan Test Projects
 
@@ -244,6 +244,7 @@ If any rule produces 0 violations, the test project is missing a trigger file.
 | AES506 | Surface orphan                         | ✓   | ✓     | ✓    |
 | AES601 | FR Format                              | ✓   |       |      |
 | AES602 | Section Structure                      | ✓   |       |      |
+| AES602 | Section Structure — level-3 template parity (`h3_off_template`) | ✓ |  |  |
 | AES603 | Spec Purity                            | ✓   |       |      |
 | AES604 | Crosslinks                             | ✓   |       |      |
 | AES605 | Doc Heading Structure                  | ✓   |       |      |

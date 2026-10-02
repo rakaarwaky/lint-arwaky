@@ -12,7 +12,7 @@
 
 The config-system crate manages lint-arwaky configuration as a business capability: discovering projects, loading and merging configuration, validating thresholds, and determining which paths the linter should ignore. It is an **infrastructure crate** — at compile time it depends only on `shared` and `filesystem` (for config file I/O via `IFileSystemIOProtocol`). Other crates receive config at runtime via DI (aggregate trait injection through `shared` re-exports).
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -37,7 +37,7 @@ flowchart TD
     O["external-lint"] -->|"config"| A
 ```
 
-### Config Loading Priority Chain
+- **Config Loading Priority Chain**
 
 ```text
 Priority 1: Project root
@@ -204,7 +204,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 
 ---
 
-### SCEN-001 — Config Discovery
+- **SCEN-001 — Config Discovery**
 
 FRD Ref: FR-ConfigSystem-001
 
@@ -228,7 +228,7 @@ FRD Ref: FR-ConfigSystem-001
 | 16 | Root with one unified config | Listed once, deduplicated |
 | 17 | Root with no config files | Empty list |
 
-### SCEN-002 — Multi-Workspace
+- **SCEN-002 — Multi-Workspace**
 
 FRD Ref: FR-ConfigSystem-002
 
@@ -248,7 +248,7 @@ FRD Ref: FR-ConfigSystem-002
 | 12 | Root is `crates/` itself | Direct subdirectories returned |
 | 13 | I/O error on one member dir | Warning logged, other members returned |
 
-### SCEN-003 — Config Merger
+- **SCEN-003 — Config Merger**
 
 FRD Ref: FR-ConfigSystem-003
 
@@ -301,15 +301,15 @@ FRD Ref: FR-ConfigSystem-003
 
 ---
 
-### Appendix A: Top-Level Config Schema
+- **Appendix A: Top-Level Config Schema**
 
-### File Naming Convention
+- **File Naming Convention**
 
 ```text
 lint_arwaky.config.yaml  — unified config for all languages (Rust, Python, TypeScript)
 ```
 
-### Default Ignored Paths (Hardcoded, Universal)
+- **Default Ignored Paths (Hardcoded, Universal)**
 
 These are always included regardless of config:
 

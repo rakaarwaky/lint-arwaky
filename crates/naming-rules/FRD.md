@@ -20,7 +20,7 @@ The naming-rules crate enforces strict naming conventions across the codebase to
 
 File system operations  are handled by the external `filesystem` crate via `IFilesystemAggregate`. The surface layer fetches the pre-populated file list from `filesystem.file_list()` and passes it to the naming orchestrator via `run_audit_with_entries(&[FileEntry])`. The naming-rules crate performs zero I/O — it receives data and delegates analysis to its internal checkers.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -179,7 +179,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **AES102 — Suffix/Prefix Validation** — e.g. `taxonomy_user_vo` — prefix taxonomy, suffix vo (in strict allow-list) → No violation
 - **Configuration** — e.g. Rule AES101 disabled in config → No AES101 violations
 
-### AES101 — Naming Convention
+- **AES101 — Naming Convention**
 
 | # | Input Scenario | Expected Output |
 | - | - | - |
@@ -194,7 +194,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 9 | File with unrecognized prefix (`foobar_user_vo`) | No violation — unknown prefix out of scope (AES101 pass, AES102 skip) |
 | 10 | File with digits in segment (`taxonomy_v2_vo`) | No violation (digits allowed) |
 
-### AES102 — Suffix/Prefix Validation
+- **AES102 — Suffix/Prefix Validation**
 
 | # | Input Scenario | Expected Output |
 | - | - | - |
@@ -214,7 +214,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 14 | File in exception list for its layer | No violation — exception |
 | 15 | `taxonomy_user` — no suffix (single word after prefix) | AES102 — suffix mismatch (strict policy requires suffix) |
 
-### Configuration
+- **Configuration**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -254,9 +254,9 @@ Each scenario is stated below as a table of cases: the input condition and the e
 
 ---
 
-### Appendix A: YAML Configuration Schema
+- **Appendix A: YAML Configuration Schema**
 
-### Top-Level Structure
+- **Top-Level Structure**
 
 ```yaml
 architecture:
@@ -266,7 +266,7 @@ architecture:
     AES102: { ... }
 ```
 
-### Suffix Policy Schema
+- **Suffix Policy Schema**
 
 ```yaml
 layers:

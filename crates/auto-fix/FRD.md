@@ -13,7 +13,7 @@
 
 The auto-fix crate applies safe, deterministic corrections to source files that violate AES rules. It consumes lint results from the analysis pipeline, filters violations by fixable error code, and writes corrected files back to disk.
 
-### Allowed Operation Classes (product policy — locked)
+- **Allowed Operation Classes (product policy — locked)**
 
 | Class       | Examples                                                          | Notes                                    |
 | ----------- | ----------------------------------------------------------------- | ---------------------------------------- |
@@ -25,7 +25,7 @@ The auto-fix crate applies safe, deterministic corrections to source files that 
 
 Every fix attempt MUST return a **reason-coded outcome** (`Applied` / `Skipped(reason)` / `Failed(reason)`), not a bare boolean. Dry-run reports the same outcomes without writing files.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -159,7 +159,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 
 ---
 
-### Reason Code Reference
+- **Reason Code Reference**
 
 `Skipped(reason)` and `Failed(reason)` carry a **closed** set of reason codes,
 not free text. This table is the canonical enumeration across every fix
@@ -239,7 +239,7 @@ and the enumerated reason set disagree.
 - **SCEN-004 — Violation Reporting** — e.g. Dry-run with fixable violations → Outcomes reported, no files modified
 - **Idempotency & Error Handling** — e.g. Second run after fix → No further `Applied` outcomes
 
-### SCEN-001 — Unused Import Removal
+- **SCEN-001 — Unused Import Removal**
 
 FRD Ref: FR-AutoFix-001
 
@@ -252,7 +252,7 @@ FRD Ref: FR-AutoFix-001
 | 5 | File does not exist | `Failed(file_not_found)` |
 | 6 | JS `= require(` pattern | Detected and removed |
 
-### SCEN-002 — Bypass Fix
+- **SCEN-002 — Bypass Fix**
 
 FRD Ref: FR-AutoFix-002
 
@@ -268,7 +268,7 @@ FRD Ref: FR-AutoFix-002
 | 8 | Missing file | `Failed(file_not_found)` |
 | 9 | No bypass on target line | `Skipped(no_bypass_pattern)` |
 
-### SCEN-003 — Symbol Renaming
+- **SCEN-003 — Symbol Renaming**
 
 FRD Ref: FR-AutoFix-003
 
@@ -280,7 +280,7 @@ FRD Ref: FR-AutoFix-003
 | 4 | Missing file | `Failed(file_not_found)` |
 | 5 | New name is a Rust keyword | `Skipped(keyword_conflict)` |
 
-### SCEN-004 — Violation Reporting
+- **SCEN-004 — Violation Reporting**
 
 FRD Ref: FR-AutoFix-004
 
