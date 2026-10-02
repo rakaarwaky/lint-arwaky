@@ -29,8 +29,8 @@ Last Updated: 2026-09-17
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | Workspace with 100 files, 5 orphans across 3 layers | All 5 detected, … | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Circular imports between two capabilities | Both reachable, neither fl… | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |
 | Workspace with zero entry points | All non-barrel files flagged as orp… | Automated | `tests/orphan-rules/` | cargo test -p orphan_rules | `29c71083` |

@@ -177,7 +177,6 @@ branch, not a new aggregate method.
 
 Every contract file is required to carry the rows that apply. Each exists for one reason.
 
-
 | Section                                  | Why it belongs here                                                                |
 | ---------------------------------------- | ---------------------------------------------------------------------------------- |
 | Module docstring (required)              | Names the feature and the seams in the file.                                       |
@@ -187,11 +186,10 @@ Every contract file is required to carry the rows that apply. Each exists for on
 | Rich named methods, one return type each | Protocol classes: each method has one VO return; no dispatch bag. |
 | Abstract methods only                    | Outer layers depend on promises, not behaviour.                                    |
 | Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.            |
-| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; `bool` permitted. |                 | Numeric domain values stay behind VOs; `str`/`bool` are permitted.               |
+| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `bool` is permitted bare. |
 | No impl-layer imports                    | Keeps the dependency arrow (capabilities → contract ← agent).                      |
 | `__all__` + `_layer_symbols`             | Harness/loader introspection and explicit public surface.                          |
 | Register in shared `__init__`            | Importable without reaching into private modules.                                  |
-
 
 ---
 

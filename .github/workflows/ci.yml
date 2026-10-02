@@ -119,11 +119,11 @@ jobs:
           # to be on PATH, and a tool that is not on PATH makes the
           # eslint/tsc/prettier adapters resolve to `None` and silently report
           # zero findings (QA #637).
-          npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/js-tools" eslint prettier typescript
+          npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/js-tools" eslint prettier typescript markdownlint-cli2
           echo "$RUNNER_TEMP/js-tools/node_modules/.bin" >> "$GITHUB_PATH"
           export PATH="$RUNNER_TEMP/js-tools/node_modules/.bin:$PATH"
           node --version
-          for tool in eslint prettier tsc; do
+          for tool in eslint prettier tsc markdownlint-cli2; do
             if ! command -v "$tool" >/dev/null; then
               echo "::error::$tool is not resolvable on PATH after install"
               exit 1

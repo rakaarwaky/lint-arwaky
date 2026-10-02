@@ -260,6 +260,7 @@ flowchart TD
 | `execute` | ExternalLintRequest | `ExternalLintResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | Linter adapter protocol | out (internal) | Define the shape every tool adapter implements for scanning and fixing | An adapter omits a required operation → it does not satisfy the protocol and is never selected |
@@ -276,9 +277,10 @@ flowchart TD
 | `eslint` | in | Lint and fix JavaScript and TypeScript | The tool is not installed → the adapter reports it as unavailable and the slice is skipped |
 | `prettier --check` / `--write` | in | Verify or apply JavaScript and TypeScript formatting | Formatting diverges → `--check` lists the files; `--write` rewrites them |
 | `tsc --noEmit` | in | Type-check TypeScript without emitting output | The compiler fails to start → the adapter reports the failure and the type-check slice is skipped |
-| `markdownlint-cli --json` | in | Lint Markdown style and structure | The tool is not installed → the adapter reports it as unavailable and the Markdown slice is skipped |
+| `markdownlint-cli --json`, else `markdownlint-cli2 <glob>` | in | Lint Markdown style and structure | The tool is not installed → the adapter reports it as unavailable and the Markdown slice is skipped |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | Scan time | Total scan time is the sum of adapter times plus the one delegated language query; the extension walk itself is O(file count) and owned by the filesystem aggregate | Time each adapter separately and confirm the total matches the sum within measurement noise |
@@ -315,6 +317,7 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 5 | Flags `has_markdown = true`, rest false | Only markdownlint runs |
 | 6 | All flags false | No adapters run, empty result list |
 | 7 | No caller-supplied context | Exactly one `FilesystemRequest::DetectProjectLanguages` is issued to the filesystem aggregate |
+| 8 | Single-file target `README.md` (flags derived from its extension) | Only markdownlint runs |
 
 ### SCEN-002 — Adapter Selection
 
@@ -345,7 +348,8 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 4 | Clippy fix | `cargo clippy --fix` executed |
 | 5 | Rustfmt fix | `cargo fmt` executed |
 | 6 | TSC/MyPy/Bandit/audit fix | No-op (no auto-fix capability) |
-| 7 | markdownlint fix | `markdownlint --fix` executed |
+| 7 | markdownlint fix | `<target> --fix` executed against the first resolvable CLI variant (`markdownlint-cli`, then `markdownlint-cli2`) |
+| 8 | No markdownlint CLI installed | No-op status, no command spawned |
 
 ### SCEN-005 — Normalization
 

@@ -496,6 +496,54 @@ fn fix_returns_a_status_without_error() {
     assert!(status.is_ok(), "fix must return a status, not an error");
 }
 
+#[test]
+fn fix_falls_back_to_cli2_when_only_that_variant_is_installed() {
+    // The common host has only `markdownlint-cli2` installed globally. Probing
+    // `markdownlint-cli` first must not stop the fix from running.
+    let (adapter, executor, _) = make_adapter(vec![""], &["markdownlint-cli2"]);
+    adapter.fix(&readme()).expect("fix must not error");
+
+    let calls = executor.calls.lock().unwrap_or_else(|e| e.into_inner());
+    assert_eq!(calls.len(), 1, "exactly one CLI invocation: {calls:?}");
+    let (binary, argv) = &calls[0];
+    assert_eq!(binary, "markdownlint-cli2");
+    assert!(argv.contains(&"--fix".to_string()), "got {argv:?}");
+    assert!(argv.contains(&"/tmp/readme.md".to_string()), "got {argv:?}");
+}
+
+#[test]
+fn fix_prefers_cli_when_both_variants_are_installed() {
+    let (adapter, executor, _) = make_adapter(vec![""], &["markdownlint-cli", "markdownlint-cli2"]);
+    adapter.fix(&readme()).expect("fix must not error");
+
+    let calls = executor.calls.lock().unwrap_or_else(|e| e.into_inner());
+    assert_eq!(
+        calls.len(),
+        1,
+        "the first resolvable binary wins: {calls:?}"
+    );
+    assert_eq!(calls[0].0, "markdownlint-cli");
+}
+
+#[test]
+fn fix_is_a_noop_status_when_no_cli_is_installed() {
+    let (adapter, executor, _) = make_adapter(vec![""], &[]);
+    let status = adapter.fix(&readme()).expect("fix must not error");
+
+    assert!(
+        !status.value(),
+        "an unresolvable CLI reports no fix applied"
+    );
+    assert!(
+        executor
+            .calls
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .is_empty(),
+        "no binary may be spawned when none resolves"
+    );
+}
+
 // ─── OutputNormalizer mapping for the new tool ───
 
 #[test]

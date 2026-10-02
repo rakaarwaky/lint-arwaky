@@ -181,6 +181,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
 ## Workflow
 
 1. Determine type:
+
    ```text
    VO
    Entity
@@ -192,15 +193,19 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```
 
 2. Create the file:
+
    ```text
    taxonomy_<domain>_<suffix>.ts
    ```
+
    inside:
+
    ```text
    packages/shared/src/<domain>/
    ```
 
 3. For VOs:
+
    ```text
    Validate in the constructor.
    Throw an Error on invalid input.
@@ -209,6 +214,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```
 
 4. For Entities:
+
    ```text
    Include an identity VO field.
    Use VO fields only for domain state.
@@ -216,6 +222,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```
 
 5. For Errors:
+
    ```text
    Extend the built-in Error class.
    Set this.name to the class name.
@@ -232,6 +239,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```
 
 6. For Events:
+
    ```text
    Use readonly fields.
    Use VO payload fields only.
@@ -239,6 +247,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```
 
 7. For Requests:
+
    ```text
    Use a discriminated union with a `verb` string literal.
    Export a factory function per verb named request<Verb>().
@@ -247,6 +256,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```
 
 8. For Responses:
+
    ```text
    Use a discriminated union with a `kind` string literal.
    VO payload fields only — no raw string or number for domain values.
@@ -254,6 +264,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
    ```
 
 9. For Constants:
+
    ```text
    Use export const only.
    No functions.
@@ -264,6 +275,7 @@ JSDoc comments and `export const` lines count. For constants, each constant shou
 10. Register the public type in the domain `index.ts`.
 
 11. Verify the project compiles:
+
    ```bash
    npx tsc --noEmit
    ```
@@ -428,6 +440,7 @@ export class OrderNotFoundError extends Error {
 ```
 
 Every error must expose all four:
+
 - **Field VO** — programmatic access to the domain data that caused the error
 - **Error id** — a stable numeric id such as `1001`, so APIs, database rows,
   and monitoring queries can correlate on a compact value
@@ -538,6 +551,7 @@ export function requestHistory(): CalculatorRequest {
 ```
 
 Request rules:
+
 - The file name is `taxonomy_<domain>_<suffix>_request.ts` and it exports the `<Name>Request` type plus one factory function per verb, each prefixed `request`.
 - The union's discriminator is the string literal `"verb"`. One member per consumer verb, no runtime branches on dynamic strings.
 - Optional fields belong on the member whose verb needs them. A verb without operands declares no extra keys.
@@ -580,6 +594,7 @@ export type CalculatorResponse =
 ```
 
 Response rules:
+
 - The file name is `taxonomy_<domain>_<suffix>_response.ts` and it exports the `<Name>Response` type.
 - `kind` is the discriminator. One member per consumer verb, matching the request side exactly.
 - A field can be `| null` for an outcome that produces a single optional value. Use `[]` for a collection outcome — never a bare `undefined`.
@@ -731,7 +746,7 @@ primitive rules above are the reader's responsibility.
 A taxonomy file that is only referenced by barrels and other taxonomy files
 is reported as an orphan:
 
-```
+```text
 [AES501] 'taxonomy_order_vo' is not reachable and not imported by higher layers.
 WHY? only imported by lower-layer files (index.ts, taxonomy_order_entity.ts)
 FIX: Import 'taxonomy_order_vo' from a contract_* or higher-layer file.

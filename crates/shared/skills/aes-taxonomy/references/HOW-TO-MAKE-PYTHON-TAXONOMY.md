@@ -183,6 +183,7 @@ Docstrings and comments count. For constants, each constant should have a descri
 ## Workflow
 
 1. Determine type:
+
    ```text
    VO
    Entity
@@ -194,15 +195,19 @@ Docstrings and comments count. For constants, each constant should have a descri
    ```
 
 2. Create the file:
+
    ```text
    taxonomy_<domain>_<suffix>.py
    ```
+
    inside:
+
    ```text
    modules/shared/src/<domain>/
    ```
 
 3. For VOs:
+
    ```text
    Validate on construction.
    Use @dataclass(frozen=True) or an equivalent immutable manual implementation.
@@ -211,6 +216,7 @@ Docstrings and comments count. For constants, each constant should have a descri
    ```
 
 4. For Entities:
+
    ```text
    Include an identity VO field.
    Use VO fields only for domain state.
@@ -218,6 +224,7 @@ Docstrings and comments count. For constants, each constant should have a descri
    ```
 
 5. For Errors:
+
    ```text
    Extend Exception.
    Store VO fields only — no raw str, int, float, dict.
@@ -233,6 +240,7 @@ Docstrings and comments count. For constants, each constant should have a descri
    ```
 
 6. For Events:
+
    ```text
    Use @dataclass(frozen=True).
    Use VO payload fields only.
@@ -240,6 +248,7 @@ Docstrings and comments count. For constants, each constant should have a descri
    ```
 
 7. For Requests:
+
    ```text
    Use a @dataclass with a `verb` discriminator field (e.g., an Enum).
    Use classmethod factories so callers call CalculatorRequest.delegate(...) instead of
@@ -249,6 +258,7 @@ Docstrings and comments count. For constants, each constant should have a descri
    ```
 
 8. For Responses:
+
    ```text
    Use a @dataclass with optional VO fields that distinguish each outcome.
    Use classmethod factories so callers call CalculatorResponse.history(...) instead of
@@ -258,6 +268,7 @@ Docstrings and comments count. For constants, each constant should have a descri
    ```
 
 9. For Constants:
+
    ```text
    Use module-level literal assignments only.
    No functions.
@@ -269,6 +280,7 @@ Docstrings and comments count. For constants, each constant should have a descri
 10. Register the public type in the domain `__init__.py`.
 
 11. Verify the module imports:
+
    ```bash
    python -c "import modules.shared.src.<domain>.taxonomy_<domain>_<suffix>"
    ```
@@ -455,6 +467,7 @@ class OrderNotFoundError(Exception):
 ```
 
 Every error must expose all four:
+
 - **Field VO** — programmatic access to the domain data that caused the error
 - **Error id** — a stable numeric id such as `1001`, so APIs, database rows,
   and monitoring queries can correlate on a compact value
@@ -608,6 +621,7 @@ __all__ = ["CalculatorVerb", "CalculatorRequest"]
 ```
 
 Request rules:
+
 - The file name is `taxonomy_<domain>_<suffix>_request.py` and it holds the `<Name>Verb` enum plus the `<Name>Request` dataclass. Both are exported in `__all__`.
 - The verb enum is a closed set — one member per consumer verb. Add a member when you add a verb; never widen the set at runtime.
 - Operand fields are `| None` with a default, because not every verb needs an operand. A verb that needs no operand gets a factory that takes no argument.
@@ -682,6 +696,7 @@ __all__ = ["CalculatorResponse"]
 ```
 
 Response rules:
+
 - The file name is `taxonomy_<domain>_<suffix>_response.py` and it holds the `<Name>Response` dataclass.
 - Each request verb has a matching factory. Fields default to `None` or an empty list, so an unserved verb leaves its field empty rather than raising.
 - Collection fields use `field(default_factory=list)` — a mutable default is not allowed in a dataclass.
@@ -860,7 +875,7 @@ primitive rules above are the reader's responsibility.
 A taxonomy file that is only referenced by barrels and other taxonomy files
 is reported as an orphan:
 
-```
+```text
 [AES501] 'taxonomy_order_vo' is not reachable and not imported by higher layers.
 WHY? only imported by lower-layer files (__init__.py, taxonomy_order_entity.py)
 FIX: Import 'taxonomy_order_vo' from a _entry file AND a contract_* or higher-layer file.

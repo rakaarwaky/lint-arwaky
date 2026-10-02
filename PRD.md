@@ -65,11 +65,13 @@ response envelope is specified in the MCP surface's design document.
 `Runtime error (2)` > `Prerequisite missing (3)` > `Policy fail (1)` > `Ok (0)`.
 
 *Examples:*
+
 - If runtime I/O fails while scanning files that also contain rule violations → Exit Code `2` (Runtime error outranks Policy fail).
 - If an external tool is missing for a subset of files while other scanned files produce violations → Exit Code `3` (Prerequisite missing outranks Policy fail).
 - If all checks pass cleanly with 0 violations and all prerequisites present → Exit Code `0` (Ok).
 
 **`fix` aggregation rule:**
+
 - If any fix attempt produces `Failed(reason)` (e.g. I/O failure, write error) → Exit Code `2` (Runtime error). This outranks the policy-fail result below.
 - If all attempted items are `Skipped(reason)` (0 `Applied`, 0 `Failed`) → Exit Code `0` (Ok, skip reasons emitted as warnings).
 - Otherwise, when every attempt is `Applied` or `Skipped` with zero `Failed`:
@@ -112,6 +114,7 @@ Seven groups: **Naming** (AES101–102, 2), **Import** (AES201–205, 5), **Qual
 ### Requirement Hierarchy & Traceability
 
 Traceability flows through four standardized layers:
+
 1. **Product Level (PRD)**: `FR-PRD-NNN` defines high-level product capabilities.
 2. **Roadmap Level (ROADMAP)**: `FR-<CRATE_CODE>` tracks crate-level delivery milestones (`FR-FILE`, `FR-AUTO`, etc.).
 3. **Feature Level (Crate FRD)**: `FR-<FeatureName>-NNN` defines granular functional requirements within each crate (`FR-AutoFix-001`, `FR-Filesystem-001`).

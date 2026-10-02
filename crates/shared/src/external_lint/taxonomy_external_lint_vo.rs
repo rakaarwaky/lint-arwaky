@@ -19,6 +19,12 @@ pub struct ExternalLintContext {
     pub has_markdown: bool,
     /// Paths to ignore from config (combined with built-in defaults).
     pub ignored_paths: Vec<String>,
+    /// Violation codes to drop from the report, matched case-insensitively as
+    /// a substring of the code. This carries the project's `ignored_rules:`
+    /// list and is how a repository turns an individual external-tool rule off
+    /// (`markdownlint::MD013`) without needing a second, tool-specific config
+    /// file alongside `lint_arwaky.config.yaml`.
+    pub ignored_rules: Vec<String>,
     /// Adapter configuration entries from config (name, weight, timeout, enabled).
     pub config_entries: Vec<AdapterEntry>,
 }

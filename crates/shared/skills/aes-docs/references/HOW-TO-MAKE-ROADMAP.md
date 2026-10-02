@@ -18,9 +18,6 @@
 
 ## Rules
 
-
-
-
 Four rules. Each one prevents a specific failure mode.
 
 1. **Single source of truth.** State vocabulary, Health vocabulary, and
@@ -34,9 +31,6 @@ Four rules. Each one prevents a specific failure mode.
  (`WS-01`). Feature prefixes are documented in the Status Policy table.
 
 ---
-
-
-
 
 ## Workflow
 

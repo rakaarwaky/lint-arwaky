@@ -26,8 +26,8 @@ Last Updated: 2026-09-28
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | Taxonomy entity file with `String` field type | AES401 violation at ex… | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Taxonomy entity file with custom VO field | No violation | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |
 | Taxonomy entity file with `i32` field type | AES401 violation | Automated | `tests/role-rules/` | cargo test -p role_rules | `29c71083` |

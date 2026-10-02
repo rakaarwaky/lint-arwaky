@@ -17,9 +17,6 @@
 
 ## Rules
 
-
-
-
 Eight rules. Each one prevents a specific failure mode.
 
 1. **No implementation detail.** SQL schemas, API signatures, class
@@ -66,9 +63,6 @@ in the root or simply absent. A goal with a metric needs a scenario in
 a feature's `## Test Scenarios` that proves it.
 
 ---
-
-
-
 
 ## Workflow
 

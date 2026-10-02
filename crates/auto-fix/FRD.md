@@ -55,7 +55,7 @@ Each of the 4 FRs maps to exactly 1 protocol trait and exactly 1 capability stru
 - **Output**: The file with the unused import line deleted. A reason-coded `FixOutcome` is returned.
 - **Business Rules**:
 
-  - Only lines matching import patterns (`use `, `import `, `from `, `require(`, `= require(`) at the target line are removed.
+  - Only lines matching import patterns (`use`, `import`, `from`, `require(`, `= require(`) at the target line are removed.
   - The target line number must be valid (1-indexed, within file length).
   - **Multi-line imports**: If the target line is part of a multi-line import block (detected by unclosed `{`, trailing `,`, or previous-line continuation), the fix is `Skipped(multi_line_import)` — removing a single line from a multi-line import would break syntax.
   - In dry-run mode, returns `Applied` (would apply) without modifying the file.
@@ -209,6 +209,7 @@ and the enumerated reason set disagree.
 | `execute` | FixRequest | `FixResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | `filesystem` aggregate | in | Provide cached file reads and writes for the correction pass | A read returns empty content → the fix reports `Failed(read_error)` and the file is left untouched |
@@ -218,6 +219,7 @@ and the enumerated reason set disagree.
 | Container composition root | out (internal) | Wire capabilities and orchestrator together | A dependency is missing at wiring time → startup fails before any file is opened |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | Correction scope | Every applied correction is a single-line remove, replace, or rename | Assert the outcome is reason-coded and inspect the diff for any change outside the target line |

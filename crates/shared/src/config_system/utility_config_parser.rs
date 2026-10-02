@@ -618,6 +618,34 @@ pub fn parse_adapter_names_from_yaml(yaml_str: &str) -> Vec<String> {
         .collect()
 }
 
+/// Parse the top-level `ignored_rules` list from YAML.
+///
+/// ```yaml
+/// ignored_rules: ["markdownlint::MD013", "AES205"]
+/// ```
+///
+/// Entries are matched as case-insensitive substrings of a violation's code,
+/// the same rule `lint-arwaky-cli scan --filter` applies, so a bare `MD013`
+/// ignores every adapter's `MD013` and a bare `AES2` ignores a whole AES
+/// range. An absent or non-list value yields an empty vec, which every caller
+/// treats as "ignore nothing".
+pub fn parse_ignored_rules_from_yaml(yaml_str: &str) -> Vec<String> {
+    let raw: serde_yaml_ng::Value = match serde_yaml_ng::from_str(yaml_str) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+    raw.get("ignored_rules")
+        .and_then(|r| r.as_sequence())
+        .map(|entries| {
+            entries
+                .iter()
+                .filter_map(|e| e.as_str())
+                .map(|s| s.to_string())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 /// Parse adapter entries from YAML, returning `Vec<AdapterEntry>` with name,
 /// status, weight, and timeout fields. Skips disabled adapters.
 ///

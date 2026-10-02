@@ -27,6 +27,9 @@ use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::ICommandExecutorProtocol;
 use shared_external_lint::IJsToolResolutionProtocol;
 use shared_external_lint::contract_external_lint_protocol::ILinterAdapterProtocol;
+use shared_external_lint::taxonomy_external_lint_constant::{
+    MARKDOWNLINT_CLI_VARIANTS, MARKDOWNLINT_EXTENSIONS, MARKDOWNLINT_FIX_FLAG,
+};
 use shared_external_lint::utility_path_normalization::resolve_capabilities_path;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_filesystem::contract_filesystem_protocol::IToolResolutionProtocol;
@@ -89,13 +92,15 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
             let Some(cmd) = cmd else {
                 continue;
             };
-            // markdownlint-cli2 prints paths relative to its CWD. Running the
-            // tool with the scan root as working directory makes those paths
-            // resolve against `root`, so canonicalization in the parser lands
-            // on the same absolute path the rest of the report uses.
+            // markdownlint-cli2 prints paths relative to its CWD, and the CWD
+            // must be a *directory* — `Command::current_dir` on a file fails to
+            // spawn. For a directory target that is the scan root itself; for a
+            // single-file target (`scan README.md`) it is the file's parent.
+            // Either way the tool's relative output resolves back onto the same
+            // absolute path the rest of the report uses.
             let Ok(response) = self.lint_executor.exec_cmd_scan(
                 cmd,
-                abs_path.clone(),
+                exec_working_dir(&abs_path, is_dir),
                 60.0,
                 Some(self.name()),
                 path,
@@ -113,9 +118,44 @@ impl ILinterAdapterProtocol for MarkdownLintAdapter {
     }
 
     fn fix(&self, path: &FilePath) -> Result<ComplianceStatus, LinterOperationError> {
-        self.js_resolution
-            .js_apply_fix(path, &ToolName::new("markdownlint-cli"), "--fix")
-            .map_err(crate::convert_executor_error)
+        // Both CLI variants spell the autofix flag `--fix`, so probe them in
+        // the same order `scan` does. Returning on the first resolvable binary
+        // keeps a host that only has `markdownlint-cli2` installed — the common
+        // case — from silently reporting a no-op fix.
+        let wd = self.tool_resolution.resolve_js_working_dir(path);
+        let abs_path = self.io.canonicalize_path_str(path);
+        let is_dir = self.io.is_dir(Path::new(&abs_path.value));
+        let target = markdown_target(&abs_path.value, is_dir);
+        for binary in MARKDOWNLINT_CLI_VARIANTS {
+            let args = vec![target.clone(), MARKDOWNLINT_FIX_FLAG.to_string()];
+            let cmd = self
+                .js_resolution
+                .resolve_js_cmd(&ToolName::new(binary), args.clone(), &wd)
+                .or_else(|| {
+                    self.tool_resolution
+                        .is_executable_in_path(&ToolName::new(binary))
+                        .then(|| {
+                            let mut cmd = vec![binary.to_string()];
+                            cmd.extend(args);
+                            cmd
+                        })
+                });
+            let Some(cmd) = cmd else {
+                continue;
+            };
+            // Run from the same directory `scan` would, so the glob resolves
+            // identically and a file target does not fail to spawn.
+            let response = self.lint_executor.exec_cmd_adapter(
+                cmd,
+                exec_working_dir(&abs_path, is_dir),
+                60.0,
+                self.name(),
+            )?;
+            return Ok(ComplianceStatus::new(response.returncode == 0));
+        }
+        // Neither CLI is installed — a no-op status, matching every other
+        // adapter's "tool unresolvable" contract.
+        Ok(ComplianceStatus::new(false))
     }
 }
 
@@ -139,25 +179,47 @@ impl MarkdownLintAdapter {
 
 /// Markdown extensions markdownlint lints by default.
 fn is_markdown_file(path: &str) -> bool {
-    path.ends_with(".md") || path.ends_with(".markdown")
+    MARKDOWNLINT_EXTENSIONS
+        .iter()
+        .any(|ext| path.ends_with(&format!(".{ext}")))
 }
 
-/// The CLI variants to try, in order. `markdownlint-cli` speaks JSON under
-/// `--json`; `markdownlint-cli2` has no JSON mode and only writes text.
-/// Directory targets get a Markdown-only glob so neither variant lints
-/// non-Markdown files under the tree (see `scan`).
-fn tool_invocations(abs_path: &str, is_dir: bool) -> Vec<(&'static str, Vec<String>)> {
-    let target = if is_dir {
+/// The Markdown-only path or glob to hand the CLI for `abs_path`. A directory
+/// target becomes a glob so neither variant lints — or autofixes — a `.rs` or
+/// `.toml` file as if it were prose.
+fn markdown_target(abs_path: &str, is_dir: bool) -> String {
+    if is_dir {
         format!("{}/**/*.{{md,markdown}}", abs_path.trim_end_matches('/'))
     } else {
         abs_path.to_string()
-    };
+    }
+}
+
+/// The directory to run the CLI from. `markdownlint-cli2` resolves its glob
+/// and prints paths relative to the CWD, and spawning with a *file* as the
+/// working directory fails outright — so a single-file target runs from its
+/// parent, a directory target from itself.
+fn exec_working_dir(abs_path: &FilePath, is_dir: bool) -> FilePath {
+    if is_dir {
+        return abs_path.clone();
+    }
+    Path::new(&abs_path.value)
+        .parent()
+        .and_then(|p| FilePath::new(p.to_string_lossy().to_string()).ok())
+        .unwrap_or_else(|| abs_path.clone())
+}
+
+/// The scan invocation per CLI variant, in probe order: `markdownlint-cli`
+/// asks for JSON, `markdownlint-cli2` only writes text. Directory targets get
+/// the Markdown-only glob (see `markdown_target`).
+fn tool_invocations(abs_path: &str, is_dir: bool) -> Vec<(&'static str, Vec<String>)> {
+    let target = markdown_target(abs_path, is_dir);
     vec![
         (
-            "markdownlint-cli",
+            MARKDOWNLINT_CLI_VARIANTS[0],
             vec!["--json".to_string(), target.clone()],
         ),
-        ("markdownlint-cli2", vec![target]),
+        (MARKDOWNLINT_CLI_VARIANTS[1], vec![target]),
     ]
 }
 

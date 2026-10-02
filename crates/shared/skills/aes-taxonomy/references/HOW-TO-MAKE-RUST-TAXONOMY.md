@@ -188,6 +188,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
 ## Workflow
 
 1. Determine type:
+
    ```text
    VO
    Entity
@@ -199,15 +200,19 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```
 
 2. Create the file:
+
    ```text
    taxonomy_<domain>_<suffix>.rs
    ```
+
    inside:
+
    ```text
    crates/shared/src/<domain>/
    ```
 
 3. For VOs:
+
    ```text
    Validate in new().
    Return Result<Self, DomainError>.
@@ -216,6 +221,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```
 
 4. For Entities:
+
    ```text
    Include an identity VO field.
    Use VO fields only for domain state.
@@ -223,6 +229,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```
 
 5. For Errors:
+
    ```text
    Implement std::error::Error and std::fmt::Display (usually via thiserror).
    Store VO fields only in enum variants.
@@ -239,6 +246,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```
 
 6. For Events:
+
    ```text
    Use standard structs with pub VO fields.
    Ensure immutability (no setters).
@@ -246,6 +254,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```
 
 7. For Requests:
+
    ```text
    Use a pub enum whose variants carry VO payload fields.
    Each variant represents one verb/action the aggregate accepts.
@@ -254,6 +263,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```
 
 8. For Responses:
+
    ```text
    Use a pub enum whose variants carry VO payload fields.
    Each variant represents one outcome the caller may inspect.
@@ -262,6 +272,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
    ```
 
 9. For Constants:
+
    ```text
    Use pub const only.
    No functions.
@@ -272,6 +283,7 @@ Doc comments count. For constants, each constant should have a descriptive comme
 10. Register the module and re-export the public type in the domain `mod.rs`.
 
 11. Verify the crate compiles:
+
    ```bash
    cargo check -p shared
    ```
@@ -475,6 +487,7 @@ impl OrderError {
 ```
 
 Every error must expose all four:
+
 - **Field VO** — programmatic access to the domain data that caused the error
 - **Error id** — a stable numeric id such as `1001`, so APIs, database rows,
   and monitoring queries can correlate on a compact value
@@ -617,6 +630,7 @@ impl FixRequest {
 ```
 
 Request rules:
+
 - The enum name matches the filename: `taxonomy_<domain>_<suffix>_request.rs` holds `<Name>Request`.
 - Every variant names one consumer verb. Doc comment the verb so the contract layer can route on it.
 - Constructor methods take references or slices and clone internally, so the enum is always fully owned.
@@ -680,6 +694,7 @@ impl FixResponse {
 ```
 
 Response rules:
+
 - The enum name matches the filename: `taxonomy_<domain>_<suffix>_response.rs` holds `<Name>Response`.
 - Variants mirror the request verbs one to one, so each verb has exactly one response shape.
 - Extractor methods consume `self` (`into_*`), keeping the response single-use and the call site free of destructuring.
@@ -833,7 +848,7 @@ primitive rules above are the reader's responsibility.
 A taxonomy file that is only referenced by barrels and other taxonomy files
 is reported as an orphan:
 
-```
+```text
 [AES501] 'taxonomy_order_vo' is not reachable and not imported by higher layers.
 WHY? only imported by lower-layer files (mod.rs, taxonomy_order_entity.rs)
 FIX: Import 'taxonomy_order_vo' from a contract_* or higher-layer file.

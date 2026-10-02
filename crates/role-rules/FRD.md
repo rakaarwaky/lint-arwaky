@@ -79,6 +79,7 @@ flowchart TD
     | `agent`                      | agent        | agent_checker (AES405)                    |
     | `surface`, `surfaces`        | surface      | surface_checker (AES406)                  |
     | `root`                       | root         | **SKIP** (pure DI wiring, no role checks) |
+
   - Apply ignore paths from architecture configuration using **segment matching** (split path by `/`, match per segment — pattern `test` matches segment `test` only, not `latest` or `contest`).
   - Files with no underscore in the name have no prefix match → silently skipped.
   - Files with unrecognized prefix → silently skipped.
@@ -111,6 +112,7 @@ flowchart TD
       | Rust                  | `String`, `i8`–`i128`, `u8`–`u128`, `f32`, `f64`, `bool`, `char`, `Vec<`, `HashMap<`, `BTreeMap<`, `Option<`, `Result<`, `Box<`, `Cell<`, `RefCell<`, `Arc<`, `Mutex<`, `Rc<` |
       | Python                | `str`, `int`, `float`, `bool`, `list`, `dict`, `tuple`, `set`                                                                                           |
       | TypeScript/JavaScript | `string`, `number`, `boolean`, `any`, `Array<`, `Record<`                                                                                               |
+
     - Type annotations using custom VO wrappers (e.g., `FilePath`, `LineNumber`, `SymbolName`) are NOT flagged.
     - Detection uses line-based scanning: extract type annotations after `:` in each line and match against the forbidden primitive list.
   - **Constant purity check** (`_constant` files):
@@ -296,6 +298,7 @@ flowchart TD
 | `execute` | RoleRequest | `RoleResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | Role runner aggregate contract | out (internal) | Expose the single composite entry point the surface calls | A request supplies no entries → the orchestrator returns an empty result set and performs no I/O of its own |
@@ -306,6 +309,7 @@ flowchart TD
 | `Rayon` | in (internal) | Parallelize the per-file role checks | A worker is interrupted → the parallel iterator yields only the results it completed, and the run is reported as partial |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | Check execution | Role checks read in-memory parse metadata and perform no I/O or parsing | Deny filesystem access during the check phase and assert findings are still produced |

@@ -26,8 +26,8 @@ Last Updated: 2026-09-29
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | Claude config | `mcpServers` wrapper with `lint-arwaky` entry | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
 | Cursor config | `mcpServers` wrapper | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |
 | Windsurf config | `mcpServers` wrapper | Automated | `tests/project-setup/` | cargo test -p project_setup | `29c71083` |

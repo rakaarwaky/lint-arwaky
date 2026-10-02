@@ -42,7 +42,6 @@ Section 5.5 "Demo Walkthrough".
 
 ## Available Scripts/Commands
 
-
 | Command                                                      | Description                                                             |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------- |
 | `scan` / `check` \[path\]                                                | Run all 7 code linters (naming, import, quality, role, orphan, structure, external) |
@@ -117,7 +116,7 @@ Acceptance tests follow `tests/acceptance_FR_00N.rs`. Pass/fail criteria: [TEST.
 
 ## Project Structure
 
-```
+```text
 crates/
 ├── shared/            # Taxonomy VOs, contracts, utilities
 │   └── skills/        # Embedded skill content (source for init)

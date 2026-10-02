@@ -39,7 +39,7 @@ flowchart TD
 
 ### Config Loading Priority Chain
 
-```
+```text
 Priority 1: Project root
   lint_arwaky.config.yaml at project root
       │ (not found)
@@ -305,7 +305,7 @@ FRD Ref: FR-ConfigSystem-003
 
 ### File Naming Convention
 
-```
+```text
 lint_arwaky.config.yaml  — unified config for all languages (Rust, Python, TypeScript)
 ```
 
@@ -313,7 +313,7 @@ lint_arwaky.config.yaml  — unified config for all languages (Rust, Python, Typ
 
 These are always included regardless of config:
 
-```
+```text
 .git
 node_modules
 target

@@ -56,6 +56,7 @@ Allowed: iteration to call deps, routing results, propagating errors.
 e.g. `for file in files { self.checker.check(file) }` = OK. `files.iter().map(|f| f.size()).sum()` = capabilities.
 
 **Error rules:**
+
 - Rule 1: Never silently discard — no `checker.check().unwrap_or_default()`.
 - Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
   holds VO-wrapped values, not raw primitives.

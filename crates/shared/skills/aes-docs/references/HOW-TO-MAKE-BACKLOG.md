@@ -40,9 +40,6 @@ contain a backtick code span naming a command and a commit hash
 
 ---
 
-
-
-
 ## Workflow
 
 1. **Create file** → `BACKLOG.md` in feature directory.

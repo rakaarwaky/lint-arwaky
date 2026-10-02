@@ -17,9 +17,6 @@
 
 ## Rules
 
-
-
-
 1. **The test is time, not completeness.** Clone → install → build → run
 in under 10 minutes. If the Quick Start cannot clear that, the
 missing step is the bug in this file.
@@ -31,9 +28,6 @@ pinned. Optional tooling listed as required teaches readers to
 distrust the list.
 
 ---
-
-
-
 
 ## Workflow
 
