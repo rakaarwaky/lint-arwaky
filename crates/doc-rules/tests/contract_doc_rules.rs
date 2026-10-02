@@ -409,6 +409,107 @@ fn aes602_fires_when_api_contract_has_two_extra_h3s() {
 }
 
 #[test]
+fn aes602_fires_when_a_protocol_table_is_parked_under_assumptions() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The escape `api_h3_unexpected` cannot see: `crates/filesystem/FRD.md`
+    // shipped exactly this — the same per-protocol method tables the Protocol
+    // API table already carries, moved to a parent section the API Contract
+    // check never reads. The document-wide parity check is what catches it.
+    let frd = conforming_frd().replace(
+        "## Assumptions & Constraints\n\n- The capability is stateless.",
+        "## Assumptions & Constraints\n\n\
+         - The capability is stateless.\n\n\
+         ### IToolResolutionProtocol (12 operations)\n\n\
+         | Method | Input | Output | Error | Event | Description |\n\
+         | --- | --- | --- | --- | --- | --- |\n\
+         | `has_local_bin` | `&Path, &ToolName` | `bool` | — | — | Local bin. |",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "h3_off_template"),
+        "expected h3_off_template for a protocol table under Assumptions, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_fires_when_a_scen_heading_is_promoted_below_test_scenarios() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The template states Test Scenarios as a bullet list, so a scenario
+    // promoted to a level-3 heading is an invented section.
+    let frd = conforming_frd().replace(
+        "## Test Scenarios\n\n- A conforming request produces a conforming response.",
+        "## Test Scenarios\n\n\
+         - A conforming request produces a conforming response.\n\n\
+         ### SCEN-001: Dispatch\n\n\
+         | # | Scenario | Expected |\n\
+         | --- | --- | --- |\n\
+         | 1 | Conforming request | Conforming response |",
+    );
+    write_workspace(tmp.path(), &frd);
+    assert!(
+        has(&audit(tmp.path()), "AES602", "h3_off_template"),
+        "expected h3_off_template for an invented SCEN heading, got: {:#?}",
+        audit(tmp.path())
+    );
+}
+
+#[test]
+fn aes602_accepts_the_three_sanctioned_h3_shapes() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The conforming FRD already carries all three: two requirement headings
+    // plus Protocol API and Aggregate API. Asserting silence proves the check
+    // is not simply "any H3 is a violation".
+    write_workspace(tmp.path(), &conforming_frd());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "sanctioned H3 shapes must not fire, got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_accepts_a_demoted_h4_heading() {
+    let tmp = tempfile::tempdir().unwrap();
+    // The remedy the message names: demote to level 4 and keep the content.
+    let frd = conforming_frd().replace(
+        "## Assumptions & Constraints\n\n- The capability is stateless.",
+        "## Assumptions & Constraints\n\n\
+         - The capability is stateless.\n\n\
+         #### Tool resolution details\n\n\
+         - Resolution order is local bin, then system path.",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "a level-4 heading is detail, not a section; got: {findings:#?}"
+    );
+}
+
+#[test]
+fn aes602_h3_parity_ignores_headings_inside_a_fenced_block() {
+    let tmp = tempfile::tempdir().unwrap();
+    // A shell comment in a code fence is not a heading; the template's own
+    // Verify block is fenced and must not be read as a section.
+    let frd = conforming_frd().replace(
+        "## Glossary\n\n- **Sample**: A value object used in this example.",
+        "## Glossary\n\n\
+         - **Sample**: A value object used in this example.\n\n\
+         ```bash\n\
+         ### not-a-heading\n\
+         # also not a heading\n\
+         ```",
+    );
+    write_workspace(tmp.path(), &frd);
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES602", "h3_off_template"),
+        "fenced headings must be ignored, got: {findings:#?}"
+    );
+}
+
+#[test]
 fn aes602_fires_when_protocol_api_is_prose_only() {
     let tmp = tempfile::tempdir().unwrap();
     // Author dumps every method into prose under Protocol API instead of a table.

@@ -19,6 +19,10 @@ inside one document:
                    disagrees with the DESIGN.md template in
                    HOW-TO-MAKE-DESIGN.md, so copying the shipped template
                    fires AES605 the moment the file is written.
+7. FRD H3        — the AES602 FRD level-3 contract in the doc-rules constants
+                   disagrees with the FRD.md template in HOW-TO-MAKE-FRD.md, so
+                   copying the shipped template fires AES602 the moment the
+                   file is written.
 
 Exit code 0 when every check passes, 1 otherwise. No third-party dependencies:
 this runs anywhere python3 does, including a CI job with no Rust toolchain.
@@ -281,8 +285,15 @@ AUTOFIX_FRD = ROOT / "crates" / "auto-fix" / "FRD.md"
 
 def documented_reasons() -> dict[str, str]:
     text = AUTOFIX_FRD.read_text(encoding="utf-8")
+    # The block is detail inside Functional Requirements. AES602 closes the FRD
+    # level-3 set to the template's three shapes, so this heading was relabelled
+    # as a bold list item — markdownlint MD001 forbids an H4 directly under an
+    # H2 and MD036 forbids bold-as-heading, leaving the list item as the only
+    # form that keeps the label without inventing a section. Accept a heading
+    # at any level or the list-item form, so this check tracks the reference
+    # rather than the mark-up choice.
     match = re.search(
-        r"^###\s+Reason Code Reference\s*$(.*?)(?=^##\s|\Z)",
+        r"^(?:#{2,4}\s+|- \*\*)Reason Code Reference(?:\*\*)?\s*$(.*?)(?=^##\s|\Z)",
         text,
         flags=re.MULTILINE | re.DOTALL,
     )
@@ -452,6 +463,96 @@ def check_design_h2_contract() -> list[str]:
     return errors
 
 
+# ─── 7. FRD H3 contract ─────────────────────────────────────────────────────
+
+HOWTO_FRD = ROOT / "crates/shared/skills/aes-docs/references/HOW-TO-MAKE-FRD.md"
+# The requirement-heading shape, written with the template's own placeholders:
+# `### FR-<FEATURENAME>-001: <Short imperative name>`. The number segment
+# accepts `XXX` as well as digits because the template ships both the first
+# numbered heading and four `-XXX` repeats.
+FR_ID_H3 = re.compile(r"^###\s+FR-<[A-Za-z_]+>-(?:\d+|XXX):")
+
+
+def howto_frd_h3() -> tuple[set[str], bool]:
+    """(literal H3 titles, saw_requirement_heading) of the FRD template.
+
+    The requirement-heading shape is a pattern, not a literal title, so it is
+    reported as a flag rather than as a member of the literal set — the same
+    split the Rust side makes in FRD_H3_TITLES plus fr_id_heading_re.
+    """
+    text = HOWTO_FRD.read_text(encoding="utf-8")
+    inside, body = False, []
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            if inside:
+                break
+            inside = True
+            continue
+        if inside:
+            body.append(line)
+    if not body:
+        raise ValueError(f"{rel(HOWTO_FRD)} has no fenced FRD.md template")
+    titles, saw_fr = set(), False
+    for m in re.finditer(r"^###\s+(.*?)\s*$", "\n".join(body), re.M):
+        title = m.group(1)
+        if FR_ID_H3.match(m.group(0)):
+            saw_fr = True
+        else:
+            titles.add(normalize_h2(title))
+    return titles, saw_fr
+
+
+def contract_frd_h3() -> tuple[set[str], bool]:
+    """(FRD_H3_TITLES, saw_requirement_alternative) from the doc-rules constants."""
+    text = DOC_CONTRACT_FILE.read_text(encoding="utf-8")
+    entry = re.search(r"FRD_H3_TITLES[^=]*=\s*&\[(.*?)\]", text, re.S)
+    if entry is None:
+        raise ValueError(f"{rel(DOC_CONTRACT_FILE)} has no FRD_H3_TITLES constant")
+    # A requirement heading is sanctioned by shape, not by title, so it is not
+    # in FRD_H3_TITLES; the constants record that fact as a doc comment on the
+    # constant. Read it rather than assuming, so deleting the comment is caught.
+    comment = text[max(0, entry.start() - 1200) : entry.start()]
+    saw_fr = "FR-<FEATURENAME>-NNN" in comment
+    return {normalize_h2(s) for s in re.findall(r'"([^"]*)"', entry.group(1))}, saw_fr
+
+
+def check_frd_h3_contract() -> list[str]:
+    """The enforced FRD level-3 set must be exactly the shipped template's.
+
+    AES602 closes the FRD level-3 set, so a heading the constants sanction but
+    the template does not is unreachable, and a heading the template emits but
+    the constants do not sanction makes the shipped template fail its own
+    linter — the same defect the DESIGN H2 check above was added to catch.
+    """
+    try:
+        template, template_saw_fr = howto_frd_h3()
+        contract, contract_saw_fr = contract_frd_h3()
+    except (OSError, ValueError) as exc:
+        return [str(exc)]
+
+    errors = []
+    unreachable = sorted(contract - template)
+    if unreachable:
+        errors.append(
+            f"FRD_H3_TITLES sanctions {unreachable}, absent from the "
+            f"{rel(HOWTO_FRD)} template; a file copied from that template "
+            f"cannot satisfy AES602"
+        )
+    off_template = sorted(template - contract)
+    if off_template:
+        errors.append(
+            f"FRD_H3_TITLES has no entry for {off_template}, which the "
+            f"{rel(HOWTO_FRD)} template emits; copying it fires AES602 h3_off_template"
+        )
+    if template_saw_fr and not contract_saw_fr:
+        errors.append(
+            f"the {rel(HOWTO_FRD)} template sanctions a requirement heading at "
+            f"level 3 but FRD_H3_TITLES does not record it; copying it fires "
+            f"AES602 h3_off_template"
+        )
+    return errors
+
+
 CHECKS = (
     ("rule ranges", check_rule_ranges),
     ("markdown anchors", check_anchors),
@@ -459,6 +560,7 @@ CHECKS = (
     ("auto-fix reason codes", check_fix_reasons),
     ("performance NFR", check_performance),
     ("DESIGN H2 contract", check_design_h2_contract),
+    ("FRD H3 contract", check_frd_h3_contract),
 )
 
 

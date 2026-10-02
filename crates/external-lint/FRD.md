@@ -18,7 +18,7 @@ All adapters execute **sequentially** (no threads, no async runtime). Each adapt
 
 The crate does **not** own language detection. Project-level language detection belongs to the `filesystem` aggregate, which serves it as `FilesystemRequest::DetectProjectLanguages` (see [crates/filesystem/FRD.md](../filesystem/FRD.md), FR-Filesystem-005). When a caller supplies no pre-computed context, the orchestrator asks the filesystem aggregate which language groups are present and uses the returned flags. It never walks the tree itself.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -304,7 +304,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-004 — Auto-Fix** — e.g. ESLint fix → `eslint --fix` executed
 - **SCEN-005 — Normalization** — e.g. Clippy `correctness` lint → Severity CRITICAL, code `clippy::<name>`
 
-### SCEN-001 — Language Flags
+- **SCEN-001 — Language Flags**
 
 Project-level language detection is owned by the `filesystem` aggregate (FR-Filesystem-005). This scenario verifies only that external-lint consumes the flags it receives and selects adapters accordingly.
 
@@ -319,14 +319,14 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 7 | No caller-supplied context | Exactly one `FilesystemRequest::DetectProjectLanguages` is issued to the filesystem aggregate |
 | 8 | Single-file target `README.md` (flags derived from its extension) | Only markdownlint runs |
 
-### SCEN-002 — Adapter Selection
+- **SCEN-002 — Adapter Selection**
 
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | No languages detected | Empty adapter list |
 | 2 | All languages detected | 10 adapters selected |
 
-### SCEN-003 — Scan Execution
+- **SCEN-003 — Scan Execution**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -338,7 +338,7 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 6 | Timeout exceeded | Adapter returns error, others continue |
 | 7 | Sequential execution | Adapters run one after another |
 
-### SCEN-004 — Auto-Fix
+- **SCEN-004 — Auto-Fix**
 
 | # | Scenario | Expected |
 | - | - | - |
@@ -351,7 +351,7 @@ Project-level language detection is owned by the `filesystem` aggregate (FR-File
 | 7 | markdownlint fix | `<target> --fix` executed against the first resolvable CLI variant (`markdownlint-cli`, then `markdownlint-cli2`) |
 | 8 | No markdownlint CLI installed | No-op status, no command spawned |
 
-### SCEN-005 — Normalization
+- **SCEN-005 — Normalization**
 
 | # | Scenario | Expected |
 | - | - | - |

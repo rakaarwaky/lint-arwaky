@@ -12,7 +12,7 @@
 
 The filesystem crate produces filesystem data for all feature crates.
 
-### Architecture & Data Flow
+- **Architecture & Data Flow**
 
 ```mermaid
 flowchart TD
@@ -55,7 +55,7 @@ flowchart TD
 
 ```
 
-### Data Production Map
+- **Data Production Map**
 
 | FR | Output Data |
 | --- | --- |
@@ -376,7 +376,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **SCEN-004: Tool Resolution** — e.g. node_modules/.bin/eslint exists → Command resolved
 - **SCEN-005: Workspace & Project Language Detection** — e.g. Start from crates/some-crate/src → Finds workspace root; a root of `.rs` + `.md` sets `has_rust` + `has_markdown` only
 
-### SCEN-001: AST Parsing & Import Extraction
+- **SCEN-001: AST Parsing & Import Extraction**
 
 | # | Scenario | Expected |
 | --- | --- | --- |
@@ -390,7 +390,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 8 | Barrel re-export through a Rust module barrel | Resolved to original source |
 | 9 | 1,000 files parsed in parallel | Completes in under 1 s |
 
-### SCEN-002: Dependency Graph Construction
+- **SCEN-002: Dependency Graph Construction**
 
 | # | Scenario | Expected |
 | --- | --- | --- |
@@ -402,7 +402,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | File with no incoming edges | Identified as orphan |
 | 7 | Circular dependency chain | Cycle detected via SCC |
 
-### SCEN-003: File I/O & Directory Operations
+- **SCEN-003: File I/O & Directory Operations**
 
 | # | Scenario | Expected |
 | --- | --- | --- |
@@ -415,7 +415,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 7 | Write + read back | Content matches |
 | 8 | Scan with ignored patterns | Ignored files excluded |
 
-### SCEN-004: Tool Resolution
+- **SCEN-004: Tool Resolution**
 
 | # | Scenario | Expected |
 | --- | --- | --- |
@@ -424,7 +424,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 3 | Config file present | Detected = true |
 | 4 | Cargo.toml in ancestor | Found |
 
-### SCEN-005: Workspace & Project Language Detection
+- **SCEN-005: Workspace & Project Language Detection**
 
 | # | Scenario | Expected |
 | --- | --- | --- |
@@ -446,119 +446,6 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - A parse warning (see `IParserProtocol::parse_warnings`) never aborts a scan; the file is treated as best-effort.
 - `IGraphProtocol` results are not persisted; they live for the duration of one scan and are discarded after the caller reports.
 
-### IParserProtocol (6 operations)
-
-| Operation | Input | Output |
-| --- | --- | --- |
-| parse_all | `&mut [FileEntry]` | — (mutates in-place) |
-| parse_warnings | — | `&[ParseWarning]` |
-| import_list | — | `Vec<ImportEntry>` |
-| imports_for | `&Path` | `Vec<ImportEntry>` |
-| extract | `&Path, &str, Language` | `Vec<ImportEntry>` |
-| resolve_barrel_imports | `&Path` | — (populates resolved_path fields) |
-
-### IGraphProtocol (7 operations)
-
-| Operation | Input | Output |
-| --- | --- | --- |
-| build_graph | `&[ImportEntry], &[FileEntry], &[DefinitionEntry], &[ImplEntry]` | — (populates graph) |
-| reverse_links | — | `&HashMap<PathBuf, Vec<PathBuf>>` |
-| symbol_definitions | — | `&HashMap<String, Vec<PathBuf>>` |
-| implementations | — | `&HashMap<String, Vec<PathBuf>>` |
-| dependents | `&Path` | `Vec<PathBuf>` |
-| dependencies | `&Path` | `Vec<PathBuf>` |
-| reachable | `&Path, &Path` | `bool` |
-
-### IFileSystemIOProtocol (29 operations)
-
-| Operation | Input | Output |
-| --- | --- | --- |
-| path_exists | `&Path` | `bool` |
-| is_dir | `&Path` | `bool` |
-| is_file | `&Path` | `bool` |
-| is_symlink | `&Path` | `bool` |
-| should_ignore | `&FilePath, &[String]` | `bool` |
-| is_ignored_dir | `&Path, &PatternList` | `bool` |
-| is_source_file | `&Path` | `bool` |
-| is_source_ext | `&FileExtension` | `bool` |
-| is_python_file | `&Path` | `bool` |
-| canonicalize | `&Path` | `Result<PathBuf>` |
-| canonicalize_path_str | `&FilePath` | `String` |
-| metadata | `&Path` | `Result<Metadata>` |
-| symlink_metadata | `&Path` | `Result<Metadata>` |
-| get_file_stem | `&str` | `&str` |
-| get_basename | `&str` | `&str` |
-| get_parent | `&str` | `&str` |
-| read_to_string | `&Path` | `Result<ContentString>` |
-| write_string | `&Path, &str` | `Result<()>` |
-| copy_file | `&Path, &Path` | `Result<ByteCount>` |
-| create_dir_all | `&Path` | `Result<()>` |
-| remove_dir_all | `&Path` | `Result<()>` |
-| remove_file | `&Path` | `Result<()>` |
-| set_permissions | `&Path, FileMode` | `Result<()>` |
-| scan_directory_with_ignored | `&Path, &PatternList` | `Vec<PathBuf>` |
-| read_dir_entries_as_pathbuf | `&Path` | `Result<Vec<PathBuf>>` |
-| run_git_command | `&[&str], &str` | `GitCommandResult` |
-| run_external_command_in | `&str, &[&str], &str` | `(String, String, bool)` |
-| parse_output_lines | `&str` | `ParsedLines` |
-| timing | — | `&ScanTiming` |
-
-### IToolResolutionProtocol (12 operations)
-
-| Operation | Input | Output |
-| --- | --- | --- |
-| is_executable_in_path | `&ToolName` | `bool` |
-| is_binary_available | `&ToolName` | `bool` |
-| has_local_bin | `&Path, &ToolName` | `bool` |
-| has_config_file | `&Path` | `bool` |
-| has_cargo_toml | `&FilePath` | `Option<FilePath>` |
-| has_cargo_lock | `&FilePath` | `Option<FilePath>` |
-| is_python_file_recursive | `&FilePath` | `bool` |
-| resolve_js_cmd | `&ToolName, Vec<String>, &FilePath` | `Option<Vec<String>>` |
-| resolve_js_working_dir | `&FilePath` | `FilePath` |
-| resolve_cargo_working_dir | `&FilePath` | `FilePath` |
-| resolve_cargo_lock_working_dir | `&FilePath` | `FilePath` |
-| default_working_dir | `&FilePath` | `FilePath` |
-
-### IWorkspaceProtocol (9 operations)
-
-| Operation | Input | Output |
-| --- | --- | --- |
-| workspace_root | `&FilePath` | `Option<PathBuf>` |
-| find_workspace_root_from_path | `&Path` | `Result<PathBuf>` |
-| is_member_path | `&FilePath` | `bool` |
-| is_leaf_member_path | `&FilePath` | `bool` |
-| detect_source_dir | `&Path` | `PathBuf` |
-| detect_language_from_path | `&str` | `ConfigLanguage` |
-| check_wired_in_container | `&Path, &PatternList` | `bool` |
-| resolve_orphan_module_path | `&Path, &Path, &str` | `Option<PathBuf>` |
-| detect_project_languages (FR-005B) | `&Path` | `ProjectLanguagesVO` |
-
-### IFilesystemAggregate — Cache Accessors & Orchestration (18 operations)
-
-| Operation | Input | Output |
-| --- | --- | --- |
-| file_list | — | `&[FileEntry]` |
-| read_cached | `&FilePath` | `ContentString` |
-| get_file_content | `&Path` | `Option<String>` |
-| has_file | `&Path` | `bool` |
-| collect_file_entries | `&PatternList` | `Vec<FileContentPair>` |
-| discover_source_files | `&Path, &[String]` | `Vec<String>` |
-| read_file | `&Path` | `Option<String>` |
-| scan_directory | `&Path` | `Vec<String>` |
-| discover_files | `&Path` | `Vec<String>` |
-| collect_source_files | `&Path, &[String]` | `Vec<FilePath>` |
-| read_lintable_file | `&str` | `Option<String>` |
-| used_identifiers_for | `&Path` | `Vec<String>` |
-| implemented_traits_map | — | `HashMap<String, Vec<String>>` |
-| build_file_index | `&Path` | — (populates caches) |
-| build_file_index_with_ignored | `&Path, &[String]` | — (populates caches with config ignores) |
-| build_orphan_graph_context | `&Path, &[String]` | `GraphAnalysisContext` |
-| find_workspace_root | `&Path` | `Option<PathBuf>` |
-| resolved_import_list | — | `Vec<ImportEntry>` |
-
----
-
 ## Glossary
 
 - **IFilesystemAggregate**: Composed trait: all 5 protocols + cache/orchestration accessors = 81 methods
@@ -572,22 +459,5 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **FileEntry**: Value object: path + content + language + extension + parse metadata
 - **ImportEntry**: Value object: source file + target module + symbols + resolution status
 - **ParseWarning**: Diagnostic for files that failed to parse
-
----
-
-### Consumer Access Pattern
-
-All consumers import **one aggregate trait** which composes all 5 protocol traits. A single reference gives access to **81 methods** (6 + 7 + 29 + 12 + 9 + 18).
-
-### Setup
-
-```rust
-// One-time setup
-let container = FilesystemContainer::new();
-let fs = container.orchestrator();
-
-// Pass as trait object
-fn lint(fs: &dyn IFilesystemAggregate) { ... }
-```
 
 ---
