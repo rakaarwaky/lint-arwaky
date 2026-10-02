@@ -292,6 +292,11 @@ impl IFileSystemIOProtocol for MockFilesystem {
 impl IFilesystemAggregate for MockFilesystem {
     fn execute(&self, request: FilesystemRequest) -> FilesystemResponse {
         match request {
+            // The mock owns no filesystem, so a test-directory walk finds
+            // nothing; AES103 needs a real aggregate, not this one.
+            FilesystemRequest::DiscoverFilesInDirectories { .. } => {
+                FilesystemResponse::Paths { paths: Vec::new() }
+            }
             FilesystemRequest::FileList | FilesystemRequest::FileListSnapshot => {
                 FilesystemResponse::Files {
                     entries: Vec::new(),

@@ -4,7 +4,7 @@
 use shared_structure_rules::contract_structure_aggregate::IStructureAggregate;
 use shared_structure_rules::contract_structure_protocol::{
     IStructureFeatureHealthProtocol, IStructureSharedPurityProtocol,
-    IStructureSurfacePurityProtocol,
+    IStructureSurfacePurityProtocol, IStructureTestSuiteProtocol,
 };
 use shared_structure_rules::taxonomy_structure_rules_request::{
     StructureFinding, StructureRequest,
@@ -18,20 +18,20 @@ pub struct StructureOrchestrator {
     shared: Arc<dyn IStructureSharedPurityProtocol>,
     feature: Arc<dyn IStructureFeatureHealthProtocol>,
     surface: Arc<dyn IStructureSurfacePurityProtocol>,
+    test_suite: Arc<dyn IStructureTestSuiteProtocol>,
 }
 
 impl IStructureAggregate for StructureOrchestrator {
     fn execute(&self, request: StructureRequest) -> StructureResponse {
         let s1 = self.shared.audit_shared(request.clone());
         let s2 = self.feature.audit_feature(request.clone());
-        let s3 = self.surface.audit_surface(request);
+        let s3 = self.surface.audit_surface(request.clone());
+        let s4 = self.test_suite.audit_test_suite(request);
         let mut all: Vec<StructureFinding> = Vec::new();
-        let StructureResponse::Findings { findings } = s1;
-        all.extend(findings);
-        let StructureResponse::Findings { findings } = s2;
-        all.extend(findings);
-        let StructureResponse::Findings { findings } = s3;
-        all.extend(findings);
+        for response in [s1, s2, s3, s4] {
+            let StructureResponse::Findings { findings } = response;
+            all.extend(findings);
+        }
         StructureResponse::Findings {
             findings: sorted(all),
         }
@@ -39,16 +39,18 @@ impl IStructureAggregate for StructureOrchestrator {
 }
 
 impl StructureOrchestrator {
-    /// Wrap three capability seams in a fresh orchestrator.
+    /// Wrap four capability seams in a fresh orchestrator.
     pub fn new(
         shared: Arc<dyn IStructureSharedPurityProtocol>,
         feature: Arc<dyn IStructureFeatureHealthProtocol>,
         surface: Arc<dyn IStructureSurfacePurityProtocol>,
+        test_suite: Arc<dyn IStructureTestSuiteProtocol>,
     ) -> Self {
         Self {
             shared,
             feature,
             surface,
+            test_suite,
         }
     }
 }

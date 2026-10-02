@@ -54,7 +54,7 @@ ordering comparison is a subtraction.
 
 | Field | Type | Description |
 |---|---|---|
-| code | Text | The structure invariant that fired (AES701–AES703) |
+| code | Text | The structure invariant that fired (AES701–AES704) |
 | violation_type | Text | Machine-parseable subtype, so a consumer routes without reading prose |
 | file | Text | The folder or file the finding points at, as the caller supplied it |
 | message | Text | Human-readable detail about what drifted |

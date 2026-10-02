@@ -374,7 +374,7 @@ impl ILinterAdapterProtocol for StubAdapter {
 
     fn scan(&self, path: &FilePath) -> Result<LintResultList, LinterOperationError> {
         Ok(LintResultList::new(vec![LintResult::new_arch(
-            &path.value(),
+            path.value(),
             1,
             "stub::finding",
             Severity::MEDIUM,
@@ -426,8 +426,10 @@ fn orchestrator_with(
 fn orchestrator_runs_adapter_when_filesystem_reports_a_language() {
     use shared_filesystem::taxonomy_filesystem_vo::ProjectLanguagesVO;
 
-    let mut languages = ProjectLanguagesVO::default();
-    languages.has_rust = true;
+    let languages = ProjectLanguagesVO {
+        has_rust: true,
+        ..ProjectLanguagesVO::default()
+    };
     let (orchestrator, _adapter) = orchestrator_with(languages);
 
     let results = orchestrator.scan_all(&FilePath::new("/tmp".to_string()).unwrap());
