@@ -92,6 +92,14 @@ pub struct ExternalCommandParams {
     pub ignored_paths: Vec<String>,
 }
 
+/// The wiring a layer-scoped command needs, so six subcommands share one
+/// parameter list instead of repeating it per layer.
+pub struct LayerScanContext {
+    pub filesystem_seam: FilesystemSeam,
+    pub config_orchestrator: Option<Arc<dyn IConfigOrchestratorAggregate>>,
+    pub scan_aggregates: Option<dispatcher::surface_check_action::ScanAggregates>,
+}
+
 /// Parameters for the `docs` command.
 pub struct DocsCommandParams {
     pub path: Option<FilePath>,
@@ -242,6 +250,39 @@ pub fn handle_naming(params: NamingCommandParams) -> ExitCode {
                 params.format,
                 is_member(&params.path, &params.filesystem_seam),
             );
+            exit_for(violations.len())
+        }
+        Err(e) => {
+            error!(error = %e, "operation failed");
+            ExitCode::RUNTIME_ERROR
+        }
+    }
+}
+
+/// A layer-scoped command — run every rule group, report only the violations
+/// whose file belongs to `layer`.
+pub fn handle_layer_scan(
+    context: &LayerScanContext,
+    layer: &'static str,
+    path: String,
+    format: Format,
+    filter: Option<String>,
+    member: Option<String>,
+) -> ExitCode {
+    let path = Some(FilePath::new(path).unwrap_or_default());
+    let member_flag = is_member(&path, &context.filesystem_seam);
+    let root = resolve_root(&path);
+    let opts = dispatcher::surface_check_action::ScanOptions {
+        path,
+        multi_project_orchestrator: context.config_orchestrator.clone(),
+        filter,
+        member,
+        filesystem: Arc::new(context.filesystem_seam.clone()),
+        scan_aggregates: context.scan_aggregates.clone(),
+    };
+    match dispatcher::surface_layer_scan_action::collect_layer_scan(opts, layer) {
+        Ok(violations) => {
+            output_violations(&violations, &root, format, member_flag);
             exit_for(violations.len())
         }
         Err(e) => {

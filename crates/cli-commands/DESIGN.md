@@ -60,6 +60,7 @@ surface file, the CLI wiring, and the Entry Points table below.
 | `scan <path>` | `surface_scan_command.rs`      | naming, import, quality, role, orphan, structure | clean / violations / error |
 | `docs <path>` | `surface_scan_command.rs`      | doc-rules aggregate | clean / violations / error                |
 | `check <path>` | `surface_check_action.rs` (dispatcher) | the same group as `scan` | exit-code shaped |
+| `taxonomy` / `contract` / `capabilities` / `utility` / `agents` / `surface` | `surface_scan_command.rs` | every group, narrowed to one layer by `surface_layer_scan_action.rs` (dispatcher) | clean / violations / error |
 | `ci`          | `surface_ci_command.rs`          | every group, with thresholds | pass / fail |
 | `fix <path>`  | `surface_fix_command.rs`         | auto-fix aggregate | clean / violations / error                |
 | `config`      | `surface_config_command.rs`      | config-system aggregate | rendered / error                       |

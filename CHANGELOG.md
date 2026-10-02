@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Layer-scoped commands
+
+- **`lint-arwaky-cli` gained one subcommand per AES layer: `taxonomy`,
+  `contract`, `capabilities`, `utility`, `agents`, `surface`.** Each runs every
+  rule group over the target and reports only the violations whose file belongs
+  to that layer, so "what is wrong with the taxonomy?" is one command instead of
+  a `scan` output filtered by eye. They accept the same flags as `scan`
+  (`--format`, `--filter`, `--member`) and are also reachable over MCP
+  `execute_command`, and all six are listed in the command catalog MCP
+  `list_commands` serves.
+
+  The narrowing is applied to the *report*, not to the analysis. An import cycle
+  (AES205) or an orphan (AES501–506) is a fact about the workspace, not about
+  one layer, so scoping the set of files handed to the linters would have made
+  each layer command blind to findings that only appear across layers. The layer
+  of a file is its AES name prefix (`taxonomy_`, `contract_`, `capabilities_`,
+  `utility_`, `agent_`, `surface_`) — the same signal the rule groups already
+  use, via `detect_layer_from_prefix`.
+
+  Two cases follow from that definition rather than from a special case list.
+  `root` has no subcommand: `root_*` files are wiring, so `scan`/`check` remains
+  their reporter. And a finding that names no layer-prefixed file — a
+  folder-level structure finding (AES702) or a Markdown doc invariant
+  (AES601–605) — belongs to no single layer, so it is dropped from all six and
+  stays with `structure` and `docs`.
+
 ### Backend hardening
 
 - Confine MCP paths to the startup workspace and default mutating MCP actions to opt-in.

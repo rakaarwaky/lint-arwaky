@@ -85,6 +85,7 @@ lac fix . --dry-run
 | `fix [PATH]`                       | Apply safe automatic fixes; `--dry-run`, `--filter <CODE>`                |
 | `ci [PATH]`                        | Quality gate; `--threshold <SCORE>` (default 80, exit 1 below it). No `--format` flag. |
 | `quality`/`import`/`naming`/`role`/`orphan`/`external` | Run one linter family in isolation (same flags as `scan`; `orphan` accepts `--member`) |
+| `taxonomy`/`contract`/`capabilities`/`utility`/`agents`/`surface` | Run every linter family, report only one AES layer (same flags as `scan`) |
 | `security [PATH]`                  | Code security issues (Bandit / `cargo audit` / ESLint security)             |
 | `dependencies [PATH]`              | Third-party CVE scan of the lockfile/manifest                              |
 | `watch [PATH]`                     | Re-lint on file save                                                       |
@@ -98,6 +99,15 @@ lac fix . --dry-run
 lint-arwaky-cli scan . --format json --filter AES201
 lint-arwaky-cli orphan crates/ --member shared_common
 lint-arwaky-cli fix modules/ --dry-run --filter AES101
+
+# Per-layer targeting: every linter runs, only that layer's files are reported.
+# A group command narrows *which linter runs*; a layer command narrows *what is
+# reported* — an import cycle or an orphan is a workspace-wide fact, so the
+# analysis still sees every file. `root_*` has no subcommand (use `scan`), and
+# findings that name no layer file (AES702 folder findings, AES601–605 doc
+# invariants) stay with `structure` and `docs`.
+lint-arwaky-cli taxonomy .
+lint-arwaky-cli capabilities . --format json
 
 # CI gate (no --format flag; exit code is the gate)
 lint-arwaky-cli ci . --threshold 90
