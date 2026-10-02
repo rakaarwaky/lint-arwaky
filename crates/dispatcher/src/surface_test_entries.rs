@@ -76,3 +76,4 @@ fn entry_for(filesystem: &Arc<dyn IFilesystemAggregate>, path: String) -> Option
         parse_metadata: None,
     })
 }
+// trigger codacy re-scan
