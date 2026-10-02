@@ -1808,6 +1808,20 @@ fn aes601_root_level_frd_is_audited() {
 
 // ── AES605: DESIGN.md heading structure ─────────────────────────────────
 
+/// A DESIGN.md whose H2 set is exactly the template's, so AES605 accepts it.
+fn conforming_design() -> String {
+    "# UI — DESIGN\n\n\
+     ## Brand & Style\n\n\
+     | Token | Value | Usage |\n|---|---|---|\n\
+     | `--surface-base` | `#000000` | default background |\n\n\
+     ## Components\n\n\
+     | Variant | Use case | States | Token map |\n|---|---|---|---|\n\
+     | `primary` | main action | default / focus | `--color-primary` |\n\n\
+     ## Reference\n\n\
+     - Backlog: [BACKLOG.md](BACKLOG.md)\n"
+        .to_string()
+}
+
 fn write_design_md(dir: &Path, text: &str) {
     write_agents_workspace(dir);
     let surface = dir.join("crates/ui");
@@ -1816,20 +1830,57 @@ fn write_design_md(dir: &Path, text: &str) {
     fs::write(surface.join("BACKLOG.md"), conforming_backlog()).unwrap();
 }
 
+/// The fenced DESIGN.md template shipped in HOW-TO-MAKE-DESIGN.md.
+///
+/// Workspace root is two levels above CARGO_MANIFEST_DIR (crates/doc-rules/).
+fn howto_design_template() -> String {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../shared/skills/aes-docs/references/HOW-TO-MAKE-DESIGN.md");
+    let text =
+        fs::read_to_string(&path).unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
+    let mut body: Vec<&str> = Vec::new();
+    let mut inside = false;
+    for line in text.lines() {
+        if line.trim_start().starts_with("```") {
+            if inside {
+                break;
+            }
+            inside = true;
+            continue;
+        }
+        if inside {
+            body.push(line);
+        }
+    }
+    assert!(
+        !body.is_empty(),
+        "HOW-TO-MAKE-DESIGN.md holds no fenced template"
+    );
+    body.join("\n")
+}
+
 #[test]
 fn aes605_conforming_design_reports_no_findings() {
     let tmp = tempfile::tempdir().unwrap();
-    write_design_md(
-        tmp.path(),
-        "# UI — DESIGN\n\n\
-         ## Kind\n\n`ui` — a surface component.\n\n\
-         ## Entry Points\n\n| File | Role |\n|---|---|\n| `x.rs` | entry |\n\n\
-         ## States\n\n| State | Condition |\n|---|---|\n| `ready` | idle |\n",
-    );
+    write_design_md(tmp.path(), &conforming_design());
     let findings = audit(tmp.path());
     assert!(
         !has(&findings, "AES605", "h2_missing") && !has(&findings, "AES605", "h2_unexpected"),
         "conforming DESIGN.md must be accepted; got: {findings:#?}"
+    );
+}
+
+/// The shipped template must pass its own rule. This is the regression guard
+/// for the contract that named "Kind"/"Entry Points"/"States", which no file
+/// produced from the template could satisfy.
+#[test]
+fn aes605_accepts_the_shipped_design_template() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_design_md(tmp.path(), &howto_design_template());
+    let findings = audit(tmp.path());
+    assert!(
+        !has(&findings, "AES605", "h2_missing") && !has(&findings, "AES605", "h2_unexpected"),
+        "a DESIGN.md copied verbatim from HOW-TO-MAKE-DESIGN.md must be accepted; got: {findings:#?}"
     );
 }
 
@@ -1848,8 +1899,8 @@ fn aes605_fires_when_required_design_headings_are_absent() {
         .map(|(_, _, m)| m.as_str())
         .unwrap();
     assert!(
-        message.contains("Kind") && message.contains("Entry Points") && message.contains("States"),
-        "message must name all three missing DESIGN sections; got: {message}"
+        message.contains("Brand & Style") && message.contains("Components"),
+        "message must name the missing DESIGN sections; got: {message}"
     );
 }
 
@@ -1858,11 +1909,7 @@ fn aes605_fires_when_design_carries_off_template_h2() {
     let tmp = tempfile::tempdir().unwrap();
     write_design_md(
         tmp.path(),
-        "# UI — DESIGN\n\n\
-         ## Kind\n\n`ui` — a surface component.\n\n\
-         ## Entry Points\n\n| File | Role |\n|---|---|\n| `x.rs` | entry |\n\n\
-         ## States\n\n| State | Condition |\n|---|---|\n| `ready` | idle |\n\n\
-         ## History\n\nOld stuff.\n",
+        &format!("{}\n## History\n\nOld stuff.\n", conforming_design()),
     );
     let findings = audit(tmp.path());
     assert!(has(&findings, "AES605", "h2_unexpected"));
@@ -1874,5 +1921,25 @@ fn aes605_fires_when_design_carries_off_template_h2() {
     assert!(
         message.contains("history"),
         "must name the unexpected section; got: {message}"
+    );
+}
+
+/// The H2 set is closed, so the surface-behaviour headings an earlier revision
+/// of the contract required are now off-template and must be reported.
+#[test]
+fn aes605_rejects_the_retired_surface_headings() {
+    let tmp = tempfile::tempdir().unwrap();
+    write_design_md(
+        tmp.path(),
+        "# UI — DESIGN\n\n\
+         ## Kind\n\n`ui` — a surface component.\n\n\
+         ## Entry Points\n\n| File | Role |\n|---|---|\n| `x.rs` | entry |\n\n\
+         ## States\n\n| State | Condition |\n|---|---|\n| `ready` | idle |\n",
+    );
+    let findings = audit(tmp.path());
+    assert!(has(&findings, "AES605", "h2_unexpected"));
+    assert!(
+        has(&findings, "AES605", "h2_missing"),
+        "a DESIGN.md without the template's H2 set must also report them missing; got: {findings:#?}"
     );
 }

@@ -1,6 +1,30 @@
 # Dispatcher — DESIGN
 
-## Kind
+> Routing contract between the rule groups and every surface. Renderers read
+> the outcome vocabulary below to decide how to present a run.
+> Condition: [ROADMAP.md](../../ROADMAP.md) (workspace) +
+> [BACKLOG.md](BACKLOG.md).
+
+## Brand & Style
+
+This surface draws nothing, so it has no palette. What it owns instead is the
+**outcome vocabulary** every renderer must honour: a collector never decides
+that a run is acceptable, it only reports what the groups found and lets the
+surface map that onto the process exit-code contract.
+
+### Outcome Vocabulary
+
+| Outcome      | Condition                                        | Who grades it   |
+| ------------ | ------------------------------------------------ | --------------- |
+| `clean`      | Every group returned zero findings                | the surface     |
+| `violations` | One or more groups returned findings              | the surface     |
+| `error`      | A group failed to run                             | the surface     |
+
+The three are not interchangeable. A group that fails is never silently treated
+as clean — a scan that could not complete reports the failure, because a clean
+result the user did not earn is worse than a visible error.
+
+### Kind
 
 `api` — the single boundary where every rule group meets the surfaces. One
 `surface_<group>_action.rs` file per group, each collecting that group's
@@ -8,28 +32,7 @@ findings from the shared `ScanAggregates` and narrowing them to the requested
 target. The CLI, the MCP server, and the TUI all reach rule behavior through
 here and nowhere else.
 
-## Entry Points
-
-| File | Serves |
-| --- | --- |
-| `surface_naming_action.rs` | AES101–102 |
-| `surface_import_action.rs` | AES201–205 |
-| `surface_quality_action.rs` | AES301–305 |
-| `surface_role_action.rs` | AES401–406 |
-| `surface_orphan_action.rs` | AES501–506 |
-| `surface_structure_action.rs` | AES701–703 |
-| `surface_check_action.rs` | `check` — the exit-code shaped entry over all groups |
-| `surface_ci_action.rs` | `ci` — the same groups with thresholds |
-| `surface_fix_action.rs` | `fix` — auto-fix over collected findings; also aggregates every collected `FixOutcome` into the run-level outcome the surface maps to an exit code |
-| `surface_docs_action.rs` | `docs` — document invariants only; the target is the audit root, not a filter |
-| `surface_watch_action.rs` | `watch` — repeated scans over changed files |
-| `surface_config_action.rs` | `config` — effective configuration |
-| `surface_git_action.rs` | `git` — hook installation and checks |
-| `surface_version_action.rs`, `surface_plugin_action.rs`, `surface_setup_action.rs`, `surface_maintenance_action.rs`, `surface_external_action.rs` | Supporting surfaces |
-
-Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<Finding>`.
-
-## Request Shape
+### Request Shape
 
 A collector receives the requested target as a string and the shared aggregates
 as an immutable borrow. It never reads the filesystem to decide scope; the scan
@@ -38,7 +41,7 @@ pipeline already produced the aggregates. Where a collector must resolve a path
 it resolves against the workspace root and filters for containment under the
 target.
 
-### Path scoping: `scan`/`check` vs. `docs`
+#### Path scoping: `scan`/`check` vs. `docs`
 
 Not every path-taking subcommand scopes the same way, and the difference is
 deliberate:
@@ -52,7 +55,7 @@ The doc-rules contract owns this semantic; see `crates/doc-rules/FRD.md`
 ("Path scoping" under System Overview) and the `docs` row in
 `crates/cli-commands/DESIGN.md`.
 
-### Exit-code aggregation for `fix`
+#### Exit-code aggregation for `fix`
 
 `surface_fix_action.rs` owns the aggregation of per-item `FixOutcome`s into one
 run-level outcome: any `Failed(reason)` raises the report's failure flag, while
@@ -63,26 +66,7 @@ contract (a `Failed` present → `RuntimeError` (2); otherwise `Ok` (0), or
 re-derives the aggregation — per the CLI's own invariant, "a surface file
 computes nothing about the codebase."
 
-## States
-
-| State | Condition |
-| --- | --- |
-| `clean` | Every group returned zero findings |
-| `violations` | One or more groups returned findings |
-| `error` | A group failed to run; the dispatcher reports it rather than reporting a clean scan |
-
-A group that fails is never silently treated as clean. A scan that could not
-complete reports the failure.
-
-## Error States
-
-| Condition | Behaviour |
-| --- | --- |
-| Target path missing | The caller returns `RuntimeError` before dispatching |
-| A group returns an internal error | The failure is surfaced; other groups still contribute findings |
-| A finding's path cannot be resolved | The finding is dropped from a scoped scan rather than reported against a path that does not exist |
-
-## Invariants
+### Invariants
 
 - A collector filters, it does not re-derive. Rule decisions belong to the rule
   crates; this layer only scopes and shapes their output.
@@ -94,7 +78,7 @@ complete reports the failure.
   `RULES_AES.md` publishes for that group. The two must agree; a rule
   renumbering or consolidation edits both in the same change.
 
-## Change Checklist
+### Change Checklist
 
 A new group: create `surface_<group>_action.rs`, add its findings to the
 aggregates in the scan pipeline, and register the group in the config. The CLI,
@@ -103,3 +87,47 @@ MCP, and TUI surfaces pick it up with no edit.
 Renumbering, adding, or consolidating a rule code: update `RULES_AES.md` first,
 then the matching row here. `tools/check_doc_consistency.py` (run in CI) fails
 when a range in this table names a code `RULES_AES.md` no longer publishes.
+
+## Components
+
+| Component            | File                     | Serves    | States                  |
+| -------------------- | ------------------------ | --------- | ----------------------- |
+| Naming collector     | `surface_naming_action.rs`  | AES101–102 | collected / scoped  |
+| Import collector     | `surface_import_action.rs`  | AES201–205 | collected / scoped  |
+| Quality collector    | `surface_quality_action.rs` | AES301–305 | collected / scoped  |
+| Role collector       | `surface_role_action.rs`   | AES401–406 | collected / scoped  |
+| Orphan collector     | `surface_orphan_action.rs` | AES501–506 | collected / scoped  |
+| Structure collector  | `surface_structure_action.rs` | AES701–703 | collected / scoped  |
+| Check entry          | `surface_check_action.rs`  | `check`   | exit-code shaped over all groups |
+| CI entry             | `surface_ci_action.rs`     | `ci`      | the same groups with thresholds   |
+| Fix entry            | `surface_fix_action.rs`    | `fix`     | aggregates every `FixOutcome` into the run-level outcome |
+| Docs entry           | `surface_docs_action.rs`   | `docs`    | audit root, not a filter          |
+| Watch entry          | `surface_watch_action.rs`  | `watch`   | repeated scans over changed files |
+| Config entry         | `surface_config_action.rs` | `config`  | effective configuration           |
+| Git entry            | `surface_git_action.rs`    | `git`     | hook installation and checks      |
+| Supporting surfaces  | `surface_version_action.rs`, `surface_plugin_action.rs`, `surface_setup_action.rs`, `surface_maintenance_action.rs`, `surface_external_action.rs` | `version`, `plugin`, `setup`, `doctor`/`security`/`deps`, `external` | pass-through |
+
+Every collector has the same shape: `collect_<group>(target, aggregates) -> Vec<Finding>`.
+
+### States
+
+| State        | Condition                                                    |
+| ------------ | ------------------------------------------------------------ |
+| `clean`      | Every group returned zero findings                            |
+| `violations` | One or more groups returned findings                          |
+| `error`      | A group failed to run; the dispatcher reports it rather than reporting a clean scan |
+
+### Error States
+
+| Condition                        | Behaviour                                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| Target path missing              | The caller returns `RuntimeError` before dispatching                                        |
+| A group returns an internal error| The failure is surfaced; other groups still contribute findings                             |
+| A finding's path cannot be resolved | The finding is dropped from a scoped scan rather than reported against a path that does not exist |
+
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md)
+- Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+- Rules: [RULES_AES.md](../../RULES_AES.md)
