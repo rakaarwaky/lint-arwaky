@@ -158,6 +158,41 @@ cargo run --bin lint-arwaky-cli -- import workspaces-bad/crates
 cargo run --bin lint-arwaky-cli -- orphan workspaces-bad/crates
 ```
 
+### 2.3.1 Layer-Scoped Surface
+
+Each AES layer has its own subcommand: it runs **every** rule group over the
+target and reports only the violations whose file belongs to that layer.
+
+```bash
+# Every rule group, taxonomy-layer findings only
+cargo run --bin lint-arwaky-cli -- taxonomy workspaces-bad/crates
+
+# Same for the other five layers (json so the codes can be tallied)
+cargo run --bin lint-arwaky-cli -- contract workspaces-bad/crates --format json
+cargo run --bin lint-arwaky-cli -- capabilities workspaces-bad/crates --format json
+cargo run --bin lint-arwaky-cli -- utility workspaces-bad/crates --format json
+cargo run --bin lint-arwaky-cli -- agents workspaces-bad/crates --format json
+cargo run --bin lint-arwaky-cli -- surface workspaces-bad/crates --format json
+```
+
+Pass/fail criteria:
+
+| Check | Expected |
+| --- | --- |
+| Every file a layer command reports carries that layer's prefix (`taxonomy_`, `contract_`, `capabilities_`, `utility_`, `agent_`, `surface_`) | no foreign layer in any output |
+| `taxonomy` on `workspaces-bad/crates` | > 0 violations, all in `taxonomy_*` files |
+| Each of the six layer commands on `workspaces-good/crates` | **0** violations |
+| `root_*` files | reported by `scan` / `check` only — `root` has no subcommand |
+| A folder-level structure finding (AES702) or a doc invariant (AES601–605) | absent from all six layer commands; reported by `structure` / `docs` |
+
+```bash
+# Assert no layer command reports a foreign layer on the good workspace.
+for layer in taxonomy contract capabilities utility agents surface; do
+  echo "== $layer"
+  cargo run --bin lint-arwaky-cli -- "$layer" workspaces-good/crates
+done
+```
+
 ### 2.4 Unit, Integration, and Doc Tests
 
 ```bash

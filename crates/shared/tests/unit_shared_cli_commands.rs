@@ -78,6 +78,42 @@ fn cli_parses_flagless_commands() {
 }
 
 #[test]
+fn cli_parses_each_layer_scoped_command() {
+    // One subcommand per AES layer except `root`: a layer command runs every
+    // rule group and reports only that layer's files, so each must parse under
+    // its own name and default to the current directory in text format.
+    for (name, variant) in [
+        ("taxonomy", "ScanTaxonomy"),
+        ("contract", "ScanContract"),
+        ("capabilities", "ScanCapabilities"),
+        ("utility", "ScanUtility"),
+        ("agents", "ScanAgents"),
+        ("surface", "ScanSurface"),
+    ] {
+        let cli = Cli::try_parse_from(["lint-arwaky", name])
+            .unwrap_or_else(|e| panic!("{name} must parse: {e}"));
+        let debug = format!("{:?}", cli.command);
+        assert!(
+            debug.starts_with(variant),
+            "{name} must map to {variant}, got {debug}"
+        );
+    }
+}
+
+#[test]
+fn cli_parses_layer_scoped_command_with_path_and_format() {
+    let cli = Cli::try_parse_from(["lint-arwaky", "capabilities", "src/", "--format", "json"])
+        .expect("valid clap args");
+    match cli.command {
+        Commands::ScanCapabilities { path, format } => {
+            assert_eq!(path.as_deref(), Some("src/"));
+            assert_eq!(format, Format::Json);
+        }
+        other => panic!("expected ScanCapabilities, got {other:?}"),
+    }
+}
+
+#[test]
 fn cli_global_flags_propagate() {
     let cli = Cli::try_parse_from(["lint-arwaky", "--verbose", "--quiet", "doctor"])
         .expect("valid clap args");
@@ -96,6 +132,27 @@ fn command_catalog_contains_core_commands() {
     let check = catalog.get(&shared_cli_commands::ActionName::from("check"));
     assert!(check.is_some());
     assert!(!check.unwrap().example.value.is_empty());
+}
+
+#[test]
+fn command_catalog_lists_every_layer_scoped_command() {
+    // MCP `list_commands` advertises the catalog, so a layer command missing
+    // from it would exist in the CLI but be undiscoverable over MCP.
+    let catalog = command_catalog();
+    for name in [
+        "taxonomy",
+        "contract",
+        "capabilities",
+        "utility",
+        "agents",
+        "surface",
+    ] {
+        let entry = catalog
+            .get(&shared_cli_commands::ActionName::from(name))
+            .unwrap_or_else(|| panic!("catalog must advertise '{name}'"));
+        assert!(!entry.description.value.is_empty(), "{name}");
+        assert!(!entry.example.value.is_empty(), "{name}");
+    }
 }
 
 #[test]
