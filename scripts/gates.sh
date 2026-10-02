@@ -87,7 +87,7 @@ ph1_start=$SECONDS
 echo -e "\n${CYAN}━━━ Phase 1: Format + Doc Consistency (fast, no build) ━━━${NC}"
 run_gate "Rust Format" cargo fmt --all -- --check &
 FMT_PID=$!
-run_gate "Doc Consistency" python3 tools/check_doc_consistency.py &
+run_gate "Doc Consistency" python3 crates/doc-rules/scripts/check_doc_consistency.py &
 DOC_PID=$!
 wait_and_report $FMT_PID $DOC_PID
 echo "Phase 1 duration: $((SECONDS - ph1_start))s"
