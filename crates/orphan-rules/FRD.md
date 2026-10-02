@@ -279,7 +279,7 @@ FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **n
 | Macro limitation | Macro-generated code is invisible to the detector; fail-strict on parse error is deliberate | Record the limitation in the rule description, since it cannot be measured from outside |
 | Graph read-only | Graph analysis performs no mutation after construction | Assert the analysis phase takes the graph by shared reference and mutates nothing |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 

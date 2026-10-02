@@ -250,7 +250,7 @@ flowchart TD
 | Duplication accuracy | Normalization suppresses differences in punctuation and formatting | Compare two near-identical blocks that differ only in punctuation and assert no finding |
 | Zero I/O | The rules perform no filesystem access of their own | Run the analysis with filesystem access denied and assert it still produces findings |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 

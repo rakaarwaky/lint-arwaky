@@ -239,7 +239,7 @@ flowchart TD
 | Install atomicity | A failed install leaves the previous hook script in place | Interrupt an install and assert the original script is still registered |
 | Block semantics | The hook exits non-zero exactly when violations are found, and zero otherwise | Run the hook against a clean and a violating change set and assert the two exit codes |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
