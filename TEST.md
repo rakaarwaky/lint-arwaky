@@ -107,7 +107,7 @@ Cross-document consistency — the drifts that span two artefacts and so fall ou
 python3 tools/check_doc_consistency.py
 ```
 
-It fails when a rule-code range in a `DESIGN.md`/`FRD.md` names a code `RULES_AES.md` no longer publishes, an in-repo Markdown link points at a missing file or heading anchor, `crates/shared/DATA.md`'s attribute tables disagree with the shared value objects, the auto-fix Reason Code Reference disagrees with the enumerated reasons, or the performance NFR states different numbers in `PRD.md`, `README.md`, and `crates/filesystem/FRD.md`. Expected: **0 failures**.
+It fails when a rule-code range in a `DESIGN.md`/`FRD.md` names a code `RULES_AES.md` no longer publishes, an in-repo Markdown link points at a missing file or heading anchor, `crates/shared/DATA.md`'s attribute tables disagree with the shared value objects, the auto-fix Reason Code Reference disagrees with the enumerated reasons, the performance NFR states different numbers in `PRD.md`, `README.md`, and `crates/filesystem/FRD.md`, or the AES605 `DESIGN.md` H2 contract in `crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs` disagrees with the template fenced in `HOW-TO-MAKE-DESIGN.md`. Expected: **0 failures**.
 
 ### 2.2 Scan Test Projects
 
