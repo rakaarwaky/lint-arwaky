@@ -1,0 +1,16 @@
+crates/shared/skills/aes-docs/references/HOW-TO-MAKE-FRD.md
+  h_9fc4aac70b107c 59
+scripts/gates.sh
+  h_9fc4aac70b107c 7,87,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bd56c190caa0817461d54352cb627d3c9b6fef2e",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
