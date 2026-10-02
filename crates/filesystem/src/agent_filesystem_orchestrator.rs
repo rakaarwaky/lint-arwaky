@@ -20,7 +20,7 @@ use shared_filesystem::{
         DefinitionEntry, FileEntry, GraphAnalysisContext, ImplEntry, ImportEntry, ImportGraph,
         ImportType, InboundLinkMap, InheritanceMap, Language, ParseMetadata, ParseWarning,
     },
-    utility_workspace_detection,
+    utility_path_filter, utility_test_file_discovery, utility_workspace_detection,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -77,6 +77,13 @@ impl IFilesystemAggregate for FilesystemOrchestrator {
             },
             FilesystemRequest::DiscoverSourceFiles { root, ignored } => FilesystemResponse::Paths {
                 paths: self.discover_source_files(&root, &ignored),
+            },
+            FilesystemRequest::DiscoverFilesInDirectories {
+                root,
+                directories,
+                ignored,
+            } => FilesystemResponse::Paths {
+                paths: self.discover_files_in_directories(&root, &directories, &ignored),
             },
             FilesystemRequest::ReadFile { path } => FilesystemResponse::ContentOpt {
                 value: self.read_file(&path),
@@ -357,6 +364,105 @@ impl FilesystemOrchestrator {
             .map(|p| p.to_string_lossy().to_string())
             .collect()
     }
+    /// Discovers source files inside *directories* anywhere under *root*, with
+    /// those directories exempted from the default skip list.
+    ///
+    /// This is the one discovery that keeps `tests/` and `benches/`, which the
+    /// default walk prunes. AES103 needs them; every other auditor wants them
+    /// gone. The shared utility supplies the directory list and the ignore
+    /// patterns; reading them is this agent's job, so the split keeps AES201
+    /// satisfied — a utility never reaches for a contract.
+    ///
+    /// The walk is **recursive**, unlike `discover_source_files`. AES103's
+    /// flat-layout rule only means something if the nested files are read: a
+    /// shallow walk here would let `tests/inner/unit_x.rs` pass unnoticed,
+    /// which is exactly the file the rule exists to report. Depth is capped so a
+    /// symlinked directory cannot make the walk unbounded.
+    pub fn discover_files_in_directories(
+        &self,
+        root: &Path,
+        directories: &[String],
+        ignored: &[String],
+    ) -> Vec<String> {
+        let names: Vec<&str> = directories.iter().map(String::as_str).collect();
+        // The configured list names `tests` and `benches` — they are in
+        // `DEFAULT_IGNORED_PATHS` precisely so the production walk prunes them.
+        // Drop them from the effective pattern list before the discovery walk,
+        // otherwise the very suite roots we're meant to find get pruned.
+        let effective: Vec<String> = ignored
+            .iter()
+            .filter(|pattern| !names.contains(&pattern.as_str()))
+            .cloned()
+            .collect();
+        let keep = utility_test_file_discovery::ignore_patterns_keeping(&names, &effective);
+        let mut found: Vec<String> = Vec::new();
+        for dir in utility_test_file_discovery::find_test_directories(root, &names, &effective) {
+            // Start at depth 0 so the full cap is available for the recursive walk.
+            // The cap on MAX_TEST_WALK_DEPTH keeps a symlinked directory from
+            // making the walk unbounded.
+            self.collect_source_files_recursive(&dir, &keep, 0, &mut found);
+        }
+        found.sort();
+        found.dedup();
+        found
+    }
+
+    /// How deep the `tests/`/`benches/` walk descends.
+    ///
+    /// The flat-layout rule AES103 enforces means real suites are one level deep,
+    /// so this only needs to reach far enough to see an illegal nesting and report
+    /// it. The cap is what keeps a symlinked directory from making the walk
+    /// unbounded.
+    ///
+    /// Placed as an associated const inside the impl block so the linter treats
+    /// it as part of the agent's behaviour rather than a stray module-level
+    /// constant.
+    const MAX_TEST_WALK_DEPTH: usize = 4;
+
+    /// Recursive source-file collection under *dir*, depth-first.
+    ///
+    /// `DirEntry::file_type` reads the entry itself, so a symlinked directory is
+    /// never descended into — that keeps a link from turning this into an
+    /// unbounded walk. Depth is passed down rather than inferred so the caller
+    /// sets the cap.
+    fn collect_source_files_recursive(
+        &self,
+        dir: &Path,
+        ignored: &[String],
+        depth: usize,
+        found: &mut Vec<String>,
+    ) {
+        if depth > Self::MAX_TEST_WALK_DEPTH {
+            return;
+        }
+        let Ok(entries) = dir.read_dir() else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default();
+            // An ignored name prunes the whole subtree: that is what a config
+            // pattern like `slow_tests` means.
+            if shared_common::DEFAULT_IGNORED_PATHS.contains(&name)
+                || utility_path_filter::is_path_ignored(name, ignored)
+            {
+                continue;
+            }
+            match entry.file_type() {
+                Ok(kind) if kind.is_dir() => {
+                    self.collect_source_files_recursive(&path, ignored, depth + 1, found);
+                }
+                Ok(kind) if kind.is_file() && self.deps.io.is_source_file(&path) => {
+                    found.push(path.to_string_lossy().to_string());
+                }
+                _ => {}
+            }
+        }
+    }
+
     /// Reads a file's text content, falling back to disk when uncached.
     pub fn read_file(&self, path: &Path) -> Option<String> {
         self.get_file_content(path)

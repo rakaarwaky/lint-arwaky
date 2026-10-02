@@ -1,4 +1,4 @@
-// PURPOSE: structure_rules — folder-layout auditors for AES701–AES703
+// PURPOSE: structure_rules — folder-layout auditors for AES701–AES704
 
 pub mod contract_structure_aggregate;
 pub mod contract_structure_protocol;
@@ -12,7 +12,7 @@ pub mod utility_structure_parsers;
 pub use contract_structure_aggregate::IStructureAggregate;
 pub use contract_structure_protocol::{
     IStructureFeatureHealthProtocol, IStructureSharedPurityProtocol,
-    IStructureSurfacePurityProtocol,
+    IStructureSurfacePurityProtocol, IStructureTestSuiteProtocol,
 };
 pub use taxonomy_structure_rules_constant::*;
 pub use taxonomy_structure_rules_request::{StructureFinding, StructureRequest};

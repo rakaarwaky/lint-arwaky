@@ -1,6 +1,7 @@
 // PURPOSE: CI entry point — CI threshold validation business logic, no formatting.
 use std::sync::Arc;
 
+use crate::surface_test_entries;
 use shared_common::{FilePath, Severity, Threshold};
 use shared_config_system::{ConfigRequest, IConfigOrchestratorAggregate};
 use shared_filesystem::FilesystemRequest;
@@ -88,14 +89,23 @@ pub fn collect_ci(
         .into_violations();
     results.extend(import_res);
 
-    // Naming rules — pass pre-fetched FileEntry data
+    // Naming rules — pass pre-fetched FileEntry data.
+    //
+    // Two file sets, because AES101/AES102 read production source and AES103
+    // reads `tests/`/`benches/`, which the index build above prunes. Routing
+    // CI through the source-only variant would leave every AES103 violation out
+    // of the CI score and its threshold gate.
+    let naming_source = deps
+        .filesystem
+        .execute(FilesystemRequest::FileList)
+        .into_file_list();
+    let naming_tests =
+        surface_test_entries::build_test_entries(&deps.filesystem, root_path, &ignored.values);
     let naming_res = deps
         .naming_orchestrator
-        .execute(NamingRequest::audit(
-            &deps
-                .filesystem
-                .execute(FilesystemRequest::FileList)
-                .into_file_list(),
+        .execute(NamingRequest::audit_with_tests(
+            &naming_source,
+            &naming_tests,
         ))
         .into_violations();
     results.extend(naming_res);

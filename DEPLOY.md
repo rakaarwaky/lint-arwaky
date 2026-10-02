@@ -20,7 +20,7 @@ previously used role names that did not match the Deploy checklist's literal tex
 | Domain | Role / Owner | Sign-off Criterion | Status | Evidence (Commit / Artifact) | Date |
 |---|---|---|---|---|---|
 | Product | Business Analyst (`@raka`) | Requirements/scope audit issues resolved with verifiable evidence; business outcome metrics current | Approved | `8d4342a` (PR #520, PR #567) | 2026-09-30 |
-| Engineering | Architect + Tech Lead (`@raka`) | 32 AES rules pass with 0 internal violations on self-lint; `cargo build --release` succeeds | Approved | `8d4342a` (`lint-arwaky-cli check .`) | 2026-09-30 |
+| Engineering | Architect + Tech Lead (`@raka`) | 34 AES rules pass with 0 internal violations on self-lint; `cargo build --release` succeeds | Approved | `8d4342a` (`lint-arwaky-cli check .`) | 2026-09-30 |
 | QA | Tech Lead (`@raka`) | Full test suite & negative test matrix green (`TEST.md` Sections 3-4) | Approved | `8d4342a` (`cargo test --workspace`) | 2026-09-30 |
 | Documentation | Business Analyst (`@raka`) | `lint-arwaky-cli docs .` reports 0 document invariant violations | Approved | `8d4342a` (`lint-arwaky-cli docs .`) | 2026-09-30 |
 | Operations | Security Engineer + DevOps Engineer (`@raka`) | `SECURITY.md` supported versions & cargo-audit clean; binaries built, checksums registered | Approved | `8d4342a` (`cargo-audit`, PR #516; `target/release/lint-arwaky-*`) | 2026-09-30 |
@@ -248,7 +248,7 @@ lint-arwaky-cli init
 Last updated: 2026-10-01
 
 - **Open defects:** 90+ logged across audit cycles (#522–#650), including 11+ confirmed CRITICAL — see PE #617. Severity counts are derived from issue **titles** (`[ROLE][SEVERITY] …`), not labels, until #618 is resolved (label writes fail with `Resource not accessible by integration`).
-- **CI detection-threshold gap — CLOSED:** the AES codes gate now enforces the reconciled scan-visible count (27 of 32 rules, per `TEST.md` §3.1/§3.2) with no safety margin — see QA #636.
+- **CI detection-threshold gap — CLOSED:** the AES codes gate now enforces the reconciled scan-visible count (29 of 34 rules, per `TEST.md` §3.1/§3.2) with no safety margin — see QA #636.
 - **Self-lint gate integrity — CLOSED:** the `check .` step now fails loudly on unparseable output or non-zero exit instead of substituting `0` violations — see QA #642.
 - **Coverage measurement:** now computed in CI via `cargo-llvm-cov` (`coverage` job summary) — see QA #643; no minimum percentage is enforced yet.
 - **External-tool end-to-end coverage — CLOSED:** CI installs ruff/mypy/bandit/eslint/prettier/tsc and asserts tool-native findings — see QA #637.

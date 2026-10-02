@@ -17,6 +17,7 @@ pub mod utility_import_extractor;
 pub mod utility_import_resolution;
 pub mod utility_language_detector;
 pub mod utility_path_filter;
+pub mod utility_test_file_discovery;
 pub mod utility_tool_resolution;
 pub mod utility_workspace_detection;
 

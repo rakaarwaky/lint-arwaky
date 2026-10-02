@@ -4,6 +4,7 @@ use naming_rules_lint_arwaky::agent_naming_orchestrator::{
 };
 use naming_rules_lint_arwaky::capabilities_naming_convention_checker::NamingConventionChecker;
 use naming_rules_lint_arwaky::capabilities_suffix_policy_checker::SuffixPolicyChecker;
+use naming_rules_lint_arwaky::capabilities_test_file_prefix_checker::TestFilePrefixChecker;
 use naming_rules_lint_arwaky::root_naming_rules_container::NamingContainer;
 use shared_common::PatternList;
 use shared_common::SuffixPolicyVO;
@@ -65,6 +66,47 @@ fn run_audit(
     }
 }
 
+/// Drive the aggregate over two file sets: production source and test/bench
+/// files. AES101 and AES102 read the first, AES103 the second, so a violation
+/// attributed to a rule proves which set reached it.
+fn run_audit_with_tests(
+    orch: &dyn INamingRunnerAggregate,
+    source: &[FileEntry],
+    tests: &[FileEntry],
+) -> Vec<shared_common::taxonomy_lint_result_vo::LintResult> {
+    match orch.execute(NamingRequest::audit_with_tests(source, tests)) {
+        NamingResponse::Audit { violations } => violations,
+        NamingResponse::Name { .. } => panic!("expected an audit response"),
+    }
+}
+
+/// Write *relative names* under a temp root, returning the entries.
+///
+/// A name containing `/` creates the intermediate directories, so a fixture can
+/// name a file inside `tests/` — the only place AES103 looks.
+fn make_nested_entries(root: &std::path::Path, names: &[&str]) -> Vec<FileEntry> {
+    names
+        .iter()
+        .map(|name| {
+            let path = root.join(name);
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent).unwrap();
+            }
+            let content = format!("fn dummy_{}() {{}}", name.replace(['.', '/'], "_"));
+            std::fs::write(&path, &content).unwrap();
+            FileEntry {
+                path,
+                extension: "rs".to_string(),
+                language: Language::Rust,
+                size: content.len() as u64,
+                content,
+                parse_ok: true,
+                parse_metadata: None,
+            }
+        })
+        .collect()
+}
+
 #[test]
 fn e2e_convention_violations_found() {
     let tmp = TempDir::new().unwrap();
@@ -81,6 +123,7 @@ fn e2e_convention_violations_found() {
     let deps = NamingOrchestratorDeps {
         naming_convention: Arc::new(NamingConventionChecker::new()),
         suffix_policy: Arc::new(SuffixPolicyChecker::new()),
+        test_file_prefix: Arc::new(TestFilePrefixChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -111,6 +154,7 @@ fn e2e_suffix_violations_found() {
     let deps = NamingOrchestratorDeps {
         naming_convention: Arc::new(NamingConventionChecker::new()),
         suffix_policy: Arc::new(SuffixPolicyChecker::new()),
+        test_file_prefix: Arc::new(TestFilePrefixChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -138,6 +182,7 @@ fn e2e_clean_files_no_violations() {
     let deps = NamingOrchestratorDeps {
         naming_convention: Arc::new(NamingConventionChecker::new()),
         suffix_policy: Arc::new(SuffixPolicyChecker::new()),
+        test_file_prefix: Arc::new(TestFilePrefixChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -168,6 +213,7 @@ fn e2e_mixed_files_partial_violations() {
     let deps = NamingOrchestratorDeps {
         naming_convention: Arc::new(NamingConventionChecker::new()),
         suffix_policy: Arc::new(SuffixPolicyChecker::new()),
+        test_file_prefix: Arc::new(TestFilePrefixChecker::new()),
         config: config.clone(),
         layer_map: layer_map.clone(),
     };
@@ -238,6 +284,7 @@ fn e2e_aes101_disabled_skips_convention_check() {
     let deps = NamingOrchestratorDeps {
         naming_convention: Arc::new(NamingConventionChecker::new()),
         suffix_policy: Arc::new(SuffixPolicyChecker::new()),
+        test_file_prefix: Arc::new(TestFilePrefixChecker::new()),
         config,
         layer_map,
     };
@@ -252,5 +299,119 @@ fn e2e_aes101_disabled_skips_convention_check() {
         aes101_count, 0,
         "AES101 disabled in config must produce zero AES101 violations, got {}",
         aes101_count
+    );
+}
+
+// ── AES103: the test-file prefix seam, end to end ──
+
+/// Count the findings carrying *code*, so a case asserts on which rule spoke.
+fn count_of(results: &[shared_common::taxonomy_lint_result_vo::LintResult], code: &str) -> usize {
+    results.iter().filter(|r| r.code.code() == code).count()
+}
+
+#[test]
+fn e2e_a_test_file_with_a_legal_prefix_is_clean() {
+    let tmp = TempDir::new().unwrap();
+    let source = make_file_entries(tmp.path(), &["capabilities_user_checker.rs"]);
+    let tests = make_nested_entries(
+        tmp.path(),
+        &[
+            "tests/contract_user_checker.rs",
+            "tests/unit_user_checker.rs",
+            "tests/integration_user_checker.rs",
+            "tests/dogfood_user_checker.rs",
+            "tests/smoke_user_checker.rs",
+            "tests/e2e_user_checker.rs",
+            "tests/acceptance_user_checker.rs",
+            "benches/bench_user_checker.rs",
+        ],
+    );
+
+    let config = Arc::new(ArchitectureConfig::default());
+    let container = NamingContainer::new(config, Arc::new(make_layer_map()));
+    let results = run_audit_with_tests(container.orchestrator().as_ref(), &source, &tests);
+
+    assert_eq!(
+        count_of(&results, "AES103"),
+        0,
+        "a suite carrying every type under a legal prefix must be clean; got {results:#?}"
+    );
+}
+
+#[test]
+fn e2e_an_illegal_test_prefix_fires_only_aes103() {
+    let tmp = TempDir::new().unwrap();
+    let source = make_file_entries(tmp.path(), &["capabilities_user_checker.rs"]);
+    let tests = make_nested_entries(
+        tmp.path(),
+        &[
+            "tests/contract_user_checker.rs",
+            "tests/helpers.rs", // no legal prefix
+        ],
+    );
+
+    let config = Arc::new(ArchitectureConfig::default());
+    let container = NamingContainer::new(config, Arc::new(make_layer_map()));
+    let results = run_audit_with_tests(container.orchestrator().as_ref(), &source, &tests);
+
+    assert_eq!(
+        count_of(&results, "AES103"),
+        1,
+        "exactly one file breaks the prefix rule; got {results:#?}"
+    );
+    assert_eq!(
+        count_of(&results, "AES101"),
+        0,
+        "a test file must not be judged by AES101 — that is why the rule takes its \
+         own file set rather than reading the source list; got {results:#?}"
+    );
+}
+
+#[test]
+fn e2e_a_nested_test_file_fires_the_flatness_half_only() {
+    let tmp = TempDir::new().unwrap();
+    let source = make_file_entries(tmp.path(), &["capabilities_user_checker.rs"]);
+    let tests = make_nested_entries(tmp.path(), &["tests/inner/unit_user_checker.rs"]);
+
+    let config = Arc::new(ArchitectureConfig::default());
+    let container = NamingContainer::new(config, Arc::new(make_layer_map()));
+    let results = run_audit_with_tests(container.orchestrator().as_ref(), &source, &tests);
+
+    assert_eq!(
+        count_of(&results, "AES103"),
+        1,
+        "nesting is one defect reported once, not a nesting finding plus a prefix \
+         finding; got {results:#?}"
+    );
+}
+
+#[test]
+fn e2e_aes103_disabled_in_config_skips_the_prefix_check() {
+    use shared_common::taxonomy_common_vo::BooleanVO;
+    use shared_common::taxonomy_error_vo::ErrorCode;
+    use shared_common::taxonomy_suggestion_vo::DescriptionVO;
+    use shared_config_system::taxonomy_config_system_vo::ArchitectureRule;
+
+    let tmp = TempDir::new().unwrap();
+    let source = make_file_entries(tmp.path(), &["capabilities_user_checker.rs"]);
+    let tests = make_nested_entries(tmp.path(), &["tests/helpers.rs"]);
+
+    let config = Arc::new(ArchitectureConfig {
+        rules: vec![ArchitectureRule {
+            name: DescriptionVO::new("disable AES103".to_string()),
+            description: DescriptionVO::new(String::new()),
+            rule_type: ErrorCode::raw("AES103"),
+            enabled: BooleanVO::new(false),
+            ..Default::default()
+        }],
+        ..ArchitectureConfig::default()
+    });
+    let container = NamingContainer::new(config, Arc::new(make_layer_map()));
+    let results = run_audit_with_tests(container.orchestrator().as_ref(), &source, &tests);
+
+    assert_eq!(
+        count_of(&results, "AES103"),
+        0,
+        "AES103 disabled in config must produce zero AES103 violations, got {results:#?}"
     );
 }

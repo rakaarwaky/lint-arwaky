@@ -206,7 +206,7 @@ impl IWorkspaceProtocol for MockFilesystem {
         ConfigLanguage::Rust
     }
     fn detect_project_languages(&self, _root: &std::path::Path) -> ProjectLanguagesVO {
-        self.languages.clone()
+        self.languages
     }
     fn check_wired_in_container(
         &self,
@@ -397,6 +397,12 @@ impl IFilesystemAggregate for MockFilesystem {
                     entries: Vec::new(),
                 }
             }
+            // The mock owns no filesystem, so a test-directory walk finds
+            // nothing. The dispatch test that needs real test files passes its
+            // own aggregate instead of this one.
+            FilesystemRequest::DiscoverFilesInDirectories { .. } => {
+                FilesystemResponse::Paths { paths: Vec::new() }
+            }
             FilesystemRequest::ReadCached { .. } => FilesystemResponse::Content {
                 value: ContentString::default(),
             },
@@ -446,7 +452,7 @@ impl IFilesystemAggregate for MockFilesystem {
             },
             FilesystemRequest::DetectProjectLanguages { .. } => {
                 FilesystemResponse::ProjectLanguages {
-                    languages: self.languages.clone(),
+                    languages: self.languages,
                 }
             }
         }
