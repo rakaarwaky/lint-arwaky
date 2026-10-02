@@ -196,7 +196,7 @@ Loaded config is merged with embedded defaults via rule-based layer merging (FR-
 | Path injection | Language input is restricted to the typed enum; XDG directory lists are capped at 8 absolute entries | Assert that a relative path or an over-long directory list is rejected before any file is opened |
 | Parse-failure reporting | A YAML parse failure produces a warning, never a silent default | Feed a malformed configuration and assert a warning is present in the result |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 - **SCEN-001 — Config Discovery** — e.g. Config exists at project root → Loaded from project root
 - **SCEN-002 — Multi-Workspace** — e.g. Directory with Cargo.toml → Rust
