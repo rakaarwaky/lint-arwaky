@@ -24,8 +24,8 @@ Last Updated: 2026-09-29
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | Report with AES violations | Human-readable output with severity badges | Automated | `tests/unit_report_formatter_text.rs` | `cargo nextest run -p report-formatter-lint-arwaky` | `cc63389a` |
 | Report with external lint results | External section with tool-native codes | Automated | `tests/unit_report_formatter_text.rs` | `cargo nextest run -p report-formatter-lint-arwaky` | `cc63389a` |
 | Report with PARSE_WARN diagnostics | Warnings section, visually distinct | Automated | `tests/unit_report_formatter_text.rs` | `cargo nextest run -p report-formatter-lint-arwaky` | `cc63389a` |

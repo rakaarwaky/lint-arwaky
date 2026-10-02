@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Backend hardening
+
 - Confine MCP paths to the startup workspace and default mutating MCP actions to opt-in.
 - Validate generic MCP argument types and CI thresholds, and standardize action statuses.
 - Preserve valid config fields while warning on unknown keys and legacy layer conflicts; invalidate edited config cache entries.
@@ -179,7 +180,6 @@
 ### Bug Fixes
 
 - fix(ci): resolve duplicate env key in auto-release workflow (#247)
-
 
 See [README.md](README.md) for the current project overview and [TEST.md](TEST.md) for verification criteria.
 
@@ -633,31 +633,22 @@ See [README.md](README.md) for the current project overview and [TEST.md](TEST.m
 - Mypy relative imports: Replaced `taxonomy.X` with direct imports.
 - CLI crash: Added missing `http_provider` DI parameter.
 - Architecture violations: `sys.modules` hack removed, 5 singletons → lazy factories, 17 `asyncio.run()` → `run_async()` bridge.
+- MCP tool name: `get_system_health` → `health_check` to match SKILL.md spec.
+- CLI command name: `multi_project` → `multi-project` (hyphen, not underscore).
+- SARIF output: Was emitting `model_dump()` JSON instead of SARIF format — now correctly delegates to `ReportFormatterProcessor.to_sarif()`.
 
 ### Added
 
 - `contract.async_bridge_aggregate.run_async()` utility for safe event loop handling.
 - Proper logging in all bare exception handlers.
+- CLI `import` command: Import config from JSON/YAML file.
+- Report delegate: SARIF and JUnit output now delegate to `ReportFormatterProcessor` (capability layer) instead of inline implementation.
+- Config import method: `DevCommandsSurface.import_config()`.
 
 ### Changed
 
 - Score range restored: negative scores now pass through (core feature).
 - UV tool reinstall now required after source changes (`uv tool install --reinstall .`).
-
-### Added
-
-- CLI `import` command: Import config from JSON/YAML file.
-- Report delegate: SARIF and JUnit output now delegate to `ReportFormatterProcessor` (capability layer) instead of inline implementation.
-- Config import method: `DevCommandsSurface.import_config()`.
-
-### Fixed
-
-- MCP tool name: `get_system_health` → `health_check` to match SKILL.md spec.
-- CLI command name: `multi_project` → `multi-project` (hyphen, not underscore).
-- SARIF output: Was emitting `model_dump()` JSON instead of SARIF format — now correctly delegates to `ReportFormatterProcessor.to_sarif()`.
-
-### Changed
-
 - Version sync: All documents synced to 1.8.0.
 
 ## 1.7.0 (2026-05-06) — Architecture Hardening

@@ -8,12 +8,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 
 **32 rules across 7 groups:** Naming (AES101–102), Import (AES201–205), Quality (AES301–305), Role (AES401–406), Orphan (AES501–506), Doc (AES601–605), and Structure (AES701–703). The `scan`/`check` command runs the six code linters plus structure; Doc rules read Markdown and are audited over the document chain via the `docs` command. External adapters (Clippy, Ruff, ESLint, …) run alongside via `external` and emit tool-native codes.
 
-
 | Code   | Name                | Severity | Group  | Description                                                                                |
 | -------- | --------------------- | ---------- | -------- | -------------------------------------------------------------------------------------------- |
 | AES101 | Naming Convention   | HIGH     | Naming | Filename must follow`prefix_concept_suffix` pattern — lowercase, underscore, min 3 words. |
 | AES102 | Suffix Prefix Rules | HIGH     | Naming | Suffix must match layer definition — allowed, forbidden, mandatory strict.                |
-
 
 | Code   | Name             | Severity | Group  | Description                                                                                    |
 | -------- | ------------------ | ---------- | -------- | ------------------------------------------------------------------------------------------------ |
@@ -23,7 +21,6 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES204 | Dummy Import     | HIGH     | Import | Import string matches a forbidden dummy pattern; symbol used only in dummy functions or stubs. |
 | AES205 | Circular Import  | CRITICAL | Import | Circular dependency between layers — must be unidirectional bottom-up.                        |
 
-
 | Code   | Name                 | Severity      | Group   | Description                                                                        |
 | -------- | ---------------------- | --------------- | --------- | ------------------------------------------------------------------------------------ |
 | AES301 | File Maximum Limit   | HIGH          | Quality | File exceeds maximum allowed line count (default: 1000).                           |
@@ -31,7 +28,6 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES303 | Mandatory Definition | HIGH / MEDIUM | Quality | File missing struct/enum/trait/class definition, or definition is empty.           |
 | AES304 | Bypass Comment       | CRITICAL      | Quality | Forbidden bypass pattern detected (`#[allow]`, `unwrap()`, `panic!`, `noqa`, etc). |
 | AES305 | Duplication Code     | MEDIUM        | Quality | Duplicate code blocks detected across files.                                       |
-
 
 | Code   | Name              | Severity | Group | Description                                                                                     |
 | -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
@@ -41,7 +37,6 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports |
 | AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
 | AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
-
 
 | Code   | Name                | Severity | Group  | Description                                                                                                                                       |
 | -------- | --------------------- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -98,7 +93,6 @@ Suffix must match the layer definition. Three sub-checks:
 
 #### Suffix Policy per Layer
 
-
 | Layer          | Policy   | Allowed Suffixes                                                                                                         | Forbidden Suffixes                                                                                     |
 | ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `root`         | strict   | `_entry`, `_container`                                                                                                   | N/A                                                                                                    |
@@ -118,7 +112,6 @@ Suffix must match the layer definition. Three sub-checks:
 **Severity:** CRITICAL
 
 A single rule with **13 sub-conditions** — each has `allowed`, `mandatory`, and `forbidden` fields. Layers are identified by **filename prefix** (`taxonomy_`, `utility_`, `contract_`, `capabilities_`, `agent_`, `surface_`, `root_`), not directory path.
-
 
 | #  | Scope                                                           | Allowed Imports                                            | Mandatory Imports             | Forbidden Imports                                                |
 | ---- | ----------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------ |
@@ -215,7 +208,6 @@ Two sub-checks:
 
 1. **Missing definition** (`Severity: HIGH`) — file has no struct/enum/trait/class at all
 2. **Empty / dead definition** (`Severity: MEDIUM`) — `struct Foo;`, `impl X for Y {}`, `class Foo: pass`, `class Foo {}`
-
 
 | Checker                  | Method                               | Path                                                     |
 | -------------------------- | -------------------------------------- | ---------------------------------------------------------- |
@@ -331,7 +323,6 @@ Utility role boundary violation. Utility files must contain stateless standalone
 **Severity:** MEDIUM / HIGH
 
 Checks — each with its own severity:
-
 
 | Sub-check              | Severity   | Description                                                                       |
 | ------------------------ | ------------ | ----------------------------------------------------------------------------------- |
@@ -577,6 +568,4 @@ A surface folder is a folder where surface files dominate — it has more surfac
 | -------------------------------------- | ------------------------------------------------------------------------ |
 | `surface_has_misplaced_files` | A surface-dominated folder holds a `capabilities_*` or `agent_*` file. |
 
-
 ---
-

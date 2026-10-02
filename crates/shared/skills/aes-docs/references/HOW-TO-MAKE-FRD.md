@@ -178,7 +178,6 @@ Copy, fill, delete nothing.
 Every section is required unless marked optional. Each exists for one
 reason.
 
-
 | Section                       | Why it belongs here                               |
 | ----------------------------- | ------------------------------------------------- |
 | Reference                     | Separates spec promise from backlog claim.        |
@@ -191,9 +190,6 @@ reason.
 | Assumptions &amp; Constraints | Implicit requirements made explicit.              |
 | Glossary                      | One meaning per term; rows and code agree.        |
 
-
-
-
 ## Verify
 
 ```bash
@@ -204,4 +200,3 @@ lint-arwaky-cli docs
 
 On any violation the gate prints `[FAIL] <code> <path>: <message>` and exits
 non-zero; every finding gates (strict is the only mode — no advisory tier).
-

@@ -24,8 +24,8 @@ Last Updated: 2026-09-17
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | Valid Rust file | parse_ok = true, full metadata | Automated | `tests/filesystem/` | cargo test -p filesystem | `29c71083` |
 | Rust file with syntax error | parse_ok = false, warning | Automated | `tests/filesystem/` | cargo test -p filesystem | `29c71083` |
 | Empty file | parse_ok = true, empty metadata | Automated | `tests/filesystem/` | cargo test -p filesystem | `29c71083` |

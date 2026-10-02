@@ -154,6 +154,7 @@ flowchart TD
     | Python bypasses             | `raise NotImplementedError`, `assert false`                                                                                      | Python     |
     | Comment/annotation bypasses | `type: ignore`, `noqa`, `@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `lint-disable`, `FIXME`, `HACK`, `XXX` | All        |
     | Cargo.toml bypass           | `level = "allow"` under `[workspace.lints.clippy]` or `[lints.clippy]`                                                         | Cargo.toml |
+
   - **Matching rules**:
 
     - All patterns are matched as **substrings** against each line.
@@ -224,6 +225,7 @@ flowchart TD
 | `execute` | CodeAnalysisRequest | `CodeAnalysisResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | `shared` config module | in | Supply per-rule thresholds, forbidden bypass patterns, and ignored paths | A threshold is absent → the rule's compiled-in default applies |
@@ -236,6 +238,7 @@ flowchart TD
 | `filesystem` aggregate | in | Walk the workspace, read content, filter by extension, and apply ignore rules | A file cannot be read → it is excluded from the analyzed set and the rest of the walk proceeds |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | 1,000-file analysis | Under 3 s | Time a full analysis over a 1,000-file workspace |

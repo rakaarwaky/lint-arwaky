@@ -56,7 +56,7 @@ AI agents frequently make this mistake. Do NOT create `surface/`, `taxonomy/`,
 `contract/`, `capabilities/`, `utility/`, `agent/` folders. The correct structure
 groups files by feature, with layers as filenames, not directories.
 
-#### Features member
+### Features member
 
 _Example feature crate `crates|packages|modules/<name-features>/`_
 
@@ -69,7 +69,7 @@ agent_<concern>_orchestrator.rs/py/ts            ← agent layer
 
 Exceptions: `main.rs`, `lib.rs`, `mod.rs`, `__init__.py`, `index.ts`, `index.js`.
 
-#### Shared member
+### Shared member
 
 `crates|packages|modules/shared/<common>or<domain-folder>`
 
@@ -86,7 +86,7 @@ taxonomy_<concern>_constant.rs/py/ts             ← taxonomy layer
 
 ### General Workspace Layout
 
-```
+```text
 project-root/                             <- Project workspace root
 │
 ├── crates|packages|modules/              <- workspace members

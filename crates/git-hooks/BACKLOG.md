@@ -24,8 +24,8 @@ Last Updated: 2026-09-29
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | Default branch from `origin/HEAD` | Correct branch detected | Automated | `tests/git-hooks/` | cargo test -p git_hooks | `HEAD` |
 | `symbolic-ref` fails | Defaults to "main" | Automated | `tests/git-hooks/` | cargo test -p git_hooks | `HEAD` |
 | Changed files via `origin/main...HEAD` | Correct file list | Automated | `tests/git-hooks/` | cargo test -p git_hooks | `HEAD` |

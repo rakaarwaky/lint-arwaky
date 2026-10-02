@@ -222,6 +222,7 @@ flowchart TD
     | eslint      | JS/TS    |
     | prettier    | JS/TS    |
     | tsc         | JS/TS    |
+
   - Each adapter checked via its version command (e.g., `ruff --version`).
   - Available is `true` if version command succeeds, `false` otherwise.
 - **Edge Cases**:
@@ -292,6 +293,7 @@ flowchart TD
 | `execute` | MaintenanceRequest | `MaintenanceResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | `shared` crate | in | Supply value objects plus the checker, installer, and aggregate contracts | A contract is missing at compile time → the build fails before any command runs |
@@ -306,6 +308,7 @@ flowchart TD
 | `sha256sum` | in | Verify the integrity of a downloaded binary | The checksum does not match → the download is discarded and the existing binary is untouched |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | Doctor latency | Under 2 s for 10 tool checks plus 3 language version checks | Time a full doctor run and record the per-check cost |
@@ -323,7 +326,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 
 - **SCEN-001 — Doctor** — e.g. All required tools OK → healthy: true, all statuses "OK"
 - **SCEN-002 — Stats** — e.g. Directory with mixed files → Per-language counts + overall totals
-- **SCEN-003 — Clean** — e.g. Project with .pytest_cache, __pycache__ → Directories removed
+- **SCEN-003 — Clean** — e.g. Project with .pytest_cache, **pycache** → Directories removed
 - **SCEN-004 — Update** — e.g. Python tools upgrade → pip install --upgrade per tool
 - **SCEN-005 — Diagnose** — e.g. cargo + rustc installed → Status "OK"
 - **SCEN-006 — Security** — e.g. Rust project with Cargo.lock → Runs cargo-audit
@@ -360,7 +363,7 @@ FRD Ref: FR-Maintenance-003
 
 | # | Scenario | Expected |
 | - | - | - |
-| 1 | Project with .pytest_cache, __pycache__ | Directories removed |
+| 1 | Project with .pytest_cache, **pycache** | Directories removed |
 | 2 | Project with target/ | Directory removed |
 | 3 | No cache directories | No-op |
 

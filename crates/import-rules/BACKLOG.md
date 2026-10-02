@@ -23,8 +23,8 @@ Last Updated: 2026-09-17
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | File imports from a forbidden layer | AES201 CRITICAL | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
 | File imports from an allowed layer | No violation | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |
 | File imports from a layer not listed in either allowed or forbidden | AES201 WARNING (grey area) | Automated | `tests/import-rules/` | cargo test -p import_rules | `29c71083` |

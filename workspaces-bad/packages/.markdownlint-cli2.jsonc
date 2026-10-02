@@ -1,0 +1,14 @@
+// .markdownlint-cli2.jsonc — markdownlint policy for this fixture workspace.
+//
+// `markdownlint-cli2` reads its policy from the scan root, and the scan target
+// here is this directory, so the repo-root policy is mirrored rather than
+// inherited. Keep the two in sync: the rule choices and their reasons are
+// documented in the repo-root copy.
+{
+  "config": {
+    "MD013": false,
+    "MD060": false,
+    "MD033": false,
+    "MD024": { "siblings_only": true }
+  }
+}

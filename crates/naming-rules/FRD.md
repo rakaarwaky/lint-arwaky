@@ -120,6 +120,7 @@ flowchart TD
   | agent        | strict   | `orchestrator`                                                                                                | —                                                                                            |
   | surface      | strict   | `command`, `controller`, `page`, `view`, `component`, `router`, `layout`, `hook`, `store`, `action`, `screen` | —                                                                                            |
   | root         | strict   | `entry`, `container`                                                                                          | —                                                                                            |
+
 - **Edge Cases**:
 
   - Files with no suffix (single-word stem after prefix, e.g., `taxonomy_user`) → fails strict policy check (AES102 `SuffixMismatch`).
@@ -147,6 +148,7 @@ flowchart TD
 | `execute` | NamingRequest | `NamingResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | `shared` config module | in | Supply layer definitions, naming rules, exceptions, and ignored paths | A layer is absent from config → files under that prefix are validated structurally only |
@@ -157,6 +159,7 @@ flowchart TD
 | Layer prefix map | out (internal) | Map a filename prefix to its architectural layer | A prefix is unknown → the file is skipped by the suffix policy rather than misclassified |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | 1,000-file check | Under 1 s | Time a full walk and check over a 1,000-file workspace |

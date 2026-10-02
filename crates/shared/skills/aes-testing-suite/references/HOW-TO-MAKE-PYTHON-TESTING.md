@@ -24,6 +24,7 @@
 Tests are placed in TWO locations based on scope:
 
 #### 1. Root Tests (`tests/` at repo root)
+
 For **cross-module** tests that span multiple features:
 
 ```text
@@ -35,12 +36,14 @@ tests/
 ```
 
 **Use root tests for:**
+
 - Shared utility tests (modules/shared/)
 - Cross-module integration tests
 - Repository-wide contract tests
 - Tests that don't belong to one specific feature
 
 #### 2. Module Tests (`modules/<name>/tests/`)
+
 For **feature-specific** tests scoped to one module:
 
 ```text
@@ -60,6 +63,7 @@ modules/<name>/
 ```
 
 **Use module tests for:**
+
 - Module-level contract tests (protocol/interface verification)
 - Unit tests for module-specific utilities
 - Integration tests for module's DI wiring
@@ -68,18 +72,6 @@ modules/<name>/
 - E2E tests for module's full workflows
 - Acceptance tests mapped to module's FRD/PRD requirements
 - Benchmarks for module's performance
-
-### Test Location Hierarchy
-
-Tests can be placed in two locations depending on scope:
-
-1. **Root tests** (`tests/` at repo root): For cross-module integration tests, shared utilities, and repository-wide checks.
-   - Pattern: `tests/test_<subject>.py`
-   - Used for: Shared utility tests, cross-module integration, repository-wide contracts
-
-2. **Module tests** (`modules/<name>/tests/`): For feature-specific tests scoped to one module.
-   - Pattern: `<type>_<module>.py`
-   - Used for: Module-level contract, unit, integration, dogfood, smoke, e2e, acceptance tests
 
 ### Naming rules
 
@@ -99,7 +91,6 @@ Prefixes: `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `a
 - **Dogfood tests: run against LIVE service/session — no mocks allowed for external deps.**
 
 ### Coverage targets
-
 
 | Layer        | Minimum |
 | ------------ | ------- |
@@ -196,7 +187,6 @@ For tests that exercise actual CLI commands against live services/sessions:
 8. **Mark with `@pytest.mark.dogfood`** for identification.
 
 Dogfood tests skip in CI when services unavailable — but the file MUST exist.
-
 
 ## Verify
 

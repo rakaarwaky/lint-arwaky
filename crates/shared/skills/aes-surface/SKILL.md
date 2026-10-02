@@ -85,7 +85,7 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 A `surface_*` file belongs in a **surface folder** — a subdirectory of a member directory
 (`crates/`, `modules/`, `packages/`) whose name matches the kind of surface it carries:
 
-```
+```text
 crates/api/src/surface_*_handler.rs        # HTTP API
 crates/mcp/src/surface_*_tool.rs           # MCP server
 crates/cli/src/surface_*_command.rs        # CLI

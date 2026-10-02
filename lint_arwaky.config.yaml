@@ -11,8 +11,8 @@ thresholds:
 # ─── Adapters ─────────────────────────────────────────────────────────
 # All adapters listed. The system auto-filters by detected language.
 # This list is also authoritative: `scan`/`check`/`external` only run the
-# adapters named here, so an adapter that is not listed (markdownlint) is
-# never invoked — CI and TEST.md §1 install exactly this set.
+# adapters named here, so an adapter that is not listed is never invoked —
+# CI and TEST.md §1 install exactly this set.
 adapters:
   # Rust
   - name: "clippy"
@@ -34,6 +34,9 @@ adapters:
   - name: "tsc"
     weight: 1.0
   - name: "prettier"
+    weight: 1.0
+  # Markdown
+  - name: "markdownlint"
     weight: 1.0
   # Internal
   - name: "architecture"

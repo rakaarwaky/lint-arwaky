@@ -1,17 +1,22 @@
 # FRD — orphan-rules (v2.0.0)
+
 ## Reference
+
 - Backlog: [BACKLOG.md](BACKLOG.md) — real condition for this feature; this file is specification only.
 - PRD: [PRD.md](../../PRD.md)
 - Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 - Filesystem crate FRD: `../filesystem/FRD.md`
 
 ## System Overview
+
 The orphan-rules crate identifies dead, unused, or unreachable code components across the 7-layer AES architecture. It receives a pre-built `GraphAnalysisContext` from the external `filesystem` crate and performs layer-specific orphan analysis starting from valid entry points (containers, binary entries, main files).
 
 Graph construction is delegated to the external `filesystem` aggregate via `build_orphan_graph_context(root, ignored)`, which discovers workspace files, parses each file via tree-sitter AST, resolves imports to file edges, and returns a `GraphAnalysisContext`. The orphan-rules crate receives pre-built graph data and performs zero I/O — it only performs business logic analysis on pre-fetched data.
 
 The orchestrator internally performs BFS reachability tracing over the import graph to determine which files are "alive" (reachable from entry points), then dispatches to 6 layer-specific orphan analyzers (AES501–AES506).
+
 ### Architecture & Data Flow
+
 ```mermaid
 flowchart TD
     A["Surface"] -->|"build_file_index(root)"| D["filesystem_aggregate\n(external crate)"]
@@ -54,7 +59,9 @@ flowchart TD
 ```
 
 ## Functional Requirements
+
 ### FR-OrphanRules-001: Graph Context, Entry Points, and Reachability
+
 - **Description**: Receive the `GraphAnalysisContext` (built externally by the filesystem crate), identify the entry points that anchor the reachability graph, trace BFS reachability from them, and dispatch to layer-specific orphan analyzers.
 - **Input**: `GraphAnalysisContext` (built by filesystem crate) containing:
 
@@ -86,6 +93,7 @@ flowchart TD
 - **Error Handling**: Individual file read/parse failures degrade gracefully (empty edges → orphan candidacy). Missing or inaccessible entry-point files (not in the file list) are excluded from the set. Cycles handled by visited set; missing graph nodes (file in file list but not in graph) → treated as unreachable.
 
 ### FR-OrphanRules-002: Taxonomy Orphan Detection (AES501)
+
 - **Description**: Check that taxonomy layer files (`taxonomy_*`) are imported by at least one file from a higher layer, or are reachable from entry points.
 - **Input**: File path, inbound link map, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -107,6 +115,7 @@ flowchart TD
 - **Error Handling**: Files with no detectable inbound links → orphan candidates.
 
 ### FR-OrphanRules-003: Contract Orphan Detection (AES502)
+
 - **Description**: Check that contract files are both reachable from entry points and have implementations and callers, using trait extraction and whole-word content searching.
 - **Input**: File path, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -132,6 +141,7 @@ flowchart TD
 - **Error Handling**: Files with empty content or no trait names → not flagged (nothing to check).
 
 ### FR-OrphanRules-004: Capabilities Orphan Detection (AES503)
+
 - **Description**: Check that capability files are both reachable from entry points and wired in a root container file.
 - **Input**: File path, alive set, filesystem aggregate (for container wiring checks).
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -150,6 +160,7 @@ flowchart TD
 - **Error Handling**: Files that fail to parse → orphan (fail-strict).
 
 ### FR-OrphanRules-005: Utility Orphan Detection (AES504)
+
 - **Description**: Check that utility files are both reachable from entry points and imported by at least one consumer layer (capabilities, agent, surface, or root).
 - **Input**: File path, inbound link map, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -171,6 +182,7 @@ flowchart TD
 - **Error Handling**: Files that fail to parse → orphan (fail-strict).
 
 ### FR-OrphanRules-006: Agent Orphan Detection (AES505)
+
 - **Description**: Check that agent files are both reachable from entry points and have their aggregate traits wired in a container file.
 - **Input**: File path, all workspace files, content map, alive set.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -190,6 +202,7 @@ flowchart TD
 - **Error Handling**: Files that fail to parse → flagged as orphan (fail-strict).
 
 ### FR-OrphanRules-007: Surface Orphan Detection (AES506)
+
 - **Description**: Check that surface files are reachable from entry points based on their group classification (Smart, Utility, Passive).
 - **Input**: File path, alive set, inbound link map, layer definition.
 - **Output**: Orphan indicator result with `is_orphan` flag, reason, and severity.
@@ -239,6 +252,7 @@ FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **n
 | `execute` | OrphanRequest | `OrphanResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | Orphan aggregate contract | out (internal) | Expose the single composite entry point the surface calls | A request supplies no graph context → the orchestrator returns an empty result set and performs no I/O of its own |
@@ -250,6 +264,7 @@ FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **n
 | `rayon` | in (internal) | Parallelize the per-file analyzer checks | A worker is interrupted → the parallel iterator yields only the results it completed, and the run is reported as partial |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | 1,000 files | Under 500 ms | Time a full orphan analysis over a 1,000-file workspace |
@@ -265,6 +280,7 @@ FR-OrphanRules-001's graph-context, entry-point, and reachability steps have **n
 | Graph read-only | Graph analysis performs no mutation after construction | Assert the analysis phase takes the graph by shared reference and mutates nothing |
 
 ## Test Scenarios / QA Checklist
+
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
 - **Core Detection** — e.g. Workspace with 100 files, 5 orphans across 3 layers → All 5 detected, 0 false positives
@@ -279,6 +295,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Performance** — e.g. 10,000 file workspace → Completes in under 5 seconds
 
 ### Core Detection
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Workspace with 100 files, 5 orphans across 3 layers | All 5 detected, 0 false positives |
@@ -289,6 +306,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | File with parse failure | Flagged as orphan (fail-strict) |
 
 ### Barrel Files
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Python package marker | Skipped, not flagged |
@@ -297,6 +315,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Rust library root | Skipped, not flagged |
 
 ### AES501 — Taxonomy Orphan
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Taxonomy file imported by a contract file | Not orphan |
@@ -305,6 +324,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Taxonomy file imported by capabilities file | Not orphan |
 
 ### AES502 — Contract Orphan
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Protocol with implementation AND callers | Not orphan |
@@ -315,6 +335,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 6 | Contract file with no traits (only type aliases) | Not orphan (nothing to check) |
 
 ### AES503 — Capabilities Orphan
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Capability struct referenced in container file | Not orphan |
@@ -323,6 +344,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Capability imported by other capabilities, chain reaches container | Not orphan (chain alive) |
 
 ### AES504 — Utility Orphan
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Utility imported by a capabilities file | Not orphan |
@@ -331,6 +353,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Utility imported by agent file | Not orphan |
 
 ### AES505 — Agent Orphan
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Agent aggregate called by container file | Not orphan |
@@ -339,6 +362,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Agent with aggregate traits, none found in containers | Orphan (HIGH) |
 
 ### AES506 — Surface Orphan
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Smart surface (`_command`) reachable from entry point | Not orphan |
@@ -350,6 +374,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 7 | Surface file with unclassifiable suffix | Skipped (no check) |
 
 ### Configuration
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Config `check_orphan: false` for a layer | No violations for that layer |
@@ -359,12 +384,14 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | Config with custom entry point patterns | Additional entry points recognized |
 
 ### Performance
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | 10,000 file workspace | Completes in under 5 seconds |
 | 2 | Contract analyzer with 50 traits × 500 files | Completes in under 2 seconds (map lookups) |
 
 ## Assumptions & Constraints
+
 - Workspace follows AES convention with `crates/`, `packages/`, `modules/` directories.
 - Naming convention validation is handled by the naming-rules crate; orphan-rules assumes filenames are correctly named.
 - Entry points are identified by filename suffix patterns (default: `_entry.*`), configurable via YAML.
@@ -395,7 +422,9 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Filesystem crate**: External crate providing graph construction, file walking, AST parsing, and content reads to orphan-rules.
 
 ### Appendix A: YAML Configuration Schema
+
 ### Top-Level Structure
+
 ```yaml
 architecture:
   enabled: true
@@ -415,7 +444,9 @@ architecture:
           - a binary-entry filename
           - a library-root filename
 ```
+
 ### Per-Rule Configuration
+
 ```yaml
 AES50X:
   enabled: true

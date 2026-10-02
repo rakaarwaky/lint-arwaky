@@ -27,8 +27,8 @@ Last Updated: 2026-09-30
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | All required tools OK | healthy: true, all statuses "OK" | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
 | Missing rustc (required) | healthy: false | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |
 | Missing ruff (optional) | Status "WARN" in adapter_statuses | Automated | `tests/unit_maintenance_checker.rs` | cargo test -p maintenance-lint-arwaky | `ca070e66` |

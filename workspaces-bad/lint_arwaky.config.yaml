@@ -30,6 +30,9 @@ adapters:
     weight: 1.0
   - name: "prettier"
     weight: 1.0
+  # Markdown
+  - name: "markdownlint"
+    weight: 1.0
   # Internal
   - name: "architecture"
     weight: 3.0

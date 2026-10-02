@@ -15,6 +15,7 @@ use std::sync::Arc;
 use shared_common::FilePath;
 use shared_config_system::contract_config_protocol::IConfigMergeProtocol;
 use shared_config_system::taxonomy_config_system_vo::AdapterEntry;
+use shared_external_lint::ExternalLintRequest;
 use shared_external_lint::IExternalLintAggregate;
 use shared_external_lint::taxonomy_external_lint_vo::ExternalLintContext;
 use shared_filesystem::FilesystemRequest;
@@ -236,4 +237,51 @@ pub fn collect_external(
     }
 
     Ok(violations)
+}
+
+/// Run the external adapters against a single-file target.
+///
+/// The language flags come from the file's own extension rather than from a
+/// project walk: a lone `.md` file *is* a Markdown-only project, which is what
+/// makes the MarkdownLint adapter fire on `scan README.md`. Every other adapter
+/// shells out to a project-wide tool whose findings name other files, so the
+/// caller's scope filter drops them anyway.
+pub fn collect_single_file_external(
+    scan_root: &Path,
+    ignored: &[String],
+    external_lint: &Arc<dyn IExternalLintAggregate>,
+    config_entries: Vec<AdapterEntry>,
+) -> Vec<ViolationItem> {
+    let context = single_file_external_context(scan_root, ignored, config_entries);
+    let Ok(target) = FilePath::new(scan_root.to_string_lossy().to_string()) else {
+        return Vec::new();
+    };
+    external_lint
+        .execute(ExternalLintRequest::scan_all_with_context(
+            &target, &context,
+        ))
+        .into_violations()
+        .values
+        .iter()
+        .map(ViolationItem::from_lint_result)
+        .collect()
+}
+
+/// Build the external-lint context for a single-file target from the file's own
+/// extension. Public so the extension-to-language mapping is directly testable:
+/// it is the whole reason `scan README.md` reaches the MarkdownLint adapter.
+pub fn single_file_external_context(
+    scan_root: &Path,
+    ignored: &[String],
+    config_entries: Vec<AdapterEntry>,
+) -> ExternalLintContext {
+    let extension = scan_root.extension().and_then(|e| e.to_str()).unwrap_or("");
+    ExternalLintContext {
+        has_rust: extension == "rs",
+        has_python: extension == "py",
+        has_js: matches!(extension, "js" | "jsx" | "ts" | "tsx"),
+        has_markdown: matches!(extension, "md" | "markdown"),
+        ignored_paths: ignored.to_vec(),
+        config_entries,
+    }
 }

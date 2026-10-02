@@ -1,0 +1,38 @@
+// .markdownlint-cli2.jsonc — markdownlint policy for this repository.
+//
+// The `markdownlint` external adapter shells out to `markdownlint-cli2` with
+// the scan root as its CWD, so this file is discovered automatically on every
+// `lint-arwaky-cli scan` / `check` / `external` run. A rule turned off here is
+// off for every consumer of the linter, not just for local runs.
+//
+// Only rules that clash with this repository's established documentation style
+// are disabled. Every structural rule — blank lines around blocks, fence
+// languages, table shape, heading increments — stays on and is enforced.
+{
+  // The bad-workspace fixtures hold deliberate Markdown violations so the
+  // markdownlint adapter has a trigger file per language. Linting them from the
+  // repo root would make the self-lint gate fail on the fixtures themselves;
+  // each fixture directory carries its own policy copy instead.
+  "ignores": ["workspaces-bad/**"],
+
+  "config": {
+    // Lines are long by design: spec tables carry full rule codes, paths, and
+    // commands on one row so each table stays scannable as a single unit.
+    "MD013": false,
+
+    // Tables are written in compact form (pipes tight against the cell text),
+    // not column-aligned. Requiring alignment would rewrite every table in the
+    // spec chain for no readability gain.
+    "MD060": false,
+
+    // Docs use `<Type>` for Rust/TS generic parameters (`<String>`,
+    // `<ImportEntry>`) inside prose and code spans. That is type notation,
+    // not markup.
+    "MD033": false,
+
+    // The AES layer sections in ARCHITECTURE.md repeat the same headings
+    // ("Purpose", "Components", "Dependencies", "Special Rules") on purpose,
+    // once per layer. Only a repeat under the *same* parent is a real defect.
+    "MD024": { "siblings_only": true }
+  }
+}
