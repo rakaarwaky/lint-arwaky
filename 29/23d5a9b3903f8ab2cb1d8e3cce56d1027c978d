@@ -1,0 +1,20 @@
+CONTRIBUTING.md
+  h_9fc4aac70b107c 152
+ROADMAP.md
+  h_9fc4aac70b107c 127,130-131
+crates/dispatcher/DESIGN.md
+  h_9fc4aac70b107c 105
+crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs
+  h_9fc4aac70b107c 229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2923d5a9b3903f8ab2cb1d8e3cce56d1027c978d",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
