@@ -11,7 +11,7 @@ use structure_rules_lint_arwaky::root_structure_rules_container::RootStructureRu
 /// workspace of *folders* complete feature folders and measures one full audit
 /// pass over it — the shape a large monorepo costs at scan time.
 fn bench_structure_audit(c: &mut Criterion) {
-    let workspace = synthetic_workspace(60);
+    let (_tmp, workspace) = synthetic_workspace(60);
 
     c.bench_function("structure_audit_full_workspace", |b| {
         b.iter(|| {
@@ -27,9 +27,12 @@ fn bench_structure_audit(c: &mut Criterion) {
 ///
 /// Written to a real temp directory because the auditors read the filesystem —
 /// that is the point being measured. Cleaned up when the bench process exits.
-fn synthetic_workspace(folders: usize) -> PathBuf {
-    let root = std::env::temp_dir().join(format!("lint-arwaky-bench-structure-{folders}"));
-    let _ = std::fs::remove_dir_all(&root);
+fn synthetic_workspace(folders: usize) -> (tempfile::TempDir, PathBuf) {
+    let tmp = tempfile::Builder::new()
+        .prefix(&format!("lint-arwaky-bench-structure-{folders}-"))
+        .tempdir()
+        .expect("bench workspace tempdir must be creatable");
+    let root = tmp.path().to_path_buf();
     for index in 0..folders {
         let crate_dir = root.join("crates").join(format!("feature_{index}"));
         let src = crate_dir.join("src");
@@ -47,7 +50,7 @@ fn synthetic_workspace(folders: usize) -> PathBuf {
         std::fs::write(crate_dir.join("FRD.md"), "# FRD\n").expect("write must succeed");
         std::fs::write(crate_dir.join("BACKLOG.md"), "# BACKLOG\n").expect("write must succeed");
     }
-    root
+    (tmp, root)
 }
 
 criterion_group!(benches, bench_structure_audit);
