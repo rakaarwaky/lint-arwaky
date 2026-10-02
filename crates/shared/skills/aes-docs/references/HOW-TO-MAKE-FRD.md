@@ -56,8 +56,7 @@ it cannot see this). A table you wanted to head with
 `Protocol API` row: move it into that table, fold it into the section that owns
 it, or demote it to a level-4 heading — level 4 and deeper are free-form and
 are where detail that must not become a section belongs. The sanctioned set is
-transcribed from the template below; `crates/doc-rules/scripts/check_doc_consistency.py` compares
-the two so they cannot drift apart again.
+transcribed from the template below.
 3a. **The FR count must match the protocol class count.** The number of
 `### FR-<Feature>-NNN:` headings and the number of `pub trait I*Protocol`
 declarations across the feature's contract protocol files must be equal

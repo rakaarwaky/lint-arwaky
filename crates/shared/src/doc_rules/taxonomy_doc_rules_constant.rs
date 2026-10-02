@@ -226,8 +226,7 @@ pub const SOURCE_EXTENSIONS: &[&str] = &["py", "rs", "ts", "tsx"];
 /// no edit. An empty `allowed` makes the set closed, so a DESIGN.md carrying an
 /// H2 the template does not name — including the surface-behaviour headings
 /// ("Kind", "Entry Points", "States") that an earlier revision of this contract
-/// required — fires `h2_unexpected`. `crates/doc-rules/scripts/check_doc_consistency.py` compares
-/// the two artefacts so this entry cannot silently drift again.
+/// required — fires `h2_unexpected`.
 pub type DocH2Contract = (
     &'static str,
     &'static [&'static str],

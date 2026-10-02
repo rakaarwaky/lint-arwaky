@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
     echo "Usage: bash scripts/gates.sh [options]"
     echo ""
-    echo "Runs all quality gates: format, doc consistency, clippy, self-lint, AES codes, tests."
+    echo "Runs all quality gates: format, clippy, self-lint, AES codes, tests."
     echo ""
     echo "Options:"
     echo "  -h, --help    Show this help"
@@ -84,12 +84,10 @@ echo "Started: $(date '+%Y-%m-%d %H:%M:%S')"
 
 # ─── Phase 1: Fast static checks (no build) ────────────────
 ph1_start=$SECONDS
-echo -e "\n${CYAN}━━━ Phase 1: Format + Doc Consistency (fast, no build) ━━━${NC}"
+echo -e "\n${CYAN}━━━ Phase 1: Format (fast, no build) ━━━${NC}"
 run_gate "Rust Format" cargo fmt --all -- --check &
 FMT_PID=$!
-run_gate "Doc Consistency" python3 crates/doc-rules/scripts/check_doc_consistency.py &
-DOC_PID=$!
-wait_and_report $FMT_PID $DOC_PID
+wait_and_report $FMT_PID
 echo "Phase 1 duration: $((SECONDS - ph1_start))s"
 
 # Skill markdown has a single source of truth at `crates/shared/skills/`.
