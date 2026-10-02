@@ -89,13 +89,11 @@ Prefixes: `contract_`, `unit_`, `integration_`, `dogfood_`, `smoke_`, `e2e_`, `a
 
 ### Coverage targets
 
-
 | Layer        | Minimum |
 | ------------ | ------- |
 | Capabilities | 30%     |
 | Agent        | 50%     |
 | Utility      | 70%     |
-
 
 ### Workflow
 
@@ -137,7 +135,6 @@ Repo root:
 
 ### When to use which location
 
-
 | Test Type                 | Root `tests/` | Package `tests/` |
 | ------------------------- | ------------- | ---------------- |
 | Cross-package utility     | ✓             |                  |
@@ -150,7 +147,6 @@ Repo root:
 | Package e2e               |               | ✓                |
 | Package acceptance        |               | ✓                |
 | Package benchmark         |               | ✓                |
-
 
 ### vitest.config.ts
 
@@ -170,7 +166,6 @@ export default defineConfig({
 
 ## Section Contract
 
-
 | Check                                                                                 | Why it belongs here                                                                        |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | No inline tests in `src/`.                                                            | Source stays clean; the suite lives under `tests/`/`benches/` only.                        |
@@ -185,7 +180,6 @@ export default defineConfig({
 | Coverage meets 70/60/50 for capabilities/agent/utility.                               | Per-layer floor before merge.                                                              |
 | `npx vitest run` passes.                                                              | The suite is green or the work is not done.                                                |
 | ALL 8 test types present per package.                                                 | No type is optional — contract, unit, integration, dogfood, smoke, e2e, acceptance, bench. |
-
 
 ---
 
@@ -219,4 +213,3 @@ npx vitest run --coverage
 # no inline tests left in src/; prefixes flat, no subdirectories; coverage 70/60/50.
 # Fallback compile gate: npx tsc --noEmit
 ```
-

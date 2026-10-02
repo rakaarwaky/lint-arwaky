@@ -53,6 +53,7 @@ I/O: stateless + I/O + domain-agnostic = taxonomy utility. Stateless + I/O + dom
 **Computation forbidden:** arithmetic, totals, averages, `.reduce`/`.fold`, parsing, normalization. Allowed: iteration to call deps, routing results, propagating errors.
 
 **Error rules:**
+
 - Rule 1: Never silently discard — no `checker.check() or ""`.
 - Rule 2: Analysis orchestration → return the taxonomy-defined response enum variant; each variant
   holds VO-wrapped values, not raw primitives.

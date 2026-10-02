@@ -18,9 +18,6 @@
 
 ## Rules
 
-
-
-
 1. **Commands must match CI.** Every printed command must be
  copy-pasteable and identical to the CI gate.
 2. **No absolute personal paths.** Use `$HOME`, `${workspaceFolder}`,
@@ -38,9 +35,6 @@
  local developer workspace.
 
 ---
-
-
-
 
 ## Workflow
 
@@ -230,7 +224,6 @@ notes. Do not apply it to code identifiers, commands, or config keys.
 `<related file list, or delete this fence>`
 ```
 
-~~~~
 
 ---
 

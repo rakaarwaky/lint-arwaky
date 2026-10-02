@@ -105,7 +105,7 @@ A `capabilities_*` file belongs in a **feature folder** — a subdirectory of a 
 directory (`crates/`, `modules/`, `packages/`) that is neither `shared/` nor a surface folder.
 The folder name must match the feature it serves:
 
-```
+```text
 crates/<feature_name>/src/capabilities_<domain>_<role>.*    # Rust
 modules/<feature_name>/src/capabilities_<domain>_<role>.py  # Python
 packages/<feature_name>/src/capabilities_<domain>_<role>.ts # TypeScript
@@ -129,7 +129,7 @@ Both violations name the misplaced file and direct you to move it into a feature
 
 A feature folder carries two documents at its root, beside the source:
 
-```
+```text
 crates/<feature_name>/FRD.md       # what the feature does — requirements
 crates/<feature_name>/BACKLOG.md   # where its work stands
 ```

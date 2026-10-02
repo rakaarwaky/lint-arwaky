@@ -87,7 +87,7 @@ Split standard (one file per feature, one trait per seam, many methods per trait
 
 A `contract_*` file belongs in the workspace's **`shared/` folder**, beside `taxonomy_*` and `utility_*` files:
 
-```
+```text
 crates/shared/src/     # Rust
 modules/shared/src/     # Python
 packages/shared/src/    # TypeScript

@@ -30,11 +30,33 @@ adapters:
     weight: 1.0
   - name: "prettier"
     weight: 1.0
+  # Markdown
+  - name: "markdownlint"
+    weight: 1.0
   # Internal
   - name: "architecture"
     weight: 3.0
 
-ignored_rules: []
+ignored_rules:
+  # markdownlint policy. The structural rules (MD012, MD022, MD031, MD032,
+  # MD040, MD047, MD056, MD058) stay enforced — they are what catches a
+  # malformed table or an unlabelled code fence. These four are off because
+  # this repository's documentation style collides with them:
+  #
+  #   MD013 line-length — spec tables carry a full rule code, a path and a
+  #     command on one row so each table stays scannable as a single unit.
+  #   MD060 table-column-style — tables are written compact (pipes tight
+  #     against the cell text), not column-aligned.
+  #   MD033 inline HTML — `<Type>` is Rust/TS generic notation in prose and
+  #     code spans, not markup.
+  #   MD024 duplicate heading — ARCHITECTURE.md repeats Purpose/Components/
+  #     Dependencies per AES layer by design. Note this silences the rule
+  #     entirely: a genuine duplicate heading under the same parent is no
+  #     longer reported.
+  - "markdownlint::MD013"
+  - "markdownlint::MD060"
+  - "markdownlint::MD033"
+  - "markdownlint::MD024"
 
 ignored_paths:
   - ".min.js"

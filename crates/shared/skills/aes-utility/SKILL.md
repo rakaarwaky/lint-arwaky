@@ -102,7 +102,7 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 
 A `utility_*` file belongs in the workspace's **`shared/` folder**, beside `taxonomy_*` and `contract_*` files:
 
-```
+```text
 crates/shared/src/     # Rust
 modules/shared/src/     # Python
 packages/shared/src/    # TypeScript

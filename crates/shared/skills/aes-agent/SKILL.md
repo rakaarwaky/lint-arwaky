@@ -90,7 +90,7 @@ Split details, templates, and Section Contract tables: **read the language HOW-T
 An `agent_*_orchestrator` file belongs in a **feature folder** — a subdirectory of a member
 directory (`crates/`, `modules/`, `packages/`) that is neither `shared/` nor a surface folder:
 
-```
+```text
 crates/<feature_name>/src/agent_<domain>_orchestrator.rs    # Rust
 modules/<feature_name>/src/agent_<domain>_orchestrator.py  # Python
 packages/<feature_name>/src/agent_<domain>_orchestrator.ts # TypeScript
@@ -115,7 +115,7 @@ the file must be moved to a feature folder.
 The feature folder holding this agent also carries two documents at its root, beside the
 source:
 
-```
+```text
 crates/<feature_name>/FRD.md       # what the feature does — requirements
 crates/<feature_name>/BACKLOG.md   # where its work stands
 ```

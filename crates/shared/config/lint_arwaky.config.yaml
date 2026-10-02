@@ -32,11 +32,25 @@ adapters:
     weight: 1.0
   - name: "prettier"
     weight: 1.0
+  # Markdown — needs `markdownlint-cli2` (or `markdownlint-cli`) on PATH.
+  - name: "markdownlint"
+    weight: 1.0
   # Internal
   - name: "architecture"
     weight: 3.0
 
-ignored_rules: []
+ignored_rules:
+  # Rule-level suppressions, applied to every linter's findings. Matched as a
+  # case-insensitive substring of the violation code: a bare `MD013` silences
+  # every adapter's MD013, `AES2` silences a whole AES range.
+  #
+  # External-tool rules go here too, which is why this file needs no per-tool
+  # companion config: a project's markdownlint policy is the `markdownlint::`
+  # entries below. Add `markdownlint` to `adapters:` above to switch the adapter
+  # on, then silence individual rules by their reported code:
+  #   ignored_rules:
+  #     - "markdownlint::MD013"
+  []
 
 ignored_paths: []
 

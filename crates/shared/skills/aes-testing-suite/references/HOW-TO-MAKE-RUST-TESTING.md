@@ -24,6 +24,7 @@
 Tests are placed in TWO locations based on scope:
 
 #### 1. Root Tests (`tests/` at repo root)
+
 For **cross-module** tests that span multiple features:
 
 ```text
@@ -34,12 +35,14 @@ tests/
 ```
 
 **Use root tests for:**
+
 - Shared utility tests (crates/shared/)
 - Cross-module integration tests
 - Repository-wide contract tests
 - Tests that don't belong to one specific crate
 
 #### 2. Crate Tests (`crates/<name>/tests/`)
+
 For **feature-specific** tests scoped to one crate:
 
 ```text
@@ -59,6 +62,7 @@ crates/<name>/
 ```
 
 **Use crate tests for:**
+
 - Crate-level contract tests (trait implementation verification)
 - Unit tests for crate-specific utilities
 - Integration tests for crate's DI wiring
@@ -190,7 +194,6 @@ For tests that exercise actual CLI commands against live services/sessions:
 8. **Mark with `#[cfg(feature = "dogfood")]`** for identification.
 
 Dogfood tests skip in CI when services unavailable — but the file MUST exist.
-
 
 ## Verify
 

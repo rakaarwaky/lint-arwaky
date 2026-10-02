@@ -352,6 +352,7 @@ flowchart TD
 | caller aggregate (e.g. naming / import / quality rules) | out | Consume `GraphAnalysisContext` produced here | caller sees stale or partial context if a walk was interrupted |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | Pipeline throughput (indexing scope) | 1,000 files in under 2 s; 10,000 files in under 10 s — this crate's own build-index run: discovery, read, parse | Time a full build-index run over workspaces of each size, with the Criterion benches under this crate; the recorded figure is the evidence for the matching row in `PRD.md` |

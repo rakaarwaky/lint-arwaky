@@ -33,20 +33,27 @@ Before making changes, observe these non-negotiable rules:
 ## Development Setup
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/rakaarwaky/lint-arwaky.git
    cd lint-arwaky
    ```
+
 2. Verify host prerequisites:
+
    ```bash
    cargo --version   # >= 1.85.0, edition 2024
    rustup show active-toolchain
    ```
+
 3. Build the workspace:
+
    ```bash
    CARGO_INCREMENTAL=0 cargo build --release
    ```
+
 4. Verify the installation:
+
    ```bash
    ./target/release/lint-arwaky-cli version
    ```
@@ -93,10 +100,12 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
 1. Read the target crate's `FRD.md` to learn its contract, and `AGENTS.md` for
    session guardrails.
 2. Create a worktree:
+
    ```bash
    git worktree add -b <branch-name> .worktree/<branch-name> origin/main
    cd .worktree/<branch-name>
    ```
+
 3. Write the test first in the owning crate's `tests/` directory, named after the
    functional requirement ID (e.g. `tests/acceptance_FR_001.rs`, scoped to the
    crate directory namespace and mapping to `FR-<Feature>-001` in that crate's `FRD.md`),
@@ -104,9 +113,11 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
    (e.g. `acceptance_cli_commands.rs`, `acceptance_mcp_server.rs`) keep their name
    until a dedicated rename refactor; new tests follow the `acceptance_FR_NNN` pattern.
 4. Verify the change took effect:
+
    ```bash
    cargo nextest run -p <crate>
    ```
+
 5. Sync the contract documents the change touches, in the same commit:
    - A new or changed `FixOutcome` reason → the Reason Code Reference table in
      `crates/auto-fix/FRD.md`.
@@ -115,9 +126,11 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
    - A renumbered, added, or consolidated rule code → `RULES_AES.md` first, then
      every `DESIGN.md`/`FRD.md` range that names it.
    Then run the doc-consistency gate, which fails on exactly these drifts:
+
    ```bash
    python3 tools/check_doc_consistency.py
    ```
+
 6. Commit with a conventional prefix (`feat:`, `fix:`, `refactor:`) and open a PR.
 
 ## Documentation Change
@@ -127,24 +140,31 @@ A change to Markdown only, with no code edit.
 1. Create a worktree the same way as above.
 2. Edit the document; the AES605 heading contract governs the H1/H2 structure of
    every root document, so run the doc gate before committing:
+
    ```bash
    ./target/debug/lint-arwaky-cli docs .
    ```
+
 3. If a skill file changed, regenerate the derived constant:
+
    ```bash
    python3 tools/regenerate_skills.py
    ```
+
 4. Run the doc-consistency gate — it validates in-repo Markdown anchor links,
    rule-code ranges, the shared data model's attribute tables, and the auto-fix
    reason table:
+
    ```bash
    python3 tools/check_doc_consistency.py
    ```
+
 5. Commit with `docs:` and open a PR.
 
 ### Claim Before You Build (Shared Contract Changes)
 
 Before restructuring a shared document contract enforced by AES605 (such as `AGENTS.md` required H2 headings, `PRD.md` sections, or `ARCHITECTURE.md` layers):
+
 1. **Open or claim an issue first**: Do not begin implementation without an assigned GitHub issue.
 2. **Adjudicate conflicts**: If competing proposals emerge (such as #493 vs #494 regarding 11 vs 12 H2 sections), the Tech Lead / Architect resolves the specification contract before PR creation.
 3. **Record rationale**: Document the resolution in `ROADMAP.md` Change Log or `CHANGELOG.md` to prevent duplicate parallel PRs.

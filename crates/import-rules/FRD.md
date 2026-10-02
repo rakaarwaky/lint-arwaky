@@ -77,7 +77,7 @@ flowchart TD
 
   AES uses **dependency injection** as the inter-layer wiring mechanism. Layers do not import each other directly; they import from **contract** (protocol/aggregate) and receive dependencies
 
-  ```
+  ```text
                       ┌──────────────────────────────────┐
                       │             root                  │
                       │  (composition root / DI wiring)   │
@@ -110,6 +110,7 @@ flowchart TD
 
   **Rationale**: Agent does not import capabilities because agent receives capabilities via DI (trait objects). Surface does not import agent because surface receives orchestrator via DI from contract aggregate. Utility does not require contract and remains flexible.
 - **Per-Scope Rules**
+
   | Scope                                  | Allowed                                                    | Forbidden                                               | Mandatory                     |
   | ---------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | ------------------------------- |
   | `taxonomy(vo)`                         | taxonomy                                                   | agent, surface, contract, utility, capabilities, root   | —                            |
@@ -124,6 +125,7 @@ flowchart TD
   | surface(hook, store, action, screen) | taxonomy,contract(aggregate)                               | capabilities, utility, agent                            | taxonomy                      |
   | surface(component, view, layout)       | taxonomy                                                   | capabilities, utility, agent                            | taxonomy                      |
   | `root`                                 | taxonomy, contract, capabilities, agent, surface, utility  | —                                                      | —                            |
+
 - **Enforcement model**: Whitelist + Blacklist hybrid.
 
   - Target layer in `allowed` → **pass**.
@@ -288,6 +290,7 @@ flowchart TD
 | `execute` | ImportRequest | `ImportResponse` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | `shared` config module | in | Supply architecture config, rules, conditions, layer definitions, and the layer map | Configuration omits a layer → rules scoped to that layer are skipped rather than guessed |
@@ -300,6 +303,7 @@ flowchart TD
 | `rayon` | in (internal) | Parallelize the file-level checks | A worker is interrupted → the parallel iterator yields only the results it completed, and the run is reported as partial |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | 1,000-file check | Under 2 s | Run the criterion benchmark over a 1,000-file workspace |
@@ -325,6 +329,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 - **Configuration** — e.g. Rule disabled in config → No violation for that rule
 
 ### AES201 — Forbidden Import
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | File imports from forbidden layer | AES201 CRITICAL |
@@ -339,6 +344,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 10 | contract(protocol) imports contract(aggregate) | AES201 CRITICAL (forbidden) |
 
 ### AES202 — Mandatory Import
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Capabilities file missing taxonomy import | AES202 violation |
@@ -348,6 +354,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | taxonomy(entity) missing taxonomy(vo) import | AES202 violation |
 
 ### AES203 — Unused Import
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Import declared but never referenced in code | AES203 violation |
@@ -357,6 +364,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 5 | Import used in`#[derive(...)]` | No violation (detected) |
 
 ### AES204 — Dummy Import
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Function named`_use_serialization()` containing import reference | AES204 violation (dummy function) |
@@ -371,6 +379,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 10 | Rust module barrel with re-exports | No violation (exempt) |
 
 ### AES205 — Circular Dependency
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Two layers importing each other | AES205 violation |
@@ -379,6 +388,7 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Indirect cycle (A → B → C → A) | AES205 violation |
 
 ### Configuration
+
 | # | Scenario | Expected |
 | - | - | - |
 | 1 | Rule disabled in config | No violation for that rule |
@@ -459,6 +469,7 @@ architecture:
 - Target in neither → AES201 WARNING (grey area).
 
 ### Layer Detection (Hardcoded Convention)
+
 | Filename Pattern    | Detected Layer |
 | --------------------- | ---------------- |
 | taxonomy prefix     | taxonomy       |
@@ -487,6 +498,7 @@ Files and directories are skipped if they match any of these criteria:
 6. **Symlink safety**: Symlink targets outside the workspace root are pruned to prevent path traversal.
 
 ### Language Detection
+
 | Extension     | Language   |
 | --------------- | ------------ |
 | `.rs`         | Rust       |

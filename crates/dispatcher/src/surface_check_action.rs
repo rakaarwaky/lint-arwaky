@@ -403,6 +403,10 @@ fn run_all_linters_in_process(
             has_js,
             has_markdown,
             ignored_paths: ignored.clone(),
+            ignored_rules: crate::surface_external_action::load_ignored_rules(
+                std::path::Path::new(&target_canon_str),
+                seam.io.as_ref(),
+            ),
             config_entries,
         };
         let mut external: Vec<ViolationItem> = agg
@@ -708,6 +712,21 @@ fn run_single_file_scan(
         orphan_violations
             .iter()
             .map(ViolationItem::from_lint_result),
+    );
+    // External — the MarkdownLint adapter is the only one that lints a single
+    // file meaningfully: every other adapter shells out to a project-wide tool
+    // (cargo, ruff, eslint) whose findings name other files, so on a one-file
+    // target they would all be dropped by the scope filter below anyway. The
+    // adapter itself already early-returns empty for a non-Markdown file, so
+    // this is safe to call unconditionally.
+    all.extend(
+        crate::surface_external_action::collect_single_file_external(
+            scan_root,
+            ignored,
+            &agg.external,
+            crate::surface_external_action::load_config_entries(scan_root, seam.io.as_ref()),
+            seam.io.as_ref(),
+        ),
     );
     // Drop violations naming files outside the target.
     all.retain(|v| {

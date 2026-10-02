@@ -153,7 +153,6 @@ pub mod contract_<name>_aggregate;
 
 Every contract file is required to carry the rows that apply. Each exists for one reason.
 
-
 | Section                                  | Why it belongs here                                                                |
 | ---------------------------------------- | ---------------------------------------------------------------------------------- |
 | Module docstring (required)              | Names the feature and the seams in the file.                                       |
@@ -165,10 +164,9 @@ Every contract file is required to carry the rows that apply. Each exists for on
 | Method signatures only (`;`)             | Outer layers depend on promises, not behaviour.                                    |
 | `Send + Sync` + object-safe              | Trait objects cross thread/task boundaries without surprises.                      |
 | Aggregate: exactly one method            | Consumers depend on one stable entry point, not a shifting method list.            |
-| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; `bool` permitted.  |                 | Numeric domain values stay behind VOs; `String`/`&str`/`bool` are permitted.    |
+| Shared VOs in signatures                 | Numeric and string domain values stay behind VOs; only `bool` is permitted bare. |
 | No impl-layer imports                    | Keeps the dependency arrow (capabilities → trait ← agent).                         |
 | Register in shared `mod.rs`              | Importable without reaching into private modules.                                  |
-
 
 ---
 

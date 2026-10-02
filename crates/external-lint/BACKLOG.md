@@ -24,8 +24,8 @@ Last Updated: 2026-09-29
 
 ## Scenario Evidence
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
+| Scenario | Rule / expected | Kind | Test file | Test name | Last verified |
+|---|---|---|---|---|---|
 | Rust-only project | Only clippy, rustfmt, cargo-audit run | Automated | `tests/unit_external_lint_*_adapter.rs` | `cargo test -p external-lint-lint-arwaky` | `cc63389a` |
 | Python-only project | Only ruff, mypy, bandit run | Automated | `tests/unit_external_lint_*_adapter.rs` | `cargo test -p external-lint-lint-arwaky` | `cc63389a` |
 | JS-only project | Only eslint, prettier, tsc run | Automated | `tests/unit_external_lint_*_adapter.rs` | `cargo test -p external-lint-lint-arwaky` | `cc63389a` |
@@ -58,6 +58,8 @@ Last Updated: 2026-09-29
 | JS tool not found anywhere | Error at execution | Automated | `tests/unit_external_lint_*_adapter.rs` | `cargo test -p external-lint-lint-arwaky` | `cc63389a` |
 | Cargo.toml found in parent directory | Cargo tools use that directory | Automated | `tests/unit_external_lint_*_adapter.rs` | `cargo test -p external-lint-lint-arwaky` | `cc63389a` |
 | No Cargo.toml in hierarchy | Adapter skipped with warning | Automated | `tests/unit_external_lint_*_adapter.rs` | `cargo test -p external-lint-lint-arwaky` | `cc63389a` |
+| markdownlint fix falls back to `markdownlint-cli2` | `--fix` runs against the first resolvable variant | Automated | `tests/unit_external_lint_md_markdownlint_adapter.rs` | `fix_falls_back_to_cli2_when_only_that_variant_is_installed` | `ec7e16a7` |
+| markdownlint fix with no CLI installed | No-op status, no command spawned | Automated | `tests/unit_external_lint_md_markdownlint_adapter.rs` | `fix_is_a_noop_status_when_no_cli_is_installed` | `ec7e16a7` |
 | markdownlint `MD041` | Severity MEDIUM, code `markdownlint::MD041` | Automated | `tests/unit_external_lint_md_markdownlint_adapter.rs` | `cargo test -p external-lint-lint-arwaky` | `cc63389a` |
 
 ## Blockers

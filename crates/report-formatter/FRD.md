@@ -174,6 +174,7 @@ flowchart TD
 | `format` | &ScanReport, Format | `DisplayContent` | — | — | Single composite entry point over the feature. |
 
 ## Integration Points
+
 | System | Direction | Purpose | Failure mode |
 | --- | --- | --- | --- |
 | `shared` crate | in | Supply the taxonomy value objects, the formatter protocol and aggregate contracts, and the JSON and SARIF value objects | A value object is missing at compile time → the build fails before any format is produced |
@@ -183,6 +184,7 @@ flowchart TD
 | `Format` enum | out (internal) | Name the supported output formats | A format is added to the enum without a registered implementation → the build fails |
 
 ## Non-functional Requirements
+
 | Metric | Target | Measurement method |
 | --- | --- | --- |
 | Output allocation | String capacity is pre-allocated from the result count to avoid reallocation | Profile a large report and confirm the allocation count is bounded by the result count, not the string length |

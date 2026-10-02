@@ -169,8 +169,9 @@ lint-arwaky-cli mcp-config --client hermes
 
 Three external, out-of-repo clients integrate against the 5-tool MCP surface
 (`execute_command`, `list_commands`, `read_skill`, `health_check`, `get_config`) at
-protocol version `2024-11-05`. No automated test exercises any of them today (PE-2-02 /
-#621), so this table is a manual verification record, not a passing CI gate:
+protocol version `2024-11-05`. No automated test exercises any of them today
+(PE-2-02 / #621), so this table is a manual verification record, not a passing
+CI gate:
 
 | Client | Protocol Version Verified | Last Verified | Notes |
 |---|---|---|---|
@@ -244,7 +245,7 @@ lint-arwaky-cli init
 
 ### Current Quality Status (update before each release attempt)
 
-_Last updated: 2026-10-01_
+Last updated: 2026-10-01
 
 - **Open defects:** 90+ logged across audit cycles (#522–#650), including 11+ confirmed CRITICAL — see PE #617. Severity counts are derived from issue **titles** (`[ROLE][SEVERITY] …`), not labels, until #618 is resolved (label writes fail with `Resource not accessible by integration`).
 - **CI detection-threshold gap — CLOSED:** the AES codes gate now enforces the reconciled scan-visible count (27 of 32 rules, per `TEST.md` §3.1/§3.2) with no safety margin — see QA #636.
@@ -321,6 +322,6 @@ cargo build --release
 
 ## Support
 
-- Repository: https://github.com/rakaarwaky/lint-arwaky
-- Issues: https://github.com/rakaarwaky/lint-arwaky/issues
+- Repository: <https://github.com/rakaarwaky/lint-arwaky>
+- Issues: <https://github.com/rakaarwaky/lint-arwaky/issues>
 - Documentation: [README.md](README.md), [RULES_AES.md](RULES_AES.md), [ARCHITECTURE.md](ARCHITECTURE.md)

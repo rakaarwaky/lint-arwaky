@@ -114,6 +114,7 @@ flowchart TD
 - **Business Rules**:
 
   - Hook script content:
+
     ```bash
     #!/bin/bash
     # Lint Arwaky Pre-Commit Hook
@@ -126,6 +127,7 @@ flowchart TD
     echo "Linting passed."
     exit 0
     ```
+
   - Creates `.git/hooks/` directory if it does not exist.
   - Sets hook file permissions to `0o755` on Unix systems.
   - If executable path is empty, defaults to `"lint-arwaky-cli"`.

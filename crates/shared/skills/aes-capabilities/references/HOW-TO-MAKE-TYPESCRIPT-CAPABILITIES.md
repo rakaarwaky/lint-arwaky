@@ -155,4 +155,3 @@ lint-arwaky-cli scan <layer-path>
 # Manual (not machine-checked): helper-vs-utility matrix; role naming lists.
 # Fallback compile gate: npx tsc --noEmit
 ```
-

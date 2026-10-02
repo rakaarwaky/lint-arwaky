@@ -176,4 +176,3 @@ lint-arwaky-cli scan <layer-path>
 #   Arc<dyn Trait> for DI; role naming lists.
 # Fallback compile gate: cargo check -p <crate-name>
 ```
-
