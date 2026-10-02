@@ -33,12 +33,16 @@ A capability file **implements a protocol** — it has DI, business rules, and c
 
 **Allowed imports:** Taxonomy only (`shared::taxonomy_*`).
 **Forbidden:** `use` from Capabilities, Agent, Surface, Contract, or other Utility modules.
+The last one is a cross-file rule in all three languages: a utility importing another
+utility couples two helpers that should be independently extractable.
+
+### Structure rules (Rust)
 
 1. **Structure:** Only `pub fn` free functions — no `struct`, no `impl` blocks, no `trait` definitions, no `pub type` aliases.
-2. **State & Side Effects:** Stateless & deterministic. Side-effects are strictly limited to domain-agnostic operations
+2. **State & Side Effects:** Stateless & deterministic. Side-effects are strictly limited to domain-agnostic operations.
 3. **Domain Awareness:** Domain-agnostic — no business rules, no layer-name knowledge.
-4. **Reusability:** Must be used by ≥2 modules. If it has a single consumer, keep it as a private helper in the consuming module.
-5. **I/O Constraint:** I/O is allowed
+4. **Reusability:** Used by ≥2 modules; if single consumer → keep as a private helper in the consuming module.
+5. **I/O Constraint:** I/O allowed only if all above hold.
 
 ### Helper vs Utility Decision Matrix
 
