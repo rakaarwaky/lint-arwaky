@@ -125,6 +125,66 @@ pub enum Commands {
         format: Format,
     },
 
+    /// Run every rule group but report only taxonomy-layer violations
+    #[command(name = "taxonomy")]
+    ScanTaxonomy {
+        /// Path to scan
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+    },
+
+    /// Run every rule group but report only contract-layer violations
+    #[command(name = "contract")]
+    ScanContract {
+        /// Path to scan
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+    },
+
+    /// Run every rule group but report only capabilities-layer violations
+    #[command(name = "capabilities")]
+    ScanCapabilities {
+        /// Path to scan
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+    },
+
+    /// Run every rule group but report only utility-layer violations
+    #[command(name = "utility")]
+    ScanUtility {
+        /// Path to scan
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+    },
+
+    /// Run every rule group but report only agent-layer violations
+    #[command(name = "agents")]
+    ScanAgents {
+        /// Path to scan
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+    },
+
+    /// Run every rule group but report only surface-layer violations
+    #[command(name = "surface")]
+    ScanSurface {
+        /// Path to scan
+        path: Option<String>,
+        /// Output format: text, json, sarif, junit
+        #[arg(long, default_value_t = Format::Text)]
+        format: Format,
+    },
+
     /// Run external linter checks only (Clippy, Ruff, ESLint, etc.)
     #[command(name = "external")]
     ScanExternal {
@@ -329,6 +389,36 @@ pub static COMMAND_CATALOG: &[(&str, &str, &str)] = &[
         "orphan",
         "Orphan detection scan (single linter)",
         "lint-arwaky-cli orphan ./src/",
+    ),
+    (
+        "taxonomy",
+        "Scan only the taxonomy layer (taxonomy_* files)",
+        "lint-arwaky-cli taxonomy ./src/",
+    ),
+    (
+        "contract",
+        "Scan only the contract layer (contract_* files)",
+        "lint-arwaky-cli contract ./src/",
+    ),
+    (
+        "capabilities",
+        "Scan only the capabilities layer (capabilities_* files)",
+        "lint-arwaky-cli capabilities ./src/",
+    ),
+    (
+        "utility",
+        "Scan only the utility layer (utility_* files)",
+        "lint-arwaky-cli utility ./src/",
+    ),
+    (
+        "agents",
+        "Scan only the agent layer (agent_* files)",
+        "lint-arwaky-cli agents ./src/",
+    ),
+    (
+        "surface",
+        "Scan only the surface layer (surface_* files)",
+        "lint-arwaky-cli surface ./src/",
     ),
     (
         "external",
