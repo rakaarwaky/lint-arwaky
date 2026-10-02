@@ -37,7 +37,15 @@ adapters:
   - name: "architecture"
     weight: 3.0
 
-ignored_rules: []
+ignored_rules:
+  # Same markdownlint policy as the good workspace — the fixture must lint
+  # under the same rules, so a violation there is a real one and a clean file
+  # here proves the adapter ran and found nothing. See the root config for
+  # why each rule is off.
+  - "markdownlint::MD013"
+  - "markdownlint::MD060"
+  - "markdownlint::MD033"
+  - "markdownlint::MD024"
 
 ignored_paths:
   - ".min.js"

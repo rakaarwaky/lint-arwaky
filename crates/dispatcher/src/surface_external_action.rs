@@ -73,6 +73,7 @@ pub fn collect_external_direct(
         has_js,
         has_markdown,
         ignored_paths: ignored_paths.to_vec(),
+        ignored_rules: load_ignored_rules(root_path, filesystem_io.as_ref()),
         config_entries,
     };
 
@@ -182,6 +183,43 @@ pub fn load_config_entries(
     Vec::new()
 }
 
+/// Find the nearest `lint_arwaky.config.yaml` at or above `root_path` and
+/// return its `ignored_rules` list.
+///
+/// Same walk-up contract as `load_config_entries` so both settings come from
+/// one file. Unlike the adapter list, an empty result here is not a fallback to
+/// "run everything" — it means the project declared no rule suppressions.
+pub fn load_ignored_rules(
+    root_path: &std::path::Path,
+    fs_io: &dyn IFileSystemIOProtocol,
+) -> Vec<String> {
+    find_config_content(root_path, fs_io)
+        .map(|content| {
+            shared_config_system::utility_config_parser::parse_ignored_rules_from_yaml(&content)
+        })
+        .unwrap_or_default()
+}
+
+/// Read the first `lint_arwaky.config.yaml` found walking up from `root_path`.
+fn find_config_content(
+    root_path: &std::path::Path,
+    fs_io: &dyn IFileSystemIOProtocol,
+) -> Option<String> {
+    let start = root_path
+        .parent()
+        .filter(|_| root_path.is_file())
+        .unwrap_or(root_path);
+    let mut current: Option<&std::path::Path> = Some(start);
+    while let Some(dir) = current {
+        let cfg_path = dir.join("lint_arwaky.config.yaml");
+        if let Ok(content) = fs_io.read_to_string(&cfg_path) {
+            return Some(content.value);
+        }
+        current = dir.parent().filter(|&p| p != dir);
+    }
+    None
+}
+
 pub fn collect_external(
     path: Option<FilePath>,
     _external_lint: Arc<dyn IExternalLintAggregate>,
@@ -251,8 +289,14 @@ pub fn collect_single_file_external(
     ignored: &[String],
     external_lint: &Arc<dyn IExternalLintAggregate>,
     config_entries: Vec<AdapterEntry>,
+    fs_io: &dyn IFileSystemIOProtocol,
 ) -> Vec<ViolationItem> {
-    let context = single_file_external_context(scan_root, ignored, config_entries);
+    let context = single_file_external_context(
+        scan_root,
+        ignored,
+        config_entries,
+        load_ignored_rules(scan_root, fs_io),
+    );
     let Ok(target) = FilePath::new(scan_root.to_string_lossy().to_string()) else {
         return Vec::new();
     };
@@ -274,6 +318,7 @@ pub fn single_file_external_context(
     scan_root: &Path,
     ignored: &[String],
     config_entries: Vec<AdapterEntry>,
+    ignored_rules: Vec<String>,
 ) -> ExternalLintContext {
     let extension = scan_root.extension().and_then(|e| e.to_str()).unwrap_or("");
     ExternalLintContext {
@@ -282,6 +327,7 @@ pub fn single_file_external_context(
         has_js: matches!(extension, "js" | "jsx" | "ts" | "tsx"),
         has_markdown: matches!(extension, "md" | "markdown"),
         ignored_paths: ignored.to_vec(),
+        ignored_rules,
         config_entries,
     }
 }

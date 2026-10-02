@@ -403,6 +403,10 @@ fn run_all_linters_in_process(
             has_js,
             has_markdown,
             ignored_paths: ignored.clone(),
+            ignored_rules: crate::surface_external_action::load_ignored_rules(
+                std::path::Path::new(&target_canon_str),
+                seam.io.as_ref(),
+            ),
             config_entries,
         };
         let mut external: Vec<ViolationItem> = agg
@@ -721,6 +725,7 @@ fn run_single_file_scan(
             ignored,
             &agg.external,
             crate::surface_external_action::load_config_entries(scan_root, seam.io.as_ref()),
+            seam.io.as_ref(),
         ),
     );
     // Drop violations naming files outside the target.

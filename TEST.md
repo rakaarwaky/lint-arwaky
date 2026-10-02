@@ -137,8 +137,13 @@ cargo run --bin lint-arwaky-cli -- scan workspaces-good/packages
 > cargo run --bin lint-arwaky-cli -- scan workspaces-good/crates/calculator/BACKLOG.md
 > ```
 >
-> Rule policy lives in `.markdownlint-cli2.jsonc` at the repo root, which
-> `markdownlint-cli2` discovers from the scan root on every run.
+> Rule policy lives in `ignored_rules:` in `lint_arwaky.config.yaml`, beside the
+> `adapters:` list. A listed code is dropped from the report when it matches as
+> a case-insensitive substring, so `markdownlint::MD013` silences exactly that
+> one rule and `MD013` works too. No per-tool companion config file is needed:
+> `markdownlint-cli2` reads its policy only from the directory it runs in and
+> never walks up, so a tool-specific file would have to be duplicated into
+> every scan root.
 
 ### 2.3 Individual Rule Surface
 

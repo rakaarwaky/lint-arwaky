@@ -42,7 +42,40 @@ adapters:
   - name: "architecture"
     weight: 3.0
 
-ignored_rules: []
+ignored_rules:
+  # Rule-level suppressions, applied to every linter's findings. Matched as a
+  # case-insensitive substring of the violation code, so `MD013` silences every
+  # adapter's MD013 and `AES2` silences a whole AES range.
+  #
+  # The markdownlint policy lives here rather than in a separate
+  # `.markdownlint-cli2.jsonc`: `markdownlint-cli2` reads policy only from the
+  # directory it runs in and never walks up, so a tool-specific file would have
+  # to be duplicated into every scan root in the repo. Keeping it beside
+  # `adapters:` makes this file the single source of truth for what runs and
+  # what is reported.
+  #
+  # The structural rules (MD012, MD022, MD031, MD032, MD040, MD047, MD056,
+  # MD058) deliberately stay enabled — they are what catches a malformed table
+  # or an unlabelled code fence. Enabling markdownlint surfaced real defects
+  # through them, including ten BACKLOG.md tables whose header declared 5
+  # columns against 6-cell rows.
+  #
+  # These four are off because this repository's documentation style collides
+  # with them:
+  #   MD013 line-length — spec tables carry a full rule code, a path and a
+  #     command on one row so each table stays scannable as a single unit.
+  #   MD060 table-column-style — tables are written compact (pipes tight
+  #     against the cell text), not column-aligned.
+  #   MD033 inline HTML — `<Type>` is Rust/TS generic notation in prose and
+  #     code spans, not markup.
+  #   MD024 duplicate heading — ARCHITECTURE.md repeats Purpose/Components/
+  #     Dependencies/Special Rules once per AES layer, by design. This silences
+  #     the rule outright, so a genuine duplicate heading under one parent is
+  #     no longer reported; nothing in this repo currently relies on that.
+  - "markdownlint::MD013"
+  - "markdownlint::MD060"
+  - "markdownlint::MD033"
+  - "markdownlint::MD024"
 
 ignored_paths: []
 

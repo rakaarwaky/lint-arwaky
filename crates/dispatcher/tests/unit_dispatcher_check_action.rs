@@ -86,7 +86,7 @@ fn collect_scan_with_filter_returns_error_for_nonexistent() {
 #[test]
 fn markdown_file_context_selects_the_markdown_adapter() {
     for name in ["README.md", "notes.markdown"] {
-        let ctx = single_file_external_context(Path::new(name), &[], Vec::new());
+        let ctx = single_file_external_context(Path::new(name), &[], Vec::new(), Vec::new());
         assert!(ctx.has_markdown, "{name} must be seen as Markdown");
         assert!(!ctx.has_rust && !ctx.has_python && !ctx.has_js, "{name}");
     }
@@ -101,26 +101,26 @@ fn source_file_context_selects_only_its_own_language() {
         ("view.tsx", "js"),
     ];
     for (name, _) in cases {
-        let ctx = single_file_external_context(Path::new(name), &[], Vec::new());
+        let ctx = single_file_external_context(Path::new(name), &[], Vec::new(), Vec::new());
         assert!(!ctx.has_markdown, "{name} must not select markdownlint");
     }
     assert!(
-        single_file_external_context(Path::new("main.rs"), &[], Vec::new()).has_rust,
+        single_file_external_context(Path::new("main.rs"), &[], Vec::new(), Vec::new()).has_rust,
         "a .rs file is Rust"
     );
     assert!(
-        single_file_external_context(Path::new("tool.py"), &[], Vec::new()).has_python,
+        single_file_external_context(Path::new("tool.py"), &[], Vec::new(), Vec::new()).has_python,
         "a .py file is Python"
     );
     assert!(
-        single_file_external_context(Path::new("index.ts"), &[], Vec::new()).has_js,
+        single_file_external_context(Path::new("index.ts"), &[], Vec::new(), Vec::new()).has_js,
         "a .ts file is JS/TS"
     );
 }
 
 #[test]
 fn extensionless_file_context_selects_no_adapter() {
-    let ctx = single_file_external_context(Path::new("Makefile"), &[], Vec::new());
+    let ctx = single_file_external_context(Path::new("Makefile"), &[], Vec::new(), Vec::new());
     assert!(
         !ctx.has_rust && !ctx.has_python && !ctx.has_js && !ctx.has_markdown,
         "an extensionless target is not a language project"
@@ -129,7 +129,12 @@ fn extensionless_file_context_selects_no_adapter() {
 
 #[test]
 fn single_file_context_carries_ignore_and_config_entries_through() {
-    let ctx =
-        single_file_external_context(Path::new("README.md"), &["target".to_string()], Vec::new());
+    let ctx = single_file_external_context(
+        Path::new("README.md"),
+        &["target".to_string()],
+        Vec::new(),
+        vec!["markdownlint::MD013".to_string()],
+    );
     assert_eq!(ctx.ignored_paths, vec!["target".to_string()]);
+    assert_eq!(ctx.ignored_rules, vec!["markdownlint::MD013".to_string()]);
 }
