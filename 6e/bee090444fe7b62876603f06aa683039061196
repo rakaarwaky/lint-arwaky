@@ -1,0 +1,158 @@
+CHANGELOG.md
+  h_9fc4aac70b107c 5-30
+README.md
+  h_9fc4aac70b107c 49,65-73
+ROADMAP.md
+  h_9fc4aac70b107c 109-110,126,128
+RULES_AES.md
+  h_9fc4aac70b107c 502,518-531
+TEST.md
+  h_9fc4aac70b107c 110,161-195,283
+crates/auto-fix/FRD.md
+  h_9fc4aac70b107c 16,28,162,234,242,255,271,283
+crates/auto-fix/tests/dogfood_auto_fix.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/cli-commands/DESIGN.md
+  h_9fc4aac70b107c 63
+crates/cli-commands/src/surface_scan_command.rs
+  h_9fc4aac70b107c 95-102,262-294
+crates/cli-commands/tests/dogfood_cli_commands.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/config-system/FRD.md
+  h_9fc4aac70b107c 15,40,199,207,231,251,304,306,312
+crates/config-system/tests/dogfood_config_system.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/dispatcher/DESIGN.md
+  h_9fc4aac70b107c 58-74,119
+crates/dispatcher/src/lib.rs
+  h_9fc4aac70b107c 13,22
+crates/dispatcher/src/surface_check_action.rs
+  h_9fc4aac70b107c 18,708-720,723
+crates/dispatcher/src/surface_ci_action.rs
+  h_9fc4aac70b107c 4,92-103,106-108
+crates/dispatcher/src/surface_layer_scan_action.rs
+  h_9fc4aac70b107c 1-42
+crates/dispatcher/src/surface_naming_action.rs
+  h_9fc4aac70b107c 21-22,56
+crates/dispatcher/src/surface_test_entries.rs
+  h_9fc4aac70b107c 1-78
+crates/dispatcher/tests/dogfood_dispatcher.rs
+  h_9fc4aac70b107c 5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/dispatcher/tests/unit_dispatcher_layer_scan_action.rs
+  h_9fc4aac70b107c 1-161
+crates/doc-rules/BACKLOG.md
+  h_9fc4aac70b107c 10,47-51,53-57,77-78,89
+crates/doc-rules/FRD.md
+  h_9fc4aac70b107c 19,21,23,30-36,101,136,153
+crates/doc-rules/src/capabilities_doc_fr_format_checker.rs
+  h_9fc4aac70b107c 2,6-10,16,18-19,24-25,49,213-263
+crates/doc-rules/src/capabilities_doc_section_structure_checker.rs
+  h_9fc4aac70b107c 12,16,18,49-51,280-336
+crates/doc-rules/tests/acceptance_FR_DOC_001.rs
+  h_9fc4aac70b107c 232-364
+crates/doc-rules/tests/contract_doc_rules.rs
+  h_9fc4aac70b107c 411-511,1389-1390,1392,1395,1403,1418,1423,1661,1689-1913
+crates/doc-rules/tests/dogfood_doc_rules.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/external-lint/FRD.md
+  h_9fc4aac70b107c 21,250,297,307,322,329,341,354
+crates/external-lint/tests/dogfood_external_lint.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/file-watch/FRD.md
+  h_9fc4aac70b107c 25
+crates/file-watch/tests/dogfood_file_watch.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/filesystem/FRD.md
+  h_9fc4aac70b107c 15,58,379,393,405,418,427
+crates/filesystem/src/agent_filesystem_orchestrator.rs
+  h_9fc4aac70b107c 23,375-380,388-397,399-403,410-465
+crates/filesystem/tests/dogfood_filesystem.rs
+  h_9fc4aac70b107c 5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/git-hooks/FRD.md
+  h_9fc4aac70b107c 26,242,251,272,286,296
+crates/git-hooks/tests/dogfood_git_hooks.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/import-rules/FRD.md
+  h_9fc4aac70b107c 15,320,331,346,356,366,381,390,436,438,454,456,471,485,489,500
+crates/import-rules/tests/dogfood_import_rules.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/maintenance/FRD.md
+  h_9fc4aac70b107c 24,323,337,349,360,370,379,390,401,411,421
+crates/maintenance/tests/dogfood_maintenance.rs
+  h_9fc4aac70b107c 5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/mcp-server/src/surface_mcp_action_command.rs
+  h_9fc4aac70b107c 29-31,189-235,567-572
+crates/mcp-server/tests/dogfood_mcp_server.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/naming-rules/FRD.md
+  h_9fc4aac70b107c 25,201,209,224,244,284,286,296
+crates/naming-rules/tests/dogfood_naming_rules.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/orphan-rules/FRD.md
+  h_9fc4aac70b107c 18,282,297,308,317,326,337,346,355,364,376,386,424,426,448
+crates/orphan-rules/tests/dogfood_orphan_rules.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/project-setup/FRD.md
+  h_9fc4aac70b107c 29,337,346,363,372,385
+crates/project-setup/tests/dogfood_project_setup.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/quality-rules/FRD.md
+  h_9fc4aac70b107c 24,253,264,275,285,303,328,339,377,379
+crates/quality-rules/tests/dogfood_quality_rules.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/report-formatter/FRD.md
+  h_9fc4aac70b107c 18,39,198,208,219,231,246,259
+crates/report-formatter/tests/dogfood_report_formatter.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/role-rules/FRD.md
+  h_9fc4aac70b107c 21,324,336,351,362,381,396,408,420
+crates/role-rules/tests/dogfood_role_rules.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/root_cli_main_entry.rs
+  h_9fc4aac70b107c 103-168,284-304,479-486,616-693
+crates/shared/skills/aes-docs/references/HOW-TO-MAKE-FRD.md
+  h_9fc4aac70b107c 48-60,187-191,203,207,211-214
+crates/shared/skills/aes-lint-arwaky/references/HOW-TO-USE-LINT-COMMANDS.md
+  h_9fc4aac70b107c 88,103-111
+crates/shared/src/cli_commands/taxonomy_cli_commands_vo.rs
+  h_9fc4aac70b107c 128-187,392-421
+crates/shared/src/doc_rules/contract_doc_protocol.rs
+  h_9fc4aac70b107c 11-12,14-15
+crates/shared/src/doc_rules/taxonomy_doc_rules_constant.rs
+  h_9fc4aac70b107c 16-19,42-47,172-182
+crates/shared/src/doc_rules/utility_markdown_scanner.rs
+  h_9fc4aac70b107c 194-229,279-417
+crates/shared/src/doc_rules/utility_protocol_counter.rs
+  h_9fc4aac70b107c 5,105-140
+crates/shared/src/filesystem/utility_test_file_discovery.rs
+  h_9fc4aac70b107c 37-52,54-61,67-71,76,97-103,105-110,117
+crates/shared/src/naming_rules/utility_test_prefix.rs
+  h_9fc4aac70b107c 108-114,118-119,121,132-141
+crates/shared/src/structure_rules/taxonomy_structure_rules_constant.rs
+  h_9fc4aac70b107c 146-153
+crates/shared/tests/unit_shared_cli_commands.rs
+  h_9fc4aac70b107c 80-115,137-157
+crates/structure-rules/FRD.md
+  h_9fc4aac70b107c 75-78
+crates/structure-rules/src/capabilities_test_suite_coverage_auditor.rs
+  h_9fc4aac70b107c 100-101,109-113,142,167
+crates/structure-rules/tests/dogfood_structure_rules.rs
+  h_9fc4aac70b107c 1,5-7,13-14,16-32,35,37-40,42-54,58-59,61,66-68,71-75,80,82,87-88
+crates/tui/tests/dogfood_tui.rs
+  h_9fc4aac70b107c 5-7,13-14,16-32,35,37-40,42-54,58-60,64-66,69-73,78-79,83-84
+scripts/gates.sh
+  h_9fc4aac70b107c 111-123,125,129-149,175
+tools/check_doc_consistency.py
+  h_9fc4aac70b107c 22-25,34,49-54,58-76,80-83,317-323,325,495-584,592
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ebee090444fe7b62876603f06aa683039061196",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
