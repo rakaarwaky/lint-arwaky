@@ -16,20 +16,24 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 
 ## Functional Requirements
 
-### FR-DOC-001: FR Format and Protocol-Class Parity (AES601)
+### FR-DOC-001: FR Format, Protocol-Class Parity, and API-Method Existence (AES601)
 
-- **Description**: Every requirement heading states its feature prefix and all six contract fields, and an FRD declares exactly as many requirements as its feature's contract module declares capability seams.
+- **Description**: Every requirement heading states its feature prefix and all six contract fields, an FRD declares exactly as many requirements as its feature's contract module declares capability seams, and every method its API tables promise is one the contract module declares.
 - **Input**: An `FRD.md` or `DATA.md` inside the audit context, plus the audit root for resolving the feature's shared contract module.
-- **Output**: A list of `DocFinding` values, each carrying `AES601` and one of `id_missing_feature_prefix`, `field_missing`, or `protocol_count_mismatch`.
+- **Output**: A list of `DocFinding` values, each carrying `AES601` and one of `id_missing_feature_prefix`, `field_missing`, `protocol_count_mismatch`, or `api_method_not_found`.
 - **Business Rules**:
   - A requirement ID must read `FR-<FEATURE>-NNN: <imperative name>`; a bare `FR-NNN` reports `id_missing_feature_prefix`.
   - The same shared FR-ID pattern drives the ID check, the field check, and the parity counter, so an accepted ID set cannot drift between them.
   - Every requirement states all six fields: Description, Input, Output, Business Rules, Edge Cases, Error Handling.
   - One protocol class is one capability seam and one seam is one requirement, so the FRD's requirement count must equal the feature's `I*Protocol` count; aggregate traits are not seams and are excluded.
   - The mismatch message names both counts and both fix directions.
-  - The check applies to `FRD.md` and `DATA.md`; parity applies to `FRD.md` alone, because only an FRD names a feature's contract module.
-- **Edge Cases**: A feature crate whose name uses `-` is resolved to the `_` spelling of its shared module. A feature with no shared contract module cannot mismatch, so the check stays silent.
-- **Error Handling**: An unreadable contract module yields no parity finding rather than a false mismatch. The finding is anchored to the requirements section, falling back to the first line when the document has none.
+  - Each row of the `Protocol API` and `Aggregate API` tables promises a method to an integrator; a method no protocol or aggregate trait declares reports `api_method_not_found`.
+  - The method finding names both remedies: delete the promise from the table, or declare the method in the contract module.
+  - Only the first cell of a table row is a promise. A method named in a row's prose or in a body paragraph is not one, so a doc that discusses a name the code never declares stays silent.
+  - The finding anchors to its own table row's line, not to the enclosing heading, so a report points at the row a reader has to fix.
+  - The check applies to `FRD.md` and `DATA.md`; parity and the method check apply to `FRD.md` alone, because only an FRD names a feature's contract module.
+- **Edge Cases**: A feature crate whose name uses `-` is resolved to the `_` spelling of its shared module. A feature with no shared contract module cannot mismatch and cannot owe a method, so both checks stay silent. A method declared on any trait in the module satisfies a row, so a seam's declaration and the aggregate's `execute` are read the same way.
+- **Error Handling**: An unreadable contract module yields no parity or method finding rather than a false violation. The parity finding is anchored to the requirements section, falling back to the first line when the document has none; a method finding is anchored to its own row.
 
 ### FR-DOC-002: Section Structure (AES602)
 
@@ -94,7 +98,7 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 
 | Method | Input | Output | Error | Event | Description |
 |--------|-------|--------|-------|-------|-------------|
-| `audit_fr_format` | `DocAuditContext` | `Vec<DocFinding>` | — | — | FR-ID format, FR fields, and FR/protocol-class parity (AES601). |
+| `audit_fr_format` | `DocAuditContext` | `Vec<DocFinding>` | — | — | FR-ID format, FR fields, FR/protocol-class parity, and promised-API-method existence (AES601). |
 | `audit_section_structure` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Template section order and mandated section shape (AES602). |
 | `audit_spec_purity` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Status leaks and source-file names in a specification (AES603). |
 | `audit_crosslinks` | `DocAuditContext` | `Vec<DocFinding>` | — | — | Reference crosslinks and state-vocabulary placement (AES604). |
@@ -129,6 +133,7 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 - Requirement count drifts from the contract seams → AES601 fires stating both counts and both fix directions.
 - An FRD carries a bare FR-ID without a feature prefix → AES601 fires naming the line and missing prefix.
 - An FRD requirement is missing a required field → AES601 fires naming the field and the line.
+- An FRD API table promises a method no protocol or aggregate trait declares → AES601 fires naming the method, the table, and both remedies.
 - A spec names a concrete source-file path → AES603 fires naming the line and the reference.
 - A spec carries a status leak (checkbox item, an implementation-state claim, or a progress percentage) → AES603 fires naming the pattern.
 - An FRD omits its BACKLOG.md link in Reference → AES604 fires.
@@ -145,7 +150,7 @@ Each rule is one capability behind one protocol seam, so the five requirements b
 
 - Document recognition is limited to the known set (`FRD.md`, `BACKLOG.md`, `PRD.md`, `ROADMAP.md`, `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `CONTRIBUTING.md`). Unknown documents are ignored.
 - H2 matching is case-insensitive and uses leading-word comparison, so `## API Contract` and `## API contract:` both match.
-- The FR/protocol parity check only applies to features that have a corresponding shared contract module (`crates/shared/src/<feature-module>/`).
+- The FR/protocol parity check and the API-method check only apply to features that have a corresponding shared contract module (`crates/shared/src/<feature-module>/`).
 - Aggregate traits are always excluded from the protocol class count regardless of naming.
 - One protocol class is one capability seam is one requirement: the five doc rules declare five seams, so this document declares five requirements and the two counts stay equal.
 - The document walk is shared utility work, not agent work: an agent coordinates in-memory protocols and may not touch the filesystem.

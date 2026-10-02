@@ -1,25 +1,28 @@
 // PURPOSE: FrFormatChecker — AES601: requirement-ID shape, required FR fields,
-// and FR/protocol-class parity.
+// FR/protocol-class parity, and API-table method existence.
 //
 // The one capability that answers AES601. It reads the requirement documents
 // (an FRD and a DATA document state requirements under the same ID rules) and
-// reports three violation families: an ID that lost its feature prefix, a
-// requirement block missing one of the six contract fields, and a requirement
-// count that has drifted from the feature's count of capability seams.
+// reports four violation families: an ID that lost its feature prefix, a
+// requirement block missing one of the six contract fields, a requirement
+// count that has drifted from the feature's count of capability seams, and a
+// promised Protocol/Aggregate API method that the contract module never
+// declares.
 use shared_doc_rules::contract_doc_protocol::IFrFormatProtocol;
 use shared_doc_rules::taxonomy_doc_audit_context_vo::DocAuditContext;
 use shared_doc_rules::taxonomy_doc_rules_constant as consts;
 use shared_doc_rules::taxonomy_doc_rules_request::{DocFinding, DocSource};
 
-use shared_doc_rules::utility_markdown_scanner::fr_id_bare_re;
+use shared_doc_rules::utility_markdown_scanner::{api_contract_methods, fr_id_bare_re};
 use shared_doc_rules::utility_protocol_counter::{
-    count_fr_headings, count_protocol_traits, fr_id_heading_re, locate_kernel_srcs,
+    contract_method_names, count_fr_headings, count_protocol_traits, fr_id_heading_re,
+    locate_kernel_srcs,
 };
 
 // ─── Block 1: Struct Definition ────────────────────────────
 
-/// The AES601 auditor: FR-ID format, FR-field completeness, and FR/protocol
-/// class parity.
+/// The AES601 auditor: FR-ID format, FR-field completeness, FR/protocol class
+/// parity, and API-table method existence.
 pub struct FrFormatChecker {}
 
 // ─── Block 2: Protocol Trait Implementation ────────────────
@@ -43,6 +46,7 @@ impl IFrFormatProtocol for FrFormatChecker {
             self.check_fr_fields(document, &mut own);
             if name == consts::FRD_DOC {
                 self.check_fr_protocol_parity(document, context, &mut own);
+                self.check_api_method_existence(document, context, &mut own);
             }
             context.stamp(document, &mut own);
             findings.extend(own);
@@ -205,5 +209,56 @@ impl FrFormatChecker {
                  module declares {protocol_count} protocol classes; {direction}"
             ),
         ));
+    }
+
+    /// Every method the FRD promises must be declared in the code.
+    ///
+    /// The `Protocol API` and `Aggregate API` tables are a promise to the
+    /// integrator; a row whose method no protocol/aggregate trait declares
+    /// is a promise the code does not keep. The finding names both remedies:
+    /// drop the promise from the table, or declare the method. A feature
+    /// whose contract module cannot be read keeps the check silent, the same
+    /// error-handling contract as the parity count.
+    fn check_api_method_existence(
+        &self,
+        document: &DocSource,
+        context: &DocAuditContext,
+        findings: &mut Vec<DocFinding>,
+    ) {
+        let Some(feature) = document
+            .path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+        else {
+            return;
+        };
+        let module = feature.replace('-', "_");
+        let mut declared = None;
+        for kernel_src in locate_kernel_srcs(context.root()) {
+            if let Some(names) = contract_method_names(&kernel_src.join(&module)) {
+                declared = Some(names);
+                break;
+            }
+        }
+        let Some(declared) = declared else {
+            return;
+        };
+        for (subsection, method, line) in api_contract_methods(&document.text) {
+            if declared.contains(&method) {
+                continue;
+            }
+            findings.push(DocFinding::new_with_line(
+                "",
+                line,
+                consts::RULE_CODE_FR_FORMAT,
+                consts::FR_API_METHOD_VIOLATION_NOT_FOUND,
+                format!(
+                    "line {line} method `{method}` in the '{subsection}' table is not declared \
+                     by any protocol/aggregate trait in the feature's contract module; either \
+                     remove `{method}` from the table or create the protocol/aggregate method"
+                ),
+            ));
+        }
     }
 }
