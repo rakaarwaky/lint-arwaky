@@ -195,7 +195,7 @@ flowchart TD
 | Thread safety | Every formatter is `Send + Sync` | Assert the bound at compile time and share one formatter across threads in a test |
 | Extensibility | A new format is added by implementing the protocol and adding an enum variant | Add a format in a test branch and assert selection routes to it without touching the orchestrator |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 

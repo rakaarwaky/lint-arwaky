@@ -294,7 +294,7 @@ flowchart TD
 | Resilience posture | One attempt per adapter per scan; a timeout or spawn failure skips that adapter and logs, and never retries | Force a timeout in one adapter and assert exactly one spawn occurred and the remaining adapters still completed |
 | Missing tool | A tool absent from PATH is reported as unavailable, and the scan continues | Run with one adapter's executable removed from PATH and assert the remaining adapters still complete |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 

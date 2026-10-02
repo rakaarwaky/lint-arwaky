@@ -171,7 +171,7 @@ flowchart TD
 | Determinism | Results depend only on file content, never on iteration order | Run the same scan twice and compare the finding sets byte for byte |
 | Zero I/O | The rule performs no filesystem access of its own | Run the check with filesystem access denied and assert it still produces findings |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
 Each scenario is stated below as a table of cases: the input condition and the expected result.
 
