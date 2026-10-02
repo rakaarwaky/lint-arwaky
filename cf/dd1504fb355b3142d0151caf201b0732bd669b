@@ -1,0 +1,52 @@
+crates/auto-fix/tests/dogfood_auto_fix.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/cli-commands/tests/dogfood_cli_commands.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/config-system/tests/dogfood_config_system.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/dispatcher/tests/dogfood_dispatcher.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/doc-rules/tests/dogfood_doc_rules.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/external-lint/tests/dogfood_external_lint.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/file-watch/tests/dogfood_file_watch.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/filesystem/tests/dogfood_filesystem.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/git-hooks/tests/dogfood_git_hooks.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/import-rules/tests/dogfood_import_rules.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/maintenance/tests/dogfood_maintenance.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/mcp-server/tests/dogfood_mcp_server.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/naming-rules/tests/dogfood_naming_rules.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/orphan-rules/tests/dogfood_orphan_rules.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/project-setup/tests/dogfood_project_setup.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/quality-rules/tests/dogfood_quality_rules.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/report-formatter/tests/dogfood_report_formatter.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/role-rules/tests/dogfood_role_rules.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/structure-rules/tests/dogfood_structure_rules.rs
+  h_9fc4aac70b107c 37-40,43,66,70,85
+crates/tui/tests/dogfood_tui.rs
+  h_9fc4aac70b107c 37-40,43,64,68,81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cfdd1504fb355b3142d0151caf201b0732bd669b",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
