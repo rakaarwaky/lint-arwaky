@@ -181,9 +181,9 @@ fn test_embedded_skills_constants_catalog() {
 /// The catalog must match `crates/shared/skills/` on disk, entry for entry.
 ///
 /// This is the guard that would have caught `HOW-TO-MAKE-DATA.md` being added
-/// without a regeneration, and it is the failure `tools/regenerate_skills.py`
-/// used to produce silently — the generator wrote to a filename no module
-/// declared, so the committed constant never moved and no test noticed.
+/// without an update, and it is the failure `taxonomy_project_setup_constant.rs`
+/// (manual update) used to produce silently — the generator wrote to a filename
+/// no module declared, so the committed constant never moved and no test noticed.
 #[test]
 fn catalog_matches_the_skills_directory() {
     let skills_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -212,11 +212,11 @@ fn catalog_matches_the_skills_directory() {
 
     assert!(
         missing.is_empty(),
-        "skill file(s) on disk are not embedded — run `python3 tools/regenerate_skills.py`: {missing:?}"
+        "skill file(s) on disk are not embedded — update crates/shared/src/project_setup/taxonomy_project_setup_constant.rs manually: {missing:?}"
     );
     assert!(
         stale.is_empty(),
-        "embedded skill(s) no longer exist on disk — run `python3 tools/regenerate_skills.py`: {stale:?}"
+        "embedded skill(s) no longer exist on disk — update crates/shared/src/project_setup/taxonomy_project_setup_constant.rs manually: {stale:?}"
     );
     assert_eq!(
         on_disk.len(),
