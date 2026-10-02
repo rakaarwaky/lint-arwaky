@@ -9,9 +9,13 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 /// AES701: checks that shared folders contain only taxonomy, utility, and contract
 /// files, and that kernel folders carry no doc pair.
 pub struct SharedPurityAuditor {}
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl IStructureSharedPurityProtocol for SharedPurityAuditor {
     fn audit_shared(&self, request: StructureRequest) -> StructureResponse {
@@ -40,6 +44,8 @@ impl IStructureSharedPurityProtocol for SharedPurityAuditor {
 }
 
 // ─── Private helpers ───────────────────────────────────────────────────────────
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 /// Resolve the workspace root: the nearest ancestor that contains one of the
 /// member directories. If *root* itself holds them, it is the root; if it is

@@ -125,6 +125,20 @@ pub trait ICapabilitiesRoleProtocol: Send + Sync {
     /// Severity HIGH.
     fn check_capability_block_order(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
 
+    /// The `Block 1:` / `Block 2:` / `Block 3:` banners must all be present, in
+    /// order, and none above 3. Severity MEDIUM.
+    ///
+    /// `check_capability_block_order` reads two `impl` lines and compares their
+    /// positions; it cannot tell a file that documents its three blocks from one
+    /// whose two `impl` blocks merely happen to land in a valid order. This check
+    /// reads the banners themselves, so a capability with no banner at all — and
+    /// so no block map for its reader — is reported.
+    ///
+    /// Three defects are reported separately, because each has a different fix: no
+    /// banner at all, a subset of 1/2/3, and a sequence that is out of order or
+    /// declares a block above 3.
+    fn check_capability_block_markers(&self, file: &FileEntry, violations: &mut Vec<LintResult>);
+
     /// Constants belong in `taxonomy_<domain>_constant.rs`, not inline. MEDIUM.
     fn check_capability_constant_placement(
         &self,

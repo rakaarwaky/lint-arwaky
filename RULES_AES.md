@@ -37,7 +37,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the full 7-layer specification.
 | -------- | ------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------- |
 | AES401 | Taxonomy Role     | HIGH     | Role  | Constant file contains non-constant declarations; primitives used in entity/error/event.        |
 | AES402 | Contract Role     | HIGH     | Role  | Contract trait/method uses primitive types instead of taxonomy VO or constant types.            |
-| AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, local const, inline test, or public helper. |
+| AES403 | Capabilities Role | HIGH/MEDIUM/LOW | Role  | Capability exceeds 3 types, has no protocol implementor, reversed block order, missing or misordered block markers, local const, inline test, or public helper. |
 | AES404 | Utility Role      | MEDIUM   | Role  | Utility contains struct/impl/trait/type-alias (Rust), class/interface/enum (Python/TS), or non-taxonomy imports |
 | AES405 | Agent Role        | MEDIUM   | Role  | Orchestrator contains too many types, or has no aggregate implementor or uses`Any` annotations. |
 | AES406 | Surface Role      | HIGH     | Role  | Passive surface contains active domain logic; file exceeds 15 functions.                        |
@@ -295,7 +295,7 @@ Checks for primitive types (`String`, `i32`, `bool`, `int`, `float`, etc.) in co
 
 **Severity:** HIGH / MEDIUM / LOW
 
-Capability routing, protocol enforcement, and 3-block structure. Six sub-checks — each with its own severity:
+Capability routing, protocol enforcement, and 3-block structure. Eight sub-checks — each with its own severity:
 
 | Sub-check                        | Severity   | Description                                                                                          |
 | -------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
@@ -303,13 +303,14 @@ Capability routing, protocol enforcement, and 3-block structure. Six sub-checks 
 | **CapabilityNoImplementor**      | **MEDIUM** | No struct/class in the capability file implements a `_protocol` contract trait.                        |
 | **CapabilityMultiProtocol**      | **MEDIUM** | File implements more than one protocol trait — should be split into separate capability files; shared helpers belong in `utility_*`. |
 | **CapabilityBlockOrder**         | **HIGH**   | Block 2 (protocol trait impl) does not precede Block 3 (inherent impl: ctors, std traits, helpers).    |
+| **CapabilityBlockMarkers**       | **MEDIUM** | The `// Block 1:` / `// Block 2:` / `// Block 3:` banners are not all present, are out of order, or declare a block above 3. |
 | **CapabilityLocalConstant**      | **MEDIUM** | File-level `const` declared inline; belongs in `taxonomy_<domain>_constant.rs`.                        |
 | **CapabilityEmbeddedTest**       | **LOW**    | `#[cfg(test)]` or `mod tests` declared inline; test code belongs in `tests/`.                          |
 | **CapabilityPublicHelper**       | **MEDIUM** | Block 3 helper with no production caller (own-module or external) is `pub`; change to `fn` or `pub(crate)` (tests in `tests/` compile as separate crate and require `pub`). |
 
-**Structure rule (3-block):** a capability file reads Block 1 (type + constructor) → Block 2 (protocol methods only) → Block 3 (factories, std traits, helpers). The `CapabilityBlockOrder` sub-check enforces the 2-before-3 half of that order.
+**Structure rule (3-block):** a capability file reads Block 1 (type + constructor) → Block 2 (protocol methods only) → Block 3 (factories, std traits, helpers). The `CapabilityBlockOrder` sub-check enforces the 2-before-3 half of that order by comparing two `impl` lines; `CapabilityBlockMarkers` reads the `Block <n>:` banner comments themselves, so a file that documents none of its three blocks is reported even when its two `impl` blocks happen to land in a valid order. A banner is `Block <digits>:` standing as its own word inside a comment — the colon keeps prose such as `Block 1 (types) -> Block 2` from reading as a marker, and the word boundary keeps `Sub-Block 4:` out.
 
-**Language coverage:** all six sub-checks run for Rust, Python, and TypeScript/JavaScript. Each language has its own implementation of the block-order, constant-placement, test-placement, and helper-visibility sub-checks, since the syntactic markers differ (`impl X for` vs `class X(Base)` vs `class X implements I`).
+**Language coverage:** all eight sub-checks run for Rust, Python, and TypeScript/JavaScript. Each language has its own implementation of the block-order, constant-placement, test-placement, and helper-visibility sub-checks, since the syntactic markers differ (`impl X for` vs `class X(Base)` vs `class X implements I`). The block-marker, type-budget, implementor, and multi-protocol sub-checks are language-agnostic and share one implementation.
 
 **FIX:** Ensure capability implements its protocol; split routing across multiple capabilities; reorder impl blocks so the protocol implementation comes first.
 

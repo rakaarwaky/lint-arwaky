@@ -16,8 +16,12 @@ use shared_common::taxonomy_severity_vo::Severity;
 use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_external_lint::contract_external_lint_protocol::INormalizeProtocol;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 /// Shared normalizer for the tool-native severity mapping.
 pub struct OutputNormalizer;
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl INormalizeProtocol for OutputNormalizer {
     fn normalize(
@@ -148,6 +152,8 @@ impl INormalizeProtocol for OutputNormalizer {
         }
     }
 }
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 /// Carry a tool-native severity token into the `Severity` enum as an ordered
 /// rank, so the per-tool mapping can compare it without string literals.

@@ -9,9 +9,13 @@ use shared_structure_rules::taxonomy_structure_rules_request::{
 };
 use shared_structure_rules::taxonomy_structure_rules_response::StructureResponse;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
 /// AES703: checks that surface-dominated folders carry only surface files plus
 /// permitted support files, and document themselves with DESIGN.md.
 pub struct SurfacePurityAuditor {}
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
     fn audit_surface(&self, request: StructureRequest) -> StructureResponse {
@@ -43,6 +47,8 @@ impl IStructureSurfacePurityProtocol for SurfacePurityAuditor {
 }
 
 // ─── Private helpers ───────────────────────────────────────────────────────────
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
 
 /// Resolve the workspace root: the nearest ancestor that contains one of the
 /// member directories. If *root* itself holds them, it is the root; if it is

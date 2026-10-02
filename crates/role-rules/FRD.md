@@ -166,12 +166,24 @@ flowchart TD
     - Violation: "missing protocol implementor".
   - Internal helper types (structs/classes without protocol impl) are allowed and not flagged individually.
   - Detection uses AST parse metadata when available; falls back to line-based scanning when absent.
+  - **Rule 3 — Single protocol**: exactly 1 protocol trait per capability file; 2 or more must be split, with shared helpers moved to a `utility_*` file.
+  - **Rule 4 — Block order**: Block 2 (protocol impl) must precede Block 3 (inherent impl). HIGH.
+  - **Rule 5 — Block markers**: the `Block 1:` / `Block 2:` / `Block 3:` banner comments must all be present, in ascending order, and none above 3. MEDIUM. A banner is `Block <digits>:` standing as a whole word inside a comment, so prose such as `Block 1 (types) -> Block 2` and `Sub-Block 4:` are not markers. This is distinct from Rule 4: Rule 4 compares two `impl` lines and cannot tell a file that documents its three blocks from one whose `impl` blocks merely happen to land in a valid order.
+  - **Rule 6 — Constant placement**: a file-level `const` is a violation; it belongs in the feature's taxonomy constant module. An associated `const` nested in an `impl` is exempt.
+  - **Rule 7 — Test placement**: an inline `#[cfg(test)]` or `mod tests` is a violation; test code belongs in the feature's test target.
+  - **Rule 8 — Helper visibility**: a Block 3 helper that is `pub` with no production caller should be `fn`, or `pub(crate)` when a same-crate test module calls it. A helper called only from a `tests/` target stays `pub`, because that target compiles as a separate crate.
 - **Edge Cases**:
 
   - Capability file with no implementor → AES403 violation (Rule 2).
   - File with exactly 3 types → passes Rule 1.
   - File with > 3 types → AES403 violation (Rule 1 only, Rule 2 skipped).
   - File with helper struct + implementor struct = 2 types → passes Rule 1, passes Rule 2.
+  - File with all three banners in order → passes Rule 5.
+  - File with no `Block N:` banner at all → AES403 violation (Rule 5).
+  - File with `Block 1:` and `Block 3:` but no `Block 2:` → AES403 violation (Rule 5).
+  - File whose banners read 1 → 3 → 2 → AES403 violation (Rule 5).
+  - File carrying a `Block 4:` banner → AES403 violation (Rule 5).
+  - A comment containing the prose `Block 1 (types) -> Block 2` → not a marker, so it neither satisfies nor violates Rule 5.
 - **Error Handling**: Emit AES403 with the violation kind (`TooManyTypes` or `MissingProtocolImplementor`), file path, and relevant counts.
 
 ---
@@ -353,6 +365,14 @@ Each scenario is stated below as a table of cases: the input condition and the e
 | 4 | Capability file with 3 types including helper struct | No violation (helper allowed, count = 3) |
 | 5 | Capability file with exactly 3 types, 1 implementor | No violation |
 | 6 | Capability file with >3 types, no implementor | AES403 — TooManyTypes only (Rule 2 skipped) |
+| 7 | Capability file carrying all three block banners in order | No violation |
+| 8 | Capability file with no block banner comment | AES403 — BlockMarkers (no markers) |
+| 9 | Capability file missing the `Block 2:` banner | AES403 — BlockMarkers (missing marker) |
+| 10 | Capability file whose banners are out of order (1 → 3 → 2) | AES403 — BlockMarkers (out of order) |
+| 11 | Capability file carrying a `Block 4:` banner | AES403 — BlockMarkers (beyond Block 3) |
+| 12 | Comment containing prose `Block 1 (types) -> Block 2` | Not read as a marker |
+| 13 | Comment containing `Sub-Block 4:` | Not read as a marker |
+| 14 | Capability file implementing 2 protocol traits | AES403 — MultiProtocol |
 
 ### AES404 — Utility Purity
 

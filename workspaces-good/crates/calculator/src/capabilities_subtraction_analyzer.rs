@@ -2,11 +2,25 @@ use calculator_shared::contract_calculator_protocol::ICalculatorProtocol;
 use calculator_shared::taxonomy_expression_vo::ExpressionVO;
 use calculator_shared::taxonomy_result_vo::ResultVO;
 
+// ─── Block 1: Struct Definition ────────────────────────────
+
+/// Subtracts the right operand of an expression from the left one.
 pub struct SubtractionAnalyzer;
+
+// ─── Block 2: Protocol Trait Implementation ────────────────
 
 impl ICalculatorProtocol for SubtractionAnalyzer {
     fn evaluate(&self, expr: &ExpressionVO) -> Option<ResultVO> {
         let value = expr.left - expr.right;
         Some(ResultVO::new(expr.left, &expr.op, expr.right, value))
+    }
+}
+
+// ─── Block 3: Constructors, Std Traits, Helpers ────────────
+
+impl SubtractionAnalyzer {
+    /// The analyzer holds no state, so construction takes no arguments.
+    pub fn new() -> Self {
+        Self
     }
 }
