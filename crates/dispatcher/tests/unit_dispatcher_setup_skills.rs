@@ -5,8 +5,8 @@ use shared_common::taxonomy_suggestion_vo::DescriptionVO;
 use shared_common::taxonomy_tool_name_vo::ToolName;
 use shared_filesystem::contract_filesystem_protocol::IFileSystemIOProtocol;
 use shared_project_setup::{
-    EMBEDDED_SKILLS, ISetupAggregate, ProjectLanguageVO, ProjectLanguagesVO, SetupRequest,
-    SetupResponse,
+    EMBEDDED_SKILLS, EMBEDDED_SKILLS_COUNT, ISetupAggregate, ProjectLanguageVO, ProjectLanguagesVO,
+    SetupRequest, SetupResponse,
 };
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -88,8 +88,6 @@ fn test_empty_detected_languages_installs_all_by_default() {
 
 #[test]
 fn test_embedded_skills_constants_catalog() {
-    assert_eq!(EMBEDDED_SKILLS.len(), 56);
-
     let mut py_count = 0;
     let mut rs_count = 0;
     let mut ts_count = 0;
@@ -120,19 +118,128 @@ fn test_embedded_skills_constants_catalog() {
         }
     }
 
-    // Each skill ships exactly one language-agnostic SKILL.md.
+    // The counts are derived rather than hard-coded. Hard-coding them made
+    // adding a single skill file a three-line test edit, and the numbers went
+    // stale silently — `HOW-TO-MAKE-DATA.md` sat in `crates/shared/skills/`
+    // un-embedded for a year precisely because nothing failed when the catalog
+    // and the directory disagreed. The `catalog_matches_the_skills_directory`
+    // test below is the real guard; this one only checks internal coherence.
     assert_eq!(
-        EMBEDDED_SKILLS
-            .iter()
-            .filter(|s| s.relative_path().ends_with("SKILL.md"))
-            .count(),
-        11
+        py_count + rs_count + ts_count + generic_count,
+        EMBEDDED_SKILLS.len(),
+        "every entry must fall into exactly one language bucket"
+    );
+    assert_eq!(EMBEDDED_SKILLS.len(), EMBEDDED_SKILLS_COUNT);
+
+    // Every skill folder ships exactly one language-agnostic SKILL.md, and no
+    // two skills share one. The count is derived from the catalog rather than
+    // pinned to a literal, so adding a skill does not mean editing this test.
+    let skill_md_names: std::collections::BTreeSet<&str> = EMBEDDED_SKILLS
+        .iter()
+        .filter(|s| s.relative_path().ends_with("SKILL.md"))
+        .map(|s| s.name())
+        .collect();
+    let skill_md_entries = EMBEDDED_SKILLS
+        .iter()
+        .filter(|s| s.relative_path().ends_with("SKILL.md"))
+        .count();
+
+    assert_eq!(
+        skill_md_entries,
+        skill_md_names.len(),
+        "no two skills may share a SKILL.md name"
     );
 
-    assert_eq!(py_count, 11);
-    assert_eq!(rs_count, 11);
-    assert_eq!(ts_count, 11);
-    assert_eq!(generic_count, 23);
+    // A skill is a folder, and a folder holds exactly one SKILL.md. Any name
+    // appearing in the catalog without a SKILL.md is either the pack README or
+    // a reference file that escaped its skill folder.
+    let catalogued_names: std::collections::BTreeSet<&str> =
+        EMBEDDED_SKILLS.iter().map(|s| s.name()).collect();
+    let names_without_skill_md: std::collections::BTreeSet<&str> = catalogued_names
+        .into_iter()
+        .filter(|n| !skill_md_names.contains(n))
+        .collect();
+    assert_eq!(
+        names_without_skill_md,
+        std::collections::BTreeSet::from(["README"]),
+        "only the skills README may be catalogued without a SKILL.md"
+    );
+
+    // The three language columns are symmetric — a language with fewer
+    // references than the others would mean `init` installs an incomplete
+    // skill for that language.
+    assert_eq!(
+        py_count, rs_count,
+        "python and rust reference sets must be the same size"
+    );
+    assert_eq!(
+        rs_count, ts_count,
+        "rust and typescript reference sets must be the same size"
+    );
+}
+
+/// The catalog must match `crates/shared/skills/` on disk, entry for entry.
+///
+/// This is the guard that would have caught `HOW-TO-MAKE-DATA.md` being added
+/// without a regeneration, and it is the failure `tools/regenerate_skills.py`
+/// used to produce silently — the generator wrote to a filename no module
+/// declared, so the committed constant never moved and no test noticed.
+#[test]
+fn catalog_matches_the_skills_directory() {
+    let skills_dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("shared")
+        .join("skills");
+    let mut on_disk: Vec<String> = walk_md(&skills_dir)
+        .into_iter()
+        .map(|p| {
+            p.strip_prefix(&skills_dir)
+                .expect("path is under the skills dir")
+                .to_string_lossy()
+                .replace('\\', "/")
+        })
+        .collect();
+    on_disk.sort();
+
+    let mut embedded: Vec<String> = EMBEDDED_SKILLS
+        .iter()
+        .map(|s| s.relative_path().to_string())
+        .collect();
+    embedded.sort();
+
+    let missing: Vec<&String> = on_disk.iter().filter(|f| !embedded.contains(f)).collect();
+    let stale: Vec<&String> = embedded.iter().filter(|f| !on_disk.contains(f)).collect();
+
+    assert!(
+        missing.is_empty(),
+        "skill file(s) on disk are not embedded — run `python3 tools/regenerate_skills.py`: {missing:?}"
+    );
+    assert!(
+        stale.is_empty(),
+        "embedded skill(s) no longer exist on disk — run `python3 tools/regenerate_skills.py`: {stale:?}"
+    );
+    assert_eq!(
+        on_disk.len(),
+        EMBEDDED_SKILLS_COUNT,
+        "EMBEDDED_SKILLS_COUNT must equal the number of skill files"
+    );
+}
+
+/// Recursively collect every `.md` path under `dir`.
+fn walk_md(dir: &Path) -> Vec<PathBuf> {
+    let mut found = Vec::new();
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return found;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            found.extend(walk_md(&path));
+        } else if path.extension().is_some_and(|e| e == "md") {
+            found.push(path);
+        }
+    }
+    found
 }
 
 // ── Mock for collect_init integration test ─────────────────
@@ -392,12 +499,17 @@ fn test_collect_init_python_only_skips_rust_and_ts_skills() {
         "typescript references must NOT be installed in a python-only project"
     );
 
-    // Total skill files written for python-only project: 23 (language-agnostic) + 11 (python refs) = 34
+    // Derived from the catalog rather than hard-coded: everything
+    // language-agnostic, plus the python half of the polyglot skills.
+    let expected = EMBEDDED_SKILLS
+        .iter()
+        .filter(|s| matches!(s.language(), None | Some("python")))
+        .count();
     let skill_files_count = written
         .keys()
         .filter(|k| k.contains(".agents/skills/"))
         .count();
-    assert_eq!(skill_files_count, 34);
+    assert_eq!(skill_files_count, expected);
 }
 
 #[test]
@@ -432,10 +544,15 @@ fn test_collect_init_rust_only_skips_python_and_ts_skills() {
             .any(|k| k.contains("HOW-TO-MAKE-TYPESCRIPT-"))
     );
 
-    // Total skill files written for rust-only project: 23 (language-agnostic) + 11 (rust refs) = 34
+    // Derived from the catalog rather than hard-coded: everything
+    // language-agnostic, plus the rust half of the polyglot skills.
+    let expected = EMBEDDED_SKILLS
+        .iter()
+        .filter(|s| matches!(s.language(), None | Some("rust")))
+        .count();
     let skill_files_count = written
         .keys()
         .filter(|k| k.contains(".agents/skills/"))
         .count();
-    assert_eq!(skill_files_count, 34);
+    assert_eq!(skill_files_count, expected);
 }

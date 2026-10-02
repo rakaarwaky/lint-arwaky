@@ -11,8 +11,10 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// copies it into OUT_DIR so `include_str!` picks up changes at compile time;
 /// `[package] include` ships the same source in the published crate.
 /// Regenerate this constant with `python3 tools/regenerate_skills.py` after
-/// adding, removing, or renaming a skill file.
-pub const EMBEDDED_SKILLS_COUNT: usize = 56;
+/// adding, removing, or renaming a skill file —
+/// `catalog_matches_the_skills_directory` in
+/// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
+pub const EMBEDDED_SKILLS_COUNT: usize = 57;
 
 pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
     EmbeddedSkillVO::new(
@@ -162,6 +164,15 @@ pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[
         include_str!(concat!(
             env!("OUT_DIR"),
             "/skills/aes-docs/references/HOW-TO-MAKE-CONTRIBUTING.md"
+        )),
+        None,
+    ),
+    EmbeddedSkillVO::new(
+        "aes-docs",
+        "aes-docs/references/HOW-TO-MAKE-DATA.md",
+        include_str!(concat!(
+            env!("OUT_DIR"),
+            "/skills/aes-docs/references/HOW-TO-MAKE-DATA.md"
         )),
         None,
     ),

@@ -1,16 +1,29 @@
 #!/usr/bin/env python3
-"""Regenerate taxonomy_skills_constant.rs from crates/shared/skills on disk.
+"""Regenerate taxonomy_project_setup_constant.rs from crates/shared/skills.
 
 Each skill ships one language-agnostic SKILL.md (always installed) plus
 optional reference(s)/<HOW-TO-MAKE-*.md> files. Reference files whose
 filename contains PYTHON, RUST, or TYPESCRIPT are installed only when that
 language is detected; all others are language-agnostic.
 
-The skills markdown lives in `crates/shared/skills/` and is the single source
-of truth. `build.rs` copies it into `OUT_DIR`, while `[package] include` ships
-the same files in published crates.
+`crates/shared/skills/` is the single source of truth for the markdown.
+`build.rs` copies it into `OUT_DIR` so the `include_str!` calls below can
+resolve, and `[package] include` ships the same files in published crates.
 
-Run:  python3 tools/regenerate_skills.py [repo-root]
+Rust cannot enumerate a directory at compile time, so this script walks the
+skills tree once and emits `EMBEDDED_SKILLS` — one `EmbeddedSkillVO` per file,
+carrying the name, relative path, embedded content, and language tag. That
+constant is what `lint-arwaky init` writes into a target project's
+`.agents/skills/`.
+
+Run after adding, removing, or renaming any file under `crates/shared/skills/`:
+
+    python3 tools/regenerate_skills.py [repo-root]
+
+The catalog is verified against the directory by the
+`catalog_matches_the_skills_directory` test in
+`crates/dispatcher/tests/unit_dispatcher_setup_skills.rs`, so a skill file
+that was never embedded fails CI rather than shipping silently uninstalled.
 """
 
 import pathlib
@@ -19,7 +32,21 @@ import sys
 
 REPO = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
 SKILLS = REPO / "crates" / "shared" / "skills"
-OUT = REPO / "crates" / "shared" / "src" / "project_setup" / "taxonomy_skills_constant.rs"
+# The taxonomy constant was renamed to `taxonomy_project_setup_constant.rs` when
+# the shared crate's filenames were consolidated to match their domain folder
+# (#422). Writing to the old name produced an untracked orphan module that is
+# declared in no `mod.rs`, so it drew AES501 (taxonomy orphan) and AES305
+# (duplicate code) on the very next self-lint — the failure mode the rename was
+# meant to prevent.
+OUT = REPO / "crates" / "shared" / "src" / "project_setup" / "taxonomy_project_setup_constant.rs"
+
+# Fail loudly rather than emitting a file nothing compiles. A wrong output path
+# is the exact defect this script had, and it went unnoticed for a year because
+# the script exits 0 either way.
+if not OUT.parent.is_dir():
+    sys.exit(f"error: output directory does not exist: {OUT.parent}")
+if not SKILLS.is_dir():
+    sys.exit(f"error: skills directory does not exist: {SKILLS}")
 
 # Detect language from filename: PYTHON-TAXONOMY, RUST-AGENT, TYPESCRIPT-SURFACE, etc.
 LANG_PATTERNS = [
@@ -60,7 +87,11 @@ for rel in files:
 
 lines = [
     "// PURPOSE: Embedded skills constants compiled directly into binary",
-    "use crate::project_setup::taxonomy_setup_vo::EmbeddedSkillVO;",
+    # `crate::`, not `crate::project_setup::` — this file is a sibling module of
+    # the VO it imports. The old spelling named a path that stopped existing
+    # when the folder names changed, which is why the committed constant had to
+    # be hand-corrected after the last regeneration.
+    "use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;",
     "",
     "/// All embedded skills compiled into the binary for initialization.",
     "///",
@@ -72,7 +103,9 @@ lines = [
     "/// copies it into OUT_DIR so `include_str!` picks up changes at compile time;",
     "/// `[package] include` ships the same source in the published crate.",
     "/// Regenerate this constant with `python3 tools/regenerate_skills.py` after",
-    "/// adding, removing, or renaming a skill file.",
+    "/// adding, removing, or renaming a skill file —",
+    "/// `catalog_matches_the_skills_directory` in",
+    "/// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.",
     f"pub const EMBEDDED_SKILLS_COUNT: usize = {len(entries)};",
     "",
     "pub const EMBEDDED_SKILLS: &[EmbeddedSkillVO] = &[",
@@ -83,12 +116,11 @@ for name, rel, lang in entries:
     lines.append(f'        "{name}",')
     lines.append(f'        "{rel}",')
     lines.append(f'        include_str!(concat!(env!("OUT_DIR"), "/skills/{rel}")),')
-    # NOTE: `crates/shared/skills/` is the single source of truth
-    # for skill markdown. `build.rs` stages it into OUT_DIR at compile time;
-    # for published crates the staging copy is packaged via `[package] include`
-    # in Cargo.toml. After editing any skill file in `crates/shared/skills/`, run
-    # `python3 tools/regenerate_skills.py` to regenerate
-    # `taxonomy_skills_constant.rs`.
+    # NOTE: `crates/shared/skills/` is the single source of truth for skill
+    # markdown. `build.rs` stages it into OUT_DIR at compile time; for published
+    # crates the staging copy is packaged via `[package] include` in Cargo.toml.
+    # After editing any skill file there, run this script — the
+    # `catalog_matches_the_skills_directory` test fails on a stale catalog.
     lines.append(f"        {lang_rs},")
     lines.append("    ),")
 lines.append("];")

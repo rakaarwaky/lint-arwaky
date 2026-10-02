@@ -26,6 +26,7 @@ pub use taxonomy_project_setup_response::SetupResponse;
 // ── Taxonomy types ──
 pub use contract_setup_aggregate::SetupMgmtProtocol;
 pub use taxonomy_project_setup_constant::EMBEDDED_SKILLS;
+pub use taxonomy_project_setup_constant::EMBEDDED_SKILLS_COUNT;
 pub use taxonomy_project_setup_vo::CreateConfigDirResult;
 pub use taxonomy_project_setup_vo::EmbeddedSkillVO;
 pub use taxonomy_project_setup_vo::McpBinaryNameVO;
