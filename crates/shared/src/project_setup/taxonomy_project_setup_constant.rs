@@ -10,8 +10,8 @@ use crate::taxonomy_project_setup_vo::EmbeddedSkillVO;
 /// The markdown source of truth lives in `crates/shared/skills/`. `build.rs`
 /// copies it into OUT_DIR so `include_str!` picks up changes at compile time;
 /// `[package] include` ships the same source in the published crate.
-/// Regenerate this constant with `python3 tools/regenerate_skills.py` after
-/// adding, removing, or renaming a skill file —
+/// Update this constant manually — edit this file after adding, removing, or
+/// renaming a skill file —
 /// `catalog_matches_the_skills_directory` in
 /// `crates/dispatcher/tests/unit_dispatcher_setup_skills.rs` fails otherwise.
 pub const EMBEDDED_SKILLS_COUNT: usize = 57;

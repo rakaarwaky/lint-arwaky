@@ -26,8 +26,8 @@ Before making changes, observe these non-negotiable rules:
    acceptable fixes. Correct the cause instead.
 5. **Single source of truth**: `crates/shared/skills/` holds the skill markdown;
    `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` embeds
-   it into the binary and is generated — run
-   `python3 tools/regenerate_skills.py` after any skill file is added, removed,
+   it into the binary and is maintained manually — update
+   file is added, removed, or renamed. The `catalog_matches_the_skills_directory`
    or renamed. The `catalog_matches_the_skills_directory` test fails when the
    two disagree, so commit the regenerated constant with the skill change.
 
@@ -143,11 +143,9 @@ A change to Markdown only, with no code edit.
    ./target/debug/lint-arwaky-cli docs .
    ```
 
-3. If a skill file changed, regenerate the derived constant:
+3. If a skill file changed, update the derived constant manually:
 
-   ```bash
-   python3 tools/regenerate_skills.py
-   ```
+    The embedded constant in `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` is maintained by hand — edit it after any skill file is added, removed, or renamed. The `catalog_matches_the_skills_directory` test fails when the two disagree.
 
 4. Commit with `docs:` and open a PR.
 

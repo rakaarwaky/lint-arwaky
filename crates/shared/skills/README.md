@@ -14,8 +14,8 @@ subdirectory is one skill, holding a `SKILL.md` at its root and an optional
 
 ```bash
 # 1. Edit the markdown source in this folder.
-# 2. Regenerate the embedded constant after adding, removing, or renaming a file.
-python3 tools/regenerate_skills.py
+# 2. Update the embedded constant after adding, removing, or renaming a file.
+    crates/shared/src/project_setup/taxonomy_project_setup_constant.rs (manual update)
 
 # 3. Rebuild, then provision into a target project.
 CARGO_INCREMENTAL=0 cargo build --release
@@ -38,9 +38,9 @@ crates/shared/skills/
 ├── <skill-name>/SKILL.md                     # one directory per skill
 └── <skill-name>/references/HOW-TO-MAKE-*.md  # optional per-language playbooks
 
-        │  tools/regenerate_skills.py
+        │  (manual update)
         ▼
-crates/shared/src/project_setup/  (generated skills constant)
+crates/shared/src/project_setup/  (updated skills constant)
         │  include_str! at compile time
         ▼
 lint-arwaky-cli binary
@@ -61,7 +61,7 @@ anything not in this folder — are left alone.
 | --- | --- |
 | `crates/shared/skills/<name>/SKILL.md` | The skill body: trigger, purpose, and routing. |
 | `crates/shared/skills/<name>/references/` | Per-language HOW-TO playbooks, filtered at provision time. |
-| `tools/regenerate_skills.py` | Regenerates the embedded constant from this folder. |
+| `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs` | Maintains the embedded constant — update manually after adding, removing, or renaming a skill file. |
 | `crates/shared/src/project_setup/` | The generated constant that `init` reads from. |
 
 All provisioned skills follow the `aes-<layer>` convention: `aes-taxonomy`,
@@ -72,7 +72,6 @@ All provisioned skills follow the `aes-<layer>` convention: `aes-taxonomy`,
 
 | Command | When to run it |
 | --- | --- |
-| `python3 tools/regenerate_skills.py` | After adding, removing, or renaming a skill file. |
 | `CARGO_INCREMENTAL=0 cargo build --release` | After any skill content change, to re-embed. |
 | `lint-arwaky-cli init <project>` | To provision the pack into a target project. |
 | `lint-arwaky-cli docs <path>` | To audit the provisioned pack for broken links. |
@@ -107,8 +106,8 @@ A clean run means every skill is reachable and every cross-reference resolves.
 
 1. Edit or add a skill directory in this folder, following the `aes-<layer>`
    naming convention.
-2. Run `python3 tools/regenerate_skills.py` and commit the regenerated
-   constant alongside the markdown change.
+2. Update `crates/shared/src/project_setup/taxonomy_project_setup_constant.rs`
+    (manual update) to reflect the changed skill set and commit the updated
 3. Run `lint-arwaky-cli docs crates/shared/skills` and confirm it is clean.
 
 Skill content changes land in the binary at the next build, so a skill fix
