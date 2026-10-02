@@ -199,7 +199,7 @@ Never use `git rebase -i` on a stack branch — use `mergify stack {edit,fixup,s
 ```bash
 bash scripts/gates.sh                       # fmt + clippy + self-lint + tests
 cargo nextest run --workspace --lib --tests # all tests, 3× faster
-python3 tools/check_doc_consistency.py      # cross-document drift (CI: "Doc Consistency")
+python3 crates/doc-rules/scripts/check_doc_consistency.py      # cross-document drift (CI: "Doc Consistency")
 ```
 
 ## Definition of Done
@@ -211,7 +211,7 @@ A change is done when all of the following hold:
 - `lint-arwaky-cli check .` reports 0 violations.
 - `lint-arwaky-cli scan workspaces-good/crates` still reports 0 violations.
 - `lint-arwaky-cli docs .` reports 0 document invariant violations.
-- `python3 tools/check_doc_consistency.py` passes: no rule-code range, Markdown anchor, shared data-model, auto-fix reason-code, or performance-NFR drift.
+- `python3 crates/doc-rules/scripts/check_doc_consistency.py` passes: no rule-code range, Markdown anchor, shared data-model, auto-fix reason-code, or performance-NFR drift.
 - Pass/fail criteria in [TEST.md](TEST.md) hold for the touched paths.
 - A new AES rule adds a trigger file to all 3 test workspaces and a row in the TEST.md per-rule matrix.
 - A PR that fixes behavior updates the invalidated ROADMAP.md backlog rows in the same change.

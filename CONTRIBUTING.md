@@ -131,7 +131,7 @@ A new rule, a fix to an existing rule, or a change to crate behaviour.
    Then run the doc-consistency gate, which fails on exactly these drifts:
 
    ```bash
-   python3 tools/check_doc_consistency.py
+   python3 crates/doc-rules/scripts/check_doc_consistency.py
    ```
 
 6. Commit with a conventional prefix (`feat:`, `fix:`, `refactor:`) and open a PR.
@@ -159,7 +159,7 @@ A change to Markdown only, with no code edit.
    reason table:
 
    ```bash
-   python3 tools/check_doc_consistency.py
+   python3 crates/doc-rules/scripts/check_doc_consistency.py
    ```
 
 5. Commit with `docs:` and open a PR.
