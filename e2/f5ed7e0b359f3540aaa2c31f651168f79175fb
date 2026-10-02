@@ -1,0 +1,24 @@
+AGENTS.md
+  h_9fc4aac70b107c 167
+CONTRIBUTING.md
+  h_9fc4aac70b107c 30,153
+crates/dispatcher/tests/unit_dispatcher_setup_skills.rs
+  h_9fc4aac70b107c 184,215,219
+crates/shared/skills/README.md
+  h_9fc4aac70b107c 18,41,64,75,110
+crates/shared/src/project_setup/taxonomy_project_setup_constant.rs
+  h_9fc4aac70b107c 13
+scripts/gates.sh
+  h_9fc4aac70b107c 87,90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e2f5ed7e0b359f3540aaa2c31f651168f79175fb",
+  "prompts": {},
+  "humans": {
+    "h_9fc4aac70b107c": {
+      "author": "raka <raka@users.noreply.github.com>"
+    }
+  }
+}
