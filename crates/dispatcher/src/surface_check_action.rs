@@ -139,7 +139,7 @@ where
 }
 
 /// Canonicalize a path via the filesystem aggregate (`None` on failure).
-fn canonicalize_via(fs: &Arc<dyn IFilesystemAggregate>, path: &Path) -> Option<PathBuf> {
+pub(crate) fn canonicalize_via(fs: &Arc<dyn IFilesystemAggregate>, path: &Path) -> Option<PathBuf> {
     match fs
         .execute(FilesystemRequest::canonicalize(path))
         .into_paths()
@@ -826,8 +826,8 @@ pub(crate) fn run_single_file_scan(
             &agg.external,
             crate::surface_external_action::load_config_entries(scan_root, seam.aggregate.as_ref()),
             seam.aggregate.as_ref(),
-        ),
-    );
+        )
+    }));
     all.retain(|v| {
         let p = std::path::Path::new(&v.file.value);
         p.is_absolute() && p.starts_with(scan_root)
