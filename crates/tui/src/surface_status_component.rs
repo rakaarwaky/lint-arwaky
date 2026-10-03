@@ -97,6 +97,52 @@ impl StatusComponent {
                     violation_style,
                 ),
             ])
+        } else if state.actions.pending {
+            // Busy indicator for a pending background action (#565):
+            // mirrors the scan busy path with a distinct "Running …" line.
+            let selected_name = match state.selected_entry() {
+                Some(entry) => entry.display_name(),
+                None => "(none)".to_string(),
+            };
+
+            let violation_style = if state.violation_count > 0 {
+                Style::default().fg(theme::color(theme::VIOLATIONS))
+            } else {
+                Style::default().fg(theme::color(theme::CLEAN))
+            };
+
+            Line::from(vec![
+                Span::styled(
+                    " Running ",
+                    Style::default()
+                        .fg(theme::color(theme::ACCENT))
+                        .add_modifier(ratatui::style::Modifier::BOLD),
+                ),
+                Span::styled(
+                    &state.actions.pending_label,
+                    Style::default().fg(theme::color(theme::PENDING)),
+                ),
+                Span::styled(
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    "Selected: ",
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    selected_name,
+                    Style::default().fg(theme::color(theme::ACCENT)),
+                ),
+                Span::styled(
+                    format!(" {} ", vsep()),
+                    Style::default().fg(theme::color(theme::SEPARATOR)),
+                ),
+                Span::styled(
+                    format!("{} {} viol.", warn(), state.violation_count),
+                    violation_style,
+                ),
+            ])
         } else {
             let selected_name = match state.selected_entry() {
                 Some(entry) => entry.display_name(),
