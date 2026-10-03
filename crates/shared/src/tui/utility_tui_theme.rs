@@ -3,7 +3,18 @@
 // When the NO_COLOR environment variable is set, all colors become monochrome
 // (white on black background) so the TUI remains readable on dumb terminals
 // and light-theme setups. This covers the whole TUI — not just the status bar.
-use ratatui::style::Color;
+//
+// Contrast limit: every token here names an ANSI colour, and the terminal
+// emulator — not this application — decides the RGB each name renders to. A
+// low-contrast terminal theme can make `HIGHLIGHT` (`DarkGray`) nearly vanish
+// against the canvas. The app cannot sample or override the user's theme, so
+// it ships an opt-in mode instead: LINT_ARWAKY_TUI_HIGH_CONTRAST swaps the
+// selection band for reversed video, which inverts the colours the terminal is
+// already using successfully. See `highlight_style`.
+use ratatui::style::{Color, Modifier, Style};
+
+/// Environment variable that opts the TUI into the high-contrast rendering mode.
+pub const HIGH_CONTRAST_VAR: &str = "LINT_ARWAKY_TUI_HIGH_CONTRAST";
 
 /// TUI design tokens — central color palette (I7).
 pub const ACCENT: Color = Color::Cyan;
@@ -61,4 +72,46 @@ pub fn color_with_override(value: Color, no_color_requested: bool) -> Color {
     } else {
         value
     }
+}
+
+/// Returns true when the user has requested the high-contrast rendering mode.
+///
+/// Opt-in only: `COLORFGBG` is absent on many terminals and misreports on some,
+/// so inferring the background would flip the selection band on an unknown
+/// basis. `NO_COLOR` wins over this mode; see [`highlight_style`].
+pub fn high_contrast() -> bool {
+    high_contrast_with_override(no_color(), std::env::var_os(HIGH_CONTRAST_VAR).is_some())
+}
+
+/// Pure form of [`high_contrast`] used by rendering tests without mutating
+/// process-wide environment state, which the test runner executes in parallel.
+pub fn high_contrast_with_override(
+    no_color_requested: bool,
+    high_contrast_requested: bool,
+) -> bool {
+    !no_color_requested && high_contrast_requested
+}
+
+/// Resolve the style for a selected row, the one element whose contrast the
+/// terminal theme can actually break.
+///
+/// Default mode paints `HIGHLIGHT` as a background, which disappears when the
+/// user's theme maps `DarkGray` close to their background. High-contrast mode
+/// uses reversed video instead: the terminal swaps the foreground and
+/// background colours it is already rendering legibly, so the band stays
+/// visible on light and dark themes alike without the app knowing the
+/// terminal's palette.
+pub fn highlight_style() -> Style {
+    highlight_style_with_override(high_contrast())
+}
+
+/// Pure form of [`highlight_style`] for rendering tests that cannot set
+/// process-wide environment state.
+pub fn highlight_style_with_override(high_contrast_requested: bool) -> Style {
+    let base = if high_contrast_requested {
+        Style::default().add_modifier(Modifier::REVERSED)
+    } else {
+        Style::default().bg(HIGHLIGHT)
+    };
+    base.add_modifier(Modifier::BOLD)
 }

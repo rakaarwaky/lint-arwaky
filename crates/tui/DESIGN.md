@@ -12,6 +12,30 @@ renderer resolves a token through the `color()` helper rather than applying a
 palette constant, so `NO_COLOR` collapses the whole surface to the terminal's
 monochrome default in one place.
 
+### Contrast Ownership
+
+Every token names an ANSI colour, and the terminal emulator decides the RGB each
+name renders to. This application cannot sample the user's palette or override
+it, so absolute contrast is out of its control. That is a stated constraint of
+terminal rendering, not an oversight.
+
+One element is interactive enough to break under it: the selection band, which
+paints `HIGHLIGHT` (`DarkGray`) as a background. A low-contrast terminal theme
+that maps `DarkGray` close to its own background makes the band vanish, and
+`NO_COLOR` is too blunt an answer because it strips every colour including the
+diagnostic ones. `LINT_ARWAKY_TUI_HIGH_CONTRAST` is the third option: it
+replaces that band with reversed video, so the terminal swaps the two colours
+it is already rendering legibly and the selection stays visible on light and
+dark themes alike. The mode is opt-in, because `COLORFGBG` is missing on many
+terminals and unreliable on others, so inferring a background would flip the
+band on an unknown basis. `NO_COLOR` wins when both variables are set, because
+a request for no colour is a stricter instruction than a request for more
+contrast.
+
+Structural chrome (`SEPARATOR`, `SCROLLBAR`) stays out of the mode. Those
+elements are meant to recede behind the data; raising their contrast would make
+the layout compete with the content.
+
 ### Colors
 
 Every token is a **role**, not a palette entry. There are three accent roles
@@ -141,6 +165,8 @@ from the state and hold none of their own.
   findings visible alongside the error.
 - No renderer names a `Color` literal. It resolves a token, so `NO_COLOR`
   reaches every pane.
+- The selection band resolves through `highlight_style()`, not a raw
+  `HIGHLIGHT` background, so `LINT_ARWAKY_TUI_HIGH_CONTRAST` reaches it.
 
 ### Change Checklist
 
