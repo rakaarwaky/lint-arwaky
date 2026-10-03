@@ -141,6 +141,45 @@ impl SurfaceLintExecutor {
         }
     }
 
+    /// Scan with a cooperative cancel token. Checks the flag between linter
+    /// phases and stops early when set, returning a partial result with
+    /// `cancelled = true` so callers can distinguish an early stop from a
+    /// normal completion.
+    pub fn scan_with_cancel<F>(
+        &self,
+        path: &str,
+        cancel: &std::sync::atomic::AtomicBool,
+        on_progress: F,
+    ) -> LintExecutionResult
+    where
+        F: FnMut(String, usize, usize) + Send,
+    {
+        let file_path = match validated_path(path) {
+            Ok(path) => path,
+            Err(error) => return error,
+        };
+        let opts = ScanOptions {
+            path: Some(file_path),
+            multi_project_orchestrator: self.config_orchestrator.clone(),
+            filter: None,
+            member: None,
+            filesystem: Arc::new(self.fs_seam.as_ref().clone()),
+            scan_aggregates: self.build_scan_aggregates(),
+        };
+        match dispatcher::surface_check_action::collect_scan_with_cancel(opts, cancel, on_progress)
+        {
+            Ok(outcome) => {
+                let count = outcome.violations.len();
+                LintExecutionResult::success_cancelled(
+                    format_violations(path, &outcome.violations),
+                    count,
+                    outcome.stopped_early,
+                )
+            }
+            Err(error) => LintExecutionResult::failure(format!("Error: {error}")),
+        }
+    }
+
     pub fn fix(&self, path: &str, flags: &ActionFlags) -> LintExecutionResult {
         let fix_orch = match &self.fix_orchestrator {
             Some(o) => o.clone(),
@@ -214,6 +253,7 @@ impl SurfaceLintExecutor {
                         LintOutcome::Failure
                     },
                     success: report.pass,
+                    cancelled: false,
                 }
             }
             Err(e) => LintExecutionResult::failure(format!("Error: {e}")),

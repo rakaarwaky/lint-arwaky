@@ -18,6 +18,9 @@ pub struct LintExecutionResult {
     /// Derived flag kept for consumer compatibility.
     /// `true` only when `outcome == LintOutcome::Success`.
     pub success: bool,
+    /// Set true when a cooperative cancel token stopped the scan early,
+    /// before every linter phase ran.
+    pub cancelled: bool,
 }
 
 impl LintExecutionResult {
@@ -27,6 +30,22 @@ impl LintExecutionResult {
             violation_count: violations,
             outcome: LintOutcome::Success,
             success: true,
+            cancelled: false,
+        }
+    }
+
+    /// A scan that was cut short by the user cancelling it.
+    pub fn success_cancelled(
+        output: impl Into<String>,
+        violations: usize,
+        cancelled: bool,
+    ) -> Self {
+        Self {
+            output: output.into(),
+            violation_count: violations,
+            outcome: LintOutcome::Success,
+            success: true,
+            cancelled,
         }
     }
 
@@ -38,6 +57,7 @@ impl LintExecutionResult {
             violation_count: 0,
             outcome: LintOutcome::Unavailable,
             success: false,
+            cancelled: false,
         }
     }
 
@@ -47,7 +67,13 @@ impl LintExecutionResult {
             violation_count: 0,
             outcome: LintOutcome::Failure,
             success: false,
+            cancelled: false,
         }
+    }
+
+    /// True when the scan was genuinely stopped early by the cancel token.
+    pub fn cancelled_early(&self) -> bool {
+        self.cancelled
     }
 }
 
